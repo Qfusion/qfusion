@@ -1678,7 +1678,24 @@ static void PM_AdjustBBox( void ) {
 * PM_AdjustViewheight
 */
 void PM_AdjustViewheight( void ) {
+	float height;
+	vec3_t pm_maxs, mins, maxs;
 
+	if( pm->playerState->pmove.pm_type == PM_SPECTATOR ) {
+		VectorCopy( playerbox_stand_mins, mins );
+		VectorCopy( playerbox_stand_maxs, maxs );
+	} else {
+		VectorCopy( pm->mins, mins );
+		VectorCopy( pm->maxs, maxs );
+	}
+
+	VectorCopy( maxs, pm_maxs );
+	gs.api.RoundUpToHullSize( mins, maxs );
+
+	height = pm_maxs[2] - maxs[2];
+	if( height > 0 ) {
+		pm->playerState->viewheight -= height;
+	}
 }
 
 static void PM_UpdateDeltaAngles( void ) {

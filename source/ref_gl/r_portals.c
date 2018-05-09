@@ -219,8 +219,9 @@ static void R_DrawPortalSurface( portalSurface_t *portalSurface ) {
 
 	best = NULL;
 	best_d = 100000000;
-	for( i = rsc.numLocalEntities; i < rsc.numEntities; i++ ) {
-		ent = R_NUM2ENT( i );
+	for( i = 0; i < rn.numEntities; i++ ) {
+		ent = R_NUM2ENT( rn.entities[i] );
+
 		if( ent->rtype != RT_PORTALSURFACE ) {
 			continue;
 		}
@@ -338,7 +339,6 @@ setup_and_render:
 
 	rn.refdef.rdflags &= ~( RDF_UNDERWATER | RDF_CROSSINGWATER | RDF_FLIPPED );
 
-	rn.shadowGroup = NULL;
 	rn.meshlist = &r_portallist;
 	rn.portalmasklist = NULL;
 
@@ -346,11 +346,15 @@ setup_and_render:
 	rn.renderFlags &= ~RF_SOFT_PARTICLES;
 	rn.clipPlane = *portal_plane;
 
+	rn.nearClip = Z_NEAR;
 	rn.farClip = R_DefaultFarClip();
 
-	rn.clipFlags |= ( 1 << 5 );
-	rn.frustum[5] = *portal_plane;
-	CategorizePlane( &rn.frustum[5] );
+	rn.polygonFactor = POLYOFFSET_FACTOR;
+	rn.polygonUnits = POLYOFFSET_UNITS;
+
+	rn.clipFlags |= 16;
+	rn.frustum[4] = *portal_plane; // nearclip
+	CategorizePlane( &rn.frustum[4] );
 
 	// if we want to render to a texture, initialize texture
 	// but do not try to render to it more than once
@@ -383,6 +387,12 @@ setup_and_render:
 
 	VectorCopy( origin, rn.refdef.vieworg );
 	Matrix3_Copy( axis, rn.refdef.viewaxis );
+
+	R_SetupViewMatrices( &rn.refdef );
+
+	R_SetupFrustum( &rn.refdef, rn.nearClip, rn.farClip, rn.frustum, rn.frustumCorners );
+
+	R_SetupPVS( &rn.refdef );
 
 	R_RenderView( &rn.refdef );
 
@@ -419,11 +429,11 @@ static void R_DrawPortalsDepthMask( void ) {
 	RB_GetDepthRange( &depthmin, &depthmax );
 
 	RB_ClearDepth( depthmin );
-	RB_Clear( GL_DEPTH_BUFFER_BIT, 0, 0, 0, 0 );
+	RB_Clear( GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT, 0, 0, 0, 0 );
 	RB_SetShaderStateMask( ~0, GLSTATE_DEPTHWRITE | GLSTATE_DEPTHFUNC_GT | GLSTATE_NO_COLORWRITE );
 	RB_DepthRange( depthmax, depthmax );
 
-	R_DrawSurfaces( rn.portalmasklist );
+	R_DrawPortalSurfaces( rn.portalmasklist );
 
 	RB_DepthRange( depthmin, depthmax );
 	RB_ClearDepth( depthmax );
@@ -436,26 +446,31 @@ static void R_DrawPortalsDepthMask( void ) {
 void R_DrawPortals( void ) {
 	unsigned int i;
 
-	if( rf.viewcluster == -1 ) {
+	if( rn.viewcluster == -1 ) {
+		return;
+	}
+	if( rn.renderFlags & ( RF_MIRRORVIEW | RF_LIGHTVIEW | RF_PORTALVIEW | RF_SHADOWMAPVIEW ) ) {
 		return;
 	}
 
-	if( !( rn.renderFlags & ( RF_MIRRORVIEW | RF_PORTALVIEW | RF_SHADOWMAPVIEW ) ) ) {
-		R_DrawPortalsDepthMask();
+	R_DrawPortalsDepthMask();
 
+	if( rn.skyportalSurface ) {
 		// render skyportal
-		if( rn.skyportalSurface ) {
-			portalSurface_t *ps = rn.skyportalSurface;
-			R_DrawSkyportal( ps->entity, ps->skyPortal );
-		}
+		portalSurface_t *ps = rn.skyportalSurface;
+		R_DrawSkyportal( ps->entity, ps->skyPortal );
+	} else {
+		// FIXME: move this?
+		// render sky dome that writes to depth
+		R_DrawDepthSkySurf();
+	}
 
-		// render regular portals
-		for( i = 0; i < rn.numPortalSurfaces; i++ ) {
-			portalSurface_t ps = rn.portalSurfaces[i];
-			if( !ps.skyPortal ) {
-				R_DrawPortalSurface( &ps );
-				rn.portalSurfaces[i] = ps;
-			}
+	// render regular portals
+	for( i = 0; i < rn.numPortalSurfaces; i++ ) {
+		portalSurface_t ps = rn.portalSurfaces[i];
+		if( !ps.skyPortal ) {
+			R_DrawPortalSurface( &ps );
+			rn.portalSurfaces[i] = ps;
 		}
 	}
 }
@@ -478,7 +493,7 @@ portalSurface_t *R_AddSkyportalSurface( const entity_t *ent, const shader_t *sha
 		rn.numDepthPortalSurfaces++;
 	}
 
-	R_AddSurfToDrawList( rn.portalmasklist, ent, NULL, rsh.skyShader, 0, 0, NULL, drawSurf );
+	R_AddSurfToDrawList( rn.portalmasklist, ent, rsh.skyShader, NULL, -1, 0, 0, NULL, drawSurf );
 
 	portalSurface->entity = ent;
 	portalSurface->shader = shader;
@@ -498,12 +513,15 @@ static void R_DrawSkyportal( const entity_t *e, skyportal_t *skyportal ) {
 	//rn.renderFlags &= ~RF_SOFT_PARTICLES;
 	VectorCopy( skyportal->vieworg, rn.pvsOrigin );
 
+	rn.nearClip = Z_NEAR;
 	rn.farClip = R_DefaultFarClip();
+	rn.polygonFactor = POLYOFFSET_FACTOR;
+	rn.polygonUnits = POLYOFFSET_UNITS;
 
 	rn.clipFlags = 15;
-	rn.shadowGroup = NULL;
 	rn.meshlist = &r_skyportallist;
 	rn.portalmasklist = NULL;
+	rn.rtLight = NULL;
 	//Vector4Set( rn.scissor, rn.refdef.x + x, rn.refdef.y + y, w, h );
 
 	if( skyportal->noEnts ) {
@@ -541,6 +559,12 @@ static void R_DrawSkyportal( const entity_t *e, skyportal_t *skyportal ) {
 		rn.refdef.fov_y = CalcFov( rn.refdef.fov_x, rn.refdef.width, rn.refdef.height );
 		AdjustFov( &rn.refdef.fov_x, &rn.refdef.fov_y, glConfig.width, glConfig.height, false );
 	}
+
+	R_SetupViewMatrices( &rn.refdef );
+
+	R_SetupFrustum( &rn.refdef, rn.nearClip, rn.farClip, rn.frustum, rn.frustumCorners );
+
+	R_SetupPVS( &rn.refdef );
 
 	R_RenderView( &rn.refdef );
 

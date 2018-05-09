@@ -47,6 +47,12 @@ static void R_RenderDebugBounds( void );
 * R_ClearScene
 */
 void R_ClearScene( void ) {
+	R_ClearRefInstStack();
+
+	R_FrameCache_Clear();
+
+	R_ClearDebugBounds();
+
 	rsc.numLocalEntities = 0;
 	rsc.numDlights = 0;
 	rsc.numPolys = 0;
@@ -89,14 +95,49 @@ void R_ClearScene( void ) {
 
 	rsc.numBmodelEntities = 0;
 
-	rsc.renderedShadowBits = 0;
 	rsc.frameCount++;
+}
 
-	R_ClearDebugBounds();
+/*
+* R_CacheSceneEntity
+*/
+static void R_CacheSceneEntity( entity_t *e ) {
+	entSceneCache_t *cache = R_ENTCACHE( e );
 
-	R_ClearShadowGroups();
+	switch( e->rtype ) {
+	case RT_MODEL:
+		if( !e->model ) {
+			cache->mod_type = mod_bad;
+			return;
+		}
 
-	R_ClearSkeletalCache();
+		cache->mod_type = e->model->type;
+		cache->radius = 0;
+		cache->rotated = false;
+		ClearBounds( cache->mins, cache->maxs );
+		ClearBounds( cache->absmins, cache->absmaxs );
+
+		switch( e->model->type ) {
+		case mod_alias:
+			R_CacheAliasModelEntity( e );
+			break;
+		case mod_skeletal:
+			R_CacheSkeletalModelEntity( e );
+			break;
+		case mod_brush:
+			R_CacheBrushModelEntity( e );
+			break;
+		default:
+			e->model->type = mod_bad;
+			break;
+		}
+		break;
+	case RT_SPRITE:
+		R_CacheSpriteEntity( e );
+		break;
+	default:
+		break;
+	}
 }
 
 /*
@@ -115,19 +156,22 @@ void R_AddEntityToScene( const entity_t *ent ) {
 		if( r_outlines_scale->value <= 0 ) {
 			de->outlineHeight = 0;
 		}
-		rsc.entShadowBits[eNum] = 0;
-		rsc.entShadowGroups[eNum] = 0;
 
 		if( de->rtype == RT_MODEL ) {
+			de->outlineHeight = rsc.worldent->outlineHeight;
+			Vector4Copy( rsc.worldent->outlineRGBA, de->outlineColor );
+
 			if( de->model && de->model->type == mod_brush ) {
-				rsc.bmodelEntities[rsc.numBmodelEntities++] = de;
-			}
-			if( !( de->renderfx & RF_NOSHADOW ) ) {
-				R_AddLightOccluder( de ); // build groups and mark shadow casters
+				de->flags |= RF_FORCENOLOD;
+				rsc.bmodelEntities[rsc.numBmodelEntities++] = eNum;
 			}
 		} else if( de->rtype == RT_SPRITE ) {
 			// simplifies further checks
 			de->model = NULL;
+			de->flags |= RF_FORCENOLOD;
+			if( !de->customShader || de->radius <= 0 || de->scale <= 0 ) {
+				return;
+			}
 		}
 
 		if( de->renderfx & RF_ALPHAHACK ) {
@@ -135,6 +179,12 @@ void R_AddEntityToScene( const entity_t *ent ) {
 				de->renderfx &= ~RF_ALPHAHACK;
 			}
 		}
+
+		if( !r_lerpmodels->integer ) {
+			de->backlerp = 0;
+		}
+
+		R_CacheSceneEntity( de );
 
 		rsc.numEntities++;
 
@@ -152,22 +202,30 @@ void R_AddEntityToScene( const entity_t *ent ) {
 * R_AddLightToScene
 */
 void R_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b ) {
-	if( ( rsc.numDlights < MAX_DLIGHTS ) && intensity && ( r != 0 || g != 0 || b != 0 ) ) {
-		dlight_t *dl = &rsc.dlights[rsc.numDlights];
+	rtlight_t *dl;
+	vec3_t color;
 
-		VectorCopy( org, dl->origin );
-		dl->intensity = intensity * DLIGHT_SCALE;
-		dl->color[0] = r;
-		dl->color[1] = g;
-		dl->color[2] = b;
-
-		if( r_lighting_grayscale->integer ) {
-			vec_t grey = ColorGrayscale( dl->color );
-			dl->color[0] = dl->color[1] = dl->color[2] = bound( 0, grey, 1 );
-		}
-
-		rsc.numDlights++;
+	if( rsc.numDlights >= MAX_DLIGHTS ) {
+		return;
 	}
+	if( !intensity || ( r == 0 && g == 0 && b == 0 ) ) {
+		return;
+	}
+
+	VectorSet( color, r, g, b );
+	if( r_lighting_grayscale->integer ) {
+		vec_t grey = ColorGrayscale( color );
+		color[0] = color[1] = color[2] = bound( 0, grey, 1 );
+	} else {
+		VectorScale( color, 1.0 / DLIGHT_SCALE, color );
+	}
+
+	dl = &rsc.dlights[rsc.numDlights];
+	R_InitRtLight( dl, org, axis_identity, intensity * DLIGHT_SCALE, color );
+	dl->worldModel = rsh.worldModel;
+	dl->shadow = dl->intensity >= DLIGHT_MIN_SHADOW_RADIUS;
+
+	rsc.numDlights++;
 }
 
 /*
@@ -291,6 +349,27 @@ void R_RenderScene( const refdef_t *fd ) {
 
 	if( !( fd->rdflags & RDF_NOWORLDMODEL ) ) {
 		rsc.refdef = *fd;
+
+		if( rsc.worldModelSequence != rsh.worldModelSequence ) {
+			rsc.frameCount = !rsc.frameCount;
+			rsc.worldModelSequence = rsh.worldModelSequence;
+
+			R_WaitWorldModel();
+		}
+
+		// FIXME: find a better place for this
+		if( rsh.worldBrushModel ) {
+			if( r_lighting_realtime_world->modified || r_lighting_realtime_world_shadows->modified ) {
+				if( r_lighting_realtime_world_shadows->integer ) {
+					unsigned i;
+					for( i = 0; i < rsh.worldBrushModel->numRtLights; i++ ) {
+						R_CompileRtLight( rsh.worldBrushModel->rtLights + i);
+					}
+				}
+			}
+			r_lighting_realtime_world->modified = false;
+			r_lighting_realtime_world_shadows->modified = false;
+		}
 	}
 
 	rn.refdef = *fd;
@@ -302,16 +381,19 @@ void R_RenderScene( const refdef_t *fd ) {
 
 	rn.renderFlags = RF_NONE;
 
+	rn.nearClip = Z_NEAR;
 	rn.farClip = R_DefaultFarClip();
+	rn.polygonFactor = POLYOFFSET_FACTOR;
+	rn.polygonUnits = POLYOFFSET_UNITS;
 	rn.clipFlags = 15;
 	if( rsh.worldModel && !( fd->rdflags & RDF_NOWORLDMODEL ) && rsh.worldBrushModel->globalfog ) {
-		rn.clipFlags |= 16;
+		rn.clipFlags |= 32; // farlip
 	}
 	rn.meshlist = &r_worldlist;
 	rn.portalmasklist = &r_portalmasklist;
-	rn.shadowBits = 0;
-	rn.dlightBits = 0;
-	rn.shadowGroup = NULL;
+	rn.numEntities = 0;
+	rn.numRealtimeLights = 0;
+	rn.rtLight = NULL;
 
 	rn.st = &rsh.st;
 	rn.renderTarget = 0;
@@ -386,17 +468,30 @@ void R_RenderScene( const refdef_t *fd ) {
 	Vector4Set( rn.scissor, fd->scissor_x, fd->scissor_y, fd->scissor_width, fd->scissor_height );
 	Vector4Set( rn.viewport, fd->x, fd->y, fd->width, fd->height );
 	VectorCopy( fd->vieworg, rn.pvsOrigin );
+	VectorCopy( fd->vieworg, rn.viewOrigin );
+	Matrix3_Copy( fd->viewaxis, rn.viewAxis );
+
 	VectorCopy( fd->vieworg, rn.lodOrigin );
+	rn.lodBias = r_lodbias->integer;
+	rn.lodScale = r_lodscale->value;
 
 	R_BindFrameBufferObject( 0 );
 
-	R_BuildShadowGroups();
+	R_SetupViewMatrices( fd );
+
+	R_SetupFrustum( fd, rn.nearClip, rn.farClip, rn.frustum, rn.frustumCorners );
+
+	R_SetupPVS( fd );
 
 	R_RenderView( fd );
 
-	R_RenderDebugSurface( fd );
+	if( !(fd->rdflags & RDF_NOWORLDMODEL) ) {
+		R_RenderDebugSurface( fd );
 
-	R_RenderDebugBounds();
+		R_RenderDebugLightVolumes();
+
+		R_RenderDebugBounds();
+	}
 
 	R_Begin2D( false );
 
@@ -593,7 +688,7 @@ BOUNDING BOXES
 typedef struct {
 	vec3_t mins;
 	vec3_t maxs;
-	byte_vec4_t color;
+	vec4_t color;
 } r_debug_bound_t;
 
 static unsigned r_num_debug_bounds;
@@ -610,7 +705,7 @@ static void R_ClearDebugBounds( void ) {
 /*
 * R_AddDebugBounds
 */
-void R_AddDebugBounds( const vec3_t mins, const vec3_t maxs, const byte_vec4_t color ) {
+void R_AddDebugBounds( const vec3_t mins, const vec3_t maxs, const vec4_t color ) {
 	unsigned i;
 
 	i = r_num_debug_bounds;
@@ -627,7 +722,7 @@ void R_AddDebugBounds( const vec3_t mins, const vec3_t maxs, const byte_vec4_t c
 
 	VectorCopy( mins, r_debug_bounds[i].mins );
 	VectorCopy( maxs, r_debug_bounds[i].maxs );
-	Vector4Copy( color, r_debug_bounds[i].color );
+	ColorNormalize( color, r_debug_bounds[i].color );
 }
 
 /*
@@ -636,20 +731,14 @@ void R_AddDebugBounds( const vec3_t mins, const vec3_t maxs, const byte_vec4_t c
 static void R_RenderDebugBounds( void ) {
 	unsigned i, j;
 	const vec_t *mins, *maxs;
-	const uint8_t *color;
 	mesh_t mesh;
 	vec4_t verts[8];
-	byte_vec4_t colors[8];
-	elem_t elems[24] =
-	{
-		0, 1, 1, 3, 3, 2, 2, 0,
-		0, 4, 1, 5, 2, 6, 3, 7,
-		4, 5, 5, 7, 7, 6, 6, 4
-	};
+	byte_vec4_t colors[8], ucolor;
+	elem_t elems[24];
 
-	if( !r_num_debug_bounds ) {
-		return;
-	}
+	//if( !r_num_debug_bounds ) {
+	//	return;
+	//}
 
 	memset( &mesh, 0, sizeof( mesh ) );
 	mesh.numVerts = 8;
@@ -660,20 +749,32 @@ static void R_RenderDebugBounds( void ) {
 
 	RB_SetShaderStateMask( ~0, GLSTATE_NO_DEPTH_TEST );
 
+	RB_SetLightstyle( NULL, NULL );
+
+	RB_SetRtLightParams( 0, NULL, 0, NULL );
+
+	for( i = 0; i < 24; i++ ) {
+		elems[i] = r_boxedges[i];
+	}
+
 	for( i = 0; i < r_num_debug_bounds; i++ ) {
 		mins = r_debug_bounds[i].mins;
 		maxs = r_debug_bounds[i].maxs;
-		color = r_debug_bounds[i].color;
+		
+		for( j = 0; j < 3; j++ )
+			ucolor[j] = r_debug_bounds[i].color[j] * 255;
+		ucolor[3] = 255;
 
 		for( j = 0; j < 8; j++ ) {
 			verts[j][0] = ( ( j & 1 ) ? mins[0] : maxs[0] );
 			verts[j][1] = ( ( j & 2 ) ? mins[1] : maxs[1] );
 			verts[j][2] = ( ( j & 4 ) ? mins[2] : maxs[2] );
 			verts[j][3] = 1.0f;
-			Vector4Copy( color, colors[j] );
+
+			Vector4Copy( ucolor, colors[j] );
 		}
 
-		RB_AddDynamicMesh( rsc.worldent, rsh.whiteShader, NULL, NULL, 0, &mesh, GL_LINES, 0.0f, 0.0f );
+		RB_AddDynamicMesh( rsc.worldent, rsh.whiteShader, NULL, NULL, &mesh, GL_LINES, 0.0f, 0.0f );
 	}
 
 	RB_FlushDynamicMeshes();

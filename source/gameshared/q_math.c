@@ -724,12 +724,17 @@ void ClearBounds( vec3_t mins, vec3_t maxs ) {
 	maxs[0] = maxs[1] = maxs[2] = -99999;
 }
 
-bool BoundsIntersect( const vec3_t mins1, const vec3_t maxs1, const vec3_t mins2, const vec3_t maxs2 ) {
-	return (bool)( mins1[0] <= maxs2[0] && mins1[1] <= maxs2[1] && mins1[2] <= maxs2[2] &&
-				   maxs1[0] >= mins2[0] && maxs1[1] >= mins2[1] && maxs1[2] >= mins2[2] );
+void CopyBounds( const vec3_t inmins, const vec3_t inmaxs, vec3_t outmins, vec3_t outmaxs ) {
+	VectorCopy( inmins, outmins );
+	VectorCopy( inmaxs, outmaxs );
 }
 
-bool BoundsAndSphereIntersect( const vec3_t mins, const vec3_t maxs, const vec3_t centre, float radius ) {
+bool BoundsOverlap( const vec3_t mins1, const vec3_t maxs1, const vec3_t mins2, const vec3_t maxs2 ) {
+	return ( mins1[0] <= maxs2[0] && mins1[1] <= maxs2[1] && mins1[2] <= maxs2[2] &&
+		maxs1[0] >= mins2[0] && maxs1[1] >= mins2[1] && maxs1[2] >= mins2[2] );
+}
+
+bool BoundsOverlapSphere( const vec3_t mins, const vec3_t maxs, const vec3_t centre, float radius ) {
 	int i;
 	float dmin = 0;
 	float radius2 = radius * radius;
@@ -775,6 +780,36 @@ float RadiusFromBounds( const vec3_t mins, const vec3_t maxs ) {
 	}
 
 	return VectorLength( corner );
+}
+
+/*
+* BoundsFromRadius
+*/
+void BoundsFromRadius( const vec3_t centre, vec_t radius, vec3_t mins, vec3_t maxs ) {
+	int i;
+
+	for( i = 0; i < 3; i++ ) {
+		mins[i] = centre[i] - radius;
+		maxs[i] = centre[i] + radius;
+	}
+}
+
+/*
+* BoundsOverlapTriangle
+*/
+bool BoundsOverlapTriangle( const vec3_t v1, const vec3_t v2, const vec3_t v3, const vec3_t mins, const vec3_t maxs ) {
+	const vec_t *a = v1, *b = v2, *c = v3;
+	vec3_t tmins = { min( a[0], min( b[0], c[0] ) ), min( a[1], min( b[1], c[1] ) ), min( a[2], min( b[2], c[2] ) ) };
+	vec3_t tmaxs = { max( a[0], max( b[0], c[0] ) ), max( a[1], max( b[1], c[1] ) ), max( a[2], max( b[2], c[2] ) ) };
+	return BoundsOverlap( tmins, tmaxs, mins, maxs );
+}
+
+/*
+* BoundsInsideBounds
+*/
+bool BoundsInsideBounds( const vec3_t mins1, const vec3_t maxs1, const vec3_t mins2, const vec3_t maxs2 ) {
+	const vec_t *a = mins1, *b = maxs1, *c = mins2, *d = maxs2;
+	return ( a[0] >= c[0] && b[0] <= d[0] && a[1] >= c[1]  && b[1] <= d[1] && a[2] >= c[2] && b[2] <= d[2] );
 }
 
 vec_t VectorNormalize( vec3_t v ) {

@@ -639,6 +639,9 @@ load_refresh:
 			Con_Close();
 			CL_UIModule_ForceMenuOff();
 			CL_SetKeyDest( key_game );
+
+			// this will precache game assets
+			SCR_UpdateScreen();
 		} else {
 			CL_UIModule_ForceMenuOn();
 			CL_SetKeyDest( key_menu );

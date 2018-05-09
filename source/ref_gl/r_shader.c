@@ -2428,7 +2428,7 @@ void R_UploadCinematicShader( const shader_t *shader ) {
 
 	// upload cinematics
 	for( j = 0, pass = shader->passes; j < shader->numpasses; j++, pass++ ) {
-		if( pass->cin ) {
+ 		if( pass->cin ) {
 			R_UploadCinematic( pass->cin );
 		}
 	}
@@ -2710,6 +2710,24 @@ create_default:
 				s->name = ( char * )data;
 				strcpy( s->name, shortname );
 				break;
+			case SHADER_TYPE_DEPTHONLY:
+				data = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) );
+
+				s->vattribs = VATTRIB_POSITION_BIT | VATTRIB_TEXCOORDS_BIT;
+				s->sort = SHADER_SORT_PORTAL;
+				s->flags = SHADER_CULL_FRONT | SHADER_DEPTHWRITE;
+				s->numpasses = 1;
+				s->passes = ( shaderpass_t * )data;
+				s->name = ( char * )( s->passes + 1 );
+				strcpy( s->name, shortname );
+
+				pass = &s->passes[0];
+				pass->rgbgen.type = RGB_GEN_IDENTITY;
+				pass->alphagen.type = ALPHA_GEN_IDENTITY;
+				pass->tcgen = TC_GEN_BASE;
+				pass->flags = GLSTATE_NO_COLORWRITE|GLSTATE_DEPTHWRITE;
+				pass->images[0] = rsh.whiteTexture;
+				break;
 			default:
 				break;
 		}
@@ -2765,6 +2783,35 @@ shader_t *R_ShaderById( unsigned int id ) {
 		return NULL;
 	}
 	return r_shaders + id;
+}
+
+/*
+* R_ShaderNoDlight
+*/
+bool R_ShaderNoDlight( const shader_t *shader ) {
+	if( Shader_DepthRead( shader ) || !Shader_DepthWrite( shader ) ) {
+		return true;
+	}
+	if( ( shader->sort < SHADER_SORT_OPAQUE ) || ( shader->sort > SHADER_SORT_BANNER ) ) {
+		return true;
+	}
+	return false;
+}
+
+/*
+* R_ShaderNoShadow
+*/
+bool R_ShaderNoShadow( const shader_t *shader ) {
+	if( ( shader->flags & (SHADER_CULL_BACK|SHADER_CULL_FRONT) ) == SHADER_CULL_BACK ) {
+		return true;
+	}
+	if( Shader_DepthRead( shader ) || !Shader_DepthWrite( shader ) ) {
+		return true;
+	}
+	if( ( shader->sort < SHADER_SORT_OPAQUE ) || ( shader->sort > SHADER_SORT_BANNER ) ) {
+		return true;
+	}
+	return false;
 }
 
 /*

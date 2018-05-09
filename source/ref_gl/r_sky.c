@@ -233,12 +233,12 @@ static void Gen_BoxSide( skydome_t *skydome, int side, vec3_t orig, vec3_t drow,
 	// which only has 1 side for skybox
 	if( side != 5 ) {
 		mesh->stArray = skydome->sphereStCoords[side];
-		R_UploadVBOVertexData( skydome->sphereVbos[side], 0, SKYDOME_VATTRIBS, mesh );
+		R_UploadVBOVertexData( skydome->sphereVbos[side], 0, SKYDOME_VATTRIBS, mesh, 0 );
 		R_UploadVBOElemData( skydome->sphereVbos[side], 0, 0, mesh );
 	}
 
 	skydome->meshes[side].stArray = skydome->linearStCoords[side];
-	R_UploadVBOVertexData( skydome->linearVbos[side], 0, SKYDOME_VATTRIBS, mesh );
+	R_UploadVBOVertexData( skydome->linearVbos[side], 0, SKYDOME_VATTRIBS, mesh, 0 );
 	R_UploadVBOElemData( skydome->linearVbos[side], 0, 0, mesh );
 }
 
@@ -262,7 +262,7 @@ static void R_DrawSkyBoxSide( const skydome_t *skydome, const visSkySide_t *visS
 
 	RB_SetSkyboxSide( imageIndex );
 
-	RB_DrawElements( visSide->firstVert, visSide->numVerts, visSide->firstElem, visSide->numElems, 0, 0, 0, 0 );
+	RB_DrawElements( visSide->firstVert, visSide->numVerts, visSide->firstElem, visSide->numElems );
 }
 
 /*
@@ -295,14 +295,14 @@ static void R_DrawBlackBottom( const skydome_t *skydome, const visSkySide_t *vis
 
 	RB_BindVBO( skydome->linearVbos[side]->index, GL_TRIANGLES );
 
-	RB_DrawElements( visSide->firstVert, visSide->numVerts, visSide->firstElem, visSide->numElems, 0, 0, 0, 0 );
+	RB_DrawElements( visSide->firstVert, visSide->numVerts, visSide->firstElem, visSide->numElems );
 }
 
 /*
 * R_DrawSkySurf
 */
-void R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, 
-	                unsigned int shadowBits, drawSurfaceSky_t *drawSurf ) {
+void R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, int lightStyleNum, 
+	const portalSurface_t *portalSurface, drawSurfaceSky_t *drawSurf ) {
 	int i;
 	int numVisSides;
 	visSkySide_t visSkySides[6];
@@ -390,12 +390,28 @@ void R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog
 
 				RB_BindVBO( skydome->sphereVbos[i]->index, GL_TRIANGLES );
 
-				RB_DrawElements( visSide->firstVert, visSide->numVerts, visSide->firstElem, visSide->numElems, 0, 0, 0, 0 );
+				RB_DrawElements( visSide->firstVert, visSide->numVerts, visSide->firstElem, visSide->numElems );
 			}
 		}
 	}
 
 	R_TransformForEntity( e );
+
+	R_ClearSky( drawSurf );
+}
+
+
+/*
+* R_DrawDepthSkySurf
+*/
+void R_DrawDepthSkySurf( void ) {
+	RB_SetShaderStateMask( ~0, GLSTATE_DEPTHWRITE );
+
+	if( mapConfig.writeSkyDepth ) {
+		R_DrawSkySurfaces( rn.meshlist );
+	}
+
+	RB_SetShaderStateMask( ~0, 0 );
 }
 
 //===================================================================
@@ -617,8 +633,8 @@ bool R_ClipSkySurface( drawSurfaceSky_t *drawSurf, const msurface_t *surf ) {
 /*
 * R_AddSkySurfToDrawList
 */
-void *R_AddSkySurfToDrawList( drawList_t *list, const shader_t *shader,const portalSurface_t *portalSurf, drawSurfaceSky_t *drawSurf ) {
-	return R_AddSurfToDrawList( rn.meshlist, rsc.skyent, NULL, shader, 0, 0, portalSurf, drawSurf );
+void *R_AddSkySurfToDrawList( drawList_t *list, const shader_t *shader, const portalSurface_t *portalSurf, drawSurfaceSky_t *drawSurf ) {
+	return R_AddSurfToDrawList( rn.meshlist, rsc.skyent, shader, NULL, -1, 0, 0, portalSurf, drawSurf );
 }
 
 /*

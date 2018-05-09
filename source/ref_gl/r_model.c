@@ -27,15 +27,20 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 typedef struct {
 	unsigned number;
 	int cluster;
+	unsigned drawSurfIndex;
 	msurface_t *surf;
 } msortedSurface_t;
 
 void Mod_LoadAliasMD3Model( model_t *mod, model_t *parent, void *buffer, bspFormatDesc_t *unused );
 void Mod_LoadSkeletalModel( model_t *mod, model_t *parent, void *buffer, bspFormatDesc_t *unused );
 void Mod_LoadQ3BrushModel( model_t *mod, model_t *parent, void *buffer, bspFormatDesc_t *format );
+void Mod_LoadQ2BrushModel( model_t *mod, model_t *parent, void *buffer, bspFormatDesc_t *format );
+void Mod_LoadQ1BrushModel( model_t *mod, model_t *parent, void *buffer, bspFormatDesc_t *format );
+void Mod_FixupQ1MipTex( model_t *mod );
 
 static void R_InitMapConfig( const char *model );
 static void R_FinishMapConfig( const model_t *mod );
+static void R_LoadWorldRtLights( model_t *model );
 
 static uint8_t mod_novis[MAX_MAP_LEAFS / 8];
 
@@ -60,6 +65,12 @@ static const modelFormatDescr_t mod_supportedformats[] =
 	// Q3-alike .bsp models
 	{ "*", 4, q3BSPFormats, 0, ( const modelLoader_t )Mod_LoadQ3BrushModel },
 
+	// Q2 .bsp models
+	{ "*", 4, q2BSPFormats, 0, ( const modelLoader_t )Mod_LoadQ2BrushModel },
+
+	// Q1 .bsp models
+	{ "*", 0, q1BSPFormats, 0, ( const modelLoader_t )Mod_LoadQ1BrushModel },
+
 	// trailing NULL
 	{ NULL, 0, NULL, 0, NULL }
 };
@@ -69,12 +80,11 @@ static const modelFormatDescr_t mod_supportedformats[] =
 /*
 * Mod_PointInLeaf
 */
-mleaf_t *Mod_PointInLeaf( vec3_t p, model_t *model ) {
+mleaf_t *Mod_PointInLeaf( const vec3_t p, mbrushmodel_t *bmodel ) {
 	mnode_t *node;
 	cplane_t *plane;
-	mbrushmodel_t *bmodel;
 
-	if( !model || !( bmodel = ( mbrushmodel_t * )model->extradata ) || !bmodel->nodes ) {
+	if( !bmodel || !bmodel->nodes ) {
 		ri.Com_Error( ERR_DROP, "Mod_PointInLeaf: bad model" );
 		return NULL;
 	}
@@ -89,20 +99,63 @@ mleaf_t *Mod_PointInLeaf( vec3_t p, model_t *model ) {
 }
 
 /*
-* Mod_ClusterVS
+* Mod_ClusterPVS
 */
-static inline uint8_t *Mod_ClusterVS( int cluster, dvis_t *vis ) {
+uint8_t *Mod_ClusterPVS( int cluster, mbrushmodel_t *bmodel ) {
+	dvis_t *vis = bmodel->pvs;
+
 	if( cluster < 0 || !vis ) {
 		return mod_novis;
 	}
+
 	return ( (uint8_t *)vis->data + cluster * vis->rowsize );
 }
 
 /*
-* Mod_ClusterPVS
+* Mod_SpherePVS_r
 */
-uint8_t *Mod_ClusterPVS( int cluster, model_t *model ) {
-	return Mod_ClusterVS( cluster, ( ( mbrushmodel_t * )model->extradata )->pvs );
+static void Mod_SpherePVS_r( mnode_t *node, const vec3_t origin, float radius, const dvis_t *vis, uint8_t *fatpvs ) {
+	int i;
+	const mleaf_t *leaf;
+	const uint8_t *row;
+
+	while( node->plane != NULL ) {
+		float d = PlaneDiff( origin, node->plane );
+
+		if( d > radius - ON_EPSILON ) {
+			node = node->children[0];
+		} else if( d < -radius + ON_EPSILON ) {
+			node = node->children[1];
+		}  else {
+			Mod_SpherePVS_r( node->children[0], origin, radius, vis, fatpvs );
+			node = node->children[1];
+		}
+	}
+
+	leaf = ( const mleaf_t * )node;
+	if( leaf->cluster < 0 ) {
+		return;
+	}
+
+	row = (uint8_t *)vis->data + leaf->cluster * vis->rowsize;
+	for( i = 0; i < vis->rowsize; i++ )
+		fatpvs[i] |= row[i];
+}
+
+/*
+* Mod_SpherePVS
+*/
+uint8_t *Mod_SpherePVS( const vec3_t origin, float radius, mbrushmodel_t *bmodel, uint8_t *fatpvs ) {
+	const dvis_t *vis;
+	
+	vis = bmodel->pvs;
+	if( !vis ) {
+		return mod_novis;
+	}
+
+	memset( fatpvs, 0, vis->rowsize );
+	Mod_SpherePVS_r( bmodel->nodes, origin, radius, vis, fatpvs );
+	return fatpvs;
 }
 
 //===============================================================================
@@ -112,17 +165,14 @@ uint8_t *Mod_ClusterPVS( int cluster, model_t *model ) {
 */
 static void Mod_CreateVisLeafs( model_t *mod ) {
 	unsigned i, j;
-	unsigned count, numVisLeafs;
+	unsigned count;
 	unsigned numVisSurfaces, numFragmentSurfaces;
 	mleaf_t *leaf;
 	msurface_t *surf;
 	mbrushmodel_t *loadbmodel = ( ( mbrushmodel_t * )mod->extradata );
 
 	count = loadbmodel->numleafs;
-	loadbmodel->visleafs = Mod_Malloc( mod, (count + 1) * sizeof( *loadbmodel->visleafs ) );
-	memset( loadbmodel->visleafs, 0, (count + 1) * sizeof( *loadbmodel->visleafs ) );
 
-	numVisLeafs = 0;
 	for( i = 0; i < count; i++ ) {
 		numVisSurfaces = numFragmentSurfaces = 0;
 
@@ -142,7 +192,7 @@ static void Mod_CreateVisLeafs( model_t *mod ) {
 			surfNum = leaf->visSurfaces[j];
 			surf = loadbmodel->surfaces + surfNum;
 
-			if( R_SurfPotentiallyVisible( surf ) ) {
+			if( !R_SurfNoDraw( surf ) ) {
 				leaf->visSurfaces[numVisSurfaces++] = surfNum;
 				if( R_SurfPotentiallyFragmented( surf ) ) {
 					leaf->fragmentSurfaces[numFragmentSurfaces++] = surfNum;
@@ -152,17 +202,7 @@ static void Mod_CreateVisLeafs( model_t *mod ) {
 
 		leaf->numVisSurfaces = numVisSurfaces;
 		leaf->numFragmentSurfaces = numFragmentSurfaces;
-
-		if( !numVisSurfaces ) {
-			//out->cluster = -1;
-			continue;
-		}
-
-		loadbmodel->visleafs[numVisLeafs++] = leaf;
 	}
-
-	loadbmodel->visleafs[numVisLeafs] = NULL;
-	loadbmodel->numvisleafs = numVisLeafs;
 }
 
 /*
@@ -225,7 +265,7 @@ static void Mod_FinishFaces( model_t *mod ) {
 		mesh = &surf->mesh;
 		shader = surf->shader;
 
-		if( !R_SurfPotentiallyVisible( surf ) ) {
+		if( R_SurfNoDraw( surf ) ) {
 			continue;
 		}
 
@@ -288,13 +328,6 @@ static void Mod_SetupSubmodels( model_t *mod ) {
 		bmodel->numModelDrawSurfaces = bm->numModelDrawSurfaces;
 
 		starmod->extradata = bmodel;
-		if( i == 0 ) {
-			bmodel->visleafs = loadbmodel->visleafs;
-			bmodel->numvisleafs = loadbmodel->numvisleafs;
-		} else {
-			bmodel->visleafs = NULL;
-			bmodel->numvisleafs = 0;
-		}
 
 		VectorCopy( bm->maxs, starmod->maxs );
 		VectorCopy( bm->mins, starmod->mins );
@@ -310,246 +343,127 @@ static void Mod_SetupSubmodels( model_t *mod ) {
 
 #define VBO_Printf ri.Com_DPrintf
 
-/*
-* R_CompareSurfacesByDrawSurf
-*/
-static int R_CompareSurfacesByDrawSurf( const void *ps1, const void *ps2 ) {
-	const msortedSurface_t *s1 = ps1;
-	const msortedSurface_t *s2 = ps2;
-	if( s1->surf->drawSurf > s2->surf->drawSurf )
-		return 1;
-	if( s1->surf->drawSurf < s2->surf->drawSurf )
-		return -1;
-	return s1->surf->firstDrawSurfVert - s2->surf->firstDrawSurfVert;
-}
+static mbrushmodel_t *loadbmodel_; // FIXME
 
 /*
-* R_CompareSurfacesByCluster
+* R_SurfaceCmp
 */
-static int R_CompareSurfacesByCluster( const void *ps1, const void *ps2 ) {
-	const msortedSurface_t *s1 = ps1;
-	const msortedSurface_t *s2 = ps2;
-	if( s1->cluster > s2->cluster )
+static int R_SurfaceCmp( const msurface_t *s1, const msurface_t *s2 ) {
+	struct superLightStyle_s *sl1 = NULL;
+	struct superLightStyle_s *sl2 = NULL;
+	int va1 = 0, va2  = 0;
+	int sid1 = 0, sid2 = 0;
+
+	if( s1->shader != NULL ) {
+		va1 = s1->shader->vattribs;
+		sid1 = s1->shader->id;
+	}
+
+	if( s2->shader != NULL ) {
+		va2 = s2->shader->vattribs;
+		sid2 = s2->shader->id;
+	}
+
+	if( s1->superLightStyle >= 0 ) {
+		sl1 = &loadbmodel_->superLightStyles[s1->superLightStyle];
+		va1 |= sl1->vattribs;
+	}
+	if( s2->superLightStyle >= 0 ) {
+		sl2 = &loadbmodel_->superLightStyles[s2->superLightStyle];
+		va2 |= sl2->vattribs;
+	}
+
+	if( s1->numInstances ) {
+		va1 |= VATTRIB_INSTANCES_BITS;
+	}
+	if( s2->numInstances ) {
+		va2 |= VATTRIB_INSTANCES_BITS;
+	}
+
+	if( va1 > va2 ) {
 		return 1;
-	if( s1->cluster < s2->cluster )
+	}
+	if( va1 < va2 ) {
 		return -1;
-	if( s1->surf > s2->surf )
+	}
+
+	if( sid1 > sid2 ) {
 		return 1;
-	if( s1->surf < s2->surf )
+	}
+	if( sid1 < sid2 ) {
 		return -1;
+	}
+
+	if( s1->fog > s2->fog ) {
+		return 1;
+	}
+	if( s1->fog < s2->fog ) {
+		return -1;
+	}
+
+	if( s1->superLightStyle > s2->superLightStyle ) {
+		return 1;
+	}
+	if( s1->superLightStyle < s2->superLightStyle ) {
+		return -1;
+	}
+
 	return 0;
 }
 
 /*
-* Mod_SortModelSurfaces
+* R_SortSurfacesCmp
 */
-static void Mod_SortModelSurfaces( model_t *mod, unsigned int modnum ) {
-	unsigned i, j;
-	mmodel_t *bm;
-	mbrushmodel_t *loadbmodel;
-	unsigned numSurfaces, firstSurface;
-	msurface_t *backupSurfaces;
-	msortedSurface_t *sortedSurfaces;
-	unsigned *map;
-	unsigned lastDrawSurf;
-
-	assert( mod );
-
-	loadbmodel = ( ( mbrushmodel_t * )mod->extradata );
-	assert( loadbmodel );
-
-	assert( modnum >= 0 && modnum < loadbmodel->numsubmodels );
-	bm = loadbmodel->submodels + modnum;
-
-	// ignore empty models
-	numSurfaces = bm->numModelSurfaces;
-	firstSurface = bm->firstModelSurface;
-	if( !numSurfaces ) {
-		return;
+static int R_SortSurfacesCmp( const void **ps1, const void **ps2 ) {
+	const msurface_t *s1 = *ps1;
+	const msurface_t *s2 = *ps2;
+	int cmp;
+	
+	cmp = R_SurfaceCmp( s1, s2 );
+	if( cmp == 0 ) {
+		return s1 - s2;
 	}
 
-	map = ( unsigned * )Mod_Malloc( mod, numSurfaces * sizeof( *map ) );
-	sortedSurfaces = ( msortedSurface_t * )Mod_Malloc( mod, numSurfaces * sizeof( *sortedSurfaces ) );
-	backupSurfaces = ( msurface_t * )Mod_Malloc( mod, numSurfaces * sizeof( *backupSurfaces ) );
-	for( i = 0; i < numSurfaces; i++ ) {
-		sortedSurfaces[i].number = i;
-		sortedSurfaces[i].cluster = 0;
-		sortedSurfaces[i].surf = loadbmodel->surfaces + firstSurface + i;
-	}
-
-	memcpy( backupSurfaces, loadbmodel->surfaces + firstSurface, numSurfaces * sizeof( msurface_t ) );
-	qsort( sortedSurfaces, numSurfaces, sizeof( msortedSurface_t ), &R_CompareSurfacesByDrawSurf );
-
-	for( i = 0; i < numSurfaces; i++ ) {
-		map[sortedSurfaces[i].number] = i;
-	}
-
-	if( !modnum && loadbmodel->visleafs ) {
-		mleaf_t *leaf, **pleaf;
-		for( pleaf = loadbmodel->visleafs, leaf = *pleaf; leaf; leaf = *++pleaf ) {
-			for( j = 0; j < leaf->numVisSurfaces; j++ ) {
-				leaf->visSurfaces[j] = map[leaf->visSurfaces[j]];
-				leaf->fragmentSurfaces[j] = map[leaf->fragmentSurfaces[j]];
-			}
-		}
-	}
-
-	for( i = 0; i < numSurfaces; i++ ) {
-		*(loadbmodel->surfaces + firstSurface + i) = backupSurfaces[sortedSurfaces[i].number];
-	}
-
-	lastDrawSurf = loadbmodel->numDrawSurfaces + 1;
-	for( i = 0; i < numSurfaces; i++ ) {
-		drawSurfaceBSP_t *drawSurf;
-		msurface_t *surf = loadbmodel->surfaces + firstSurface + i;
-
-		if( !surf->drawSurf ) {
-			continue;
-		}
-
-		drawSurf = &loadbmodel->drawSurfaces[surf->drawSurf - 1];
-
-		if( lastDrawSurf != surf->drawSurf ) {
-			drawSurf->numWorldSurfaces = 0;
-			drawSurf->firstWorldSurface = firstSurface + i;
-			lastDrawSurf = surf->drawSurf;
-		}
-
-		drawSurf->numWorldSurfaces++;
-	}
-
-	R_Free( map );
-	R_Free( sortedSurfaces );
-	R_Free( backupSurfaces );
+	return cmp;
 }
 
 /*
 * Mod_CreateSubmodelBufferObjects
 */
-static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, size_t *vbo_total_size ) {
+static int Mod_CreateSubmodelBufferObjects( model_t *mod, size_t *vbo_total_size ) {
 	unsigned int i, j;
-	uint8_t *visdata = NULL;
-	uint8_t *areadata = NULL;
-	unsigned int rowbytes, rowlongs;
-	int areabytes;
-	uint8_t *arearow;
+	unsigned int modnum;
 	mmodel_t *bm;
-	mbrushmodel_t *loadbmodel;
 	msurface_t *surf, *surf2;
-	msurface_t **surfmap;
-	unsigned numUnmappedSurfaces;
-	unsigned startDrawSurface;
+	msurface_t **sortedSurfaces;
 	drawSurfaceBSP_t *drawSurf;
 	int num_vbos;
 	vattribmask_t floatVattribs;
 	mesh_vbo_t *tempVBOs;
 	unsigned numTempVBOs, maxTempVBOs;
-	unsigned numUnmergedVBOs;
-	msortedSurface_t *sortedSurfaces;
-
-	assert( mod );
+	unsigned *worldSurfaces;
+	mesh_vbo_t *vbo;
+	mbrushmodel_t *loadbmodel;
 
 	loadbmodel = ( ( mbrushmodel_t * )mod->extradata );
-	assert( loadbmodel );
+	loadbmodel_ = loadbmodel; // FIXME
 
-	assert( modnum >= 0 && modnum < loadbmodel->numsubmodels );
-	bm = loadbmodel->submodels + modnum;
-
-	// ignore empty models
-	if( !bm->numModelSurfaces ) {
-		return 0;
-	}
-
-	numUnmappedSurfaces = 0;
-	surfmap = ( msurface_t ** )Mod_Malloc( mod, bm->numModelSurfaces * sizeof( *surfmap ) );
-
-	sortedSurfaces = ( msortedSurface_t * )Mod_Malloc( mod, bm->numModelSurfaces * sizeof( *sortedSurfaces ) );
-	for( i = 0, surf = loadbmodel->surfaces + bm->firstModelSurface; i < bm->numModelSurfaces; i++, surf++ ) {
-		sortedSurfaces[i].number = i;
-		sortedSurfaces[i].cluster = -1;
-		sortedSurfaces[i].surf = surf;
+	worldSurfaces = ( unsigned * )Mod_Malloc( mod, loadbmodel->numsurfaces * sizeof( *worldSurfaces ) );
+	sortedSurfaces = ( msurface_t ** )Mod_Malloc( mod, loadbmodel->numsurfaces * sizeof( *sortedSurfaces ) );
+	for( i = 0, surf = loadbmodel->surfaces; i < loadbmodel->numsurfaces; i++, surf++ ) {
+		sortedSurfaces[i] = surf;
 	}
 
 	numTempVBOs = 0;
 	maxTempVBOs = 1024;
 	tempVBOs = ( mesh_vbo_t * )Mod_Malloc( mod, maxTempVBOs * sizeof( *tempVBOs ) );
-	startDrawSurface = loadbmodel->numDrawSurfaces;
-
-	bm->numModelDrawSurfaces = 0;
-	bm->firstModelDrawSurface = startDrawSurface;
-
-	if( !modnum && loadbmodel->pvs ) {
-		mleaf_t *leaf, **pleaf;
-
-		rowbytes = loadbmodel->pvs->rowsize;
-		rowlongs = ( rowbytes + 3 ) / 4;
-		areabytes = ( loadbmodel->numareas + 7 ) / 8;
-
-		if( !rowbytes ) {
-			return 0;
-		}
-
-		// build visibility data for each face, based on what leafs
-		// this face belongs to (visible from)
-		visdata = ( uint8_t * )Mod_Malloc( mod, rowlongs * 4 * loadbmodel->numsurfaces );
-		areadata = ( uint8_t * )Mod_Malloc( mod, areabytes * loadbmodel->numsurfaces );
-
-		for( pleaf = loadbmodel->visleafs, leaf = *pleaf; leaf; leaf = *++pleaf ) {
-			for( i = 0; i < leaf->numVisSurfaces; i++ ) {
-				unsigned surfnum;
-
-				surfnum = leaf->visSurfaces[i];
-				surf = loadbmodel->surfaces + surfnum;
-
-				if( surfnum >= bm->numModelSurfaces ) {
-					// some buggy maps such as aeroq2 contain visleafs that address faces from submodels...
-					continue;
-				}
-
-				if( sortedSurfaces[surfnum].cluster < leaf->cluster ) {
-					sortedSurfaces[surfnum].cluster = leaf->cluster;
-				}
-
-				if( surfmap[surfnum] ) {
-					continue;
-				}
-				surfmap[surfnum] = surf;
-
-				if( leaf->area >= 0 ) {
-					arearow = areadata + surfnum * areabytes;
-					arearow[leaf->area >> 3] |= ( 1 << ( leaf->area & 7 ) );
-				}
-
-				numUnmappedSurfaces++;
-			}
-		}
-
-		memset( surfmap, 0, bm->numModelSurfaces * sizeof( *surfmap ) );
-		qsort( sortedSurfaces, bm->numModelSurfaces, sizeof( msortedSurface_t ), &R_CompareSurfacesByCluster );
-	} else {
-		// either a submodel or an unvised map
-		rowbytes = 0;
-		rowlongs = 0;
-		visdata = NULL;
-		areabytes = 0;
-		areadata = NULL;
-
-		for( i = 0, surf = loadbmodel->surfaces + bm->firstModelSurface; i < bm->numModelSurfaces; i++, surf++ ) {
-			if( !R_SurfPotentiallyVisible( surf ) ) {
-				continue;
-			}
-
-			sortedSurfaces[i].cluster = 0;
-			numUnmappedSurfaces++;
-		}
-	}
 
 	// now linearly scan all faces for this submodel, merging them into
 	// vertex buffer objects if they share shader, lightmap texture and we can render
 	// them in hardware (some Q3A shaders require GLSL for that)
 
 	// don't use half-floats for XYZ due to precision issues
-	floatVattribs = VATTRIB_POSITION_BIT;
+	floatVattribs = VATTRIB_POSITION_BIT|VATTRIB_SURFINDEX_BIT;
 	if( mapConfig.maxLightmapSize > 1024 ) {
 		// don't use half-floats for lightmaps if there's not enough precision (half mantissa is 10 bits)
 		floatVattribs |= VATTRIB_LMCOORDS_BITS;
@@ -557,287 +471,204 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 
 	num_vbos = 0;
 	*vbo_total_size = 0;
-	for( i = 0; i < bm->numModelSurfaces; i++ ) {
-		mesh_vbo_t *vbo;
-		shader_t *shader;
-		int fcount;
-		int vcount, ecount;
-		vattribmask_t vattribs;
-		unsigned last_merged = i;
+	vbo = NULL;
 
-		if( numUnmappedSurfaces == 0 ) {
-			// done
-			break;
-		}
+	for( modnum = 0; modnum < loadbmodel->numsubmodels; modnum++ ) {
+		bm = loadbmodel->submodels + modnum;
+		bm->numModelDrawSurfaces = 0;
+		bm->firstModelDrawSurface = loadbmodel->numDrawSurfaces;
 
-		// ignore faces already merged
-		if( surfmap[i] ) {
-			continue;
-		}
-		if( sortedSurfaces[i].cluster < 0 ) {
-			continue;
-		}
+		qsort( sortedSurfaces + bm->firstModelSurface, bm->numModelSurfaces, sizeof( *sortedSurfaces ), &R_SortSurfacesCmp );
 
-		surf = sortedSurfaces[i].surf;
-		shader = surf->shader;
-		arearow = areadata + sortedSurfaces[i].number * areabytes;
+		for( i = 0; i < bm->numModelSurfaces;  ) {
+			shader_t *shader;
+			int fcount;
+			int vcount, ecount;
+			vattribmask_t vattribs;
+			bool mergable;
+			vec3_t mins, maxs;
 
-		fcount = 1;
-		vcount = surf->mesh.numVerts;
-		ecount = surf->mesh.numElems;
+			surf = sortedSurfaces[bm->firstModelSurface+i];
+			shader = surf->shader;
 
-		// portal or foliage surfaces can not be batched
-		if( !( shader->flags & ( SHADER_PORTAL_CAPTURE | SHADER_PORTAL_CAPTURE2 ) ) && !surf->numInstances ) {
-			// scan remaining face checking whether we merge them with the current one
-			for( j = i + 1; j < bm->numModelSurfaces; j++ ) {
-				if( sortedSurfaces[j].cluster < 0 ) {
-					continue;
+			if( R_SurfNoDraw( surf ) || surf->drawSurf != 0 || !shader ) {
+				i++;
+				continue;
+			}
+
+			// create vertex buffer object for this face then upload data
+			vattribs = shader->vattribs | VATTRIB_NORMAL_BIT | VATTRIB_SURFINDEX_BIT;
+			if( surf->numInstances ) {
+				vattribs |= VATTRIB_INSTANCES_BITS;
+			}
+			if( surf->superLightStyle >= 0 ) {
+				vattribs |= loadbmodel->superLightStyles[surf->superLightStyle].vattribs;
+			}
+
+			// allocate a drawsurf
+			drawSurf = &loadbmodel->drawSurfaces[loadbmodel->numDrawSurfaces++];
+			drawSurf->type = ST_BSP;
+			drawSurf->superLightStyle = surf->superLightStyle;
+			drawSurf->instances = surf->instances;
+			drawSurf->numInstances = surf->numInstances;
+			drawSurf->fog = surf->fog;
+			drawSurf->shader = surf->shader;
+			drawSurf->numLightmaps = 0;
+			drawSurf->surfFlags = surf->flags;
+			drawSurf->numLightmaps = 0;
+
+			// count lightmaps
+			if( surf->superLightStyle >= 0 ) {
+				for( j = 0; j < MAX_LIGHTMAPS; j++ ) {
+					if( loadbmodel->superLightStyles[surf->superLightStyle].lightmapStyles[j] == 255 )
+						break;
+					drawSurf->numLightmaps++;
 				}
+			}
 
-				surf2 = sortedSurfaces[j].surf;
+			drawSurf->numWorldSurfaces = 1;
+			drawSurf->worldSurfaces = worldSurfaces;
+			drawSurf->worldSurfaces[0] = surf - loadbmodel->surfaces;
 
-				// already merged
-				if( surf2->drawSurf ) {
-					continue;
-				}
+			// upload vertex and elements data for face itself
+			surf->drawSurf = loadbmodel->numDrawSurfaces;
+			surf->firstDrawSurfVert = 0;
+			surf->firstDrawSurfElem = 0;
 
-				// the following checks ensure the two faces are compatible can can be merged
-				// into a single vertex buffer object
-				if( surf2->shader != surf->shader || surf2->superLightStyle != surf->superLightStyle ) {
-					continue;
-				}
-				if( surf2->fog != surf->fog ) {
-					continue;
-				}
-				if( vcount + surf2->mesh.numVerts >= USHRT_MAX ) {
-					continue;
-				}
-				if( surf2->numInstances != 0 ) {
-					continue;
-				}
+			// portal or foliage surfaces can not be batched
+			mergable = true;
+			if( ( shader->flags & ( SHADER_PORTAL_CAPTURE | SHADER_PORTAL_CAPTURE2 ) ) || surf->numInstances ) {
+				mergable = false;
+			}
 
-				// only merge faces that reside in same map areas
-				if( areabytes > 0 ) {
-					// if areabits aren't equal, faces have different area visibility
-					if( memcmp( arearow, areadata + sortedSurfaces[j].number * areabytes, areabytes ) ) {
+			fcount = 1;
+			vcount = surf->mesh.numVerts;
+			ecount = surf->mesh.numElems;
+			CopyBounds( surf->mins, surf->maxs, mins, maxs );
+
+			if( mergable ) {
+				vec_t testlen;
+				vec3_t testmins, testmaxs, testsize;
+
+				// scan remaining face checking whether we merge them with the current one
+				for( j = i + 1; j < bm->numModelSurfaces; j++ ) {
+					surf2 = sortedSurfaces[bm->firstModelSurface+j];
+
+					if( R_SurfaceCmp( surf, surf2 ) || surf2->numInstances )  {
+						break;
+					}
+					if( R_SurfNoDraw( surf2 ) || surf2->drawSurf != 0 ) {
 						continue;
 					}
-				}
 
-				fcount++;
-				vcount += surf2->mesh.numVerts;
-				ecount += surf2->mesh.numElems;
-				surfmap[j] = surf;
-				last_merged = j;
+					// keep the draw surface spatially compact
+					CopyBounds( mins, maxs, testmins, testmaxs );
+					AddPointToBounds( surf2->mins, testmins, testmaxs );
+					AddPointToBounds( surf2->maxs, testmins, testmaxs );
+
+					testsize[0] = testmaxs[0] - testmins[0];
+					testsize[1] = testmaxs[1] - testmins[1];
+					testsize[2] = testmaxs[2] - testmins[2];
+					testlen = max( max( testsize[0], testsize[1] ), testsize[2] );
+
+					if( fcount == MAX_DRAWSURF_SURFS ) {
+						break;
+					}
+					if( vcount + surf2->mesh.numVerts >= USHRT_MAX ) {
+						break;
+					}
+
+					drawSurf->worldSurfaces[fcount] = surf2 - loadbmodel->surfaces;
+
+					surf2->drawSurf = loadbmodel->numDrawSurfaces;
+					surf2->firstDrawSurfVert = vcount;
+					surf2->firstDrawSurfElem = ecount;
+
+					fcount++;
+					vcount += surf2->mesh.numVerts;
+					ecount += surf2->mesh.numElems;
+
+					CopyBounds( testmins, testmaxs, mins, maxs );
+				}
 			}
-		}
 
-		// create vertex buffer object for this face then upload data
-		vattribs = shader->vattribs | surf->superLightStyle->vattribs | VATTRIB_NORMAL_BIT;
-		if( surf->numInstances ) {
-			vattribs |= VATTRIB_INSTANCES_BITS;
-		}
-
-		// create temp VBO to hold pre-batched info
-		if( numTempVBOs == maxTempVBOs ) {
-			maxTempVBOs += 1024;
-			tempVBOs = Mod_Realloc( tempVBOs, maxTempVBOs * sizeof( *tempVBOs ) );
-		}
-
-		vbo = &tempVBOs[numTempVBOs++];
-		vbo->numVerts = vcount;
-		vbo->numElems = ecount;
-		vbo->vertexAttribs = vattribs;
-		if( fcount == 1 ) {
-			// non-mergable
-			vbo->index = numTempVBOs;
-		}
-
-		// allocate a drawsurf
-		drawSurf = &loadbmodel->drawSurfaces[loadbmodel->numDrawSurfaces++];
-		drawSurf->type = ST_BSP;
-		drawSurf->superLightStyle = surf->superLightStyle;
-		drawSurf->instances = surf->instances;
-		drawSurf->numInstances = surf->numInstances;
-		drawSurf->fog = surf->fog;
-		drawSurf->shader = surf->shader;
-		drawSurf->numLightmaps = 0;
-
-		// upload vertex and elements data for face itself
-		surf->drawSurf = loadbmodel->numDrawSurfaces;
-		surf->firstDrawSurfVert = 0;
-		surf->firstDrawSurfElem = 0;
-
-		vcount = surf->mesh.numVerts;
-		ecount = surf->mesh.numElems;
-		numUnmappedSurfaces--;
-
-		// count lightmaps
-		for( j = 0; j < MAX_LIGHTMAPS; j++ ) {
-			if( surf->superLightStyle->lightmapStyles[j] == 255 )
-				break;
-			drawSurf->numLightmaps++;
-		}
-
-		// now if there are any merged faces upload them to the same VBO
-		if( fcount > 1 ) {
-			for( j = i + 1; j <= last_merged; j++ ) {
-				if( surfmap[j] != surf ) {
-					continue;
+			if( !vbo || vbo->vertexAttribs != vattribs || vbo->numVerts + vcount >= USHRT_MAX || vbo->instancesOffset ) {
+				// create temp VBO to hold pre-batched info
+				if( numTempVBOs == maxTempVBOs ) {
+					maxTempVBOs += 1024;
+					tempVBOs = Mod_Realloc( tempVBOs, maxTempVBOs * sizeof( *tempVBOs ) );
 				}
 
-				assert( numUnmappedSurfaces != 0 );
-				if( numUnmappedSurfaces == 0 ) {
-					break;
-				}
-
-				surf2 = sortedSurfaces[j].surf;
-				surf2->drawSurf = loadbmodel->numDrawSurfaces;
-				surf2->firstDrawSurfVert = vcount;
-				surf2->firstDrawSurfElem = ecount;
-
-				vcount += surf2->mesh.numVerts;
-				ecount += surf2->mesh.numElems;
-				numUnmappedSurfaces--;
+				vbo = &tempVBOs[numTempVBOs];
+				vbo->owner = NULL;
+				vbo->numVerts = 0;
+				vbo->numElems = 0;
+				vbo->vertexAttribs = vattribs;
+				vbo->index = numTempVBOs;
+				vbo->instancesOffset = drawSurf->numInstances;
+				numTempVBOs++;
 			}
+
+			drawSurf->numVerts = vcount;
+			drawSurf->numElems = ecount;
+			drawSurf->numWorldSurfaces = fcount;
+			drawSurf->vbo = vbo->index;
+			drawSurf->firstVboVert = vbo->numVerts;
+			drawSurf->firstVboElem = vbo->numElems;
+
+			vbo->numVerts += vcount;
+			vbo->numElems += ecount;
+
+			*vbo_total_size += vbo->arrayBufferSize + vbo->elemBufferSize;
+
+			i++;
+			worldSurfaces += fcount;
 		}
 
-		drawSurf->numVerts = vcount;
-		drawSurf->numElems = ecount;
-
-		*vbo_total_size += vbo->arrayBufferSize + vbo->elemBufferSize;
+		bm->numModelDrawSurfaces = loadbmodel->numDrawSurfaces - bm->firstModelDrawSurface;
 	}
-
-	assert( numUnmappedSurfaces == 0 );
-
-	// merge vertex buffer objects with identical vertex attribs
-	numUnmergedVBOs = numTempVBOs;
-	for( i = 0; i < numTempVBOs; i++ ) {
-		mesh_vbo_t *vbo = &tempVBOs[i];
-
-		if( !numUnmergedVBOs ) {
-			break;
-		}
-
-		if( vbo->index == 0 ) {
-			for( j = i + 1; j < numTempVBOs; j++ ) {
-				mesh_vbo_t *vbo2 = &tempVBOs[j];
-
-				if( vbo2->index != 0 ) {
-					// already merged
-					continue;
-				}
-				if( vbo2->vertexAttribs != vbo->vertexAttribs ) {
-					continue;
-				}
-				if( vbo->numVerts + vbo2->numVerts >= USHRT_MAX ) {
-					continue;
-				}
-
-				drawSurf = &loadbmodel->drawSurfaces[startDrawSurface + j];
-				drawSurf->firstVboVert = vbo->numVerts;
-				drawSurf->firstVboElem = vbo->numElems;
-
-				vbo->numVerts += vbo2->numVerts;
-				vbo->numElems += vbo2->numElems;
-
-				vbo2->index = i + 1;
-				numUnmergedVBOs--;
-			}
-
-			vbo->index = i + 1;
-		}
-
-		if( vbo->index == i + 1 ) {
-			numUnmergedVBOs--;
-		}
-	}
-
-	assert( numUnmergedVBOs == 0 );
 
 	// create real VBOs and assign owner pointers
-	numUnmergedVBOs = numTempVBOs;
 	for( i = 0; i < numTempVBOs; i++ ) {
-		mesh_vbo_t *vbo = &tempVBOs[i];
-
-		if( !numUnmergedVBOs ) {
-			break;
-		}
-
-		if( vbo->owner != NULL ) {
-			// already assigned to a real VBO
-			continue;
-		}
-		if( vbo->index != i + 1 ) {
-			// not owning self, meaning it's been merged to another VBO
-			continue;
-		}
-
-		drawSurf = &loadbmodel->drawSurfaces[startDrawSurface + i];
+		vbo = &tempVBOs[i];
 
 		// don't use half-floats for XYZ due to precision issues
-		vbo->owner = R_CreateMeshVBO( drawSurf, vbo->numVerts, vbo->numElems, drawSurf->numInstances,
-									  vbo->vertexAttribs, VBO_TAG_WORLD, vbo->vertexAttribs & ~floatVattribs );
-		drawSurf->vbo = vbo->owner;
-
-		if( drawSurf->numInstances == 0 ) {
-			for( j = i + 1; j < numTempVBOs; j++ ) {
-				mesh_vbo_t *vbo2 = &tempVBOs[j];
-
-				if( vbo2->index != i + 1 ) {
-					continue;
-				}
-
-				vbo2->owner = vbo->owner;
-				drawSurf = &loadbmodel->drawSurfaces[startDrawSurface + j];
-				drawSurf->vbo = vbo->owner;
-				numUnmergedVBOs--;
-			}
-		}
+		vbo->owner = R_CreateMeshVBO( vbo, vbo->numVerts, vbo->numElems, (int)vbo->instancesOffset,
+			vbo->vertexAttribs, VBO_TAG_WORLD, vbo->vertexAttribs & ~floatVattribs );
 
 		num_vbos++;
-		numUnmergedVBOs--;
 	}
 
-	assert( numUnmergedVBOs == 0 );
-
 	// upload data to merged VBO's and assign offsets to drawSurfs
-	for( i = 0; i < bm->numModelSurfaces; i++ ) {
-		mesh_vbo_t *vbo;
+	for( i = 0; i < loadbmodel->numDrawSurfaces; i++ ) {
 		const mesh_t *mesh;
 		int vertsOffset, elemsOffset;
 
-		surf = sortedSurfaces[i].surf;
+		drawSurf = &loadbmodel->drawSurfaces[i];
+		vbo = tempVBOs[drawSurf->vbo].owner;
+		drawSurf->vbo = vbo->index;
 
-		if( !surf->drawSurf ) {
-			memset( &surf->mesh, 0, sizeof( surf->mesh ) );
+		if( !vbo ) {
 			continue;
 		}
 
-		drawSurf = &loadbmodel->drawSurfaces[surf->drawSurf - 1];
-		mesh = &surf->mesh;
-		vbo = drawSurf->vbo;
+		for( j = 0; j < drawSurf->numWorldSurfaces; j++ ) {
+			unsigned si = drawSurf->worldSurfaces[j];
+			
+			surf = loadbmodel->surfaces + si;
+			mesh = &surf->mesh;
 
-		vertsOffset = drawSurf->firstVboVert + surf->firstDrawSurfVert;
-		elemsOffset = drawSurf->firstVboElem + surf->firstDrawSurfElem;
+			vertsOffset = drawSurf->firstVboVert + surf->firstDrawSurfVert;
+			elemsOffset = drawSurf->firstVboElem + surf->firstDrawSurfElem;
 
-		R_UploadVBOVertexData( vbo, vertsOffset, vbo->vertexAttribs, mesh );
-		R_UploadVBOElemData( vbo, vertsOffset, elemsOffset, mesh );
-		R_UploadVBOInstancesData( vbo, 0, surf->numInstances, surf->instances );
+			R_UploadVBOVertexData( vbo, vertsOffset, vbo->vertexAttribs, mesh, j );
+			R_UploadVBOElemData( vbo, vertsOffset, elemsOffset, mesh );
+			R_UploadVBOInstancesData( vbo, 0, surf->numInstances, surf->instances );
+		}
 	}
-
-	bm->numModelDrawSurfaces = loadbmodel->numDrawSurfaces - bm->firstModelDrawSurface;
 
 	R_Free( tempVBOs );
-	R_Free( surfmap );
 	R_Free( sortedSurfaces );
-
-	if( visdata ) {
-		R_Free( visdata );
-	}
-	if( areadata ) {
-		R_Free( areadata );
-	}
 
 	return num_vbos;
 }
@@ -846,9 +677,8 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 * Mod_CreateVertexBufferObjects
 */
 void Mod_CreateVertexBufferObjects( model_t *mod ) {
-	unsigned int i;
-	unsigned int vbos = 0, total = 0;
-	size_t size = 0, total_size = 0;
+	unsigned int total_vbos = 0;
+	size_t total_size = 0;
 	mbrushmodel_t *loadbmodel = ( ( mbrushmodel_t * )mod->extradata );
 
 	// free all VBO's allocated for previous world map so
@@ -862,18 +692,10 @@ void Mod_CreateVertexBufferObjects( model_t *mod ) {
 	loadbmodel->numDrawSurfaces = 0;
 	loadbmodel->drawSurfaces = Mod_Malloc( mod, sizeof( *loadbmodel->drawSurfaces ) * loadbmodel->numsurfaces );
 
-	for( i = 0; i < loadbmodel->numsubmodels; i++ ) {
-		vbos = Mod_CreateSubmodelBufferObjects( mod, i, &size );
-		total += vbos;
-		total_size += size;
-	}
+	total_vbos = Mod_CreateSubmodelBufferObjects( mod, &total_size );
 
-	for( i = 0; i < loadbmodel->numsubmodels; i++ ) {
-		Mod_SortModelSurfaces( mod, i );
-	}
-
-	if( total ) {
-		VBO_Printf( "Created %i VBOs, totalling %.1f MiB of memory\n", total, ( total_size + 1048574 ) / 1048576.0f );
+	if( total_vbos ) {
+		VBO_Printf( "Created %i VBOs, totalling %.1f MiB of memory\n", total_vbos, ( total_size + 1048574 ) / 1048576.0f );
 	}
 }
 
@@ -889,7 +711,7 @@ static void Mod_CreateSkydome( model_t *mod ) {
 		msurface_t *surf = loadbmodel->surfaces + bm->firstModelSurface;
 
 		for( j = 0; j < bm->numModelSurfaces; j++ ) {
-			if( R_SurfPotentiallyVisible( surf ) && ( surf->shader->flags & SHADER_SKY ) ) {
+			if( !R_SurfNoDraw( surf ) && ( surf->shader->flags & SHADER_SKY ) ) {
 				loadbmodel->skydome = R_CreateSkydome( mod );
 				return;
 			}
@@ -935,7 +757,7 @@ static void Mod_TouchBrushModel( model_t *model ) {
 	for( i = 0; i < loadbmodel->numDrawSurfaces; i++ ) {
 		drawSurfaceBSP_t *drawSurf = &loadbmodel->drawSurfaces[i];
 		R_TouchShader( drawSurf->shader );
-		R_TouchMeshVBO( drawSurf->vbo );
+		R_TouchMeshVBO( R_GetVBOByIndex( drawSurf->vbo ) );
 	}
 
 	for( i = 0; i < loadbmodel->numfogs; i++ ) {
@@ -946,6 +768,10 @@ static void Mod_TouchBrushModel( model_t *model ) {
 
 	if( loadbmodel->skydome ) {
 		R_TouchSkydome( loadbmodel->skydome );
+	}
+
+	for( i = 0; i < loadbmodel->numRtLights; i++ ) {
+		R_TouchRtLight( loadbmodel->rtLights + i );
 	}
 
 	R_TouchLightmapImages( model );
@@ -1211,6 +1037,10 @@ model_t *Mod_ForName( const char *name, bool crash ) {
 		mod->touch = &Mod_TouchBrushModel;
 	}
 
+	if( mod_isworldmodel ) {
+		R_LoadWorldRtLights( mod );
+	}
+
 	if( !descr->maxLods ) {
 		return mod;
 	}
@@ -1295,6 +1125,7 @@ static void R_InitMapConfig( const char *model ) {
 	mapConfig.forceClear = false;
 	mapConfig.forceWorldOutlines = false;
 	mapConfig.averageLightingIntensity = 1;
+	mapConfig.writeSkyDepth = false;
 
 	VectorClear( mapConfig.ambient );
 	VectorClear( mapConfig.outlineColor );
@@ -1362,6 +1193,9 @@ void R_RegisterWorldModel( const char *model ) {
 
 	R_TouchModel( rsh.worldModel );
 	rsh.worldBrushModel = ( mbrushmodel_t * )rsh.worldModel->extradata;
+
+	// lazy-compile realtime light shadows
+	r_lighting_realtime_world_shadows->modified = true;
 }
 
 /*
@@ -1370,6 +1204,9 @@ void R_RegisterWorldModel( const char *model ) {
 void R_WaitWorldModel( void ) {
 	// load all world images if not yet
 	R_FinishLoadingImages();
+
+	// if it's a Quake1 .bsp, load default miptex's for all missing high res images
+	Mod_FixupQ1MipTex( rsh.worldModel );
 }
 
 /*
@@ -1383,6 +1220,259 @@ struct model_s *R_RegisterModel( const char *name ) {
 		R_TouchModel( mod );
 	}
 	return mod;
+}
+
+/*
+* R_LoadWorldRtLightsFromMap
+*/
+static void R_LoadWorldRtLightsFromMap( model_t *model ) {
+	char *data;
+	char key[MAX_KEY], value[MAX_VALUE], *token;
+	bool islight, shadow, radiusset;
+	int style, flags;
+	float radius;
+	float colorf[3], originf[3];
+	mbrushmodel_t *bmodel;
+	unsigned numLights, maxLights;
+	rtlight_t *lights;
+
+	if( !model || !( bmodel = ( mbrushmodel_t * )model->extradata ) ) {
+		return;
+	}
+
+	numLights = 0;
+	maxLights = 128;
+	lights = ( rtlight_t * )Mod_Malloc( model, maxLights * sizeof( *lights ) );
+
+	data = bmodel->entityString;
+	for(; ( token = COM_Parse( &data ) ) && token[0] == '{'; ) {
+		islight = false;
+		radiusset = false;
+		radius = 0;
+		style = 0;
+		shadow = true;
+		flags = LIGHTFLAG_REALTIMEMODE;
+		VectorSet( colorf, 1, 1, 1 );
+
+		while( 1 ) {
+			token = COM_Parse( &data );
+			if( !token[0] ) {
+				break; // error
+			}
+			if( token[0] == '}' ) {
+				break; // end of entity
+
+			}
+			Q_strncpyz( key, token, sizeof( key ) );
+			Q_trim( key );
+
+			token = COM_Parse( &data );
+			if( !token[0] ) {
+				break; // error
+
+			}
+			Q_strncpyz( value, token, sizeof( value ) );
+
+			// now that we have the key pair worked out...
+			if( !strcmp( key, "classname" ) ) {
+				if( !strcmp( value, "light") ) {
+					islight = true;
+				}
+			} else if( !strcmp( key, "_color" ) ) {
+				sscanf( value, "%f %f %f", &colorf[0], &colorf[1], &colorf[2] );
+			} else if( !strcmp( key, "color" ) ) {
+				sscanf( value, "%f %f %f", &colorf[0], &colorf[1], &colorf[2] );
+			} else if( !strcmp( key, "origin" ) ) {
+				sscanf( value, "%f %f %f", &originf[0], &originf[1], &originf[2] );
+			} else if( !strcmp( key, "light" ) ) {
+				sscanf( value, "%f", &radius ), radiusset = true;
+			} else if( !strcmp( key, "_light" ) ) {
+				sscanf( value, "%f", &radius ), radiusset = true;
+			} else if( !strcmp( key, "style" ) ) {
+				sscanf( value, "%d", &style );
+			}
+		}
+
+		if( islight ) {
+			rtlight_t *l;
+
+			if( numLights == maxLights ) {
+				maxLights = maxLights + 128;
+				lights = Mod_Realloc( lights, maxLights * sizeof( *lights ) );
+			}
+
+			if( !radiusset )
+				radius = MAPLIGHT_DEFAULT_RADIUS;
+			else if( radius < 0.01 )
+				continue;
+
+			if( style >= MAX_LIGHTSTYLES )
+				style = 0;
+			if( radius < MAPLIGHT_MIN_SHADOW_RADIUS )
+				shadow = false;
+
+			l = &lights[numLights++];
+			R_InitRtLight( l, originf, axis_identity, radius, colorf );
+
+			l->flags = flags;
+			l->shadow = shadow;
+			l->style = style;
+			l->world = true;
+			l->worldModel = model;
+
+			R_GetRtLightVisInfo( bmodel, l );
+		}
+	}
+
+	bmodel->numRtLights = numLights;
+	if( numLights ) {
+		bmodel->rtLights = Mod_Malloc( model, numLights * sizeof( rtlight_t ) );
+		memcpy( bmodel->rtLights, lights, numLights * sizeof( rtlight_t ) );
+	}
+
+	R_Free( lights );
+}
+
+/*
+* R_LoadWorldRtLights
+*/
+static void R_LoadWorldRtLights( model_t *model ) {
+	mbrushmodel_t *bmodel;
+	char shortname[MAX_QPATH];
+	char *buf;
+	int n;
+	char tempchar, *s, *t;
+	char cubemap[MAX_QPATH];
+	char format[128];
+	unsigned numLights, maxLights;
+	rtlight_t *lights;
+
+	if( r_lighting_realtime_world_importfrommap->integer == 2 ) {
+		R_LoadWorldRtLightsFromMap( model );
+		return;
+	}
+
+	if( !model || !( bmodel = ( mbrushmodel_t * )model->extradata ) ) {
+		return;
+	}
+
+	bmodel->numRtLights = 0;
+
+	Q_strncpyz( shortname, model->name, sizeof( shortname ) );
+	COM_ReplaceExtension( shortname, ".rtlights", sizeof( shortname ) );
+
+	R_LoadFile( shortname, ( void ** )&buf );
+	if( !buf ) {
+		if( r_lighting_realtime_world_importfrommap->integer ) {
+			R_LoadWorldRtLightsFromMap( model );
+		}
+		return;
+	}
+
+	Q_snprintfz( format, sizeof( format ), "%%f %%f %%f %%f %%f %%f %%f %%d %%%zus %%f %%f %%f %%f %%f %%f %%f %%f %%i", sizeof( cubemap ) );
+
+	numLights = 0;
+	maxLights = 128;
+	lights = ( rtlight_t * )Mod_Malloc( model, maxLights * sizeof( *lights ) );
+
+	s = buf;
+	n = 0;
+	while( *s ) {
+		int a;
+		bool shadow;
+		int style, flags;
+		float origin[3], radius, color[3], angles[3], corona, coronasizescale, ambientscale, diffusescale, specularscale;
+		mat3_t axis;
+		rtlight_t *l;
+
+		t = s;
+		while( *s && *s != '\n' && *s != '\r' ) {
+			s++;
+		}
+		if( !*s )
+			break;
+
+		tempchar = *s;
+		shadow = true;
+
+		// check for modifier flags
+		if( *t == '!' ) {
+			shadow = false;
+			t++;
+		}
+
+		cubemap[0] = '\0';
+
+		*s = 0;
+		a = sscanf( t, format, &origin[0], &origin[1], &origin[2], &radius, &color[0], &color[1], &color[2], &style, cubemap, 
+			&corona, &angles[0], &angles[1], &angles[2], &coronasizescale, &ambientscale, &diffusescale, &specularscale, &flags );
+		*s = tempchar;
+
+		if( a < 8 ) {
+			Com_Printf( S_COLOR_YELLOW "Found %d parameters on line %i, should be 8 or more parameters "
+				"(origin[0] origin[1] origin[2] radius color[0] color[1] color[2] style \"cubemapname\" corona "
+				"angles[0] angles[1] angles[2] coronasizescale ambientscale diffusescale specularscale flags)\n", 
+				a, n + 1);
+			break;
+		}
+
+		if( a < 18 )
+			flags = LIGHTFLAG_REALTIMEMODE;
+		if( a < 17 )
+			specularscale = 1;
+		if( a < 16 )
+			diffusescale = 1;
+		if( a < 15 )
+			ambientscale = 0;
+		if( a < 14 )
+			coronasizescale = 0.25f;
+		if( a < 13 )
+			VectorClear( angles );
+		if( a < 10 )
+			corona = 0;
+		AnglesToAxis( angles, axis );
+
+		if( numLights == maxLights ) {
+			maxLights = maxLights + 64;
+			lights = Mod_Realloc( lights, maxLights * sizeof( *lights ) );
+		}
+
+		l = &lights[numLights++];
+		R_InitRtLight( l, origin, axis, radius, color );
+		l->flags = flags;
+		l->style = style;
+		l->shadow = shadow;
+		l->world = true;
+		l->worldModel = model;
+
+		if( cubemap[0] ) {
+			// strip quotes
+			if( cubemap[0] == '"' && cubemap[strlen(cubemap) - 1] == '"' ) {
+				size_t namelen;
+				namelen = strlen( cubemap ) - 2;
+				memmove( cubemap, cubemap + 1, namelen );
+				cubemap[namelen] = '\0';
+			}
+			l->cubemapFilter = R_FindImage( cubemap, NULL, IT_SRGB | IT_CLAMP | IT_CUBEMAP, 1, IMAGE_TAG_WORLD );
+		}
+
+		R_GetRtLightVisInfo( bmodel, l );
+
+		if( *s == '\r' )
+			s++;
+		if( *s == '\n' )
+			s++;
+		n++;
+	}
+
+	bmodel->numRtLights = numLights;
+	if( numLights ) {
+		bmodel->rtLights = Mod_Malloc( model, numLights * sizeof( rtlight_t ) );
+		memcpy( bmodel->rtLights, lights, numLights * sizeof( rtlight_t ) );
+	}
+
+	R_Free( buf );
+	R_Free( lights );
 }
 
 /*

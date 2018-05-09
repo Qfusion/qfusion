@@ -50,12 +50,12 @@ void R_InitCoronas( void ) {
 /*
 * R_BatchCoronaSurf
 */
-void R_BatchCoronaSurf( const entity_t *e, const shader_t *shader,
-						const mfog_t *fog, const portalSurface_t *portalSurface, unsigned int shadowBits, drawSurfaceType_t *drawSurf ) {
+void R_BatchCoronaSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, 
+	int lightStyle, const portalSurface_t *portalSurface, drawSurfaceType_t *drawSurf, bool mergable ) {
 	int i;
 	vec3_t origin, point;
 	vec3_t v_left, v_up;
-	dlight_t *light = rsc.dlights + ( drawSurf - r_coronaSurfs );
+	rtlight_t *light = rsc.dlights + ( drawSurf - r_coronaSurfs );
 	float radius = light->intensity, colorscale;
 	elem_t elems[6] = { 0, 1, 2, 0, 2, 3 };
 	vec4_t xyz[4] = { {0,0,0,1}, {0,0,0,1}, {0,0,0,1}, {0,0,0,1} };
@@ -99,7 +99,7 @@ void R_BatchCoronaSurf( const entity_t *e, const shader_t *shader,
 	mesh.stArray = texcoords;
 	mesh.colorsArray[0] = colors;
 
-	RB_AddDynamicMesh( e, shader, fog, portalSurface, 0, &mesh, GL_TRIANGLES, 0.0f, 0.0f );
+	RB_AddDynamicMesh( e, shader, fog, portalSurface, &mesh, GL_TRIANGLES, 0.0f, 0.0f );
 }
 
 /*
@@ -108,7 +108,7 @@ void R_BatchCoronaSurf( const entity_t *e, const shader_t *shader,
 void R_DrawCoronas( void ) {
 	unsigned int i;
 	float dist;
-	dlight_t *light;
+	rtlight_t *light;
 	rtrace_t tr;
 
 	if( r_dynamiclight->integer != 2 ) {
@@ -133,9 +133,8 @@ void R_DrawCoronas( void ) {
 		}
 
 		R_AddSurfToDrawList( rn.meshlist, rsc.polyent,
-							 R_FogForSphere( light->origin, 1 ),
-							 r_coronaShader,
-							 Distance( rn.viewOrigin, light->origin ), 0, NULL, &r_coronaSurfs[i] );
+			r_coronaShader,	R_FogForSphere( light->origin, 1 ), -1,
+			Distance( rn.viewOrigin, light->origin ), 0, NULL, &r_coronaSurfs[i] );
 	}
 }
 
@@ -166,7 +165,7 @@ void R_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t d
 	VectorSet( ambientLocal, 0, 0, 0 );
 	VectorSet( diffuseLocal, 0, 0, 0 );
 
-	if( noWorldLight ) {
+	if( noWorldLight || r_lighting_realtime_world->integer ) {
 		VectorSet( dir, 0.0f, 0.0f, 0.0f );
 		goto dynamic;
 	}
@@ -193,9 +192,9 @@ void R_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t d
 
 	for( i = 0; i < 4; i++ ) {
 		lightarray[i * 2 + 0] = rsh.worldBrushModel->lightgrid[rsh.worldBrushModel->lightarray[bound( 0, elem[i] + 0,
-																									  (int)rsh.worldBrushModel->numlightarrayelems - 1 )]];
+			(int)rsh.worldBrushModel->numlightarrayelems - 1 )]];
 		lightarray[i * 2 + 1] = rsh.worldBrushModel->lightgrid[rsh.worldBrushModel->lightarray[bound( 1, elem[i] + 1,
-																									  (int)rsh.worldBrushModel->numlightarrayelems - 1 )]];
+			(int)rsh.worldBrushModel->numlightarrayelems - 1 )]];
 	}
 
 	t[0] = vf2[0] * vf2[1] * vf2[2];
@@ -271,9 +270,9 @@ void R_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t d
 
 dynamic:
 	// add dynamic lights
-	if( radius && r_dynamiclight->integer ) {
+	if( radius && r_dynamiclight->integer && !r_lighting_realtime_dlight->integer ) {
 		unsigned int lnum;
-		dlight_t *dl;
+		rtlight_t *dl;
 		float dist, dist2, add;
 		vec3_t direction;
 		bool anyDlights = false;
@@ -448,14 +447,14 @@ static int R_UploadLightmap( const char *name, uint8_t *data, int w, int h, int 
 * R_PackLightmaps
 */
 static int R_PackLightmaps( int num, int w, int h, int dataSize, int stride, int samples, bool deluxe,
-							const char *name, const uint8_t *data, mlightmapRect_t *rects ) {
+							const char *name, const uint8_t *data, lightmapRect_t *rects ) {
 	int i, x, y, root;
 	uint8_t *block;
 	int lightmapNum;
 	int rectX, rectY, rectW, rectH, rectSize;
 	int maxX, maxY, max, xStride;
 	double tw, th, tx, ty;
-	mlightmapRect_t *rect;
+	lightmapRect_t *rect;
 
 	maxX = r_maxLightmapBlockSize / w;
 	maxY = r_maxLightmapBlockSize / h;
@@ -581,7 +580,7 @@ static int R_PackLightmaps( int num, int w, int h, int dataSize, int stride, int
 /*
 * R_BuildLightmaps
 */
-void R_BuildLightmaps( model_t *mod, int numLightmaps, int w, int h, const uint8_t *data, mlightmapRect_t *rects ) {
+void R_BuildLightmaps( model_t *mod, int numLightmaps, int w, int h, const uint8_t *data, lightmapRect_t *rects ) {
 	int i, j, p;
 	int numBlocks = numLightmaps;
 	int samples;
@@ -635,7 +634,7 @@ void R_BuildLightmaps( model_t *mod, int numLightmaps, int w, int h, const uint8
 		int layer = 0;
 		int lightmapNum = 0;
 		image_t *image = NULL;
-		mlightmapRect_t *rect = rects;
+		lightmapRect_t *rect = rects;
 		int blockSize = w * h * LIGHTMAP_BYTES;
 		float texScale = 1.0f;
 		char tempbuf[16];
@@ -762,8 +761,8 @@ void R_InitLightStyles( model_t *mod ) {
 /*
 * R_AddSuperLightStyle
 */
-superLightStyle_t *R_AddSuperLightStyle( model_t *mod, const int *lightmaps,
-										 const uint8_t *lightmapStyles, const uint8_t *vertexStyles, mlightmapRect_t **lmRects ) {
+int R_AddSuperLightStyle( model_t *mod, const int *lightmaps,
+	const uint8_t *lightmapStyles, const uint8_t *vertexStyles, lightmapRect_t **lmRects ) {
 	unsigned int i, j;
 	superLightStyle_t *sls;
 	mbrushmodel_t *loadbmodel;
@@ -780,14 +779,14 @@ superLightStyle_t *R_AddSuperLightStyle( model_t *mod, const int *lightmaps,
 				break;
 			}
 		if( j == MAX_LIGHTMAPS ) {
-			return sls;
+			return i;
 		}
 	}
 
 	if( loadbmodel->numSuperLightStyles == MAX_SUPER_STYLES ) {
-		ri.Com_Error( ERR_DROP, "R_AddSuperLightStyle: r_numSuperLightStyles == MAX_SUPER_STYLES" );
+		Com_Printf( "R_AddSuperLightStyle: r_numSuperLightStyles == MAX_SUPER_STYLES" );
+		return -1;
 	}
-	loadbmodel->numSuperLightStyles++;
 
 	sls->vattribs = 0;
 	for( j = 0; j < MAX_LIGHTMAPS; j++ ) {
@@ -811,7 +810,7 @@ superLightStyle_t *R_AddSuperLightStyle( model_t *mod, const int *lightmaps,
 		}
 	}
 
-	return sls;
+	return loadbmodel->numSuperLightStyles++;
 }
 
 /*
@@ -860,4 +859,802 @@ void R_SortSuperLightStyles( model_t *mod ) {
 	loadbmodel = ( ( mbrushmodel_t * )mod->extradata );
 	qsort( loadbmodel->superLightStyles, loadbmodel->numSuperLightStyles,
 		   sizeof( superLightStyle_t ), ( int ( * )( const void *, const void * ) )R_SuperLightStylesCmp );
+}
+
+/*
+=============================================================================
+
+LIGHTMAP ALLOCATION
+
+=============================================================================
+*/
+
+/*
+* R_AllocLightmap_Init
+*/
+void R_AllocLightmap_Init( lightmapAllocState_t *state, int width, int height )
+{
+	int y;
+
+	state->width = width;
+	state->height = height;
+	state->width = width;
+	state->height = height;
+	state->currentY = 0;
+
+	state->rows = ( lightmapAllocRow_t * )R_Malloc( state->height * sizeof( *state->rows ) );
+	for( y = 0; y < state->height; y++ ) {
+		state->rows[y].currentX = 0;
+		state->rows[y].rowY = -1;
+	}
+}
+
+/*
+* R_AllocLightmap_Reset
+*/
+void R_AllocLightmap_Reset( lightmapAllocState_t *state )
+{
+	int y;
+
+	state->currentY = 0;
+	for( y = 0; y < state->height; y++ ) {
+		state->rows[y].currentX = 0;
+		state->rows[y].rowY = -1;
+	}
+}
+
+/*
+* R_AllocLightmap_Free
+*/
+void R_AllocLightmap_Free( lightmapAllocState_t *state )
+{
+	R_Free( state->rows );
+	memset( state, 0, sizeof( *state ) );
+}
+
+/*
+* R_AllocLightmap_Block
+*/
+bool R_AllocLightmap_Block( lightmapAllocState_t *state, int blockwidth, int blockheight, int *outx, int *outy )
+{
+	int y;
+	lightmapAllocRow_t *row;
+
+	row = state->rows + blockheight;
+	if( ( row->rowY < 0 ) || ( row->currentX + blockwidth > state->width ) ) {
+		if( state->currentY + blockheight <= state->height ) {
+			// use the current allocation position
+			row->rowY = state->currentY;
+			row->currentX = 0;
+			state->currentY += blockheight;
+		} else {
+			// find another position
+			for( y = blockheight; y < state->height; y++ ) {
+				if( ( state->rows[y].rowY >= 0 ) && ( state->rows[y].currentX + blockwidth <= state->width ) ) {
+					row = state->rows + y;
+					break;
+				}
+			}
+			if( y == state->height ) {
+				return false;
+			}
+		}
+	}
+
+	*outy = row->rowY;
+	*outx = row->currentX;
+	row->currentX += blockwidth;
+
+	return true;
+}
+
+/*
+=============================================================================
+
+REALTIME LIGHTS
+
+=============================================================================
+*/
+
+typedef struct {
+	unsigned maxLeafs;
+	unsigned maxSurfaces;
+	unsigned maxDrawSurfaces;
+
+	unsigned numSurfaces;
+	unsigned numDrawSurfaces;
+
+	vec3_t leafMins, leafMaxs;
+	vec3_t surfMins, surfMaxs;
+
+	unsigned *visLeafs; // [maxLeafs + 1]
+	uint8_t *surfMasks; // [maxSurfaces]
+	uint8_t *drawSurfPvs; // [(maxDrawSurfaces + 7)/8]
+} r_lightWorldVis_t;
+
+static r_lightWorldVis_t r_lightWorldVis;
+
+/*
+* R_AllocLightWorldVis
+*/
+static void R_AllocLightWorldVis( r_lightWorldVis_t *vis, mbrushmodel_t *bm ) {
+	if( bm->numleafs > vis->maxLeafs ) {
+		R_Free( vis->visLeafs );
+		vis->maxLeafs = bm->numleafs;
+		vis->visLeafs = R_Malloc( sizeof( *(vis->visLeafs) ) * (vis->maxLeafs + 1) );
+	}
+
+	if( bm->numsurfaces > vis->maxSurfaces ) {
+		R_Free( vis->surfMasks );
+		vis->maxSurfaces = bm->numsurfaces;
+		vis->surfMasks = R_Malloc( sizeof( *(vis->surfMasks) ) * vis->maxSurfaces );
+	}
+
+	if( bm->numDrawSurfaces > vis->maxDrawSurfaces ) {
+		R_Free( vis->drawSurfPvs );
+		vis->maxDrawSurfaces = bm->numDrawSurfaces;
+		vis->drawSurfPvs = R_Malloc( (vis->maxDrawSurfaces+7)/8 );
+	}
+}
+
+/*
+* R_RtLightMalloc
+*/
+static void *R_RtLightMalloc( rtlight_t *l, size_t size ) {
+	if( l->world ) {
+		return R_MallocExt( l->worldModel->mempool, size, 0, 1 );
+	}
+	return R_FrameCache_Alloc( size );
+}
+
+/*
+* R_GetRtLightLeafVisInfo_r
+*/
+static void R_GetRtLightLeafVisInfo_r( rtlight_t *l, const mnode_t *node, mbrushmodel_t *bm, r_lightWorldVis_t *vis ) {
+	unsigned i;
+	mleaf_t *leaf;
+	unsigned *numLeafs;
+	unsigned *nextLeaf;
+
+	while( node->plane != NULL ) {
+		float d = PlaneDiff( l->origin, node->plane );
+
+		if( d > l->intensity + ON_EPSILON ) {
+			node = node->children[0];
+		} else if( d < -l->intensity - ON_EPSILON ) {
+			node = node->children[1];
+		}  else {
+			R_GetRtLightLeafVisInfo_r( l, node->children[0], bm, vis );
+			node = node->children[1];
+		}
+	}
+
+	leaf = ( mleaf_t * )node;
+	if( leaf->cluster < 0 || !leaf->numVisSurfaces ) {
+		return;
+	}
+
+	if( !BoundsOverlap( l->lightmins, l->lightmaxs, leaf->mins, leaf->maxs ) ) {
+		return;
+	}
+
+	if( l->shadow ) {
+		const uint8_t *pvs = Mod_ClusterPVS( l->cluster, bm );
+		if( !( pvs[leaf->cluster >> 3] & ( 1 << ( leaf->cluster & 7 ) ) ) ) {
+			return;
+		}
+	}
+
+	numLeafs = vis->visLeafs;
+	nextLeaf = vis->visLeafs + 1 + *numLeafs;
+	*nextLeaf = leaf - bm->leafs;
+	*numLeafs = *numLeafs + 1;
+
+	for( i = 0; i < 3; i++ ) {
+		vis->leafMins[i] = min( vis->leafMins[i], leaf->mins[i] );
+		vis->leafMaxs[i] = max( vis->leafMaxs[i], leaf->maxs[i] );
+	}
+}
+
+/*
+* R_GetRtLightLeafVisInfo
+*/
+static void R_GetRtLightLeafVisInfo( rtlight_t *l, const mnode_t *node, mbrushmodel_t *bm, r_lightWorldVis_t *vis ) {
+	vis->visLeafs[0] = 0;
+
+	VectorCopy( l->origin, vis->leafMins );
+	VectorCopy( l->origin, vis->leafMaxs );
+
+	R_GetRtLightLeafVisInfo_r( l, bm->nodes, bm, vis );
+}
+
+/*
+* R_GetRtLightSurfaceVisInfo
+*/
+static void R_GetRtLightSurfaceVisInfo( rtlight_t *l, mbrushmodel_t *bm, r_lightWorldVis_t *vis ) {
+	unsigned i, j;
+	uint8_t *smasks, *dspvs;
+	unsigned *scount = NULL, *dscount = NULL;
+	unsigned numLeafs = vis->visLeafs[0];
+	unsigned *visLeafs = vis->visLeafs + 1;
+
+	smasks = vis->surfMasks;
+	dspvs = vis->drawSurfPvs;
+	scount = &vis->numSurfaces;
+	dscount = &vis->numDrawSurfaces;
+
+	vis->numSurfaces = 0;
+	vis->numDrawSurfaces = 0;
+
+	memset( smasks, 0, bm->numsurfaces );
+	memset( dspvs, 0, (bm->numDrawSurfaces + 7)/8 );
+
+	ClearBounds( vis->surfMins, vis->surfMaxs );
+
+	for( i = 0; i < numLeafs; i++ ) {
+		int leafNum = visLeafs[i];
+		const mleaf_t *leaf = bm->leafs + leafNum;
+
+		for( j = 0; j < leaf->numVisSurfaces; j++ ) {
+			unsigned s = leaf->visSurfaces[j];
+			const msurface_t *surf = bm->surfaces + s;
+			unsigned ds = surf->drawSurf - 1;
+			unsigned mask;
+
+			if( !surf->drawSurf ) {
+				continue;
+			}
+
+			if( smasks[s] ) {
+				continue;
+			}
+
+			mask = R_CalcRtLightSurfaceSidemask( l, surf );
+			if( !mask ) {
+				continue;
+			}
+
+			AddPointToBounds( surf->mins, vis->surfMins, vis->surfMaxs );
+			AddPointToBounds( surf->maxs, vis->surfMins, vis->surfMaxs );
+
+			*scount = *scount + 1;
+			if( !( dspvs[ds>>3] & (1<<(ds&7))) ) {
+				*dscount = *dscount + 1;
+			}
+
+			smasks[s] = mask;
+			dspvs[ds>>3] |= (1<<(ds&7));
+		}
+	}
+}
+
+/*
+* R_CompileRtLightVisInfo
+*/
+static void R_CompileRtLightVisInfo( rtlight_t *l, mbrushmodel_t *bm, r_lightWorldVis_t *vis ) {
+	unsigned i, j;
+	unsigned *p;
+	unsigned nds;
+	unsigned lcount, scount, dscount;
+	const uint8_t *smasks;
+	const uint8_t *dspvs;
+
+	if( l->surfaceInfo != NULL ) {
+		return;
+	}
+
+	lcount = vis->visLeafs[0];
+	scount = vis->numSurfaces;
+	dscount = vis->numDrawSurfaces;
+	smasks = vis->surfMasks;
+	dspvs = vis->drawSurfPvs;
+
+	l->numVisLeafs = lcount;
+	l->visLeafs = R_RtLightMalloc( l, sizeof( int ) * lcount );
+	memcpy( l->visLeafs, vis->visLeafs + 1, sizeof( int ) * lcount );
+
+	// drawSurf, numVisSurfs, (surf, mask)[numVisSurfs]
+	l->surfaceInfo = R_RtLightMalloc( l, sizeof( unsigned ) * (1 + dscount*2 + scount*3) );
+
+	nds = 0;
+	p = l->surfaceInfo + 1;
+	for( i = 0; i < bm->numDrawSurfaces; i++ ) {
+		unsigned n, *np;
+		drawSurfaceBSP_t *drawSurf = bm->drawSurfaces + i;
+
+		if( !( dspvs[i>>3] & (1<<(i&7))) ) {
+			continue;
+		}
+
+		*p++ = i;
+		np = p++;
+		n = 0;
+
+		for( j = 0; j < drawSurf->numWorldSurfaces; j++ ) {
+			unsigned s = drawSurf->worldSurfaces[j];
+			if( !smasks[s] ) {
+				continue;
+			}
+
+			*p++ = s;
+			*p++ = j;
+			*p++ = smasks[s];
+			n++;
+		}
+
+		*np = n;
+		nds++;
+	}
+
+	*l->surfaceInfo = nds;
+	l->numSurfaces = scount;
+}
+
+/*
+* R_GetRtLightVisInfo
+*/
+void R_GetRtLightVisInfo( mbrushmodel_t *bm, rtlight_t *l ) {
+	unsigned i;
+	mleaf_t *leaf;
+	r_lightWorldVis_t *vis = &r_lightWorldVis;
+
+	l->area = -1;
+	l->cluster = -1;
+
+	leaf = Mod_PointInLeaf( l->origin, bm );
+	if( leaf ) {
+		l->cluster = leaf->cluster;
+		l->area = leaf->area;
+	}
+
+	R_AllocLightWorldVis( &r_lightWorldVis, bm );
+
+	R_GetRtLightLeafVisInfo( l, bm->nodes, bm, vis );
+
+	// limit combined leaf box to light boundaries
+	for( i = 0; i < 3; i++ ) {
+		l->worldmins[i] = max( vis->leafMins[i] - 1, l->lightmins[i] );
+		l->worldmaxs[i] = min( vis->leafMaxs[i] + 1, l->lightmaxs[i] );
+	}
+
+	R_GetRtLightSurfaceVisInfo( l, bm, vis );
+
+	R_CompileRtLightVisInfo( l, bm, vis );
+
+	// limit combined surface box to light boundaries
+	for( i = 0; i < 3; i++ ) {
+		l->worldmins[i] = max( vis->surfMins[i] - 1, l->lightmins[i] );
+		l->worldmaxs[i] = min( vis->surfMaxs[i] + 1, l->lightmaxs[i] );
+	}
+}
+
+/*
+* R_InitRtLight
+*/
+void R_InitRtLight( rtlight_t *l, const vec3_t origin, const vec_t *axis, float radius, const vec3_t color ) {
+	mat4_t lightMatrix;
+
+	if( radius < 1.0 )
+		radius = 1.0;
+
+	memset( l, 0, sizeof( rtlight_t ) );
+
+	l->area = -1;
+	l->cluster = -2; // differentiate from valid cluster -1, call R_GetRtLightVisInfo on first render
+	l->sceneFrame = !rsc.frameCount;
+	l->intensity = radius;
+	l->flags = LIGHTFLAG_REALTIMEMODE;
+	l->style = MAX_LIGHTSTYLES;
+	VectorCopy( origin, l->origin );
+	Matrix3_Copy( axis, l->axis );
+
+	VectorCopy( color, l->color );
+	l->color[3] = 1.0 / radius;
+
+	l->linearColor[0] = R_LinearFloatFromsRGBFloat( color[0] );
+	l->linearColor[1] = R_LinearFloatFromsRGBFloat( color[1] );
+	l->linearColor[2] = R_LinearFloatFromsRGBFloat( color[2] );
+	l->linearColor[3] = 1.0 / radius;
+
+	Matrix4_ObjectMatrix( origin, axis, 1, lightMatrix );
+	Matrix4_Invert( lightMatrix, l->worldToLightMatrix );
+
+	BoundsFromRadius( l->origin, l->intensity + 1, l->lightmins, l->lightmaxs );
+	CopyBounds( l->lightmins, l->lightmaxs, l->worldmins, l->worldmaxs );
+}
+
+/*
+* R_RtLightsShadowSizeCmp
+*/
+static int R_RtLightsShadowSizeCmp( const void *pl1, const void *pl2 ) {
+	const rtlight_t *l1 = *((const rtlight_t **)pl1);
+	const rtlight_t *l2 = *((const rtlight_t **)pl2);
+	int s1 = l1->sort;
+	int s2 = l2->sort;
+	return s2 - s1;
+}
+
+/*
+* R_PrepareRtLightntities
+*/
+void R_PrepareRtLightEntities( rtlight_t *l ) {
+	unsigned i;
+	int nre, nse;
+	static int re[MAX_REF_ENTITIES], se[MAX_REF_ENTITIES];
+
+	nre = 0;
+	nse = 0;
+
+	l->entSideMask = 0;
+
+	for( i = rsc.numLocalEntities; i < rsc.numEntities; i++ ) {
+		bool ignore;
+		entity_t *e = R_NUM2ENT( i );
+		int entNum = R_ENT2NUM( e );
+		entSceneCache_t *cache = R_ENTCACHE( e );
+		int sideMask;
+
+		if( e->rtype != RT_MODEL ) {
+			continue;
+		}
+		if( !BoundsOverlapSphere( cache->absmins, cache->absmaxs, l->origin, l->intensity ) ) {
+			continue;
+		}
+
+		ignore = true;
+		if( !(e->flags & RF_FULLBRIGHT) ) {
+			ignore = false;
+			re[nre++] = entNum;
+		}
+		if( !(e->flags & (RF_NOSHADOW|RF_WEAPONMODEL|RF_NODEPTHTEST)) ) {
+			ignore = false;
+			se[nse++] = entNum;
+		}
+
+		if( ignore ) {
+			continue;
+		}
+
+		sideMask = R_CalcRtLightBBoxSidemask( l, cache->absmins, cache->absmaxs );
+		if( !sideMask ) {
+			continue;
+		}
+
+		// expand the cullmins/maxs to include influenced entities
+		AddPointToBounds( cache->mins, l->cullmins, l->cullmaxs );
+		AddPointToBounds( cache->maxs, l->cullmins, l->cullmaxs );
+
+		l->entSideMask |= sideMask;
+	}
+
+	l->numReceieveEnts = nre;
+	l->numShadowEnts = nse;
+
+	l->receiveEnts = R_FrameCache_Alloc( sizeof( int ) * l->numReceieveEnts );
+	memcpy( l->receiveEnts, re, sizeof( int ) * l->numReceieveEnts );
+
+	l->shadowEnts = R_FrameCache_Alloc( sizeof( int ) * l->numShadowEnts );
+	memcpy( l->shadowEnts, se, sizeof( int ) * l->numShadowEnts );
+}
+
+/*
+* R_PrepareRtLightFrameData
+*/
+void R_PrepareRtLightFrameData( rtlight_t *l ) {
+	int i;
+
+	if( l->sceneFrame == rsc.frameCount ) {
+		return;
+	}
+
+	CopyBounds( l->worldmins, l->worldmaxs, l->cullmins, l->cullmaxs );
+
+	l->sceneFrame = rsc.frameCount;
+
+	R_PrepareRtLightEntities( l );
+
+	// limit combined world + ents box to light boundaries
+	for( i = 0; i < 3; i++ ) {
+		l->cullmins[i] = max( l->cullmins[i], l->lightmins[i] );
+		l->cullmaxs[i] = min( l->cullmaxs[i], l->lightmaxs[i] );
+	}
+}
+
+/*
+* R_CullRtLights
+*/
+unsigned R_CullRtLights( unsigned numLights, rtlight_t *lights, unsigned clipFlags, bool shadows ) {
+	unsigned i, j;
+	unsigned count;
+	const uint8_t *areabits = rn.areabits;
+	const uint8_t *pvs = rn.pvs;
+
+	if( rn.renderFlags & (RF_LIGHTVIEW|RF_SHADOWMAPVIEW) ) {
+		return 0;
+	}
+
+	count = 0;
+	for( i = 0; i < numLights; i++ ) {
+		rtlight_t *l = lights + i;
+
+		if( r_lighting_debuglight->integer >= 0 && (int)i != r_lighting_debuglight->integer ) {
+			continue;
+		}
+		if( rn.numRealtimeLights == MAX_SCENE_RTLIGHTS ) {
+			break;
+		}
+		if( !(l->flags & LIGHTFLAG_REALTIMEMODE) ) {
+			continue;
+		}
+		if( l->style >= 0 && l->style < MAX_LIGHTSTYLES ) {
+			if( VectorLength( rsc.lightStyles[l->style].rgb ) < 0.01 ) {
+				continue;
+			}
+		}
+
+		if( R_CullSphere( l->origin, l->intensity, rn.clipFlags ) ) {
+			continue;
+		}
+
+		if( l->cluster == -2 ) {
+			// dynamic light with no vis info for this frame
+			R_GetRtLightVisInfo( rsh.worldBrushModel, l );
+		}
+
+		if( l->cluster < 0 ) {
+			continue;
+		}
+
+		if( areabits ) {
+			if( l->area < 0 || !( areabits[l->area >> 3] & ( 1 << ( l->area & 7 ) ) ) ) {
+				continue; // not visible
+			}
+		}
+
+		if( pvs ) {
+			unsigned numLeafs = l->numVisLeafs;
+			unsigned *visLeafs = l->visLeafs;
+
+			for( j = 0; j < numLeafs; j++ ) {
+				unsigned leafNum = visLeafs[j];
+				if( rn.meshlist->worldLeafVis[leafNum] ) {
+					break;
+				}
+			}
+
+			if( j == numLeafs ) {
+				continue;
+			}
+		}
+
+		R_PrepareRtLightFrameData( l );
+
+		if( R_CullBox( l->cullmins, l->cullmaxs, clipFlags ) ) {
+			continue;
+		}
+
+		l->sideMask = l->entSideMask;
+		l->shadowSize = 0;
+		l->lod = R_ComputeLOD( rn.viewOrigin, l->lightmins, l->lightmaxs, l->intensity, 1.0, 0 );
+		l->sort = l->intensity / (l->lod + 1.0);
+
+		rn.rtlights[rn.numRealtimeLights] = l;
+		rn.numRealtimeLights++;
+
+		if( l->world ) {
+			rf.stats.c_world_lights++;
+			if( l->shadow ) {
+				rf.stats.c_world_light_shadows++;
+			}
+		} else {
+			rf.stats.c_dynamic_lights++;
+			if( l->shadow ) {
+				rf.stats.c_dynamic_light_shadows++;
+			}
+		}
+		count++;
+	}
+
+	// sort lights by predicted shadow size in ascending order so that
+	// more important lights are always processed first
+	qsort( rn.rtlights, rn.numRealtimeLights, sizeof( rtlight_t * ), &R_RtLightsShadowSizeCmp );
+
+	return count;
+}
+
+/*
+* R_CalcRtLightBBoxSidemask
+*
+* FIXME: Needs support for rotating lights
+*/
+int R_CalcRtLightBBoxSidemask( const rtlight_t *l, const vec3_t mins, const vec3_t maxs ) {
+	int i;
+	int sidemask = 0x3F;
+	const vec_t *o = &l->origin[0];
+	const vec_t *lmins = &l->lightmins[0];
+	const vec_t *lmaxs = &l->lightmaxs[0];
+
+	if( !BoundsOverlapSphere( mins, maxs, l->origin, l->intensity ) ) {
+		return 0;
+	}
+
+	for( i = 0; i < 3; i++ ) {
+		int j = i << 1;
+
+		if( mins[i] > lmaxs[i] + ON_EPSILON ) {
+			return 0;
+		}
+		if( maxs[i] < lmins[i] - ON_EPSILON ) {
+			return 0;
+		}
+
+		if( o[i] > maxs[i] + ON_EPSILON ) {
+			sidemask &= ~(1<<j);
+		}
+		if( o[i] < mins[i] - ON_EPSILON ) {
+			sidemask &= ~(1<<(j+1));
+		}
+	}
+
+	return sidemask;
+}
+
+/*
+* R_CalcRtLightSurfaceSidemask
+*/
+int R_CalcRtLightSurfaceSidemask( const rtlight_t *lt, const msurface_t *surf ) {
+	float dist;
+
+	if( surf->facetype == FACETYPE_PLANAR ) {
+		dist = DotProduct( lt->origin, surf->plane ) - surf->plane[3];
+
+		if( ( surf->shader->flags & (SHADER_CULL_BACK|SHADER_CULL_FRONT) ) == SHADER_CULL_BACK ) {
+			if( dist <= -1.0 * lt->intensity - ON_EPSILON ) {
+				return 0;
+			}
+		} else if( ( surf->shader->flags & (SHADER_CULL_BACK|SHADER_CULL_FRONT) ) == SHADER_CULL_FRONT ) {
+			if( dist >= lt->intensity + ON_EPSILON ) {
+				return 0;
+			}
+		}
+	}
+
+	return R_CalcRtLightBBoxSidemask( lt, surf->mins, surf->maxs );
+}
+
+/*
+* R_BatchRtLightSurfaceTriangles
+*/
+int R_CullRtLightSurfaceTriangles( const rtlight_t *l, const msurface_t *surf, bool cull, int vertsOffset, elem_t *oe, int *firstVert, int *lastVert ) {
+	unsigned i, j;
+	bool inside;
+	const mesh_t *mesh = &surf->mesh;
+	const elem_t *ie = mesh->elems;
+	unsigned numElems = mesh->numElems;
+	unsigned numOutElems = 0;
+	const vec_t *lmins = l->worldmins;
+	const vec_t *lmaxs = l->worldmaxs;
+
+	inside = BoundsInsideBounds( surf->mins, surf->maxs, lmins, lmaxs );
+
+	for( i = 0; i < numElems; i += 3, ie += 3 ) {
+		if( cull ) {
+			const vec_t *v[3] = { mesh->xyzArray[ie[0]], mesh->xyzArray[ie[1]], mesh->xyzArray[ie[2]] };
+
+			if( !inside && !BoundsOverlapTriangle( v[0], v[1], v[2], lmins, lmaxs ) ) {
+				continue;
+			}
+			if( !PointInfrontOfTriangle( l->origin, v[0], v[1], v[2] ) ) {
+				continue;
+			}
+		}
+
+		for( j = 0; j < 3; j++ ) {
+			oe[j] = vertsOffset + ie[j];
+			if( firstVert && oe[j] < *firstVert ) *firstVert = oe[j];
+			if( lastVert && oe[j] > *lastVert  ) *lastVert = oe[j];
+		}
+
+		oe += 3;
+		numOutElems += 3;
+	}
+
+	return numOutElems;
+}
+
+/*
+* R_CompileRtLight
+*/
+void R_CompileRtLight( rtlight_t *l ) {
+	if( !l->world ) {
+		return;
+	}
+
+	R_CompileRtLightShadow( l );
+}
+
+/*
+* R_TouchRtLight
+*/
+void R_TouchRtLight( rtlight_t *l ) {
+	if( l->cubemapFilter ) {
+		R_TouchImage( l->cubemapFilter, IMAGE_TAG_WORLD );
+	}
+	R_TouchCompiledRtLightShadows( l );
+}
+
+/*
+* R_RenderDebugLightVolumes
+*/
+void R_RenderDebugLightVolumes( void ) {
+	unsigned i;
+
+	if( !r_lighting_showlightvolumes->integer ) {
+		return;
+	}
+
+	for( i = 0; i < rn.numRealtimeLights; i++ ) {
+		rtlight_t *l = rn.rtlights[i];
+		if( !l->sideMask ) {
+			continue;
+		}
+
+		switch( r_lighting_showlightvolumes->integer ) {
+			case 2:
+				R_AddDebugBounds( l->worldmins, l->worldmaxs, l->color );
+				break;
+			case 3:
+				R_AddDebugBounds( l->cullmins, l->cullmaxs, l->color );
+				break;
+			default:
+				R_AddDebugBounds( l->lightmins, l->lightmaxs, l->color );
+				break;
+		}
+	}
+}
+
+/*
+* R_DrawRtLights
+*/
+void R_DrawRtLights( void ) {
+	unsigned i;
+	unsigned numRtLights;
+	rtlight_t *l, **rtLights;
+	refinst_t *prevrn;
+
+	rtLights = rn.rtlights;
+	numRtLights = rn.numRealtimeLights;
+
+	if( !numRtLights ) {
+		return;
+	}
+
+	prevrn = R_PushRefInst();
+
+	rn = *prevrn;
+	rn.meshlist = &r_shadowlist;
+	rn.portalmasklist = NULL;
+	rn.parent = prevrn;
+	rn.renderFlags |= RF_LIGHTVIEW;
+	rn.numDepthPortalSurfaces = 0;
+
+	for( i = 0; i < numRtLights; i++ ) {
+		l = rtLights[i];
+		if( !l->sideMask ) {
+			continue;
+		}
+
+		rn.rtLight = l;
+
+		if( R_ScissorForBBox( prevrn, l->cullmins, l->cullmaxs, rn.scissor ) ) {
+			// clipped away
+			continue;
+		}
+
+		R_SetupPVSFromCluster( l->cluster, l->area );
+
+		R_RenderView( &rn.refdef );
+	}
+
+	R_PopRefInst();
 }

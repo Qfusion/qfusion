@@ -420,6 +420,10 @@ static int R_ReadImageFromDisk( int ctx, char *pathname, size_t pathname_size,
 			imginfo = LoadTGA( pathname, _R_AllocImageBufferCb, (void *)&cbinfo );
 		} else if( !Q_stricmp( extension, ".png" ) ) {
 			imginfo = LoadPNG( pathname, _R_AllocImageBufferCb, (void *)&cbinfo );
+		} else if( !Q_stricmp( extension, ".pcx" ) ) {
+			imginfo = LoadPCX( pathname, _R_AllocImageBufferCb, (void *)&cbinfo );
+		} else if( !Q_stricmp( extension, ".wal" ) ) {
+			imginfo = LoadWAL( pathname, _R_AllocImageBufferCb, (void *)&cbinfo );
 		} else {
 			return 0;
 		}
@@ -1149,6 +1153,101 @@ static int R_PixelFormatSize( int format, int type ) {
 }
 
 /*
+=================================================================
+
+PALETTES
+
+=================================================================
+*/
+
+/*
+* R_LoadQuake1Palette
+*/
+static void R_LoadQuake1Palette( unsigned *out ) {
+	uint8_t *raw;
+	int r, g, b;
+	unsigned v;
+	int i, len;
+	const uint8_t *pal;
+	static const uint8_t host_quakepal[768] =
+#include "../qcommon/quake1pal.h"
+	;
+
+	// get the palette
+	len = R_LoadFile( "gfx/palette.lmp", (void **)&raw );
+	pal = ( raw && len >= 768 ) ? raw : host_quakepal;
+
+	for( i = 0; i < 256; i++ ) {
+		r = pal[i * 3 + 0];
+		g = pal[i * 3 + 1];
+		b = pal[i * 3 + 2];
+
+		v = COLOR_RGBA( r, g, b, 255 );
+		out[i] = LittleLong( v );
+	}
+
+	R_FreeFile( raw );
+
+	out[255] = 0;   // 255 is transparent
+}
+
+/*
+* R_LoadQuake2Palette
+*/
+static void R_LoadQuake2Palette( unsigned *out ) {
+	int i;
+	uint8_t     *pal;
+	int r, g, b;
+	unsigned v;
+	loaderCbInfo_t cbinfo = { QGL_CONTEXT_MAIN, 0 };
+	r_imginfo_t imginfo;
+
+	imginfo = LoadPCX( "pics/colormap.pcx", _R_AllocImageBufferCb, (void *)&cbinfo );
+	if( !imginfo.pixels ) {
+		return;
+	}
+
+	pal = imginfo.pixels + imginfo.width * imginfo.height * imginfo.samples;
+	for( i = 0; i < 256; i++ ) {
+		r = pal[i * 3 + 0];
+		g = pal[i * 3 + 1];
+		b = pal[i * 3 + 2];
+
+		v = COLOR_RGBA( r, g, b, 255 );
+		out[i] = LittleLong( v );
+	}
+
+	out[255] &= LittleLong( 0xffffff ); // 255 is transparent
+}
+
+/*
+* R_LoadPalette
+*
+* Loads Q1 or Q2 palette from disk if not already loaded.
+*/
+unsigned *R_LoadPalette( int flags ) {
+	assert( ( flags & ( IT_MIPTEX | IT_WAL ) ) != 0 );
+
+	if( flags & IT_MIPTEX ) {
+		if( !r_8to24table[0] ) {
+			r_8to24table[0] = R_MallocExt( r_imagesPool, sizeof( unsigned ) * 256, 0, 1 );
+			R_LoadQuake1Palette( r_8to24table[0] );
+		}
+		return r_8to24table[0];
+	}
+
+	if( flags & IT_WAL ) {
+		if( !r_8to24table[1] ) {
+			r_8to24table[1] = R_MallocExt( r_imagesPool, sizeof( unsigned ) * 256, 0, 1 );
+			R_LoadQuake2Palette( r_8to24table[1] );
+		}
+		return r_8to24table[1];
+	}
+
+	return NULL;
+}
+
+/*
 * R_MipCount
 */
 static int R_MipCount( int width, int height, int minmipsize ) {
@@ -1610,6 +1709,84 @@ error: // must not be reached after actually starting uploading the texture
 }
 
 /*
+=========================================================
+
+MIPTEX LOADING
+
+=========================================================
+*/
+
+/*
+* LoadMipTex
+*/
+static int LoadMipTex( uint8_t **pic, int width, int height, int flags ) {
+	unsigned int i;
+	unsigned int s, *trans;
+	uint8_t *imgbuf, *data;
+	const unsigned *table8to24 = R_LoadPalette( IT_MIPTEX );
+
+	data = *pic;
+	s = width * height;
+	imgbuf = R_PrepareImageBuffer( QGL_CONTEXT_MAIN, TEXTURE_LOADING_BUF0, s * 4 );
+	*pic = imgbuf;
+	trans = ( unsigned int * )imgbuf;
+
+	if( flags & IT_SKY ) {
+		unsigned j;
+		unsigned r, g, b;
+		unsigned transpix;
+		unsigned rgba;
+		int halfwidth = width >> 1;
+
+		// a sky texture is 256*128, with the right side being a masked overlay
+		r = g = b = 0;
+		for( i = 0; i < (unsigned)height; i++ ) {
+			for( j = 0; j < (unsigned)halfwidth; j++ ) {
+				uint8_t p = data[i * width + halfwidth + j];
+				rgba = table8to24[p];
+				trans[i * width + halfwidth + j] = rgba;
+				r += COLOR_R( rgba );
+				g += COLOR_G( rgba );
+				b += COLOR_B( rgba );
+			}
+		}
+
+		// make an average value for the back to avoid
+		// a fringe on the top level
+		transpix = COLOR_RGBA( r / ( halfwidth * height ), g / ( halfwidth * height ), b / ( halfwidth * height ), 0 );
+
+		for( i = 0; i < (unsigned)height; i++ ) {
+			for( j = 0; j < (unsigned)halfwidth; j++ ) {
+				uint8_t p = data[i * width + j];
+				trans[i * width + j] = p ? table8to24[p] : transpix;
+			}
+		}
+		return 4;
+	} else if( flags & IT_MIPTEX_FULLBRIGHT ) {
+		// this is a fullbright mask, so make all non-fullbright
+		// colors transparent
+		for( i = 0; i < s; i++ ) {
+			uint8_t p = data[i];
+			if( p < 224 ) {
+				trans[i] = 0; // transparent
+			} else {
+				trans[i] = table8to24[p];   // fullbright
+			}
+		}
+		return 4;
+	} else {
+		// copy rgb components
+		for( i = 0; i < s; i++ ) {
+			uint8_t p = data[i];
+			*imgbuf++ = ( (uint8_t *)&table8to24[p] )[0];
+			*imgbuf++ = ( (uint8_t *)&table8to24[p] )[1];
+			*imgbuf++ = ( (uint8_t *)&table8to24[p] )[2];
+		}
+		return 3;
+	}
+}
+
+/*
 * R_LoadImageFromDisk
 */
 static bool R_LoadImageFromDisk( int ctx, image_t *image ) {
@@ -1633,64 +1810,78 @@ static bool R_LoadImageFromDisk( int ctx, image_t *image ) {
 	pathname[len] = 0;
 
 	if( flags & IT_CUBEMAP ) {
-		int i, j;
+		int i, j, k;
 		uint8_t *pic[6];
 		struct cubemapSufAndFlip {
 			char *suf; int flags;
 		} cubemapSides[2][6] = {
 			{
-				{ "px", 0 }, { "nx", 0 }, { "py", 0 },
-				{ "ny", 0 }, { "pz", 0 }, { "nz", 0 }
+				{ "px", 0 },
+				{ "nx", 0 },
+				{ "py", 0 },
+				{ "ny", 0 },
+				{ "pz", 0 },
+				{ "nz", 0 }
 			},
 			{
-				{ "rt", IT_FLIPDIAGONAL }, { "lf", IT_FLIPX | IT_FLIPY | IT_FLIPDIAGONAL }, { "bk", IT_FLIPY },
-				{ "ft", IT_FLIPX }, { "up", IT_FLIPDIAGONAL }, { "dn", IT_FLIPDIAGONAL }
+				{ "rt", IT_FLIPX | IT_FLIPDIAGONAL }, 
+				{ "lf", IT_FLIPY | IT_FLIPDIAGONAL },
+				{ "ft", IT_FLIPX | IT_FLIPY },
+				{ "bk", 0 },
+				{ "up", IT_FLIPX | IT_FLIPDIAGONAL },
+				{ "dn", IT_FLIPX | IT_FLIPDIAGONAL }
 			}
 		};
 		int lastSize = 0;
 
-		pathname[len] = '_';
-		for( i = 0; i < 2; i++ ) {
-			for( j = 0; j < 6; j++ ) {
-				int cbflags = cubemapSides[i][j].flags;
+		for( k = 0; k < 2; k++ ) {
+			pathname[len] = '_';
 
-				pathname[len + 1] = cubemapSides[i][j].suf[0];
-				pathname[len + 2] = cubemapSides[i][j].suf[1];
-				pathname[len + 3] = 0;
+			for( i = 0; i < 2; i++ ) {
+				for( j = 0; j < 6; j++ ) {
+					int cbflags = cubemapSides[i][j].flags;
 
-				Q_strncatz( pathname, ".tga", pathsize );
-				samples = R_ReadImageFromDisk( ctx, pathname, pathsize,
-											   &( pic[j] ), &width, &height, &flags, j );
-				if( pic[j] ) {
-					if( width != height ) {
-						ri.Com_DPrintf( S_COLOR_YELLOW "Not square cubemap image %s\n", pathname );
-						break;
+					pathname[len + k + 0] = cubemapSides[i][j].suf[0];
+					pathname[len + k + 1] = cubemapSides[i][j].suf[1];
+					pathname[len + k + 2] = 0;
+
+					Q_strncatz( pathname, ".tga", pathsize );
+					samples = R_ReadImageFromDisk( ctx, pathname, pathsize,
+												   &( pic[j] ), &width, &height, &flags, j );
+					if( pic[j] ) {
+						if( width != height ) {
+							ri.Com_DPrintf( S_COLOR_YELLOW "Not square cubemap image %s\n", pathname );
+							break;
+						}
+						if( !j ) {
+							lastSize = width;
+						} else if( lastSize != width ) {
+							ri.Com_DPrintf( S_COLOR_YELLOW "Different cubemap image size: %s\n", pathname );
+							break;
+						}
+						if( cbflags & ( IT_FLIPX | IT_FLIPY | IT_FLIPDIAGONAL ) ) {
+							uint8_t *temp = R_PrepareImageBuffer( ctx,
+								TEXTURE_FLIPPING_BUF0 + j, width * height * samples );
+							R_FlipTexture( pic[j], temp, width, height, samples,
+										   ( cbflags & IT_FLIPX ) ? true : false,
+										   ( cbflags & IT_FLIPY ) ? true : false,
+										   ( cbflags & IT_FLIPDIAGONAL ) ? true : false );
+							pic[j] = temp;
+						}
+						continue;
 					}
-					if( !j ) {
-						lastSize = width;
-					} else if( lastSize != width ) {
-						ri.Com_DPrintf( S_COLOR_YELLOW "Different cubemap image size: %s\n", pathname );
-						break;
-					}
-					if( cbflags & ( IT_FLIPX | IT_FLIPY | IT_FLIPDIAGONAL ) ) {
-						uint8_t *temp = R_PrepareImageBuffer( ctx,
-															  TEXTURE_FLIPPING_BUF0 + j, width * height * samples );
-						R_FlipTexture( pic[j], temp, width, height, 4,
-									   ( cbflags & IT_FLIPX ) ? true : false,
-									   ( cbflags & IT_FLIPY ) ? true : false,
-									   ( cbflags & IT_FLIPDIAGONAL ) ? true : false );
-						pic[j] = temp;
-					}
-					continue;
+					break;
 				}
-				break;
+				if( j == 6 ) {
+					break;
+				}
 			}
-			if( j == 6 ) {
+			if( i != 2 ) {
 				break;
 			}
 		}
 
-		if( i != 2 ) {
+		if( k != 2 ) {
 			image->width = width;
 			image->height = height;
 			image->samples = samples;
@@ -1698,9 +1889,9 @@ static bool R_LoadImageFromDisk( int ctx, image_t *image ) {
 			R_BindImage( image );
 
 			R_Upload32( ctx, pic, 0, 0, 0, width, height, flags, image->minmipsize, &image->upload_width,
-						&image->upload_height, samples, false, false );
+				&image->upload_height, samples, false, false );
 
-			Q_strncpyz( image->extension, &pathname[len + 3], sizeof( image->extension ) );
+			Q_strncpyz( image->extension, &pathname[len + k + 2], sizeof( image->extension ) );
 			loaded = true;
 		} else {
 			ri.Com_DPrintf( S_COLOR_YELLOW "Missing image: %s\n", image->name );
@@ -1823,11 +2014,15 @@ static image_t *R_CreateImage( const char *name, int width, int height, int laye
 */
 image_t *R_LoadImage( const char *name, uint8_t **pic, int width, int height, int flags, int minmipsize, int tags, int samples ) {
 	image_t *image;
+	uint8_t **data = pic;
 
 	if( !glConfig.sSRGB ) {
 		flags &= ~IT_SRGB;
 	}
 
+	if( flags & IT_MIPTEX ) {
+		samples = LoadMipTex( data, width, height, flags );
+	}
 	if( !( flags & IT_CUBEMAP ) && ( flags & ( IT_LEFTHALF | IT_RIGHTHALF ) ) ) {
 		width /= 2;
 	}
@@ -2516,29 +2711,29 @@ image_t *R_GetPortalTexture( int viewportWidth, int viewportHeight,
 }
 
 /*
-* R_GetShadowmapTexture
+* R_GetShadowmapAtlasTexture
 */
-image_t *R_GetShadowmapTexture( int id, int viewportWidth, int viewportHeight, int flags ) {
+image_t *R_GetShadowmapAtlasTexture( void ) {
+	int flags;
 	int samples;
+	int size;
 
-	if( id < 0 || id >= MAX_SHADOWGROUPS ) {
-		return NULL;
-	}
+	size = max( r_shadows_texturesize->integer, SHADOWMAP_MIN_ATLAS_SIZE );
 
 	if( glConfig.ext.shadow ) {
 		// render to depthbuffer, GL_ARB_shadow path
-		flags |= IT_DEPTH;
+		flags = IT_DEPTH;
 		samples = 1;
 	} else {
-		flags |= IT_NOFILTERING;
+		flags = IT_NOFILTERING;
 		samples = 3;
 	}
 
-	R_InitViewportTexture( &rsh.shadowmapTextures[id], "r_shadowmap", id,
-						   viewportWidth, viewportHeight, r_shadows_maxtexsize->integer,
-						   IT_SPECIAL | IT_FRAMEBUFFER | IT_DEPTHCOMPARE | flags, IMAGE_TAG_GENERIC, samples );
+	R_InitViewportTexture( &rsh.shadowmapAtlasTexture, "r_shadowmap", 0,
+		size, size, size,
+		IT_SPECIAL | IT_FRAMEBUFFER | IT_DEPTHCOMPARE | flags, IMAGE_TAG_BUILTIN, samples );
 
-	return rsh.shadowmapTextures[id];
+	return rsh.shadowmapAtlasTexture;
 }
 
 /*
@@ -2564,7 +2759,7 @@ static void R_InitScreenImagePair( const char *name, image_t **color, image_t **
 	assert( !depth || glConfig.ext.depth_texture );
 
 	if( !glConfig.stencilBits ) {
-		orFlags &= IT_STENCIL;
+		orFlags &= ~IT_STENCIL;
 	}
 	if( width < 1 ) {
 		width = 1;
@@ -2792,6 +2987,7 @@ static void R_ReleaseBuiltinImages( void ) {
 	rsh.blankBumpTexture = NULL;
 	rsh.particleTexture = NULL;
 	rsh.coronaTexture = NULL;
+	rsh.shadowmapAtlasTexture = NULL;
 }
 
 //=======================================================
@@ -2896,7 +3092,6 @@ void R_FreeUnusedImages( void ) {
 	R_FinishLoadingImages();
 
 	memset( rsh.portalTextures, 0, sizeof( image_t * ) * MAX_PORTAL_TEXTURES );
-	memset( rsh.shadowmapTextures, 0, sizeof( image_t * ) * MAX_SHADOWGROUPS );
 }
 
 /*
@@ -2949,7 +3144,6 @@ void R_ShutdownImages( void ) {
 	r_screenShotBufferSize = 0;
 
 	memset( rsh.portalTextures, 0, sizeof( rsh.portalTextures ) );
-	memset( rsh.shadowmapTextures, 0, sizeof( rsh.shadowmapTextures ) );
 
 	r_imagePathBuf = r_imagePathBuf2 = NULL;
 	r_sizeof_imagePathBuf = r_sizeof_imagePathBuf2 = 0;

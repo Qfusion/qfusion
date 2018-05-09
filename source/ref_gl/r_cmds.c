@@ -222,12 +222,15 @@ void R_TakeEnvShot( const char *path, const char *name, unsigned maxPixels ) {
 	fd.width = fd.height = size;
 	fd.fov_x = fd.fov_y = 90;
 
+	rn.nearClip = Z_NEAR;
 	rn.farClip = R_DefaultFarClip();
+
+	rn.polygonFactor = POLYOFFSET_FACTOR;
+	rn.polygonUnits = POLYOFFSET_UNITS;
 
 	// do not render non-bmodel entities
 	rn.renderFlags |= RF_CUBEMAPVIEW;
 	rn.clipFlags = 15;
-	rn.shadowGroup = NULL;
 	rn.renderTarget = 0;
 
 	Vector4Set( rn.viewport, fd.x, glConfig.height - size - fd.y, size, size );
@@ -235,6 +238,12 @@ void R_TakeEnvShot( const char *path, const char *name, unsigned maxPixels ) {
 
 	for( i = 0; i < 6; i++ ) {
 		AnglesToAxis( cubemapShots[i].angles, fd.viewaxis );
+
+		R_SetupViewMatrices( &fd );
+
+		R_SetupFrustum( &fd, rn.nearClip, rn.farClip, rn.frustum, rn.frustumCorners );
+
+		R_SetupPVS( &fd );
 
 		R_RenderView( &fd );
 

@@ -30,12 +30,20 @@ static mempool_t *cmap_mempool;
 static cvar_t *cm_noAreas;
 cvar_t *cm_noCurves;
 
+void CM_LoadQ2BrushModel( cmodel_state_t *cms, void *parent, void *buf, bspFormatDesc_t *format );
+void CM_LoadQ1BrushModel( cmodel_state_t *cms, void *parent, void *buffer, bspFormatDesc_t *format );
 void CM_LoadQ3BrushModel( cmodel_state_t *cms, void *parent, void *buffer, bspFormatDesc_t *format );
 
 static const modelFormatDescr_t cm_supportedformats[] =
 {
 	// Q3-alike .bsp models
 	{ "*", 4, q3BSPFormats, 0, ( const modelLoader_t )CM_LoadQ3BrushModel },
+
+	// Q2-alike .bsp models
+	{ "*", 4, q2BSPFormats, 0, ( const modelLoader_t )CM_LoadQ2BrushModel },
+
+	// Q1-alike .bsp models
+	{ "*", 0, q1BSPFormats, 0, ( const modelLoader_t )CM_LoadQ1BrushModel },
 
 	// trailing NULL
 	{ NULL, 0, NULL, 0, NULL }
@@ -171,11 +179,25 @@ static void CM_Clear( cmodel_state_t *cms ) {
 		cms->map_entitystring = &cms->map_entitystring_empty;
 	}
 
+	if( cms->map_hulls ) {
+		Mem_Free( cms->map_hulls );
+		cms->map_hulls = NULL;
+	}
+
+	if( cms->map_clipnodes ) {
+		Mem_Free( cms->map_clipnodes );
+		cms->map_clipnodes = NULL;
+	}
+
 	CM_FreeCheckCounts( cms );
 
 	cms->map_name[0] = 0;
 
 	ClearBounds( cms->world_mins, cms->world_maxs );
+
+	cms->CM_TransformedBoxTrace = NULL;
+	cms->CM_TransformedPointContents = NULL;
+	cms->CM_RoundUpToHullSize = NULL;
 }
 
 /*
@@ -449,12 +471,57 @@ int CM_LeafArea( cmodel_state_t *cms, int leafnum ) {
 }
 
 /*
+* CM_BoundBrush
+*/
+void CM_BoundBrush( cbrush_t *brush ) {
+	int i;
+
+	for( i = 0; i < 3; i++ ) {
+		brush->mins[i] = -brush->brushsides[i * 2 + 0].plane.dist;
+		brush->maxs[i] = +brush->brushsides[i * 2 + 1].plane.dist;
+	}
+}
+
+/*
 ===============================================================================
 
 PVS
 
 ===============================================================================
 */
+
+/*
+* CM_DecompressVis
+*
+* Decompresses RLE-compressed PVS data
+*/
+uint8_t *CM_DecompressVis( const uint8_t *in, int rowsize, uint8_t *decompressed ) {
+	int c;
+	uint8_t *out;
+	int row;
+
+	row = rowsize;
+	out = decompressed;
+
+	if( !in ) {
+		// no vis info, so make all visible
+		memset( out, 0xff, rowsize );
+	} else {
+		do {
+			if( *in ) {
+				*out++ = *in++;
+				continue;
+			}
+
+			c = in[1];
+			in += 2;
+			while( c-- )
+				*out++ = 0;
+		} while( out - decompressed < row );
+	}
+
+	return decompressed;
+}
 
 /*
 * CM_ClusterRowSize
@@ -478,16 +545,27 @@ int CM_NumClusters( cmodel_state_t *cms ) {
 }
 
 /*
+* CM_PVSData
+*/
+dvis_t *CM_PVSData( cmodel_state_t *cms ) {
+	return cms->map_pvs;
+}
+
+/*
+* CM_ClusterVS
+*/
+static inline uint8_t *CM_ClusterVS( int cluster, dvis_t *vis, uint8_t *nullrow ) {
+	if( cluster == -1 || !vis ) {
+		return nullrow;
+	}
+	return ( uint8_t * )vis->data + cluster * vis->rowsize;
+}
+
+/*
 * CM_ClusterPVS
 */
 static inline uint8_t *CM_ClusterPVS( cmodel_state_t *cms, int cluster ) {
-	dvis_t *vis = cms->map_pvs;
-
-	if( cluster == -1 || !vis ) {
-		return cms->nullrow;
-	}
-
-	return ( uint8_t * )vis->data + cluster * vis->rowsize;
+	return CM_ClusterVS( cluster, cms->map_pvs, cms->nullrow );
 }
 
 /*
@@ -924,17 +1002,16 @@ void CM_ReleaseReference( cmodel_state_t *cms ) {
 		return;
 	}
 
+	// note: QAtomic_Add returns the previous value of refcount
 	rc = QAtomic_Add( &cms->refcount, -1, cms->refcount_mutex );
-	if( rc != 0 ) {
-		return;
-	}
-
-	if( rc < 0 ) {
+	if( rc <= 0 ) {
 		Com_Error( ERR_FATAL, "CM_ReleaseReference: refcount < 0" );
 		return;
 	}
 
-	CM_Free( cms );
+	if( QAtomic_Add( &cms->refcount, 0, cms->refcount_mutex ) == 0 ) {
+		CM_Free( cms );
+	}
 }
 
 /*

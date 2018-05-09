@@ -21,6 +21,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef R_MODEL_H
 #define R_MODEL_H
 
+#include "r_mesh.h"
+#include "r_shader.h"
 #include "r_surface.h"
 
 /*
@@ -64,7 +66,7 @@ typedef struct mshaderref_s {
 	char name[MAX_QPATH];
 	int flags;
 	int contents;
-	shader_t        *shaders[NUM_SHADER_TYPES_BSP];
+	shader_t *shaders[NUM_SHADER_TYPES_BSP];
 } mshaderref_t;
 
 typedef struct msurface_s {
@@ -96,7 +98,7 @@ typedef struct msurface_s {
 	shader_t *shader;
 	mfog_t *fog;
 
-	struct superLightStyle_s *superLightStyle;
+	int superLightStyle;
 } msurface_t;
 
 typedef struct mnode_s {
@@ -131,12 +133,6 @@ typedef struct {
 	uint8_t direction[2];
 } mgridlight_t;
 
-typedef struct {
-	int texNum;
-	int texLayer;
-	float texMatrix[2][2];
-} mlightmapRect_t;
-
 typedef struct mbrushmodel_s {
 	const bspFormatDesc_t *format;
 
@@ -159,8 +155,6 @@ typedef struct mbrushmodel_s {
 
 	unsigned int numleafs;              // number of visible leafs, not counting 0
 	mleaf_t         *leafs;
-	mleaf_t         **visleafs;
-	unsigned int numvisleafs;
 
 	unsigned int numnodes;
 	mnode_t         *nodes;
@@ -177,6 +171,9 @@ typedef struct mbrushmodel_s {
 	unsigned int numfogs;
 	mfog_t          *fogs;
 	mfog_t          *globalfog;
+
+	unsigned int numRtLights;
+	struct rtlight_s *rtLights;
 
 	/*unsigned*/ int numareas;
 
@@ -196,7 +193,10 @@ typedef struct mbrushmodel_s {
 	struct superLightStyle_s *superLightStyles;
 
 	unsigned numMiptex;
-	void            *mipTex;
+	void *mipTex;
+
+	unsigned entityStringLen;
+	char *entityString;
 } mbrushmodel_t;
 
 /*
@@ -369,7 +369,7 @@ typedef struct mskmodel_s {
 // Whole model
 //
 
-typedef enum { mod_bad = -1, mod_free, mod_brush, mod_alias, mod_skeletal } modtype_t;
+typedef enum { mod_bad = -1, mod_free, mod_brush, mod_alias, mod_skeletal, mod_sprite } modtype_t;
 typedef void ( *mod_touch_t )( struct model_s *model );
 
 #define MOD_MAX_LODS    4
@@ -415,10 +415,10 @@ struct model_s *R_RegisterModel( const char *name );
 
 void R_GetTransformBufferForMesh( mesh_t *mesh, bool positions, bool normals, bool sVectors );
 
-void        Mod_ClearAll( void );
 model_t     *Mod_ForName( const char *name, bool crash );
-mleaf_t     *Mod_PointInLeaf( float *p, model_t *model );
-uint8_t     *Mod_ClusterPVS( int cluster, model_t *model );
+mleaf_t     *Mod_PointInLeaf( const vec3_t p, mbrushmodel_t *bmodel );
+uint8_t     *Mod_ClusterPVS( int cluster, mbrushmodel_t *bmodel );
+uint8_t		*Mod_SpherePVS( const vec3_t origin, float radius, mbrushmodel_t *bmodel, uint8_t *fatpvs );
 
 unsigned int Mod_Handle( const model_t *mod );
 model_t     *Mod_ForHandle( unsigned int elem );

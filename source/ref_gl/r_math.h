@@ -28,18 +28,20 @@ extern const mat4_t mat4x4_identity;
 
 void        Matrix4_Identity( mat4_t m );
 void        Matrix4_Copy( const mat4_t m1, mat4_t m2 );
-bool    Matrix4_Compare( const mat4_t m1, const mat4_t m2 );
+bool		Matrix4_Compare( const mat4_t m1, const mat4_t m2 );
 void        Matrix4_Multiply( const mat4_t m1, const mat4_t m2, mat4_t out );
 void        Matrix4_MultiplyFast( const mat4_t m1, const mat4_t m2, mat4_t out );
+void        Matrix4_MultiplySSE( const mat4_t m1, const mat4_t m2, mat4_t out );
 void        Matrix4_Rotate( mat4_t m, vec_t angle, vec_t x, vec_t y, vec_t z );
 void        Matrix4_Translate( mat4_t m, vec_t x, vec_t y, vec_t z );
 void        Matrix4_Scale( mat4_t m, vec_t x, vec_t y, vec_t z );
 void        Matrix4_Transpose( const mat4_t m, mat4_t out );
 void        Matrix4_Matrix( const mat4_t in, vec3_t out[3] );
 void        Matrix4_Multiply_Vector( const mat4_t m, const vec4_t v, vec4_t out );
+void		Matrix4_Multiply_Vector3( const mat4_t m, const vec3_t v, vec3_t out );
 void        Matrix4_FromQuaternion( const quat_t q, mat4_t out );
 void        Matrix4_FromDualQuaternion( const dualquat_t dq, mat4_t out );
-bool    Matrix4_Invert( const mat4_t in, mat4_t out );
+bool		Matrix4_Invert( const mat4_t in, mat4_t out );
 
 void        Matrix4_Copy2D( const mat4_t m1, mat4_t m2 );
 void        Matrix4_Multiply2D( const mat4_t m1, const mat4_t m2, mat4_t out );
@@ -55,6 +57,8 @@ void        Matrix4_InfinitePerspectiveProjection( vec_t fov_x, vec_t fov_y,
 												   vec_t near, vec_t stereoSeparation, mat4_t m, vec_t epsilon );
 void        Matrix4_PerspectiveProjectionToInfinity( vec_t near, mat4_t m, vec_t epsilon );
 void        Matrix4_Modelview( const vec3_t viewOrg, const mat3_t viewAxis, mat4_t m );
+void		Matrix4_ObjectMatrix( const vec3_t origin, const mat3_t axis, float scale, mat4_t m );
+void		Matrix4_QuakeModelview( const vec3_t viewOrg, const mat3_t viewAxis, mat4_t m );
 void        Matrix4_ObliqueNearClipping( const vec3_t normal, const vec_t dist, const mat4_t cm, mat4_t pm );
 
 #endif // R_MATH_H

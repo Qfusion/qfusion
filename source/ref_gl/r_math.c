@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "r_math.h"
 
-const mat4_t mat4x4_identity =
+const ATTRIBUTE_ALIGNED( 16 ) mat4_t mat4x4_identity =
 {
 	1, 0, 0, 0,
 	0, 1, 0, 0,
@@ -89,6 +89,41 @@ void Matrix4_MultiplyFast( const mat4_t m1, const mat4_t m2, mat4_t out ) {
 	out[14] = m1[2] * m2[12] + m1[6] * m2[13] + m1[10] * m2[14] + m1[14];
 	out[15] = 1.0f;
 }
+
+#if defined ( id386 ) && ( defined ( __GNUC__ ) && defined ( __SSE__ ) ) ||  ( defined ( _WIN32 ) && ( _MSC_VER >= 1400 ) ) && 0
+
+#include <xmmintrin.h>
+
+static inline __m128 lincomb_SSE( const __m128 a, const float *m )
+{
+	__m128 result;
+	result = _mm_mul_ps( _mm_shuffle_ps( a, a, 0x00 ), _mm_load_ps( m ) );
+	result = _mm_add_ps( result, _mm_mul_ps( _mm_shuffle_ps( a, a, 0x55 ), _mm_load_ps( m + 4 ) ) );
+	result = _mm_add_ps( result, _mm_mul_ps( _mm_shuffle_ps( a, a, 0xaa ), _mm_load_ps( m + 8 ) ) );
+	result = _mm_add_ps( result, _mm_mul_ps( _mm_shuffle_ps( a, a, 0xff ), _mm_load_ps( m + 12 ) ) );
+	return result;
+}
+
+void Matrix4_MultiplySSE( const mat4_t m1, const mat4_t m2, mat4_t out ) {
+	float *fo = &out[0];
+	const float *fm1 = &m2[0], *fm2 = &m1[0];
+	__m128 out0x = lincomb_SSE( _mm_load_ps( fm1 ), fm2 );
+	__m128 out1x = lincomb_SSE( _mm_load_ps( fm1 + 4 ), fm2 );
+	__m128 out2x = lincomb_SSE( _mm_load_ps( fm1 + 8 ), fm2 );
+	__m128 out3x = lincomb_SSE( _mm_load_ps( fm1 + 12 ), fm2 );
+	_mm_store_ps( fo     , out0x );
+	_mm_store_ps( fo + 4 , out1x );
+	_mm_store_ps( fo + 8 , out2x );
+	_mm_store_ps( fo + 12 , out3x );
+}
+
+#else
+
+void Matrix4_MultiplySSE( const mat4_t m1, const mat4_t m2, mat4_t out ) {
+	Matrix4_Multiply( m1, m2, out );
+}
+
+#endif
 
 // Taken from Darkplaces source code
 // Adapted from code contributed to Mesa by David Moore (Mesa 7.6 under SGI Free License B - which is MIT/X11-type)
@@ -242,6 +277,12 @@ void Matrix4_Multiply_Vector( const mat4_t m, const vec4_t v, vec4_t out ) {
 	out[1] = m[1] * v[0] + m[5] * v[1] + m[9] * v[2] + m[13] * v[3];
 	out[2] = m[2] * v[0] + m[6] * v[1] + m[10] * v[2] + m[14] * v[3];
 	out[3] = m[3] * v[0] + m[7] * v[1] + m[11] * v[2] + m[15] * v[3];
+}
+
+void Matrix4_Multiply_Vector3( const mat4_t m, const vec3_t v, vec3_t out ) {
+	out[0] = m[0] * v[0] + m[4] * v[1] + m[8] * v[2];
+	out[1] = m[1] * v[0] + m[5] * v[1] + m[9] * v[2];
+	out[2] = m[2] * v[0] + m[6] * v[1] + m[10] * v[2];
 }
 
 //============================================================================
@@ -398,41 +439,66 @@ void Matrix4_PerspectiveProjectionToInfinity( vec_t near, mat4_t m, vec_t epsilo
 */
 void Matrix4_Modelview( const vec3_t viewOrg, const mat3_t viewAxis, mat4_t m ) {
 	mat3_t axis;
-	mat4_t flip, view;
-
-#if 0
-	Matrix4_Identity( flip );
-	Matrix4_Rotate( flip, -90, 1, 0, 0 );
-	Matrix4_Rotate( flip, 90, 0, 0, 1 );
-#else
-	Vector4Set( &flip[0], 0, 0, -1, 0 );
-	Vector4Set( &flip[4], -1, 0, 0, 0 );
-	Vector4Set( &flip[8], 0, 1, 0, 0 );
-	Vector4Set( &flip[12], 0, 0, 0, 1 );
-#endif
 
 	Matrix3_Copy( viewAxis, axis );
 
-	view[0 ] = axis[0];
-	view[4 ] = axis[1];
-	view[8 ] = axis[2];
-	view[12] = -viewOrg[0] * view[0] + -viewOrg[1] * view[4] + -viewOrg[2] * view[8];
+	m[0 ] = axis[0];
+	m[4 ] = axis[1];
+	m[8 ] = axis[2];
+	m[12] = -viewOrg[0] * m[0] + -viewOrg[1] * m[4] + -viewOrg[2] * m[8];
 
-	view[1 ] = axis[3];
-	view[5 ] = axis[4];
-	view[9 ] = axis[5];
-	view[13] = -viewOrg[0] * view[1] + -viewOrg[1] * view[5] + -viewOrg[2] * view[9];
+	m[1 ] = axis[3];
+	m[5 ] = axis[4];
+	m[9 ] = axis[5];
+	m[13] = -viewOrg[0] * m[1] + -viewOrg[1] * m[5] + -viewOrg[2] * m[9];
 
-	view[2 ] = axis[6];
-	view[6 ] = axis[7];
-	view[10] = axis[8];
-	view[14] = -viewOrg[0] * view[2] + -viewOrg[1] * view[6] + -viewOrg[2] * view[10];
+	m[2 ] = axis[6];
+	m[6 ] = axis[7];
+	m[10] = axis[8];
+	m[14] = -viewOrg[0] * m[2] + -viewOrg[1] * m[6] + -viewOrg[2] * m[10];
 
-	view[3] = 0;
-	view[7] = 0;
-	view[11] = 0;
-	view[15] = 1;
+	m[3] = 0;
+	m[7] = 0;
+	m[11] = 0;
+	m[15] = 1;
+}
 
+/*
+* Matrix4_ObjectMatrix
+*/
+void Matrix4_ObjectMatrix( const vec3_t origin, const mat3_t axis, float scale, mat4_t m ) {
+	m[0] = axis[0] * scale;
+	m[1] = axis[1] * scale;
+	m[2] = axis[2] * scale;
+	m[4] = axis[3] * scale;
+	m[5] = axis[4] * scale;
+	m[6] = axis[5] * scale;
+	m[8] = axis[6] * scale;
+	m[9] = axis[7] * scale;
+	m[10] = axis[8] * scale;
+
+	m[3] = 0;
+	m[7] = 0;
+	m[11] = 0;
+	m[12] = origin[0];
+	m[13] = origin[1];
+	m[14] = origin[2];
+	m[15] = 1.0;
+}
+
+/*
+* Matrix4_QuakeModelview
+*/
+void Matrix4_QuakeModelview( const vec3_t viewOrg, const mat3_t viewAxis, mat4_t m ) {
+	mat4_t view;
+	const mat4_t flip = { 
+		0, 0, -1, 0,
+		-1, 0, 0, 0,
+		0, 1, 0, 0,
+		0, 0, 0, 1
+	};
+
+	Matrix4_Modelview( viewOrg, viewAxis, view );
 	Matrix4_Multiply( flip, view, m );
 }
 

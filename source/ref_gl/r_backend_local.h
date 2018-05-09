@@ -57,7 +57,6 @@ typedef struct {
 	const shader_t *shader;
 	const mfog_t *fog;
 	const portalSurface_t *portalSurface;
-	unsigned int shadowBits;
 	vattribmask_t vattribs; // based on the fields above - cached to avoid rebinding
 	int streamId;
 	int primitive;
@@ -87,6 +86,8 @@ typedef struct r_backend_s {
 
 		int fbWidth, fbHeight;
 
+		float polygonfactor, polygonunits;
+
 		float depthmin, depthmax;
 
 		bool depthoffset;
@@ -102,12 +103,16 @@ typedef struct r_backend_s {
 
 	mat4_t cameraMatrix;
 	mat4_t objectMatrix;
+	mat4_t objectToLightMatrix;
+	vec3_t lightDir;
 	mat4_t modelviewMatrix;
 	mat4_t projectionMatrix;
 	mat4_t modelviewProjectionMatrix;
 	float zNear, zFar;
 
+	int mode;
 	int renderFlags;
+	int surfFlags;
 
 	vec3_t cameraOrigin;
 	mat3_t cameraAxis;
@@ -135,16 +140,12 @@ typedef struct r_backend_s {
 	int maxDrawInstances;
 
 	rbDrawElements_t drawElements;
-	rbDrawElements_t drawShadowElements;
 
 	vattribmask_t currentVAttribs;
 
 	int primitive;
 	int currentVBOId;
 	mesh_vbo_t *currentVBO;
-
-	unsigned int currentDlightBits;
-	unsigned int currentShadowBits;
 
 	const shader_t *skyboxShader;
 	int skyboxSide;
@@ -160,7 +161,7 @@ typedef struct r_backend_s {
 
 	bool triangleOutlines;
 
-	const superLightStyle_t *superLightStyle;
+	const superLightStyle_t *superLightStyle, *realSuperLightStyle;
 
 	uint8_t entityColor[4];
 	uint8_t entityOutlineColor[4];
@@ -179,6 +180,9 @@ typedef struct r_backend_s {
 	float hdrExposure;
 	bool noWorldLight;
 	refScreenTexSet_t st;
+
+	unsigned numRealtimeLights;
+	rtlight_t *rtlights[MAX_DRAWSURF_RTLIGHTS];
 } rbackend_t;
 
 extern rbackend_t rb;

@@ -49,17 +49,32 @@ void R_InitDrawLists( void ) {
 * R_ClearDrawList
 */
 void R_ClearDrawList( drawList_t *list ) {
+	unsigned numSurfaces, numLeafs, numDrawSurfaces;
+	const mbrushmodel_t *bm = rsh.worldBrushModel;
+
 	if( !list ) {
 		return;
 	}
 
-	// clear counters
 	list->numDrawSurfs = 0;
+	memset( &rn.meshlist->bspBatch, 0, sizeof( drawListBatch_t ) );
 
-	// clear VBO slices
-	if( list->vboSlices ) {
-		memset( list->vboSlices, 0, sizeof( *list->vboSlices ) * list->maxVboSlices );
+	if( !bm ) {
+		return;
 	}
+
+	numSurfaces = bm->numsurfaces;
+	numLeafs = bm->numleafs;
+	numDrawSurfaces = bm->numDrawSurfaces;
+
+	clamp_high( numSurfaces, list->numWorldSurfVis );
+	clamp_high( numLeafs, list->numWorldLeafVis );
+	clamp_high( numDrawSurfaces, list->numWorldDrawSurfVis );
+
+	memset( (void *)list->worldSurfVis, 0, numSurfaces * sizeof( *list->worldSurfVis ) );
+	memset( (void *)list->worldSurfFullVis, 0, numSurfaces * sizeof( *list->worldSurfVis ) );
+	memset( (void *)list->worldLeafVis, 0, numLeafs * sizeof( *list->worldLeafVis ) );
+	memset( (void *)list->worldDrawSurfVis, 0, numDrawSurfaces * sizeof( *list->worldDrawSurfVis ) );
 }
 
 /*
@@ -85,6 +100,36 @@ static void R_ReserveDrawSurfaces( drawList_t *list, int minMeshes ) {
 }
 
 /*
+* R_ReserveDrawListWorldSurfaces
+*/
+void R_ReserveDrawListWorldSurfaces( drawList_t *list ) {
+	const mbrushmodel_t *bm = rsh.worldBrushModel;
+
+	if( !list->numWorldSurfVis ) {
+		list->worldSurfVis = R_Malloc( bm->numsurfaces * sizeof( *list->worldSurfVis ) );
+		list->worldSurfFullVis = R_Malloc( bm->numsurfaces * sizeof( *list->worldSurfVis ) );
+	} else if( list->numWorldSurfVis < bm->numsurfaces ) {
+		list->worldSurfVis = R_Realloc( (void *)list->worldSurfVis, bm->numsurfaces * sizeof( *list->worldSurfVis ) );
+		list->worldSurfFullVis = R_Realloc( (void *)list->worldSurfFullVis, bm->numsurfaces * sizeof( *list->worldSurfVis ) );
+	}
+	list->numWorldSurfVis = bm->numsurfaces;
+
+	if( !list->numWorldLeafVis ) {
+		list->worldLeafVis = R_Malloc( bm->numleafs * sizeof( *list->worldLeafVis ) );
+	} else if( list->numWorldLeafVis < bm->numleafs ) {
+		list->worldLeafVis = R_Realloc( (void *)list->worldLeafVis, bm->numleafs * sizeof( *list->worldLeafVis ) );
+	}
+	list->numWorldLeafVis = bm->numleafs;
+
+	if( !list->numWorldDrawSurfVis ) {
+		list->worldDrawSurfVis = R_Malloc( bm->numDrawSurfaces * sizeof( *list->worldDrawSurfVis ) );
+	} else if( list->numWorldDrawSurfVis < bm->numDrawSurfaces ) {
+		list->worldDrawSurfVis = R_Realloc( (void *)list->worldDrawSurfVis, bm->numDrawSurfaces * sizeof( *list->worldDrawSurfVis ) );
+	}
+	list->numWorldDrawSurfVis = bm->numDrawSurfaces;
+}
+
+/*
 * R_PackDistKey
 */
 static int R_PackDistKey( int renderFx, const shader_t *shader, float dist, unsigned order ) {
@@ -93,7 +138,7 @@ static int R_PackDistKey( int renderFx, const shader_t *shader, float dist, unsi
 	shaderSort = shader->sort;
 
 	if( renderFx & RF_WEAPONMODEL ) {
-		bool depthWrite = ( shader->flags & SHADER_DEPTHWRITE ) ? true : false;
+		bool depthWrite = Shader_DepthWrite( shader );
 
 		if( renderFx & RF_NOCOLORWRITE ) {
 			// depth-pass for alpha-blended weapon:
@@ -122,21 +167,24 @@ static int R_PackDistKey( int renderFx, const shader_t *shader, float dist, unsi
 /*
 * R_PackSortKey
 */
-static unsigned int R_PackSortKey( unsigned int shaderNum, int fogNum,
-								   int portalNum, unsigned int entNum ) {
-	return ( shaderNum & 0x7FF ) << 21 | ( ( (unsigned int)( fogNum + 1 ) & 0x1F ) << 16 ) |
-		( entNum & 0x7FF ) << 5 | ( ( ( portalNum + 1 ) & 0x1F ) );
+static uint64_t R_PackSortKey( unsigned int shaderNum, int fogNum, 
+	int superLightStyleNum, int portalNum, unsigned int entNum ) {
+	return 
+		( (uint64_t)shaderNum & 0xFFF ) << 36 | ( ( (uint64_t)( fogNum + 1 ) & 0xFF ) << 28 ) |
+		( ( (unsigned int)( superLightStyleNum + 1 ) & 0xFF ) << 20 ) | ( entNum & 0xFFF ) << 8 |
+		( ( ( portalNum + 1 ) & 0xFF ) );
 }
 
 /*
 * R_UnpackSortKey
 */
-static void R_UnpackSortKey( unsigned int sortKey, unsigned int *shaderNum, int *fogNum,
-							 int *portalNum, unsigned int *entNum ) {
-	*shaderNum = ( sortKey >> 21 ) & 0x7FF;
-	*fogNum = (signed int)( ( sortKey >> 16 ) & 0x1F ) - 1;
-	*entNum = ( sortKey >> 5 ) & 0x7FF;
-	*portalNum = (signed int)( ( sortKey ) & 0x1F ) - 1;
+static void R_UnpackSortKey( uint64_t sortKey, unsigned int *shaderNum, int *fogNum,
+	int *superLightStyleNum, int *portalNum, unsigned int *entNum ) {
+	*shaderNum = ( sortKey >> 36 ) & 0xFFF;
+	*fogNum = (signed int)( ( sortKey >> 28 ) & 0xFF ) - 1;
+	*superLightStyleNum = (signed int)( ( sortKey >> 20 ) & 0xFF ) - 1;
+	*entNum = ( sortKey >> 8 ) & 0xFFF;
+	*portalNum = (signed int)( ( sortKey ) & 0xFF ) - 1;
 }
 
 /*
@@ -155,7 +203,7 @@ unsigned R_PackOpaqueOrder( const mfog_t *fog, const shader_t *shader, int numLi
 	if( dlight ) {
 		order |= 0x40;
 	}
-	// group by dlight
+	// group by fog
 	if( fog != NULL ) {
 		order |= 0x80;
 	}
@@ -171,17 +219,15 @@ unsigned R_PackOpaqueOrder( const mfog_t *fog, const shader_t *shader, int numLi
 * Calculate sortkey and store info used for batching and sorting.
 * All 3D-geometry passes this function.
 */
-void *R_AddSurfToDrawList( drawList_t *list, const entity_t *e, const mfog_t *fog, const shader_t *shader,
-						   float dist, unsigned int order, const portalSurface_t *portalSurf, void *drawSurf ) {
+void *R_AddSurfToDrawList( drawList_t *list, const entity_t *e, const shader_t *shader, const mfog_t *fog,
+	int superLightStyle, float dist, unsigned int order, const portalSurface_t *portalSurf, void *drawSurf ) {
 	int distKey;
 	sortedDrawSurf_t *sds;
 
 	if( !list || !shader ) {
 		return NULL;
 	}
-	if( ( rn.renderFlags & RF_SHADOWMAPVIEW ) && Shader_ReadDepth( shader ) ) {
-		return NULL;
-	}
+
 	if( !rsh.worldBrushModel ) {
 		fog = NULL;
 	}
@@ -207,7 +253,7 @@ void *R_AddSurfToDrawList( drawList_t *list, const entity_t *e, const mfog_t *fo
 	sds = &list->drawSurfs[list->numDrawSurfs++];
 	sds->drawSurf = ( drawSurfaceType_t * )drawSurf;
 	sds->sortKey = R_PackSortKey( shader->id, fog ? fog - rsh.worldBrushModel->fogs : -1,
-		portalSurf ? portalSurf - rn.portalSurfaces : -1, R_ENT2NUM( e ) );
+		superLightStyle, portalSurf ? portalSurf - rn.portalSurfaces : -1, R_ENT2NUM( e ) );
 	sds->distKey = distKey;
 
 	return sds;
@@ -226,12 +272,12 @@ void R_UpdateDrawSurfDistKey( void *psds, int renderFx, const shader_t *shader, 
 */
 portalSurface_t *R_GetDrawListSurfPortal( void *psds ) {
 	sortedDrawSurf_t *sds = psds;
-	unsigned int sortKey = sds->sortKey;
+	uint64_t sortKey = sds->sortKey;
 	unsigned int shaderNum;
 	unsigned int entNum;
-	int portalNum, fogNum;
+	int portalNum, fogNum, lightStyle;
 
-	R_UnpackSortKey( sortKey, &shaderNum, &fogNum, &portalNum, &entNum );
+	R_UnpackSortKey( sortKey, &shaderNum, &fogNum, &lightStyle, &portalNum, &entNum );
 
 	return portalNum >= 0 ? rn.portalSurfaces + portalNum : NULL;
 }
@@ -256,6 +302,13 @@ static int R_DrawSurfCompare( const sortedDrawSurf_t *sbs1, const sortedDrawSurf
 		return -1;
 	}
 
+	if( sbs1->drawSurf > sbs2->drawSurf ) {
+		return 1;
+	}
+	if( sbs2->drawSurf > sbs1->drawSurf ) {
+		return -1;
+	}
+
 	return 0;
 }
 
@@ -274,98 +327,12 @@ void R_SortDrawList( drawList_t *list ) {
 		   ( int ( * )( const void *, const void * ) )R_DrawSurfCompare );
 }
 
-/*
-* R_ReserveVBOSlices
-*
-* Ensures there's enough space to store the minSlices amount of slices
-* plus some more.
-*/
-static void R_ReserveVBOSlices( drawList_t *list, unsigned int minSlices ) {
-	unsigned int oldSize, newSize;
-	vboSlice_t *slices, *newSlices;
-
-	oldSize = list->maxVboSlices;
-	newSize = max( minSlices, oldSize * 2 );
-
-	slices = list->vboSlices;
-	newSlices = R_Malloc( newSize * sizeof( vboSlice_t ) );
-	if( slices ) {
-		memcpy( newSlices, slices, oldSize * sizeof( vboSlice_t ) );
-		R_Free( slices );
-	}
-
-	list->vboSlices = newSlices;
-	list->maxVboSlices = newSize;
-}
-
-/*
-* R_AddDrawListVBOSlice
-*/
-void R_AddDrawListVBOSlice( drawList_t *list, unsigned int index, unsigned int numVerts, unsigned int numElems,
-					unsigned int firstVert, unsigned int firstElem ) {
-	vboSlice_t *slice;
-
-	if( index >= list->maxVboSlices ) {
-		unsigned int minSlices = index + 1;
-		if( rsh.worldBrushModel ) {
-			minSlices = max( rsh.worldBrushModel->numDrawSurfaces, minSlices );
-		}
-		R_ReserveVBOSlices( list, minSlices );
-	}
-
-	slice = &list->vboSlices[index];
-	if( !slice->numVerts ) {
-		// initialize the slice
-		slice->firstVert = firstVert;
-		slice->firstElem = firstElem;
-		slice->numVerts = numVerts;
-		slice->numElems = numElems;
-	} else {
-		if( firstVert < slice->firstVert ) {
-			// prepend
-			slice->numVerts = slice->numVerts + slice->firstVert - firstVert;
-			slice->numElems = slice->numElems + slice->firstElem - firstElem;
-
-			slice->firstVert = firstVert;
-			slice->firstElem = firstElem;
-		} else {
-			// append
-			slice->numVerts = max( slice->numVerts, numVerts + firstVert - slice->firstVert );
-			slice->numElems = max( slice->numElems, numElems + firstElem - slice->firstElem );
-		}
-	}
-}
-
-/*
-* R_GetDrawListVBOSlice
-*/
-vboSlice_t *R_GetDrawListVBOSlice( drawList_t *list, unsigned int index ) {
-	if( index >= list->maxVboSlices ) {
-		return NULL;
-	}
-	return &list->vboSlices[index];
-}
-
-/*
-* R_GetDrawListVBOSliceCounts
-*
-* The initial values are not reset
-*/
-void R_GetVBOSliceCounts( drawList_t *list, unsigned *numSliceVerts, unsigned *numSliceElems ) {
-	unsigned i;
-
-	for( i = 0; i < list->maxVboSlices; i++ ) {
-		*numSliceVerts += list->vboSlices[i].numVerts;
-		*numSliceElems += list->vboSlices[i].numElems;
-	}
-}
-
 static const drawSurf_cb r_drawSurfCb[ST_MAX_TYPES] =
 {
 	/* ST_NONE */
 	NULL,
 	/* ST_BSP */
-	( drawSurf_cb ) & R_DrawBSPSurf,
+	( drawSurf_cb ) NULL,
 	/* ST_SKY */
 	( drawSurf_cb ) & R_DrawSkySurf,
 	/* ST_ALIAS */
@@ -380,6 +347,8 @@ static const drawSurf_cb r_drawSurfCb[ST_MAX_TYPES] =
 	NULL,
 	/* ST_NULLMODEL */
 	( drawSurf_cb ) & R_DrawNullSurf,
+	/* ST_COMPILED_LIGHT */
+	( drawSurf_cb ) & R_DrawCompiledLightSurf,
 };
 
 static const batchDrawSurf_cb r_batchDrawSurfCb[ST_MAX_TYPES] =
@@ -387,7 +356,7 @@ static const batchDrawSurf_cb r_batchDrawSurfCb[ST_MAX_TYPES] =
 	/* ST_NONE */
 	NULL,
 	/* ST_BSP */
-	NULL,
+	( batchDrawSurf_cb ) & R_BatchBSPSurf,
 	/* ST_SKY */
 	NULL,
 	/* ST_ALIAS */
@@ -402,21 +371,74 @@ static const batchDrawSurf_cb r_batchDrawSurfCb[ST_MAX_TYPES] =
 	( batchDrawSurf_cb ) & R_BatchCoronaSurf,
 	/* ST_NULLMODEL */
 	NULL,
+	/* ST_COMPILED_LIGHT */
+	NULL,
+};
+
+static const walkDrawSurf_cb r_walkSurfCb[ST_MAX_TYPES] =
+{
+	/* ST_NONE */
+	NULL,
+	/* ST_BSP */
+	( walkDrawSurf_cb ) & R_WalkBSPSurf,
+	/* ST_SKY */
+	NULL,
+	/* ST_ALIAS */
+	NULL,
+	/* ST_SKELETAL */
+	NULL,
+	/* ST_SPRITE */
+	NULL,
+	/* ST_POLY */
+	NULL,
+	/* ST_CORONA */
+	NULL,
+	/* ST_NULLMODEL */
+	NULL,
+	/* ST_COMPILED_LIGHT */
+	NULL,
+};
+
+static const flushBatchDrawSurf_cb r_flushBatchSurfCb[ST_MAX_TYPES] =
+{
+	/* ST_NONE */
+	NULL,
+	/* ST_BSP */
+	( flushBatchDrawSurf_cb ) & R_FlushBSPSurfBatch,
+	/* ST_SKY */
+	NULL,
+	/* ST_ALIAS */
+	NULL,
+	/* ST_SKELETAL */
+	NULL,
+	/* ST_SPRITE */
+	( flushBatchDrawSurf_cb ) & RB_FlushDynamicMeshes,
+	/* ST_POLY */
+	( flushBatchDrawSurf_cb ) & RB_FlushDynamicMeshes,
+	/* ST_CORONA */
+	( flushBatchDrawSurf_cb ) & RB_FlushDynamicMeshes,
+	/* ST_NULLMODEL */
+	NULL,
+	/* ST_COMPILED_LIGHT */
+	NULL,
 };
 
 /*
 * R_DrawSurfaces
 */
-static void _R_DrawSurfaces( drawList_t *list ) {
+static void _R_DrawSurfaces( drawList_t *list, bool *depthCopied, int mode, int drawSurfTypeFilter, unsigned minSort, unsigned maxSort ) {
 	unsigned int i;
-	unsigned int sortKey;
+	unsigned distKey, sortDist;
+	uint64_t sortKey;
 	unsigned int shaderNum = 0, prevShaderNum = MAX_SHADERS;
 	unsigned int entNum = 0, prevEntNum = MAX_REF_ENTITIES;
 	int portalNum = -1, prevPortalNum = -100500;
 	int fogNum = -1, prevFogNum = -100500;
+	int lightStyle = -1, prevLightStyle = -100500;
 	sortedDrawSurf_t *sds;
 	int drawSurfType;
 	bool batchDrawSurf = false, prevBatchDrawSurf = false;
+	flushBatchDrawSurf_cb batchFlush = NULL;
 	const shader_t *shader;
 	const entity_t *entity;
 	const mfog_t *fog;
@@ -425,11 +447,10 @@ static void _R_DrawSurfaces( drawList_t *list ) {
 	bool depthHack = false, cullHack = false;
 	bool infiniteProj = false, prevInfiniteProj = false;
 	bool depthWrite = false;
-	bool depthCopied = false;
 	bool batchFlushed = true, batchOpaque = false;
+	bool batchMergable = true;
 	int entityFX = 0, prevEntityFX = -1;
 	mat4_t projectionMatrix;
-	unsigned int shadowBits = 0;
 	int riFBO = 0;
 
 	if( !list->numDrawSurfs ) {
@@ -438,42 +459,57 @@ static void _R_DrawSurfaces( drawList_t *list ) {
 
 	riFBO = RB_BoundFrameBufferObject();
 
+	RB_SetMode( mode );
+
 	RB_SetScreenImageSet( rn.st );
 
 	for( i = 0; i < list->numDrawSurfs; i++ ) {
 		sds = list->drawSurfs + i;
+		distKey = sds->distKey;
 		sortKey = sds->sortKey;
+		sortDist = (distKey >> 26) & 31;
 		drawSurfType = *(int *)sds->drawSurf;
 
 		assert( drawSurfType > ST_NONE && drawSurfType < ST_MAX_TYPES );
+		if( drawSurfTypeFilter > ST_NONE && drawSurfType != drawSurfTypeFilter ) {
+			continue;
+		}
+		if( sortDist < minSort ) {
+			continue;
+		}
+		if( sortDist > maxSort ) {
+			break;
+		}
+
+		// decode draw surface properties
+		R_UnpackSortKey( sortKey, &shaderNum, &fogNum, &lightStyle, &portalNum, &entNum );
+
+		entity = R_NUM2ENT( entNum );
+		entityFX = entity->renderfx;
+		fog = fogNum >= 0 ? rsh.worldBrushModel->fogs + fogNum : NULL;
+		portalSurface = portalNum >= 0 ? rn.portalSurfaces + portalNum : NULL;
+		shader = R_ShaderById( shaderNum );
+		depthWrite = Shader_DepthWrite( shader );
+		batchMergable = true;
+
+		if( ( mode == RB_MODE_DEPTH ) && !depthWrite ) {
+			continue;
+		}
 
 		batchDrawSurf = ( r_batchDrawSurfCb[drawSurfType] ? true : false );
 
-		// decode draw surface properties
-		R_UnpackSortKey( sortKey, &shaderNum, &fogNum, &portalNum, &entNum );
-
-		shader = R_ShaderById( shaderNum );
-		entity = R_NUM2ENT( entNum );
-		fog = fogNum >= 0 ? rsh.worldBrushModel->fogs + fogNum : NULL;
-		portalSurface = portalNum >= 0 ? rn.portalSurfaces + portalNum : NULL;
-		entityFX = entity->renderfx;
-		depthWrite = shader->flags & SHADER_DEPTHWRITE ? true : false;
-
 		// see if we need to reset mesh properties in the backend
 		if( !prevBatchDrawSurf || shaderNum != prevShaderNum || fogNum != prevFogNum ||
-			portalNum != prevPortalNum ||
+			portalNum != prevPortalNum || lightStyle != prevLightStyle ||
 			( entNum != prevEntNum && !( shader->flags & SHADER_ENTITY_MERGABLE ) ) ||
 			entityFX != prevEntityFX ) {
 
-			if( prevBatchDrawSurf && !batchDrawSurf ) {
-				RB_FlushDynamicMeshes();
-				batchFlushed = true;
-			}
+			batchMergable = false;
 
 			// hack the depth range to prevent view model from poking into walls
 			if( entity->flags & RF_WEAPONMODEL ) {
 				if( !depthHack ) {
-					RB_FlushDynamicMeshes();
+					if( batchFlush ) batchFlush();
 					batchFlushed = true;
 					depthHack = true;
 					RB_GetDepthRange( &depthmin, &depthmax );
@@ -481,7 +517,7 @@ static void _R_DrawSurfaces( drawList_t *list ) {
 				}
 			} else {
 				if( depthHack ) {
-					RB_FlushDynamicMeshes();
+					if( batchFlush ) batchFlush();
 					batchFlushed = true;
 					depthHack = false;
 					RB_DepthRange( depthmin, depthmax );
@@ -493,7 +529,7 @@ static void _R_DrawSurfaces( drawList_t *list ) {
 				bool oldCullHack = cullHack;
 				cullHack = ( ( entity->flags & RF_CULLHACK ) ? true : false );
 				if( cullHack != oldCullHack ) {
-					RB_FlushDynamicMeshes();
+					if( batchFlush ) batchFlush();
 					batchFlushed = true;
 					RB_FlipFrontFace();
 				}
@@ -503,30 +539,35 @@ static void _R_DrawSurfaces( drawList_t *list ) {
 			// to not pollute the farclip
 			infiniteProj = entity->renderfx & RF_NODEPTHTEST ? true : ( shader->flags & SHADER_SKY ? true : false );
 			if( infiniteProj != prevInfiniteProj ) {
-				RB_FlushDynamicMeshes();
+				if( batchFlush ) batchFlush();
 				batchFlushed = true;
 				if( infiniteProj ) {
 					Matrix4_Copy( rn.projectionMatrix, projectionMatrix );
-					Matrix4_PerspectiveProjectionToInfinity( Z_NEAR, projectionMatrix, glConfig.depthEpsilon );
+					Matrix4_PerspectiveProjectionToInfinity( rn.nearClip, projectionMatrix, glConfig.depthEpsilon );
 					RB_LoadProjectionMatrix( projectionMatrix );
 				} else {
 					RB_LoadProjectionMatrix( rn.projectionMatrix );
 				}
 			}
 
+			if( prevBatchDrawSurf && !batchDrawSurf || batchFlush != r_flushBatchSurfCb[drawSurfType] ) {
+				if( batchFlush ) batchFlush();
+				batchFlushed = true;
+			}
+
 			if( batchFlushed ) {
 				batchOpaque = false;
 			}
 
-			if( !depthWrite && !depthCopied && Shader_ReadDepth( shader ) ) {
+			if( !depthWrite && !*depthCopied && Shader_DepthRead( shader ) ) {
 				// ignore portals because oblique frustum messes up the depth values
-				if( ( rn.renderFlags & RF_SOFT_PARTICLES ) && !( rn.renderFlags & RF_CLIPPLANE ) ) {
+				if( ( rn.renderFlags & (RF_SOFT_PARTICLES|RF_CLIPPLANE) ) == RF_SOFT_PARTICLES ) {
 					int fbo = RB_BoundFrameBufferObject();
 					if( RFB_HasDepthRenderBuffer( fbo ) && rn.st->screenTexCopy ) {
 						// draw all dynamic surfaces that write depth before copying
 						if( batchOpaque ) {
 							batchOpaque = false;
-							RB_FlushDynamicMeshes();
+							if( batchFlush ) batchFlush();
 							batchFlushed = true;
 						}
 						// this also resolves the multisampling fbo
@@ -535,16 +576,16 @@ static void _R_DrawSurfaces( drawList_t *list ) {
 					}
 				}
 
-				depthCopied = true;
+				*depthCopied = true;
 			}
 
 			if( batchDrawSurf ) {
 				// don't transform batched surfaces
-				if( !prevBatchDrawSurf ) {
+				if( !prevBatchDrawSurf || batchFlush != r_flushBatchSurfCb[drawSurfType] ) {
 					RB_LoadObjectMatrix( mat4x4_identity );
 				}
 			} else {
-				if( ( entNum != prevEntNum ) || prevBatchDrawSurf ) {
+				if( ( entNum != prevEntNum ) || prevBatchDrawSurf != batchDrawSurf ) {
 					if( shader->flags & SHADER_AUTOSPRITE ) {
 						R_TranslateForEntity( entity );
 					} else {
@@ -553,16 +594,15 @@ static void _R_DrawSurfaces( drawList_t *list ) {
 				}
 			}
 
-			shadowBits = ( rsc.entShadowBits[entNum] & rn.shadowBits ) & rsc.renderedShadowBits;
-
 			if( !batchDrawSurf ) {
 				assert( r_drawSurfCb[drawSurfType] );
 
 				RB_BindShader( entity, shader, fog );
-				RB_SetPortalSurface( portalSurface );
-				RB_SetShadowBits( shadowBits );
 
-				r_drawSurfCb[drawSurfType]( entity, shader, fog, portalSurface, shadowBits, sds->drawSurf );
+				RB_SetPortalSurface( portalSurface );
+
+				batchFlush = NULL;
+				r_drawSurfCb[drawSurfType]( entity, shader, fog, lightStyle, portalSurface, sds->drawSurf );
 			}
 
 			prevShaderNum = shaderNum;
@@ -572,28 +612,86 @@ static void _R_DrawSurfaces( drawList_t *list ) {
 			prevPortalNum = portalNum;
 			prevInfiniteProj = infiniteProj;
 			prevEntityFX = entityFX;
+			prevLightStyle = lightStyle;
 		}
 
 		if( batchDrawSurf ) {
-			r_batchDrawSurfCb[drawSurfType]( entity, shader, fog, portalSurface, shadowBits, sds->drawSurf );
+			batchFlush = r_flushBatchSurfCb[drawSurfType];
+			r_batchDrawSurfCb[drawSurfType]( entity, shader, fog, lightStyle, portalSurface, sds->drawSurf, batchMergable );
 			batchFlushed = false;
 			if( depthWrite ) {
 				batchOpaque = true;
 			}
+			batchMergable = false;
 		}
 	}
 
 	if( batchDrawSurf ) {
-		RB_FlushDynamicMeshes();
+		if( batchFlush ) batchFlush();
 	}
+
 	if( depthHack ) {
 		RB_DepthRange( depthmin, depthmax );
 	}
 	if( cullHack ) {
 		RB_FlipFrontFace();
 	}
+	if( infiniteProj ) {
+		RB_LoadProjectionMatrix( rn.projectionMatrix );
+	}
 
 	RB_BindFrameBufferObject( riFBO );
+}
+
+/*
+* R_DrawLightSurfaces
+*/
+static void R_DrawLightSurfaces( drawList_t *list ) {
+	bool depthCopied = false;
+
+	_R_DrawSurfaces( list, &depthCopied, RB_MODE_LIGHT, ST_NONE, SHADER_SORT_NONE, SHADER_SORT_BANNER );
+}
+
+/*
+* R_DrawShadowSurfaces
+*/
+static void R_DrawShadowSurfaces( drawList_t *list ) {
+	bool depthCopied = false;
+
+	_R_DrawSurfaces( list, &depthCopied, RB_MODE_DEPTH, ST_NONE, SHADER_SORT_NONE, SHADER_SORT_BANNER );
+}
+
+/*
+* R_DrawForwardRtLightSurfaces
+*/
+static void R_DrawForwardRtLightSurfaces( drawList_t *list ) {
+	bool depthCopied = false, _dummy = false;
+
+	// early Z-pass
+	_R_DrawSurfaces( list, &depthCopied, RB_MODE_DEPTH, ST_NONE, SHADER_SORT_NONE, SHADER_SORT_BANNER );
+
+	// clear color to black for portal surfaces that fail the Z-test
+	_R_DrawSurfaces( rn.portalmasklist, &_dummy, RB_MODE_BLACK_GT, ST_NONE, SHADER_SORT_PORTAL, SHADER_SORT_SKY );
+
+	// draw additive lights
+	R_DrawRtLights();
+
+	// draw decal passes for opaque shaders
+	_R_DrawSurfaces( list, &depthCopied, RB_MODE_POST_LIGHT, ST_NONE, SHADER_SORT_NONE, SHADER_SORT_BANNER );
+
+	// draw decals, translucent surfaces, etc
+	_R_DrawSurfaces( list, &depthCopied, RB_MODE_DECALS, ST_NONE, SHADER_SORT_BANNER+1, SHADER_SORT_MAX );
+
+	RB_SetMode( RB_MODE_NORMAL );
+}
+
+/*
+* R_DrawPortalSurfaces
+*/
+void R_DrawPortalSurfaces( drawList_t *list ) {
+	bool depthCopied = false;
+
+	_R_DrawSurfaces( list, &depthCopied, RB_MODE_NORMAL, ST_NONE, SHADER_SORT_PORTAL, SHADER_SORT_PORTAL );
 }
 
 /*
@@ -601,11 +699,35 @@ static void _R_DrawSurfaces( drawList_t *list ) {
 */
 void R_DrawSurfaces( drawList_t *list ) {
 	bool triOutlines;
+	bool depthCopied = false;
+
+	triOutlines = RB_EnableTriangleOutlines( false );
+	if( !triOutlines ) {
+		if( rn.renderFlags & RF_LIGHTVIEW ) {
+			R_DrawLightSurfaces( list );
+		} else if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
+			R_DrawShadowSurfaces( list );
+		} else if( rn.numRealtimeLights ) {
+			R_DrawForwardRtLightSurfaces( list );
+		} else {
+			_R_DrawSurfaces( list, &depthCopied, RB_MODE_NORMAL, ST_NONE, SHADER_SORT_NONE, SHADER_SORT_MAX );
+		}
+	}
+
+	RB_EnableTriangleOutlines( triOutlines );
+}
+
+/*
+* R_DrawSkySurfaces
+*/
+void R_DrawSkySurfaces( drawList_t *list ) {
+	bool triOutlines;
+	bool depthCopied = false;
 
 	triOutlines = RB_EnableTriangleOutlines( false );
 	if( !triOutlines ) {
 		// do not recurse into normal mode when rendering triangle outlines
-		_R_DrawSurfaces( list );
+		_R_DrawSurfaces( list, &depthCopied, RB_MODE_NORMAL, ST_SKY, SHADER_SORT_SKY, SHADER_SORT_SKY );
 	}
 	RB_EnableTriangleOutlines( triOutlines );
 }
@@ -615,16 +737,49 @@ void R_DrawSurfaces( drawList_t *list ) {
 */
 void R_DrawOutlinedSurfaces( drawList_t *list ) {
 	bool triOutlines;
+	bool depthCopied = false;
 
-	if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
+	if( rn.renderFlags & (RF_LIGHTVIEW|RF_SHADOWMAPVIEW) ) {
 		return;
 	}
 
 	// properly store and restore the state, as the
 	// R_DrawOutlinedSurfaces calls can be nested
 	triOutlines = RB_EnableTriangleOutlines( true );
-	_R_DrawSurfaces( list );
+	_R_DrawSurfaces( list, &depthCopied, RB_MODE_NORMAL, ST_NONE, SHADER_SORT_NONE, SHADER_SORT_MAX );
 	RB_EnableTriangleOutlines( triOutlines );
+}
+
+/*
+* R_WalkDrawList
+*/
+void R_WalkDrawList( drawList_t *list, walkDrawSurf_cb_cb cb, void *ptr ) {
+	unsigned i;
+	sortedDrawSurf_t *sds;
+	int drawSurfType;
+	uint64_t sortKey;
+	unsigned int shaderNum;
+	unsigned int entNum;
+	int portalNum, fogNum, lightStyleNum;
+	walkDrawSurf_cb walkCb;
+
+	if( !cb ) {
+		return;
+	}
+
+	for( i = 0; i < list->numDrawSurfs; i++ ) {
+		sds = list->drawSurfs + i;
+		sortKey = sds->sortKey;
+		drawSurfType = *(int *)sds->drawSurf;
+
+		// decode draw surface properties
+		R_UnpackSortKey( sortKey, &shaderNum, &fogNum, &lightStyleNum, &portalNum, &entNum );
+
+		walkCb = r_walkSurfCb[drawSurfType];
+		if( walkCb ) {
+			walkCb( R_NUM2ENT( entNum ), R_ShaderById( shaderNum ), lightStyleNum, sds->drawSurf, cb, ptr );
+		}
+	}
 }
 
 /*

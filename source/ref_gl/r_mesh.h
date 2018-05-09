@@ -20,6 +20,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef R_MESH_H
 #define R_MESH_H
 
+#include "r_surface.h"
+
 struct shader_s;
 struct mfog_s;
 struct portalSurface_s;
@@ -45,25 +47,47 @@ typedef struct mesh_s {
 } mesh_t;
 
 typedef struct {
-	unsigned int firstVert, firstElem;
-	unsigned int numVerts, numElems; // real counts, including the overdraw
-} vboSlice_t;
-
-typedef struct {
 	unsigned int distKey;
-	unsigned int sortKey;
-	drawSurfaceType_t   *drawSurf;
+	uint64_t sortKey;
+	drawSurfaceType_t *drawSurf;
 } sortedDrawSurf_t;
 
 typedef struct {
-	unsigned int numDrawSurfs, maxDrawSurfs;
-	sortedDrawSurf_t    *drawSurfs;
+	int vbo;
+	unsigned count;
+	unsigned firstVert, numVerts;
+	unsigned firstElem, numElems;
+	int lightStyleNum;
+	void *lastDrawSurf;
+	entity_t *entity;
+	struct shader_s *shader;
+	struct mfog_s *fog;
+	struct portalSurface_s *portalSurface;
+} drawListBatch_t;
 
-	unsigned int maxVboSlices;
-	vboSlice_t          *vboSlices;
+typedef struct {
+	unsigned int numDrawSurfs, maxDrawSurfs;
+	sortedDrawSurf_t *drawSurfs;
+
+	drawListBatch_t bspBatch;
+
+	unsigned int numWorldSurfVis;
+	volatile unsigned char *worldSurfVis;
+	volatile unsigned char *worldSurfFullVis;
+
+	unsigned int numWorldLeafVis;
+	volatile unsigned char *worldLeafVis;
+
+	unsigned int numWorldDrawSurfVis;
+	volatile unsigned char *worldDrawSurfVis;
 } drawList_t;
 
-typedef void (*drawSurf_cb)( const entity_t *, const struct shader_s *, const struct mfog_s *, const struct portalSurface_s *, unsigned int, void * );
-typedef void (*batchDrawSurf_cb)( const entity_t *, const struct shader_s *, const struct mfog_s *, const struct portalSurface_s *, unsigned int, void * );
+typedef void *(*drawSurf_cb)( const entity_t *, const struct shader_s *, const struct mfog_s *, int, const struct portalSurface_s *, void * );
+
+typedef void (*flushBatchDrawSurf_cb)( void );
+typedef void (*batchDrawSurf_cb)( const entity_t *, const struct shader_s *, const struct mfog_s *, int, const struct portalSurface_s *, void *, bool );
+
+typedef void (*walkDrawSurf_cb_cb)( void *, const entity_t *, const struct shader_s *, int, void *, void *p );
+typedef void (*walkDrawSurf_cb)( const entity_t *, const struct shader_s *, int, void *, walkDrawSurf_cb_cb, void * );
 
 #endif // R_MESH_H

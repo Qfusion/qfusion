@@ -20,6 +20,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef R_SURFACE_H
 #define R_SURFACE_H
 
+#define MAX_DRAWSURF_RTLIGHTS	32 //
+#define MAX_DRAWSURF_SURFS		128 // limit the number of surfaces to a sane 8-bit integer
+
 typedef enum {
 	ST_NONE,
 	ST_BSP,
@@ -30,6 +33,7 @@ typedef enum {
 	ST_POLY,
 	ST_CORONA,
 	ST_NULLMODEL,
+	ST_COMPILED_LIGHT,
 
 	ST_MAX_TYPES,
 
@@ -41,33 +45,36 @@ typedef struct {
 
 	unsigned int visFrame;          // should be drawn when node is crossed
 
-	unsigned int shadowBits;
-	unsigned int shadowFrame;
-
-	unsigned int dlightBits;
-	unsigned int dlightFrame;
-
 	unsigned int numVerts;
 	unsigned int numElems;
 
+	unsigned int numWorldSurfaces;
+
 	unsigned int firstVboVert, firstVboElem;
 
-	unsigned int firstWorldSurface, numWorldSurfaces;
-
 	unsigned int numInstances;
-	instancePoint_t *instances;
+
+	int superLightStyle;
 
 	unsigned int numLightmaps;
+
+	unsigned int numRtLights;
+
+	unsigned int surfFlags;
+
+	int vbo;
+
+	unsigned int *worldSurfaces; // [numSurfaces]
+
+	instancePoint_t *instances;
 
 	struct shader_s *shader;
 
 	struct mfog_s *fog;
 
-	struct mesh_vbo_s *vbo;
-
-	struct superLightStyle_s *superLightStyle;
-
 	void *listSurf;                 // only valid if visFrame == rf.frameCount
+
+	struct rtlight_s *rtLights[MAX_DRAWSURF_RTLIGHTS];
 } drawSurfaceBSP_t;
 
 typedef struct {
@@ -109,5 +116,17 @@ typedef struct {
 	elem_t *elems;
 	struct shader_s *shader;
 } drawSurfacePoly_t;
+
+typedef struct {
+	drawSurfaceType_t type;
+
+	int vbo;
+
+	int firstVert, numVerts;
+	int firstElem, numElems;
+
+	int numInstances;
+	instancePoint_t *instances;
+} drawSurfaceCompiledLight_t;
 
 #endif // R_SURFACE_H

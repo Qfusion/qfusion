@@ -27,6 +27,16 @@ enum {
 	RB_VBO_NUM_STREAMS          = -RB_VBO_STREAM_COMPACT
 };
 
+enum {
+	RB_MODE_NORMAL,
+	RB_MODE_DEPTH,
+	RB_MODE_BLACK_GT,
+	RB_MODE_LIGHT,
+	RB_MODE_POST_LIGHT,
+	RB_MODE_DECALS,
+	RB_MODE_TRIANGLE_OUTLINES,
+};
+
 //===================================================================
 
 struct shader_s;
@@ -48,6 +58,7 @@ void RB_LoadCameraMatrix( const mat4_t m );
 void RB_LoadObjectMatrix( const mat4_t m );
 void RB_LoadProjectionMatrix( const mat4_t m );
 
+void RB_PolygonOffset( float factor, float units );
 void RB_DepthRange( float depthmin, float depthmax );
 void RB_GetDepthRange( float* depthmin, float *depthmax );
 void RB_DepthOffset( bool enable );
@@ -71,29 +82,28 @@ void RB_BlitFrameBufferObject( int src, int dest, int bitMask, int mode, int fil
 void RB_BindVBO( int id, int primitive );
 
 void RB_AddDynamicMesh( const entity_t *entity, const shader_t *shader,
-						const struct mfog_s *fog, const struct portalSurface_s *portalSurface, unsigned int shadowBits,
+						const struct mfog_s *fog, const struct portalSurface_s *portalSurface,
 						const struct mesh_s *mesh, int primitive, float x_offset, float y_offset );
 void RB_FlushDynamicMeshes( void );
 
-void RB_DrawElements( int firstVert, int numVerts, int firstElem, int numElems,
-					  int firstShadowVert, int numShadowVerts, int firstShadowElem, int numShadowElems );
+void RB_DrawElements( int firstVert, int numVerts, int firstElem, int numElems );
 void RB_DrawElementsInstanced( int firstVert, int numVerts, int firstElem, int numElems,
-							   int firstShadowVert, int numShadowVerts, int firstShadowElem, int numShadowElems,
 							   int numInstances, instancePoint_t *instances );
 
 void RB_FlushTextureCache( void );
 
 // shader
 void RB_BindShader( const entity_t *e, const struct shader_s *shader, const struct mfog_s *fog );
-void RB_SetLightstyle( const struct superLightStyle_s *lightStyle );
-void RB_SetDlightBits( unsigned int dlightBits );
-void RB_SetShadowBits( unsigned int shadowBits );
+void RB_SetLightstyle( const struct superLightStyle_s *lightStyle, const struct superLightStyle_s *realLightStyle );
 void RB_SetBonesData( int numBones, dualquat_t *dualQuats, int maxWeights );
 void RB_SetPortalSurface( const struct portalSurface_s *portalSurface );
 void RB_SetSkyboxShader( const shader_t *shader );
 void RB_SetSkyboxSide( int side );
+void RB_SetMode( int mode );
+void RB_SetSurfFlags( int flags );
 void RB_SetRenderFlags( int flags );
 void RB_SetLightParams( float minLight, bool noWorldLight, float hdrExposure );
+void RB_SetRtLightParams( unsigned numRtLights, rtlight_t **rtlights, unsigned numSurfs, unsigned *surfRtLightBits );
 void RB_SetShaderStateMask( int ANDmask, int ORmask );
 void RB_SetCamera( const vec3_t cameraOrigin, const mat3_t cameraAxis );
 bool RB_EnableTriangleOutlines( bool enable );

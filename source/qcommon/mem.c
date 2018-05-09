@@ -215,6 +215,19 @@ void *_Mem_Realloc( void *data, size_t size, const char *filename, int fileline 
 	}
 
 	mem = ( memheader_t * )( (uint8_t *) data - sizeof( memheader_t ) );
+
+	assert( mem->sentinel1 == MEMHEADER_SENTINEL1 );
+	assert( *( (uint8_t *) mem + sizeof( memheader_t ) + mem->size ) == MEMHEADER_SENTINEL2 );
+
+	if( mem->sentinel1 != MEMHEADER_SENTINEL1 ) {
+		_Mem_Error( "Mem_Realloc: trashed header sentinel 1 (alloc at %s:%i, free at %s:%i)", 
+			mem->filename, mem->fileline, filename, fileline );
+	}
+	if( *( (uint8_t *)mem + sizeof( memheader_t ) + mem->size ) != MEMHEADER_SENTINEL2 ) {
+		_Mem_Error( "Mem_Realloc: trashed header sentinel 2 (alloc at %s:%i, free at %s:%i)", 
+			mem->filename, mem->fileline, filename, fileline );
+	}
+
 	if( size <= mem->size ) {
 		return data;
 	}

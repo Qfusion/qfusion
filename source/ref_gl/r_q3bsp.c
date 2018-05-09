@@ -40,7 +40,7 @@ static int loadmodel_numsurfelems;
 static elem_t *loadmodel_surfelems;
 
 static int loadmodel_numlightmaps;
-static mlightmapRect_t *loadmodel_lightmapRects;
+static lightmapRect_t *loadmodel_lightmapRects;
 
 static int loadmodel_numshaderrefs;
 static mshaderref_t *loadmodel_shaderrefs;
@@ -301,7 +301,7 @@ static void Mod_LoadFaces( const lump_t *l ) {
 		int fogNum;
 		mshaderref_t *shaderRef;
 		shaderType_e shaderType;
-		mlightmapRect_t *lmRects[MAX_LIGHTMAPS];
+		lightmapRect_t *lmRects[MAX_LIGHTMAPS];
 		int lightmaps[MAX_LIGHTMAPS];
 		uint8_t lightmapStyles[MAX_LIGHTMAPS], vertexStyles[MAX_LIGHTMAPS];
 
@@ -511,15 +511,25 @@ static void Mod_LoadSubmodels( const lump_t *l ) {
 	loadbmodel->inlines = mod_inline;
 
 	for( i = 0; i < count; i++, in++, out++ ) {
+		vec3_t origin, mins, maxs;
+
 		mod_inline[i].extradata = bmodel + i;
 
 		for( j = 0; j < 3; j++ ) {
 			// spread the mins / maxs by a pixel
 			out->mins[j] = LittleFloat( in->mins[j] ) - 1;
 			out->maxs[j] = LittleFloat( in->maxs[j] ) + 1;
+			origin[j] = (out->mins[j] + out->maxs[j]) * 0.5f;
 		}
 
-		out->radius = RadiusFromBounds( out->mins, out->maxs );
+		// the bounds are from world to local coordinates
+		// otherwise bmodel radius isn't going make any sense
+		for( j = 0; j < 3; j++ ) {
+			mins[j] = out->mins[j] - origin[j];
+			maxs[j] = out->maxs[j] - origin[j];
+		}
+
+		out->radius = RadiusFromBounds( mins, maxs );
 		out->firstModelSurface = LittleLong( in->firstface );
 		out->numModelSurfaces = LittleLong( in->numfaces );
 	}
@@ -1428,7 +1438,7 @@ static void Mod_LoadEntities( const lump_t *l, vec3_t gridSize, vec3_t ambient, 
 	int n;
 	char *data;
 	bool isworld;
-	float gridsizef[3] = { 0, 0, 0 }, colorf[3] = { 0, 0, 0 }, ambientf = 0;
+	float gridsizef[3] = { 0, 0, 0 }, colorf[3] = { 0, 0, 0 }, originf[3], ambientf = 0;
 	char key[MAX_KEY], value[MAX_VALUE], *token;
 	float celcolorf[3] = { 0, 0, 0 };
 
@@ -1441,12 +1451,18 @@ static void Mod_LoadEntities( const lump_t *l, vec3_t gridSize, vec3_t ambient, 
 	VectorClear( outline );
 
 	data = (char *)mod_base + l->fileofs;
-	if( !data || !data[0] ) {
+	if( !data[0] ) {
 		return;
 	}
 
+	loadbmodel->entityStringLen = l->filelen;
+	loadbmodel->entityString = ( char * )Mod_Malloc( loadmodel, l->filelen + 1 );
+	memcpy( loadbmodel->entityString, data, l->filelen );
+	loadbmodel->entityString[l->filelen] = '\0';
+
 	for(; ( token = COM_Parse( &data ) ) && token[0] == '{'; ) {
 		isworld = false;
+		VectorClear( colorf );
 
 		while( 1 ) {
 			token = COM_Parse( &data );
@@ -1490,6 +1506,15 @@ static void Mod_LoadEntities( const lump_t *l, vec3_t gridSize, vec3_t ambient, 
 					sscanf( value, "%3i %3i %3i", &colori[0], &colori[1], &colori[2] );
 					VectorCopy( colori, colorf );
 				}
+			} else if( !strcmp( key, "color" ) ) {
+				n = sscanf( value, "%8f %8f %8f", &colorf[0], &colorf[1], &colorf[2] );
+				if( n != 3 ) {
+					int colori[3] = { 0, 0, 0 };
+					sscanf( value, "%3i %3i %3i", &colori[0], &colori[1], &colori[2] );
+					VectorCopy( colori, colorf );
+				}
+			} else if( !strcmp( key, "origin" ) ) {
+				n = sscanf( value, "%8f %8f %8f", &originf[0], &originf[1], &originf[2] );
 			} else if( !strcmp( key, "_forceclear" ) ) {
 				if( atof( value ) != 0 ) {
 					mapConfig.forceClear = true;
@@ -1516,7 +1541,6 @@ static void Mod_LoadEntities( const lump_t *l, vec3_t gridSize, vec3_t ambient, 
 				VectorScale( celcolorf, 1.0f / 255.0f, celcolorf );   // [0..1] RGB -> [0..255] RGB
 			}
 			VectorCopy( celcolorf, outline );
-			break;
 		}
 	}
 }
@@ -1529,7 +1553,7 @@ static void Mod_ApplySuperStylesToFace( const rdface_t *in, msurface_t *out ) {
 	float *lmArray;
 	uint8_t *lmlayersArray;
 	mesh_t *mesh = &out->mesh;
-	mlightmapRect_t *lmRects[MAX_LIGHTMAPS];
+	lightmapRect_t *lmRects[MAX_LIGHTMAPS];
 	int lightmaps[MAX_LIGHTMAPS];
 	uint8_t lightmapStyles[MAX_LIGHTMAPS], vertexStyles[MAX_LIGHTMAPS];
 

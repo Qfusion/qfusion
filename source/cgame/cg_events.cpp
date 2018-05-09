@@ -116,10 +116,13 @@ static void _LaserImpact( trace_t *trace, vec3_t dir ) {
 	// it's a brush model
 	if( trace->ent == 0 || !( cg_entities[trace->ent].current.effects & EF_TAKEDAMAGE ) ) {
 		vec4_t color;
+		vec3_t origin;
 
-		CG_LaserGunImpact( trace->endpos, trace->plane.normal, 15.0f, dir, _LaserColor( color ) );
+		VectorMA( trace->endpos, IMPACT_POINT_OFFSET, trace->plane.normal, origin );
 
-		CG_AddLightToScene( trace->endpos, 100, 0.75f, 0.75f, 0.375f );
+		CG_LaserGunImpact( origin, 15.0f, dir, _LaserColor( color ) );
+
+		CG_AddLightToScene( origin, 100, 0.75f, 0.75f, 0.375f );
 		return;
 	}
 

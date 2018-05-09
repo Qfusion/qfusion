@@ -41,45 +41,11 @@ typedef unsigned short elem_t;
 
 typedef vec_t instancePoint_t[8]; // quaternion for rotation + xyz pos + uniform scale
 
+#include "r_math.h"
+
 #define NUM_CUSTOMCOLORS        16
 
 #define NUM_LOADER_THREADS      4 // optimal value found by testing, when there are too many, CPU usage may be 100%
-
-enum {
-	QGL_CONTEXT_MAIN,
-	QGL_CONTEXT_LOADER,
-	NUM_QGL_CONTEXTS = QGL_CONTEXT_LOADER + NUM_LOADER_THREADS
-};
-
-#include "r_math.h"
-#include "r_public.h"
-#include "r_vattribs.h"
-
-typedef struct {
-	vec3_t origin;
-	vec3_t color;
-	float intensity;
-} dlight_t;
-
-typedef struct superLightStyle_s {
-	vattribmask_t vattribs;
-	int lightmapNum[MAX_LIGHTMAPS];
-	int lightmapStyles[MAX_LIGHTMAPS];
-	int vertexStyles[MAX_LIGHTMAPS];
-	float stOffset[MAX_LIGHTMAPS][2];
-} superLightStyle_t;
-
-#include "r_glimp.h"
-#include "r_surface.h"
-#include "r_image.h"
-#include "r_mesh.h"
-#include "r_shader.h"
-#include "r_backend.h"
-#include "r_shadow.h"
-#include "r_model.h"
-#include "r_trace.h"
-#include "r_program.h"
-#include "r_jobs.h"
 
 #ifdef CGAMEGETLIGHTORIGIN
 #define SHADOW_MAPPING          2
@@ -91,6 +57,8 @@ typedef struct superLightStyle_s {
 #define SUBDIVISIONS_MAX        16
 #define SUBDIVISIONS_DEFAULT    5
 
+#define MIN_FRAMECACHE_SIZE		32 * 1024
+
 #define MAX_PORTAL_SURFACES     32
 #define MAX_PORTAL_TEXTURES     64
 
@@ -98,10 +66,13 @@ typedef struct superLightStyle_s {
 
 #define BACKFACE_EPSILON        4
 
-#define ON_EPSILON              0.1         // point on plane side epsilon
+#define ON_EPSILON              0.03125 // 1/32 to keep floating point happy
 
 #define Z_NEAR                  4.0f
 #define Z_BIAS                  64.0f
+
+#define POLYOFFSET_FACTOR       -2.0f
+#define POLYOFFSET_UNITS        -1.0f
 
 #define SIDE_FRONT              0
 #define SIDE_BACK               1
@@ -122,14 +93,54 @@ typedef struct superLightStyle_s {
 #define RF_SOFT_PARTICLES       RF_BIT( 9 )
 #define RF_PORTAL_CAPTURE       RF_BIT( 10 )
 #define RF_SHADOWMAPVIEW_RGB    RF_BIT( 11 )
+#define RF_LIGHTVIEW            RF_BIT( 12 )
+#define RF_NOENTS               RF_BIT( 13 )
 
 #define RF_CUBEMAPVIEW          ( RF_ENVVIEW )
-#define RF_NONVIEWERREF         ( RF_PORTALVIEW | RF_MIRRORVIEW | RF_ENVVIEW | RF_SHADOWMAPVIEW )
+#define RF_NONVIEWERREF         ( RF_PORTALVIEW | RF_MIRRORVIEW | RF_ENVVIEW | RF_SHADOWMAPVIEW | RF_LIGHTVIEW )
 
-#define MAX_REF_SCENES          32 // max scenes rendered per frame
 #define MAX_REF_ENTITIES        ( MAX_ENTITIES + 48 ) // must not exceed 2048 because of sort key packing
 
+#define MAX_ENT_RTLIGHTS		8
+#define MAX_SCENE_RTLIGHTS		1024
+
+enum {
+	QGL_CONTEXT_MAIN,
+	QGL_CONTEXT_LOADER,
+	NUM_QGL_CONTEXTS = QGL_CONTEXT_LOADER + NUM_LOADER_THREADS
+};
+
+#include "r_public.h"
+#include "r_vattribs.h"
+#include "r_light.h"
+#include "r_glimp.h"
+#include "r_surface.h"
+#include "r_image.h"
+#include "r_mesh.h"
+#include "r_shader.h"
+#include "r_backend.h"
+#include "r_shadow.h"
+#include "r_model.h"
+#include "r_trace.h"
+#include "r_program.h"
+#include "r_jobs.h"
+#include "r_portals.h"
+
+extern const elem_t r_boxedges[24];
+
 //===================================================================
+
+// cached for this frame for zero LOD
+typedef struct {
+	int mod_type;
+	bool rotated;
+	float radius;
+
+	vec3_t mins, maxs;
+	vec3_t absmins, absmaxs;
+
+	struct mfog_s *fog;
+} entSceneCache_t;
 
 typedef struct refScreenTexSet_s {
 	image_t         *screenTex;
@@ -142,20 +153,9 @@ typedef struct refScreenTexSet_s {
 	int multisampleTarget;                // multisample fbo
 } refScreenTexSet_t;
 
-typedef struct portalSurface_s {
-	const entity_t  *entity;
-	cplane_t plane, untransformed_plane;
-	const shader_t  *shader;
-	vec3_t mins, maxs, centre;
-	image_t         *texures[2];            // front and back portalmaps
-	skyportal_t     *skyPortal;
-} portalSurface_t;
-
-typedef struct {
+typedef struct refinst_s {
+	unsigned int clipFlags;
 	unsigned int renderFlags;
-	unsigned int dlightBits;
-
-	unsigned int shadowBits;
 
 	int renderTarget;                       // target framebuffer object
 	bool multisampleDepthResolved;
@@ -169,11 +169,19 @@ typedef struct {
 	vec3_t viewOrigin;
 	mat3_t viewAxis;
 	cplane_t frustum[6];
-	float farClip;
-	unsigned int clipFlags;
+	vec3_t frustumCorners[4];
+
+	cplane_t deformedFrustum[6];
+	int numDeformedFrustumPlanes;
+
+	float nearClip, farClip;
+	float polygonFactor, polygonUnits;
+
 	vec3_t visMins, visMaxs;
 	float visFarClip;
 	float hdrExposure;
+
+	int viewcluster, viewarea;
 
 	vec3_t lodOrigin;
 	vec3_t pvsOrigin;
@@ -190,14 +198,27 @@ typedef struct {
 
 	drawSurfaceSky_t skyDrawSurface;
 
-	float lod_dist_scale_for_fov;
+	int lodBias;
+	float lodScale;
 
 	unsigned int numPortalSurfaces;
 	unsigned int numDepthPortalSurfaces;
 	portalSurface_t portalSurfaces[MAX_PORTAL_SURFACES];
 	portalSurface_t *skyportalSurface;
 
+	rtlight_t *rtlights[MAX_SCENE_RTLIGHTS];
+	unsigned numRealtimeLights;
+
 	refdef_t refdef;
+
+	unsigned int numEntities;
+	int *entities;
+	uint8_t *entpvs;
+
+	struct refinst_s *parent;
+
+	int				rtLightSide;
+	rtlight_t		*rtLight;
 
 	refScreenTexSet_t *st;                  // points to either either a 8bit or a 16bit float set
 
@@ -205,9 +226,9 @@ typedef struct {
 	drawList_t      *portalmasklist;        // sky and portal BSP surfaces are rendered before (sky-)portals
 											// to create depth mask
 
-	shadowGroup_t   *shadowGroup;
-
 	mfog_t          *fog_eye;
+
+	uint8_t			*pvs, *areabits;
 } refinst_t;
 
 //====================================================
@@ -244,7 +265,7 @@ typedef struct {
 	image_t         *particleTexture;           // little dot for particles
 	image_t         *coronaTexture;
 	image_t         *portalTextures[MAX_PORTAL_TEXTURES + 1];
-	image_t         *shadowmapTextures[MAX_SHADOWGROUPS];
+	image_t         *shadowmapAtlasTexture;
 
 	refScreenTexSet_t st, stf, st2D;
 
@@ -252,6 +273,7 @@ typedef struct {
 	shader_t        *skyShader;
 	shader_t        *whiteShader;
 	shader_t        *emptyFogShader;
+	shader_t		*depthOnlyShader;
 
 	byte_vec4_t customColors[NUM_CUSTOMCOLORS];
 } r_shared_t;
@@ -260,9 +282,12 @@ typedef struct {
 	// bumped each R_ClearScene
 	unsigned int frameCount;
 
+	int worldModelSequence;
+
 	unsigned int numEntities;
 	unsigned int numLocalEntities;
 	entity_t entities[MAX_REF_ENTITIES];
+	entSceneCache_t entSceneCache[MAX_REF_ENTITIES];
 	entity_t        *worldent;
 	entity_t        *polyent;
 	entity_t        *polyweapent;
@@ -270,7 +295,7 @@ typedef struct {
 	entity_t        *skyent;
 
 	unsigned int numDlights;
-	dlight_t dlights[MAX_DLIGHTS];
+	rtlight_t dlights[MAX_DLIGHTS];
 
 	unsigned int numPolys;
 	drawSurfacePoly_t polys[MAX_POLYS];
@@ -278,17 +303,9 @@ typedef struct {
 	lightstyle_t lightStyles[MAX_LIGHTSTYLES];
 
 	unsigned int numBmodelEntities;
-	entity_t        *bmodelEntities[MAX_REF_ENTITIES];
-
-	unsigned int maxShadowGroups;
-	unsigned int numShadowGroups;
-	shadowGroup_t shadowGroups[MAX_REF_ENTITIES];
-	unsigned int entShadowGroups[MAX_REF_ENTITIES];
-	unsigned int entShadowBits[MAX_REF_ENTITIES];
+	int bmodelEntities[MAX_REF_ENTITIES];
 
 	float farClipMin, farClipBias;
-
-	unsigned int renderedShadowBits;
 
 	refdef_t refdef;
 } r_scene_t;
@@ -312,19 +329,18 @@ typedef struct {
 	float cameraSeparation;
 	int swapInterval;
 
-	int worldModelSequence;
-
 	// used for dlight push checking
 	unsigned int frameCount;
 
-	int viewcluster, viewarea;
-
 	struct {
 		unsigned int c_brush_polys, c_world_leafs;
-		unsigned int c_slices_verts, c_slices_elems;
 		unsigned int c_world_draw_surfs;
+		unsigned int c_world_lights, c_dynamic_lights;
+		unsigned int c_world_light_shadows, c_dynamic_light_shadows;
+		unsigned int c_ents_total, c_ents_bmodels;
 		unsigned int t_cull_world_nodes, t_cull_world_surfs;
-		unsigned int t_world_node;
+		unsigned int t_cull_rtlights;
+		unsigned int t_world_node, t_light_node;
 		unsigned int t_add_world_surfs;
 		unsigned int t_add_polys, t_add_entities;
 		unsigned int t_draw_meshes;
@@ -341,24 +357,15 @@ typedef struct {
 	char speedsMsg[2048];
 	qmutex_t        *speedsMsgLock;
 
+	rtrace_t		debugTrace;
 	msurface_t      *debugSurface;
 	qmutex_t        *debugSurfaceLock;
-
-	unsigned int numWorldSurfVis;
-	volatile unsigned char *worldSurfVis;
-	volatile unsigned char *worldSurfFullVis;
-
-	unsigned int numWorldLeafVis;
-	volatile unsigned char *worldLeafVis;
-
-	unsigned int numWorldDrawSurfVis;
-	volatile unsigned char *worldDrawSurfVis;
 
 	char drawBuffer[32];
 	bool newDrawBuffer;
 
 	int transformMatrixStackSize[2];
-	mat4_t transformMatricesStack[2][MAX_PROJMATRIX_STACK_SIZE];
+	/*ATTRIBUTE_ALIGNED( 16 ) */mat4_t transformMatricesStack[2][MAX_PROJMATRIX_STACK_SIZE];
 } r_globals_t;
 
 extern ref_import_t ri;
@@ -369,6 +376,9 @@ extern r_globals_t rf;
 
 #define R_ENT2NUM( ent ) ( ( ent ) - rsc.entities )
 #define R_NUM2ENT( num ) ( rsc.entities + ( num ) )
+
+#define R_ENTNUMCACHE( num ) ( rsc.entSceneCache + num )
+#define R_ENTCACHE( ent ) R_ENTNUMCACHE( R_ENT2NUM( ent ) )
 
 extern cvar_t *r_norefresh;
 extern cvar_t *r_drawentities;
@@ -409,19 +419,34 @@ extern cvar_t *r_lighting_vertexlight;
 extern cvar_t *r_lighting_maxglsldlights;
 extern cvar_t *r_lighting_grayscale;
 extern cvar_t *r_lighting_intensity;
+extern cvar_t *r_lighting_realtime_world;
+extern cvar_t *r_lighting_realtime_world_lightmaps;
+extern cvar_t *r_lighting_realtime_world_shadows;
+extern cvar_t *r_lighting_realtime_world_importfrommap;
+extern cvar_t *r_lighting_realtime_dlight;
+extern cvar_t *r_lighting_realtime_dlight_shadows;
+extern cvar_t *r_lighting_showlightvolumes;
+extern cvar_t *r_lighting_debuglight;
 
 extern cvar_t *r_offsetmapping;
 extern cvar_t *r_offsetmapping_scale;
 extern cvar_t *r_offsetmapping_reliefmapping;
 
 extern cvar_t *r_shadows;
-extern cvar_t *r_shadows_alpha;
-extern cvar_t *r_shadows_nudge;
-extern cvar_t *r_shadows_projection_distance;
-extern cvar_t *r_shadows_maxtexsize;
+extern cvar_t *r_shadows_minsize;
+extern cvar_t *r_shadows_maxsize;
+extern cvar_t *r_shadows_texturesize;
+extern cvar_t *r_shadows_bordersize;
 extern cvar_t *r_shadows_pcf;
 extern cvar_t *r_shadows_self_shadow;
 extern cvar_t *r_shadows_dither;
+extern cvar_t *r_shadows_precision;
+extern cvar_t *r_shadows_nearclip;
+extern cvar_t *r_shadows_bias;
+extern cvar_t *r_shadows_usecompiled;
+extern cvar_t *r_shadows_culltriangles;
+extern cvar_t *r_shadows_polygonoffset_factor;
+extern cvar_t *r_shadows_polygonoffset_units;
 
 extern cvar_t *r_outlines_world;
 extern cvar_t *r_outlines_scale;
@@ -492,11 +517,12 @@ void R_LatLongToNorm4( const uint8_t latlong[2], vec4_t out );
 //
 // r_alias.c
 //
-bool    R_AddAliasModelToDrawList( const entity_t *e );
-void    R_DrawAliasSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, unsigned int shadowBits, drawSurfaceAlias_t *drawSurf );
+void	R_CacheAliasModelEntity( const entity_t *e );
+bool    R_AddAliasModelToDrawList( const entity_t *e, int lod );
+void    R_DrawAliasSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, int lightStyleNum, 
+	const portalSurface_t *portalSurface, drawSurfaceAlias_t *drawSurf );
 bool    R_AliasModelLerpTag( orientation_t *orient, const maliasmodel_t *aliasmodel, int framenum, int oldframenum,
-							 float lerpfrac, const char *name );
-float       R_AliasModelBBox( const entity_t *e, vec3_t mins, vec3_t maxs );
+	float lerpfrac, const char *name );
 void        R_AliasModelFrameBounds( const model_t *mod, int frame, vec3_t mins, vec3_t maxs );
 
 //
@@ -530,13 +556,18 @@ void        R_ShaderDump_f( void );
 //
 // r_cull.c
 //
-void        R_SetupFrustum( const refdef_t *rd, float farClip, cplane_t *frustum );
+void    R_SetupFrustum( const refdef_t *rd, float nearClip, float farClip, cplane_t *frustum, vec3_t corner[4] );
+void	R_SetupSideViewFrustum( const refdef_t *rd, int side, float nearClip, float farClip, cplane_t *frustum, vec3_t corner[4] );
+int		R_DeformFrustum( const cplane_t *frustum, const vec3_t corners[4], const vec3_t origin, const vec3_t point, cplane_t *deformed );
 bool    R_CullBox( const vec3_t mins, const vec3_t maxs, const unsigned int clipflags );
+bool    R_DeformedCullBox( const vec3_t mins, const vec3_t maxs );
 bool    R_CullSphere( const vec3_t centre, const float radius, const unsigned int clipflags );
+bool    R_DeformedCullSphere( const vec3_t centre, const float radius );
 bool    R_VisCullBox( const vec3_t mins, const vec3_t maxs );
 bool    R_VisCullSphere( const vec3_t origin, float radius );
-int         R_CullModelEntity( const entity_t *e, vec3_t mins, vec3_t maxs, float radius, bool sphereCull, bool pvsCull );
-bool    R_CullSpriteEntity( const entity_t *e );
+int     R_CullModelEntity( const entity_t *e, bool pvsCull );
+int		R_CullSpriteEntity( const entity_t *e );
+bool	R_FogCull( const mfog_t *fog, vec3_t origin, float radius );
 
 //
 // r_framebuffer.c
@@ -569,31 +600,9 @@ void        RFB_FreeUnusedObjects( void );
 void        RFB_Shutdown( void );
 
 //
-// r_light.c
-//
-#define DLIGHT_SCALE        0.5f
-#define MAX_SUPER_STYLES    128
-
-unsigned int R_AddSurfaceDlighbits( const msurface_t *surf, unsigned int checkDlightBits );
-void        R_AddDynamicLights( unsigned int dlightbits, int state );
-void        R_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t diffuse, float radius, bool noWorldLight );
-float       R_LightExposureForOrigin( const vec3_t origin );
-void        R_BuildLightmaps( model_t *mod, int numLightmaps, int w, int h, const uint8_t *data, mlightmapRect_t *rects );
-void        R_InitLightStyles( model_t *mod );
-superLightStyle_t   *R_AddSuperLightStyle( model_t *mod, const int *lightmaps,
-										   const uint8_t *lightmapStyles, const uint8_t *vertexStyles, mlightmapRect_t **lmRects );
-void        R_SortSuperLightStyles( model_t *mod );
-void        R_TouchLightmapImages( model_t *mod );
-
-void        R_InitCoronas( void );
-void        R_BatchCoronaSurf(  const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, unsigned int shadowBits, drawSurfaceType_t *drawSurf );
-void        R_DrawCoronas( void );
-void        R_ShutdownCoronas( void );
-
-//
 // r_main.c
 //
-#define R_FASTSKY() ( r_fastsky->integer || rf.viewcluster == -1 )
+#define R_FASTSKY() ( r_fastsky->integer || rn.viewcluster == -1 )
 
 extern mempool_t *r_mempool;
 
@@ -622,6 +631,10 @@ int         R_SetSwapInterval( int swapInterval, int oldSwapInterval );
 void        R_SetGamma( float gamma );
 void        R_SetWallFloorColors( const vec3_t wallColor, const vec3_t floorColor );
 void        R_SetDrawBuffer( const char *drawbuffer );
+void		R_SetupPVSFromCluster( int cluster, int area );
+void		R_SetupPVS( const refdef_t *fd );
+void		R_SetupViewMatrices( const refdef_t *rd );
+void		R_SetupSideViewMatrices( const refdef_t *rd, int side );
 void        R_RenderView( const refdef_t *fd );
 const msurface_t *R_GetDebugSurface( void );
 const char *R_WriteSpeedsMessage( char *out, size_t size );
@@ -652,14 +665,17 @@ void        R_DeferDataSync( void );
 
 mfog_t      *R_FogForBounds( const vec3_t mins, const vec3_t maxs );
 mfog_t      *R_FogForSphere( const vec3_t centre, const float radius );
-bool    R_CompletelyFogged( const mfog_t *fog, vec3_t origin, float radius );
-int         R_LODForSphere( const vec3_t origin, float radius );
+
+int			R_ComputeLOD( const vec3_t viewOrg, const vec3_t mins, const vec3_t maxs, float lodDistance, float lodScale, int lodBias );
 float       R_DefaultFarClip( void );
 
-void        R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, unsigned int shadowBits, drawSurfaceType_t *drawSurf );
+void        R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, int lightStyleNum, 
+	const portalSurface_t *portalSurface, drawSurfaceType_t *drawSurf, bool mergable );
 
 struct mesh_vbo_s *R_InitNullModelVBO( void );
-void    R_DrawNullSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, unsigned int shadowBits, drawSurfaceType_t *drawSurf );
+void    R_DrawNullSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, int lightStyleNum, const portalSurface_t *portalSurface, drawSurfaceType_t *drawSurf );
+
+void		R_CacheSpriteEntity( const entity_t *e );
 
 struct mesh_vbo_s *R_InitPostProcessingVBO( void );
 
@@ -667,6 +683,9 @@ void        R_TransformForWorld( void );
 void        R_TransformForEntity( const entity_t *e );
 void        R_TranslateForEntity( const entity_t *e );
 void        R_TransformBounds( const vec3_t origin, const mat3_t axis, vec3_t mins, vec3_t maxs, vec3_t bbox[8] );
+
+bool		R_ScissorForCorners( const refinst_t *rnp, vec3_t corner[8], int *scissor );
+bool		R_ScissorForBBox( const refinst_t *rnp, vec3_t mins, vec3_t maxs, int *scissor );
 
 void        R_DrawStretchPic( int x, int y, int w, int h, float s1, float t1, float s2, float t2,
 							  const vec4_t color, const shader_t *shader );
@@ -689,7 +708,7 @@ void        R_ShutdownCustomColors( void );
 #define ENTITY_OUTLINE( ent ) ( ( !( rn.renderFlags & RF_MIRRORVIEW ) && ( ( ent )->renderfx & RF_VIEWERMODEL ) ) ? 0 : ( ent )->outlineHeight )
 
 void        R_ClearRefInstStack( void );
-bool        R_PushRefInst( void );
+refinst_t  *R_PushRefInst( void );
 void        R_PopRefInst( void );
 
 void        R_BindFrameBufferObject( int object );
@@ -701,26 +720,33 @@ void        R_ResetScissor( void );
 void		R_PushTransformMatrix( bool projection, const float *pm );
 void		R_PopTransformMatrix( bool projection );
 
+void		R_FrameCache_Free( void );
+void		R_FrameCache_Clear( void );
+void		*R_FrameCache_Alloc( size_t size );
+size_t		R_FrameCache_TotalSize( void );
+void		R_FrameCache_SetMark( void );
+void		R_FrameCache_FreeToMark( void );
+
 //
 // r_mesh.c
 //
 void R_InitDrawList( drawList_t *list );
 void R_ClearDrawList( drawList_t *list );
 unsigned R_PackOpaqueOrder( const mfog_t *fog, const shader_t *shader, int numLightmaps, bool dlight );
-void *R_AddSurfToDrawList( drawList_t *list, const entity_t *e, const mfog_t *fog, const shader_t *shader,
-						   float dist, unsigned int order, const portalSurface_t *portalSurf, void *drawSurf );
+void *R_AddSurfToDrawList( drawList_t *list, const entity_t *e, const shader_t *shader, const mfog_t *fog,
+	int superLightStyle, float dist, unsigned int order, const portalSurface_t *portalSurf, void *drawSurf );
 void R_UpdateDrawSurfDistKey( void *psds, int renderFx, const shader_t *shader, float dist, unsigned order );
 portalSurface_t *R_GetDrawListSurfPortal( void *psds );
-void R_AddDrawListVBOSlice( drawList_t *list, unsigned int index, unsigned int numVerts, unsigned int numElems,
-					unsigned int firstVert, unsigned int firstElem );
-vboSlice_t *R_GetDrawListVBOSlice( drawList_t *list, unsigned int index );
-void R_GetVBOSliceCounts( drawList_t *list, unsigned *numSliceVerts, unsigned *numSliceElems );
+void R_ReserveDrawListWorldSurfaces( drawList_t *list );
 
 void R_InitDrawLists( void );
 
 void R_SortDrawList( drawList_t *list );
 void R_DrawSurfaces( drawList_t *list );
+void R_DrawPortalSurfaces( drawList_t *list );
+void R_DrawSkySurfaces( drawList_t *list );
 void R_DrawOutlinedSurfaces( drawList_t *list );
+void R_WalkDrawList( drawList_t *list, walkDrawSurf_cb_cb cb, void *ptr );
 
 void R_CopyOffsetElements( const elem_t *inelems, int numElems, int vertsOffset, elem_t *outelems );
 void R_CopyOffsetTriangles( const elem_t *inelems, int numElems, int vertsOffset, elem_t *outelems );
@@ -729,20 +755,10 @@ void R_BuildTangentVectors( int numVertexes, vec4_t *xyzArray, vec4_t *normalsAr
 							int numTris, elem_t *elems, vec4_t *sVectorsArray );
 
 //
-// r_portals.c
-//
-extern drawList_t r_portallist, r_skyportallist;
-
-portalSurface_t *R_AddPortalSurface( const entity_t *ent, const shader_t *shader, void *drawSurf );
-portalSurface_t *R_AddSkyportalSurface( const entity_t *ent, const shader_t *shader, void *drawSurf );
-void R_UpdatePortalSurface( portalSurface_t *portalSurface, const mesh_t *mesh,
-									 const vec3_t mins, const vec3_t maxs, const shader_t *shader, void *drawSurf );
-void R_DrawPortals( void );
-
-//
 // r_poly.c
 //
-void        R_BatchPolySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, unsigned int shadowBits, drawSurfacePoly_t *poly );
+void       R_BatchPolySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, int lightStyleNum,
+	const portalSurface_t *portalSurface, drawSurfacePoly_t *poly, bool mergable );
 void        R_DrawPolys( void );
 void        R_DrawStretchPoly( const poly_t *poly, float x_offset, float y_offset );
 bool    R_SurfPotentiallyFragmented( const msurface_t *surf );
@@ -766,7 +782,7 @@ rserr_t     R_SetMode( int x, int y, int width, int height, int displayFrequency
 //
 extern drawList_t r_worldlist, r_portalmasklist;
 
-void R_AddDebugBounds( const vec3_t mins, const vec3_t maxs, const byte_vec4_t color );
+void R_AddDebugBounds( const vec3_t mins, const vec3_t maxs, const vec4_t color );
 void R_ClearScene( void );
 void R_AddEntityToScene( const entity_t *ent );
 void R_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b );
@@ -780,13 +796,18 @@ void R_BlurScreen( void );
 //
 #define MAX_SURF_QUERIES        0x1E0
 
-void        R_DrawWorld( void );
-bool    R_SurfPotentiallyVisible( const msurface_t *surf );
-bool    R_SurfPotentiallyShadowed( const msurface_t *surf );
-bool    R_SurfPotentiallyLit( const msurface_t *surf );
+void    R_DrawWorldNode( void );
+void	R_DrawWorldShadowNode( void );
+bool    R_SurfNoDraw( const msurface_t *surf );
+bool    R_SurfNoShadow( const msurface_t *surf );
+void	R_CacheBrushModelEntity( const entity_t *e );
 bool    R_AddBrushModelToDrawList( const entity_t *e );
-float       R_BrushModelBBox( const entity_t *e, vec3_t mins, vec3_t maxs, bool *rotated );
-void    R_DrawBSPSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, unsigned int shadowBits, drawSurfaceBSP_t *drawSurf );
+float   R_BrushModelBBox( const entity_t *e, vec3_t mins, vec3_t maxs, bool *rotated );
+void    R_BatchBSPSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, int lightStyleNum, 
+	const portalSurface_t *portalSurface, drawSurfaceBSP_t *drawSurf, bool mergable );
+void	R_FlushBSPSurfBatch( void );
+void	R_WalkBSPSurf( const entity_t *e, const shader_t *shader, int lightStyleNum, 
+	drawSurfaceBSP_t *drawSurf, walkDrawSurf_cb_cb cb, void *ptr );
 
 //
 // r_skin.c
@@ -801,18 +822,15 @@ shader_t    *R_FindShaderForSkinFile( const struct skinfile_s *skinfile, const c
 //
 // r_skm.c
 //
-bool    R_AddSkeletalModelToDrawList( const entity_t *e );
-void    R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, unsigned int shadowBits, drawSurfaceSkeletal_t *drawSurf );
-float       R_SkeletalModelBBox( const entity_t *e, vec3_t mins, vec3_t maxs );
+void	R_CacheSkeletalModelEntity( const entity_t *e );
+bool    R_AddSkeletalModelToDrawList( const entity_t *e, int lod );
+void    R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, int lightStyleNum, 
+	const portalSurface_t *portalSurface, drawSurfaceSkeletal_t *drawSurf );
 void        R_SkeletalModelFrameBounds( const model_t *mod, int frame, vec3_t mins, vec3_t maxs );
 int         R_SkeletalGetBoneInfo( const model_t *mod, int bonenum, char *name, size_t name_size, int *flags );
 void        R_SkeletalGetBonePose( const model_t *mod, int bonenum, int frame, bonepose_t *bonepose );
 int         R_SkeletalGetNumBones( const model_t *mod, int *numFrames );
 bool        R_SkeletalModelLerpTag( orientation_t *orient, const mskmodel_t *skmodel, int oldframenum, int framenum, float lerpfrac, const char *name );
-
-void        R_InitSkeletalCache( void );
-void        R_ClearSkeletalCache( void );
-void        R_ShutdownSkeletalCache( void );
 
 //
 // r_vbo.c
@@ -832,7 +850,6 @@ typedef struct mesh_vbo_s {
 
 	unsigned int vertexId;
 	unsigned int elemId;
-	void                *owner;
 	unsigned int visframe;
 
 	unsigned int numVerts;
@@ -848,6 +865,7 @@ typedef struct mesh_vbo_s {
 	size_t normalsOffset;
 	size_t sVectorsOffset;
 	size_t stOffset;
+	size_t siOffset;
 	size_t lmstOffset[( MAX_LIGHTMAPS + 1 ) / 2];
 	size_t lmstSize[( MAX_LIGHTMAPS + 1 ) / 2];
 	size_t lmlayersOffset[( MAX_LIGHTMAPS + 3 ) / 4];
@@ -856,18 +874,22 @@ typedef struct mesh_vbo_s {
 	size_t bonesWeightsOffset;
 	size_t spritePointsOffset;              // autosprite or autosprite2 centre + radius
 	size_t instancesOffset;
+
+	void *owner;							// opaque pointer
+	struct mesh_vbo_s *vertsVbo;			// pointer to linked vertex data VBO, only relevant for elems-only VBOs
 } mesh_vbo_t;
 
 void        R_InitVBO( void );
 mesh_vbo_t *R_CreateMeshVBO( void *owner, int numVerts, int numElems, int numInstances,
 							 vattribmask_t vattribs, vbo_tag_t tag, vattribmask_t halfFloatVattribs );
+mesh_vbo_t *R_CreateElemsVBO( void *owner, mesh_vbo_t *vertsVbo, int numElems, vbo_tag_t tag );
 void        R_ReleaseMeshVBO( mesh_vbo_t *vbo );
 void        R_TouchMeshVBO( mesh_vbo_t *vbo );
 mesh_vbo_t *R_GetVBOByIndex( int index );
 int         R_GetNumberOfActiveVBOs( void );
-vattribmask_t R_FillVBOVertexDataBuffer( mesh_vbo_t *vbo, vattribmask_t vattribs, const mesh_t *mesh, void *outData );
+vattribmask_t R_FillVBOVertexDataBuffer( mesh_vbo_t *vbo, vattribmask_t vattribs, const mesh_t *mesh, void *outData, int surfIndex );
 void        R_UploadVBOVertexRawData( mesh_vbo_t *vbo, int vertsOffset, int numVerts, const void *data );
-vattribmask_t R_UploadVBOVertexData( mesh_vbo_t *vbo, int vertsOffset, vattribmask_t vattribs, const mesh_t *mesh );
+vattribmask_t R_UploadVBOVertexData( mesh_vbo_t *vbo, int vertsOffset, vattribmask_t vattribs, const mesh_t *mesh, int surfIndex );
 void        R_UploadVBOElemData( mesh_vbo_t *vbo, int vertsOffset, int elemsOffset, const mesh_t *mesh );
 vattribmask_t R_UploadVBOInstancesData( mesh_vbo_t *vbo, int instOffset, int numInstances, instancePoint_t *instances );
 void        R_FreeVBOsByTag( vbo_tag_t tag );
@@ -889,9 +911,10 @@ enum {
 
 struct skydome_s *R_CreateSkydome( model_t *model );
 void        R_TouchSkydome( struct skydome_s *skydome );
-void        R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, 
-	                       unsigned int shadowBits, drawSurfaceSky_t *drawSurf );
+void        R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, int lightStyleNum, 
+	const portalSurface_t *portalSurface, drawSurfaceSky_t *drawSurf );
 void        R_ClearSky( drawSurfaceSky_t *drawSurf );
+void		R_DrawDepthSkySurf( void );
 
 /**
 * Maps world surface to skybox side
@@ -922,6 +945,7 @@ typedef struct {
 	bool forceClear;
 
 	bool forceWorldOutlines;
+	bool writeSkyDepth;
 } mapconfig_t;
 
 extern mapconfig_t mapConfig;
