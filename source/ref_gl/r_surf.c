@@ -1062,13 +1062,13 @@ void R_DrawWorldNode( void ) {
 		}
 
 		if( r_lighting_realtime_world->integer != 0 ) {
-			rf.stats.c_world_lights += R_CullRtLights( bm->numRtLights, 
+			R_CullRtLights( bm->numRtLights, 
 				bm->rtLights, clipFlags, r_lighting_realtime_world_shadows->integer != 0 );
 		}
 
 		if( r_lighting_realtime_dlight->integer != 0 ) {
 			if( !( rn.renderFlags & RF_ENVVIEW ) && r_dynamiclight->integer == 1 ) {
-				rf.stats.c_dynamic_lights += R_CullRtLights( rsc.numDlights, 
+				R_CullRtLights( rsc.numDlights, 
 					rsc.dlights, clipFlags, r_lighting_realtime_dlight_shadows->integer != 0 );
 			}
 		}

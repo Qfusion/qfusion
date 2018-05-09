@@ -1771,7 +1771,7 @@ const char *R_WriteSpeedsMessage( char *out, size_t size ) {
 							 "cull nodes\\surfs\\lights: %5u\\%5u\\%5u\n"
 							 "node world\\light: %5u\\%5u\n"
 							 "polys\\ents: %5u\\%5u  draw: %5u\n"
-							 "lights world\\dynamic: %5u\\%5u\n"
+							 "world\\dynamic: lights %3u\\%3u  shadows %3u\\%3u\n"
 							 "ents total: %5u bmodels: %5u\n"
 							 "frame cache: %.3fMB\n"
 							 "%s",
@@ -1780,7 +1780,7 @@ const char *R_WriteSpeedsMessage( char *out, size_t size ) {
 							 rf.stats.t_cull_world_nodes, rf.stats.t_cull_world_surfs, rf.stats.t_cull_rtlights, 
 							 rf.stats.t_world_node, rf.stats.t_light_node,
 							 rf.stats.t_add_polys, rf.stats.t_add_entities, rf.stats.t_draw_meshes,
-							 rf.stats.c_world_lights, rf.stats.c_dynamic_lights,
+							 rf.stats.c_world_lights, rf.stats.c_dynamic_lights, rf.stats.c_world_light_shadows, rf.stats.c_dynamic_light_shadows,
 							 rf.stats.c_ents_total, rf.stats.c_ents_bmodels,
 							 R_FrameCache_TotalSize() / 1048576.0,
 							 backend_msg

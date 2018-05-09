@@ -336,6 +336,7 @@ typedef struct {
 		unsigned int c_brush_polys, c_world_leafs;
 		unsigned int c_world_draw_surfs;
 		unsigned int c_world_lights, c_dynamic_lights;
+		unsigned int c_world_light_shadows, c_dynamic_light_shadows;
 		unsigned int c_ents_total, c_ents_bmodels;
 		unsigned int t_cull_world_nodes, t_cull_world_surfs;
 		unsigned int t_cull_rtlights;

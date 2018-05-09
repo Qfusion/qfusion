@@ -1441,6 +1441,17 @@ unsigned R_CullRtLights( unsigned numLights, rtlight_t *lights, unsigned clipFla
 		rn.rtlights[rn.numRealtimeLights] = l;
 		rn.numRealtimeLights++;
 
+		if( l->world ) {
+			rf.stats.c_world_lights++;
+			if( l->shadow ) {
+				rf.stats.c_world_light_shadows++;
+			}
+		} else {
+			rf.stats.c_dynamic_lights++;
+			if( l->shadow ) {
+				rf.stats.c_dynamic_light_shadows++;
+			}
+		}
 		count++;
 	}
 
