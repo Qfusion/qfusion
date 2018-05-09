@@ -1301,26 +1301,16 @@ static void Mod_Q2LoadSubmodels( const lump_t *l ) {
 	loadbmodel->numsubmodels = count;
 	loadbmodel->inlines = mod_inline;
 
-	for( i = 0; i < count; i++, in++, out++ ) {
-		vec3_t origin, mins, maxs;
-		
+	for( i = 0; i < count; i++, in++, out++ ) {	
 		mod_inline[i].extradata = bmodel + i;
 
 		for( j = 0; j < 3; j++ ) {
 			// spread the mins / maxs by a pixel
 			out->mins[j] = LittleFloat( in->mins[j] ) - 1;
 			out->maxs[j] = LittleFloat( in->maxs[j] ) + 1;
-			origin[j] = (out->mins[j] + out->maxs[j]) * 0.5f;
 		}
 
-		// the bounds are from world to local coordinates
-		// otherwise bmodel radius isn't going make any sense
-		for( j = 0; j < 3; j++ ) {
-			mins[j] = out->mins[j] - origin[j];
-			maxs[j] = out->maxs[j] - origin[j];
-		}
-
-		out->radius = RadiusFromBounds( mins, maxs );
+		out->radius = RadiusFromBounds( out->mins, out->maxs );
 		out->firstModelSurface = LittleLong( in->firstface );
 		out->numModelSurfaces = LittleLong( in->numfaces );
 	}
