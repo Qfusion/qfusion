@@ -85,6 +85,10 @@ const shader_t *R_OpaqueShadowShader( const shader_t *shader ) {
 */
 void R_DrawCompiledLightSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, 
 	int lightStyleNum, const portalSurface_t *portalSurface, drawSurfaceCompiledLight_t *drawSurf ) {
+	if( !drawSurf->numElems ) {
+		return;
+	}
+
 	RB_BindVBO( drawSurf->vbo, GL_TRIANGLES );
 
 	if( drawSurf->numInstances ) {
@@ -111,19 +115,21 @@ static void R_BatchShadowSurfElems( shadowSurfBatch_t *batch, int vertsOffset, c
 * R_UploadBatchShadowElems
 */
 static void R_UploadBatchShadowElems( shadowSurfBatch_t *batch ) {
-	mesh_t mesh;
-	mesh_vbo_t *elemsVbo;
 	drawSurfaceCompiledLight_t *drawSurf;
 
-	memset( &mesh, 0, sizeof( mesh_t ) );
-	mesh.numElems = batch->numElems;
-	mesh.elems = batch->elemsBuffer;
+	if( batch->numElems ) {
+		mesh_t mesh;
+		mesh_vbo_t *elemsVbo;
 
-	elemsVbo = R_CreateElemsVBO( batch->light, R_GetVBOByIndex( batch->vbo ), batch->numElems, VBO_TAG_WORLD );
-	R_UploadVBOElemData( elemsVbo, 0, 0, &mesh );
+		memset( &mesh, 0, sizeof( mesh_t ) );
+		mesh.numElems = batch->numElems;
+		mesh.elems = batch->elemsBuffer;
 
-	batch->elemsVbo = elemsVbo->index;
-	batch->elemsBuffer = NULL;
+		elemsVbo = R_CreateElemsVBO( batch->light, R_GetVBOByIndex( batch->vbo ), batch->numElems, VBO_TAG_WORLD );
+		R_UploadVBOElemData( elemsVbo, 0, 0, &mesh );
+
+		batch->elemsVbo = elemsVbo->index;
+	}
 
 	drawSurf = &batch->drawSurf;
 	drawSurf->type = ST_COMPILED_LIGHT;
@@ -133,6 +139,7 @@ static void R_UploadBatchShadowElems( shadowSurfBatch_t *batch ) {
 	drawSurf->numElems = batch->numElems;
 	drawSurf->vbo = batch->elemsVbo;
 
+	batch->elemsBuffer = NULL;
 	R_FrameCache_FreeToMark();
 }
 
@@ -177,7 +184,17 @@ static void R_BatchLightSideView( shadowSurfBatch_t *batch, const entity_t *e, c
 
 		if( tail->pass ) {
 			if( numInstances ) {
+				drawSurfaceCompiledLight_t *sdrawSurf;
+
 				tail->elemsVbo = tail->vbo;
+ 
+				sdrawSurf = &tail->drawSurf;
+				sdrawSurf->type = ST_COMPILED_LIGHT;
+				sdrawSurf->firstVert = drawSurf->firstVboVert + surf->firstDrawSurfVert;
+				sdrawSurf->numVerts = numVerts;
+				sdrawSurf->firstElem = drawSurf->firstVboElem + surf->firstDrawSurfElem;
+				sdrawSurf->numElems = numElems;
+				sdrawSurf->vbo = tail->elemsVbo;
 				return;
 			}
 

@@ -740,9 +740,9 @@ bool R_AddAliasModelToDrawList( const entity_t *e, int lod ) {
 			continue;
 		}
 
-		for( j = 0; j < mesh->numskins; j++ ) {
+		for( j = 0; j < numSkins; j++ ) {
 			int drawOrder;
-			const shader_t *shader = mesh->skins[j].shader;
+			const shader_t *shader = skins[j].shader;
 		
 			if( !shader ) {
 				continue;
