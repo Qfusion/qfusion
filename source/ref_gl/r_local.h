@@ -212,8 +212,8 @@ typedef struct refinst_s {
 	refdef_t refdef;
 
 	unsigned int numEntities;
-	entity_t *entities[MAX_REF_ENTITIES];
-	uint8_t entpvs[(MAX_REF_ENTITIES+7)/8];
+	int *entities;
+	uint8_t *entpvs;
 
 	struct refinst_s *parent;
 
