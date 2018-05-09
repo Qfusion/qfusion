@@ -1228,7 +1228,7 @@ struct model_s *R_RegisterModel( const char *name ) {
 static void R_LoadWorldRtLightsFromMap( model_t *model ) {
 	char *data;
 	char key[MAX_KEY], value[MAX_VALUE], *token;
-	bool islight, shadow;
+	bool islight, shadow, radiusset;
 	int style, flags;
 	float radius;
 	float colorf[3], originf[3];
@@ -1247,6 +1247,7 @@ static void R_LoadWorldRtLightsFromMap( model_t *model ) {
 	data = bmodel->entityString;
 	for(; ( token = COM_Parse( &data ) ) && token[0] == '{'; ) {
 		islight = false;
+		radiusset = false;
 		radius = 0;
 		style = 0;
 		shadow = true;
@@ -1284,7 +1285,9 @@ static void R_LoadWorldRtLightsFromMap( model_t *model ) {
 			} else if( !strcmp( key, "origin" ) ) {
 				sscanf( value, "%f %f %f", &originf[0], &originf[1], &originf[2] );
 			} else if( !strcmp( key, "light" ) ) {
-				sscanf( value, "%f", &radius );
+				sscanf( value, "%f", &radius ), radiusset = true;
+			} else if( !strcmp( key, "_light" ) ) {
+				sscanf( value, "%f", &radius ), radiusset = true;
 			} else if( !strcmp( key, "style" ) ) {
 				sscanf( value, "%d", &style );
 			}
@@ -1298,7 +1301,9 @@ static void R_LoadWorldRtLightsFromMap( model_t *model ) {
 				lights = Mod_Realloc( lights, maxLights * sizeof( *lights ) );
 			}
 
-			if( radius < 0.01 )
+			if( !radiusset )
+				radius = MAPLIGHT_DEFAULT_RADIUS;
+			else if( radius < 0.01 )
 				continue;
 
 			if( style >= MAX_LIGHTSTYLES )
