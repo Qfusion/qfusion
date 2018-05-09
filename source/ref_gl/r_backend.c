@@ -615,6 +615,24 @@ void RB_Viewport( int x, int y, int w, int h ) {
 }
 
 /*
+* RB_GetViewport
+*/
+void RB_GetViewport( int *x, int *y, int *w, int *h ) {
+	if( x ) {
+		*x = rb.gl.viewport[0];
+	}
+	if( y ) {
+		*y = rb.gl.viewport[1];
+	}
+	if( w ) {
+		*w = rb.gl.viewport[2];
+	}
+	if( h ) {
+		*h = rb.gl.viewport[3];
+	}
+}
+
+/*
 * RB_Clear
 */
 void RB_Clear( int bits, float r, float g, float b, float a ) {

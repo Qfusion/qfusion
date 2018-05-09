@@ -71,6 +71,7 @@ void RB_Scissor( int x, int y, int w, int h );
 void RB_GetScissor( int *x, int *y, int *w, int *h );
 void RB_ApplyScissor( void );
 void RB_Viewport( int x, int y, int w, int h );
+void RB_GetViewport( int *x, int *y, int *w, int *h );
 void RB_Clear( int bits, float r, float g, float b, float a );
 void RB_SetZClip( float zNear, float zFar );
 void RB_SetScreenImageSet( const struct refScreenTexSet_s *st );

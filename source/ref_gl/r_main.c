@@ -449,15 +449,15 @@ void R_Begin2D( bool multiSamples ) {
 
 	RB_FlushDynamicMeshes();
 
-	rf.twoD.enabled = true;
-	rf.twoD.width = width;
-	rf.twoD.height = height;
-	rf.twoD.multiSamples = multiSamples;
-
 	if( multiSamples )
 		R_BindFrameBufferObject( rf.renderTarget );
 	else
 		R_BindFrameBufferObject( 0 );
+
+	rf.twoD.enabled = true;
+	rf.twoD.width = rf.frameBufferWidth;
+	rf.twoD.height = rf.frameBufferHeight;
+	rf.twoD.multiSamples = multiSamples;
 
 	RB_EnableTriangleOutlines( multiSamples && ( r_showtris2D->integer != 0 ) );
 
@@ -473,8 +473,8 @@ void R_SetupGL2D( void ) {
 	int width, height;
 	/*ATTRIBUTE_ALIGNED( 16 ) */mat4_t projectionMatrix;
 
-	width = rf.frameBufferWidth;
-	height = rf.frameBufferHeight;
+	width = rf.twoD.width;
+	height = rf.twoD.height;
 
 	Matrix4_OrthogonalProjection( 0, width, height, 0, -1, 1, projectionMatrix );
 
@@ -761,9 +761,6 @@ void R_BindFrameBufferObject( int object ) {
 	rf.frameBufferHeight = height;
 
 	RB_BindFrameBufferObject( object );
-
-	RB_Viewport( rn.viewport[0], rn.viewport[1], rn.viewport[2], rn.viewport[3] );
-	RB_Scissor( rn.scissor[0], rn.scissor[1], rn.scissor[2], rn.scissor[3] );
 }
 
 /*
@@ -1648,6 +1645,7 @@ void R_BlitTextureToScrFbo( const refdef_t *fd, image_t *image, int dstFbo,
 	int iParam0 ) {
 	int x, y;
 	int w, h, fw, fh;
+	int scissor[4], viewport[4];
 	static char s_name[] = "$builtinpostprocessing";
 	static shaderpass_t p;
 	static shader_t s;
@@ -1668,6 +1666,9 @@ void R_BlitTextureToScrFbo( const refdef_t *fd, image_t *image, int dstFbo,
 
 	RB_BindFrameBufferObject( dstFbo );
 
+	RB_GetScissor( &scissor[0], &scissor[1], &scissor[2], &scissor[3] );
+	RB_GetViewport( &viewport[0], &viewport[1], &viewport[2], &viewport[3] );
+
 	if( !dstFbo ) {
 		// default framebuffer
 		// set the viewport to full resolution
@@ -1684,7 +1685,7 @@ void R_BlitTextureToScrFbo( const refdef_t *fd, image_t *image, int dstFbo,
 			h = fh = glConfig.height;
 		}
 		RB_Viewport( 0, 0, glConfig.width, glConfig.height );
-		RB_Scissor( rn.scissor[0], rn.scissor[1], rn.scissor[2], rn.scissor[3] );
+		RB_Scissor( scissor[0], scissor[1], scissor[2], scissor[3] );
 	} else {
 		// aux framebuffer
 		// set the viewport to full resolution of the framebuffer (without the NPOT padding if there's one)
@@ -1749,8 +1750,8 @@ void R_BlitTextureToScrFbo( const refdef_t *fd, image_t *image, int dstFbo,
 	RB_LoadObjectMatrix( mat4x4_identity );
 
 	// restore 2D viewport and scissor
-	RB_Viewport( 0, 0, rf.frameBufferWidth, rf.frameBufferHeight );
-	RB_Scissor( 0, 0, rf.frameBufferWidth, rf.frameBufferHeight );
+	RB_Viewport( viewport[0], viewport[1], viewport[2], viewport[3] );
+	RB_Scissor( scissor[0], scissor[1], scissor[2], scissor[3] );
 }
 
 /*
@@ -1957,10 +1958,6 @@ void R_BeginFrame( float cameraSeparation, bool forceClear, int swapInterval ) {
 #endif
 	}
 
-	if( forceClear ) {
-		RB_Clear( GL_COLOR_BUFFER_BIT, 0, 0, 0, 1 );
-	}
-
 	// set swap interval (vertical synchronization)
 	rf.swapInterval = R_SetSwapInterval( swapInterval, rf.swapInterval );
 
@@ -1978,6 +1975,12 @@ void R_BeginFrame( float cameraSeparation, bool forceClear, int swapInterval ) {
 
 	samples = R_MultisampleSamples( r_samples2D->integer );
 	rf.renderTarget = R_RegisterMultisampleTarget( &rsh.st2D, samples, false, true );
+
+	R_Begin2D( true );
+
+	if( forceClear ) {
+		RB_Clear( GL_COLOR_BUFFER_BIT, 0, 0, 0, 1 );
+	}
 }
 
 /*
