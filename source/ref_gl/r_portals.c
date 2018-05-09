@@ -220,7 +220,7 @@ static void R_DrawPortalSurface( portalSurface_t *portalSurface ) {
 	best = NULL;
 	best_d = 100000000;
 	for( i = 0; i < rn.numEntities; i++ ) {
-		ent = rn.entities[i];
+		ent = R_NUM2ENT( rn.entities[i] );
 
 		if( ent->rtype != RT_PORTALSURFACE ) {
 			continue;

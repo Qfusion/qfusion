@@ -1151,12 +1151,17 @@ static void R_CullEntities( void ) {
 	entity_t *e;
 	entSceneCache_t *cache;
 
+	rn.entities = NULL;
+	rn.entpvs = NULL;
 	rn.numEntities = 0;
-	memset( rn.entpvs, 0, (rsc.numEntities+7)/8 );
 
 	if( rn.renderFlags & RF_NOENTS ) {
 		return;
 	}
+
+	rn.entities = R_FrameCache_Alloc( sizeof( *rn.entities ) * rsc.numEntities );
+	rn.entpvs = R_FrameCache_Alloc( sizeof( *rn.entpvs ) * (rsc.numEntities+7)/8 );
+	memset( rn.entpvs, 0, (rsc.numEntities+7)/8 );
 
 	if( rn.renderFlags & RF_ENVVIEW ) {
 		for( i = 0; i < rsc.numBmodelEntities; i++ ) {
@@ -1168,7 +1173,7 @@ static void R_CullEntities( void ) {
 			}
 
 			rn.entpvs[entNum>>3] |= (1<<(entNum&7));
-			rn.entities[rn.numEntities++] = e;
+			rn.entities[rn.numEntities++] = entNum;
 		}
 		return;
 	}
@@ -1184,9 +1189,8 @@ static void R_CullEntities( void ) {
 				continue;
 			}
 
-			e = R_NUM2ENT( entNum );
 			rn.entpvs[entNum>>3] |= (1<<(entNum&7));
-			rn.entities[rn.numEntities++] = e;
+			rn.entities[rn.numEntities++] = entNum;
 		}
 		return;
 	}
@@ -1207,7 +1211,7 @@ static void R_CullEntities( void ) {
 			}
 
 			rn.entpvs[entNum>>3] |= (1<<(entNum&7));
-			rn.entities[rn.numEntities++] = e;
+			rn.entities[rn.numEntities++] = entNum;
 		}
 		return;
 	}
@@ -1254,7 +1258,7 @@ static void R_CullEntities( void ) {
 
 add:
 		rn.entpvs[entNum>>3] |= (1<<(entNum&7));
-		rn.entities[rn.numEntities++] = e;
+		rn.entities[rn.numEntities++] = entNum;
 	}
 }
 
@@ -1268,7 +1272,7 @@ static void R_DrawEntities( void ) {
 	entSceneCache_t *cache;
 
 	for( i = 0; i < rn.numEntities; i++ ) {
-		e = rn.entities[i];
+		e = R_NUM2ENT( rn.entities[i] );
 		cache = R_ENTCACHE( e );
 
 		lod = 0;
@@ -1450,6 +1454,8 @@ static unsigned int riStackSize;
 */
 void R_ClearRefInstStack( void ) {
 	riStackSize = 0;
+	memset( riStack, 0, sizeof( riStack ) );
+	memset( &rn, 0, sizeof( refinst_t ) );
 }
 
 /*
