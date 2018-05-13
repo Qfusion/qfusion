@@ -1665,6 +1665,7 @@ void R_DrawRtLights( void ) {
 		rn.rtLight = l;
 		rn.rtLightEntities = l->receiveEnts;
 		rn.numRtLightEntities = l->numReceieveEnts;
+		rn.rtLightSurfaceInfo = l->surfaceInfo;
 
 		if( R_ScissorForBBox( prevrn, l->cullmins, l->cullmaxs, rn.scissor ) ) {
 			// clipped away

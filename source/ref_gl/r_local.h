@@ -223,6 +223,8 @@ typedef struct refinst_s {
 	unsigned		numRtLightEntities;
 	int				*rtLightEntities;
 
+	unsigned		*rtLightSurfaceInfo;
+
 	refScreenTexSet_t *st;                  // points to either either a 8bit or a 16bit float set
 
 	drawList_t      *meshlist;              // meshes to be rendered
@@ -726,10 +728,14 @@ void		R_PopTransformMatrix( bool projection );
 
 void		R_FrameCache_Free( void );
 void		R_FrameCache_Clear( void );
-void		*R_FrameCache_Alloc( size_t size );
+void		*R_FrameCache_Alloc_( size_t size, const char *filename, int fileline );
 size_t		R_FrameCache_TotalSize( void );
-void		*R_FrameCache_SetMark( void );
-void		R_FrameCache_FreeToMark( void *mark );
+void		*R_FrameCache_SetMark_( const char *filename, int fileline );
+void		R_FrameCache_FreeToMark_( void *mark, const char *filename, int fileline );
+
+#define R_FrameCache_Alloc(s) R_FrameCache_Alloc_(s,__FILE__,__LINE__)
+#define R_FrameCache_SetMark() R_FrameCache_SetMark_(__FILE__,__LINE__)
+#define R_FrameCache_FreeToMark(m) R_FrameCache_FreeToMark_(m,__FILE__,__LINE__)
 
 //
 // r_mesh.c

@@ -323,7 +323,6 @@ static void R_DrawRtLightShadow( rtlight_t *l, image_t *target, int sideMask, bo
 	int side;
 	refdef_t *fd;
 	refinst_t *rnp = &rn;
-	void *cachemark = NULL;
 
 	if( !l->shadow ) {
 		return;
@@ -349,6 +348,7 @@ static void R_DrawRtLightShadow( rtlight_t *l, image_t *target, int sideMask, bo
 	rnp->numDeformedFrustumPlanes = 0;
 	rnp->numRtLightEntities = l->numShadowEnts;
 	rnp->rtLightEntities = l->shadowEnts;
+	rnp->rtLightSurfaceInfo = l->surfaceInfo;
 	VectorCopy( l->origin, rnp->lodOrigin );
 	VectorCopy( l->origin, rnp->pvsOrigin );
 
@@ -375,8 +375,6 @@ static void R_DrawRtLightShadow( rtlight_t *l, image_t *target, int sideMask, bo
 		rnp->numDeformedFrustumPlanes = R_DeformFrustum( prevrn->frustum, prevrn->frustumCorners, 
 			prevrn->viewOrigin, l->origin, rnp->deformedFrustum  );
 
-		cachemark = R_FrameCache_SetMark();
-
 		// cull entities by the deformed frustum
 		rnp->numRtLightEntities = 0;
 		rnp->rtLightEntities = R_FrameCache_Alloc( sizeof( *(rnp->rtLightEntities) ) * l->numShadowEnts );
@@ -388,6 +386,43 @@ static void R_DrawRtLightShadow( rtlight_t *l, image_t *target, int sideMask, bo
 				rnp->rtLightEntities[rnp->numRtLightEntities++] = entNum;
 			}
 		}
+
+#if 0
+		if( 0 ) {
+			unsigned j;
+			unsigned dscount, scount;
+			unsigned *pin, *pout;
+
+			pin = l->surfaceInfo;
+			dscount = *pin;
+			scount = l->numSurfaces;
+
+			pout = R_FrameCache_Alloc( sizeof( unsigned ) * (1 + dscount*2 + scount*3) );
+			rnp->rtLightSurfaceInfo = pout;
+
+			*pout = *pin;
+			pout++, pin++;
+
+			for( i = 0; i < dscount; i++ ) {
+				unsigned ds = *pin++;
+				unsigned numSurfaces = *pin++;
+
+				*pout++ = ds;
+				*pout++ = numSurfaces;
+
+				for( j = 0; j < numSurfaces; j++, pin += 3, pout += 3 ) {
+					const msurface_t *surf = rsh.worldBrushModel->surfaces + pin[0];
+
+					pout[0] = pin[0], pout[1] = pin[1];
+					if( !R_DeformedCullBox( surf->mins, surf->maxs ) || r_temp1->integer ) {
+						pout[2] = pin[2];
+					} else {
+						pout[2] = 0;
+					}
+				}
+			}
+		}
+#endif
 	}
 
 	for( side = 0; side < 6; side++ ) {
@@ -428,10 +463,6 @@ static void R_DrawRtLightShadow( rtlight_t *l, image_t *target, int sideMask, bo
 		if( compile && l->world ) {
 			R_CompileLightSideView( l, side );
 		}
-	}
-
-	if( cachemark ) {
-		R_FrameCache_FreeToMark( cachemark );
 	}
 }
 

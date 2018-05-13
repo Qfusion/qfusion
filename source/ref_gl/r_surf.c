@@ -84,6 +84,9 @@ static void R_AddLightsToSurfaces( void ) {
 	if( rn.renderFlags & (RF_LIGHTVIEW|RF_SHADOWMAPVIEW) ) {
 		return;
 	}
+	if( !rn.numRealtimeLights ) {
+		return;
+	}
 
 	cachemark = R_FrameCache_SetMark();
 
@@ -869,10 +872,15 @@ void R_DrawWorldShadowNode( void ) {
 	if( rn.refdef.rdflags & RDF_NOWORLDMODEL ) {
 		return;
 	}
-	if( !l || !l->surfaceInfo ) {
+	if( !l ) {
 		return;
 	}
 	if( !( rn.renderFlags & (RF_SHADOWMAPVIEW|RF_LIGHTVIEW) ) ) {
+		return;
+	}
+
+	p = rn.rtLightSurfaceInfo;
+	if( !p ) {
 		return;
 	}
 
@@ -930,7 +938,6 @@ void R_DrawWorldShadowNode( void ) {
 		}
 	}
 
-	p = l->surfaceInfo;
 	numDrawSurfaces = *p++;
 
 	for( i = 0; i < numDrawSurfaces; i++ ) {
@@ -949,7 +956,6 @@ void R_DrawWorldShadowNode( void ) {
 						continue;
 					}
 				} else {
-					// FIXME: apply deformed frustum culling here as well?
 					if( R_CullBox( surf->mins, surf->maxs, clipFlags ) ) {
 						continue;
 					}
