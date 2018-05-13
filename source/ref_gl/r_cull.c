@@ -359,14 +359,19 @@ bool R_FogCull( const mfog_t *fog, vec3_t origin, float radius ) {
 *
 * Returns true if the box is completely outside the frustum
 */
-static bool R_CullBoxCustomPlanes( const cplane_t *p, unsigned nump, const vec3_t mins, const vec3_t maxs, const unsigned int clipflags ) {
+static bool R_CullBoxCustomPlanes( const cplane_t *p, unsigned nump, const vec3_t mins, const vec3_t maxs, unsigned int clipflags ) {
 	unsigned int i, bit;
 
 	if( r_nocull->integer ) {
 		return false;
 	}
 
+	clipflags &= 63;
+
 	for( i = 0, bit = 1; i < nump; i++, bit <<= 1, p++ ) {
+		if( !clipflags ) {
+			break;
+		}
 		if( !( clipflags & bit ) ) {
 			continue;
 		}
@@ -415,6 +420,8 @@ static bool R_CullBoxCustomPlanes( const cplane_t *p, unsigned nump, const vec3_
 		default:
 			break;
 		}
+
+		clipflags &= ~bit;
 	}
 
 	return false;
@@ -444,20 +451,26 @@ bool R_DeformedCullBox( const vec3_t mins, const vec3_t maxs ) {
 *
 * Returns true if the sphere is completely outside the frustum
 */
-static bool R_CullSphereCustomPlanes( const cplane_t *p, unsigned nump, const vec3_t centre, const float radius, const unsigned int clipflags ) {
+static bool R_CullSphereCustomPlanes( const cplane_t *p, unsigned nump, const vec3_t centre, const float radius, unsigned int clipflags ) {
 	unsigned int i, bit;
 
 	if( r_nocull->integer ) {
 		return false;
 	}
 
+	clipflags &= 63;
+
 	for( i = 0, bit = 1; i < nump; i++, bit <<= 1, p++ ) {
+		if( !clipflags ) {
+			break;
+		}
 		if( !( clipflags & bit ) ) {
 			continue;
 		}
 		if( DotProduct( centre, p->normal ) - p->dist <= -radius ) {
 			return true;
 		}
+		clipflags &= ~bit;
 	}
 
 	return false;

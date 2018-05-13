@@ -79,8 +79,10 @@ typedef struct rtlight_s {
 
 	// frame data
 	unsigned sceneFrame;
-	int sideMask;
-	int entSideMask;
+	int receiverMask;
+	int casterMask;
+	int entReceiverMask;
+	int entCasterMask;
 	int sort;
 	int lod;
 	int shadowBorder;

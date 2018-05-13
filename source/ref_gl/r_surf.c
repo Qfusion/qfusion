@@ -72,41 +72,38 @@ bool R_SurfNoShadow( const msurface_t *surf ) {
 }
 
 /*
-* R_CullSurface
-*/
-static bool R_CullSurface( const entity_t *e, const msurface_t *surf, unsigned int clipflags ) {
-	return ( clipflags && R_CullBox( surf->mins, surf->maxs, clipflags ) );
-}
-
-/*
 * R_AddLightsToSurfaces
 */
 static void R_AddLightsToSurfaces( void ) {
 	unsigned i, j, k;
 	mmodel_t *bmodel = &rsh.worldBrushModel->submodels[0];
-	unsigned **lsi, *lc, *lm;
+	unsigned **lsi, *lc, *lrm, *lcm;
 	unsigned **lsip, *lcp;
+	void *cachemark = NULL;
 
 	if( rn.renderFlags & (RF_LIGHTVIEW|RF_SHADOWMAPVIEW) ) {
 		return;
 	}
 
-	R_FrameCache_SetMark();
+	cachemark = R_FrameCache_SetMark();
 
 	lsi = R_FrameCache_Alloc( sizeof( *lsi ) * rn.numRealtimeLights );
 	lc = R_FrameCache_Alloc( sizeof( *lc ) * rn.numRealtimeLights );
-	lm = R_FrameCache_Alloc( sizeof( *lm ) * rn.numRealtimeLights );
+	lrm = R_FrameCache_Alloc( sizeof( *lrm ) * rn.numRealtimeLights );
+	lcm = R_FrameCache_Alloc( sizeof( *lcm ) * rn.numRealtimeLights );
 
 	memset( lsi, 0, sizeof( *lsi ) * rn.numRealtimeLights );
 	memset( lc, 0, sizeof( *lc ) * rn.numRealtimeLights );
-	memset( lm, 0, sizeof( *lm ) * rn.numRealtimeLights );
+	memset( lrm, 0, sizeof( *lrm ) * rn.numRealtimeLights );
+	memset( lcm, 0, sizeof( *lcm ) * rn.numRealtimeLights );
 
 	lsip = lsi;
 	lcp = lc;
 
 	for( j = 0; j < rn.numRealtimeLights; j++ ) {
 		lsi[j] = rn.rtlights[j]->surfaceInfo;
-		lm[j] = rn.rtlights[j]->sideMask;
+		lrm[j] = rn.rtlights[j]->receiverMask;
+		lcm[j] = rn.rtlights[j]->casterMask;
 
 		if( !lsi[j] ) {
 			lc[j] = 0;
@@ -125,12 +122,8 @@ static void R_AddLightsToSurfaces( void ) {
 			continue;
 		}
 
-		if( R_SurfFlagsNoDlight( drawSurf->surfFlags ) ) {
-			continue;
-		}
-
 		for( j = 0; j < rn.numRealtimeLights; j++ ) {
-			if( lm[j] == 0x3F ) {
+			if( lrm[j] == 0x3F && lcm[j] == 0x3F ) {
 				continue;
 			}
 
@@ -151,16 +144,17 @@ static void R_AddLightsToSurfaces( void ) {
 				// iterate the list of world surfaces
 				unsigned *p = lsi[j];
 				p++;
-				unsigned ns = *p++;			
+				unsigned ns = *p++;
 
 				for( k = 0; k < ns; k++, p += 3 ) {
-					unsigned s = p[0], mask = p[2];
+					unsigned s = p[0], rmask = p[1], cmask = p[2];
 					if( !rn.meshlist->worldSurfVis[s] ) {
 						continue;
 					}
 
-					lm[j] |= mask;
-					if( lm[j] == 0x3F ) {
+					lrm[j] |= rmask;
+					lcm[j] |= cmask;
+					if( lrm[j] == 0x3F && lcm[j] == 0x3F ) {
 						break;
 					}
 				}
@@ -170,10 +164,11 @@ static void R_AddLightsToSurfaces( void ) {
 
 	for( j = 0; j < rn.numRealtimeLights; j++ ) {
 		rtlight_t *l = rn.rtlights[j];
-		l->sideMask |= lm[j];
+		l->receiverMask = lrm[j];
+		l->casterMask = lcm[j];
 	}
 
-	R_FrameCache_FreeToMark();
+	R_FrameCache_FreeToMark( cachemark );
 }
 
 /*
@@ -714,7 +709,7 @@ static void R_CullVisSurfaces( unsigned firstSurf, unsigned numSurfs, unsigned c
 
 		if( rn.meshlist->worldSurfVis[i] ) {
 			// the surface is at partly visible in at least one leaf, frustum cull it
-			if( R_CullSurface( rsc.worldent, surf, clipFlags ) ) {
+			if( R_CullBox( surf->mins, surf->maxs, clipFlags ) ) {
 				rn.meshlist->worldSurfVis[i] = 0;
 			}
 			rn.meshlist->worldSurfFullVis[i] = 0;
@@ -861,9 +856,10 @@ void R_DrawWorldShadowNode( void ) {
 	const uint8_t *areabits = rn.areabits;
 	unsigned *p;
 	unsigned numDrawSurfaces;
-	bool (*skipSurf)( const msurface_t * ) = NULL;
+	int maskindex = -1;
 	drawList_t *parentDrawList = NULL;
 	uint8_t *tempSurfVis;
+	void *cachemark;
 
 	R_ReserveDrawListWorldSurfaces( rn.meshlist );
 
@@ -894,13 +890,13 @@ void R_DrawWorldShadowNode( void ) {
 		msec = ri.Sys_Milliseconds();
 	}
 
-	if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
-		skipSurf = R_SurfNoShadow;
-	} else if( rn.renderFlags & RF_LIGHTVIEW ) {
-		skipSurf = R_SurfNoDlight;
+	if( rn.renderFlags & RF_LIGHTVIEW ) {
+		maskindex = 1;
+	} else {
+		maskindex = 2;
 	}
 
-	R_FrameCache_SetMark();
+	cachemark = R_FrameCache_SetMark();
 
 	tempSurfVis = R_FrameCache_Alloc( sizeof( *tempSurfVis ) * rsh.worldBrushModel->numsurfaces );
 	memset( (void *)tempSurfVis, 0, sizeof( *tempSurfVis ) * rsh.worldBrushModel->numsurfaces );
@@ -942,25 +938,27 @@ void R_DrawWorldShadowNode( void ) {
 		unsigned ds = *p++;
 		unsigned numSurfaces = *p++;
 
-		for( j = 0; j < numSurfaces; j++ ) {
-			unsigned s = *p++;
+		for( j = 0; j < numSurfaces; j++, p += 3 ) {
+			unsigned s = p[0];
+			unsigned mask = p[maskindex];
 			const msurface_t *surf = bm->surfaces + s;
-			p += 2;
 
-			if( rn.renderFlags & RF_LIGHTVIEW ) {
-				if( !parentDrawList->worldSurfVis[s] ) {
-					continue;
+			if( mask && tempSurfVis[s] ) {
+				if( rn.renderFlags & RF_LIGHTVIEW ) {
+					if( !parentDrawList->worldSurfVis[s] ) {
+						continue;
+					}
+				} else {
+					// FIXME: apply deformed frustum culling here as well?
+					if( R_CullBox( surf->mins, surf->maxs, clipFlags ) ) {
+						continue;
+					}
 				}
-			}
 
-			if( tempSurfVis[s] && !skipSurf( surf ) ) {
-				if( ( rn.renderFlags & RF_LIGHTVIEW ) || !R_CullSurface( rsc.worldent, surf, clipFlags ) ) {
-					culled = false;
-					rn.meshlist->worldSurfVis[s] = 1;
-					rf.stats.c_brush_polys++;
-				}
+				culled = false;
+				rn.meshlist->worldSurfVis[s] = 1;
+				rf.stats.c_brush_polys++;
 			}
-
 		}
 
 		if( !culled ) {
@@ -969,7 +967,7 @@ void R_DrawWorldShadowNode( void ) {
 		}
 	}
 
-	R_FrameCache_FreeToMark();
+	R_FrameCache_FreeToMark( cachemark );
 
 	// END t_world_node
 	if( speeds ) {
