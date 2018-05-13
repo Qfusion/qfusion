@@ -41,6 +41,7 @@ typedef struct shadowSurfBatch_s {
 	int vbo;
 	int elemsVbo;
 	elem_t *elemsBuffer;
+	void *cacheMark;
 
 	drawSurfaceCompiledLight_t drawSurf;
 
@@ -148,8 +149,10 @@ static void R_UploadBatchShadowElems( shadowSurfBatch_t *batch ) {
 
 	R_UpdateBatchShadowDrawSurf( batch );
 
+	R_FrameCache_FreeToMark( batch->cacheMark );
+
 	batch->elemsBuffer = NULL;
-	R_FrameCache_FreeToMark();
+	batch->cacheMark = NULL;
 }
 
 /*
@@ -202,8 +205,7 @@ static void R_BatchLightSideView( shadowSurfBatch_t *batch, const entity_t *e, c
 				return;
 			}
 
-			R_FrameCache_SetMark();
-
+			tail->cacheMark = R_FrameCache_SetMark();
 			tail->elemsBuffer = R_FrameCache_Alloc( sizeof( elem_t ) * tail->numElems );
 			tail->numElems = 0;
 			tail->firstVert = UINT16_MAX;
@@ -313,8 +315,6 @@ void R_DrawRtLightWorld( void ) {
 	}
 }
 
-int R_DeformFrustum2( const cplane_t *frustum, const vec3_t corners[4], const vec3_t origin, const vec3_t point, cplane_t *deformed );
-
 /*
 * R_DrawRtLightShadow
 */
@@ -323,6 +323,7 @@ static void R_DrawRtLightShadow( rtlight_t *l, image_t *target, int sideMask, bo
 	int side;
 	refdef_t *fd;
 	refinst_t *rnp = &rn;
+	void *cachemark = NULL;
 
 	if( !l->shadow ) {
 		return;
@@ -342,9 +343,12 @@ static void R_DrawRtLightShadow( rtlight_t *l, image_t *target, int sideMask, bo
 	rnp->meshlist = &r_shadowlist;
 	rnp->parent = prevrn;
 	rnp->portalmasklist = NULL;
-	rnp->lodBias = 0;
+	rnp->lodBias = r_shadows_lodbias->integer;
 	rnp->lodScale = 1;
 	rnp->numDepthPortalSurfaces = 0;
+	rnp->numDeformedFrustumPlanes = 0;
+	rnp->numRtLightEntities = l->numShadowEnts;
+	rnp->rtLightEntities = l->shadowEnts;
 	VectorCopy( l->origin, rnp->lodOrigin );
 	VectorCopy( l->origin, rnp->pvsOrigin );
 
@@ -359,6 +363,31 @@ static void R_DrawRtLightShadow( rtlight_t *l, image_t *target, int sideMask, bo
 	// ignore current frame's area vis when compiling shadow geometry
 	if( compile ) {
 		fd->areabits = NULL;
+	}
+
+	if( prevrn != NULL && !compile ) {
+		unsigned i;
+
+		// generate a deformed frustum that includes the light origin, this is
+		// used to cull shadow casting surfaces that can not possibly cast a
+		// shadow onto the visible light-receiving surfaces, which can be a
+		// performance gain
+		rnp->numDeformedFrustumPlanes = R_DeformFrustum( prevrn->frustum, prevrn->frustumCorners, 
+			prevrn->viewOrigin, l->origin, rnp->deformedFrustum  );
+
+		cachemark = R_FrameCache_SetMark();
+
+		// cull entities by the deformed frustum
+		rnp->numRtLightEntities = 0;
+		rnp->rtLightEntities = R_FrameCache_Alloc( sizeof( *(rnp->rtLightEntities) ) * l->numShadowEnts );
+
+		for( i = 0; i < l->numShadowEnts; i++ ) {
+			int entNum = l->shadowEnts[i];
+			entSceneCache_t *cache = R_ENTNUMCACHE( entNum );
+			if( !R_DeformedCullBox( cache->absmins, cache->absmaxs ) ) {
+				rnp->rtLightEntities[rnp->numRtLightEntities++] = entNum;
+			}
+		}
 	}
 
 	for( side = 0; side < 6; side++ ) {
@@ -394,20 +423,15 @@ static void R_DrawRtLightShadow( rtlight_t *l, image_t *target, int sideMask, bo
 
 		R_SetupSideViewFrustum( fd, side, rnp->nearClip, rnp->farClip, rnp->frustum, rn.frustumCorners );
 
-		if( prevrn != NULL && !compile ) {
-			// generate a deformed frustum that includes the light origin, this is
-			// used to cull shadow casting surfaces that can not possibly cast a
-			// shadow onto the visible light-receiving surfaces, which can be a
-			// performance gain
-			rnp->numDeformedFrustumPlanes = R_DeformFrustum( prevrn->frustum, prevrn->frustumCorners, 
-					prevrn->viewOrigin, l->origin, rnp->deformedFrustum  );
-		}
-
 		R_RenderView( fd );
 
 		if( compile && l->world ) {
 			R_CompileLightSideView( l, side );
 		}
+	}
+
+	if( cachemark ) {
+		R_FrameCache_FreeToMark( cachemark );
 	}
 }
 
@@ -548,7 +572,10 @@ void R_DrawShadows( void ) {
 		if( !l->shadow ) {
 			continue;
 		}
-		if( !l->sideMask ) {
+
+		sideMask = l->casterMask;
+		sideMask &= l->receiverMask;
+		if( !sideMask ) {
 			continue;
 		}
 
@@ -583,8 +610,7 @@ void R_DrawShadows( void ) {
 			continue;
 		}
 
-		sideMask = R_CullRtLightFrumSides( prevrn, l, size, border );
-		sideMask &= l->sideMask;
+		sideMask &= R_CullRtLightFrumSides( prevrn, l, size, border );
 		if( !sideMask ) {
 			continue;
 		}

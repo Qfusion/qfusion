@@ -220,6 +220,9 @@ typedef struct refinst_s {
 	int				rtLightSide;
 	rtlight_t		*rtLight;
 
+	unsigned		numRtLightEntities;
+	int				*rtLightEntities;
+
 	refScreenTexSet_t *st;                  // points to either either a 8bit or a 16bit float set
 
 	drawList_t      *meshlist;              // meshes to be rendered
@@ -447,6 +450,7 @@ extern cvar_t *r_shadows_usecompiled;
 extern cvar_t *r_shadows_culltriangles;
 extern cvar_t *r_shadows_polygonoffset_factor;
 extern cvar_t *r_shadows_polygonoffset_units;
+extern cvar_t *r_shadows_lodbias;
 
 extern cvar_t *r_outlines_world;
 extern cvar_t *r_outlines_scale;
@@ -724,8 +728,8 @@ void		R_FrameCache_Free( void );
 void		R_FrameCache_Clear( void );
 void		*R_FrameCache_Alloc( size_t size );
 size_t		R_FrameCache_TotalSize( void );
-void		R_FrameCache_SetMark( void );
-void		R_FrameCache_FreeToMark( void );
+void		*R_FrameCache_SetMark( void );
+void		R_FrameCache_FreeToMark( void *mark );
 
 //
 // r_mesh.c
@@ -799,6 +803,7 @@ void R_BlurScreen( void );
 void    R_DrawWorldNode( void );
 void	R_DrawWorldShadowNode( void );
 bool    R_SurfNoDraw( const msurface_t *surf );
+bool    R_SurfNoDlight( const msurface_t *surf );
 bool    R_SurfNoShadow( const msurface_t *surf );
 void	R_CacheBrushModelEntity( const entity_t *e );
 bool    R_AddBrushModelToDrawList( const entity_t *e );
@@ -831,6 +836,7 @@ int         R_SkeletalGetBoneInfo( const model_t *mod, int bonenum, char *name, 
 void        R_SkeletalGetBonePose( const model_t *mod, int bonenum, int frame, bonepose_t *bonepose );
 int         R_SkeletalGetNumBones( const model_t *mod, int *numFrames );
 bool        R_SkeletalModelLerpTag( orientation_t *orient, const mskmodel_t *skmodel, int oldframenum, int framenum, float lerpfrac, const char *name );
+void		R_ClearSkeletalCache( void );
 
 //
 // r_vbo.c
