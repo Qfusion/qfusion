@@ -1176,10 +1176,8 @@ static void R_CullEntities( void ) {
 	}
 
 	if( rn.renderFlags & RF_LIGHTVIEW ) {
-		const rtlight_t *l = rn.rtLight;
-
-		for( i = 0; i < l->numReceieveEnts; i++ ) {
-			entNum = l->receiveEnts[i];
+		for( i = 0; i < rn.numRtLightEntities; i++ ) {
+			entNum = rn.rtLightEntities[i];
 
 			if( !(rn.parent->entpvs[entNum>>3] & (1<<(entNum&7))) ) {
 				// not visible in parent view
@@ -1193,17 +1191,12 @@ static void R_CullEntities( void ) {
 	}
 
 	if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
-		const rtlight_t *l = rn.rtLight;
-
-		for( i = 0; i < l->numShadowEnts; i++ ) {
-			entNum = l->shadowEnts[i];
+		for( i = 0; i < rn.numRtLightEntities; i++ ) {
+			entNum = rn.rtLightEntities[i];
 			e = R_NUM2ENT( entNum );
 			cache = R_ENTCACHE( e );
 
 			if( R_CullModelEntity( e, false ) ) {
-				continue;
-			}
-			if( R_DeformedCullBox( cache->absmins, cache->absmaxs ) ) {
 				continue;
 			}
 
@@ -2149,9 +2142,15 @@ void R_FreeFile_( void *buffer, const char *filename, int fileline ) {
 
 //===================================================================
 
+typedef struct r_framecachemark_s {
+	uint8_t *ptr;
+	struct r_framecache_s *cache;
+} r_framecachemark_t;
+
 typedef struct r_framecache_s {
 	size_t dataSize;
-	uint8_t *dataRover, *mark;
+	uint8_t *dataRover;
+	r_framecachemark_t mark;
 	struct r_framecache_s *next;
 } r_framecache_t;
 
@@ -2180,7 +2179,8 @@ void R_FrameCache_Free( void ) {
 */
 static void R_FrameCache_ResetBlock( r_framecache_t *cache ) {
 	cache->dataRover = (uint8_t *)(((uintptr_t)(cache + 1) + 15) & ~15);
-	cache->mark = cache->dataRover;
+	cache->mark.cache = cache;
+	cache->mark.ptr = cache->dataRover;
 }
 
 /*
@@ -2269,15 +2269,18 @@ size_t R_FrameCache_TotalSize( void ) {
 /*
 * R_FrameCache_SetMark
 */
-void R_FrameCache_SetMark( void ) {
+void *R_FrameCache_SetMark( void ) {
 	r_framecache_t *cache = r_frameCacheHead;
-	cache->mark = cache->dataRover;
+	r_framecachemark_t *cmark = &cache->mark;
+	cmark->ptr = cache->dataRover;
+	return (void *)cmark;
 }
 
 /*
 * R_FrameCache_FreeToMark
 */
-void R_FrameCache_FreeToMark( void ) {
-	r_framecache_t *cache = r_frameCacheHead;
-	cache->dataRover = cache->mark;
+void R_FrameCache_FreeToMark( void *mark ) {
+	r_framecachemark_t *cmark = mark;
+	r_framecache_t *cache = cmark->cache;
+	cache->dataRover = cmark->ptr;
 }

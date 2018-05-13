@@ -968,7 +968,7 @@ typedef struct {
 	vec3_t surfMins, surfMaxs;
 
 	unsigned *visLeafs; // [maxLeafs + 1]
-	uint8_t *surfMasks; // [maxSurfaces]
+	uint8_t *surfMasks; // [maxSurfaces]*2
 	uint8_t *drawSurfPvs; // [(maxDrawSurfaces + 7)/8]
 } r_lightWorldVis_t;
 
@@ -987,7 +987,7 @@ static void R_AllocLightWorldVis( r_lightWorldVis_t *vis, mbrushmodel_t *bm ) {
 	if( bm->numsurfaces > vis->maxSurfaces ) {
 		R_Free( vis->surfMasks );
 		vis->maxSurfaces = bm->numsurfaces;
-		vis->surfMasks = R_Malloc( sizeof( *(vis->surfMasks) ) * vis->maxSurfaces );
+		vis->surfMasks = R_Malloc( sizeof( *(vis->surfMasks) ) * vis->maxSurfaces * 2 );
 	}
 
 	if( bm->numDrawSurfaces > vis->maxDrawSurfaces ) {
@@ -1086,7 +1086,7 @@ static void R_GetRtLightSurfaceVisInfo( rtlight_t *l, mbrushmodel_t *bm, r_light
 	vis->numSurfaces = 0;
 	vis->numDrawSurfaces = 0;
 
-	memset( smasks, 0, bm->numsurfaces );
+	memset( smasks, 0, bm->numsurfaces*2 );
 	memset( dspvs, 0, (bm->numDrawSurfaces + 7)/8 );
 
 	ClearBounds( vis->surfMins, vis->surfMaxs );
@@ -1096,6 +1096,7 @@ static void R_GetRtLightSurfaceVisInfo( rtlight_t *l, mbrushmodel_t *bm, r_light
 		const mleaf_t *leaf = bm->leafs + leafNum;
 
 		for( j = 0; j < leaf->numVisSurfaces; j++ ) {
+			bool nolight, noshadow;
 			unsigned s = leaf->visSurfaces[j];
 			const msurface_t *surf = bm->surfaces + s;
 			unsigned ds = surf->drawSurf - 1;
@@ -1105,7 +1106,13 @@ static void R_GetRtLightSurfaceVisInfo( rtlight_t *l, mbrushmodel_t *bm, r_light
 				continue;
 			}
 
-			if( smasks[s] ) {
+			if( smasks[s*2+0] || smasks[s*2+1] ) {
+				continue;
+			}
+
+			nolight = R_SurfNoDlight( surf );
+			noshadow = R_SurfNoShadow( surf );
+			if( nolight && noshadow ) {
 				continue;
 			}
 
@@ -1122,7 +1129,8 @@ static void R_GetRtLightSurfaceVisInfo( rtlight_t *l, mbrushmodel_t *bm, r_light
 				*dscount = *dscount + 1;
 			}
 
-			smasks[s] = mask;
+			smasks[s*2+0] = nolight ? 0 : mask;
+			smasks[s*2+1] = noshadow ? 0 : mask;
 			dspvs[ds>>3] |= (1<<(ds&7));
 		}
 	}
@@ -1153,7 +1161,7 @@ static void R_CompileRtLightVisInfo( rtlight_t *l, mbrushmodel_t *bm, r_lightWor
 	l->visLeafs = R_RtLightMalloc( l, sizeof( int ) * lcount );
 	memcpy( l->visLeafs, vis->visLeafs + 1, sizeof( int ) * lcount );
 
-	// drawSurf, numVisSurfs, (surf, mask)[numVisSurfs]
+	// drawSurf, numVisSurfs, (surf, receivermask, castermask)[numVisSurfs]
 	l->surfaceInfo = R_RtLightMalloc( l, sizeof( unsigned ) * (1 + dscount*2 + scount*3) );
 
 	nds = 0;
@@ -1172,13 +1180,14 @@ static void R_CompileRtLightVisInfo( rtlight_t *l, mbrushmodel_t *bm, r_lightWor
 
 		for( j = 0; j < drawSurf->numWorldSurfaces; j++ ) {
 			unsigned s = drawSurf->worldSurfaces[j];
-			if( !smasks[s] ) {
+
+			if( !smasks[s*2+0] && !smasks[s*2+1] ) {
 				continue;
 			}
 
 			*p++ = s;
-			*p++ = j;
-			*p++ = smasks[s];
+			*p++ = smasks[s*2+0];
+			*p++ = smasks[s*2+1];
 			n++;
 		}
 
@@ -1280,15 +1289,15 @@ static int R_RtLightsShadowSizeCmp( const void *pl1, const void *pl2 ) {
 void R_PrepareRtLightEntities( rtlight_t *l ) {
 	unsigned i;
 	int nre, nse;
+	unsigned receiverMask, casterMask;
 	static int re[MAX_REF_ENTITIES], se[MAX_REF_ENTITIES];
 
 	nre = 0;
 	nse = 0;
-
-	l->entSideMask = 0;
+	receiverMask = casterMask = 0;
 
 	for( i = rsc.numLocalEntities; i < rsc.numEntities; i++ ) {
-		bool ignore;
+		bool elight, eshadow;
 		entity_t *e = R_NUM2ENT( i );
 		int entNum = R_ENT2NUM( e );
 		entSceneCache_t *cache = R_ENTCACHE( e );
@@ -1301,17 +1310,15 @@ void R_PrepareRtLightEntities( rtlight_t *l ) {
 			continue;
 		}
 
-		ignore = true;
+		elight = eshadow = false;
 		if( !(e->flags & RF_FULLBRIGHT) ) {
-			ignore = false;
-			re[nre++] = entNum;
+			elight = true;
 		}
 		if( !(e->flags & (RF_NOSHADOW|RF_WEAPONMODEL|RF_NODEPTHTEST)) ) {
-			ignore = false;
-			se[nse++] = entNum;
+			eshadow = true;
 		}
 
-		if( ignore ) {
+		if( !elight && !eshadow ) {
 			continue;
 		}
 
@@ -1321,13 +1328,23 @@ void R_PrepareRtLightEntities( rtlight_t *l ) {
 		}
 
 		// expand the cullmins/maxs to include influenced entities
-		AddPointToBounds( cache->mins, l->cullmins, l->cullmaxs );
-		AddPointToBounds( cache->maxs, l->cullmins, l->cullmaxs );
+		AddPointToBounds( cache->absmins, l->cullmins, l->cullmaxs );
+		AddPointToBounds( cache->absmaxs, l->cullmins, l->cullmaxs );
 
-		l->entSideMask |= sideMask;
+		if( elight ) {
+			re[nre++] = entNum;
+			receiverMask |= sideMask;
+		}
+		if( eshadow ) {
+			se[nse++] = entNum;
+			casterMask |= sideMask;
+		}
 	}
 
+	l->entReceiverMask = receiverMask;
 	l->numReceieveEnts = nre;
+
+	l->entCasterMask = casterMask;
 	l->numShadowEnts = nse;
 
 	l->receiveEnts = R_FrameCache_Alloc( sizeof( int ) * l->numReceieveEnts );
@@ -1433,7 +1450,8 @@ unsigned R_CullRtLights( unsigned numLights, rtlight_t *lights, unsigned clipFla
 			continue;
 		}
 
-		l->sideMask = l->entSideMask;
+		l->receiverMask = l->entReceiverMask;
+		l->casterMask = l->entCasterMask;
 		l->shadowSize = 0;
 		l->lod = R_ComputeLOD( rn.viewOrigin, l->lightmins, l->lightmaxs, l->intensity, 1.0, 0 );
 		l->sort = l->intensity / (l->lod + 1.0);
@@ -1595,7 +1613,7 @@ void R_RenderDebugLightVolumes( void ) {
 
 	for( i = 0; i < rn.numRealtimeLights; i++ ) {
 		rtlight_t *l = rn.rtlights[i];
-		if( !l->sideMask ) {
+		if( !l->receiverMask ) {
 			continue;
 		}
 
@@ -1640,11 +1658,13 @@ void R_DrawRtLights( void ) {
 
 	for( i = 0; i < numRtLights; i++ ) {
 		l = rtLights[i];
-		if( !l->sideMask ) {
+		if( !l->receiverMask ) {
 			continue;
 		}
 
 		rn.rtLight = l;
+		rn.rtLightEntities = l->receiveEnts;
+		rn.numRtLightEntities = l->numReceieveEnts;
 
 		if( R_ScissorForBBox( prevrn, l->cullmins, l->cullmaxs, rn.scissor ) ) {
 			// clipped away

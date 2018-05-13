@@ -919,8 +919,14 @@ typedef struct skmcacheentry_s {
 	uint8_t *data;
 } skmcacheentry_t;
 
-static unsigned r_skmcacheFrame;
-static skmcacheentry_t *r_skmcachekeys[MAX_REF_ENTITIES * ( MOD_MAX_LODS + 1 )];      // entities linked to cache entries
+static skmcacheentry_t r_skmcachekeys[MAX_REF_ENTITIES * ( MOD_MAX_LODS + 1 )];      // entities linked to cache entries
+
+/*
+* R_ClearSkeletalCache
+*/
+void R_ClearSkeletalCache( void ) {
+	memset( r_skmcachekeys, 0, sizeof( r_skmcachekeys ) );
+}
 
 /*
 * R_GetSkeletalCache
@@ -928,14 +934,8 @@ static skmcacheentry_t *r_skmcachekeys[MAX_REF_ENTITIES * ( MOD_MAX_LODS + 1 )];
 static skmcacheentry_t *R_GetSkeletalCache( int entNum, int lodNum ) {
 	skmcacheentry_t *cache;
 
-	if( r_skmcacheFrame != rsc.frameCount ) {
-		r_skmcacheFrame = rsc.frameCount;
-		memset( r_skmcachekeys, 0, sizeof( r_skmcachekeys ) );
-		return NULL;
-	}
-
-	cache = r_skmcachekeys[entNum * ( MOD_MAX_LODS + 1 ) + lodNum];
-	if( !cache ) {
+	cache = &r_skmcachekeys[entNum * ( MOD_MAX_LODS + 1 ) + lodNum];
+	if( !cache->data ) {
 		return NULL;
 	}
 
@@ -954,7 +954,7 @@ static skmcacheentry_t *R_AllocSkeletalDataCache( int entNum, int lodNum, const 
 	skmcacheentry_t *cache;
 	size_t size;
 	
-	assert( !r_skmcachekeys[entNum * ( MOD_MAX_LODS + 1 ) + lodNum] );
+	assert( !r_skmcachekeys[entNum * ( MOD_MAX_LODS + 1 ) + lodNum].data );
 
 	size = sizeof( dualquat_t ) * skmodel->numbones;
 	if( !hwTransform ) {
@@ -962,7 +962,7 @@ static skmcacheentry_t *R_AllocSkeletalDataCache( int entNum, int lodNum, const 
 	}
 
 	// and link it to the allocation list
-	cache = R_FrameCache_Alloc( sizeof( skmcacheentry_t ) );
+	cache = &r_skmcachekeys[entNum * ( MOD_MAX_LODS + 1 ) + lodNum];
 	cache->data = R_FrameCache_Alloc( size );
 	cache->hwTransform = false;
 	cache->entNum = entNum;
@@ -971,7 +971,6 @@ static skmcacheentry_t *R_AllocSkeletalDataCache( int entNum, int lodNum, const 
 	cache->boneposes = cache->oldboneposes = NULL;
 	cache->framenum = cache->oldframenum = 0;
 	cache->hwTransform = hwTransform;
-	r_skmcachekeys[entNum * ( MOD_MAX_LODS + 1 ) + lodNum] = cache;
 
 	return cache;
 }

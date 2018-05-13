@@ -51,6 +51,8 @@ void R_ClearScene( void ) {
 
 	R_FrameCache_Clear();
 
+	R_ClearSkeletalCache();
+
 	R_ClearDebugBounds();
 
 	rsc.numLocalEntities = 0;
