@@ -95,6 +95,7 @@ cvar_t *r_shadows_usecompiled;
 cvar_t *r_shadows_culltriangles;
 cvar_t *r_shadows_polygonoffset_factor;
 cvar_t *r_shadows_polygonoffset_units;
+cvar_t *r_shadows_lodbias;
 
 cvar_t *r_outlines_world;
 cvar_t *r_outlines_scale;
@@ -1149,8 +1150,9 @@ static void R_Register( const char *screenshotsPrefix ) {
 	r_shadows_bias = ri.Cvar_Get( "r_shadows_bias", "0.03", CVAR_ARCHIVE );
 	r_shadows_usecompiled  = ri.Cvar_Get( "r_shadows_usecompiled", "1", 0 );
 	r_shadows_culltriangles  = ri.Cvar_Get( "r_shadows_culltriangles", "1", 0 );
-	r_shadows_polygonoffset_factor  = ri.Cvar_Get( "r_shadows_polygonoffset_factor", "2", CVAR_ARCHIVE );
-	r_shadows_polygonoffset_units  = ri.Cvar_Get( "r_shadows_polygonoffset_units", "0", CVAR_ARCHIVE );
+	r_shadows_polygonoffset_factor = ri.Cvar_Get( "r_shadows_polygonoffset_factor", "2", CVAR_ARCHIVE );
+	r_shadows_polygonoffset_units = ri.Cvar_Get( "r_shadows_polygonoffset_units", "0", CVAR_ARCHIVE );
+	r_shadows_lodbias = ri.Cvar_Get( "r_shadows_lodbias", "100", CVAR_ARCHIVE );
 
 	r_outlines_world = ri.Cvar_Get( "r_outlines_world", "1.8", CVAR_ARCHIVE );
 	r_outlines_scale = ri.Cvar_Get( "r_outlines_scale", "1", CVAR_ARCHIVE );
