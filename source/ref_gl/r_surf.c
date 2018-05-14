@@ -909,8 +909,8 @@ void R_DrawWorldShadowNode( void ) {
 	tempSurfVis = R_FrameCache_Alloc( sizeof( *tempSurfVis ) * rsh.worldBrushModel->numsurfaces );
 	memset( (void *)tempSurfVis, 0, sizeof( *tempSurfVis ) * rsh.worldBrushModel->numsurfaces );
 
-	for( i = 0; i < l->numVisLeafs; i++ ) {
-		int leafNum = l->visLeafs[i];
+	for( i = 0; i < rn.numRtLightVisLeafs; i++ ) {
+		int leafNum = rn.rtLightVisLeafs[i];
 		const mleaf_t *leaf = bm->leafs + leafNum;
 
 		// check for door connected areas
