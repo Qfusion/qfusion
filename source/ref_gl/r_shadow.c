@@ -349,6 +349,8 @@ static void R_DrawRtLightShadow( rtlight_t *l, image_t *target, int sideMask, bo
 	rnp->numRtLightEntities = l->numShadowEnts;
 	rnp->rtLightEntities = l->shadowEnts;
 	rnp->rtLightSurfaceInfo = l->surfaceInfo;
+	rnp->numRtLightVisLeafs = l->numVisLeafs;
+	rnp->rtLightVisLeafs = l->visLeafs;
 	VectorCopy( l->origin, rnp->lodOrigin );
 	VectorCopy( l->origin, rnp->pvsOrigin );
 
@@ -384,6 +386,17 @@ static void R_DrawRtLightShadow( rtlight_t *l, image_t *target, int sideMask, bo
 			entSceneCache_t *cache = R_ENTNUMCACHE( entNum );
 			if( !R_DeformedCullBox( cache->absmins, cache->absmaxs ) ) {
 				rnp->rtLightEntities[rnp->numRtLightEntities++] = entNum;
+			}
+		}
+
+		rnp->numRtLightVisLeafs = 0;
+		rnp->rtLightVisLeafs = R_FrameCache_Alloc( sizeof( *(rnp->rtLightVisLeafs) ) * l->numVisLeafs );
+
+		for( i = 0; i < l->numVisLeafs; i++ ) {
+			int leafNum = l->visLeafs[i];
+			const mleaf_t *leaf = rsh.worldBrushModel->leafs + leafNum;
+			if( !R_DeformedCullBox( leaf->mins, leaf->maxs ) ) {
+				rnp->rtLightVisLeafs[rnp->numRtLightVisLeafs++] = leafNum;
 			}
 		}
 

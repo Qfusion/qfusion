@@ -225,6 +225,9 @@ typedef struct refinst_s {
 
 	unsigned		*rtLightSurfaceInfo;
 
+	unsigned		numRtLightVisLeafs;
+	unsigned		*rtLightVisLeafs;
+
 	refScreenTexSet_t *st;                  // points to either either a 8bit or a 16bit float set
 
 	drawList_t      *meshlist;              // meshes to be rendered
