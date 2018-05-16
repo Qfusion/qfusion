@@ -828,17 +828,17 @@ static bool IsEnemyVisible( const edict_t *self, const edict_t *enemyEnt ) {
 
 void BotPerceptionManager::TryGuessingBeamOwnersOrigins( const EntNumsVector &dangerousEntsNums, float failureChance ) {
 	const edict_t *const gameEdicts = game.edicts;
-	auto *const botBrain = &self->ai->botRef->botBrain;
+	auto *const bot = self->ai->botRef;
 	for( auto entNum: dangerousEntsNums ) {
 		if( random() < failureChance ) {
 			continue;
 		}
 		const edict_t *owner = &gameEdicts[gameEdicts[entNum].s.ownerNum];
-		if( botBrain->MayNotBeFeasibleEnemy( owner ) ) {
+		if( bot->MayNotBeFeasibleEnemy( owner ) ) {
 			continue;
 		}
 		if( CanDistinguishEnemyShotsFromTeammates( owner ) ) {
-			botBrain->OnEnemyOriginGuessed( owner, 128 );
+			bot->OnEnemyOriginGuessed( owner, 128 );
 		}
 	}
 }
@@ -846,21 +846,21 @@ void BotPerceptionManager::TryGuessingBeamOwnersOrigins( const EntNumsVector &da
 void BotPerceptionManager::TryGuessingProjectileOwnersOrigins( const EntNumsVector &dangerousEntNums, float failureChance ) {
 	const edict_t *const gameEdicts = game.edicts;
 	const int64_t levelTime = level.time;
-	auto *const botBrain = &self->ai->botRef->botBrain;
+	auto *const bot = self->ai->botRef;
 	for( auto entNum: dangerousEntNums ) {
 		if( random() < failureChance ) {
 			continue;
 		}
 		const edict_t *projectile = &gameEdicts[entNum];
 		const edict_t *owner = &gameEdicts[projectile->s.ownerNum];
-		if( botBrain->MayNotBeFeasibleEnemy( owner ) ) {
+		if( bot->MayNotBeFeasibleEnemy( owner ) ) {
 			continue;
 		}
 
 		if( projectile->s.linearMovement ) {
 			// This test is expensive, do it after cheaper ones have succeeded.
 			if( CanDistinguishEnemyShotsFromTeammates( projectile->s.linearMovementBegin ) ) {
-				botBrain->OnEnemyOriginGuessed( owner, 256, projectile->s.linearMovementBegin );
+				bot->OnEnemyOriginGuessed( owner, 256, projectile->s.linearMovementBegin );
 			}
 			return;
 		}
@@ -879,7 +879,7 @@ void BotPerceptionManager::TryGuessingProjectileOwnersOrigins( const EntNumsVect
 		// This test is expensive, do it after cheaper ones have succeeded.
 		if( CanDistinguishEnemyShotsFromTeammates( owner ) ) {
 			// Use the exact enemy origin as a guessed one
-			botBrain->OnEnemyOriginGuessed( owner, 384 );
+			bot->OnEnemyOriginGuessed( owner, 384 );
 		}
 	}
 }
@@ -894,7 +894,6 @@ void BotPerceptionManager::RegisterVisibleEnemies() {
 	AngleVectors( self->s.angles, lookDir, nullptr, nullptr );
 
 	const float dotFactor = self->ai->botRef->FovDotFactor();
-	auto *botBrain = &self->ai->botRef->botBrain;
 
 	// Note: non-client entities also may be candidate targets.
 	StaticVector<EntAndDistance, MAX_EDICTS> candidateTargets;
@@ -902,7 +901,7 @@ void BotPerceptionManager::RegisterVisibleEnemies() {
 	edict_t *const gameEdicts = game.edicts;
 	for( int i = 1; i < game.numentities; ++i ) {
 		edict_t *ent = gameEdicts + i;
-		if( botBrain->MayNotBeFeasibleEnemy( ent ) ) {
+		if( self->ai->botRef->MayNotBeFeasibleEnemy( ent ) ) {
 			continue;
 		}
 
@@ -932,10 +931,11 @@ void BotPerceptionManager::RegisterVisibleEnemies() {
 	entitiesDetector.FilterRawEntitiesWithDistances( candidateTargets, visibleTargets, MAX_CLIENTS,
 													 IsGenericEntityInPvs, IsEnemyVisible );
 
+	auto *const threatTracker = &self->ai->botRef->threatTracker;
 	for( auto entNum: visibleTargets )
-		botBrain->OnEnemyViewed( gameEdicts + entNum );
+		threatTracker->OnEnemyViewed( gameEdicts + entNum );
 
-	botBrain->AfterAllEnemiesViewed();
+	threatTracker->AfterAllEnemiesViewed();
 
 	self->ai->botRef->CheckAlertSpots( visibleTargets );
 }
@@ -1427,7 +1427,7 @@ void BotPerceptionManager::HandlePlayerTeleportOutEvent( const edict_t *ent, flo
 void BotPerceptionManager::JumppadUsersTracker::Think() {
 	// Report new origins of tracked players.
 
-	BotBrain *botBrain = &perceptionManager->self->ai->botRef->botBrain;
+	Bot *bot = perceptionManager->self->ai->botRef;
 	const edict_t *gameEdicts = game.edicts;
 	for( int i = 0, end = gs.maxclients; i < end; ++i ) {
 		if( !isTrackedUser[i] ) {
@@ -1435,11 +1435,11 @@ void BotPerceptionManager::JumppadUsersTracker::Think() {
 		}
 		const edict_t *ent = gameEdicts + i + 1;
 		// Check whether a player cannot be longer a valid entity
-		if( botBrain->MayNotBeFeasibleEnemy( ent ) ) {
+		if( bot->MayNotBeFeasibleEnemy( ent ) ) {
 			isTrackedUser[i] = false;
 			continue;
 		}
-		botBrain->OnEnemyOriginGuessed( ent, 128 );
+		bot->OnEnemyOriginGuessed( ent, 128 );
 	}
 }
 
@@ -1511,13 +1511,13 @@ void BotPerceptionManager::ProcessEvents() {
 	// has been accumulated during the Think() frames cycle
 	// and might contain outdated info (e.g. a player has changed its team).
 	const auto *gameEdicts = game.edicts;
-	auto *botBrain = &self->ai->botRef->botBrain;
+	Bot *bot = self->ai->botRef;
 	for( const auto &detectedEvent: eventsQueue ) {
 		const edict_t *ent = gameEdicts + detectedEvent.enemyEntNum;
-		if( botBrain->MayNotBeFeasibleEnemy( ent ) ) {
+		if( bot->MayNotBeFeasibleEnemy( ent ) ) {
 			continue;
 		}
-		botBrain->OnEnemyOriginGuessed( ent, 96, detectedEvent.origin );
+		bot->OnEnemyOriginGuessed( ent, 96, detectedEvent.origin );
 	}
 
 	eventsQueue.clear();
