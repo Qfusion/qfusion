@@ -458,12 +458,48 @@ bool SelectedEnemies::HaveGoodCloseRangeWeapons() const {
 	return false;
 }
 
+inline void BotWeaponSelector::Debug( const char *format, ... ) const {
+	va_list va;
+	va_start( va, format );
+	AI_Debugv( game.edicts[bot->EntNum()].r.client->netname, format, va );
+	va_end( va );
+}
+
+inline bool BotWeaponSelector::BotHasQuad() const { return ::HasQuad( game.edicts + bot->EntNum() ); }
+inline bool BotWeaponSelector::BotHasShell() const { return ::HasShell( game.edicts + bot->EntNum() ); }
+inline bool BotWeaponSelector::BotHasPowerups() const { return ::HasPowerups( game.edicts + bot->EntNum() ); }
+inline bool BotWeaponSelector::BotIsCarrier() const { return ::IsCarrier( game.edicts + bot->EntNum() ); }
+
+inline const int *BotWeaponSelector::Inventory() const { return bot->PlayerState()->inventory; }
+
+template <int Weapon>
+inline int BotWeaponSelector::AmmoReadyToFireCount() const {
+	if( !Inventory()[Weapon] ) {
+		return 0;
+	}
+	return Inventory()[WeaponAmmo < Weapon > ::strongAmmoTag] + Inventory()[WeaponAmmo < Weapon > ::weakAmmoTag];
+}
+
+inline int BotWeaponSelector::BlastsReadyToFireCount() const {
+	// Check only strong ammo, the weak ammo enables blade attack
+	return Inventory()[AMMO_GUNBLADE];
+}
+
+inline int BotWeaponSelector::ShellsReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_RIOTGUN>(); }
+inline int BotWeaponSelector::GrenadesReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_GRENADELAUNCHER>(); }
+inline int BotWeaponSelector::RocketsReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_ROCKETLAUNCHER>(); }
+inline int BotWeaponSelector::PlasmasReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_PLASMAGUN>(); }
+inline int BotWeaponSelector::BulletsReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_MACHINEGUN>(); }
+inline int BotWeaponSelector::LasersReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_LASERGUN>(); }
+inline int BotWeaponSelector::WavesReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_SHOCKWAVE>(); }
+inline int BotWeaponSelector::BoltsReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_ELECTROBOLT>(); }
+
 void BotWeaponSelector::Frame( const WorldState &cachedWorldState ) {
 	if( nextFastWeaponSwitchActionCheckAt > level.time ) {
 		return;
 	}
 
-	if( !self->ai->botRef->selectedEnemies.AreValid() ) {
+	if( !bot->selectedEnemies.AreValid() ) {
 		return;
 	}
 
@@ -484,11 +520,11 @@ void BotWeaponSelector::Frame( const WorldState &cachedWorldState ) {
 }
 
 void BotWeaponSelector::Think( const WorldState &cachedWorldState ) {
-	if( selectedWeapons.AreValid() ) {
+	if( bot->weaponsUsageModule.GetSelectedWeapons().AreValid() ) {
 		return;
 	}
 
-	if( !self->ai->botRef->selectedEnemies.AreValid() ) {
+	if( !bot->selectedEnemies.AreValid() ) {
 		return;
 	}
 
@@ -506,18 +542,18 @@ void BotWeaponSelector::Think( const WorldState &cachedWorldState ) {
 }
 
 bool BotWeaponSelector::CheckFastWeaponSwitchAction( const WorldState &worldState ) {
-	if( self->r.client->ps.stats[STAT_WEAPON_TIME] >= 64 ) {
+	if( game.edicts[bot->EntNum()].r.client->ps.stats[STAT_WEAPON_TIME] >= 64 ) {
 		return false;
 	}
 
 	// Easy bots do not perform fast weapon switch actions
-	if( self->ai->botRef->Skill() < 0.33f ) {
+	if( bot->Skill() < 0.33f ) {
 		return false;
 	}
 
-	if( self->ai->botRef->Skill() < 0.66f ) {
+	if( bot->Skill() < 0.66f ) {
 		// Mid-skill bots do these actions in non-think frames occasionally
-		if( self->ai->botRef->ShouldSkipThinkFrame() && random() > self->ai->botRef->Skill() ) {
+		if( bot->ShouldSkipThinkFrame() && random() > bot->Skill() ) {
 			return false;
 		}
 	}
@@ -539,6 +575,7 @@ bool BotWeaponSelector::CheckFastWeaponSwitchAction( const WorldState &worldStat
 
 	if( chosenWeapon != WEAP_NONE ) {
 		unsigned timeoutPeriod = 64 + 1;
+		const auto &selectedWeapons = bot->weaponsUsageModule.GetSelectedWeapons();
 		if( selectedWeapons.TimeoutAt() > level.time + 64 + 1 ) {
 			timeoutPeriod += level.time - selectedWeapons.timeoutAt - 64 - 1;
 		}
@@ -557,18 +594,18 @@ inline float GetLaserRange() {
 }
 
 void BotWeaponSelector::SuggestAimWeapon( const WorldState &worldState ) {
-	Vec3 botOrigin( self->s.origin );
-	TestTargetEnvironment( botOrigin, selectedEnemies.LastSeenOrigin(), selectedEnemies.Ent() );
+	Vec3 botOrigin( bot->Origin() );
+	TestTargetEnvironment( botOrigin, bot->selectedEnemies.LastSeenOrigin(), bot->selectedEnemies.Ent() );
 
 	if( GS_Instagib() ) {
 		// TODO: Select script weapon too
-		SetSelectedWeapons( SuggestInstagibWeapon( worldState ), -1, true, weaponChoicePeriod );
+		SetSelectedWeapons( SuggestInstagibWeapon( worldState ), weaponChoicePeriod );
 		return;
 	}
 
 	if( BotHasPowerups() ) {
 		// TODO: Select script weapon too
-		SetSelectedWeapons( SuggestQuadBearerWeapon( worldState ), -1, true, weaponChoicePeriod );
+		SetSelectedWeapons( SuggestQuadBearerWeapon( worldState ), weaponChoicePeriod );
 		return;
 	}
 
@@ -587,11 +624,11 @@ void BotWeaponSelector::SuggestSniperRangeWeapon( const WorldState &worldState )
 	int chosenWeapon = WEAP_NONE;
 
 	// Spam plasma from long range to blind enemy
-	if( selectedEnemies.PendingWeapon() == WEAP_ELECTROBOLT ) {
+	if( bot->selectedEnemies.PendingWeapon() == WEAP_ELECTROBOLT ) {
 		if( PlasmasReadyToFireCount() && weaponChoiceRandom > 0.5f ) {
 			chosenWeapon = WEAP_PLASMAGUN;
 		}
-	} else if( !self->ai->botRef->ShouldKeepXhairOnEnemy() ) {
+	} else if( !bot->ShouldKeepXhairOnEnemy() ) {
 		// In this case try preferring weapons that does not require precise aiming.
 		// Otherwise the bot is unlikely to start firing at all due to view angles mismatch.
 		if( PlasmasReadyToFireCount() && weaponChoiceRandom > 0.7f ) {
@@ -638,7 +675,7 @@ void BotWeaponSelector::SuggestSniperRangeWeapon( const WorldState &worldState )
 		}
 		SetSelectedWeapons( chosenWeapon, scriptWeaponDef->weaponNum, preferBuiltinWeapon, weaponChoicePeriod );
 	} else {
-		SetSelectedWeapons( chosenWeapon, -1, true, weaponChoicePeriod );
+		SetSelectedWeapons( chosenWeapon, weaponChoicePeriod );
 	}
 }
 struct WeaponAndScore {
@@ -652,7 +689,7 @@ struct WeaponAndScore {
 
 int BotWeaponSelector::ChooseWeaponByScores( struct WeaponAndScore *begin, struct WeaponAndScore *end ) {
 	int weapon = WEAP_NONE;
-	const int pendingWeapon = self->r.client->ps.stats[STAT_PENDING_WEAPON];
+	const int pendingWeapon = bot->PlayerState()->stats[STAT_PENDING_WEAPON];
 	float pendingWeaponScore = std::numeric_limits<float>::infinity();
 	for( WeaponAndScore *it = begin; it != end; ++it ) {
 		if( pendingWeapon == it->weapon ) {
@@ -704,7 +741,9 @@ void BotWeaponSelector::SuggestFarRangeWeapon( const WorldState &worldState ) {
 		WeaponAndScore( WEAP_RIOTGUN, 0.6f * BoundedFraction( ShellsReadyToFireCount(), 2 ) )
 	};
 
-	weaponScores[EB].score += self->ai->botRef->Skill() / 3;
+	weaponScores[EB].score += bot->Skill() / 3;
+
+	const auto &selectedEnemies = bot->selectedEnemies;
 
 	// Counteract EB with PG or MG
 	if( selectedEnemies.PendingWeapon() == WEAP_ELECTROBOLT ) {
@@ -730,7 +769,7 @@ void BotWeaponSelector::SuggestFarRangeWeapon( const WorldState &worldState ) {
 	}
 	if( enemySpeed > DEFAULT_DASHSPEED ) {
 		targetMoveDir *= 1.0f / enemySpeed;
-		Vec3 botToTargetDir = selectedEnemies.LastSeenOrigin() - self->s.origin;
+		Vec3 botToTargetDir = selectedEnemies.LastSeenOrigin() - bot->Origin();
 		botToTargetDir.NormalizeFast();
 
 		float speedFactor = BoundedFraction( enemySpeed - DEFAULT_DASHSPEED, 1000.0f - DEFAULT_DASHSPEED );
@@ -739,13 +778,13 @@ void BotWeaponSelector::SuggestFarRangeWeapon( const WorldState &worldState ) {
 		weaponScores[PG].score *= 1.0f - ( 1.0f - dirFactor ) * speedFactor;
 	}
 
-	if( self->ai->botRef->IsInSquad() ) {
+	if( bot->IsInSquad() ) {
 		// In squad prefer MG to gun down an enemy together
 		weaponScores[MG].score *= 1.75f;
 	}
 
 	// Add extra scores for weapons that do not require precise aiming in this case
-	if( !self->ai->botRef->ShouldKeepXhairOnEnemy() ) {
+	if( !bot->ShouldKeepXhairOnEnemy() ) {
 		weaponScores[PG].score *= 3.0f;
 		weaponScores[RG].score *= 2.0f;
 	}
@@ -759,12 +798,28 @@ void BotWeaponSelector::SuggestFarRangeWeapon( const WorldState &worldState ) {
 	int chosenWeapon = ChooseWeaponByScores( weaponScores, weaponScores + 4 );
 
 	if( chosenWeapon == WEAP_NONE ) {
-		// Bot needs to have lots of rocket since most of rockets will not hit at this distance
-		float rocketScore = targetEnvironment.factor * std::min( 6, RocketsReadyToFireCount() ) / 6.0f;
-		if( rocketScore > 0.4f ) {
-			chosenWeapon = WEAP_ROCKETLAUNCHER;
+		if( targetEnvironment.factor > 0.5f ) {
+			if( WavesReadyToFireCount() && RocketsReadyToFireCount() ) {
+				if( bot->WillRetreat() ) {
+					chosenWeapon = WEAP_SHOCKWAVE;
+				} else {
+					chosenWeapon = WEAP_ROCKETLAUNCHER;
+				}
+			} else {
+				if( WavesReadyToFireCount() ) {
+					chosenWeapon = WEAP_SHOCKWAVE;
+				} else if( RocketsReadyToFireCount() ) {
+					chosenWeapon = WEAP_ROCKETLAUNCHER;
+				} else {
+					chosenWeapon = WEAP_GUNBLADE;
+				}
+			}
 		} else {
-			chosenWeapon = WEAP_GUNBLADE;
+			if( bot->WillRetreat() && WavesReadyToFireCount() ) {
+				chosenWeapon = WEAP_SHOCKWAVE;
+			} else {
+				chosenWeapon = WEAP_GUNBLADE;
+			}
 		}
 	}
 
@@ -780,7 +835,7 @@ void BotWeaponSelector::SuggestFarRangeWeapon( const WorldState &worldState ) {
 		}
 		SetSelectedWeapons( chosenWeapon, scriptWeaponDef->weaponNum, preferBuiltinWeapon, weaponChoicePeriod );
 	} else {
-		SetSelectedWeapons( chosenWeapon, -1, true, weaponChoicePeriod );
+		SetSelectedWeapons( chosenWeapon, weaponChoicePeriod );
 	}
 }
 
@@ -790,6 +845,8 @@ void BotWeaponSelector::SuggestMiddleRangeWeapon( const WorldState &worldState )
 	const float midRangeLen = lgRange - CLOSE_RANGE;
 	// Relative distance from min mid range distance
 	const float midRangeDistance = worldState.DistanceToEnemy() - CLOSE_RANGE;
+
+	const auto &selectedEnemies = bot->selectedEnemies;
 
 	int chosenWeapon = WEAP_NONE;
 
@@ -809,7 +866,7 @@ void BotWeaponSelector::SuggestMiddleRangeWeapon( const WorldState &worldState )
 	weaponScores[RG].score = 0.7f * BoundedFraction( ShellsReadyToFireCount(), 3.0f );
 	weaponScores[GL].score = 0.5f * BoundedFraction( GrenadesReadyToFireCount(), 5.0f );
 
-	if( self->ai->botRef->IsInSquad() ) {
+	if( bot->IsInSquad() ) {
 		// In squad prefer continuous fire weapons to burn an enemy quick together
 		float boost = 1.5f;
 		weaponScores[LG].score *= boost;
@@ -817,12 +874,14 @@ void BotWeaponSelector::SuggestMiddleRangeWeapon( const WorldState &worldState )
 		weaponScores[MG].score *= boost;
 	}
 
-	if( self->ai->botRef->WillAdvance() ) {
+	if( bot->WillAdvance() ) {
 		weaponScores[RL].score *= 1.3f;
 		weaponScores[GL].score *= 0.7f;
 		weaponScores[RG].score *= 1.1f;
 	}
-	if( self->ai->botRef->WillRetreat() ) {
+	if( bot->WillRetreat() ) {
+		// Retreating is the only situation where bots use SW properly
+		weaponScores[SW].score *= 2.0f;
 		// Plasma is a great defensive weapon
 		weaponScores[PG].score *= 1.5f;
 		weaponScores[LG].score *= 1.1f;
@@ -849,13 +908,46 @@ void BotWeaponSelector::SuggestMiddleRangeWeapon( const WorldState &worldState )
 	weaponScores[GL].score *= targetEnvironment.factor;
 
 	// Add extra scores for weapons that do not require precise aiming in this case
-	if( !self->ai->botRef->ShouldKeepXhairOnEnemy() ) {
+	if( !bot->ShouldKeepXhairOnEnemy() ) {
 		weaponScores[PG].score *= 1.5f;
 		weaponScores[RG].score *= 2.0f;
 		weaponScores[GL].score *= 1.5f;
-		if( self->ai->botRef->WillRetreat() ) {
+		weaponScores[SW].score *= 1.5f;
+		if( bot->WillRetreat() ) {
 			weaponScores[PG].score *= 1.5f;
 			weaponScores[GL].score *= 1.5f;
+		}
+	}
+
+	// Ignore the nested checks if the bot is retreating / an enemy is in a tight environment
+	if( !bot->WillRetreat() && targetEnvironment.factor < 0.5f ) {
+		// Do not use SW on escaping enemies, and prefer it on chasing enemies
+		Vec3 targetMoveDir( selectedEnemies.LastSeenVelocity() );
+		float enemySpeed = targetMoveDir.SquaredLength();
+		if( enemySpeed > ( DEFAULT_DASHSPEED ) * ( DEFAULT_DASHSPEED ) ) {
+			enemySpeed = SQRTFAST( enemySpeed );
+			targetMoveDir *= 1.0f / enemySpeed;
+			Vec3 botToTargetDir = selectedEnemies.LastSeenOrigin() - bot->Origin();
+			botToTargetDir.NormalizeFast();
+
+			float speedFactor = BoundedFraction( enemySpeed - DEFAULT_DASHSPEED, 1000.0f - DEFAULT_DASHSPEED );
+			// -1.0 if the enemy is escaping straight away from the bot
+			//  0.5 if the enemy moves side-to-side
+			// +1.0 if the enemy is chasing the bot in a straight line
+			float dirFactor = botToTargetDir.Dot( targetMoveDir );
+			// 0.1 for worst case (the enemy is escaping on high speed)
+			// 1.9 for best case (the enemy is chasing on high speed)
+			float scoreScale = 1.0f + 0.9f * speedFactor * dirFactor;
+			weaponScores[SW].score *= scoreScale;
+		}
+	}
+
+	// Prefer high-dps weapons for unaware enemies
+	if( !worldState.HasThreateningEnemyVar() ) {
+		float speedThreshold = DEFAULT_DASHSPEED + 50.0f;
+		if( selectedEnemies.LastSeenVelocity().SquaredLength() < speedThreshold * speedThreshold ) {
+			weaponScores[PG].score *= 1.5f;
+			weaponScores[SW].score *= 1.5f;
 		}
 	}
 
@@ -869,7 +961,7 @@ void BotWeaponSelector::SuggestMiddleRangeWeapon( const WorldState &worldState )
 		bool preferBuiltinWeapon = scriptWeaponTier < BuiltinWeaponTier( chosenWeapon );
 		SetSelectedWeapons( chosenWeapon, scriptWeaponDef->weaponNum, preferBuiltinWeapon, weaponChoicePeriod );
 	} else {
-		SetSelectedWeapons( chosenWeapon, -1, true, weaponChoicePeriod );
+		SetSelectedWeapons( chosenWeapon, weaponChoicePeriod );
 	}
 }
 
@@ -925,13 +1017,13 @@ void BotWeaponSelector::SuggestCloseRangeWeapon( const WorldState &worldState ) 
 		bool preferBuiltinWeapon = scriptWeaponTier < BuiltinWeaponTier( chosenWeapon );
 		SetSelectedWeapons( chosenWeapon, scriptWeaponDef->weaponNum, preferBuiltinWeapon, weaponChoicePeriod );
 	} else {
-		SetSelectedWeapons( chosenWeapon, -1, true, weaponChoicePeriod );
+		SetSelectedWeapons( chosenWeapon, weaponChoicePeriod );
 	}
 }
 
 const AiScriptWeaponDef *BotWeaponSelector::SuggestScriptWeapon( const WorldState &worldState, int *effectiveTier ) {
-	const auto &scriptWeaponDefs = self->ai->botRef->scriptWeaponDefs;
-	const auto &scriptWeaponCooldown = self->ai->botRef->scriptWeaponCooldown;
+	const auto &scriptWeaponDefs = bot->weaponsUsageModule.scriptWeaponDefs;
+	const auto &scriptWeaponCooldown = bot->weaponsUsageModule.scriptWeaponCooldown;
 
 	const AiScriptWeaponDef *bestWeapon = nullptr;
 	float bestScore = 0.000001f;
@@ -1012,8 +1104,10 @@ int BotWeaponSelector::SuggestFinishWeapon( const WorldState &worldState ) {
 				return WEAP_PLASMAGUN;
 			}
 			// Hard bots do not do this high risk action
-			if( self->ai->botRef->Skill() < 0.66f && RocketsReadyToFireCount() ) {
-				return WEAP_ROCKETLAUNCHER;
+			if( bot->Skill() < 0.66f ) {
+				if( RocketsReadyToFireCount() ) {
+					return WEAP_ROCKETLAUNCHER;
+				}
 			}
 		} else {
 			if( RocketsReadyToFireCount() && targetEnvironment.factor > 0 ) {
@@ -1040,7 +1134,7 @@ int BotWeaponSelector::SuggestFinishWeapon( const WorldState &worldState ) {
 		if( distance < lgRange / 2 && targetEnvironment.factor > 0.6f && RocketsReadyToFireCount() ) {
 			return WEAP_ROCKETLAUNCHER;
 		}
-		if( BoltsReadyToFireCount() && damageToKill > 30 && selectedEnemies.PendingWeapon() == WEAP_LASERGUN ) {
+		if( BoltsReadyToFireCount() && damageToKill > 30 && bot->selectedEnemies.PendingWeapon() == WEAP_LASERGUN ) {
 			return WEAP_ELECTROBOLT;
 		}
 		if( LasersReadyToFireCount() > damageToKill * 0.3f * 14 ) {
@@ -1057,7 +1151,7 @@ int BotWeaponSelector::SuggestFinishWeapon( const WorldState &worldState ) {
 		}
 
 		// Surprise...
-		if( weaponChoiceRandom < 0.15f && self->ai->botRef->Skill() > 0.5f ) {
+		if( weaponChoiceRandom < 0.15f && bot->Skill() > 0.5f ) {
 			if( GrenadesReadyToFireCount() && targetEnvironment.factor > 0.5f ) {
 				return WEAP_GRENADELAUNCHER;
 			}
@@ -1103,6 +1197,9 @@ static bool IsEscapingFromStandingEntity( const edict_t *escaping, const edict_t
 
 bool BotWeaponSelector::IsEnemyEscaping( const WorldState &worldState, bool *botMovesFast, bool *enemyMovesFast ) {
 	// Very basic. Todo: Check env. behind an enemy or the bot, is it really tries to escape or just pushed on a wall
+
+	const edict_t *self = game.edicts + bot->EntNum();
+	const auto &selectedEnemies = bot->selectedEnemies;
 
 	float botVelocitySqLen = VectorLengthSquared( self->velocity );
 	float enemyVelocitySqLen = selectedEnemies.LastSeenVelocity().SquaredLength();
@@ -1150,6 +1247,9 @@ int BotWeaponSelector::SuggestHitEscapingEnemyWeapon( const WorldState &worldSta
 	// If target will be lost out of sight, its worth to do a fast weapon switching
 
 	constexpr float predictionSeconds = 0.8f;
+
+	edict_t *self = game.edicts + bot->EntNum();
+	const auto &selectedEnemies = bot->selectedEnemies;
 
 	// Extrapolate bot origin
 	Vec3 extrapolatedBotOrigin( self->velocity );
@@ -1235,11 +1335,11 @@ bool BotWeaponSelector::CheckForShotOfDespair( const WorldState &worldState ) {
 	}
 
 	// Restrict weapon switch time even more compared to generic fast switch action
-	if( self->r.client->ps.stats[STAT_WEAPON_TIME] > 16 ) {
+	if( bot->PlayerState()->stats[STAT_WEAPON_TIME] > 16 ) {
 		return false;
 	}
 
-	float adjustedDamageToBeKilled = worldState.DamageToBeKilled() * ( selectedEnemies.HaveQuad() ? 0.25f : 1.0f );
+	float adjustedDamageToBeKilled = worldState.DamageToBeKilled() * ( bot->selectedEnemies.HaveQuad() ? 0.25f : 1.0f );
 	if( adjustedDamageToBeKilled > 25 ) {
 		return false;
 	}
@@ -1254,7 +1354,7 @@ bool BotWeaponSelector::CheckForShotOfDespair( const WorldState &worldState ) {
 		return false;
 	}
 
-	switch( selectedEnemies.PendingWeapon() ) {
+	switch( bot->selectedEnemies.PendingWeapon() ) {
 		case WEAP_LASERGUN:
 			return true;
 		case WEAP_PLASMAGUN:
@@ -1270,7 +1370,7 @@ bool BotWeaponSelector::CheckForShotOfDespair( const WorldState &worldState ) {
 
 int BotWeaponSelector::SuggestShotOfDespairWeapon( const WorldState &worldState ) {
 	// Prevent negative scores from self-damage suicide.
-	int score = self->r.client->ps.stats[STAT_SCORE];
+	int score = bot->PlayerState()->stats[STAT_SCORE];
 	if( level.gametype.inverseScore ) {
 		score *= -1;
 	}
@@ -1287,7 +1387,9 @@ int BotWeaponSelector::SuggestShotOfDespairWeapon( const WorldState &worldState 
 
 	const float lgRange = GetLaserRange();
 
-	enum { EB, RG, RL, GB, GL, WEIGHTS_COUNT };
+	const auto &selectedEnemies = bot->selectedEnemies;
+
+	enum { EB, RG, RL, SW, GB, GL, WEIGHTS_COUNT };
 
 	WeaponAndScore scores[WEIGHTS_COUNT] =
 	{
@@ -1298,7 +1400,7 @@ int BotWeaponSelector::SuggestShotOfDespairWeapon( const WorldState &worldState 
 		WeaponAndScore( WEAP_GRENADELAUNCHER, 0.7f )
 	};
 
-	TestTargetEnvironment( Vec3( self->s.origin ), Vec3( selectedEnemies.LastSeenOrigin() ), selectedEnemies.Ent() );
+	TestTargetEnvironment( Vec3( bot->Origin() ), Vec3( selectedEnemies.LastSeenOrigin() ), selectedEnemies.Ent() );
 
 	// Do not touch hitscan weapons scores, we are not going to do a continuous fight
 	scores[RL].score *= targetEnvironment.factor;
@@ -1348,7 +1450,7 @@ int BotWeaponSelector::SuggestShotOfDespairWeapon( const WorldState &worldState 
 }
 
 int BotWeaponSelector::SuggestQuadBearerWeapon( const WorldState &worldState ) {
-	float distance = ( selectedEnemies.LastSeenOrigin() - self->s.origin ).LengthFast();
+	float distance = ( bot->selectedEnemies.LastSeenOrigin() - bot->Origin() ).LengthFast();
 	auto lgDef = GS_GetWeaponDef( WEAP_LASERGUN );
 	auto lgRange = ( lgDef->firedef.timeout + lgDef->firedef_weak.timeout ) / 2.0f;
 	int lasersCount = 0;
@@ -1385,7 +1487,7 @@ int BotWeaponSelector::SuggestQuadBearerWeapon( const WorldState &worldState ) {
 	}
 	if( Inventory()[WEAP_GRENADELAUNCHER] ) {
 		if( GrenadesReadyToFireCount() > 0 && distance > CLOSE_RANGE && distance < lgRange ) {
-			float deltaZ = self->s.origin[2] - selectedEnemies.LastSeenOrigin().Z();
+			float deltaZ = bot->Origin()[2] - bot->selectedEnemies.LastSeenOrigin().Z();
 			if( deltaZ < -250.0f && random() > 0.5f ) {
 				return WEAP_GRENADELAUNCHER;
 			}
@@ -1401,7 +1503,7 @@ int BotWeaponSelector::SuggestInstagibWeapon( const WorldState &worldState ) {
 	}
 	if( Inventory()[WEAP_LASERGUN] ) {
 		auto lgDef = GS_GetWeaponDef( WEAP_LASERGUN );
-		float squaredDistance = ( selectedEnemies.LastSeenOrigin() - self->s.origin ).SquaredLength();
+		float squaredDistance = ( bot->selectedEnemies.LastSeenOrigin() - bot->Origin() ).SquaredLength();
 		if( Inventory()[AMMO_LASERS] && squaredDistance < lgDef->firedef.timeout * lgDef->firedef.timeout ) {
 			return WEAP_LASERGUN;
 		}
@@ -1414,7 +1516,7 @@ int BotWeaponSelector::SuggestInstagibWeapon( const WorldState &worldState ) {
 	}
 
 	if( Inventory()[WEAP_PLASMAGUN] ) {
-		float squaredDistance = ( selectedEnemies.LastSeenOrigin() - self->s.origin ).SquaredLength();
+		float squaredDistance = ( bot->selectedEnemies.LastSeenOrigin() - bot->Origin() ).SquaredLength();
 		if( squaredDistance < 1000 && PlasmasReadyToFireCount() ) {
 			return WEAP_PLASMAGUN;
 		}
@@ -1489,31 +1591,3 @@ void BotWeaponSelector::TestTargetEnvironment( const Vec3 &botOrigin, const Vec3
 	targetEnvironment.factor = std::min( 1.0f, factor / 6.0f );
 }
 
-void BotWeaponSelector::SetSelectedWeapons( int builtinWeapon, int scriptWeapon, bool preferBuiltinWeapon, unsigned timeoutPeriod ) {
-	selectedWeapons.hasSelectedBuiltinWeapon = false;
-	selectedWeapons.hasSelectedScriptWeapon = false;
-	if( builtinWeapon >= 0 ) {
-		const auto *weaponDef = GS_GetWeaponDef( builtinWeapon );
-		const auto *fireDef = &weaponDef->firedef;
-		// TODO: We avoid issues with blade attack until melee aim style handling is introduced
-		if( builtinWeapon != WEAP_GUNBLADE ) {
-			const auto *inventory = self->r.client->ps.inventory;
-			// If there is no strong ammo but there is some weak ammo
-			if( !inventory[builtinWeapon + WEAP_TOTAL] ) {
-				static_assert( AMMO_WEAK_GUNBLADE > AMMO_GUNBLADE, "" );
-				if( inventory[builtinWeapon + WEAP_TOTAL + ( AMMO_WEAK_GUNBLADE - AMMO_GUNBLADE )] ) {
-					fireDef = &weaponDef->firedef_weak;
-				}
-			}
-		}
-		selectedWeapons.builtinFireDef = GenericFireDef( builtinWeapon, fireDef );
-		selectedWeapons.hasSelectedBuiltinWeapon = true;
-	}
-	if( scriptWeapon >= 0 ) {
-		selectedWeapons.scriptFireDef = GenericFireDef( scriptWeapon, &self->ai->botRef->scriptWeaponDefs[scriptWeapon] );
-		selectedWeapons.hasSelectedScriptWeapon = true;
-	}
-	selectedWeapons.instanceId++;
-	selectedWeapons.preferBuiltinWeapon = preferBuiltinWeapon;
-	selectedWeapons.timeoutAt = level.time + timeoutPeriod;
-}
