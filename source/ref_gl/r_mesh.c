@@ -499,7 +499,7 @@ static void _R_DrawSurfaces( drawList_t *list, bool *depthCopied, int mode, int 
 		batchDrawSurf = ( r_batchDrawSurfCb[drawSurfType] ? true : false );
 
 		// see if we need to reset mesh properties in the backend
-		if( !prevBatchDrawSurf || shaderNum != prevShaderNum || fogNum != prevFogNum ||
+		if( !prevBatchDrawSurf || !batchDrawSurf || shaderNum != prevShaderNum || fogNum != prevFogNum ||
 			portalNum != prevPortalNum || lightStyle != prevLightStyle ||
 			( entNum != prevEntNum && !( shader->flags & SHADER_ENTITY_MERGABLE ) ) ||
 			entityFX != prevEntityFX ) {
