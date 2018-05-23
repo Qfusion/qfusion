@@ -427,7 +427,7 @@ static void R_DrawRtLightShadow( rtlight_t *l, image_t *target, int sideMask, bo
 					const msurface_t *surf = rsh.worldBrushModel->surfaces + pin[0];
 
 					pout[0] = pin[0], pout[1] = pin[1];
-					if( !R_DeformedCullBox( surf->mins, surf->maxs ) || r_temp1->integer ) {
+					if( !R_DeformedCullBox( surf->mins, surf->maxs ) ) {
 						pout[2] = pin[2];
 					} else {
 						pout[2] = 0;

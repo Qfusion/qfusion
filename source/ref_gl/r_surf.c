@@ -581,7 +581,11 @@ bool R_AddBrushModelToDrawList( const entity_t *e ) {
 			continue;
 		}
 
-		if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
+		if( rn.renderFlags & RF_LIGHTMAP ) {
+			if( R_SurfNoDlight( surf ) ) {
+				continue;
+			}
+		} else if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
 			if( R_SurfNoShadow( surf ) ) {
 				continue;
 			}
