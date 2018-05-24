@@ -41,7 +41,7 @@ extern drawList_t r_portallist, r_skyportallist;
 portalSurface_t *R_AddPortalSurface( const entity_t *ent, const shader_t *shader, void *drawSurf );
 portalSurface_t *R_AddSkyportalSurface( const entity_t *ent, const shader_t *shader, void *drawSurf );
 void R_UpdatePortalSurface( portalSurface_t *portalSurface, const mesh_t *mesh,
-	const vec3_t mins, const vec3_t maxs, const shader_t *shader, void *drawSurf );
+	const vec3_t mins, const vec3_t maxs, const shader_t *shader );
 void R_DrawPortals( void );
 
 #endif // R_PORTALS_H

@@ -291,9 +291,9 @@ void R_WalkBSPSurf( const entity_t *e, const shader_t *shader, int lightStyleNum
 }
 
 /*
-* R_AddSurfaceToDrawList
+* R_AddWorldDrawSurfaceToDrawList
 */
-static bool R_AddSurfaceToDrawList( const entity_t *e, unsigned ds ) {
+static bool R_AddWorldDrawSurfaceToDrawList( const entity_t *e, unsigned ds ) {
 	drawSurfaceBSP_t *drawSurf = rsh.worldBrushModel->drawSurfaces + ds;
 	const mfog_t *fog = drawSurf->fog;
 	const shader_t *shader = drawSurf->shader;
@@ -379,108 +379,69 @@ static bool R_AddSurfaceToDrawList( const entity_t *e, unsigned ds ) {
 }
 
 /*
-* R_ClipSpecialWorldSurf
+* R_CheckSpecialWorldSurfaces
 */
-static bool R_ClipSpecialWorldSurf( drawSurfaceBSP_t *drawSurf, const msurface_t *surf, const vec3_t origin, float *pdist ) {
-	bool sky, portal;
-	portalSurface_t *portalSurface = NULL;
-	const shader_t *shader = drawSurf->shader;
-
-	sky = ( shader->flags & SHADER_SKY ) != 0;
-	portal = ( shader->flags & SHADER_PORTAL ) != 0;
-
-	if( sky ) {
-		if( R_ClipSkySurface( &rn.skyDrawSurface, surf ) ) {
-			return true;
-		}
-		return false;
-	}
-
-	if( portal ) {
-		portalSurface = R_GetDrawListSurfPortal( drawSurf->listSurf );
-	}
-
-	if( portalSurface != NULL ) {
-		vec3_t centre;
-		float dist = 0;
-
-		if( origin ) {
-			VectorCopy( origin, centre );
-		} else {
-			VectorAdd( surf->mins, surf->maxs, centre );
-			VectorScale( centre, 0.5, centre );
-		}
-		dist = Distance( rn.refdef.vieworg, centre );
-
-		// draw portals in front-to-back order
-		dist = 1024 - dist / 100.0f;
-		if( dist < 1 ) {
-			dist = 1;
-		}
-
-		R_UpdatePortalSurface( portalSurface, &surf->mesh, surf->mins, surf->maxs, shader, drawSurf );
-
-		*pdist = dist;
-	}
-
-	return true;
-}
-
-/*
-* R_UpdateSurfaceInDrawList
-*
-* Walk the list of visible world surfaces and draw order bits.
-* For sky surfaces, skybox clipping is also performed.
-*/
-static void R_UpdateSurfaceInDrawList( const entity_t *e, unsigned ds, const vec3_t origin ) {
+static void R_CheckSpecialWorldSurfaces( const entity_t *e, unsigned ds, const vec3_t origin ) {
 	unsigned i;
-	float dist = 0;
-	bool special;
-	bool rtlight;
+	bool sky, portal;
 	drawSurfaceBSP_t *drawSurf = rsh.worldBrushModel->drawSurfaces + ds;
-	unsigned numVisSurfaces;
-	unsigned* visSurfaces;
+	const shader_t *shader = drawSurf->shader;
 
 	if( !drawSurf->listSurf ) {
 		return;
 	}
 
-	visSurfaces = alloca( sizeof( *visSurfaces ) * drawSurf->numWorldSurfaces );
-	numVisSurfaces = 0;
+	sky = ( shader->flags & SHADER_SKY ) != 0;
+	portal = ( shader->flags & SHADER_PORTAL ) != 0;
 
-	for( i = 0; i < drawSurf->numWorldSurfaces; i++ ) {
-		int s = drawSurf->worldSurfaces[i];
-		if( !rn.meshlist->worldSurfVis[s] ) {
-			continue;			
+	if( sky ) {
+		for( i = 0; i < drawSurf->numWorldSurfaces; i++ ) {
+			int s = drawSurf->worldSurfaces[i];
+			msurface_t *surf = rsh.worldBrushModel->surfaces + s;
+
+			if( !rn.meshlist->worldSurfVis[s] ) {
+				continue;
+			}
+			R_ClipSkySurface( &rn.skyDrawSurface, surf );
 		}
-		visSurfaces[numVisSurfaces++] = i;
+		return;
 	}
 
-	special = ( drawSurf->shader->flags & (SHADER_SKY|SHADER_PORTAL) ) != 0;
+	if( portal ) {
+		vec3_t centre;
+		float dist;
+		portalSurface_t *portalSurface = R_GetDrawListSurfPortal( drawSurf->listSurf );
 
-	for( i = 0; i < numVisSurfaces; i++ ) {
-		unsigned si = visSurfaces[i];
-		unsigned s = drawSurf->worldSurfaces[si];
-		msurface_t *surf = rsh.worldBrushModel->surfaces + s;
-		float sdist = 0;
-
-		if( special && !R_ClipSpecialWorldSurf( drawSurf, surf, origin, &sdist ) ) {
-			// clipped away
-			continue;
+		if( !portalSurface ) {
+			return;
 		}
 
-		if( sdist > sdist )
-			dist = sdist;
-	}
+		for( i = 0; i < drawSurf->numWorldSurfaces; i++ ) {
+			int s = drawSurf->worldSurfaces[i];
+			msurface_t *surf = rsh.worldBrushModel->surfaces + s;
 
-	rtlight = drawSurf->numRtLights != 0;
+			if( !rn.meshlist->worldSurfVis[s] ) {
+				continue;			
+			}
 
-	// update the distance sorting key if it's a portal surface or a normal dlit surface
-	if( dist != 0 || rtlight ) {
-		int drawOrder = R_PackOpaqueOrder( drawSurf->fog, drawSurf->shader, R_DrawSurfLightsKey( drawSurf ), rtlight );
-		if( dist == 0 )
-			dist = WORLDSURF_DIST;
-		R_UpdateDrawSurfDistKey( drawSurf->listSurf, 0, drawSurf->shader, dist, drawOrder );
+			if( origin ) {
+				VectorCopy( origin, centre );
+			} else {
+				VectorAdd( surf->mins, surf->maxs, centre );
+				VectorScale( centre, 0.5, centre );
+			}
+			dist = Distance( rn.refdef.vieworg, centre );
+
+			// draw portals in front-to-back order
+			dist = 1024 - dist / 100.0f;
+			if( dist < 1 ) {
+				dist = 1;
+			}
+
+			R_UpdatePortalSurface( portalSurface, &surf->mesh, surf->mins, surf->maxs, shader );
+		}
+
+		return;
 	}
 }
 
@@ -605,9 +566,9 @@ bool R_AddBrushModelToDrawList( const entity_t *e ) {
 		unsigned ds = bmodel->firstModelDrawSurface + i;
 
 		if( rn.meshlist->worldDrawSurfVis[ds] ) {
-			R_AddSurfaceToDrawList( e, ds );
+			R_AddWorldDrawSurfaceToDrawList( e, ds );
 
-			R_UpdateSurfaceInDrawList( e, ds, origin );
+			R_CheckSpecialWorldSurfaces( e, ds, origin );
 		}
 	}
 
@@ -745,7 +706,7 @@ static void R_AddVisSurfaces( void ) {
 		if( !rn.meshlist->worldDrawSurfVis[i] ) {
 			continue;
 		}
-		R_AddSurfaceToDrawList( rsc.worldent, i );
+		R_AddWorldDrawSurfaceToDrawList( rsc.worldent, i );
 	}
 }
 
@@ -761,7 +722,7 @@ static void R_AddWorldDrawSurfaces( unsigned firstDrawSurf, unsigned numDrawSurf
 		if( !rn.meshlist->worldDrawSurfVis[ds] ) {
 			continue;
 		}
-		R_UpdateSurfaceInDrawList( rsc.worldent, ds, NULL );
+		R_CheckSpecialWorldSurfaces( rsc.worldent, ds, NULL );
 	}
 }
 
@@ -973,7 +934,7 @@ void R_DrawWorldShadowNode( void ) {
 
 		if( !culled ) {
 			rn.meshlist->worldDrawSurfVis[ds] = 1;
-			R_AddSurfaceToDrawList( rsc.worldent, ds );
+			R_AddWorldDrawSurfaceToDrawList( rsc.worldent, ds );
 		}
 	}
 
