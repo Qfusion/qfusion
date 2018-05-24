@@ -62,7 +62,7 @@ portalSurface_t *R_AddPortalSurface( const entity_t *ent, const shader_t *shader
 * R_UpdatePortalSurface
 */
 void R_UpdatePortalSurface( portalSurface_t *portalSurface, const mesh_t *mesh,
-									 const vec3_t mins, const vec3_t maxs, const shader_t *shader, void *drawSurf ) {
+	const vec3_t mins, const vec3_t maxs, const shader_t *shader ) {
 	unsigned int i;
 	float dist;
 	cplane_t plane, untransformed_plane;
