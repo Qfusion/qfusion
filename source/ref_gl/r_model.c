@@ -1228,6 +1228,7 @@ struct model_s *R_RegisterModel( const char *name ) {
 static void R_LoadWorldRtLightsFromMap( model_t *model ) {
 	char *data;
 	char key[MAX_KEY], value[MAX_VALUE], *token;
+	char cubemap[MAX_QPATH];
 	bool islight, shadow, radiusset;
 	int style, flags;
 	float radius;
@@ -1253,6 +1254,7 @@ static void R_LoadWorldRtLightsFromMap( model_t *model ) {
 		shadow = true;
 		flags = LIGHTFLAG_REALTIMEMODE;
 		VectorSet( colorf, 1, 1, 1 );
+		cubemap[0] = 0;
 
 		while( 1 ) {
 			token = COM_Parse( &data );
@@ -1290,6 +1292,8 @@ static void R_LoadWorldRtLightsFromMap( model_t *model ) {
 				sscanf( value, "%f", &radius ), radiusset = true;
 			} else if( !strcmp( key, "style" ) ) {
 				sscanf( value, "%d", &style );
+			} else if( !strcmp( key, "_cubemap" ) ) {
+				Q_strncpyz( cubemap, value, sizeof( cubemap ) );
 			}
 		}
 
@@ -1319,6 +1323,10 @@ static void R_LoadWorldRtLightsFromMap( model_t *model ) {
 			l->style = style;
 			l->world = true;
 			l->worldModel = model;
+
+			if( cubemap[0] != '\0' ) {
+				l->cubemapFilter = R_FindImage( cubemap, NULL, IT_SRGB | IT_CLAMP | IT_CUBEMAP, 1, IMAGE_TAG_WORLD );
+			}
 
 			R_GetRtLightVisInfo( bmodel, l );
 		}
