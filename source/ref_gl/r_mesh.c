@@ -453,6 +453,9 @@ static void _R_DrawSurfaces( drawList_t *list, bool *depthCopied, int mode, int 
 	mat4_t projectionMatrix;
 	int riFBO = 0;
 
+	if( !list ) {
+		return;
+	}
 	if( !list->numDrawSurfs ) {
 		return;
 	}
