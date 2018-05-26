@@ -76,6 +76,7 @@ typedef struct rtlight_s {
 	int area;
 	bool world;
 	bool shadow;
+	bool rotated;
 
 	// frame data
 	unsigned sceneFrame;
@@ -111,6 +112,7 @@ typedef struct rtlight_s {
 
 	mat3_t axis;
 	mat4_t worldToLightMatrix;
+	mat4_t radiusToLightMatrix;
 
 	unsigned numVisLeafs;
 	unsigned numSurfaces;
