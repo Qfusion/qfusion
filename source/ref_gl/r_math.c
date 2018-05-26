@@ -285,6 +285,29 @@ void Matrix4_Multiply_Vector3( const mat4_t m, const vec3_t v, vec3_t out ) {
 	out[2] = m[2] * v[0] + m[6] * v[1] + m[10] * v[2];
 }
 
+// Ensures each element of the 3x3 rotation matrix is facing in the + direction
+void Matrix4_Abs( const mat4_t in, mat4_t out ) {
+	out[0]  = fabs( in[0] );
+	out[1]  = fabs( in[1] );
+	out[2]  = fabs( in[2] );
+	out[3]  = in[3];
+
+	out[4]  = fabs( in[4] );
+	out[5]  = fabs( in[5] );
+	out[6]  = fabs( in[6] );
+	out[7]  = in[7];
+
+	out[8]  = fabs( in[8] );
+	out[9]  = fabs( in[9] );
+	out[10] = fabs( in[10] );
+	out[11] = in[11];
+
+	out[12] = in[12];
+	out[13] = in[13];
+	out[14] = in[14];
+	out[15] = in[15];
+}
+
 //============================================================================
 
 void Matrix4_Copy2D( const mat4_t m1, mat4_t m2 ) {
