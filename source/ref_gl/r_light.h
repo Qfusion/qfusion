@@ -126,7 +126,7 @@ typedef struct rtlight_s {
 	void *compiledSurf[6];
 } rtlight_t;
 
-void        R_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t diffuse, float radius, bool noWorldLight );
+void        R_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t diffuse, float radius, bool noWorldLight, bool noDLight );
 float       R_LightExposureForOrigin( const vec3_t origin );
 void        R_BuildLightmaps( model_t *mod, int numLightmaps, int w, int h, const uint8_t *data, lightmapRect_t *rects );
 void        R_InitLightStyles( model_t *mod );

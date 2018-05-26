@@ -233,7 +233,7 @@ void RB_VertexTCCelshadeMatrix( mat4_t matrix ) {
 	const entity_t *e = rb.currentEntity;
 
 	if( e->model != NULL && !( rb.renderFlags & RF_SHADOWMAPVIEW ) ) {
-		R_LightForOrigin( e->lightingOrigin, dir, NULL, NULL, e->model->radius * e->scale, rb.noWorldLight );
+		R_LightForOrigin( e->lightingOrigin, dir, NULL, NULL, e->model->radius * e->scale, rb.noWorldLight, false );
 
 		Matrix4_Identity( m );
 
@@ -799,7 +799,7 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 	glossExponent = rb.currentShader->glossExponent ? rb.currentShader->glossExponent : r_lighting_glossexponent->value;
 
 	applyDecal = decalmap != NULL;
-	if( rb.mode == RB_MODE_LIGHT || rb.mode == RB_MODE_LIGHTMAP ) {
+	if( rb.mode == RB_MODE_LIGHT || rb.mode == RB_MODE_LIGHTMAP || rb.mode == RB_MODE_DIFFUSE ) {
 		applyDecal = false;
 	}
 
@@ -814,6 +814,10 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 	programFeatures |= RB_FogProgramFeatures( pass, fog );
 
 	if( rb.currentModelType == mod_brush ) {
+		if( rb.mode == RB_MODE_DIFFUSE ) {
+			return;
+		}
+
 		lightStyle = rb.superLightStyle;
 
 		// brush models
@@ -949,8 +953,9 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 			vec3_t temp;
 
 			// get weighted incoming direction of world and dynamic lights
+			// for 'lightmap' mode, only consider contributions from the lightgrid
 			R_LightForOrigin( e->lightingOrigin, temp, ambient, diffuse,
-				e->model->radius * e->scale, rb.noWorldLight );
+				e->model->radius * e->scale, rb.noWorldLight, rb.mode == RB_MODE_LIGHTMAP || rb.mode == RB_MODE_DIFFUSE );
 
 			// rotate direction
 			Matrix3_TransformVector( e->axis, temp, lightDir );
@@ -1244,9 +1249,13 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 	vec3_t lightDir;
 	vec4_t lightAmbient, lightDiffuse;
 	mat4_t texMatrix, genVectors;
-	bool noDlight = ( ( rb.surfFlags & SURF_NODLIGHT ) != 0 );
+	bool noDlight = ( ( rb.surfFlags & (SURF_SKY|SURF_NODLIGHT) ) != 0 );
 
 	if( isWorldSurface ) {
+		if( rb.mode == RB_MODE_DIFFUSE ) {
+			return;
+		}
+
 		if( rgbgen == RGB_GEN_VERTEX || rgbgen == RGB_GEN_EXACT_VERTEX ) {
 			// vertex-lit world surface
 			isWorldVertexLight = ( realLightStyle && realLightStyle->vertexStyles[0] != 255 ) || ( noDlight == false );
@@ -1276,27 +1285,34 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 	programFeatures |= RB_FogProgramFeatures( pass, fog );
 
 	// diffuse lighting for entities
-	if( !isWorldSurface && rgbgen == RGB_GEN_LIGHTING_DIFFUSE && !( e->flags & RF_FULLBRIGHT ) ) {
+	if( !isWorldSurface && rgbgen == RGB_GEN_LIGHTING_DIFFUSE ) {
 		vec3_t temp = { 0.1f, 0.2f, 0.7f };
 		float radius = 1;
 
 		applyLighting = true;
 
-		if( e != rsc.worldent && e->model != NULL ) {
-			radius = e->model->radius;
-		}
-
-		// get weighted incoming direction of world and dynamic lights
-		R_LightForOrigin( e->lightingOrigin, temp, lightAmbient, lightDiffuse, radius * e->scale, rb.noWorldLight );
-
-		if( e->flags & RF_MINLIGHT ) {
-			if( lightAmbient[0] <= 0.1f || lightAmbient[1] <= 0.1f || lightAmbient[2] <= 0.1f ) {
-				VectorSet( lightAmbient, 0.1f, 0.1f, 0.1f );
+		if( e->flags & RF_FULLBRIGHT ) {
+			VectorSet( lightDir, 0, 0, 0 );
+			Vector4Set( lightAmbient, 1, 1, 1, 1 );
+			Vector4Set( lightDiffuse, 1, 1, 1, 1 );
+		} else {
+			if( e != rsc.worldent && e->model != NULL ) {
+				radius = e->model->radius;
 			}
-		}
 
-		// rotate direction
-		Matrix3_TransformVector( e->axis, temp, lightDir );
+			// get weighted incoming direction of world and dynamic lights
+			R_LightForOrigin( e->lightingOrigin, temp, lightAmbient, lightDiffuse, radius * e->scale, 
+				rb.noWorldLight, rb.mode == RB_MODE_LIGHTMAP || rb.mode == RB_MODE_DIFFUSE );
+
+			if( e->flags & RF_MINLIGHT ) {
+				if( lightAmbient[0] <= 0.1f || lightAmbient[1] <= 0.1f || lightAmbient[2] <= 0.1f ) {
+					VectorSet( lightAmbient, 0.1f, 0.1f, 0.1f );
+				}
+			}
+
+			// rotate direction
+			Matrix3_TransformVector( e->axis, temp, lightDir );
+		}
 	} else {
 		VectorSet( lightDir, 0, 0, 0 );
 		Vector4Set( lightAmbient, 1, 1, 1, 1 );
@@ -1310,7 +1326,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 		applyLighting = ( isLightmapped || isWorldVertexLight );
 	}
 
-	if( !applyLighting && ( rb.mode == RB_MODE_LIGHT || rb.mode == RB_MODE_LIGHTMAP ) ) {
+	if( !applyLighting && ( rb.mode == RB_MODE_LIGHT || rb.mode == RB_MODE_LIGHTMAP || rb.mode == RB_MODE_DIFFUSE ) ) {
 		return;
 	}
 	if( applyLighting && ( rb.mode == RB_MODE_POST_LIGHT ) ) {
@@ -1864,7 +1880,7 @@ void RB_BindShader( const entity_t *e, const shader_t *shader, const mfog_t *fog
 	if( rb.mode == RB_MODE_DEPTH ) {
 		rb.noColorWrite = true;
 	}
-	if( rb.mode == RB_MODE_LIGHT ) {
+	if( rb.mode == RB_MODE_LIGHT || rb.mode == RB_MODE_LIGHTMAP || rb.mode == RB_MODE_DIFFUSE ) {
 		rb.depthEqual = true;
 	}
 
@@ -2151,7 +2167,7 @@ static void RB_SetShaderState( void ) {
 static int RB_GetShaderpassState( int state ) {
 	state |= rb.currentShaderState;
 
-	if( rb.mode == RB_MODE_LIGHT ) {
+	if( rb.mode == RB_MODE_LIGHT || rb.mode == RB_MODE_LIGHTMAP || rb.mode == RB_MODE_DIFFUSE ) {
 		state &= ~GLSTATE_DEPTHWRITE;
 		state |= GLSTATE_DEPTHFUNC_EQ | GLSTATE_SRCBLEND_SRC_ALPHA | GLSTATE_DSTBLEND_ONE;
 	} else if( rb.mode == RB_MODE_BLACK_GT ) {
@@ -2277,7 +2293,7 @@ void RB_DrawShadedElements( void ) {
 	RB_SetShaderState();
 
 	for( i = 0, pass = rb.currentShader->passes; i < rb.currentShader->numpasses; i++, pass++ ) {
-		if( rb.mode == RB_MODE_DEPTH || rb.mode == RB_MODE_LIGHT || rb.mode == RB_MODE_LIGHTMAP ) {
+		if( rb.mode == RB_MODE_DEPTH || rb.mode == RB_MODE_LIGHT || rb.mode == RB_MODE_LIGHTMAP || rb.mode == RB_MODE_DIFFUSE ) {
 			if( !(pass->flags & GLSTATE_DEPTHWRITE) ) {
 				continue;
 			}
@@ -2303,7 +2319,7 @@ void RB_DrawShadedElements( void ) {
 		RB_RenderPass( pass );
 	}
 
-	if( rb.mode == RB_MODE_DEPTH || rb.mode == RB_MODE_TRIANGLE_OUTLINES || rb.mode == RB_MODE_LIGHT || rb.mode == RB_MODE_LIGHTMAP ) {
+	if( rb.mode == RB_MODE_DEPTH || rb.mode == RB_MODE_TRIANGLE_OUTLINES || rb.mode == RB_MODE_LIGHT || rb.mode == RB_MODE_LIGHTMAP || rb.mode == RB_MODE_DIFFUSE ) {
 		goto end;
 	}
 

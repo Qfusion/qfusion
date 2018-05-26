@@ -426,7 +426,7 @@ static const flushBatchDrawSurf_cb r_flushBatchSurfCb[ST_MAX_TYPES] =
 /*
 * R_DrawSurfaces
 */
-static void _R_DrawSurfaces( drawList_t *list, bool *depthCopied, int mode, int drawSurfTypeFilter, unsigned minSort, unsigned maxSort ) {
+static void _R_DrawSurfaces( drawList_t *list, bool *depthCopied, int mode, int drawSurfTypeEq, int drawSurfTypeNeq, unsigned minSort, unsigned maxSort ) {
 	unsigned int i;
 	unsigned distKey, sortDist;
 	uint64_t sortKey;
@@ -471,7 +471,10 @@ static void _R_DrawSurfaces( drawList_t *list, bool *depthCopied, int mode, int 
 		drawSurfType = *(int *)sds->drawSurf;
 
 		assert( drawSurfType > ST_NONE && drawSurfType < ST_MAX_TYPES );
-		if( drawSurfTypeFilter > ST_NONE && drawSurfType != drawSurfTypeFilter ) {
+		if( drawSurfTypeEq > ST_NONE && drawSurfType != drawSurfTypeEq ) {
+			continue;
+		}
+		if( drawSurfType == drawSurfTypeNeq ) {
 			continue;
 		}
 		if( sortDist < minSort ) {
@@ -649,7 +652,7 @@ static void _R_DrawSurfaces( drawList_t *list, bool *depthCopied, int mode, int 
 static void R_DrawLightSurfaces( drawList_t *list ) {
 	bool depthCopied = false;
 
-	_R_DrawSurfaces( list, &depthCopied, RB_MODE_LIGHT, ST_NONE, SHADER_SORT_NONE, SHADER_SORT_BANNER );
+	_R_DrawSurfaces( list, &depthCopied, RB_MODE_LIGHT, ST_NONE, ST_SKY, SHADER_SORT_NONE, SHADER_SORT_BANNER );
 }
 
 /*
@@ -658,7 +661,7 @@ static void R_DrawLightSurfaces( drawList_t *list ) {
 static void R_DrawShadowSurfaces( drawList_t *list ) {
 	bool depthCopied = false;
 
-	_R_DrawSurfaces( list, &depthCopied, RB_MODE_DEPTH, ST_NONE, SHADER_SORT_NONE, SHADER_SORT_BANNER );
+	_R_DrawSurfaces( list, &depthCopied, RB_MODE_DEPTH, ST_NONE, ST_SKY, SHADER_SORT_NONE, SHADER_SORT_BANNER );
 }
 
 /*
@@ -668,23 +671,25 @@ static void R_DrawForwardRtLightSurfaces( drawList_t *list ) {
 	bool depthCopied = false, _dummy = false;
 
 	// early Z-pass
-	_R_DrawSurfaces( list, &depthCopied, RB_MODE_DEPTH, ST_NONE, SHADER_SORT_NONE, SHADER_SORT_BANNER );
+	_R_DrawSurfaces( list, &depthCopied, RB_MODE_DEPTH, ST_NONE, ST_NONE, SHADER_SORT_NONE, SHADER_SORT_BANNER );
 
 	// clear color to black for portal surfaces that fail the Z-test
-	_R_DrawSurfaces( rn.portalmasklist, &_dummy, RB_MODE_BLACK_GT, ST_NONE, SHADER_SORT_PORTAL, SHADER_SORT_SKY );
+	_R_DrawSurfaces( rn.portalmasklist, &_dummy, RB_MODE_BLACK_GT, ST_NONE, ST_NONE, SHADER_SORT_PORTAL, SHADER_SORT_SKY );
 
-	if( r_lighting_realtime_world_lightmaps->integer ) {
-		_R_DrawSurfaces( list, &depthCopied, RB_MODE_LIGHTMAP, ST_NONE, SHADER_SORT_NONE, SHADER_SORT_BANNER );
+	if( !r_lighting_realtime_world->integer || r_lighting_realtime_world_lightmaps->integer ) {
+		_R_DrawSurfaces( list, &depthCopied, RB_MODE_LIGHTMAP, ST_NONE, ST_SKY, SHADER_SORT_NONE, SHADER_SORT_BANNER );
+	} else {
+		_R_DrawSurfaces( list, &depthCopied, RB_MODE_DIFFUSE, ST_NONE, ST_SKY, SHADER_SORT_NONE, SHADER_SORT_BANNER );
 	}
 
 	// draw additive lights
 	R_DrawRtLights();
 
-	// draw decal passes for opaque shaders
-	_R_DrawSurfaces( list, &depthCopied, RB_MODE_POST_LIGHT, ST_NONE, SHADER_SORT_NONE, SHADER_SORT_BANNER );
+	// draw sky and decal passes for opaque shaders
+	_R_DrawSurfaces( list, &depthCopied, RB_MODE_POST_LIGHT, ST_NONE, ST_NONE, SHADER_SORT_NONE, SHADER_SORT_BANNER );
 
 	// draw decals, translucent surfaces, etc
-	_R_DrawSurfaces( list, &depthCopied, RB_MODE_DECALS, ST_NONE, SHADER_SORT_BANNER+1, SHADER_SORT_MAX );
+	_R_DrawSurfaces( list, &depthCopied, RB_MODE_DECALS, ST_NONE, ST_NONE, SHADER_SORT_BANNER+1, SHADER_SORT_MAX );
 
 	RB_SetMode( RB_MODE_NORMAL );
 }
@@ -695,7 +700,7 @@ static void R_DrawForwardRtLightSurfaces( drawList_t *list ) {
 void R_DrawPortalSurfaces( drawList_t *list ) {
 	bool depthCopied = false;
 
-	_R_DrawSurfaces( list, &depthCopied, RB_MODE_NORMAL, ST_NONE, SHADER_SORT_PORTAL, SHADER_SORT_PORTAL );
+	_R_DrawSurfaces( list, &depthCopied, RB_MODE_NORMAL, ST_NONE, ST_NONE, SHADER_SORT_PORTAL, SHADER_SORT_PORTAL );
 }
 
 /*
@@ -711,10 +716,10 @@ void R_DrawSurfaces( drawList_t *list ) {
 			R_DrawLightSurfaces( list );
 		} else if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
 			R_DrawShadowSurfaces( list );
-		} else if( rn.numRealtimeLights ) {
+		} else if( r_lighting_realtime_world->integer || r_lighting_realtime_dlight->integer ) {
 			R_DrawForwardRtLightSurfaces( list );
 		} else {
-			_R_DrawSurfaces( list, &depthCopied, RB_MODE_NORMAL, ST_NONE, SHADER_SORT_NONE, SHADER_SORT_MAX );
+			_R_DrawSurfaces( list, &depthCopied, RB_MODE_NORMAL, ST_NONE, ST_NONE, SHADER_SORT_NONE, SHADER_SORT_MAX );
 		}
 	}
 
@@ -731,7 +736,7 @@ void R_DrawSkySurfaces( drawList_t *list ) {
 	triOutlines = RB_EnableTriangleOutlines( false );
 	if( !triOutlines ) {
 		// do not recurse into normal mode when rendering triangle outlines
-		_R_DrawSurfaces( list, &depthCopied, RB_MODE_NORMAL, ST_SKY, SHADER_SORT_SKY, SHADER_SORT_SKY );
+		_R_DrawSurfaces( list, &depthCopied, RB_MODE_NORMAL, ST_SKY, ST_NONE, SHADER_SORT_SKY, SHADER_SORT_SKY );
 	}
 	RB_EnableTriangleOutlines( triOutlines );
 }
@@ -750,7 +755,7 @@ void R_DrawOutlinedSurfaces( drawList_t *list ) {
 	// properly store and restore the state, as the
 	// R_DrawOutlinedSurfaces calls can be nested
 	triOutlines = RB_EnableTriangleOutlines( true );
-	_R_DrawSurfaces( list, &depthCopied, RB_MODE_NORMAL, ST_NONE, SHADER_SORT_NONE, SHADER_SORT_MAX );
+	_R_DrawSurfaces( list, &depthCopied, RB_MODE_NORMAL, ST_NONE, ST_NONE, SHADER_SORT_NONE, SHADER_SORT_MAX );
 	RB_EnableTriangleOutlines( triOutlines );
 }
 

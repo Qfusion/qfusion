@@ -150,7 +150,7 @@ void R_ShutdownCoronas( void ) {
 /*
 * R_LightForOrigin
 */
-void R_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t diffuse, float radius, bool noWorldLight ) {
+void R_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t diffuse, float radius, bool noWorldLight, bool noDLight ) {
 	int i, j;
 	int k, s;
 	int vi[3], elem[4];
@@ -165,7 +165,7 @@ void R_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t d
 	VectorSet( ambientLocal, 0, 0, 0 );
 	VectorSet( diffuseLocal, 0, 0, 0 );
 
-	if( noWorldLight || r_lighting_realtime_world->integer ) {
+	if( noWorldLight ) {
 		VectorSet( dir, 0.0f, 0.0f, 0.0f );
 		goto dynamic;
 	}
@@ -270,7 +270,7 @@ void R_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t d
 
 dynamic:
 	// add dynamic lights
-	if( radius && r_dynamiclight->integer && !r_lighting_realtime_dlight->integer ) {
+	if( radius && noDLight && r_dynamiclight->integer ) {
 		unsigned int lnum;
 		rtlight_t *dl;
 		float dist, dist2, add;
@@ -343,7 +343,7 @@ float R_LightExposureForOrigin( const vec3_t origin ) {
 	vec4_t ambient, diffuse;
 	//vec4_t total;
 
-	R_LightForOrigin( origin, dir, ambient, diffuse, 0.1f, false );
+	R_LightForOrigin( origin, dir, ambient, diffuse, 0.1f, false, false );
 
 	for( i = 0; i < 3; i++ ) {
 		ambient[i] = R_LinearFloatFromsRGBFloat( ambient[i] );
