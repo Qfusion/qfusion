@@ -799,6 +799,9 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 	glossExponent = rb.currentShader->glossExponent ? rb.currentShader->glossExponent : r_lighting_glossexponent->value;
 
 	applyDecal = decalmap != NULL;
+	if( rb.mode == RB_MODE_LIGHT || rb.mode == RB_MODE_LIGHTMAP ) {
+		applyDecal = false;
+	}
 
 	// possibly apply the "texture" fog inline
 	if( fog == rb.texFog ) {
@@ -952,11 +955,10 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 			// rotate direction
 			Matrix3_TransformVector( e->axis, temp, lightDir );
 
-			minLight = true;
 			programFeatures |= GLSL_SHADER_MATERIAL_DIRECTIONAL_LIGHT;
 		}
 
-		if( minLight && false ) {
+		if( minLight ) {
 			float ambientL = VectorLength( ambient );
 
 			if( ambientL < rb.minLight ) {
@@ -1287,7 +1289,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 		// get weighted incoming direction of world and dynamic lights
 		R_LightForOrigin( e->lightingOrigin, temp, lightAmbient, lightDiffuse, radius * e->scale, rb.noWorldLight );
 
-		if( ( e->flags & RF_MINLIGHT ) && false ) {
+		if( e->flags & RF_MINLIGHT ) {
 			if( lightAmbient[0] <= 0.1f || lightAmbient[1] <= 0.1f || lightAmbient[2] <= 0.1f ) {
 				VectorSet( lightAmbient, 0.1f, 0.1f, 0.1f );
 			}
@@ -1308,7 +1310,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 		applyLighting = ( isLightmapped || isWorldVertexLight );
 	}
 
-	if( !applyLighting && ( rb.mode == RB_MODE_LIGHT ) ) {
+	if( !applyLighting && ( rb.mode == RB_MODE_LIGHT || rb.mode == RB_MODE_LIGHTMAP ) ) {
 		return;
 	}
 	if( applyLighting && ( rb.mode == RB_MODE_POST_LIGHT ) ) {
@@ -2275,7 +2277,7 @@ void RB_DrawShadedElements( void ) {
 	RB_SetShaderState();
 
 	for( i = 0, pass = rb.currentShader->passes; i < rb.currentShader->numpasses; i++, pass++ ) {
-		if( rb.mode == RB_MODE_DEPTH || rb.mode == RB_MODE_LIGHT ) {
+		if( rb.mode == RB_MODE_DEPTH || rb.mode == RB_MODE_LIGHT || rb.mode == RB_MODE_LIGHTMAP ) {
 			if( !(pass->flags & GLSTATE_DEPTHWRITE) ) {
 				continue;
 			}
@@ -2301,7 +2303,7 @@ void RB_DrawShadedElements( void ) {
 		RB_RenderPass( pass );
 	}
 
-	if( rb.mode == RB_MODE_DEPTH || rb.mode == RB_MODE_TRIANGLE_OUTLINES || rb.mode == RB_MODE_LIGHT ) {
+	if( rb.mode == RB_MODE_DEPTH || rb.mode == RB_MODE_TRIANGLE_OUTLINES || rb.mode == RB_MODE_LIGHT || rb.mode == RB_MODE_LIGHTMAP ) {
 		goto end;
 	}
 

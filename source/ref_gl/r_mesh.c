@@ -673,6 +673,10 @@ static void R_DrawForwardRtLightSurfaces( drawList_t *list ) {
 	// clear color to black for portal surfaces that fail the Z-test
 	_R_DrawSurfaces( rn.portalmasklist, &_dummy, RB_MODE_BLACK_GT, ST_NONE, SHADER_SORT_PORTAL, SHADER_SORT_SKY );
 
+	if( r_lighting_realtime_world_lightmaps->integer ) {
+		_R_DrawSurfaces( list, &depthCopied, RB_MODE_LIGHTMAP, ST_NONE, SHADER_SORT_NONE, SHADER_SORT_BANNER );
+	}
+
 	// draw additive lights
 	R_DrawRtLights();
 
