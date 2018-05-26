@@ -1509,7 +1509,7 @@ int R_CalcRtLightBBoxSidemask( const rtlight_t *l, const vec3_t mins, const vec3
 		VectorAdd( mins, radius, center );
 		Matrix4_Multiply_Vector( l->worldToLightMatrix, center, lightcenter );
 		Matrix4_Multiply_Vector3( l->radiusToLightMatrix, radius, lightradius );
-		
+		 
 		// use the rotated radius to calculate the transformed bounds in worldspace
 		VectorAdd( o, lightcenter, lightcenter );
 		VectorSubtract( lightcenter, lightradius, pmin );
