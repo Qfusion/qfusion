@@ -1242,9 +1242,11 @@ void R_GetRtLightVisInfo( mbrushmodel_t *bm, rtlight_t *l ) {
 */
 void R_InitRtLight( rtlight_t *l, const vec3_t origin, const vec_t *axis, float radius, const vec3_t color ) {
 	mat4_t lightMatrix;
+	bool rotated;
 
 	if( radius < 1.0 )
 		radius = 1.0;
+	rotated = !((axis[AXIS_FORWARD+0] == 1.0f) && (axis[AXIS_RIGHT+1] == 1.0f) && (axis[AXIS_UP+2] == 1.0f));
 
 	memset( l, 0, sizeof( rtlight_t ) );
 
@@ -1254,6 +1256,7 @@ void R_InitRtLight( rtlight_t *l, const vec3_t origin, const vec_t *axis, float 
 	l->intensity = radius;
 	l->flags = LIGHTFLAG_REALTIMEMODE;
 	l->style = MAX_LIGHTSTYLES;
+	l->rotated = rotated;
 	VectorCopy( origin, l->origin );
 	Matrix3_Copy( axis, l->axis );
 
@@ -1267,6 +1270,7 @@ void R_InitRtLight( rtlight_t *l, const vec3_t origin, const vec_t *axis, float 
 
 	Matrix4_ObjectMatrix( origin, axis, 1, lightMatrix );
 	Matrix4_Invert( lightMatrix, l->worldToLightMatrix );
+	Matrix4_Abs( l->worldToLightMatrix, l->radiusToLightMatrix );
 
 	BoundsFromRadius( l->origin, l->intensity + 1, l->lightmins, l->lightmaxs );
 	CopyBounds( l->lightmins, l->lightmaxs, l->worldmins, l->worldmaxs );
@@ -1482,12 +1486,11 @@ unsigned R_CullRtLights( unsigned numLights, rtlight_t *lights, unsigned clipFla
 
 /*
 * R_CalcRtLightBBoxSidemask
-*
-* FIXME: Needs support for rotating lights
 */
 int R_CalcRtLightBBoxSidemask( const rtlight_t *l, const vec3_t mins, const vec3_t maxs ) {
 	int i;
 	int sidemask = 0x3F;
+	vec3_t pmin, pmax;
 	const vec_t *o = &l->origin[0];
 	const vec_t *lmins = &l->lightmins[0];
 	const vec_t *lmaxs = &l->lightmaxs[0];
@@ -1496,20 +1499,41 @@ int R_CalcRtLightBBoxSidemask( const rtlight_t *l, const vec3_t mins, const vec3
 		return 0;
 	}
 
+	if( l->rotated ) {
+		vec3_t radius, lightradius;
+		vec4_t center = { 0, 0, 0, 1 }, lightcenter = { 0, 0, 0, 1 };
+
+		// calculate bounds center and radius vector in lightspace
+		VectorSubtract( maxs, mins, radius );
+		VectorScale( radius, 0.5f, radius );
+		VectorAdd( mins, radius, center );
+		Matrix4_Multiply_Vector( l->worldToLightMatrix, center, lightcenter );
+		Matrix4_Multiply_Vector3( l->radiusToLightMatrix, radius, lightradius );
+		
+		// use the rotated radius to calculate the transformed bounds in worldspace
+		VectorAdd( o, lightcenter, lightcenter );
+		VectorSubtract( lightcenter, lightradius, pmin );
+		VectorAdd( lightcenter, lightradius, pmax );
+	}
+	else {
+		VectorCopy( mins, pmin );
+		VectorCopy( maxs, pmax );
+	}
+
 	for( i = 0; i < 3; i++ ) {
 		int j = i << 1;
 
-		if( mins[i] > lmaxs[i] + ON_EPSILON ) {
+		if( pmin[i] > lmaxs[i] + ON_EPSILON ) {
 			return 0;
 		}
-		if( maxs[i] < lmins[i] - ON_EPSILON ) {
+		if( pmax[i] < lmins[i] - ON_EPSILON ) {
 			return 0;
 		}
 
-		if( o[i] > maxs[i] + ON_EPSILON ) {
+		if( o[i] > pmax[i] + ON_EPSILON ) {
 			sidemask &= ~(1<<j);
 		}
-		if( o[i] < mins[i] - ON_EPSILON ) {
+		if( o[i] < pmin[i] - ON_EPSILON ) {
 			sidemask &= ~(1<<(j+1));
 		}
 	}
