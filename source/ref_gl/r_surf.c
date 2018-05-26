@@ -383,7 +383,7 @@ static bool R_AddWorldDrawSurfaceToDrawList( const entity_t *e, unsigned ds ) {
 */
 static void R_CheckSpecialWorldSurfaces( const entity_t *e, unsigned ds, const vec3_t origin ) {
 	unsigned i;
-	bool sky, portal;
+	bool portal;
 	drawSurfaceBSP_t *drawSurf = rsh.worldBrushModel->drawSurfaces + ds;
 	const shader_t *shader = drawSurf->shader;
 
@@ -391,21 +391,7 @@ static void R_CheckSpecialWorldSurfaces( const entity_t *e, unsigned ds, const v
 		return;
 	}
 
-	sky = ( shader->flags & SHADER_SKY ) != 0;
 	portal = ( shader->flags & SHADER_PORTAL ) != 0;
-
-	if( sky ) {
-		for( i = 0; i < drawSurf->numWorldSurfaces; i++ ) {
-			int s = drawSurf->worldSurfaces[i];
-			msurface_t *surf = rsh.worldBrushModel->surfaces + s;
-
-			if( !rn.meshlist->worldSurfVis[s] ) {
-				continue;
-			}
-			R_ClipSkySurface( &rn.skyDrawSurface, surf );
-		}
-		return;
-	}
 
 	if( portal ) {
 		vec3_t centre;
@@ -691,6 +677,11 @@ static void R_CullVisSurfaces( unsigned firstSurf, unsigned numSurfs, unsigned c
 
 		if( rn.meshlist->worldSurfVis[i] ) {
 			rn.meshlist->worldDrawSurfVis[surf->drawSurf - 1] = 1;
+
+			if( surf->flags & SURF_SKY ) {
+				R_ClipSkySurface( &rn.skyDrawSurface, surf );
+			}
+
 			rf.stats.c_brush_polys++;
 		}
 	}
