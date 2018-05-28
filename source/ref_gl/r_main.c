@@ -2235,7 +2235,7 @@ void R_FrameCache_Clear( void ) {
 void *R_FrameCache_Alloc_( size_t size, const char *filename, int fileline ) {
 	uint8_t *data;
 	r_framecache_t *cache = r_frameCacheHead;
-	size_t remaining;
+	size_t used;
 
 	if( !size ) {
 		return NULL;
@@ -2252,8 +2252,8 @@ void *R_FrameCache_Alloc_( size_t size, const char *filename, int fileline ) {
 		return NULL;
 	}
 
-	remaining = cache->dataSize - (cache->dataRover - (uint8_t *)cache);
-	if( size > remaining ) {
+	used = cache->dataRover - (uint8_t *)cache;
+	if( used + size > cache->dataSize ) {
 		size_t newSize = r_frameCacheTotalSize / 2;
 
 		if( newSize < MIN_FRAMECACHE_SIZE ) {
