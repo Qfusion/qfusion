@@ -2312,7 +2312,9 @@ void RP_UpdateRealtimeLightsUniforms( int elem, const vec3_t lightVec, const mat
 				break;
 			}
 
-			qglUniformMatrix4fvARB( program->loc.DynamicLightsMatrix, 1, GL_FALSE, objectToLightMatrix );
+			if( program->loc.DynamicLightsMatrix >= 0 ) {
+				qglUniformMatrix4fvARB( program->loc.DynamicLightsMatrix, 1, GL_FALSE, objectToLightMatrix );
+			}
 
 			c = n & 3;
 			if( glConfig.sSRGB ) {
