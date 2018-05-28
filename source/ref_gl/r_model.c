@@ -1232,7 +1232,7 @@ static void R_LoadWorldRtLightsFromMap( model_t *model ) {
 	bool islight, shadow, radiusset;
 	int style, flags;
 	float radius;
-	float colorf[3], originf[3];
+	float colorf[3], originf[3], angles[3];
 	mbrushmodel_t *bmodel;
 	unsigned numLights, maxLights;
 	rtlight_t *lights;
@@ -1254,6 +1254,7 @@ static void R_LoadWorldRtLightsFromMap( model_t *model ) {
 		shadow = true;
 		flags = LIGHTFLAG_REALTIMEMODE;
 		VectorSet( colorf, 1, 1, 1 );
+		VectorClear( angles );
 		cubemap[0] = 0;
 
 		while( 1 ) {
@@ -1280,25 +1281,24 @@ static void R_LoadWorldRtLightsFromMap( model_t *model ) {
 				if( !strcmp( value, "light") ) {
 					islight = true;
 				}
-			} else if( !strcmp( key, "_color" ) ) {
-				sscanf( value, "%f %f %f", &colorf[0], &colorf[1], &colorf[2] );
-			} else if( !strcmp( key, "color" ) ) {
+			} else if( !strcmp( key, "_color" ) || !strcmp( key, "color" ) ) {
 				sscanf( value, "%f %f %f", &colorf[0], &colorf[1], &colorf[2] );
 			} else if( !strcmp( key, "origin" ) ) {
 				sscanf( value, "%f %f %f", &originf[0], &originf[1], &originf[2] );
-			} else if( !strcmp( key, "light" ) ) {
-				sscanf( value, "%f", &radius ), radiusset = true;
-			} else if( !strcmp( key, "_light" ) ) {
+			} else if( !strcmp( key, "light" ) || !strcmp( key, "_light" ) ) {
 				sscanf( value, "%f", &radius ), radiusset = true;
 			} else if( !strcmp( key, "style" ) ) {
 				sscanf( value, "%d", &style );
 			} else if( !strcmp( key, "_cubemap" ) ) {
 				Q_strncpyz( cubemap, value, sizeof( cubemap ) );
+			} else if( !strcmp( key, "angles" ) ) {
+				sscanf( value, "%f %f %f", &angles[0], &angles[1], &angles[2] );
 			}
 		}
 
 		if( islight ) {
 			rtlight_t *l;
+			mat3_t axis;
 
 			if( numLights == maxLights ) {
 				maxLights = maxLights + 128;
@@ -1314,9 +1314,10 @@ static void R_LoadWorldRtLightsFromMap( model_t *model ) {
 				style = 0;
 			if( radius < MAPLIGHT_MIN_SHADOW_RADIUS )
 				shadow = false;
+			AnglesToAxis( angles, axis );
 
 			l = &lights[numLights++];
-			R_InitRtLight( l, originf, axis_identity, radius, colorf );
+			R_InitRtLight( l, originf, axis, radius, colorf );
 
 			l->flags = flags;
 			l->shadow = shadow;
