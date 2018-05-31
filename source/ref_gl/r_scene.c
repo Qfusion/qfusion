@@ -688,9 +688,8 @@ BOUNDING BOXES
 */
 
 typedef struct {
-	vec3_t mins;
-	vec3_t maxs;
-	vec4_t color;
+	vec4_t corners[8];
+	byte_vec4_t colors[8];
 } r_debug_bound_t;
 
 static unsigned r_num_debug_bounds;
@@ -705,10 +704,11 @@ static void R_ClearDebugBounds( void ) {
 }
 
 /*
-* R_AddDebugBounds
+* R_AddDebugCorners
 */
-void R_AddDebugBounds( const vec3_t mins, const vec3_t maxs, const vec4_t color ) {
-	unsigned i;
+void R_AddDebugCorners( const vec3_t corners[8], const vec4_t color ) {
+	unsigned i, j, k;
+	r_debug_bound_t *b;
 
 	i = r_num_debug_bounds;
 	r_num_debug_bounds++;
@@ -722,32 +722,51 @@ void R_AddDebugBounds( const vec3_t mins, const vec3_t maxs, const vec4_t color 
 		}
 	}
 
-	VectorCopy( mins, r_debug_bounds[i].mins );
-	VectorCopy( maxs, r_debug_bounds[i].maxs );
-	ColorNormalize( color, r_debug_bounds[i].color );
+	b = &r_debug_bounds[i];
+
+	for( j = 0; j < 8; j++ ) {
+		VectorCopy( corners[j], b->corners[j] );
+		b->corners[j][3] = 1;
+
+		for( k = 0; k < 4; k++ ) {
+			b->colors[j][k] = color[k] * 255;
+		}
+	}
+
+}
+
+/*
+* R_AddDebugBounds
+*/
+void R_AddDebugBounds( const vec3_t mins, const vec3_t maxs, const vec4_t color ) {
+	unsigned j;
+	vec3_t corners[8];
+
+	for( j = 0; j < 8; j++ ) {
+		corners[j][0] = ( ( j & 1 ) ? mins[0] : maxs[0] );
+		corners[j][1] = ( ( j & 2 ) ? mins[1] : maxs[1] );
+		corners[j][2] = ( ( j & 4 ) ? mins[2] : maxs[2] );
+	}
+
+	R_AddDebugCorners( corners, color );
 }
 
 /*
 * R_RenderDebugBounds
 */
 static void R_RenderDebugBounds( void ) {
-	unsigned i, j;
-	const vec_t *mins, *maxs;
+	unsigned i;
 	mesh_t mesh;
-	vec4_t verts[8];
-	byte_vec4_t colors[8], ucolor;
 	elem_t elems[24];
 
-	//if( !r_num_debug_bounds ) {
-	//	return;
-	//}
+	if( !r_num_debug_bounds ) {
+		return;
+	}
 
 	memset( &mesh, 0, sizeof( mesh ) );
 	mesh.numVerts = 8;
-	mesh.xyzArray = verts;
 	mesh.numElems = 24;
 	mesh.elems = elems;
-	mesh.colorsArray[0] = colors;
 
 	RB_SetShaderStateMask( ~0, GLSTATE_NO_DEPTH_TEST );
 
@@ -760,21 +779,8 @@ static void R_RenderDebugBounds( void ) {
 	}
 
 	for( i = 0; i < r_num_debug_bounds; i++ ) {
-		mins = r_debug_bounds[i].mins;
-		maxs = r_debug_bounds[i].maxs;
-		
-		for( j = 0; j < 3; j++ )
-			ucolor[j] = r_debug_bounds[i].color[j] * 255;
-		ucolor[3] = 255;
-
-		for( j = 0; j < 8; j++ ) {
-			verts[j][0] = ( ( j & 1 ) ? mins[0] : maxs[0] );
-			verts[j][1] = ( ( j & 2 ) ? mins[1] : maxs[1] );
-			verts[j][2] = ( ( j & 4 ) ? mins[2] : maxs[2] );
-			verts[j][3] = 1.0f;
-
-			Vector4Copy( ucolor, colors[j] );
-		}
+		mesh.xyzArray = r_debug_bounds[i].corners;
+		mesh.colorsArray[0] = r_debug_bounds[i].colors;
 
 		RB_AddDynamicMesh( rsc.worldent, rsh.whiteShader, NULL, NULL, &mesh, GL_LINES, 0.0f, 0.0f );
 	}
