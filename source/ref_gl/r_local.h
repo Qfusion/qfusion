@@ -795,6 +795,7 @@ rserr_t     R_SetMode( int x, int y, int width, int height, int displayFrequency
 //
 extern drawList_t r_worldlist, r_portalmasklist;
 
+void R_AddDebugCorners( const vec3_t corners[8], const vec4_t color );
 void R_AddDebugBounds( const vec3_t mins, const vec3_t maxs, const vec4_t color );
 void R_ClearScene( void );
 void R_AddEntityToScene( const entity_t *ent );
