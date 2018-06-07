@@ -669,6 +669,7 @@ void PlaneFromPoints( vec3_t verts[3], cplane_t *plane ) {
 	CrossProduct( v2, v1, plane->normal );
 	VectorNormalize( plane->normal );
 	plane->dist = DotProduct( verts[0], plane->normal );
+	plane->type = PLANE_NONAXIAL;
 }
 
 #define PLANE_NORMAL_EPSILON    0.00001
@@ -720,8 +721,8 @@ void SnapPlane( vec3_t normal, vec_t *dist ) {
 }
 
 void ClearBounds( vec3_t mins, vec3_t maxs ) {
-	mins[0] = mins[1] = mins[2] = 99999;
-	maxs[0] = maxs[1] = maxs[2] = -99999;
+	mins[0] = mins[1] = mins[2] = 999999;
+	maxs[0] = maxs[1] = maxs[2] = -999999;
 }
 
 void CopyBounds( const vec3_t inmins, const vec3_t inmaxs, vec3_t outmins, vec3_t outmaxs ) {
@@ -783,6 +784,37 @@ float RadiusFromBounds( const vec3_t mins, const vec3_t maxs ) {
 }
 
 /*
+* BoundsCentre
+*/
+void BoundsCentre( const vec3_t mins, const vec3_t maxs, vec3_t centre ) {
+	VectorClear( centre );
+	VectorMA( centre, 0.5, mins, centre );
+	VectorMA( centre, 0.5, maxs, centre );
+}
+
+/*
+* LocalBounds
+*/
+float LocalBounds( const vec3_t inmins, const vec3_t inmaxs, vec3_t mins, vec3_t maxs, vec3_t centre ) {
+	vec3_t v, vmin, vmax;
+
+	BoundsCentre( inmins, inmaxs, v );
+	VectorSubtract( inmins, v, vmin );
+	VectorSubtract( inmaxs, v, vmax );
+
+	if( mins ) {
+		VectorCopy( vmin, mins );
+	}
+	if( maxs ) {
+		VectorCopy( vmax, maxs );
+	}
+	if( centre ) {
+		VectorCopy( v, centre );
+	}
+	return RadiusFromBounds( vmin, vmax );
+}
+
+/*
 * BoundsFromRadius
 */
 void BoundsFromRadius( const vec3_t centre, vec_t radius, vec3_t mins, vec3_t maxs ) {
@@ -791,6 +823,43 @@ void BoundsFromRadius( const vec3_t centre, vec_t radius, vec3_t mins, vec3_t ma
 	for( i = 0; i < 3; i++ ) {
 		mins[i] = centre[i] - radius;
 		maxs[i] = centre[i] + radius;
+	}
+}
+
+/*
+* ClipBounds
+*/
+void ClipBounds( vec3_t mins, vec3_t maxs, const vec3_t mins2, const vec3_t maxs2 ) {
+	int i;
+
+	for( i = 0; i < 3; i++ ) {
+		mins[i] = max( mins[i], mins2[i] );
+		maxs[i] = min( maxs[i], maxs2[i] );
+	}
+}
+
+/*
+* UnionBounds
+*/
+void UnionBounds( vec3_t mins, vec3_t maxs, const vec3_t mins2, const vec3_t maxs2 ) {
+	int i;
+
+	for( i = 0; i < 3; i++ ) {
+		mins[i] = min( mins[i], mins2[i] );
+		maxs[i] = max( maxs[i], maxs2[i] );
+	}
+}
+
+/*
+* BoundsCorners
+*/
+void BoundsCorners( const vec3_t mins, const vec3_t maxs, vec3_t corners[8] ) {
+	int j;
+
+	for( j = 0; j < 8; j++ ) {
+		corners[j][0] = ( ( j & 1 ) ? mins[0] : maxs[0] );
+		corners[j][1] = ( ( j & 2 ) ? mins[1] : maxs[1] );
+		corners[j][2] = ( ( j & 4 ) ? mins[2] : maxs[2] );
 	}
 }
 
