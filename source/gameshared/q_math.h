@@ -214,6 +214,8 @@ void _VectorCopy( const vec3_t in, vec3_t out );
 
 void ClearBounds( vec3_t mins, vec3_t maxs );
 void CopyBounds( const vec3_t inmins, const vec3_t inmaxs, vec3_t outmins, vec3_t outmaxs );
+void ClipBounds( vec3_t mins, vec3_t maxs, const vec3_t mins2, const vec3_t maxs2 );
+void UnionBounds( vec3_t mins, vec3_t maxs, const vec3_t mins2, const vec3_t maxs2 );
 void AddPointToBounds( const vec3_t v, vec3_t mins, vec3_t maxs );
 float RadiusFromBounds( const vec3_t mins, const vec3_t maxs );
 bool BoundsOverlap( const vec3_t mins1, const vec3_t maxs1, const vec3_t mins2, const vec3_t maxs2 );
@@ -221,6 +223,10 @@ bool BoundsOverlapSphere( const vec3_t mins, const vec3_t maxs, const vec3_t cen
 void BoundsFromRadius( const vec3_t centre, vec_t radius, vec3_t mins, vec3_t maxs );
 bool BoundsOverlapTriangle( const vec3_t v1, const vec3_t v2, const vec3_t v3, const vec3_t mins, const vec3_t maxs );
 bool BoundsInsideBounds( const vec3_t mins1, const vec3_t maxs1, const vec3_t mins2, const vec3_t maxs2 );
+void BoundsCentre( const vec3_t mins, const vec3_t maxs, vec3_t centre );
+float LocalBounds( const vec3_t inmins, const vec3_t inmaxs, vec3_t mins, vec3_t maxs, vec3_t centre );
+#define BoundsVolume(mins,maxs) (((maxs)[0]-(mins)[0]) * ((maxs)[1]-(mins)[1]) * ((maxs)[2]-(mins)[2]))
+void BoundsCorners( const vec3_t mins, const vec3_t maxs, vec3_t corners[8] );
 
 // LordHavoc's triangle utility functions follow
 
