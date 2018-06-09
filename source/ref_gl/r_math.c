@@ -577,3 +577,39 @@ void Matrix4_ObliqueNearClipping( const vec3_t normal, const vec_t dist, const m
 	pm[10] = c[2] * d - pm[11];
 	pm[14] = c[3] * d - pm[15];
 }
+
+/*
+* Matrix4_CropMatrixBounds
+*/
+void Matrix4_CropMatrixBounds( const vec3_t corners[8], const mat4_t m, vec_t *out ) {
+	int i, j;
+	vec3_t mins, maxs;
+
+	// compute the off-center orthographic projection parameters to fit corners into the view
+	for( i = 0; i < 8; i++ ) {
+		vec4_t vv = { 0, 0, 0, 1 }, out;
+
+		VectorCopy( corners[i], vv );
+		Matrix4_Multiply_Vector( m, vv, out );
+
+		if( i == 0 ) {
+			for( j = 0; j < 3; j++ ) {
+				mins[j] = out[j];
+				maxs[j] = out[j];
+			}
+			continue;
+		}
+
+		for( j = 0; j < 3; j++ ) {
+			mins[j] = min( mins[j], out[j] );
+			maxs[j] = min( maxs[j], out[j] );
+		}
+	}
+
+	out[0] = mins[0];
+	out[1] = maxs[0];
+	out[2] = mins[1];
+	out[3] = maxs[1];
+	out[4] = -maxs[2];
+	out[5] = -mins[2];
+}
