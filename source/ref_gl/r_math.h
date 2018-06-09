@@ -61,5 +61,6 @@ void        Matrix4_Modelview( const vec3_t viewOrg, const mat3_t viewAxis, mat4
 void		Matrix4_ObjectMatrix( const vec3_t origin, const mat3_t axis, float scale, mat4_t m );
 void		Matrix4_QuakeModelview( const vec3_t viewOrg, const mat3_t viewAxis, mat4_t m );
 void        Matrix4_ObliqueNearClipping( const vec3_t normal, const vec_t dist, const mat4_t cm, mat4_t pm );
+void		Matrix4_CropMatrixBounds( const vec3_t corners[8], const mat4_t m, vec_t *out );
 
 #endif // R_MATH_H
