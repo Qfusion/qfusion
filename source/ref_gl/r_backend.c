@@ -308,7 +308,11 @@ void RB_LoadObjectMatrix( const mat4_t m ) {
 
 		Matrix4_Multiply( rb.rtlights[0]->worldToLightMatrix, m, rb.objectToLightMatrix );
 
-		VectorSubtract( rl->origin, rb.currentEntity->origin, tvec );
+		if( rl->directional ) {
+			VectorNegate( &rl->axis[AXIS_FORWARD], tvec );
+		} else {
+			VectorSubtract( rl->origin, rb.currentEntity->origin, tvec );
+		}
 		Matrix3_TransformVector( rb.currentEntity->axis, tvec, rb.lightDir );
 	}
 

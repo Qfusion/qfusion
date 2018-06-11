@@ -70,6 +70,7 @@ typedef struct
 
 typedef struct rtlight_s {
 	float intensity;
+	float radius;
 	int flags;
 	int style;
 	int cluster;
@@ -77,6 +78,8 @@ typedef struct rtlight_s {
 	bool world;
 	bool shadow;
 	bool rotated;
+	bool directional;
+	bool sky;
 
 	// frame data
 	unsigned sceneFrame;
@@ -96,26 +99,35 @@ typedef struct rtlight_s {
 	int *receiveEnts;
 	int *shadowEnts;
 
-	vec3_t cullmins; // worldmins & all influenced entities
-	vec3_t cullmaxs; // worldmaxs & all influenced entities
-
 	vec4_t color; // r, g, b, 1.0 / intensity
 	vec4_t linearColor; // r, g, b, 1.0 / intensity
 
 	vec3_t origin;
 
-	vec3_t worldmins;
-	vec3_t worldmaxs;
+	vec3_t worldmins; // origin - intensity on all axes, clipped to affected world geometry
+	vec3_t worldmaxs; // origin + intensity on all axes, clipped to affected world geometry
 
-	vec3_t lightmins;
-	vec3_t lightmaxs;
+	vec3_t lightmins; // origin - intensity on all axes
+	vec3_t lightmaxs; // origin + intensity on all axes
+
+	vec3_t skymins;
+	vec3_t skymaxs;
+
+	vec3_t cullmins; // worldmins & all influenced entities
+	vec3_t cullmaxs; // worldmaxs & all influenced entities
+	mat4_t projectionMatrix;
 
 	mat3_t axis;
 	mat4_t worldToLightMatrix;
 	mat4_t radiusToLightMatrix;
 
+	// ortho
+	cplane_t frustum[6];
+	vec3_t frustumCorners[8];
+
 	unsigned numVisLeafs;
-	unsigned numSurfaces;
+	unsigned numReceiveSurfaces;
+	unsigned numShadowSurfaces;
 
 	image_t *cubemapFilter;
 
@@ -149,6 +161,7 @@ bool		R_AllocLightmap_Block( lightmapAllocState_t *state, int blockwidth, int bl
 
 
 void		R_InitRtLight( rtlight_t *l, const vec3_t origin, const vec_t *axis, float radius, const vec3_t color );
+void		R_InitRtDirectionalLight( rtlight_t *l, vec3_t corners[8], const vec3_t color );
 void		R_GetRtLightVisInfo( mbrushmodel_t *bm, rtlight_t *l );
 
 unsigned	R_CullRtLights( unsigned numLights, rtlight_t *lights, unsigned clipFlags, bool shadows );

@@ -2713,7 +2713,7 @@ create_default:
 			case SHADER_TYPE_DEPTHONLY:
 				data = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) );
 
-				s->vattribs = VATTRIB_POSITION_BIT | VATTRIB_TEXCOORDS_BIT;
+				s->vattribs = VATTRIB_POSITION_BIT;
 				s->sort = SHADER_SORT_PORTAL;
 				s->flags = SHADER_CULL_FRONT | SHADER_DEPTHWRITE;
 				s->numpasses = 1;

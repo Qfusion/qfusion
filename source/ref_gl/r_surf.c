@@ -311,18 +311,21 @@ static bool R_AddWorldDrawSurfaceToDrawList( const entity_t *e, unsigned ds ) {
 
 	sky = ( shader->flags & SHADER_SKY ) != 0;
 	portal = ( shader->flags & SHADER_PORTAL ) != 0;
-
-	if( rn.renderFlags & RF_LIGHTVIEW ) {
+	if( rn.renderFlags & (RF_LIGHTVIEW|RF_SHADOWMAPVIEW) ) {
 		fog = NULL;
 		lightStyleNum = -1;
+	}
+
+	if( rn.renderFlags & RF_LIGHTVIEW ) {
 		if( sky || portal ) {
 			return false;
 		}
-	}
-
-	if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
-		fog = NULL;
-		lightStyleNum = -1;
+	} else if( rn.renderFlags & RF_SKYSHADOWVIEW ) {
+		shader = sky ? rsh.depthOnlyShader : R_OpaqueShadowShader( shader );
+		if( !shader ) {
+			return false;
+		}
+	} else if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
 		shader = R_OpaqueShadowShader( shader );
 		if( !shader ) {
 			return false;
@@ -334,21 +337,28 @@ static bool R_AddWorldDrawSurfaceToDrawList( const entity_t *e, unsigned ds ) {
 			return false;
 		}
 
+		drawSurf->visFrame = rf.frameCount;
+
 		if( rn.refdef.rdflags & RDF_SKYPORTALINVIEW ) {
 			// this will later trigger the skyportal view to be rendered in R_DrawPortals
 			portalSurface = R_AddSkyportalSurface( e, shader, drawSurf );
-		} else if( mapConfig.writeSkyDepth ) {
+		} else if( rn.renderFlags & RF_SKYSHADOWVIEW ) {
 			// add the sky surface to depth mask
 			R_AddSurfToDrawList( rn.portalmasklist, e, rsh.depthOnlyShader, NULL, -1, 0, 0, NULL, drawSurf );
 		}
-
-		// we still need to add draw surface to the draw list to perform sky clipping in R_UpdateSurfaceInDrawList
-		drawSurf->visFrame = rf.frameCount;
-		drawSurf->listSurf = R_AddSurfToDrawList( rn.meshlist, e, mapConfig.writeSkyDepth ? rsh.depthOnlyShader : shader, 
-			fog, lightStyleNum, 0, drawOrder, portalSurface, drawSurf );
-
-		// the actual skydome surface
+		
 		if( !(rn.renderFlags & RF_SHADOWMAPVIEW ) ) {
+			if( mapConfig.writeSkyDepth ) {
+				if( !portalSurface ) {
+					R_AddSurfToDrawList( rn.portalmasklist, e, rsh.depthOnlyShader, NULL, -1, 0, 0, NULL, drawSurf );
+				}
+
+				// add the sky surface to depth mask
+				drawSurf->listSurf = R_AddSurfToDrawList( rn.meshlist, e, rsh.depthOnlyShader, 
+					fog, lightStyleNum, 0, drawOrder, portalSurface, drawSurf );
+			}
+
+			// the actual skydome surface
 			R_AddSkySurfToDrawList( rn.meshlist, shader, portalSurface, &rn.skyDrawSurface );
 		}
 
@@ -578,11 +588,6 @@ static void R_CullVisLeaves( unsigned firstLeaf, unsigned numLeaves, unsigned cl
 	const uint8_t *pvs = rn.pvs;
 	const uint8_t *areabits = rn.areabits;
 
-	if( rn.renderFlags & RF_NOVIS ) {
-		pvs = NULL;
-		areabits = NULL;
-	}
-
 	for( i = 0; i < numLeaves; i++ ) {
 		int clipped;
 		unsigned bit, testFlags;
@@ -605,6 +610,12 @@ static void R_CullVisLeaves( unsigned firstLeaf, unsigned numLeaves, unsigned cl
 			if( !( pvs[leaf->cluster >> 3] & ( 1 << ( leaf->cluster & 7 ) ) ) ) {
 				continue; // not visible
 			}
+		}
+
+		// add leaf bounds to pvs bounds
+		for( j = 0; j < 3; j++ ) {
+			rn.pvsMins[j] = min( rn.pvsMins[j], leaf->mins[j] );
+			rn.pvsMaxs[j] = max( rn.pvsMaxs[j], leaf->maxs[j] );
 		}
 
 		// track leaves, which are entirely inside the frustum
@@ -915,6 +926,11 @@ void R_DrawWorldShadowNode( void ) {
 					if( R_CullBox( surf->mins, surf->maxs, clipFlags ) ) {
 						continue;
 					}
+					if( l->sky && (surf->flags & SURF_SKY) ) {
+						if( !BoundsInsideBounds( surf->mins, surf->maxs, l->skymins, l->skymaxs ) ) {
+							continue;
+						}
+					}
 				}
 
 				culled = false;
@@ -975,8 +991,11 @@ void R_DrawWorldNode( void ) {
 		msec = ri.Sys_Milliseconds();
 	}
 
-	VectorCopy( rsh.worldModel->mins, rn.visMins );
-	VectorCopy( rsh.worldModel->maxs, rn.visMaxs );
+	VectorCopy( rn.viewOrigin, rn.visMins );
+	VectorCopy( rn.viewOrigin, rn.visMaxs );
+
+	VectorCopy( rn.viewOrigin, rn.pvsMins );
+	VectorCopy( rn.viewOrigin, rn.pvsMaxs );
 
 	//
 	// cull leafs
@@ -989,7 +1008,7 @@ void R_DrawWorldNode( void ) {
 		R_CullVisLeaves( 0, bm->numleafs, clipFlags );
 	} else {
 		memset( (void *)rn.meshlist->worldSurfVis, 1, bm->numsurfaces * sizeof( *rn.meshlist->worldSurfVis ) );
-		memset( (void *)rn.meshlist->worldSurfFullVis, 0, bm->numsurfaces * sizeof( *rn.meshlist->worldSurfVis ) );
+		memset( (void *)rn.meshlist->worldSurfFullVis, 0, bm->numsurfaces * sizeof( *rn.meshlist->worldSurfFullVis ) );
 		memset( (void *)rn.meshlist->worldLeafVis, 1, bm->numleafs * sizeof( *rn.meshlist->worldLeafVis ) );
 		memset( (void *)rn.meshlist->worldDrawSurfVis, 0, bm->numDrawSurfaces * sizeof( *rn.meshlist->worldDrawSurfVis ) );
 	}

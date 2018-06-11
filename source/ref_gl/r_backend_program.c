@@ -563,6 +563,9 @@ static r_glslfeat_t RB_RtlightbitsToProgramFeatures( void ) {
 			bits |= GLSL_SHADER_COMMON_DLIGHT_CUBEFILTER;
 	}
 
+	if( rb.rtlights[0]->directional )
+		bits |= GLSL_SHADER_COMMON_DLIGHT_ORTHO;
+
 	return bits|GLSL_SHADER_COMMON_DLIGHTS;
 }
 
@@ -795,6 +798,12 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 		state = ( state & ~GLSTATE_DEPTHWRITE ) | GLSTATE_SRCBLEND_SRC_ALPHA | GLSTATE_DSTBLEND_ONE;
 	}
 
+	if( rb.mode == RB_MODE_DEPTH ) {
+		if( !(state & GLSTATE_DEPTHWRITE) ) {
+			return;
+		}
+	}
+
 	glossIntensity = rb.currentShader->glossIntensity ? rb.currentShader->glossIntensity : r_lighting_glossintensity->value;
 	glossExponent = rb.currentShader->glossExponent ? rb.currentShader->glossExponent : r_lighting_glossexponent->value;
 
@@ -850,13 +859,13 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 
 	Matrix4_Identity( texMatrix );
 
-	RB_BindImage( 0, base );
-
 	// convert rgbgen and alphagen to GLSL feature defines
 	programFeatures |= RB_RGBAlphaGenToProgramFeatures( &pass->rgbgen, &pass->alphagen );
 
 	// set shaderpass state (blending, depthwrite, etc)
 	RB_SetState( state );
+
+	RB_BindImage( 0, base );
 
 	// we only send S-vectors to GPU and recalc T-vectors as cross product
 	// in vertex shader
@@ -1346,8 +1355,6 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 		programFeatures |= GLSL_SHADER_Q3_ALPHA_MASK;
 	}
 
-	RB_BindImage( 0, image );
-
 	// convert rgbgen and alphagen to GLSL feature defines
 	programFeatures |= RB_RGBAlphaGenToProgramFeatures( &pass->rgbgen, &pass->alphagen );
 
@@ -1366,7 +1373,15 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 		state |= GLSTATE_DEPTHWRITE;
 	}
 
+	if( rb.mode == RB_MODE_DEPTH ) {
+		if( !(state & GLSTATE_DEPTHWRITE) ) {
+			return;
+		}
+	}
+
 	RB_SetState( RB_GetShaderpassState( state ) );
+
+	RB_BindImage( 0, image );
 
 	if( programFeatures & GLSL_SHADER_COMMON_SOFT_PARTICLE ) {
 		RB_BindImage( 3, rb.st.screenDepthTexCopy );
@@ -1850,7 +1865,11 @@ void RB_BindShader( const entity_t *e, const shader_t *shader, const mfog_t *fog
 	{
 		vec3_t tvec;
 		rtlight_t *rl = rb.rtlights[0];
-		VectorSubtract( rl->origin, rb.currentEntity->origin, tvec );
+		if( rl->directional ) {
+			VectorNegate( &rl->axis[AXIS_FORWARD], tvec );
+		} else {
+			VectorSubtract( rl->origin, rb.currentEntity->origin, tvec );
+		}
 		Matrix3_TransformVector( rb.currentEntity->axis, tvec, rb.lightDir );
 	}
 
@@ -2168,8 +2187,11 @@ static int RB_GetShaderpassState( int state ) {
 	state |= rb.currentShaderState;
 
 	if( rb.mode == RB_MODE_LIGHT || rb.mode == RB_MODE_LIGHTMAP || rb.mode == RB_MODE_DIFFUSE ) {
-		state &= ~GLSTATE_DEPTHWRITE;
-		state |= GLSTATE_DEPTHFUNC_EQ | GLSTATE_SRCBLEND_SRC_ALPHA | GLSTATE_DSTBLEND_ONE;
+		state &= ~(GLSTATE_DEPTHWRITE|GLSTATE_DSTBLEND_MASK);
+		if( !(state & GLSTATE_OFFSET_FILL) ) {
+			state |= GLSTATE_DEPTHFUNC_EQ;
+		}
+		state |= GLSTATE_SRCBLEND_SRC_ALPHA | GLSTATE_DSTBLEND_ONE;
 	} else if( rb.mode == RB_MODE_BLACK_GT ) {
 		state &= ~(GLSTATE_BLEND_MASK|GLSTATE_DEPTHWRITE);
 		state |= GLSTATE_DEPTHFUNC_GT | GLSTATE_SRCBLEND_ZERO | GLSTATE_DSTBLEND_ZERO;
@@ -2293,29 +2315,21 @@ void RB_DrawShadedElements( void ) {
 	RB_SetShaderState();
 
 	for( i = 0, pass = rb.currentShader->passes; i < rb.currentShader->numpasses; i++, pass++ ) {
-		if( rb.mode == RB_MODE_DEPTH || rb.mode == RB_MODE_LIGHT || rb.mode == RB_MODE_LIGHTMAP || rb.mode == RB_MODE_DIFFUSE ) {
-			if( !(pass->flags & GLSTATE_DEPTHWRITE) ) {
-				continue;
-			}
-			if( pass->flags & GLSTATE_BLEND_MASK ) {
-				continue;
-			}
-		}
 		if( rb.mode == RB_MODE_DECALS ) {
 			int state = RB_GetShaderpassState( pass->flags );
-			if( state & GLSTATE_DEPTHWRITE ) {
-				continue;
-			}
 			if( !(state & GLSTATE_BLEND_MASK) ) {
 				continue;
 			}
 		}
+
 		if( ( pass->flags & SHADERPASS_DETAIL ) && !r_detailtextures->integer ) {
 			continue;
 		}
+
 		if( pass->flags & SHADERPASS_LIGHTMAP ) {
 			continue;
 		}
+
 		RB_RenderPass( pass );
 	}
 
