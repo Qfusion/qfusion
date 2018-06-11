@@ -602,7 +602,7 @@ void Matrix4_CropMatrixBounds( const vec3_t corners[8], const mat4_t m, vec_t *o
 
 		for( j = 0; j < 3; j++ ) {
 			mins[j] = min( mins[j], out[j] );
-			maxs[j] = min( maxs[j], out[j] );
+			maxs[j] = max( maxs[j], out[j] );
 		}
 	}
 
