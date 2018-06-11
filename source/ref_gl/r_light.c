@@ -1016,17 +1016,31 @@ static void R_GetRtLightLeafVisInfo_r( rtlight_t *l, const mnode_t *node, mbrush
 	unsigned *numLeafs;
 	unsigned *nextLeaf;
 
-	while( node->plane != NULL ) {
-		float d = PlaneDiff( l->origin, node->plane );
+	if( l->directional ) {
+		while( node->plane != NULL ) {
+			int s = BOX_ON_PLANE_SIDE( l->lightmins, l->lightmaxs, node->plane ) - 1;
+			if( s < 2 ) {
+				node = node->children[s];
+				continue;
+			}
 
-		if( d > l->intensity + ON_EPSILON ) {
-			node = node->children[0];
-		} else if( d < -l->intensity - ON_EPSILON ) {
-			node = node->children[1];
-		}  else {
 			R_GetRtLightLeafVisInfo_r( l, node->children[0], bm, vis );
 			node = node->children[1];
 		}
+	} else {
+		while( node->plane != NULL ) {
+			float d = PlaneDiff( l->origin, node->plane );
+
+			if( d > l->intensity + ON_EPSILON ) {
+				node = node->children[0];
+			} else if( d < -l->intensity - ON_EPSILON ) {
+				node = node->children[1];
+			}  else {
+				R_GetRtLightLeafVisInfo_r( l, node->children[0], bm, vis );
+				node = node->children[1];
+			}
+		}
+
 	}
 
 	leaf = ( mleaf_t * )node;
@@ -1038,7 +1052,13 @@ static void R_GetRtLightLeafVisInfo_r( rtlight_t *l, const mnode_t *node, mbrush
 		return;
 	}
 
-	if( l->shadow ) {
+	if( l->directional ) {
+		if( R_CullBoxCustomPlanes( l->frustum, 6, leaf->mins, leaf->maxs, 63 ) ) {
+			return;
+		}
+	}
+
+	if( l->shadow && !l->sky ) {
 		const uint8_t *pvs = Mod_ClusterPVS( l->cluster, bm );
 		if( !( pvs[leaf->cluster >> 3] & ( 1 << ( leaf->cluster & 7 ) ) ) ) {
 			return;
@@ -1112,6 +1132,27 @@ static void R_GetRtLightSurfaceVisInfo( rtlight_t *l, mbrushmodel_t *bm, r_light
 
 			nolight = R_SurfNoDlight( surf );
 			noshadow = R_SurfNoShadow( surf );
+			if( l->sky && ( surf->flags & SURF_SKY ) ) {
+				noshadow = false;
+			}
+
+			if( l->directional && !nolight ) {
+				// check plane normal direction for directional lights
+				if( ( surf->facetype == FACETYPE_PLANAR ) && !Shader_CullNone( surf->shader ) ) {
+					float dot, epsilon = ON_EPSILON;
+
+					dot = DotProduct( surf->plane, &l->axis[AXIS_FORWARD] );
+					if( Shader_CullBack( surf->shader ) ) {
+						dot = -dot;
+						epsilon = -ON_EPSILON;
+					}
+
+					if( dot > epsilon ) {
+						nolight = true;
+					}
+				}
+			}
+
 			if( nolight && noshadow ) {
 				continue;
 			}
@@ -1144,6 +1185,7 @@ static void R_CompileRtLightVisInfo( rtlight_t *l, mbrushmodel_t *bm, r_lightWor
 	unsigned *p;
 	unsigned nds;
 	unsigned lcount, scount, dscount;
+	unsigned rscount, sscount;
 	const uint8_t *smasks;
 	const uint8_t *dspvs;
 
@@ -1165,6 +1207,7 @@ static void R_CompileRtLightVisInfo( rtlight_t *l, mbrushmodel_t *bm, r_lightWor
 	l->surfaceInfo = R_RtLightMalloc( l, sizeof( unsigned ) * (1 + dscount*2 + scount*3) );
 
 	nds = 0;
+	rscount = sscount = 0;
 	p = l->surfaceInfo + 1;
 	for( i = 0; i < bm->numDrawSurfaces; i++ ) {
 		unsigned n, *np;
@@ -1179,15 +1222,26 @@ static void R_CompileRtLightVisInfo( rtlight_t *l, mbrushmodel_t *bm, r_lightWor
 		n = 0;
 
 		for( j = 0; j < drawSurf->numWorldSurfaces; j++ ) {
+			unsigned rmask, smask;
 			unsigned s = drawSurf->worldSurfaces[j];
 
-			if( !smasks[s*2+0] && !smasks[s*2+1] ) {
+			rmask = smasks[s*2+0];
+			smask = smasks[s*2+1];
+
+			if( !rmask && !smask ) {
 				continue;
 			}
 
+			if( rmask ) {
+				rscount++;
+			}
+			if( smask ) {
+				sscount++;
+			}
+
 			*p++ = s;
-			*p++ = smasks[s*2+0];
-			*p++ = smasks[s*2+1];
+			*p++ = rmask;
+			*p++ = smask;
 			n++;
 		}
 
@@ -1196,7 +1250,8 @@ static void R_CompileRtLightVisInfo( rtlight_t *l, mbrushmodel_t *bm, r_lightWor
 	}
 
 	*l->surfaceInfo = nds;
-	l->numSurfaces = scount;
+	l->numReceiveSurfaces = rscount;
+	l->numShadowSurfaces = sscount;
 }
 
 /*
@@ -1208,7 +1263,7 @@ void R_GetRtLightVisInfo( mbrushmodel_t *bm, rtlight_t *l ) {
 	r_lightWorldVis_t *vis = &r_lightWorldVis;
 
 	l->area = -1;
-	l->cluster = -1;
+	l->cluster = CLUSTER_INVALID;
 
 	leaf = Mod_PointInLeaf( l->origin, bm );
 	if( leaf ) {
@@ -1220,40 +1275,47 @@ void R_GetRtLightVisInfo( mbrushmodel_t *bm, rtlight_t *l ) {
 
 	R_GetRtLightLeafVisInfo( l, bm->nodes, bm, vis );
 
-	// limit combined leaf box to light boundaries
 	for( i = 0; i < 3; i++ ) {
-		l->worldmins[i] = max( vis->leafMins[i] - 1, l->lightmins[i] );
-		l->worldmaxs[i] = min( vis->leafMaxs[i] + 1, l->lightmaxs[i] );
+		l->worldmins[i] = vis->leafMins[i] - 1;
+		l->worldmaxs[i] = vis->leafMaxs[i] + 1;
 	}
+
+	// limit combined leaf box to light boundaries
+	ClipBounds( l->worldmins, l->worldmaxs, l->lightmins, l->lightmaxs );
 
 	R_GetRtLightSurfaceVisInfo( l, bm, vis );
 
 	R_CompileRtLightVisInfo( l, bm, vis );
 
-	// limit combined surface box to light boundaries
 	for( i = 0; i < 3; i++ ) {
-		l->worldmins[i] = max( vis->surfMins[i] - 1, l->lightmins[i] );
-		l->worldmaxs[i] = min( vis->surfMaxs[i] + 1, l->lightmaxs[i] );
+		l->worldmins[i] = vis->surfMins[i] - 1;
+		l->worldmaxs[i] = vis->surfMaxs[i] + 1;
+	}
+
+	// limit combined surface box to light boundaries
+	ClipBounds( l->worldmins, l->worldmaxs, l->lightmins, l->lightmaxs );
+
+	// update the frustum to only include the visible part of the world 
+	if( l->directional ) {
+		R_ProjectFarFrustumCornersToBounds( l->frustumCorners, l->worldmins, l->worldmaxs );
+
+		R_FrustumPlanesFromCorners( l->frustumCorners, l->frustum );
 	}
 }
 
 /*
 * R_InitRtLight
 */
-void R_InitRtLight( rtlight_t *l, const vec3_t origin, const vec_t *axis, float radius, const vec3_t color ) {
-	mat4_t lightMatrix;
+static void R_InitRtLight_( rtlight_t *l, const vec3_t origin, const vec_t *axis, const vec3_t color, float falloff ) {
 	bool rotated;
 
-	if( radius < 1.0 )
-		radius = 1.0;
 	rotated = !((axis[AXIS_FORWARD+0] == 1.0f) && (axis[AXIS_RIGHT+1] == 1.0f) && (axis[AXIS_UP+2] == 1.0f));
 
 	memset( l, 0, sizeof( rtlight_t ) );
 
 	l->area = -1;
-	l->cluster = -2; // differentiate from valid cluster -1, call R_GetRtLightVisInfo on first render
+	l->cluster = CLUSTER_UNKNOWN; // differentiate from valid cluster -1, call R_GetRtLightVisInfo on first render
 	l->sceneFrame = !rsc.frameCount;
-	l->intensity = radius;
 	l->flags = LIGHTFLAG_REALTIMEMODE;
 	l->style = MAX_LIGHTSTYLES;
 	l->rotated = rotated;
@@ -1261,12 +1323,26 @@ void R_InitRtLight( rtlight_t *l, const vec3_t origin, const vec_t *axis, float 
 	Matrix3_Copy( axis, l->axis );
 
 	VectorCopy( color, l->color );
-	l->color[3] = 1.0 / radius;
+	l->color[3] = falloff;
 
 	l->linearColor[0] = R_LinearFloatFromsRGBFloat( color[0] );
 	l->linearColor[1] = R_LinearFloatFromsRGBFloat( color[1] );
 	l->linearColor[2] = R_LinearFloatFromsRGBFloat( color[2] );
-	l->linearColor[3] = 1.0 / radius;
+	l->linearColor[3] = falloff;
+}
+
+/*
+* R_InitRtLight
+*/
+void R_InitRtLight( rtlight_t *l, const vec3_t origin, const vec_t *axis, float radius, const vec3_t color ) {
+	mat4_t lightMatrix;
+
+	if( radius < 1.0 )
+		radius = 1.0;
+
+	R_InitRtLight_( l, origin, axis, color, 1.0f / radius );
+	l->radius = radius;
+	l->intensity = radius;
 
 	Matrix4_ObjectMatrix( origin, axis, 1, lightMatrix );
 	Matrix4_Invert( lightMatrix, l->worldToLightMatrix );
@@ -1274,6 +1350,54 @@ void R_InitRtLight( rtlight_t *l, const vec3_t origin, const vec_t *axis, float 
 
 	BoundsFromRadius( l->origin, l->intensity + 1, l->lightmins, l->lightmaxs );
 	CopyBounds( l->lightmins, l->lightmaxs, l->worldmins, l->worldmaxs );
+}
+
+/*
+* R_InitRtDirectionalLight
+*/
+void R_InitRtDirectionalLight( rtlight_t *l, vec3_t corners[8], const vec3_t color ) {
+	int i;
+	float farlip;
+	mat3_t axis;
+	vec3_t origin;
+	vec3_t mins, maxs, dir;
+
+	// compute unclipped bounding box for this light
+	ClearBounds( mins, maxs );
+	for( i = 0; i < 8; i++ ) {
+		AddPointToBounds( corners[i], mins, maxs );
+	}
+
+	// calculate the 6 frustum planes
+	VectorSubtract( corners[4], corners[0], dir );
+	farlip = VectorNormalize( dir );
+
+	// put the origin point on near frustum plane and slightly push it backwards
+	// not that origin matters but it's nice to have it set to something sensible
+	VectorClear( origin );
+	for( i = 0; i < 4; i++ ) {
+		VectorMA( origin, 1.0/4.0, corners[i], origin );
+	}
+	VectorSubtract( origin, dir, origin );
+
+	NormalVectorToAxis( dir, axis );
+
+	R_InitRtLight_( l, origin, axis, color, 1.0f );
+
+	l->directional = true;
+	l->radius = farlip;
+
+	for( i = 0; i < 8; i++ ) {
+		VectorCopy( corners[i], l->frustumCorners[i] );
+	}
+
+	Matrix4_QuakeModelview( l->origin, l->axis, l->worldToLightMatrix );
+	Matrix4_Abs( l->worldToLightMatrix, l->radiusToLightMatrix );
+
+	CopyBounds( mins, maxs, l->lightmins, l->lightmaxs );
+	CopyBounds( l->lightmins, l->lightmaxs, l->worldmins, l->worldmaxs );
+
+	R_FrustumPlanesFromCorners( l->frustumCorners, l->frustum );
 }
 
 /*
@@ -1290,7 +1414,7 @@ static int R_RtLightsShadowSizeCmp( const void *pl1, const void *pl2 ) {
 /*
 * R_PrepareRtLightntities
 */
-void R_PrepareRtLightEntities( rtlight_t *l ) {
+static void R_PrepareRtLightEntities( rtlight_t *l ) {
 	unsigned i;
 	int nre, nse;
 	unsigned receiverMask, casterMask;
@@ -1310,8 +1434,18 @@ void R_PrepareRtLightEntities( rtlight_t *l ) {
 		if( e->rtype != RT_MODEL ) {
 			continue;
 		}
-		if( !BoundsOverlapSphere( cache->absmins, cache->absmaxs, l->origin, l->intensity ) ) {
-			continue;
+
+		if( l->directional ) {
+			if( !BoundsOverlap( cache->absmins, cache->absmaxs, l->lightmins, l->lightmaxs ) ) {
+				continue;
+			}
+			if( R_CullBoxCustomPlanes( l->frustum, 6, cache->absmins, cache->absmaxs, 63 ) ) {
+				continue;
+			}
+		} else {
+			if( !BoundsOverlapSphere( cache->absmins, cache->absmaxs, l->origin, l->intensity ) ) {
+				continue;
+			}
 		}
 
 		elight = eshadow = false;
@@ -1362,8 +1496,6 @@ void R_PrepareRtLightEntities( rtlight_t *l ) {
 * R_PrepareRtLightFrameData
 */
 void R_PrepareRtLightFrameData( rtlight_t *l ) {
-	int i;
-
 	if( l->sceneFrame == rsc.frameCount ) {
 		return;
 	}
@@ -1375,10 +1507,7 @@ void R_PrepareRtLightFrameData( rtlight_t *l ) {
 	R_PrepareRtLightEntities( l );
 
 	// limit combined world + ents box to light boundaries
-	for( i = 0; i < 3; i++ ) {
-		l->cullmins[i] = max( l->cullmins[i], l->lightmins[i] );
-		l->cullmaxs[i] = min( l->cullmaxs[i], l->lightmaxs[i] );
-	}
+	ClipBounds( l->cullmins, l->cullmaxs, l->lightmins, l->lightmaxs );
 }
 
 /*
@@ -1401,29 +1530,54 @@ unsigned R_CullRtLights( unsigned numLights, rtlight_t *lights, unsigned clipFla
 		if( r_lighting_debuglight->integer >= 0 && (int)i != r_lighting_debuglight->integer ) {
 			continue;
 		}
+
 		if( rn.numRealtimeLights == MAX_SCENE_RTLIGHTS ) {
 			break;
 		}
+
 		if( !(l->flags & LIGHTFLAG_REALTIMEMODE) ) {
 			continue;
 		}
+
+		if( !l->radius ) {
+			continue;
+		}
+
+		if( l->sky ) {
+			if( !r_lighting_realtime_sky->integer ) {
+				continue;
+			}
+		} else {
+			if( r_lighting_realtime_sky->integer == 2 ) {
+				continue;
+			}
+		}
+
 		if( l->style >= 0 && l->style < MAX_LIGHTSTYLES ) {
 			if( VectorLength( rsc.lightStyles[l->style].rgb ) < 0.01 ) {
 				continue;
 			}
 		}
 
-		if( R_CullSphere( l->origin, l->intensity, rn.clipFlags ) ) {
-			continue;
+		if( l->directional ) {
+			if( R_CullBox( l->lightmins, l->lightmaxs, rn.clipFlags ) ) {
+				continue;
+			}
+		} else {
+			if( R_CullSphere( l->origin, l->intensity, rn.clipFlags ) ) {
+				continue;
+			}
 		}
 
-		if( l->cluster == -2 ) {
+		if( l->cluster == CLUSTER_UNKNOWN ) {
 			// dynamic light with no vis info for this frame
 			R_GetRtLightVisInfo( rsh.worldBrushModel, l );
 		}
 
 		if( l->cluster < 0 ) {
-			continue;
+			if( !l->directional ) {
+				continue;
+			}
 		}
 
 		if( areabits ) {
@@ -1457,8 +1611,48 @@ unsigned R_CullRtLights( unsigned numLights, rtlight_t *lights, unsigned clipFla
 		l->receiverMask = l->entReceiverMask;
 		l->casterMask = l->entCasterMask;
 		l->shadowSize = 0;
-		l->lod = R_ComputeLOD( rn.viewOrigin, l->lightmins, l->lightmaxs, l->intensity, 1.0, 0 );
+		l->lod = R_ComputeLOD( rn.viewOrigin, l->lightmins, l->lightmaxs, l->radius, 1.0, 0 );
 		l->sort = l->intensity / (l->lod + 1.0);
+
+
+		// for ortho lights, compute the projection matrix based on the scene frustum
+		{
+			vec_t ob[6];
+#if 0
+			vec3_t corners[8];
+			vec3_t shadowMins, shadowMaxs;
+			vec3_t recieveMins, recieveMaxs;
+			vec_t cb[6], rb[6], vb[6];
+
+			// use PVS bounds for shadow casters' bounds
+			CopyBounds( rn.pvsMins, rn.pvsMaxs, shadowMins, shadowMaxs );
+			ClipBounds( shadowMins, shadowMaxs, l->worldmins, l->worldmaxs );
+
+			// use culled vis bounds for receiver' bounds
+			CopyBounds( rn.visMins, rn.visMaxs, recieveMins, recieveMaxs );
+			ClipBounds( recieveMins, recieveMaxs, l->worldmins, l->worldmaxs );
+
+			BoundsCorners( shadowMins, shadowMaxs, corners );
+			Matrix4_CropMatrixBounds( corners, l->worldToLightMatrix, cb );
+
+			BoundsCorners( recieveMins, recieveMaxs, corners );
+			Matrix4_CropMatrixBounds( corners, l->worldToLightMatrix, rb );
+
+			BoundsCorners( rn.visMins, rn.visMaxs, corners );
+			Matrix4_CropMatrixBounds( corners, l->worldToLightMatrix, vb );
+
+			ob[0] = max( max( cb[0], rb[0] ), vb[0] );
+			ob[1] = min( min( cb[1], rb[1] ), vb[1] );
+			ob[2] = max( max( cb[2], rb[2] ), vb[2] );
+			ob[3] = min( min( cb[3], rb[3] ), vb[3] );
+			ob[4] = min( cb[4], vb[4] );
+			ob[5] = max( rb[5], vb[5] );
+#else
+			Matrix4_CropMatrixBounds( l->frustumCorners, l->worldToLightMatrix, ob );
+#endif
+
+			Matrix4_OrthogonalProjection( ob[0], ob[1], ob[2], ob[3], ob[4], ob[5], l->projectionMatrix );
+		}
 
 		rn.rtlights[rn.numRealtimeLights] = l;
 		rn.numRealtimeLights++;
@@ -1494,6 +1688,17 @@ int R_CalcRtLightBBoxSidemask( const rtlight_t *l, const vec3_t mins, const vec3
 	const vec_t *o = &l->origin[0];
 	const vec_t *lmins = &l->lightmins[0];
 	const vec_t *lmaxs = &l->lightmaxs[0];
+
+	if( l->directional ) {
+		if( !BoundsOverlap( mins, maxs, l->lightmins, l->lightmaxs ) ) {
+			return 0;
+		}
+		if( R_CullBoxCustomPlanes( l->frustum, 6, mins, maxs, 63 ) ) {
+			return 0;
+		}
+
+		return 1;
+	}
 
 	if( !BoundsOverlapSphere( mins, maxs, l->origin, l->intensity ) ) {
 		return 0;
@@ -1545,17 +1750,18 @@ int R_CalcRtLightBBoxSidemask( const rtlight_t *l, const vec3_t mins, const vec3
 * R_CalcRtLightSurfaceSidemask
 */
 int R_CalcRtLightSurfaceSidemask( const rtlight_t *lt, const msurface_t *surf ) {
-	float dist;
+	if( !lt->directional ) {
+		// quick distance-to-plane check
+		if( ( surf->facetype == FACETYPE_PLANAR ) && !Shader_CullNone( surf->shader ) ) {
+			vec_t dist = DotProduct( lt->origin, surf->plane ) - surf->plane[3];
+			vec_t culldist = lt->intensity + ON_EPSILON;
 
-	if( surf->facetype == FACETYPE_PLANAR ) {
-		dist = DotProduct( lt->origin, surf->plane ) - surf->plane[3];
-
-		if( ( surf->shader->flags & (SHADER_CULL_BACK|SHADER_CULL_FRONT) ) == SHADER_CULL_BACK ) {
-			if( dist <= -1.0 * lt->intensity - ON_EPSILON ) {
-				return 0;
+			if( Shader_CullBack( surf->shader ) ) {
+				dist = -dist;
+				culldist = -culldist;
 			}
-		} else if( ( surf->shader->flags & (SHADER_CULL_BACK|SHADER_CULL_FRONT) ) == SHADER_CULL_FRONT ) {
-			if( dist >= lt->intensity + ON_EPSILON ) {
+
+			if( dist > culldist ) {
 				return 0;
 			}
 		}
@@ -1581,13 +1787,22 @@ int R_CullRtLightSurfaceTriangles( const rtlight_t *l, const msurface_t *surf, b
 
 	for( i = 0; i < numElems; i += 3, ie += 3 ) {
 		if( cull ) {
+			vec3_t n;
 			const vec_t *v[3] = { mesh->xyzArray[ie[0]], mesh->xyzArray[ie[1]], mesh->xyzArray[ie[2]] };
 
 			if( !inside && !BoundsOverlapTriangle( v[0], v[1], v[2], lmins, lmaxs ) ) {
 				continue;
 			}
-			if( !PointInfrontOfTriangle( l->origin, v[0], v[1], v[2] ) ) {
-				continue;
+
+			if( l->directional ) {
+				TriangleNormal( v[0], v[1], v[2], n );
+				if( DotProduct( n, &l->axis[AXIS_FORWARD] ) >= 0 ) {
+					continue;
+				}
+			} else {
+				if( !PointInfrontOfTriangle( l->origin, v[0], v[1], v[2] ) ) {
+					continue;
+				}
 			}
 		}
 
@@ -1625,11 +1840,13 @@ void R_TouchRtLight( rtlight_t *l ) {
 	R_TouchCompiledRtLightShadows( l );
 }
 
+
 /*
 * R_RenderDebugLightVolumes
 */
 void R_RenderDebugLightVolumes( void ) {
-	unsigned i;
+	unsigned i, j;
+	vec3_t mins, maxs;
 
 	if( !r_lighting_showlightvolumes->integer ) {
 		return;
@@ -1647,6 +1864,18 @@ void R_RenderDebugLightVolumes( void ) {
 				break;
 			case 3:
 				R_AddDebugBounds( l->cullmins, l->cullmaxs, l->color );
+				break;
+			case 4:
+				if( l->directional ) {
+					R_AddDebugCorners( l->frustumCorners, l->color );
+				}
+				break;
+			case 5:
+				for( j = 0; j < 3; j++ ) {
+					mins[j] = l->origin[j] - 8;
+					maxs[j] = l->origin[j] + 8;
+				}
+				R_AddDebugBounds( mins, maxs, l->color );
 				break;
 			default:
 				R_AddDebugBounds( l->lightmins, l->lightmaxs, l->color );

@@ -876,41 +876,39 @@ float R_DefaultFarClip( void ) {
 * R_SetupPVSFromCluster
 */
 void R_SetupPVSFromCluster( int cluster, int area ) {
-	int viewcluster = -1;
-	int viewarea = -1;
-	bool novis;
 	uint8_t *pvs = NULL;
 	uint8_t *areabits = NULL;
 	int arearowbytes, areabytes;
 
+	if( !rsh.worldBrushModel->pvs ) {
+		rn.viewcluster = CLUSTER_INVALID;
+		rn.viewarea = -1;
+		rn.pvs = NULL;
+		rn.areabits = NULL;
+		return;
+	}
+
 	// current viewcluster
-	if( cluster >= 0 ) {
-		viewcluster = cluster;
-		viewarea = area;
-	}
+	pvs = Mod_ClusterPVS( cluster, rsh.worldBrushModel );
 
-	novis = viewcluster == -1 || !rsh.worldBrushModel->pvs;
-	if( !novis ) {
-		arearowbytes = ( ( rsh.worldBrushModel->numareas + 7 ) / 8 );
-		areabytes = arearowbytes;
+	arearowbytes = ( ( rsh.worldBrushModel->numareas + 7 ) / 8 );
+	areabytes = arearowbytes;
 #ifdef AREAPORTALS_MATRIX
-		areabytes *= rsh.worldBrushModel->numareas;
+	areabytes *= rsh.worldBrushModel->numareas;
 #endif
 
-		pvs = Mod_ClusterPVS( viewcluster, rsh.worldBrushModel );
-		if( viewarea > -1 && rn.refdef.areabits )
+	if( area > -1 && rn.refdef.areabits && area < rsh.worldBrushModel->numareas )
 #ifdef AREAPORTALS_MATRIX
-		{ areabits = rn.refdef.areabits + viewarea * arearowbytes;}
+	{ areabits = rn.refdef.areabits + area * arearowbytes;}
 #else
-		{ areabits = rn.refdef.areabits;}
+	{ areabits = rn.refdef.areabits;}
 #endif
-		else {
-			areabits = NULL;
-		}
+	else {
+		areabits = NULL;
 	}
 
-	rn.viewcluster = viewcluster;
-	rn.viewarea = viewarea;
+	rn.viewcluster = cluster;
+	rn.viewarea = area;
 	rn.pvs = pvs;
 	rn.areabits = areabits;
 }
@@ -921,7 +919,7 @@ void R_SetupPVSFromCluster( int cluster, int area ) {
 void R_SetupPVS( const refdef_t *fd ) {
 	const mleaf_t *leaf;
 
-	if( ( fd->rdflags & RDF_NOWORLDMODEL ) || !rsh.worldBrushModel ) {
+	if( ( fd->rdflags & RDF_NOWORLDMODEL ) || !rsh.worldBrushModel || r_novis->integer ) {
 		R_SetupPVSFromCluster( -1, -1 );
 		return;
 	}
@@ -1037,7 +1035,7 @@ static void R_Clear( int bitMask ) {
 	if( depthPortal ) {
 		return;
 	}
-	if( rn.renderFlags & RF_LIGHTVIEW ) {
+	if( rn.renderFlags & (RF_SKYSHADOWVIEW|RF_LIGHTVIEW) ) {
 		return;
 	}
 
@@ -1331,15 +1329,12 @@ void R_RenderView( const refdef_t *fd ) {
 	rn.skyportalSurface = NULL;
 
 	ClearBounds( rn.visMins, rn.visMaxs );
+	ClearBounds( rn.pvsMins, rn.pvsMaxs );
 
 	VectorCopy( rn.refdef.vieworg, rn.viewOrigin );
 	Matrix3_Copy( rn.refdef.viewaxis, rn.viewAxis );
 
 	R_ClearSky( &rn.skyDrawSurface );
-
-	if( r_novis->integer ) {
-		rn.renderFlags |= RF_NOVIS;
-	}
 
 	if( r_lightmap->integer ) {
 		rn.renderFlags |= RF_LIGHTMAP;
@@ -1399,8 +1394,6 @@ void R_RenderView( const refdef_t *fd ) {
 
 	RJ_FinishJobs();
 
-	R_DrawShadows();
-
 	R_SortDrawList( rn.meshlist );
 
 	R_BindRefInstFBO();
@@ -1414,6 +1407,8 @@ void R_RenderView( const refdef_t *fd ) {
 	}
 
 	R_Clear( ~0 );
+
+	R_DrawShadows();
 
 	if( r_speeds->integer ) {
 		msec = ri.Sys_Milliseconds();

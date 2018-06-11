@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define SHADOWMAP_MIN_ATLAS_SIZE	1024
 
 extern drawList_t r_shadowlist;
+extern drawList_t r_shadowportallist;
 
 void        R_DrawShadows( void );
 

@@ -73,6 +73,9 @@ cvar_t *r_lighting_realtime_world_shadows;
 cvar_t *r_lighting_realtime_world_importfrommap;
 cvar_t *r_lighting_realtime_dlight;
 cvar_t *r_lighting_realtime_dlight_shadows;
+cvar_t *r_lighting_realtime_sky;
+cvar_t *r_lighting_realtime_sky_direction;
+cvar_t *r_lighting_realtime_sky_color;
 cvar_t *r_lighting_showlightvolumes;
 cvar_t *r_lighting_debuglight;
 
@@ -95,6 +98,8 @@ cvar_t *r_shadows_usecompiled;
 cvar_t *r_shadows_culltriangles;
 cvar_t *r_shadows_polygonoffset_factor;
 cvar_t *r_shadows_polygonoffset_units;
+cvar_t *r_shadows_sky_polygonoffset_factor;
+cvar_t *r_shadows_sky_polygonoffset_units;
 cvar_t *r_shadows_lodbias;
 
 cvar_t *r_outlines_world;
@@ -1126,6 +1131,9 @@ static void R_Register( const char *screenshotsPrefix ) {
 	r_lighting_realtime_world_importfrommap = ri.Cvar_Get( "r_lighting_realtime_world_importfrommap", "1", CVAR_ARCHIVE );
 	r_lighting_realtime_dlight = ri.Cvar_Get( "r_lighting_realtime_dlight", "1", CVAR_ARCHIVE );
 	r_lighting_realtime_dlight_shadows = ri.Cvar_Get( "r_lighting_realtime_dlight_shadows", "1", CVAR_ARCHIVE );
+	r_lighting_realtime_sky = ri.Cvar_Get( "r_lighting_realtime_sky", "1", CVAR_ARCHIVE );
+	r_lighting_realtime_sky_direction = ri.Cvar_Get( "r_lighting_realtime_sky_direction", "", CVAR_ARCHIVE );
+	r_lighting_realtime_sky_color = ri.Cvar_Get( "r_lighting_realtime_sky_color", "", CVAR_ARCHIVE );
 	r_lighting_showlightvolumes = ri.Cvar_Get( "r_lighting_showlightvolumes", "0", 0 );
 	r_lighting_debuglight = ri.Cvar_Get( "r_lighting_debuglight", "-1", 0 );
 
@@ -1152,6 +1160,8 @@ static void R_Register( const char *screenshotsPrefix ) {
 	r_shadows_culltriangles  = ri.Cvar_Get( "r_shadows_culltriangles", "1", 0 );
 	r_shadows_polygonoffset_factor = ri.Cvar_Get( "r_shadows_polygonoffset_factor", "2", CVAR_ARCHIVE );
 	r_shadows_polygonoffset_units = ri.Cvar_Get( "r_shadows_polygonoffset_units", "0", CVAR_ARCHIVE );
+	r_shadows_sky_polygonoffset_factor = ri.Cvar_Get( "r_shadows_sky_polygonoffset_factor", "8", CVAR_ARCHIVE );
+	r_shadows_sky_polygonoffset_units = ri.Cvar_Get( "r_shadows_sky_polygonoffset_units", "1", CVAR_ARCHIVE );
 	r_shadows_lodbias = ri.Cvar_Get( "r_shadows_lodbias", "100", CVAR_ARCHIVE );
 
 	r_outlines_world = ri.Cvar_Get( "r_outlines_world", "1.8", CVAR_ARCHIVE );

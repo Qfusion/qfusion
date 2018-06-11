@@ -31,6 +31,7 @@ OMNIDIRECTIONAL SHADOW MAPS
 typedef struct shadowSurfBatch_s {
 	int pass;
 	unsigned shaderId;
+	bool sky;
 
 	int firstElem;
 	int firstVert, lastVert;
@@ -105,10 +106,9 @@ void R_DrawCompiledLightSurf( const entity_t *e, const shader_t *shader, const m
 /*
 * R_BatchShadowSurfElems
 */
-static void R_BatchShadowSurfElems( shadowSurfBatch_t *batch, int vertsOffset, const msurface_t *surf ) {
+static void R_BatchShadowSurfElems( shadowSurfBatch_t *batch, int vertsOffset, const msurface_t *surf, bool cull ) {
 	elem_t *oe = batch->elemsBuffer + batch->numElems;
 	const rtlight_t *l = batch->light;
-	bool cull = r_shadows_culltriangles->integer != 0;
 
 	batch->numElems += R_CullRtLightSurfaceTriangles( l, surf, cull, vertsOffset, oe, &batch->firstVert, &batch->lastVert );
 }
@@ -156,9 +156,9 @@ static void R_UploadBatchShadowElems( shadowSurfBatch_t *batch ) {
 }
 
 /*
-* R_BatchLightSideView
+* R_BatchCompileShadowSurf
 */
-static void R_BatchLightSideView( shadowSurfBatch_t *batch, const entity_t *e, const shader_t *shader,
+static void R_BatchCompileShadowSurf( shadowSurfBatch_t *batch, const entity_t *e, const shader_t *shader,
 	int lightStyleNum, drawSurfaceBSP_t *drawSurf, msurface_t *surf ) {
 	int vbo;
 	int vertsOffset;
@@ -166,6 +166,8 @@ static void R_BatchLightSideView( shadowSurfBatch_t *batch, const entity_t *e, c
 	int numInstances;
 	instancePoint_t *instances;
 	shadowSurfBatch_t *tail;
+	bool sky = (surf->flags & SURF_SKY) != 0;
+	bool cull = !sky && (r_shadows_culltriangles->integer != 0);
 
 	if( e != rsc.worldent ) {
 		return;
@@ -182,7 +184,7 @@ static void R_BatchLightSideView( shadowSurfBatch_t *batch, const entity_t *e, c
 
 	if( tail->vbo != vbo || tail->shaderId != shader->id || 
 		tail->numInstances != 0 || numInstances != 0 || 
-		tail->numElems + numElems > UINT16_MAX ) {
+		tail->numElems + numElems > UINT16_MAX || tail->sky != sky ) {
 		if( tail->pass ) {
 			R_UploadBatchShadowElems( tail );
 		}
@@ -210,10 +212,11 @@ static void R_BatchLightSideView( shadowSurfBatch_t *batch, const entity_t *e, c
 			tail->numElems = 0;
 			tail->firstVert = UINT16_MAX;
 			tail->lastVert = 0;
-			R_BatchShadowSurfElems( tail, vertsOffset, surf );
+			R_BatchShadowSurfElems( tail, vertsOffset, surf, cull );
 			return;
 		}
 
+		tail->sky = sky;
 		tail->light = rn.rtLight;
 		tail->vbo = vbo;
 		tail->shaderId = shader->id;
@@ -225,7 +228,7 @@ static void R_BatchLightSideView( shadowSurfBatch_t *batch, const entity_t *e, c
 	}
 
 	if( tail->pass ) {
-		R_BatchShadowSurfElems( tail, vertsOffset, surf );
+		R_BatchShadowSurfElems( tail, vertsOffset, surf, cull );
 		return;
 	}
 
@@ -248,7 +251,8 @@ static void R_CompileLightSideView( rtlight_t *l, int side ) {
 	head.tail = &head;
 
 	// walk the sorted list, batching BSP geometry
-	R_WalkDrawList( &r_shadowlist, R_BatchLightSideView, &head );
+	R_WalkDrawList( &r_shadowlist, R_BatchCompileShadowSurf, &head );
+	R_WalkDrawList( &r_shadowportallist, R_BatchCompileShadowSurf, &head );
 
 	for( p = head.next; p && p != &head; p = next ) {
 		next = p->next;
@@ -261,7 +265,8 @@ static void R_CompileLightSideView( rtlight_t *l, int side ) {
 	} else {
 		// walk the list again, now uploading elems to newly created VBO's
 		head.tail = &head;
-		R_WalkDrawList( &r_shadowlist, R_BatchLightSideView, &head );
+		R_WalkDrawList( &r_shadowlist, R_BatchCompileShadowSurf, &head );
+		R_WalkDrawList( &r_shadowportallist, R_BatchCompileShadowSurf, &head );
 		R_UploadBatchShadowElems( head.tail );
 	}
 
@@ -310,8 +315,10 @@ void R_DrawRtLightWorld( void ) {
 	}
 
 	for( b = l->compiledSurf[side]; b && b->shaderId; b = b->next ) {
-		R_AddSurfToDrawList( rn.meshlist, rsc.worldent, R_ShaderById( b->shaderId ), NULL, 
-			-1, 0, 0, NULL, &b->drawSurf );
+		shader_t *shader = R_ShaderById( b->shaderId );
+		drawList_t *list = b->sky ? rn.portalmasklist : rn.meshlist;
+
+		R_AddSurfToDrawList( list, rsc.worldent, shader, NULL, -1, 0, 0, NULL, &b->drawSurf );
 	}
 }
 
@@ -335,13 +342,11 @@ static void R_DrawRtLightShadow( rtlight_t *l, image_t *target, int sideMask, bo
 
 	rnp->renderTarget = target->fbo;
 	rnp->nearClip = r_shadows_nearclip->value;
-	rnp->farClip = l->intensity;
+	rnp->farClip = l->radius;
 	rnp->clipFlags = 63; // clip by near and far planes too
-	rnp->polygonFactor = r_shadows_polygonoffset_factor->value;
 	rnp->polygonUnits = r_shadows_polygonoffset_units->value;
 	rnp->meshlist = &r_shadowlist;
 	rnp->parent = prevrn;
-	rnp->portalmasklist = NULL;
 	rnp->lodBias = r_shadows_lodbias->integer;
 	rnp->lodScale = 1;
 	rnp->numDepthPortalSurfaces = 0;
@@ -354,20 +359,37 @@ static void R_DrawRtLightShadow( rtlight_t *l, image_t *target, int sideMask, bo
 	VectorCopy( l->origin, rnp->lodOrigin );
 	VectorCopy( l->origin, rnp->pvsOrigin );
 
+	if( l->sky ) {
+		rnp->portalmasklist = &r_shadowportallist;
+		rnp->polygonFactor = r_shadows_sky_polygonoffset_factor->value;
+		rnp->polygonUnits = r_shadows_sky_polygonoffset_units->value;
+	} else {
+		rnp->portalmasklist = NULL;
+		rnp->polygonFactor = r_shadows_polygonoffset_factor->value;
+		rnp->polygonUnits = r_shadows_polygonoffset_units->value;
+	}
+
 	fd = &rnp->refdef;
 	fd->rdflags = 0;
-	fd->fov_x = fd->fov_y = RAD2DEG( 2 * atan2( size, ((float)size - border) ) );
-	fd->width = size;
-	fd->height = size;
 	VectorCopy( l->origin, fd->vieworg );
 	Matrix3_Copy( l->axis, fd->viewaxis );
+
+	if( l->directional ) {
+		fd->fov_x = fd->fov_y = 90;
+		fd->width = size - border * 2;
+		fd->height = size - border * 2;
+	} else {
+		fd->fov_x = fd->fov_y = RAD2DEG( 2 * atan2( size, ((float)size - border) ) );
+		fd->width = size;
+		fd->height = size;
+	}
 
 	// ignore current frame's area vis when compiling shadow geometry
 	if( compile ) {
 		fd->areabits = NULL;
 	}
 
-	if( prevrn != NULL && !compile ) {
+	if( prevrn != NULL && !compile && !l->directional ) {
 		unsigned i;
 
 		// generate a deformed frustum that includes the light origin, this is
@@ -438,6 +460,8 @@ static void R_DrawRtLightShadow( rtlight_t *l, image_t *target, int sideMask, bo
 #endif
 	}
 
+	sideMask &= l->directional ? 1 : 0x3F;
+
 	for( side = 0; side < 6; side++ ) {
 		if( !(sideMask & (1<<side)) ) {
 			continue;
@@ -447,29 +471,51 @@ static void R_DrawRtLightShadow( rtlight_t *l, image_t *target, int sideMask, bo
 		rnp->rtLightSide = side;
 
 		rnp->renderFlags = RF_SHADOWMAPVIEW;
-		if( (side & 1) ^ (side >> 2) ) {
-			rnp->renderFlags |= RF_FLIPFRONTFACE;
+		if( l->directional ) {
+			if( l->sky ) {
+				rnp->renderFlags |= RF_SKYSHADOWVIEW;
+			}
+		} else {
+			if( (side & 1) ^ (side >> 2) ) {
+				rnp->renderFlags |= RF_FLIPFRONTFACE;
+			}
 		}
 		if( !( target->flags & IT_DEPTH ) ) {
 			rnp->renderFlags |= RF_SHADOWMAPVIEW_RGB;
-		}
-		if( novis ) {
-			rnp->renderFlags |= RF_NOVIS;
 		}
 		if( compile ) {
 			rnp->renderFlags |= RF_NOENTS;
 		}
 
-		fd->x = x + (side & 1) * size;
-		fd->y = y + (side >> 1) * size;
-		Vector4Set( rnp->viewport, fd->x, -fd->y + target->upload_height - fd->height, fd->width, fd->height );
-		Vector4Set( rnp->scissor, fd->x, -fd->y + target->upload_height - fd->height, fd->width, fd->height );
+		if( l->directional ) {
+			fd->x = x + border;
+			fd->y = y + border;
+			Vector4Set( rnp->viewport, fd->x, -fd->y + target->upload_height - fd->height, fd->width, fd->height );
+			Vector4Set( rnp->scissor, x, -y + target->upload_height - size, size, size );
+		} else {
+			fd->x = x + (side & 1) * size;
+			fd->y = y + (side >> 1) * size;
+			Vector4Set( rnp->viewport, fd->x, -fd->y + target->upload_height - fd->height, fd->width, fd->height );
+			Vector4Set( rnp->scissor, fd->x, -fd->y + target->upload_height - fd->height, fd->width, fd->height );
+		}
 
-		R_SetupPVSFromCluster( l->cluster, l->area );
+		if( novis ) {
+			R_SetupPVSFromCluster( -1, -1 );
+		} else {
+			R_SetupPVSFromCluster( l->cluster, l->area );
+		}
 
-		R_SetupSideViewMatrices( fd, side );
+		if( l->directional ) {
+			Matrix4_Copy( l->worldToLightMatrix, rn.cameraMatrix );
+			Matrix4_Copy( l->projectionMatrix, rn.projectionMatrix );
+			Matrix4_Multiply( rn.projectionMatrix, rn.cameraMatrix, rn.cameraProjectionMatrix );
 
-		R_SetupSideViewFrustum( fd, side, rnp->nearClip, rnp->farClip, rnp->frustum, rn.frustumCorners );
+			memcpy( rn.frustum, l->frustum, sizeof( cplane_t ) * 6 );
+		} else {
+			R_SetupSideViewMatrices( fd, side );
+
+			R_SetupSideViewFrustum( fd, side, rnp->nearClip, rnp->farClip, rnp->frustum, rn.frustumCorners );
+		}
 
 		R_RenderView( fd );
 
@@ -509,7 +555,7 @@ void R_CompileRtLightShadow( rtlight_t *l ) {
 
 	prevrn = R_PushRefInst();
 
-	R_DrawRtLightShadow( l, atlas, 0x3F, true, false, prevrn );
+	R_DrawRtLightShadow( l, atlas, 0x3F, true, l->directional, prevrn );
 
 	R_PopRefInst();
 }
@@ -524,6 +570,10 @@ static int R_CullRtLightFrumSides( const refinst_t *r, const rtlight_t *l, float
 	int sides = 0x3F;
 	vec3_t n;
 	float scale = (size - 2*border) / size, len;
+
+	if( l->directional ) {
+		return 1;
+	}
 
 	// check if cone enclosing side would cross frustum plane
 	scale = 2 / ( scale * scale + 2 );
@@ -634,14 +684,19 @@ void R_DrawShadows( void ) {
 		}
 
 		size = l->lod;
-		size = l->intensity * r_shadows_precision->value / (size + 1.0);
+		size = l->radius * r_shadows_precision->value / (size + 1.0);
 		size = bound( minsize, size, maxsize );
 
 		x = y = 0;
 		haveBlock = false;
 		while( !haveBlock && size >= minsize ) {
-			width = size * 2;
-			height = size * 3;
+			if( l->directional ) {
+				width = size;
+				height = size;
+			} else {
+				width = size * 2;
+				height = size * 3;
+			}
 
 			haveBlock = R_AllocLightmap_Block( salloc, width, height, &x, &y );
 			if( haveBlock ) {
@@ -664,7 +719,7 @@ void R_DrawShadows( void ) {
 		l->shadowOffset[0] = x;
 		l->shadowOffset[1] = y;
 
-		R_DrawRtLightShadow( l, atlas, sideMask, false, false, prevrn );
+		R_DrawRtLightShadow( l, atlas, sideMask, false, l->directional, prevrn );
 	}
 
 	R_PopRefInst();

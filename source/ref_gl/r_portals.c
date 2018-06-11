@@ -430,6 +430,7 @@ static void R_DrawPortalsDepthMask( void ) {
 
 	RB_ClearDepth( depthmin );
 	RB_Clear( GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT, 0, 0, 0, 0 );
+
 	RB_SetShaderStateMask( ~0, GLSTATE_DEPTHWRITE | GLSTATE_DEPTHFUNC_GT | GLSTATE_NO_COLORWRITE );
 	RB_DepthRange( depthmax, depthmax );
 
@@ -437,7 +438,6 @@ static void R_DrawPortalsDepthMask( void ) {
 
 	RB_DepthRange( depthmin, depthmax );
 	RB_ClearDepth( depthmax );
-	RB_SetShaderStateMask( ~0, 0 );
 }
 
 /*
@@ -446,10 +446,39 @@ static void R_DrawPortalsDepthMask( void ) {
 void R_DrawPortals( void ) {
 	unsigned int i;
 
-	if( rn.viewcluster == -1 ) {
+	if( rn.renderFlags & RF_SKYSHADOWVIEW ) {
+		// the sky mask for ortho skylights
+		float depthmin, depthmax;
+
+		RB_GetDepthRange( &depthmin, &depthmax );
+
+		RB_ClearDepth( depthmin );
+
+		RB_Clear( GL_DEPTH_BUFFER_BIT, 0, 0, 0, 0 );
+
+		if( rn.portalmasklist && rn.portalmasklist->numDrawSurfs ) {
+			RB_SetShaderStateMask( ~0, GLSTATE_DEPTHWRITE | GLSTATE_NO_COLORWRITE | GLSTATE_OFFSET_FILL | GLSTATE_DEPTHFUNC_GT );
+			RB_FlipFrontFace();
+			RB_DepthRange( depthmax, depthmax );
+			R_DrawPortalSurfaces( rn.portalmasklist );
+
+			RB_SetShaderStateMask( ~0, GLSTATE_DEPTHWRITE | GLSTATE_NO_COLORWRITE | GLSTATE_OFFSET_FILL );
+			RB_FlipFrontFace();
+			RB_DepthRange( depthmin, depthmin );
+			R_DrawPortalSurfaces( rn.portalmasklist );
+
+			RB_DepthRange( depthmin, depthmax );
+		}
+
+		RB_ClearDepth( depthmax );
+
 		return;
 	}
-	if( rn.renderFlags & ( RF_MIRRORVIEW | RF_LIGHTVIEW | RF_PORTALVIEW | RF_SHADOWMAPVIEW ) ) {
+
+	if( rn.renderFlags & ( RF_MIRRORVIEW | RF_LIGHTVIEW | RF_PORTALVIEW ) ) {
+		return;
+	}
+	if( rn.viewcluster == -1 ) {
 		return;
 	}
 

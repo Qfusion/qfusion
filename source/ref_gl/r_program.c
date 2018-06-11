@@ -604,6 +604,7 @@ static const glsl_feature_t glsl_features_material[] =
 
 	{ GLSL_SHADER_COMMON_DLIGHTS, "#define NUM_DLIGHTS 1\n", "_dl" },
 	{ GLSL_SHADER_COMMON_DLIGHT_CUBEFILTER, "#define APPLY_DLIGHT_CUBEFILTER\n", "_dlcf" },
+	{ GLSL_SHADER_COMMON_DLIGHT_ORTHO, "#define APPLY_DLIGHT_ORTHO\n", "_ortho" },
 
 	{ GLSL_SHADER_COMMON_REALTIME_SHADOWS, "#define APPLY_REALTIME_SHADOWS\n", "_rtshadow" },
 	{ GLSL_SHADER_COMMON_SHADOWMAP_SAMPLERS, "#define APPLY_SHADOW_SAMPLERS\n", "_ss" },
@@ -746,6 +747,7 @@ static const glsl_feature_t glsl_features_q3a[] =
 
 	{ GLSL_SHADER_COMMON_DLIGHTS, "#define NUM_DLIGHTS 1\n", "_dl" },
 	{ GLSL_SHADER_COMMON_DLIGHT_CUBEFILTER, "#define APPLY_DLIGHT_CUBEFILTER\n", "_dlcf" },
+	{ GLSL_SHADER_COMMON_DLIGHT_ORTHO, "#define APPLY_DLIGHT_ORTHO\n", "_ortho" },
 
 	{ GLSL_SHADER_COMMON_REALTIME_SHADOWS, "#define APPLY_REALTIME_SHADOWS\n", "_rtshadow" },
 	{ GLSL_SHADER_COMMON_SHADOWMAP_SAMPLERS, "#define APPLY_SHADOW_SAMPLERS\n", "_ss" },
@@ -2297,14 +2299,12 @@ void RP_UpdateLightstyleUniforms( int elem, const superLightStyle_t *superLightS
 void RP_UpdateRealtimeLightsUniforms( int elem, const vec3_t lightVec, const mat4_t objectToLightMatrix,
 	unsigned int numRtLights, const rtlight_t **rtlights, unsigned numSurfs, unsigned *surfRtLightBits ) {
 	unsigned i;
-	int n, c;
 	glsl_program_t *program = r_glslprograms + elem - 1;
 
 	if( numRtLights ) {
 		const rtlight_t *rl;
 		vec4_t shaderColor = { 0 };
 
-		n = 0;
 		for( i = 0; i < numRtLights; i++ ) {
 			rl = rtlights[i];
 
@@ -2313,10 +2313,17 @@ void RP_UpdateRealtimeLightsUniforms( int elem, const vec3_t lightVec, const mat
 			}
 
 			if( program->loc.DynamicLightsMatrix >= 0 ) {
-				qglUniformMatrix4fvARB( program->loc.DynamicLightsMatrix, 1, GL_FALSE, objectToLightMatrix );
+				if( rl->directional ) {
+					mat4_t m;
+
+					Matrix4_Multiply( rl->projectionMatrix, objectToLightMatrix, m );
+
+					qglUniformMatrix4fvARB( program->loc.DynamicLightsMatrix, 1, GL_FALSE, m );
+				} else {
+					qglUniformMatrix4fvARB( program->loc.DynamicLightsMatrix, 1, GL_FALSE, objectToLightMatrix );
+				}
 			}
 
-			c = n & 3;
 			if( glConfig.sSRGB ) {
 				shaderColor[0] = rl->linearColor[0];
 				shaderColor[1] = rl->linearColor[1];
@@ -2375,8 +2382,6 @@ void RP_UpdateRealtimeLightsUniforms( int elem, const vec3_t lightVec, const mat
 			if( program->loc.DynamicLightVector >= 0 ) {
 				qglUniform3fvARB( program->loc.DynamicLightVector, 1, lightVec );
 			}
-
-			n++;
 		}
 	}
 }

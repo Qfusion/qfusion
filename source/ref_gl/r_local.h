@@ -95,9 +95,10 @@ typedef vec_t instancePoint_t[8]; // quaternion for rotation + xyz pos + uniform
 #define RF_SHADOWMAPVIEW_RGB    RF_BIT( 11 )
 #define RF_LIGHTVIEW            RF_BIT( 12 )
 #define RF_NOENTS               RF_BIT( 13 )
+#define RF_SKYSHADOWVIEW        RF_BIT( 14 )
 
 #define RF_CUBEMAPVIEW          ( RF_ENVVIEW )
-#define RF_NONVIEWERREF         ( RF_PORTALVIEW | RF_MIRRORVIEW | RF_ENVVIEW | RF_SHADOWMAPVIEW | RF_LIGHTVIEW )
+#define RF_NONVIEWERREF         ( RF_PORTALVIEW | RF_MIRRORVIEW | RF_ENVVIEW | RF_SHADOWMAPVIEW | RF_LIGHTVIEW | RF_SKYSHADOWVIEW )
 
 #define MAX_REF_ENTITIES        ( MAX_ENTITIES + 48 ) // must not exceed 2048 because of sort key packing
 
@@ -178,6 +179,7 @@ typedef struct refinst_s {
 	float polygonFactor, polygonUnits;
 
 	vec3_t visMins, visMaxs;
+	vec3_t pvsMins, pvsMaxs;
 	float visFarClip;
 	float hdrExposure;
 
@@ -433,6 +435,9 @@ extern cvar_t *r_lighting_realtime_world_shadows;
 extern cvar_t *r_lighting_realtime_world_importfrommap;
 extern cvar_t *r_lighting_realtime_dlight;
 extern cvar_t *r_lighting_realtime_dlight_shadows;
+extern cvar_t *r_lighting_realtime_sky;
+extern cvar_t *r_lighting_realtime_sky_direction;
+extern cvar_t *r_lighting_realtime_sky_color;
 extern cvar_t *r_lighting_showlightvolumes;
 extern cvar_t *r_lighting_debuglight;
 
@@ -455,6 +460,8 @@ extern cvar_t *r_shadows_usecompiled;
 extern cvar_t *r_shadows_culltriangles;
 extern cvar_t *r_shadows_polygonoffset_factor;
 extern cvar_t *r_shadows_polygonoffset_units;
+extern cvar_t *r_shadows_sky_polygonoffset_factor;
+extern cvar_t *r_shadows_sky_polygonoffset_units;
 extern cvar_t *r_shadows_lodbias;
 
 extern cvar_t *r_outlines_world;
@@ -568,6 +575,8 @@ void        R_ShaderDump_f( void );
 void    R_SetupFrustum( const refdef_t *rd, float nearClip, float farClip, cplane_t *frustum, vec3_t corner[4] );
 void	R_SetupSideViewFrustum( const refdef_t *rd, int side, float nearClip, float farClip, cplane_t *frustum, vec3_t corner[4] );
 int		R_DeformFrustum( const cplane_t *frustum, const vec3_t corners[4], const vec3_t origin, const vec3_t point, cplane_t *deformed );
+bool	R_CullBoxCustomPlanes( const cplane_t *p, unsigned nump, const vec3_t mins, const vec3_t maxs, unsigned int clipflags );
+bool	R_CullSphereCustomPlanes( const cplane_t *p, unsigned nump, const vec3_t centre, const float radius, unsigned int clipflags );
 bool    R_CullBox( const vec3_t mins, const vec3_t maxs, const unsigned int clipflags );
 bool    R_DeformedCullBox( const vec3_t mins, const vec3_t maxs );
 bool    R_CullSphere( const vec3_t centre, const float radius, const unsigned int clipflags );
@@ -577,6 +586,8 @@ bool    R_VisCullSphere( const vec3_t origin, float radius );
 int     R_CullModelEntity( const entity_t *e, bool pvsCull );
 int		R_CullSpriteEntity( const entity_t *e );
 bool	R_FogCull( const mfog_t *fog, vec3_t origin, float radius );
+void	R_FrustumPlanesFromCorners( vec3_t corners[8], cplane_t *frustum );
+void	R_ProjectFarFrustumCornersToBounds( vec3_t corners[8], const vec3_t mins, const vec3_t maxs );
 
 //
 // r_framebuffer.c
@@ -611,7 +622,7 @@ void        RFB_Shutdown( void );
 //
 // r_main.c
 //
-#define R_FASTSKY() ( r_fastsky->integer || rn.viewcluster == -1 )
+#define R_FASTSKY() ( r_fastsky->integer || (rn.viewcluster == -1 && !(rn.renderFlags & RF_SHADOWMAPVIEW)) )
 
 extern mempool_t *r_mempool;
 
@@ -966,5 +977,26 @@ typedef struct {
 
 extern mapconfig_t mapConfig;
 extern refinst_t rn;
+
+typedef struct {
+	int area;
+	float radius;
+	vec3_t dir;
+	vec3_t mins;
+	vec3_t maxs;
+	vec3_t skymins;
+	vec3_t skymaxs;
+	vec3_t cullmins;
+	vec3_t cullmaxs;
+	vec3_t origin;
+	mat3_t axis;
+	mat4_t worldToLightMatrix;
+	mat4_t projectionMatrix;
+	vec3_t frustumCorners[8];
+	cplane_t frustum[6];
+} skyaye_t;
+
+extern skyaye_t skies[10000];
+extern unsigned numskies;
 
 #endif // R_LOCAL_H

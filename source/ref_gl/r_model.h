@@ -40,6 +40,8 @@ BRUSH MODELS
 ==============================================================================
 */
 
+#define CLUSTER_UNKNOWN -2
+#define CLUSTER_INVALID -1
 
 //
 // in memory representation

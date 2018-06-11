@@ -41,6 +41,7 @@ void Mod_FixupQ1MipTex( model_t *mod );
 static void R_InitMapConfig( const char *model );
 static void R_FinishMapConfig( const model_t *mod );
 static void R_LoadWorldRtLights( model_t *model );
+static void R_LoadWorldRtSkyLights( model_t *model );
 
 static uint8_t mod_novis[MAX_MAP_LEAFS / 8];
 
@@ -1039,6 +1040,7 @@ model_t *Mod_ForName( const char *name, bool crash ) {
 
 	if( mod_isworldmodel ) {
 		R_LoadWorldRtLights( mod );
+		R_LoadWorldRtSkyLights( mod );
 	}
 
 	if( !descr->maxLods ) {
@@ -1482,6 +1484,325 @@ static void R_LoadWorldRtLights( model_t *model ) {
 
 	R_Free( buf );
 	R_Free( lights );
+}
+
+/*
+* R_LoadWorldRtSkyLights_r
+*/
+static void R_LoadWorldRtSkyLights_r( mbrushmodel_t *bmodel, unsigned leafNum, mleaf_t *startLeaf, uint8_t *skyleafs, uint8_t *leafcheck, uint8_t checknum, int level ) {
+	unsigned i;
+	uint8_t *pvs;
+	mleaf_t *leaf = bmodel->leafs + leafNum;
+
+	pvs = Mod_ClusterPVS( leaf->cluster, bmodel );
+	for( i = 0; i < bmodel->numleafs; i++ ) {
+		mleaf_t *leaf2 = bmodel->leafs + i;
+
+		if( leafcheck[i] == checknum ) {
+			continue;
+		}
+		if( leaf2->cluster < 0 ) {
+			continue;
+		}
+		if( leaf2->area != leaf->area ) {
+			continue;
+		}
+
+		if( !( pvs[leaf2->cluster >> 3] & ( 1 << ( leaf2->cluster & 7 ) ) ) ) {
+			continue;
+		}
+
+		//if( !( pvs[startLeaf->cluster >> 3] & ( 1 << ( startLeaf->cluster & 7 ) ) ) ) {
+		//	continue;
+		//}
+
+		leafcheck[i] = checknum;
+	}
+	//Com_Printf("\n");
+}
+
+skyaye_t skies[10000];
+unsigned skychecks[10000];
+unsigned numskies;
+
+/*
+* R_LoadWorldRtSkyLights
+*
+* REWRITE THIS CRAP
+*/
+static void R_LoadWorldRtSkyLights( model_t *model ) {
+	unsigned i, j, k;
+	uint8_t *skyleafs;
+	uint8_t *leafcheck;
+	uint8_t checknum;
+	mbrushmodel_t *bmodel;
+
+	numskies = 0;
+
+	if( !model || !( bmodel = ( mbrushmodel_t * )model->extradata ) ) {
+		return;
+	}
+
+	skyleafs = Mod_Malloc( model, sizeof( *skyleafs ) * (bmodel->numleafs+1) );
+	memset( skyleafs, 0, sizeof( *skyleafs ) * (bmodel->numleafs+1) );
+
+	for( i = 0; i < bmodel->numleafs; i++ ) {
+		mleaf_t *leaf = bmodel->leafs + i;
+
+		if( leaf->cluster < 0 ) {
+			continue;
+		}
+
+		for( j = 0; j < leaf->numVisSurfaces; j++ ) {
+			msurface_t *surf = bmodel->surfaces + leaf->visSurfaces[j];
+			if( !( surf->flags & SURF_SKY ) ) {
+				continue;
+			}
+			skyleafs[i] = 1;
+			break;
+		}
+	}
+
+	leafcheck = Mod_Malloc( model, sizeof( *leafcheck ) * (bmodel->numleafs+1) );
+	memset( leafcheck, 0, sizeof( *leafcheck ) * (bmodel->numleafs+1) );
+
+	checknum = 0;
+	for( i = 0; i < bmodel->numleafs; i++ ) {
+		mleaf_t *leaf = bmodel->leafs + i;
+
+		if( !skyleafs[i] ) {
+			continue;
+		}
+		//if( leafcheck[i] ) {
+		//	continue;
+		//}
+
+		checknum++;
+
+		leafcheck[i] = checknum;
+		R_LoadWorldRtSkyLights_r( bmodel, i, leaf, skyleafs, leafcheck, checknum, 1 );
+
+		{
+			unsigned cnt = 0, cntf = 0;
+
+			skychecks[numskies] = checknum;
+			ClearBounds( skies[numskies].mins, skies[numskies].maxs );
+			ClearBounds( skies[numskies].skymins, skies[numskies].skymaxs );
+			skies[numskies].area = leaf->area;
+
+			for( j = 0; j < leaf->numVisSurfaces; j++ ) {
+				msurface_t *surf = bmodel->surfaces + leaf->visSurfaces[j];
+
+				if( surf->flags & SURF_SKY ) {
+					if( cntf == 0 )
+						CopyBounds( surf->mins, surf->maxs, skies[numskies].skymins, skies[numskies].skymaxs );
+					else
+						UnionBounds( skies[numskies].skymins, skies[numskies].skymaxs, surf->mins, surf->maxs );
+					cntf++;
+				}
+			}
+
+
+			for( j = 0; j < 3; j++ ) {
+				skies[numskies].skymins[j] -= 32;
+				skies[numskies].skymaxs[j] += 32;
+			}
+
+			for( j = 0; j < bmodel->numleafs; j++ ) {
+				if( leafcheck[j] == checknum ) {
+					mleaf_t *leaf2 = bmodel->leafs + j;
+
+					for( k = 0; k < leaf2->numVisSurfaces; k++ ) {
+						msurface_t *surf = bmodel->surfaces + leaf2->visSurfaces[k];
+						if( !(surf->flags & SURF_SKY) ) {
+							UnionBounds( skies[numskies].mins, skies[numskies].maxs, surf->mins, surf->maxs );
+							cnt++;
+						}
+					}
+				}
+			}
+
+			if( cnt == 0 ) {
+				break;
+			}
+
+			UnionBounds( skies[numskies].mins, skies[numskies].maxs, skies[numskies].skymins, skies[numskies].skymaxs );
+
+			numskies++;
+		}
+	}
+
+	for( i = 0; i < numskies; i++ ) {
+		vec_t farclip;
+		vec3_t dir = { 0, 0, -1 };
+		vec3_t cmins, cmaxs, v;
+		const char *cvardir = r_lighting_realtime_sky_direction->string;
+
+		// cvar override
+		if( cvardir[0] != '\0' ) {
+			float cdir[3];
+			if( sscanf( cvardir, "%f %f %f", &cdir[0], &cdir[1], &cdir[2] ) == 3 ) {
+				VectorCopy( cdir, dir );
+			}
+		}
+
+		VectorNormalize( dir );
+		VectorCopy( dir, skies[i].dir );
+
+		// extend the skyvolume along light direction
+		CopyBounds( skies[i].skymins, skies[i].skymaxs, cmins, cmaxs );
+
+		farclip = 2.0 * LocalBounds( skies[i].mins, skies[i].maxs, NULL, NULL, NULL );
+
+		VectorMA( skies[i].skymins, farclip, dir, v );
+		AddPointToBounds( v, cmins, cmaxs );
+		VectorMA( skies[i].skymaxs, farclip, dir, v );
+		AddPointToBounds( v, cmins, cmaxs );
+
+		ClipBounds( cmins, cmaxs, skies[i].mins, skies[i].maxs );
+		//cmins[a] = max(cmins[a], skies[i].mins[a]);
+		//cmaxs[a] = min(cmaxs[a], skies[i].maxs[a]);
+		CopyBounds( cmins, cmaxs, skies[i].cullmins, skies[i].cullmaxs );
+		CopyBounds( cmins, cmaxs, skies[i].mins, skies[i].maxs );
+		skies[i].radius = LocalBounds( skies[i].cullmins, skies[i].cullmaxs, NULL, NULL, NULL );
+	}
+
+	while( true ) {
+		int removed = 0;
+
+		for( i = 0; i < numskies; i++ ) {
+			for( j = 0; j < numskies; j++ ) {
+				if( i == j ) {
+					continue;
+				}
+
+				if( !VectorCompare( skies[i].dir, skies[j].dir ) )  {
+					continue;
+				}
+
+				if( skies[i].area != skies[j].area ) {
+					continue;
+				}
+
+				if( BoundsOverlap( skies[i].skymins, skies[i].skymaxs, skies[j].skymins, skies[j].skymaxs ) ) {
+					// merge j into i
+					if( skies[i].area != skies[j].area )
+						Com_Printf("%i %i\n", skies[i].area, skies[j].area);
+
+					UnionBounds( skies[i].mins, skies[i].maxs, skies[j].mins, skies[j].maxs );
+					UnionBounds( skies[i].skymins, skies[i].skymaxs, skies[j].skymins, skies[j].skymaxs );
+					UnionBounds( skies[i].cullmins, skies[i].skymaxs, skies[j].cullmins, skies[j].cullmaxs );
+
+					memmove( &skies[j], &skies[j+1], sizeof( skies[0] ) * (numskies-j-1) );
+					if( i > j ) i--;
+					j--;
+					numskies--;
+					removed++;
+					//Com_Printf("Removed sky\n");
+					break;
+				}
+			}
+		}
+
+		if(!removed) break;
+	}
+
+	for( i = 0; i < numskies; i++ ) {
+		int a = 0;
+		vec_t l = 0;
+		vec3_t dir = { 0, 0, 0 };
+		vec3_t corners[8];
+
+		VectorCopy( skies[i].dir, dir );
+
+		// find the largest magnitude axially aligned vector
+		a = 0;
+		l = 0;
+		for( j = 0; j < 3; j++ ) {
+			if( j == 0 || fabs( dir[j] ) > l ) {
+				a = j;
+				l = fabs( dir[j] );
+			}
+		}
+
+		// compute 8 frustum corners
+#if 1
+		for( j = 0; j < 4; j++ ) {
+			corners[j][a] = dir[a] < 0 ? skies[i].skymaxs[a] + 1 : skies[i].skymins[a] - 1;
+			corners[j][(a+1)%3] = j & 1 ? skies[i].skymins[(a+1)%3] + 1 : skies[i].skymaxs[(a+1)%3] - 1;
+			corners[j][(a+2)%3] = j & 2 ? skies[i].skymins[(a+2)%3] + 1 : skies[i].skymaxs[(a+2)%3] - 1;
+		}
+#else
+		for( j = 0; j < 4; j++ ) {
+//			corners[j][a] = dir[a] < 0 ? skies[i].maxs[a] : skies[i].mins[a];
+			corners[j][(a+0)%3] = j & 0 ? skies[i].mins[(a+0)%3] : skies[i].maxs[(a+0)%3];
+			corners[j][(a+1)%3] = j & 1 ? skies[i].mins[(a+1)%3] : skies[i].maxs[(a+1)%3];
+			corners[j][(a+2)%3] = j & 2 ? skies[i].mins[(a+2)%3] : skies[i].maxs[(a+2)%3];
+		}
+#endif
+
+		for( j = 0; j < 4; j++ ) {
+			VectorCopy( corners[j], skies[i].frustumCorners[j] );
+			VectorMA( corners[j], 1.0, dir, skies[i].frustumCorners[j+4] );
+		}
+
+		R_ProjectFarFrustumCornersToBounds( skies[i].frustumCorners, skies[i].mins, skies[i].maxs );
+	}
+
+	Com_Printf("Numskies is: %d\n", numskies);
+
+	if( 1 )
+	{
+		rtlight_t *lights, *oldlights;
+		vec3_t color = { 0.7, 0.7, 0.7 };
+		const char *cvarcolor = r_lighting_realtime_sky_color->string;
+
+		// cvar override
+		if( cvarcolor[0] != '\0' ) {
+			float c[3];
+			if( sscanf( cvarcolor, "%f %f %f", &c[0], &c[1], &c[2] ) == 3 ) {
+				ColorNormalize( c, color );
+			}
+		}
+
+		lights = Mod_Malloc( model, (bmodel->numRtLights + numskies) * sizeof( rtlight_t ) );
+
+		for( i = 0; i < numskies; i++ ) {
+			rtlight_t *l = &lights[bmodel->numRtLights+i];
+
+			R_InitRtDirectionalLight( l, skies[i].frustumCorners, color );
+
+			l->flags = LIGHTFLAG_REALTIMEMODE;
+			l->style = 0;
+			l->shadow = true;
+			l->world = true;
+			l->worldModel = model;
+			l->sky = true;
+
+			R_GetRtLightVisInfo( bmodel, l );
+
+			CopyBounds( skies[i].skymins, skies[i].skymaxs, l->skymins, l->skymaxs );
+
+			if( l->numReceiveSurfaces == 0 ) {
+				l->radius = 0;
+				l->cluster = CLUSTER_INVALID;
+				l->area = -1;
+				continue;
+			}
+
+			l->cluster = CLUSTER_INVALID;
+			l->area = skies[i].area;
+		}
+
+		if( bmodel->numRtLights ) {
+			memcpy( lights, bmodel->rtLights, bmodel->numRtLights * sizeof( rtlight_t ) );
+		}
+
+		oldlights = bmodel->rtLights;
+		bmodel->numRtLights = bmodel->numRtLights + numskies;
+		bmodel->rtLights = lights;
+		R_Free( oldlights );
+	}
 }
 
 /*
