@@ -728,25 +728,21 @@ void R_AddDebugCorners( const vec3_t corners[8], const vec4_t color ) {
 		VectorCopy( corners[j], b->corners[j] );
 		b->corners[j][3] = 1;
 
-		for( k = 0; k < 4; k++ ) {
+		for( k = 0; k < 3; k++ ) {
 			b->colors[j][k] = color[k] * 255;
 		}
-	}
 
+		b->colors[j][3] = 255;
+	}
 }
 
 /*
 * R_AddDebugBounds
 */
 void R_AddDebugBounds( const vec3_t mins, const vec3_t maxs, const vec4_t color ) {
-	unsigned j;
 	vec3_t corners[8];
 
-	for( j = 0; j < 8; j++ ) {
-		corners[j][0] = ( ( j & 1 ) ? mins[0] : maxs[0] );
-		corners[j][1] = ( ( j & 2 ) ? mins[1] : maxs[1] );
-		corners[j][2] = ( ( j & 4 ) ? mins[2] : maxs[2] );
-	}
+	BoundsCorners( mins, maxs, corners );
 
 	R_AddDebugCorners( corners, color );
 }
