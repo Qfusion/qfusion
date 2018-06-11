@@ -257,15 +257,9 @@ void AnglesToAxis( const vec3_t angles, mat3_t axis ) {
 // similar to MakeNormalVectors but for rotational matrices
 // (FIXME: weird, what's the diff between this and MakeNormalVectors?)
 void NormalVectorToAxis( const vec3_t forward, mat3_t axis ) {
-	VectorCopy( forward, &axis[0] );
-	if( forward[0] || forward[1] ) {
-		VectorSet( &axis[3], forward[1], -forward[0], 0 );
-		VectorNormalize( &axis[3] );
-		CrossProduct( &axis[0], &axis[3], &axis[6] );
-	} else {
-		VectorSet( &axis[3], 1, 0, 0 );
-		VectorSet( &axis[6], 0, 1, 0 );
-	}
+	VectorCopy( forward, &axis[AXIS_FORWARD] );
+	PerpendicularVector( &axis[AXIS_RIGHT], &axis[AXIS_FORWARD] );
+	CrossProduct( &axis[AXIS_FORWARD], &axis[AXIS_RIGHT], &axis[AXIS_UP] );
 }
 
 void BuildBoxPoints( vec3_t p[8], const vec3_t org, const vec3_t mins, const vec3_t maxs ) {
