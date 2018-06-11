@@ -978,25 +978,4 @@ typedef struct {
 extern mapconfig_t mapConfig;
 extern refinst_t rn;
 
-typedef struct {
-	int area;
-	float radius;
-	vec3_t dir;
-	vec3_t mins;
-	vec3_t maxs;
-	vec3_t skymins;
-	vec3_t skymaxs;
-	vec3_t cullmins;
-	vec3_t cullmaxs;
-	vec3_t origin;
-	mat3_t axis;
-	mat4_t worldToLightMatrix;
-	mat4_t projectionMatrix;
-	vec3_t frustumCorners[8];
-	cplane_t frustum[6];
-} skyaye_t;
-
-extern skyaye_t skies[10000];
-extern unsigned numskies;
-
 #endif // R_LOCAL_H

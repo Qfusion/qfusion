@@ -1008,6 +1008,16 @@ static void *R_RtLightMalloc( rtlight_t *l, size_t size ) {
 }
 
 /*
+* R_RtLightFree
+*/
+static void R_RtLightFree( rtlight_t *l, void *data ) {
+	if( !l->world ) {
+		return;
+	}
+	R_Free( data );
+}
+
+/*
 * R_GetRtLightLeafVisInfo_r
 */
 static void R_GetRtLightLeafVisInfo_r( rtlight_t *l, const mnode_t *node, mbrushmodel_t *bm, r_lightWorldVis_t *vis ) {
@@ -1304,6 +1314,17 @@ void R_GetRtLightVisInfo( mbrushmodel_t *bm, rtlight_t *l ) {
 }
 
 /*
+* R_SetRtLightColor
+*/
+void R_SetRtLightColor( rtlight_t *l, const vec3_t color ) {
+	VectorCopy( color, l->color );
+
+	l->linearColor[0] = R_LinearFloatFromsRGBFloat( color[0] );
+	l->linearColor[1] = R_LinearFloatFromsRGBFloat( color[1] );
+	l->linearColor[2] = R_LinearFloatFromsRGBFloat( color[2] );
+}
+
+/*
 * R_InitRtLight
 */
 static void R_InitRtLight_( rtlight_t *l, const vec3_t origin, const vec_t *axis, const vec3_t color, float falloff ) {
@@ -1322,12 +1343,9 @@ static void R_InitRtLight_( rtlight_t *l, const vec3_t origin, const vec_t *axis
 	VectorCopy( origin, l->origin );
 	Matrix3_Copy( axis, l->axis );
 
-	VectorCopy( color, l->color );
-	l->color[3] = falloff;
+	R_SetRtLightColor( l, color );
 
-	l->linearColor[0] = R_LinearFloatFromsRGBFloat( color[0] );
-	l->linearColor[1] = R_LinearFloatFromsRGBFloat( color[1] );
-	l->linearColor[2] = R_LinearFloatFromsRGBFloat( color[2] );
+	l->color[3] = falloff;
 	l->linearColor[3] = falloff;
 }
 
@@ -1831,6 +1849,21 @@ void R_CompileRtLight( rtlight_t *l ) {
 }
 
 /*
+* R_UncompileRtLight
+*/
+void R_UncompileRtLight( rtlight_t *l ) {
+	R_UncompileRtLightShadow( l );
+
+	R_RtLightFree( l, l->visLeafs );
+	R_RtLightFree( l, l->surfaceInfo );
+
+	l->area = -1;
+	l->cluster = CLUSTER_UNKNOWN;
+	l->visLeafs = NULL;
+	l->surfaceInfo = NULL;
+}
+
+/*
 * R_TouchRtLight
 */
 void R_TouchRtLight( rtlight_t *l ) {
@@ -1839,7 +1872,6 @@ void R_TouchRtLight( rtlight_t *l ) {
 	}
 	R_TouchCompiledRtLightShadows( l );
 }
-
 
 /*
 * R_RenderDebugLightVolumes

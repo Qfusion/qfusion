@@ -135,6 +135,24 @@ typedef struct {
 	uint8_t direction[2];
 } mgridlight_t;
 
+typedef struct {
+	int area;
+	float radius;
+	vec3_t dir;
+	vec3_t mins;
+	vec3_t maxs;
+	vec3_t skymins;
+	vec3_t skymaxs;
+	vec3_t cullmins;
+	vec3_t cullmaxs;
+	vec3_t origin;
+	mat3_t axis;
+	mat4_t worldToLightMatrix;
+	mat4_t projectionMatrix;
+	vec3_t frustumCorners[8];
+	cplane_t frustum[6];
+} skyaye_t;
+
 typedef struct mbrushmodel_s {
 	const bspFormatDesc_t *format;
 
@@ -176,6 +194,9 @@ typedef struct mbrushmodel_s {
 
 	unsigned int numRtLights;
 	struct rtlight_s *rtLights;
+
+	unsigned int numRtSkyLights;
+	struct rtlight_s *rtSkyLights;
 
 	/*unsigned*/ int numareas;
 
@@ -414,8 +435,9 @@ void        R_ModelFrameBounds( const struct model_s *model, int frame, vec3_t m
 void        R_RegisterWorldModel( const char *model );
 void        R_WaitWorldModel( void );
 struct model_s *R_RegisterModel( const char *name );
+bool		R_UpdateWorldRtSkyLights( model_t *model );
 
-void R_GetTransformBufferForMesh( mesh_t *mesh, bool positions, bool normals, bool sVectors );
+void		R_GetTransformBufferForMesh( mesh_t *mesh, bool positions, bool normals, bool sVectors );
 
 model_t     *Mod_ForName( const char *name, bool crash );
 mleaf_t     *Mod_PointInLeaf( const vec3_t p, mbrushmodel_t *bmodel );

@@ -1040,7 +1040,11 @@ model_t *Mod_ForName( const char *name, bool crash ) {
 
 	if( mod_isworldmodel ) {
 		R_LoadWorldRtLights( mod );
+	
 		R_LoadWorldRtSkyLights( mod );
+
+		r_lighting_realtime_sky_color->modified = false;
+		r_lighting_realtime_sky_direction->modified = false;
 	}
 
 	if( !descr->maxLods ) {
@@ -1521,6 +1525,32 @@ static void R_LoadWorldRtSkyLights_r( mbrushmodel_t *bmodel, unsigned leafNum, m
 	//Com_Printf("\n");
 }
 
+/*
+* R_SetWorldRtSkyLightsColors
+*/
+void R_SetWorldRtSkyLightsColors( model_t *model ) {
+	unsigned i;
+	vec3_t color = { 0.7, 0.7, 0.7 };
+	const char *cvarcolor = r_lighting_realtime_sky_color->string;
+	mbrushmodel_t *bmodel;
+
+	if( !model || model->type != mod_brush || !( bmodel = ( mbrushmodel_t * )model->extradata ) ) {
+		return;
+	}
+
+	// cvar override
+	if( cvarcolor[0] != '\0' ) {
+		float c[3];
+		if( sscanf( cvarcolor, "%f %f %f", &c[0], &c[1], &c[2] ) == 3 ) {
+			ColorNormalize( c, color );
+		}
+	}
+
+	for( i = 0; i < bmodel->numRtSkyLights; i++ ) {
+		R_SetRtLightColor( bmodel->rtSkyLights + i, color );
+	}
+}
+
 skyaye_t skies[10000];
 unsigned skychecks[10000];
 unsigned numskies;
@@ -1537,11 +1567,19 @@ static void R_LoadWorldRtSkyLights( model_t *model ) {
 	uint8_t checknum;
 	mbrushmodel_t *bmodel;
 
-	numskies = 0;
-
-	if( !model || !( bmodel = ( mbrushmodel_t * )model->extradata ) ) {
+	if( !model || model->type != mod_brush || !( bmodel = ( mbrushmodel_t * )model->extradata ) ) {
 		return;
 	}
+
+	numskies = 0;
+
+	for( i = 0; i < bmodel->numRtSkyLights; i++ ) {
+		R_UncompileRtLight( bmodel->rtSkyLights + i );
+	}
+
+	R_Free( bmodel->rtSkyLights );
+	bmodel->rtSkyLights = NULL;
+	bmodel->numRtSkyLights = 0;
 
 	skyleafs = Mod_Malloc( model, sizeof( *skyleafs ) * (bmodel->numleafs+1) );
 	memset( skyleafs, 0, sizeof( *skyleafs ) * (bmodel->numleafs+1) );
@@ -1749,28 +1787,18 @@ static void R_LoadWorldRtSkyLights( model_t *model ) {
 		R_ProjectFarFrustumCornersToBounds( skies[i].frustumCorners, skies[i].mins, skies[i].maxs );
 	}
 
-	Com_Printf("Numskies is: %d\n", numskies);
+	//Com_Printf("Numskies is: %d\n", numskies);
 
 	if( 1 )
 	{
-		rtlight_t *lights, *oldlights;
-		vec3_t color = { 0.7, 0.7, 0.7 };
-		const char *cvarcolor = r_lighting_realtime_sky_color->string;
+		rtlight_t *lights;
 
-		// cvar override
-		if( cvarcolor[0] != '\0' ) {
-			float c[3];
-			if( sscanf( cvarcolor, "%f %f %f", &c[0], &c[1], &c[2] ) == 3 ) {
-				ColorNormalize( c, color );
-			}
-		}
-
-		lights = Mod_Malloc( model, (bmodel->numRtLights + numskies) * sizeof( rtlight_t ) );
+		lights = Mod_Malloc( model, numskies * sizeof( rtlight_t ) );
 
 		for( i = 0; i < numskies; i++ ) {
-			rtlight_t *l = &lights[bmodel->numRtLights+i];
+			rtlight_t *l = &lights[i];
 
-			R_InitRtDirectionalLight( l, skies[i].frustumCorners, color );
+			R_InitRtDirectionalLight( l, skies[i].frustumCorners, colorWhite );
 
 			l->flags = LIGHTFLAG_REALTIMEMODE;
 			l->style = 0;
@@ -1794,15 +1822,34 @@ static void R_LoadWorldRtSkyLights( model_t *model ) {
 			l->area = skies[i].area;
 		}
 
-		if( bmodel->numRtLights ) {
-			memcpy( lights, bmodel->rtLights, bmodel->numRtLights * sizeof( rtlight_t ) );
-		}
+		bmodel->numRtSkyLights = numskies;
+		bmodel->rtSkyLights = lights;
 
-		oldlights = bmodel->rtLights;
-		bmodel->numRtLights = bmodel->numRtLights + numskies;
-		bmodel->rtLights = lights;
-		R_Free( oldlights );
+		R_SetWorldRtSkyLightsColors( model );
 	}
+
+	R_Free( leafcheck );
+	R_Free( skyleafs );
+}
+
+/*
+* R_UpdateWorldRtSkyLights
+*/
+bool R_UpdateWorldRtSkyLights( model_t *model ) {
+	bool updated = false;
+
+	if( r_lighting_realtime_sky_direction->modified ) {
+		R_LoadWorldRtSkyLights( model );
+		r_lighting_realtime_sky_direction->modified = false;
+		updated = true;
+	}
+
+	if( r_lighting_realtime_sky_color->modified ) {
+		R_SetWorldRtSkyLightsColors( model );
+		r_lighting_realtime_sky_color->modified = false;
+	}
+
+	return updated;
 }
 
 /*
