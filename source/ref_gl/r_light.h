@@ -164,6 +164,8 @@ void		R_InitRtLight( rtlight_t *l, const vec3_t origin, const vec_t *axis, float
 void		R_InitRtDirectionalLight( rtlight_t *l, vec3_t corners[8], const vec3_t color );
 void		R_GetRtLightVisInfo( mbrushmodel_t *bm, rtlight_t *l );
 
+void		R_SetRtLightColor( rtlight_t *l, const vec3_t color );
+
 unsigned	R_CullRtLights( unsigned numLights, rtlight_t *lights, unsigned clipFlags, bool shadows );
 void		R_DrawRtLights( void );
 
@@ -173,6 +175,7 @@ int			R_CalcRtLightSurfaceSidemask( const rtlight_t *lt, const msurface_t *surf 
 int			R_CullRtLightSurfaceTriangles( const rtlight_t *l, const msurface_t *surf, bool cull, int vertsOffset, elem_t *oe, int *firstVert, int *lastVert );
 
 void		R_CompileRtLight( rtlight_t *l );
+void		R_UncompileRtLight( rtlight_t *l );
 void		R_TouchRtLight( rtlight_t *l );
 
 void		R_RenderDebugLightVolumes( void );

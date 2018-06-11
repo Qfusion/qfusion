@@ -31,6 +31,7 @@ void        R_DrawShadows( void );
 
 void		R_DrawRtLightWorld( void );
 void		R_CompileRtLightShadow( rtlight_t *l );
+void		R_UncompileRtLightShadow( rtlight_t *l );
 void		R_TouchCompiledRtLightShadows( rtlight_t *l );
 
 void		R_DrawCompiledLightSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, 

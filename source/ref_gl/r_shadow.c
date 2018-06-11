@@ -318,6 +318,9 @@ void R_DrawRtLightWorld( void ) {
 		shader_t *shader = R_ShaderById( b->shaderId );
 		drawList_t *list = b->sky ? rn.portalmasklist : rn.meshlist;
 
+		if( b->sky && !l->sky ) {
+			continue;
+		}
 		R_AddSurfToDrawList( list, rsc.worldent, shader, NULL, -1, 0, 0, NULL, &b->drawSurf );
 	}
 }
@@ -346,6 +349,7 @@ static void R_DrawRtLightShadow( rtlight_t *l, image_t *target, int sideMask, bo
 	rnp->clipFlags = 63; // clip by near and far planes too
 	rnp->polygonUnits = r_shadows_polygonoffset_units->value;
 	rnp->meshlist = &r_shadowlist;
+	rnp->portalmasklist = &r_shadowportallist;
 	rnp->parent = prevrn;
 	rnp->lodBias = r_shadows_lodbias->integer;
 	rnp->lodScale = 1;
@@ -360,11 +364,9 @@ static void R_DrawRtLightShadow( rtlight_t *l, image_t *target, int sideMask, bo
 	VectorCopy( l->origin, rnp->pvsOrigin );
 
 	if( l->sky ) {
-		rnp->portalmasklist = &r_shadowportallist;
 		rnp->polygonFactor = r_shadows_sky_polygonoffset_factor->value;
 		rnp->polygonUnits = r_shadows_sky_polygonoffset_units->value;
 	} else {
-		rnp->portalmasklist = NULL;
 		rnp->polygonFactor = r_shadows_polygonoffset_factor->value;
 		rnp->polygonUnits = r_shadows_polygonoffset_units->value;
 	}
@@ -558,6 +560,39 @@ void R_CompileRtLightShadow( rtlight_t *l ) {
 	R_DrawRtLightShadow( l, atlas, 0x3F, true, l->directional, prevrn );
 
 	R_PopRefInst();
+}
+
+/*
+* R_UncompileRtLightShadow
+*/
+void R_UncompileRtLightShadow( rtlight_t *l ) {
+	int side;
+	shadowSurfBatch_t *b, *next;
+
+	assert( l != NULL );
+	if( !l ) {
+		return;
+	}
+
+	if( !l->compiledSurf[0] ) {
+		return;
+	}
+
+	for( side = 0; side < 6; side++ ) {
+		for( b = l->compiledSurf[side]; b; b = next ) {
+			mesh_vbo_t *ebo;
+
+			next = b->next;
+			ebo = R_GetVBOByIndex( b->elemsVbo );
+
+			if( ebo ) {
+				R_ReleaseMeshVBO( ebo );
+			}
+			R_Free( b );
+		}
+	}
+
+	memset( l->compiledSurf, 0, sizeof( l->compiledSurf ) );
 }
 
 /*

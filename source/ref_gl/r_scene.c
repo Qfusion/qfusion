@@ -361,14 +361,22 @@ void R_RenderScene( const refdef_t *fd ) {
 
 		// FIXME: find a better place for this
 		if( rsh.worldBrushModel ) {
-			if( r_lighting_realtime_world->modified || r_lighting_realtime_world_shadows->modified ) {
+			bool skyUpdated = R_UpdateWorldRtSkyLights( rsh.worldModel );
+
+			if( r_lighting_realtime_world->modified || r_lighting_realtime_world_shadows->modified || skyUpdated ) {
 				if( r_lighting_realtime_world_shadows->integer ) {
 					unsigned i;
+
 					for( i = 0; i < rsh.worldBrushModel->numRtLights; i++ ) {
-						R_CompileRtLight( rsh.worldBrushModel->rtLights + i);
+						R_CompileRtLight( rsh.worldBrushModel->rtLights + i );
+					}
+
+					for( i = 0; i < rsh.worldBrushModel->numRtSkyLights; i++ ) {
+						R_CompileRtLight( rsh.worldBrushModel->rtSkyLights + i );
 					}
 				}
 			}
+
 			r_lighting_realtime_world->modified = false;
 			r_lighting_realtime_world_shadows->modified = false;
 		}
