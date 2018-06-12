@@ -622,7 +622,7 @@ void        RFB_Shutdown( void );
 //
 // r_main.c
 //
-#define R_FASTSKY() ( r_fastsky->integer || (rn.viewcluster == -1 && !(rn.renderFlags & RF_SHADOWMAPVIEW)) )
+#define R_FASTSKY() ( r_fastsky->integer || (rn.viewcluster == -1 && !(rn.renderFlags & RF_SKYSHADOWVIEW)) )
 
 extern mempool_t *r_mempool;
 

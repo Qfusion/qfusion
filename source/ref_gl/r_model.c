@@ -1753,22 +1753,22 @@ static void R_LoadWorldRtSkyLights( model_t *model ) {
 
 		VectorCopy( skies[i].dir, dir );
 
-		// find the largest magnitude axially aligned vector
+		// find the shortest magnitude axially aligned vector
 		a = 0;
-		l = 0;
+		l = 1000000;
 		for( j = 0; j < 3; j++ ) {
-			if( j == 0 || fabs( dir[j] ) > l ) {
+			if( skies[i].skymaxs[j] - skies[i].skymins[j] < l ) {
 				a = j;
-				l = fabs( dir[j] );
+				l = skies[i].skymaxs[j] - skies[i].skymins[j];
 			}
 		}
 
 		// compute 8 frustum corners
 #if 1
 		for( j = 0; j < 4; j++ ) {
-			corners[j][a] = dir[a] < 0 ? skies[i].skymaxs[a] + 1 : skies[i].skymins[a] - 1;
-			corners[j][(a+1)%3] = j & 1 ? skies[i].skymins[(a+1)%3] + 1 : skies[i].skymaxs[(a+1)%3] - 1;
-			corners[j][(a+2)%3] = j & 2 ? skies[i].skymins[(a+2)%3] + 1 : skies[i].skymaxs[(a+2)%3] - 1;
+			corners[j][a] = dir[a] < 0 ? skies[i].skymaxs[a] : skies[i].skymins[a];
+			corners[j][(a+1)%3] = j & 1 ? skies[i].skymins[(a+1)%3] : skies[i].skymaxs[(a+1)%3];
+			corners[j][(a+2)%3] = j & 2 ? skies[i].skymins[(a+2)%3] : skies[i].skymaxs[(a+2)%3];
 		}
 #else
 		for( j = 0; j < 4; j++ ) {

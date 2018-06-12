@@ -316,12 +316,10 @@ void R_DrawRtLightWorld( void ) {
 
 	for( b = l->compiledSurf[side]; b && b->shaderId; b = b->next ) {
 		shader_t *shader = R_ShaderById( b->shaderId );
-		drawList_t *list = b->sky ? rn.portalmasklist : rn.meshlist;
-
-		if( b->sky && !l->sky ) {
-			continue;
+		if( b->sky ) {
+			R_AddSurfToDrawList( rn.portalmasklist, rsc.worldent, shader, NULL, -1, 0, 0, NULL, &b->drawSurf );
 		}
-		R_AddSurfToDrawList( list, rsc.worldent, shader, NULL, -1, 0, 0, NULL, &b->drawSurf );
+		R_AddSurfToDrawList( rn.meshlist, rsc.worldent, shader, NULL, -1, 0, 0, NULL, &b->drawSurf );
 	}
 }
 

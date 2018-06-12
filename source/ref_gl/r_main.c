@@ -1035,7 +1035,11 @@ static void R_Clear( int bitMask ) {
 	if( depthPortal ) {
 		return;
 	}
-	if( rn.renderFlags & (RF_SKYSHADOWVIEW|RF_LIGHTVIEW) ) {
+	if( rn.renderFlags & RF_LIGHTVIEW ) {
+		return;
+	}
+	if( rn.renderFlags & RF_SKYSHADOWVIEW ) {
+		// R_DrawPortals has already set up the depth buffer
 		return;
 	}
 
