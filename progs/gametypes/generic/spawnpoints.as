@@ -62,7 +62,7 @@ class Spawnpoint
             return;
   
         Trace tr;
-        tr.doTrace( spawn.origin, vec3Origin, vec3Origin, spawn.origin , 0, ::MASK_DEADSOLID );
+        tr.doTrace( spawn.origin, vec3Origin, vec3Origin, spawn.origin , -1, ::MASK_DEADSOLID );
 
 		Entity @model = @G_SpawnEntity( "spawnpoint_model" );
 		@this.model = @model;
