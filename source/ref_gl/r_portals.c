@@ -464,8 +464,6 @@ void R_DrawPortals( void ) {
 
 			RB_SetShaderStateMask( ~0, GLSTATE_DEPTHWRITE | GLSTATE_NO_COLORWRITE | GLSTATE_OFFSET_FILL );
 			RB_FlipFrontFace();
-			RB_DepthRange( depthmin, depthmin );
-			R_DrawPortalSurfaces( rn.portalmasklist );
 
 			RB_DepthRange( depthmin, depthmax );
 		}

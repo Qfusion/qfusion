@@ -333,6 +333,8 @@ static bool R_AddWorldDrawSurfaceToDrawList( const entity_t *e, unsigned ds ) {
 	}
 
 	if( sky ) {
+		bool writeDepth = mapConfig.writeSkyDepth || ( rn.renderFlags & RF_SKYSHADOWVIEW );
+
 		if( R_FASTSKY() ) {
 			return false;
 		}
@@ -342,22 +344,19 @@ static bool R_AddWorldDrawSurfaceToDrawList( const entity_t *e, unsigned ds ) {
 		if( rn.refdef.rdflags & RDF_SKYPORTALINVIEW ) {
 			// this will later trigger the skyportal view to be rendered in R_DrawPortals
 			portalSurface = R_AddSkyportalSurface( e, shader, drawSurf );
-		} else if( rn.renderFlags & RF_SKYSHADOWVIEW ) {
-			// add the sky surface to depth mask
-			R_AddSurfToDrawList( rn.portalmasklist, e, rsh.depthOnlyShader, NULL, -1, 0, 0, NULL, drawSurf );
 		}
-		
-		if( !(rn.renderFlags & RF_SHADOWMAPVIEW ) ) {
-			if( mapConfig.writeSkyDepth ) {
-				if( !portalSurface ) {
-					R_AddSurfToDrawList( rn.portalmasklist, e, rsh.depthOnlyShader, NULL, -1, 0, 0, NULL, drawSurf );
-				}
 
+		if( writeDepth ) {
+			if( !portalSurface ) {
 				// add the sky surface to depth mask
-				drawSurf->listSurf = R_AddSurfToDrawList( rn.meshlist, e, rsh.depthOnlyShader, 
-					fog, lightStyleNum, 0, drawOrder, portalSurface, drawSurf );
+				R_AddSurfToDrawList( rn.portalmasklist, e, rsh.depthOnlyShader, NULL, -1, 0, 0, NULL, drawSurf );
 			}
 
+			drawSurf->listSurf = R_AddSurfToDrawList( rn.meshlist, e, rsh.depthOnlyShader, 
+				fog, lightStyleNum, 0, drawOrder, portalSurface, drawSurf );
+		}
+
+		if( !(rn.renderFlags & RF_SHADOWMAPVIEW ) ) {
 			// the actual skydome surface
 			R_AddSkySurfToDrawList( rn.meshlist, shader, portalSurface, &rn.skyDrawSurface );
 		}

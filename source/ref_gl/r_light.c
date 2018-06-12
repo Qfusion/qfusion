@@ -1622,6 +1622,16 @@ unsigned R_CullRtLights( unsigned numLights, rtlight_t *lights, unsigned clipFla
 
 		R_PrepareRtLightFrameData( l );
 
+		// check for bogus bounds
+		for( j = 0; j < 3; j++ ) {
+			if( l->cullmins[j] >= l->cullmaxs[j] ) {
+				break;
+			}
+		}
+		if( j != 3 ) {
+			continue;
+		}
+
 		if( R_CullBox( l->cullmins, l->cullmaxs, clipFlags ) ) {
 			continue;
 		}
