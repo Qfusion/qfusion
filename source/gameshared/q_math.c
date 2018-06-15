@@ -875,6 +875,38 @@ bool BoundsInsideBounds( const vec3_t mins1, const vec3_t maxs1, const vec3_t mi
 	return ( a[0] >= c[0] && b[0] <= d[0] && a[1] >= c[1]  && b[1] <= d[1] && a[2] >= c[2] && b[2] <= d[2] );
 }
 
+/*
+* BoundsNearestDistance
+*/
+vec_t BoundsNearestDistance( const vec3_t point, const vec3_t mins, const vec3_t maxs ) {
+	int i;
+	vec3_t nearestpoint;
+
+	for( i = 0; i < 3; i++ )
+		nearestpoint[i] = bound( mins[i], point[i], maxs[i] );
+	return DistanceFast( nearestpoint, point );
+}
+
+/*
+* BoundsFurthestDistance
+*/
+vec_t BoundsFurthestDistance( const vec3_t point, const vec3_t mins, const vec3_t maxs ) {
+	int i;
+	vec3_t corners[8];
+	vec_t maxDist = 0;
+
+	BoundsCorners( mins, maxs, corners );
+
+	maxDist = 0;
+	for( i = 0; i < 8; i++ ) {
+		vec_t dist = DistanceSquared( point, corners[i] );
+		maxDist = max( maxDist, dist );
+	}
+
+	return sqrt( maxDist );
+}
+
+
 vec_t VectorNormalize( vec3_t v ) {
 	float length, ilength;
 
