@@ -227,6 +227,8 @@ void BoundsCentre( const vec3_t mins, const vec3_t maxs, vec3_t centre );
 float LocalBounds( const vec3_t inmins, const vec3_t inmaxs, vec3_t mins, vec3_t maxs, vec3_t centre );
 #define BoundsVolume(mins,maxs) (((maxs)[0]-(mins)[0]) * ((maxs)[1]-(mins)[1]) * ((maxs)[2]-(mins)[2]))
 void BoundsCorners( const vec3_t mins, const vec3_t maxs, vec3_t corners[8] );
+vec_t BoundsNearestDistance( const vec3_t point, const vec3_t mins, const vec3_t maxs );
+vec_t BoundsFurthestDistance( const vec3_t point, const vec3_t mins, const vec3_t maxs );
 
 // LordHavoc's triangle utility functions follow
 

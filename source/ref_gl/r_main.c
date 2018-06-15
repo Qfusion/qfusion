@@ -159,17 +159,13 @@ mfog_t *R_FogForSphere( const vec3_t centre, const float radius ) {
 */
 int R_ComputeLOD( const vec3_t viewOrg, const vec3_t mins, const vec3_t maxs, 
 	float lodDistance, float lodScale, int lodBias ) {
-	int i;
 	int lodi;
 	float dist, lod;
-	vec3_t nearestpoint;
 
 	if( lodDistance < 1.0f )
 		lodDistance = 1.0f;
 
-	for( i = 0; i < 3; i++ )
-		nearestpoint[i] = bound( mins[i], viewOrg[i], maxs[i] );
-	dist = DistanceFast( nearestpoint, viewOrg );
+	dist = BoundsNearestDistance( viewOrg, mins, maxs );
 	//dist *= tan( DEG2RAD( rn.refdef.fov_x ) * 0.5f );
 
 	if( dist <= lodDistance ) {
