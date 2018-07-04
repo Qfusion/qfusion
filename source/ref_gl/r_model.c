@@ -1640,7 +1640,6 @@ static void R_LoadWorldRtSkyLights( model_t *model ) {
 				}
 			}
 
-
 			for( j = 0; j < 3; j++ ) {
 				skies[numskies].skymins[j] -= 32;
 				skies[numskies].skymaxs[j] += 32;
@@ -1652,8 +1651,10 @@ static void R_LoadWorldRtSkyLights( model_t *model ) {
 
 					for( k = 0; k < leaf2->numVisSurfaces; k++ ) {
 						msurface_t *surf = bmodel->surfaces + leaf2->visSurfaces[k];
+
+						UnionBounds( skies[numskies].mins, skies[numskies].maxs, surf->mins, surf->maxs );
+
 						if( !(surf->flags & SURF_SKY) ) {
-							UnionBounds( skies[numskies].mins, skies[numskies].maxs, surf->mins, surf->maxs );
 							cnt++;
 						}
 					}
@@ -1664,7 +1665,11 @@ static void R_LoadWorldRtSkyLights( model_t *model ) {
 				break;
 			}
 
-			UnionBounds( skies[numskies].mins, skies[numskies].maxs, skies[numskies].skymins, skies[numskies].skymaxs );
+			//UnionBounds( skies[numskies].mins, skies[numskies].maxs, skies[numskies].skymins, skies[numskies].skymaxs );
+			for( j = 0; j < 3; j++ ) {
+				skies[numskies].mins[j] -= 32;
+				skies[numskies].maxs[j] += 32;
+			}
 
 			numskies++;
 		}
@@ -1746,20 +1751,27 @@ static void R_LoadWorldRtSkyLights( model_t *model ) {
 	}
 
 	for( i = 0; i < numskies; i++ ) {
-		int a = 0;
+		int a;
 		vec_t l = 0;
 		vec3_t dir = { 0, 0, 0 };
 		vec3_t corners[8];
 
 		VectorCopy( skies[i].dir, dir );
 
-		// find the shortest magnitude axially aligned vector
-		a = 0;
-		l = 1000000;
-		for( j = 0; j < 3; j++ ) {
-			if( skies[i].skymaxs[j] - skies[i].skymins[j] < l ) {
-				a = j;
-				l = skies[i].skymaxs[j] - skies[i].skymins[j];
+		for( a = 0; a < 3; a++ ) {
+			if( fabs( dir[a] ) == 1.0f ) {
+				break;
+			}
+		}
+
+		if( a == 3 ) {
+			// find the shortest magnitude axially aligned vector
+			l = 1000000;
+			for( j = 0; j < 3; j++ ) {
+				if( skies[i].skymaxs[j] - skies[i].skymins[j] < l ) {
+					a = j;
+					l = skies[i].skymaxs[j] - skies[i].skymins[j];
+				}
 			}
 		}
 
@@ -1784,7 +1796,7 @@ static void R_LoadWorldRtSkyLights( model_t *model ) {
 			VectorMA( corners[j], 1.0, dir, skies[i].frustumCorners[j+4] );
 		}
 
-		R_ProjectFarFrustumCornersToBounds( skies[i].frustumCorners, skies[i].mins, skies[i].maxs );
+		R_ProjectFarFrustumCornersOnBounds( skies[i].frustumCorners, skies[i].mins, skies[i].maxs );
 	}
 
 	//Com_Printf("Numskies is: %d\n", numskies);
@@ -1806,6 +1818,7 @@ static void R_LoadWorldRtSkyLights( model_t *model ) {
 			l->world = true;
 			l->worldModel = model;
 			l->sky = true;
+			l->cascaded = true;
 
 			R_GetRtLightVisInfo( bmodel, l );
 

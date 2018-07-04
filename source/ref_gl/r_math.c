@@ -352,9 +352,9 @@ void Matrix4_Stretch2D( mat4_t m, vec_t s, vec_t t ) {
 //============================================================================
 
 /*
-* Matrix4_OrthogonalProjection
+* Matrix4_OrthoProjection
 */
-void Matrix4_OrthogonalProjection( vec_t left, vec_t right, vec_t bottom, vec_t top,
+void Matrix4_OrthoProjection( vec_t left, vec_t right, vec_t bottom, vec_t top,
 								   vec_t near, vec_t far, mat4_t m ) {
 	m[0] = 2.0f / ( right - left );
 	m[1] = 0.0f;
@@ -378,9 +378,9 @@ void Matrix4_OrthogonalProjection( vec_t left, vec_t right, vec_t bottom, vec_t 
 }
 
 /*
-* Matrix4_InfiniteOrthogonalProjection
+* Matrix4_InfiniteOrthoProjection
 */
-void Matrix4_InfiniteOrthogonalProjection( vec_t left, vec_t right, vec_t bottom, vec_t top,
+void Matrix4_InfiniteOrthoProjection( vec_t left, vec_t right, vec_t bottom, vec_t top,
 										   mat4_t m ) {
 	m[0] = 2.0f / ( right - left );
 	m[1] = 0.0f;
@@ -579,30 +579,29 @@ void Matrix4_ObliqueNearClipping( const vec3_t normal, const vec_t dist, const m
 }
 
 /*
-* Matrix4_CropMatrixBounds
+* Matrix4_CropMatrixParams
 */
-void Matrix4_CropMatrixBounds( const vec3_t corners[8], const mat4_t m, vec_t *out ) {
+void Matrix4_CropMatrixParams( const vec3_t corners[8], const mat4_t m, vec_t *out ) {
 	int i, j;
 	vec3_t mins, maxs;
 
 	// compute the off-center orthographic projection parameters to fit corners into the view
 	for( i = 0; i < 8; i++ ) {
-		vec4_t vv = { 0, 0, 0, 1 }, out;
+		vec4_t c = { 0, 0, 0, 1 }, vv;
 
-		VectorCopy( corners[i], vv );
-		Matrix4_Multiply_Vector( m, vv, out );
+		VectorCopy( corners[i], c );
+		Matrix4_Multiply_Vector( m, c, vv );
 
 		if( i == 0 ) {
 			for( j = 0; j < 3; j++ ) {
-				mins[j] = out[j];
-				maxs[j] = out[j];
+				mins[j] = vv[j];
+				maxs[j] = vv[j];
 			}
-			continue;
-		}
-
-		for( j = 0; j < 3; j++ ) {
-			mins[j] = min( mins[j], out[j] );
-			maxs[j] = max( maxs[j], out[j] );
+		} else {
+			for( j = 0; j < 3; j++ ) {
+				mins[j] = min( mins[j], vv[j] );
+				maxs[j] = max( maxs[j], vv[j] );
+			}
 		}
 	}
 
@@ -610,6 +609,6 @@ void Matrix4_CropMatrixBounds( const vec3_t corners[8], const mat4_t m, vec_t *o
 	out[1] = maxs[0];
 	out[2] = mins[1];
 	out[3] = maxs[1];
-	out[4] = -maxs[2];
-	out[5] = -mins[2];
+	out[4] = mins[2];
+	out[5] = maxs[2];
 }
