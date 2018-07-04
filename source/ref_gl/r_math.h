@@ -50,7 +50,7 @@ void        Matrix4_Scale2D( mat4_t m, vec_t x, vec_t y );
 void        Matrix4_Translate2D( mat4_t m, vec_t x, vec_t y );
 void        Matrix4_Stretch2D( mat4_t m, vec_t s, vec_t t );
 
-void        Matrix4_OrthogonalProjection( vec_t left, vec_t right, vec_t bottom, vec_t top,
+void        Matrix4_OrthoProjection( vec_t left, vec_t right, vec_t bottom, vec_t top,
 										  vec_t near, vec_t far, mat4_t m );
 void        Matrix4_PerspectiveProjection( vec_t fov_x, vec_t fov_y,
 										   vec_t near, vec_t far, vec_t stereoSeparation, mat4_t m );
@@ -61,6 +61,6 @@ void        Matrix4_Modelview( const vec3_t viewOrg, const mat3_t viewAxis, mat4
 void		Matrix4_ObjectMatrix( const vec3_t origin, const mat3_t axis, float scale, mat4_t m );
 void		Matrix4_QuakeModelview( const vec3_t viewOrg, const mat3_t viewAxis, mat4_t m );
 void        Matrix4_ObliqueNearClipping( const vec3_t normal, const vec_t dist, const mat4_t cm, mat4_t pm );
-void		Matrix4_CropMatrixBounds( const vec3_t corners[8], const mat4_t m, vec_t *out );
+void		Matrix4_CropMatrixParams( const vec3_t corners[8], const mat4_t m, vec_t *out );
 
 #endif // R_MATH_H

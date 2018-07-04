@@ -30,13 +30,11 @@ FRUSTUM AND PVS CULLING
 */
 
 /*
-* R_SetupSideViewFrustum
+* R_SideViewAxis
 */
-void R_SetupSideViewFrustum( const refdef_t *rd, int side, float nearClip, float farClip, cplane_t *frustum, vec3_t corner[4] ) {
-	int i;
+static void R_SideViewAxis( const refdef_t *rd, int side, vec3_t forward, vec3_t left, vec3_t up ) {
 	float sign;
 	int a0, a1, a2;
-	vec3_t forward, left, up;
 
 	// 0 - left
 	// 1 - right
@@ -55,6 +53,47 @@ void R_SetupSideViewFrustum( const refdef_t *rd, int side, float nearClip, float
 	VectorCopy( &rd->viewaxis[a2], up );
 
 	VectorScale( forward, sign, forward );
+}
+
+/*
+* R_ComputeFrustumSplit
+*/
+void R_ComputeFrustumSplit( const refdef_t *rd, int side, float dist, vec3_t corner[4] ) {
+	vec3_t forward, left, up;
+	vec_t fpx, fnx, fpy, fny;
+
+	R_SideViewAxis( rd, side, forward, left, up );
+
+	fpx = dist * tan( rd->fov_x * M_PI / 360.0 );
+	fnx = -1.0 * fpx;
+	fpy = dist * tan( rd->fov_y * M_PI / 360.0 );
+	fny = -1.0 * fpy;
+
+	VectorMA( rd->vieworg, dist, forward, corner[0] );
+	VectorMA( corner[0], fnx, left, corner[0] );
+	VectorMA( corner[0], fny, up, corner[0] );
+
+	VectorMA( rd->vieworg, dist, forward, corner[1] );
+	VectorMA( corner[1], fnx, left, corner[1] );
+	VectorMA( corner[1], fpy, up, corner[1] );
+
+	VectorMA( rd->vieworg, dist, forward, corner[2] );
+	VectorMA( corner[2], fpx, left, corner[2] );
+	VectorMA( corner[2], fpy, up, corner[2] );
+
+	VectorMA( rd->vieworg, dist, forward, corner[3] );
+	VectorMA( corner[3], fpx, left, corner[3] );
+	VectorMA( corner[3], fny, up, corner[3] );
+}
+
+/*
+* R_SetupSideViewFrustum
+*/
+void R_SetupSideViewFrustum( const refdef_t *rd, int side, float nearClip, float farClip, cplane_t *frustum, vec3_t corner[4] ) {
+	int i;
+	vec3_t forward, left, up;
+
+	R_SideViewAxis( rd, side, forward, left, up );
 
 	if( rd->rdflags & RDF_USEORTHO ) {
 		VectorNegate( left, frustum[0].normal );
@@ -74,8 +113,6 @@ void R_SetupSideViewFrustum( const refdef_t *rd, int side, float nearClip, float
 		frustum[3].dist -= rd->ortho_y;
 	} else {
 		vec3_t right;
-		vec_t fpx, fnx, fpy, fny;
-		vec_t dist;
 
 		VectorNegate( left, right );
 
@@ -98,28 +135,7 @@ void R_SetupSideViewFrustum( const refdef_t *rd, int side, float nearClip, float
 
 		// change this dist to nearClip to calculate the near corner
 		// instead of an arbitrary corner on the frustum
-		dist = 1024.0f;
-
-		fpx = dist * tan( rd->fov_x * M_PI / 360.0 );
-		fnx = -1.0 * fpx;
-		fpy = dist * tan( rd->fov_y * M_PI / 360.0 );
-		fny = -1.0 * fpy;
-
-		VectorMA( rd->vieworg, dist, forward, corner[0] );
-		VectorMA( corner[0], fnx, left, corner[0] );
-		VectorMA( corner[0], fny, up, corner[0] );
-
-		VectorMA( rd->vieworg, dist, forward, corner[1] );
-		VectorMA( corner[1], fnx, left, corner[1] );
-		VectorMA( corner[1], fpy, up, corner[1] );
-
-		VectorMA( rd->vieworg, dist, forward, corner[2] );
-		VectorMA( corner[2], fpx, left, corner[2] );
-		VectorMA( corner[2], fpy, up, corner[2] );
-
-		VectorMA( rd->vieworg, dist, forward, corner[3] );
-		VectorMA( corner[3], fpx, left, corner[3] );
-		VectorMA( corner[3], fny, up, corner[3] );
+		R_ComputeFrustumSplit( rd, side, 1024.0f, corner );
 	}
 
 	// near clip
@@ -339,6 +355,42 @@ bool R_ScissorForBBox( const refinst_t *rnp, vec3_t mins, vec3_t maxs, int *scis
 }
 
 /*
+* R_ComputeVolumeSphereForFrustumSplit
+*
+* Computes bounding sphere radius and center coordinate for a frustum split, defined by two split distances.
+*/
+vec_t R_ComputeVolumeSphereForFrustumSplit( const refinst_t *rnp, const vec_t n, const vec_t f, vec3_t center ) {
+	const refdef_t *rd = &rnp->refdef;
+	const vec_t *eye = rd->vieworg;
+	const vec_t *direction = &rd->viewaxis[AXIS_FORWARD];
+	vec_t u, r, u2pr2;
+	vec_t s, radius, dist2;
+
+	u = tan( rd->fov_x * M_PI / 360.0 );
+	r = tan( rd->fov_y * M_PI / 360.0 );
+
+	// the sphere center is equidistant to two corner points on both planes, which leads to:
+	// (s - n)^2 + r^2 + u^2 = (s - f)^2 + r^2(f/n)^2 + u^2(f/n)^2
+	// solving the above for s gives:
+	u2pr2 = u * u + r * r;
+	s = 0.5 * (n + f) * (1.0 + u2pr2);
+
+	if( s >= n ) {
+		// the center lies outside the frustum, move it to the far plane
+		s = f;
+		dist2 = 0.0;
+	} else {
+		// the center is inside the frustum
+		dist2 = (1.0f - s / f);
+		dist2 *= dist2;
+	}
+
+	radius = f * sqrt( dist2 + u2pr2 );
+	VectorMA( eye, s, direction, center );
+	return radius;
+}
+
+/*
 * R_FogCull
 */
 bool R_FogCull( const mfog_t *fog, vec3_t origin, float radius ) {
@@ -437,18 +489,6 @@ bool R_CullBox( const vec3_t mins, const vec3_t maxs, const unsigned int clipFla
 }
 
 /*
-* R_DeformedCullBox
-*
-* Returns true if the bounding box is completely outside the deformed frustum
-*/
-bool R_DeformedCullBox( const vec3_t mins, const vec3_t maxs ) {
-	if( r_nocull->integer ) {
-		return false;
-	}
-	return R_CullBoxCustomPlanes( rn.deformedFrustum, rn.numDeformedFrustumPlanes, mins, maxs, (1<<rn.numDeformedFrustumPlanes)-1 );
-}
-
-/*
 * R_CullSphereCustomPlanes
 *
 * Returns true if the sphere is completely outside the frustum
@@ -484,18 +524,6 @@ bool R_CullSphere( const vec3_t centre, const float radius, const unsigned int c
 		return false;
 	}
 	return R_CullSphereCustomPlanes( rn.frustum, sizeof( rn.frustum ) / sizeof( rn.frustum[0] ), centre, radius, clipFlags );
-}
-
-/*
-* R_DeformedCullSphere
-*
-* Returns true if the sphere is completely outside the deformed frustum
-*/
-bool R_DeformedCullSphere( const vec3_t centre, const float radius ) {
-	if( r_nocull->integer ) {
-		return false;
-	}
-	return R_CullSphereCustomPlanes( rn.deformedFrustum, rn.numDeformedFrustumPlanes, centre, radius, (1<<rn.numDeformedFrustumPlanes)-1 );
 }
 
 /*
@@ -698,11 +726,11 @@ void R_FrustumPlanesFromCorners( vec3_t corners[8], cplane_t *frustum ) {
 }
 
 /*
-* R_ProjectFarFrustumCornersToBounds
+* R_ProjectFarFrustumCornersOnBounds
 *
 * Reprojects the far frustum corners (index 4 to 7) onto bounds
 */
-void R_ProjectFarFrustumCornersToBounds( vec3_t corners[8], const vec3_t mins, const vec3_t maxs ) {
+void R_ProjectFarFrustumCornersOnBounds( vec3_t corners[8], const vec3_t mins, const vec3_t maxs ) {
 	int i;
 	vec3_t dir;
 	float farclip;

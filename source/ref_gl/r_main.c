@@ -157,15 +157,13 @@ mfog_t *R_FogForSphere( const vec3_t centre, const float radius ) {
 /*
 * R_ComputeLOD
 */
-int R_ComputeLOD( const vec3_t viewOrg, const vec3_t mins, const vec3_t maxs, 
-	float lodDistance, float lodScale, int lodBias ) {
+int R_ComputeLOD( float dist, float lodDistance, float lodScale, int lodBias ) {
 	int lodi;
-	float dist, lod;
+	float lod;
 
 	if( lodDistance < 1.0f )
 		lodDistance = 1.0f;
 
-	dist = BoundsNearestDistance( viewOrg, mins, maxs );
 	//dist *= tan( DEG2RAD( rn.refdef.fov_x ) * 0.5f );
 
 	if( dist <= lodDistance ) {
@@ -472,7 +470,7 @@ void R_SetupGL2D( void ) {
 	width = rf.twoD.width;
 	height = rf.twoD.height;
 
-	Matrix4_OrthogonalProjection( 0, width, height, 0, -1, 1, projectionMatrix );
+	Matrix4_OrthoProjection( 0, width, height, 0, -1, 1, projectionMatrix );
 
 	// set 2D virtual screen size
 	RB_Scissor( 0, 0, width, height );
@@ -925,19 +923,28 @@ void R_SetupPVS( const refdef_t *fd ) {
 }
 
 /*
+* R_SetCameraAndProjectionMatrices
+*/
+void R_SetCameraAndProjectionMatrices( const mat4_t cam, const mat4_t proj ) {
+	Matrix4_Copy( cam, rn.cameraMatrix );
+	Matrix4_Copy( proj, rn.projectionMatrix );
+	Matrix4_Multiply( proj, cam, rn.cameraProjectionMatrix );
+}
+
+/*
 * R_SetupViewMatrices_
 */
 static void R_SetupViewMatrices_( const refdef_t *rd, const mat4_t camTransform ) {
-	mat4_t cam, proj;
+	mat4_t cam, cam_, proj;
 
 	Matrix4_Modelview( rd->vieworg, rd->viewaxis, cam );
 
 	if( rd->rdflags & RDF_USEORTHO ) {
-		Matrix4_OrthogonalProjection( -rd->ortho_x, rd->ortho_x, -rd->ortho_y, rd->ortho_y,
-									  -rn.farClip, rn.farClip, proj );
+		Matrix4_OrthoProjection( -rd->ortho_x, rd->ortho_x, -rd->ortho_y, rd->ortho_y,
+			rn.nearClip, rn.farClip, proj );
 	} else {
 		Matrix4_PerspectiveProjection( rd->fov_x, rd->fov_y,
-									   rn.nearClip, rn.farClip, rf.cameraSeparation, proj );
+			rn.nearClip, rn.farClip, rf.cameraSeparation, proj );
 	}
 
 	if( rd->rdflags & RDF_FLIPPED ) {
@@ -945,9 +952,8 @@ static void R_SetupViewMatrices_( const refdef_t *rd, const mat4_t camTransform 
 		rn.renderFlags |= RF_FLIPFRONTFACE;
 	}
 
-	Matrix4_Multiply( camTransform, cam, rn.cameraMatrix );
-	Matrix4_Copy( proj, rn.projectionMatrix );
-	Matrix4_Multiply( rn.projectionMatrix, rn.cameraMatrix, rn.cameraProjectionMatrix );
+	Matrix4_Multiply( camTransform, cam, cam_ );
+	R_SetCameraAndProjectionMatrices( cam_, proj );
 }
 
 /*
@@ -1265,7 +1271,8 @@ static void R_DrawEntities( void ) {
 
 		lod = 0;
 		if( !(e->flags & RF_FORCENOLOD ) ) {
-			lod = R_ComputeLOD( rn.lodOrigin, cache->absmins, cache->absmaxs, cache->radius, rn.lodScale, rn.lodBias );
+			float dist = BoundsNearestDistance( rn.lodOrigin, cache->absmins, cache->absmaxs );
+			lod = R_ComputeLOD( dist, cache->radius, rn.lodScale, rn.lodBias );
 		}
 
 		switch( e->rtype ) {
@@ -2013,12 +2020,12 @@ void R_EndFrame( void ) {
 			x = (1.0 * x + (side & 1) * size) / (float)rsh.shadowmapAtlasTexture->upload_width;
 			y = (1.0 * y + (side >> 1) * size) / (float)rsh.shadowmapAtlasTexture->upload_width;
 
-			R_DrawStretchQuick( 0, 0, size, size, 
+			R_DrawStretchQuick( 0, 0, 128, 128, 
 				x, y, 
 				x + st, y + st, colorRed, GLSL_PROGRAM_TYPE_NONE,
 				rsh.whiteTexture, 0 );
 
-			R_DrawStretchQuick( 0, 0, size, size, 
+			R_DrawStretchQuick( 0, 0, 128, 128, 
 				x, y, 
 				x + st, y + st, colorWhite, GLSL_PROGRAM_TYPE_NONE,
 				atlas, 0 );

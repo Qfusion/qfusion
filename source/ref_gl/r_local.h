@@ -172,9 +172,6 @@ typedef struct refinst_s {
 	cplane_t frustum[6];
 	vec3_t frustumCorners[4];
 
-	cplane_t deformedFrustum[6];
-	int numDeformedFrustumPlanes;
-
 	float nearClip, farClip;
 	float polygonFactor, polygonUnits;
 
@@ -462,6 +459,11 @@ extern cvar_t *r_shadows_polygonoffset_factor;
 extern cvar_t *r_shadows_polygonoffset_units;
 extern cvar_t *r_shadows_sky_polygonoffset_factor;
 extern cvar_t *r_shadows_sky_polygonoffset_units;
+extern cvar_t *r_shadows_cascades_minradius;
+extern cvar_t *r_shadows_cascades_lambda;
+extern cvar_t *r_shadows_cascades_minsize;
+extern cvar_t *r_shadows_cascades_maxsize;
+extern cvar_t *r_shadows_cascades_debug;
 extern cvar_t *r_shadows_lodbias;
 
 extern cvar_t *r_outlines_world;
@@ -573,21 +575,21 @@ void        R_ShaderDump_f( void );
 // r_cull.c
 //
 void    R_SetupFrustum( const refdef_t *rd, float nearClip, float farClip, cplane_t *frustum, vec3_t corner[4] );
+void	R_ComputeFrustumSplit( const refdef_t *rd, int side, float dist, vec3_t corner[4] );
 void	R_SetupSideViewFrustum( const refdef_t *rd, int side, float nearClip, float farClip, cplane_t *frustum, vec3_t corner[4] );
 int		R_DeformFrustum( const cplane_t *frustum, const vec3_t corners[4], const vec3_t origin, const vec3_t point, cplane_t *deformed );
 bool	R_CullBoxCustomPlanes( const cplane_t *p, unsigned nump, const vec3_t mins, const vec3_t maxs, unsigned int clipflags );
 bool	R_CullSphereCustomPlanes( const cplane_t *p, unsigned nump, const vec3_t centre, const float radius, unsigned int clipflags );
 bool    R_CullBox( const vec3_t mins, const vec3_t maxs, const unsigned int clipflags );
-bool    R_DeformedCullBox( const vec3_t mins, const vec3_t maxs );
 bool    R_CullSphere( const vec3_t centre, const float radius, const unsigned int clipflags );
-bool    R_DeformedCullSphere( const vec3_t centre, const float radius );
 bool    R_VisCullBox( const vec3_t mins, const vec3_t maxs );
 bool    R_VisCullSphere( const vec3_t origin, float radius );
 int     R_CullModelEntity( const entity_t *e, bool pvsCull );
 int		R_CullSpriteEntity( const entity_t *e );
 bool	R_FogCull( const mfog_t *fog, vec3_t origin, float radius );
 void	R_FrustumPlanesFromCorners( vec3_t corners[8], cplane_t *frustum );
-void	R_ProjectFarFrustumCornersToBounds( vec3_t corners[8], const vec3_t mins, const vec3_t maxs );
+void	R_ProjectFarFrustumCornersOnBounds( vec3_t corners[8], const vec3_t mins, const vec3_t maxs );
+vec_t	R_ComputeVolumeSphereForFrustumSplit( const refinst_t *rnp, const vec_t dnear, const vec_t dfar, vec3_t center );
 
 //
 // r_framebuffer.c
@@ -653,6 +655,7 @@ void        R_SetWallFloorColors( const vec3_t wallColor, const vec3_t floorColo
 void        R_SetDrawBuffer( const char *drawbuffer );
 void		R_SetupPVSFromCluster( int cluster, int area );
 void		R_SetupPVS( const refdef_t *fd );
+void		R_SetCameraAndProjectionMatrices( const mat4_t cam, const mat4_t proj );
 void		R_SetupViewMatrices( const refdef_t *rd );
 void		R_SetupSideViewMatrices( const refdef_t *rd, int side );
 void        R_RenderView( const refdef_t *fd );
@@ -686,7 +689,7 @@ void        R_DeferDataSync( void );
 mfog_t      *R_FogForBounds( const vec3_t mins, const vec3_t maxs );
 mfog_t      *R_FogForSphere( const vec3_t centre, const float radius );
 
-int			R_ComputeLOD( const vec3_t viewOrg, const vec3_t mins, const vec3_t maxs, float lodDistance, float lodScale, int lodBias );
+int			R_ComputeLOD( float dist, float lodDistance, float lodScale, int lodBias );
 float       R_DefaultFarClip( void );
 
 void        R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, int lightStyleNum, 

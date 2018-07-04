@@ -564,7 +564,7 @@ static r_glslfeat_t RB_RtlightbitsToProgramFeatures( void ) {
 	}
 
 	if( rb.rtlights[0]->directional )
-		bits |= GLSL_SHADER_COMMON_DLIGHT_ORTHO;
+		bits |= GLSL_SHADER_COMMON_DLIGHT_DIRECTIONAL;
 
 	return bits|GLSL_SHADER_COMMON_DLIGHTS;
 }

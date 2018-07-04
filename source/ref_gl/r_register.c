@@ -100,6 +100,11 @@ cvar_t *r_shadows_polygonoffset_factor;
 cvar_t *r_shadows_polygonoffset_units;
 cvar_t *r_shadows_sky_polygonoffset_factor;
 cvar_t *r_shadows_sky_polygonoffset_units;
+cvar_t *r_shadows_cascades_minradius;
+cvar_t *r_shadows_cascades_lambda;
+cvar_t *r_shadows_cascades_minsize;
+cvar_t *r_shadows_cascades_maxsize;
+cvar_t *r_shadows_cascades_debug;
 cvar_t *r_shadows_lodbias;
 
 cvar_t *r_outlines_world;
@@ -1161,8 +1166,13 @@ static void R_Register( const char *screenshotsPrefix ) {
 	r_shadows_polygonoffset_factor = ri.Cvar_Get( "r_shadows_polygonoffset_factor", "2", CVAR_ARCHIVE );
 	r_shadows_polygonoffset_units = ri.Cvar_Get( "r_shadows_polygonoffset_units", "0", CVAR_ARCHIVE );
 	r_shadows_sky_polygonoffset_factor = ri.Cvar_Get( "r_shadows_sky_polygonoffset_factor", "8", CVAR_ARCHIVE );
-	r_shadows_sky_polygonoffset_units = ri.Cvar_Get( "r_shadows_sky_polygonoffset_units", "1", CVAR_ARCHIVE );
+	r_shadows_sky_polygonoffset_units = ri.Cvar_Get( "r_shadows_sky_polygonoffset_units", "2", CVAR_ARCHIVE );
 	r_shadows_lodbias = ri.Cvar_Get( "r_shadows_lodbias", "100", CVAR_ARCHIVE );
+	r_shadows_cascades_minradius = ri.Cvar_Get( "r_shadows_cascades_minradius", "1024", CVAR_ARCHIVE );
+	r_shadows_cascades_lambda = ri.Cvar_Get( "r_shadows_cascades_lambda", "0.8", CVAR_ARCHIVE );
+	r_shadows_cascades_minsize = ri.Cvar_Get( "r_shadows_cascades_minsize", "128", CVAR_ARCHIVE );
+	r_shadows_cascades_maxsize = ri.Cvar_Get( "r_shadows_cascades_maxsize", "1024", CVAR_ARCHIVE );
+	r_shadows_cascades_debug = ri.Cvar_Get( "r_shadows_cascades_debug", "0", 0 );
 
 	r_outlines_world = ri.Cvar_Get( "r_outlines_world", "1.8", CVAR_ARCHIVE );
 	r_outlines_scale = ri.Cvar_Get( "r_outlines_scale", "1", CVAR_ARCHIVE );

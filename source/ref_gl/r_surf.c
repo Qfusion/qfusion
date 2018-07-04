@@ -504,7 +504,7 @@ void R_CacheBrushModelEntity( const entity_t *e ) {
 * R_AddBrushModelToDrawList
 */
 bool R_AddBrushModelToDrawList( const entity_t *e ) {
-	unsigned int i;
+	unsigned int i, j;
 	vec3_t origin;
 	model_t *model = e->model;
 	mbrushmodel_t *bmodel = ( mbrushmodel_t * )model->extradata;
@@ -565,6 +565,11 @@ bool R_AddBrushModelToDrawList( const entity_t *e ) {
 
 			R_CheckSpecialWorldSurfaces( e, ds, origin );
 		}
+	}
+
+	for( j = 0; j < 3; j++ ) {
+		rn.visMins[j] = min( rn.visMins[j], cache->mins[j] );
+		rn.visMaxs[j] = max( rn.visMaxs[j], cache->maxs[j] );
 	}
 
 	return true;

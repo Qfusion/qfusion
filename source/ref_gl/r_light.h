@@ -40,6 +40,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define DLIGHT_SCALE				0.5f
 #define MAX_SUPER_STYLES			128
 
+#define MAX_SHADOW_CASCADES			4
+
 typedef struct superLightStyle_s {
 	vattribmask_t vattribs;
 	int lightmapNum[MAX_LIGHTMAPS];
@@ -80,6 +82,7 @@ typedef struct rtlight_s {
 	bool rotated;
 	bool directional;
 	bool sky;
+	bool cascaded;
 
 	// frame data
 	unsigned sceneFrame;
@@ -89,6 +92,7 @@ typedef struct rtlight_s {
 	int entCasterMask;
 	int sort;
 	int lod;
+	int shadowCascades;
 	int shadowBorder;
 	int shadowSize;
 	int shadowOffset[2];
@@ -115,7 +119,6 @@ typedef struct rtlight_s {
 
 	vec3_t cullmins; // worldmins & all influenced entities
 	vec3_t cullmaxs; // worldmaxs & all influenced entities
-	mat4_t projectionMatrix;
 
 	mat3_t axis;
 	mat4_t worldToLightMatrix;
@@ -124,6 +127,12 @@ typedef struct rtlight_s {
 	// ortho
 	cplane_t frustum[6];
 	vec3_t frustumCorners[8];
+	vec_t ortho[6];
+	mat4_t projectionMatrix;
+
+	// ortho cascades
+	vec_t splitOrtho[MAX_SHADOW_CASCADES][7]; // [6] set to 1 indicates that a single cascade with projectionMatrix should be used
+	mat4_t splitProjectionMatrix[MAX_SHADOW_CASCADES];
 
 	unsigned numVisLeafs;
 	unsigned numReceiveSurfaces;

@@ -1307,9 +1307,18 @@ void R_GetRtLightVisInfo( mbrushmodel_t *bm, rtlight_t *l ) {
 
 	// update the frustum to only include the visible part of the world 
 	if( l->directional ) {
-		R_ProjectFarFrustumCornersToBounds( l->frustumCorners, l->worldmins, l->worldmaxs );
+		vec_t *ob = l->ortho;
+
+		CopyBounds( l->worldmins, l->worldmaxs, l->lightmins, l->lightmaxs );
+
+		R_ProjectFarFrustumCornersOnBounds( l->frustumCorners, l->worldmins, l->worldmaxs );
 
 		R_FrustumPlanesFromCorners( l->frustumCorners, l->frustum );
+
+		Matrix4_CropMatrixParams( l->frustumCorners, l->worldToLightMatrix, ob );
+		Matrix4_OrthoProjection( ob[0], ob[1], ob[2], ob[3], -ob[5], -ob[4], l->projectionMatrix );
+
+		l->radius = LocalBounds( l->worldmins, l->worldmaxs, NULL, NULL, NULL ) * 2.0;
 	}
 }
 
@@ -1375,7 +1384,7 @@ void R_InitRtLight( rtlight_t *l, const vec3_t origin, const vec_t *axis, float 
 */
 void R_InitRtDirectionalLight( rtlight_t *l, vec3_t corners[8], const vec3_t color ) {
 	int i;
-	float farlip;
+	vec_t *ob = l->ortho;
 	mat3_t axis;
 	vec3_t origin;
 	vec3_t mins, maxs, dir;
@@ -1388,7 +1397,7 @@ void R_InitRtDirectionalLight( rtlight_t *l, vec3_t corners[8], const vec3_t col
 
 	// calculate the 6 frustum planes
 	VectorSubtract( corners[4], corners[0], dir );
-	farlip = VectorNormalize( dir );
+	VectorNormalize( dir );
 
 	// put the origin point on near frustum plane and slightly push it backwards
 	// not that origin matters but it's nice to have it set to something sensible
@@ -1403,7 +1412,7 @@ void R_InitRtDirectionalLight( rtlight_t *l, vec3_t corners[8], const vec3_t col
 	R_InitRtLight_( l, origin, axis, color, 1.0f );
 
 	l->directional = true;
-	l->radius = farlip;
+	l->radius = LocalBounds( mins, maxs, NULL, NULL, NULL ) * 2.0;
 
 	for( i = 0; i < 8; i++ ) {
 		VectorCopy( corners[i], l->frustumCorners[i] );
@@ -1416,6 +1425,9 @@ void R_InitRtDirectionalLight( rtlight_t *l, vec3_t corners[8], const vec3_t col
 	CopyBounds( l->lightmins, l->lightmaxs, l->worldmins, l->worldmaxs );
 
 	R_FrustumPlanesFromCorners( l->frustumCorners, l->frustum );
+
+	Matrix4_CropMatrixParams( l->frustumCorners, l->worldToLightMatrix, ob );
+	Matrix4_OrthoProjection( ob[0], ob[1], ob[2], ob[3], -ob[5], -ob[4], l->projectionMatrix );
 }
 
 /*
@@ -1543,6 +1555,7 @@ unsigned R_CullRtLights( unsigned numLights, rtlight_t *lights, unsigned clipFla
 
 	count = 0;
 	for( i = 0; i < numLights; i++ ) {
+		float dist;
 		rtlight_t *l = lights + i;
 
 		if( r_lighting_debuglight->integer >= 0 && (int)i != r_lighting_debuglight->integer ) {
@@ -1562,7 +1575,7 @@ unsigned R_CullRtLights( unsigned numLights, rtlight_t *lights, unsigned clipFla
 		}
 
 		if( l->sky ) {
-			if( !r_lighting_realtime_sky->integer ) {
+			if( !r_lighting_realtime_sky->integer || r_fastsky->integer ) {
 				continue;
 			}
 		} else {
@@ -1636,51 +1649,13 @@ unsigned R_CullRtLights( unsigned numLights, rtlight_t *lights, unsigned clipFla
 			continue;
 		}
 
+		dist = BoundsNearestDistance( rn.viewOrigin, l->lightmins, l->lightmaxs );
 		l->receiverMask = l->entReceiverMask;
 		l->casterMask = l->entCasterMask;
 		l->shadowSize = 0;
-		l->lod = R_ComputeLOD( rn.viewOrigin, l->lightmins, l->lightmaxs, l->radius, 1.0, 0 );
-		l->sort = l->intensity / (l->lod + 1.0);
-
-
-		// for ortho lights, compute the projection matrix based on the scene frustum
-		{
-			vec_t ob[6];
-#if 0
-			vec3_t corners[8];
-			vec3_t shadowMins, shadowMaxs;
-			vec3_t recieveMins, recieveMaxs;
-			vec_t cb[6], rb[6], vb[6];
-
-			// use PVS bounds for shadow casters' bounds
-			CopyBounds( rn.pvsMins, rn.pvsMaxs, shadowMins, shadowMaxs );
-			ClipBounds( shadowMins, shadowMaxs, l->worldmins, l->worldmaxs );
-
-			// use culled vis bounds for receiver' bounds
-			CopyBounds( rn.visMins, rn.visMaxs, recieveMins, recieveMaxs );
-			ClipBounds( recieveMins, recieveMaxs, l->worldmins, l->worldmaxs );
-
-			BoundsCorners( shadowMins, shadowMaxs, corners );
-			Matrix4_CropMatrixBounds( corners, l->worldToLightMatrix, cb );
-
-			BoundsCorners( recieveMins, recieveMaxs, corners );
-			Matrix4_CropMatrixBounds( corners, l->worldToLightMatrix, rb );
-
-			BoundsCorners( rn.visMins, rn.visMaxs, corners );
-			Matrix4_CropMatrixBounds( corners, l->worldToLightMatrix, vb );
-
-			ob[0] = max( max( cb[0], rb[0] ), vb[0] );
-			ob[1] = min( min( cb[1], rb[1] ), vb[1] );
-			ob[2] = max( max( cb[2], rb[2] ), vb[2] );
-			ob[3] = min( min( cb[3], rb[3] ), vb[3] );
-			ob[4] = min( cb[4], vb[4] );
-			ob[5] = max( rb[5], vb[5] );
-#else
-			Matrix4_CropMatrixBounds( l->frustumCorners, l->worldToLightMatrix, ob );
-#endif
-
-			Matrix4_OrthogonalProjection( ob[0], ob[1], ob[2], ob[3], ob[4], ob[5], l->projectionMatrix );
-		}
+		l->shadowCascades = 1;
+		l->lod = R_ComputeLOD( dist, l->radius, 1.0, 0 );
+		l->sort = l->radius / (l->lod + 1.0);
 
 		rn.rtlights[rn.numRealtimeLights] = l;
 		rn.numRealtimeLights++;

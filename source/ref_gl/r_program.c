@@ -110,6 +110,8 @@ typedef struct glsl_program_s {
 			DynamicLightsDiffuseAndInvRadius,
 			DynamicLightShadowmapParams,
 			DynamicLightShadowmapTextureScale,
+			DynamicLightShadowmapNumCascades,
+			DynamicLightShadowmapCascadeMatrix[MAX_SHADOW_CASCADES],
 			DynamicLightVector,
 
 			AttrBonesIndices,
@@ -604,7 +606,7 @@ static const glsl_feature_t glsl_features_material[] =
 
 	{ GLSL_SHADER_COMMON_DLIGHTS, "#define NUM_DLIGHTS 1\n", "_dl" },
 	{ GLSL_SHADER_COMMON_DLIGHT_CUBEFILTER, "#define APPLY_DLIGHT_CUBEFILTER\n", "_dlcf" },
-	{ GLSL_SHADER_COMMON_DLIGHT_ORTHO, "#define APPLY_DLIGHT_ORTHO\n", "_ortho" },
+	{ GLSL_SHADER_COMMON_DLIGHT_DIRECTIONAL, "#define APPLY_DLIGHT_DIRECTIONAL\n", "_dir" },
 
 	{ GLSL_SHADER_COMMON_REALTIME_SHADOWS, "#define APPLY_REALTIME_SHADOWS\n", "_rtshadow" },
 	{ GLSL_SHADER_COMMON_SHADOWMAP_SAMPLERS, "#define APPLY_SHADOW_SAMPLERS\n", "_ss" },
@@ -747,7 +749,7 @@ static const glsl_feature_t glsl_features_q3a[] =
 
 	{ GLSL_SHADER_COMMON_DLIGHTS, "#define NUM_DLIGHTS 1\n", "_dl" },
 	{ GLSL_SHADER_COMMON_DLIGHT_CUBEFILTER, "#define APPLY_DLIGHT_CUBEFILTER\n", "_dlcf" },
-	{ GLSL_SHADER_COMMON_DLIGHT_ORTHO, "#define APPLY_DLIGHT_ORTHO\n", "_ortho" },
+	{ GLSL_SHADER_COMMON_DLIGHT_DIRECTIONAL, "#define APPLY_DLIGHT_DIRECTIONAL\n", "_ortho" },
 
 	{ GLSL_SHADER_COMMON_REALTIME_SHADOWS, "#define APPLY_REALTIME_SHADOWS\n", "_rtshadow" },
 	{ GLSL_SHADER_COMMON_SHADOWMAP_SAMPLERS, "#define APPLY_SHADOW_SAMPLERS\n", "_ss" },
@@ -1082,8 +1084,8 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 	"#define MAX_UNIFORM_INSTANCES " STR_TOSTR( MAX_GLSL_UNIFORM_INSTANCES ) "\n" \
 	"#endif\n" \
 	"\n" \
-	"#ifndef MAX_DRAWSURF_SURFS\n" \
-	"#define MAX_DRAWSURF_SURFS " STR_TOSTR( MAX_DRAWSURF_SURFS ) "\n" \
+	"#ifndef MAX_SHADOW_CASCADES\n" \
+	"#define MAX_SHADOW_CASCADES " STR_TOSTR( MAX_SHADOW_CASCADES ) "\n" \
 	"#endif\n"
 
 #define QF_BUILTIN_GLSL_UNIFORMS \
@@ -2301,27 +2303,38 @@ void RP_UpdateRealtimeLightsUniforms( int elem, const vec3_t lightVec, const mat
 	unsigned i;
 	glsl_program_t *program = r_glslprograms + elem - 1;
 
-	if( numRtLights ) {
-		const rtlight_t *rl;
+	if( numRtLights ) {	
 		vec4_t shaderColor = { 0 };
 
 		for( i = 0; i < numRtLights; i++ ) {
-			rl = rtlights[i];
+			const rtlight_t *rl = rtlights[i];
 
 			if( program->loc.DynamicLightsDiffuseAndInvRadius < 0 ) {
 				break;
 			}
 
 			if( program->loc.DynamicLightsMatrix >= 0 ) {
-				if( rl->directional ) {
-					mat4_t m;
+				qglUniformMatrix4fvARB( program->loc.DynamicLightsMatrix, 1, GL_FALSE, objectToLightMatrix );
+			}
 
-					Matrix4_Multiply( rl->projectionMatrix, objectToLightMatrix, m );
+			if( program->loc.DynamicLightShadowmapCascadeMatrix >= 0 ) {
+				int j;
+				mat4_t bias;
 
-					qglUniformMatrix4fvARB( program->loc.DynamicLightsMatrix, 1, GL_FALSE, m );
-				} else {
-					qglUniformMatrix4fvARB( program->loc.DynamicLightsMatrix, 1, GL_FALSE, objectToLightMatrix );
+				Matrix4_Identity( bias );
+				bias[0] = bias[5] = bias[12] = bias[13] = rl->shadowSize * 0.5;
+				bias[10] = 0.5, bias[14] += 0.5;
+
+				for( j = 0; j < rl->shadowCascades; j++ ) {
+					mat4_t m, mb;
+					Matrix4_Multiply( rl->splitProjectionMatrix[j], objectToLightMatrix, m );
+					Matrix4_Multiply( bias, m, mb );
+					qglUniformMatrix4fvARB( program->loc.DynamicLightShadowmapCascadeMatrix[j], 1, GL_FALSE, mb );
 				}
+			}
+
+			if( program->loc.DynamicLightShadowmapNumCascades >= 0 ) {
+				qglUniform1iARB( program->loc.DynamicLightShadowmapNumCascades, rl->shadowCascades );
 			}
 
 			if( glConfig.sSRGB ) {
@@ -2349,17 +2362,24 @@ void RP_UpdateRealtimeLightsUniforms( int elem, const vec3_t lightVec, const mat
 			if( program->loc.DynamicLightShadowmapParams >= 0 ) {
 				GLfloat params[4] = { 0, 0, 0, 0 };
 				int size = rl->shadowSize;
+				int border = rl->shadowBorder;
 
-				if( size > 0 ) {
-					int border = rl->shadowBorder;
-					float nearclip = r_shadows_nearclip->value;
-					float farclip = rl->intensity;
-					float bias = r_shadows_bias->value * nearclip * (1024.0f / (size/* * 3*/));
-
-					params[0] = 0.5f * (size - border);
-					params[1] = -nearclip * farclip / (farclip - nearclip) - 0.5f * bias;
+				if( rl->directional ) {
+					params[0] = 2.0 * border;
+					params[1] = size - 2.0 * border;
 					params[2] = size;
-					params[3] = 0.5f + 0.5f * (farclip + nearclip) / (farclip - nearclip);
+					params[3] = r_shadows_cascades_debug->integer ? rl->splitOrtho[0][6] : 0.0f;
+				} else {
+					if( size > 0 ) {
+						float nearclip = r_shadows_nearclip->value;
+						float farclip = rl->intensity;
+						float bias = r_shadows_bias->value * nearclip * (1024.0f / (size/* * 3*/));
+
+						params[0] = 0.5f * (size - border);
+						params[1] = -nearclip * farclip / (farclip - nearclip) - 0.5f * bias;
+						params[2] = size;
+						params[3] = 0.5f + 0.5f * (farclip + nearclip) / (farclip - nearclip);
+					}
 				}
 
 				qglUniform4fvARB( program->loc.DynamicLightShadowmapParams, 1, params );
@@ -2611,6 +2631,10 @@ static void RP_GetUniformLocations( glsl_program_t *program ) {
 	program->loc.DynamicLightsMatrix = qglGetUniformLocationARB( program->object, "u_DlightMatrix" );
 	program->loc.DynamicLightShadowmapParams = qglGetUniformLocationARB( program->object, "u_DlightShadowmapParams" );
 	program->loc.DynamicLightShadowmapTextureScale = qglGetUniformLocationARB( program->object, "u_DlightShadowmapTextureScale" );
+	for( i = 0; i < MAX_SHADOW_CASCADES; i++ ) {
+		program->loc.DynamicLightShadowmapCascadeMatrix[i] = qglGetUniformLocationARB( program->object, va_r( tmp, sizeof( tmp ), "u_DlightShadowmapCascadeMatrix[%i]", i ) );
+	}
+	program->loc.DynamicLightShadowmapNumCascades = qglGetUniformLocationARB( program->object, "u_DlightShadowmapNumCascades" );
 	program->loc.DynamicLightVector = qglGetUniformLocationARB( program->object, "u_DlightVector" );
 
 	program->loc.ShadowmapTextureSize =	qglGetUniformLocationARB( program->object, "u_ShadowmapTextureSize" );
