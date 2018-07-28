@@ -131,7 +131,8 @@ typedef struct rtlight_s {
 	mat4_t projectionMatrix;
 
 	// ortho cascades
-	vec_t splitOrtho[MAX_SHADOW_CASCADES][7]; // [6] set to 1 indicates that a single cascade with projectionMatrix should be used
+	vec_t splitOrtho[MAX_SHADOW_CASCADES][8];	// [6] if set to 1, indicates that a single cascade with projectionMatrix should be used
+												// [7] is farclip offset
 	mat4_t splitProjectionMatrix[MAX_SHADOW_CASCADES];
 
 	unsigned numVisLeafs;

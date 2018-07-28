@@ -698,7 +698,7 @@ int R_CullSpriteEntity( const entity_t *e ) {
 void R_FrustumPlanesFromCorners( vec3_t corners[8], cplane_t *frustum ) {
 	int i;
 	vec3_t centre;
-	const int boxplanes[6][3] = { {7,3,5}, {7,6,3}, {7,5,6}, {0,2,4}, {0,4,1}, {0,1,2} };
+	const int boxplanes[6][3] = { {7,3,5}, {7,6,3}, {0,2,4}, {0,4,1}, {0,1,2}, {7,5,6} };
 
 	VectorClear( centre );
 	for( i = 0; i < 8; i++ ) {
@@ -730,7 +730,7 @@ void R_FrustumPlanesFromCorners( vec3_t corners[8], cplane_t *frustum ) {
 *
 * Reprojects the far frustum corners (index 4 to 7) onto bounds
 */
-void R_ProjectFarFrustumCornersOnBounds( vec3_t corners[8], const vec3_t mins, const vec3_t maxs ) {
+float R_ProjectFarFrustumCornersOnBounds( vec3_t corners[8], const vec3_t mins, const vec3_t maxs ) {
 	int i;
 	vec3_t dir;
 	float farclip;
@@ -759,4 +759,6 @@ void R_ProjectFarFrustumCornersOnBounds( vec3_t corners[8], const vec3_t mins, c
 	for( i = 0; i < 4; i++ ) {
 		VectorMA( corners[i], farclip, dir, corners[i+4] );
 	}
+
+	return farclip;
 }

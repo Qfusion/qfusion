@@ -327,7 +327,7 @@ void R_DrawRtLightWorld( void ) {
 * R_ComputeShadowCascades
 */
 static void R_ComputeShadowCascades( const refinst_t *rpn, rtlight_t *l, int border ) {
-	int i;
+	int i, j;
 	int numCascades;
 	mat4_t viewProj;
 	vec_t dists[MAX_SHADOW_CASCADES+1];
@@ -368,7 +368,7 @@ static void R_ComputeShadowCascades( const refinst_t *rpn, rtlight_t *l, int bor
 	l->shadowCascades = 0;
 
 	for( i = 0; i < numCascades; i++ ) {
-		vec_t splitRadius;
+		vec_t splitRadius, splitFarClipOff;
 		vec3_t splitCentre;
 		vec3_t splitCorners[8];
 		vec3_t splitMins, splitMaxs;
@@ -381,12 +381,29 @@ static void R_ComputeShadowCascades( const refinst_t *rpn, rtlight_t *l, int bor
 		if( !BoundsOverlap( splitMins, splitMaxs, l->worldmins, l->worldmaxs ) ) {
 			continue;
 		}
-	
+
+		// calculate the farclip offset
 		BoundsCorners( splitMins, splitMaxs, splitCorners );
+
+		splitFarClipOff = 0.0f;
+		for( j = 0; j < 8; j++ ) {
+			vec_t dist = PlaneDiff( splitCorners[j], &l->frustum[5] );
+			if( j == 0 || dist < splitFarClipOff ) {
+				splitFarClipOff = dist;
+			}
+			if( splitFarClipOff < 0 ) {
+				break;
+			}
+		}
+
+		if( splitFarClipOff < 0 ) {
+			splitFarClipOff = 0;
+		}
 
 		Matrix4_CropMatrixParams( splitCorners, viewProj, l->splitOrtho[l->shadowCascades] );
 		l->splitOrtho[l->shadowCascades][4] = -1.0;
 		l->splitOrtho[l->shadowCascades][6] = 1.0; // indicate it's a real split
+		l->splitOrtho[l->shadowCascades][7] = splitFarClipOff;
 		l->shadowCascades++;
 
 		if( BoundsInsideBounds( visMins, visMaxs, splitMins, splitMaxs ) ) {
@@ -425,7 +442,7 @@ static void R_DrawRtLightOrthoShadow( refinst_t *rnp, rtlight_t *l, image_t *tar
 		fd->areabits = NULL;
 	}
 
-	if( sideMask != 1 ) {
+	if( (sideMask & 1) == 0 ) {
 		return;
 	}
 
@@ -451,6 +468,10 @@ static void R_DrawRtLightOrthoShadow( refinst_t *rnp, rtlight_t *l, image_t *tar
 	}
 
 	cascades = l->shadowCascades;
+	if( compile ) {
+		cascades = 1;
+	}
+
 	for( i = 0; i < cascades; i++ ) {
 		float *ob = l->splitOrtho[i];
 
@@ -458,6 +479,8 @@ static void R_DrawRtLightOrthoShadow( refinst_t *rnp, rtlight_t *l, image_t *tar
 		fd->y = y + border;
 		Vector4Set( rnp->viewport, fd->x, -fd->y + target->upload_height - fd->height, fd->width, fd->height );
 		Vector4Set( rnp->scissor, x, -y + target->upload_height - size, size, size );
+
+		memcpy( rn.frustum, l->frustum, sizeof( cplane_t ) * 6 );
 
 		Matrix4_Copy( l->projectionMatrix, l->splitProjectionMatrix[i] );
 
@@ -469,12 +492,12 @@ static void R_DrawRtLightOrthoShadow( refinst_t *rnp, rtlight_t *l, image_t *tar
 			Matrix4_Multiply( crop, l->projectionMatrix, l->splitProjectionMatrix[i] );
 			l->splitProjectionMatrix[i][12] = (floor(l->splitProjectionMatrix[i][12] / fract)) * fract;
 			l->splitProjectionMatrix[i][13] = (floor(l->splitProjectionMatrix[i][13] / fract)) * fract;
+
+			// offset the far clip distance to tightly enclose the split bounds
+			rn.frustum[5].dist += ob[7];
 		}
 
 		R_SetCameraAndProjectionMatrices( l->worldToLightMatrix, l->splitProjectionMatrix[i] );
-
-		// TODO: derive the far plane distance from splitProjectionMatrix
-		memcpy( rn.frustum, l->frustum, sizeof( cplane_t ) * 6 );
 
 		R_RenderView( fd );
 
