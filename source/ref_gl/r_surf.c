@@ -226,9 +226,7 @@ void R_BatchBSPSurf( const entity_t *e, const shader_t *shader, const mfog_t *fo
 	if( !mergable ) {
 		R_FlushBSPSurfBatch();
 
-		if( batch->entity != e ) {
-			R_TransformForEntity( e );
-		}
+		R_TransformForEntity( e );
 	}
 
 	if( drawSurf->numInstances ) {
