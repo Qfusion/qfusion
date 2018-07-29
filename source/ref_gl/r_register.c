@@ -1153,7 +1153,7 @@ static void R_Register( const char *screenshotsPrefix ) {
 #endif
 	r_shadows_minsize = ri.Cvar_Get( "r_shadows_minsize", "32", CVAR_ARCHIVE );
 	r_shadows_maxsize = ri.Cvar_Get( "r_shadows_maxsize", "512", CVAR_ARCHIVE );
-	r_shadows_texturesize = ri.Cvar_Get( "r_shadows_texturesize", "4096", CVAR_ARCHIVE );
+	r_shadows_texturesize = ri.Cvar_Get( "r_shadows_texturesize", "8192", CVAR_ARCHIVE );
 	r_shadows_bordersize = ri.Cvar_Get( "r_shadows_bordersize", "6", CVAR_ARCHIVE );
 	r_shadows_pcf = ri.Cvar_Get( "r_shadows_pcf", "1", CVAR_ARCHIVE );
 	r_shadows_self_shadow = ri.Cvar_Get( "r_shadows_self_shadow", "0", CVAR_ARCHIVE );
