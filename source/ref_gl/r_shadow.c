@@ -893,7 +893,7 @@ void R_DrawShadows( void ) {
 			maxsize = r_shadows_maxsize->integer;
 		}
 
-		clamp_high( minsize, SHADOWMAP_MIN_SIZE );
+		clamp_low( minsize, SHADOWMAP_MIN_SIZE );
 		clamp( maxsize, minsize + 2, r_shadows_texturesize->integer );
 
 		size = l->lod;
