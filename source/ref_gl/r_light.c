@@ -1313,7 +1313,7 @@ void R_GetRtLightVisInfo( mbrushmodel_t *bm, rtlight_t *l ) {
 
 		R_ProjectFarFrustumCornersOnBounds( l->frustumCorners, l->worldmins, l->worldmaxs );
 
-		R_FrustumPlanesFromCorners( l->frustumCorners, l->frustum );
+		R_OrthoFrustumPlanesFromCorners( l->frustumCorners, l->frustum );
 
 		Matrix4_CropMatrixParams( l->frustumCorners, l->worldToLightMatrix, ob );
 		Matrix4_OrthoProjection( ob[0], ob[1], ob[2], ob[3], -ob[5], -ob[4], l->projectionMatrix );
@@ -1424,7 +1424,7 @@ void R_InitRtDirectionalLight( rtlight_t *l, vec3_t corners[8], const vec3_t col
 	CopyBounds( mins, maxs, l->lightmins, l->lightmaxs );
 	CopyBounds( l->lightmins, l->lightmaxs, l->worldmins, l->worldmaxs );
 
-	R_FrustumPlanesFromCorners( l->frustumCorners, l->frustum );
+	R_OrthoFrustumPlanesFromCorners( l->frustumCorners, l->frustum );
 
 	Matrix4_CropMatrixParams( l->frustumCorners, l->worldToLightMatrix, ob );
 	Matrix4_OrthoProjection( ob[0], ob[1], ob[2], ob[3], -ob[5], -ob[4], l->projectionMatrix );
