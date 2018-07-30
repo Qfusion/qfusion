@@ -587,7 +587,7 @@ bool    R_VisCullSphere( const vec3_t origin, float radius );
 int     R_CullModelEntity( const entity_t *e, bool pvsCull );
 int		R_CullSpriteEntity( const entity_t *e );
 bool	R_FogCull( const mfog_t *fog, vec3_t origin, float radius );
-void	R_FrustumPlanesFromCorners( vec3_t corners[8], cplane_t *frustum );
+void	R_OrthoFrustumPlanesFromCorners( vec3_t corners[8], cplane_t *frustum );
 float	R_ProjectFarFrustumCornersOnBounds( vec3_t corners[8], const vec3_t mins, const vec3_t maxs );
 vec_t	R_ComputeVolumeSphereForFrustumSplit( const refinst_t *rnp, const vec_t dnear, const vec_t dfar, vec3_t center );
 

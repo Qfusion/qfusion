@@ -691,27 +691,34 @@ int R_CullSpriteEntity( const entity_t *e ) {
 }
 
 /*
-* R_FrustumPlanesFromCorners
+* R_OrthoFrustumPlanesFromCorners
 *
-* Produces 6 frustum planes from 8 corner points
+* Produces 6 ortho frustum planes from 8 corner points
 */
-void R_FrustumPlanesFromCorners( vec3_t corners[8], cplane_t *frustum ) {
+void R_OrthoFrustumPlanesFromCorners( vec3_t corners[8], cplane_t *frustum ) {
 	int i;
 	vec3_t centre;
+	vec3_t mins, maxs;
+	vec3_t boxcorners[8];
 	const int boxplanes[6][3] = { {7,3,5}, {7,6,3}, {0,2,4}, {0,4,1}, {0,1,2}, {7,5,6} };
+
+	ClearBounds( mins, maxs );
 
 	VectorClear( centre );
 	for( i = 0; i < 8; i++ ) {
+		AddPointToBounds( corners[i], mins, maxs );
 		VectorMA( centre, 1.0/8.0, corners[i], centre );
 	}
+
+	BoundsCorners( mins, maxs, boxcorners );
 
 	for( i = 0; i < 6; i++ ) {
 		vec3_t pv[3];
 		cplane_t *p = &frustum[i];
 
-		VectorCopy( corners[boxplanes[i][0]], pv[0] );
-		VectorCopy( corners[boxplanes[i][1]], pv[1] );
-		VectorCopy( corners[boxplanes[i][2]], pv[2] );
+		VectorCopy( boxcorners[boxplanes[i][0]], pv[0] );
+		VectorCopy( boxcorners[boxplanes[i][1]], pv[1] );
+		VectorCopy( boxcorners[boxplanes[i][2]], pv[2] );
 
 		PlaneFromPoints( pv, p );
 
