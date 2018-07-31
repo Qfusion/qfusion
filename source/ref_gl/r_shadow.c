@@ -853,6 +853,7 @@ void R_DrawShadows( void ) {
 		int x, y;
 		int size, width, height;
 		int sideMask;
+		int lod;
 		bool haveBlock;
 		int minsize, maxsize;
 
@@ -886,9 +887,11 @@ void R_DrawShadows( void ) {
 		}
 
 		if( l->cascaded ) {
+			lod = 0;
 			minsize = r_shadows_cascades_minsize->integer;
 			maxsize = r_shadows_cascades_maxsize->integer;
 		} else {
+			lod = l->lod;
 			minsize = r_shadows_minsize->integer;
 			maxsize = r_shadows_maxsize->integer;
 		}
@@ -896,8 +899,7 @@ void R_DrawShadows( void ) {
 		clamp_low( minsize, SHADOWMAP_MIN_SIZE );
 		clamp( maxsize, minsize + 2, r_shadows_texturesize->integer );
 
-		size = l->lod;
-		size = l->radius * r_shadows_precision->value / (size + 1.0);
+		size = l->radius * r_shadows_precision->value / (lod + 1.0);
 		size = bound( minsize, size, maxsize );
 		
 		x = y = 0;
