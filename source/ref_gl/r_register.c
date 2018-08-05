@@ -105,6 +105,7 @@ cvar_t *r_shadows_cascades_lambda;
 cvar_t *r_shadows_cascades_minsize;
 cvar_t *r_shadows_cascades_maxsize;
 cvar_t *r_shadows_cascades_debug;
+cvar_t *r_shadows_cascades_blendarea;
 cvar_t *r_shadows_lodbias;
 
 cvar_t *r_outlines_world;
@@ -1173,6 +1174,7 @@ static void R_Register( const char *screenshotsPrefix ) {
 	r_shadows_cascades_minsize = ri.Cvar_Get( "r_shadows_cascades_minsize", "512", CVAR_ARCHIVE );
 	r_shadows_cascades_maxsize = ri.Cvar_Get( "r_shadows_cascades_maxsize", "2048", CVAR_ARCHIVE );
 	r_shadows_cascades_debug = ri.Cvar_Get( "r_shadows_cascades_debug", "0", 0 );
+	r_shadows_cascades_blendarea = ri.Cvar_Get( "r_shadows_cascades_blendarea", "15", 0 );
 
 	r_outlines_world = ri.Cvar_Get( "r_outlines_world", "1.8", CVAR_ARCHIVE );
 	r_outlines_scale = ri.Cvar_Get( "r_outlines_scale", "1", CVAR_ARCHIVE );

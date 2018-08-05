@@ -464,6 +464,7 @@ extern cvar_t *r_shadows_cascades_lambda;
 extern cvar_t *r_shadows_cascades_minsize;
 extern cvar_t *r_shadows_cascades_maxsize;
 extern cvar_t *r_shadows_cascades_debug;
+extern cvar_t *r_shadows_cascades_blendarea;
 extern cvar_t *r_shadows_lodbias;
 
 extern cvar_t *r_outlines_world;
