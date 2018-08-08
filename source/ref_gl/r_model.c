@@ -1236,7 +1236,7 @@ static void R_LoadWorldRtLightsFromMap( model_t *model ) {
 	char key[MAX_KEY], value[MAX_VALUE], *token;
 	char cubemap[MAX_QPATH];
 	bool islight, shadow, radiusset;
-	int style, flags;
+	int style, flags, noshadow;
 	float radius;
 	float colorf[3], originf[3], angles[3];
 	mbrushmodel_t *bmodel;
@@ -1258,6 +1258,7 @@ static void R_LoadWorldRtLightsFromMap( model_t *model ) {
 		radius = 0;
 		style = 0;
 		shadow = true;
+		noshadow = -1;
 		flags = LIGHTFLAG_REALTIMEMODE;
 		VectorSet( colorf, 1, 1, 1 );
 		VectorClear( angles );
@@ -1299,6 +1300,11 @@ static void R_LoadWorldRtLightsFromMap( model_t *model ) {
 				Q_strncpyz( cubemap, value, sizeof( cubemap ) );
 			} else if( !strcmp( key, "angles" ) ) {
 				sscanf( value, "%f %f %f", &angles[0], &angles[1], &angles[2] );
+			} else if( !strcmp( key, "_noshadow" ) ) {
+				noshadow = 0;
+				sscanf( value, "%d", &noshadow );
+			} else if( !strcmp( key, "_rtflags" ) ) {
+				sscanf( value, "%d", &flags );
 			}
 		}
 
@@ -1318,8 +1324,13 @@ static void R_LoadWorldRtLightsFromMap( model_t *model ) {
 
 			if( style >= MAX_LIGHTSTYLES )
 				style = 0;
-			if( radius < MAPLIGHT_MIN_SHADOW_RADIUS )
-				shadow = false;
+
+			if( noshadow >= 0 ) {
+				shadow = noshadow == 0;
+			} else {
+				shadow = radius >= MAPLIGHT_MIN_SHADOW_RADIUS;
+			}
+
 			AnglesToAxis( angles, axis );
 
 			l = &lights[numLights++];
