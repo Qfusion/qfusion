@@ -406,22 +406,6 @@ bool BotWeaponsUsageModule::CheckShot( const AimParams &aimParams,
 				return toTargetDotLookDir > 0.60f + 0.15f * velocityFactor;
 			}
 
-			if( fireDef.WeaponNum() == WEAP_SHOCKWAVE ) {
-				const float squareDistance = DistanceSquared( aimParams.fireOrigin, aimParams.fireTarget );
-				// Shockwave requires rather precise directional aiming on long range
-				if( squareDistance > 128.0f * 128.0f ) {
-					const float distanceFactor = BoundedFraction( SQRTFAST( squareDistance ), 1024.0f );
-					if( bot->ShouldKeepXhairOnEnemy() ) {
-						return toTargetDotLookDir > 0.9f + 0.09f * distanceFactor;
-					}
-					return toTargetDotLookDir > 0.9f + 0.05f * distanceFactor;
-				}
-
-				float squareSplashThreshold = 0.75f * fireDef.SplashRadius();
-				squareSplashThreshold *= squareSplashThreshold;
-				return DistanceSquared( aimParams.fireTarget, tr.endpos ) < squareSplashThreshold;
-			}
-
 			// Projectile EB needs a special handling, otherwise bots miss a lot
 			if( fireDef.WeaponNum() == WEAP_ELECTROBOLT ) {
 				Vec3 absMins( aimParams.fireTarget );

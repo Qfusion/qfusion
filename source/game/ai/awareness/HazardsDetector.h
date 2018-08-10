@@ -45,8 +45,6 @@ class HazardsDetector {
 
 	EntsAndDistancesVector maybeDangerousRockets;
 	EntNumsVector dangerousRockets;
-	EntsAndDistancesVector maybeDangerousWaves;
-	EntNumsVector dangerousWaves;
 	EntsAndDistancesVector maybeDangerousPlasmas;
 	EntNumsVector dangerousPlasmas;
 	EntsAndDistancesVector maybeDangerousBlasts;
@@ -58,8 +56,6 @@ class HazardsDetector {
 
 	EntsAndDistancesVector maybeVisibleOtherRockets;
 	EntNumsVector visibleOtherRockets;
-	EntsAndDistancesVector maybeVisibleOtherWaves;
-	EntNumsVector visibleOtherWaves;
 	EntsAndDistancesVector maybeVisibleOtherPlasmas;
 	EntNumsVector visibleOtherPlasmas;
 	EntsAndDistancesVector maybeVisibleOtherBlasts;

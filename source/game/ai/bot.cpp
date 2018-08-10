@@ -775,4 +775,3 @@ bool Bot::IsCombatCrouchingAllowed() const {
 
 	return false;
 }
->>>>>>> e6c46002... Control combat dodging/dashing by top-level logic

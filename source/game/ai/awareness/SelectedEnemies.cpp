@@ -396,9 +396,6 @@ bool SelectedEnemies::HaveGoodMiddleRangeWeapons() const {
 		if( activeEnemy->PlasmasReadyToFireCount() ) {
 			return true;
 		}
-		if( activeEnemy->WavesReadyToFireCount() ) {
-			return true;
-		}
 		if( activeEnemy->BulletsReadyToFireCount() ) {
 			return true;
 		}
@@ -419,9 +416,6 @@ bool SelectedEnemies::HaveGoodCloseRangeWeapons() const {
 			return true;
 		}
 		if( activeEnemy->PlasmasReadyToFireCount() ) {
-			return true;
-		}
-		if( activeEnemy->WavesReadyToFireCount() ) {
 			return true;
 		}
 		if( activeEnemy->ShellsReadyToFireCount() ) {
@@ -582,9 +576,7 @@ bool SelectedEnemies::TestAboutToHitRLorSW( int64_t levelTime ) const {
 		}
 
 		if( !enemy->IsShootableCurrOrPendingWeapon( WEAP_ROCKETLAUNCHER ) ) {
-			if( !enemy->IsShootableCurrOrPendingWeapon( WEAP_SHOCKWAVE ) ) {
-				continue;
-			}
+			continue;
 		}
 
 		const float distance = SQRTFAST( squareDistance );

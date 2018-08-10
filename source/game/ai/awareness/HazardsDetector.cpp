@@ -6,8 +6,6 @@
 void HazardsDetector::Clear() {
 	maybeDangerousRockets.clear();
 	dangerousRockets.clear();
-	maybeVisibleOtherWaves.clear();
-	dangerousWaves.clear();
 	maybeDangerousPlasmas.clear();
 	dangerousPlasmas.clear();
 	maybeDangerousBlasts.clear();
@@ -19,8 +17,6 @@ void HazardsDetector::Clear() {
 
 	maybeVisibleOtherRockets.clear();
 	visibleOtherRockets.clear();
-	maybeVisibleOtherWaves.clear();
-	visibleOtherWaves.clear();
 	maybeVisibleOtherPlasmas.clear();
 	visibleOtherPlasmas.clear();
 	maybeVisibleOtherBlasts.clear();
@@ -46,9 +42,6 @@ void HazardsDetector::Exec() {
 		switch( ent->s.type ) {
 			case ET_ROCKET:
 				TryAddEntity( ent, DETECT_ROCKET_SQ_RADIUS, maybeDangerousRockets, maybeVisibleOtherRockets );
-				break;
-			case ET_WAVE:
-				TryAddEntity( ent, DETECT_WAVE_SQ_RADIUS, maybeDangerousWaves, maybeVisibleOtherWaves );
 				break;
 			case ET_PLASMA:
 				TryAddEntity( ent, DETECT_PLASMA_SQ_RADIUS, maybeDangerousPlasmas, maybeVisibleOtherPlasmas );
@@ -78,9 +71,6 @@ void HazardsDetector::Exec() {
 
 	if( VisCheckRawEnts( maybeDangerousRockets, dangerousRockets, self, 12, isGenInPvs, isGenVisible ) ) {
 		VisCheckRawEnts( maybeVisibleOtherRockets, visibleOtherRockets, self, 6, isGenInPvs, isGenVisible );
-	}
-	if( VisCheckRawEnts( maybeDangerousWaves, dangerousWaves, self, 12, isGenInPvs, isGenVisible ) ) {
-		VisCheckRawEnts( maybeVisibleOtherWaves, visibleOtherWaves, self, 6, isGenInPvs, isGenVisible );
 	}
 	if( VisCheckRawEnts( maybeDangerousPlasmas, dangerousPlasmas, self, 48, isGenInPvs, isGenVisible ) ) {
 		VisCheckRawEnts( maybeVisibleOtherPlasmas, visibleOtherPlasmas, self, 12, isGenInPvs, isGenVisible );

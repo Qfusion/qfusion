@@ -37,7 +37,6 @@ inline int BotWeaponSelector::RocketsReadyToFireCount() const { return AmmoReady
 inline int BotWeaponSelector::PlasmasReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_PLASMAGUN>(); }
 inline int BotWeaponSelector::BulletsReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_MACHINEGUN>(); }
 inline int BotWeaponSelector::LasersReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_LASERGUN>(); }
-inline int BotWeaponSelector::WavesReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_SHOCKWAVE>(); }
 inline int BotWeaponSelector::BoltsReadyToFireCount() const { return AmmoReadyToFireCount<WEAP_ELECTROBOLT>(); }
 
 void BotWeaponSelector::Frame( const WorldState &cachedWorldState ) {
@@ -345,27 +344,13 @@ void BotWeaponSelector::SuggestFarRangeWeapon( const WorldState &worldState ) {
 
 	if( chosenWeapon == WEAP_NONE ) {
 		if( targetEnvironment.factor > 0.5f ) {
-			if( WavesReadyToFireCount() && RocketsReadyToFireCount() ) {
-				if( bot->WillRetreat() ) {
-					chosenWeapon = WEAP_SHOCKWAVE;
-				} else {
-					chosenWeapon = WEAP_ROCKETLAUNCHER;
-				}
-			} else {
-				if( WavesReadyToFireCount() ) {
-					chosenWeapon = WEAP_SHOCKWAVE;
-				} else if( RocketsReadyToFireCount() ) {
-					chosenWeapon = WEAP_ROCKETLAUNCHER;
-				} else {
-					chosenWeapon = WEAP_GUNBLADE;
-				}
-			}
-		} else {
-			if( bot->WillRetreat() && WavesReadyToFireCount() ) {
-				chosenWeapon = WEAP_SHOCKWAVE;
+			if( RocketsReadyToFireCount() ) {
+				chosenWeapon = WEAP_ROCKETLAUNCHER;
 			} else {
 				chosenWeapon = WEAP_GUNBLADE;
 			}
+		} else {
+			chosenWeapon = WEAP_GUNBLADE;
 		}
 	}
 
@@ -426,8 +411,6 @@ void BotWeaponSelector::SuggestMiddleRangeWeapon( const WorldState &worldState )
 		weaponScores[RG].score *= 1.1f;
 	}
 	if( bot->WillRetreat() ) {
-		// Retreating is the only situation where bots use SW properly
-		weaponScores[SW].score *= 2.0f;
 		// Plasma is a great defensive weapon
 		weaponScores[PG].score *= 1.5f;
 		weaponScores[LG].score *= 1.1f;
@@ -458,33 +441,9 @@ void BotWeaponSelector::SuggestMiddleRangeWeapon( const WorldState &worldState )
 		weaponScores[PG].score *= 1.5f;
 		weaponScores[RG].score *= 2.0f;
 		weaponScores[GL].score *= 1.5f;
-		weaponScores[SW].score *= 1.5f;
 		if( bot->WillRetreat() ) {
 			weaponScores[PG].score *= 1.5f;
 			weaponScores[GL].score *= 1.5f;
-		}
-	}
-
-	// Ignore the nested checks if the bot is retreating / an enemy is in a tight environment
-	if( !bot->WillRetreat() && targetEnvironment.factor < 0.5f ) {
-		// Do not use SW on escaping enemies, and prefer it on chasing enemies
-		Vec3 targetMoveDir( selectedEnemies.LastSeenVelocity() );
-		float enemySpeed = targetMoveDir.SquaredLength();
-		if( enemySpeed > ( DEFAULT_DASHSPEED ) * ( DEFAULT_DASHSPEED ) ) {
-			enemySpeed = SQRTFAST( enemySpeed );
-			targetMoveDir *= 1.0f / enemySpeed;
-			Vec3 botToTargetDir = selectedEnemies.LastSeenOrigin() - bot->Origin();
-			botToTargetDir.NormalizeFast();
-
-			float speedFactor = BoundedFraction( enemySpeed - DEFAULT_DASHSPEED, 1000.0f - DEFAULT_DASHSPEED );
-			// -1.0 if the enemy is escaping straight away from the bot
-			//  0.5 if the enemy moves side-to-side
-			// +1.0 if the enemy is chasing the bot in a straight line
-			float dirFactor = botToTargetDir.Dot( targetMoveDir );
-			// 0.1 for worst case (the enemy is escaping on high speed)
-			// 1.9 for best case (the enemy is chasing on high speed)
-			float scoreScale = 1.0f + 0.9f * speedFactor * dirFactor;
-			weaponScores[SW].score *= scoreScale;
 		}
 	}
 
@@ -493,7 +452,6 @@ void BotWeaponSelector::SuggestMiddleRangeWeapon( const WorldState &worldState )
 		float speedThreshold = DEFAULT_DASHSPEED + 50.0f;
 		if( selectedEnemies.LastSeenVelocity().SquaredLength() < speedThreshold * speedThreshold ) {
 			weaponScores[PG].score *= 1.5f;
-			weaponScores[SW].score *= 1.5f;
 		}
 	}
 
@@ -935,7 +893,7 @@ int BotWeaponSelector::SuggestShotOfDespairWeapon( const WorldState &worldState 
 
 	const auto &selectedEnemies = bot->selectedEnemies;
 
-	enum { EB, RG, RL, SW, GB, GL, WEIGHTS_COUNT };
+	enum { EB, RG, RL, GB, GL, WEIGHTS_COUNT };
 
 	WeaponAndScore scores[WEIGHTS_COUNT] =
 	{

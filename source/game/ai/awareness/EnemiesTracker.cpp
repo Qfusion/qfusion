@@ -135,7 +135,7 @@ int TrackedEnemy::ComputeCheckForWeaponHitFlags( float damageToKillTarget ) cons
 
 	int flags = 0;
 	if( damageToKillTarget < 150 ) {
-		if( RocketsReadyToFireCount() || WavesReadyToFireCount()) {
+		if( RocketsReadyToFireCount()) {
 			flags |= ROCKET;
 		}
 	}

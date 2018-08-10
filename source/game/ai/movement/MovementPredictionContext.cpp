@@ -807,11 +807,11 @@ void MovementPredictionContext::BuildPlan() {
 		movementAction->BeforePlanning();
 
 	// Intercept these calls implicitly performed by PMove()
-	const auto general_PMoveTouchTriggers = module_PMoveTouchTriggers;
-	const auto general_PredictedEvent = module_PredictedEvent;
+	const auto general_PMoveTouchTriggers = gs.api.PMoveTouchTriggers;
+	const auto general_PredictedEvent = gs.api.PredictedEvent;
 
-	module_PMoveTouchTriggers = &Intercepted_PMoveTouchTriggers;
-	module_PredictedEvent = &Intercepted_PredictedEvent;
+	gs.api.PMoveTouchTriggers = &Intercepted_PMoveTouchTriggers;
+	gs.api.PredictedEvent = &Intercepted_PredictedEvent;
 
 	edict_t *const self = game.edicts + bot->EntNum();
 
@@ -901,8 +901,8 @@ void MovementPredictionContext::BuildPlan() {
 	Assert( VectorCompare( self->s.origin, self->ai->botRef->entityPhysicsState->Origin() ) );
 	Assert( VectorCompare( self->velocity, self->ai->botRef->entityPhysicsState->Velocity() ) );
 
-	module_PMoveTouchTriggers = general_PMoveTouchTriggers;
-	module_PredictedEvent = general_PredictedEvent;
+	gs.api.PMoveTouchTriggers = general_PMoveTouchTriggers;
+	gs.api.PredictedEvent = general_PredictedEvent;
 
 	for( auto *movementAction: module->movementActions )
 		movementAction->AfterPlanning();
@@ -973,20 +973,20 @@ void MovementPredictionContext::NextMovementStep() {
 	// should be added and this interception of the module_Trace() should be skipped if the flag is set.
 
 	// Save the G_GS_Trace() pointer
-	auto oldModuleTrace = module_Trace;
-	module_Trace = Intercepted_Trace;
+	auto oldModuleTrace = gs.api.Trace;
+	gs.api.Trace = Intercepted_Trace;
 
 	// Do not test entities contents for same reasons
 	// Save the G_PointContents4D() pointer
-	auto oldModulePointContents = module_PointContents;
-	module_PointContents = Intercepted_PointContents;
+	auto oldModulePointContents = gs.api.PointContents;
+	gs.api.PointContents = Intercepted_PointContents;
 
 	Pmove( &pm );
 
 	// Restore the G_GS_Trace() pointer
-	module_Trace = oldModuleTrace;
+	gs.api.Trace = oldModuleTrace;
 	// Restore the G_PointContents4D() pointer
-	module_PointContents = oldModulePointContents;
+	gs.api.PointContents = oldModulePointContents;
 
 	// Update the entity physics state that is going to be used in the next prediction frame
 	entityPhysicsState->UpdateFromPMove( &pm );

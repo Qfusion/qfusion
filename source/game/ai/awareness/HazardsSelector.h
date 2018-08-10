@@ -52,7 +52,6 @@ class HazardsSelector {
 	Pool<Hazard, 3> hazardsPool { "hazardsPool" };
 
 	void FindProjectileHazards( const EntNumsVector &entNums );
-	void FindWaveHazards( const EntNumsVector &entNums );
 	void FindPlasmaHazards( const EntNumsVector &entNums );
 	void FindLaserHazards( const EntNumsVector &entNums );
 public:

@@ -384,13 +384,6 @@ void BotAwarenessModule::CheckForNewHazards() {
 
 	eventsTracker.TryGuessingProjectileOwnersOrigins( hazardsDetector.visibleOtherRockets );
 
-	if( !( v = &hazardsDetector.dangerousWaves )->empty() ) {
-		hazardsSelector.FindWaveHazards( *v );
-		eventsTracker.TryGuessingProjectileOwnersOrigins( *v );
-	}
-
-	eventsTracker.TryGuessingProjectileOwnersOrigins( hazardsDetector.visibleOtherWaves );
-
 	if( !( v = &hazardsDetector.dangerousBlasts )->empty() ) {
 		hazardsSelector.FindProjectileHazards( *v );
 		eventsTracker.TryGuessingProjectileOwnersOrigins( *v );

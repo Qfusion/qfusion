@@ -147,7 +147,6 @@ private:
 	inline int PlasmasReadyToFireCount() const;
 	inline int BulletsReadyToFireCount() const;
 	inline int LasersReadyToFireCount() const;
-	inline int WavesReadyToFireCount() const;
 	inline int BoltsReadyToFireCount() const;
 
 	bool CheckFastWeaponSwitchAction( const WorldState &worldState );
