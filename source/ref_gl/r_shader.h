@@ -209,6 +209,13 @@ typedef struct {
 	shaderfunc_t func;
 } deformv_t;
 
+typedef struct {
+	float height;
+	image_t *images[6];
+	vec3_t lightDir;
+	vec3_t lightColor;
+} shaderskyparms_t;
+
 // Per-pass rendering state information
 typedef struct {
 	unsigned int flags;
@@ -265,8 +272,7 @@ typedef struct shader_s {
 
 	float portalDistance;
 
-	float skyHeight;
-	image_t             *skyboxImages[6];
+	shaderskyparms_t skyParms;
 
 	struct shader_s     *prev, *next;
 } shader_t;

@@ -116,6 +116,7 @@ typedef struct rtlight_s {
 
 	vec3_t skymins;
 	vec3_t skymaxs;
+	vec3_t skycolor; // set by the shader
 
 	vec3_t cullmins; // worldmins & all influenced entities
 	vec3_t cullmaxs; // worldmaxs & all influenced entities

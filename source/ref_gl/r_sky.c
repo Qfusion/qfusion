@@ -363,7 +363,7 @@ void R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog
 	}
 
 	// center skydome on camera to give the illusion of a larger space
-	rsc.skyent->scale = shader->skyHeight;
+	rsc.skyent->scale = shader->skyParms.height;
 	VectorCopy( rn.viewOrigin, rsc.skyent->origin );
 	R_TransformForEntity( rsc.skyent );
 
@@ -371,7 +371,7 @@ void R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog
 		// render fake fogged skybox
 		R_DrawSkyBox( skydome, visSkySides, rsh.emptyFogShader, shader, fog, drawSurf );
 	} else {
-		if( shader->skyboxImages[0] ) {
+		if( shader->skyParms.images[0] ) {
 			R_DrawSkyBox( skydome, visSkySides, rsh.skyShader, shader, fog, drawSurf );
 		} else {
 			R_DrawBlackBottom( skydome, visSkySides, fog, drawSurf );

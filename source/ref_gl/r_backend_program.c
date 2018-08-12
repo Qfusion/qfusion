@@ -448,7 +448,7 @@ static inline const image_t *RB_ShaderpassTex( const shaderpass_t *pass ) {
 	}
 
 	if( ( pass->flags & SHADERPASS_SKYBOXSIDE ) && rb.skyboxShader && rb.skyboxSide >= 0 ) {
-		return rb.skyboxShader->skyboxImages[rb.skyboxSide];
+		return rb.skyboxShader->skyParms.images[rb.skyboxSide];
 	}
 
 	if( pass->cin ) {

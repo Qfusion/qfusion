@@ -705,9 +705,9 @@ static void Shader_SkyParmsExt( shader_t *shader, shaderpass_t *pass, const char
 	float skyheight;
 
 	if( custom ) {
-		Shader_ParseCustomSkySides( ptr, shader->skyboxImages, shader->imagetags );
+		Shader_ParseCustomSkySides( ptr, shader->skyParms.images, shader->imagetags );
 	} else {
-		Shader_ParseSkySides( ptr, shader->skyboxImages, shader->imagetags, underscore );
+		Shader_ParseSkySides( ptr, shader->skyParms.images, shader->imagetags, underscore );
 	}
 
 	skyheight = Shader_ParseFloat( ptr );
@@ -715,7 +715,7 @@ static void Shader_SkyParmsExt( shader_t *shader, shaderpass_t *pass, const char
 		skyheight = 512.0f;
 	}
 
-	shader->skyHeight = skyheight;
+	shader->skyParms.height = skyheight;
 	shader->flags |= SHADER_SKY;
 }
 
@@ -729,6 +729,16 @@ static void Shader_SkyParms2( shader_t *shader, shaderpass_t *pass, const char *
 
 static void Shader_SkyParmsSides( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
 	Shader_SkyParmsExt( shader, pass, ptr, true, false );
+}
+
+static void Shader_SkyLightParms( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
+	vec3_t color, dir;
+
+	Shader_ParseVector( ptr, color, 3 );
+	ColorNormalize( color, shader->skyParms.lightColor );
+
+	Shader_ParseVector( ptr, dir, 3 );
+	VectorNormalize2( dir, shader->skyParms.lightDir );
 }
 
 static void Shader_FogParms( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
@@ -965,6 +975,7 @@ static const shaderkey_t shaderkeys[] =
 	{ "skyparms", Shader_SkyParms },
 	{ "skyparms2", Shader_SkyParms2 },
 	{ "skyparmssides", Shader_SkyParmsSides },
+	{ "skylightparams", Shader_SkyLightParms },
 	{ "fogparms", Shader_FogParms },
 	{ "nomipmaps", Shader_NoMipMaps },
 	{ "nopicmip", Shader_NoPicMip },
@@ -1966,7 +1977,7 @@ void R_TouchShader( shader_t *s ) {
 	if( s->flags & SHADER_SKY ) {
 		// touch sky images for this shader
 		for( i = 0; i < 6; i++ ) {
-			image_t *image = s->skyboxImages[i];
+			image_t *image = s->skyParms.images[i];
 			if( image ) {
 				R_TouchImage( image, imagetags );
 			}
