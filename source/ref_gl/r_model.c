@@ -1558,9 +1558,35 @@ void R_SetWorldRtSkyLightsColors( model_t *model ) {
 	}
 
 	for( i = 0; i < bmodel->numRtSkyLights; i++ ) {
-		R_SetRtLightColor( bmodel->rtSkyLights + i, color );
+		rtlight_t *l = bmodel->rtSkyLights + i;
+		const vec_t *shaderColor = l->skycolor;
+
+		if( shaderColor[0] != 0.0 || shaderColor[1] != 0.0 || shaderColor[2] != 0.0 ) {
+			R_SetRtLightColor( l, shaderColor );
+		} else {
+			R_SetRtLightColor( l, color );
+		}
 	}
 }
+
+typedef struct {
+	int area;
+	float radius;
+	vec3_t dir;
+	vec3_t mins;
+	vec3_t maxs;
+	vec3_t skymins;
+	vec3_t skymaxs;
+	vec3_t cullmins;
+	vec3_t cullmaxs;
+	vec3_t origin;
+	mat3_t axis;
+	mat4_t worldToLightMatrix;
+	mat4_t projectionMatrix;
+	vec3_t frustumCorners[8];
+	cplane_t frustum[6];
+	shader_t *shader;
+} skyaye_t;
 
 skyaye_t skies[10000];
 unsigned skychecks[10000];
@@ -1643,10 +1669,17 @@ static void R_LoadWorldRtSkyLights( model_t *model ) {
 				msurface_t *surf = bmodel->surfaces + leaf->visSurfaces[j];
 
 				if( surf->flags & SURF_SKY ) {
-					if( cntf == 0 )
-						CopyBounds( surf->mins, surf->maxs, skies[numskies].skymins, skies[numskies].skymaxs );
-					else
+					if( cntf != 0 ) {
+						if( skies[numskies].shader != surf->shader ) {
+							continue;
+						}
 						UnionBounds( skies[numskies].skymins, skies[numskies].skymaxs, surf->mins, surf->maxs );
+						cntf++;
+						continue;
+					}
+
+					CopyBounds( surf->mins, surf->maxs, skies[numskies].skymins, skies[numskies].skymaxs );
+					skies[numskies].shader = surf->shader;
 					cntf++;
 				}
 			}
@@ -1691,12 +1724,16 @@ static void R_LoadWorldRtSkyLights( model_t *model ) {
 		vec3_t dir = { 0, 0, -1 };
 		vec3_t cmins, cmaxs, v;
 		const char *cvardir = r_lighting_realtime_sky_direction->string;
+		const vec_t *shaderDir = skies[i].shader->skyParms.lightDir;
 
-		// cvar override
-		if( cvardir[0] != '\0' ) {
-			float cdir[3];
-			if( sscanf( cvardir, "%f %f %f", &cdir[0], &cdir[1], &cdir[2] ) == 3 ) {
-				VectorCopy( cdir, dir );
+		if( shaderDir[0] != 0.0 || shaderDir[1] != 0.0 || shaderDir[2] != 0.0 ) {
+			VectorCopy( shaderDir, dir );
+		} else {
+			if( cvardir[0] != '\0' ) {
+				float cdir[3];
+				if( sscanf( cvardir, "%f %f %f", &cdir[0], &cdir[1], &cdir[2] ) == 3 ) {
+					VectorCopy( cdir, dir );
+				}
 			}
 		}
 
@@ -1740,9 +1777,6 @@ static void R_LoadWorldRtSkyLights( model_t *model ) {
 
 				if( BoundsOverlap( skies[i].skymins, skies[i].skymaxs, skies[j].skymins, skies[j].skymaxs ) ) {
 					// merge j into i
-					if( skies[i].area != skies[j].area )
-						Com_Printf("%i %i\n", skies[i].area, skies[j].area);
-
 					UnionBounds( skies[i].mins, skies[i].maxs, skies[j].mins, skies[j].maxs );
 					UnionBounds( skies[i].skymins, skies[i].skymaxs, skies[j].skymins, skies[j].skymaxs );
 					UnionBounds( skies[i].cullmins, skies[i].skymaxs, skies[j].cullmins, skies[j].cullmaxs );
@@ -1752,7 +1786,6 @@ static void R_LoadWorldRtSkyLights( model_t *model ) {
 					j--;
 					numskies--;
 					removed++;
-					//Com_Printf("Removed sky\n");
 					break;
 				}
 			}
@@ -1820,8 +1853,9 @@ static void R_LoadWorldRtSkyLights( model_t *model ) {
 
 		for( i = 0; i < numskies; i++ ) {
 			rtlight_t *l = &lights[i];
+			const vec_t *shaderColor = skies[i].shader->skyParms.lightColor;
 
-			R_InitRtDirectionalLight( l, skies[i].frustumCorners, colorWhite );
+			R_InitRtDirectionalLight( l, skies[i].frustumCorners, shaderColor );
 
 			l->flags = LIGHTFLAG_REALTIMEMODE;
 			l->style = 0;
@@ -1830,6 +1864,7 @@ static void R_LoadWorldRtSkyLights( model_t *model ) {
 			l->worldModel = model;
 			l->sky = true;
 			l->cascaded = true;
+			VectorCopy( shaderColor, l->skycolor );
 
 			R_GetRtLightVisInfo( bmodel, l );
 
