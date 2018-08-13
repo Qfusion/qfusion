@@ -1502,41 +1502,6 @@ static void R_LoadWorldRtLights( model_t *model ) {
 }
 
 /*
-* R_LoadWorldRtSkyLights_r
-*/
-static void R_LoadWorldRtSkyLights_r( mbrushmodel_t *bmodel, unsigned leafNum, mleaf_t *startLeaf, uint8_t *skyleafs, uint8_t *leafcheck, uint8_t checknum, int level ) {
-	unsigned i;
-	uint8_t *pvs;
-	mleaf_t *leaf = bmodel->leafs + leafNum;
-
-	pvs = Mod_ClusterPVS( leaf->cluster, bmodel );
-	for( i = 0; i < bmodel->numleafs; i++ ) {
-		mleaf_t *leaf2 = bmodel->leafs + i;
-
-		if( leafcheck[i] == checknum ) {
-			continue;
-		}
-		if( leaf2->cluster < 0 ) {
-			continue;
-		}
-		if( leaf2->area != leaf->area ) {
-			continue;
-		}
-
-		if( !( pvs[leaf2->cluster >> 3] & ( 1 << ( leaf2->cluster & 7 ) ) ) ) {
-			continue;
-		}
-
-		//if( !( pvs[startLeaf->cluster >> 3] & ( 1 << ( startLeaf->cluster & 7 ) ) ) ) {
-		//	continue;
-		//}
-
-		leafcheck[i] = checknum;
-	}
-	//Com_Printf("\n");
-}
-
-/*
 * R_SetWorldRtSkyLightsColors
 */
 void R_SetWorldRtSkyLightsColors( model_t *model ) {
@@ -1569,40 +1534,26 @@ void R_SetWorldRtSkyLightsColors( model_t *model ) {
 	}
 }
 
+#define MAX_BRUSHSKIES 1000
+
 typedef struct {
 	int area;
 	float radius;
 	vec3_t dir;
-	vec3_t mins;
-	vec3_t maxs;
-	vec3_t skymins;
-	vec3_t skymaxs;
-	vec3_t cullmins;
-	vec3_t cullmaxs;
-	vec3_t origin;
-	mat3_t axis;
-	mat4_t worldToLightMatrix;
-	mat4_t projectionMatrix;
+	vec3_t mins, maxs;
+	vec3_t skymins, skymaxs;
 	vec3_t frustumCorners[8];
-	cplane_t frustum[6];
 	shader_t *shader;
-} skyaye_t;
-
-skyaye_t skies[10000];
-unsigned skychecks[10000];
-unsigned numskies;
+} mbrushsky_t;
 
 /*
 * R_LoadWorldRtSkyLights
-*
-* REWRITE THIS CRAP
 */
 static void R_LoadWorldRtSkyLights( model_t *model ) {
 	unsigned i, j, k;
-	uint8_t *skyleafs;
-	uint8_t *leafcheck;
-	uint8_t checknum;
 	mbrushmodel_t *bmodel;
+	unsigned numskies;
+	static mbrushsky_t skies[MAX_BRUSHSKIES];
 
 	if( !model || model->type != mod_brush || !( bmodel = ( mbrushmodel_t * )model->extradata ) ) {
 		return;
@@ -1618,104 +1569,73 @@ static void R_LoadWorldRtSkyLights( model_t *model ) {
 	bmodel->rtSkyLights = NULL;
 	bmodel->numRtSkyLights = 0;
 
-	skyleafs = Mod_Malloc( model, sizeof( *skyleafs ) * (bmodel->numleafs+1) );
-	memset( skyleafs, 0, sizeof( *skyleafs ) * (bmodel->numleafs+1) );
-
 	for( i = 0; i < bmodel->numleafs; i++ ) {
 		mleaf_t *leaf = bmodel->leafs + i;
+		uint8_t *pvs = Mod_ClusterPVS( leaf->cluster, bmodel );
+		unsigned numCasters, numReceivers;
+		mbrushsky_t *sky = &skies[numskies];
 
-		if( leaf->cluster < 0 ) {
-			continue;
-		}
+		ClearBounds( sky->mins, sky->maxs );
+		ClearBounds( sky->skymins, sky->skymaxs );
+		sky->area = leaf->area;
 
+		numCasters = 0;
 		for( j = 0; j < leaf->numVisSurfaces; j++ ) {
 			msurface_t *surf = bmodel->surfaces + leaf->visSurfaces[j];
-			if( !( surf->flags & SURF_SKY ) ) {
-				continue;
-			}
-			skyleafs[i] = 1;
-			break;
-		}
-	}
 
-	leafcheck = Mod_Malloc( model, sizeof( *leafcheck ) * (bmodel->numleafs+1) );
-	memset( leafcheck, 0, sizeof( *leafcheck ) * (bmodel->numleafs+1) );
-
-	checknum = 0;
-	for( i = 0; i < bmodel->numleafs; i++ ) {
-		mleaf_t *leaf = bmodel->leafs + i;
-
-		if( !skyleafs[i] ) {
-			continue;
-		}
-		//if( leafcheck[i] ) {
-		//	continue;
-		//}
-
-		checknum++;
-
-		leafcheck[i] = checknum;
-		R_LoadWorldRtSkyLights_r( bmodel, i, leaf, skyleafs, leafcheck, checknum, 1 );
-
-		{
-			unsigned cnt = 0, cntf = 0;
-
-			skychecks[numskies] = checknum;
-			ClearBounds( skies[numskies].mins, skies[numskies].maxs );
-			ClearBounds( skies[numskies].skymins, skies[numskies].skymaxs );
-			skies[numskies].area = leaf->area;
-
-			for( j = 0; j < leaf->numVisSurfaces; j++ ) {
-				msurface_t *surf = bmodel->surfaces + leaf->visSurfaces[j];
-
-				if( surf->flags & SURF_SKY ) {
-					if( cntf != 0 ) {
-						if( skies[numskies].shader != surf->shader ) {
-							continue;
-						}
-						UnionBounds( skies[numskies].skymins, skies[numskies].skymaxs, surf->mins, surf->maxs );
-						cntf++;
+			if( surf->flags & SURF_SKY ) {
+				if( numCasters != 0 ) {
+					if( sky->shader != surf->shader ) {
 						continue;
 					}
+					UnionBounds( sky->skymins, sky->skymaxs, surf->mins, surf->maxs );
+					numCasters++;
+					continue;
+				}
 
-					CopyBounds( surf->mins, surf->maxs, skies[numskies].skymins, skies[numskies].skymaxs );
-					skies[numskies].shader = surf->shader;
-					cntf++;
+				CopyBounds( surf->mins, surf->maxs, sky->skymins, sky->skymaxs );
+				sky->shader = surf->shader;
+				numCasters++;
+			}
+		}
+
+		if( numCasters == 0 ) {
+			continue;
+		}
+
+		numReceivers = 0;
+
+		for( j = 0; j < bmodel->numleafs; j++ ) {
+			mleaf_t *leaf2 = bmodel->leafs + j;
+
+			if( leaf2->cluster < 0 ) {
+				continue;
+			}
+			if( leaf2->area != leaf->area ) {
+				continue;
+			}
+			if( !( pvs[leaf2->cluster >> 3] & ( 1 << ( leaf2->cluster & 7 ) ) ) ) {
+				continue;
+			}
+
+			for( k = 0; k < leaf2->numVisSurfaces; k++ ) {
+				msurface_t *surf = bmodel->surfaces + leaf2->visSurfaces[k];
+
+				UnionBounds( sky->mins, sky->maxs, surf->mins, surf->maxs );
+
+				if( !(surf->flags & SURF_SKY) ) {
+					numReceivers++;
 				}
 			}
+		}
 
-			for( j = 0; j < 3; j++ ) {
-				skies[numskies].skymins[j] -= 32;
-				skies[numskies].skymaxs[j] += 32;
-			}
+		if( numReceivers == 0 ) {
+			continue;
+		}
 
-			for( j = 0; j < bmodel->numleafs; j++ ) {
-				if( leafcheck[j] == checknum ) {
-					mleaf_t *leaf2 = bmodel->leafs + j;
-
-					for( k = 0; k < leaf2->numVisSurfaces; k++ ) {
-						msurface_t *surf = bmodel->surfaces + leaf2->visSurfaces[k];
-
-						UnionBounds( skies[numskies].mins, skies[numskies].maxs, surf->mins, surf->maxs );
-
-						if( !(surf->flags & SURF_SKY) ) {
-							cnt++;
-						}
-					}
-				}
-			}
-
-			if( cnt == 0 ) {
-				break;
-			}
-
-			//UnionBounds( skies[numskies].mins, skies[numskies].maxs, skies[numskies].skymins, skies[numskies].skymaxs );
-			for( j = 0; j < 3; j++ ) {
-				skies[numskies].mins[j] -= 32;
-				skies[numskies].maxs[j] += 32;
-			}
-
-			numskies++;
+		numskies++;
+		if( numskies == MAX_BRUSHSKIES ) {
+			break;
 		}
 	}
 
@@ -1723,8 +1643,9 @@ static void R_LoadWorldRtSkyLights( model_t *model ) {
 		vec_t farclip;
 		vec3_t dir = { 0, 0, -1 };
 		vec3_t cmins, cmaxs, v;
+		mbrushsky_t *sky = &skies[i];
 		const char *cvardir = r_lighting_realtime_sky_direction->string;
-		const vec_t *shaderDir = skies[i].shader->skyParms.lightDir;
+		const vec_t *shaderDir = sky->shader->skyParms.lightDir;
 
 		if( shaderDir[0] != 0.0 || shaderDir[1] != 0.0 || shaderDir[2] != 0.0 ) {
 			VectorCopy( shaderDir, dir );
@@ -1738,69 +1659,83 @@ static void R_LoadWorldRtSkyLights( model_t *model ) {
 		}
 
 		VectorNormalize( dir );
-		VectorCopy( dir, skies[i].dir );
+		VectorCopy( dir, sky->dir );
+		
+		// expand the volume a bit so that nearby volumes can be merged together due to intersection
+		for( j = 0; j < 3; j++ ) {
+			sky->skymins[j] -= 32;
+			sky->skymaxs[j] += 32;
+		}
+		for( j = 0; j < 3; j++ ) {
+			sky->mins[j] -= 32;
+			sky->maxs[j] += 32;
+		}
 
 		// extend the skyvolume along light direction
-		CopyBounds( skies[i].skymins, skies[i].skymaxs, cmins, cmaxs );
+		CopyBounds( sky->skymins, sky->skymaxs, cmins, cmaxs );
 
-		farclip = 2.0 * LocalBounds( skies[i].mins, skies[i].maxs, NULL, NULL, NULL );
+		farclip = 2.0 * LocalBounds( sky->mins, sky->maxs, NULL, NULL, NULL );
 
-		VectorMA( skies[i].skymins, farclip, dir, v );
+		VectorMA( sky->skymins, farclip, dir, v );
 		AddPointToBounds( v, cmins, cmaxs );
-		VectorMA( skies[i].skymaxs, farclip, dir, v );
+		VectorMA( sky->skymaxs, farclip, dir, v );
 		AddPointToBounds( v, cmins, cmaxs );
 
-		ClipBounds( cmins, cmaxs, skies[i].mins, skies[i].maxs );
-		//cmins[a] = max(cmins[a], skies[i].mins[a]);
-		//cmaxs[a] = min(cmaxs[a], skies[i].maxs[a]);
-		CopyBounds( cmins, cmaxs, skies[i].cullmins, skies[i].cullmaxs );
-		CopyBounds( cmins, cmaxs, skies[i].mins, skies[i].maxs );
-		skies[i].radius = LocalBounds( skies[i].cullmins, skies[i].cullmaxs, NULL, NULL, NULL );
+		CopyBounds( cmins, cmaxs, sky->mins, sky->maxs );
+		sky->radius = LocalBounds( cmins, cmaxs, NULL, NULL, NULL );
 	}
 
+	// merge intersecting sky volumes
 	while( true ) {
-		int removed = 0;
+		int merged = 0;
 
 		for( i = 0; i < numskies; i++ ) {
+			mbrushsky_t *sky = &skies[i];
+
 			for( j = 0; j < numskies; j++ ) {
+				mbrushsky_t *sky2 = &skies[j];
+
 				if( i == j ) {
 					continue;
 				}
 
-				if( !VectorCompare( skies[i].dir, skies[j].dir ) )  {
+				if( sky->area != sky2->area ) {
+					continue;
+				}
+				if( sky->shader != sky2->shader )  {
 					continue;
 				}
 
-				if( skies[i].area != skies[j].area ) {
-					continue;
-				}
-
-				if( BoundsOverlap( skies[i].skymins, skies[i].skymaxs, skies[j].skymins, skies[j].skymaxs ) ) {
+				if( BoundsOverlap( sky->skymins, sky->skymaxs, sky2->skymins, sky2->skymaxs ) ) {
 					// merge j into i
-					UnionBounds( skies[i].mins, skies[i].maxs, skies[j].mins, skies[j].maxs );
-					UnionBounds( skies[i].skymins, skies[i].skymaxs, skies[j].skymins, skies[j].skymaxs );
-					UnionBounds( skies[i].cullmins, skies[i].skymaxs, skies[j].cullmins, skies[j].cullmaxs );
+					UnionBounds( sky->mins, sky->maxs, sky2->mins, sky2->maxs );
+					UnionBounds( sky->skymins, sky->skymaxs, sky2->skymins, sky2->skymaxs );
 
-					memmove( &skies[j], &skies[j+1], sizeof( skies[0] ) * (numskies-j-1) );
+					// remove j
+					memmove( sky2, sky2 + 1, sizeof( *sky2 ) * (numskies-j-1) );
+
 					if( i > j ) i--;
 					j--;
 					numskies--;
-					removed++;
+					merged++;
 					break;
 				}
 			}
 		}
 
-		if(!removed) break;
+		if( !merged ) {
+			break;
+		}
 	}
 
 	for( i = 0; i < numskies; i++ ) {
 		int a;
 		vec_t l = 0;
-		vec3_t dir = { 0, 0, 0 };
+		vec3_t dir;
 		vec3_t corners[8];
+		mbrushsky_t *sky = &skies[i];
 
-		VectorCopy( skies[i].dir, dir );
+		VectorCopy( sky->dir, dir );
 
 		for( a = 0; a < 3; a++ ) {
 			if( fabs( dir[a] ) == 1.0f ) {
@@ -1812,83 +1747,63 @@ static void R_LoadWorldRtSkyLights( model_t *model ) {
 			// find the shortest magnitude axially aligned vector
 			l = 1000000;
 			for( j = 0; j < 3; j++ ) {
-				if( skies[i].skymaxs[j] - skies[i].skymins[j] < l ) {
+				if( sky->skymaxs[j] - sky->skymins[j] < l ) {
 					a = j;
-					l = skies[i].skymaxs[j] - skies[i].skymins[j];
+					l = sky->skymaxs[j] - sky->skymins[j];
 				}
 			}
 		}
 
 		// compute 8 frustum corners
-#if 1
 		for( j = 0; j < 4; j++ ) {
-			corners[j][a] = dir[a] < 0 ? skies[i].skymaxs[a] : skies[i].skymins[a];
-			corners[j][(a+1)%3] = j & 1 ? skies[i].skymins[(a+1)%3] : skies[i].skymaxs[(a+1)%3];
-			corners[j][(a+2)%3] = j & 2 ? skies[i].skymins[(a+2)%3] : skies[i].skymaxs[(a+2)%3];
-		}
-#else
-		for( j = 0; j < 4; j++ ) {
-//			corners[j][a] = dir[a] < 0 ? skies[i].maxs[a] : skies[i].mins[a];
-			corners[j][(a+0)%3] = j & 0 ? skies[i].mins[(a+0)%3] : skies[i].maxs[(a+0)%3];
-			corners[j][(a+1)%3] = j & 1 ? skies[i].mins[(a+1)%3] : skies[i].maxs[(a+1)%3];
-			corners[j][(a+2)%3] = j & 2 ? skies[i].mins[(a+2)%3] : skies[i].maxs[(a+2)%3];
-		}
-#endif
-
-		for( j = 0; j < 4; j++ ) {
-			VectorCopy( corners[j], skies[i].frustumCorners[j] );
-			VectorMA( corners[j], 1.0, dir, skies[i].frustumCorners[j+4] );
+			corners[j][a] = dir[a] < 0 ? sky->skymaxs[a] : sky->skymins[a];
+			corners[j][(a+1)%3] = j & 1 ? sky->skymins[(a+1)%3] : sky->skymaxs[(a+1)%3];
+			corners[j][(a+2)%3] = j & 2 ? sky->skymins[(a+2)%3] : sky->skymaxs[(a+2)%3];
 		}
 
-		R_ProjectFarFrustumCornersOnBounds( skies[i].frustumCorners, skies[i].mins, skies[i].maxs );
+		for( j = 0; j < 4; j++ ) {
+			VectorCopy( corners[j], sky->frustumCorners[j] );
+			VectorMA( corners[j], 1.0, dir, sky->frustumCorners[j+4] );
+		}
+
+		R_ProjectFarFrustumCornersOnBounds( sky->frustumCorners, sky->mins, sky->maxs );
 	}
 
-	//Com_Printf("Numskies is: %d\n", numskies);
+	bmodel->rtSkyLights = Mod_Malloc( model, numskies * sizeof( rtlight_t ) );
+	bmodel->numRtSkyLights = numskies;
 
-	if( 1 )
-	{
-		rtlight_t *lights;
+	for( i = 0; i < numskies; i++ ) {
+		rtlight_t *l = &bmodel->rtSkyLights[i];
+		mbrushsky_t *sky = &skies[i];
+		const vec_t *shaderColor = sky->shader->skyParms.lightColor;
 
-		lights = Mod_Malloc( model, numskies * sizeof( rtlight_t ) );
+		R_InitRtDirectionalLight( l, sky->frustumCorners, shaderColor );
 
-		for( i = 0; i < numskies; i++ ) {
-			rtlight_t *l = &lights[i];
-			const vec_t *shaderColor = skies[i].shader->skyParms.lightColor;
+		l->flags = LIGHTFLAG_REALTIMEMODE;
+		l->style = 0;
+		l->shadow = true;
+		l->world = true;
+		l->worldModel = model;
+		l->sky = true;
+		l->cascaded = true;
+		VectorCopy( shaderColor, l->skycolor );
 
-			R_InitRtDirectionalLight( l, skies[i].frustumCorners, shaderColor );
+		R_GetRtLightVisInfo( bmodel, l );
 
-			l->flags = LIGHTFLAG_REALTIMEMODE;
-			l->style = 0;
-			l->shadow = true;
-			l->world = true;
-			l->worldModel = model;
-			l->sky = true;
-			l->cascaded = true;
-			VectorCopy( shaderColor, l->skycolor );
+		CopyBounds( sky->skymins, sky->skymaxs, l->skymins, l->skymaxs );
 
-			R_GetRtLightVisInfo( bmodel, l );
-
-			CopyBounds( skies[i].skymins, skies[i].skymaxs, l->skymins, l->skymaxs );
-
-			if( l->numReceiveSurfaces == 0 ) {
-				l->radius = 0;
-				l->cluster = CLUSTER_INVALID;
-				l->area = -1;
-				continue;
-			}
-
+		if( l->numReceiveSurfaces == 0 ) {
+			l->radius = 0;
 			l->cluster = CLUSTER_INVALID;
-			l->area = skies[i].area;
+			l->area = -1;
+			continue;
 		}
 
-		bmodel->numRtSkyLights = numskies;
-		bmodel->rtSkyLights = lights;
-
-		R_SetWorldRtSkyLightsColors( model );
+		l->cluster = CLUSTER_INVALID;
+		l->area = sky->area;
 	}
 
-	R_Free( leafcheck );
-	R_Free( skyleafs );
+	R_SetWorldRtSkyLightsColors( model );
 }
 
 /*
