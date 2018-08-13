@@ -558,7 +558,7 @@ static void _R_DrawSurfaces( drawList_t *list, bool *depthCopied, int mode, int 
 				}
 			}
 
-			if( prevBatchDrawSurf && !batchDrawSurf || batchFlush != r_flushBatchSurfCb[drawSurfType] ) {
+			if( ( prevBatchDrawSurf && !batchDrawSurf ) || ( batchFlush != r_flushBatchSurfCb[drawSurfType] ) ) {
 				if( batchFlush ) batchFlush();
 				batchFlushed = true;
 			}

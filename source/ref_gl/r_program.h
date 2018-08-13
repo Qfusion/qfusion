@@ -224,7 +224,7 @@ void RP_UpdateDiffuseLightUniforms( int elem,
 void RP_UpdateLightstyleUniforms( int elem, const superLightStyle_t *superLightStyle );
 
 void RP_UpdateRealtimeLightsUniforms( int elem, const vec3_t lightVec, const mat4_t objectToLightMatrix,
-	unsigned int numRtLights, const rtlight_t **rtlights, unsigned numSurfs, unsigned *surfRtLightBits );
+	unsigned int numRtLights, rtlight_t **rtlights, unsigned numSurfs, unsigned *surfRtLightBits );
 
 void RP_UpdateFogUniforms( int elem, byte_vec4_t color, float clearDist, float opaqueDist,
 						   cplane_t *fogPlane, cplane_t *eyePlane, float eyeFogDist );
