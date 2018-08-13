@@ -2301,7 +2301,7 @@ void RP_UpdateLightstyleUniforms( int elem, const superLightStyle_t *superLightS
 * RP_UpdateRealtimeLightsUniforms
 */
 void RP_UpdateRealtimeLightsUniforms( int elem, const vec3_t lightVec, const mat4_t objectToLightMatrix,
-	unsigned int numRtLights, const rtlight_t **rtlights, unsigned numSurfs, unsigned *surfRtLightBits ) {
+	unsigned int numRtLights, rtlight_t **rtlights, unsigned numSurfs, unsigned *surfRtLightBits ) {
 	unsigned i;
 	glsl_program_t *program = r_glslprograms + elem - 1;
 

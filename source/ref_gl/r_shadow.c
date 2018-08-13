@@ -251,8 +251,8 @@ static void R_CompileLightSideView( rtlight_t *l, int side ) {
 	head.tail = &head;
 
 	// walk the sorted list, batching BSP geometry
-	R_WalkDrawList( &r_shadowlist, R_BatchCompileShadowSurf, &head );
-	R_WalkDrawList( &r_shadowportallist, R_BatchCompileShadowSurf, &head );
+	R_WalkDrawList( &r_shadowlist, (walkDrawSurf_cb_cb)&R_BatchCompileShadowSurf, &head );
+	R_WalkDrawList( &r_shadowportallist, (walkDrawSurf_cb_cb)&R_BatchCompileShadowSurf, &head );
 
 	for( p = head.next; p && p != &head; p = next ) {
 		next = p->next;
@@ -265,8 +265,8 @@ static void R_CompileLightSideView( rtlight_t *l, int side ) {
 	} else {
 		// walk the list again, now uploading elems to newly created VBO's
 		head.tail = &head;
-		R_WalkDrawList( &r_shadowlist, R_BatchCompileShadowSurf, &head );
-		R_WalkDrawList( &r_shadowportallist, R_BatchCompileShadowSurf, &head );
+		R_WalkDrawList( &r_shadowlist, (walkDrawSurf_cb_cb)&R_BatchCompileShadowSurf, &head );
+		R_WalkDrawList( &r_shadowportallist, (walkDrawSurf_cb_cb)&R_BatchCompileShadowSurf, &head );
 		R_UploadBatchShadowElems( head.tail );
 	}
 
