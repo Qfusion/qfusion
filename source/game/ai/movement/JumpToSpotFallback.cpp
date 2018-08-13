@@ -202,7 +202,7 @@ void JumpToSpotFallback::SetupMovement( Context *context ) {
 		// Try using a cheating acceleration
 		Vec3 forwardDir( entityPhysicsState.ForwardDir() );
 		// Check whether the bot is not leaning too hard to avoid weird-looking movement
-		if( fabsf( forwardDir.Z() ) < 0.3f & DistanceSquared( entityPhysicsState.Origin(), targetOrigin ) > SQUARE( 48 ) ) {
+		if( fabsf( forwardDir.Z() ) < 0.3f && DistanceSquared( entityPhysicsState.Origin(), targetOrigin ) > SQUARE( 48 ) ) {
 			forwardDir.Z() = 0;
 			forwardDir.NormalizeFast();
 			if( toTargetDir.Dot( forwardDir ) > 0.9f ) {
