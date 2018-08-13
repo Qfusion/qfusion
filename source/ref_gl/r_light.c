@@ -956,6 +956,8 @@ REALTIME LIGHTS
 =============================================================================
 */
 
+//#define ENABLE_SURFNORMAL_CHECK // occasionally we get bogus surface normal from the first triangle
+
 typedef struct {
 	unsigned maxLeafs;
 	unsigned maxSurfaces;
@@ -1146,12 +1148,17 @@ static void R_GetRtLightSurfaceVisInfo( rtlight_t *l, mbrushmodel_t *bm, r_light
 				noshadow = false;
 			}
 
+#ifdef ENABLE_SURFNORMAL_CHECK
 			if( l->directional && !nolight ) {
 				// check plane normal direction for directional lights
 				if( ( surf->facetype == FACETYPE_PLANAR ) && !Shader_CullNone( surf->shader ) ) {
 					float dot, epsilon = ON_EPSILON;
 
 					dot = DotProduct( surf->plane, &l->axis[AXIS_FORWARD] );
+					if( s == 926 ) {
+						Com_Printf("%f %s\n", VectorLength( surf->plane ), vtos( surf->plane ) );
+					}
+
 					if( Shader_CullBack( surf->shader ) ) {
 						dot = -dot;
 						epsilon = -ON_EPSILON;
@@ -1162,6 +1169,7 @@ static void R_GetRtLightSurfaceVisInfo( rtlight_t *l, mbrushmodel_t *bm, r_light
 					}
 				}
 			}
+#endif
 
 			if( nolight && noshadow ) {
 				continue;
@@ -1754,6 +1762,7 @@ int R_CalcRtLightBBoxSidemask( const rtlight_t *l, const vec3_t mins, const vec3
 */
 int R_CalcRtLightSurfaceSidemask( const rtlight_t *lt, const msurface_t *surf ) {
 	if( !lt->directional ) {
+#ifdef ENABLE_SURFNORMAL_CHECK
 		// quick distance-to-plane check
 		if( ( surf->facetype == FACETYPE_PLANAR ) && !Shader_CullNone( surf->shader ) ) {
 			vec_t dist = DotProduct( lt->origin, surf->plane ) - surf->plane[3];
@@ -1768,6 +1777,7 @@ int R_CalcRtLightSurfaceSidemask( const rtlight_t *lt, const msurface_t *surf ) 
 				return 0;
 			}
 		}
+#endif
 	}
 
 	return R_CalcRtLightBBoxSidemask( lt, surf->mins, surf->maxs );
