@@ -12,4 +12,4 @@
 	url = https://github.com/Qfusion/nanosvg
 [submodule "third-party/recastnavigation"]
 	path = third-party/recastnavigation
-	url = https://github.com/Warsow/recastnavigation.git
+	url = https://github.com/Qfusion/recastnavigation.git
