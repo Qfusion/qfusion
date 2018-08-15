@@ -746,13 +746,13 @@ void team_CTF_teamflag( Entity @ent, int team )
 
     // check for spawning inside solid, and try to avoid at least the case of shared leaf
     Trace trace;
-    trace.doTrace( ent.origin, mins, maxs, ent.origin, 0, MASK_DEADSOLID );
+    trace.doTrace( ent.origin, mins, maxs, ent.origin, -1, MASK_DEADSOLID );
     if ( trace.startSolid || trace.allSolid )
     {
         // try to resolve the shared leaf case by moving it up by a little
         Vec3 start = ent.origin;
         start.z += 16;
-        trace.doTrace( start, mins, maxs, start, 0, MASK_DEADSOLID );
+        trace.doTrace( start, mins, maxs, start, -1, MASK_DEADSOLID );
         if ( trace.startSolid || trace.allSolid )
         {
             G_Print( ent.classname + " starts inside solid. Inhibited\n" );
