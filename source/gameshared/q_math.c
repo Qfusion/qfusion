@@ -482,45 +482,40 @@ float anglemod( float a ) {
 }
 
 /*
-* CalcFov
+* WidescreenFov
 */
-float CalcFov( float fov_x, float width, float height ) {
-	float x;
-
-	if( fov_x < 1 || fov_x > 179 ) {
-		Sys_Error( "Bad fov: %f", fov_x );
-	}
-
-	x = width / tan( fov_x / 360 * M_PI );
-
-	return atan( height / x ) * 360 / M_PI;
+float WidescreenFov( float fov ) {
+	return atan( tan( (fov) / 360.0 * M_PI ) * (3.0 / 4.0) ) * (360.0 / M_PI);
 }
 
 /*
-* AdjustFov
+* CalcVerticalFov
 */
-void AdjustFov( float *fov_x, float *fov_y, float width, float height, bool lock_x ) {
-	float x, y;
+float CalcVerticalFov( float fov_x, float width, float height ) {
+	float x;
 
-	if( width * 3 == 4 * height || width * 4 == height * 5 || height > width ) {
-		// 4:3, 5:4 ratios or vertical display
-		return;
+	if( fov_x < 1 || fov_x > 179 ) {
+		Sys_Error( "Bad horizontal fov: %f", fov_x );
 	}
 
-	if( lock_x ) {
-		*fov_y = 2 * atan( ( width * 3 ) / ( height * 4 ) * tan( *fov_y * M_PI / 360.0 * 0.5 ) ) * 360 / M_PI;
-		return;
+	x = height;
+	x *= tan( fov_x / 360.0 * M_PI );
+	return atan( x / width ) * 360.0 / M_PI;
+}
+
+/*
+* CalcHorizontalFov
+*/
+float CalcHorizontalFov( float fov_y, float width, float height ) {
+	float x;
+
+	if( fov_y < 1 || fov_y > 179 ) {
+		Sys_Error( "Bad vertical fov: %f", fov_y );
 	}
 
-	y = CalcFov( *fov_x, 640, 480 );
-	x = *fov_x;
-
-	*fov_x = CalcFov( y, height, width );
-	if( *fov_x < x ) {
-		*fov_x = x;
-	} else {
-		*fov_y = y;
-	}
+	x = width;
+	x *= tan( fov_y / 360.0 * M_PI );
+	return atan( x / height ) * 360.0 / M_PI;
 }
 
 /*

@@ -581,9 +581,8 @@ static void R_DrawSkyportal( const entity_t *e, skyportal_t *skyportal ) {
 
 	rn.refdef.rdflags &= ~( RDF_UNDERWATER | RDF_CROSSINGWATER | RDF_SKYPORTALINVIEW );
 	if( skyportal->fov ) {
-		rn.refdef.fov_x = skyportal->fov;
-		rn.refdef.fov_y = CalcFov( rn.refdef.fov_x, rn.refdef.width, rn.refdef.height );
-		AdjustFov( &rn.refdef.fov_x, &rn.refdef.fov_y, glConfig.width, glConfig.height, false );
+		rn.refdef.fov_y = WidescreenFov( skyportal->fov );
+		rn.refdef.fov_x = CalcHorizontalFov( rn.refdef.fov_y, rn.refdef.width, rn.refdef.height );
 	}
 
 	R_SetupViewMatrices( &rn.refdef );

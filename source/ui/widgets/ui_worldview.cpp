@@ -41,7 +41,7 @@ private:
 	vec3_t aWaveAmplitude;
 	vec3_t aWavePhase;
 	vec3_t aWaveFrequency;
-	float fovX;
+	float fovY;
 	float mouseSensitivity;
 	vec3_t anglesMove;
 	vec3_t anglesClamp;
@@ -69,7 +69,7 @@ public:
 
 		// Some default values
 		Matrix3_Copy( axis_identity, refdef.viewaxis );
-		fovX = 100.0f;
+		fovY = 100.0f;
 		mouseSensitivity = 0.0f;
 
 		InitLightStyles();
@@ -109,9 +109,8 @@ public:
 		Rocket::Core::Vector2f box = GetBox().GetSize( Rocket::Core::Box::CONTENT );
 		refdef.width = box.x;
 		refdef.height = box.y;
-		refdef.fov_x = fovX;
-		refdef.fov_y = CalcFov( refdef.fov_x, refdef.width, refdef.height );
-		AdjustFov( &refdef.fov_x, &refdef.fov_y, refdef.width, refdef.height, false );
+		refdef.fov_y = WidescreenFov( fovY );
+		refdef.fov_x = CalcHorizontalFov( refdef.fov_y, refdef.width, refdef.height );
 		refdef.time = ui_main->getRefreshState().time;
 
 		anglesMove[PITCH] += mousedy * mouseSensitivity * 0.022;
@@ -193,7 +192,7 @@ public:
 			} else if( *it == "wave-roll-frequency" ) {
 				aWaveFrequency[ROLL] = atof( GetProperty( *it )->Get<String>().CString() );
 			} else if( *it == "fov" ) {
-				fovX = atof( GetProperty( *it )->Get<String>().CString() );
+				fovY = atof( GetProperty( *it )->Get<String>().CString() );
 			} else if( *it == "color-correction" ) {
 				colorCorrection = GetProperty( *it )->Get<String>();
 			} else if( *it == "mouse-sensitivity" ) {

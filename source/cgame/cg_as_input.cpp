@@ -22,19 +22,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 //=======================================================================
 
-static cg_asApiFuncPtr_t cg_asInputAPI[] = {
-	{ "void CGame::Input::Load()", &cgs.asInput.load, false },
-	{ "void CGame::Input::Init()", &cgs.asInput.init, true },
-	{ "void CGame::Input::Shutdown()", &cgs.asInput.shutdown, true },
-	{ "void CGame::Input::Frame( int64 curTime, int frameTime )", &cgs.asInput.frame, true },
-	{ "void CGame::Input::ClearState()", &cgs.asInput.clearState, true },
-	{ "void CGame::Input::MouseMove( int mx, int my )", &cgs.asInput.mouseMove, true },
-	{ "uint CGame::Input::GetButtonBits()", &cgs.asInput.getButtonBits, true },
-	{ "Vec3 CGame::Input::GetAngularMovement()", &cgs.asInput.getAngularMovement, true },
-	{ "Vec3 CGame::Input::GetMovement()", &cgs.asInput.getMovement, true },
-	{ nullptr, nullptr, false },
-};
-
 static const gs_asEnumVal_t asTouchpadEnumVals[] =
 {
 	ASLIB_ENUM_VAL( TOUCHPAD_MOVE ),
@@ -86,7 +73,7 @@ static const gs_asProperty_t astouch_Properties[] =
 	{ ASLIB_PROPERTY_DECL( const int, y ), ASLIB_FOFFSET( cg_touch_t, y ) },
 	{ ASLIB_PROPERTY_DECL( const int64, time ), ASLIB_FOFFSET( cg_touch_t, time ) },
 	{ ASLIB_PROPERTY_DECL( const int, area ), ASLIB_FOFFSET( cg_touch_t, area ) },
-	{ ASLIB_PROPERTY_DECL( const  bool, areaValid ), ASLIB_FOFFSET( cg_touch_t, area_valid ) },
+	{ ASLIB_PROPERTY_DECL( const bool, areaValid ), ASLIB_FOFFSET( cg_touch_t, area_valid ) },
 
 	ASLIB_PROPERTY_NULL
 };
@@ -149,10 +136,6 @@ static asvec4_t CG_asInputGetThumbsticks( void ) {
 	return sticks;
 }
 
-static float CG_asInputGetPixelRatio( void ) {
-	return cgs.pixelRatio;
-}
-
 const gs_asClassDescriptor_t * const asCGameInputClassesDescriptors[] =
 {
 	&asTouchClassDescriptor,
@@ -167,30 +150,11 @@ const gs_asglobfuncs_t asCGameInputGlobalFuncs[] =
 	{ "Touchpad @GetTouchpad( int id )", asFUNCTION( CG_GetTouchpad ), NULL },
 	{ "Vec4 GetThumbsticks()", asFUNCTION( CG_asInputGetThumbsticks ), NULL },
 	{ "float GetSensitivityScale( float sens, float zoomSens )", asFUNCTION( CG_GetSensitivityScale ), NULL },
-	{ "float GetPixelRatio()", asFUNCTION( CG_asInputGetPixelRatio ), NULL },
 
 	{ NULL }
 };
 
 //======================================================================
-
-/*
-* CG_asLoadInputScript
-*/
-bool CG_asLoadInputScript( void ) {
-	auto asModule = CG_asLoadScriptModule( CG_SCRIPTS_INPUT_MODULE_NAME, "input", cg_asInputAPI );
-	if( asModule == nullptr ) {
-		return false;
-	}
-	return true;
-}
-
-/*
-* CG_asUnloadInputScript
-*/
-void CG_asUnloadInputScript( void ) {
-	CG_asUnloadScriptModule( CG_SCRIPTS_INPUT_MODULE_NAME, cg_asInputAPI );
-}
 
 /*
 * CG_asInputInit

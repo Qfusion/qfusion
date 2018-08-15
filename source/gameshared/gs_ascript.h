@@ -84,7 +84,7 @@ typedef struct gs_asglobproperties_s {
 	void *pointer;
 } gs_asglobproperties_t;
 
-static void gs_asemptyfunc( void ) {}
+void gs_asemptyfunc( void );
 
 #define ASLIB_LOCAL_CLASS_DESCR( x )
 

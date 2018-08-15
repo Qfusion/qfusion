@@ -980,7 +980,7 @@ int CG_DemoCam_FreeFly( void ) {
 
 		cam_POVent = 0;
 		cam_3dPerson = false;
-		return VIEWDEF_CAMERA;
+		return VIEWDEF_DEMOCAM;
 	}
 
 	return VIEWDEF_PLAYERVIEW;
@@ -991,7 +991,7 @@ static void CG_Democam_SetCameraPositionFromView( void ) {
 		VectorCopy( cg.view.origin, cam_origin );
 		VectorCopy( cg.view.angles, cam_angles );
 		VectorCopy( cg.view.velocity, cam_velocity );
-		cam_fov = cg.view.refdef.fov_x;
+		cam_fov = cg.view.fov_y;
 		cam_orbital_radius = 0;
 	}
 
@@ -1031,19 +1031,19 @@ static int CG_Democam_CalcView( void ) {
 				VectorCopy( cg.view.origin, cam_origin );
 				VectorCopy( cg.view.angles, cam_angles );
 				VectorCopy( cg.view.velocity, cam_velocity );
-				cam_fov = cg.view.refdef.fov_x;
+				cam_fov = cg.view.fov_y;
 				break;
 
 			case DEMOCAM_THIRDPERSON:
 				VectorCopy( cg.view.origin, cam_origin );
 				VectorCopy( cg.view.angles, cam_angles );
 				VectorCopy( cg.view.velocity, cam_velocity );
-				cam_fov = cg.view.refdef.fov_x;
+				cam_fov = cg.view.fov_y;
 				cam_3dPerson = true;
 				break;
 
 			case DEMOCAM_POSITIONAL:
-				viewType = VIEWDEF_CAMERA;
+				viewType = VIEWDEF_DEMOCAM;
 				cam_POVent = 0;
 				VectorCopy( currentcam->origin, cam_origin );
 				if( !CG_DemoCam_LookAt( currentcam->trackEnt, cam_origin, cam_angles ) ) {
@@ -1053,7 +1053,7 @@ static int CG_Democam_CalcView( void ) {
 				break;
 
 			case DEMOCAM_PATH_LINEAR:
-				viewType = VIEWDEF_CAMERA;
+				viewType = VIEWDEF_DEMOCAM;
 				cam_POVent = 0;
 				VectorCopy( cam_origin, v );
 
@@ -1078,7 +1078,7 @@ static int CG_Democam_CalcView( void ) {
 				break;
 
 			case DEMOCAM_PATH_SPLINE:
-				viewType = VIEWDEF_CAMERA;
+				viewType = VIEWDEF_DEMOCAM;
 				cam_POVent = 0;
 				clamp( lerpfrac, 0, 1 );
 				VectorCopy( cam_origin, v );
@@ -1150,7 +1150,7 @@ static int CG_Democam_CalcView( void ) {
 				break;
 
 			case DEMOCAM_ORBITAL:
-				viewType = VIEWDEF_CAMERA;
+				viewType = VIEWDEF_DEMOCAM;
 				cam_POVent = 0;
 				cam_fov = currentcam->fov;
 				VectorCopy( cam_origin, v );

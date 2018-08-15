@@ -271,14 +271,15 @@ private:
 		refdef.height = box.y;
 
 		refdef.fov_x = fov_x;
-		refdef.fov_y = fov_y;
-		if( !refdef.fov_x && !refdef.fov_y ) {
-			refdef.fov_x = 30.0f;
+		refdef.fov_y = WidescreenFov( fov_y );
+		if( !fov_x && !fov_y ) {
+			refdef.fov_y = WidescreenFov( 30.0f );
 		}
+
 		if( !refdef.fov_x ) {
-			refdef.fov_x = CalcFov( refdef.fov_y, refdef.height, refdef.width );
+			refdef.fov_x = CalcHorizontalFov( refdef.fov_y, refdef.width, refdef.height );
 		} else if( !refdef.fov_y ) {
-			refdef.fov_y = CalcFov( refdef.fov_x, refdef.width, refdef.height );
+			refdef.fov_y = CalcVerticalFov( refdef.fov_x, refdef.width, refdef.height );
 		}
 
 		skel = NULL;

@@ -301,8 +301,9 @@ vec_t ColorNormalize( const vec_t *in, vec_t *out );
 
 #define ColorGrayscale( c ) ( 0.299 * ( c )[0] + 0.587 * ( c )[1] + 0.114 * ( c )[2] )
 
-float CalcFov( float fov_x, float width, float height );
-void AdjustFov( float *fov_x, float *fov_y, float width, float height, bool lock_x );
+float WidescreenFov( float fov );
+float CalcVerticalFov( float fov_x, float width, float height );
+float CalcHorizontalFov( float fov_y, float width, float height );
 
 #define Q_sign( x ) ( ( x ) < 0 ? -1 : ( ( x ) > 0 ? 1 : 0 ) )
 #define Q_rint( x ) ( ( x ) < 0 ? ( (int)( ( x ) - 0.5f ) ) : ( (int)( ( x ) + 0.5f ) ) )

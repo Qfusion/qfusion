@@ -22,6 +22,24 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 std::function<void(asIScriptContext *)> cg_empty_as_cb = [](asIScriptContext *ctx) {};
 
+static cg_asApiFuncPtr_t cg_asCGameAPI[] = {
+	{ "void CGame::Load()", &cgs.asMain.load, false },
+
+	{ "void CGame::Input::Init()", &cgs.asInput.init, true },
+	{ "void CGame::Input::Shutdown()", &cgs.asInput.shutdown, true },
+	{ "void CGame::Input::Frame( int64 curTime, int frameTime )", &cgs.asInput.frame, true },
+	{ "void CGame::Input::ClearState()", &cgs.asInput.clearState, true },
+	{ "void CGame::Input::MouseMove( int mx, int my )", &cgs.asInput.mouseMove, true },
+	{ "uint CGame::Input::GetButtonBits()", &cgs.asInput.getButtonBits, true },
+	{ "Vec3 CGame::Input::GetAngularMovement()", &cgs.asInput.getAngularMovement, true },
+	{ "Vec3 CGame::Input::GetMovement()", &cgs.asInput.getMovement, true },
+
+	{ "void CGame::Camera::SetupCamera( CGame::Camera::Camera @cam )", &cgs.asCamera.setupCamera, true },
+	{ "void CGame::Camera::SetupRefdef( const CGame::Camera::Camera @cam, CGame::Camera::Refdef @rd )", &cgs.asCamera.setupRefdef, true },
+
+	{ nullptr, nullptr, false },
+};
+
 //=======================================================================
 
 static const gs_asEnumVal_t asLimitsEnumVals[] =
@@ -69,20 +87,24 @@ static void CG_asInitializeCGameEngineSyntax( asIScriptEngine *asEngine ) {
 	// register global enums
 	GS_asRegisterEnums( asEngine, asCGameEnums, "CGame" );
 	GS_asRegisterEnums( asEngine, asCGameInputEnums, "CGame" );
+	GS_asRegisterEnums( asEngine, asCGameCameraEnums, "CGame" );
 
 	// register global funcdefs
 	GS_asRegisterFuncdefs( asEngine, asCGameCmdFuncdefs, "CGame::Cmd" );
 
 	// first register all class names so methods using custom classes work
 	GS_asRegisterObjectClassNames( asEngine, asCGameInputClassesDescriptors, "CGame::Input" );
+	GS_asRegisterObjectClassNames( asEngine, asCGameCameraClassesDescriptors, "CGame::Camera" );
 
 	// register classes
 	GS_asRegisterObjectClasses( asEngine, asCGameInputClassesDescriptors, "CGame::Input" );
+	GS_asRegisterObjectClasses( asEngine, asCGameCameraClassesDescriptors, "CGame::Camera" );
 
 	// register global functions
 	GS_asRegisterGlobalFunctions( asEngine, asCGameGlobalFuncs, "CGame" );
 	GS_asRegisterGlobalFunctions( asEngine, asCGameCmdGlobalFuncs, "CGame::Cmd" );
 	GS_asRegisterGlobalFunctions( asEngine, asCGameInputGlobalFuncs, "CGame::Input" );
+	GS_asRegisterGlobalFunctions( asEngine, asCGameCameraGlobalFuncs, "CGame::Camera" );
 
 	// register global properties
 }
@@ -127,9 +149,6 @@ void CG_asShutdownScriptEngine( void ) {
 	if( asEngine == NULL ) {
 		return;
 	}
-
-	CG_asUnloadGameScript();
-	CG_asUnloadInputScript();
 
 	cgs.asExport->asReleaseEngine( asEngine );
 	cgs.asEngine = NULL;
@@ -251,7 +270,7 @@ error:
 * CG_asLoadGameScript
 */
 bool CG_asLoadGameScript( void ) {
-	auto asModule = CG_asLoadScriptModule( CG_SCRIPTS_GAME_MODULE_NAME, "cgame", NULL );
+	auto asModule = CG_asLoadScriptModule( CG_SCRIPTS_GAME_MODULE_NAME, "cgame", cg_asCGameAPI );
 	if( asModule == nullptr ) {
 		return false;
 	}

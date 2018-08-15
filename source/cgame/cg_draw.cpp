@@ -182,8 +182,8 @@ static void CG_DrawModel( int x, int y, int align, int w, int h, struct model_s 
 	refdef.y = y;
 	refdef.width = w;
 	refdef.height = h;
-	refdef.fov_x = 30;
-	refdef.fov_y = CalcFov( refdef.fov_x, w, h );
+	refdef.fov_y = WidescreenFov( 30 );
+	refdef.fov_x = CalcHorizontalFov( refdef.fov_y, w, h );
 	refdef.time = cg.time;
 	refdef.rdflags = RDF_NOWORLDMODEL;
 	Matrix3_Copy( axis_identity, refdef.viewaxis );

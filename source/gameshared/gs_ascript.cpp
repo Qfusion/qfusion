@@ -26,6 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gs_ascript.h"
 
 angelwrap_api_t *module_angelExport = NULL;
+void gs_asemptyfunc( void ) {}
 
 #ifdef __cplusplus
 extern "C" {

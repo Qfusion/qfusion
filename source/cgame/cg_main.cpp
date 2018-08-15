@@ -1183,6 +1183,8 @@ void CG_Init( const char *serverName, unsigned int playerNum,
 
 	CG_RefreshQuickMenu();
 
+	CG_asLoadGameScript();
+
 	CG_InitInput();
 
 	CG_RegisterVariables();
@@ -1233,8 +1235,6 @@ void CG_Init( const char *serverName, unsigned int playerNum,
 	CG_ConfigString( CS_AUTORECORDSTATE, cgs.configStrings[CS_AUTORECORDSTATE] );
 
 	CG_DemocamInit();
-
-	CG_asLoadGameScript();
 }
 
 /*
@@ -1247,6 +1247,7 @@ void CG_Shutdown( void ) {
 	CG_UnregisterCGameCommands();
 	CG_FreeTemporaryBoneposesCache();
 	CG_ShutdownInput();
+	CG_asUnloadGameScript();
 	CG_asShutdownScriptEngine();
 }
 

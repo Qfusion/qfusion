@@ -281,8 +281,6 @@ void CG_CenterView( float pitch ) {
 * CG_InputInit
 */
 void CG_InitInput( void ) {
-	CG_asLoadInputScript();
-
 	CG_asInputInit();
 }
 
@@ -291,8 +289,6 @@ void CG_InitInput( void ) {
 */
 void CG_ShutdownInput( void ) {
 	CG_asInputShutdown();
-
-	CG_asUnloadInputScript();
 }
 
 /*

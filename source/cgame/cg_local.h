@@ -388,8 +388,9 @@ typedef struct {
 
 // view types
 enum {
-	VIEWDEF_CAMERA,
+	VIEWDEF_DEMOCAM,
 	VIEWDEF_PLAYERVIEW,
+	VIEWDEF_OVERHEAD,
 
 	VIEWDEF_MAXTYPES
 };
@@ -401,13 +402,15 @@ typedef struct {
 	bool playerPrediction;
 	bool drawWeapon;
 	bool draw2D;
-	refdef_t refdef;
+	float fov_x, fov_y;
 	float fracDistFOV;
 	vec3_t origin;
 	vec3_t angles;
 	mat3_t axis;
 	vec3_t velocity;
 	bool flipped;
+	float stereoSeparation;
+	refdef_t refdef;
 } cg_viewdef_t;
 
 #include "cg_democams.h"
@@ -424,11 +427,15 @@ typedef struct {
 
 	// AngelScript
 	struct angelwrap_api_s *asExport;
-	void *asEngine;
 
+	void *asEngine;
 	// AS input subsystem API
 	struct {
 		void *load;
+	} asMain;
+
+	// AS input subsystem API
+	struct {
 		void *init;
 		void *shutdown;
 		void *frame;
@@ -438,6 +445,12 @@ typedef struct {
 		void *getAngularMovement;
 		void *getMovement;
 	} asInput;
+
+	// AS camera subsystem API
+	struct {
+		void *setupCamera;
+		void *setupRefdef;
+	} asCamera;
 
 	// fonts
 	char fontSystemFamily[MAX_QPATH];
@@ -1172,8 +1185,6 @@ void CG_asShutdownScriptEngine( void );
 bool CG_asLoadGameScript( void );
 void CG_asUnloadGameScript( void );
 
-bool CG_asLoadInputScript( void );
-void CG_asUnloadInputScript( void );
 void CG_asInputInit( void );
 void CG_asInputShutdown( void );
 void CG_asInputFrame( int frameTime );
@@ -1182,6 +1193,9 @@ void CG_asInputMouseMove( int mx, int my );
 unsigned CG_asGetButtonBits( void );
 void CG_asGetAngularMovement( vec3_t viewAngles );
 void CG_asGetMovement( vec3_t movement );
+
+void CG_asSetupCamera( cg_viewdef_t *view );
+void CG_asSetupRefdef( cg_viewdef_t *view, refdef_t *rd );
 
 //
 // cg_input.cpp
