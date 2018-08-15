@@ -28,7 +28,7 @@ float pixelRatio;
 
 void Init()
 {
-	pixelRatio = GetPixelRatio();
+	pixelRatio = CGame::Camera::GetViewport().screenPixelRatio;
 
 	CGame::Input::Keys::Init();
 }
