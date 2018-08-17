@@ -629,26 +629,29 @@ vattribmask_t R_FillVBOVertexDataBuffer( mesh_vbo_t *vbo, vattribmask_t vattribs
 		const int edges[3][2] = { { 1, 0 }, { 2, 0 }, { 2, 1 } };
 		vec4_t centre[4];
 		vec4_t axes[4];
-		vec4_t *verts = mesh->xyzArray;
+		vec4_t *verts = NULL;
 		const elem_t *elems = mesh->elems, trifanElems[6] = { 0, 1, 2, 0, 2, 3 };
-		int numQuads;
+		int numQuads = 0;
 		size_t bufferOffset0 = vbo->spritePointsOffset;
 		size_t bufferOffset1 = vbo->sVectorsOffset;
 
 		assert( ( mesh->elems && mesh->numElems ) || ( numVerts == 4 ) );
-		if( mesh->elems && mesh->numElems ) {
-			numQuads = mesh->numElems / 6;
 
-			// protect against bogus autosprite2 meshes
-			if( numQuads > mesh->numVerts / 4 ) {
-				numQuads = mesh->numVerts / 4;
+		if( mesh->xyzArray ) {
+			verts = mesh->xyzArray;
+
+			if( mesh->elems && mesh->numElems ) {
+				numQuads = mesh->numElems / 6;
+
+				// protect against bogus autosprite2 meshes
+				if( numQuads > mesh->numVerts / 4 ) {
+					numQuads = mesh->numVerts / 4;
+				}
+			} else if( numVerts == 4 ) {
+				// single quad as triangle fan
+				numQuads = 1;
+				elems = trifanElems;
 			}
-		} else if( numVerts == 4 ) {
-			// single quad as triangle fan
-			numQuads = 1;
-			elems = trifanElems;
-		} else {
-			numQuads = 0;
 		}
 
 		for( i = 0; i < numQuads; i++, elems += 6 ) {
@@ -710,17 +713,14 @@ vattribmask_t R_FillVBOVertexDataBuffer( mesh_vbo_t *vbo, vattribmask_t vattribs
 			bufferOffset1 += 4 * vertSize;
 		}
 	} else if( vbo->spritePointsOffset && ( ( vattribs & VATTRIB_AUTOSPRITE_BIT ) == VATTRIB_AUTOSPRITE_BIT ) ) {
-		vec4_t *verts;
+		vec4_t *verts = NULL;
 		vec4_t centre[4];
-		int numQuads;
+		int numQuads = 0;
 		size_t bufferOffset = vbo->spritePointsOffset;
 
 		if( mesh->xyzArray ) {
 			verts = mesh->xyzArray;
 			numQuads = numVerts / 4;
-		} else {
-			verts = NULL;
-			numQuads = 0;
 		}
 
 		for( i = 0; i < numQuads; i++ ) {
