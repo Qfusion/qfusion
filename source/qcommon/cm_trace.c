@@ -367,7 +367,7 @@ static inline int CM_PatchContents( cface_t *patch, vec3_t p ) {
 	int i, c;
 	cbrush_t *facet;
 
-	for( i = 0, facet = patch->facets; i < patch->numfacets; i++, patch++ )
+	for( i = 0, facet = patch->facets; i < patch->numfacets; i++, facet++ )
 		if( ( c = CM_BrushContents( facet, p ) ) ) {
 			return c;
 		}
