@@ -458,38 +458,20 @@ void CL_UIModule_UpdateConnectScreen( bool backGround ) {
 }
 
 /*
-* CL_UIModule_Keydown
+* CL_UIModule_KeyEvent
 */
-void CL_UIModule_Keydown( int key ) {
+void CL_UIModule_KeyEvent( int key, bool down ) {
 	if( uie ) {
-		uie->Keydown( UI_CONTEXT_MAIN, key );
+		uie->KeyEvent( UI_CONTEXT_MAIN, key, down );
 	}
 }
 
 /*
-* CL_UIModule_Keyup
+* CL_UIModule_KeyEventQuick
 */
-void CL_UIModule_Keyup( int key ) {
+void CL_UIModule_KeyEventQuick( int key, bool down ) {
 	if( uie ) {
-		uie->Keyup( UI_CONTEXT_MAIN, key );
-	}
-}
-
-/*
-* CL_UIModule_KeydownQuick
-*/
-void CL_UIModule_KeydownQuick( int key ) {
-	if( uie ) {
-		uie->Keydown( UI_CONTEXT_QUICK, key );
-	}
-}
-
-/*
-* CL_UIModule_KeyupQuick
-*/
-void CL_UIModule_KeyupQuick( int key ) {
-	if( uie ) {
-		uie->Keyup( UI_CONTEXT_QUICK, key );
+		uie->KeyEvent( UI_CONTEXT_QUICK, key, down );
 	}
 }
 

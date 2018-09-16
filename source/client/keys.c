@@ -597,7 +597,6 @@ static int Key_NumPadKeyValue( int key ) {
 * Should NOT be called during an interrupt!
 */
 void Key_Event( int key, bool down, int64_t time ) {
-	char *kb;
 	char cmd[1024];
 	bool handled = false;
 	int numkey = Key_NumPadKeyValue( key );
@@ -655,7 +654,7 @@ void Key_Event( int key, bool down, int64_t time ) {
 				if( cls.state != CA_DISCONNECTED ) {
 					Cbuf_AddText( "disconnect\n" );
 				} else if( cls.key_dest == key_menu ) {
-					CL_UIModule_Keydown( key );
+					CL_UIModule_KeyEvent( key, down );
 				}
 				return;
 			}
@@ -666,7 +665,7 @@ void Key_Event( int key, bool down, int64_t time ) {
 				Con_MessageKeyDown( key );
 				break;
 			case key_menu:
-				CL_UIModule_Keydown( key );
+				CL_UIModule_KeyEvent( key, down );
 				break;
 			case key_game:
 				CL_GameModule_EscapeKey();
@@ -690,7 +689,7 @@ void Key_Event( int key, bool down, int64_t time ) {
 		|| ( cls.key_dest == key_console && !consolekeys[key] )
 		|| ( cls.key_dest == key_game && ( cls.state == CA_ACTIVE || !consolekeys[key] ) && ( !have_quickmenu || !numeric ) )
 		|| ( cls.key_dest == key_message && ( key >= K_F1 && key <= K_F15 ) ) ) {
-		kb = keybindings[key];
+		const char *kb = keybindings[key];
 
 		if( kb ) {
 			if( in_debug && in_debug->integer ) {
@@ -727,29 +726,21 @@ void Key_Event( int key, bool down, int64_t time ) {
 	}
 
 	if( cls.key_dest == key_menu ) {
-		if( down ) {
-			CL_UIModule_Keydown( key );
-		} else {
-			CL_UIModule_Keyup( key );
-		}
+		CL_UIModule_KeyEvent( key, down );
 		return;
 	}
 
 	if( handled || !down ) {
 		return; // other systems only care about key down events
-
 	}
+
 	switch( cls.key_dest ) {
 		case key_message:
 			Con_MessageKeyDown( key );
 			break;
 		case key_game:
 			if( have_quickmenu && numeric ) {
-				if( down ) {
-					CL_UIModule_KeydownQuick( numkey );
-				} else {
-					CL_UIModule_KeyupQuick( numkey );
-				}
+				CL_UIModule_KeyEventQuick( numkey, down );
 				break;
 			}
 		case key_console:

@@ -85,15 +85,9 @@ void UpdateConnectScreen( const char *serverName, const char *rejectmessage,
 	}
 }
 
-void Keydown( int context, int key ) {
+void KeyEvent( int context, int key, bool down ) {
 	if( ui_main ) {
-		ui_main->keyEvent( context, key, true );
-	}
-}
-
-void Keyup( int context, int key ) {
-	if( ui_main ) {
-		ui_main->keyEvent( context, key, false );
+		ui_main->keyEvent( context, key, down );
 	}
 }
 
@@ -187,8 +181,7 @@ ui_export_t *GetUIAPI( ui_import_t *import ) {
 	globals.Refresh = WSWUI::Refresh;
 	globals.UpdateConnectScreen = WSWUI::UpdateConnectScreen;
 
-	globals.Keydown = WSWUI::Keydown;
-	globals.Keyup = WSWUI::Keyup;
+	globals.KeyEvent = WSWUI::KeyEvent;
 	globals.CharEvent = WSWUI::CharEvent;
 	globals.MouseMove = WSWUI::MouseMove;
 	globals.MouseSet = WSWUI::MouseSet;

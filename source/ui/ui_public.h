@@ -237,8 +237,7 @@ typedef struct {
 								   int downloadType, const char *downloadfilename, float downloadPercent, int downloadSpeed,
 								   int connectCount, bool backGround );
 
-	void ( *Keydown )( int context, int key );
-	void ( *Keyup )( int context, int key );
+	void ( *KeyEvent )( int context, int key, bool down );
 	void ( *CharEvent )( int context, wchar_t key );
 
 	void ( *MouseMove )( int context, int frameTime, int dx, int dy );
