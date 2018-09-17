@@ -129,6 +129,13 @@ cg_touch_t *CG_GetTouch( int id ) {
 }
 
 /*
+* CG_KeyEvent
+*/
+bool CG_KeyEvent( int key, bool down ) {
+	return CG_asInputKeyEvent( key, down );
+}
+
+/*
 * CG_TouchEvent
 */
 void CG_TouchEvent( int id, touchevent_t type, int x, int y, int64_t time ) {

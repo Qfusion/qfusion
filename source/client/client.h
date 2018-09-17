@@ -414,6 +414,16 @@ unsigned CL_GameModule_GetButtonBits( void );
 void CL_GameModule_AddViewAngles( vec3_t viewAngles );
 void CL_GameModule_AddMovement( vec3_t movement );
 void CL_GameModule_MouseMove( int dx, int dy );
+
+/**
+* Passes the key press/up event to clientside game module.
+* Returns true if the action bound to the key should not be sent to the interpreter.
+*
+* @param key  key id
+* @param down true, if it's a button down event
+*/
+bool CL_GameModule_KeyEvent( int key, bool down );
+
 void CL_GameModule_TouchEvent( int id, touchevent_t type, int x, int y, int64_t time );
 bool CL_GameModule_IsTouchDown( int id );
 

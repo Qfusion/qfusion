@@ -29,6 +29,7 @@ static cg_asApiFuncPtr_t cg_asCGameAPI[] = {
 	{ "void CGame::Input::Shutdown()", &cgs.asInput.shutdown, true },
 	{ "void CGame::Input::Frame( int64 curTime, int frameTime )", &cgs.asInput.frame, true },
 	{ "void CGame::Input::ClearState()", &cgs.asInput.clearState, true },
+	{ "bool CGame::Input::KeyEvent( int key, bool down )", &cgs.asInput.keyEvent, false },
 	{ "void CGame::Input::MouseMove( int mx, int my )", &cgs.asInput.mouseMove, true },
 	{ "uint CGame::Input::GetButtonBits()", &cgs.asInput.getButtonBits, true },
 	{ "Vec3 CGame::Input::GetAngularMovement()", &cgs.asInput.getAngularMovement, true },

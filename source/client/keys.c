@@ -690,8 +690,9 @@ void Key_Event( int key, bool down, int64_t time ) {
 		|| ( cls.key_dest == key_game && ( cls.state == CA_ACTIVE || !consolekeys[key] ) && ( !have_quickmenu || !numeric ) )
 		|| ( cls.key_dest == key_message && ( key >= K_F1 && key <= K_F15 ) ) ) {
 		const char *kb = keybindings[key];
+		bool suppress = ( cls.key_dest == key_game ) && CL_GameModule_KeyEvent( key, down );
 
-		if( kb ) {
+		if( kb && !suppress ) {
 			if( in_debug && in_debug->integer ) {
 				Com_Printf( "key:%i down:%i time:%" PRIi64 " %s\n", key, down, time, kb );
 			}

@@ -360,6 +360,15 @@ typedef struct {
 	 * @return whether the finger is in cgame touch context
 	 */
 	bool ( *IsTouchDown )( int id );
+
+	/**
+	* Passes the key press/up event to clientside game module.
+	* Returns true if the action bound to the key should not be sent to the interpreter.
+	*
+	* @param key  key id
+	* @param down true, if it's a button down event
+	*/
+	bool ( *KeyEvent )( int key, bool down );
 } cgame_export_t;
 
 #endif

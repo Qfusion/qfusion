@@ -701,6 +701,16 @@ void CL_GameModule_MouseMove( int dx, int dy ) {
 }
 
 /*
+* CL_GameModule_KeyEvent
+*/
+bool CL_GameModule_KeyEvent( int key, bool down ) {
+	if( cge ) {
+		return cge->KeyEvent( key, down );
+	}
+	return false;
+}
+
+/*
 * CL_GameModule_TouchEvent
 */
 void CL_GameModule_TouchEvent( int id, touchevent_t type, int x, int y, int64_t time ) {

@@ -191,14 +191,38 @@ void CG_asInputClearState( void ) {
 }
 
 /*
+* CG_asInputKeyEvent
+*/
+bool CG_asInputKeyEvent( int key, bool down ) {
+	uint8_t res = 0;
+
+	if( !cgs.asInput.keyEvent ) {
+		return false;
+	}
+
+	CG_asCallScriptFunc( cgs.asInput.keyEvent, [key, down](asIScriptContext *ctx)
+		{
+			ctx->SetArgDWord( 0, key );
+			ctx->SetArgByte( 1, down );
+		},
+		[&res](asIScriptContext *ctx)
+		{
+			res = ctx->GetReturnByte();
+		}
+	);
+
+	return res == 0 ? false : true;
+}
+
+/*
 * CG_asInputMouseMove
 */
 void CG_asInputMouseMove( int mx, int my ) {
 	CG_asCallScriptFunc( cgs.asInput.mouseMove, [mx, my](asIScriptContext *ctx)
-	{
-		ctx->SetArgDWord( 0, mx );
-		ctx->SetArgDWord( 1, my );
-	},
+		{
+			ctx->SetArgDWord( 0, mx );
+			ctx->SetArgDWord( 1, my );
+		},
 		cg_empty_as_cb
 	);
 }

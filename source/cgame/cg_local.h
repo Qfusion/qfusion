@@ -440,6 +440,7 @@ typedef struct {
 		void *shutdown;
 		void *frame;
 		void *clearState;
+		void *keyEvent;
 		void *mouseMove;
 		void *getButtonBits;
 		void *getAngularMovement;
@@ -1189,6 +1190,7 @@ void CG_asInputInit( void );
 void CG_asInputShutdown( void );
 void CG_asInputFrame( int frameTime );
 void CG_asInputClearState( void );
+bool CG_asInputKeyEvent( int key, bool down );
 void CG_asInputMouseMove( int mx, int my );
 unsigned CG_asGetButtonBits( void );
 void CG_asGetAngularMovement( vec3_t viewAngles );
@@ -1260,6 +1262,16 @@ void CG_SetTouchpad( int padID, int touchID );
 cg_touchpad_t *CG_GetTouchpad( int padID );
 
 int CG_TouchArea( int area, int x, int y, int w, int h, void ( *upfunc )( int id, int64_t time ) );
+
+/**
+* Passes the key press/up event to clientside game module.
+* Returns true if the action bound to the key should not be sent to the interpreter.
+*
+* @param key  key id
+* @param down true, if it's a button down event
+*/
+bool CG_KeyEvent( int key, bool down );
+
 void CG_TouchEvent( int id, touchevent_t type, int x, int y, int64_t time );
 cg_touch_t *CG_GetTouch( int id );
 bool CG_IsTouchDown( int id );
