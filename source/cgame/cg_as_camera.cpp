@@ -201,6 +201,8 @@ static const gs_asProperty_t asrefdef_Properties[] =
 	{ ASLIB_PROPERTY_DECL( int, orthoX ), ASLIB_FOFFSET( refdef_t, ortho_x ) },
 	{ ASLIB_PROPERTY_DECL( int, orthoY ), ASLIB_FOFFSET( refdef_t, ortho_y ) },
 
+	{ ASLIB_PROPERTY_DECL( Vec3, viewOrigin ), ASLIB_FOFFSET( refdef_t, vieworg ) },
+
 	ASLIB_PROPERTY_NULL
 };
 
