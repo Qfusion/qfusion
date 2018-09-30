@@ -319,7 +319,7 @@ class Player
         return !this.inRace && !this.practicing && !this.postRace && this.client.team != TEAM_SPECTATOR;
     }
 
-    void setQuickMenu()
+    void setOverlayMenu()
     {
         String s = '';
         Position @position = this.savedPosition();
@@ -354,7 +354,7 @@ class Player
                      menuItems[MI_CLEAR_POSITION];
         }
 
-        GENERIC_SetQuickMenu( this.client, s );
+        GENERIC_SetOverlayMenu( this.client, s );
     }
 
     bool toggleNoclip()
@@ -387,7 +387,7 @@ class Player
 
         G_PrintMsg( ent, msg + "\n" );
 
-        this.setQuickMenu();
+        this.setOverlayMenu();
 
         return true;
     }
@@ -493,7 +493,7 @@ class Player
             }
             position.weapon = ent.moveType == MOVETYPE_NOCLIP ? this.noclipWeapon : ref.weapon;
         }
-        this.setQuickMenu();
+        this.setOverlayMenu();
 
         return true;
     }
@@ -507,7 +507,7 @@ class Player
         }
 
         this.savedPosition().clear();
-        this.setQuickMenu();
+        this.setOverlayMenu();
 
         return true;
     }
@@ -533,7 +533,7 @@ class Player
 
         this.client.newRaceRun( numCheckpoints );
 
-        this.setQuickMenu();
+        this.setOverlayMenu();
 
         return true;
     }
@@ -745,7 +745,7 @@ class Player
         this.practicing = true;
         G_CenterPrintMsg( this.client.getEnt(), S_COLOR_CYAN + "Entered practice mode" );
         this.cancelRace();
-        this.setQuickMenu();
+        this.setOverlayMenu();
     }
 
     void leavePracticeMode()
@@ -757,7 +757,7 @@ class Player
         G_CenterPrintMsg( this.client.getEnt(), S_COLOR_CYAN + "Left practice mode" );
         if ( this.client.team != TEAM_SPECTATOR )
             this.client.respawn( false );
-        this.setQuickMenu();
+        this.setOverlayMenu();
     }
 
     void togglePracticeMode()
@@ -1502,7 +1502,7 @@ void GT_PlayerRespawn( Entity @ent, int old_team, int new_team )
     Player @player = RACE_GetPlayer( ent.client );
     player.cancelRace();
 
-    player.setQuickMenu();
+    player.setOverlayMenu();
 
     if ( ent.isGhosting() )
         return;

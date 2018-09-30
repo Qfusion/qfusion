@@ -38,7 +38,7 @@ void GENERIC_SetUpWarmup()
             team.clearInvites();
 
 			for ( j = 0; @team.ent( j ) != null; j++ )
-				GENERIC_ClearQuickMenu( @team.ent( j ).client );
+				GENERIC_ClearOverlayMenu( @team.ent( j ).client );
 		
             if ( team.unlock() )
                 anyone = true;
@@ -53,7 +53,7 @@ void GENERIC_SetUpWarmup()
         team.clearInvites();
 
 		for ( j = 0; @team.ent( j ) != null; j++ )
-			GENERIC_ClearQuickMenu( @team.ent( j ).client );
+			GENERIC_ClearOverlayMenu( @team.ent( j ).client );
 		
         if ( team.unlock() )
             G_PrintMsg( null, "Teams unlocked.\n" );
@@ -158,7 +158,7 @@ void GENERIC_SetUpEndMatch()
 
         if ( client.state() >= CS_SPAWNED ) {
             client.respawn( true ); // ghost them all
-			GENERIC_SetPostmatchQuickMenu( @client );
+			GENERIC_SetPostmatchOverlayMenu( @client );
 		}
     }
 

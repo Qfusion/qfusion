@@ -92,7 +92,7 @@ void TDM_playerKilled( Entity @target, Entity @attacker, Entity @inflictor )
 		award_playerKilled( @target, @attacker, @inflictor );
 }
 
-void TDM_SetVoicecommQuickMenu( Client @client )
+void TDM_SetVoicecommOverlayMenu( Client @client )
 {
 	String menuStr = '';
 	
@@ -108,7 +108,7 @@ void TDM_SetVoicecommQuickMenu( Client @client )
 		'"On offense" "vsay_team onoffense" ' + 
 		'"On defense" "vsay_team ondefense" ';
 
-	GENERIC_SetQuickMenu( @client, menuStr );
+	GENERIC_SetOverlayMenu( @client, menuStr );
 }
 
 ///*****************************************************************
@@ -314,7 +314,7 @@ void GT_PlayerRespawn( Entity @ent, int old_team, int new_team )
 
     if ( ent.isGhosting() )
 	{
-		GENERIC_ClearQuickMenu( @client );
+		GENERIC_ClearOverlayMenu( @client );
 		ent.svflags &= ~SVF_FORCETEAM;
         return;
 	}
@@ -367,7 +367,7 @@ void GT_PlayerRespawn( Entity @ent, int old_team, int new_team )
 
 	ent.svflags |= SVF_FORCETEAM;
 
-	TDM_SetVoicecommQuickMenu( @client );
+	TDM_SetVoicecommOverlayMenu( @client );
 	
     // add a teleportation effect
     ent.respawnEffect();

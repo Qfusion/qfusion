@@ -141,7 +141,7 @@ void setTeamProgress( int teamNum, int progress )
 	}
 }
 
-void BOMB_SetVoicecommQuickMenu( Client @client )
+void BOMB_SetVoicecommOverlayMenu( Client @client )
 {
 	String menuStr = '';
 	
@@ -168,7 +168,7 @@ void BOMB_SetVoicecommQuickMenu( Client @client )
 		'"Affirmative" "vsay_team affirmative" ' + 
 		'"Negative" "vsay_team negative" ';
 
-	GENERIC_SetQuickMenu( @client, menuStr );
+	GENERIC_SetOverlayMenu( @client, menuStr );
 }
 
 bool GT_Command( Client @client, const String &cmdString, const String &argsString, int argc )
@@ -633,11 +633,11 @@ void GT_PlayerRespawn( Entity @ent, int old_team, int new_team )
 	if ( ent.isGhosting() )
 	{
 		ent.svflags &= ~SVF_FORCETEAM;
-		GENERIC_ClearQuickMenu( @client );
+		GENERIC_ClearOverlayMenu( @client );
 		return;
 	}
 
-	BOMB_SetVoicecommQuickMenu( @client );
+	BOMB_SetVoicecommOverlayMenu( @client );
 	
 	player.giveInventory();
 	

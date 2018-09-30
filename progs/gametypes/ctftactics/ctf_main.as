@@ -129,7 +129,7 @@ void CTF_playerKilled( Entity @target, Entity @attacker, Entity @inflictor )
 		award_playerKilled( @target, @attacker, @inflictor );	
 }
 
-void CTF_SetVoicecommQuickMenu( Client @client, int playerClass )
+void CTF_SetVoicecommOverlayMenu( Client @client, int playerClass )
 {
 	String menuStr = '';
 
@@ -163,7 +163,7 @@ void CTF_SetVoicecommQuickMenu( Client @client, int playerClass )
 		'"On offense" "vsay_team onoffense" ' + 
 		'"On defense" "vsay_team ondefense" ';
 
-	GENERIC_SetQuickMenu( @client, menuStr );
+	GENERIC_SetOverlayMenu( @client, menuStr );
 }
 
 ///*****************************************************************
@@ -1213,7 +1213,7 @@ void GT_PlayerRespawn( Entity @ent, int old_team, int new_team )
 
 	ent.svflags |= SVF_FORCETEAM;
 
-	CTF_SetVoicecommQuickMenu( @client, player.playerClass.tag );
+	CTF_SetVoicecommOverlayMenu( @client, player.playerClass.tag );
 	
     // add a teleportation effect
     ent.respawnEffect();

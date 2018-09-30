@@ -17,18 +17,18 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-void GENERIC_ClearQuickMenu( Client @client )
+void GENERIC_ClearOverlayMenu( Client @client )
 {
-	client.setQuickMenuItems( "" );
+	client.setOverlayMenuItems( "" );
 }
 
-void GENERIC_SetQuickMenu( Client @client, const String &menuStr )
+void GENERIC_SetOverlayMenu( Client @client, const String &menuStr )
 {
-	client.setQuickMenuItems( menuStr );
+	client.setOverlayMenuItems( menuStr );
 }
 
-void GENERIC_SetPostmatchQuickMenu( Client @client )
+void GENERIC_SetPostmatchOverlayMenu( Client @client )
 {
-	GENERIC_SetQuickMenu( @client, '"Good game" "vsay goodgame" "Thanks" "vsay thanks" "Yeehaa" "vsay yeehaa" "Oops" "vsay oops" "Sorry" "vsay sorry"' );
+	GENERIC_SetOverlayMenu( @client, '"Good game" "vsay goodgame" "Thanks" "vsay thanks" "Yeehaa" "vsay yeehaa" "Oops" "vsay oops" "Sorry" "vsay sorry"' );
 }
 
