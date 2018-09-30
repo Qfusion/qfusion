@@ -2,7 +2,7 @@
 /shared/utils.as;
 /shared/files.as;
 
-generic/quickmenu.as;
+generic/overlaymenu.as;
 generic/awards.as;
 generic/bots.as;
 generic/matchstates.as;
