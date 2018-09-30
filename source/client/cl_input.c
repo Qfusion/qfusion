@@ -37,7 +37,9 @@ static void CL_CreateNewUserCommand( int realMsec );
 */
 void CL_MouseSet( int mx, int my, bool showCursor ) {
 	if( cls.key_dest == key_menu ) {
-		CL_UIModule_MouseSet( mx, my, showCursor );
+		CL_UIModule_MouseSet( true, mx, my, showCursor );
+	} else if( cls.key_dest == key_game ) {
+		CL_UIModule_MouseSet( false, mx, my, showCursor );
 	}
 }
 
@@ -48,18 +50,18 @@ void CL_TouchEvent( int id, touchevent_t type, int x, int y, int64_t time ) {
 	switch( cls.key_dest ) {
 		case key_game:
 		{
-			bool toQuickMenu = false;
+			bool toOverlayMenu = false;
 
-			if( SCR_IsQuickMenuShown() && !CL_GameModule_IsTouchDown( id ) ) {
+			if( SCR_IsOverlayMenuShown() && !CL_GameModule_IsTouchDown( id ) ) {
 				if( CL_UIModule_IsTouchDownQuick( id ) ) {
-					toQuickMenu = true;
+					toOverlayMenu = true;
 				}
 
 				// if the quick menu has consumed the touch event, don't send the event to the game
-				toQuickMenu |= CL_UIModule_TouchEventQuick( id, type, x, y );
+				toOverlayMenu |= CL_UIModule_TouchEventQuick( id, type, x, y );
 			}
 
-			if( !toQuickMenu ) {
+			if( !toOverlayMenu ) {
 				CL_GameModule_TouchEvent( id, type, x, y, time );
 			}
 		}
@@ -73,7 +75,7 @@ void CL_TouchEvent( int id, touchevent_t type, int x, int y, int64_t time ) {
 			break;
 
 		case key_menu:
-			CL_UIModule_TouchEvent( id, type, x, y );
+			CL_UIModule_TouchEvent( false, id, type, x, y );
 			break;
 
 		default:
@@ -111,6 +113,7 @@ void CL_ClearInputState( void ) {
 */
 static void CL_UpdateGameInput( int frameTime ) {
 	int mx, my;
+	bool overlayMenuMouse = cls.key_dest == key_game && SCR_IsOverlayMenuShown() && cls.overlayMenuShowCursor;
 
 	IN_GetMouseMovement( &mx, &my );
 
@@ -118,12 +121,14 @@ static void CL_UpdateGameInput( int frameTime ) {
 	CL_GameModule_InputFrame( frameTime );
 
 	if( cls.key_dest == key_menu ) {
-		CL_UIModule_MouseMove( frameTime, mx, my );
+		CL_UIModule_MouseMove( true, frameTime, mx, my );
+	} else if( overlayMenuMouse ) {
+		CL_UIModule_MouseMove( false, frameTime, mx, my );
 	} else {
 		CL_GameModule_MouseMove( mx, my );
 	}
 
-	if( cls.key_dest == key_game || ( ( cls.key_dest == key_console ) && Cvar_Value( "in_grabinconsole" ) != 0 ) ) {
+	if( (cls.key_dest == key_game && !overlayMenuMouse) || ( ( cls.key_dest == key_console ) && Cvar_Value( "in_grabinconsole" ) != 0 ) ) {
 		CL_GameModule_AddViewAngles( cl.viewangles );
 	}
 }

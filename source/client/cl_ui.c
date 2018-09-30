@@ -337,7 +337,7 @@ void CL_UIModule_Init( void ) {
 		uie->Init( viddef.width, viddef.height, VID_GetPixelRatio(),
 				   APP_PROTOCOL_VERSION, APP_DEMO_EXTENSION_STR, APP_UI_BASEPATH );
 
-		uie->ShowQuickMenu( cls.quickmenu );
+		uie->ShowOverlayMenu( cls.overlayMenu, cls.overlayMenuShowCursor );
 	} else {
 		// wrong version
 		uie = NULL;
@@ -460,9 +460,9 @@ void CL_UIModule_UpdateConnectScreen( bool backGround ) {
 /*
 * CL_UIModule_KeyEvent
 */
-void CL_UIModule_KeyEvent( int key, bool down ) {
+void CL_UIModule_KeyEvent( bool mainContext, int key, bool down ) {
 	if( uie ) {
-		uie->KeyEvent( UI_CONTEXT_MAIN, key, down );
+		uie->KeyEvent( mainContext ? UI_CONTEXT_MAIN : UI_CONTEXT_OVERLAY, key, down );
 	}
 }
 
@@ -471,25 +471,25 @@ void CL_UIModule_KeyEvent( int key, bool down ) {
 */
 void CL_UIModule_KeyEventQuick( int key, bool down ) {
 	if( uie ) {
-		uie->KeyEvent( UI_CONTEXT_QUICK, key, down );
+		uie->KeyEvent( UI_CONTEXT_OVERLAY, key, down );
 	}
 }
 
 /*
 * CL_UIModule_CharEvent
 */
-void CL_UIModule_CharEvent( wchar_t key ) {
+void CL_UIModule_CharEvent( bool mainContext, wchar_t key ) {
 	if( uie ) {
-		uie->CharEvent( UI_CONTEXT_MAIN, key );
+		uie->CharEvent( mainContext ? UI_CONTEXT_MAIN : UI_CONTEXT_OVERLAY, key );
 	}
 }
 
 /*
 * CL_UIModule_TouchEvent
 */
-bool CL_UIModule_TouchEvent( int id, touchevent_t type, int x, int y ) {
+bool CL_UIModule_TouchEvent( bool mainContext, int id, touchevent_t type, int x, int y ) {
 	if( uie ) {
-		return uie->TouchEvent( UI_CONTEXT_MAIN, id, type, x, y );
+		return uie->TouchEvent( mainContext ? UI_CONTEXT_MAIN : UI_CONTEXT_OVERLAY, id, type, x, y );
 	}
 
 	return false;
@@ -500,7 +500,7 @@ bool CL_UIModule_TouchEvent( int id, touchevent_t type, int x, int y ) {
 */
 bool CL_UIModule_TouchEventQuick( int id, touchevent_t type, int x, int y ) {
 	if( uie ) {
-		return uie->TouchEvent( UI_CONTEXT_QUICK, id, type, x, y );
+		return uie->TouchEvent( UI_CONTEXT_OVERLAY, id, type, x, y );
 	}
 
 	return false;
@@ -522,7 +522,7 @@ bool CL_UIModule_IsTouchDown( int id ) {
 */
 bool CL_UIModule_IsTouchDownQuick( int id ) {
 	if( uie ) {
-		return uie->IsTouchDown( UI_CONTEXT_QUICK, id );
+		return uie->IsTouchDown( UI_CONTEXT_OVERLAY, id );
 	}
 
 	return false;
@@ -533,7 +533,7 @@ bool CL_UIModule_IsTouchDownQuick( int id ) {
 */
 void CL_UIModule_CancelTouches( void ) {
 	if( uie ) {
-		uie->CancelTouches( UI_CONTEXT_QUICK );
+		uie->CancelTouches( UI_CONTEXT_OVERLAY );
 		uie->CancelTouches( UI_CONTEXT_MAIN );
 	}
 }
@@ -557,20 +557,20 @@ void CL_UIModule_ForceMenuOff( void ) {
 }
 
 /*
-* CL_UIModule_ShowQuickMenu
+* CL_UIModule_ShowOverlayMenu
 */
-void CL_UIModule_ShowQuickMenu( bool show ) {
+void CL_UIModule_ShowOverlayMenu( bool show, bool showCursor ) {
 	if( uie ) {
-		uie->ShowQuickMenu( show );
+		uie->ShowOverlayMenu( show, showCursor );
 	}
 }
 
 /*
-* CL_UIModule_HaveQuickMenu
+* CL_UIModule_HaveOverlayMenu
 */
-bool CL_UIModule_HaveQuickMenu( void ) {
+bool CL_UIModule_HaveOverlayMenu( void ) {
 	if( uie ) {
-		return uie->HaveQuickMenu();
+		return uie->HaveOverlayMenu();
 	}
 	return false;
 }
@@ -587,17 +587,27 @@ void CL_UIModule_AddToServerList( const char *adr, const char *info ) {
 /*
 * CL_UIModule_MouseMove
 */
-void CL_UIModule_MouseMove( int frameTime, int dx, int dy ) {
+void CL_UIModule_MouseMove( bool mainContext, int frameTime, int dx, int dy ) {
 	if( uie ) {
-		uie->MouseMove( UI_CONTEXT_MAIN, frameTime, dx, dy );
+		uie->MouseMove( mainContext ? UI_CONTEXT_MAIN : UI_CONTEXT_OVERLAY, frameTime, dx, dy );
 	}
 }
 
 /*
 * CL_UIModule_MouseSet
 */
-void CL_UIModule_MouseSet( int mx, int my, bool showCursor ) {
+void CL_UIModule_MouseSet( bool mainContext, int mx, int my, bool showCursor ) {
 	if( uie ) {
-		uie->MouseSet( UI_CONTEXT_MAIN, mx, my, showCursor );
+		uie->MouseSet( mainContext ? UI_CONTEXT_MAIN : UI_CONTEXT_OVERLAY, mx, my, showCursor );
 	}
+}
+
+/*
+* CL_UIModule_MouseHover
+*/
+bool CL_UIModule_MouseHover( bool mainContext ) {
+	if( uie ) {
+		return uie->MouseHover( mainContext ? UI_CONTEXT_MAIN : UI_CONTEXT_OVERLAY );
+	}
+	return false;
 }

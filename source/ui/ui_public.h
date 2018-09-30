@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __UI_PUBLIC_H__
 #define __UI_PUBLIC_H__
 
-#define UI_API_VERSION      66
+#define UI_API_VERSION      67
 
 typedef size_t ( *ui_async_stream_read_cb_t )( const void *buf, size_t numb, float percentage,
 											 int status, const char *contentType, void *privatep );
@@ -30,7 +30,7 @@ typedef void ( *ui_async_stream_done_cb_t )( int status, const char *contentType
 typedef void ( *ui_fdrawchar_t )( int x, int y, int w, int h, float s1, float t1, float s2, float t2, const vec4_t color, const struct shader_s *shader );
 
 enum {
-	UI_CONTEXT_QUICK,
+	UI_CONTEXT_OVERLAY,
 	UI_CONTEXT_MAIN,
 
 	UI_NUM_CONTEXTS
@@ -243,13 +243,19 @@ typedef struct {
 	void ( *MouseMove )( int context, int frameTime, int dx, int dy );
 	void ( *MouseSet )( int context, int mx, int my, bool showCursor );
 
+	/**
+	* MouseHover
+	* Returns true if mouse hovers above something that's isn't the body element.
+	*/
+	bool ( *MouseHover )( int context );
+
 	bool ( *TouchEvent )( int context, int id, touchevent_t type, int x, int y );
 	bool ( *IsTouchDown )( int context, int id );
 	void ( *CancelTouches )( int context );
 
 	void ( *ForceMenuOff )( void );
-	bool ( *HaveQuickMenu )( void );
-	void ( *ShowQuickMenu )( bool show );
+	bool ( *HaveOverlayMenu )( void );
+	void ( *ShowOverlayMenu )( bool show, bool showCursor );
 	void ( *AddToServerList )( const char *adr, const char *info );
 } ui_export_t;
 

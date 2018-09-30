@@ -109,6 +109,13 @@ void MouseMove( int context, int frameTime, int dx, int dy ) {
 	}
 }
 
+bool MouseHover( int context ) {
+	if( ui_main ) {
+		return ui_main->mouseHover( context );
+	}
+	return false;
+}
+
 void MouseSet( int context, int mx, int my, bool showCursor ) {
 	if( ui_main ) {
 		ui_main->mouseMove( context, 0, mx, my, true, showCursor );
@@ -143,15 +150,15 @@ void ForceMenuOff( void ) {
 	}
 }
 
-void ShowQuickMenu( bool show ) {
+void ShowOverlayMenu( bool show, bool showCursor ) {
 	if( ui_main ) {
-		ui_main->showQuickMenu( show );
+		ui_main->showOverlayMenu( show, showCursor );
 	}
 }
 
-bool HaveQuickMenu( void ) {
+bool HaveOverlayMenu( void ) {
 	if( ui_main ) {
-		return ui_main->haveQuickMenu();
+		return ui_main->haveOverlayMenu();
 	}
 	return false;
 }
@@ -184,14 +191,15 @@ ui_export_t *GetUIAPI( ui_import_t *import ) {
 	globals.KeyEvent = WSWUI::KeyEvent;
 	globals.CharEvent = WSWUI::CharEvent;
 	globals.MouseMove = WSWUI::MouseMove;
+	globals.MouseHover = WSWUI::MouseHover;
 	globals.MouseSet = WSWUI::MouseSet;
 	globals.TouchEvent = WSWUI::TouchEvent;
 	globals.IsTouchDown = WSWUI::IsTouchDown;
 	globals.CancelTouches = WSWUI::CancelTouches;
 
 	globals.ForceMenuOff = WSWUI::ForceMenuOff;
-	globals.ShowQuickMenu = WSWUI::ShowQuickMenu;
-	globals.HaveQuickMenu = WSWUI::HaveQuickMenu;
+	globals.ShowOverlayMenu = WSWUI::ShowOverlayMenu;
+	globals.HaveOverlayMenu = WSWUI::HaveOverlayMenu;
 
 	globals.AddToServerList = WSWUI::AddToServerList;
 

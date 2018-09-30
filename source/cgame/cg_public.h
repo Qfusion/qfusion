@@ -43,7 +43,7 @@ typedef void ( *cg_fdrawchar_t )( int x, int y, int w, int h, float s1, float t1
 
 // cg_public.h -- client game dll information visible to engine
 
-#define CGAME_API_VERSION   103
+#define CGAME_API_VERSION   104
 
 //
 // structs and variables shared with the main engine
@@ -240,9 +240,9 @@ typedef struct {
 	size_t ( *SCR_strWidth )( const char *str, struct qfontface_s *font, size_t maxlen, int flags );
 	size_t ( *SCR_StrlenForWidth )( const char *str, struct qfontface_s *font, size_t maxwidth, int flags );
 	cg_fdrawchar_t ( *SCR_SetDrawCharIntercept )( cg_fdrawchar_t intercept );
-	void ( *SCR_EnableQuickMenu )( bool enabled );
-	bool ( *SCR_HaveQuickMenu )( void );
-	bool ( *SCR_IsQuickMenuShown )( void );
+	void ( *SCR_EnableOverlayMenu )( bool enabled, bool showCursor );
+	bool ( *SCR_HaveOverlayMenu )( void );
+	bool ( *SCR_IsOverlayMenuShown )( void );
 	void ( *SCR_DrawChat )( int x, int y, int width, struct qfontface_s *font );
 
 	// managed memory allocation

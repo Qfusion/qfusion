@@ -1176,7 +1176,7 @@ static void Cmd_TVConnect_f( edict_t *ent ) {
 static void Cmd_Upstate_f( edict_t *ent ) {
 	G_UpdatePlayerMatchMsg( ent, true );
 	G_SetPlayerHelpMessage( ent, ent->r.client->level.helpmessage, true );
-	trap_GameCmd( ent, va( "qm %s", ent->r.client->level.quickMenuItems ) );
+	trap_GameCmd( ent, va( "qm %s", ent->r.client->level.overlayMenuItems ) );
 }
 
 //===========================================================

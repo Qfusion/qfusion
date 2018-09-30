@@ -632,8 +632,8 @@ typedef struct {
 	size_t teaminfo_size;
 	char *motd;
 	int64_t motd_time;
-	char quickmenu[MAX_STRING_CHARS];
-	bool quickmenu_left;
+	char overlayMenu[MAX_STRING_CHARS];
+	bool overlayMenu_left;
 
 	// awards
 	char award_lines[MAX_AWARD_LINES][MAX_CONFIGSTRING_CHARS];
@@ -745,6 +745,12 @@ void CG_Predict_TouchTriggers( pmove_t *pm, vec3_t previous_origin );
 //
 // cg_screen.c
 //
+typedef enum {
+	OVERLAY_MENU_LEFT = -1,
+	OVERLAY_MENU_HIDDEN = 0,
+	OVERLAY_MENU_RIGHT = 1,
+} e_ingamestate_t;
+
 extern vrect_t scr_vrect;
 
 extern cvar_t *cg_scoreboardFontFamily;
@@ -796,14 +802,14 @@ void CG_ClearPointedNum( void );
 /**
  * Sends current quick menu string to the UI.
  */
-void CG_RefreshQuickMenu( void );
+void CG_RefreshOverlayMenu( void );
 
 /**
  * Toggles the visibility of the quick menu.
  *
  * @param state quick menu visibility (0 = hidden, 1 = on the right, -1 = on the left)
  */
-void CG_ShowQuickMenu( int state );
+void CG_ShowOverlayMenu( int state, bool showCursor );
 
 //
 // cg_hud.c

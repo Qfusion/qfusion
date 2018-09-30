@@ -161,33 +161,33 @@ void CG_ScreenCrosshairDamageUpdate( void ) {
 //=============================================================================
 
 /*
-* CG_RefreshQuickMenu
+* CG_RefreshInGamekMenu
 */
-void CG_RefreshQuickMenu( void ) {
-	if( !cg.quickmenu[0] ) {
+void CG_RefreshOverlayMenu( void ) {
+	if( !cg.overlayMenu[0] ) {
 		trap_Cmd_ExecuteText( EXEC_APPEND, "menu_quick 0\n" );
 		return;
 	}
 
-	trap_Cmd_ExecuteText( EXEC_APPEND, va( "menu_quick game_quick left %d %s\n", cg.quickmenu_left ? 1 : 0, cg.quickmenu ) );
+	trap_Cmd_ExecuteText( EXEC_APPEND, va( "menu_quick game_quick left %d %s\n", cg.overlayMenu_left ? 1 : 0, cg.overlayMenu ) );
 }
 
 /*
-* CG_ShowQuickMenu
+* CG_ShowOverlayMenu
 */
-void CG_ShowQuickMenu( int state ) {
-	if( !state ) {
-		trap_SCR_EnableQuickMenu( false );
+void CG_ShowOverlayMenu( int state, bool showCursor ) {
+	if( state == OVERLAY_MENU_HIDDEN ) {
+		trap_SCR_EnableOverlayMenu( false, showCursor );
 		return;
 	}
 
-	bool left = ( state < 0 );
-	if( cg.quickmenu_left != left ) {
-		cg.quickmenu_left = left;
-		CG_RefreshQuickMenu();
+	bool left = state == OVERLAY_MENU_LEFT;
+	if( cg.overlayMenu_left != left ) {
+		cg.overlayMenu_left = left;
+		CG_RefreshOverlayMenu();
 	}
 
-	trap_SCR_EnableQuickMenu( true );
+	trap_SCR_EnableOverlayMenu( true, showCursor );
 }
 
 //=============================================================================
@@ -243,30 +243,14 @@ static void CG_SizeDown_f( void ) {
 	trap_Cvar_SetValue( cg_viewSize->name, cg_viewSize->integer - 10 );
 }
 
-/*
-* CG_QuickMenuOn_f
-*/
-static void CG_QuickMenuOn_f( void ) {
-	if( GS_MatchState() < MATCH_STATE_POSTMATCH ) {
-		CG_ShowQuickMenu( 1 );
-	}
-}
-
-/*
-* CG_QuickMenuOff_f
-*/
-static void CG_QuickMenuOff_f( void ) {
-	if( GS_MatchState() < MATCH_STATE_POSTMATCH ) {
-		CG_ShowQuickMenu( 0 );
-	}
-}
-
 //============================================================================
 
 /*
 * CG_ScreenInit
 */
 void CG_ScreenInit( void ) {
+	int i;
+
 	cg_viewSize =       trap_Cvar_Get( "cg_viewSize", "100", CVAR_ARCHIVE );
 	cg_showFPS =        trap_Cvar_Get( "cg_showFPS", "0", CVAR_ARCHIVE );
 	cg_showHUD =        trap_Cvar_Get( "cg_showHUD", "1", CVAR_ARCHIVE );
@@ -327,10 +311,6 @@ void CG_ScreenInit( void ) {
 	trap_Cmd_AddCommand( "help_hud", Cmd_CG_PrintHudHelp_f );
 	trap_Cmd_AddCommand( "gamemenu", CG_GameMenu_f );
 
-	trap_Cmd_AddCommand( "+quickmenu", &CG_QuickMenuOn_f );
-	trap_Cmd_AddCommand( "-quickmenu", &CG_QuickMenuOff_f );
-
-	int i;
 	for( i = 0; i < TOUCHPAD_COUNT; ++i )
 		CG_SetTouchpad( i, -1 );
 }
@@ -344,8 +324,8 @@ void CG_ScreenShutdown( void ) {
 	trap_Cmd_RemoveCommand( "sizedown" );
 	trap_Cmd_RemoveCommand( "help_hud" );
 
-	trap_Cmd_RemoveCommand( "+quickmenu" );
-	trap_Cmd_RemoveCommand( "-quickmenu" );
+	trap_Cmd_RemoveCommand( "+overlayMenu" );
+	trap_Cmd_RemoveCommand( "-overlayMenu" );
 }
 
 
@@ -1136,9 +1116,9 @@ void CG_DrawRSpeeds( int x, int y, int align, struct qfontface_s *font, vec4_t c
 //=============================================================================
 
 /*
-* CG_InGameMenu
+* CG_OverlayMenu
 */
-static void CG_InGameMenu( void ) {
+static void CG_OverlayMenu( void ) {
 	static char menuparms[MAX_STRING_CHARS];
 	int is_challenger = 0, needs_ready = 0, is_ready = 0;
 	int realteam = cg.predictedPlayerState.stats[STAT_REALTEAM];
@@ -1200,7 +1180,7 @@ void CG_GameMenu_f( void ) {
 		trap_Cmd_ExecuteText( EXEC_NOW, "cmd putaway\n" );
 	}
 
-	CG_InGameMenu();
+	CG_OverlayMenu();
 }
 
 /*

@@ -38,6 +38,7 @@ public:
 
 	// system events
 	void mouseMove( int contextId, int mousex, int mousey );
+	bool mouseHover( int contextId );
 	void textInput( int contextId, wchar_t c );
 	void keyEvent( int contextId, int key, bool pressed );
 	bool touchEvent( int contextId, int id, touchevent_t type, int x, int y );
@@ -75,7 +76,7 @@ private:
 	Rocket::Core::Context *contextForId( int contextId );
 
 	bool rocketInitialized;
-	unsigned int hideCursorBits;
+	unsigned int hideCursorBits[UI_NUM_CONTEXTS];
 
 	struct contextTouch {
 		int id;

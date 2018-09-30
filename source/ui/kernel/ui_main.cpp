@@ -55,9 +55,9 @@ UI_Main::UI_Main( int vidWidth, int vidHeight, float pixelRatio,
 	playerModels( 0 ), tvchannels( 0 ), gameajax( 0 ),
 
 	// other members
-	quickMenuURL( "" ),
+	overlayMenuURL( "" ),
 	mousex( 0 ), mousey( 0 ), gameProtocol( protocol ),
-	menuVisible( false ), quickMenuVisible( false ), forceMenu( false ), showNavigationStack( false ),
+	menuVisible( false ), overlayMenuVisible( false ), forceMenu( false ), showNavigationStack( false ),
 	demoExtension( demoExtension ), invalidateAjaxCache( false ),
 	ui_basepath( nullptr ), ui_cursor( nullptr ), ui_developer( nullptr ), ui_preload( nullptr ) {
 	// instance
@@ -99,7 +99,7 @@ UI_Main::UI_Main( int vidWidth, int vidHeight, float pixelRatio,
 	createDataSources();
 	createFormatters();
 	createStack( UI_CONTEXT_MAIN );
-	createStack( UI_CONTEXT_QUICK );
+	createStack( UI_CONTEXT_OVERLAY );
 
 	streamCache = __new__( StreamCache )();
 
@@ -235,9 +235,9 @@ void UI_Main::preloadUI( void ) {
 		mouseMove( UI_CONTEXT_MAIN, 0, refreshState.width >> 1, refreshState.height >> 1, true, true );
 	}
 
-	if( !quickMenuURL.Empty() ) {
-		navigator = navigations[UI_CONTEXT_QUICK].front();
-		navigator->pushDocument( quickMenuURL.CString(), false );
+	if( !overlayMenuURL.Empty() ) {
+		navigator = navigations[UI_CONTEXT_OVERLAY].front();
+		navigator->pushDocument( overlayMenuURL.CString(), false );
 	}
 
 	rocketModule->update();
@@ -292,7 +292,7 @@ void UI_Main::loadCursor( void ) {
 
 	rocketModule->loadCursor( UI_CONTEXT_MAIN, basecursor.c_str() );
 
-	//rocketModule->loadCursor( UI_CONTEXT_QUICK, basecursor.c_str() );
+	rocketModule->loadCursor( UI_CONTEXT_OVERLAY, basecursor.c_str() );
 }
 
 bool UI_Main::initRocket( void ) {
@@ -458,16 +458,22 @@ void UI_Main::showUI( bool show ) {
 	}
 }
 
-void UI_Main::showQuickMenu( bool show ) {
-	quickMenuVisible = show;
+void UI_Main::showOverlayMenu( bool show, bool showCursor ) {
+	overlayMenuVisible = show;
 
 	if( !show ) {
-		cancelTouches( UI_CONTEXT_QUICK );
+		cancelTouches( UI_CONTEXT_OVERLAY );
+	}
+
+	if( showCursor ) {
+		rocketModule->hideCursor( UI_CONTEXT_OVERLAY, 0, RocketModule::HIDECURSOR_INPUT );
+	} else {
+		rocketModule->hideCursor( UI_CONTEXT_OVERLAY, RocketModule::HIDECURSOR_INPUT, 0 );
 	}
 }
 
-bool UI_Main::haveQuickMenu( void ) {
-	NavigationStack *nav = self->navigations[UI_CONTEXT_QUICK].front();
+bool UI_Main::haveOverlayMenu( void ) {
+	NavigationStack *nav = self->navigations[UI_CONTEXT_OVERLAY].front();
 	if( !nav ) {
 		return false;
 	}
@@ -649,6 +655,10 @@ void UI_Main::mouseMove( int contextId, int frameTime, int x, int y, bool absolu
 	}
 }
 
+bool UI_Main::mouseHover( int contextId ) {
+	return rocketModule->mouseHover( contextId );
+}
+
 void UI_Main::textInput( int contextId, wchar_t c ) {
 	rocketModule->textInput( contextId, c );
 }
@@ -661,6 +671,8 @@ void UI_Main::keyEvent( int contextId, int key, bool pressed ) {
 bool UI_Main::touchEvent( int contextId, int id, touchevent_t type, int x, int y ) {
 	return rocketModule->touchEvent( contextId, id, type, x, y );
 }
+
+bool ( *MouseHover )( int context );
 
 bool UI_Main::isTouchDown( int contextId, int id ) {
 	return rocketModule->isTouchDown( contextId, id );
@@ -775,8 +787,8 @@ void UI_Main::refreshScreen( unsigned int time, int clientState, int serverState
 	// rocket update+render
 	rocketModule->update();
 
-	if( quickMenuVisible ) {
-		rocketModule->render( UI_CONTEXT_QUICK );
+	if( overlayMenuVisible ) {
+		rocketModule->render( UI_CONTEXT_OVERLAY );
 	}
 	if( menuVisible ) {
 		rocketModule->render( UI_CONTEXT_MAIN );
@@ -924,13 +936,13 @@ void UI_Main::M_Menu_Quick_f( void ) {
 		return;
 	}
 
-	NavigationStack *nav = self->navigations[UI_CONTEXT_QUICK].front();
+	NavigationStack *nav = self->navigations[UI_CONTEXT_OVERLAY].front();
 	if( !nav ) {
 		return;
 	}
 
 	if( trap::Cmd_Argc() <= 2 ) {
-		self->quickMenuURL = "";
+		self->overlayMenuURL = "";
 		nav->popAllDocuments();
 		return;
 	}
@@ -945,7 +957,7 @@ void UI_Main::M_Menu_Quick_f( void ) {
 	}
 
 	Rocket::Core::String urlString = url.GetURL();
-	if( urlString == self->quickMenuURL ) {
+	if( urlString == self->overlayMenuURL ) {
 		return;
 	}
 
@@ -955,7 +967,7 @@ void UI_Main::M_Menu_Quick_f( void ) {
 
 	nav->pushDocument( urlString.CString(), false );
 
-	self->quickMenuURL = urlString;
+	self->overlayMenuURL = urlString;
 }
 
 void UI_Main::M_Menu_Close_f( void ) {

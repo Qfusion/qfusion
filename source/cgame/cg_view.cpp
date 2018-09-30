@@ -127,8 +127,6 @@ static void CG_AddLocalSounds( void ) {
 	// if in postmatch, play postmatch song
 	if( GS_MatchState() >= MATCH_STATE_POSTMATCH ) {
 		if( !postmatchsound_set && !demostream ) {
-			CG_ShowQuickMenu( 1 );
-
 			trap_S_StartBackgroundTrack( S_PLAYLIST_POSTMATCH, NULL, 3 ); // loop random track from the playlist
 			postmatchsound_set = true;
 			background = false;
@@ -140,8 +138,6 @@ static void CG_AddLocalSounds( void ) {
 		}
 
 		if( postmatchsound_set ) {
-			CG_ShowQuickMenu( 0 );
-
 			trap_S_StopBackgroundTrack();
 			postmatchsound_set = false;
 			background = false;

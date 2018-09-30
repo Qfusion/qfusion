@@ -51,7 +51,7 @@ public:
 //==================================================
 
 RocketModule::RocketModule( int vidWidth, int vidHeight, float pixelRatio )
-	: rocketInitialized( false ), hideCursorBits( 0 ),
+	: rocketInitialized( false ),
 
 	// pointers
 	systemInterface( nullptr ), fsInterface( nullptr ), renderInterface( nullptr ),
@@ -84,12 +84,9 @@ RocketModule::RocketModule( int vidWidth, int vidHeight, float pixelRatio )
 	contextMain = Rocket::Core::CreateContext( contextName, Vector2i( vidWidth, vidHeight ) );
 
 	contextQuick = Rocket::Core::CreateContext( contextName + "_quick", Vector2i( vidWidth, vidHeight ) );
-	if( contextQuick ) {
-		contextQuick->ShowMouseCursor( false );
-	}
 
-	contextsTouch[UI_CONTEXT_MAIN].id = -1;
-	contextsTouch[UI_CONTEXT_QUICK].id = -1;
+	memset( hideCursorBits, 0, sizeof( *hideCursorBits ) * UI_NUM_CONTEXTS );
+	memset( contextsTouch, -1, sizeof( *contextsTouch ) * UI_NUM_CONTEXTS );
 }
 
 // here for hax0rz, TODO: move to "common" area
@@ -129,6 +126,15 @@ RocketModule::~RocketModule() {
 void RocketModule::mouseMove( int contextId, int mousex, int mousey ) {
 	auto *context = contextForId( contextId );
 	context->ProcessMouseMove( mousex, mousey, KeyConverter::getModifiers() );
+}
+
+bool RocketModule::mouseHover( int contextId ) {
+	auto *context = contextForId( contextId );
+	Element *element = context->GetHoverElement();
+	if( !element || element->GetTagName() == "body" ) {
+		return false;
+	}
+	return true;
 }
 
 void RocketModule::textInput( int contextId, wchar_t c ) {
@@ -211,7 +217,7 @@ bool RocketModule::touchEvent( int contextId, int id, touchevent_t type, int x, 
 	auto *context = contextForId( contextId );
 
 	if( ( type == TOUCH_DOWN ) && ( contextTouch.id < 0 ) ) {
-		if( contextId == UI_CONTEXT_QUICK ) {
+		if( contextId == UI_CONTEXT_OVERLAY ) {
 			Rocket::Core::Vector2f position( ( float )x, ( float )y );
 			Element *element = context->GetElementAtPoint( position );
 			if( !element || element->GetTagName() == "body" ) {
@@ -368,10 +374,10 @@ Rocket::Core::Context *RocketModule::contextForId( int contextId ) {
 	switch( contextId ) {
 		case UI_CONTEXT_MAIN:
 			return contextMain;
-		case UI_CONTEXT_QUICK:
+		case UI_CONTEXT_OVERLAY:
 			return contextQuick;
 		default:
-			assert( contextId != UI_CONTEXT_MAIN && contextId != UI_CONTEXT_QUICK );
+			assert( contextId != UI_CONTEXT_MAIN && contextId != UI_CONTEXT_OVERLAY );
 			return NULL;
 	}
 }
@@ -381,7 +387,7 @@ int RocketModule::idForContext( Rocket::Core::Context *context ) {
 		return UI_CONTEXT_MAIN;
 	}
 	if( context == contextQuick ) {
-		return UI_CONTEXT_QUICK;
+		return UI_CONTEXT_OVERLAY;
 	}
 	return UI_NUM_CONTEXTS;
 }
@@ -397,13 +403,8 @@ void RocketModule::loadCursor( int contextId, const String& rmlCursor ) {
 }
 
 void RocketModule::hideCursor( int contextId, unsigned int addBits, unsigned int clearBits ) {
-	if( contextId == UI_CONTEXT_QUICK ) {
-		contextQuick->ShowMouseCursor( false );
-		return;
-	}
-
-	hideCursorBits = ( hideCursorBits & ~clearBits ) | addBits;
-	contextForId( contextId )->ShowMouseCursor( hideCursorBits == 0 );
+	hideCursorBits[contextId] = ( hideCursorBits[contextId] & ~clearBits ) | addBits;
+	contextForId( contextId )->ShowMouseCursor( hideCursorBits[contextId] == 0 );
 }
 
 void RocketModule::update( void ) {

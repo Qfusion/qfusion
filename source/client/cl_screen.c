@@ -509,18 +509,26 @@ void SCR_ShutdownScreen( void ) {
 }
 
 /*
-* SCR_EnableQuickMenu
+* SCR_EnableOverlayMenu
 */
-void SCR_EnableQuickMenu( bool enable ) {
-	cls.quickmenu = enable;
-	CL_UIModule_ShowQuickMenu( cls.quickmenu );
+void SCR_EnableOverlayMenu( bool enable, bool showCursor ) {
+	cls.overlayMenu = enable;
+	cls.overlayMenuShowCursor = showCursor;
+	CL_UIModule_ShowOverlayMenu( enable, showCursor );
 }
 
 /*
-* SCR_IsQuickMenuShown
+* SCR_IsOverlayMenuShown
 */
-bool SCR_IsQuickMenuShown( void ) {
-	return cls.quickmenu && CL_UIModule_HaveQuickMenu();
+bool SCR_IsOverlayMenuShown( void ) {
+	return cls.overlayMenu && CL_UIModule_HaveOverlayMenu();
+}
+
+/*
+* SCR_IsOverlayMenuHover
+*/
+bool SCR_IsOverlayMenuHover( void ) {
+	return SCR_IsOverlayMenuShown() && cls.overlayMenuShowCursor && CL_UIModule_MouseHover( false );
 }
 
 /*

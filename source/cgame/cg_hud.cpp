@@ -579,12 +579,12 @@ static int CG_GetScoreboardShown( const void *parameter ) {
 	return CG_IsScoreboardShown() ? 1 : 0;
 }
 
-static int CG_GetQuickMenuState( const void *parameter ) {
-	if( trap_SCR_IsQuickMenuShown() ) {
+static int CG_GetOverlayMenuState( const void *parameter ) {
+	if( trap_SCR_IsOverlayMenuShown() ) {
 		return 2;
 	}
 
-	if( trap_SCR_HaveQuickMenu() ) {
+	if( trap_SCR_HaveOverlayMenu() ) {
 		return 1;
 	}
 
@@ -676,7 +676,7 @@ static const reference_numeric_t cg_numeric_references[] =
 	{ "PMOVE_TYPE", CG_GetPmoveType, NULL },
 	{ "DEMOPLAYING", CG_IsDemoPlaying, NULL },
 	{ "INSTANTRESPAWN", CG_GetLayoutStatFlag, (void *)STAT_LAYOUT_INSTANTRESPAWN },
-	{ "QUICKMENU", CG_GetQuickMenuState, NULL },
+	{ "QUICKMENU", CG_GetOverlayMenuState, NULL },
 
 	{ "POWERUP_QUAD_TIME", CG_GetPowerupTime, (void *)POWERUP_QUAD },
 	{ "POWERUP_WARSHELL_TIME", CG_GetPowerupTime, (void *)POWERUP_SHELL },
@@ -2724,27 +2724,6 @@ static bool CG_LFuncTouchScores( struct cg_layoutnode_s *commandnode, struct cg_
 	return true;
 }
 
-static void CG_QuickMenuUpFunc( int id, int64_t time ) {
-	if( GS_MatchState() < MATCH_STATE_POSTMATCH ) {
-		CG_ShowQuickMenu( 0 );
-	}
-}
-
-static bool CG_LFuncTouchQuickMenu( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
-	int side = ( int )CG_GetNumericArg( &argumentnode );
-
-	if( GS_MatchState() < MATCH_STATE_POSTMATCH ) {
-		if( CG_TouchArea( TOUCHAREA_HUD_QUICKMENU,
-						  CG_HorizontalAlignForWidth( layout_cursor_x, layout_cursor_align, layout_cursor_width ),
-						  CG_VerticalAlignForHeight( layout_cursor_y, layout_cursor_align, layout_cursor_height ),
-						  layout_cursor_width, layout_cursor_height, CG_QuickMenuUpFunc ) >= 0 ) {
-			CG_ShowQuickMenu( ( side < 0 ) ? -1 : 1 );
-		}
-	}
-	return true;
-}
-
-
 static bool CG_LFuncIf( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	return (int)CG_GetNumericArg( &argumentnode ) != 0;
 }
@@ -3436,15 +3415,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 		CG_LFuncTouchScores,
 		0,
 		"Places scoreboard button",
-		false
-	},
-
-	{
-		"touchQuickMenu",
-		NULL,
-		CG_LFuncTouchQuickMenu,
-		1,
-		"Places quick menu button, 1 to show the menu on the right, -1 to show it on the left",
 		false
 	},
 

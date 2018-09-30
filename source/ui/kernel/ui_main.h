@@ -68,6 +68,7 @@ public:
 	void addToServerList( const char *adr, const char *info );
 
 	void mouseMove( int contextId, int frameTime, int x, int y, bool absolute, bool showCursor );
+	bool mouseHover( int contextId );
 	void textInput( int contextId, wchar_t c );
 	void keyEvent( int contextId, int key, bool pressed );
 	bool touchEvent( int contextId, int id, touchevent_t type, int x, int y );
@@ -86,7 +87,7 @@ public:
 	static void M_Menu_AddTVChannel_f( void );
 	static void M_Menu_RemoveTVChannel_f( void );
 
-	// pops all documents from stack and inserts a new one _if_ the quickMenuURL is different
+	// pops all documents from stack and inserts a new one _if_ the overlayMenuURL is different
 	static void M_Menu_Quick_f( void );
 
 	// DEBUG
@@ -102,8 +103,8 @@ public:
 	// Public methods
 	void forceUI( bool force );
 	void showUI( bool show );
-	void showQuickMenu( bool show );
-	bool haveQuickMenu( void );
+	void showOverlayMenu( bool show, bool showCursor );
+	bool haveOverlayMenu( void );
 
 	ASUI::ASInterface *getAS( void ) { return asmodule; };
 	RocketModule *getRocket( void ) { return rocketModule; }
@@ -205,7 +206,7 @@ private:
 	GameAjaxDataSource *gameajax;
 
 	UI_Navigation navigations[UI_NUM_CONTEXTS];
-	Rocket::Core::String quickMenuURL;
+	Rocket::Core::String overlayMenuURL;
 
 	StreamCache *streamCache;
 
@@ -216,7 +217,7 @@ private:
 
 	int gameProtocol;
 	bool menuVisible;
-	bool quickMenuVisible;
+	bool overlayMenuVisible;
 	bool forceMenu;
 	bool showNavigationStack;
 

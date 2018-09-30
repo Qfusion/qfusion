@@ -1152,7 +1152,7 @@ typedef struct {
 
 	int64_t callvote_when;
 
-	char quickMenuItems[1024];
+	char overlayMenuItems[1024];
 } client_levelreset_t;
 
 typedef struct {

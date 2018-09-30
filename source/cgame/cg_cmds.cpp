@@ -743,19 +743,19 @@ static void CG_SC_MenuQuick( void ) {
 		return;
 	}
 
-	cg.quickmenu[0] = '\0';
+	cg.overlayMenu[0] = '\0';
 
 	if( trap_Cmd_Argc() >= 2 ) {
 		for( i = 1, c = 1; i < trap_Cmd_Argc() - 1; i += 2, c++ ) {
 			const char *label = trap_Cmd_Argv( i );
 			const char *cmd = trap_Cmd_Argv( i + 1 );
 
-			Q_strncatz( cg.quickmenu, va( "btn%i \"%s\" ", c, label ), sizeof( cg.quickmenu ) );
-			Q_strncatz( cg.quickmenu, va( "cmd%i \"%s%s\" ", c, *cmd ? "cmd " : "", cmd ), sizeof( cg.quickmenu ) );
+			Q_strncatz( cg.overlayMenu, va( "btn%i \"%s\" ", c, label ), sizeof( cg.overlayMenu ) );
+			Q_strncatz( cg.overlayMenu, va( "cmd%i \"%s%s\" ", c, *cmd ? "cmd " : "", cmd ), sizeof( cg.overlayMenu ) );
 		}
 	}
 
-	CG_RefreshQuickMenu();
+	CG_RefreshOverlayMenu();
 }
 
 /*

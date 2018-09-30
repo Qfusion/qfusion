@@ -1047,7 +1047,7 @@ static void objectGameClient_SetHelpMessage( unsigned int index, gclient_t *self
 	G_SetPlayerHelpMessage( PLAYERENT( playerNum ), index );
 }
 
-static void objectGameClient_SetQuickMenuItems( asstring_t *str, gclient_t *self ) {
+static void objectGameClient_SetOverlayMenuItems( asstring_t *str, gclient_t *self ) {
 	int playerNum;
 
 	if( !str || !str->buffer ) {
@@ -1063,7 +1063,7 @@ static void objectGameClient_SetQuickMenuItems( asstring_t *str, gclient_t *self
 		return;
 	}
 
-	Q_strncpyz( self->level.quickMenuItems, str->buffer, sizeof( self->level.quickMenuItems ) );
+	Q_strncpyz( self->level.overlayMenuItems, str->buffer, sizeof( self->level.overlayMenuItems ) );
 	trap_GameCmd( PLAYERENT( playerNum ), va( "qm %s", str->buffer ) );
 }
 
@@ -1119,7 +1119,7 @@ static const gs_asMethod_t gameclient_Methods[] =
 	{ ASLIB_FUNCTION_DECL( void, newRaceRun, ( int numSectors ) ), asFUNCTION( objectGameClient_NewRaceRun ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, setRaceTime, ( int sector, int64 time ) ), asFUNCTION( objectGameClient_SetRaceTime ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, setHelpMessage, ( uint msg ) ), asFUNCTION( objectGameClient_SetHelpMessage ), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL( void, setQuickMenuItems, ( const String &in ) ), asFUNCTION( objectGameClient_SetQuickMenuItems ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( void, setOverlayMenuItems, ( const String &in ) ), asFUNCTION( objectGameClient_SetOverlayMenuItems ), asCALL_CDECL_OBJLAST },
 
 	ASLIB_METHOD_NULL
 };

@@ -504,9 +504,9 @@ void CL_GameModule_Init( void ) {
 	import.SCR_SetDrawCharIntercept = SCR_SetDrawCharIntercept;
 	import.SCR_strWidth = SCR_strWidth;
 	import.SCR_StrlenForWidth = SCR_StrlenForWidth;
-	import.SCR_EnableQuickMenu = SCR_EnableQuickMenu;
-	import.SCR_HaveQuickMenu = CL_UIModule_HaveQuickMenu;
-	import.SCR_IsQuickMenuShown = SCR_IsQuickMenuShown;
+	import.SCR_EnableOverlayMenu = SCR_EnableOverlayMenu;
+	import.SCR_HaveOverlayMenu = CL_UIModule_HaveOverlayMenu;
+	import.SCR_IsOverlayMenuShown = SCR_IsOverlayMenuShown;
 	import.SCR_DrawChat = Con_DrawChat;
 
 	import.AsyncStream_UrlEncode = AsyncStream_UrlEncode;
@@ -548,7 +548,7 @@ void CL_GameModule_Init( void ) {
 
 	CL_GameModule_AsyncStream_Init();
 
-	SCR_EnableQuickMenu( false );
+	SCR_EnableOverlayMenu( false, true );
 
 	start = Sys_Milliseconds();
 	cge->Init( cls.servername, cl.playernum,

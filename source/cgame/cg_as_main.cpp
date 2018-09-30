@@ -50,12 +50,23 @@ static const gs_asEnumVal_t asLimitsEnumVals[] =
 	ASLIB_ENUM_VAL_NULL
 };
 
-static const gs_asEnum_t asCGameEnums[] =
+static const gs_asEnumVal_t asOverlayMenuEnumVals[] =
 {
-	{ "cg_limits_e", asLimitsEnumVals },
+	ASLIB_ENUM_VAL( OVERLAY_MENU_LEFT ),
+	ASLIB_ENUM_VAL( OVERLAY_MENU_HIDDEN ),
+	ASLIB_ENUM_VAL( OVERLAY_MENU_RIGHT ),
 
 	ASLIB_ENUM_VAL_NULL
 };
+
+static const gs_asEnum_t asCGameEnums[] =
+{
+	{ "cg_limits_e", asLimitsEnumVals },
+	{ "cg_overlayMenuState_e", asOverlayMenuEnumVals },
+
+	ASLIB_ENUM_VAL_NULL
+};
+
 
 //======================================================================
 
@@ -70,6 +81,7 @@ static void asFunc_Print( const asstring_t *str ) {
 static const gs_asglobfuncs_t asCGameGlobalFuncs[] =
 {
 	{ "void Print( const String &in )", asFUNCTION( asFunc_Print ), NULL },
+	{ "void ShowOverlayMenu( int state, bool showCursor )", asFUNCTION( CG_ShowOverlayMenu ), NULL },
 
 	{ NULL }
 };

@@ -502,7 +502,7 @@ void Key_CharEvent( int key, wchar_t charkey ) {
 			Con_MessageCharEvent( charkey );
 			break;
 		case key_menu:
-			CL_UIModule_CharEvent( charkey );
+			CL_UIModule_CharEvent( true, charkey );
 			break;
 		case key_game:
 		case key_console:
@@ -599,9 +599,8 @@ static int Key_NumPadKeyValue( int key ) {
 void Key_Event( int key, bool down, int64_t time ) {
 	char cmd[1024];
 	bool handled = false;
-	int numkey = Key_NumPadKeyValue( key );
-	bool have_quickmenu = SCR_IsQuickMenuShown();
-	bool numeric = numkey >= '0' && numkey <= '9';
+	bool have_overlayMenu = SCR_IsOverlayMenuShown();
+	bool have_overlayMenuHover = have_overlayMenu && cls.overlayMenuShowCursor && CL_UIModule_MouseHover( false );
 
 	// update auto-repeat status
 	if( down ) {
@@ -654,7 +653,7 @@ void Key_Event( int key, bool down, int64_t time ) {
 				if( cls.state != CA_DISCONNECTED ) {
 					Cbuf_AddText( "disconnect\n" );
 				} else if( cls.key_dest == key_menu ) {
-					CL_UIModule_KeyEvent( key, down );
+					CL_UIModule_KeyEvent( true, key, down );
 				}
 				return;
 			}
@@ -665,7 +664,7 @@ void Key_Event( int key, bool down, int64_t time ) {
 				Con_MessageKeyDown( key );
 				break;
 			case key_menu:
-				CL_UIModule_KeyEvent( key, down );
+				CL_UIModule_KeyEvent( true, key, down );
 				break;
 			case key_game:
 				CL_GameModule_EscapeKey();
@@ -687,10 +686,21 @@ void Key_Event( int key, bool down, int64_t time ) {
 	//
 	if( ( cls.key_dest == key_menu && menubound[key] )
 		|| ( cls.key_dest == key_console && !consolekeys[key] )
-		|| ( cls.key_dest == key_game && ( cls.state == CA_ACTIVE || !consolekeys[key] ) && ( !have_quickmenu || !numeric ) )
+		|| ( cls.key_dest == key_game && ( cls.state == CA_ACTIVE || !consolekeys[key] ) )
 		|| ( cls.key_dest == key_message && ( key >= K_F1 && key <= K_F15 ) ) ) {
 		const char *kb = keybindings[key];
-		bool suppress = ( cls.key_dest == key_game ) && CL_GameModule_KeyEvent( key, down );
+		bool suppress = false;
+
+		if( cls.key_dest == key_game ) {
+			// if the cursor is hovering above in-game UI elements, 
+			// do not pass call the cgame callaback at all
+			if( !have_overlayMenuHover )
+				suppress = CL_GameModule_KeyEvent( key, down );
+
+			// always suppress keybindings if in-game UI and the cursor is on
+			if( have_overlayMenu && cls.overlayMenuShowCursor )
+				suppress = true;
+		}
 
 		if( kb && !suppress ) {
 			if( in_debug && in_debug->integer ) {
@@ -726,8 +736,8 @@ void Key_Event( int key, bool down, int64_t time ) {
 		}
 	}
 
-	if( cls.key_dest == key_menu ) {
-		CL_UIModule_KeyEvent( key, down );
+	if( cls.key_dest == key_menu || ( cls.key_dest == key_game && have_overlayMenuHover ) ) {
+		CL_UIModule_KeyEvent( cls.key_dest == key_menu, key, down );
 		return;
 	}
 
@@ -740,8 +750,7 @@ void Key_Event( int key, bool down, int64_t time ) {
 			Con_MessageKeyDown( key );
 			break;
 		case key_game:
-			if( have_quickmenu && numeric ) {
-				CL_UIModule_KeyEventQuick( numkey, down );
+			if( have_overlayMenuHover ) {
 				break;
 			}
 		case key_console:

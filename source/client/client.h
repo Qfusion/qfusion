@@ -207,7 +207,8 @@ typedef struct {
 	connstate_t state;          // only set through CL_SetClientState
 	keydest_t key_dest;
 	keydest_t old_key_dest;
-	bool quickmenu;
+	bool overlayMenu;
+	bool overlayMenuShowCursor;
 
 	int64_t framecount;
 	int64_t realtime;               // always increasing, no clamping, etc
@@ -470,10 +471,10 @@ void CL_Mumble_Shutdown( void );
 void CL_UIModule_Init( void );
 void CL_UIModule_Shutdown( void );
 void CL_UIModule_TouchAllAssets( void );
-void CL_UIModule_KeyEvent( int key, bool down );
+void CL_UIModule_KeyEvent( bool mainContext, int key, bool down );
 void CL_UIModule_KeyEventQuick( int key, bool down );
-void CL_UIModule_CharEvent( wchar_t key );
-bool CL_UIModule_TouchEvent( int id, touchevent_t type, int x, int y );
+void CL_UIModule_CharEvent( bool mainContext, wchar_t key );
+bool CL_UIModule_TouchEvent( bool mainContext, int id, touchevent_t type, int x, int y );
 bool CL_UIModule_TouchEventQuick( int id, touchevent_t type, int x, int y );
 bool CL_UIModule_IsTouchDown( int id );
 bool CL_UIModule_IsTouchDownQuick( int id );
@@ -482,11 +483,12 @@ void CL_UIModule_Refresh( bool backGround, bool showCursor );
 void CL_UIModule_UpdateConnectScreen( bool backGround );
 void CL_UIModule_ForceMenuOn( void );
 void CL_UIModule_ForceMenuOff( void );
-void CL_UIModule_ShowQuickMenu( bool show );
-bool CL_UIModule_HaveQuickMenu( void );
+void CL_UIModule_ShowOverlayMenu( bool show, bool showCursor );
+bool CL_UIModule_HaveOverlayMenu( void );
 void CL_UIModule_AddToServerList( const char *adr, const char *info );
-void CL_UIModule_MouseMove( int frameTime, int dx, int dy );
-void CL_UIModule_MouseSet( int mx, int my, bool showCursor );
+void CL_UIModule_MouseMove( bool mainContext, int frameTime, int dx, int dy );
+void CL_UIModule_MouseSet( bool mainContext, int mx, int my, bool showCursor );
+bool CL_UIModule_MouseHover( bool mainContext );
 
 //
 // cl_serverlist.c
@@ -567,8 +569,9 @@ void CL_CheckDownloadTimeout( void );
 //
 void SCR_InitScreen( void );
 void SCR_ShutdownScreen( void );
-void SCR_EnableQuickMenu( bool enable );
-bool SCR_IsQuickMenuShown( void );
+void SCR_EnableOverlayMenu( bool enable, bool showCursor );
+bool SCR_IsOverlayMenuShown( void );
+bool SCR_IsOverlayMenuHover( void );
 void SCR_UpdateScreen( void );
 void SCR_BeginLoadingPlaque( void );
 void SCR_EndLoadingPlaque( void );
