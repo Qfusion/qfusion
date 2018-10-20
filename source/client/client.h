@@ -207,8 +207,6 @@ typedef struct {
 	connstate_t state;          // only set through CL_SetClientState
 	keydest_t key_dest;
 	keydest_t old_key_dest;
-	bool overlayMenu;
-	bool overlayMenuShowCursor;
 
 	int64_t framecount;
 	int64_t realtime;               // always increasing, no clamping, etc
@@ -569,9 +567,11 @@ void CL_CheckDownloadTimeout( void );
 //
 void SCR_InitScreen( void );
 void SCR_ShutdownScreen( void );
-void SCR_EnableOverlayMenu( bool enable, bool showCursor );
-bool SCR_IsOverlayMenuShown( void );
-bool SCR_IsOverlayMenuHover( void );
+void SCR_ShowOverlay( bool enable, bool showCursor );
+bool SCR_HaveOverlay( void );
+bool SCR_OverlayHover( void );
+void SCR_OverlayKeyEvent( int key, bool down );
+void SCR_OverlayMouseMove( int x, int y, bool abs );
 void SCR_UpdateScreen( void );
 void SCR_BeginLoadingPlaque( void );
 void SCR_EndLoadingPlaque( void );

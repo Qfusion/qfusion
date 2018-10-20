@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
 #include "cg_local.h"
+#include "../gameshared//q_keycodes.h"
 
 static bool cg_inputCenterView;
 static float cg_inputCenterViewPitch;
@@ -57,7 +58,13 @@ float CG_GetSensitivityScale( float sens, float zoomSens ) {
 * CG_MouseMove
 */
 void CG_MouseMove( int mx, int my ) {
-	CG_asInputMouseMove( mx, my );
+	CG_Overlay_MouseMove( &cg_overlay, mx, my );
+
+	if( CG_Overlay_Hover( &cg_overlay ) ) {
+		CG_asInputMouseMove( 0, 0 );
+	} else {
+		CG_asInputMouseMove( mx, my );
+	}
 }
 
 /*
@@ -132,6 +139,10 @@ cg_touch_t *CG_GetTouch( int id ) {
 * CG_KeyEvent
 */
 bool CG_KeyEvent( int key, bool down ) {
+	if( CG_Overlay_Hover( &cg_overlay ) && ( key >= K_MOUSE1 && key <= K_MOUSE1DBLCLK ) ) {
+		CG_Overlay_KeyEvent( &cg_overlay, key, down );
+		return true;
+	}
 	return CG_asInputKeyEvent( key, down );
 }
 

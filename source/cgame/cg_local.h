@@ -633,7 +633,6 @@ typedef struct {
 	char *motd;
 	int64_t motd_time;
 	char overlayMenu[MAX_STRING_CHARS];
-	bool overlayMenu_left;
 
 	// awards
 	char award_lines[MAX_AWARD_LINES][MAX_CONFIGSTRING_CHARS];
@@ -712,6 +711,22 @@ struct model_s *CG_RegisterModel( const char *name );
 struct sfx_s *CG_MediaSfx( cgs_media_handle_t *mediasfx );
 struct model_s *CG_MediaModel( cgs_media_handle_t *mediamodel );
 struct shader_s *CG_MediaShader( cgs_media_handle_t *mediashader );
+
+//
+// cg_overlay.c
+//
+typedef struct {
+	bool showCursor;
+	int cursor_x, cursor_y;
+} cg_overlay_t;
+
+extern cg_overlay_t cg_overlay;
+
+void CG_Overlay_Init( cg_overlay_t *overlay );
+void CG_Overlay_MouseMove( cg_overlay_t *overlay, int mx, int my );
+bool CG_Overlay_Hover( cg_overlay_t *overlay );
+void CG_Overlay_KeyEvent( cg_overlay_t *overlay, int key, bool down );
+void CG_Overlay_Show( cg_overlay_t *overlay, bool show, bool showCursor );
 
 //
 // cg_players.c

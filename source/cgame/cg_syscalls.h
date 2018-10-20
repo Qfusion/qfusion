@@ -483,24 +483,32 @@ static inline size_t trap_SCR_StrlenForWidth( const char *str, struct qfontface_
 	return CGAME_IMPORT.SCR_StrlenForWidth( str, font, maxwidth, 0 );
 }
 
-static inline void trap_SCR_EnableOverlayMenu( bool enable, bool showCursor ) {
-	CGAME_IMPORT.SCR_EnableOverlayMenu( enable, showCursor );
-}
-
-static inline bool trap_SCR_HaveOverlayMenu( void ) {
-	return CGAME_IMPORT.SCR_HaveOverlayMenu();
-}
-
-static inline bool trap_SCR_IsOverlayMenuShown( void ) {
-	return CGAME_IMPORT.SCR_IsOverlayMenuShown();
-}
-
 static inline void trap_SCR_DrawChat( int x, int y, int width, struct qfontface_s *font ) {
 	CGAME_IMPORT.SCR_DrawChat( x, y, width, font );
 }
 
 inline cg_fdrawchar_t trap_SCR_SetDrawCharIntercept( cg_fdrawchar_t intercept ) {
 	return CGAME_IMPORT.SCR_SetDrawCharIntercept( intercept );
+}
+
+static inline bool trap_SCR_HaveOverlay( void ) {
+	return CGAME_IMPORT.SCR_HaveOverlay();
+}
+
+static inline void trap_SCR_ShowOverlay( bool show, bool showCursor ) {
+	CGAME_IMPORT.SCR_ShowOverlay( show, showCursor );
+}
+
+static inline void trap_SCR_OverlayKeyEvent( int key, bool down ) {
+	CGAME_IMPORT.SCR_OverlayKeyEvent( key, down );
+}
+
+static inline void trap_SCR_OverlayMouseMove( int x, int y, bool abs ) {
+	CGAME_IMPORT.SCR_OverlayMouseMove( x, y, abs );
+}
+
+static inline bool trap_SCR_OverlayHover( void ) {
+	return CGAME_IMPORT.SCR_OverlayHover();
 }
 
 static inline ATTRIBUTE_MALLOC void *trap_MemAlloc( size_t size, const char *filename, int fileline ) {

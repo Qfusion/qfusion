@@ -240,10 +240,16 @@ typedef struct {
 	size_t ( *SCR_strWidth )( const char *str, struct qfontface_s *font, size_t maxlen, int flags );
 	size_t ( *SCR_StrlenForWidth )( const char *str, struct qfontface_s *font, size_t maxwidth, int flags );
 	cg_fdrawchar_t ( *SCR_SetDrawCharIntercept )( cg_fdrawchar_t intercept );
-	void ( *SCR_EnableOverlayMenu )( bool enabled, bool showCursor );
-	bool ( *SCR_HaveOverlayMenu )( void );
-	bool ( *SCR_IsOverlayMenuShown )( void );
 	void ( *SCR_DrawChat )( int x, int y, int width, struct qfontface_s *font );
+	void ( *SCR_ShowOverlay )( bool show, bool showCursor );
+	bool ( *SCR_HaveOverlay )( void );
+	void ( *SCR_OverlayKeyEvent )( int key, bool down );
+	void ( *SCR_OverlayMouseMove )( int x, int y, bool abs );
+	/**
+	* SCR_OverlayHover
+	* Returns true if mouse hovers above something that's isn't the body element.
+	*/
+	bool ( *SCR_OverlayHover )( void );
 
 	// managed memory allocation
 	void *( *Mem_Alloc )( size_t size, const char *filename, int fileline );

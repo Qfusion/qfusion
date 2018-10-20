@@ -169,25 +169,14 @@ void CG_RefreshOverlayMenu( void ) {
 		return;
 	}
 
-	trap_Cmd_ExecuteText( EXEC_APPEND, va( "menu_quick game_quick left %d %s\n", cg.overlayMenu_left ? 1 : 0, cg.overlayMenu ) );
+	trap_Cmd_ExecuteText( EXEC_APPEND, va( "menu_quick game_quick left %d %s\n", 0, cg.overlayMenu ) );
 }
 
 /*
 * CG_ShowOverlayMenu
 */
 void CG_ShowOverlayMenu( int state, bool showCursor ) {
-	if( state == OVERLAY_MENU_HIDDEN ) {
-		trap_SCR_EnableOverlayMenu( false, showCursor );
-		return;
-	}
-
-	bool left = state == OVERLAY_MENU_LEFT;
-	if( cg.overlayMenu_left != left ) {
-		cg.overlayMenu_left = left;
-		CG_RefreshOverlayMenu();
-	}
-
-	trap_SCR_EnableOverlayMenu( true, showCursor );
+	CG_Overlay_Show( &cg_overlay, state != OVERLAY_MENU_HIDDEN, showCursor );
 }
 
 //=============================================================================

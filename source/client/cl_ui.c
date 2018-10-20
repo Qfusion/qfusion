@@ -336,8 +336,6 @@ void CL_UIModule_Init( void ) {
 
 		uie->Init( viddef.width, viddef.height, VID_GetPixelRatio(),
 				   APP_PROTOCOL_VERSION, APP_DEMO_EXTENSION_STR, APP_UI_BASEPATH );
-
-		uie->ShowOverlayMenu( cls.overlayMenu, cls.overlayMenuShowCursor );
 	} else {
 		// wrong version
 		uie = NULL;

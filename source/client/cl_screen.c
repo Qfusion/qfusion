@@ -509,26 +509,41 @@ void SCR_ShutdownScreen( void ) {
 }
 
 /*
-* SCR_EnableOverlayMenu
+* SCR_ShowOverlay
 */
-void SCR_EnableOverlayMenu( bool enable, bool showCursor ) {
-	cls.overlayMenu = enable;
-	cls.overlayMenuShowCursor = showCursor;
+void SCR_ShowOverlay( bool enable, bool showCursor ) {
 	CL_UIModule_ShowOverlayMenu( enable, showCursor );
 }
 
 /*
-* SCR_IsOverlayMenuShown
+* SCR_HaveOverlay
 */
-bool SCR_IsOverlayMenuShown( void ) {
-	return cls.overlayMenu && CL_UIModule_HaveOverlayMenu();
+bool SCR_HaveOverlay( void ) {
+	return CL_UIModule_HaveOverlayMenu();
 }
 
 /*
-* SCR_IsOverlayMenuHover
+* SCR_OverlayHover
 */
-bool SCR_IsOverlayMenuHover( void ) {
-	return SCR_IsOverlayMenuShown() && cls.overlayMenuShowCursor && CL_UIModule_MouseHover( false );
+bool SCR_OverlayHover( void ) {
+	return CL_UIModule_MouseHover( false );
+}
+
+/*
+* SCR_OverlayKeyEvent
+*/
+void SCR_OverlayKeyEvent( int key, bool down ) {
+	CL_UIModule_KeyEvent( false, key, down );
+}
+
+/*
+* SCR_OverlayKeyEvent
+*/
+void SCR_OverlayMouseMove( int x, int y, bool abs ) {
+	if( abs )
+		CL_UIModule_MouseSet( false, x, y, false );
+	else
+		CL_UIModule_MouseMove( false, 0, x, y );
 }
 
 /*

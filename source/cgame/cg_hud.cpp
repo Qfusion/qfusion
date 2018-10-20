@@ -580,11 +580,11 @@ static int CG_GetScoreboardShown( const void *parameter ) {
 }
 
 static int CG_GetOverlayMenuState( const void *parameter ) {
-	if( trap_SCR_IsOverlayMenuShown() ) {
+	if( trap_SCR_HaveOverlay() && cg_overlay.showCursor ) {
 		return 2;
 	}
 
-	if( trap_SCR_HaveOverlayMenu() ) {
+	if( trap_SCR_HaveOverlay() ) {
 		return 1;
 	}
 

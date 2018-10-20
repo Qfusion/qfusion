@@ -734,9 +734,9 @@ static void CG_SC_MenuCustom( void ) {
 }
 
 /*
-* CG_SC_MenuQuick
+* CG_SC_MenuOverlay
 */
-static void CG_SC_MenuQuick( void ) {
+static void CG_SC_MenuOverlay( void ) {
 	int i, c;
 
 	if( cgs.demoPlaying || cgs.tv ) {
@@ -842,7 +842,7 @@ static const svcmd_t cg_svcmds[] =
 	{ "memo", CG_SC_MenuModal },
 	{ "motd", CG_SC_MOTD },
 	{ "aw", CG_SC_AddAward },
-	{ "qm", CG_SC_MenuQuick },
+	{ "qm", CG_SC_MenuOverlay },
 
 	{ NULL }
 };

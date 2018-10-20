@@ -599,8 +599,6 @@ static int Key_NumPadKeyValue( int key ) {
 void Key_Event( int key, bool down, int64_t time ) {
 	char cmd[1024];
 	bool handled = false;
-	bool have_overlayMenu = SCR_IsOverlayMenuShown();
-	bool have_overlayMenuHover = have_overlayMenu && cls.overlayMenuShowCursor && CL_UIModule_MouseHover( false );
 
 	// update auto-repeat status
 	if( down ) {
@@ -694,12 +692,7 @@ void Key_Event( int key, bool down, int64_t time ) {
 		if( cls.key_dest == key_game ) {
 			// if the cursor is hovering above in-game UI elements, 
 			// do not pass call the cgame callaback at all
-			if( !have_overlayMenuHover )
-				suppress = CL_GameModule_KeyEvent( key, down );
-
-			// always suppress keybindings if in-game UI and the cursor is on
-			if( have_overlayMenu && cls.overlayMenuShowCursor )
-				suppress = true;
+			suppress = CL_GameModule_KeyEvent( key, down );
 		}
 
 		if( kb && !suppress ) {
@@ -736,7 +729,7 @@ void Key_Event( int key, bool down, int64_t time ) {
 		}
 	}
 
-	if( cls.key_dest == key_menu || ( cls.key_dest == key_game && have_overlayMenuHover ) ) {
+	if( cls.key_dest == key_menu ) {
 		CL_UIModule_KeyEvent( cls.key_dest == key_menu, key, down );
 		return;
 	}
@@ -750,9 +743,6 @@ void Key_Event( int key, bool down, int64_t time ) {
 			Con_MessageKeyDown( key );
 			break;
 		case key_game:
-			if( have_overlayMenuHover ) {
-				break;
-			}
 		case key_console:
 			Con_KeyDown( key );
 			break;

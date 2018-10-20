@@ -1802,7 +1802,7 @@ void CL_InitMedia( void ) {
 	// register console font and background
 	SCR_RegisterConsoleMedia();
 
-	SCR_EnableOverlayMenu( false, true );
+	SCR_ShowOverlay( false, true );
 
 	// load user interface
 	CL_UIModule_Init();
