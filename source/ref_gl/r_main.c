@@ -941,7 +941,7 @@ static void R_SetupViewMatrices_( const refdef_t *rd, const mat4_t camTransform 
 
 	if( rd->rdflags & RDF_USEORTHO ) {
 		Matrix4_OrthoProjection( -rd->ortho_x, rd->ortho_x, -rd->ortho_y, rd->ortho_y,
-			rn.nearClip, rn.farClip, proj );
+			-rn.farClip, rn.farClip, proj );
 	} else {
 		Matrix4_PerspectiveProjection( rd->fov_x, rd->fov_y,
 			rn.nearClip, rn.farClip, rf.cameraSeparation, proj );
