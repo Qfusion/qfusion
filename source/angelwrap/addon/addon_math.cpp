@@ -93,6 +93,12 @@ static int asFunc_rand( void ) {
 	return rand();
 }
 
+static asvec3_t asFunc_RotatePointAroundVector( const asvec3_t *dir, const asvec3_t *point, float degrees ) {
+	asvec3_t dst;
+	RotatePointAroundVector( dst.v, dir->v, point->v, degrees );
+	return dst;
+}
+
 void PreRegisterMathAddon( asIScriptEngine *engine ) {
 }
 
@@ -121,6 +127,7 @@ void RegisterMathAddon( asIScriptEngine *engine ) {
 		{ "double random()", asFUNCTION( asFunc_random ) },
 		{ "double brandom( double min, double max )", asFUNCTION( asFunc_brandom ) },
 		{ "int rand()", asFUNCTION( asFunc_rand ) },
+		{ "Vec3 RotatePointAroundVector( const Vec3 &in dir, const Vec3 &in point, float degrees )", asFUNCTION( asFunc_RotatePointAroundVector ) },
 
 		{ NULL, asFUNCTION( 0 ) }
 	}, *func;
