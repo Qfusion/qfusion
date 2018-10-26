@@ -21,7 +21,6 @@ if (QFUSION_APPLICATION_VERSION_HEADER)
 	add_definitions(-DAPPLICATION_VERSION_HEADER=${QFUSION_APPLICATION_VERSION_HEADER})
 endif()
 
-option(USE_SDL2 "Build using SDL2" OFF)
 option(GAME_MODULES_ONLY "Only build game modules" OFF)
 option(SERVER_ONLY "Only build server binaries and game modules" OFF)
 
@@ -89,7 +88,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 	set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libc++")          # Use modern libc++ instead of libstdc++
 	set(CMAKE_FRAMEWORK_PATH "../libsrcs/lib/mac/Frameworks")
 	set(CMAKE_MACOSX_RPATH 1)
-	set(USE_SDL2 1)
 
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wno-unused-function -fvisibility=hidden -Winvalid-pch")
 	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 -D_DEBUG")
@@ -168,16 +166,8 @@ if (NOT GAME_MODULES_ONLY)
 		find_package(Theora REQUIRED)
 		find_package(Freetype REQUIRED)
 		find_package(OpenAL)
-
-		# We need SDL only on non-Windows platforms or when with SDL2-backend
-		if (USE_SDL2 OR (${CMAKE_SYSTEM_NAME} MATCHES "Linux"))
-			set(USE_SDL2 1)
-			find_package(SDL2 REQUIRED)
-		endif()
-
-		if (USE_SDL2)
-			add_definitions(-DUSE_SDL2)
-		endif()
+		find_package(SDL2 REQUIRED)
+		add_definitions(-DUSE_SDL2)
 	endif()
 endif()
 
