@@ -18,8 +18,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#ifndef R_IMAGELIB_H
-#define R_IMAGELIB_H
+#pragma once
 
 // odd values include alpha channel
 typedef enum {
@@ -37,21 +36,11 @@ typedef struct {
 	uint8_t *pixels;
 } r_imginfo_t;
 
-void R_Imagelib_Init( void );
-void R_Imagelib_Shutdown( void );
+r_imginfo_t LoadImage( const char * filename, uint8_t *( *allocbuf )( void *, size_t, const char *, int ), void *uptr );
 
-r_imginfo_t LoadTGA( const char *name, uint8_t *( *allocbuf )( void *, size_t, const char *, int ), void *uptr );
-bool WriteTGA( const char *name, r_imginfo_t *info, int quality );
-
-r_imginfo_t LoadJPG( const char *name, uint8_t *( *allocbuf )( void *, size_t, const char *, int ), void *uptr );
-bool WriteJPG( const char *name, r_imginfo_t *info, int quality );
-
-r_imginfo_t LoadPNG( const char *name, uint8_t *( *allocbuf )( void *, size_t, const char *, int ), void *uptr );
+bool WriteTGA( const char * filename, r_imginfo_t *info, int quality );
+bool WriteJPG( const char * filename, r_imginfo_t *info, int quality );
 
 r_imginfo_t LoadPCX( const char *name, uint8_t *( *allocbuf )( void *, size_t, const char *, int ), void *uptr );
 
-r_imginfo_t LoadWAL( const char *name, uint8_t *( *allocbuf )( void *, size_t, const char *, int ), void *uptr );
-
 void DecompressETC1( const uint8_t *in, int width, int height, uint8_t *out, bool bgr );
-
-#endif // R_IMAGELIB_H
