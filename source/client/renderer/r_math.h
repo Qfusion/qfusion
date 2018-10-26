@@ -19,7 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef R_MATH_H
 #define R_MATH_H
 
-#include "../gameshared/q_math.h"
+#include "../../gameshared/q_math.h"
 
 // r_math.h
 typedef vec_t mat4_t[16];

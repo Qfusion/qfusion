@@ -19,7 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "r_local.h"
 #include "r_imagelib.h"
-#include "../qalgo/hash.h"
+#include "../../qalgo/hash.h"
 
 #define MAX_GLIMAGES        8192
 #define IMAGES_HASH_SIZE    64
@@ -82,7 +82,7 @@ glmode_t modes[] = {
 * R_AllocTextureNum
 */
 static void R_AllocTextureNum( image_t *tex ) {
-	qglGenTextures( 1, &tex->texnum );
+	glGenTextures( 1, &tex->texnum );
 }
 
 /*
@@ -93,7 +93,7 @@ static void R_FreeTextureNum( image_t *tex ) {
 		return;
 	}
 
-	qglDeleteTextures( 1, &tex->texnum );
+	glDeleteTextures( 1, &tex->texnum );
 	tex->texnum = 0;
 
 	RB_FlushTextureCache();
@@ -106,12 +106,12 @@ int R_TextureTarget( int flags, int *uploadTarget ) {
 	int target, target2;
 
 	if( flags & IT_CUBEMAP ) {
-		target = GL_TEXTURE_CUBE_MAP_ARB;
-		target2 = GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB;
+		target = GL_TEXTURE_CUBE_MAP;
+		target2 = GL_TEXTURE_CUBE_MAP_POSITIVE_X;
 	} else if( flags & IT_ARRAY ) {
-		target = target2 = GL_TEXTURE_2D_ARRAY_EXT;
+		target = target2 = GL_TEXTURE_2D_ARRAY;
 	} else if( flags & IT_3D ) {
-		target = target2 = GL_TEXTURE_3D_EXT;
+		target = target2 = GL_TEXTURE_3D;
 	} else {
 		target = target2 = GL_TEXTURE_2D;
 	}
@@ -126,7 +126,7 @@ int R_TextureTarget( int flags, int *uploadTarget ) {
 * R_BindImage
 */
 static void R_BindImage( const image_t *tex ) {
-	qglBindTexture( R_TextureTarget( tex->flags, NULL ), tex->texnum );
+	glBindTexture( R_TextureTarget( tex->flags, NULL ), tex->texnum );
 	RB_FlushTextureCache();
 }
 
@@ -134,7 +134,7 @@ static void R_BindImage( const image_t *tex ) {
 * R_UnbindImage
 */
 static void R_UnbindImage( const image_t *tex ) {
-	qglBindTexture( R_TextureTarget( tex->flags, NULL ), 0 );
+	glBindTexture( R_TextureTarget( tex->flags, NULL ), 0 );
 	RB_FlushTextureCache();
 }
 
@@ -174,11 +174,11 @@ void R_TextureMode( char *string ) {
 		R_BindImage( glt );
 
 		if( !( glt->flags & IT_NOMIPMAP ) ) {
-			qglTexParameteri( target, GL_TEXTURE_MIN_FILTER, gl_filter_min );
-			qglTexParameteri( target, GL_TEXTURE_MAG_FILTER, gl_filter_max );
+			glTexParameteri( target, GL_TEXTURE_MIN_FILTER, gl_filter_min );
+			glTexParameteri( target, GL_TEXTURE_MAG_FILTER, gl_filter_max );
 		} else {
-			qglTexParameteri( target, GL_TEXTURE_MIN_FILTER, gl_filter_max );
-			qglTexParameteri( target, GL_TEXTURE_MAG_FILTER, gl_filter_max );
+			glTexParameteri( target, GL_TEXTURE_MIN_FILTER, gl_filter_max );
+			glTexParameteri( target, GL_TEXTURE_MAG_FILTER, gl_filter_max );
 		}
 	}
 }
@@ -192,7 +192,7 @@ static void R_UnpackAlignment( int ctx, int value ) {
 	}
 
 	r_unpackAlignment[ctx] = value;
-	qglPixelStorei( GL_UNPACK_ALIGNMENT, value );
+	glPixelStorei( GL_UNPACK_ALIGNMENT, value );
 }
 
 /*
@@ -223,7 +223,7 @@ void R_AnisotropicFilter( int value ) {
 
 		R_BindImage( glt );
 
-		qglTexParameteri( R_TextureTarget( glt->flags, NULL ), GL_TEXTURE_MAX_ANISOTROPY_EXT, gl_anisotropic_filter );
+		glTexParameteri( R_TextureTarget( glt->flags, NULL ), GL_TEXTURE_MAX_ANISOTROPY_EXT, gl_anisotropic_filter );
 	}
 }
 
@@ -265,17 +265,13 @@ void R_PrintImageList( const char *mask, bool ( *filter )( const char *mask, con
 		bpp = image->samples;
 		if( image->flags & IT_DEPTH ) {
 			bpp = 0; // added later
-		} else if( ( image->flags & IT_FRAMEBUFFER ) && !glConfig.ext.rgb8_rgba8 ) {
-			bpp = 2;
 		}
 
 		if( image->flags & ( IT_DEPTH | IT_DEPTHRB ) ) {
 			if( image->flags & IT_STENCIL ) {
 				bpp += 4;
-			} else if( glConfig.ext.depth24 ) {
-				bpp += 3;
 			} else {
-				bpp += 2;
+				bpp += 3;
 			}
 		}
 
@@ -416,7 +412,7 @@ static int R_ReadImageFromDisk( int ctx, char *pathname, size_t pathname_size,
 		r_imginfo_t imginfo = LoadImage( pathname, _R_AllocImageBufferCb, (void *)&cbinfo );
 
 		if( imginfo.samples >= 3 ) {
-			if( ( ( imginfo.comp & ~1 ) == IMGCOMP_BGR ) && ( !glConfig.ext.bgra || !flags ) ) {
+			if( ( ( imginfo.comp & ~1 ) == IMGCOMP_BGR ) && !flags ) {
 				R_SwapBlueRed( imginfo.pixels, imginfo.width, imginfo.height, imginfo.samples, 1 );
 				imginfo.comp = IMGCOMP_RGB | ( imginfo.comp & 1 );
 			}
@@ -458,10 +454,7 @@ static int R_ScaledImageSize( int width, int height, int *scaledWidth, int *scal
 		maxSize = glConfig.maxTextureSize;
 	}
 
-	makePOT = !glConfig.ext.texture_non_power_of_two && !forceNPOT;
-#ifdef GL_ES_VERSION_2_0
-	makePOT = makePOT && ( ( flags & ( IT_CLAMP | IT_NOMIPMAP ) ) != ( IT_CLAMP | IT_NOMIPMAP ) );
-#endif
+	makePOT = !forceNPOT;
 	if( makePOT ) {
 		int potWidth, potHeight;
 
@@ -764,7 +757,6 @@ static void R_MipMap16( unsigned short *in, int width, int height, int rMask, in
 /*
 * R_TextureInternalFormat
 */
-#ifndef GL_ES_VERSION_2_0
 static int R_TextureInternalFormat( int samples, int flags, int pixelType ) {
 	bool sRGB = ( flags & IT_SRGB ) != 0;
 
@@ -776,55 +768,38 @@ static int R_TextureInternalFormat( int samples, int flags, int pixelType ) {
 			if( samples == 3 ) {
 				return GL_COMPRESSED_SRGB_EXT;
 			}
-			if( samples == 2 ) {
-				return GL_COMPRESSED_SLUMINANCE_EXT;
-			}
-			if( ( samples == 1 ) && !( flags & IT_ALPHAMASK ) ) {
-				return GL_COMPRESSED_SLUMINANCE_ALPHA_EXT;
-			}
 		} else {
 			if( samples == 4 ) {
-				return GL_COMPRESSED_RGBA_ARB;
+				return GL_COMPRESSED_RGBA;
 			}
 			if( samples == 3 ) {
-				return GL_COMPRESSED_RGB_ARB;
-			}
-			if( samples == 2 ) {
-				return GL_COMPRESSED_LUMINANCE_ALPHA_ARB;
-			}
-			if( ( samples == 1 ) && !( flags & IT_ALPHAMASK ) ) {
-				return GL_COMPRESSED_LUMINANCE_ARB;
+				return GL_COMPRESSED_RGB;
 			}
 		}
 	}
 
 	if( samples == 3 ) {
 		if( sRGB ) {
-			return GL_SRGB_EXT;
+			return GL_SRGB;
 		}
 		return GL_RGB;
 	}
 
 	if( samples == 2 ) {
-		if( sRGB ) {
-			return GL_SLUMINANCE_ALPHA_EXT;
-		}
-		return GL_LUMINANCE_ALPHA;
+		assert( !sRGB );
+		return GL_RG;
 	}
 
 	if( samples == 1 ) {
-		if( sRGB ) {
-			return ( ( flags & IT_ALPHAMASK ) ? GL_ALPHA : GL_SLUMINANCE_EXT );
-		}
-		return ( ( flags & IT_ALPHAMASK ) ? GL_ALPHA : GL_LUMINANCE );
+		assert( !sRGB );
+		return ( flags & IT_ALPHAMASK ) ? GL_ALPHA : GL_RED;
 	}
 
 	if( sRGB ) {
-		return GL_SRGB8_ALPHA8_EXT;
+		return GL_SRGB_ALPHA;
 	}
 	return GL_RGBA;
 }
-#endif
 
 /*
 * R_TextureFormat
@@ -832,61 +807,52 @@ static int R_TextureInternalFormat( int samples, int flags, int pixelType ) {
 static void R_TextureFormat( int flags, int samples, int *comp, int *format, int *type ) {
 	if( flags & IT_DEPTH ) {
 		if( flags & IT_STENCIL ) {
-			*comp = *format = GL_DEPTH_STENCIL_EXT;
-			*type = GL_UNSIGNED_INT_24_8_EXT;
+			*comp = *format = GL_DEPTH_STENCIL;
+			*type = GL_UNSIGNED_INT_24_8;
 		} else {
 			*comp = *format = GL_DEPTH_COMPONENT;
-			if( glConfig.ext.depth24 ) {
-				*type = GL_UNSIGNED_INT;
-			} else {
-				*type = GL_UNSIGNED_SHORT;
-				if( glConfig.ext.depth_nonlinear ) {
-					*comp = GL_DEPTH_COMPONENT16_NONLINEAR_NV;
-				}
-			}
+			*type = GL_UNSIGNED_INT;
 		}
 	} else if( flags & IT_FRAMEBUFFER ) {
 		if( samples == 4 ) {
 			*comp = *format = GL_RGBA;
-			*type = glConfig.ext.rgb8_rgba8 ? GL_UNSIGNED_BYTE : GL_UNSIGNED_SHORT_4_4_4_4;
+			*type = GL_UNSIGNED_BYTE;
 		} else {
 			*comp = *format = GL_RGB;
-			*type = glConfig.ext.rgb8_rgba8 ? GL_UNSIGNED_BYTE : GL_UNSIGNED_SHORT_5_6_5;
+			*type = GL_UNSIGNED_BYTE;
 		}
 
 		if( flags & IT_FLOAT ) {
 			*type = GL_FLOAT;
 			if( samples == 4 ) {
-				*comp = GL_RGBA16F_ARB;
+				*comp = GL_RGBA16F;
 			} else if( samples == 3 ) {
-				*comp = GL_RGB16F_ARB;
+				*comp = GL_RGB16F;
 			}
 		}
 	} else {
 		if( samples == 4 ) {
-			*format = ( flags & IT_BGRA ? GL_BGRA_EXT : GL_RGBA );
+			*format = ( flags & IT_BGRA ? GL_BGRA : GL_RGBA );
 		} else if( samples == 3 ) {
-			*format = ( flags & IT_BGRA ? GL_BGR_EXT : GL_RGB );
+			*format = ( flags & IT_BGRA ? GL_BGR : GL_RGB );
 		} else if( samples == 2 ) {
-			*format = GL_LUMINANCE_ALPHA;
+			*format = GL_RG;
 		} else if( flags & IT_ALPHAMASK ) {
 			*format = GL_ALPHA;
 		} else {
-			*format = GL_LUMINANCE;
+			*format = GL_RED;
 		}
 
 		if( flags & IT_FLOAT ) {
 			*type = GL_FLOAT;
 			if( samples == 4 ) {
-				*comp = GL_RGBA16F_ARB;
+				*comp = GL_RGBA16F;
 			} else if( samples == 3 ) {
-				*comp = GL_RGB16F_ARB;
+				*comp = GL_RGB16F;
 			} else if( samples == 2 ) {
-				*comp = GL_LUMINANCE_ALPHA16F_ARB;
-			} else if( flags & IT_ALPHAMASK ) {
-				*comp = GL_ALPHA16F_ARB;
+				*comp = GL_RG16F;
 			} else {
-				*comp = GL_LUMINANCE16F_ARB;
+				*comp = GL_R16F;
 			}
 		} else {
 			*type = GL_UNSIGNED_BYTE;
@@ -909,21 +875,21 @@ static void R_SetupTexParameters( int flags, int upload_width, int upload_height
 	int wrap = GL_REPEAT;
 
 	if( flags & IT_NOFILTERING ) {
-		qglTexParameteri( target, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
-		qglTexParameteri( target, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+		glTexParameteri( target, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+		glTexParameteri( target, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
 	} else if( flags & IT_DEPTH ) {
-		qglTexParameteri( target, GL_TEXTURE_MIN_FILTER, gl_filter_depth );
-		qglTexParameteri( target, GL_TEXTURE_MAG_FILTER, gl_filter_depth );
+		glTexParameteri( target, GL_TEXTURE_MIN_FILTER, gl_filter_depth );
+		glTexParameteri( target, GL_TEXTURE_MAG_FILTER, gl_filter_depth );
 
 		if( glConfig.ext.texture_filter_anisotropic ) {
-			qglTexParameteri( target, GL_TEXTURE_MAX_ANISOTROPY_EXT, 1 );
+			glTexParameteri( target, GL_TEXTURE_MAX_ANISOTROPY_EXT, 1 );
 		}
 	} else if( !( flags & IT_NOMIPMAP ) ) {
-		qglTexParameteri( target, GL_TEXTURE_MIN_FILTER, gl_filter_min );
-		qglTexParameteri( target, GL_TEXTURE_MAG_FILTER, gl_filter_max );
+		glTexParameteri( target, GL_TEXTURE_MIN_FILTER, gl_filter_min );
+		glTexParameteri( target, GL_TEXTURE_MAG_FILTER, gl_filter_max );
 
 		if( glConfig.ext.texture_filter_anisotropic ) {
-			qglTexParameteri( target, GL_TEXTURE_MAX_ANISOTROPY_EXT, gl_anisotropic_filter );
+			glTexParameteri( target, GL_TEXTURE_MAX_ANISOTROPY_EXT, gl_anisotropic_filter );
 		}
 
 		if( minmipsize > 1 ) {
@@ -939,38 +905,30 @@ static void R_SetupTexParameters( int flags, int upload_width, int upload_height
 					mipheight = 1;
 				}
 			}
-			qglTexParameteri( target, GL_TEXTURE_MAX_LOD_SGIS, mip );
-			qglTexParameteri( target, GL_TEXTURE_MAX_LEVEL_SGIS, mip );
+			glTexParameteri( target, GL_TEXTURE_MAX_LEVEL, mip );
 		}
 	} else {
-		qglTexParameteri( target, GL_TEXTURE_MIN_FILTER, gl_filter_max );
-		qglTexParameteri( target, GL_TEXTURE_MAG_FILTER, gl_filter_max );
+		glTexParameteri( target, GL_TEXTURE_MIN_FILTER, gl_filter_max );
+		glTexParameteri( target, GL_TEXTURE_MAG_FILTER, gl_filter_max );
 
 		if( glConfig.ext.texture_filter_anisotropic ) {
-			qglTexParameteri( target, GL_TEXTURE_MAX_ANISOTROPY_EXT, 1 );
+			glTexParameteri( target, GL_TEXTURE_MAX_ANISOTROPY_EXT, 1 );
 		}
 	}
 
 	// clamp if required
 	if( flags & IT_CLAMP ) {
-		if( glConfig.ext.texture_edge_clamp ) {
-			wrap = GL_CLAMP_TO_EDGE;
-		}
-#ifndef GL_ES_VERSION_2_0
-		else {
-			wrap = GL_CLAMP;
-		}
-#endif
+		wrap = GL_CLAMP_TO_EDGE;
 	}
-	qglTexParameteri( target, GL_TEXTURE_WRAP_S, wrap );
-	qglTexParameteri( target, GL_TEXTURE_WRAP_T, wrap );
+	glTexParameteri( target, GL_TEXTURE_WRAP_S, wrap );
+	glTexParameteri( target, GL_TEXTURE_WRAP_T, wrap );
 	if( flags & IT_3D ) {
-		qglTexParameteri( target, GL_TEXTURE_WRAP_R_EXT, wrap );
+		glTexParameteri( target, GL_TEXTURE_WRAP_R, wrap );
 	}
 
-	if( ( flags & IT_DEPTH ) && ( flags & IT_DEPTHCOMPARE ) && glConfig.ext.shadow ) {
-		qglTexParameteri( target, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE_ARB );
-		qglTexParameteri( target, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL );
+	if( ( flags & IT_DEPTH ) && ( flags & IT_DEPTHCOMPARE ) ) {
+		glTexParameteri( target, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE );
+		glTexParameteri( target, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL );
 	}
 }
 
@@ -1039,13 +997,13 @@ static void R_Upload32( int ctx, uint8_t **data, int layer,
 	if( ( scaledWidth == width ) && ( scaledHeight == height ) && ( flags & IT_NOMIPMAP ) ) {
 		if( flags & ( IT_ARRAY | IT_3D ) ) {
 			for( i = 0; i < numTextures; i++, target++ )
-				qglTexSubImage3DEXT( target, 0, 0, 0, layer, scaledWidth, scaledHeight, 1, format, type, data[i] );
+				glTexSubImage3D( target, 0, 0, 0, layer, scaledWidth, scaledHeight, 1, format, type, data[i] );
 		} else if( subImage ) {
 			for( i = 0; i < numTextures; i++, target++ )
-				qglTexSubImage2D( target, 0, x, y, scaledWidth, scaledHeight, format, type, data[i] );
+				glTexSubImage2D( target, 0, x, y, scaledWidth, scaledHeight, format, type, data[i] );
 		} else {
 			for( i = 0; i < numTextures; i++, target++ )
-				qglTexImage2D( target, 0, comp, scaledWidth, scaledHeight, 0, format, type, data[i] );
+				glTexImage2D( target, 0, comp, scaledWidth, scaledHeight, 0, format, type, data[i] );
 		}
 	} else {
 		for( i = 0; i < numTextures; i++, target++ ) {
@@ -1065,11 +1023,11 @@ static void R_Upload32( int ctx, uint8_t **data, int layer,
 			}
 
 			if( flags & ( IT_ARRAY | IT_3D ) ) {
-				qglTexSubImage3DEXT( target, 0, 0, 0, layer, scaledWidth, scaledHeight, 1, format, type, mip );
+				glTexSubImage3D( target, 0, 0, 0, layer, scaledWidth, scaledHeight, 1, format, type, mip );
 			} else if( subImage ) {
-				qglTexSubImage2D( target, 0, x, y, scaledWidth, scaledHeight, format, type, mip );
+				glTexSubImage2D( target, 0, x, y, scaledWidth, scaledHeight, format, type, mip );
 			} else {
-				qglTexImage2D( target, 0, comp, scaledWidth, scaledHeight, 0, format, type, mip );
+				glTexImage2D( target, 0, comp, scaledWidth, scaledHeight, 0, format, type, mip );
 			}
 
 			// mipmaps generation
@@ -1093,11 +1051,11 @@ static void R_Upload32( int ctx, uint8_t **data, int layer,
 					miplevel++;
 
 					if( flags & ( IT_ARRAY | IT_3D ) ) {
-						qglTexSubImage3DEXT( target, miplevel, 0, 0, layer, w, h, 1, format, type, mip );
+						glTexSubImage3D( target, miplevel, 0, 0, layer, w, h, 1, format, type, mip );
 					} else if( subImage ) {
-						qglTexSubImage2D( target, miplevel, x, y, w, h, format, type, mip );
+						glTexSubImage2D( target, miplevel, x, y, w, h, format, type, mip );
 					} else {
-						qglTexImage2D( target, miplevel, comp, w, h, 0, format, type, mip );
+						glTexImage2D( target, miplevel, comp, w, h, 0, format, type, mip );
 					}
 				}
 			}
@@ -1113,15 +1071,15 @@ static int R_PixelFormatSize( int format, int type ) {
 		case GL_UNSIGNED_BYTE:
 			switch( format ) {
 				case GL_RGBA:
-				case GL_BGRA_EXT:
+				case GL_BGRA:
 					return 4;
 				case GL_RGB:
-				case GL_BGR_EXT:
+				case GL_BGR:
 					return 3;
-				case GL_LUMINANCE_ALPHA:
+				case GL_RG:
 					return 2;
 				case GL_ALPHA:
-				case GL_LUMINANCE:
+				case GL_RED:
 					return 1;
 			}
 			break;
@@ -1129,12 +1087,6 @@ static int R_PixelFormatSize( int format, int type ) {
 		case GL_UNSIGNED_SHORT_5_5_5_1:
 		case GL_UNSIGNED_SHORT_5_6_5:
 			return 2;
-		case 0: // 4x4 block sizes
-			switch( format ) {
-				case GL_ETC1_RGB8_OES:
-					return 8;
-			}
-			break;
 	}
 	return 0;
 }
@@ -1157,7 +1109,7 @@ static void R_LoadQuake1Palette( unsigned *out ) {
 	int i, len;
 	const uint8_t *pal;
 	static const uint8_t host_quakepal[768] =
-#include "../qcommon/quake1pal.h"
+#include "../../qcommon/quake1pal.h"
 	;
 
 	// get the palette
@@ -1360,7 +1312,7 @@ static void R_UploadMipmapped( int ctx, uint8_t **data,
 	for( i = 0; ( i < mips ) && ( mip < mipLevels ); i++, mip++ ) {
 		faceSize = ALIGN( scaledWidth * pixelSize, 4 ) * scaledHeight; // will be used for the first remaining mipmap
 		for( j = 0; j < faces; j++ )
-			qglTexImage2D( target + j, i, comp, scaledWidth, scaledHeight, 0, format, type, data[mip * faces + j] );
+			glTexImage2D( target + j, i, comp, scaledWidth, scaledHeight, 0, format, type, data[mip * faces + j] );
 		oldWidth = scaledWidth;
 		oldHeight = scaledHeight;
 		scaledWidth >>= 1;
@@ -1385,7 +1337,7 @@ static void R_UploadMipmapped( int ctx, uint8_t **data,
 			} else {
 				R_MipMap16( ( unsigned short * )face, oldWidth, oldHeight, rMask, gMask, bMask, aMask );
 			}
-			qglTexImage2D( target + j, i, comp, scaledWidth, scaledHeight, 0, format, type, face );
+			glTexImage2D( target + j, i, comp, scaledWidth, scaledHeight, 0, format, type, face );
 		}
 
 		oldWidth = scaledWidth;
@@ -1409,12 +1361,12 @@ static bool R_IsKTXFormatValid( int format, int type ) {
 		case GL_UNSIGNED_BYTE:
 			switch( format ) {
 				case GL_RGBA:
-				case GL_BGRA_EXT:
+				case GL_BGRA:
 				case GL_RGB:
-				case GL_BGR_EXT:
-				case GL_LUMINANCE_ALPHA:
+				case GL_BGR:
+				case GL_RG:
 				case GL_ALPHA:
-				case GL_LUMINANCE:
+				case GL_RED:
 					return true;
 			}
 			return false;
@@ -1423,8 +1375,6 @@ static bool R_IsKTXFormatValid( int format, int type ) {
 			return ( format == GL_RGBA ) ? true : false;
 		case GL_UNSIGNED_SHORT_5_6_5:
 			return ( format == GL_RGB ) ? true : false;
-		case 0:
-			return ( format == GL_ETC1_RGB8_OES ) ? true : false;
 	}
 	return false;
 }
@@ -1540,7 +1490,7 @@ static bool R_LoadKTX( int ctx, image_t *image, const char *pathname ) {
 
 		// If different compression formats are added, make this more general-purpose!
 
-		if( !glConfig.ext.texture_compression || !( glConfig.ext.compressed_ETC1_RGB8_texture || glConfig.ext.ES3_compatibility ) || ( mip < 0 ) ) {
+		if( mip < 0 ) {
 			int inSize = ( ( ALIGN( header->pixelWidth, 4 ) * ALIGN( header->pixelHeight, 4 ) ) >> 4 ) * 8;
 			int outSize = ALIGN( header->pixelWidth * 3, 4 ) * header->pixelHeight;
 			uint8_t *in = data + sizeof( int );
@@ -1548,53 +1498,13 @@ static bool R_LoadKTX( int ctx, image_t *image, const char *pathname ) {
 
 			for( i = 0; i < numFaces; ++i ) {
 				decompressed[i] = R_PrepareImageBuffer( ctx, TEXTURE_LOADING_BUF0 + i, outSize );
-				DecompressETC1( in, header->pixelWidth, header->pixelHeight, decompressed[i], glConfig.ext.bgra ? true : false );
+				DecompressETC1( in, header->pixelWidth, header->pixelHeight, decompressed[i], true );
 				in += inSize;
 			}
 
 			R_UploadMipmapped( ctx, decompressed, header->pixelWidth, header->pixelHeight, 1,
 							   image->flags, image->minmipsize, &image->upload_width, &image->upload_height,
-							   glConfig.ext.bgra ? GL_BGR_EXT : GL_RGB, GL_UNSIGNED_BYTE );
-		} else {
-			int target;
-			int compressedFormat;
-			size_t faceSize;
-
-			if( glConfig.ext.ES3_compatibility && ( image->flags & IT_SRGB ) ) {
-				compressedFormat = GL_COMPRESSED_SRGB8_ETC2;
-			} else {
-				compressedFormat = glConfig.ext.ES3_compatibility ? GL_COMPRESSED_RGB8_ETC2 : GL_ETC1_RGB8_OES;
-			}
-
-			R_TextureTarget( image->flags, &target );
-
-			R_SetupTexParameters( image->flags, scaledWidth, scaledHeight, image->minmipsize );
-
-			for( i = 0; i < mip; ++i ) {
-				data += sizeof( int ) + numFaces * ( (
-														 ALIGN( max( header->pixelWidth >> i, 1 ), 4 ) *
-														 ALIGN( max( header->pixelHeight >> i, 1 ), 4 )
-														 ) >> 4 ) * 8;
-			}
-
-			mips -= mip;
-			for( i = 0; i < mips; ++i ) {
-				faceSize = ( ( ALIGN( scaledWidth, 4 ) * ALIGN( scaledHeight, 4 ) ) >> 4 ) * 8;
-				data += sizeof( int );
-				for( j = 0; j < numFaces; ++j ) {
-					qglCompressedTexImage2DARB( target + j, i, compressedFormat,
-												scaledWidth, scaledHeight, 0, faceSize, data );
-					data += faceSize;
-				}
-				scaledWidth >>= 1;
-				scaledHeight >>= 1;
-				if( !scaledWidth ) {
-					scaledWidth = 1;
-				}
-				if( !scaledHeight ) {
-					scaledHeight = 1;
-				}
-			}
+							   GL_BGR, GL_UNSIGNED_BYTE );
 		}
 
 		image->samples = 3;
@@ -1609,21 +1519,21 @@ static bool R_LoadKTX( int ctx, image_t *image, const char *pathname ) {
 			case GL_RGBA:
 				image->samples = 4;
 				break;
-			case GL_BGRA_EXT:
+			case GL_BGRA:
 				image->samples = 4;
 				image->flags |= IT_BGRA;
 				break;
 			case GL_RGB:
 				image->samples = 3;
 				break;
-			case GL_BGR_EXT:
+			case GL_BGR:
 				image->samples = 3;
 				image->flags |= IT_BGRA;
 				break;
-			case GL_LUMINANCE_ALPHA:
+			case GL_RG:
 				image->samples = 2;
 				break;
-			case GL_LUMINANCE:
+			case GL_RED:
 				image->samples = 1;
 				break;
 			case GL_ALPHA:
@@ -1644,24 +1554,7 @@ static bool R_LoadKTX( int ctx, image_t *image, const char *pathname ) {
 			data += faceSize * numFaces;
 		}
 
-		if( !glConfig.ext.bgra &&
-			( ( header->baseInternalFormat == GL_BGR_EXT ) || ( header->baseInternalFormat == GL_BGRA_EXT ) ) ) {
-			for( i = 0; i < mips; i++ ) {
-				for( j = 0; j < numFaces; j++ ) {
-					R_SwapBlueRed( images[i * numFaces + j], mipWidth, mipHeight,
-								   ( header->baseInternalFormat == GL_BGR_EXT ) ? 3 : 4, 4 );
-				}
-				mipWidth >>= 1;
-				mipHeight >>= 1;
-				if( !mipWidth ) {
-					mipWidth = 1;
-				}
-				if( !mipHeight ) {
-					mipHeight = 1;
-				}
-			}
-			header->baseInternalFormat = ( ( header->baseInternalFormat == GL_BGR_EXT ) ? GL_RGB : GL_RGBA );
-		} else if( swapEndian && (
+		if( swapEndian && (
 					   ( header->type == GL_UNSIGNED_SHORT_4_4_4_4 ) || ( header->type == GL_UNSIGNED_SHORT_5_5_5_1 ) ||
 					   ( header->type == GL_UNSIGNED_SHORT_5_6_5 ) ) ) {
 			for( i = 0; i < mips; i++ ) {
@@ -2051,7 +1944,7 @@ image_t *R_Create3DImage( const char *name, int width, int height, int layers, i
 	R_TextureTarget( flags, &target );
 	R_TextureFormat( flags, samples, &comp, &format, &type );
 
-	qglTexImage3DEXT( target, 0, comp, scaledWidth, scaledHeight, layers, 0, format, type, NULL );
+	glTexImage3D( target, 0, comp, scaledWidth, scaledHeight, layers, 0, format, type, NULL );
 
 	if( !( flags & IT_NOMIPMAP ) ) {
 		int miplevel = 0;
@@ -2064,7 +1957,7 @@ image_t *R_Create3DImage( const char *name, int width, int height, int layers, i
 			if( scaledHeight < 1 ) {
 				scaledHeight = 1;
 			}
-			qglTexImage3DEXT( target, miplevel++, comp, scaledWidth, scaledHeight, layers, 0, format, type, NULL );
+			glTexImage3D( target, miplevel++, comp, scaledWidth, scaledHeight, layers, 0, format, type, NULL );
 		}
 	}
 
@@ -2258,7 +2151,7 @@ image_t *R_FindImage( const char *name, const char *suffix, int flags, int minmi
 	} else {
 		// Make sure the image is updated on all contexts.
 		if( glConfig.multithreading ) {
-			qglFinish();
+			glFinish();
 		}
 		image->loaded = true;
 	}
@@ -2317,7 +2210,7 @@ void R_ScreenShot( const char *filename, int x, int y, int width, int height, in
 	imginfo.pixels = flipped ? flipped : buffer;
 	imginfo.comp = Q_stricmp( extension, ".jpg" ) ? IMGCOMP_BGR : IMGCOMP_RGB;
 
-	qglReadPixels( 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, buffer );
+	glReadPixels( 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, buffer );
 
 	rgb = rgba = buffer;
 	if( imginfo.comp == IMGCOMP_BGR ) {
@@ -2530,8 +2423,6 @@ static void R_InitCoronaTexture( int *w, int *h, int *flags, int *samples ) {
 void R_GetRenderBufferSize( const int inWidth, const int inHeight,
 							const int inLimit, const int flags, int *outWidth, int *outHeight ) {
 	int limit;
-	int width_, height_;
-	bool npot;
 
 	// limit the texture size to either screen resolution in case we can't use FBO
 	// or hardware limits and ensure it's a POW2-texture if we don't support such textures
@@ -2542,41 +2433,9 @@ void R_GetRenderBufferSize( const int inWidth, const int inHeight,
 	if( limit < 1 ) {
 		limit = 1;
 	}
-	width_ = height_ = limit;
 
-	npot = glConfig.ext.texture_non_power_of_two;
-#ifdef GL_ES_VERSION_2_0
-	npot = npot || ( ( flags & ( IT_CLAMP | IT_NOMIPMAP ) ) == ( IT_CLAMP | IT_NOMIPMAP ) );
-#endif
-	if( npot ) {
-		width_ = min( inWidth, limit );
-		height_ = min( inHeight, limit );
-	} else {
-		int d;
-
-		// calculate the upper bound and make sure it's not a pow of 2
-		d = min( limit, inWidth );
-		if( ( d & ( d - 1 ) ) == 0 ) {
-			d--;
-		}
-		for( width_ = 2; width_ <= d; width_ <<= 1 ) ;
-
-		d = min( limit, inHeight );
-		if( ( d & ( d - 1 ) ) == 0 ) {
-			d--;
-		}
-		for( height_ = 2; height_ <= d; height_ <<= 1 ) ;
-
-		if( inLimit ) {
-			while( width_ > inLimit || height_ > inLimit ) {
-				width_ >>= 1;
-				height_ >>= 1;
-			}
-		}
-	}
-
-	*outWidth = width_;
-	*outHeight = height_;
+	*outWidth = min( inWidth, limit );
+	*outHeight = min( inHeight, limit );
 }
 
 /*
@@ -2707,14 +2566,8 @@ image_t *R_GetShadowmapAtlasTexture( void ) {
 
 	size = max( r_shadows_texturesize->integer, SHADOWMAP_MIN_ATLAS_SIZE );
 
-	if( glConfig.ext.shadow ) {
-		// render to depthbuffer, GL_ARB_shadow path
-		flags = IT_DEPTH;
-		samples = 1;
-	} else {
-		flags = IT_NOFILTERING;
-		samples = 3;
-	}
+	flags = IT_DEPTH;
+	samples = 1;
 
 	R_InitViewportTexture( &rsh.shadowmapAtlasTexture, "r_shadowmap", 0,
 		size, size, size,
@@ -2742,8 +2595,6 @@ static void R_InitScreenImagePair( const char *name, image_t **color, image_t **
 	int flags, colorFlags, depthFlags;
 	int width = glConfig.width >> lod;
 	int height = glConfig.height >> lod;
-
-	assert( !depth || glConfig.ext.depth_texture );
 
 	if( !glConfig.stencilBits ) {
 		orFlags &= ~IT_STENCIL;
@@ -2805,21 +2656,19 @@ static void R_InitBuiltinScreenImageSet( refScreenTexSet_t *st, int flags ) {
 	useFloat = (flags & IT_FLOAT) != 0;
 	postfix = useFloat ? "16f" : "";
 
-	if( glConfig.ext.depth_texture && glConfig.ext.fragment_precision_high && glConfig.ext.framebuffer_blit ) {
-		Q_snprintfz( name, sizeof( name ), "r_screenTex%s", postfix );
-		R_InitScreenImagePair( name, &st->screenTex, &st->screenDepthTex, IT_STENCIL|flags, 0, ~0 );
+	Q_snprintfz( name, sizeof( name ), "r_screenTex%s", postfix );
+	R_InitScreenImagePair( name, &st->screenTex, &st->screenDepthTex, IT_STENCIL|flags, 0, ~0 );
 
-		// stencil is required in the copy for depth/stencil formats to match when blitting.
-		Q_snprintfz( name, sizeof( name ), "r_screenTexCopy%s", postfix );
-		R_InitScreenImagePair( name, &st->screenTexCopy, &st->screenDepthTexCopy, IT_STENCIL|flags, 0, ~0 );
-	}
+	// stencil is required in the copy for depth/stencil formats to match when blitting.
+	Q_snprintfz( name, sizeof( name ), "r_screenTexCopy%s", postfix );
+	R_InitScreenImagePair( name, &st->screenTexCopy, &st->screenDepthTexCopy, IT_STENCIL|flags, 0, ~0 );
 
 	for( j = 0; j < 2; j++ ) {
 		Q_snprintfz( name, sizeof( name ), "rsh.screenPP%sCopy%i", postfix, j );
 		R_InitScreenImagePair( name, &st->screenPPCopies[j], NULL, flags, 0, ~0 );
 	}
 
-	if( !useFloat && glConfig.ext.draw_buffers ) {
+	if( !useFloat ) {
 		Q_snprintfz( name, sizeof( name ), "rsh.screenTexOverbright%s", postfix );
 		R_InitScreenImagePair( name, &st->screenOverbrightTex, NULL, 0, 0, ~IT_FRAMEBUFFER );
 
@@ -2909,11 +2758,7 @@ int R_RegisterMultisampleTarget( refScreenTexSet_t *st, int samples, bool useFlo
 */
 void R_InitBuiltinScreenImages( void ) {
 	R_InitBuiltinScreenImageSet( &rsh.st, 0 );
-
-	if( glConfig.ext.texture_float ) {
-		R_InitBuiltinScreenImageSet( &rsh.stf, IT_FLOAT );
-	}
-
+	R_InitBuiltinScreenImageSet( &rsh.stf, IT_FLOAT );
 	R_InitScreenImagePair( "r_2Dtex", &rsh.st2D.screenTex, &rsh.st2D.screenDepthTex, IT_SRGB, 0, ~0 );
 }
 
@@ -2993,7 +2838,7 @@ void R_InitImages( void ) {
 	r_imagesLock = ri.Mutex_Create();
 
 	r_unpackAlignment[QGL_CONTEXT_MAIN] = 4;
-	qglPixelStorei( GL_PACK_ALIGNMENT, 1 );
+	glPixelStorei( GL_PACK_ALIGNMENT, 1 );
 
 	r_imagePathBuf = r_imagePathBuf2 = NULL;
 	r_sizeof_imagePathBuf = r_sizeof_imagePathBuf2 = 0;
@@ -3272,7 +3117,7 @@ static bool R_LoadAsyncImageFromDisk( image_t *image ) {
 	// since the loader thread is woken up pretty much instantly, and the GL calls that initialize the texture
 	// may still be processed or only queued in the main thread while the loader is trying to load the image.
 	R_UnbindImage( image );
-	qglFinish();
+	glFinish();
 
 	R_IssueLoadPicLoaderCmd( id, pic );
 	return true;
@@ -3345,7 +3190,7 @@ static unsigned R_HandleLoadPicLoaderCmd( void *pcmd ) {
 		// - image->loaded is set when the image is actually uploaded, so the renderer doesn't try to use it while
 		//   it's still being uploaded, causing transient or even permanent glitches.
 		if( !rsh.registrationOpen ) {
-			qglFinish();
+			glFinish();
 		}
 		image->loaded = true;
 	}
@@ -3359,7 +3204,7 @@ static unsigned R_HandleLoadPicLoaderCmd( void *pcmd ) {
 static unsigned R_HandleDataSyncLoaderCmd( void *pcmd ) {
 	int *cmd = pcmd;
 
-	qglFinish();
+	glFinish();
 
 	return sizeof( *cmd );
 }

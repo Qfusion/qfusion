@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // r_shader.c
 
 #include "r_local.h"
-#include "../qalgo/hash.h"
+#include "../../qalgo/hash.h"
 
 #define SHADERS_HASH_SIZE   128
 #define SHADERCACHE_HASH_SIZE   128
@@ -275,7 +275,7 @@ static bool Shader_ParseConditions( const char **ptr, shader_t *shader ) {
 			} else if( !Q_stricmp( tok, "maxTextureUnits" ) ) {
 				conditions[numConditions].operand = ( int )glConfig.maxTextureUnits;
 			} else if( !Q_stricmp( tok, "textureCubeMap" ) ) {
-				conditions[numConditions].operand = ( int )glConfig.ext.texture_cube_map;
+				conditions[numConditions].operand = 1;
 			} else if( !Q_stricmp( tok, "GLSL" ) ) {
 				conditions[numConditions].operand = 1;
 			} else if( !Q_stricmp( tok, "deluxeMaps" ) || !Q_stricmp( tok, "deluxe" ) ) {
@@ -635,7 +635,7 @@ static void Shader_NoFiltering( shader_t *shader, shaderpass_t *pass, const char
 
 static void Shader_SmallestMipMapSize( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
 	int size = Shader_ParseInt( ptr );
-	if( glConfig.ext.texture_lod && !r_shaderNoMipMaps ) {
+	if( !r_shaderNoMipMaps ) {
 		r_shaderMinMipSize = max( size, 1 );
 	}
 }

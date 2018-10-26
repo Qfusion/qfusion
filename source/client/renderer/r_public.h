@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef R_PUBLIC_H
 #define R_PUBLIC_H
 
-#include "../cgame/ref.h"
+#include "../../cgame/ref.h"
 
 #define REF_API_VERSION 24
 

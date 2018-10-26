@@ -20,11 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef R_GLIMP_H
 #define R_GLIMP_H
 
-#ifdef __cplusplus
-#define QGL_EXTERN extern "C"
-#else
-#define QGL_EXTERN extern
-#endif
+#include "qgl.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -67,8 +63,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define QGL_FUNC_OPT( type, name, params ) QGL_EXTERN type( APIENTRY * q ## name ) params;
 #define QGL_EXT( type, name, params ) QGL_EXTERN type( APIENTRY * q ## name ) params;
 
-#include "qgl.h"
-
 #undef QGL_EGL_EXT
 #undef QGL_EGL
 #undef QGL_GLX_EXT
@@ -90,7 +84,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 extern cvar_t *r_stencilbits;
 extern cvar_t *gl_drawbuffer;
-extern cvar_t *gl_driver;
 
 //====================================================================
 
@@ -148,60 +141,16 @@ enum {
 //====================================================================
 
 typedef struct {
-	int _extMarker;
+	bool texture_filter_anisotropic;
+	bool texture_compression;
+	bool get_program_binary;
+	bool texture_sRGB;
+	bool texture_sRGB_decode;
 
-	//
-	// only uint8_ts must follow the extensionsBoolMarker
-	//
-
-	char draw_range_elements
-	,multitexture
-	,texture_cube_map
-	,texture_edge_clamp
-	,texture_filter_anisotropic
-	,texture_compression
-	,compressed_ETC1_RGB8_texture
-	,vertex_buffer_object
-	,GLSL
-	,GLSL_core
-	,GLSL130
-	,depth_texture
-	,framebuffer_object
-	,vertex_shader
-	,fragment_shader
-	,shader_objects
-	,shading_language_100
-	,shading_language_130
-	,bgra
-	,gamma_control
-	,swap_control
-	,draw_instanced
-	,instanced_arrays
-	,gpu_memory_info
-	,meminfo
-	,framebuffer_blit
-	,depth24
-	,depth_nonlinear
-	,get_program_binary
-	,rgb8_rgba8
-	,ES3_compatibility
-	,blend_func_separate
-	,texture_array
-	,fragment_precision_high
-	,packed_depth_stencil
-	,texture_lod
-	,gpu_shader5
-	,texture_float
-	,texture_sRGB
-	,draw_buffers
-	,multisample
-	,pixel_format
-	,framebuffer_multisample
-	;
-	union { char shadow, shadow_samplers; };
-	union { char texture3D, texture_3D; };
-	union { char texture_non_power_of_two, texture_npot; };
-	union { char half_float_vertex, vertex_half_float; };
+	bool khr_debug;
+	bool amd_debug;
+	bool nvidia_meminfo;
+	bool ati_meminfo;
 } glextinfo_t;
 
 typedef struct {
@@ -209,7 +158,6 @@ typedef struct {
 	const char      *vendorString;
 	const char      *versionString;
 	const char      *extensionsString;
-	const char      *glwExtensionsString;
 	const char      *shadingLanguageVersionString;
 	unsigned versionHash;
 
@@ -233,19 +181,18 @@ typedef struct {
 
 	float depthEpsilon;
 
-	int maxTextureSize
-	,maxTextureUnits
-	,maxTextureCubemapSize
-	,maxTexture3DSize
-	,maxTextureLayers
-	,maxTextureFilterAnisotropic
-	,maxRenderbufferSize
-	,maxVaryingFloats
-	,maxVertexUniformComponents
-	,maxVertexAttribs
-	,maxFragmentUniformComponents
-	,maxFramebufferSamples
-	;
+	int maxTextureSize;
+	int maxTextureUnits;
+	int maxTextureCubemapSize;
+	int maxTexture3DSize;
+	int maxTextureLayers;
+	int maxTextureFilterAnisotropic;
+	int maxRenderbufferSize;
+	int maxVaryingFloats;
+	int maxVertexUniformComponents;
+	int maxVertexAttribs;
+	int maxFragmentUniformComponents;
+	int maxFramebufferSamples;
 	unsigned int maxGLSLBones;      // the maximum amount of bones we can handle in a vertex shader
 
 	bool forceRGBAFramebuffers;             // PowerVR hack - its blending interprets alpha in RGB FBs as 0, not 1

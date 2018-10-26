@@ -182,6 +182,10 @@ static bool GLimp_InitGL( int stencilbits, bool stereo ) {
 		SDL_GL_SetAttribute( SDL_GL_STEREO, 1 );
 	}
 
+	SDL_GL_SetAttribute( SDL_GL_CONTEXT_MAJOR_VERSION, 3 );
+	SDL_GL_SetAttribute( SDL_GL_CONTEXT_MINOR_VERSION, 3 );
+	SDL_GL_SetAttribute( SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE ); 
+
 	glw_state.sdl_glcontext = SDL_GL_CreateContext( glw_state.sdl_window );
 	if( glw_state.sdl_glcontext == 0 ) {
 		ri.Com_Printf( "GLimp_Init() - SDL_GL_CreateContext failed: \"%s\"\n", SDL_GetError() );

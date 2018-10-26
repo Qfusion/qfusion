@@ -76,14 +76,10 @@ void RB_BeginRegistration( void ) {
 	for( i = MAX_TEXTURE_UNITS - 1; i >= 0; i-- ) {
 		RB_SelectTextureUnit( i );
 
-		qglBindTexture( GL_TEXTURE_CUBE_MAP_ARB, 0 );
-		if( glConfig.ext.texture_array ) {
-			qglBindTexture( GL_TEXTURE_2D_ARRAY_EXT, 0 );
-		}
-		if( glConfig.ext.texture3D ) {
-			qglBindTexture( GL_TEXTURE_3D_EXT, 0 );
-		}
-		qglBindTexture( GL_TEXTURE_2D, 0 );
+		glBindTexture( GL_TEXTURE_CUBE_MAP, 0 );
+		glBindTexture( GL_TEXTURE_2D_ARRAY, 0 );
+		glBindTexture( GL_TEXTURE_3D, 0 );
+		glBindTexture( GL_TEXTURE_2D, 0 );
 	}
 
 	RB_FlushTextureCache();
@@ -146,27 +142,27 @@ void RB_StatsMessage( char *msg, size_t size ) {
 */
 static void RB_SetGLDefaults( void ) {
 	if( glConfig.stencilBits ) {
-		qglStencilMask( ( GLuint ) ~0 );
-		qglStencilFunc( GL_EQUAL, 128, 0xFF );
-		qglStencilOp( GL_KEEP, GL_KEEP, GL_INCR );
+		glStencilMask( ( GLuint ) ~0 );
+		glStencilFunc( GL_EQUAL, 128, 0xFF );
+		glStencilOp( GL_KEEP, GL_KEEP, GL_INCR );
 	}
 
-	qglDisable( GL_CULL_FACE );
-	qglFrontFace( GL_CCW );
-	qglDisable( GL_BLEND );
-	qglDepthFunc( GL_LEQUAL );
-	qglDepthMask( GL_FALSE );
-	qglDisable( GL_POLYGON_OFFSET_FILL );
+	glDisable( GL_CULL_FACE );
+	glFrontFace( GL_CCW );
+	glDisable( GL_BLEND );
+	glDepthFunc( GL_LEQUAL );
+	glDepthMask( GL_FALSE );
+	glDisable( GL_POLYGON_OFFSET_FILL );
 #ifdef GL_ES_VERSION_2_0
-	qglPolygonOffset( -1.0f, 0.0f ); // units will be handled by RB_DepthOffset
+	glPolygonOffset( -1.0f, 0.0f ); // units will be handled by RB_DepthOffset
 #endif
-	qglColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
-	qglEnable( GL_DEPTH_TEST );
+	glColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
+	glEnable( GL_DEPTH_TEST );
 #ifndef GL_ES_VERSION_2_0
-	qglPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
+	glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
 #endif
-	qglFrontFace( GL_CCW );
-	qglEnable( GL_SCISSOR_TEST );
+	glFrontFace( GL_CCW );
+	glEnable( GL_SCISSOR_TEST );
 }
 
 /*
@@ -178,10 +174,7 @@ static void RB_SelectTextureUnit( int tmu ) {
 	}
 
 	rb.gl.currentTMU = tmu;
-	qglActiveTextureARB( tmu + GL_TEXTURE0_ARB );
-#ifndef GL_ES_VERSION_2_0
-	qglClientActiveTextureARB( tmu + GL_TEXTURE0_ARB );
-#endif
+	glActiveTexture( tmu + GL_TEXTURE0 );
 }
 
 /*
@@ -224,7 +217,7 @@ void RB_BindImage( int tmu, const image_t *tex ) {
 
 	RB_SelectTextureUnit( tmu );
 
-	qglBindTexture( R_TextureTarget( tex->flags, NULL ), tex->texnum );
+	glBindTexture( R_TextureTarget( tex->flags, NULL ), tex->texnum );
 
 	rb.stats.c_totalBinds++;
 }
@@ -251,7 +244,7 @@ void RB_DepthRange( float depthmin, float depthmax ) {
 		depthmin += 4.0f / 65535.0f;
 	}
 #endif
-	qglDepthRange( depthmin, depthmax );
+	glDepthRange( depthmin, depthmax );
 }
 
 /*
@@ -275,7 +268,7 @@ void RB_DepthOffset( bool enable ) {
 			depthmin += 4.0f / 65535.0f;
 		}
 #endif
-		qglDepthRange( depthmin, depthmax );
+		glDepthRange( depthmin, depthmax );
 	}
 }
 
@@ -283,7 +276,7 @@ void RB_DepthOffset( bool enable ) {
 * RB_ClearDepth
 */
 void RB_ClearDepth( float depth ) {
-	qglClearDepth( depth );
+	glClearDepth( depth );
 }
 
 /*
@@ -337,15 +330,15 @@ void RB_Cull( int cull ) {
 	}
 
 	if( !cull ) {
-		qglDisable( GL_CULL_FACE );
+		glDisable( GL_CULL_FACE );
 		rb.gl.faceCull = 0;
 		return;
 	}
 
 	if( !rb.gl.faceCull ) {
-		qglEnable( GL_CULL_FACE );
+		glEnable( GL_CULL_FACE );
 	}
-	qglCullFace( cull );
+	glCullFace( cull );
 	rb.gl.faceCull = cull;
 }
 
@@ -421,83 +414,81 @@ void RB_SetState( int state ) {
 			}
 
 			if( !( rb.gl.state & GLSTATE_BLEND_MASK ) ) {
-				qglEnable( GL_BLEND );
+				glEnable( GL_BLEND );
 			}
 
-			qglBlendFuncSeparateEXT( blendsrc, blenddst, GL_ONE, GL_ONE );
+			glBlendFuncSeparate( blendsrc, blenddst, GL_ONE, GL_ONE );
 		} else {
-			qglDisable( GL_BLEND );
+			glDisable( GL_BLEND );
 		}
 	}
 
 	if( diff & ( GLSTATE_NO_COLORWRITE | GLSTATE_ALPHAWRITE ) ) {
 		if( state & GLSTATE_NO_COLORWRITE ) {
-			qglColorMask( GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE );
+			glColorMask( GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE );
 		} else {
-			qglColorMask( GL_TRUE, GL_TRUE, GL_TRUE, ( state & GLSTATE_ALPHAWRITE ) ? GL_TRUE : GL_FALSE );
+			glColorMask( GL_TRUE, GL_TRUE, GL_TRUE, ( state & GLSTATE_ALPHAWRITE ) ? GL_TRUE : GL_FALSE );
 		}
 	}
 
 	if( diff & ( GLSTATE_DEPTHFUNC_EQ | GLSTATE_DEPTHFUNC_GT ) ) {
 		if( state & GLSTATE_DEPTHFUNC_EQ ) {
-			qglDepthFunc( GL_EQUAL );
+			glDepthFunc( GL_EQUAL );
 		} else if( state & GLSTATE_DEPTHFUNC_GT ) {
-			qglDepthFunc( GL_GREATER );
+			glDepthFunc( GL_GREATER );
 		} else {
-			qglDepthFunc( GL_LEQUAL );
+			glDepthFunc( GL_LEQUAL );
 		}
 	}
 
 	if( diff & GLSTATE_DEPTHWRITE ) {
 		if( state & GLSTATE_DEPTHWRITE ) {
-			qglDepthMask( GL_TRUE );
+			glDepthMask( GL_TRUE );
 		} else {
-			qglDepthMask( GL_FALSE );
+			glDepthMask( GL_FALSE );
 		}
 	}
 
 	if( diff & GLSTATE_NO_DEPTH_TEST ) {
 		if( state & GLSTATE_NO_DEPTH_TEST ) {
-			qglDisable( GL_DEPTH_TEST );
+			glDisable( GL_DEPTH_TEST );
 		} else {
-			qglEnable( GL_DEPTH_TEST );
+			glEnable( GL_DEPTH_TEST );
 		}
 	}
 
 	if( diff & GLSTATE_OFFSET_FILL ) {
 		if( state & GLSTATE_OFFSET_FILL ) {
-			qglEnable( GL_POLYGON_OFFSET_FILL );
+			glEnable( GL_POLYGON_OFFSET_FILL );
 #ifdef GL_ES_VERSION_2_0
-			qglPolygonOffset( rb.gl.polygonfactor, 0 );
+			glPolygonOffset( rb.gl.polygonfactor, 0 );
 			RB_DepthOffset( true );
 #else
-			qglPolygonOffset( rb.gl.polygonfactor, rb.gl.polygonunits );
+			glPolygonOffset( rb.gl.polygonfactor, rb.gl.polygonunits );
 #endif
 		} else {
 #ifdef GL_ES_VERSION_2_0
 			RB_DepthOffset( false );
 #endif
-			qglDisable( GL_POLYGON_OFFSET_FILL );
+			glDisable( GL_POLYGON_OFFSET_FILL );
 		}
 	}
 
 	if( diff & GLSTATE_STENCIL_TEST ) {
 		if( glConfig.stencilBits ) {
 			if( state & GLSTATE_STENCIL_TEST ) {
-				qglEnable( GL_STENCIL_TEST );
+				glEnable( GL_STENCIL_TEST );
 			} else {
-				qglDisable( GL_STENCIL_TEST );
+				glDisable( GL_STENCIL_TEST );
 			}
 		}
 	}
 
 	if( diff & GLSTATE_ALPHATEST ) {
-		if( glConfig.ext.multisample ) {
-			if( state & GLSTATE_ALPHATEST ) {
-				qglEnable( GL_SAMPLE_ALPHA_TO_COVERAGE_ARB );
-			} else {
-				qglDisable( GL_SAMPLE_ALPHA_TO_COVERAGE_ARB );
-			}
+		if( state & GLSTATE_ALPHATEST ) {
+			glEnable( GL_SAMPLE_ALPHA_TO_COVERAGE );
+		} else {
+			glDisable( GL_SAMPLE_ALPHA_TO_COVERAGE );
 		}
 	}
 
@@ -508,7 +499,7 @@ void RB_SetState( int state ) {
 * RB_FrontFace
 */
 void RB_FrontFace( bool front ) {
-	qglFrontFace( front ? GL_CW : GL_CCW );
+	glFrontFace( front ? GL_CW : GL_CCW );
 	rb.gl.frontFace = front;
 }
 
@@ -524,7 +515,7 @@ void RB_FlipFrontFace( void ) {
 */
 void RB_BindArrayBuffer( int buffer ) {
 	if( buffer != rb.gl.currentArrayVBO ) {
-		qglBindBufferARB( GL_ARRAY_BUFFER_ARB, buffer );
+		glBindBuffer( GL_ARRAY_BUFFER, buffer );
 		rb.gl.currentArrayVBO = buffer;
 		rb.gl.lastVAttribs = 0;
 	}
@@ -535,7 +526,7 @@ void RB_BindArrayBuffer( int buffer ) {
 */
 void RB_BindElementArrayBuffer( int buffer ) {
 	if( buffer != rb.gl.currentElemArrayVBO ) {
-		qglBindBufferARB( GL_ELEMENT_ARRAY_BUFFER_ARB, buffer );
+		glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, buffer );
 		rb.gl.currentElemArrayVBO = buffer;
 	}
 }
@@ -555,10 +546,10 @@ static void RB_EnableVertexAttrib( int index, bool enable ) {
 
 	if( enable ) {
 		rb.gl.vertexAttribEnabled |= bit;
-		qglEnableVertexAttribArrayARB( index );
+		glEnableVertexAttribArray( index );
 	} else {
 		rb.gl.vertexAttribEnabled &= ~bit;
-		qglDisableVertexAttribArrayARB( index );
+		glDisableVertexAttribArray( index );
 	}
 }
 
@@ -603,7 +594,7 @@ void RB_ApplyScissor( void ) {
 	int h = rb.gl.scissor[3];
 	if( rb.gl.scissorChanged ) {
 		rb.gl.scissorChanged = false;
-		qglScissor( rb.gl.scissor[0], rb.gl.fbHeight - h - rb.gl.scissor[1], rb.gl.scissor[2], h );
+		glScissor( rb.gl.scissor[0], rb.gl.fbHeight - h - rb.gl.scissor[1], rb.gl.scissor[2], h );
 	}
 }
 
@@ -615,7 +606,7 @@ void RB_Viewport( int x, int y, int w, int h ) {
 	rb.gl.viewport[1] = y;
 	rb.gl.viewport[2] = w;
 	rb.gl.viewport[3] = h;
-	qglViewport( x, rb.gl.fbHeight - h - y, w, h );
+	glViewport( x, rb.gl.fbHeight - h - y, w, h );
 }
 
 /*
@@ -647,19 +638,19 @@ void RB_Clear( int bits, float r, float g, float b, float a ) {
 	}
 
 	if( bits & GL_STENCIL_BUFFER_BIT ) {
-		qglClearStencil( 128 );
+		glClearStencil( 128 );
 	}
 
 	if( bits & GL_COLOR_BUFFER_BIT ) {
 		state = ( state & ~GLSTATE_NO_COLORWRITE ) | GLSTATE_ALPHAWRITE;
-		qglClearColor( r, g, b, a );
+		glClearColor( r, g, b, a );
 	}
 
 	RB_SetState( state );
 
 	RB_ApplyScissor();
 
-	qglClear( bits );
+	glClear( bits );
 
 	RB_DepthRange( 0.0f, 1.0f );
 }
@@ -970,13 +961,13 @@ static void RB_EnableVertexAttribs( void ) {
 
 	// xyz position
 	RB_EnableVertexAttrib( VATTRIB_POSITION, true );
-	qglVertexAttribPointerARB( VATTRIB_POSITION, 4, FLOAT_VATTRIB_GL_TYPE( VATTRIB_POSITION_BIT, hfa ),
+	glVertexAttribPointer( VATTRIB_POSITION, 4, FLOAT_VATTRIB_GL_TYPE( VATTRIB_POSITION_BIT, hfa ),
 							   GL_FALSE, vbo->vertexSize, ( const GLvoid * )0 );
 
 	// normal
 	if( vattribs & VATTRIB_NORMAL_BIT ) {
 		RB_EnableVertexAttrib( VATTRIB_NORMAL, true );
-		qglVertexAttribPointerARB( VATTRIB_NORMAL, 4, FLOAT_VATTRIB_GL_TYPE( VATTRIB_NORMAL_BIT, hfa ),
+		glVertexAttribPointer( VATTRIB_NORMAL, 4, FLOAT_VATTRIB_GL_TYPE( VATTRIB_NORMAL_BIT, hfa ),
 								   GL_FALSE, vbo->vertexSize, ( const GLvoid * )vbo->normalsOffset );
 	} else {
 		RB_EnableVertexAttrib( VATTRIB_NORMAL, false );
@@ -985,7 +976,7 @@ static void RB_EnableVertexAttribs( void ) {
 	// s-vector
 	if( vattribs & VATTRIB_SVECTOR_BIT ) {
 		RB_EnableVertexAttrib( VATTRIB_SVECTOR, true );
-		qglVertexAttribPointerARB( VATTRIB_SVECTOR, 4, FLOAT_VATTRIB_GL_TYPE( VATTRIB_SVECTOR_BIT, hfa ),
+		glVertexAttribPointer( VATTRIB_SVECTOR, 4, FLOAT_VATTRIB_GL_TYPE( VATTRIB_SVECTOR_BIT, hfa ),
 								   GL_FALSE, vbo->vertexSize, ( const GLvoid * )vbo->sVectorsOffset );
 	} else {
 		RB_EnableVertexAttrib( VATTRIB_SVECTOR, false );
@@ -994,7 +985,7 @@ static void RB_EnableVertexAttribs( void ) {
 	// color
 	if( vattribs & VATTRIB_COLOR0_BIT ) {
 		RB_EnableVertexAttrib( VATTRIB_COLOR0, true );
-		qglVertexAttribPointerARB( VATTRIB_COLOR0, 4, GL_UNSIGNED_BYTE,
+		glVertexAttribPointer( VATTRIB_COLOR0, 4, GL_UNSIGNED_BYTE,
 								   GL_TRUE, vbo->vertexSize, (const GLvoid * )vbo->colorsOffset[0] );
 	} else {
 		RB_EnableVertexAttrib( VATTRIB_COLOR0, false );
@@ -1003,7 +994,7 @@ static void RB_EnableVertexAttribs( void ) {
 	// texture coordinates
 	if( vattribs & VATTRIB_TEXCOORDS_BIT ) {
 		RB_EnableVertexAttrib( VATTRIB_TEXCOORDS, true );
-		qglVertexAttribPointerARB( VATTRIB_TEXCOORDS, 2, FLOAT_VATTRIB_GL_TYPE( VATTRIB_TEXCOORDS_BIT, hfa ),
+		glVertexAttribPointer( VATTRIB_TEXCOORDS, 2, FLOAT_VATTRIB_GL_TYPE( VATTRIB_TEXCOORDS_BIT, hfa ),
 								   GL_FALSE, vbo->vertexSize, ( const GLvoid * )vbo->stOffset );
 	} else {
 		RB_EnableVertexAttrib( VATTRIB_TEXCOORDS, false );
@@ -1012,7 +1003,7 @@ static void RB_EnableVertexAttribs( void ) {
 	if( ( vattribs & VATTRIB_AUTOSPRITE_BIT ) == VATTRIB_AUTOSPRITE_BIT ) {
 		// submit sprite point
 		RB_EnableVertexAttrib( VATTRIB_SPRITEPOINT, true );
-		qglVertexAttribPointerARB( VATTRIB_SPRITEPOINT, 4, FLOAT_VATTRIB_GL_TYPE( VATTRIB_AUTOSPRITE_BIT, hfa ),
+		glVertexAttribPointer( VATTRIB_SPRITEPOINT, 4, FLOAT_VATTRIB_GL_TYPE( VATTRIB_AUTOSPRITE_BIT, hfa ),
 								   GL_FALSE, vbo->vertexSize, ( const GLvoid * )vbo->spritePointsOffset );
 	} else {
 		RB_EnableVertexAttrib( VATTRIB_SPRITEPOINT, false );
@@ -1022,12 +1013,12 @@ static void RB_EnableVertexAttribs( void ) {
 	if( ( vattribs & VATTRIB_BONES_BITS ) == VATTRIB_BONES_BITS ) {
 		// submit indices
 		RB_EnableVertexAttrib( VATTRIB_BONESINDICES, true );
-		qglVertexAttribPointerARB( VATTRIB_BONESINDICES, 4, GL_UNSIGNED_BYTE,
+		glVertexAttribPointer( VATTRIB_BONESINDICES, 4, GL_UNSIGNED_BYTE,
 								   GL_FALSE, vbo->vertexSize, ( const GLvoid * )vbo->bonesIndicesOffset );
 
 		// submit weights
 		RB_EnableVertexAttrib( VATTRIB_BONESWEIGHTS, true );
-		qglVertexAttribPointerARB( VATTRIB_BONESWEIGHTS, 4, GL_UNSIGNED_BYTE,
+		glVertexAttribPointer( VATTRIB_BONESWEIGHTS, 4, GL_UNSIGNED_BYTE,
 								   GL_TRUE, vbo->vertexSize, ( const GLvoid * )vbo->bonesWeightsOffset );
 	} else {
 		int i;
@@ -1041,7 +1032,7 @@ static void RB_EnableVertexAttribs( void ) {
 		for( i = 0; i < ( MAX_LIGHTMAPS + 1 ) / 2; i++ ) {
 			if( vattribs & lmattrbit ) {
 				RB_EnableVertexAttrib( lmattr, true );
-				qglVertexAttribPointerARB( lmattr, vbo->lmstSize[i],
+				glVertexAttribPointer( lmattr, vbo->lmstSize[i],
 										   FLOAT_VATTRIB_GL_TYPE( VATTRIB_LMCOORDS0_BIT, hfa ),
 										   GL_FALSE, vbo->vertexSize, ( const GLvoid * )vbo->lmstOffset[i] );
 			} else {
@@ -1058,7 +1049,7 @@ static void RB_EnableVertexAttribs( void ) {
 		for( i = 0; i < ( MAX_LIGHTMAPS + 3 ) / 4; i++ ) {
 			if( vattribs & ( VATTRIB_LMLAYERS0123_BIT << i ) ) {
 				RB_EnableVertexAttrib( lmattr, true );
-				qglVertexAttribPointerARB( lmattr, 4, GL_UNSIGNED_BYTE,
+				glVertexAttribPointer( lmattr, 4, GL_UNSIGNED_BYTE,
 										   GL_FALSE, vbo->vertexSize, ( const GLvoid * )vbo->lmlayersOffset[i] );
 			} else {
 				RB_EnableVertexAttrib( lmattr, false );
@@ -1069,7 +1060,7 @@ static void RB_EnableVertexAttribs( void ) {
 
 		if( vattribs & VATTRIB_SURFINDEX_BIT ) {
 			RB_EnableVertexAttrib( VATTRIB_SURFINDEX, true );
-			qglVertexAttribPointerARB( VATTRIB_SURFINDEX, 1, FLOAT_VATTRIB_GL_TYPE( VATTRIB_SURFINDEX_BIT, hfa ),
+			glVertexAttribPointer( VATTRIB_SURFINDEX, 1, FLOAT_VATTRIB_GL_TYPE( VATTRIB_SURFINDEX_BIT, hfa ),
 				GL_FALSE, vbo->vertexSize, ( const GLvoid * )vbo->siOffset );
 		} else {
 			RB_EnableVertexAttrib( VATTRIB_SURFINDEX, false );
@@ -1078,14 +1069,14 @@ static void RB_EnableVertexAttribs( void ) {
 
 	if( ( vattribs & VATTRIB_INSTANCES_BITS ) == VATTRIB_INSTANCES_BITS ) {
 		RB_EnableVertexAttrib( VATTRIB_INSTANCE_QUAT, true );
-		qglVertexAttribPointerARB( VATTRIB_INSTANCE_QUAT, 4, GL_FLOAT, GL_FALSE, 8 * sizeof( vec_t ),
+		glVertexAttribPointer( VATTRIB_INSTANCE_QUAT, 4, GL_FLOAT, GL_FALSE, 8 * sizeof( vec_t ),
 								   ( const GLvoid * )vbo->instancesOffset );
-		qglVertexAttribDivisorARB( VATTRIB_INSTANCE_QUAT, 1 );
+		glVertexAttribDivisor( VATTRIB_INSTANCE_QUAT, 1 );
 
 		RB_EnableVertexAttrib( VATTRIB_INSTANCE_XYZS, true );
-		qglVertexAttribPointerARB( VATTRIB_INSTANCE_XYZS, 4, GL_FLOAT, GL_FALSE, 8 * sizeof( vec_t ),
+		glVertexAttribPointer( VATTRIB_INSTANCE_XYZS, 4, GL_FLOAT, GL_FALSE, 8 * sizeof( vec_t ),
 								   ( const GLvoid * )( vbo->instancesOffset + sizeof( vec_t ) * 4 ) );
-		qglVertexAttribDivisorARB( VATTRIB_INSTANCE_XYZS, 1 );
+		glVertexAttribDivisor( VATTRIB_INSTANCE_XYZS, 1 );
 	} else {
 		RB_EnableVertexAttrib( VATTRIB_INSTANCE_QUAT, false );
 		RB_EnableVertexAttrib( VATTRIB_INSTANCE_XYZS, false );
@@ -1112,58 +1103,17 @@ void RB_DrawElementsReal( rbDrawElements_t *de ) {
 	numInstances = de->numInstances;
 
 	if( numInstances ) {
-		if( glConfig.ext.instanced_arrays ) {
-			// the instance data is contained in vertex attributes
-			qglDrawElementsInstancedARB( rb.primitive, numElems, GL_UNSIGNED_SHORT,
-										 (GLvoid *)( firstElem * sizeof( elem_t ) ), numInstances );
+		// the instance data is contained in vertex attributes
+		glDrawElementsInstanced( rb.primitive, numElems, GL_UNSIGNED_SHORT,
+									 (GLvoid *)( firstElem * sizeof( elem_t ) ), numInstances );
 
-			rb.stats.c_totalDraws++;
-		} else if( glConfig.ext.draw_instanced ) {
-			int i, numUInstances = 0;
-
-			// manually update uniform values for instances for currently bound program,
-			// respecting the MAX_GLSL_UNIFORM_INSTANCES limit
-			for( i = 0; i < numInstances; i += numUInstances ) {
-				numUInstances = min( numInstances - i, MAX_GLSL_UNIFORM_INSTANCES );
-
-				RB_SetInstanceData( numUInstances, rb.drawInstances + i );
-
-				qglDrawElementsInstancedARB( rb.primitive, numElems, GL_UNSIGNED_SHORT,
-											 (GLvoid *)( firstElem * sizeof( elem_t ) ), numUInstances );
-
-				rb.stats.c_totalDraws++;
-			}
-		} else {
-			int i;
-
-			// manually update uniform values for instances for currently bound program,
-			// one by one
-			for( i = 0; i < numInstances; i++ ) {
-				RB_SetInstanceData( 1, rb.drawInstances + i );
-
-				if( glConfig.ext.draw_range_elements ) {
-					qglDrawRangeElementsEXT( rb.primitive,
-											 firstVert, firstVert + numVerts - 1, numElems,
-											 GL_UNSIGNED_SHORT, (GLvoid *)( firstElem * sizeof( elem_t ) ) );
-				} else {
-					qglDrawElements( rb.primitive, numElems, GL_UNSIGNED_SHORT,
-									 (GLvoid *)( firstElem * sizeof( elem_t ) ) );
-				}
-
-				rb.stats.c_totalDraws++;
-			}
-		}
+		rb.stats.c_totalDraws++;
 	} else {
 		numInstances = 1;
 
-		if( glConfig.ext.draw_range_elements ) {
-			qglDrawRangeElementsEXT( rb.primitive,
-									 firstVert, firstVert + numVerts - 1, numElems,
-									 GL_UNSIGNED_SHORT, (GLvoid *)( firstElem * sizeof( elem_t ) ) );
-		} else {
-			qglDrawElements( rb.primitive, numElems, GL_UNSIGNED_SHORT,
-							 (GLvoid *)( firstElem * sizeof( elem_t ) ) );
-		}
+		glDrawRangeElements( rb.primitive,
+								 firstVert, firstVert + numVerts - 1, numElems,
+								 GL_UNSIGNED_SHORT, (GLvoid *)( firstElem * sizeof( elem_t ) ) );
 
 		rb.stats.c_totalDraws++;
 	}
@@ -1247,11 +1197,9 @@ void RB_DrawElementsInstanced( int firstVert, int numVerts, int firstElem, int n
 	rb.drawElements.numInstances = 0;
 
 	// check for vertex-attrib-divisor style instancing
-	if( glConfig.ext.instanced_arrays ) {
-		if( rb.currentVBO->instancesOffset ) {
-			// static VBO's must come with their own set of instance data
-			rb.currentVAttribs |= VATTRIB_INSTANCES_BITS;
-		}
+	if( rb.currentVBO->instancesOffset ) {
+		// static VBO's must come with their own set of instance data
+		rb.currentVAttribs |= VATTRIB_INSTANCES_BITS;
 	}
 
 	if( !( rb.currentVAttribs & VATTRIB_INSTANCES_BITS ) ) {
@@ -1323,10 +1271,10 @@ bool RB_EnableTriangleOutlines( bool enable ) {
 #ifndef GL_ES_VERSION_2_0
 		if( enable ) {
 			RB_SetShaderStateMask( 0, GLSTATE_NO_DEPTH_TEST );
-			qglPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+			glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
 		} else {
 			RB_SetShaderStateMask( ~0, 0 );
-			qglPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
+			glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
 		}
 #endif
 	}

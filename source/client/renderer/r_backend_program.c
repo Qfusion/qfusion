@@ -541,12 +541,7 @@ static r_glslfeat_t RB_RtlightbitsToProgramFeatures( void ) {
 
 	if( rb.numRealtimeLights > 0 && rb.rtlights[0]->shadowSize > 0 && rsh.shadowmapAtlasTexture ) {
 		bits |= GLSL_SHADER_COMMON_REALTIME_SHADOWS;
-
-		if( glConfig.ext.shadow ) {
-			bits |= GLSL_SHADER_COMMON_SHADOWMAP_SAMPLERS;
-		} else if( glConfig.ext.rgb8_rgba8 ) {
-			bits |= GLSL_SHADER_COMMON_RGBSHADOW_24BIT;
-		}
+		bits |= GLSL_SHADER_COMMON_SHADOWMAP_SAMPLERS;
 		if( r_shadows_pcf->integer > 1 ) {
 			bits |= GLSL_SHADER_COMMON_SHADOWMAP_PCF2;
 		} else if( r_shadows_pcf->integer > 0 ) {
@@ -1120,11 +1115,7 @@ static void RB_RenderMeshGLSL_Shadow( const shaderpass_t *pass, r_glslfeat_t pro
 	mat4_t texMatrix;
 	const image_t *base;
 
-	if( glConfig.ext.shadow ) {
-		programFeatures |= GLSL_SHADER_COMMON_SHADOWMAP_SAMPLERS;
-	} else if( glConfig.ext.rgb8_rgba8 ) {
-		programFeatures |= GLSL_SHADER_COMMON_RGBSHADOW_24BIT;
-	}
+	programFeatures |= GLSL_SHADER_COMMON_SHADOWMAP_SAMPLERS;
 
 	if( pass->flags & SHADERPASS_ALPHAFUNC ) {
 		base = RB_ShaderpassTex( pass );
@@ -1586,7 +1577,6 @@ static void RB_RenderMeshGLSL_Fog( const shaderpass_t *pass, r_glslfeat_t progra
 * RB_RenderMeshGLSL_FXAA
 */
 static void RB_RenderMeshGLSL_FXAA( const shaderpass_t *pass, r_glslfeat_t programFeatures ) {
-	bool fxaa3 = false;
 	int program;
 	const image_t *image = pass->images[0];
 	mat4_t texMatrix;
@@ -1598,17 +1588,7 @@ static void RB_RenderMeshGLSL_FXAA( const shaderpass_t *pass, r_glslfeat_t progr
 
 	RB_BindImage( 0, image );
 
-	if( glConfig.ext.gpu_shader5 ) {
-		fxaa3 = true;
-	}
-#ifdef GL_ES_VERSION_2_0
-	if( glConfig.shadingLanguageVersion >= 310 ) {
-		fxaa3 = true;
-	}
-#endif
-	if( fxaa3 ) {
-		programFeatures |= GLSL_SHADER_FXAA_FXAA3;
-	}
+	programFeatures |= GLSL_SHADER_FXAA_FXAA3;
 
 	// update uniforms
 	program = RB_RegisterProgram( GLSL_PROGRAM_TYPE_FXAA, NULL,
@@ -1738,11 +1718,6 @@ void RB_RenderMeshGLSLProgrammed( const shaderpass_t *pass, int programType ) {
 	if( rb.greyscale || pass->flags & SHADERPASS_GREYSCALE ) {
 		features |= GLSL_SHADER_COMMON_GREYSCALE;
 	}
-#ifdef GL_ES_VERSION_2_0
-	if( glConfig.ext.fragment_precision_high ) {
-		features |= GLSL_SHADER_COMMON_FRAGMENT_HIGHP;
-	}
-#endif
 
 	features |= RB_BonesTransformsToProgramFeatures();
 	features |= RB_AutospriteProgramFeatures();
@@ -2105,13 +2080,13 @@ int RB_BindProgram( int program ) {
 	rb.currentProgram = program;
 	if( !program ) {
 		rb.currentProgramObject = 0;
-		qglUseProgram( 0 );
+		glUseProgram( 0 );
 		return 0;
 	}
 
 	object = RP_GetProgramObject( program );
 	if( object ) {
-		qglUseProgram( object );
+		glUseProgram( object );
 	}
 	rb.currentProgramObject = object;
 	rb.dirtyUniformState = true;

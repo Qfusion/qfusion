@@ -11,13 +11,13 @@ endif()
 
 file(GLOB CLIENT_HEADERS
 	"*.h"
+	"renderer/*.h"
 	"../gameshared/q_*.h"
 	"../gameshared/anorms.h"
 	"../gameshared/config.h"
 	"../qcommon/*.h"
 	"../qalgo/*.h"
 	"../angelwrap/qas_public.h"
-	"../ref_gl/r_public.h"
 	"../cgame/cg_public.h"
 	"../cgame/ref.h"
 	"../game/g_public.h"
@@ -37,6 +37,21 @@ file(GLOB CLIENT_COMMON_SOURCES
 	"../qalgo/*.c"
 	"../matchmaker/*.c"
 	"libmumblelink/*.c"
+
+	"renderer/*.c"
+	"renderer/*.cpp"
+
+	"../sdl/sdl_input.c"
+	"../sdl/sdl_input_joy.c"
+	"../sdl/sdl_vid.c"
+	"../sdl/sdl_sys.c"
+	"../sdl/sdl_clipboard.c"
+	"../sdl/sdl_time.c"
+	"../sdl/sdl_lib.c"
+	"../sdl/sdl_client.c"
+	"../sdl/sdl_glw.c"
+	"../sdl/sdl_glw_icon.c"
+	"../sdl/sdl_qgl.c"
 	)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
@@ -55,15 +70,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 		"../win32/win_threads.c"
 		"../null/sys_vfs_null.c"
 
-		"../sdl/sdl_input.c"
-		"../sdl/sdl_input_joy.c"
 		"../sdl/sdl_input_win.c"
-		"../sdl/sdl_vid.c"
-		"../sdl/sdl_sys.c"
-		"../sdl/sdl_clipboard.c"
-		"../sdl/sdl_time.c"
-		"../sdl/sdl_lib.c"
-		"../sdl/sdl_client.c"
 
 		"../win32/qfusion.rc"
 		)
@@ -86,15 +93,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 		"../unix/unix_threads.c"
 		"../null/sys_vfs_null.c"
 
-		"../sdl/sdl_input.c"
-		"../sdl/sdl_input_joy.c"
 		"../sdl/sdl_input_osx.m"
-		"../sdl/sdl_vid.c"
-		"../sdl/sdl_sys.c"
-		"../sdl/sdl_clipboard.c"
-		"../sdl/sdl_time.c"
-		"../sdl/sdl_lib.c"
-		"../sdl/sdl_client.c"
 
 		"../mac/mac_sys.m"
 		"${QFUSION_MAC_INFO_PLIST}"
@@ -126,15 +125,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 		"../unix/unix_threads.c"
 		"../null/sys_vfs_null.c"
 
-		"../sdl/sdl_input.c"
-		"../sdl/sdl_input_joy.c"
 		"../sdl/sdl_input_unix.c"
-		"../sdl/sdl_vid.c"
-		"../sdl/sdl_sys.c"
-		"../sdl/sdl_clipboard.c"
-		"../sdl/sdl_time.c"
-		"../sdl/sdl_lib.c"
-		"../sdl/sdl_client.c"
 		)
 
 	set(CLIENT_PLATFORM_LIBRARIES ${SDL2_LIBRARY} "pthread" "m" "dl" "rt")
@@ -144,7 +135,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 endif()
 
 add_executable(${QFUSION_CLIENT_NAME} ${CLIENT_BINARY_TYPE} ${CLIENT_HEADERS} ${CLIENT_PLATFORM_HEADERS} ${CLIENT_COMMON_SOURCES} ${CLIENT_PLATFORM_SOURCES} ${BUNDLE_RESOURCES})
-add_dependencies(${QFUSION_CLIENT_NAME} angelwrap cgame cin ftlib game ref_gl snd_openal snd_qf steamlib ui)
+add_dependencies(${QFUSION_CLIENT_NAME} angelwrap cgame cin ftlib game snd_openal snd_qf steamlib ui)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 	set_target_properties(${QFUSION_CLIENT_NAME} PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${QFUSION_MAC_INFO_PLIST})

@@ -1121,7 +1121,7 @@ static void R_SetupGL( void ) {
 		RB_SetRtLightParams( 0, NULL, 0, NULL );
 	}
 
-	if( ( rn.renderFlags & RF_SHADOWMAPVIEW ) && glConfig.ext.shadow ) {
+	if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
 		RB_SetShaderStateMask( ~0, GLSTATE_NO_COLORWRITE|GLSTATE_OFFSET_FILL|GLSTATE_DEPTHWRITE );
 	} else {
 		RB_SetShaderStateMask( ~0, 0 );
@@ -1134,7 +1134,7 @@ static void R_SetupGL( void ) {
 static void R_EndGL( void ) {
 	RB_FlushDynamicMeshes();
 
-	if( ( rn.renderFlags & RF_SHADOWMAPVIEW ) && glConfig.ext.shadow ) {
+	if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
 		RB_SetShaderStateMask( ~0, 0 );
 	}
 
@@ -1529,11 +1529,11 @@ void R_PopTransformMatrix( bool projection ) {
 //=======================================================================
 
 void R_Finish( void ) {
-	qglFinish();
+	glFinish();
 }
 
 void R_Flush( void ) {
-	qglFlush();
+	glFlush();
 }
 
 void R_DeferDataSync( void ) {
@@ -1542,7 +1542,7 @@ void R_DeferDataSync( void ) {
 	}
 
 	rf.dataSync = true;
-	qglFlush();
+	glFlush();
 	RB_FlushTextureCache();
 }
 
@@ -1551,7 +1551,7 @@ void R_DataSync( void ) {
 		if( glConfig.multithreading ) {
 			// synchronize data we might have uploaded this frame between the threads
 			// FIXME: only call this when absolutely necessary
-			qglFinish();
+			glFinish();
 		}
 		rf.dataSync = false;
 	}
@@ -1626,7 +1626,7 @@ bool R_IsRenderingToScreen( void ) {
 * R_MultisampleSamples
 */
 int R_MultisampleSamples( int samples ) {
-	if( !glConfig.ext.framebuffer_multisample || samples <= 1 ) {
+	if( samples <= 1 ) {
 		return 0;
 	}
 	return bound( 2, samples, glConfig.maxFramebufferSamples );
@@ -1929,11 +1929,11 @@ void R_BeginFrame( float cameraSeparation, bool forceClear, int swapInterval ) {
 	if( rf.cameraSeparation != cameraSeparation ) {
 		rf.cameraSeparation = cameraSeparation;
 		if( cameraSeparation < 0 ) {
-			qglDrawBuffer( GL_BACK_LEFT );
+			glDrawBuffer( GL_BACK_LEFT );
 		} else if( cameraSeparation > 0 ) {
-			qglDrawBuffer( GL_BACK_RIGHT );
+			glDrawBuffer( GL_BACK_RIGHT );
 		} else {
-			qglDrawBuffer( GL_BACK );
+			glDrawBuffer( GL_BACK );
 		}
 	}
 #endif
@@ -1945,9 +1945,9 @@ void R_BeginFrame( float cameraSeparation, bool forceClear, int swapInterval ) {
 #ifndef GL_ES_VERSION_2_0
 		if( cameraSeparation == 0 || !glConfig.stereoEnabled ) {
 			if( Q_stricmp( rf.drawBuffer, "GL_FRONT" ) == 0 ) {
-				qglDrawBuffer( GL_FRONT );
+				glDrawBuffer( GL_FRONT );
 			} else {
-				qglDrawBuffer( GL_BACK );
+				glDrawBuffer( GL_BACK );
 			}
 		}
 #endif
@@ -2041,7 +2041,7 @@ void R_EndFrame( void ) {
 	rf.transformMatrixStackSize[0] = 0;
 	rf.transformMatrixStackSize[1] = 0;
 
-	assert( qglGetError() == GL_NO_ERROR );
+	assert( glGetError() == GL_NO_ERROR );
 }
 
 //===================================================================

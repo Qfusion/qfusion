@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // r_alias.c: Quake III Arena .md3 model format support
 
 #include "r_local.h"
+#include "../../qcommon/qfiles.h"
 
 #define MD3SURF_DISTANCE(s, d) ((s)->flags & SHADER_AUTOSPRITE ? d : 0)
 
@@ -95,10 +96,8 @@ static void Mod_AliasBuildMeshesForFrame0( model_t *mod ) {
 
 		R_BuildTangentVectors( mesh->numverts, mesh->xyzArray, mesh->normalsArray, mesh->stArray, mesh->numtris, mesh->elems, mesh->sVectorsArray );
 
-		if( glConfig.ext.vertex_buffer_object ) {
-			// build a static vertex buffer object to be used for rendering simple models, such as items
-			Mod_AliasBuildStaticVBOForMesh( mesh );
-		}
+		// build a static vertex buffer object to be used for rendering simple models, such as items
+		Mod_AliasBuildStaticVBOForMesh( mesh );
 	}
 }
 

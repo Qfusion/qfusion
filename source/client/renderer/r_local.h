@@ -21,13 +21,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef R_LOCAL_H
 #define R_LOCAL_H
 
-#include "../gameshared/q_arch.h"
-#include "../gameshared/q_math.h"
-#include "../gameshared/q_shared.h"
-#include "../gameshared/q_cvar.h"
-#include "../qcommon/qfiles.h"
-#include "../qcommon/bsp.h"
-#include "../qcommon/patch.h"
+#include "../../gameshared/q_arch.h"
+#include "../../gameshared/q_math.h"
+#include "../../gameshared/q_shared.h"
+#include "../../gameshared/q_cvar.h"
+#include "../../qcommon/qfiles.h"
+#include "../../qcommon/bsp.h"
+#include "../../qcommon/patch.h"
 
 typedef struct { char *name; void **funcPointer; } dllfunc_t;
 
