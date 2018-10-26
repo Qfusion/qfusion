@@ -49,8 +49,8 @@ and Zephaniah E. Hull. Adapted by Victor Luchits for qfusion project.
 
 #include "../qcommon/qcommon.h"
 #include "sdl_glw.h"
-#include "../ref_gl/qgl.h"
-#include "../ref_gl/glad.h"
+#include "../client/renderer/qgl.h"
+#include "../client/renderer/glad.h"
 
 /*
 ** QGL_Init

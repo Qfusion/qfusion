@@ -20,7 +20,7 @@
 
 #include <SDL.h>
 
-#include "../ref_gl/r_local.h"
+#include "../client/renderer/r_local.h"
 #include "sdl_glw.h"
 
 glwstate_t glw_state = {NULL, false};
