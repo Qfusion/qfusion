@@ -1,7 +1,7 @@
 #if defined(NUM_DLIGHTS)
 
-uniform vec3 u_DlightPosition[NUM_DLIGHTS];
-uniform myhalf4 u_DlightDiffuseAndInvRadius[NUM_DLIGHTS];
+uniform vec3 u_DlightPosition[NUM_DLIGHTS * 4];
+uniform myhalf4 u_DlightDiffuseAndInvRadius[NUM_DLIGHTS * 4];
 #if !defined(GL_ES) && (QF_GLSL_VERSION >= 330)
 uniform int u_NumDynamicLights;
 #endif

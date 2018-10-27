@@ -538,14 +538,13 @@ static int RF_CompileShader( int program, const char *programName, const char *s
 		log[sizeof( log ) - 1] = 0;
 
 		if( log[0] ) {
-			int i;
-
-			for( i = 0; i < numStrings; i++ ) {
+			Com_Printf( "!!! begin\n" );
+			for( int i = 0; i < numStrings; i++ ) {
 				Com_Printf( "%s", strings[i] );
-				Com_Printf( "\n" );
 			}
+			Com_Printf( "\n!!! end\n" );
 
-			Com_Printf( S_COLOR_YELLOW "Failed to compile %s shader for program %s\n",
+			Com_Printf( S_COLOR_YELLOW "Failed to compile %s shader above for program %s\n",
 						shaderName, programName );
 			Com_Printf( "%s", log );
 			Com_Printf( "\n" );
