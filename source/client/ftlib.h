@@ -18,7 +18,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#include "../ftlib/ftlib_public.h"
+#include "ftlib/ftlib_public.h"
 
 void FTLIB_LoadLibrary( bool verbose );
 void FTLIB_UnloadLibrary( bool verbose );

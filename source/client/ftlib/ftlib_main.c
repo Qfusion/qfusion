@@ -23,13 +23,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 struct mempool_s *ftlibPool;
 
 /*
-* FTLIB_API
-*/
-int FTLIB_API( void ) {
-	return FTLIB_API_VERSION;
-}
-
-/*
 * FTLIB_Init
 */
 bool FTLIB_Init( bool verbose ) {
@@ -64,44 +57,3 @@ char *FTLIB_CopyString( const char *in ) {
 
 	return out;
 }
-
-#ifndef FTLIB_HARD_LINKED
-
-// this is only here so the functions in q_shared.c and q_math.c can link
-void Sys_Error( const char *format, ... ) {
-	va_list argptr;
-	char msg[3072];
-
-	va_start( argptr, format );
-	Q_vsnprintfz( msg, sizeof( msg ), format, argptr );
-	va_end( argptr );
-
-	trap_Error( msg );
-}
-
-void Com_Printf( const char *format, ... ) {
-	va_list argptr;
-	char msg[3072];
-
-	va_start( argptr, format );
-	Q_vsnprintfz( msg, sizeof( msg ), format, argptr );
-	va_end( argptr );
-
-	trap_Print( msg );
-}
-
-
-void Com_DPrintf( const char *format, ... ) {
-	va_list argptr;
-	char msg[1024];
-
-	va_start( argptr, format );
-	Q_vsnprintfz( msg, sizeof( msg ), format, argptr );
-	va_end( argptr );
-
-	if( trap_Cvar_Value( "developer" ) > 0 ) {
-		trap_Print( msg );
-	}
-}
-
-#endif

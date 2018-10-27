@@ -1,6 +1,6 @@
 project(${QFUSION_CLIENT_NAME})
 
-include_directories(${ZLIB_INCLUDE_DIR} ${CURL_INCLUDE_DIR} ${SDL2_INCLUDE_DIR})
+include_directories(${ZLIB_INCLUDE_DIR} ${CURL_INCLUDE_DIR} ${SDL2_INCLUDE_DIR} ${OGG_INCLUDE_DIR} ${VORBIS_INCLUDE_DIR} ${THEORA_INCLUDE_DIR} ${CURL_INCLUDE_DIR} ${ZLIB_INCLUDE_DIR} ${FREETYPE_INCLUDE_DIRS})
 
 if (NOT QFUSION_MAC_ICON)
 	set(QFUSION_MAC_ICON ../../icons/qfusion.icns)
@@ -9,9 +9,12 @@ if (NOT QFUSION_MAC_INFO_PLIST)
 	set(QFUSION_MAC_INFO_PLIST ../mac/Qfusion-Info.plist)
 endif()
 
+add_definitions(-DCIN_HARD_LINKED)
+
 file(GLOB CLIENT_HEADERS
 	"*.h"
 	"renderer/*.h"
+	"ftlib/*.h"
 	"../gameshared/q_*.h"
 	"../gameshared/anorms.h"
 	"../gameshared/config.h"
@@ -22,9 +25,8 @@ file(GLOB CLIENT_HEADERS
 	"../cgame/ref.h"
 	"../game/g_public.h"
 	"../ui/ui_public.h"
-	"../ftlib/ftlib_public.h"
 	"../steamlib/steamlib_public.h"
-	"../cin/cin_public.h"
+	"../cin/*.h"
 	"../matchmaker/*.h"
 	"../server/*.h"
 	)
@@ -40,6 +42,10 @@ file(GLOB CLIENT_COMMON_SOURCES
 
 	"renderer/*.c"
 	"renderer/*.cpp"
+
+	"../cin/*.c"
+
+	"ftlib/*.c"
 
 	"../sdl/sdl_input.c"
 	"../sdl/sdl_input_joy.c"
@@ -135,7 +141,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 endif()
 
 add_executable(${QFUSION_CLIENT_NAME} ${CLIENT_BINARY_TYPE} ${CLIENT_HEADERS} ${CLIENT_PLATFORM_HEADERS} ${CLIENT_COMMON_SOURCES} ${CLIENT_PLATFORM_SOURCES} ${BUNDLE_RESOURCES})
-add_dependencies(${QFUSION_CLIENT_NAME} angelwrap cgame cin ftlib game snd_openal snd_qf steamlib ui)
+add_dependencies(${QFUSION_CLIENT_NAME} angelwrap cgame game snd_openal snd_qf steamlib ui)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 	set_target_properties(${QFUSION_CLIENT_NAME} PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${QFUSION_MAC_INFO_PLIST})

@@ -2040,8 +2040,6 @@ void R_EndFrame( void ) {
 
 	rf.transformMatrixStackSize[0] = 0;
 	rf.transformMatrixStackSize[1] = 0;
-
-	assert( glGetError() == GL_NO_ERROR );
 }
 
 //===================================================================

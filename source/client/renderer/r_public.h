@@ -242,14 +242,12 @@ typedef struct {
 
 typedef ref_export_t *(*GetRefAPI_t)( const ref_import_t *imports );
 
-#ifdef REF_HARD_LINKED
 #ifdef __cplusplus
 extern "C" {
 #endif
 ref_export_t *GetRefAPI( ref_import_t *import );
 #ifdef __cplusplus
 }
-#endif
 #endif
 
 #endif // R_PUBLIC_H

@@ -50,7 +50,6 @@ and Zephaniah E. Hull. Adapted by Victor Luchits for qfusion project.
 #include "../qcommon/qcommon.h"
 #include "sdl_glw.h"
 #include "../client/renderer/qgl.h"
-#include "../client/renderer/glad.h"
 
 /*
 ** QGL_Init
@@ -68,10 +67,7 @@ qgl_initerr_t QGL_Init() {
 		return qgl_initerr_unknown;
 	}
 
-	if( gladLoadGLLoader( SDL_GL_GetProcAddress ) != 1 ) {
-		Com_Printf( "Error loading OpenGL\n" );
-		return qgl_initerr_invalid_driver;
-	}
+	SDL_GL_LoadLibrary( NULL );
 
 	return qgl_initerr_ok;
 }

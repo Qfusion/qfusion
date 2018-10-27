@@ -601,8 +601,6 @@ void RFB_BlitObject( int src, int dest, int bitMask, int mode, int filter, int r
 		glDrawBuffer( GL_COLOR_ATTACHMENT0 );
 	}
 #endif
-
-	assert( glGetError() == GL_NO_ERROR );
 }
 
 /*

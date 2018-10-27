@@ -911,13 +911,6 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 #define STR_TOSTR( x )                  STR_HELPER( x )
 #endif
 
-#define QF_GLSL_ENABLE_ARB_GPU_SHADER5 "#extension GL_ARB_gpu_shader5 : enable\n"
-#define QF_GLSL_ENABLE_EXT_GPU_SHADER5 "#extension GL_EXT_gpu_shader5 : enable\n"
-#define QF_GLSL_ENABLE_ARB_DRAW_INSTANCED "#extension GL_ARB_draw_instanced : enable\n"
-#define QF_GLSL_ENABLE_EXT_SHADOW_SAMPLERS "#extension GL_EXT_shadow_samplers : enable\n"
-#define QF_GLSL_ENABLE_EXT_TEXTURE_ARRAY "#extension GL_EXT_texture_array : enable\n"
-#define QF_GLSL_ENABLE_OES_TEXTURE_3D "#extension GL_OES_texture_3D : enable\n"
-
 #define QF_BUILTIN_GLSL_MACROS "" \
 	"#if !defined(myhalf)\n" \
 	"//#if !defined(__GLSL_CG_DATA_TYPES)\n" \
@@ -1607,8 +1600,6 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 	int hash;
 	int error = 0;
 	int shaderTypeIdx, wavefuncsIdx, deformvIdx, dualQuatsIdx, instancedIdx, vTransformsIdx;
-	int enableTextureArrayIdx;
-	int enableInstancedIdx;
 	int body_start, num_init_strings;
 	glsl_program_t *program;
 	char fullName[1024];
@@ -1702,13 +1693,7 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 	ri.Com_DPrintf( "Registering GLSL program %s\n", fullName );
 
 	i = 0;
-	shaderStrings[i++] = "#version 330";
-
-	enableTextureArrayIdx = i;
-	shaderStrings[i++] = "\n";
-	enableInstancedIdx = i;
-	shaderStrings[i++] = QF_GLSL_ENABLE_ARB_DRAW_INSTANCED;
-
+	shaderStrings[i++] = "#version 330\n";
 	shaderStrings[i++] = shaderVersion;
 	shaderTypeIdx = i;
 	shaderStrings[i++] = "\n";
@@ -1785,9 +1770,6 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 	}
 
 	// fragment shader
-	shaderStrings[enableTextureArrayIdx] = QF_GLSL_ENABLE_EXT_TEXTURE_ARRAY;
-	shaderStrings[enableInstancedIdx] = "\n";
-
 	shaderStrings[shaderTypeIdx] = "#define FRAGMENT_SHADER\n";
 	shaderStrings[wavefuncsIdx] = "\n";
 	shaderStrings[deformvIdx] = "\n";

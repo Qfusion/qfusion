@@ -41,7 +41,7 @@ extern "C"
 {
 #endif
 
-QF_DLL_EXPORT ref_export_t *GetRefAPI( ref_import_t *import ) {
+ref_export_t *GetRefAPI( ref_import_t *import ) {
 	static ref_export_t globals;
 
 	ri = *import;

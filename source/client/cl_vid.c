@@ -56,7 +56,6 @@ static bool vid_initialized;
 static bool vid_app_active;
 static bool vid_app_minimized;
 
-static void     *vid_ref_libhandle = NULL;
 static mempool_t *vid_ref_mempool = NULL;
 
 // These are system specific functions
@@ -282,14 +281,11 @@ static rserr_t VID_ChangeMode( void ) {
 ** VID_UnloadRefresh
 */
 static void VID_UnloadRefresh( void ) {
-	if( vid_ref_libhandle ) {
-		if( vid_ref_active ) {
-			re.Shutdown( false );
-			vid_ref_active = false;
-		}
-		Com_UnloadLibrary( &vid_ref_libhandle );
-		Mem_FreePool( &vid_ref_mempool );
+	if( vid_ref_active ) {
+		re.Shutdown( false );
+		vid_ref_active = false;
 	}
+	Mem_FreePool( &vid_ref_mempool );
 }
 
 static void *VID_RefModule_MemAllocExt( mempool_t *pool, size_t size, size_t align, int z, const char *filename, int fileline ) {
@@ -321,10 +317,6 @@ static struct cinematics_s *VID_RefModule_CIN_Open( const char *name, int64_t st
 */
 static bool VID_LoadRefresh( const char *name ) {
 	static ref_import_t import;
-	size_t file_size;
-	char *file;
-	dllfunc_t funcs[2];
-	GetRefAPI_t GetRefAPI_f;
 
 	VID_UnloadRefresh();
 
@@ -409,37 +401,17 @@ static bool VID_LoadRefresh( const char *name ) {
 	import.BufPipe_ReadCmds = QBufPipe_ReadCmds;
 	import.BufPipe_Wait = QBufPipe_Wait;
 
-	file_size = strlen( LIB_DIRECTORY "/" LIB_PREFIX ) + strlen( name ) + 1 + strlen( ARCH ) + strlen( LIB_SUFFIX ) + 1;
-	file = Mem_TempMalloc( file_size );
-	Q_snprintfz( file, file_size, LIB_DIRECTORY "/" LIB_PREFIX "%s_" ARCH LIB_SUFFIX, name );
 
-	// load dynamic library
-	Com_Printf( "Loading refresh module %s... ", name );
-	funcs[0].name = "GetRefAPI";
-	funcs[0].funcPointer = (void **) &GetRefAPI_f;
-	funcs[1].name = NULL;
-	vid_ref_libhandle = Com_LoadLibrary( file, funcs );
+	// load succeeded
+	ref_export_t * rep = GetRefAPI( &import );
+	re = *rep;
+	vid_ref_mempool = Mem_AllocPool( NULL, "Refresh" );
+	int api_version = re.API();
 
-	Mem_TempFree( file );
-
-	if( vid_ref_libhandle ) {
-		// load succeeded
-		int api_version;
-		ref_export_t *rep;
-
-		rep = GetRefAPI_f( &import );
-		re = *rep;
-		vid_ref_mempool = Mem_AllocPool( NULL, "Refresh" );
-		api_version = re.API();
-
-		if( api_version != REF_API_VERSION ) {
-			// wrong version
-			Com_Printf( "Wrong version: %i, not %i.\n", api_version, REF_API_VERSION );
-			VID_UnloadRefresh();
-			return false;
-		}
-	} else {
-		Com_Printf( "Not found %s.\n", va( LIB_DIRECTORY "/" LIB_PREFIX "%s_" ARCH LIB_SUFFIX, name ) );
+	if( api_version != REF_API_VERSION ) {
+		// wrong version
+		Com_Printf( "Wrong version: %i, not %i.\n", api_version, REF_API_VERSION );
+		VID_UnloadRefresh();
 		return false;
 	}
 

@@ -20,6 +20,7 @@
 
 #include <SDL.h>
 
+#include "../client/renderer/glad.h"
 #include "../client/renderer/r_local.h"
 #include "sdl_glw.h"
 
@@ -172,6 +173,94 @@ bool GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, vo
 	return true;
 }
 
+#define RESET "\x1b[0m"
+#define RED "\x1b[1;31m"
+#define YELLOW "\x1b[1;32m"
+#define GREEN "\x1b[1;33m"
+
+static const char * type_string( GLenum type ) {
+        switch( type ) {
+                case GL_DEBUG_TYPE_ERROR:
+                case GL_DEBUG_CATEGORY_API_ERROR_AMD:
+                        return "error";
+                case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
+                case GL_DEBUG_CATEGORY_DEPRECATION_AMD:
+                        return "deprecated";
+                case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
+                case GL_DEBUG_CATEGORY_UNDEFINED_BEHAVIOR_AMD:
+                        return "undefined";
+                case GL_DEBUG_TYPE_PORTABILITY:
+                        return "nonportable";
+                case GL_DEBUG_TYPE_PERFORMANCE:
+                case GL_DEBUG_CATEGORY_PERFORMANCE_AMD:
+                        return "performance";
+                case GL_DEBUG_CATEGORY_WINDOW_SYSTEM_AMD:
+                        return "window system";
+                case GL_DEBUG_CATEGORY_SHADER_COMPILER_AMD:
+                        return "shader compiler";
+                case GL_DEBUG_CATEGORY_APPLICATION_AMD:
+                        return "application";
+                case GL_DEBUG_TYPE_OTHER:
+                case GL_DEBUG_CATEGORY_OTHER_AMD:
+                        return "other";
+                default:
+                        return "idk";
+        }
+}
+
+static const char * severity_string( GLenum severity ) {
+        switch( severity ) {
+                case GL_DEBUG_SEVERITY_LOW:
+                // case GL_DEBUG_SEVERITY_LOW_AMD:
+                        return GREEN "low" RESET;
+                case GL_DEBUG_SEVERITY_MEDIUM:
+                // case GL_DEBUG_SEVERITY_MEDIUM_AMD:
+                        return YELLOW "medium" RESET;
+                case GL_DEBUG_SEVERITY_HIGH:
+                // case GL_DEBUG_SEVERITY_HIGH_AMD:
+                        return RED "high" RESET;
+                case GL_DEBUG_SEVERITY_NOTIFICATION:
+                        return "notice";
+                default:
+                        return "idk";
+        }
+}
+
+static void gl_debug_output_callback(
+        GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length,
+        const GLchar * message, const void * _
+) {
+        if(
+            source == 33352 || // shader compliation errors
+            source == 131169 ||
+            source == 131185 ||
+            source == 131218 ||
+            source == 131204
+        ) {
+                return;
+        }
+
+        if( severity == GL_DEBUG_SEVERITY_NOTIFICATION || severity == GL_DEBUG_SEVERITY_NOTIFICATION_KHR ) {
+                return;
+        }
+
+	printf( "GL [%s - %s]: %s", type_string( type ), severity_string( severity ), message );
+	size_t len = strlen( message );
+	if( len == 0 || message[ len - 1 ] != '\n' )
+		printf( "\n" );
+
+        if( severity == GL_DEBUG_SEVERITY_HIGH ) {
+		abort();
+        }
+}
+
+static void gl_debug_output_callback_amd(
+        GLuint id, GLenum type, GLenum severity, GLsizei length,
+        const GLchar * message, const void * _
+) {
+        gl_debug_output_callback( GL_DONT_CARE, type, id, severity, length, message, _ );
+}
+
 static bool GLimp_InitGL( int stencilbits, bool stereo ) {
 	int colorBits, depthBits, stencilBits, stereo_;
 
@@ -182,20 +271,50 @@ static bool GLimp_InitGL( int stencilbits, bool stereo ) {
 		SDL_GL_SetAttribute( SDL_GL_STEREO, 1 );
 	}
 
+	SDL_GL_SetAttribute( SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE ); 
+	SDL_GL_SetAttribute( SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG ); 
 	SDL_GL_SetAttribute( SDL_GL_CONTEXT_MAJOR_VERSION, 3 );
 	SDL_GL_SetAttribute( SDL_GL_CONTEXT_MINOR_VERSION, 3 );
-	SDL_GL_SetAttribute( SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE ); 
+#if !PUBLIC_BUILD
+	SDL_GL_SetAttribute( SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG ); 
+#endif
 
 	glw_state.sdl_glcontext = SDL_GL_CreateContext( glw_state.sdl_window );
 	if( glw_state.sdl_glcontext == 0 ) {
 		ri.Com_Printf( "GLimp_Init() - SDL_GL_CreateContext failed: \"%s\"\n", SDL_GetError() );
-		goto fail;
+		return false;
 	}
 
 	if( SDL_GL_MakeCurrent( glw_state.sdl_window, glw_state.sdl_glcontext ) ) {
 		ri.Com_Printf( "GLimp_Init() - SDL_GL_MakeCurrent failed: \"%s\"\n", SDL_GetError() );
-		goto fail;
+		return false;
 	}
+
+	if( gladLoadGLLoader( SDL_GL_GetProcAddress ) != 1 ) {
+		Com_Printf( "Error loading OpenGL\n" );
+		return false;
+	}
+
+#if !PUBLIC_BUILD
+	if( GLAD_GL_KHR_debug != 0 ) {
+		GLint context_flags;
+		glGetIntegerv( GL_CONTEXT_FLAGS, &context_flags );
+		if( context_flags & GL_CONTEXT_FLAG_DEBUG_BIT ) {
+			Com_Printf( "Initialising debug output\n" );
+
+			glEnable( GL_DEBUG_OUTPUT );
+			glEnable( GL_DEBUG_OUTPUT_SYNCHRONOUS );
+			glDebugMessageCallback( ( GLDEBUGPROC ) gl_debug_output_callback, NULL );
+			glDebugMessageControl( GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE );
+		}
+	}
+	else if( GLAD_GL_AMD_debug_output != 0 ) {
+		Com_Printf( "Initialising AMD debug output\n" );
+
+		glDebugMessageCallbackAMD( ( GLDEBUGPROCAMD ) gl_debug_output_callback_amd, NULL );
+		glDebugMessageEnableAMD( 0, 0, 0, NULL, GL_TRUE );
+	}
+#endif
 
 	/*
 	 ** print out PFD specifics
@@ -211,9 +330,6 @@ static bool GLimp_InitGL( int stencilbits, bool stereo ) {
 	ri.Com_Printf( "GL PFD: color(%d-bits) Z(%d-bit) stencil(%d-bits)\n", colorBits, depthBits, stencilBits );
 
 	return true;
-
-fail:
-	return false;
 }
 
 /**

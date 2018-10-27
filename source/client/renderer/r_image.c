@@ -791,8 +791,8 @@ static int R_TextureInternalFormat( int samples, int flags, int pixelType ) {
 	}
 
 	if( samples == 1 ) {
-		assert( !sRGB );
-		return ( flags & IT_ALPHAMASK ) ? GL_ALPHA : GL_RED;
+		/* assert( !sRGB ); */ // TODO: WTF
+		return GL_RED;
 	}
 
 	if( sRGB ) {
@@ -837,8 +837,6 @@ static void R_TextureFormat( int flags, int samples, int *comp, int *format, int
 			*format = ( flags & IT_BGRA ? GL_BGR : GL_RGB );
 		} else if( samples == 2 ) {
 			*format = GL_RG;
-		} else if( flags & IT_ALPHAMASK ) {
-			*format = GL_ALPHA;
 		} else {
 			*format = GL_RED;
 		}
@@ -858,11 +856,9 @@ static void R_TextureFormat( int flags, int samples, int *comp, int *format, int
 			*type = GL_UNSIGNED_BYTE;
 			*comp = *format;
 
-#ifndef GL_ES_VERSION_2_0
 			if( !( flags & IT_3D ) ) {
 				*comp = R_TextureInternalFormat( samples, flags, GL_UNSIGNED_BYTE );
 			}
-#endif
 		}
 	}
 }

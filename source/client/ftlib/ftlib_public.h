@@ -18,14 +18,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#ifndef _FTLIB_PUBLIC_H_
-#define _FTLIB_PUBLIC_H_
+#pragma once
+
+#include "../../qcommon/qcommon.h"
 
 // ftlib_public.h - font provider subsystem
-
-#define FTLIB_API_VERSION           11
-
-//===============================================================
 
 struct shader_s;
 struct qfontface_s;
@@ -37,11 +34,7 @@ typedef void ( *fdrawchar_t )( int x, int y, int w, int h, float s1, float t1, f
 //
 typedef struct {
 	// drops to console a client game error
-#ifndef _MSC_VER
-	void ( *Error )( const char *msg ) __attribute__( ( noreturn ) );
-#else
 	void ( *Error )( const char *msg );
-#endif
 
 	// console messages
 	void ( *Print )( const char *msg );
@@ -98,48 +91,4 @@ typedef struct {
 	void ( *R_Scissor )( int x, int y, int w, int h );
 	void ( *R_GetScissor )( int *x, int *y, int *w, int *h );
 	void ( *R_ResetScissor )( void );
-
-	// managed memory allocation
-	struct mempool_s *( *Mem_AllocPool )( const char *name, const char *filename, int fileline );
-	void *( *Mem_Alloc )( struct mempool_s *pool, size_t size, const char *filename, int fileline );
-	void *( *Mem_Realloc )( void *data, size_t size, const char *filename, int fileline );
-	void ( *Mem_Free )( void *data, const char *filename, int fileline );
-	void ( *Mem_FreePool )( struct mempool_s **pool, const char *filename, int fileline );
-	void ( *Mem_EmptyPool )( struct mempool_s *pool, const char *filename, int fileline );
 } ftlib_import_t;
-
-//
-// functions exported by the cinematics subsystem
-//
-typedef struct {
-	// if API is different, the dll cannot be used
-	int ( *API )( void );
-
-	// the init function will be called at each restart
-	bool ( *Init )( bool verbose );
-	void ( *Shutdown )( bool verbose );
-
-	// core functions
-	void ( *PrecacheFonts )( bool verbose );
-	struct qfontface_s *( *RegisterFont )( const char *family, const char *fallback, int style, unsigned int size );
-	void ( *TouchFont )( struct qfontface_s *qfont );
-	void ( *TouchAllFonts )( void );
-	void ( *FreeFonts )( bool verbose );
-
-	// drawing functions
-	size_t ( *FontSize )( struct qfontface_s *font );
-	size_t ( *FontHeight )( struct qfontface_s *font );
-	size_t ( *StringWidth )( const char *str, struct qfontface_s *font, size_t maxlen, int flags );
-	size_t ( *StrlenForWidth )( const char *str, struct qfontface_s *font, size_t maxwidth, int flags );
-	int ( *FontUnderline )( struct qfontface_s *font, int *thickness );
-	size_t ( *FontAdvance )( struct qfontface_s *font );
-	size_t ( *FontXHeight )( struct qfontface_s *font );
-	void ( *DrawClampChar )( int x, int y, wchar_t num, int xmin, int ymin, int xmax, int ymax, struct qfontface_s *font, vec4_t color );
-	void ( *DrawRawChar )( int x, int y, wchar_t num, struct qfontface_s *font, vec4_t color );
-	void ( *DrawClampString )( int x, int y, const char *str, int xmin, int ymin, int xmax, int ymax, struct qfontface_s *font, vec4_t color, int flags );
-	size_t ( *DrawRawString )( int x, int y, const char *str, size_t maxwidth, int *width, struct qfontface_s *font, vec4_t color, int flags );
-	int ( *DrawMultilineString )( int x, int y, const char *str, int halign, int maxwidth, int maxlines, struct qfontface_s *font, vec4_t color, int flags );
-	fdrawchar_t ( *SetDrawIntercept )( fdrawchar_t intercept );
-} ftlib_export_t;
-
-#endif

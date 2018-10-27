@@ -666,7 +666,7 @@ static rserr_t R_PostInit( void ) {
 	glConfig.vendorString = (const char *)glGetString( GL_VENDOR );
 	glConfig.rendererString = (const char *)glGetString( GL_RENDERER );
 	glConfig.versionString = (const char *)glGetString( GL_VERSION );
-	glConfig.extensionsString = (const char *)glGetString( GL_EXTENSIONS );
+	glConfig.extensionsString = "";
 	glConfig.shadingLanguageVersionString = (const char *)glGetString( GL_SHADING_LANGUAGE_VERSION );
 
 	if( !glConfig.vendorString ) {

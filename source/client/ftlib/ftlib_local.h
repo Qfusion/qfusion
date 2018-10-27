@@ -21,13 +21,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef _FTLIB_LOCAL_H_
 #define _FTLIB_LOCAL_H_
 
-// it's in qcommon.h too, but we don't include it for modules
-typedef struct { char *name; void **funcPointer; } dllfunc_t;
-
-#include "../gameshared/q_arch.h"
-#include "../gameshared/q_math.h"
-#include "../gameshared/q_shared.h"
-#include "../gameshared/q_cvar.h"
+#include "../../qcommon/qcommon.h"
+#include "../../gameshared/q_arch.h"
+#include "../../gameshared/q_math.h"
+#include "../../gameshared/q_shared.h"
+#include "../../gameshared/q_cvar.h"
 
 #include "ftlib_public.h"
 #include "ftlib_syscalls.h"
@@ -146,11 +144,12 @@ typedef struct qfontfamily_s {
 
 void Com_DPrintf( const char *format, ... );
 
-int FTLIB_API( void );
 bool FTLIB_Init( bool verbose );
 void FTLIB_Shutdown( bool verbose );
 
 char *FTLIB_CopyString( const char *in );
+
+void GetFTLibAPI( ftlib_import_t *import );
 
 // ftlib.c
 void FTLIB_InitSubsystems( bool verbose );
