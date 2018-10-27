@@ -30,7 +30,14 @@ r_imginfo_t LoadImage( const char * filename, uint8_t * ( *allocbuf )( void *, s
 	( void ) allocbuf;
 
 	r_imginfo_t ret;
-	ret.pixels = stbi_load( filename, &ret.width, &ret.height, &ret.samples, 0 );
+	memset( &ret, 0, sizeof( ret ) );
+
+	uint8_t * data;
+	size_t size = R_LoadFile( filename, ( void ** ) &data );
+	if( data == NULL )
+		return ret;
+
+	ret.pixels = stbi_load_from_memory( data, size, &ret.width, &ret.height, &ret.samples, 0 );
 	ret.comp = ret.samples == 3 ? IMGCOMP_RGB : IMGCOMP_RGBA;
 
 	return ret;
