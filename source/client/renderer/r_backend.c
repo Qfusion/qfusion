@@ -517,7 +517,7 @@ static void RB_EnableVertexAttrib( int index, bool enable ) {
 	bit = 1 << index;
 	diff = ( rb.gl.vertexAttribEnabled & bit ) ^ ( enable ? bit : 0 );
 	if( !diff ) {
-		return;
+		/* return; */
 	}
 
 	if( enable ) {

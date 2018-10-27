@@ -27,7 +27,7 @@ typedef uint64_t r_glslfeat_t;
 
 #define DEFAULT_GLSL_MATERIAL_PROGRAM           "defaultMaterial"
 #define DEFAULT_GLSL_DISTORTION_PROGRAM         "defaultDistortion"
-#define DEFAULT_GLSL_SHADOW_PROGRAM             "defaultShadow"
+#define DEFAULT_GLSL_SHADOW_PROGRAM             "defaultShadowmap"
 #define DEFAULT_GLSL_OUTLINE_PROGRAM            "defaultOutline"
 #define DEFAULT_GLSL_DYNAMIC_LIGHTS_PROGRAM     "defaultDynamicLights"
 #define DEFAULT_GLSL_Q3A_SHADER_PROGRAM         "defaultQ3AShader"

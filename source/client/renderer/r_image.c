@@ -926,6 +926,13 @@ static void R_SetupTexParameters( int flags, int upload_width, int upload_height
 		glTexParameteri( target, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE );
 		glTexParameteri( target, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL );
 	}
+
+	if( flags & IT_ALPHAMASK ) {
+		glTexParameteri( target, GL_TEXTURE_SWIZZLE_R, GL_ONE );
+		glTexParameteri( target, GL_TEXTURE_SWIZZLE_G, GL_ONE );
+		glTexParameteri( target, GL_TEXTURE_SWIZZLE_B, GL_ONE );
+		glTexParameteri( target, GL_TEXTURE_SWIZZLE_A, GL_RED );
+	}
 }
 
 /*
@@ -1074,7 +1081,6 @@ static int R_PixelFormatSize( int format, int type ) {
 					return 3;
 				case GL_RG:
 					return 2;
-				case GL_ALPHA:
 				case GL_RED:
 					return 1;
 			}
@@ -1507,6 +1513,8 @@ static bool R_LoadKTX( int ctx, image_t *image, const char *pathname ) {
 		size_t pixelSize = 2;
 		size_t faceSize;
 
+		GLenum internalFormat = header->baseInternalFormat;
+
 		switch( header->baseInternalFormat ) {
 			case GL_RGBA:
 				image->samples = 4;
@@ -1531,6 +1539,7 @@ static bool R_LoadKTX( int ctx, image_t *image, const char *pathname ) {
 			case GL_ALPHA:
 				image->samples = 1;
 				image->flags |= IT_ALPHAMASK;
+				internalFormat = GL_RED;
 				break;
 		}
 
@@ -1564,7 +1573,7 @@ static bool R_LoadKTX( int ctx, image_t *image, const char *pathname ) {
 		}
 
 		R_UploadMipmapped( ctx, images, header->pixelWidth, header->pixelHeight, mips, image->flags, image->minmipsize,
-						   &image->upload_width, &image->upload_height, header->baseInternalFormat, header->type );
+						   &image->upload_width, &image->upload_height, internalFormat, header->type );
 	}
 
 	Q_strncpyz( image->extension, ".ktx", sizeof( image->extension ) );
