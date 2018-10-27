@@ -177,7 +177,7 @@ void R_TextureMode( char *string ) {
 			glTexParameteri( target, GL_TEXTURE_MIN_FILTER, gl_filter_min );
 			glTexParameteri( target, GL_TEXTURE_MAG_FILTER, gl_filter_max );
 		} else {
-			glTexParameteri( target, GL_TEXTURE_MIN_FILTER, gl_filter_max );
+			glTexParameteri( target, GL_TEXTURE_MIN_FILTER, gl_filter_min );
 			glTexParameteri( target, GL_TEXTURE_MAG_FILTER, gl_filter_max );
 		}
 	}

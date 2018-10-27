@@ -1599,7 +1599,6 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 	const char **header;
 	char *shaderBuffers[100];
 	const char *shaderStrings[MAX_DEFINES_FEATURES + 100];
-	char shaderVersion[100];
 	char maxBones[100];
 	const char *deformv;
 	glslParser_t parser;
@@ -1676,9 +1675,6 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 	Q_strncpyz( fullName, name, sizeof( fullName ) );
 	header = R_ProgramFeatures2Defines( glsl_programtypes_features[type], features, fullName, sizeof( fullName ) );
 
-	Q_snprintfz( shaderVersion, sizeof( shaderVersion ),
-				 "#define QF_GLSL_VERSION %i\n", glConfig.shadingLanguageVersion );
-
 	// load
 	//
 
@@ -1686,7 +1682,7 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 
 	i = 0;
 	shaderStrings[i++] = "#version 330\n";
-	shaderStrings[i++] = shaderVersion;
+	shaderStrings[i++] = "#define QF_GLSL_VERSION 330\n";
 	shaderTypeIdx = i;
 	shaderStrings[i++] = "\n";
 	shaderStrings[i++] = QF_BUILTIN_GLSL_MACROS;

@@ -157,16 +157,11 @@ typedef struct {
 	const char      *rendererString;
 	const char      *vendorString;
 	const char      *versionString;
-	const char      *extensionsString;
-	const char      *shadingLanguageVersionString;
 	unsigned versionHash;
 
 	const char      *applicationName;
 	const char      *screenshotPrefix;
 	int startupColor;
-
-	int version;
-	int shadingLanguageVersion;
 
 	int width, height;
 	bool fullScreen;

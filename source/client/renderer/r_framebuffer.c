@@ -612,32 +612,8 @@ bool RFB_CheckObjectStatus( void ) {
 	}
 
 	status = glCheckFramebufferStatus( GL_FRAMEBUFFER );
-	switch( status ) {
-		case GL_FRAMEBUFFER_COMPLETE:
-			return true;
-		case GL_FRAMEBUFFER_UNSUPPORTED:
-			return false;
-		case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
-			assert( status != GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT );
-			return false;
-		case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
-			assert( status != GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT );
-			return false;
-		case GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER:
-			assert( status != GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER );
-			return false;
-		case GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER:
-			assert( status != GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER );
-			return false;
-		case GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE:
-			assert( status != GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE );
-			return false;
-		default:
-			// programming error; will fail on all hardware
-			assert( 0 );
-	}
-
-	return false;
+	assert( status == GL_FRAMEBUFFER_COMPLETE );
+	return status == GL_FRAMEBUFFER_COMPLETE;
 }
 
 /*

@@ -252,12 +252,7 @@ static void R_PrintMemoryInfo( void ) {
 * Verify correctness of values provided by the driver, init some variables
 */
 static void R_FinalizeGLExtensions( void ) {
-	int versionMajor, versionMinor;
 	char tmp[128];
-
-	versionMajor = versionMinor = 0;
-	sscanf( glConfig.versionString, "%d.%d", &versionMajor, &versionMinor );
-	glConfig.version = versionMajor * 100 + versionMinor * 10;
 
 	glConfig.maxTextureSize = 0;
 	glGetIntegerv( GL_MAX_TEXTURE_SIZE, &glConfig.maxTextureSize );
@@ -298,10 +293,6 @@ static void R_FinalizeGLExtensions( void ) {
 	glConfig.maxTextureLayers = 0;
 	glGetIntegerv( GL_MAX_3D_TEXTURE_SIZE, &glConfig.maxTexture3DSize );
 	glGetIntegerv( GL_MAX_ARRAY_TEXTURE_LAYERS, &glConfig.maxTextureLayers );
-
-	versionMajor = versionMinor = 0;
-	sscanf( glConfig.shadingLanguageVersionString, "%d.%d", &versionMajor, &versionMinor );
-	glConfig.shadingLanguageVersion = versionMajor * 100 + versionMinor;
 
 	glConfig.maxVertexUniformComponents = glConfig.maxFragmentUniformComponents = 0;
 	glConfig.maxVaryingFloats = 0;
@@ -526,9 +517,6 @@ static void R_GfxInfo_f( void ) {
 	Com_Printf( "GL_VENDOR: %s\n", glConfig.vendorString );
 	Com_Printf( "GL_RENDERER: %s\n", glConfig.rendererString );
 	Com_Printf( "GL_VERSION: %s\n", glConfig.versionString );
-	Com_Printf( "GL_SHADING_LANGUAGE_VERSION: %s\n", glConfig.shadingLanguageVersionString );
-
-	Com_Printf( "GL_EXTENSIONS: %s\n", glConfig.extensionsString );
 
 	Com_Printf( "GL_MAX_TEXTURE_SIZE: %i\n", glConfig.maxTextureSize );
 	Com_Printf( "GL_MAX_TEXTURE_IMAGE_UNITS: %i\n", glConfig.maxTextureUnits );
@@ -666,8 +654,6 @@ static rserr_t R_PostInit( void ) {
 	glConfig.vendorString = (const char *)glGetString( GL_VENDOR );
 	glConfig.rendererString = (const char *)glGetString( GL_RENDERER );
 	glConfig.versionString = (const char *)glGetString( GL_VERSION );
-	glConfig.extensionsString = "";
-	glConfig.shadingLanguageVersionString = (const char *)glGetString( GL_SHADING_LANGUAGE_VERSION );
 
 	if( !glConfig.vendorString ) {
 		glConfig.vendorString = "";
@@ -677,12 +663,6 @@ static rserr_t R_PostInit( void ) {
 	}
 	if( !glConfig.versionString ) {
 		glConfig.versionString = "";
-	}
-	if( !glConfig.extensionsString ) {
-		glConfig.extensionsString = "";
-	}
-	if( !glConfig.shadingLanguageVersionString ) {
-		glConfig.shadingLanguageVersionString = "";
 	}
 
 	glConfig.versionHash = R_GLVersionHash( glConfig.vendorString, glConfig.rendererString,
@@ -779,7 +759,11 @@ rserr_t R_SetMode( int x, int y, int width, int height, int displayFrequency, bo
 /*
 * R_InitVolatileAssets
 */
+static GLuint vao;
 static void R_InitVolatileAssets( void ) {
+        glGenVertexArrays( 1, &vao );
+        glBindVertexArray( vao );
+
 	// init volatile data
 	R_InitCoronas();
 	R_InitCustomColors();
@@ -810,6 +794,9 @@ static void R_DestroyVolatileAssets( void ) {
 	// kill volatile data
 	R_ShutdownCustomColors();
 	R_ShutdownCoronas();
+
+	glBindVertexArray( 0 );
+	glDeleteVertexArrays( 1, &vao );
 }
 
 /*
