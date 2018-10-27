@@ -925,17 +925,10 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 	"//#define myhalf4 half4\n" \
 	"//#endif\n" \
 	"#endif\n" \
-	"#ifdef GL_ES\n" \
-	"#define qf_lowp_float lowp float\n" \
-	"#define qf_lowp_vec2 lowp vec2\n" \
-	"#define qf_lowp_vec3 lowp vec3\n" \
-	"#define qf_lowp_vec4 lowp vec4\n" \
-	"#else\n" \
 	"#define qf_lowp_float float\n" \
 	"#define qf_lowp_vec2 vec2\n" \
 	"#define qf_lowp_vec3 vec3\n" \
 	"#define qf_lowp_vec4 vec4\n" \
-	"#endif\n" \
 	"\n"
 
 #define QF_BUILTIN_GLSL_MACROS_GLSL120 "" \

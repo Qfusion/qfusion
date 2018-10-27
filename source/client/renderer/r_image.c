@@ -1294,11 +1294,7 @@ static void R_UploadMipmapped( int ctx, uint8_t **data,
 		mipLevels = 1;
 	}
 
-#ifdef GL_ES_VERSION_2_0
-	comp = format;
-#else
 	comp = R_TextureInternalFormat( pixelSize, flags, type );
-#endif
 
 	R_SetupTexParameters( flags, scaledWidth, scaledHeight, minmipsize );
 

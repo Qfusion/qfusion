@@ -153,14 +153,9 @@ static void RB_SetGLDefaults( void ) {
 	glDepthFunc( GL_LEQUAL );
 	glDepthMask( GL_FALSE );
 	glDisable( GL_POLYGON_OFFSET_FILL );
-#ifdef GL_ES_VERSION_2_0
-	glPolygonOffset( -1.0f, 0.0f ); // units will be handled by RB_DepthOffset
-#endif
 	glColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
 	glEnable( GL_DEPTH_TEST );
-#ifndef GL_ES_VERSION_2_0
 	glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
-#endif
 	glFrontFace( GL_CCW );
 	glEnable( GL_SCISSOR_TEST );
 }
@@ -238,12 +233,6 @@ void RB_DepthRange( float depthmin, float depthmax ) {
 	clamp( depthmax, 0.0f, 1.0f );
 	rb.gl.depthmin = depthmin;
 	rb.gl.depthmax = depthmax;
-#ifdef GL_ES_VERSION_2_0
-	// depthmin == depthmax is a special case when a specific depth value is going to be written
-	if( ( depthmin != depthmax ) && !rb.gl.depthoffset ) {
-		depthmin += 4.0f / 65535.0f;
-	}
-#endif
 	glDepthRange( depthmin, depthmax );
 }
 
@@ -263,11 +252,6 @@ void RB_DepthOffset( bool enable ) {
 	float depthmax = rb.gl.depthmax;
 	rb.gl.depthoffset = enable;
 	if( depthmin != depthmax ) {
-#ifdef GL_ES_VERSION_2_0
-		if( !enable ) {
-			depthmin += 4.0f / 65535.0f;
-		}
-#endif
 		glDepthRange( depthmin, depthmax );
 	}
 }
@@ -460,16 +444,8 @@ void RB_SetState( int state ) {
 	if( diff & GLSTATE_OFFSET_FILL ) {
 		if( state & GLSTATE_OFFSET_FILL ) {
 			glEnable( GL_POLYGON_OFFSET_FILL );
-#ifdef GL_ES_VERSION_2_0
-			glPolygonOffset( rb.gl.polygonfactor, 0 );
-			RB_DepthOffset( true );
-#else
 			glPolygonOffset( rb.gl.polygonfactor, rb.gl.polygonunits );
-#endif
 		} else {
-#ifdef GL_ES_VERSION_2_0
-			RB_DepthOffset( false );
-#endif
 			glDisable( GL_POLYGON_OFFSET_FILL );
 		}
 	}
@@ -1267,8 +1243,6 @@ bool RB_EnableTriangleOutlines( bool enable ) {
 		rb.triangleOutlines = enable;
 		rb.dirtyUniformState = true;
 
-		// OpenGL ES systems don't support glPolygonMode
-#ifndef GL_ES_VERSION_2_0
 		if( enable ) {
 			RB_SetShaderStateMask( 0, GLSTATE_NO_DEPTH_TEST );
 			glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
@@ -1276,7 +1250,6 @@ bool RB_EnableTriangleOutlines( bool enable ) {
 			RB_SetShaderStateMask( ~0, 0 );
 			glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
 		}
-#endif
 	}
 
 	return oldVal;

@@ -577,7 +577,6 @@ void RFB_BlitObject( int src, int dest, int bitMask, int mode, int filter, int r
 	glBindFramebuffer( GL_READ_FRAMEBUFFER, fbo->objectID );
 	glBindFramebuffer( GL_DRAW_FRAMEBUFFER, destObj );
 
-#ifndef GL_ES_VERSION_2_0
 	if( src == 0 ) {
 		glReadBuffer( GL_BACK );
 		glDrawBuffer( GL_COLOR_ATTACHMENT0 + drawAtt );
@@ -585,14 +584,12 @@ void RFB_BlitObject( int src, int dest, int bitMask, int mode, int filter, int r
 		glReadBuffer( GL_COLOR_ATTACHMENT0 + readAtt );
 		glDrawBuffer( GL_COLOR_ATTACHMENT0 + drawAtt );
 	}
-#endif
 
 	glBlitFramebuffer( 0, 0, fbo->width, fbo->height, dx, dy, dx + dw, dy + dh, bits, filter );
 	glBindFramebuffer( GL_READ_FRAMEBUFFER, 0 );
 	glBindFramebuffer( GL_DRAW_FRAMEBUFFER, 0 );
 	glBindFramebuffer( GL_FRAMEBUFFER, fbo->objectID );
 
-#ifndef GL_ES_VERSION_2_0
 	if( src == 0 ) {
 		glReadBuffer( GL_BACK );
 		glDrawBuffer( GL_BACK );
@@ -600,7 +597,6 @@ void RFB_BlitObject( int src, int dest, int bitMask, int mode, int filter, int r
 		glReadBuffer( GL_COLOR_ATTACHMENT0 );
 		glDrawBuffer( GL_COLOR_ATTACHMENT0 );
 	}
-#endif
 }
 
 /*
