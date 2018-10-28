@@ -21,45 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
 //
-// monster weapons
-//
-
-//FIXME mosnters should call these with a totally accurate direction
-// and we can mess it up based on skill.  Spread should be for normal
-// and we can tighten or loosen based on skill.  We could muck with
-// the damages too, but I'm not sure that's such a good idea.
-void monster_fire_bullet (edict_t *self, vec3_t start, vec3_t dir, int damage, int kick)
-{
-	W_Fire_Bullet( self, start, dir, rand() & 255, 1024, 300, 300, damage, kick, kick, MOD_MACHINEGUN_S, 0 );
-}
-
-void monster_fire_shotgun (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick)
-{
-	W_Fire_Riotgun( self, start, aimdir, rand() & 255, 1024, 300, 300, 12, damage, kick, kick, MOD_RIOTGUN_S, 0 );
-}
-
-void monster_fire_blaster (edict_t *self, vec3_t start, vec3_t dir, int damage, int speed)
-{
-	W_Fire_GunbladeBlast( self, start, dir, damage, 0, 10, 0, 0, 0, speed, 10000, MOD_GUNBLADE_S, 0 );
-}	
-
-void monster_fire_grenade (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int speed, int flashtype)
-{
-	W_Fire_Grenade( self, start, aimdir, speed, damage, 10, 20, 0, 0, damage + 40, 2500, MOD_GRENADE_S, 0 );
-}
-
-void monster_fire_rocket (edict_t *self, vec3_t start, vec3_t dir, int damage, int speed, int flashtype)
-{
-	W_Fire_Rocket( self, start, dir, speed, damage, 10, 20, 0, 0, damage + 20, 10000, MOD_ROCKET_S, 0 );
-}	
-
-void monster_fire_railgun (edict_t *self, vec3_t start, vec3_t aimdir, int damage, int kick, int flashtype)
-{
-	W_Fire_Electrobolt_FullInstant( self, start, aimdir, damage, damage, 10, 20, 0, 1024, 1024, MOD_ELECTROBOLT_S, 0 );
-}
-
-
-//
 // Monster utility functions
 //
 
