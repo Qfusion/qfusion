@@ -256,6 +256,9 @@ static edict_t *CopyToBodyQue( edict_t *ent, edict_t *attacker, int damage ) {
 		body->nextThink = level.time + 3000 + random() * 3000;
 		body->deadflag = DEAD_DEAD;
 	} else if( ent->s.type == ET_PLAYER ) {
+		const int deathanim[3] = { BOTH_DEAD1, BOTH_DEAD2, BOTH_DEAD3 };
+		int i = rand() % (sizeof(deathanim) / sizeof(deathanim[0]));
+
 		// copy the model
 		body->s.type = ET_CORPSE;
 		body->s.modelindex = ent->s.modelindex;
@@ -264,23 +267,8 @@ static edict_t *CopyToBodyQue( edict_t *ent, edict_t *attacker, int damage ) {
 		body->s.teleported = true;
 
 		// launch the death animation on the body
-		{
-			static int i;
-			i = ( i + 1 ) % 3;
-			G_AddEvent( body, EV_DIE, i, true );
-			switch( i ) {
-				default:
-				case 0:
-					body->s.frame = ( ( BOTH_DEAD1 & 0x3F ) | ( BOTH_DEAD1 & 0x3F ) << 6 | ( 0 & 0xF ) << 12 );
-					break;
-				case 1:
-					body->s.frame = ( ( BOTH_DEAD2 & 0x3F ) | ( BOTH_DEAD2 & 0x3F ) << 6 | ( 0 & 0xF ) << 12 );
-					break;
-				case 2:
-					body->s.frame = ( ( BOTH_DEAD3 & 0x3F ) | ( BOTH_DEAD3 & 0x3F ) << 6 | ( 0 & 0xF ) << 12 );
-					break;
-			}
-		}
+		G_AddEvent( body, EV_DIE, i, true );
+		body->s.frame = GS_EncodeAnimState( deathanim[i], deathanim[i], 0 );
 
 		body->think = body_ready;
 		body->takedamage = DAMAGE_NO;
