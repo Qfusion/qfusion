@@ -960,8 +960,10 @@ void CG_PModel_LeanAngles( centity_t *cent, pmodel_t *pmodel ) {
 * can be detected as groundentities by the animation checks
 */
 void CG_UpdatePModelAnimations( centity_t *cent ) {
-	int newanim[PMODEL_PARTS];
+	int i;
+	int newanim[PMODEL_PARTS], lastanim[PMODEL_PARTS];
 	int frame;
+	int lastframe;
 
 	cent->pendingAnimationsUpdate = false;
 
@@ -970,12 +972,16 @@ void CG_UpdatePModelAnimations( centity_t *cent ) {
 	} else {
 		frame = GS_UpdateBaseAnims( &cent->current, cent->animVelocity );
 	}
+	lastframe = cent->lastAnims;
+	cent->lastAnims = frame;
+
+	GS_DecodeAnimState( frame, newanim[LOWER], newanim[UPPER], newanim[HEAD] );
+	GS_DecodeAnimState( lastframe, lastanim[LOWER], lastanim[UPPER], lastanim[HEAD] );
 
 	// filter unchanged animations
-	newanim[LOWER] = ( frame & 0x3F ) * ( ( frame & 0x3F ) != ( cent->lastAnims & 0x3F ) );
-	newanim[UPPER] = ( frame >> 6 & 0x3F ) * ( ( frame >> 6 & 0x3F ) != ( cent->lastAnims >> 6 & 0x3F ) );
-	newanim[HEAD] = ( frame >> 12 & 0xF ) * ( ( frame >> 12 & 0xF ) != ( cent->lastAnims >> 12 & 0xF ) );
-	cent->lastAnims = frame;
+	for( i = LOWER; i <= HEAD; i++ ) {
+		newanim[i] *= newanim[i] != lastanim[i];
+	}
 
 	CG_PModel_AddAnimation( cent->current.number, newanim[LOWER], newanim[UPPER], newanim[HEAD], BASE_CHANNEL );
 }
