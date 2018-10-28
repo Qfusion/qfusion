@@ -2308,3 +2308,69 @@ void G_MapLocationNameForTAG( int tag, char *buf, size_t buflen ) {
 	}
 	Q_strncpyz( buf, trap_GetConfigString( CS_LOCATIONS + tag ), buflen );
 }
+
+/*
+* G_PlayerNoise
+*
+* Each player can have two noise objects associated with it:
+* a personal noise (jumping, pain, weapon firing), and a weapon
+* target noise (bullet wall impacts)
+* Monsters that don't directly see the player can move
+* to a noise in hopes of seeing the player from there.
+*/
+void G_PlayerNoise( edict_t *who, vec3_t where, int type )
+{
+	edict_t		*noise;
+	
+	if (!who->r.client) {
+		return;
+	}
+	if (who->r.svflags & SVF_NOCLIENT) {
+		return;
+	}
+
+	//if (deathmatch->value)
+	//	return;
+	
+	if (who->flags & FL_NOTARGET)
+		return;
+	
+	if (!who->mynoise)
+	{
+		noise = G_Spawn();
+		noise->classname = "player_noise";
+		VectorSet (noise->r.mins, -8, -8, -8);
+		VectorSet (noise->r.maxs, 8, 8, 8);
+		noise->r.owner = who;
+		noise->r.svflags = SVF_NOCLIENT;
+		who->mynoise = noise;
+		
+		noise = G_Spawn();
+		noise->classname = "player_noise";
+		VectorSet (noise->r.mins, -8, -8, -8);
+		VectorSet (noise->r.maxs, 8, 8, 8);
+		noise->r.owner = who;
+		noise->r.svflags = SVF_NOCLIENT;
+		who->mynoise2 = noise;
+	}
+	
+	if (type == PNOISE_SELF || type == PNOISE_WEAPON)
+	{
+		noise = who->mynoise;
+		level.sound_entity = noise;
+		level.sound_entity_framenum = level.framenum;
+	}
+	else // type == PNOISE_IMPACT
+	{
+		noise = who->mynoise2;
+		level.sound2_entity = noise;
+		level.sound2_entity_framenum = level.framenum;
+	}
+	
+	VectorCopy (where, noise->s.origin);
+	VectorSubtract (where, noise->r.maxs, noise->r.absmin);
+	VectorAdd (where, noise->r.maxs, noise->r.absmax);
+	noise->teleport_time = level.time;
+	GClip_LinkEntity(noise);
+}
+

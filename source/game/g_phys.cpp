@@ -1047,9 +1047,6 @@ void SV_Physics_Step (edict_t *ent)
 				if (hitsound)
 					G_Sound (ent, 0, trap_SoundIndex( S_LAND ), ATTN_NORM);
 	}
-
-	// regular thinking
-	SV_RunThink (ent);
 }
 
 //============================================================================
@@ -1108,6 +1105,9 @@ void G_RunEntity( edict_t *ent ) {
 			break;
 		case MOVETYPE_TOSSSLIDE:
 			G_BoxSlideMove( ent, ent->r.clipmask ? ent->r.clipmask : MASK_PLAYERSOLID, 1.01f, 10 );
+			break;
+		case MOVETYPE_STEP:
+			SV_Physics_Step( ent );
 			break;
 		default:
 			G_Error( "SV_Physics: bad movetype %i", (int)ent->movetype );

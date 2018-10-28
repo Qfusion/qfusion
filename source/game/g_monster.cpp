@@ -231,7 +231,7 @@ void M_MoveFrame (edict_t *self)
 	int		index;
 
 	move = self->monsterinfo.currentmove;
-	self->nextThink = level.time + 100;
+	self->nextThink = level.time + 1;
 
 	if ((self->monsterinfo.nextframe) && (self->monsterinfo.nextframe >= move->firstframe) && (self->monsterinfo.nextframe <= move->lastframe))
 	{
@@ -283,6 +283,80 @@ void M_MoveFrame (edict_t *self)
 		move->frame[index].thinkfunc (self);
 }
 
+void M_ReactToDamage (edict_t *targ, edict_t *attacker)
+{
+	if (!(attacker->r.client) && !(attacker->r.svflags & SVF_MONSTER))
+		return;
+	
+	if (attacker == targ || attacker == targ->enemy)
+		return;
+	
+	// if we are a good guy monster and our attacker is a player
+	// or another good guy, do not get mad at them
+	if (targ->monsterinfo.aiflags & AI_GOOD_GUY)
+	{
+		if (attacker->r.client || (attacker->monsterinfo.aiflags & AI_GOOD_GUY))
+			return;
+	}
+	
+	// we now know that we are not both good guys
+	
+	// if attacker is a client, get mad at them because he's good and we're not
+	if (attacker->r.client)
+	{
+		targ->monsterinfo.aiflags &= ~AI_SOUND_TARGET;
+		
+		// this can only happen in coop (both new and old enemies are clients)
+		// only switch if can't see the current enemy
+		if (targ->enemy && targ->enemy->r.client)
+		{
+			if (G_Visible(targ, targ->enemy))
+			{
+				targ->oldenemy = attacker;
+				return;
+			}
+			targ->oldenemy = targ->enemy;
+		}
+		targ->enemy = attacker;
+		if (!(targ->monsterinfo.aiflags & AI_DUCKED))
+			FoundTarget (targ);
+		return;
+	}
+	
+	// it's the same base (walk/swim/fly) type and a different classname and it's not a tank
+	// (they spray too much), get mad at them
+	if (((targ->flags & (FL_FLY|FL_SWIM)) == (attacker->flags & (FL_FLY|FL_SWIM))) &&
+		(strcmp (targ->classname, attacker->classname) != 0) &&
+		(strcmp(attacker->classname, "monster_tank") != 0) &&
+		(strcmp(attacker->classname, "monster_supertank") != 0) &&
+		(strcmp(attacker->classname, "monster_makron") != 0) &&
+		(strcmp(attacker->classname, "monster_jorg") != 0) )
+	{
+		if (targ->enemy && targ->enemy->r.client)
+			targ->oldenemy = targ->enemy;
+		targ->enemy = attacker;
+		if (!(targ->monsterinfo.aiflags & AI_DUCKED))
+			FoundTarget (targ);
+	}
+	// if they *meant* to shoot us, then shoot back
+	else if (attacker->enemy == targ)
+	{
+		if (targ->enemy && targ->enemy->r.client)
+			targ->oldenemy = targ->enemy;
+		targ->enemy = attacker;
+		if (!(targ->monsterinfo.aiflags & AI_DUCKED))
+			FoundTarget (targ);
+	}
+	// otherwise get mad at whoever they are mad at (help our buddy) unless it is us!
+	else if (attacker->enemy && attacker->enemy != targ)
+	{
+		if (targ->enemy && targ->enemy->r.client)
+			targ->oldenemy = targ->enemy;
+		targ->enemy = attacker->enemy;
+		if (!(targ->monsterinfo.aiflags & AI_DUCKED))
+			FoundTarget (targ);
+	}
+}
 
 void monster_think (edict_t *self)
 {
@@ -352,7 +426,7 @@ void monster_triggered_spawn_use (edict_t *self, edict_t *other, edict_t *activa
 {
 	// we have a one frame delay here so we don't telefrag the guy who activated us
 	self->think = monster_triggered_spawn;
-	self->nextThink = level.time + 100;
+	self->nextThink = level.time + 1;
 	if (activator->r.client)
 		self->enemy = activator;
 	self->use = monster_use;
@@ -421,7 +495,7 @@ bool monster_start (edict_t *self)
 	//	level.total_monsters++;
 #endif
 
-	self->nextThink = level.time + 100;
+	self->nextThink = level.time + 1;
 	self->r.svflags |= SVF_MONSTER;
 	self->takedamage = DAMAGE_AIM;
 	self->air_finished = level.time + 12000;
@@ -435,7 +509,8 @@ bool monster_start (edict_t *self)
 
 	if (!self->monsterinfo.checkattack)
 		self->monsterinfo.checkattack = M_CheckAttack;
-	VectorCopy (self->s.origin, self->s.origin2);
+	if (!self->monsterinfo.scale)
+		self->monsterinfo.scale = 1.0;
 
 	if (st.item)
 	{
@@ -537,7 +612,7 @@ void monster_start_go (edict_t *self)
 	}
 
 	self->think = monster_think;
-	self->nextThink = level.time + 100;
+	self->nextThink = level.time + 1;
 }
 
 

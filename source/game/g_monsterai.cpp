@@ -142,11 +142,11 @@ void ai_stand (edict_t *self, float dist)
 		if (self->monsterinfo.idle_time)
 		{
 			self->monsterinfo.idle (self);
-			self->monsterinfo.idle_time = level.time + 15 + random() * 15;
+			self->monsterinfo.idle_time = level.time + 15000 + random() * 15000;
 		}
 		else
 		{
-			self->monsterinfo.idle_time = level.time + random() * 15;
+			self->monsterinfo.idle_time = level.time + random() * 15000;
 		}
 	}
 }
@@ -172,11 +172,11 @@ void ai_walk (edict_t *self, float dist)
 		if (self->monsterinfo.idle_time)
 		{
 			self->monsterinfo.search (self);
-			self->monsterinfo.idle_time = level.time + 15 + random() * 15;
+			self->monsterinfo.idle_time = level.time + 15000 + random() * 15000;
 		}
 		else
 		{
-			self->monsterinfo.idle_time = level.time + random() * 15;
+			self->monsterinfo.idle_time = level.time + random() * 15000;
 		}
 	}
 }
@@ -303,7 +303,7 @@ void FoundTarget (edict_t *self)
 		level.sight_entity_framenum = level.framenum;
 	}
 
-	self->show_hostile = level.time + 1;		// wake up other monsters
+	self->show_hostile = level.time + 1000;		// wake up other monsters
 
 	VectorCopy(self->enemy->s.origin, self->monsterinfo.last_sighting);
 	self->monsterinfo.trail_time = level.time;
@@ -357,6 +357,7 @@ bool FindTarget (edict_t *self)
 {
 	edict_t		*client;
 	bool	heardit;
+	bool    noise;
 	int			r;
 
 	if (self->monsterinfo.aiflags & AI_GOOD_GUY)
@@ -383,7 +384,7 @@ bool FindTarget (edict_t *self)
 // but not weapon impact/explosion noises
 
 	heardit = false;
-	if ((level.sight_entity_framenum > level.framenum) && !(self->spawnflags & 1) )
+	if ((level.sight_entity_framenum+1 >= level.framenum) && !(self->spawnflags & 1) )
 	{
 		client = level.sight_entity;
 		if (client->enemy == self->enemy)
@@ -391,12 +392,12 @@ bool FindTarget (edict_t *self)
 			return false;
 		}
 	}
-	else if (level.sound_entity_framenum > level.framenum)
+	else if (level.sound_entity_framenum+1 >= level.framenum)
 	{
 		client = level.sound_entity;
 		heardit = true;
 	}
-	else if (!(self->enemy) && (level.sound2_entity_framenum > level.framenum) && !(self->spawnflags & 1) )
+	else if (!(self->enemy) && (level.sound2_entity_framenum+1 >= level.framenum) && !(self->spawnflags & 1) )
 	{
 		client = level.sound2_entity;
 		heardit = true;
@@ -411,9 +412,12 @@ bool FindTarget (edict_t *self)
 	// if the entity went away, forget it
 	if (!client->r.inuse)
 		return false;
-
 	if (client == self->enemy)
 		return true;	// JDC false;
+
+	noise = strcmp(client->classname, "player_noise") == 0;
+	if (!noise && (client->r.svflags & SVF_NOCLIENT))
+		return false;
 
 	if (client->r.client)
 	{
@@ -470,7 +474,7 @@ bool FindTarget (edict_t *self)
 
 		self->enemy = client;
 
-		if (strcmp(self->enemy->classname, "player_noise") != 0)
+		if (!noise)
 		{
 			self->monsterinfo.aiflags &= ~AI_SOUND_TARGET;
 
@@ -540,7 +544,7 @@ bool FacingIdeal(edict_t *self)
 	float	delta;
 
 	delta = anglemod(self->s.angles[YAW] - self->ideal_yaw);
-	if (delta > 45 && delta < 315)
+	if (delta > 5 && delta < 355)
 		return false;
 	return true;
 }
@@ -575,6 +579,8 @@ bool M_CheckAttack (edict_t *self)
 	{
 		// don't always melee in easy mode
 		if (skill == 0 && (rand()&3) )
+			return false;
+		if (level.time < self->monsterinfo.attack_finished)
 			return false;
 		if (self->monsterinfo.melee)
 			self->monsterinfo.attack_state = AS_MELEE;
@@ -622,7 +628,7 @@ bool M_CheckAttack (edict_t *self)
 	if (random () < chance)
 	{
 		self->monsterinfo.attack_state = AS_MISSILE;
-		self->monsterinfo.attack_finished = level.time + 2*random();
+		self->monsterinfo.attack_finished = level.time + 2000*random();
 		return true;
 	}
 
@@ -740,7 +746,7 @@ bool ai_checkattack (edict_t *self, float dist)
 			}
 			else
 			{
-				self->show_hostile = level.time + 1;
+				self->show_hostile = level.time + 1000;
 				return false;
 			}
 		}
@@ -806,13 +812,13 @@ bool ai_checkattack (edict_t *self, float dist)
 		}
 	}
 
-	self->show_hostile = level.time + 1;		// wake up other monsters
+	self->show_hostile = level.time + 1000;		// wake up other monsters
 
 // check knowledge of enemy
 	enemy_vis = G_Visible(self, self->enemy);
 	if (enemy_vis)
 	{
-		self->monsterinfo.search_time = level.time + 5;
+		self->monsterinfo.search_time = level.time + 5000;
 		VectorCopy (self->enemy->s.origin, self->monsterinfo.last_sighting);
 	}
 
@@ -920,7 +926,7 @@ void ai_run (edict_t *self, float dist)
 	}
 #endif
 
-	if ((self->monsterinfo.search_time) && (level.time > (self->monsterinfo.search_time + 20)))
+	if ((self->monsterinfo.search_time) && (level.time > (self->monsterinfo.search_time + 20000)))
 	{
 		M_MoveToGoal (self, dist);
 		self->monsterinfo.search_time = 0;
@@ -946,7 +952,7 @@ void ai_run (edict_t *self, float dist)
 		self->monsterinfo.aiflags &= ~AI_PURSUE_NEXT;
 
 		// give ourself more time since we got this far
-		self->monsterinfo.search_time = level.time + 5;
+		self->monsterinfo.search_time = level.time + 5000;
 
 		if (self->monsterinfo.aiflags & AI_PURSUE_TEMP)
 		{

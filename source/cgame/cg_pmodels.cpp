@@ -1040,7 +1040,7 @@ void CG_UpdatePlayerModelEnt( centity_t *cent ) {
 	for( i = LOWER; i < PMODEL_PARTS; i++ )
 		VectorCopy( pmodel->angles[i], pmodel->oldangles[i] );
 
-	if( cent->current.type == ET_CORPSE ) {
+	if( cent->current.type == ET_CORPSE || cent->current.type == ET_MONSTER_CORPSE ) {
 		VectorClear( cent->animVelocity );
 		cent->yawVelocity = 0;
 	} else {

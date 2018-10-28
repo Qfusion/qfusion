@@ -610,6 +610,13 @@ bool Add_Armor( edict_t *ent, edict_t *other, bool pick_it );
 //
 #define G_LEVELPOOL_BASE_SIZE   45 * 1024 * 1024
 
+// noise types for G_PlayerNoise
+enum {
+	PNOISE_SELF,
+	PNOISE_WEAPON,
+	PNOISE_IMPACT
+};
+
 bool KillBox( edict_t *ent );
 float LookAtKillerYAW( edict_t *self, edict_t *inflictor, edict_t *attacker );
 edict_t *G_Find( edict_t *from, size_t fieldofs, const char *match );
@@ -718,6 +725,8 @@ void G_MapLocationNameForTAG( int tag, char *buf, size_t buflen );
 
 void G_SetBoundsForSpanEntity( edict_t *ent, vec_t size );
 
+void G_PlayerNoise( edict_t *who, vec3_t where, int type );
+
 //
 // g_callvotes.c
 //
@@ -818,6 +827,7 @@ void monster_death_use (edict_t *self);
 void M_CategorizePosition (edict_t *ent);
 bool M_CheckAttack (edict_t *self);
 void M_CheckGround (edict_t *ent);
+void M_ReactToDamage (edict_t *targ, edict_t *attacker);
 
 //
 // g_misc.c
@@ -1147,8 +1157,8 @@ typedef struct {
 
 typedef struct {
 	mmove_t		*currentmove;
-	int		aiflags;
-	int		nextframe;
+	int			aiflags;
+	int			nextframe;
 	float		scale;
 
 	void		(*stand)(edict_t *self);
@@ -1162,17 +1172,17 @@ typedef struct {
 	void		(*sight)(edict_t *self, edict_t *other);
 	bool		(*checkattack)(edict_t *self);
 
-	unsigned	pausetime;
-	unsigned	attack_finished;
+	int64_t		pausetime;
+	int64_t		attack_finished;
 
 	vec3_t		saved_goal;
-	unsigned	search_time;
-	unsigned	trail_time;
+	int64_t		search_time;
+	int64_t		trail_time;
 	vec3_t		last_sighting;
-	int		attack_state;
-	int		lefty;
-	unsigned	idle_time;
-	int		linkcount;
+	int			attack_state;
+	int			lefty;
+	int64_t		idle_time;
+	int			linkcount;
 } monsterinfo_t;
 
 typedef struct {
@@ -1549,6 +1559,9 @@ struct edict_s {
 
 	edict_t *trigger_entity;
 	int64_t trigger_timeout;
+
+	edict_t *mynoise;
+	edict_t *mynoise2;
 
 	bool linked;
 

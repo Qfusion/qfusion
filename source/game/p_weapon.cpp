@@ -253,6 +253,7 @@ static edict_t *G_Fire_Gunblade_Knife( vec3_t origin, vec3_t angles, firedef_t *
 	int range, knockback, stun, mod;
 	float damage;
 	int timeDelta;
+	vec3_t dir;
 
 	timeDelta = 0;
 	if( owner && owner->r.client ) {
@@ -270,7 +271,8 @@ static edict_t *G_Fire_Gunblade_Knife( vec3_t origin, vec3_t angles, firedef_t *
 		knockback *= QUAD_KNOCKBACK_SCALE;
 	}
 
-	W_Fire_Blade( owner, range, origin, angles, damage, knockback, stun, mod, timeDelta );
+	AngleVectors( angles, dir, NULL, NULL );
+	W_Fire_Blade( owner, range, origin, dir, damage, knockback, stun, mod, timeDelta );
 
 	return NULL;
 }
@@ -312,6 +314,7 @@ static edict_t *G_Fire_Gunblade_Blast( vec3_t origin, vec3_t angles, firedef_t *
 	int speed, knockback, stun, minDamage, minKnockback, radius, mod;
 	float damage;
 	int timeDelta;
+	vec3_t dir;
 
 	timeDelta = 0;
 	if( owner && owner->r.client ) {
@@ -336,7 +339,8 @@ static edict_t *G_Fire_Gunblade_Blast( vec3_t origin, vec3_t angles, firedef_t *
 		knockback *= QUAD_KNOCKBACK_SCALE;
 	}
 
-	return W_Fire_GunbladeBlast( owner, origin, angles, damage, minKnockback, knockback, stun, minDamage,
+	AngleVectors( angles, dir, NULL, NULL );
+	return W_Fire_GunbladeBlast( owner, origin, dir, damage, minKnockback, knockback, stun, minDamage,
 								 radius, speed, firedef->timeout, mod, timeDelta );
 }
 
@@ -347,6 +351,7 @@ static edict_t *G_Fire_Rocket( vec3_t origin, vec3_t angles, firedef_t *firedef,
 	int speed, knockback, stun, minDamage, minKnockback, radius, mod;
 	float damage;
 	int timeDelta;
+	vec3_t dir;
 
 	// FIXME2: Rockets go slower underwater, do this at the actual rocket firing function
 
@@ -373,7 +378,8 @@ static edict_t *G_Fire_Rocket( vec3_t origin, vec3_t angles, firedef_t *firedef,
 		knockback *= QUAD_KNOCKBACK_SCALE;
 	}
 
-	return W_Fire_Rocket( owner, origin, angles, speed, damage, minKnockback, knockback, stun, minDamage,
+	AngleVectors( angles, dir, NULL, NULL );
+	return W_Fire_Rocket( owner, origin, dir, speed, damage, minKnockback, knockback, stun, minDamage,
 						  radius, firedef->timeout, mod, timeDelta );
 }
 
@@ -384,6 +390,7 @@ static edict_t *G_Fire_Machinegun( vec3_t origin, vec3_t angles, firedef_t *fire
 	int range, knockback, stun, mod;
 	float damage;
 	int timeDelta;
+	vec3_t dir;
 
 	if( owner && owner->r.client ) {
 		timeDelta = owner->r.client->timeDelta;
@@ -402,7 +409,8 @@ static edict_t *G_Fire_Machinegun( vec3_t origin, vec3_t angles, firedef_t *fire
 		knockback *= QUAD_KNOCKBACK_SCALE;
 	}
 
-	W_Fire_Bullet( owner, origin, angles, seed, range, firedef->spread, firedef->v_spread,
+	AngleVectors( angles, dir, NULL, NULL );
+	W_Fire_Bullet( owner, origin, dir, seed, range, firedef->spread, firedef->v_spread,
 				   damage, knockback, stun, mod, timeDelta );
 
 	return NULL;
@@ -415,6 +423,7 @@ static edict_t *G_Fire_Riotgun( vec3_t origin, vec3_t angles, firedef_t *firedef
 	int range, knockback, stun, mod;
 	float damage;
 	int timeDelta;
+	vec3_t dir;
 
 	if( owner && owner->r.client ) {
 		timeDelta = owner->r.client->timeDelta;
@@ -433,7 +442,8 @@ static edict_t *G_Fire_Riotgun( vec3_t origin, vec3_t angles, firedef_t *firedef
 		knockback *= QUAD_KNOCKBACK_SCALE;
 	}
 
-	W_Fire_Riotgun( owner, origin, angles, seed, range, firedef->spread, firedef->v_spread,
+	AngleVectors( angles, dir, NULL, NULL );
+	W_Fire_Riotgun( owner, origin, dir, seed, range, firedef->spread, firedef->v_spread,
 					firedef->projectile_count, damage, knockback, stun, mod, timeDelta );
 
 	return NULL;
@@ -476,8 +486,8 @@ static edict_t *G_Fire_Grenade( vec3_t origin, vec3_t angles, firedef_t *firedef
 
 	VectorCopy( angles, angles_ );
 	angles_[PITCH] -= 5.0f * cos( DEG2RAD( angles_[PITCH] ) ); // aim some degrees upwards from view dir
-	AngleVectors( angles_, dir, NULL, NULL );
 
+	AngleVectors( angles_, dir, NULL, NULL );
 	return W_Fire_Grenade( owner, origin, dir, speed, damage, minKnockback, knockback, stun,
 		minDamage, radius, firedef->timeout, mod, timeDelta );
 }
@@ -489,6 +499,7 @@ static edict_t *G_Fire_Plasma( vec3_t origin, vec3_t angles, firedef_t *firedef,
 	int speed, knockback, stun, minDamage, minKnockback, radius, mod;
 	float damage;
 	int timeDelta;
+	vec3_t dir;
 
 	// FIXME2: projectiles go slower underwater, do this at the actual firing function
 
@@ -515,7 +526,8 @@ static edict_t *G_Fire_Plasma( vec3_t origin, vec3_t angles, firedef_t *firedef,
 		knockback *= QUAD_KNOCKBACK_SCALE;
 	}
 
-	return W_Fire_Plasma( owner, origin, angles, damage, minKnockback, knockback, stun, minDamage, radius,
+	AngleVectors( angles, dir, NULL, NULL );
+	return W_Fire_Plasma( owner, origin, dir, damage, minKnockback, knockback, stun, minDamage, radius,
 						  speed, firedef->timeout, mod, timeDelta );
 }
 
@@ -576,6 +588,7 @@ static edict_t *G_Fire_WeakBolt( vec3_t origin, vec3_t angles, firedef_t *firede
 	int speed, maxknockback, minknockback, stun, mod;
 	float maxdamage, mindamage;
 	int timeDelta;
+	vec3_t dir;
 
 	// FIXME2: projectiles go slower underwater, do this at the actual firing function
 
@@ -601,13 +614,16 @@ static edict_t *G_Fire_WeakBolt( vec3_t origin, vec3_t angles, firedef_t *firede
 		maxdamage *= QUAD_DAMAGE_SCALE;
 		maxknockback *= QUAD_KNOCKBACK_SCALE;
 	}
+	
+	AngleVectors( angles, dir, NULL, NULL );
+
 #ifdef ELECTROBOLT_TEST
-	W_Fire_Electrobolt_Combined( owner, origin, angles, maxdamage, mindamage,
+	W_Fire_Electrobolt_Combined( owner, origin, dir, maxdamage, mindamage,
 								 maxknockback, minknockback, stun, firedef->timeout, mod, timeDelta );
 
 	return NULL;
 #else
-	return W_Fire_Electrobolt_Weak( owner, origin, angles, speed, maxdamage, minknockback, maxknockback, stun,
+	return W_Fire_Electrobolt_Weak( owner, origin, dir, speed, maxdamage, minknockback, maxknockback, stun,
 									firedef->timeout, mod, timeDelta );
 #endif
 }
@@ -620,6 +636,7 @@ static edict_t *G_Fire_StrongBolt( vec3_t origin, vec3_t angles, firedef_t *fire
 	int minDamageRange, stun, mod;
 	float maxdamage, mindamage, maxknockback, minknockback;
 	int timeDelta;
+	vec3_t dir;
 
 	timeDelta = 0;
 	if( owner && owner->r.client ) {
@@ -643,11 +660,13 @@ static edict_t *G_Fire_StrongBolt( vec3_t origin, vec3_t angles, firedef_t *fire
 		maxdamage *= QUAD_DAMAGE_SCALE;
 		maxknockback *= QUAD_KNOCKBACK_SCALE;
 	}
+	
+	AngleVectors( angles, dir, NULL, NULL );
 #ifdef ELECTROBOLT_TEST
-	W_Fire_Electrobolt_FullInstant( owner, origin, angles, maxdamage, mindamage,
+	W_Fire_Electrobolt_FullInstant( owner, origin, dir, maxdamage, mindamage,
 									maxknockback, minknockback, stun, ELECTROBOLT_RANGE, minDamageRange, mod, timeDelta );
 #else
-	W_Fire_Electrobolt_Combined( owner, origin, angles, maxdamage, mindamage,
+	W_Fire_Electrobolt_Combined( owner, origin, dir, maxdamage, mindamage,
 								 maxknockback, minknockback, stun, range, mod, timeDelta );
 #endif
 	return NULL;
@@ -660,6 +679,7 @@ static edict_t *G_Fire_Instagun( vec3_t origin, vec3_t angles, firedef_t *firede
 	int range, knockback, stun, radius, mod;
 	float damage;
 	int timeDelta;
+	vec3_t dir;
 
 	timeDelta = 0;
 	if( owner && owner->r.client ) {
@@ -682,7 +702,8 @@ static edict_t *G_Fire_Instagun( vec3_t origin, vec3_t angles, firedef_t *firede
 		knockback *= QUAD_KNOCKBACK_SCALE;
 	}
 
-	W_Fire_Instagun( owner, origin, angles, damage,
+	AngleVectors( angles, dir, NULL, NULL );
+	W_Fire_Instagun( owner, origin, dir, damage,
 					 knockback, stun, radius, range, mod, timeDelta );
 
 	return NULL;
@@ -715,7 +736,6 @@ void G_FireWeapon( edict_t *ent, int parm ) {
 	}
 
 	VectorAdd( ent->s.origin, viewoffset, origin );
-
 
 	// shoot
 
@@ -767,32 +787,35 @@ void G_FireWeapon( edict_t *ent, int parm ) {
 	}
 
 	// add stats
-	if( ent->r.client && weapondef->weapon_id != WEAP_NONE ) {
-		ent->r.client->level.stats.accuracy_shots[firedef->ammo_id - AMMO_GUNBLADE] += firedef->projectile_count;
-	}
-
-	if( projectile ) {
-		//if( projectile->s.linearProjectile ) // convert distance to time for linear projectiles
-		//	G_ProjectileTimePrestep( projectile, 1000.0f * ( g_projectile_prestep->value / VectorLengthFast( projectile->velocity ) ) );
-		//else
-		G_ProjectileDistancePrestep( projectile, g_projectile_prestep->value );
-		if( projectile->s.linearMovement )
-			VectorCopy( projectile->s.origin, projectile->s.linearMovementBegin );
-	}
-
-#ifdef NO_ROCKET_ANTILAG
-
-	// hack for disabling antilag on rockets
-	if( projectile && projectile->s.type == ET_ROCKET ) {
-		int timeOffset;
-
-		timeOffset = -projectile->timeDelta;
-		projectile->timeDelta = 0;
-		if( projectile->s.linearMovement ) {
-			projectile->s.modelindex2 = 0;
+	if( ent->r.client ) {
+		G_PlayerNoise( ent, origin, PNOISE_WEAPON );
+		
+		if( weapondef->weapon_id != WEAP_NONE ) {
+			ent->r.client->level.stats.accuracy_shots[firedef->ammo_id - AMMO_GUNBLADE] += firedef->projectile_count;
 		}
 
-		G_ProjectileTimePrestep( projectile, timeOffset );
-	}
+		if( projectile ) {
+			//if( projectile->s.linearProjectile ) // convert distance to time for linear projectiles
+			//	G_ProjectileTimePrestep( projectile, 1000.0f * ( g_projectile_prestep->value / VectorLengthFast( projectile->velocity ) ) );
+			//else
+			G_ProjectileDistancePrestep( projectile, g_projectile_prestep->value );
+			if( projectile->s.linearMovement )
+				VectorCopy( projectile->s.origin, projectile->s.linearMovementBegin );
+		}
+
+#ifdef NO_ROCKET_ANTILAG
+		// hack for disabling antilag on rockets
+		if( projectile && projectile->s.type == ET_ROCKET ) {
+			int timeOffset;
+
+			timeOffset = -projectile->timeDelta;
+			projectile->timeDelta = 0;
+			if( projectile->s.linearMovement ) {
+				projectile->s.modelindex2 = 0;
+			}
+
+			G_ProjectileTimePrestep( projectile, timeOffset );
+		}
 #endif
+	}
 }

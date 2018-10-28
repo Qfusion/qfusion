@@ -196,7 +196,7 @@ static void CG_NewPacketEntityState( entity_state_t *state ) {
 			memset( cent->localEffects, 0, sizeof( cent->localEffects ) );
 
 			// Init the animation when new into PVS
-			if( cg.frame.valid && ( state->type == ET_PLAYER || state->type == ET_CORPSE ) ) {
+			if( cg.frame.valid && ( state->type == ET_PLAYER || state->type == ET_CORPSE || state->type == ET_MONSTER_PLAYER || state->type == ET_MONSTER_CORPSE ) ) {
 				cent->lastAnims = 0;
 				memset( cent->lastVelocities, 0, sizeof( cent->lastVelocities ) );
 				memset( cent->lastVelocitiesFrames, 0, sizeof( cent->lastVelocitiesFrames ) );
@@ -479,7 +479,7 @@ struct cmodel_s *CG_CModelForEntity( int entNum ) {
 		bmaxs[0] = bmaxs[1] = x;
 		bmins[2] = -zd;
 		bmaxs[2] = zu;
-		if( cent->type == ET_PLAYER || cent->type == ET_CORPSE ) {
+		if( cent->type == ET_PLAYER || cent->type == ET_CORPSE || cent->type == ET_MONSTER_PLAYER || cent->type == ET_MONSTER_CORPSE ) {
 			cmodel = trap_CM_OctagonModelForBBox( bmins, bmaxs );
 		} else {
 			cmodel = trap_CM_ModelForBBox( bmins, bmaxs );
@@ -1107,6 +1107,35 @@ static void CG_AddPlayerEnt( centity_t *cent ) {
 		return;
 	}
 
+	if( cent->current.modelindex2 ) {
+		CG_AddLinkedModel( cent );
+	}
+}
+
+
+//==========================================================================
+//		ET_MONSTER_PLAYER
+//==========================================================================
+
+/*
+ * CG_AddMonsterPlayerEnt
+ */
+static void CG_AddPMonsterlayerEnt( centity_t *cent ) {
+	// render effects
+	cent->ent.renderfx = cent->renderfx;
+
+	// if set to invisible, skip
+	if( !cent->current.modelindex ) {
+		return;
+	}
+	
+	CG_AddPModel( cent );
+	
+	// corpses can never have a model in modelindex2
+	if( cent->current.type == ET_MONSTER_CORPSE ) {
+		return;
+	}
+	
 	if( cent->current.modelindex2 ) {
 		CG_AddLinkedModel( cent );
 	}
@@ -1928,8 +1957,28 @@ void CG_AddEntities( void ) {
 				canLight = true;
 				break;
 
+			case ET_MONSTER_PLAYER:
+				CG_AddPMonsterlayerEnt( cent );
+				if( cg_drawEntityBoxes->integer ) {
+					CG_DrawEntityBox( cent );
+				}
+				CG_EntityLoopSound( state, ATTN_IDLE );
+				CG_LaserBeamEffect( cent );
+				CG_WeaponBeamEffect( cent );
+				canLight = true;
+				break;
+
 			case ET_CORPSE:
 				CG_AddPlayerEnt( cent );
+				if( cg_drawEntityBoxes->integer ) {
+					CG_DrawEntityBox( cent );
+				}
+				CG_EntityLoopSound( state, ATTN_IDLE );
+				canLight = true;
+				break;
+
+			case ET_MONSTER_CORPSE:
+				CG_AddPMonsterlayerEnt( cent );
 				if( cg_drawEntityBoxes->integer ) {
 					CG_DrawEntityBox( cent );
 				}
@@ -2039,6 +2088,8 @@ void CG_LerpEntities( void ) {
 			case ET_PLAYER:
 			case ET_CORPSE:
 			case ET_FLAG_BASE:
+			case ET_MONSTER_PLAYER:
+			case ET_MONSTER_CORPSE:
 				if( state->linearMovement ) {
 					CG_ExtrapolateLinearProjectile( cent );
 				} else {
@@ -2157,6 +2208,8 @@ void CG_UpdateEntities( void ) {
 				break;
 			case ET_PLAYER:
 			case ET_CORPSE:
+			case ET_MONSTER_PLAYER:
+			case ET_MONSTER_CORPSE:
 				CG_UpdatePlayerModelEnt( cent );
 				break;
 

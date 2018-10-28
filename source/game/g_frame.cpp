@@ -398,7 +398,7 @@ static void G_SnapEntities( void ) {
 		}
 
 		// types which can have accumulated damage effects
-		if( ( ent->s.type == ET_GENERIC || ent->s.type == ET_PLAYER || ent->s.type == ET_CORPSE ) ) { // doors don't bleed
+		if( ( ent->s.type == ET_GENERIC || ent->s.type == ET_PLAYER || ent->s.type == ET_CORPSE || ent->s.type == ET_MONSTER_PLAYER || ent->s.type == ET_MONSTER_CORPSE ) ) { // doors don't bleed
 			// Until we get a proper damage saved effect, we accumulate both into the blood fx
 			// so, at least, we don't send 2 entities where we can send one
 			ent->snap.damage_taken += ent->snap.damage_saved;
@@ -417,20 +417,20 @@ static void G_SnapEntities( void ) {
 				VectorNormalize( dir );
 				VectorAdd( ent->s.origin, ent->snap.damage_at, origin );
 
-				if( ent->s.type == ET_PLAYER || ent->s.type == ET_CORPSE ) {
+				if( ent->s.type == ET_PLAYER || ent->s.type == ET_CORPSE || ent->s.type == ET_MONSTER_PLAYER || ent->s.type == ET_MONSTER_CORPSE ) {
 					event = G_SpawnEvent( EV_BLOOD, DirToByte( dir ), origin );
 					event->s.damage = HEALTH_TO_INT( damage );
 					event->s.ownerNum = i; // set owner
 
 					// ET_PLAYERS can also spawn sound events
-					if( ent->s.type == ET_PLAYER ) {
+					if( ent->s.type == ET_PLAYER || ent->s.type == ET_MONSTER_PLAYER ) {
 						// play an apropriate pain sound
 						if( level.time >= ent->pain_debounce_time ) {
 							// see if it should pain for a FALL or for damage received
 							if( ent->snap.damage_fall ) {
 								ent->pain_debounce_time = level.time + 200;
 							} else if( !G_IsDead( ent ) ) {
-								if( ent->r.client->ps.inventory[POWERUP_SHELL] > 0 ) {
+								if( ent->r.client && ent->r.client->ps.inventory[POWERUP_SHELL] > 0 ) {
 									G_AddEvent( ent, EV_PAIN, PAIN_WARSHELL, true );
 								} else if( ent->health <= 20 ) {
 									G_AddEvent( ent, EV_PAIN, PAIN_20, true );
@@ -744,6 +744,7 @@ void G_RunFrame( unsigned int msec, int64_t serverTime ) {
 
 	// run the world
 	G_asCallMapPreThink();
+	AI_SetSightClient();
 	AI_CommonFrame();
 	G_RunClients();
 	G_RunEntities();

@@ -332,7 +332,7 @@ void M_ChangeYaw (edict_t *ent)
 			move = -speed;
 	}
 	
-	ent->s.angles[YAW] = anglemod (current + move);
+	ent->s.angles[YAW] = anglemod (current + move * FRAMETIME * 10);
 }
 
 
@@ -354,8 +354,8 @@ bool SV_StepDirection (edict_t *ent, float yaw, float dist)
 	M_ChangeYaw (ent);
 	
 	yaw = DEG2RAD ( yaw );
-	move[0] = cos(yaw)*dist;
-	move[1] = sin(yaw)*dist;
+	move[0] = cos(yaw)*dist * FRAMETIME;
+	move[1] = sin(yaw)*dist * FRAMETIME;
 	move[2] = 0;
 
 	VectorCopy (ent->s.origin, oldorigin);
@@ -517,7 +517,7 @@ void M_MoveToGoal (edict_t *ent, float dist)
 		return;
 
 // if the next step hits the enemy, return immediately
-	if (ent->enemy &&  SV_CloseEnough (ent, ent->enemy, dist) )
+	if (ent->enemy && SV_CloseEnough (ent, ent->enemy, dist) )
 		return;
 
 // bump around...
@@ -542,9 +542,8 @@ bool M_walkmove (edict_t *ent, float yaw, float dist)
 		return false;
 
 	yaw = DEG2RAD ( yaw );
-	
-	move[0] = cos(yaw)*dist;
-	move[1] = sin(yaw)*dist;
+	move[0] = cos(yaw)*dist * FRAMETIME;
+	move[1] = sin(yaw)*dist * FRAMETIME;
 	move[2] = 0;
 
 	return SV_movestep(ent, move, true);
