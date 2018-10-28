@@ -599,6 +599,9 @@ typedef struct {
 	int loopingframes[PMODEL_TOTAL_ANIMATIONS];
 	float frametime[PMODEL_TOTAL_ANIMATIONS];
 } gs_pmodel_animationset_t;
+	
+#define GS_EncodeAnimState(lower,upper,head) (((lower)&0x3F)|(((upper)&0x3F )<<6)|(((head)&0xF)<<12))
+#define GS_DecodeAnimState(frame,lower,upper,head) ( (lower)=((frame)&0x3F),(upper)=(((frame)>>6)&0x3F),(head)=(((frame)>>12)&0xF) )
 
 int GS_UpdateBaseAnims( entity_state_t *state, vec3_t velocity );
 void GS_PModel_AnimToFrame( int64_t curTime, gs_pmodel_animationset_t *animSet, gs_pmodel_animationstate_t *anim );
@@ -1008,6 +1011,9 @@ enum {
 	ET_VIDEO_SPEAKER,
 	ET_RADAR,       // same as ET_SPRITE but sets NO_DEPTH_TEST bit
 
+	ET_MONSTER_PLAYER,
+	ET_MONSTER_CORPSE,
+	
 	// eventual entities: types below this will get event treatment
 	ET_EVENT = EVENT_ENTITIES_START,
 	ET_SOUNDEVENT,
