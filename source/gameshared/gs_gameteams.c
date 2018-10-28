@@ -114,6 +114,7 @@ bool GS_IsTeamDamage( entity_state_t *targ, entity_state_t *attacker ) {
 
 	if( targ->team && attacker->team &&
 		targ->team == attacker->team &&
+	   	targ->team != TEAM_MONSTERS &&
 		targ->number != attacker->number ) {
 		return true;
 	}
