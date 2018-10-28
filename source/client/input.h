@@ -33,8 +33,6 @@ unsigned int IN_SupportedDevices( void );
 
 void IN_ShowSoftKeyboard( bool show );
 
-void IN_GetInputLanguage( char *dest, size_t size );
-
 void IN_IME_Enable( bool enable );
 size_t IN_IME_GetComposition( char *str, size_t strSize, size_t *cursorPos, size_t *convStart, size_t *convLen );
 unsigned int IN_IME_GetCandidates( char * const *cands, size_t candSize, unsigned int maxCands, int *selected, int *firstKey );

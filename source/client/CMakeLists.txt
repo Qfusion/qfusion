@@ -75,8 +75,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 		"../win32/win_threads.c"
 		"../null/sys_vfs_null.c"
 
-		"../sdl/sdl_input_win.c"
-
 		"../win32/qfusion.rc"
 		)
 
@@ -129,8 +127,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 		"../unix/unix_console.c"
 		"../unix/unix_threads.c"
 		"../null/sys_vfs_null.c"
-
-		"../sdl/sdl_input_unix.c"
 		)
 
 	set(CLIENT_PLATFORM_LIBRARIES ${SDL2_LIBRARY} "pthread" "m" "dl" "rt")

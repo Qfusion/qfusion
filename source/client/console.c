@@ -817,13 +817,6 @@ void Con_DrawChat( int x, int y, int width, struct qfontface_s *font ) {
 	width -= promptwidth;
 	candwidth = width / 3 - spacewidth;
 
-	IN_GetInputLanguage( lang, sizeof( lang ) );
-	if( lang[0] && strcmp( lang, "EN" ) ) {
-		Q_snprintfz( langstr, sizeof( langstr ), " (%s)", lang );
-		width -= SCR_strWidth( langstr, font, 0, 0 );
-		SCR_DrawString( x + width, y, ALIGN_LEFT_TOP, langstr, font, colorWhite, 0 );
-	}
-
 	underlinePosition = SCR_FontUnderline( font, &underlineThickness );
 	width -= underlineThickness;
 
