@@ -777,7 +777,6 @@ void Con_DrawChat( int x, int y, int width, struct qfontface_s *font ) {
 	int compx = 0;
 	int swidth, compwidth = 0, totalwidth, prewidth = 0;
 	int promptwidth, spacewidth;
-	char lang[16], langstr[20];
 	int fontHeight;
 	int underlineThickness, underlinePosition;
 	char comp[MAX_STRING_CHARS];
