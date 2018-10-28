@@ -171,6 +171,9 @@ spawn_t spawns[] = {
 	{ "misc_particles", SP_misc_particles },
 	{ "misc_video_speaker", SP_misc_video_speaker },
 
+	{ "monster_army", SP_monster_soldier },
+	{ "monster_soldier", SP_monster_soldier },
+
 	{ NULL, NULL }
 };
 

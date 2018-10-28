@@ -895,6 +895,11 @@ edict_t *Drop_Weapon( edict_t *ent, const gsitem_t *item );
 void Use_Weapon( edict_t *ent, const gsitem_t *item );
 
 //
+// m_soldier.c
+//
+void SP_monster_soldier( edict_t *self );
+
+//
 // g_chasecam	//newgametypes
 //
 void G_SpectatorMode( edict_t *ent );
