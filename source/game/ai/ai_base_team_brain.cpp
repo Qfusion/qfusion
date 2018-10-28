@@ -62,14 +62,14 @@ void AiBaseTeamBrain::InitTeamAffinity() const {
 		return;
 	}
 
-	static_assert( TEAM_ALPHA == 2 && TEAM_BETA == 3, "Modify affinity offset computations" );
+	static_assert( TEAM_ALPHA == 3 && TEAM_BETA == 4, "Modify affinity offset computations" );
 	switch( teamBrainAffinityModulo ) {
 		// The Alpha team brain thinks on frame 0, the Beta team brain thinks on frame 2
-		case 4: teamBrainAffinityOffset = ( team - 2 ) * 2; break;
+		case 4: teamBrainAffinityOffset = ( team - 3 ) * 2; break;
 		// Both Alpha and Beta team brains think on frame 0
 		case 3: teamBrainAffinityOffset = 0; break;
 		// The Alpha team brain thinks on frame 0, the Beta team brain thinks on frame 1
-		case 2: teamBrainAffinityOffset = team - 2; break;
+		case 2: teamBrainAffinityOffset = team - 3; break;
 		// All brains think in the same frame
 		case 1: teamBrainAffinityOffset = 0; break;
 	}

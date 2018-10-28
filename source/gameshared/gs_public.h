@@ -547,10 +547,10 @@ int GS_Armor_PickupCountForTag( int tag );
 
 enum {
 	TEAM_SPECTATOR,
+	TEAM_MONSTERS,
 	TEAM_PLAYERS,
 	TEAM_ALPHA,
 	TEAM_BETA,
-	TEAM_MONSTERS,
 
 	GS_MAX_TEAMS
 };
