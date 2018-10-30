@@ -33,17 +33,6 @@ cvar_t *cl_ucmdTimeNudge;
 static void CL_CreateNewUserCommand( int realMsec );
 
 /*
-* CL_MouseSet
-*/
-void CL_MouseSet( int mx, int my, bool showCursor ) {
-	if( cls.key_dest == key_menu ) {
-		CL_UIModule_MouseSet( true, mx, my, showCursor );
-	} else if( cls.key_dest == key_game ) {
-		CL_UIModule_MouseSet( false, mx, my, showCursor );
-	}
-}
-
-/*
 * CL_ClearInputState
 */
 void CL_ClearInputState( void ) {

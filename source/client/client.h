@@ -508,14 +508,6 @@ void CL_UserInputFrame( int realMsec );
 void CL_WriteUcmdsToMessage( msg_t *msg );
 
 /**
-* Mouse input for systems with basic mouse support (without centering
-* and possibly without toggleable cursor).
-*/
-void CL_MouseSet( int mx, int my, bool showCursor );
-
-void CL_TouchEvent( int id, touchevent_t type, int x, int y, int64_t time );
-
-/**
  * Resets the input state to the same as when no input is done,
  * mainly when the current input dest can't receive events anymore.
  */
