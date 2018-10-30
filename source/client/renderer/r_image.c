@@ -173,8 +173,8 @@ void R_TextureMode( char *string ) {
 
 		R_BindImage( glt );
 
-		if( !( glt->flags & IT_NOMIPMAP ) ) {
-			glTexParameteri( target, GL_TEXTURE_MIN_FILTER, gl_filter_min );
+		if( glt->flags & IT_NOMIPMAP ) {
+			glTexParameteri( target, GL_TEXTURE_MIN_FILTER, gl_filter_max );
 			glTexParameteri( target, GL_TEXTURE_MAG_FILTER, gl_filter_max );
 		} else {
 			glTexParameteri( target, GL_TEXTURE_MIN_FILTER, gl_filter_min );
