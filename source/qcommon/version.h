@@ -24,27 +24,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define STR_HELPER( s )                 # s
 #define STR_TOSTR( x )                  STR_HELPER( x )
 
-#ifdef APPLICATION_VERSION_HEADER
-
-#if defined( RC_INVOKED ) && defined ( __GNUC__ )
-
-#define APPLICATION_VERSION_HEADER_RC_STR STR_TOSTR( APPLICATION_VERSION_HEADER )
-#include APPLICATION_VERSION_HEADER_RC_STR
-
-#else
-
-#include APPLICATION_VERSION_HEADER
-
-#endif
-
-#endif
-
 #ifndef APPLICATION
-#define APPLICATION                     "Qfusion"
+#define APPLICATION                     "Cocaine Diesel"
 #endif
 
 #ifndef APPLICATION_UTF8
-#define APPLICATION_UTF8                "Qfusion"
+#define APPLICATION_UTF8                "Cocaine Diesel"
 #endif
 
 #ifndef DEFAULT_BASEGAME
@@ -56,11 +41,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 #ifndef APP_VERSION_MINOR
-#define APP_VERSION_MINOR               2
+#define APP_VERSION_MINOR               0
 #endif
 
 #ifndef APP_VERSION_UPDATE
-#define APP_VERSION_UPDATE              0
+#define APP_VERSION_UPDATE              1
 #endif
 
 #ifndef APP_VERSION
@@ -88,11 +73,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 #ifndef APP_COPYRIGHT_OWNER
-#define APP_COPYRIGHT_OWNER             "Picmip Studios"
+#define APP_COPYRIGHT_OWNER             "Aha Cheers"
 #endif
 
 #ifndef APP_SCREENSHOTS_PREFIX
-#define APP_SCREENSHOTS_PREFIX          "qfusion_"
+#define APP_SCREENSHOTS_PREFIX          "cocainediesel_"
 #endif
 #ifndef APP_PROTOCOL_VERSION_STR
 #define APP_PROTOCOL_VERSION_STR        STR_TOSTR( APP_PROTOCOL_VERSION )
@@ -124,7 +109,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifndef APP_UPDATE_URL
 #define APP_UPDATE_URL                  "http://update.e4m5.net/"
-#define APP_SERVER_UPDATE_DIRECTORY     "autoupdate/"STR_TOSTR ( APP_VERSION_MAJOR ) "." STR_TOSTR( APP_VERSION_MINOR ) "/"
+#define APP_SERVER_UPDATE_DIRECTORY     "autoupdate/" STR_TOSTR ( APP_VERSION_MAJOR ) "." STR_TOSTR( APP_VERSION_MINOR ) "/"
 #define APP_SERVER_UPDATE_FILE          "filelist.txt"
 #define APP_CLIENT_UPDATE_FILE          "qfusion_last_version.txt"
 #endif
