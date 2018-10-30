@@ -582,9 +582,12 @@ typedef unsigned short GLhalfARB;
 #define GL_EXT_packed_depth_stencil
 
 #define GL_DEPTH_STENCIL_EXT                                0x84F9
-#define GL_DEPTH_STENCIL_ATTACHMENT_EXT                     0x821A
 #define GL_UNSIGNED_INT_24_8_EXT                            0x84FA
 #define GL_DEPTH24_STENCIL8_EXT                             0x88F0
+#endif
+
+#ifndef GL_DEPTH_STENCIL_ATTACHMENT_EXT
+#define GL_DEPTH_STENCIL_ATTACHMENT_EXT                     0x821A
 #endif
 
 /* GL_SGIS_texture_lod */
