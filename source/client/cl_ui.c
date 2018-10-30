@@ -225,7 +225,6 @@ void CL_UIModule_Init( void ) {
 	import.Key_IsDown = Key_IsDown;
 
 	import.IN_GetThumbsticks = IN_GetThumbsticks;
-	import.IN_ShowSoftKeyboard = IN_ShowSoftKeyboard;
 	import.IN_SupportedDevices = IN_SupportedDevices;
 
 	import.R_ClearScene = re.ClearScene;
@@ -293,7 +292,6 @@ void CL_UIModule_Init( void ) {
 	import.GetBaseServerURL = CL_GetBaseServerURL;
 
 	import.VID_GetModeInfo = VID_GetModeInfo;
-	import.VID_FlashWindow = VID_FlashWindow;
 
 	import.Mem_Alloc = CL_UIModule_MemAlloc;
 	import.Mem_Free = CL_UIModule_MemFree;

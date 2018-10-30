@@ -167,7 +167,6 @@ void Con_ToggleConsole_f( void ) {
 		// open console
 		CL_SetOldKeyDest( cls.key_dest );
 		CL_SetKeyDest( key_console );
-		IN_ShowSoftKeyboard( true );
 	}
 }
 
@@ -320,7 +319,6 @@ static void Con_MessageMode_f( void ) {
 	chat_team = false;
 	if( cls.state == CA_ACTIVE && !cls.demo.playing ) {
 		CL_SetKeyDest( key_message );
-		IN_ShowSoftKeyboard( true );
 	}
 }
 
@@ -331,7 +329,6 @@ static void Con_MessageMode2_f( void ) {
 	chat_team = Cmd_Exists( "say_team" ); // if not, make it a normal "say: "
 	if( cls.state == CA_ACTIVE && !cls.demo.playing ) {
 		CL_SetKeyDest( key_message );
-		IN_ShowSoftKeyboard( true );
 	}
 }
 
@@ -1812,7 +1809,6 @@ void Con_KeyDown( int key ) {
 	}
 
 	if( key == K_A_BUTTON ) {
-		IN_ShowSoftKeyboard( true );
 		return;
 	}
 
@@ -2178,7 +2174,6 @@ void Con_MessageKeyDown( int key ) {
 	}
 
 	if( key == K_A_BUTTON ) {
-		IN_ShowSoftKeyboard( true );
 		return;
 	}
 
@@ -2195,95 +2190,3 @@ void Con_MessageKeyDown( int key ) {
 		return;
 	}
 }
-
-/*
-* Con_TouchDown
-*/
-static void Con_TouchDown( int x, int y ) {
-	int smallCharHeight = SCR_FontHeight( cls.consoleFont );
-
-	if( cls.key_dest == key_console ) {
-		if( touch_x >= 0 ) {
-			return;
-		}
-
-		if( touch_y >= 0 ) {
-			int dist = ( y - touch_y ) / smallCharHeight;
-			con.display += dist;
-			clamp_high( con.display, con.numlines - 1 );
-			clamp_low( con.display, 0 );
-			touch_y += dist * smallCharHeight;
-		} else if( scr_con_current ) {
-			if( y < ( ( viddef.height * scr_con_current ) - (int)( 14 * Con_GetPixelRatio() ) - smallCharHeight ) ) {
-				touch_x = -1;
-				touch_y = y;
-			} else if( y < ( viddef.height * scr_con_current ) ) {
-				touch_x = x;
-				touch_y = y;
-			}
-		}
-	} else if( cls.key_dest == key_message ) {
-		touch_x = x;
-		touch_y = y;
-	}
-}
-
-/*
-* Con_TouchUp
-*/
-static void Con_TouchUp( int x, int y ) {
-	if( ( touch_x < 0 ) && ( touch_y < 0 ) ) {
-		return;
-	}
-
-	if( ( x < 0 ) || ( y < 0 ) ) {
-		touch_x = touch_y = -1;
-		return;
-	}
-
-	if( cls.key_dest == key_console ) {
-		if( touch_x >= 0 ) {
-			int smallCharHeight = SCR_FontHeight( cls.consoleFont );
-
-			if( ( x - touch_x ) >= ( smallCharHeight * 4 ) ) {
-				Con_CompleteCommandLine();
-			} else if( ( y - touch_y ) >= ( smallCharHeight * 2 ) ) {
-				Con_HistoryUp();
-			} else if( ( touch_y - y ) >= ( smallCharHeight * 2 ) ) {
-				Con_HistoryDown();
-			} else {
-				IN_ShowSoftKeyboard( true );
-			}
-		}
-	} else if( cls.key_dest == key_message ) {
-		int x1 = -1, y1 = -1, x2 = -1, y2 = -1, promptwidth = 0;
-		if( Con_GetMessageArea( &x1, &y1, &x2, &y2, &promptwidth ) ) {
-			if( ( x >= x1 ) && ( y >= y1 ) && ( x < x2 ) && ( y < y2 ) ) {
-				if( x > x1 + promptwidth ) {
-					IN_ShowSoftKeyboard( true );
-				} else {
-					chat_team = !chat_team && Cmd_Exists( "say_team" );
-				}
-			}
-		}
-	}
-
-	touch_x = touch_y = -1;
-}
-
-/*
-* Con_TouchEvent
-*/
-void Con_TouchEvent( bool down, int x, int y ) {
-	if( !con_initialized ) {
-		return;
-	}
-
-	if( down ) {
-		Con_TouchDown( x, y );
-	} else {
-		Con_TouchUp( x, y );
-	}
-}
-
-//============================================================================

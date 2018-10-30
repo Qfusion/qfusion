@@ -152,7 +152,6 @@ typedef struct {
 	bool ( *Key_IsDown )( int keynum );
 
 	void ( *IN_GetThumbsticks )( vec4_t sticks );
-	void ( *IN_ShowSoftKeyboard )( bool show );
 	unsigned int ( *IN_SupportedDevices )( void );
 
 	bool ( *VID_GetModeInfo )( int *width, int *height, unsigned mode );

@@ -6,20 +6,18 @@ cvar_t *in_grabinconsole;
 cvar_t *in_disablemacosxmouseaccel;
 cvar_t *in_mousehack;
 
-extern cvar_t *vid_xpos;
-extern cvar_t *vid_ypos;
-
-extern SDL_Window *sdl_window;
+extern SDL_Window * sdl_window;
 
 static bool input_inited = false;
-static bool mouse_active = false;
-static bool input_active = false;
 static bool input_focus = false;
 static bool mouse_relative = false;
 
 static int mx = 0, my = 0;
+static int rx = 0, ry = 0;
 
 static bool bugged_rawXevents = false;
+
+static bool running_in_debugger = false;
 
 #if defined( __APPLE__ )
 void IN_SetMouseScalingEnabled( bool isRestore );
@@ -37,10 +35,6 @@ void IN_Commands( void ) {
  * @param ev the SDL event object containing the mouse position et all
  */
 static void mouse_motion_event( SDL_MouseMotionEvent *event ) {
-	if( !mouse_active ) {
-		return;
-	}
-
 	// See:
 	// https://bugzilla.libsdl.org/show_bug.cgi?id=2963
 	// https://bugs.freedesktop.org/show_bug.cgi?id=71609
@@ -60,8 +54,10 @@ static void mouse_motion_event( SDL_MouseMotionEvent *event ) {
 		last_yrel = event->yrel;
 	}
 
-	mx += event->xrel;
-	my += event->yrel;
+	mx = event->x;
+	my = event->y;
+	rx = event->xrel;
+	ry = event->yrel;
 }
 
 /**
@@ -71,10 +67,6 @@ static void mouse_motion_event( SDL_MouseMotionEvent *event ) {
  */
 static void mouse_button_event( SDL_MouseButtonEvent *event, bool state ) {
 	Uint8 button = event->button;
-
-	if( !mouse_active ) {
-		return;
-	}
 
 	if( button <= 10 ) {
 		// The engine only supports up to 8 buttons plus the mousewheel.
@@ -123,10 +115,6 @@ static void mouse_button_event( SDL_MouseButtonEvent *event, bool state ) {
 static void mouse_wheel_event( SDL_MouseWheelEvent *event ) {
 	int key = event->y > 0 ? K_MWHEELUP : K_MWHEELDOWN;
 	int64_t sys_msg_time = Sys_Milliseconds();
-
-	if( !mouse_active ) {
-		return;
-	}
 
 	Key_Event( key, true, sys_msg_time );
 	Key_Event( key, false, sys_msg_time );
@@ -369,13 +357,6 @@ static void IN_HandleEvents( void ) {
 					case SDL_WINDOWEVENT_FOCUS_LOST:
 						input_focus = false;
 						break;
-					case SDL_WINDOWEVENT_MOVED:
-						// FIXME: move this somewhere else
-						Cvar_SetValue( "vid_xpos", event.window.data1 );
-						Cvar_SetValue( "vid_ypos", event.window.data2 );
-						vid_xpos->modified = false;
-						vid_ypos->modified = false;
-						break;
 				}
 				break;
 		}
@@ -389,59 +370,82 @@ static void IN_HandleEvents( void ) {
  */
 static void IN_SkipRelativeMouseMove( void ) {
 	if( mouse_relative ) {
-		SDL_GetRelativeMouseState( &mx, &my );
-		mx = my = 0;
+		SDL_GetRelativeMouseState( &rx, &ry );
+		rx = ry = 0;
 	}
 }
 
-static void IN_WarpMouseToCenter( int *pcenter_x, int *pcenter_y ) {
-	int center_x, center_y;
-
-	SDL_GetWindowSize( sdl_window, &center_x, &center_y );
-
-	center_x /= 2;
-	center_y /= 2;
-
-	SDL_WarpMouseInWindow( sdl_window, center_x, center_y );
-
-	if( pcenter_x ) {
-		*pcenter_x = center_x;
-	}
-	if( pcenter_y ) {
-		*pcenter_y = center_y;
-	}
+static void IN_WarpMouseToCenter() {
+	int w, h;
+	SDL_GetWindowSize( sdl_window, &w, &h );
+	SDL_WarpMouseInWindow( sdl_window, w / 2, h / 2 );
 }
 
-void IN_GetMouseMovement( int *dx, int *dy ) {
-	*dx = *dy = 0;
-	
-	if( mouse_active ) {
-		if( !mouse_relative ) {
-			if( mx || my ) {
-				int center_x, center_y;
-
-				SDL_GetMouseState( &mx, &my );
-
-				IN_WarpMouseToCenter( &center_x, &center_y );
-
-				mx -= center_x;
-				my -= center_y;
-			}
-		}
-
-		*dx = mx;
-		*dy = my;
-	}
-
-	mx = my = 0;
+MouseMovement IN_GetMouseMovement() {
+	MouseMovement movement;
+	movement.relx = rx;
+	movement.rely = ry;
+	movement.absx = mx;
+	movement.absy = my;
+	rx = ry = 0;
+	return movement;
 }
+
+#if _WIN32
+static bool being_debugged() {
+	return IsDebuggerPresent() != 0;
+}
+#endif
+
+#if __linux__
+#include <sys/ptrace.h>
+#include <sys/wait.h>
+
+#include <err.h>
+#include <errno.h>
+#include <unistd.h>
+
+static bool being_debugged() {
+        pid_t parent_pid = getpid();
+        pid_t child_pid = fork();
+        if( child_pid == -1 ) {
+                err( 1, "fork" );
+        }
+
+        if( child_pid == 0 ) {
+                // if we can't ptrace the parent then gdb is already there
+                if( ptrace( PTRACE_ATTACH, parent_pid, NULL, NULL ) != 0 ) {
+                        if( errno == EPERM ) {
+                                printf( "! echo 0 > /proc/sys/kernel/yama/ptrace_scope\n" );
+                                printf( "! or\n" );
+                                printf( "! sysctl kernel.yama.ptrace_scope=0\n" );
+                        }
+                        exit( 1 );
+                }
+
+                // ptrace automatically stops the process so wait for SIGSTOP and send PTRACE_CONT
+                waitpid( parent_pid, NULL, 0 );
+                ptrace( PTRACE_CONT, NULL, NULL );
+
+                // detach
+                ptrace( PTRACE_DETACH, parent_pid, NULL, NULL );
+                exit( 0 );
+        }
+
+        int status;
+        waitpid( child_pid, &status, 0 );
+        if( !WIFEXITED( status ) ) {
+                err( 1, "WIFEXITED" );
+        }
+
+        return WEXITSTATUS( status ) == 1;
+}
+#endif
 
 void IN_Init() {
 	SDL_version linked;
 
-	if( input_inited ) {
-		return;
-	}
+	assert( !input_inited );
 
 	in_grabinconsole = Cvar_Get( "in_grabinconsole", "0", CVAR_ARCHIVE );
 	in_disablemacosxmouseaccel = Cvar_Get( "in_disablemacosxmouseaccel", "1", CVAR_ARCHIVE );
@@ -449,15 +453,11 @@ void IN_Init() {
 
 	SDL_GetVersion( &linked );
 
-	SDL_ShowCursor( SDL_DISABLE );
+	running_in_debugger = being_debugged();
 
-#if SDL_VERSION_ATLEAST( 2, 0, 2 )
+	SDL_ShowCursor( running_in_debugger ? SDL_ENABLE : SDL_DISABLE );
 
-	{
-		cvar_t *m_raw = Cvar_Get( "m_raw", "1", CVAR_ARCHIVE );
-		SDL_SetHint( SDL_HINT_MOUSE_RELATIVE_MODE_WARP, m_raw->integer ? "0" : "1" );
-	}
-#endif
+	SDL_SetHint( SDL_HINT_MOUSE_RELATIVE_MODE_WARP, "0" );
 
 	mouse_relative = SDL_SetRelativeMouseMode( SDL_TRUE ) == 0;
 	if( mouse_relative ) {
@@ -470,8 +470,6 @@ void IN_Init() {
 
 	input_focus = true;
 	input_inited = true;
-	input_active = true; // will be activated by IN_Frame if necessary
-	mouse_active = true;
 	bugged_rawXevents = linked.major == 2 && linked.minor == 0 && linked.patch < 4;
 
 	IN_SkipRelativeMouseMove();
@@ -481,9 +479,7 @@ void IN_Init() {
  * Shutdown input subsystem.
  */
 void IN_Shutdown() {
-	if( !input_inited ) {
-		return;
-	}
+	assert( input_inited );
 
 	input_inited = false;
 	SDL_SetRelativeMouseMode( SDL_FALSE );
@@ -504,36 +500,20 @@ void IN_Restart( void ) {
  * for events that occured at our input devices.
  */
 void IN_Frame() {
-	if( !input_inited ) {
-		return;
-	}
+	assert( input_inited );
 
-	if( !input_focus || ( !Cvar_Value( "vid_fullscreen" ) && cls.key_dest == key_console && !in_grabinconsole->integer ) ) {
-		if( mouse_active ) {
-			if( mouse_relative ) {
-				mouse_relative = !( SDL_SetRelativeMouseMode( SDL_FALSE ) == 0 );
-				if( !mouse_relative ) {
-					IN_SetMouseScalingEnabled( true );
-				}
-			}
-			SDL_ShowCursor( SDL_ENABLE );
-		}
-		mouse_active = false;
-		input_active = true;
-	} else {
-		if( !mouse_active ) {
-			SDL_ShowCursor( SDL_DISABLE );
-
-			mouse_relative = SDL_SetRelativeMouseMode( SDL_TRUE ) == 0;
-			if( mouse_relative ) {
-				IN_SetMouseScalingEnabled( false );
-			} else {
-				IN_WarpMouseToCenter( NULL, NULL );
-			}
+	if( cls.key_dest == key_game && input_focus ) {
+		if( running_in_debugger ) {
+			IN_WarpMouseToCenter();
 			IN_SkipRelativeMouseMove();
 		}
-		mouse_active = true;
-		input_active = true;
+		else {
+			SDL_SetRelativeMouseMode( SDL_TRUE );
+		}
+	}
+	else {
+		SDL_SetRelativeMouseMode( SDL_FALSE );
+		SDL_ShowCursor( SDL_ENABLE );
 	}
 
 	IN_HandleEvents();

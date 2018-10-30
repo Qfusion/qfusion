@@ -44,63 +44,15 @@ void CL_MouseSet( int mx, int my, bool showCursor ) {
 }
 
 /*
-* CL_TouchEvent
-*/
-void CL_TouchEvent( int id, touchevent_t type, int x, int y, int64_t time ) {
-	switch( cls.key_dest ) {
-		case key_game:
-		{
-			bool toOverlayMenu = false;
-
-			if( SCR_IsOverlayMenuShown() && !CL_GameModule_IsTouchDown( id ) ) {
-				if( CL_UIModule_IsTouchDownQuick( id ) ) {
-					toOverlayMenu = true;
-				}
-
-				// if the quick menu has consumed the touch event, don't send the event to the game
-				toOverlayMenu |= CL_UIModule_TouchEventQuick( id, type, x, y );
-			}
-
-			if( !toOverlayMenu ) {
-				CL_GameModule_TouchEvent( id, type, x, y, time );
-			}
-		}
-		break;
-
-		case key_console:
-		case key_message:
-			if( id == 0 ) {
-				Con_TouchEvent( ( type != TOUCH_UP ) ? true : false, x, y );
-			}
-			break;
-
-		case key_menu:
-			CL_UIModule_TouchEvent( false, id, type, x, y );
-			break;
-
-		default:
-			break;
-	}
-}
-
-/*
 * CL_ClearInputState
 */
 void CL_ClearInputState( void ) {
-	IN_ShowSoftKeyboard( false );
-
 	Key_ClearStates();
 
 	switch( cls.key_dest ) {
 		case key_game:
 			CL_GameModule_ClearInputState();
 			break;
-		case key_console:
-		case key_message:
-			Con_TouchEvent( false, -1, -1 );
-			break;
-		case key_menu:
-			CL_UIModule_CancelTouches();
 		default:
 			break;
 	}
@@ -112,20 +64,19 @@ void CL_ClearInputState( void ) {
 * Notifies cgame of new frame, refreshes input timings, coordinates and angles
 */
 static void CL_UpdateGameInput( int frameTime ) {
-	int mx, my;
 	bool overlayMenuMouse = cls.key_dest == key_game && SCR_IsOverlayMenuShown() && cls.overlayMenuShowCursor;
 
-	IN_GetMouseMovement( &mx, &my );
+	MouseMovement movement = IN_GetMouseMovement();
 
 	// refresh input in cgame
 	CL_GameModule_InputFrame( frameTime );
 
 	if( cls.key_dest == key_menu ) {
-		CL_UIModule_MouseMove( true, frameTime, mx, my );
+		CL_UIModule_MouseSet( true, movement.absx, movement.absy, true );
 	} else if( overlayMenuMouse ) {
-		CL_UIModule_MouseMove( false, frameTime, mx, my );
+		CL_UIModule_MouseSet( false, movement.absx, movement.absy, true );
 	} else {
-		CL_GameModule_MouseMove( mx, my );
+		CL_GameModule_MouseMove( movement.relx, movement.rely );
 	}
 
 	if( (cls.key_dest == key_game && !overlayMenuMouse) || ( ( cls.key_dest == key_console ) && Cvar_Value( "in_grabinconsole" ) != 0 ) ) {
