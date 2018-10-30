@@ -947,11 +947,6 @@ static void R_SetupViewMatrices_( const refdef_t *rd, const mat4_t camTransform 
 			rn.nearClip, rn.farClip, rf.cameraSeparation, proj );
 	}
 
-	if( rd->rdflags & RDF_FLIPPED ) {
-		proj[0] = -proj[0];
-		rn.renderFlags |= RF_FLIPFRONTFACE;
-	}
-
 	Matrix4_Multiply( camTransform, cam, cam_ );
 	R_SetCameraAndProjectionMatrices( cam_, proj );
 }
@@ -1878,10 +1873,6 @@ void R_RenderDebugSurface( const refdef_t *fd ) {
 			R_ClearDrawList( rn.portalmasklist );
 
 			if( R_AddSurfToDrawList( rn.meshlist, R_NUM2ENT( tr.ent ), surf->shader, NULL, -1, 0, 0, NULL, drawSurf ) ) {
-				if( rn.refdef.rdflags & RDF_FLIPPED ) {
-					RB_FlipFrontFace();
-				}
-
 				if( r_speeds->integer == 5 ) {
 					unsigned i;
 
@@ -1894,10 +1885,6 @@ void R_RenderDebugSurface( const refdef_t *fd ) {
 				}
 
 				R_DrawOutlinedSurfaces( rn.meshlist );
-
-				if( rn.refdef.rdflags & RDF_FLIPPED ) {
-					RB_FlipFrontFace();
-				}
 
 				debugSurf = surf;
 			}

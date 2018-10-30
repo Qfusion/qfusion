@@ -553,10 +553,6 @@ void RF_TransformVectorToScreen( const refdef_t *rd, const vec3_t in, vec2_t out
 											   p, glConfig.depthEpsilon );
 	}
 
-	if( rd->rdflags & RDF_FLIPPED ) {
-		p[0] = -p[0];
-	}
-
 	Matrix4_QuakeModelview( rd->vieworg, rd->viewaxis, m );
 
 	Matrix4_Multiply_Vector( m, temp, temp2 );
