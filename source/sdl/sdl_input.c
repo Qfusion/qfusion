@@ -56,8 +56,8 @@ static void mouse_motion_event( SDL_MouseMotionEvent *event ) {
 
 	mx = event->x;
 	my = event->y;
-	rx = event->xrel;
-	ry = event->yrel;
+	rx += event->xrel;
+	ry += event->yrel;
 }
 
 /**
@@ -270,6 +270,9 @@ static void AppActivate( SDL_Window *window, bool active ) {
 }
 
 static void IN_HandleEvents( void ) {
+	rx = 0;
+	ry = 0;
+
 	Uint16 *wtext = NULL;
 	SDL_PumpEvents();
 	SDL_Event event;
