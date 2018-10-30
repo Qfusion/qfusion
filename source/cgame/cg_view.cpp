@@ -547,10 +547,6 @@ static int CG_RenderFlags( void ) {
 		rdflags |= RDF_WORLDOUTLINES;
 	}
 
-	if( cg.view.flipped ) {
-		rdflags |= RDF_FLIPPED;
-	}
-
 	if( GS_MatchState() >= MATCH_STATE_POSTMATCH ) {
 		rdflags |= RDF_BLURRED;
 	}
@@ -939,9 +935,6 @@ static void CG_SetupViewDef( cg_viewdef_t *view, int type, float stereo_separati
 	CG_asSetupCamera( view );
 
 	Matrix3_FromAngles( view->angles, view->axis );
-	if( view->flipped ) {
-		VectorInverse( &view->axis[AXIS_RIGHT] );
-	}
 
 	view->fracDistFOV = tan( DEG2RAD( view->fov_x ) * 0.5f );
 

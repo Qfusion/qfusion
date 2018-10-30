@@ -408,7 +408,6 @@ typedef struct {
 	vec3_t angles;
 	mat3_t axis;
 	vec3_t velocity;
-	bool flipped;
 	float stereoSeparation;
 	refdef_t refdef;
 } cg_viewdef_t;

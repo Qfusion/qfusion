@@ -38,7 +38,6 @@ static const gs_asEnumVal_t asRefdefFlagsEnumVals[] =
 	ASLIB_ENUM_VAL( RDF_OLDAREABITS ),
 	ASLIB_ENUM_VAL( RDF_PORTALINVIEW ),
 	ASLIB_ENUM_VAL( RDF_SKYPORTALINVIEW ),
-	ASLIB_ENUM_VAL( RDF_FLIPPED ),
 	ASLIB_ENUM_VAL( RDF_WORLDOUTLINES ),
 	ASLIB_ENUM_VAL( RDF_CROSSINGWATER ),
 	ASLIB_ENUM_VAL( RDF_USEORTHO ),
@@ -141,7 +140,6 @@ static const gs_asProperty_t ascamera_Properties[] =
 {
 	{ ASLIB_PROPERTY_DECL( int, type ), ASLIB_FOFFSET( cg_viewdef_t, type ) },
 	{ ASLIB_PROPERTY_DECL( int, POVent ), ASLIB_FOFFSET( cg_viewdef_t, POVent ) },
-	{ ASLIB_PROPERTY_DECL( bool, flipped ), ASLIB_FOFFSET( cg_viewdef_t, flipped ) },
 	{ ASLIB_PROPERTY_DECL( bool, thirdPerson ), ASLIB_FOFFSET( cg_viewdef_t, thirdperson ) },
 	{ ASLIB_PROPERTY_DECL( bool, playerPrediction ), ASLIB_FOFFSET( cg_viewdef_t, playerPrediction ) },
 	{ ASLIB_PROPERTY_DECL( bool, drawWeapon ), ASLIB_FOFFSET( cg_viewdef_t, drawWeapon ) },
