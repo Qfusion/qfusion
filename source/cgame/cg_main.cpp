@@ -149,8 +149,6 @@ cvar_t *cg_playListShuffle;
 
 cvar_t *cg_flashWindowCount;
 
-cvar_t *cg_viewBob;
-
 /*
 * CG_API
 */
@@ -877,8 +875,6 @@ static void CG_RegisterVariables( void ) {
 	cg_playListShuffle = trap_Cvar_Get( "cg_playListShuffle", "1", CVAR_ARCHIVE );
 
 	cg_flashWindowCount = trap_Cvar_Get( "cg_flashWindowCount", "4", CVAR_ARCHIVE );
-
-	cg_viewBob = trap_Cvar_Get( "cg_viewBob", "1", CVAR_ARCHIVE );
 }
 
 /*

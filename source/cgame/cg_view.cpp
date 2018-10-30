@@ -393,12 +393,6 @@ void CG_StartKickAnglesEffect( vec3_t source, float knockback, float radius, int
 * CG_StartFallKickEffect
 */
 void CG_StartFallKickEffect( int bounceTime ) {
-	if( !cg_viewBob->integer ) {
-		cg.fallEffectTime = 0;
-		cg.fallEffectRebounceTime = 0;
-		return;
-	}
-
 	if( cg.fallEffectTime > cg.time ) {
 		cg.fallEffectRebounceTime = 0;
 	}
@@ -902,10 +896,6 @@ static void CG_SetupViewDef( cg_viewdef_t *view, int type ) {
 			}
 
 			CG_ViewSmoothPredictedSteps( view->origin ); // smooth out stair climbing
-
-			if( cg_viewBob->integer && !cg_thirdPerson->integer ) {
-				view->origin[2] += CG_ViewSmoothFallKick() * 6.5f;
-			}
 		} else {
 			cg.predictingTimeStamp = cg.time;
 			cg.predictFrom = 0;
