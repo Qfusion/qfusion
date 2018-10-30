@@ -40,7 +40,6 @@ file(GLOB CLIENT_COMMON_SOURCES
 	"../matchmaker/*.c"
 
 	"renderer/*.c"
-	"renderer/*.cpp"
 
 	"../cin/*.c"
 
