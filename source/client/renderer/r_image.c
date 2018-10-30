@@ -442,7 +442,6 @@ static int R_ScaledImageSize( int width, int height, int *scaledWidth, int *scal
 	int maxSize;
 	int mip = 0;
 	int clampedWidth, clampedHeight;
-	bool makePOT;
 
 	if( flags & ( IT_FRAMEBUFFER | IT_DEPTH ) ) {
 		maxSize = glConfig.maxRenderbufferSize;
@@ -452,21 +451,6 @@ static int R_ScaledImageSize( int width, int height, int *scaledWidth, int *scal
 		maxSize = glConfig.maxTexture3DSize;
 	} else {
 		maxSize = glConfig.maxTextureSize;
-	}
-
-	makePOT = !forceNPOT;
-	if( makePOT ) {
-		int potWidth, potHeight;
-
-		for( potWidth = 1; potWidth < width; potWidth <<= 1 ) ;
-		for( potHeight = 1; potHeight < height; potHeight <<= 1 ) ;
-
-		if( ( width != potWidth ) || ( height != potHeight ) ) {
-			mips = 1;
-		}
-
-		width = potWidth;
-		height = potHeight;
 	}
 
 	if( !( flags & IT_NOPICMIP ) ) {
