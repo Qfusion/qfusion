@@ -506,6 +506,8 @@ void IN_Frame() {
 		if( running_in_debugger ) {
 			IN_WarpMouseToCenter();
 			IN_SkipRelativeMouseMove();
+			SDL_SetRelativeMouseMode( SDL_FALSE );
+			SDL_ShowCursor( SDL_ENABLE );
 		}
 		else {
 			SDL_SetRelativeMouseMode( SDL_TRUE );
@@ -513,7 +515,7 @@ void IN_Frame() {
 	}
 	else {
 		SDL_SetRelativeMouseMode( SDL_FALSE );
-		SDL_ShowCursor( SDL_ENABLE );
+		SDL_ShowCursor( SDL_DISABLE );
 	}
 
 	IN_HandleEvents();
@@ -524,12 +526,6 @@ void IN_Frame() {
  */
 unsigned int IN_SupportedDevices( void ) {
 	return IN_DEVICE_KEYBOARD | IN_DEVICE_MOUSE | IN_DEVICE_JOYSTICK;
-}
-
-/**
- * Stub for showing an on-screen keyboard.
- */
-void IN_ShowSoftKeyboard( bool show ) {
 }
 
 /**
