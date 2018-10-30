@@ -845,7 +845,8 @@ static int R_TextureInternalFormat( int samples, int flags, int pixelType ) {
 static void R_TextureFormat( int flags, int samples, int *comp, int *format, int *type ) {
 	if( flags & IT_DEPTH ) {
 		if( flags & IT_STENCIL ) {
-			*comp = *format = GL_DEPTH_STENCIL_EXT;
+			*comp = GL_DEPTH24_STENCIL8_EXT;
+			*format = GL_DEPTH_STENCIL_EXT;
 			*type = GL_UNSIGNED_INT_24_8_EXT;
 		} else {
 			*comp = *format = GL_DEPTH_COMPONENT;
@@ -2759,6 +2760,7 @@ static void R_InitScreenImagePair( const char *name, image_t **color, image_t **
 	assert( !depth || glConfig.ext.depth_texture );
 
 	if( !glConfig.stencilBits ) {
+		andFlags &= ~IT_STENCIL;
 		orFlags &= ~IT_STENCIL;
 	}
 	if( width < 1 ) {

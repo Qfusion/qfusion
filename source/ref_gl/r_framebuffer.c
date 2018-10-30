@@ -204,14 +204,15 @@ found:
 		qglBindRenderbufferEXT( GL_RENDERBUFFER_EXT, 0 );
 	}
 
-	if( fbo->colorRenderBuffer ) {
+	if( colorRB ) {
 		qglFramebufferRenderbufferEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_RENDERBUFFER_EXT, fbo->colorRenderBuffer );
 	}
-	if( fbo->depthRenderBuffer ) {
-		qglFramebufferRenderbufferEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, fbo->depthRenderBuffer );
-	}
-	if( fbo->stencilRenderBuffer ) {
-		qglFramebufferRenderbufferEXT( GL_FRAMEBUFFER_EXT, GL_STENCIL_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, fbo->stencilRenderBuffer );
+	if( depthRB ) {
+		if( stencilRB ) {
+			qglFramebufferRenderbufferEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_STENCIL_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, fbo->stencilRenderBuffer );
+		} else {
+			qglFramebufferRenderbufferEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, fbo->depthRenderBuffer );
+		}
 	}
 
 	if( colorRB && depthRB ) {
@@ -375,12 +376,12 @@ bind:
 	qglFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, attachment, GL_TEXTURE_2D, texnum, 0 );
 	if( texture ) {
 		if( ( texture->flags & ( IT_DEPTH | IT_STENCIL ) ) == ( IT_DEPTH | IT_STENCIL ) ) {
-			qglFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_STENCIL_ATTACHMENT_EXT, GL_TEXTURE_2D, texnum, 0 );
+			qglFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_STENCIL_ATTACHMENT_EXT, GL_TEXTURE_2D, texnum, 0 );
 		}
 	}
 	else {
 		if( depth ) {
-			qglFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_STENCIL_ATTACHMENT_EXT, GL_TEXTURE_2D, texnum, 0 );
+			qglFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, texnum, 0 );
 		}
 	}
 	qglBindFramebufferEXT( GL_FRAMEBUFFER_EXT, r_bound_framebuffer_objectID ? r_bound_framebuffer_object->objectID : 0 );
@@ -604,6 +605,8 @@ void RFB_BlitObject( int src, int dest, int bitMask, int mode, int filter, int r
 			dh = fbo->height;
 			break;
 	}
+
+	qglGetError();
 
 	qglBindFramebufferEXT( GL_FRAMEBUFFER_EXT, 0 );
 	qglBindFramebufferEXT( GL_READ_FRAMEBUFFER_EXT, fbo->objectID );
