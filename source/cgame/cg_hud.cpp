@@ -35,7 +35,6 @@ extern cvar_t *cg_specHUD;
 
 cvar_t *cg_showminimap;
 cvar_t *cg_showitemtimers;
-cvar_t *cg_placebo;
 cvar_t *cg_strafeHUD;
 cvar_t *cg_touch_flip;
 cvar_t *cg_touch_scale;

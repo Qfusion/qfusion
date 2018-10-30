@@ -816,7 +816,6 @@ void CG_ShowOverlayMenu( int state, bool showCursor );
 //
 extern cvar_t *cg_showminimap;
 extern cvar_t *cg_showitemtimers;
-extern cvar_t *cg_placebo;
 extern cvar_t *cg_strafeHUD;
 extern cvar_t *cg_touch_flip;
 extern cvar_t *cg_touch_scale;
