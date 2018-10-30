@@ -128,7 +128,7 @@ const char *S_ErrorMessage( ALenum error ) {
 /*
 * S_Init
 */
-static bool S_Init( void *hwnd, int maxEntities, bool verbose ) {
+static bool S_Init( int maxEntities, bool verbose ) {
 	int numDevices;
 	int userDeviceNum = -1;
 	char *devices, *defaultDevice;
@@ -401,7 +401,7 @@ void S_StopAviDemo( void ) {
 */
 static unsigned S_HandleInitCmd( const sndCmdInit_t *cmd ) {
 	//Com_Printf("S_HandleShutdownCmd\n");
-	S_Init( cmd->hwnd, cmd->maxents, cmd->verbose );
+	S_Init( cmd->maxents, cmd->verbose );
 	return sizeof( *cmd );
 }
 

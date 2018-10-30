@@ -57,10 +57,9 @@ static void S_EnqueueCmd( sndCmdPipe_t *queue, const void *cmd, unsigned cmd_siz
 /*
 * S_IssueInitCmd
 */
-void S_IssueInitCmd( sndCmdPipe_t *queue, void *hwnd, int maxents, bool verbose ) {
+void S_IssueInitCmd( sndCmdPipe_t *queue, int maxents, bool verbose ) {
 	sndCmdInit_t cmd;
 	cmd.id = SND_CMD_INIT;
-	cmd.hwnd = hwnd;
 	cmd.maxents = maxents;
 	cmd.verbose = verbose == true ? 1 : 0;
 	S_EnqueueCmd( queue, &cmd, sizeof( cmd ) );

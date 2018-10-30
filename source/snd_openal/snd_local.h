@@ -258,7 +258,7 @@ void S_StopAviDemo( void );
 /*
 * Exported functions
 */
-bool SF_Init( void *hwnd, int maxEntities, bool verbose );
+bool SF_Init( int maxEntities, bool verbose );
 void SF_Shutdown( bool verbose );
 void SF_EndRegistration( void );
 void SF_BeginRegistration( void );

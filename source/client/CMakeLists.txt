@@ -47,15 +47,12 @@ file(GLOB CLIENT_COMMON_SOURCES
 
 	"../sdl/sdl_input.c"
 	"../sdl/sdl_input_joy.c"
-	"../sdl/sdl_vid.c"
+	"../sdl/sdl_window.c"
 	"../sdl/sdl_sys.c"
 	"../sdl/sdl_clipboard.c"
 	"../sdl/sdl_time.c"
 	"../sdl/sdl_lib.c"
 	"../sdl/sdl_client.c"
-	"../sdl/sdl_glw.c"
-	"../sdl/sdl_glw_icon.c"
-	"../sdl/sdl_qgl.c"
 	)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")

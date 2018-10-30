@@ -121,7 +121,7 @@ static void print_audiospec( const char *str, const SDL_AudioSpec *spec ) {
 	Com_Printf( "\n" );
 }
 
-bool SNDDMA_Init( void *hwnd, bool verbose ) {
+bool SNDDMA_Init( bool verbose ) {
 	char drivername[128];
 	SDL_AudioSpec desired;
 	SDL_AudioSpec obtained;

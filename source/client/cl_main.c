@@ -23,9 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "ftlib.h"
 #include "../qcommon/asyncstream.h"
 #include "../qalgo/hash.h"
-
-cvar_t *cl_stereo_separation;
-cvar_t *cl_stereo;
+#include "renderer/r_frontend.h"
 
 cvar_t *rcon_client_password;
 cvar_t *rcon_address;
@@ -660,7 +658,7 @@ static void CL_BeginRegistration( void ) {
 
 	cls.registrationOpen = true;
 
-	re.BeginRegistration();
+	RF_BeginRegistration();
 	CL_SoundModule_BeginRegistration();
 }
 
@@ -676,7 +674,7 @@ static void CL_EndRegistration( void ) {
 
 	FTLIB_TouchAllFonts();
 	CL_UIModule_TouchAllAssets();
-	re.EndRegistration();
+	RF_EndRegistration();
 	CL_SoundModule_EndRegistration();
 }
 
@@ -1781,9 +1779,6 @@ void CL_InitMedia( void ) {
 	if( cls.state == CA_UNINITIALIZED ) {
 		return;
 	}
-	if( !VID_RefreshIsActive() ) {
-		return;
-	}
 
 	// random seed to be shared among game modules so pseudo-random stuff is in sync
 	if( cls.state != CA_CONNECTED ) {
@@ -1814,9 +1809,6 @@ void CL_ShutdownMedia( void ) {
 	if( !cls.mediaInitialized ) {
 		return;
 	}
-	if( !VID_RefreshIsActive() ) {
-		return;
-	}
 
 	cls.mediaInitialized = false;
 
@@ -1837,10 +1829,6 @@ void CL_ShutdownMedia( void ) {
 * CL_RestartMedia
 */
 void CL_RestartMedia( void ) {
-	if( !VID_RefreshIsActive() ) {
-		return;
-	}
-
 	if( cls.mediaInitialized ) {
 		// shutdown cgame
 		CL_GameModule_Shutdown();
@@ -1872,31 +1860,16 @@ void CL_RestartMedia( void ) {
 }
 
 /*
-* CL_S_Restart
-*
-* Restart the sound subsystem so it can pick up new parameters and flush all sounds
-*/
-void CL_S_Restart( bool noVideo ) {
-	bool verbose = ( Cmd_Argc() >= 2 ? true : false );
-
-	// The cgame and game must also be forced to restart because handles will become invalid
-	// VID_Restart also forces an audio restart
-	if( !noVideo ) {
-		VID_Restart( verbose, true );
-		VID_CheckChanges();
-	} else {
-		CL_SoundModule_Shutdown( verbose );
-		CL_SoundModule_Init( verbose );
-	}
-}
-
-/*
 * CL_S_Restart_f
 *
 * Restart the sound subsystem so it can pick up new parameters and flush all sounds
 */
-static void CL_S_Restart_f( void ) {
-	CL_S_Restart( false );
+static void CL_S_Restart_f() {
+	bool verbose = ( Cmd_Argc() >= 2 ? true : false );
+
+	// The cgame and game must also be forced to restart because handles will become invalid
+	// VID_Restart also forces an audio restart
+	VID_Restart( verbose, true );
 }
 
 /*
@@ -1932,9 +1905,6 @@ static void CL_InitLocal( void ) {
 	//
 	// register our variables
 	//
-	cl_stereo_separation =  Cvar_Get( "cl_stereo_separation", "0.4", CVAR_ARCHIVE );
-	cl_stereo =     Cvar_Get( "cl_stereo", "0", CVAR_ARCHIVE );
-
 	cl_maxfps =     Cvar_Get( "cl_maxfps", "250", CVAR_ARCHIVE );
 	cl_sleep =      Cvar_Get( "cl_sleep", "1", CVAR_ARCHIVE );
 	cl_pps =        Cvar_Get( "cl_pps", "40", CVAR_ARCHIVE );
@@ -2524,9 +2494,6 @@ void CL_Frame( int realMsec, int gameMsec ) {
 
 	CL_TimedemoStats();
 
-	// allow rendering DLL change
-	VID_CheckChanges();
-
 	// update the screen
 	if( host_speeds->integer ) {
 		time_before_ref = Sys_Milliseconds();
@@ -2548,6 +2515,7 @@ void CL_Frame( int realMsec, int gameMsec ) {
 		// if the loading plaque is up, clear everything out to make sure we aren't looping a dirty
 		// dma buffer while loading
 		if( cls.disable_screen ) {
+			printf( "disable screen\n" );
 			CL_SoundModule_Clear();
 		} else {
 			CL_SoundModule_Update( vec3_origin, vec3_origin, axis_identity, NULL, false );

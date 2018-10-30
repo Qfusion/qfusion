@@ -408,7 +408,6 @@ typedef struct {
 	vec3_t angles;
 	mat3_t axis;
 	vec3_t velocity;
-	float stereoSeparation;
 	refdef_t refdef;
 } cg_viewdef_t;
 
@@ -1024,7 +1023,7 @@ void CG_StartColorBlendEffect( float r, float g, float b, float a, int time );
 void CG_StartFallKickEffect( int bounceTime );
 void CG_ViewSmoothPredictedSteps( vec3_t vieworg );
 float CG_ViewSmoothFallKick( void );
-void CG_RenderView( int frameTime, int realFrameTime, int64_t realTime, int64_t serverTime, float stereo_separation, unsigned extrapolationTime );
+void CG_RenderView( int frameTime, int realFrameTime, int64_t realTime, int64_t serverTime, unsigned extrapolationTime );
 void CG_AddKickAngles( vec3_t viewangles );
 bool CG_ChaseStep( int step );
 bool CG_SwitchChaseCamMode( void );

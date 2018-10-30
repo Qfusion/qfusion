@@ -811,8 +811,7 @@ static void CG_SetupRefDef( cg_viewdef_t *view, refdef_t *rd ) {
 		}
 	}
 
-	// offset vieworg appropriately if we're doing stereo separation
-	VectorMA( view->origin, view->stereoSeparation, &view->axis[AXIS_RIGHT], rd->vieworg );
+	VectorCopy( view->origin, rd->vieworg );
 
 	AnglesToAxis( view->angles, rd->viewaxis );
 
@@ -834,7 +833,7 @@ static void CG_SetupRefDef( cg_viewdef_t *view, refdef_t *rd ) {
 /*
 * CG_SetupViewDef
 */
-static void CG_SetupViewDef( cg_viewdef_t *view, int type, float stereo_separation ) {
+static void CG_SetupViewDef( cg_viewdef_t *view, int type ) {
 	memset( view, 0, sizeof( cg_viewdef_t ) );
 
 	//
@@ -842,7 +841,6 @@ static void CG_SetupViewDef( cg_viewdef_t *view, int type, float stereo_separati
 	//
 
 	view->type = type;
-	view->stereoSeparation = stereo_separation;
 
 	if( view->type == VIEWDEF_PLAYERVIEW ) {
 		view->POVent = cg.frame.playerState.POVnum;
@@ -950,7 +948,7 @@ static void CG_SetupViewDef( cg_viewdef_t *view, int type, float stereo_separati
 /*
 * CG_RenderView
 */
-void CG_RenderView( int frameTime, int realFrameTime, int64_t realTime, int64_t serverTime, float stereo_separation, unsigned extrapolationTime ) {
+void CG_RenderView( int frameTime, int realFrameTime, int64_t realTime, int64_t serverTime, unsigned extrapolationTime ) {
 	refdef_t *rd = &cg.view.refdef;
 
 	// update time
@@ -1071,9 +1069,9 @@ void CG_RenderView( int frameTime, int realFrameTime, int64_t realTime, int64_t 
 	trap_R_ClearScene();
 
 	if( CG_DemoCam_Update() ) {
-		CG_SetupViewDef( &cg.view, CG_DemoCam_GetViewType(), stereo_separation );
+		CG_SetupViewDef( &cg.view, CG_DemoCam_GetViewType() );
 	} else {
-		CG_SetupViewDef( &cg.view, VIEWDEF_PLAYERVIEW, stereo_separation );
+		CG_SetupViewDef( &cg.view, VIEWDEF_PLAYERVIEW );
 	}
 
 	CG_LerpEntities();  // interpolate packet entities positions

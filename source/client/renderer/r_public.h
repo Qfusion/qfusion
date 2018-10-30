@@ -20,9 +20,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef R_PUBLIC_H
 #define R_PUBLIC_H
 
+#include "../../qcommon/qcommon.h"
 #include "../../cgame/ref.h"
-
-#define REF_API_VERSION 24
 
 //
 // these are the functions exported by the refresh module
@@ -97,14 +96,6 @@ typedef struct {
 	void ( *CIN_Reset )( struct cinematics_s *cin, int64_t cur_time );
 	void ( *CIN_Close )( struct cinematics_s *cin );
 
-	struct mempool_s *( *Mem_AllocPool )( struct mempool_s *parent, const char *name, const char *filename, int fileline );
-	void ( *Mem_FreePool )( struct mempool_s **pool, const char *filename, int fileline );
-	void ( *Mem_EmptyPool )( struct mempool_s *pool, const char *filename, int fileline );
-	void *( *Mem_AllocExt )( struct mempool_s *pool, size_t size, size_t alignment, int z, const char *filename, int fileline );
-	void ( *Mem_Free )( void *data, const char *filename, int fileline );
-	void *( *Mem_Realloc )( void *data, size_t size, const char *filename, int fileline );
-	size_t ( *Mem_PoolTotalSize )( struct mempool_s *pool );
-
 	// multithreading
 	struct qthread_s *( *Thread_Create )( void *( *routine )( void* ), void *param );
 	void ( *Thread_Join )( struct qthread_s *thread );
@@ -124,26 +115,9 @@ typedef struct {
 } ref_import_t;
 
 typedef struct {
-	// if API is different, the dll cannot be used
-	int ( *API )( void );
-
-	rserr_t ( *Init )( const char *applicationName, const char *screenshotsPrefix, int startupColor,
-					   int iconResource, const int *iconXPM, void *hinstance, void *wndproc, void *parenthWnd, bool verbose );
-	rserr_t ( *SetMode )( int x, int y, int width, int height, int displayFrequency, bool fullScreen, bool stereo, bool borderless );
-	rserr_t ( *SetWindow )( void *hinstance, void *wndproc, void *parenthWnd );
+	rserr_t ( *Init )( bool verbose );
 
 	void ( *Shutdown )( bool verbose );
-
-	// All data that will be used in a level should be
-	// registered before rendering any frames to prevent disk hits,
-	// but they can still be registered at a later time
-	// if necessary.
-	//
-	// EndRegistration will free any remaining data that wasn't registered.
-	// Any model_s, shader_s and skinfile_s pointers from before
-	// the BeginRegistration are no longer valid after EndRegistration.
-	void ( *BeginRegistration )( void );
-	void ( *EndRegistration )( void );
 
 	void ( *ModelBounds )( const struct model_s *model, vec3_t mins, vec3_t maxs );
 	void ( *ModelFrameBounds )( const struct model_s *model, int frame, vec3_t mins, vec3_t maxs );
@@ -212,10 +186,7 @@ typedef struct {
 
 	void ( *TransformVectorToScreen )( const refdef_t *rd, const vec3_t in, vec2_t out );
 
-	// Should only be used as a hint - the renderer may keep drawing or not drawing to the window for a few frames when this changes
-	bool ( *RenderingEnabled )( void );
-
-	void ( *BeginFrame )( float cameraSeparation, bool forceClear, bool forceVsync, bool uncappedFPS );
+	void ( *BeginFrame )( bool forceClear, bool forceVsync, bool uncappedFPS );
 	void ( *EndFrame )( void );
 	const char *( *GetSpeedsMessage )( char *out, size_t size );
 	int ( *GetAverageFrametime )( void );

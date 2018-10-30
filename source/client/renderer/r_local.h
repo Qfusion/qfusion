@@ -18,18 +18,16 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
-#ifndef R_LOCAL_H
-#define R_LOCAL_H
+#pragma once
 
 #include "../../gameshared/q_arch.h"
 #include "../../gameshared/q_math.h"
 #include "../../gameshared/q_shared.h"
 #include "../../gameshared/q_cvar.h"
+#include "../../qcommon/qcommon.h"
 #include "../../qcommon/qfiles.h"
 #include "../../qcommon/bsp.h"
 #include "../../qcommon/patch.h"
-
-typedef struct { char *name; void **funcPointer; } dllfunc_t;
 
 typedef struct mempool_s mempool_t;
 typedef struct cinematics_s cinematics_t;
@@ -44,8 +42,6 @@ typedef vec_t instancePoint_t[8]; // quaternion for rotation + xyz pos + uniform
 #include "r_math.h"
 
 #define NUM_CUSTOMCOLORS        16
-
-#define NUM_LOADER_THREADS      4 // optimal value found by testing, when there are too many, CPU usage may be 100%
 
 #ifdef CGAMEGETLIGHTORIGIN
 #define SHADOW_MAPPING          2
@@ -108,7 +104,7 @@ typedef vec_t instancePoint_t[8]; // quaternion for rotation + xyz pos + uniform
 enum {
 	QGL_CONTEXT_MAIN,
 	QGL_CONTEXT_LOADER,
-	NUM_QGL_CONTEXTS = QGL_CONTEXT_LOADER + NUM_LOADER_THREADS
+	NUM_QGL_CONTEXTS = QGL_CONTEXT_LOADER
 };
 
 #include "r_public.h"
@@ -333,7 +329,6 @@ typedef struct {
 
 	int frameBufferWidth, frameBufferHeight;
 
-	float cameraSeparation;
 	int swapInterval;
 
 	// used for dlight push checking
@@ -367,9 +362,6 @@ typedef struct {
 	rtrace_t		debugTrace;
 	msurface_t      *debugSurface;
 	qmutex_t        *debugSurfaceLock;
-
-	char drawBuffer[32];
-	bool newDrawBuffer;
 
 	int transformMatrixStackSize[2];
 	/*ATTRIBUTE_ALIGNED( 16 ) */mat4_t transformMatricesStack[2][MAX_PROJMATRIX_STACK_SIZE];
@@ -518,7 +510,6 @@ extern cvar_t *r_multithreading;
 extern cvar_t *gl_cull;
 
 extern cvar_t *vid_displayfrequency;
-extern cvar_t *vid_multiscreen_head;
 
 //====================================================================
 
@@ -630,11 +621,11 @@ void        RFB_Shutdown( void );
 extern mempool_t *r_mempool;
 
 #define R_Malloc( size ) R_Malloc_( size, __FILE__, __LINE__ )
-#define R_Realloc( data, size ) ri.Mem_Realloc( data, size, __FILE__, __LINE__ )
-#define R_Free( data ) ri.Mem_Free( data, __FILE__, __LINE__ )
-#define R_AllocPool( parent, name ) ri.Mem_AllocPool( parent, name, __FILE__, __LINE__ )
-#define R_FreePool( pool ) ri.Mem_FreePool( pool, __FILE__, __LINE__ )
-#define R_MallocExt( pool,size,align,z ) ri.Mem_AllocExt( pool,size,align,z,__FILE__,__LINE__ )
+#define R_Realloc( data, size ) Mem_Realloc( data, size )
+#define R_Free( data ) Mem_Free( data )
+#define R_AllocPool( parent, name ) Mem_AllocPool( parent, name )
+#define R_FreePool( pool ) Mem_FreePool( pool )
+#define R_MallocExt( pool, size, align, z ) _Mem_AllocExt( pool, size, align, z, 0, 0, __FILE__, __LINE__ )
 
 ATTRIBUTE_MALLOC void * R_Malloc_( size_t size, const char *filename, int fileline );
 char        *R_CopyString_( const char *in, const char *filename, int fileline );
@@ -648,12 +639,11 @@ void        R_FreeFile_( void *buffer, const char *filename, int fileline );
 #define     R_FreeFile( buffer ) R_FreeFile_( buffer,__FILE__,__LINE__ )
 
 bool        R_IsRenderingToScreen( void );
-void        R_BeginFrame( float cameraSeparation, bool forceClear, int swapInterval );
+void        R_BeginFrame( bool forceClear, int swapInterval );
 void        R_EndFrame( void );
 int         R_SetSwapInterval( int swapInterval, int oldSwapInterval );
 void        R_SetGamma( float gamma );
 void        R_SetWallFloorColors( const vec3_t wallColor, const vec3_t floorColor );
-void        R_SetDrawBuffer( const char *drawbuffer );
 void		R_SetupPVSFromCluster( int cluster, int area );
 void		R_SetupPVS( const refdef_t *fd );
 void		R_SetCameraAndProjectionMatrices( const mat4_t cam, const mat4_t proj );
@@ -796,14 +786,10 @@ int         R_GetClippedFragments( const vec3_t origin, float radius, vec3_t axi
 //
 // r_register.c
 //
-rserr_t     R_Init( const char *applicationName, const char *screenshotPrefix, int startupColor,
-					int iconResource, const int *iconXPM,
-					void *hinstance, void *wndproc, void *parenthWnd,
-					bool verbose );
+rserr_t     R_Init( bool verbose );
 void        R_BeginRegistration( void );
 void        R_EndRegistration( void );
 void        R_Shutdown( bool verbose );
-rserr_t     R_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullScreen, bool stereo, bool borderless );
 
 //
 // r_scene.c
@@ -981,5 +967,3 @@ typedef struct {
 
 extern mapconfig_t mapConfig;
 extern refinst_t rn;
-
-#endif // R_LOCAL_H

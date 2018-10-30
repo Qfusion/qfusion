@@ -353,6 +353,9 @@ static bool CL_GameModule_AddRawSamplesListener( struct cinematics_s *cin,
 
 //==============================================
 
+void VID_FlashWindow( int count ) { }
+float VID_GetPixelRatio() { return 1; }
+
 /*
 * CL_GameModule_Init
 */
@@ -638,9 +641,9 @@ bool CL_GameModule_NewSnapshot( int pendingSnapshot ) {
 /*
 * CL_GameModule_RenderView
 */
-void CL_GameModule_RenderView( float stereo_separation ) {
+void CL_GameModule_RenderView() {
 	if( cge && cls.cgameActive ) {
-		cge->RenderView( cls.frametime, cls.realFrameTime, cls.realtime, cl.serverTime, stereo_separation,
+		cge->RenderView( cls.frametime, cls.realFrameTime, cls.realtime, cl.serverTime,
 						 cl_extrapolate->integer && !cls.demo.playing ? cl_extrapolationTime->integer : 0 );
 	}
 }

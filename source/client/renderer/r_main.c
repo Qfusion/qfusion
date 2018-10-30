@@ -943,8 +943,7 @@ static void R_SetupViewMatrices_( const refdef_t *rd, const mat4_t camTransform 
 		Matrix4_OrthoProjection( -rd->ortho_x, rd->ortho_x, -rd->ortho_y, rd->ortho_y,
 			rn.nearClip, rn.farClip, proj );
 	} else {
-		Matrix4_PerspectiveProjection( rd->fov_x, rd->fov_y,
-			rn.nearClip, rn.farClip, rf.cameraSeparation, proj );
+		Matrix4_PerspectiveProjection( rd->fov_x, rd->fov_y, rn.nearClip, rn.farClip, proj );
 	}
 
 	Matrix4_Multiply( camTransform, cam, cam_ );
@@ -1556,12 +1555,8 @@ void R_DataSync( void ) {
 * R_SetSwapInterval
 */
 int R_SetSwapInterval( int swapInterval, int oldSwapInterval ) {
-	if( glConfig.stereoEnabled ) {
-		return oldSwapInterval;
-	}
-
 	if( swapInterval != oldSwapInterval ) {
-		GLimp_SetSwapInterval( swapInterval );
+		/* GLimp_SetSwapInterval( swapInterval ); */ // TODO: WTF
 	}
 	return swapInterval;
 }
@@ -1586,7 +1581,7 @@ void R_SetGamma( float gamma ) {
 		gammaRamp[i] = gammaRamp[i + GAMMARAMP_STRIDE] = gammaRamp[i + 2 * GAMMARAMP_STRIDE] = ( ( unsigned short )bound( 0, v, 65535 ) );
 	}
 
-	GLimp_SetGammaRamp( GAMMARAMP_STRIDE, glConfig.gammaRampSize, gammaRamp );
+	VID_SetGammaRamp( GAMMARAMP_STRIDE, glConfig.gammaRampSize, gammaRamp );
 }
 
 /*
@@ -1598,23 +1593,6 @@ void R_SetWallFloorColors( const vec3_t wallColor, const vec3_t floorColor ) {
 		rsh.wallColor[i] = bound( 0, floor( wallColor[i] ) / 255.0, 1.0 );
 		rsh.floorColor[i] = bound( 0, floor( floorColor[i] ) / 255.0, 1.0 );
 	}
-}
-
-/*
-* R_SetDrawBuffer
-*/
-void R_SetDrawBuffer( const char *drawbuffer ) {
-	Q_strncpyz( rf.drawBuffer, drawbuffer, sizeof( rf.drawBuffer ) );
-	rf.newDrawBuffer = true;
-}
-
-/*
-* R_IsRenderingToScreen
-*/
-bool R_IsRenderingToScreen( void ) {
-	bool surfaceRenderable = true;
-	GLimp_GetWindowSurface( &surfaceRenderable );
-	return surfaceRenderable;
 }
 
 /*
@@ -1900,41 +1878,14 @@ void R_RenderDebugSurface( const refdef_t *fd ) {
 /*
 * R_BeginFrame
 */
-void R_BeginFrame( float cameraSeparation, bool forceClear, int swapInterval ) {
+void R_BeginFrame( bool forceClear, int swapInterval ) {
 	int samples;
 	int64_t time = ri.Sys_Milliseconds();
 
-	GLimp_BeginFrame();
-
 	RB_BeginFrame();
 
-	if( cameraSeparation && ( !glConfig.stereoEnabled || !R_IsRenderingToScreen() ) ) {
-		cameraSeparation = 0;
-	}
-
-	if( rf.cameraSeparation != cameraSeparation ) {
-		rf.cameraSeparation = cameraSeparation;
-		if( cameraSeparation < 0 ) {
-			glDrawBuffer( GL_BACK_LEFT );
-		} else if( cameraSeparation > 0 ) {
-			glDrawBuffer( GL_BACK_RIGHT );
-		} else {
-			glDrawBuffer( GL_BACK );
-		}
-	}
-
-	// draw buffer stuff
-	if( rf.newDrawBuffer ) {
-		rf.newDrawBuffer = false;
-
-		if( cameraSeparation == 0 || !glConfig.stereoEnabled ) {
-			if( Q_stricmp( rf.drawBuffer, "GL_FRONT" ) == 0 ) {
-				glDrawBuffer( GL_FRONT );
-			} else {
-				glDrawBuffer( GL_BACK );
-			}
-		}
-	}
+	// TODO
+	/* glDrawBuffer( GL_BACK ); */
 
 	// set swap interval (vertical synchronization)
 	rf.swapInterval = R_SetSwapInterval( swapInterval, rf.swapInterval );
@@ -2019,7 +1970,7 @@ void R_EndFrame( void ) {
 
 	RB_EndFrame();
 
-	GLimp_EndFrame();
+	VID_Swap(); // TODO: this doesn't belong here
 
 	rf.transformMatrixStackSize[0] = 0;
 	rf.transformMatrixStackSize[1] = 0;
@@ -2066,7 +2017,7 @@ void R_LatLongToNorm( const uint8_t latlong[2], vec3_t out ) {
 * R_CopyString
 */
 ATTRIBUTE_MALLOC void *R_Malloc_( size_t size, const char *filename, int fileline ) {
-	return ri.Mem_AllocExt( r_mempool, size, 16, 1, filename, fileline );
+	return _Mem_AllocExt( r_mempool, size, 16, 1, 0, 0, filename, fileline );
 }
 
 /*
@@ -2075,7 +2026,7 @@ ATTRIBUTE_MALLOC void *R_Malloc_( size_t size, const char *filename, int filelin
 char *R_CopyString_( const char *in, const char *filename, int fileline ) {
 	char *out;
 
-	out = ri.Mem_AllocExt( r_mempool, ( strlen( in ) + 1 ), 0, 1, filename, fileline );
+	out = _Mem_AllocExt( r_mempool, ( strlen( in ) + 1 ), 0, 1, 0, 0, filename, fileline );
 	strcpy( out, in );
 
 	return out;
@@ -2106,7 +2057,7 @@ int R_LoadFile_( const char *path, int flags, void **buffer, const char *filenam
 		return len;
 	}
 
-	buf = ( uint8_t *)ri.Mem_AllocExt( r_mempool, len + 1, 16, 0, filename, fileline );
+	buf = ( uint8_t *)R_MallocExt( r_mempool, len + 1, 16, 0 );
 	buf[len] = 0;
 	*buffer = buf;
 
@@ -2120,7 +2071,7 @@ int R_LoadFile_( const char *path, int flags, void **buffer, const char *filenam
 * R_FreeFile
 */
 void R_FreeFile_( void *buffer, const char *filename, int fileline ) {
-	ri.Mem_Free( buffer, filename, fileline );
+	_Mem_Free( buffer, 0, 0, filename, fileline );
 }
 
 //===================================================================

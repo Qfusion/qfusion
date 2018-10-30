@@ -18,9 +18,9 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
-#ifndef R_MODEL_H
-#define R_MODEL_H
+#pragma once
 
+#include "../../qcommon/qcommon.h"
 #include "r_mesh.h"
 #include "r_shader.h"
 #include "r_surface.h"
@@ -430,12 +430,10 @@ unsigned int Mod_Handle( const model_t *mod );
 model_t     *Mod_ForHandle( unsigned int elem );
 
 // force 16-bytes alignment for all memory chunks allocated for model data
-#define     Mod_Malloc( mod, size ) ri.Mem_AllocExt( ( mod )->mempool, size, 16, 1, __FILE__, __LINE__ )
-#define     Mod_Realloc( data, size ) ri.Mem_Realloc( data, size, __FILE__, __LINE__ )
-#define     Mod_MemFree( data ) ri.Mem_Free( data, __FILE__, __LINE__ )
+#define     Mod_Malloc( mod, size ) Mem_AllocExt( ( mod )->mempool, size, 1 )
+#define     Mod_Realloc( data, size ) Mem_Realloc( data, size )
+#define     Mod_MemFree( data ) Mem_Free( data )
 
 void        Mod_StripLODSuffix( char *name );
 
 void        Mod_Modellist_f( void );
-
-#endif // R_MODEL_H

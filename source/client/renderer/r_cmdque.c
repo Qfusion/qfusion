@@ -63,7 +63,6 @@ enum {
 
 typedef struct {
 	int id;
-	float cameraSeparation;
 	bool forceClear;
 	int swapInterval;
 } refCmdBeginFrame_t;
@@ -201,7 +200,7 @@ static const refCmdHandler_t refCmdHandlers[NUM_REF_CMDS] =
 
 static unsigned R_HandleBeginFrameCmd( uint8_t *pcmd ) {
 	refCmdBeginFrame_t *cmd = (void *)pcmd;
-	R_BeginFrame( cmd->cameraSeparation, cmd->forceClear, cmd->swapInterval );
+	R_BeginFrame( cmd->forceClear, cmd->swapInterval );
 	return sizeof( *cmd );
 }
 
@@ -331,11 +330,10 @@ static void RF_IssueAbstractCmd( ref_cmdbuf_t *cmdbuf, void *cmd, size_t struct_
 	}
 }
 
-static void RF_IssueBeginFrameCmd( ref_cmdbuf_t *cmdbuf, float cameraSeparation, bool forceClear, int swapInterval ) {
+static void RF_IssueBeginFrameCmd( ref_cmdbuf_t *cmdbuf, bool forceClear, int swapInterval ) {
 	refCmdBeginFrame_t cmd;
 
 	cmd.id = REF_CMD_BEGIN_FRAME;
-	cmd.cameraSeparation = cameraSeparation;
 	cmd.forceClear = forceClear;
 	cmd.swapInterval = swapInterval;
 
@@ -726,7 +724,6 @@ enum {
 	REF_PIPE_CMD_SET_CUSTOM_COLOR,
 	REF_PIPE_CMD_SET_WALL_FLOOR_COLORS,
 
-	REF_PIPE_CMD_SET_DRAWBUFFER,
 	REF_PIPE_CMD_SET_TEXTURE_MODE,
 	REF_PIPE_CMD_SET_TEXTURE_FILTER,
 	REF_PIPE_CMD_SET_GAMMA,
@@ -771,11 +768,6 @@ typedef struct {
 
 typedef struct {
 	int id;
-	char drawbuffer[32];
-} refReliableCmdSetDrawBuffer_t;
-
-typedef struct {
-	int id;
 	char texturemode[32];
 } refReliableCmdSetTextureMode_t;
 
@@ -798,14 +790,12 @@ typedef unsigned (*refPipeCmdHandler_t)( const void * );
 
 static unsigned R_HandleInitReliableCmd( void *pcmd );
 static unsigned R_HandleShutdownReliableCmd( void *pcmd );
-static unsigned R_HandleSurfaceChangeReliableCmd( void *pcmd );
 static unsigned R_HandleScreenShotReliableCmd( void *pcmd );
 static unsigned R_HandleEnvShotReliableCmd( void *pcmd );
 static unsigned R_HandleBeginRegistrationReliableCmd( void *pcmd );
 static unsigned R_HandleEndRegistrationReliableCmd( void *pcmd );
 static unsigned R_HandleSetCustomColorReliableCmd( void *pcmd );
 static unsigned R_HandleSetWallFloorColorsReliableCmd( void *pcmd );
-static unsigned R_HandleSetDrawBufferReliableCmd( void *pcmd );
 static unsigned R_HandleSetTextureModeReliableCmd( void *pcmd );
 static unsigned R_HandleSetTextureFilterReliableCmd( void *pcmd );
 static unsigned R_HandleSetGammaReliableCmd( void *pcmd );
@@ -815,14 +805,13 @@ static refPipeCmdHandler_t refPipeCmdHandlers[NUM_REF_PIPE_CMDS] =
 {
 	(refPipeCmdHandler_t)R_HandleInitReliableCmd,
 	(refPipeCmdHandler_t)R_HandleShutdownReliableCmd,
-	(refPipeCmdHandler_t)R_HandleSurfaceChangeReliableCmd,
+	NULL,
 	(refPipeCmdHandler_t)R_HandleScreenShotReliableCmd,
 	(refPipeCmdHandler_t)R_HandleEnvShotReliableCmd,
 	(refPipeCmdHandler_t)R_HandleBeginRegistrationReliableCmd,
 	(refPipeCmdHandler_t)R_HandleEndRegistrationReliableCmd,
 	(refPipeCmdHandler_t)R_HandleSetCustomColorReliableCmd,
 	(refPipeCmdHandler_t)R_HandleSetWallFloorColorsReliableCmd,
-	(refPipeCmdHandler_t)R_HandleSetDrawBufferReliableCmd,
 	(refPipeCmdHandler_t)R_HandleSetTextureModeReliableCmd,
 	(refPipeCmdHandler_t)R_HandleSetTextureFilterReliableCmd,
 	(refPipeCmdHandler_t)R_HandleSetGammaReliableCmd,
@@ -853,14 +842,6 @@ static unsigned R_HandleShutdownReliableCmd( void *pcmd ) {
 	RFB_Shutdown();
 
 	return 0;
-}
-
-static unsigned R_HandleSurfaceChangeReliableCmd( void *pcmd ) {
-	refReliableCmdSurfaceChange_t *cmd = pcmd;
-
-	GLimp_UpdatePendingWindowSurface();
-
-	return sizeof( *cmd );
 }
 
 static unsigned R_HandleScreenShotReliableCmd( void *pcmd ) {
@@ -909,14 +890,6 @@ static unsigned R_HandleSetWallFloorColorsReliableCmd( void *pcmd ) {
 	refReliableCmdSetWallFloorColors_t *cmd = pcmd;
 
 	R_SetWallFloorColors( cmd->wall, cmd->floor );
-
-	return sizeof( *cmd );
-}
-
-static unsigned R_HandleSetDrawBufferReliableCmd( void *pcmd ) {
-	refReliableCmdSetDrawBuffer_t *cmd = pcmd;
-
-	R_SetDrawBuffer( cmd->drawbuffer );
 
 	return sizeof( *cmd );
 }
@@ -1049,15 +1022,6 @@ static void RF_IssueSetWallFloorColorsReliableCmd( ref_cmdpipe_t *cmdpipe, const
 	RF_IssueAbstractReliableCmd( cmdpipe, &cmd, sizeof( cmd ) );
 }
 
-static void RF_IssueSetDrawBufferReliableCmd( ref_cmdpipe_t *cmdpipe, const char *drawbuffer ) {
-	refReliableCmdSetDrawBuffer_t cmd;
-
-	cmd.id = REF_PIPE_CMD_SET_DRAWBUFFER;
-	Q_strncpyz( cmd.drawbuffer, drawbuffer, sizeof( cmd.drawbuffer ) );
-
-	RF_IssueAbstractReliableCmd( cmdpipe, &cmd, sizeof( cmd ) );
-}
-
 static void RF_IssueSetTextureModeReliableCmd( ref_cmdpipe_t *cmdpipe, const char *texturemode ) {
 	refReliableCmdSetTextureMode_t cmd;
 
@@ -1141,7 +1105,6 @@ ref_cmdpipe_t *RF_CreateCmdPipe( bool sync ) {
 	cmdpipe->EndRegistration = &RF_IssueEndRegistrationReliableCmd;
 	cmdpipe->SetCustomColor = &RF_IssueSetCustomColorReliableCmd;
 	cmdpipe->SetWallFloorColors = &RF_IssueSetWallFloorColorsReliableCmd;
-	cmdpipe->SetDrawBuffer = &RF_IssueSetDrawBufferReliableCmd;
 	cmdpipe->SetTextureMode = &RF_IssueSetTextureModeReliableCmd;
 	cmdpipe->SetTextureFilter = &RF_IssueSetTextureFilterReliableCmd;
 	cmdpipe->SetGamma = &RF_IssueSetGammaReliableCmd;

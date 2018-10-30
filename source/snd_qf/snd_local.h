@@ -183,7 +183,7 @@ SYSTEM SPECIFIC FUNCTIONS
 */
 
 // initializes cycling through a DMA buffer and returns information on it
-bool SNDDMA_Init( void *hwnd, bool verbose );
+bool SNDDMA_Init( bool verbose );
 
 // gets the current DMA position
 int SNDDMA_GetDMAPos( void );
@@ -265,7 +265,7 @@ int S_PaintChannels( unsigned int endtime, int dumpfile, float gain );
 /*
 * Exported functions
 */
-bool SF_Init( void *hwnd, int maxEntities, bool verbose );
+bool SF_Init( int maxEntities, bool verbose );
 void SF_Shutdown( bool verbose );
 void SF_EndRegistration( void );
 void SF_BeginRegistration( void );

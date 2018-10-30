@@ -46,10 +46,6 @@ void R_TakeScreenShot( const char *path, const char *name, const char *fmtString
 	size_t checkname_size = 0;
 	int quality;
 
-	if( !R_IsRenderingToScreen() ) {
-		return;
-	}
-
 	if( r_screenshot_jpeg->integer ) {
 		extension = ".jpg";
 		quality = r_screenshot_jpeg_quality->integer;
@@ -151,9 +147,9 @@ void R_ScreenShot_f( void ) {
 
 	mediadir = ri.FS_MediaDirectory( FS_MEDIA_IMAGES );
 	if( mediadir ) {
-		path_size = strlen( mediadir ) + 1 /* '/' */ + strlen( glConfig.applicationName ) + 1 /* '/' */ + 1;
+		path_size = strlen( mediadir ) + 1 /* '/' */ + strlen( APPLICATION ) + 1 /* '/' */ + 1;
 		path = alloca( path_size );
-		Q_snprintfz( path, path_size, "%s/%s/", mediadir, glConfig.applicationName );
+		Q_snprintfz( path, path_size, "%s/%s/", mediadir, APPLICATION );
 	} else {
 		path_size = strlen( ri.FS_WriteDirectory() ) + 1 /* '/' */ + strlen( ri.FS_GameDirectory() ) + strlen( "/screenshots/" ) + 1;
 		path = alloca( path_size );
@@ -172,7 +168,7 @@ void R_ScreenShot_f( void ) {
 
 	// hm... shouldn't really happen, but check anyway
 	if( i == 2 ) {
-		ri.Cvar_ForceSet( r_screenshot_fmtstr->name, glConfig.screenshotPrefix );
+		ri.Cvar_ForceSet( r_screenshot_fmtstr->name, APP_SCREENSHOTS_PREFIX );
 	}
 
 	RF_ScreenShot( path, name, r_screenshot_fmtstr->string,
@@ -199,7 +195,7 @@ void R_TakeEnvShot( const char *path, const char *name, unsigned maxPixels ) {
 		{ "nz", { 90, 180, 0 }, IT_FLIPDIAGONAL }
 	};
 
-	if( !R_IsRenderingToScreen() || !rsh.worldModel ) {
+	if( !rsh.worldModel ) {
 		return;
 	}
 

@@ -154,7 +154,6 @@ cvar_t *r_usenotexture;
 
 cvar_t *r_maxglslbones;
 
-cvar_t *gl_drawbuffer;
 cvar_t *gl_cull;
 cvar_t *r_multithreading;
 
@@ -338,20 +337,12 @@ static void R_FinalizeGLExtensions( void ) {
 */
 static void R_FillStartupBackgroundColor( float r, float g, float b ) {
 	glClearColor( r, g, b, 1.0 );
-	GLimp_BeginFrame();
-	if( glConfig.stereoEnabled ) {
-		glDrawBuffer( GL_BACK_LEFT );
-		glClear( GL_COLOR_BUFFER_BIT );
-		glDrawBuffer( GL_BACK_RIGHT );
-		glClear( GL_COLOR_BUFFER_BIT );
-		glDrawBuffer( GL_BACK );
-	}
 	glClear( GL_COLOR_BUFFER_BIT );
 	glFinish();
-	GLimp_EndFrame();
+	VID_Swap();
 }
 
-static void R_Register( const char *screenshotsPrefix ) {
+static void R_Register() {
 	char tmp[128];
 
 	r_norefresh = ri.Cvar_Get( "r_norefresh", "0", 0 );
@@ -474,7 +465,7 @@ static void R_Register( const char *screenshotsPrefix ) {
 
 	r_screenshot_jpeg = ri.Cvar_Get( "r_screenshot_jpeg", "1", CVAR_ARCHIVE );
 	r_screenshot_jpeg_quality = ri.Cvar_Get( "r_screenshot_jpeg_quality", "90", CVAR_ARCHIVE );
-	r_screenshot_fmtstr = ri.Cvar_Get( "r_screenshot_fmtstr", va_r( tmp, sizeof( tmp ), "%s%%y%%m%%d_%%H%%M%%S", screenshotsPrefix ), CVAR_ARCHIVE );
+	r_screenshot_fmtstr = ri.Cvar_Get( "r_screenshot_fmtstr", va_r( tmp, sizeof( tmp ), "%s%%y%%m%%d_%%H%%M%%S", APP_SCREENSHOTS_PREFIX ), CVAR_ARCHIVE );
 
 	r_swapinterval = ri.Cvar_Get( "r_swapinterval", "0", CVAR_ARCHIVE );
 	r_swapinterval_min = ri.Cvar_Get( "r_swapinterval_min", "0", CVAR_READONLY ); // exposes vsync support to UI
@@ -496,7 +487,6 @@ static void R_Register( const char *screenshotsPrefix ) {
 	r_multithreading = ri.Cvar_Get( "r_multithreading", "0", CVAR_ARCHIVE | CVAR_LATCH_VIDEO | CVAR_READONLY );
 
 	gl_cull = ri.Cvar_Get( "gl_cull", "1", 0 );
-	gl_drawbuffer = ri.Cvar_Get( "gl_drawbuffer", "GL_BACK", 0 );
 
 	ri.Cmd_AddCommand( "imagelist", R_ImageList_f );
 	ri.Cmd_AddCommand( "shaderlist", R_ShaderList_f );
@@ -590,60 +580,35 @@ static unsigned R_GLVersionHash( const char *vendorString,
 /*
 * R_Init
 */
-rserr_t R_Init( const char *applicationName, const char *screenshotPrefix, int startupColor,
-				int iconResource, const int *iconXPM,
-				void *hinstance, void *wndproc, void *parenthWnd,
-				bool verbose ) {
-	qgl_initerr_t initerr;
-
+static rserr_t R_PostInit( void );
+rserr_t R_Init( bool verbose ) {
 	r_mempool = R_AllocPool( NULL, "Rendering Frontend" );
 
 	r_verbose = verbose;
 
 	r_postinit = true;
 
-	if( !applicationName ) {
-		applicationName = "Qfusion";
-	}
-	if( !screenshotPrefix ) {
-		screenshotPrefix = "";
-	}
+	R_Register();
 
-	R_Register( screenshotPrefix );
-
+	// TODO: sigh
+	int w = glConfig.width;
+	int h = glConfig.height;
 	memset( &glConfig, 0, sizeof( glConfig ) );
+	glConfig.width = w;
+	glConfig.height = h;
 
-	// initialize our QGL dynamic bindings
-	initerr = QGL_Init();
-	if( initerr != qgl_initerr_ok ) {
-		QGL_Shutdown();
-		Com_Printf( "ref_gl::R_Init() - could not load GL dll\n" );
-
-		return rserr_invalid_driver;
-	}
-
-	// initialize OS-specific parts of OpenGL
-	if( !GLimp_Init( applicationName, hinstance, wndproc, parenthWnd, iconResource, iconXPM ) ) {
-		QGL_Shutdown();
-		return rserr_unknown;
-	}
-
-	// FIXME: move this elsewhere?
-	glConfig.applicationName = R_CopyString( applicationName );
-	glConfig.screenshotPrefix = R_CopyString( screenshotPrefix );
-	glConfig.startupColor = startupColor;
-
-	return rserr_ok;
+	return R_PostInit();
 }
 
 /*
 * R_PostInit
 */
+rserr_t RF_Init();
 static rserr_t R_PostInit( void ) {
 	int i;
 	GLenum glerr;
 
-	glConfig.hwGamma = GLimp_GetGammaRamp( GAMMARAMP_STRIDE, &glConfig.gammaRampSize, glConfig.originalGammaRamp );
+	glConfig.hwGamma = VID_GetGammaRamp( GAMMARAMP_STRIDE, &glConfig.gammaRampSize, glConfig.originalGammaRamp );
 	if( glConfig.hwGamma ) {
 		r_gamma->modified = true;
 	}
@@ -667,7 +632,7 @@ static rserr_t R_PostInit( void ) {
 
 	glConfig.versionHash = R_GLVersionHash( glConfig.vendorString, glConfig.rendererString,
 											glConfig.versionString );
-	glConfig.multithreading = r_multithreading->integer != 0 && !strstr( glConfig.vendorString, "nouveau" );
+	glConfig.multithreading = 0;
 
 	memset( &rsh, 0, sizeof( rsh ) );
 	memset( &rf, 0, sizeof( rf ) );
@@ -690,14 +655,13 @@ static rserr_t R_PostInit( void ) {
 	R_InitDrawLists();
 
 	if( !R_RegisterGLExtensions() ) {
-		QGL_Shutdown();
 		return rserr_unknown;
 	}
 
 	R_SetSwapInterval( 0, -1 );
 
-	R_FillStartupBackgroundColor( COLOR_R( glConfig.startupColor ) / 255.0f,
-								  COLOR_G( glConfig.startupColor ) / 255.0f, COLOR_B( glConfig.startupColor ) / 255.0f );
+	R_FillStartupBackgroundColor( COLOR_R( APP_STARTUP_COLOR ) / 255.0f,
+								  COLOR_G( APP_STARTUP_COLOR ) / 255.0f, COLOR_B( APP_STARTUP_COLOR ) / 255.0f );
 
 	R_TextureMode( r_texturemode->string );
 
@@ -728,32 +692,14 @@ static rserr_t R_PostInit( void ) {
 
 	R_ClearRefInstStack();
 
+	RF_Init();
+
 	glerr = glGetError();
 	if( glerr != GL_NO_ERROR ) {
 		Com_Printf( "glGetError() = 0x%x\n", glerr );
 	}
 
 	return rserr_ok;
-}
-
-/*
-* R_SetMode
-*/
-rserr_t R_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullScreen, bool stereo, bool borderless ) {
-	rserr_t err;
-
-	err = GLimp_SetMode( x, y, width, height, displayFrequency, fullScreen, stereo, borderless );
-	if( err != rserr_ok ) {
-		Com_Printf( "Could not GLimp_SetMode()\n" );
-		return err;
-	}
-
-	if( r_postinit ) {
-		err = R_PostInit();
-		r_postinit = false;
-	}
-
-	return err;
 }
 
 /*
@@ -803,8 +749,6 @@ static void R_DestroyVolatileAssets( void ) {
 * R_BeginRegistration
 */
 void R_BeginRegistration( void ) {
-	R_FinishLoadingImages();
-
 	R_DestroyVolatileAssets();
 
 	rsh.registrationSequence++;
@@ -885,19 +829,13 @@ void R_Shutdown( bool verbose ) {
 
 	// restore original gamma
 	if( glConfig.hwGamma ) {
-		GLimp_SetGammaRamp( GAMMARAMP_STRIDE, glConfig.gammaRampSize, glConfig.originalGammaRamp );
+		VID_SetGammaRamp( GAMMARAMP_STRIDE, glConfig.gammaRampSize, glConfig.originalGammaRamp );
 	}
 
 	ri.Mutex_Destroy( &rf.speedsMsgLock );
 	ri.Mutex_Destroy( &rf.debugSurfaceLock );
 
 	RJ_Shutdown();
-
-	// shut down OS specific OpenGL stuff like contexts, etc.
-	GLimp_Shutdown();
-
-	// shutdown our QGL subsystem
-	QGL_Shutdown();
 
 	R_FrameCache_Free();
 

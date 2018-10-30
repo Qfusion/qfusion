@@ -25,13 +25,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 ref_import_t ri;
 
 /*
-* GetRefAPIVersion
-*/
-static int GetRefAPIVersion( void ) {
-	return REF_API_VERSION;
-}
-
-/*
 * GetRefAPI
 *
 * Returns a pointer to the structure with all entry points
@@ -46,15 +39,7 @@ ref_export_t *GetRefAPI( ref_import_t *import ) {
 
 	ri = *import;
 
-	globals.API = GetRefAPIVersion;
-
-	globals.Init = RF_Init;
-	globals.SetMode = RF_SetMode;
-	globals.SetWindow = RF_SetWindow;
-	globals.BeginRegistration = RF_BeginRegistration;
-	globals.EndRegistration = RF_EndRegistration;
 	globals.Shutdown = RF_Shutdown;
-	globals.RenderingEnabled = RF_RenderingEnabled;
 	globals.AppActivate = RF_AppActivate;
 
 	globals.BeginFrame = RF_BeginFrame;

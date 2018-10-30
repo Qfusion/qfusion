@@ -406,8 +406,7 @@ void Matrix4_InfiniteOrthoProjection( vec_t left, vec_t right, vec_t bottom, vec
 /*
 * Matrix4_PerspectiveProjection
 */
-void Matrix4_PerspectiveProjection( vec_t fov_x, vec_t fov_y,
-									vec_t near, vec_t far, vec_t stereoSeparation, mat4_t m ) {
+void Matrix4_PerspectiveProjection( vec_t fov_x, vec_t fov_y, vec_t near, vec_t far, mat4_t m ) {
 	m[0] = 1.0f / tan( fov_x * M_PI / 360.0 );
 	m[1] = 0.0f;
 	m[2] = 0.0f;
@@ -429,8 +428,7 @@ void Matrix4_PerspectiveProjection( vec_t fov_x, vec_t fov_y,
 /*
 * Matrix4_InfinitePerspectiveProjection
 */
-void Matrix4_InfinitePerspectiveProjection( vec_t fov_x, vec_t fov_y,
-											vec_t near, vec_t stereoSeparation, mat4_t m, vec_t epsilon ) {
+void Matrix4_InfinitePerspectiveProjection( vec_t fov_x, vec_t fov_y, vec_t near, mat4_t m, vec_t epsilon ) {
 	m[0] = 1.0f / tan( fov_x * M_PI / 360.0 );
 	m[1] = 0.0f;
 	m[2] = 0.0f;

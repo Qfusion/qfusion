@@ -118,7 +118,7 @@ typedef struct {
 	int ( *API )( void );
 
 	// the init function will be called at each restart
-	bool ( *Init )( void *hwnd, int maxEntities, bool verbose );
+	bool ( *Init )( int maxEntities, bool verbose );
 	void ( *Shutdown )( bool verbose );
 
 	void ( *BeginRegistration )( void );

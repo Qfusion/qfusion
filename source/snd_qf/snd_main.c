@@ -253,7 +253,7 @@ void SF_EndRegistration( void ) {
 /*
 * SF_Init
 */
-bool SF_Init( void *hwnd, int maxEntities, bool verbose ) {
+bool SF_Init( int maxEntities, bool verbose ) {
 	soundpool = S_MemAllocPool( "QF Sound Module" );
 
 	developer = trap_Cvar_Get( "developer", "0", 0 );
@@ -295,7 +295,7 @@ bool SF_Init( void *hwnd, int maxEntities, bool verbose ) {
 
 	s_backThread = trap_Thread_Create( S_BackgroundUpdateProc, s_cmdPipe );
 
-	S_IssueInitCmd( s_cmdPipe, hwnd, maxEntities, verbose );
+	S_IssueInitCmd( s_cmdPipe, maxEntities, verbose );
 
 	S_FinishSoundCmdPipe( s_cmdPipe );
 

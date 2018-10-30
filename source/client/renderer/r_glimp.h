@@ -17,61 +17,9 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-#ifndef R_GLIMP_H
-#define R_GLIMP_H
+#pragma once
 
 #include "qgl.h"
-
-#ifdef _WIN32
-#include <windows.h>
-
-#define QGL_WGL( type, name, params ) QGL_EXTERN type( APIENTRY * q ## name ) params;
-#define QGL_WGL_EXT( type, name, params ) QGL_EXTERN type( APIENTRY * q ## name ) params;
-#define QGL_GLX( type, name, params )
-#define QGL_GLX_EXT( type, name, params )
-#define QGL_EGL( type, name, params )
-#define QGL_EGL_EXT( type, name, params )
-#endif
-
-#if defined ( __ANDROID__ )
-#define QGL_WGL( type, name, params )
-#define QGL_WGL_EXT( type, name, params )
-#define QGL_GLX( type, name, params )
-#define QGL_GLX_EXT( type, name, params )
-#define QGL_EGL( type, name, params ) QGL_EXTERN type( APIENTRY * q ## name ) params;
-#define QGL_EGL_EXT( type, name, params ) QGL_EXTERN type( APIENTRY * q ## name ) params;
-
-#elif defined ( __linux__ ) || defined ( __FreeBSD__ )
-#define QGL_WGL( type, name, params )
-#define QGL_WGL_EXT( type, name, params )
-#define QGL_GLX( type, name, params ) QGL_EXTERN type( APIENTRY * q ## name ) params;
-#define QGL_GLX_EXT( type, name, params ) QGL_EXTERN type( APIENTRY * q ## name ) params;
-#define QGL_EGL( type, name, params )
-#define QGL_EGL_EXT( type, name, params )
-#endif
-
-#if defined ( __MACOSX__ )
-#define QGL_WGL( type, name, params )
-#define QGL_WGL_EXT( type, name, params )
-#define QGL_GLX( type, name, params )
-#define QGL_GLX_EXT( type, name, params )
-#define QGL_EGL( type, name, params )
-#define QGL_EGL_EXT( type, name, params )
-#endif
-
-#define QGL_FUNC( type, name, params ) QGL_EXTERN type( APIENTRY * q ## name ) params;
-#define QGL_FUNC_OPT( type, name, params ) QGL_EXTERN type( APIENTRY * q ## name ) params;
-#define QGL_EXT( type, name, params ) QGL_EXTERN type( APIENTRY * q ## name ) params;
-
-#undef QGL_EGL_EXT
-#undef QGL_EGL
-#undef QGL_GLX_EXT
-#undef QGL_GLX
-#undef QGL_WGL_EXT
-#undef QGL_WGL
-#undef QGL_EXT
-#undef QGL_FUNC_OPT
-#undef QGL_FUNC
 
 //====================================================================
 
@@ -83,7 +31,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define GAMMARAMP_STRIDE                4096
 
 extern cvar_t *r_stencilbits;
-extern cvar_t *gl_drawbuffer;
 
 //====================================================================
 
@@ -159,15 +106,10 @@ typedef struct {
 	const char      *versionString;
 	unsigned versionHash;
 
-	const char      *applicationName;
-	const char      *screenshotPrefix;
-	int startupColor;
-
 	int width, height;
 	bool fullScreen;
 	bool borderless;
 
-	bool stereoEnabled;
 	int stencilBits;
 
 	bool hwGamma;
@@ -208,8 +150,7 @@ IMPLEMENTATION SPECIFIC FUNCTIONS
 */
 
 bool    GLimp_RenderingEnabled( void );
-void    GLimp_BeginFrame( void );
-void    GLimp_EndFrame( void );
+void    VID_Swap(); // TODO: this doesn't belong here
 bool    GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, void *parenthWnd,
 					int iconResource, const int *iconXPM );
 void    GLimp_Shutdown( void );
@@ -217,8 +158,8 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency
 rserr_t GLimp_SetWindow( void *hinstance, void *wndproc, void *parenthWnd, bool *surfaceChangePending );
 rserr_t GLimp_SetFullscreenMode( int displayFrequency, bool fullscreen );
 void    GLimp_AppActivate( bool active, bool minimize, bool destroy );
-bool    GLimp_GetGammaRamp( size_t stride, unsigned short *psize, unsigned short *ramp );
-void    GLimp_SetGammaRamp( size_t stride, unsigned short size, unsigned short *ramp );
+bool    VID_GetGammaRamp( size_t stride, unsigned short *psize, unsigned short *ramp ); // TODO: this doesn't belong here
+void    VID_SetGammaRamp( size_t stride, unsigned short size, unsigned short *ramp );
 void    GLimp_SetSwapInterval( int swapInterval );
 
 bool    GLimp_MakeCurrent( void *context, void *surface );
@@ -232,5 +173,3 @@ void    GLimp_UpdatePendingWindowSurface( void ); // Call from the rendering thr
 
 bool    GLimp_SharedContext_Create( void **context, void **surface );
 void    GLimp_SharedContext_Destroy( void *context, void *surface );
-
-#endif // R_GLIMP_H

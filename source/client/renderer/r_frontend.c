@@ -51,13 +51,13 @@ static void RF_AdapterFrame( ref_frontendAdapter_t *adapter ) {
 static void *RF_AdapterThreadProc( void *param ) {
 	ref_frontendAdapter_t *adapter = param;
 
-	GLimp_MakeCurrent( adapter->GLcontext, GLimp_GetWindowSurface( NULL ) );
+	/* GLimp_MakeCurrent( adapter->GLcontext, NULL ); */
 
 	while( !adapter->shutdown ) {
 		RF_AdapterFrame( adapter );
 	}
 
-	GLimp_MakeCurrent( NULL, NULL );
+	/* GLimp_MakeCurrent( NULL, NULL ); */
 
 	return NULL;
 }
@@ -96,11 +96,11 @@ static void RF_AdapterShutdown( ref_frontendAdapter_t *adapter ) {
 
 	RF_DestroyCmdPipe( &adapter->cmdPipe );
 
-	if( adapter->GLcontext ) {
-		GLimp_SharedContext_Destroy( adapter->GLcontext, NULL );
-	}
+	/* if( adapter->GLcontext ) { */
+	/* 	GLimp_SharedContext_Destroy( adapter->GLcontext, NULL ); */
+	/* } */
 
-	GLimp_EnableMultithreadedRendering( false );
+	/* GLimp_EnableMultithreadedRendering( false ); */
 
 	memset( adapter, 0, sizeof( *adapter ) );
 }
@@ -111,22 +111,22 @@ static void RF_AdapterShutdown( ref_frontendAdapter_t *adapter ) {
 static bool RF_AdapterInit( ref_frontendAdapter_t *adapter ) {
 	adapter->cmdPipe = RF_CreateCmdPipe( !glConfig.multithreading );
 
-	if( glConfig.multithreading ) {
-		adapter->frameLock = ri.Mutex_Create();
-
-		GLimp_EnableMultithreadedRendering( true );
-
-		if( !GLimp_SharedContext_Create( &adapter->GLcontext, NULL ) ) {
-			return false;
-		}
-
-		adapter->shutdown = false;
-		adapter->thread = ri.Thread_Create( RF_AdapterThreadProc, adapter );
-		if( !adapter->thread ) {
-			GLimp_EnableMultithreadedRendering( false );
-			return false;
-		}
-	}
+	/* if( glConfig.multithreading ) { */
+	/* 	adapter->frameLock = ri.Mutex_Create(); */
+        /*  */
+	/* 	GLimp_EnableMultithreadedRendering( true ); */
+        /*  */
+	/* 	if( !GLimp_SharedContext_Create( &adapter->GLcontext, NULL ) ) { */
+	/* 		return false; */
+	/* 	} */
+        /*  */
+	/* 	adapter->shutdown = false; */
+	/* 	adapter->thread = ri.Thread_Create( RF_AdapterThreadProc, adapter ); */
+	/* 	if( !adapter->thread ) { */
+	/* 		GLimp_EnableMultithreadedRendering( false ); */
+	/* 		return false; */
+	/* 	} */
+	/* } */
 
 	adapter->cmdPipe->Init( adapter->cmdPipe );
 
@@ -147,54 +147,52 @@ static ref_cmdbuf_t *RF_GetNextAdapterFrame( ref_frontendAdapter_t *adapter ) {
 	return result;
 }
 
-rserr_t RF_Init( const char *applicationName, const char *screenshotPrefix, int startupColor,
-				 int iconResource, const int *iconXPM,
-				 void *hinstance, void *wndproc, void *parenthWnd,
-				 bool verbose ) {
-	rserr_t err;
+/* rserr_t RF_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullScreen, bool borderless ) { */
+/* 	rserr_t err; */
+/*  */
+/* 	if( glConfig.width == width && glConfig.height == height && glConfig.fullScreen != fullScreen ) { */
+/* 		return GLimp_SetFullscreenMode( displayFrequency, fullScreen ); */
+/* 	} */
+/*  */
+/* 	RF_AdapterShutdown( &rrf.adapter ); */
+/*  */
+/* 	err = R_SetMode( x, y, width, height, displayFrequency, fullScreen, borderless ); */
+/* 	if( err != rserr_ok ) { */
+/* 		return err; */
+/* 	} */
+/*  */
+/* 	rrf.frameNum = rrf.lastFrameNum = 0; */
+/*  */
+/* 	if( !rrf.frame ) { */
+/* 		if( glConfig.multithreading ) { */
+/* 			int i; */
+/* 			for( i = 0; i < 3; i++ ) */
+/* 				rrf.frames[i] = RF_CreateCmdBuf( false ); */
+/* 		} else { */
+/* 			rrf.frame = RF_CreateCmdBuf( true ); */
+/* 		} */
+/* 	} */
+/*  */
+/* 	if( glConfig.multithreading ) { */
+/* 		rrf.frame = rrf.frames[0]; */
+/* 	} */
+/*  */
+/* 	rrf.frame->Clear( rrf.frame ); */
+/* 	memset( rrf.customColors, 255, sizeof( rrf.customColors ) ); */
+/*  */
+/* 	rrf.adapter.owner = (void *)&rrf; */
+/* 	if( RF_AdapterInit( &rrf.adapter ) != true ) { */
+/* 		return rserr_unknown; */
+/* 	} */
+/*  */
+/* 	return rserr_ok; */
+/* } */
 
-	memset( &rrf, 0, sizeof( rrf ) );
-
-	err = R_Init( applicationName, screenshotPrefix, startupColor,
-				  iconResource, iconXPM, hinstance, wndproc, parenthWnd, verbose );
-	if( err != rserr_ok ) {
-		return err;
-	}
-
-	return rserr_ok;
-}
-
-rserr_t RF_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullScreen, bool stereo, bool borderless ) {
-	rserr_t err;
-
-	if( glConfig.width == width && glConfig.height == height && glConfig.fullScreen != fullScreen ) {
-		return GLimp_SetFullscreenMode( displayFrequency, fullScreen );
-	}
-
-	RF_AdapterShutdown( &rrf.adapter );
-
-	err = R_SetMode( x, y, width, height, displayFrequency, fullScreen, stereo, borderless );
-	if( err != rserr_ok ) {
-		return err;
-	}
-
+rserr_t RF_Init() {
 	rrf.frameNum = rrf.lastFrameNum = 0;
-
-	if( !rrf.frame ) {
-		if( glConfig.multithreading ) {
-			int i;
-			for( i = 0; i < 3; i++ )
-				rrf.frames[i] = RF_CreateCmdBuf( false );
-		} else {
-			rrf.frame = RF_CreateCmdBuf( true );
-		}
-	}
-
-	if( glConfig.multithreading ) {
-		rrf.frame = rrf.frames[0];
-	}
-
+	rrf.frame = RF_CreateCmdBuf( true );
 	rrf.frame->Clear( rrf.frame );
+
 	memset( rrf.customColors, 255, sizeof( rrf.customColors ) );
 
 	rrf.adapter.owner = (void *)&rrf;
@@ -205,22 +203,8 @@ rserr_t RF_SetMode( int x, int y, int width, int height, int displayFrequency, b
 	return rserr_ok;
 }
 
-rserr_t RF_SetWindow( void *hinstance, void *wndproc, void *parenthWnd ) {
-	rserr_t err;
-	bool surfaceChangePending = false;
-
-	err = GLimp_SetWindow( hinstance, wndproc, parenthWnd, &surfaceChangePending );
-
-	if( err == rserr_ok && surfaceChangePending ) {
-		rrf.adapter.cmdPipe->SurfaceChange( rrf.adapter.cmdPipe );
-	}
-
-	return err;
-}
-
 void RF_AppActivate( bool active, bool minimize, bool destroy ) {
 	R_Flush();
-	GLimp_AppActivate( active, minimize, destroy );
 }
 
 void RF_Shutdown( bool verbose ) {
@@ -261,11 +245,6 @@ static void RF_CheckCvars( void ) {
 		rrf.adapter.cmdPipe->SetWallFloorColors( rrf.adapter.cmdPipe, wallColor, floorColor );
 	}
 
-	if( gl_drawbuffer->modified ) {
-		gl_drawbuffer->modified = false;
-		rrf.adapter.cmdPipe->SetDrawBuffer( rrf.adapter.cmdPipe, gl_drawbuffer->string );
-	}
-
 	// texturemode stuff
 	if( r_texturemode->modified ) {
 		r_texturemode->modified = false;
@@ -283,7 +262,7 @@ static void RF_CheckCvars( void ) {
 	}
 }
 
-void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync, bool uncappedFPS ) {
+void RF_BeginFrame( bool forceClear, bool forceVsync, bool uncappedFPS ) {
 	int swapInterval;
 
 	RF_CheckCvars();
@@ -309,14 +288,13 @@ void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync, bo
 	}
 
 	rrf.frame->Clear( rrf.frame );
-	rrf.cameraSeparation = cameraSeparation;
 
 	R_DataSync();
 
 	swapInterval = r_swapinterval->integer || forceVsync ? 1 : 0;
 	clamp_low( swapInterval, r_swapinterval_min->integer );
 
-	rrf.frame->BeginFrame( rrf.frame, cameraSeparation, forceClear, swapInterval );
+	rrf.frame->BeginFrame( rrf.frame, forceClear, swapInterval );
 }
 
 void RF_EndFrame( void ) {
@@ -459,19 +437,11 @@ void RF_SetCustomColor( int num, int r, int g, int b ) {
 }
 
 void RF_ScreenShot( const char *path, const char *name, const char *fmtstring, bool silent ) {
-	if( RF_RenderingEnabled() ) {
-		rrf.adapter.cmdPipe->ScreenShot( rrf.adapter.cmdPipe, path, name, fmtstring, silent );
-	}
+	rrf.adapter.cmdPipe->ScreenShot( rrf.adapter.cmdPipe, path, name, fmtstring, silent );
 }
 
 void RF_EnvShot( const char *path, const char *name, unsigned pixels ) {
-	if( RF_RenderingEnabled() ) {
-		rrf.adapter.cmdPipe->EnvShot( rrf.adapter.cmdPipe, path, name, pixels );
-	}
-}
-
-bool RF_RenderingEnabled( void ) {
-	return GLimp_RenderingEnabled();
+	rrf.adapter.cmdPipe->EnvShot( rrf.adapter.cmdPipe, path, name, pixels );
 }
 
 const char *RF_GetSpeedsMessage( char *out, size_t size ) {
@@ -499,10 +469,6 @@ void RF_WriteAviFrame( int frame, bool scissor ) {
 	size_t path_size;
 	char *path;
 	char name[32];
-
-	if( !R_IsRenderingToScreen() ) {
-		return;
-	}
 
 	if( scissor ) {
 		x = rsc.refdef.x;
@@ -549,8 +515,7 @@ void RF_TransformVectorToScreen( const refdef_t *rd, const vec3_t in, vec2_t out
 		Matrix4_OrthoProjection( rd->ortho_x, rd->ortho_x, rd->ortho_y, rd->ortho_y,
 									  -4096.0f, 4096.0f, p );
 	} else {
-		Matrix4_InfinitePerspectiveProjection( rd->fov_x, rd->fov_y, Z_NEAR, rrf.cameraSeparation,
-											   p, glConfig.depthEpsilon );
+		Matrix4_InfinitePerspectiveProjection( rd->fov_x, rd->fov_y, Z_NEAR, p, glConfig.depthEpsilon );
 	}
 
 	Matrix4_QuakeModelview( rd->vieworg, rd->viewaxis, m );

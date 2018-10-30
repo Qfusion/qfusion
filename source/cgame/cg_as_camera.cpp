@@ -146,7 +146,6 @@ static const gs_asProperty_t ascamera_Properties[] =
 	{ ASLIB_PROPERTY_DECL( bool, draw2D ), ASLIB_FOFFSET( cg_viewdef_t, draw2D ) },
 	{ ASLIB_PROPERTY_DECL( float, fovX ), ASLIB_FOFFSET( cg_viewdef_t, fov_x ) },
 	{ ASLIB_PROPERTY_DECL( float, fovY ), ASLIB_FOFFSET( cg_viewdef_t, fov_y ) },
-	{ ASLIB_PROPERTY_DECL( float, stereoSeparation ), ASLIB_FOFFSET( cg_viewdef_t, stereoSeparation ) },
 	{ ASLIB_PROPERTY_DECL( Vec3, origin ), ASLIB_FOFFSET( cg_viewdef_t, origin ) },
 	{ ASLIB_PROPERTY_DECL( Vec3, angles ), ASLIB_FOFFSET( cg_viewdef_t, angles ) },
 	{ ASLIB_PROPERTY_DECL( Vec3, velocity ), ASLIB_FOFFSET( cg_viewdef_t, velocity ) },

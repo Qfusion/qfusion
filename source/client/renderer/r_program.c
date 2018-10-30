@@ -267,9 +267,9 @@ void RP_PrecachePrograms( void ) {
 	ptr = &data;
 
 	token = COM_Parse_r( tempbuf, sizeof( tempbuf ), ptr );
-	if( strcmp( token, glConfig.applicationName ) ) {
+	if( strcmp( token, APPLICATION ) ) {
 		ri.Com_DPrintf( "Ignoring GLSL cache: unknown application name \"%s\", expected \"%s\"\n",
-						token, glConfig.applicationName );
+						token, APPLICATION );
 		return;
 	}
 
@@ -428,7 +428,7 @@ void RP_StorePrecacheList( void ) {
 		}
 	}
 
-	ri.FS_Printf( handle, "%s\n", glConfig.applicationName );
+	ri.FS_Printf( handle, "%s\n", APPLICATION );
 	ri.FS_Printf( handle, "%i\n", GLSL_BITS_VERSION );
 
 	for( i = 0, program = r_glslprograms; i < r_numglslprograms; i++, program++ ) {
@@ -930,29 +930,7 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 	"#define qf_lowp_vec4 vec4\n" \
 	"\n"
 
-#define QF_BUILTIN_GLSL_MACROS_GLSL120 "" \
-	"#define qf_varying varying\n" \
-	"#define qf_flat_varying varying\n" \
-	"#ifdef VERTEX_SHADER\n" \
-	"# define qf_FrontColor gl_FrontColor\n" \
-	"# define qf_attribute attribute\n" \
-	"#endif\n" \
-	"#ifdef FRAGMENT_SHADER\n" \
-	"# define qf_FrontColor gl_Color\n" \
-	"# define qf_FragColor gl_FragColor\n" \
-	"# define qf_BrightColor gl_FragData[1]\n" \
-	"#endif\n" \
-	"#define qf_texture texture2D\n" \
-	"#define qf_textureLod texture2DLod\n" \
-	"#define qf_textureCube textureCube\n" \
-	"#define qf_textureArray texture2DArray\n" \
-	"#define qf_texture3D texture3D\n" \
-	"#define qf_textureOffset(a,b,c,d) texture2DOffset(a,b,ivec2(c,d))\n" \
-	"#define qf_shadow shadow2D\n" \
-	"\n"
-
 #define QF_BUILTIN_GLSL_MACROS_GLSL130 "" \
-	"precision highp float;\n" \
 	"#ifdef VERTEX_SHADER\n" \
 	"  out myhalf4 qf_FrontColor;\n" \
 	"# define qf_varying out\n" \
@@ -972,67 +950,6 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 	"#define qf_textureArray texture\n" \
 	"#define qf_texture3D texture\n" \
 	"#define qf_textureOffset(a,b,c,d) textureOffset(a,b,ivec2(c,d))\n" \
-	"#define qf_shadow texture\n" \
-	"\n"
-
-#define QF_BUILTIN_GLSL_MACROS_GLSL100ES "" \
-	"#define qf_varying varying\n" \
-	"#define qf_flat_varying varying\n" \
-	"#ifdef VERTEX_SHADER\n" \
-	"# define qf_attribute attribute\n" \
-	"#endif\n" \
-	"#ifdef FRAGMENT_SHADER\n" \
-	"# if defined(GL_FRAGMENT_PRECISION_HIGH) && defined(QF_FRAGMENT_PRECISION_HIGH)\n" \
-	"   precision highp float;\n" \
-	"# else\n" \
-	"   precision mediump float;\n" \
-	"# endif\n" \
-	"# ifdef GL_EXT_texture_array\n" \
-	"   precision lowp sampler2DArray;\n" \
-	"# endif\n" \
-	"# ifdef GL_OES_texture_3D\n" \
-	"   precision lowp sampler3D;\n" \
-	"# endif\n" \
-	"# ifdef GL_EXT_shadow_samplers\n" \
-	"   precision lowp sampler2DShadow;\n" \
-	"# endif\n" \
-	"# define qf_FragColor gl_FragColor\n" \
-	"#endif\n" \
-	" qf_varying myhalf4 qf_FrontColor;\n" \
-	"#define qf_texture texture2D\n" \
-	"#define qf_textureLod texture2DLod\n" \
-	"#define qf_textureCube textureCube\n" \
-	"#define qf_textureArray texture2DArray\n" \
-	"#define qf_texture3D texture3D\n" \
-	"#define qf_shadow shadow2DEXT\n" \
-	"\n"
-
-#define QF_BUILTIN_GLSL_MACROS_GLSL300ES "" \
-	"#ifdef VERTEX_SHADER\n" \
-	"# define qf_varying out\n" \
-	"# define qf_flat_varying flat out\n" \
-	"# define qf_attribute in\n" \
-	"#endif\n" \
-	"#ifdef FRAGMENT_SHADER\n" \
-	"# ifdef QF_FRAGMENT_PRECISION_HIGH\n" \
-	"   precision highp float;\n" \
-	"# else\n" \
-	"   precision mediump float;\n" \
-	"# endif\n" \
-	"  precision lowp sampler2DArray;\n" \
-	"  precision lowp sampler3D;\n" \
-	"  precision lowp sampler2DShadow;\n" \
-	"  layout(location = 0) out vec4 qf_FragColor;\n" \
-	"  layout(location = 1) out vec4 qf_BrightColor;\n" \
-	"# define qf_varying in\n" \
-	"# define qf_flat_varying flat in\n" \
-	"#endif\n" \
-	" qf_varying myhalf4 qf_FrontColor;\n" \
-	"#define qf_texture texture\n" \
-	"#define qf_textureLod textureLod\n" \
-	"#define qf_textureCube texture\n" \
-	"#define qf_textureArray texture\n" \
-	"#define qf_texture3D texture\n" \
 	"#define qf_shadow texture\n" \
 	"\n"
 
@@ -2393,28 +2310,27 @@ void RP_UpdateKawaseUniforms( int elem, int TexWidth, int TexHeight, int iterati
 static void RP_GetUniformLocations( glsl_program_t *program ) {
 	char tmp[1024];
 	unsigned int i;
-	int locBaseTexture,
-		locNormalmapTexture,
-		locGlossTexture,
-		locDecalTexture,
-		locEntityDecalTexture,
-		locLightmapTexture[MAX_LIGHTMAPS],
-		locDuDvMapTexture,
-		locReflectionTexture,
-		locRefractionTexture,
-		locShadowmapTexture,
-		locCelShadeTexture,
-		locCelLightTexture,
-		locDiffuseTexture,
-		locStripesTexture,
-		locDepthTexture,
-		locBloomTexture[NUM_BLOOM_LODS],
-		locYUVTextureY,
-		locYUVTextureU,
-		locYUVTextureV,
-		locColorLUT,
-		locCubeFilter
-	;
+	int locBaseTexture;
+	int locNormalmapTexture;
+	int locGlossTexture;
+	int locDecalTexture;
+	int locEntityDecalTexture;
+	int locLightmapTexture[MAX_LIGHTMAPS];
+	int locDuDvMapTexture;
+	int locReflectionTexture;
+	int locRefractionTexture;
+	int locShadowmapTexture;
+	int locCelShadeTexture;
+	int locCelLightTexture;
+	int locDiffuseTexture;
+	int locStripesTexture;
+	int locDepthTexture;
+	int locBloomTexture[NUM_BLOOM_LODS];
+	int locYUVTextureY;
+	int locYUVTextureU;
+	int locYUVTextureV;
+	int locColorLUT;
+	int locCubeFilter;
 
 	memset( &program->loc, -1, sizeof( program->loc ) );
 

@@ -57,8 +57,6 @@ static int gl_filter_max = GL_LINEAR;
 static int gl_filter_depth = GL_LINEAR;
 
 static int gl_anisotropic_filter = 0;
-static void R_InitImageLoader( int id );
-static void R_ShutdownImageLoader( int id );
 static bool R_LoadAsyncImageFromDisk( image_t *image );
 
 typedef struct {
@@ -2162,10 +2160,6 @@ void R_ScreenShot( const char *filename, int x, int y, int width, int height, in
 	r_imginfo_t imginfo;
 	const char *extension;
 
-	if( !R_IsRenderingToScreen() ) {
-		return;
-	}
-
 	extension = COM_FileExtension( filename );
 	if( !extension ) {
 		Com_Printf( "R_ScreenShot: Invalid filename\n" );
@@ -2584,12 +2578,7 @@ static void R_InitScreenImagePair( const char *name, image_t **color, image_t **
 	if( !glConfig.stencilBits ) {
 		orFlags &= ~IT_STENCIL;
 	}
-	if( width < 1 ) {
-		width = 1;
-	}
-	if( height < 1 ) {
-		height = 1;
-	}
+	assert( width >= 1 && height >= 1 );
 
 	flags = IT_SPECIAL;
 	flags |= orFlags;
@@ -2653,19 +2642,19 @@ static void R_InitBuiltinScreenImageSet( refScreenTexSet_t *st, int flags ) {
 		R_InitScreenImagePair( name, &st->screenPPCopies[j], NULL, flags, 0, ~0 );
 	}
 
-	if( !useFloat ) {
-		Q_snprintfz( name, sizeof( name ), "rsh.screenTexOverbright%s", postfix );
-		R_InitScreenImagePair( name, &st->screenOverbrightTex, NULL, 0, 0, ~IT_FRAMEBUFFER );
-
-		if( st->screenOverbrightTex ) {
-			for( i = 0; i < NUM_BLOOM_LODS; i++ ) {
-				for( j = 0; j < 2; j++ ) {
-					Q_snprintfz( name, sizeof( name ), "rsh.screenTexBloomLod%s_%i_%i", postfix, i, j );
-					R_InitScreenImagePair( name, &st->screenBloomLodTex[i][j], NULL, 0, i + 1, ~0 );
-				}
-			}
-		}
-	}
+	/* if( !useFloat ) { */
+	/* 	Q_snprintfz( name, sizeof( name ), "rsh.screenTexOverbright%s", postfix ); */
+	/* 	R_InitScreenImagePair( name, &st->screenOverbrightTex, NULL, 0, 0, ~IT_FRAMEBUFFER ); */
+        /*  */
+	/* 	if( st->screenOverbrightTex ) { */
+	/* 		for( i = 0; i < NUM_BLOOM_LODS; i++ ) { */
+	/* 			for( j = 0; j < 2; j++ ) { */
+	/* 				Q_snprintfz( name, sizeof( name ), "rsh.screenTexBloomLod%s_%i_%i", postfix, i, j ); */
+	/* 				R_InitScreenImagePair( name, &st->screenBloomLodTex[i][j], NULL, 0, i + 1, ~0 ); */
+	/* 			} */
+	/* 		} */
+	/* 	} */
+	/* } */
 }
 
 /*
@@ -2842,10 +2831,6 @@ void R_InitImages( void ) {
 		r_images[i].next = &r_images[i + 1];
 	}
 
-	for( i = 0; i < NUM_LOADER_THREADS; i++ ) {
-		R_InitImageLoader( i );
-	}
-
 	R_InitStretchRawImages();
 	R_InitBuiltinImages();
 }
@@ -2904,8 +2889,6 @@ void R_FreeUnusedImagesByTags( int tags ) {
 void R_FreeUnusedImages( void ) {
 	R_FreeUnusedImagesByTags( ~IMAGE_TAG_BUILTIN );
 
-	R_FinishLoadingImages();
-
 	memset( rsh.portalTextures, 0, sizeof( image_t * ) * MAX_PORTAL_TEXTURES );
 }
 
@@ -2918,10 +2901,6 @@ void R_ShutdownImages( void ) {
 
 	if( !r_imagesPool ) {
 		return;
-	}
-
-	for( i = 0; i < NUM_LOADER_THREADS; i++ ) {
-		R_ShutdownImageLoader( i );
 	}
 
 	R_ReleaseBuiltinImages();
@@ -2966,255 +2945,9 @@ void R_ShutdownImages( void ) {
 
 // ============================================================================
 
-enum {
-	CMD_LOADER_INIT,
-	CMD_LOADER_SHUTDOWN,
-	CMD_LOADER_LOAD_PIC,
-	CMD_LOADER_DATA_SYNC,
-
-	NUM_LOADER_CMDS
-};
-
-typedef struct {
-	int id;
-	int self;
-} loaderInitCmd_t;
-
-typedef struct {
-	int id;
-	int self;
-	int pic;
-} loaderPicCmd_t;
-
-typedef unsigned (*queueCmdHandler_t)( const void * );
-
-static qbufPipe_t *loader_queue[NUM_LOADER_THREADS] = { NULL };
-static qthread_t *loader_thread[NUM_LOADER_THREADS] = { NULL };
-
-static void *loader_gl_context[NUM_LOADER_THREADS] = { NULL };
-static void *loader_gl_surface[NUM_LOADER_THREADS] = { NULL };
-
-static void *R_ImageLoaderThreadProc( void *param );
-
-/*
-* R_IssueInitLoaderCmd
-*/
-static void R_IssueInitLoaderCmd( int id ) {
-	loaderInitCmd_t cmd;
-	cmd.id = CMD_LOADER_INIT;
-	cmd.self = id;
-	ri.BufPipe_WriteCmd( loader_queue[id], &cmd, sizeof( cmd ) );
-}
-
-/*
-* R_IssueShutdownLoaderCmd
-*/
-static void R_IssueShutdownLoaderCmd( int id ) {
-	int cmd;
-	cmd = CMD_LOADER_SHUTDOWN;
-	ri.BufPipe_WriteCmd( loader_queue[id], &cmd, sizeof( cmd ) );
-}
-
-/*
-* R_IssueLoadPicLoaderCmd
-*/
-static void R_IssueLoadPicLoaderCmd( int id, int pic ) {
-	loaderPicCmd_t cmd;
-	cmd.id = CMD_LOADER_LOAD_PIC;
-	cmd.self = id;
-	cmd.pic = pic;
-	ri.BufPipe_WriteCmd( loader_queue[id], &cmd, sizeof( cmd ) );
-}
-
-/*
-* R_IssueDataSyncLoaderCmd
-*/
-static void R_IssueDataSyncLoaderCmd( int id ) {
-	int cmd;
-	cmd = CMD_LOADER_DATA_SYNC;
-	ri.BufPipe_WriteCmd( loader_queue[id], &cmd, sizeof( cmd ) );
-}
-
-/*
-* R_InitImageLoader
-*/
-static void R_InitImageLoader( int id ) {
-	if( !glConfig.multithreading ) {
-		loader_gl_context[id] = NULL;
-		loader_gl_surface[id] = NULL;
-		return;
-	}
-
-	if( !GLimp_SharedContext_Create( &loader_gl_context[id], &loader_gl_surface[id] ) ) {
-		return;
-	}
-
-	loader_queue[id] = ri.BufPipe_Create( 0x40000, 1 );
-	loader_thread[id] = ri.Thread_Create( R_ImageLoaderThreadProc, loader_queue[id] );
-
-	R_IssueInitLoaderCmd( id );
-
-	// wait for the thread to complete context setup
-	ri.BufPipe_Finish( loader_queue[id] );
-}
-
-/*
-* R_FinishLoadingImages
-*/
-void R_FinishLoadingImages( void ) {
-	int i;
-
-	for( i = 0; i < NUM_LOADER_THREADS; i++ ) {
-		if( loader_gl_context[i] ) {
-			R_IssueDataSyncLoaderCmd( i );
-		}
-	}
-
-	for( i = 0; i < NUM_LOADER_THREADS; i++ ) {
-		if( loader_gl_context[i] ) {
-			ri.BufPipe_Finish( loader_queue[i] );
-		}
-	}
-}
-
 /*
 * R_LoadAsyncImageFromDisk
 */
 static bool R_LoadAsyncImageFromDisk( image_t *image ) {
-	int pic;
-	int id;
-
-	if( loader_gl_context[0] == NULL ) {
-		return false;
-	}
-
-	pic = image - r_images;
-	id = pic % NUM_LOADER_THREADS;
-	if( loader_gl_context[id] == NULL ) {
-		id = 0;
-	}
-
-	image->loaded = false;
-	image->missing = false;
-
-	// Unbind and finish so that the image resource becomes available in the loader's context.
-	// Not doing finish (or only doing flush instead) causes missing textures on Nvidia and possibly other GPUs,
-	// since the loader thread is woken up pretty much instantly, and the GL calls that initialize the texture
-	// may still be processed or only queued in the main thread while the loader is trying to load the image.
-	R_UnbindImage( image );
-	glFinish();
-
-	R_IssueLoadPicLoaderCmd( id, pic );
-	return true;
-}
-
-/*
-* R_ShutdownImageLoader
-*/
-static void R_ShutdownImageLoader( int id ) {
-	void *context = loader_gl_context[id];
-	void *surface = loader_gl_surface[id];
-
-	loader_gl_context[id] = NULL;
-	loader_gl_surface[id] = NULL;
-	if( !context ) {
-		return;
-	}
-
-	R_IssueShutdownLoaderCmd( id );
-
-	ri.BufPipe_Finish( loader_queue[id] );
-
-	ri.Thread_Join( loader_thread[id] );
-	loader_thread[id] = NULL;
-
-	ri.BufPipe_Destroy( &loader_queue[id] );
-
-	GLimp_SharedContext_Destroy( context, surface );
-}
-
-//
-
-/*
-* R_HandleInitLoaderCmd
-*/
-static unsigned R_HandleInitLoaderCmd( void *pcmd ) {
-	loaderInitCmd_t *cmd = pcmd;
-
-	GLimp_MakeCurrent( loader_gl_context[cmd->self], loader_gl_surface[cmd->self] );
-	r_unpackAlignment[QGL_CONTEXT_LOADER + cmd->self] = 4;
-
-	return sizeof( *cmd );
-}
-
-/*
-* R_HandleShutdownLoaderCmd
-*/
-static unsigned R_HandleShutdownLoaderCmd( void *pcmd ) {
-	GLimp_MakeCurrent( NULL, NULL );
-
-	return 0;
-}
-
-/*
-* R_HandleLoadPicLoaderCmd
-*/
-static unsigned R_HandleLoadPicLoaderCmd( void *pcmd ) {
-	loaderPicCmd_t *cmd = pcmd;
-	image_t *image = r_images + cmd->pic;
-	bool loaded;
-
-	loaded = R_LoadImageFromDisk( QGL_CONTEXT_LOADER + cmd->self, image );
-	R_UnbindImage( image );
-
-	if( !loaded ) {
-		image->missing = true;
-	} else {
-		// Make sure:
-		// - The GL calls are submitted, otherwise they may stay in the queue until some other textures are loaded.
-		// - image->loaded is set when the image is actually uploaded, so the renderer doesn't try to use it while
-		//   it's still being uploaded, causing transient or even permanent glitches.
-		if( !rsh.registrationOpen ) {
-			glFinish();
-		}
-		image->loaded = true;
-	}
-
-	return sizeof( *cmd );
-}
-
-/*
-* R_HandleDataSyncLoaderCmd
-*/
-static unsigned R_HandleDataSyncLoaderCmd( void *pcmd ) {
-	int *cmd = pcmd;
-
-	glFinish();
-
-	return sizeof( *cmd );
-}
-
-/*
-*R_ImageLoaderCmdsWaiter
-*/
-static int R_ImageLoaderCmdsWaiter( qbufPipe_t *queue, queueCmdHandler_t *cmdHandlers, bool timeout ) {
-	return ri.BufPipe_ReadCmds( queue, cmdHandlers );
-}
-
-/*
-* R_ImageLoaderThreadProc
-*/
-static void *R_ImageLoaderThreadProc( void *param ) {
-	qbufPipe_t *cmdQueue = param;
-	queueCmdHandler_t cmdHandlers[NUM_LOADER_CMDS] =
-	{
-		(queueCmdHandler_t)R_HandleInitLoaderCmd,
-		(queueCmdHandler_t)R_HandleShutdownLoaderCmd,
-		(queueCmdHandler_t)R_HandleLoadPicLoaderCmd,
-		(queueCmdHandler_t)R_HandleDataSyncLoaderCmd,
-	};
-
-	ri.BufPipe_Wait( cmdQueue, R_ImageLoaderCmdsWaiter, cmdHandlers, Q_THREADS_WAIT_INFINITE );
-
-	return NULL;
+	return false;
 }

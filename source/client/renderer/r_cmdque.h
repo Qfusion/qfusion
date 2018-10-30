@@ -31,7 +31,7 @@ typedef struct ref_cmdbuf_s {
 	// command procs
 
 	// a valid frame should begin and end with BeginFrame and EndFrame respectively
-	void ( *BeginFrame )( struct ref_cmdbuf_s *cmdbuf, float cameraSeparation, bool forceClear, int swapInterval );
+	void ( *BeginFrame )( struct ref_cmdbuf_s *cmdbuf, bool forceClear, int swapInterval );
 	void ( *EndFrame )( struct ref_cmdbuf_s *cmdbuf );
 	void ( *DrawRotatedStretchPic )( struct ref_cmdbuf_s *cmdbuf, int x, int y, int w, int h,
 									 float s1, float t1, float s2, float t2, float angle, const vec4_t color, const shader_t *shader );
@@ -79,7 +79,6 @@ typedef struct ref_cmdpipe_s {
 	void ( *EndRegistration )( struct ref_cmdpipe_s *cmdpipe );
 	void ( *SetCustomColor )( struct ref_cmdpipe_s *cmdpipe, int num, int r, int g, int b );
 	void ( *SetWallFloorColors )( struct ref_cmdpipe_s *cmdpipe, const vec3_t wallColor, const vec3_t floorColor );
-	void ( *SetDrawBuffer )( struct ref_cmdpipe_s *cmdpipe, const char *drawbuffer );
 	void ( *SetTextureMode )( struct ref_cmdpipe_s *cmdpipe, const char *texturemode );
 	void ( *SetTextureFilter )( struct ref_cmdpipe_s *cmdpipe, int filter );
 	void ( *SetGamma )( struct ref_cmdpipe_s *cmdpipe, float gamma );

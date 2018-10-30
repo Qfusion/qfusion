@@ -303,7 +303,7 @@ static void parse_xpm_elem( const char *elem, xpm_state_t *xpm_state, int **data
 	}
 }
 
-int *parse_xpm_icon( int num_xpm_elems, char *xpm_data[] ) {
+int *parse_xpm_icon( int num_xpm_elems, const char *xpm_data[] ) {
 	int i;
 	xpm_state_t xpm_state;
 	/*
@@ -358,6 +358,6 @@ int *parse_xpm_icon( int num_xpm_elems, char *xpm_data[] ) {
 	return data;
 }
 
-int *XPM_ParseIcon( int num_xpm_elems, char *xpm_data[] ) {
+int *XPM_ParseIcon( int num_xpm_elems, const char *xpm_data[] ) {
 	return parse_xpm_icon( num_xpm_elems, xpm_data );
 }

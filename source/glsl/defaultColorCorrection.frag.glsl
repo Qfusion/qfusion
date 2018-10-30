@@ -73,7 +73,7 @@ vec3 ColorMap(vec3 c)
 
 void main(void)
 {
-	vec4 texel = qf_texture(u_BaseTexture, v_TexCoord);
+	vec4 texel = texture(u_BaseTexture, v_TexCoord);
 	vec3 coords = texel.rgb;
 
 #ifdef APPLY_HDR

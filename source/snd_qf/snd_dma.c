@@ -127,8 +127,8 @@ static void S_SoundList_f( void ) {
 /*
 * S_Init
 */
-static bool S_Init( void *hwnd, int maxEntities, bool verbose ) {
-	if( !SNDDMA_Init( hwnd, verbose ) ) {
+static bool S_Init( int maxEntities, bool verbose ) {
+	if( !SNDDMA_Init( verbose ) ) {
 		return false;
 	}
 
@@ -1319,7 +1319,7 @@ static void S_StopAviDemo( void ) {
 */
 static unsigned S_HandleInitCmd( const sndCmdInit_t *cmd ) {
 	//Com_Printf("S_HandleShutdownCmd\n");
-	S_Init( cmd->hwnd, cmd->maxents, cmd->verbose );
+	S_Init( cmd->maxents, cmd->verbose );
 	return sizeof( *cmd );
 }
 

@@ -794,7 +794,7 @@ void Mod_Modellist_f( void ) {
 		if( !mod->name ) {
 			continue;
 		}
-		size = ri.Mem_PoolTotalSize( mod->mempool );
+		size = Mem_PoolTotalSize( mod->mempool );
 		Com_Printf( "%8" PRIuPTR " : %s\n", (uintptr_t)size, mod->name );
 		total += size;
 	}
@@ -1208,9 +1208,6 @@ void R_RegisterWorldModel( const char *model ) {
 * R_WaitWorldModel
 */
 void R_WaitWorldModel( void ) {
-	// load all world images if not yet
-	R_FinishLoadingImages();
-
 	// if it's a Quake1 .bsp, load default miptex's for all missing high res images
 	Mod_FixupQ1MipTex( rsh.worldModel );
 }

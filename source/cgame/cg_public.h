@@ -294,7 +294,7 @@ typedef struct {
 
 	void ( *Trace )( trace_t *tr, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int passent, int contentmask );
 
-	void ( *RenderView )( int frameTime, int realFrameTime, int64_t realTime, int64_t serverTime, float stereo_separation, unsigned extrapolationTime );
+	void ( *RenderView )( int frameTime, int realFrameTime, int64_t realTime, int64_t serverTime, unsigned extrapolationTime );
 
 	bool ( *NewFrameSnapshot )( snapshot_t *newSnapshot, snapshot_t *currentSnapshot );
 

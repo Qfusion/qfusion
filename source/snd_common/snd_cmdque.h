@@ -66,7 +66,6 @@ typedef struct {
 
 typedef struct {
 	int id;
-	void *hwnd;
 	int maxents;
 	int verbose;
 } sndCmdInit_t;
@@ -235,7 +234,7 @@ void S_WaitEnqueuedCmds( qbufPipe_t *queue, int ( *read )( qbufPipe_t *, unsigne
 						 unsigned( **cmdHandlers )( const void * ), unsigned timeout_msec );
 void S_FinishSoundCmdPipe( sndCmdPipe_t *queue );
 
-void S_IssueInitCmd( sndCmdPipe_t *queue, void *hwnd, int maxents, bool verbose );
+void S_IssueInitCmd( sndCmdPipe_t *queue, int maxents, bool verbose );
 void S_IssueShutdownCmd( sndCmdPipe_t *queue, bool verbose );
 void S_IssueClearCmd( sndCmdPipe_t *queue );
 void S_IssueStopAllSoundsCmd( sndCmdPipe_t *queue, bool clear, bool stopMusic );
