@@ -846,7 +846,6 @@ static void CG_SetupViewDef( cg_viewdef_t *view, int type, float stereo_separati
 	//
 
 	view->type = type;
-	view->flipped = cg_flip->integer != 0;
 	view->stereoSeparation = stereo_separation;
 
 	if( view->type == VIEWDEF_PLAYERVIEW ) {

@@ -1008,8 +1008,6 @@ typedef struct {
 
 extern cg_chasecam_t chaseCam;
 
-extern cvar_t *cg_flip;
-
 extern cvar_t *cg_thirdPerson;
 extern cvar_t *cg_thirdPersonAngle;
 extern cvar_t *cg_thirdPersonRange;
