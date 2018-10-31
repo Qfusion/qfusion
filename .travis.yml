@@ -77,7 +77,7 @@ install:
 
 script:
   - cd source
-  - if [[ "$QF_ARCH" == "x86_64" ]]; then make -j8; fi
+  - if [[ "$QF_ARCH" == "x86_64" ]]; then make -j$(nproc --all); fi
   - if [[ "$QF_ARCH" == "OSX" ]]; then xcodebuild -project qfusion.xcodeproj/ -jobs 4 -configuration Release -target ALL_BUILD; fi
 
 before_deploy:
