@@ -245,12 +245,6 @@ static void RF_CheckCvars( void ) {
 		rrf.adapter.cmdPipe->SetWallFloorColors( rrf.adapter.cmdPipe, wallColor, floorColor );
 	}
 
-	// texturemode stuff
-	if( r_texturemode->modified ) {
-		r_texturemode->modified = false;
-		rrf.adapter.cmdPipe->SetTextureMode( rrf.adapter.cmdPipe, r_texturemode->string );
-	}
-
 	// keep r_outlines_cutoff value in sane bounds to prevent wallhacking
 	if( r_outlines_scale->modified ) {
 		if( r_outlines_scale->value < 0 ) {

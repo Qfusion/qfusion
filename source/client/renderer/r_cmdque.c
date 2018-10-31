@@ -714,7 +714,6 @@ INTER-FRAME COMMANDS PIPE
 enum {
 	REF_PIPE_CMD_INIT,
 	REF_PIPE_CMD_SHUTDOWN,
-	REF_PIPE_CMD_SURFACE_CHANGE,
 	REF_PIPE_CMD_SCREEN_SHOT,
 	REF_PIPE_CMD_ENV_SHOT,
 
@@ -724,7 +723,6 @@ enum {
 	REF_PIPE_CMD_SET_CUSTOM_COLOR,
 	REF_PIPE_CMD_SET_WALL_FLOOR_COLORS,
 
-	REF_PIPE_CMD_SET_TEXTURE_MODE,
 	REF_PIPE_CMD_SET_TEXTURE_FILTER,
 	REF_PIPE_CMD_SET_GAMMA,
 	REF_PIPE_CMD_FENCE,
@@ -735,10 +733,6 @@ enum {
 typedef struct {
 	int id;
 } refReliableCmdInitShutdown_t;
-
-typedef struct {
-	int id;
-} refReliableCmdSurfaceChange_t;
 
 typedef struct {
 	int id;
@@ -768,11 +762,6 @@ typedef struct {
 
 typedef struct {
 	int id;
-	char texturemode[32];
-} refReliableCmdSetTextureMode_t;
-
-typedef struct {
-	int id;
 	char filter;
 } refReliableCmdSetTextureFilter_t;
 
@@ -796,7 +785,6 @@ static unsigned R_HandleBeginRegistrationReliableCmd( void *pcmd );
 static unsigned R_HandleEndRegistrationReliableCmd( void *pcmd );
 static unsigned R_HandleSetCustomColorReliableCmd( void *pcmd );
 static unsigned R_HandleSetWallFloorColorsReliableCmd( void *pcmd );
-static unsigned R_HandleSetTextureModeReliableCmd( void *pcmd );
 static unsigned R_HandleSetTextureFilterReliableCmd( void *pcmd );
 static unsigned R_HandleSetGammaReliableCmd( void *pcmd );
 static unsigned R_HandleFenceReliableCmd( void *pcmd );
@@ -805,14 +793,12 @@ static refPipeCmdHandler_t refPipeCmdHandlers[NUM_REF_PIPE_CMDS] =
 {
 	(refPipeCmdHandler_t)R_HandleInitReliableCmd,
 	(refPipeCmdHandler_t)R_HandleShutdownReliableCmd,
-	NULL,
 	(refPipeCmdHandler_t)R_HandleScreenShotReliableCmd,
 	(refPipeCmdHandler_t)R_HandleEnvShotReliableCmd,
 	(refPipeCmdHandler_t)R_HandleBeginRegistrationReliableCmd,
 	(refPipeCmdHandler_t)R_HandleEndRegistrationReliableCmd,
 	(refPipeCmdHandler_t)R_HandleSetCustomColorReliableCmd,
 	(refPipeCmdHandler_t)R_HandleSetWallFloorColorsReliableCmd,
-	(refPipeCmdHandler_t)R_HandleSetTextureModeReliableCmd,
 	(refPipeCmdHandler_t)R_HandleSetTextureFilterReliableCmd,
 	(refPipeCmdHandler_t)R_HandleSetGammaReliableCmd,
 	(refPipeCmdHandler_t)R_HandleFenceReliableCmd,
@@ -894,14 +880,6 @@ static unsigned R_HandleSetWallFloorColorsReliableCmd( void *pcmd ) {
 	return sizeof( *cmd );
 }
 
-static unsigned R_HandleSetTextureModeReliableCmd( void *pcmd ) {
-	refReliableCmdSetTextureMode_t *cmd = pcmd;
-
-	R_TextureMode( cmd->texturemode );
-
-	return sizeof( *cmd );
-}
-
 static unsigned R_HandleSetTextureFilterReliableCmd( void *pcmd ) {
 	refReliableCmdSetTextureFilter_t *cmd = pcmd;
 
@@ -943,11 +921,6 @@ static void RF_IssueInitReliableCmd( ref_cmdpipe_t *cmdpipe ) {
 
 static void RF_IssueShutdownReliableCmd( ref_cmdpipe_t *cmdpipe ) {
 	refReliableCmdInitShutdown_t cmd = { REF_PIPE_CMD_SHUTDOWN };
-	RF_IssueAbstractReliableCmd( cmdpipe, &cmd, sizeof( cmd ) );
-}
-
-static void RF_IssueSurfaceChangeReliableCmd( ref_cmdpipe_t *cmdpipe ) {
-	refReliableCmdSurfaceChange_t cmd = { REF_PIPE_CMD_SURFACE_CHANGE };
 	RF_IssueAbstractReliableCmd( cmdpipe, &cmd, sizeof( cmd ) );
 }
 
@@ -1022,15 +995,6 @@ static void RF_IssueSetWallFloorColorsReliableCmd( ref_cmdpipe_t *cmdpipe, const
 	RF_IssueAbstractReliableCmd( cmdpipe, &cmd, sizeof( cmd ) );
 }
 
-static void RF_IssueSetTextureModeReliableCmd( ref_cmdpipe_t *cmdpipe, const char *texturemode ) {
-	refReliableCmdSetTextureMode_t cmd;
-
-	cmd.id = REF_PIPE_CMD_SET_TEXTURE_MODE;
-	Q_strncpyz( cmd.texturemode, texturemode, sizeof( cmd.texturemode ) );
-
-	RF_IssueAbstractReliableCmd( cmdpipe, &cmd, sizeof( cmd ) );
-}
-
 static void RF_IssueSetTextureFilterReliableCmd( ref_cmdpipe_t *cmdpipe, int filter ) {
 	refReliableCmdSetTextureFilter_t cmd;
 
@@ -1097,7 +1061,6 @@ ref_cmdpipe_t *RF_CreateCmdPipe( bool sync ) {
 
 	cmdpipe->Init = &RF_IssueInitReliableCmd;
 	cmdpipe->Shutdown = &RF_IssueShutdownReliableCmd;
-	cmdpipe->SurfaceChange = &RF_IssueSurfaceChangeReliableCmd;
 	cmdpipe->ScreenShot = &RF_IssueScreenShotReliableCmd;
 	cmdpipe->EnvShot = &RF_IssueEnvShotReliableCmd;
 	cmdpipe->AviShot = &RF_IssueAviShotReliableCmd;
@@ -1105,7 +1068,6 @@ ref_cmdpipe_t *RF_CreateCmdPipe( bool sync ) {
 	cmdpipe->EndRegistration = &RF_IssueEndRegistrationReliableCmd;
 	cmdpipe->SetCustomColor = &RF_IssueSetCustomColorReliableCmd;
 	cmdpipe->SetWallFloorColors = &RF_IssueSetWallFloorColorsReliableCmd;
-	cmdpipe->SetTextureMode = &RF_IssueSetTextureModeReliableCmd;
 	cmdpipe->SetTextureFilter = &RF_IssueSetTextureFilterReliableCmd;
 	cmdpipe->SetGamma = &RF_IssueSetGammaReliableCmd;
 	cmdpipe->Fence = &RF_IssueFenceReliableCmd;

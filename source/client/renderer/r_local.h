@@ -480,7 +480,6 @@ extern cvar_t *r_lodbias;
 extern cvar_t *r_lodscale;
 
 extern cvar_t *r_gamma;
-extern cvar_t *r_texturemode;
 extern cvar_t *r_texturefilter;
 extern cvar_t *r_texturecompression;
 extern cvar_t *r_mode;

@@ -51,29 +51,8 @@ static size_t r_sizeof_imagePathBuf, r_sizeof_imagePathBuf2;
 		r_ ## buf = R_MallocExt( r_imagesPool, r_sizeof_ ## buf, 0, 0 ); \
 	}
 
-static int gl_filter_min = GL_LINEAR_MIPMAP_NEAREST;
-static int gl_filter_max = GL_LINEAR;
-
-static int gl_filter_depth = GL_LINEAR;
-
 static int gl_anisotropic_filter = 0;
 static bool R_LoadAsyncImageFromDisk( image_t *image );
-
-typedef struct {
-	char *name;
-	int minimize, maximize;
-} glmode_t;
-
-glmode_t modes[] = {
-	{ "GL_NEAREST", GL_NEAREST, GL_NEAREST },
-	{ "GL_LINEAR", GL_LINEAR, GL_LINEAR },
-	{ "GL_NEAREST_MIPMAP_NEAREST", GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST },
-	{ "GL_LINEAR_MIPMAP_NEAREST", GL_LINEAR_MIPMAP_NEAREST, GL_LINEAR },
-	{ "GL_NEAREST_MIPMAP_LINEAR", GL_NEAREST_MIPMAP_LINEAR, GL_NEAREST },
-	{ "GL_LINEAR_MIPMAP_LINEAR", GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR }
-};
-
-#define NUM_GL_MODES ( sizeof( modes ) / sizeof( glmode_t ) )
 
 
 /*
@@ -134,51 +113,6 @@ static void R_BindImage( const image_t *tex ) {
 static void R_UnbindImage( const image_t *tex ) {
 	glBindTexture( R_TextureTarget( tex->flags, NULL ), 0 );
 	RB_FlushTextureCache();
-}
-
-/*
-* R_TextureMode
-*/
-void R_TextureMode( char *string ) {
-	int i;
-	image_t *glt;
-	int target;
-
-	for( i = 0; i < NUM_GL_MODES; i++ ) {
-		if( !Q_stricmp( modes[i].name, string ) ) {
-			break;
-		}
-	}
-
-	if( i == NUM_GL_MODES ) {
-		Com_Printf( "R_TextureMode: bad filter name\n" );
-		return;
-	}
-
-	gl_filter_min = modes[i].minimize;
-	gl_filter_max = modes[i].maximize;
-
-	// change all the existing mipmap texture objects
-	for( i = 1, glt = r_images; i < MAX_GLIMAGES; i++, glt++ ) {
-		if( !glt->texnum ) {
-			continue;
-		}
-		if( glt->flags & ( IT_NOFILTERING | IT_DEPTH ) ) {
-			continue;
-		}
-
-		target = R_TextureTarget( glt->flags, NULL );
-
-		R_BindImage( glt );
-
-		if( glt->flags & IT_NOMIPMAP ) {
-			glTexParameteri( target, GL_TEXTURE_MIN_FILTER, gl_filter_max );
-			glTexParameteri( target, GL_TEXTURE_MAG_FILTER, gl_filter_max );
-		} else {
-			glTexParameteri( target, GL_TEXTURE_MIN_FILTER, gl_filter_min );
-			glTexParameteri( target, GL_TEXTURE_MAG_FILTER, gl_filter_max );
-		}
-	}
 }
 
 /*
@@ -856,15 +790,15 @@ static void R_SetupTexParameters( int flags, int upload_width, int upload_height
 		glTexParameteri( target, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
 		glTexParameteri( target, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
 	} else if( flags & IT_DEPTH ) {
-		glTexParameteri( target, GL_TEXTURE_MIN_FILTER, gl_filter_depth );
-		glTexParameteri( target, GL_TEXTURE_MAG_FILTER, gl_filter_depth );
+		glTexParameteri( target, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+		glTexParameteri( target, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 
 		if( glConfig.ext.texture_filter_anisotropic ) {
 			glTexParameteri( target, GL_TEXTURE_MAX_ANISOTROPY_EXT, 1 );
 		}
 	} else if( !( flags & IT_NOMIPMAP ) ) {
-		glTexParameteri( target, GL_TEXTURE_MIN_FILTER, gl_filter_min );
-		glTexParameteri( target, GL_TEXTURE_MAG_FILTER, gl_filter_max );
+		glTexParameteri( target, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
+		glTexParameteri( target, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 
 		if( glConfig.ext.texture_filter_anisotropic ) {
 			glTexParameteri( target, GL_TEXTURE_MAX_ANISOTROPY_EXT, gl_anisotropic_filter );
@@ -886,8 +820,8 @@ static void R_SetupTexParameters( int flags, int upload_width, int upload_height
 			glTexParameteri( target, GL_TEXTURE_MAX_LEVEL, mip );
 		}
 	} else {
-		glTexParameteri( target, GL_TEXTURE_MIN_FILTER, gl_filter_max );
-		glTexParameteri( target, GL_TEXTURE_MAG_FILTER, gl_filter_max );
+		glTexParameteri( target, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+		glTexParameteri( target, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 
 		if( glConfig.ext.texture_filter_anisotropic ) {
 			glTexParameteri( target, GL_TEXTURE_MAX_ANISOTROPY_EXT, 1 );

@@ -117,7 +117,6 @@ void R_PrintImageList( const char *pattern, bool ( *filter )( const char *filter
 void R_ScreenShot( const char *filename, int x, int y, int width, int height, int quality,
 				   bool flipx, bool flipy, bool flipdiagonal, bool silent );
 
-void R_TextureMode( char *string );
 void R_AnisotropicFilter( int value );
 
 image_t *R_LoadImage( const char *name, uint8_t **pic, int width, int height, int flags, int minmipsize, int tags, int samples );

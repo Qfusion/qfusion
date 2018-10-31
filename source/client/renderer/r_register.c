@@ -130,7 +130,6 @@ cvar_t *r_lodscale;
 
 cvar_t *r_stencilbits;
 cvar_t *r_gamma;
-cvar_t *r_texturemode;
 cvar_t *r_texturefilter;
 cvar_t *r_texturecompression;
 cvar_t *r_picmip;
@@ -458,7 +457,6 @@ static void R_Register() {
 	r_lodscale = ri.Cvar_Get( "r_lodscale", "5.0", CVAR_ARCHIVE );
 
 	r_gamma = ri.Cvar_Get( "r_gamma", "1.0", CVAR_ARCHIVE );
-	r_texturemode = ri.Cvar_Get( "r_texturemode", "GL_LINEAR_MIPMAP_LINEAR", CVAR_ARCHIVE );
 	r_texturefilter = ri.Cvar_Get( "r_texturefilter", "4", CVAR_ARCHIVE );
 	r_texturecompression = ri.Cvar_Get( "r_texturecompression", "0", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
 	r_stencilbits = ri.Cvar_Get( "r_stencilbits", "0", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
@@ -527,7 +525,6 @@ static void R_GfxInfo_f( void ) {
 	Com_Printf( "mode: %ix%i%s\n", glConfig.width, glConfig.height,
 				glConfig.fullScreen ? ", fullscreen" : ", windowed" );
 	Com_Printf( "picmip: %i\n", r_picmip->integer );
-	Com_Printf( "texturemode: %s\n", r_texturemode->string );
 	Com_Printf( "anisotropic filtering: %i\n", r_texturefilter->integer );
 	Com_Printf( "vertical sync: %s\n", ( r_swapinterval->integer || r_swapinterval_min->integer ) ? "enabled" : "disabled" );
 	Com_Printf( "multithreading: %s\n", glConfig.multithreading ? "enabled" : "disabled" );
@@ -662,8 +659,6 @@ static rserr_t R_PostInit( void ) {
 
 	R_FillStartupBackgroundColor( COLOR_R( APP_STARTUP_COLOR ) / 255.0f,
 								  COLOR_G( APP_STARTUP_COLOR ) / 255.0f, COLOR_B( APP_STARTUP_COLOR ) / 255.0f );
-
-	R_TextureMode( r_texturemode->string );
 
 	R_AnisotropicFilter( r_texturefilter->integer );
 

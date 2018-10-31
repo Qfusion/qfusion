@@ -71,7 +71,6 @@ typedef struct ref_cmdpipe_s {
 	void ( *Init )( struct ref_cmdpipe_s *cmdpipe );
 	void ( *Shutdown )( struct ref_cmdpipe_s *cmdpipe );
 
-	void ( *SurfaceChange )( struct ref_cmdpipe_s *cmdpipe );
 	void ( *ScreenShot )( struct ref_cmdpipe_s *cmdpipe, const char *path, const char *name, const char *fmtstring, bool silent );
 	void ( *EnvShot )( struct ref_cmdpipe_s *cmdpipe, const char *path, const char *name, unsigned pixels );
 	void ( *AviShot )( struct ref_cmdpipe_s *cmdpipe, const char *path, const char *name, int x, int y, int w, int h );
@@ -79,7 +78,6 @@ typedef struct ref_cmdpipe_s {
 	void ( *EndRegistration )( struct ref_cmdpipe_s *cmdpipe );
 	void ( *SetCustomColor )( struct ref_cmdpipe_s *cmdpipe, int num, int r, int g, int b );
 	void ( *SetWallFloorColors )( struct ref_cmdpipe_s *cmdpipe, const vec3_t wallColor, const vec3_t floorColor );
-	void ( *SetTextureMode )( struct ref_cmdpipe_s *cmdpipe, const char *texturemode );
 	void ( *SetTextureFilter )( struct ref_cmdpipe_s *cmdpipe, int filter );
 	void ( *SetGamma )( struct ref_cmdpipe_s *cmdpipe, float gamma );
 	void ( *Fence )( struct ref_cmdpipe_s *cmdpipe );
