@@ -775,6 +775,10 @@ static void Mod_TouchBrushModel( model_t *model ) {
 		R_TouchRtLight( loadbmodel->rtLights + i );
 	}
 
+	for( i = 0; i < loadbmodel->numRtSkyLights; i++ ) {
+		R_TouchRtLight( loadbmodel->rtSkyLights + i );
+	}
+
 	R_TouchLightmapImages( model );
 }
 
