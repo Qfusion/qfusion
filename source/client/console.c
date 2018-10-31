@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "client.h"
 
-#define CON_MAXLINES    500
+#define CON_MAXLINES    5000
 typedef struct {
 	char *text[CON_MAXLINES];
 	int x;              // offset in current line for next print
