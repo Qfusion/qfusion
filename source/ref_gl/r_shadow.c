@@ -707,7 +707,7 @@ void R_CompileRtLightShadow( rtlight_t *l ) {
 	}
 
 	atlas = R_GetShadowmapAtlasTexture();
-	if( !atlas || !atlas->fbo ) {
+	if( !atlas || !atlas->fbo || atlas->error != GL_NO_ERROR ) {
 		return;
 	}
 
@@ -830,7 +830,7 @@ void R_DrawShadows( void ) {
 	}
 
 	atlas = R_GetShadowmapAtlasTexture();
-	if( !atlas || !atlas->fbo ) {
+	if( !atlas || !atlas->fbo || atlas->error != GL_NO_ERROR ) {
 		return;
 	}
 
@@ -897,7 +897,7 @@ void R_DrawShadows( void ) {
 		}
 
 		clamp_low( minsize, SHADOWMAP_MIN_SIZE );
-		clamp( maxsize, minsize + 2, r_shadows_texturesize->integer );
+		clamp( maxsize, minsize + 2, atlas->width );
 
 		size = l->radius * r_shadows_precision->value / (lod + 1.0);
 		size = bound( minsize, size, maxsize );

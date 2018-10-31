@@ -920,6 +920,10 @@ bool R_AllocLightmap_Block( lightmapAllocState_t *state, int blockwidth, int blo
 	int y;
 	lightmapAllocRow_t *row;
 
+	if( blockheight >= state->height ) {
+		return false;
+	}
+
 	row = state->rows + blockheight;
 	if( ( row->rowY < 0 ) || ( row->currentX + blockwidth > state->width ) ) {
 		if( state->currentY + blockheight <= state->height ) {
@@ -935,7 +939,7 @@ bool R_AllocLightmap_Block( lightmapAllocState_t *state, int blockwidth, int blo
 					break;
 				}
 			}
-			if( y == state->height ) {
+			if( y >= state->height ) {
 				return false;
 			}
 		}

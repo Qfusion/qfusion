@@ -1892,6 +1892,7 @@ static bool R_LoadImageFromDisk( int ctx, image_t *image ) {
 			R_Upload32( ctx, pic, 0, 0, 0, width, height, flags, image->minmipsize, &image->upload_width,
 				&image->upload_height, samples, false, false );
 
+			image->error = qglGetError();
 			Q_strncpyz( image->extension, &pathname[len + k + 2], sizeof( image->extension ) );
 			loaded = true;
 		} else {
@@ -1913,6 +1914,7 @@ static bool R_LoadImageFromDisk( int ctx, image_t *image ) {
 			R_Upload32( ctx, &pic, 0, 0, 0, width, height, flags, image->minmipsize, &image->upload_width,
 						&image->upload_height, samples, false, false );
 
+			image->error = qglGetError();
 			Q_strncpyz( image->extension, &pathname[len], sizeof( image->extension ) );
 			loaded = true;
 		} else {
@@ -2035,6 +2037,7 @@ image_t *R_LoadImage( const char *name, uint8_t **pic, int width, int height, in
 	R_Upload32( QGL_CONTEXT_MAIN, pic, 0, 0, 0, width, height, flags, minmipsize,
 				&image->upload_width, &image->upload_height, image->samples, false, false );
 
+	image->error = qglGetError();
 	return image;
 }
 
@@ -2125,10 +2128,7 @@ void R_ReplaceImage( image_t *image, uint8_t **pic, int width, int height, int f
 					&( image->upload_width ), &( image->upload_height ), samples, true, false );
 	}
 
-	if( !( image->flags & IT_NO_DATA_SYNC ) ) {
-		R_DeferDataSync();
-	}
-
+	image->error = qglGetError();
 	image->flags = flags;
 	image->width = width;
 	image->height = height;
@@ -2136,6 +2136,10 @@ void R_ReplaceImage( image_t *image, uint8_t **pic, int width, int height, int f
 	image->minmipsize = minmipsize;
 	image->samples = samples;
 	image->registrationSequence = rsh.registrationSequence;
+
+	if( !( image->flags & IT_NO_DATA_SYNC ) ) {
+		R_DeferDataSync();
+	}
 }
 
 /*
@@ -2150,11 +2154,12 @@ void R_ReplaceSubImage( image_t *image, int layer, int x, int y, uint8_t **pic, 
 	R_Upload32( QGL_CONTEXT_MAIN, pic, layer, x, y, width, height, image->flags, image->minmipsize,
 				NULL, NULL, image->samples, true, true );
 
+	image->error = qglGetError();
+	image->registrationSequence = rsh.registrationSequence;
+
 	if( !( image->flags & IT_NO_DATA_SYNC ) ) {
 		R_DeferDataSync();
 	}
-
-	image->registrationSequence = rsh.registrationSequence;
 }
 
 /*
@@ -2169,11 +2174,12 @@ void R_ReplaceImageLayer( image_t *image, int layer, uint8_t **pic ) {
 	R_Upload32( QGL_CONTEXT_MAIN, pic, layer, 0, 0, image->width, image->height, image->flags, image->minmipsize,
 				NULL, NULL, image->samples, true, false );
 
+	image->error = qglGetError();
+	image->registrationSequence = rsh.registrationSequence;
+
 	if( !( image->flags & IT_NO_DATA_SYNC ) ) {
 		R_DeferDataSync();
 	}
-
-	image->registrationSequence = rsh.registrationSequence;
 }
 
 /*
@@ -2621,6 +2627,7 @@ void R_InitViewportTexture( image_t **texture, const char *name, int id,
 
 			R_Upload32( QGL_CONTEXT_MAIN, &data, 0, 0, 0, width, height, flags, 1,
 						&t->upload_width, &t->upload_height, t->samples, false, false );
+			t->error = qglGetError();
 		}
 
 		// update FBO, if attached
@@ -2628,6 +2635,11 @@ void R_InitViewportTexture( image_t **texture, const char *name, int id,
 			RFB_UnregisterObject( t->fbo );
 			t->fbo = 0;
 		}
+
+		if( t->error != GL_NO_ERROR ) {
+			return;
+		}
+
 		if( t->flags & IT_FRAMEBUFFER ) {
 			t->fbo = RFB_RegisterObject( t->upload_width, t->upload_height, 
 				( tags & IMAGE_TAG_BUILTIN ) != 0,
@@ -2668,7 +2680,8 @@ static int R_GetPortalTextureId( const int viewportWidth, const int viewportHeig
 
 		if( image->width == realwidth &&
 			image->height == realheight &&
-			image->flags == realflags ) {
+			image->flags == realflags &&
+		    image->error == GL_NO_ERROR ) {
 			// 100% match
 			return i;
 		}
@@ -2718,6 +2731,7 @@ image_t *R_GetShadowmapAtlasTexture( void ) {
 	int flags;
 	int samples;
 	int size;
+	int err = GL_NO_ERROR;
 
 	size = max( r_shadows_texturesize->integer, SHADOWMAP_MIN_ATLAS_SIZE );
 
@@ -2730,9 +2744,20 @@ image_t *R_GetShadowmapAtlasTexture( void ) {
 		samples = 3;
 	}
 
-	R_InitViewportTexture( &rsh.shadowmapAtlasTexture, "r_shadowmap", 0,
-		size, size, size,
-		IT_SPECIAL | IT_FRAMEBUFFER | IT_DEPTHCOMPARE | flags, IMAGE_TAG_BUILTIN, samples );
+	// FIXME: should we generalize this loop for other textures as well?
+	while( size >= SHADOWMAP_MIN_ATLAS_SIZE ) {
+		image_t *t;
+		R_InitViewportTexture( &rsh.shadowmapAtlasTexture, "r_shadowmap", 0,
+			size, size, size,
+			IT_SPECIAL | IT_FRAMEBUFFER | IT_DEPTHCOMPARE | flags, IMAGE_TAG_BUILTIN, samples );
+
+		t = rsh.shadowmapAtlasTexture;
+		if( t && t->error == GL_OUT_OF_MEMORY ) {
+			size >>= 1;
+			continue;
+		}
+		break;
+	}
 
 	return rsh.shadowmapAtlasTexture;
 }
