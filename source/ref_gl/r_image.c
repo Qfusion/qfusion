@@ -2006,6 +2006,7 @@ static image_t *R_CreateImage( const char *name, int width, int height, int laye
 	image->loaded = true;
 	image->missing = false;
 	image->extension[0] = '\0';
+	image->error = GL_NO_ERROR;
 
 	R_AllocTextureNum( image );
 
