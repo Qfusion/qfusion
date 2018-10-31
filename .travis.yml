@@ -43,13 +43,13 @@ matrix:
     #         - gcc-multilib
     - os: linux
       language: c++
-      compiler: gcc-4.9
+      compiler: gcc
       env: QF_ARCH=x86_64
       addons:
         apt:
           packages:
-            - gcc-4.9
-            - g++-4.9
+            - gcc
+            - g++
             - cmake
             - build-essential
             - libsdl2-dev
