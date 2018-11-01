@@ -391,13 +391,13 @@ static void R_Register() {
 	r_lighting_maxglsldlights = ri.Cvar_Get( "r_lighting_maxglsldlights", "32", CVAR_ARCHIVE );
 	r_lighting_grayscale = ri.Cvar_Get( "r_lighting_grayscale", "0", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
 	r_lighting_intensity = ri.Cvar_Get( "r_lighting_intensity", "1.75", CVAR_ARCHIVE );
-	r_lighting_realtime_world = ri.Cvar_Get( "r_lighting_realtime_world", "1", CVAR_ARCHIVE );
+	r_lighting_realtime_world = ri.Cvar_Get( "r_lighting_realtime_world", "0", CVAR_ARCHIVE );
 	r_lighting_realtime_world_lightmaps = ri.Cvar_Get( "r_lighting_realtime_world_lightmaps", "0", CVAR_ARCHIVE );
-	r_lighting_realtime_world_shadows = ri.Cvar_Get( "r_lighting_realtime_world_shadows", "1", CVAR_ARCHIVE );
+	r_lighting_realtime_world_shadows = ri.Cvar_Get( "r_lighting_realtime_world_shadows", "0", CVAR_ARCHIVE );
 	r_lighting_realtime_world_importfrommap = ri.Cvar_Get( "r_lighting_realtime_world_importfrommap", "1", CVAR_ARCHIVE );
-	r_lighting_realtime_dlight = ri.Cvar_Get( "r_lighting_realtime_dlight", "1", CVAR_ARCHIVE );
+	r_lighting_realtime_dlight = ri.Cvar_Get( "r_lighting_realtime_dlight", "0", CVAR_ARCHIVE );
 	r_lighting_realtime_dlight_shadows = ri.Cvar_Get( "r_lighting_realtime_dlight_shadows", "1", CVAR_ARCHIVE );
-	r_lighting_realtime_sky = ri.Cvar_Get( "r_lighting_realtime_sky", "1", CVAR_ARCHIVE );
+	r_lighting_realtime_sky = ri.Cvar_Get( "r_lighting_realtime_sky", "0", CVAR_ARCHIVE );
 	r_lighting_realtime_sky_direction = ri.Cvar_Get( "r_lighting_realtime_sky_direction", "", CVAR_ARCHIVE );
 	r_lighting_realtime_sky_color = ri.Cvar_Get( "r_lighting_realtime_sky_color", "", CVAR_ARCHIVE );
 	r_lighting_showlightvolumes = ri.Cvar_Get( "r_lighting_showlightvolumes", "0", 0 );
