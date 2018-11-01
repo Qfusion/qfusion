@@ -1874,7 +1874,6 @@ static void R_InitShadersCache( void ) {
 	}
 
 	if( !numfiles_total ) {
-		abort();
 		ri.Com_Error( ERR_DROP, "Could not find any shaders!" );
 	}
 
