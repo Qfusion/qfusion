@@ -138,7 +138,7 @@ void Retarded_SetWindowSize( int w, int h ) {
 static bool VID_ChangeMode() {
 	VideoMode prev_mode = VID_GetCurrentVideoMode();
 
-	VideoMode new_mode = { };
+	VideoMode new_mode;
 	new_mode.width = vid_width->integer;
 	new_mode.height = vid_height->integer;
 	new_mode.frequency = vid_displayfrequency->integer;
@@ -617,7 +617,7 @@ void VID_Init() {
 	/* 	} */
 	/* } */
 
-	VideoMode mode = { }; // TODO!!!!
+	VideoMode mode; // TODO!!!
 	mode.width = 800;
 	mode.height = 600;
 	mode.frequency = 144;
