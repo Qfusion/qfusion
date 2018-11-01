@@ -57,7 +57,6 @@ static cvar_t *logconsole_append;
 static cvar_t *logconsole_flush;
 static cvar_t *logconsole_timestamp;
 static cvar_t *com_showtrace;
-static cvar_t *com_introPlayed3;
 
 static qmutex_t *com_print_mutex;
 
@@ -910,7 +909,6 @@ void Qcommon_Init( int argc, char **argv ) {
 	logconsole_timestamp =  Cvar_Get( "logconsole_timestamp", "0", CVAR_ARCHIVE );
 
 	com_showtrace =     Cvar_Get( "com_showtrace", "0", 0 );
-	com_introPlayed3 =   Cvar_Get( "com_introPlayed3", "0", CVAR_ARCHIVE );
 
 	Cvar_Get( "gamename", APPLICATION, CVAR_READONLY );
 	versioncvar = Cvar_Get( "version", APP_VERSION_STR " " CPUSTRING " " __DATE__ " " BUILDSTRING, CVAR_SERVERINFO | CVAR_READONLY );
@@ -948,16 +946,6 @@ void Qcommon_Init( int argc, char **argv ) {
 	// add + commands from command line
 	if( !Cbuf_AddLateCommands() ) {
 		// if the user didn't give any commands, run default action
-
-		if( !dedicated->integer ) {
-			// only play the introduction sequence once
-			if( !com_introPlayed3->integer ) {
-				Cvar_ForceSet( com_introPlayed3->name, "1" );
-#if ( !defined( __ANDROID__ ) || defined ( __i386__ ) || defined ( __x86_64__ ) )
-				Cbuf_AddText( "cinematic intro.roq\n" );
-#endif
-			}
-		}
 	} else {
 		// the user asked for something explicit
 		// so drop the loading plaque
