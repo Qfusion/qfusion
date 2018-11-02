@@ -26,7 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include <setjmp.h>
 
-r_imginfo_t LoadImage( const char * filename, uint8_t * ( *allocbuf )( void *, size_t, const char *, int ), void * uptr ) {
+r_imginfo_t IMG_LoadImage( const char * filename, uint8_t * ( *allocbuf )( void *, size_t, const char *, int ), void * uptr ) {
 	( void ) allocbuf;
 
 	r_imginfo_t ret;

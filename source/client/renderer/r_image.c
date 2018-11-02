@@ -341,7 +341,7 @@ static int R_ReadImageFromDisk( int ctx, char *pathname, size_t pathname_size,
 
 		COM_ReplaceExtension( pathname, extension, pathname_size );
 
-		r_imginfo_t imginfo = LoadImage( pathname, _R_AllocImageBufferCb, (void *)&cbinfo );
+		r_imginfo_t imginfo = IMG_LoadImage( pathname, _R_AllocImageBufferCb, (void *)&cbinfo );
 
 		if( imginfo.samples >= 3 ) {
 			if( ( ( imginfo.comp & ~1 ) == IMGCOMP_BGR ) && !flags ) {
