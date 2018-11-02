@@ -836,10 +836,7 @@ void CG_ReleaseAnnouncerEvents( void ) {
 /*
 * CG_StartVoiceTokenEffect
 */
-static void CG_StartVoiceTokenEffect( int entNum, int type, int vsay ) {
-	centity_t *cent;
-	cgs_media_handle_t *sound = NULL;
-
+static void CG_StartVoiceTokenEffect( int entNum, int vsay ) {
 	if( !cg_voiceChats->integer || cg_volume_voicechats->value <= 0.0f ) {
 		return;
 	}
@@ -847,7 +844,7 @@ static void CG_StartVoiceTokenEffect( int entNum, int type, int vsay ) {
 		return;
 	}
 
-	cent = &cg_entities[entNum];
+	centity_t *cent = &cg_entities[entNum];
 
 	// ignore repeated/flooded events
 	if( cent->localEffects[LOCALEFFECT_VSAY_HEADICON_TIMEOUT] > cg.time ) {
@@ -859,13 +856,13 @@ static void CG_StartVoiceTokenEffect( int entNum, int type, int vsay ) {
 	cent->localEffects[LOCALEFFECT_VSAY_HEADICON_TIMEOUT] = cg.time + HEADICON_TIMEOUT;
 
 	// play the sound
-	sound = cgs.media.sfxVSaySounds[vsay];
+	cgs_media_handle_t *sound = cgs.media.sfxVSaySounds[vsay];
 	if( !sound ) {
 		return;
 	}
 
 	// played as it was made by the 1st person player
-	trap_S_StartLocalSound( CG_MediaSfx( sound ), CHAN_AUTO, cg_volume_voicechats->value );
+	trap_S_StartFixedSound( CG_MediaSfx( sound ), cent->microSmoothOrigin, CHAN_AUTO, cg_volume_voicechats->value, ATTN_NORM );
 }
 
 //==================================================================
@@ -1549,7 +1546,7 @@ void CG_EntityEvent( entity_state_t *ent, int ev, int parm, bool predicted ) {
 		break;
 
 		case EV_VSAY:
-			CG_StartVoiceTokenEffect( ent->ownerNum, EV_VSAY, parm );
+			CG_StartVoiceTokenEffect( ent->ownerNum, parm );
 			break;
 	}
 }
