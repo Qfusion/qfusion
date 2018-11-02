@@ -2503,16 +2503,15 @@ static void R_InitStretchRawImages( void ) {
 * R_InitScreenImagePair
 */
 static void R_InitScreenImagePair( const char *name, image_t **color, image_t **depth, 
-	int orFlags, int lod, int andFlags ) {
+	int orFlags ) {
 	char tn[128];
 	int flags, colorFlags, depthFlags;
-	int width = glConfig.width >> lod;
-	int height = glConfig.height >> lod;
+
+	assert( glConfig.width >= 1 && glConfig.height >= 1 );
 
 	if( !glConfig.stencilBits ) {
 		orFlags &= ~IT_STENCIL;
 	}
-	assert( width >= 1 && height >= 1 );
 
 	flags = IT_SPECIAL;
 	flags |= orFlags;
@@ -2532,16 +2531,15 @@ static void R_InitScreenImagePair( const char *name, image_t **color, image_t **
 	if( flags & IT_FLOAT ) {
 		colorFlags |= IT_FLOAT;
 	}
-	colorFlags &= andFlags;
 
 	if( color ) {
 		R_InitViewportTexture( color, name,
-							   0, width, height, 0, colorFlags, IMAGE_TAG_BUILTIN,
+							   0, glConfig.width, glConfig.height, 0, colorFlags, IMAGE_TAG_BUILTIN,
 							   glConfig.forceRGBAFramebuffers ? 4 : 3 );
 	}
 	if( depth && color && *color ) {
 		R_InitViewportTexture( depth, va_r( tn, sizeof( tn ), "%s_depth", name ),
-							   0, width, height, 0, depthFlags, IMAGE_TAG_BUILTIN, 1 );
+							   0, glConfig.width, glConfig.height, 0, depthFlags, IMAGE_TAG_BUILTIN, 1 );
 
 		if( colorFlags & IT_FRAMEBUFFER ) {
 			RFB_AttachTextureToObject( ( *color )->fbo, true, 0, *depth );
@@ -2555,7 +2553,6 @@ static void R_InitScreenImagePair( const char *name, image_t **color, image_t **
  * Screen textures may only be used in or referenced from the rendering context/thread.
 */
 static void R_InitBuiltinScreenImageSet( refScreenTexSet_t *st, int flags ) {
-	int i, j;
 	char name[128];
 	bool useFloat;
 	const char *postfix;
@@ -2565,15 +2562,15 @@ static void R_InitBuiltinScreenImageSet( refScreenTexSet_t *st, int flags ) {
 	postfix = useFloat ? "16f" : "";
 
 	Q_snprintfz( name, sizeof( name ), "r_screenTex%s", postfix );
-	R_InitScreenImagePair( name, &st->screenTex, &st->screenDepthTex, IT_STENCIL|flags, 0, ~0 );
+	R_InitScreenImagePair( name, &st->screenTex, &st->screenDepthTex, IT_STENCIL|flags );
 
 	// stencil is required in the copy for depth/stencil formats to match when blitting.
 	Q_snprintfz( name, sizeof( name ), "r_screenTexCopy%s", postfix );
-	R_InitScreenImagePair( name, &st->screenTexCopy, &st->screenDepthTexCopy, IT_STENCIL|flags, 0, ~0 );
+	R_InitScreenImagePair( name, &st->screenTexCopy, &st->screenDepthTexCopy, IT_STENCIL|flags );
 
-	for( j = 0; j < 2; j++ ) {
+	for( int j = 0; j < 2; j++ ) {
 		Q_snprintfz( name, sizeof( name ), "rsh.screenPP%sCopy%i", postfix, j );
-		R_InitScreenImagePair( name, &st->screenPPCopies[j], NULL, flags, 0, ~0 );
+		R_InitScreenImagePair( name, &st->screenPPCopies[j], NULL, flags );
 	}
 }
 
@@ -2581,32 +2578,20 @@ static void R_InitBuiltinScreenImageSet( refScreenTexSet_t *st, int flags ) {
 * R_ReleaseBuiltinScreenImageSet
 */
 static void R_ReleaseBuiltinScreenImageSet( refScreenTexSet_t *st ) {
-	int i, j;
+	assert( st->screenTex != NULL );
 
-	if( st->screenTex ) {
-		R_FreeImage( st->screenTex );
-		st->screenTex = NULL;
-	}
-	if( st->screenDepthTex ) {
-		R_FreeImage( st->screenDepthTex );
-		st->screenDepthTex = NULL;
-	}
+	R_FreeImage( st->screenTex );
+	R_FreeImage( st->screenDepthTex );
 
-	if( st->screenTexCopy ) {
-		R_FreeImage( st->screenTexCopy );
-		st->screenTexCopy = NULL;
-	}
-	if( st->screenDepthTexCopy ) {
-		R_FreeImage( st->screenDepthTexCopy );
-		st->screenDepthTexCopy = NULL;
-	}
+	st->screenTex = NULL;
 
-	for( j = 0; j < 2; j++ ) {
-		if( st->screenPPCopies[j] ) {
-			R_FreeImage( st->screenPPCopies[j] );
-			st->screenPPCopies[j] = NULL;
-		}
-	}
+	if( st->screenTexCopy == NULL )
+		return;
+
+	R_FreeImage( st->screenTexCopy );
+	R_FreeImage( st->screenDepthTexCopy );
+	R_FreeImage( st->screenPPCopies[0] );
+	R_FreeImage( st->screenPPCopies[1] );
 }
 
 /*
@@ -2639,7 +2624,7 @@ int R_RegisterMultisampleTarget( refScreenTexSet_t *st, int samples, bool useFlo
 void R_InitBuiltinScreenImages( void ) {
 	R_InitBuiltinScreenImageSet( &rsh.st, 0 );
 	R_InitBuiltinScreenImageSet( &rsh.stf, IT_FLOAT );
-	R_InitScreenImagePair( "r_2Dtex", &rsh.st2D.screenTex, &rsh.st2D.screenDepthTex, IT_SRGB, 0, ~0 );
+	R_InitScreenImagePair( "r_2Dtex", &rsh.st2D.screenTex, &rsh.st2D.screenDepthTex, IT_SRGB );
 }
 
 /*
