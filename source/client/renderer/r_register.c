@@ -436,7 +436,7 @@ static void R_Register() {
 
 	r_outlines_world = ri.Cvar_Get( "r_outlines_world", "1.8", CVAR_ARCHIVE );
 	r_outlines_scale = ri.Cvar_Get( "r_outlines_scale", "1", CVAR_ARCHIVE );
-	r_outlines_cutoff = ri.Cvar_Get( "r_outlines_cutoff", "712", CVAR_ARCHIVE );
+	r_outlines_cutoff = ri.Cvar_Get( "r_outlines_cutoff", "4096", CVAR_ARCHIVE );
 
 	r_soft_particles = ri.Cvar_Get( "r_soft_particles", "1", CVAR_ARCHIVE );
 	r_soft_particles_scale = ri.Cvar_Get( "r_soft_particles_scale", "0.02", CVAR_ARCHIVE );
@@ -466,9 +466,9 @@ static void R_Register() {
 
 	r_temp1 = ri.Cvar_Get( "r_temp1", "0", 0 );
 
-	r_drawflat = ri.Cvar_Get( "r_drawflat", "0", CVAR_ARCHIVE );
-	r_wallcolor = ri.Cvar_Get( "r_wallcolor", "255 255 255", CVAR_ARCHIVE );
-	r_floorcolor = ri.Cvar_Get( "r_floorcolor", "255 153 0", CVAR_ARCHIVE );
+	r_drawflat = ri.Cvar_Get( "r_drawflat", "1", CVAR_ARCHIVE | CVAR_READONLY );
+	r_wallcolor = ri.Cvar_Get( "r_wallcolor", "192 192 192", CVAR_ARCHIVE | CVAR_READONLY );
+	r_floorcolor = ri.Cvar_Get( "r_floorcolor", "255 255 255", CVAR_ARCHIVE | CVAR_READONLY );
 
 	// make sure we rebuild our 3D texture after vid_restart
 	r_wallcolor->modified = r_floorcolor->modified = true;

@@ -1754,22 +1754,6 @@ bool G_Gametype_Exists( const char *name ) {
 }
 
 /*
-* G_Gametype_GenerateGametypesList
-*/
-void G_Gametype_GenerateGametypesList( void ) {
-	char *scriptsList;
-
-	scriptsList = G_AllocCreateNamesList( "progs/gametypes", GAMETYPE_PROJECT_EXTENSION, CHAR_GAMETYPE_SEPARATOR );
-	if( !scriptsList ) {
-		trap_Cvar_ForceSet( "g_gametypes_list", "dm;" );
-		return;
-	}
-
-	trap_Cvar_ForceSet( "g_gametypes_list", scriptsList );
-	G_Free( scriptsList );
-}
-
-/*
 * G_Gametype_SetDefaults
 */
 void G_Gametype_SetDefaults( void ) {
@@ -1825,8 +1809,7 @@ void G_Gametype_Init( void ) {
 	bool changed = false;
 	const char *mapGametype;
 
-	g_gametypes_list = trap_Cvar_Get( "g_gametypes_list", "", CVAR_NOSET | CVAR_ARCHIVE );
-	G_Gametype_GenerateGametypesList(); // fill the g_gametypes_list cvar
+	g_gametypes_list = trap_Cvar_Get( "g_gametypes_list", "bomb", CVAR_NOSET | CVAR_ARCHIVE );
 
 	// empty string to allow all
 	g_votable_gametypes = trap_Cvar_Get( "g_votable_gametypes", "", CVAR_ARCHIVE );
@@ -1835,7 +1818,7 @@ void G_Gametype_Init( void ) {
 		changed = true;
 	}
 
-	g_gametype = trap_Cvar_Get( "g_gametype", "dm", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_LATCH );
+	g_gametype = trap_Cvar_Get( "g_gametype", "bomb", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_LATCH );
 	g_gametype_generic = trap_Cvar_Get( "g_gametype_generic", "1", CVAR_ARCHIVE );
 
 	//get the match cvars too
@@ -1847,9 +1830,9 @@ void G_Gametype_Init( void ) {
 	// game settings
 	g_timelimit = trap_Cvar_Get( "g_timelimit", "10", CVAR_ARCHIVE );
 	g_scorelimit = trap_Cvar_Get( "g_scorelimit", "0", CVAR_ARCHIVE );
-	g_allow_falldamage = trap_Cvar_Get( "g_allow_falldamage", "1", CVAR_ARCHIVE );
+	g_allow_falldamage = trap_Cvar_Get( "g_allow_falldamage", "0", CVAR_ARCHIVE );
 	g_allow_selfdamage = trap_Cvar_Get( "g_allow_selfdamage", "1", CVAR_ARCHIVE );
-	g_allow_teamdamage = trap_Cvar_Get( "g_allow_teamdamage", "1", CVAR_ARCHIVE );
+	g_allow_teamdamage = trap_Cvar_Get( "g_allow_teamdamage", "0", CVAR_ARCHIVE );
 	g_allow_bunny = trap_Cvar_Get( "g_allow_bunny", "1", CVAR_ARCHIVE | CVAR_READONLY );
 
 	// map-specific gametype

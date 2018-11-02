@@ -820,7 +820,7 @@ static void CG_RegisterVariables( void ) {
 	cg_teamPLAYERSmodelForce = trap_Cvar_Get( "cg_teamPLAYERSmodelForce", "0", CVAR_ARCHIVE );
 	cg_teamPLAYERSskin = trap_Cvar_Get( "cg_teamPLAYERSskin", DEFAULT_PLAYERSKIN, CVAR_ARCHIVE );
 	cg_teamPLAYERScolor = trap_Cvar_Get( "cg_teamPLAYERScolor", DEFAULT_TEAMBETA_COLOR, CVAR_ARCHIVE );
-	cg_teamPLAYERScolorForce = trap_Cvar_Get( "cg_teamPLAYERScolorForce", "0", CVAR_ARCHIVE );
+	cg_teamPLAYERScolorForce = trap_Cvar_Get( "cg_teamPLAYERScolorForce", "1", CVAR_ARCHIVE );
 	cg_teamPLAYERSmodel->modified = true;
 	cg_teamPLAYERSmodelForce->modified = true;
 	cg_teamPLAYERSskin->modified = true;
@@ -828,27 +828,27 @@ static void CG_RegisterVariables( void ) {
 	cg_teamPLAYERScolorForce->modified = true;
 
 	cg_teamALPHAmodel = trap_Cvar_Get( "cg_teamALPHAmodel", "bigvic", CVAR_ARCHIVE );
-	cg_teamALPHAmodelForce = trap_Cvar_Get( "cg_teamALPHAmodelForce", "1", CVAR_ARCHIVE );
-	cg_teamALPHAskin = trap_Cvar_Get( "cg_teamALPHAskin", DEFAULT_PLAYERSKIN, CVAR_ARCHIVE );
-	cg_teamALPHAcolor = trap_Cvar_Get( "cg_teamALPHAcolor", DEFAULT_TEAMALPHA_COLOR, CVAR_ARCHIVE );
+	cg_teamALPHAmodelForce = trap_Cvar_Get( "cg_teamALPHAmodelForce", "0", CVAR_ARCHIVE );
+	cg_teamALPHAskin = trap_Cvar_Get( "cg_teamALPHAskin", DEFAULT_PLAYERSKIN, CVAR_ARCHIVE | CVAR_READONLY );
+	cg_teamALPHAcolor = trap_Cvar_Get( "cg_teamALPHAcolor", DEFAULT_TEAMALPHA_COLOR, CVAR_ARCHIVE | CVAR_READONLY );
 	cg_teamALPHAmodel->modified = true;
 	cg_teamALPHAmodelForce->modified = true;
 	cg_teamALPHAskin->modified = true;
 	cg_teamALPHAcolor->modified = true;
 
 	cg_teamBETAmodel = trap_Cvar_Get( "cg_teamBETAmodel", "padpork", CVAR_ARCHIVE );
-	cg_teamBETAmodelForce = trap_Cvar_Get( "cg_teamBETAmodelForce", "1", CVAR_ARCHIVE );
-	cg_teamBETAskin = trap_Cvar_Get( "cg_teamBETAskin", DEFAULT_PLAYERSKIN, CVAR_ARCHIVE );
-	cg_teamBETAcolor = trap_Cvar_Get( "cg_teamBETAcolor", DEFAULT_TEAMBETA_COLOR, CVAR_ARCHIVE );
+	cg_teamBETAmodelForce = trap_Cvar_Get( "cg_teamBETAmodelForce", "0", CVAR_ARCHIVE );
+	cg_teamBETAskin = trap_Cvar_Get( "cg_teamBETAskin", DEFAULT_PLAYERSKIN, CVAR_ARCHIVE | CVAR_READONLY );
+	cg_teamBETAcolor = trap_Cvar_Get( "cg_teamBETAcolor", DEFAULT_TEAMBETA_COLOR, CVAR_ARCHIVE | CVAR_READONLY );
 	cg_teamBETAmodel->modified = true;
 	cg_teamBETAmodelForce->modified = true;
 	cg_teamBETAskin->modified = true;
 	cg_teamBETAcolor->modified = true;
 
-	cg_forceMyTeamAlpha = trap_Cvar_Get( "cg_forceMyTeamAlpha", "0", CVAR_ARCHIVE );
+	cg_forceMyTeamAlpha = trap_Cvar_Get( "cg_forceMyTeamAlpha", "1", CVAR_ARCHIVE | CVAR_READONLY );
 
 	// dmh - learn0more's team colored beams
-	cg_teamColoredBeams = trap_Cvar_Get( "cg_teamColoredBeams", "0", CVAR_ARCHIVE );
+	cg_teamColoredBeams = trap_Cvar_Get( "cg_teamColoredBeams", "1", CVAR_ARCHIVE | CVAR_READONLY );
 	cg_teamColoredInstaBeams = trap_Cvar_Get( "cg_teamColoredInstaBeams", "1", CVAR_ARCHIVE );
 
 	cg_ebbeam_old = trap_Cvar_Get( "cg_ebbeam_old", "0", CVAR_ARCHIVE );

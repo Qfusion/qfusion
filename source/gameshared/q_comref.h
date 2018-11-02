@@ -222,7 +222,7 @@ typedef struct {
 #define SERVER_PINGING_TIMEOUT              50
 #define LAN_SERVER_PINGING_TIMEOUT          20
 #define DEFAULT_PLAYERMODEL                 "bigvic"
-#define DEFAULT_PLAYERSKIN                  "default"
+#define DEFAULT_PLAYERSKIN                  "fullbright"
 
 #ifdef UCMDTIMENUDGE
 # define MAX_UCMD_TIMENUDGE 50

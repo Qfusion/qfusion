@@ -27,8 +27,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 extern "C" {
 #endif
 
-#define DEFAULT_TEAMALPHA_COLOR     "255 70 45"
-#define DEFAULT_TEAMBETA_COLOR      "0 255 70"
+#define DEFAULT_TEAMALPHA_COLOR     "0 0 255"
+#define DEFAULT_TEAMBETA_COLOR      "255 0 0"
 
 #define MAX_CLANNAME_BYTES 16
 #define MAX_CLANNAME_CHARS 8

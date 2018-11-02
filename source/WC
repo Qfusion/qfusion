@@ -1,0 +1,5 @@
+#! /bin/sh
+
+find . \( -name "*.lua" -or -name "*.c" -or -name "*.cpp" -or -name "*.h" -or -name "*.glsl" \) \
+	| xargs wc -l
+
