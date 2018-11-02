@@ -312,7 +312,7 @@ dynamic:
 		VectorSet( ambientLocal, 1, 1, 1 );
 		VectorSet( diffuseLocal, 1, 1, 1 );
 	} else {
-		float scale = ( 1 << mapConfig.overbrightBits ) / 255.0f;
+		float scale = ( 1 << 2 ) / 255.0f;
 
 		for( i = 0; i < 3; i++ )
 			ambientLocal[i] = ambientLocal[i] * scale * bound( 0.0f, r_lighting_ambientscale->value, 1.0f );

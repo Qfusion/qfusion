@@ -2575,20 +2575,6 @@ static void R_InitBuiltinScreenImageSet( refScreenTexSet_t *st, int flags ) {
 		Q_snprintfz( name, sizeof( name ), "rsh.screenPP%sCopy%i", postfix, j );
 		R_InitScreenImagePair( name, &st->screenPPCopies[j], NULL, flags, 0, ~0 );
 	}
-
-	/* if( !useFloat ) { */
-	/* 	Q_snprintfz( name, sizeof( name ), "rsh.screenTexOverbright%s", postfix ); */
-	/* 	R_InitScreenImagePair( name, &st->screenOverbrightTex, NULL, 0, 0, ~IT_FRAMEBUFFER ); */
-        /*  */
-	/* 	if( st->screenOverbrightTex ) { */
-	/* 		for( i = 0; i < NUM_BLOOM_LODS; i++ ) { */
-	/* 			for( j = 0; j < 2; j++ ) { */
-	/* 				Q_snprintfz( name, sizeof( name ), "rsh.screenTexBloomLod%s_%i_%i", postfix, i, j ); */
-	/* 				R_InitScreenImagePair( name, &st->screenBloomLodTex[i][j], NULL, 0, i + 1, ~0 ); */
-	/* 			} */
-	/* 		} */
-	/* 	} */
-	/* } */
 }
 
 /*
@@ -2619,20 +2605,6 @@ static void R_ReleaseBuiltinScreenImageSet( refScreenTexSet_t *st ) {
 		if( st->screenPPCopies[j] ) {
 			R_FreeImage( st->screenPPCopies[j] );
 			st->screenPPCopies[j] = NULL;
-		}
-	}
-
-	if( st->screenOverbrightTex ) {
-		R_FreeImage( st->screenOverbrightTex );
-		st->screenOverbrightTex = NULL;
-	}
-
-	for( i = 0; i < NUM_BLOOM_LODS; i++ ) {
-		for( j = 0; j < 2; j++ ) {
-			if( st->screenBloomLodTex[j][j] ) {
-				R_FreeImage( st->screenBloomLodTex[i][j] );
-				st->screenBloomLodTex[i][j] = NULL;
-			}
 		}
 	}
 }

@@ -58,8 +58,6 @@ typedef vec_t instancePoint_t[8]; // quaternion for rotation + xyz pos + uniform
 #define MAX_PORTAL_SURFACES     32
 #define MAX_PORTAL_TEXTURES     64
 
-#define NUM_BLOOM_LODS          4
-
 #define BACKFACE_EPSILON        4
 
 #define ON_EPSILON              0.03125 // 1/32 to keep floating point happy
@@ -145,8 +143,6 @@ typedef struct refScreenTexSet_s {
 	image_t         *screenPPCopies[2];
 	image_t         *screenDepthTex;
 	image_t         *screenDepthTexCopy;
-	image_t         *screenOverbrightTex; // the overbrights output target
-	image_t         *screenBloomLodTex[NUM_BLOOM_LODS][2]; // lods + backups for bloom
 	int multisampleTarget;                // multisample fbo
 } refScreenTexSet_t;
 
@@ -469,8 +465,6 @@ extern cvar_t *r_soft_particles_scale;
 extern cvar_t *r_hdr;
 extern cvar_t *r_hdr_gamma;
 extern cvar_t *r_hdr_exposure;
-
-extern cvar_t *r_bloom;
 
 extern cvar_t *r_fxaa;
 extern cvar_t *r_samples;
@@ -945,8 +939,6 @@ void        *R_AddSkySurfToDrawList( drawList_t *list, const shader_t *shader, c
 //====================================================================
 
 typedef struct {
-	int overbrightBits;                     // map specific overbright bits
-
 	float ambient[3];
 	byte_vec4_t outlineColor;
 	byte_vec4_t environmentColor;

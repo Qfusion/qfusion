@@ -175,11 +175,9 @@ enum {
 // fxaa
 #define GLSL_SHADER_FXAA_FXAA3                  GLSL_BIT( 32 )
 
-// hdr/bloom/tone-mapping/color-correction
+// hdr/color-correction
 #define GLSL_SHADER_COLOR_CORRECTION_LUT        GLSL_BIT( 32 )
 #define GLSL_SHADER_COLOR_CORRECTION_HDR        GLSL_BIT( 33 )
-#define GLSL_SHADER_COLOR_CORRECTION_OVERBRIGHT GLSL_BIT( 34 )
-#define GLSL_SHADER_COLOR_CORRECTION_BLOOM      GLSL_BIT( 35 )
 
 void RP_Init( void );
 void RP_Shutdown( void );

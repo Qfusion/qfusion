@@ -24,8 +24,6 @@ enum {
 	PPFX_SOFT_PARTICLES,
 	PPFX_TONE_MAPPING,
 	PPFX_COLOR_CORRECTION,
-	PPFX_OVERBRIGHT_TARGET,
-	PPFX_BLOOM,
 	PPFX_FXAA,
 	PPFX_BLUR,
 };
@@ -34,8 +32,6 @@ enum {
 	PPFX_BIT_SOFT_PARTICLES = RF_BIT( PPFX_SOFT_PARTICLES ),
 	PPFX_BIT_TONE_MAPPING = RF_BIT( PPFX_TONE_MAPPING ),
 	PPFX_BIT_COLOR_CORRECTION = RF_BIT( PPFX_COLOR_CORRECTION ),
-	PPFX_BIT_OVERBRIGHT_TARGET = RF_BIT( PPFX_OVERBRIGHT_TARGET ),
-	PPFX_BIT_BLOOM = RF_BIT( PPFX_BLOOM ),
 	PPFX_BIT_FXAA = RF_BIT( PPFX_FXAA ),
 	PPFX_BIT_BLUR = RF_BIT( PPFX_BLUR ),
 };
@@ -339,7 +335,6 @@ void R_RenderScene( const refdef_t *fd ) {
 	int samples = 0;
 	image_t *ppSource;
 	shader_t *cc;
-	image_t *bloomTex[NUM_BLOOM_LODS];
 
 	if( r_norefresh->integer ) {
 		return;
@@ -453,9 +448,6 @@ void R_RenderScene( const refdef_t *fd ) {
 			if( r_fxaa->integer ) {
 				fbFlags |= PPFX_BIT_FXAA;
 			}
-			if( r_bloom->integer && rn.st == &rsh.stf && rsh.st.screenBloomLodTex[NUM_BLOOM_LODS - 1][1] ) {
-				fbFlags |= PPFX_BIT_OVERBRIGHT_TARGET | PPFX_BIT_COLOR_CORRECTION;
-			}
 			if( fd->rdflags & RDF_BLURRED ) {
 				fbFlags |= PPFX_BIT_BLUR;
 				fbFlags &= ~PPFX_BIT_FXAA;
@@ -546,7 +538,7 @@ void R_RenderScene( const refdef_t *fd ) {
 
 	fbFlags &= ~PPFX_BIT_SOFT_PARTICLES;
 
-	// apply tone mapping (and possibly color correction too, if not doing the bloom as well)
+	// apply tone mapping/color correction
 	if( fbFlags & PPFX_BIT_TONE_MAPPING ) {
 		unsigned numImages = 0;
 		image_t *images[MAX_SHADER_IMAGES] = { NULL };
@@ -555,20 +547,7 @@ void R_RenderScene( const refdef_t *fd ) {
 		fbFlags &= ~PPFX_BIT_TONE_MAPPING;
 		dest = fbFlags ? rsh.st.screenPPCopies[ppFrontBuffer] : NULL; // LDR
 
-		if( fbFlags & PPFX_BIT_OVERBRIGHT_TARGET ) {
-			fbFlags &= ~PPFX_BIT_OVERBRIGHT_TARGET;
-
-			if( !RFB_AttachTextureToObject( dest->fbo, false, 1, rsh.st.screenOverbrightTex ) ) {
-				dest = fbFlags ? rsh.st.screenPPCopies[ppFrontBuffer] : NULL; // re-evaluate
-			} else {
-				fbFlags |= PPFX_BIT_BLOOM;
-			}
-		}
-
-		if( fbFlags & PPFX_BIT_BLOOM ) {
-			images[1] = rsh.st.screenOverbrightTex;
-			numImages = 2;
-		} else if( cc ) {
+		if( cc ) {
 			images[0] = cc->passes[0].images[0];
 			numImages = 2;
 			fbFlags &= ~PPFX_BIT_COLOR_CORRECTION;
@@ -584,30 +563,6 @@ void R_RenderScene( const refdef_t *fd ) {
 
 		ppFrontBuffer ^= 1;
 		ppSource = dest;
-
-		if( fbFlags & PPFX_BIT_BLOOM ) {
-			// detach
-			RFB_AttachTextureToObject( dest->fbo, false, 1, NULL );
-		}
-	}
-
-	// apply bloom
-	if( fbFlags & PPFX_BIT_BLOOM ) {
-		image_t *src;
-
-		// continously downscale and blur
-		src = rsh.st.screenOverbrightTex;
-		for( l = 0; l < NUM_BLOOM_LODS; l++ ) {
-			// halve the resolution
-			R_BlitTextureToScrFbo( fd,
-								   src, rsh.st.screenBloomLodTex[l][0]->fbo,
-								   GLSL_PROGRAM_TYPE_NONE,
-								   colorWhite, 0,
-								   0, NULL, 0 );
-
-			src = R_BlurTextureToScrFbo( fd, rsh.st.screenBloomLodTex[l][0], rsh.st.screenBloomLodTex[l][1] );
-			bloomTex[l] = src;
-		}
 	}
 
 	// apply color correction
@@ -617,10 +572,6 @@ void R_RenderScene( const refdef_t *fd ) {
 		image_t *images[MAX_SHADER_IMAGES] = { NULL };
 
 		fbFlags &= ~PPFX_BIT_COLOR_CORRECTION;
-		if( fbFlags & PPFX_BIT_BLOOM ) {
-			memcpy( images + 2, bloomTex, sizeof( image_t * ) * NUM_BLOOM_LODS );
-			fbFlags &= ~PPFX_BIT_BLOOM;
-		}
 		images[0] = cc ? cc->passes[0].images[0] : NULL;
 		numImages = MAX_SHADER_IMAGES;
 

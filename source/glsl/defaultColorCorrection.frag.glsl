@@ -9,13 +9,6 @@ uniform sampler2D u_BaseTexture;
 uniform sampler2D u_ColorLUT;
 #endif
 
-#ifdef APPLY_BLOOM
-uniform sampler2D u_BloomTexture0;
-uniform sampler2D u_BloomTexture1;
-uniform sampler2D u_BloomTexture2;
-uniform sampler2D u_BloomTexture3;
-#endif
-
 const float W = 0.90; // the white point
 const float B = 0.80; // the bright point for bloom
 
@@ -40,17 +33,6 @@ vec3 ToneMap(vec3 c)
 	return ACESFilm(c / 2.0) / ACESFilm(vec3(W) / 2.0);
 }
 
-#endif
-
-#ifdef APPLY_BLOOM
-vec3 Bloom(vec2 t)
-{
-	vec3 bloom = qf_texture(u_BloomTexture0, t).rgb +
-				 qf_texture(u_BloomTexture1, t).rgb +
-				 qf_texture(u_BloomTexture2, t).rgb +
-				 qf_texture(u_BloomTexture3, t).rgb;
-	return clamp(bloom, 0.0, 1.0);
-}
 #endif
 
 #ifdef APPLY_LUT
@@ -90,32 +72,13 @@ void main(void)
 
 #endif
 
-#ifdef APPLY_OVEBRIGHT
-
-	qf_FragColor = vec4(coords, texel.a);
-	qf_BrightColor = vec4(coords - clamp(coords, 0.0, B), texel.a);
-	
-#else
-
 #if defined(APPLY_LUT) && defined(APPLY_SRGB2LINEAR)
 	coords = clamp(coords, 0.0, 1.0);
 #endif
 
 #ifdef APPLY_LUT
 	coords = ColorMap(coords);
-
-#ifdef APPLY_BLOOM
-	coords += ColorMap(Bloom(v_TexCoord));
-#endif // APPLY_BLOOM
-
-#else
-
-#ifdef APPLY_BLOOM
-	coords += Bloom(v_TexCoord);
-#endif // APPLY_BLOOM
-
 #endif // APPLY_LUT
 
 	qf_FragColor = vec4(coords, texel.a);
-#endif // APPLY_OUT_BLOOM
 }

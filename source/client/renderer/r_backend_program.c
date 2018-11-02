@@ -1640,12 +1640,6 @@ static void RB_RenderMeshGLSL_ColorCorrection( const shaderpass_t *pass, r_glslf
 	if( pass->images[1] ) { // lut
 		programFeatures |= GLSL_SHADER_COLOR_CORRECTION_LUT;
 	}
-	if( pass->images[2] ) { // output bloom
-		programFeatures |= GLSL_SHADER_COLOR_CORRECTION_OVERBRIGHT;
-	}
-	if( pass->images[3] ) { // apply bloom
-		programFeatures |= GLSL_SHADER_COLOR_CORRECTION_BLOOM;
-	}
 
 	if( pass->images[0]->flags & IT_FLOAT ) {
 		if( glConfig.sSRGB ) {
@@ -1664,11 +1658,6 @@ static void RB_RenderMeshGLSL_ColorCorrection( const shaderpass_t *pass, r_glslf
 	RB_BindImage( 0, pass->images[0] );
 	if( pass->images[1] ) {
 		RB_BindImage( 1, pass->images[1] );
-	}
-	for( i = 0; i < NUM_BLOOM_LODS; i++ ) {
-		if( pass->images[3 + i] ) {
-			RB_BindImage( 2 + i, pass->images[3 + i] );
-		}
 	}
 
 	// update uniforms

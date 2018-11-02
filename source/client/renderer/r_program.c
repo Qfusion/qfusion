@@ -866,8 +866,6 @@ static const glsl_feature_t glsl_features_colcorrection[] =
 
 	{ GLSL_SHADER_COLOR_CORRECTION_LUT, "#define APPLY_LUT\n", "_lut" },
 	{ GLSL_SHADER_COLOR_CORRECTION_HDR, "#define APPLY_HDR\n", "_hdr" },
-	{ GLSL_SHADER_COLOR_CORRECTION_OVERBRIGHT, "#define APPLY_OVEBRIGHT\n", "_obloom" },
-	{ GLSL_SHADER_COLOR_CORRECTION_BLOOM, "#define APPLY_BLOOM\n", "_bloom" },
 
 	{ 0, NULL, NULL }
 };
@@ -2325,7 +2323,6 @@ static void RP_GetUniformLocations( glsl_program_t *program ) {
 	int locDiffuseTexture;
 	int locStripesTexture;
 	int locDepthTexture;
-	int locBloomTexture[NUM_BLOOM_LODS];
 	int locYUVTextureY;
 	int locYUVTextureU;
 	int locYUVTextureV;
@@ -2375,9 +2372,6 @@ static void RP_GetUniformLocations( glsl_program_t *program ) {
 	locYUVTextureY = glGetUniformLocation( program->object, "u_YUVTextureY" );
 	locYUVTextureU = glGetUniformLocation( program->object, "u_YUVTextureU" );
 	locYUVTextureV = glGetUniformLocation( program->object, "u_YUVTextureV" );
-
-	for( i = 0; i < NUM_BLOOM_LODS; i++ )
-		locBloomTexture[i] = glGetUniformLocation( program->object, va_r( tmp, sizeof( tmp ), "u_BloomTexture%i", i ) );
 
 	locColorLUT = glGetUniformLocation( program->object, "u_ColorLUT" );
 	locCubeFilter = glGetUniformLocation( program->object, "u_CubeFilter" );
@@ -2529,9 +2523,6 @@ static void RP_GetUniformLocations( glsl_program_t *program ) {
 	if( locColorLUT >= 0 ) {
 		glUniform1i( locColorLUT, 1 );
 	}
-
-	for( i = 0; i < NUM_BLOOM_LODS && locBloomTexture[i] >= 0; i++ )
-		glUniform1i( locBloomTexture[i], 2 + i );
 
 	if( locCubeFilter >= 0 ) {
 		glUniform1i( locCubeFilter, 5 );
