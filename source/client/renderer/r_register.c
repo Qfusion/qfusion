@@ -154,7 +154,6 @@ cvar_t *r_maxglslbones;
 cvar_t *r_multithreading;
 
 static bool r_verbose;
-static bool r_postinit;
 
 static void R_FinalizeGLExtensions( void );
 static void R_GfxInfo_f( void );
@@ -575,8 +574,6 @@ rserr_t R_Init( bool verbose ) {
 	r_mempool = R_AllocPool( NULL, "Rendering Frontend" );
 
 	r_verbose = verbose;
-
-	r_postinit = true;
 
 	R_Register();
 
