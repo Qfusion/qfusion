@@ -37,7 +37,6 @@ end of unit intermissions
 
 vrect_t scr_vrect;
 
-cvar_t *cg_viewSize;
 cvar_t *cg_centerTime;
 cvar_t *cg_showFPS;
 cvar_t *cg_showPointedPlayer;
@@ -198,49 +197,9 @@ void CG_ShowOverlayMenu( int state, bool showCursor ) {
 * Sets scr_vrect, the coordinates of the rendered window
 */
 void CG_CalcVrect( void ) {
-	int size;
-
-	// bound viewsize
-	if( cg_viewSize->integer < 40 ) {
-		trap_Cvar_Set( cg_viewSize->name, "40" );
-	} else if( cg_viewSize->integer > 100 ) {
-		trap_Cvar_Set( cg_viewSize->name, "100" );
-	}
-
-	size = cg_viewSize->integer;
-
-	if( size == 100 ) {
-		scr_vrect.width = cgs.vidWidth;
-		scr_vrect.height = cgs.vidHeight;
-		scr_vrect.x = scr_vrect.y = 0;
-	} else {
-		scr_vrect.width = cgs.vidWidth * size / 100;
-		scr_vrect.width &= ~1;
-
-		scr_vrect.height = cgs.vidHeight * size / 100;
-		scr_vrect.height &= ~1;
-
-		scr_vrect.x = ( cgs.vidWidth - scr_vrect.width ) / 2;
-		scr_vrect.y = ( cgs.vidHeight - scr_vrect.height ) / 2;
-	}
-}
-
-/*
-* CG_SizeUp_f
-*
-* Keybinding command
-*/
-static void CG_SizeUp_f( void ) {
-	trap_Cvar_SetValue( cg_viewSize->name, cg_viewSize->integer + 10 );
-}
-
-/*
-* CG_SizeDown_f
-*
-* Keybinding command
-*/
-static void CG_SizeDown_f( void ) {
-	trap_Cvar_SetValue( cg_viewSize->name, cg_viewSize->integer - 10 );
+	scr_vrect.width = cgs.vidWidth;
+	scr_vrect.height = cgs.vidHeight;
+	scr_vrect.x = scr_vrect.y = 0;
 }
 
 //============================================================================
@@ -251,7 +210,6 @@ static void CG_SizeDown_f( void ) {
 void CG_ScreenInit( void ) {
 	int i;
 
-	cg_viewSize =       trap_Cvar_Get( "cg_viewSize", "100", CVAR_ARCHIVE );
 	cg_showFPS =        trap_Cvar_Get( "cg_showFPS", "0", CVAR_ARCHIVE );
 	cg_showHUD =        trap_Cvar_Get( "cg_showHUD", "1", CVAR_ARCHIVE );
 	cg_draw2D =     trap_Cvar_Get( "cg_draw2D", "1", 0 );
@@ -306,8 +264,6 @@ void CG_ScreenInit( void ) {
 	//
 	// register our commands
 	//
-	trap_Cmd_AddCommand( "sizeup", CG_SizeUp_f );
-	trap_Cmd_AddCommand( "sizedown", CG_SizeDown_f );
 	trap_Cmd_AddCommand( "help_hud", Cmd_CG_PrintHudHelp_f );
 	trap_Cmd_AddCommand( "gamemenu", CG_GameMenu_f );
 
@@ -320,8 +276,6 @@ void CG_ScreenInit( void ) {
 */
 void CG_ScreenShutdown( void ) {
 	trap_Cmd_RemoveCommand( "gamemenu" );
-	trap_Cmd_RemoveCommand( "sizeup" );
-	trap_Cmd_RemoveCommand( "sizedown" );
 	trap_Cmd_RemoveCommand( "help_hud" );
 
 	trap_Cmd_RemoveCommand( "+overlayMenu" );
@@ -1238,58 +1192,6 @@ bool CG_LoadingItemName( const char *str ) {
 	}
 	cgs.precacheCount++;
 	return true;
-}
-
-/*
-* CG_TileClearRect
-*
-* This repeats tile graphic to fill the screen around a sized down
-* refresh window.
-*/
-static void CG_TileClearRect( int x, int y, int w, int h, struct shader_s *shader ) {
-	float iw, ih;
-
-	iw = 1.0f / 64.0;
-	ih = 1.0f / 64.0;
-
-	trap_R_DrawStretchPic( x, y, w, h, x * iw, y * ih, ( x + w ) * iw, ( y + h ) * ih, colorWhite, shader );
-}
-
-/*
-* CG_TileClear
-*
-* Clear any parts of the tiled background that were drawn on last frame
-*/
-void CG_TileClear( void ) {
-	int w, h;
-	int top, bottom, left, right;
-	struct shader_s *backTile;
-
-	if( cg_viewSize->integer == 100 ) {
-		return; // full screen rendering
-
-	}
-	w = cgs.vidWidth;
-	h = cgs.vidHeight;
-
-	top = scr_vrect.y;
-	bottom = top + scr_vrect.height - 1;
-	left = scr_vrect.x;
-	right = left + scr_vrect.width - 1;
-
-	backTile = CG_MediaShader( cgs.media.shaderBackTile );
-
-	// clear above view screen
-	CG_TileClearRect( 0, 0, w, top, backTile );
-
-	// clear below view screen
-	CG_TileClearRect( 0, bottom, w, h - bottom, backTile );
-
-	// clear left of view screen
-	CG_TileClearRect( 0, top, left, bottom - top + 1, backTile );
-
-	// clear left of view screen
-	CG_TileClearRect( right, top, w - right, bottom - top + 1, backTile );
 }
 
 //===============================================================

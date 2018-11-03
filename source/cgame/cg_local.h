@@ -768,7 +768,6 @@ void CG_ScreenShutdown( void );
 void CG_Draw2D( void );
 void CG_DrawHUD( bool touch );
 void CG_CalcVrect( void );
-void CG_TileClear( void );
 void CG_DrawLoading( void );
 void CG_CenterPrint( const char *str );
 

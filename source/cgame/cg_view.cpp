@@ -1048,7 +1048,6 @@ void CG_RenderView( int frameTime, int realFrameTime, int64_t realTime, int64_t 
 	CG_FlashGameWindow(); // notify player of important game events
 
 	CG_CalcVrect(); // find sizes of the 3d drawing screen
-	CG_TileClear(); // clear any dirty part of the background
 
 	CG_UpdateChaseCam();
 
