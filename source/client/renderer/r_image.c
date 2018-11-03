@@ -24,6 +24,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define MAX_GLIMAGES        8192
 #define IMAGES_HASH_SIZE    64
 
+#define DEPRECATED_GL_LUMINANCE 0x1909
+#define DEPRECATED_GL_LUMINANCE_ALPHA 0x190a
+
 typedef struct {
 	int ctx;
 	int side;
@@ -702,7 +705,7 @@ static int R_TextureInternalFormat( int samples, int flags, int pixelType ) {
 	}
 
 	if( samples == 2 ) {
-		assert( !sRGB );
+		/* assert( !sRGB ); */ // TODO: WTF
 		return GL_RG;
 	}
 
@@ -848,6 +851,16 @@ static void R_SetupTexParameters( int flags, int upload_width, int upload_height
 		glTexParameteri( target, GL_TEXTURE_SWIZZLE_G, GL_ONE );
 		glTexParameteri( target, GL_TEXTURE_SWIZZLE_B, GL_ONE );
 		glTexParameteri( target, GL_TEXTURE_SWIZZLE_A, GL_RED );
+	} else if( flags & IT_LUM ) {
+		glTexParameteri( target, GL_TEXTURE_SWIZZLE_R, GL_RED );
+		glTexParameteri( target, GL_TEXTURE_SWIZZLE_G, GL_RED );
+		glTexParameteri( target, GL_TEXTURE_SWIZZLE_B, GL_RED );
+		glTexParameteri( target, GL_TEXTURE_SWIZZLE_A, GL_ONE );
+	} else if( flags & IT_LUMALPHA ) {
+		glTexParameteri( target, GL_TEXTURE_SWIZZLE_R, GL_RED );
+		glTexParameteri( target, GL_TEXTURE_SWIZZLE_G, GL_RED );
+		glTexParameteri( target, GL_TEXTURE_SWIZZLE_B, GL_RED );
+		glTexParameteri( target, GL_TEXTURE_SWIZZLE_A, GL_GREEN );
 	}
 }
 
@@ -1281,6 +1294,8 @@ static bool R_IsKTXFormatValid( int format, int type ) {
 				case GL_RG:
 				case GL_ALPHA:
 				case GL_RED:
+				case DEPRECATED_GL_LUMINANCE:
+				case DEPRECATED_GL_LUMINANCE_ALPHA:
 					return true;
 			}
 			return false;
@@ -1456,6 +1471,16 @@ static bool R_LoadKTX( int ctx, image_t *image, const char *pathname ) {
 				image->samples = 1;
 				image->flags |= IT_ALPHAMASK;
 				internalFormat = GL_RED;
+				break;
+			case DEPRECATED_GL_LUMINANCE:
+				image->samples = 1;
+				image->flags |= IT_LUM;
+				internalFormat = GL_RED;
+				break;
+			case DEPRECATED_GL_LUMINANCE_ALPHA:
+				image->samples = 2;
+				image->flags |= IT_LUMALPHA;
+				internalFormat = GL_RG;
 				break;
 		}
 
@@ -1984,7 +2009,6 @@ image_t *R_FindImage( const char *name, const char *suffix, int flags, int minmi
 	image_t *image, *hnode;
 	char *pathname;
 	uint8_t *empty_data[6] = { NULL, NULL, NULL, NULL, NULL, NULL };
-	bool loaded;
 
 	if( !name || !name[0] ) {
 		return NULL; //	ri.Com_Error (ERR_DROP, "R_FindImage: NULL name");
@@ -2059,7 +2083,7 @@ image_t *R_FindImage( const char *name, const char *suffix, int flags, int minmi
 		}
 	}
 
-	loaded = R_LoadImageFromDisk( QGL_CONTEXT_MAIN, image );
+	bool loaded = R_LoadImageFromDisk( QGL_CONTEXT_MAIN, image );
 	R_UnbindImage( image );
 
 	if( !loaded ) {
