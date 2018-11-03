@@ -28,8 +28,6 @@ EXTERN_API_FUNC void *GetCGameAPI( void * );
 
 static mempool_t *cl_gamemodulepool;
 
-static void *module_handle;
-
 static async_stream_module_t *cg_async_stream;
 
 static int cg_load_seq = 1;
@@ -360,13 +358,8 @@ float VID_GetPixelRatio() { return 1; }
 * CL_GameModule_Init
 */
 void CL_GameModule_Init( void ) {
-	int apiversion;
 	int64_t start;
 	cgame_import_t import;
-	void *( *builtinAPIfunc )( void * ) = NULL;
-#ifdef CGAME_HARD_LINKED
-	builtinAPIfunc = GetCGameAPI;
-#endif
 
 	// stop all playing sounds
 	CL_SoundModule_StopAllSounds( true, true );
@@ -532,22 +525,7 @@ void CL_GameModule_Init( void ) {
 
 	import.asGetAngelExport = Com_asGetAngelExport;
 
-	if( builtinAPIfunc ) {
-		cge = builtinAPIfunc( &import );
-	} else {
-		cge = (cgame_export_t *)Com_LoadGameLibrary( "cgame", "GetCGameAPI", &module_handle, &import, cls.sv_pure, NULL );
-	}
-	if( !cge ) {
-		Com_Error( ERR_DROP, "Failed to load client game DLL" );
-	}
-
-	apiversion = cge->API();
-	if( apiversion != CGAME_API_VERSION ) {
-		Com_UnloadGameLibrary( &module_handle );
-		Mem_FreePool( &cl_gamemodulepool );
-		cge = NULL;
-		Com_Error( ERR_DROP, "Client game is version %i, not %i", apiversion, CGAME_API_VERSION );
-	}
+	cge = GetCGameAPI( &import );
 
 	CL_GameModule_AsyncStream_Init();
 
@@ -590,7 +568,6 @@ void CL_GameModule_Shutdown( void ) {
 
 	cge->Shutdown();
 	Mem_FreePool( &cl_gamemodulepool );
-	Com_UnloadGameLibrary( &module_handle );
 	cge = NULL;
 }
 
