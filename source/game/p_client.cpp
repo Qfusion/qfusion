@@ -838,7 +838,7 @@ static int G_SanitizeUserString( char *string, size_t size ) {
 * G_SetName
 */
 static void G_SetName( edict_t *ent, const char *original_name ) {
-	const char *invalid_prefixes[] = { "console", "[team]", "[spec]", "[bot]", "[coach]", "[tv]", NULL };
+	const char *invalid_prefixes[] = { "console", "[team]", "[spec]", "[bot]", "[coach]", NULL };
 	edict_t *other;
 	char name[MAX_NAME_BYTES];
 	char colorless[MAX_NAME_BYTES];
@@ -874,9 +874,6 @@ static void G_SetName( edict_t *ent, const char *original_name ) {
 	}
 
 	maxchars = MAX_NAME_CHARS;
-	if( ent->r.client->isTV ) {
-		maxchars = min( maxchars + 10, MAX_NAME_BYTES - 1 );
-	}
 
 	// Limit the name to MAX_NAME_CHARS printable characters
 	// (non-ascii utf-8 sequences are currently counted as 2 or more each, sorry)
@@ -924,7 +921,7 @@ static void G_SetName( edict_t *ent, const char *original_name ) {
 * G_SetClan
 */
 static void G_SetClan( edict_t *ent, const char *original_clan ) {
-	const char *invalid_values[] = { "console", "spec", "bot", "coach", "tv", NULL };
+	const char *invalid_values[] = { "console", "spec", "bot", "coach", NULL };
 	char clan[MAX_CLANNAME_BYTES];
 	char colorless[MAX_CLANNAME_BYTES];
 	int i;
@@ -1112,7 +1109,7 @@ void ClientUserinfoChanged( edict_t *ent, char *userinfo ) {
 	// set name, it's validated and possibly changed first
 	Q_strncpyz( oldname, cl->netname, sizeof( oldname ) );
 	G_SetName( ent, Info_ValueForKey( userinfo, "name" ) );
-	if( oldname[0] && Q_stricmp( oldname, cl->netname ) && !cl->isTV && !CheckFlood( ent, false ) ) {
+	if( oldname[0] && Q_stricmp( oldname, cl->netname ) && !CheckFlood( ent, false ) ) {
 		G_PrintMsg( NULL, "%s%s is now known as %s%s\n", oldname, S_COLOR_WHITE, cl->netname, S_COLOR_WHITE );
 	}
 	if( !Info_SetValueForKey( userinfo, "name", cl->netname ) ) {
@@ -1203,24 +1200,6 @@ void ClientUserinfoChanged( edict_t *ent, char *userinfo ) {
 	s = Info_ValueForKey( userinfo, "mmflags" );
 	cl->mmflags = ( s == NULL ) ? 0 : strtoul( s, NULL, 10 );
 
-	// tv
-	if( cl->isTV ) {
-		s = Info_ValueForKey( userinfo, "tv_port" );
-		cl->tv.port = s ? atoi( s ) : 0;
-
-		s = Info_ValueForKey( userinfo, "tv_port6" );
-		cl->tv.port6 = s ? atoi( s ) : 0;
-
-		s = Info_ValueForKey( userinfo, "max_cl" );
-		cl->tv.maxclients = s ? atoi( s ) : 0;
-
-		s = Info_ValueForKey( userinfo, "num_cl" );
-		cl->tv.numclients = s ? atoi( s ) : 0;
-
-		s = Info_ValueForKey( userinfo, "chan" );
-		cl->tv.channel = s ? atoi( s ) : 0;
-	}
-
 	if( !G_ISGHOSTING( ent ) && trap_GetClientState( PLAYERNUM( ent ) ) >= CS_SPAWNED ) {
 		G_Client_AssignTeamSkin( ent, userinfo );
 	}
@@ -1244,7 +1223,7 @@ void ClientUserinfoChanged( edict_t *ent, char *userinfo ) {
 * Changing levels will NOT cause this to be called again, but
 * loadgames will.
 */
-bool ClientConnect( edict_t *ent, char *userinfo, bool fakeClient, bool tvClient ) {
+bool ClientConnect( edict_t *ent, char *userinfo, bool fakeClient ) {
 	char *value;
 
 	assert( ent );
@@ -1305,7 +1284,6 @@ bool ClientConnect( edict_t *ent, char *userinfo, bool fakeClient, bool tvClient
 	memset( ent->r.client, 0, sizeof( gclient_t ) );
 	ent->r.client->ps.playerNum = PLAYERNUM( ent );
 	ent->r.client->connecting = true;
-	ent->r.client->isTV = tvClient == true;
 	ent->r.client->team = TEAM_SPECTATOR;
 	G_Client_UpdateActivity( ent->r.client ); // activity detected
 
@@ -1380,72 +1358,6 @@ void ClientDisconnect( edict_t *ent, const char *reason ) {
 	GClip_UnlinkEntity( ent );
 
 	G_Match_CheckReadys();
-}
-
-/*
-* G_MoveClientToTV
-*
-* Sends cmd to connect to a non-full TV server with round robin balancing
-*/
-void G_MoveClientToTV( edict_t *ent ) {
-	int i;
-	gclient_t *client, *best;
-	static int last_tv = 0;
-	bool isIPv6;
-	char ip[MAX_INFO_VALUE];
-	int port;
-	const char *p;
-
-	if( !ent->r.client ) {
-		return;
-	}
-	if( ent->r.svflags & SVF_FAKECLIENT ) {
-		return;
-	}
-	if( ent->r.client->isTV ) {
-		return;
-	}
-
-	best = NULL;
-	for( i = 0; i < gs.maxclients; i++ ) {
-		client = &game.clients[( last_tv + 1 + i ) % gs.maxclients];
-		if( !client->isTV || client->connecting ) {
-			// not a TV or not ready yet
-			continue;
-		}
-		if( client->tv.numclients == client->tv.maxclients ) {
-			// full
-			continue;
-		}
-		if( !client->tv.channel ) {
-			// invalid userinfo/channel number
-			continue;
-		}
-		best = client;
-		break;
-	}
-
-	if( !best ) {
-		G_PrintMsg( ent, "Could not find a free TV server\n" );
-		return;
-	}
-
-	Q_strncpyz( ip, best->ip, sizeof( ip ) );
-
-	// check IP type
-	p = strstr( ip, "::" );
-	isIPv6 = p != NULL;
-
-	// strip port number from address string
-	p = strrchr( ip, ':' );
-	if( p != NULL ) {
-		ip[p - ip] = '\0';
-	}
-
-	port = isIPv6 ? best->tv.port6 : best->tv.port;
-
-	last_tv = best - game.clients;
-	trap_GameCmd( ent, va( "memo tv_moveto \"%s\" %s:%hu#%i", COM_RemoveColorTokens( best->netname ), ip, port, best->tv.channel ) );
 }
 
 //==============================================================
@@ -1628,7 +1540,7 @@ void ClientThink( edict_t *ent, usercmd_t *ucmd, int timeDelta ) {
 		client->ps.pmove.pm_type = PM_FREEZE;
 	} else if( ent->s.type == ET_GIB ) {
 		client->ps.pmove.pm_type = PM_GIB;
-	} else if( ent->movetype == MOVETYPE_NOCLIP || client->isTV ) {
+	} else if( ent->movetype == MOVETYPE_NOCLIP ) {
 		client->ps.pmove.pm_type = PM_SPECTATOR;
 	} else {
 		client->ps.pmove.pm_type = PM_NORMAL;
@@ -1637,10 +1549,6 @@ void ClientThink( edict_t *ent, usercmd_t *ucmd, int timeDelta ) {
 	// set up for pmove
 	memset( &pm, 0, sizeof( pmove_t ) );
 	pm.playerState = &client->ps;
-
-	if( !client->isTV ) {
-		pm.cmd = *ucmd;
-	}
 
 	// perform a pmove
 	Pmove( &pm );

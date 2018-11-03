@@ -415,9 +415,7 @@ void SV_SendClientMessages( void ) {
 			continue;
 		}
 
-		if( !client->tvclient ) {
-			SV_UpdateActivity();
-		}
+		SV_UpdateActivity();
 
 		if( client->state == CS_SPAWNED ) {
 			if( !SV_SendClientDatagram( client ) ) {

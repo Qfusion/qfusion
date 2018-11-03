@@ -63,7 +63,7 @@ void SV_ClientCloseDownload( client_t *client ) {
 * this is the only place a client_t is ever initialized
 */
 bool SV_ClientConnect( const socket_t *socket, const netadr_t *address, client_t *client, char *userinfo,
-					   int game_port, int challenge, bool fakeClient, bool tvClient,
+					   int game_port, int challenge, bool fakeClient,
 					   unsigned int ticket_id, int session_id ) {
 	int i;
 	edict_t *ent;
@@ -86,7 +86,7 @@ bool SV_ClientConnect( const socket_t *socket, const netadr_t *address, client_t
 	}
 
 	// get the game a chance to reject this connection or modify the userinfo
-	if( !ge->ClientConnect( ent, userinfo, fakeClient, tvClient ) ) {
+	if( !ge->ClientConnect( ent, userinfo, fakeClient ) ) {
 		return false;
 	}
 
@@ -95,8 +95,6 @@ bool SV_ClientConnect( const socket_t *socket, const netadr_t *address, client_t
 	memset( client, 0, sizeof( *client ) );
 	client->edict = ent;
 	client->challenge = challenge; // save challenge for checksumming
-
-	client->tvclient = tvClient;
 
 	client->mm_session = session_id;
 	client->mm_ticket = ticket_id;
@@ -239,7 +237,6 @@ void SV_DropClient( client_t *drop, int type, const char *format, ... ) {
 		drop->mv = false;
 	}
 
-	drop->tvclient = false;
 	drop->state = CS_ZOMBIE;    // become free in a few seconds
 	drop->name[0] = 0;
 }
@@ -818,10 +815,7 @@ static void SV_Multiview_f( client_t *client ) {
 	if( client->mv == mv ) {
 		return;
 	}
-	if( !client->tvclient ) {
-		return;     // allow MV connections only for TV
-
-	}
+	return;
 	if( !ge->ClientMultiviewChanged( client->edict, mv ) ) {
 		return;
 	}
@@ -1042,9 +1036,7 @@ void SV_ParseClientMessage( client_t *client, msg_t *msg ) {
 		return;
 	}
 
-	if( !client->tvclient ) {
-		SV_UpdateActivity();
-	}
+	SV_UpdateActivity();
 
 	// only allow one move command
 	move_issued = false;

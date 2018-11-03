@@ -172,8 +172,6 @@ typedef struct client_s {
 
 	netchan_t netchan;
 
-	bool tvclient;
-
 	int mm_session;
 	unsigned int mm_ticket;
 	char mm_login[MAX_INFO_VALUE];
@@ -449,7 +447,7 @@ void SV_BroadcastCommand( _Printf_format_string_ const char *format, ... );
 //
 void SV_ParseClientMessage( client_t *client, msg_t *msg );
 bool SV_ClientConnect( const socket_t *socket, const netadr_t *address, client_t *client, char *userinfo,
-					   int game_port, int challenge, bool fakeClient, bool tvClient,
+					   int game_port, int challenge, bool fakeClient,
 					   unsigned int ticket_id, int session_id );
 
 #ifndef _MSC_VER
