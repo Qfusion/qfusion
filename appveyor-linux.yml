@@ -2,6 +2,12 @@ version: "{build}"
 clone_depth: 1
 image: Ubuntu
 
+install:
+- sh: >-
+    sudo apt-get -y update
+
+    sudo apt-get -y install libvorbis-dev libtheora-dev
+
 build_script:
 - sh: >-
     git submodule update --init --recursive
