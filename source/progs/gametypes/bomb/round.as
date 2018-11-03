@@ -204,13 +204,21 @@ void oneVsMsg( int teamNum, uint enemies )
 	}
 }
 
-void swapTeams()
+void setTeams()
 {
-	// i'm so smug
-	
-	attackingTeam ^= defendingTeam;
-	defendingTeam ^= attackingTeam;
-	attackingTeam ^= defendingTeam;
+	uint limit = cvarScoreLimit.integer;
+
+	bool even = roundCount % 2 == 0;
+
+	if( limit == 0 || roundCount >= limit * 2 ) {
+		attackingTeam = even ? INITIAL_ATTACKERS : INITIAL_DEFENDERS;
+		defendingTeam = even ? INITIAL_DEFENDERS : INITIAL_ATTACKERS;
+		return;
+	}
+
+	bool first_half = roundCount < limit;
+	attackingTeam = first_half ? INITIAL_ATTACKERS : INITIAL_DEFENDERS;
+	defendingTeam = first_half ? INITIAL_DEFENDERS : INITIAL_ATTACKERS;
 }
 
 void newGame()
@@ -323,25 +331,10 @@ void roundNewState( uint state )
 		{
 			roundCountDown = COUNTDOWN_MAX;
 
-            oldAttackingTeam = attackingTeam;
-            oldDefendingTeam = defendingTeam;
+			oldAttackingTeam = attackingTeam;
+			oldDefendingTeam = defendingTeam;
 
-			// swap teams if scorelimit is 0, round == roundLimit or round >= roundLimit * 2
-			uint roundLimit = cvarScoreLimit.integer;
-
-			if ( roundLimit == 0 )
-			{
-				swapTeams();
-			}
-			else
-			{
-				roundLimit--;
-
-				if ( roundCount == roundLimit || roundCount >= roundLimit * 2 )
-				{
-					swapTeams();
-				}
-			}
+			setTeams();
 
 			roundCount++;
 
@@ -367,8 +360,8 @@ void roundNewState( uint state )
 			respawnAllPlayers();
 			disableMovement();
 
-            // This call clears site weights, so it should be done before bombGiveToRandom()/botSetCarrier()
-            BOMB_SetupNewBotsRound();
+			// This call clears site weights, so it should be done before bombGiveToRandom()/botSetCarrier()
+			BOMB_SetupNewBotsRound();
 
 			bombGiveToRandom();
 
