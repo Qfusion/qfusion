@@ -1,0 +1,9 @@
+version: 0.{build}
+
+build_script:
+- sh: >-
+    cd source
+
+    cmake .
+
+    msbuild ALL_BUILD.vcproj

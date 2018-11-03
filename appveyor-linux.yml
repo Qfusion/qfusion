@@ -1,0 +1,10 @@
+version: 0.{build}
+image: Ubuntu
+
+build_script:
+- sh: >-
+    cd source
+
+    cmake .
+
+    make -j$(nproc --all)
