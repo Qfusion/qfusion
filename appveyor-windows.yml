@@ -9,4 +9,4 @@ build_script:
 
     cmake .
 
-    msbuild ALL_BUILD.vcxproj
+    msbuild -maxcpucount ALL_BUILD.vcxproj
