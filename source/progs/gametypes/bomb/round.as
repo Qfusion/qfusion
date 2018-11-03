@@ -117,9 +117,6 @@ void playerKilled( Entity @victim, Entity @attacker, Entity @inflictor )
 	// add a round for the victim
 	victim.client.stats.addRound();
 	
-	// check for generic awards for the frag
-	award_playerKilled( @victim, @attacker, @inflictor );
-	
 	// check if the player's team is now dead
 	checkPlayersAlive( victim.team );
 }

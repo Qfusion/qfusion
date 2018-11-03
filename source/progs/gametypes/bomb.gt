@@ -6,7 +6,6 @@ generic/overlaymenu.as;
 generic/matchstates.as;
 generic/bots.as;
 generic/items.as;
-generic/awards.as;
 
 bomb/main.as;
 bomb/player.as;
