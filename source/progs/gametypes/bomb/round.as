@@ -271,7 +271,7 @@ void roundWonBy( int winner )
 			
 			// ch :
 			cPlayer @player = @playerFromClient( @ent.client );
-			if( player.oneVS > ONEVS_AWARD_COUNT )
+			if( player.oneVS > 0 )
 				// ent.client.addMetaAward( "Clean The House!" );
 				ent.client.addAward( "Clean The House!" );
 			
