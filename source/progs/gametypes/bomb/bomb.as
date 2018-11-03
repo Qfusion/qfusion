@@ -560,8 +560,7 @@ void bombThink()
 		}
 
 		case BOMBSTATE_DROPPED:
-			// do nothing
-			
+			bombModel.effects = EF_ROTATE_AND_BOB;
 			break;
 
 		case BOMBSTATE_PLANTING:
