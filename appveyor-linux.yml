@@ -3,6 +3,8 @@ image: Ubuntu
 
 build_script:
 - sh: >-
+    git submodule update --init --recursive
+
     cd source
 
     cmake .

@@ -2,6 +2,8 @@ version: 0.{build}
 
 build_script:
 - sh: >-
+    git submodule update --init --recursive
+
     cd source
 
     cmake .
