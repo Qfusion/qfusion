@@ -39,13 +39,11 @@ Cvar m_accel( "m_accel", "0", CVAR_ARCHIVE );
 Cvar m_accelStyle( "m_accelStyle", "0", CVAR_ARCHIVE );
 Cvar m_accelOffset( "m_accelOffset", "0", CVAR_ARCHIVE );
 Cvar m_accelPow( "m_accelPow", "2", CVAR_ARCHIVE );
-Cvar m_filter( "m_filter", "0", CVAR_ARCHIVE );
 Cvar m_pitch( "m_pitch", "0.022", CVAR_ARCHIVE );
 Cvar m_yaw( "m_yaw", "0.022", CVAR_ARCHIVE );
 Cvar m_sensCap( "m_sensCap", "0", CVAR_ARCHIVE );
 
 float mouse_x = 0, mouse_y = 0;
-float old_mouse_x = 0, old_mouse_y = 0;
 
 /*
 * Move
@@ -53,23 +51,8 @@ float old_mouse_x = 0, old_mouse_y = 0;
 void Move( int mx, int my ) {
 	float accelSensitivity;
 
-	// mouse filtering
-	switch( m_filter.integer ) {
-	case 1:
-	{
-		mouse_x = ( mx + old_mouse_x ) * 0.5;
-		mouse_y = ( my + old_mouse_y ) * 0.5;
-	}
-	break;
-
-	default: // no filtering
-		mouse_x = mx;
-		mouse_y = my;
-		break;
-	}
-
-	old_mouse_x = mx;
-	old_mouse_y = my;
+	mouse_x = mx;
+	mouse_y = my;
 
 	accelSensitivity = sensitivity.value;
 
@@ -147,5 +130,3 @@ Vec3 GetAngularMovement() {
 }
 
 }
-
-
