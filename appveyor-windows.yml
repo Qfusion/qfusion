@@ -1,7 +1,8 @@
 version: 0.{build}
+shallow_clone: true
 
 build_script:
-- sh: >-
+- cmd: >-
     git submodule update --init --recursive
 
     cd source
