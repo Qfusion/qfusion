@@ -1549,6 +1549,7 @@ void ClientThink( edict_t *ent, usercmd_t *ucmd, int timeDelta ) {
 	// set up for pmove
 	memset( &pm, 0, sizeof( pmove_t ) );
 	pm.playerState = &client->ps;
+	pm.cmd = *ucmd;
 
 	// perform a pmove
 	Pmove( &pm );
