@@ -97,7 +97,7 @@ Cvar cvarEnableCarriers(  "g_bomb_carriers",        "1",  CVAR_ARCHIVE );
 Cvar cvarSpawnProtection( "g_bomb_spawnprotection", "3",  CVAR_ARCHIVE );
 
 // read from this later
-Cvar cvarScoreLimit( "g_scorelimit", "16", CVAR_ARCHIVE );
+Cvar cvarScoreLimit( "g_scorelimit", "10", CVAR_ARCHIVE );
 
 // why doesn't AS have char arithmetic...
 const String[] SITE_LETTERS = { 'A', 'B' };
