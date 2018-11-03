@@ -1,5 +1,9 @@
 #! /bin/sh
 
-find . \( -name "*.lua" -or -name "*.c" -or -name "*.cpp" -or -name "*.h" -or -name "*.glsl" \) \
+sub=.
+if [ "$#" -ge 1 ]; then
+	sub=$1
+fi
+find $sub \( -name "*.lua" -or -name "*.c" -or -name "*.cpp" -or -name "*.h" -or -name "*.glsl" -or -name "*.as" \) \
 	| xargs wc -l
 
