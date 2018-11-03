@@ -275,10 +275,6 @@ void SV_Status_f( void ) {
 			Com_Printf( "%5i", cl->rate );
 		}
 #endif
-		Com_Printf( " " );
-		if( cl->mv ) {
-			Com_Printf( "MV" );
-		}
 		Com_Printf( "\n" );
 	}
 	Com_Printf( "\n" );

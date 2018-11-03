@@ -585,15 +585,6 @@ void SV_Map( const char *level, bool devmap ) {
 			svs.clients[i].state = CS_CONNECTING;
 		}
 
-		// limit number of connected multiview clients
-		if( svs.clients[i].mv ) {
-			if( sv.num_mv_clients < sv_maxmvclients->integer ) {
-				sv.num_mv_clients++;
-			} else {
-				svs.clients[i].mv = false;
-			}
-		}
-
 		svs.clients[i].lastframe = -1;
 		memset( svs.clients[i].gameCommands, 0, sizeof( svs.clients[i].gameCommands ) );
 	}

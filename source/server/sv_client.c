@@ -232,11 +232,6 @@ void SV_DropClient( client_t *drop, int type, const char *format, ... ) {
 		NET_CloseSocket( &drop->socket );
 	}
 
-	if( drop->mv ) {
-		sv.num_mv_clients--;
-		drop->mv = false;
-	}
-
 	drop->state = CS_ZOMBIE;    // become free in a few seconds
 	drop->name[0] = 0;
 }
@@ -804,37 +799,6 @@ static void SV_NoDelta_f( client_t *client ) {
 	client->lastframe = -1; // jal : I'm not sure about this. Seems like it's missing but...
 }
 
-/*
-* SV_Multiview_f
-*/
-static void SV_Multiview_f( client_t *client ) {
-	bool mv;
-
-	mv = ( atoi( Cmd_Argv( 1 ) ) != 0 );
-
-	if( client->mv == mv ) {
-		return;
-	}
-	return;
-	if( !ge->ClientMultiviewChanged( client->edict, mv ) ) {
-		return;
-	}
-
-	if( mv ) {
-		if( sv.num_mv_clients < sv_maxmvclients->integer ) {
-			client->mv = true;
-			sv.num_mv_clients++;
-		} else {
-			SV_AddGameCommand( client, "pr \"Can't multiview: maximum number of allowed multiview clients reached.\"" );
-			return;
-		}
-	} else {
-		assert( sv.num_mv_clients );
-		client->mv = false;
-		sv.num_mv_clients--;
-	}
-}
-
 typedef struct {
 	const char *name;
 	void ( *func )( client_t *client );
@@ -851,8 +815,6 @@ ucmd_t ucmds[] =
 	{ "usri", SV_UserinfoCommand_f },
 
 	{ "nodelta", SV_NoDelta_f },
-
-	{ "multiview", SV_Multiview_f },
 
 	// issued by hand at client consoles
 	{ "info", SV_ShowServerinfo_f },

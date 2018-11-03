@@ -59,7 +59,6 @@ typedef struct {
 
 	char configstrings[MAX_CONFIGSTRINGS][MAX_CONFIGSTRING_CHARS];
 	entity_state_t baselines[MAX_EDICTS];
-	int num_mv_clients;     // current number, <= sv_maxmvclients
 
 	//
 	// global variables shared between game and server
@@ -311,7 +310,6 @@ extern cvar_t *sv_http_upstream_realip_header;
 
 extern cvar_t *sv_skilllevel;
 extern cvar_t *sv_maxclients;
-extern cvar_t *sv_maxmvclients;
 
 extern cvar_t *sv_enforcetime;
 extern cvar_t *sv_showRcon;
