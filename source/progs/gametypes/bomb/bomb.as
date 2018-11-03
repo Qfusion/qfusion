@@ -46,8 +46,8 @@ const uint BOMBDROP_NORMAL = 0; // dropped manually
 const uint BOMBDROP_KILLED = 1; // died
 const uint BOMBDROP_TEAM = 2; // changed teams
 
-const uint FAST_PLANT_TIME = 10;	// seconds for fastplant
-const uint LAST_CALL_TIME = 1;	// last call for defuse or arm
+const uint FAST_PLANT_TIME = 10000;	// seconds for fastplant
+const uint LAST_CALL_TIME = 1000;	// last call for defuse or arm
 
 //eBombStates bombState = BOMBSTATE_IDLE; FIXME enum
 uint bombState = BOMBSTATE_IDLE;
@@ -105,29 +105,12 @@ Vec3 getMiddle( Entity @ent )
 
 bool isFastPlant()
 {
-	int64 maxTime = FAST_PLANT_TIME * 1000 + int( cvarExplodeTime.value * 1000 );
-	if( (levelTime - roundStartTime) < maxTime )
-		return true;
-
-	return false;
-}
-
-bool isLastCallArm()
-{
-	int64 minTime = ( int( cvarRoundTime.value ) - LAST_CALL_TIME ) * 1000;
-	if( levelTime > minTime )
-		return true;
-	else
-		return false;
+	return levelTime - roundStartTime < FAST_PLANT_TIME;
 }
 
 bool isLastCallDefuse()
 {
-	int64 minTime = ( int( cvarExplodeTime.value ) - LAST_CALL_TIME ) * 1000;
-	if( bombActionTime > minTime )
-		return true;
-	else
-		return false;
+	return bombActionTime - levelTime <= LAST_CALL_TIME;
 }
 
 void bombModelCreate()
