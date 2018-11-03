@@ -2,11 +2,7 @@ version: "{build}"
 clone_depth: 1
 
 build_script:
-- cmd: >-
-    git submodule update --init --recursive
-
-    cd source
-
-    cmake .
-
-    msbuild -maxcpucount ALL_BUILD.vcxproj
+- cmd: git submodule update --init --recursive
+- cmd: cd source
+- cmd: cmake .
+- cmd: msbuild -maxcpucount ALL_BUILD.vcxproj

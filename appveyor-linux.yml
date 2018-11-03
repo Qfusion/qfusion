@@ -2,18 +2,10 @@ version: "{build}"
 clone_depth: 1
 image: Ubuntu
 
-install:
-- sh: >-
-    sudo apt-get -y update
-
-    sudo apt-get -y install libvorbis-dev libtheora-dev
-
 build_script:
-- sh: >-
-    git submodule update --init --recursive
-
-    cd source
-
-    cmake .
-
-    make -j$(nproc --all)
+- sh: sudo apt-get -y update
+- sh: sudo apt-get -y install libogg-dev libvorbis-dev libtheora-dev
+- sh: git submodule update --init --recursive
+- sh: cd source
+- sh: cmake .
+- sh: make -j$(nproc --all)
