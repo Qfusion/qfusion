@@ -1199,17 +1199,17 @@ void CG_DrawLoading( void ) {
 
 	const vec4_t color = { 22.0f / 255.0f, 20.0f / 255.0f, 28.0f / 255.0f, 1.0f };
 	trap_R_DrawStretchPic( 0, 0, cgs.vidWidth, cgs.vidHeight, 0.0f, 0.0f, 1.0f, 1.0f, color, cgs.shaderWhite );
-	trap_R_DrawStretchPic( cgs.vidWidth / 2 - ( int )( 256 * scale ), cgs.vidHeight / 2 - ( int )( 64 * scale ),
-						   512 * scale, 128 * scale, 0.0f, 0.0f, 1.0f, 1.0f, colorWhite, trap_R_RegisterPic( UI_SHADER_LOADINGLOGO ) );
+	trap_R_DrawStretchPic( cgs.vidWidth / 2 - ( int )( 375 * scale ), cgs.vidHeight / 2 - ( int )( 128 * scale ),
+						   750 * scale, 256 * scale, 0.0f, 0.0f, 1.0f, 1.0f, colorWhite, trap_R_RegisterPic( UI_SHADER_LOADINGLOGO ) );
 
 	if( cgs.precacheCount && cgs.precacheTotal ) {
 		struct shader_s *shader = trap_R_RegisterPic( UI_SHADER_LOADINGBAR );
-		int width = 480 * scale;
+		int width = 700 * scale;
 		int height = 32 * scale;
 		float percent = ( ( float )cgs.precacheCount / ( float )cgs.precacheTotal );
 		int barWidth = ( width - height ) * bound( 0.0f, percent, 1.0f );
 		int x = ( cgs.vidWidth - width ) / 2;
-		int y = cgs.vidHeight / 2 + ( int )( 32 * scale );
+		int y = cgs.vidHeight / 2 + ( int )( 160 * scale );
 
 		trap_R_DrawStretchPic( x, y, height, height, 0.0f, 0.0f, 0.5f, 0.5f, colorWhite, shader );
 		trap_R_DrawStretchPic( x + height, y, width - height * 2, height, 0.5f, 0.0f, 0.5f, 0.5f, colorWhite, shader );
