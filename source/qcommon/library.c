@@ -177,30 +177,7 @@ void Com_UnloadGameLibrary( void **handle ) {
 		gamelib->lib = NULL;
 	}
 
-	// remove tempfile if it's not used by other instances
-	if( gamelib->fullname ) {
-		iter = gamelibs;
-		while( iter ) {
-			if( !strcmp( gamelib->fullname, iter->fullname ) ) {
-				break;
-			}
-			iter = iter->next;
-		}
-
-		if( !iter ) {
-			char *p;
-
-			FS_RemoveAbsoluteFile( gamelib->fullname );
-			p = strrchr( gamelib->fullname, '/' );
-			if( p ) {
-				*p = '\0';
-				FS_RemoveAbsoluteDirectory( gamelib->fullname );
-			}
-		}
-
-		Mem_ZoneFree( gamelib->fullname );
-	}
-
+	Mem_ZoneFree( gamelib->fullname );
 	Mem_ZoneFree( gamelib );
 
 	*handle = NULL;
@@ -252,75 +229,53 @@ static void Com_LoadGameLibraryManifest( const char *libname, char *manifest ) {
 * Com_LoadGameLibrary
 */
 void *Com_LoadGameLibrary( const char *basename, const char *apifuncname, void **handle, void *parms, bool pure, char *manifest ) {
-	static int randomizer = 0; // random part of tempmodules dir, always the same for one launch of Warsow
-	static int64_t randomizer_time;
-	const char *temppath;
-	char *tempname, *libname;
-	int libname_size;
-	void *( *APIfunc )( void * );
-	gamelib_t *gamelib;
-
 	*handle = 0;
 
-	if( !randomizer ) {
-		randomizer_time = time( NULL );
-		srand( randomizer_time );
-		randomizer = brandom( 1, 9999 );
-	}
-
-	gamelib = ( gamelib_t* )Mem_ZoneMalloc( sizeof( gamelib_t ) );
+	gamelib_t *gamelib = ( gamelib_t* )Mem_ZoneMalloc( sizeof( gamelib_t ) );
 	gamelib->lib = NULL;
-	gamelib->fullname = NULL;
 
-	libname_size = strlen( LIB_PREFIX ) + strlen( basename ) + 1 + strlen( ARCH ) + strlen( LIB_SUFFIX ) + 1;
-	libname = ( char* )Mem_TempMalloc( libname_size );
+	int libname_size = strlen( LIB_PREFIX ) + strlen( basename ) + 1 + strlen( ARCH ) + strlen( LIB_SUFFIX ) + 1;
+	char *libname = ( char* )Mem_TempMalloc( libname_size );
 	Q_snprintfz( libname, libname_size, LIB_PREFIX "%s_" ARCH LIB_SUFFIX, basename );
 
-	// it exists?
-	if( FS_FOpenFile( libname, NULL, FS_READ ) == -1 ) {
+	const char *abspath = FS_BaseNameForFile( libname );
+	if( abspath == NULL ) {
 		Com_Printf( "LoadLibrary (%s):(File not found)\n", libname );
 		Mem_TempFree( libname );
 		Mem_ZoneFree( gamelib );
 		return NULL;
 	}
 
+	COM_SanitizeFilePath( abspath );
+
 	// pure check
-	if( pure && !FS_IsPureFile( libname ) ) {
-		Com_Printf( "LoadLibrary (%s):(Unpure file)\n", libname );
+	if( pure && !FS_IsPureFile( abspath ) ) {
+		Com_Printf( "LoadLibrary (%s):(Unpure file)\n", abspath );
 		Mem_TempFree( libname );
 		Mem_ZoneFree( gamelib );
 		return NULL;
 	}
 
-	temppath = Sys_Library_GetGameLibPath( libname, randomizer_time, randomizer );
-	tempname = ( char * )Mem_ZoneMalloc( strlen( temppath ) + 1 );
-	strcpy( tempname, temppath );
+	gamelib->fullname = ( char * )Mem_ZoneMalloc( strlen( abspath ) + 1 );
+	strcpy( gamelib->fullname, abspath );
 
-	if( FS_FOpenFile( tempname, NULL, FS_READ ) == -1 ) {
-		if( !FS_ExtractFile( libname, tempname ) ) {
-			Com_Printf( "LoadLibrary (%s):(FS_ExtractFile failed)\n", libname );
-			Mem_TempFree( libname );
-			Mem_ZoneFree( tempname );
-			Mem_ZoneFree( gamelib );
-			return NULL;
-		}
-	}
-
-	gamelib->fullname = COM_SanitizeFilePath( tempname );
 	gamelib->lib = Sys_Library_Open( gamelib->fullname );
 	gamelib->next = gamelibs;
 	gamelibs = gamelib;
 
-	if( !( gamelib->lib ) ) {
-		Com_Printf( "LoadLibrary (%s):(%s)\n", tempname, Sys_Library_ErrorString() );
+	if( !gamelib->lib ) {
+		Com_Printf( "LoadLibrary (%s):(%s)\n", abspath, Sys_Library_ErrorString() );
+		Mem_ZoneFree( gamelib->fullname );
 		Mem_TempFree( libname );
 		Com_UnloadGameLibrary( (void **)&gamelib );
 		return NULL;
 	}
 
-	APIfunc = ( void* ( * )( void* ) )Sys_Library_ProcAddress( gamelib->lib, apifuncname );
+	void *( *APIfunc )( void * ) = ( void* ( * )( void * ) )Sys_Library_ProcAddress( gamelib->lib, apifuncname );
 	if( !APIfunc ) {
-		Com_Printf( "LoadLibrary (%s):(%s)\n", tempname, Sys_Library_ErrorString() );
+		Com_Printf( "LoadLibrary (%s):(%s)\n", abspath, Sys_Library_ErrorString() );
+		Mem_ZoneFree( gamelib->fullname );
+		Mem_TempFree( libname );
 		Mem_TempFree( libname );
 		Com_UnloadGameLibrary( (void **)&gamelib );
 		return NULL;
