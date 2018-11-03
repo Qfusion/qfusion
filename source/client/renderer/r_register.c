@@ -151,7 +151,6 @@ cvar_t *r_usenotexture;
 
 cvar_t *r_maxglslbones;
 
-cvar_t *gl_cull;
 cvar_t *r_multithreading;
 
 static bool r_verbose;
@@ -479,8 +478,6 @@ static void R_Register() {
 	r_maxglslbones = ri.Cvar_Get( "r_maxglslbones", STR_TOSTR( MAX_GLSL_UNIFORM_BONES ), CVAR_LATCH_VIDEO );
 
 	r_multithreading = ri.Cvar_Get( "r_multithreading", "0", CVAR_ARCHIVE | CVAR_LATCH_VIDEO | CVAR_READONLY );
-
-	gl_cull = ri.Cvar_Get( "gl_cull", "1", 0 );
 
 	ri.Cmd_AddCommand( "imagelist", R_ImageList_f );
 	ri.Cmd_AddCommand( "shaderlist", R_ShaderList_f );

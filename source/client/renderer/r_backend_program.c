@@ -2117,7 +2117,7 @@ static void RB_SetShaderState( void ) {
 	int shaderFlags = rb.currentShader->flags;
 
 	// Face culling
-	if( !gl_cull->integer || rb.currentEntity->rtype == RT_SPRITE ) {
+	if( rb.currentEntity->rtype == RT_SPRITE ) {
 		RB_Cull( 0 );
 	} else if( shaderFlags & SHADER_CULL_FRONT ) {
 		RB_Cull( GL_FRONT );

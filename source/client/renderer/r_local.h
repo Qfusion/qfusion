@@ -500,8 +500,6 @@ extern cvar_t *r_maxglslbones;
 
 extern cvar_t *r_multithreading;
 
-extern cvar_t *gl_cull;
-
 extern cvar_t *vid_displayfrequency;
 
 //====================================================================
