@@ -367,7 +367,6 @@ static void G_Gametype_GENERIC_Init( void ) {
 	trap_ConfigString( CS_GAMETYPETITLE, "Generic Deathmatch" );
 	trap_ConfigString( CS_GAMETYPEVERSION, "1.0" );
 	trap_ConfigString( CS_GAMETYPEAUTHOR, "Warsow Development Team" );
-	trap_Cvar_ForceSet( "g_gametype", "generic" );
 
 	level.gametype.spawnableItemsMask = ( IT_WEAPON | IT_AMMO | IT_ARMOR | IT_POWERUP | IT_HEALTH );
 	level.gametype.respawnableItemsMask = ( IT_WEAPON | IT_AMMO | IT_ARMOR | IT_POWERUP | IT_HEALTH );
@@ -1807,7 +1806,6 @@ void G_Gametype_SetDefaults( void ) {
 */
 void G_Gametype_Init( void ) {
 	bool changed = false;
-	const char *mapGametype;
 
 	g_gametypes_list = trap_Cvar_Get( "g_gametypes_list", "bomb", CVAR_NOSET | CVAR_ARCHIVE );
 
@@ -1818,7 +1816,7 @@ void G_Gametype_Init( void ) {
 		changed = true;
 	}
 
-	g_gametype = trap_Cvar_Get( "g_gametype", "bomb", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_LATCH );
+	g_gametype = trap_Cvar_Get( "g_gametype", "bomb", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_LATCH | CVAR_READONLY );
 	g_gametype_generic = trap_Cvar_Get( "g_gametype_generic", "1", CVAR_ARCHIVE );
 
 	//get the match cvars too
@@ -1835,12 +1833,6 @@ void G_Gametype_Init( void ) {
 	g_allow_teamdamage = trap_Cvar_Get( "g_allow_teamdamage", "0", CVAR_ARCHIVE );
 	g_allow_bunny = trap_Cvar_Get( "g_allow_bunny", "1", CVAR_ARCHIVE | CVAR_READONLY );
 
-	// map-specific gametype
-	mapGametype = G_asCallMapGametype();
-	if( mapGametype[0] && G_Gametype_Exists( mapGametype ) ) {
-		trap_Cvar_Set( g_gametype->name, mapGametype );
-	}
-
 	// update latched gametype change
 	if( g_gametype->latched_string ) {
 		if( G_Gametype_Exists( g_gametype->latched_string ) ) {
@@ -1853,8 +1845,8 @@ void G_Gametype_Init( void ) {
 	}
 
 	if( !G_Gametype_Exists( g_gametype->string ) ) {
-		G_Printf( "G_Gametype: Wrong value: '%s'. Setting up with default (dm)\n", g_gametype->string );
-		trap_Cvar_ForceSet( "g_gametype", "dm" );
+		G_Printf( "G_Gametype: Wrong value: '%s'. Setting up with default (bomb)\n", g_gametype->string );
+		trap_Cvar_ForceSet( "g_gametype", "bomb" );
 		changed = true;
 	}
 
