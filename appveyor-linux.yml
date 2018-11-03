@@ -1,5 +1,5 @@
-version: 0.{build}
-shallow_clone: true
+version: {build}
+clone_depth: 1
 image: Ubuntu
 
 build_script:
