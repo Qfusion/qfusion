@@ -862,7 +862,7 @@ static void CG_StartVoiceTokenEffect( int entNum, int vsay ) {
 	}
 
 	// played as it was made by the 1st person player
-	trap_S_StartFixedSound( CG_MediaSfx( sound ), cent->microSmoothOrigin, CHAN_AUTO, cg_volume_voicechats->value, ATTN_NORM );
+	trap_S_StartRelativeSound( CG_MediaSfx( sound ), entNum, CHAN_AUTO, cg_volume_voicechats->value, ATTN_NORM );
 }
 
 //==================================================================
