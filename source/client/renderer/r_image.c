@@ -2526,8 +2526,7 @@ static void R_InitStretchRawImages( void ) {
 /*
 * R_InitScreenImagePair
 */
-static void R_InitScreenImagePair( const char *name, image_t **color, image_t **depth, 
-	int orFlags ) {
+static void R_InitScreenImagePair( const char *name, image_t **color, image_t **depth, int orFlags ) {
 	char tn[128];
 	int flags, colorFlags, depthFlags;
 
@@ -2608,6 +2607,7 @@ static void R_ReleaseBuiltinScreenImageSet( refScreenTexSet_t *st ) {
 	R_FreeImage( st->screenDepthTex );
 
 	st->screenTex = NULL;
+	st->screenDepthTex = NULL;
 
 	if( st->screenTexCopy == NULL )
 		return;
@@ -2616,6 +2616,11 @@ static void R_ReleaseBuiltinScreenImageSet( refScreenTexSet_t *st ) {
 	R_FreeImage( st->screenDepthTexCopy );
 	R_FreeImage( st->screenPPCopies[0] );
 	R_FreeImage( st->screenPPCopies[1] );
+
+	st->screenTexCopy = NULL;
+	st->screenDepthTexCopy = NULL;
+	st->screenPPCopies[0] = NULL;
+	st->screenPPCopies[1] = NULL;
 }
 
 /*

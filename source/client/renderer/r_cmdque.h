@@ -71,6 +71,7 @@ typedef struct ref_cmdpipe_s {
 	void ( *Init )( struct ref_cmdpipe_s *cmdpipe );
 	void ( *Shutdown )( struct ref_cmdpipe_s *cmdpipe );
 
+	void ( *ResizeFramebuffers )( struct ref_cmdpipe_s *cmdpipe );
 	void ( *ScreenShot )( struct ref_cmdpipe_s *cmdpipe, const char *path, const char *name, const char *fmtstring, bool silent );
 	void ( *EnvShot )( struct ref_cmdpipe_s *cmdpipe, const char *path, const char *name, unsigned pixels );
 	void ( *AviShot )( struct ref_cmdpipe_s *cmdpipe, const char *path, const char *name, int x, int y, int w, int h );

@@ -81,6 +81,7 @@ void RF_SetScissor( int x, int y, int w, int h );
 void RF_GetScissor( int *x, int *y, int *w, int *h );
 void RF_ResetScissor( void );
 void RF_SetCustomColor( int num, int r, int g, int b );
+void RF_ResizeFramebuffers();
 void RF_ScreenShot( const char *path, const char *name, const char *fmtstring, bool silent );
 void RF_EnvShot( const char *path, const char *name, unsigned pixels );
 bool RF_RenderingEnabled( void );

@@ -170,7 +170,6 @@ static bool InitGL( int stencilbits ) {
 	return true;
 }
 
-void Retarded_SetWindowSize( int w, int h );
 void VID_WindowInit( VideoMode mode, int stencilbits ) {
 	uint32_t flags = SDL_WINDOW_OPENGL;
 	if( mode.fullscreen == FullScreenMode_Fullscreen )
@@ -186,7 +185,6 @@ void VID_WindowInit( VideoMode mode, int stencilbits ) {
 
 	int w, h;
 	SDL_GetWindowSize( sdl_window, &w, &h );
-	Retarded_SetWindowSize( w, h );
 	printf( "%d %d\n", w, h );
 
 #ifndef __APPLE__

@@ -714,6 +714,7 @@ INTER-FRAME COMMANDS PIPE
 enum {
 	REF_PIPE_CMD_INIT,
 	REF_PIPE_CMD_SHUTDOWN,
+	REF_PIPE_CMD_RESIZE_FRAMEBUFFERS,
 	REF_PIPE_CMD_SCREEN_SHOT,
 	REF_PIPE_CMD_ENV_SHOT,
 
@@ -733,6 +734,10 @@ enum {
 typedef struct {
 	int id;
 } refReliableCmdInitShutdown_t;
+
+typedef struct {
+	int id;
+} refReliableCmdResizeFramebuffers_t;
 
 typedef struct {
 	int id;
@@ -779,6 +784,7 @@ typedef unsigned (*refPipeCmdHandler_t)( const void * );
 
 static unsigned R_HandleInitReliableCmd( void *pcmd );
 static unsigned R_HandleShutdownReliableCmd( void *pcmd );
+static unsigned R_HandleResizeFramebuffersCmd( void *pcmd );
 static unsigned R_HandleScreenShotReliableCmd( void *pcmd );
 static unsigned R_HandleEnvShotReliableCmd( void *pcmd );
 static unsigned R_HandleBeginRegistrationReliableCmd( void *pcmd );
@@ -793,6 +799,7 @@ static refPipeCmdHandler_t refPipeCmdHandlers[NUM_REF_PIPE_CMDS] =
 {
 	(refPipeCmdHandler_t)R_HandleInitReliableCmd,
 	(refPipeCmdHandler_t)R_HandleShutdownReliableCmd,
+	(refPipeCmdHandler_t)R_HandleResizeFramebuffersCmd,
 	(refPipeCmdHandler_t)R_HandleScreenShotReliableCmd,
 	(refPipeCmdHandler_t)R_HandleEnvShotReliableCmd,
 	(refPipeCmdHandler_t)R_HandleBeginRegistrationReliableCmd,
@@ -826,6 +833,14 @@ static unsigned R_HandleShutdownReliableCmd( void *pcmd ) {
 	RB_Shutdown();
 
 	RFB_Shutdown();
+
+	return 0;
+}
+
+static unsigned R_HandleResizeFramebuffersCmd( void *pcmd ) {
+	R_ReleaseBuiltinScreenImages();
+	R_InitBuiltinScreenImages();
+	R_BindFrameBufferObject( 0 );
 
 	return 0;
 }
@@ -921,6 +936,11 @@ static void RF_IssueInitReliableCmd( ref_cmdpipe_t *cmdpipe ) {
 
 static void RF_IssueShutdownReliableCmd( ref_cmdpipe_t *cmdpipe ) {
 	refReliableCmdInitShutdown_t cmd = { REF_PIPE_CMD_SHUTDOWN };
+	RF_IssueAbstractReliableCmd( cmdpipe, &cmd, sizeof( cmd ) );
+}
+
+static void RF_IssueResizeFramebuffersCmd( ref_cmdpipe_t *cmdpipe ) {
+	refReliableCmdResizeFramebuffers_t cmd = { REF_PIPE_CMD_RESIZE_FRAMEBUFFERS };
 	RF_IssueAbstractReliableCmd( cmdpipe, &cmd, sizeof( cmd ) );
 }
 
@@ -1061,6 +1081,7 @@ ref_cmdpipe_t *RF_CreateCmdPipe( bool sync ) {
 
 	cmdpipe->Init = &RF_IssueInitReliableCmd;
 	cmdpipe->Shutdown = &RF_IssueShutdownReliableCmd;
+	cmdpipe->ResizeFramebuffers = &RF_IssueResizeFramebuffersCmd;
 	cmdpipe->ScreenShot = &RF_IssueScreenShotReliableCmd;
 	cmdpipe->EnvShot = &RF_IssueEnvShotReliableCmd;
 	cmdpipe->AviShot = &RF_IssueAviShotReliableCmd;

@@ -1865,11 +1865,11 @@ void CL_RestartMedia( void ) {
 * Restart the sound subsystem so it can pick up new parameters and flush all sounds
 */
 static void CL_S_Restart_f() {
-	bool verbose = ( Cmd_Argc() >= 2 ? true : false );
+	/* bool verbose = ( Cmd_Argc() >= 2 ? true : false ); */
 
 	// The cgame and game must also be forced to restart because handles will become invalid
 	// VID_Restart also forces an audio restart
-	VID_Restart( verbose, true );
+	/* VID_Restart( verbose, true ); */
 }
 
 /*
@@ -2493,6 +2493,8 @@ void CL_Frame( int realMsec, int gameMsec ) {
 #endif
 
 	CL_TimedemoStats();
+
+	VID_CheckChanges();
 
 	// update the screen
 	if( host_speeds->integer ) {

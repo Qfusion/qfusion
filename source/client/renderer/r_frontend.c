@@ -430,6 +430,10 @@ void RF_SetCustomColor( int num, int r, int g, int b ) {
 	}
 }
 
+void RF_ResizeFramebuffers() {
+	rrf.adapter.cmdPipe->ResizeFramebuffers( rrf.adapter.cmdPipe );
+}
+
 void RF_ScreenShot( const char *path, const char *name, const char *fmtstring, bool silent ) {
 	rrf.adapter.cmdPipe->ScreenShot( rrf.adapter.cmdPipe, path, name, fmtstring, silent );
 }
