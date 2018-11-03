@@ -46,7 +46,7 @@ void AiShutdownHooksHolder::InvokeHooks() {
 }
 
 AiShutdownHooksHolder::~AiShutdownHooksHolder() {
-	// if( !hooksInvoked ) {
-	// 	AI_FailWith( "AiShutdownHooksHolder::~AiShutdownHooksHolder()", "Hooks have not been invoked\n" );
-	// }
+	if( !hooksInvoked ) {
+		AI_FailWith( "AiShutdownHooksHolder::~AiShutdownHooksHolder()", "Hooks have not been invoked\n" );
+	}
 }

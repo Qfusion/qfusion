@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "g_local.h"
 
-game_import_t gi_imp_local;
+game_import_t GAME_IMPORT;
 
 /*
 * GetGameAPI
@@ -31,7 +31,7 @@ extern "C" QF_DLL_EXPORT game_export_t * GetGameAPI( game_import_t * import )
 {
 	static game_export_t globals;
 
-	gi_imp_local = *import;
+	GAME_IMPORT = *import;
 
 	globals.API = G_API;
 
@@ -64,3 +64,9 @@ extern "C" QF_DLL_EXPORT game_export_t * GetGameAPI( game_import_t * import )
 
 	return &globals;
 }
+
+#if defined ( HAVE_DLLMAIN ) && !defined ( GAME_HARD_LINKED )
+int WINAPI DLLMain( void *hinstDll, unsigned long dwReason, void *reserved ) {
+	return 1;
+}
+#endif

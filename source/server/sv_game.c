@@ -26,6 +26,7 @@ game_export_t *ge;
 EXTERN_API_FUNC void *GetGameAPI( void * );
 
 mempool_t *sv_gameprogspool;
+static void *module_handle;
 
 //======================================================================
 
@@ -426,6 +427,7 @@ void SV_ShutdownGameProgs( void ) {
 	// This call might still require the memory pool to be valid
 	// (for example if there are global object destructors calling G_Free()),
 	// that's why it's called before releasing the pool.
+	Com_UnloadGameLibrary( &module_handle );
 	Mem_FreePool( &sv_gameprogspool );
 	ge = NULL;
 }
@@ -452,8 +454,14 @@ static void SV_LocateEntities( struct edict_s *edicts, int edict_size, int num_e
 * Init the game subsystem for a new map
 */
 void SV_InitGameProgs( void ) {
+	int apiversion;
 	game_import_t import;
+	void *( *builtinAPIfunc )( void * ) = NULL;
 	char manifest[MAX_INFO_STRING];
+
+#ifdef GAME_HARD_LINKED
+	builtinAPIfunc = GetGameAPI;
+#endif
 
 	// unload anything we have now
 	if( ge ) {
@@ -554,7 +562,22 @@ void SV_InitGameProgs( void ) {
 	assert( sizeof( manifest ) >= MAX_INFO_STRING );
 	memset( manifest, 0, sizeof( manifest ) );
 
-	ge = GetGameAPI( &import );
+	if( builtinAPIfunc ) {
+		ge = builtinAPIfunc( &import );
+	} else {
+		ge = (game_export_t *)Com_LoadGameLibrary( "game", "GetGameAPI", &module_handle, &import, false, manifest );
+	}
+	if( !ge ) {
+		Com_Error( ERR_DROP, "Failed to load game DLL" );
+	}
+
+	apiversion = ge->API();
+	if( apiversion != GAME_API_VERSION ) {
+		Com_UnloadGameLibrary( &module_handle );
+		Mem_FreePool( &sv_gameprogspool );
+		ge = NULL;
+		Com_Error( ERR_DROP, "Game is version %i, not %i", apiversion, GAME_API_VERSION );
+	}
 
 	Cvar_ForceSet( "sv_modmanifest", manifest );
 

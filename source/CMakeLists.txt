@@ -183,7 +183,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR MINGW)
 		set(TAR_GZ_DIST "${QFUSION_TAR_GZ_OUTPUT_DIRECTORY}/${QFUSION_CLIENT_NAME}_${TAR_GZ_NAME}")
 	endif()
 	add_custom_target(tar_gz COMMAND ${CMAKE_COMMAND} -E tar "cfvz" ${TAR_GZ_DIST} "${CMAKE_HOME_DIRECTORY}/build/")
-	add_dependencies(tar_gz ${QFUSION_CLIENT_NAME} ${QFUSION_SERVER_NAME})
+	add_dependencies(tar_gz ${QFUSION_CLIENT_NAME} game ${QFUSION_SERVER_NAME})
 endif()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
@@ -237,6 +237,8 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 endif()
 
 add_subdirectory(angelwrap)
+add_subdirectory(cgame)
+add_subdirectory(game)
 
 if (NOT GAME_MODULES_ONLY)
 	add_subdirectory(server)

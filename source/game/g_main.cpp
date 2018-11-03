@@ -669,3 +669,30 @@ void G_RestartLevel( void ) {
 	Q_strncpyz( level.forcemap, level.mapname, sizeof( level.mapname ) );
 	G_EndMatch();
 }
+
+//======================================================================
+
+#ifndef GAME_HARD_LINKED
+// this is only here so the functions in q_shared.c and q_math.c can link
+void Sys_Error( const char *format, ... ) {
+	va_list argptr;
+	char msg[3072];
+
+	va_start( argptr, format );
+	Q_vsnprintfz( msg, sizeof( msg ), format, argptr );
+	va_end( argptr );
+
+	G_Error( "%s", msg );
+}
+
+void Com_Printf( const char *format, ... ) {
+	va_list argptr;
+	char msg[3072];
+
+	va_start( argptr, format );
+	Q_vsnprintfz( msg, sizeof( msg ), format, argptr );
+	va_end( argptr );
+
+	G_Printf( "%s", msg );
+}
+#endif
