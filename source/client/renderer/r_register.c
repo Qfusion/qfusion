@@ -364,7 +364,7 @@ static void R_Register() {
 	r_brightness = ri.Cvar_Get( "r_brightness", "0", CVAR_ARCHIVE );
 	r_sRGB = ri.Cvar_Get( "r_sRGB", "1", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
 
-	r_detailtextures = ri.Cvar_Get( "r_detailtextures", "1", CVAR_ARCHIVE );
+	r_detailtextures = ri.Cvar_Get( "r_detailtextures", "0", CVAR_ARCHIVE | CVAR_READONLY );
 
 	r_dynamiclight = ri.Cvar_Get( "r_dynamiclight", "1", CVAR_ARCHIVE );
 	r_coronascale = ri.Cvar_Get( "r_coronascale", "0.4", 0 );
