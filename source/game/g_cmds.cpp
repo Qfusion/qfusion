@@ -699,10 +699,6 @@ void Cmd_Say_f( edict_t *ent, bool arg0, bool checkflood ) {
 	// don't let text be too long for malicious reasons
 	text[arg0len + ( MAX_CHAT_BYTES - 1 )] = 0;
 
-	if( !Q_stricmp( text, "gg" ) || !Q_stricmp( text, "good game" ) ) {
-		G_AwardFairPlay( ent );
-	}
-
 	G_ChatMsg( NULL, ent, false, "%s", text );
 }
 
@@ -724,43 +720,42 @@ typedef struct
 {
 	const char *name;
 	int id;
-	const char *message;
 } g_vsays_t;
 
 static const g_vsays_t g_vsays[] = {
-	{ "needhealth", VSAY_NEEDHEALTH, "Need health!" },
-	{ "needweapon", VSAY_NEEDWEAPON, "Need weapon!" },
-	{ "needarmor", VSAY_NEEDARMOR, "Need armor!" },
-	{ "affirmative", VSAY_AFFIRMATIVE, "Affirmative!" },
-	{ "negative", VSAY_NEGATIVE, "Negative!" },
-	{ "yes", VSAY_YES, "Yes!" },
-	{ "no", VSAY_NO, "No!" },
-	{ "ondefense", VSAY_ONDEFENSE, "I'm on defense!" },
-	{ "onoffense", VSAY_ONOFFENSE, "I'm on offense!" },
-	{ "oops", VSAY_OOPS, "Oops!" },
-	{ "sorry", VSAY_SORRY, "Sorry!" },
-	{ "thanks", VSAY_THANKS, "Thanks!" },
-	{ "noproblem", VSAY_NOPROBLEM, "No problem!" },
-	{ "yeehaa", VSAY_YEEHAA, "Yeehaa!" },
-	{ "goodgame", VSAY_GOODGAME, "Good game!" },
-	{ "defend", VSAY_DEFEND, "Defend!" },
-	{ "attack", VSAY_ATTACK, "Attack!" },
-	{ "needbackup", VSAY_NEEDBACKUP, "Need backup!" },
-	{ "booo", VSAY_BOOO, "Booo!" },
-	{ "needdefense", VSAY_NEEDDEFENSE, "Need defense!" },
-	{ "needoffense", VSAY_NEEDOFFENSE, "Need offense!" },
-	{ "needhelp", VSAY_NEEDHELP, "Need help!" },
-	{ "roger", VSAY_ROGER, "Roger!" },
-	{ "armorfree", VSAY_ARMORFREE, "Armor free!" },
-	{ "areasecured", VSAY_AREASECURED, "Area secured!" },
-	{ "boomstick", VSAY_BOOMSTICK, "Need a weapon!" },
-	{ "gotopowerup", VSAY_GOTOPOWERUP, "Go to main powerup!" },
-	{ "gotoquad", VSAY_GOTOQUAD, "Go to quad!" },
-	{ "ok", VSAY_OK, "Ok!" },
-	{ "defend_a", VSAY_DEFEND_A, "Defend A!" },
-	{ "attack_a", VSAY_ATTACK_A, "Attack A!" },
-	{ "defend_b", VSAY_DEFEND_B, "Defend B!" },
-	{ "attack_b", VSAY_ATTACK_B, "Attack B!" },
+	{ "needhealth", VSAY_NEEDHEALTH },
+	{ "needweapon", VSAY_NEEDWEAPON },
+	{ "needarmor", VSAY_NEEDARMOR },
+	{ "affirmative", VSAY_AFFIRMATIVE },
+	{ "negative", VSAY_NEGATIVE },
+	{ "yes", VSAY_YES },
+	{ "no", VSAY_NO },
+	{ "ondefense", VSAY_ONDEFENSE },
+	{ "onoffense", VSAY_ONOFFENSE },
+	{ "oops", VSAY_OOPS },
+	{ "sorry", VSAY_SORRY },
+	{ "thanks", VSAY_THANKS },
+	{ "noproblem", VSAY_NOPROBLEM },
+	{ "yeehaa", VSAY_YEEHAA },
+	{ "goodgame", VSAY_GOODGAME },
+	{ "defend", VSAY_DEFEND },
+	{ "attack", VSAY_ATTACK },
+	{ "needbackup", VSAY_NEEDBACKUP },
+	{ "booo", VSAY_BOOO },
+	{ "needdefense", VSAY_NEEDDEFENSE },
+	{ "needoffense", VSAY_NEEDOFFENSE },
+	{ "needhelp", VSAY_NEEDHELP },
+	{ "roger", VSAY_ROGER },
+	{ "armorfree", VSAY_ARMORFREE },
+	{ "areasecured", VSAY_AREASECURED },
+	{ "boomstick", VSAY_BOOMSTICK },
+	{ "gotopowerup", VSAY_GOTOPOWERUP },
+	{ "gotoquad", VSAY_GOTOQUAD },
+	{ "ok", VSAY_OK },
+	{ "defend_a", VSAY_DEFEND_A },
+	{ "attack_a", VSAY_ATTACK_A },
+	{ "defend_b", VSAY_DEFEND_B },
+	{ "attack_b", VSAY_ATTACK_B },
 
 	{ NULL, 0 }
 };
@@ -768,7 +763,6 @@ static const g_vsays_t g_vsays[] = {
 void G_BOTvsay_f( edict_t *ent, const char *msg, bool team ) {
 	edict_t *event = NULL;
 	const g_vsays_t *vsay;
-	const char *text = NULL;
 
 	if( !( ent->r.svflags & SVF_FAKECLIENT ) ) {
 		return;
@@ -781,23 +775,16 @@ void G_BOTvsay_f( edict_t *ent, const char *msg, bool team ) {
 	for( vsay = g_vsays; vsay->name; vsay++ ) {
 		if( !Q_stricmp( msg, vsay->name ) ) {
 			event = G_SpawnEvent( EV_VSAY, vsay->id, NULL );
-			text = vsay->message;
 			break;
 		}
 	}
 
-	if( event && text ) {
+	if( event ) {
 		event->r.svflags |= SVF_BROADCAST; // force sending even when not in PVS
 		event->s.ownerNum = ent->s.number;
 		if( team ) {
 			event->s.team = ent->s.team;
 			event->r.svflags |= SVF_ONLYTEAM; // send only to clients with the same ->s.team value
-		}
-
-		if( team ) {
-			G_Say_Team( ent, va( "(v) %s", text ), false );
-		} else {
-			G_ChatMsg( NULL, ent, false, "(v) %s", text );
 		}
 	}
 }
@@ -808,7 +795,6 @@ void G_BOTvsay_f( edict_t *ent, const char *msg, bool team ) {
 static void G_vsay_f( edict_t *ent, bool team ) {
 	edict_t *event = NULL;
 	const g_vsays_t *vsay;
-	const char *text = NULL;
 	char *msg = trap_Cmd_Argv( 1 );
 
 	if( ent->r.client && ( ent->r.client->muted & 2 ) ) {
@@ -833,40 +819,16 @@ static void G_vsay_f( edict_t *ent, bool team ) {
 	for( vsay = g_vsays; vsay->name; vsay++ ) {
 		if( !Q_stricmp( msg, vsay->name ) ) {
 			event = G_SpawnEvent( EV_VSAY, vsay->id, NULL );
-			text = vsay->message;
 			break;
 		}
 	}
 
-	if( event && text ) {
-		char saystring[256];
-
+	if( event ) {
 		event->r.svflags |= SVF_BROADCAST; // force sending even when not in PVS
 		event->s.ownerNum = ent->s.number;
 		if( team ) {
 			event->s.team = ent->s.team;
 			event->r.svflags |= SVF_ONLYTEAM; // send only to clients with the same ->s.team value
-		}
-
-		if( !team && ( vsay->id == VSAY_GOODGAME ) ) {
-			G_AwardFairPlay( ent );
-		}
-
-		if( trap_Cmd_Argc() > 2 ) {
-			int i;
-
-			saystring[0] = 0;
-			for( i = 2; i < trap_Cmd_Argc(); i++ ) {
-				Q_strncatz( saystring, trap_Cmd_Argv( i ), sizeof( saystring ) );
-				Q_strncatz( saystring, " ", sizeof( saystring ) );
-			}
-			text = saystring;
-		}
-
-		if( team ) {
-			G_Say_Team( ent, va( "(v) %s", text ), false );
-		} else {
-			G_ChatMsg( NULL, ent, false, "(v) %s", text );
 		}
 		return;
 	}

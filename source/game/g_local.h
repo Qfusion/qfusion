@@ -997,13 +997,6 @@ void G_AwardResetPlayerComboStats( edict_t *ent );
 void G_AwardRaceRecord( edict_t *self );
 void G_DeathAwards( edict_t *ent );
 
-/**
- * Gives the player the Fair Play award if all conditions are met.
- *
- * @param ent the player entity
- */
-void G_AwardFairPlay( edict_t *ent );
-
 //============================================================================
 
 #include "ai/ai.h"
