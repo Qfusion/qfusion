@@ -473,6 +473,10 @@ void UI_Main::showOverlayMenu( bool show, bool showCursor ) {
 }
 
 bool UI_Main::haveOverlayMenu( void ) {
+	if( !overlayMenuVisible ) {
+		return false;
+	}
+
 	NavigationStack *nav = self->navigations[UI_CONTEXT_OVERLAY].front();
 	if( !nav ) {
 		return false;
