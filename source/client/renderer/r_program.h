@@ -34,7 +34,6 @@ typedef uint64_t r_glslfeat_t;
 #define DEFAULT_GLSL_CELSHADE_PROGRAM           "defaultCelshade"
 #define DEFAULT_GLSL_FOG_PROGRAM                "defaultFog"
 #define DEFAULT_GLSL_FXAA_PROGRAM               "defaultFXAA"
-#define DEFAULT_GLSL_YUV_PROGRAM                "defaultYUV"
 #define DEFAULT_GLSL_COLORCORRECTION_PROGRAM    "defaultColorCorrection"
 #define DEFAULT_GLSL_KAWASE_BLUR_PROGRAM        "defaultKawaseBlur"
 
@@ -50,7 +49,6 @@ enum {
 	GLSL_PROGRAM_TYPE_CELSHADE,
 	GLSL_PROGRAM_TYPE_FOG,
 	GLSL_PROGRAM_TYPE_FXAA,
-	GLSL_PROGRAM_TYPE_YUV,
 	GLSL_PROGRAM_TYPE_COLOR_CORRECTION,
 	GLSL_PROGRAM_TYPE_KAWASE_BLUR,
 
