@@ -186,7 +186,7 @@ typedef struct {
 
 	void ( *TransformVectorToScreen )( const refdef_t *rd, const vec3_t in, vec2_t out );
 
-	void ( *BeginFrame )( bool forceClear, bool forceVsync, bool uncappedFPS );
+	void ( *BeginFrame )( bool forceClear, bool uncappedFPS );
 	void ( *EndFrame )( void );
 	const char *( *GetSpeedsMessage )( char *out, size_t size );
 	int ( *GetAverageFrametime )( void );

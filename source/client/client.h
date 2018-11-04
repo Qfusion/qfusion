@@ -386,6 +386,8 @@ void CL_Precache_f( void );
 void CL_ForwardToServer_f( void );
 void CL_ServerDisconnect_f( void );
 
+void CL_ForceVsync( bool force );
+
 size_t CL_GetBaseServerURL( char *buffer, size_t buffer_size );
 
 int CL_AddSessionHttpRequestHeaders( const char *url, const char **headers );

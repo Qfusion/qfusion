@@ -31,7 +31,7 @@ typedef struct ref_cmdbuf_s {
 	// command procs
 
 	// a valid frame should begin and end with BeginFrame and EndFrame respectively
-	void ( *BeginFrame )( struct ref_cmdbuf_s *cmdbuf, bool forceClear, int swapInterval );
+	void ( *BeginFrame )( struct ref_cmdbuf_s *cmdbuf, bool forceClear );
 	void ( *EndFrame )( struct ref_cmdbuf_s *cmdbuf );
 	void ( *DrawRotatedStretchPic )( struct ref_cmdbuf_s *cmdbuf, int x, int y, int w, int h,
 									 float s1, float t1, float s2, float t2, float angle, const vec4_t color, const shader_t *shader );

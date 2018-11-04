@@ -658,7 +658,7 @@ static void SCR_RenderView( bool timedemo ) {
 */
 void SCR_UpdateScreen( void ) {
 	bool cinematic;
-	bool forcevsync, forceclear;
+	bool forceclear;
 	bool timedemo;
 
 	// if the screen is disabled (loading plaque is up, or vid mode changing)
@@ -680,11 +680,11 @@ void SCR_UpdateScreen( void ) {
 	SCR_CheckSystemFontsModified();
 
 	cinematic = cls.state == CA_CINEMATIC ? true : false;
-	forcevsync = cinematic || ( cls.state == CA_DISCONNECTED && scr_con_current );
+	CL_ForceVsync( cinematic || ( cls.state == CA_DISCONNECTED && scr_con_current ) );
 	forceclear = cinematic;
 	timedemo = cl_timedemo->integer != 0 && cls.demo.playing;
 
-	re.BeginFrame( forceclear, forcevsync, timedemo );
+	re.BeginFrame( forceclear, timedemo );
 
 	if( scr_draw_loading == 2 ) {
 		// loading plaque over APP_STARTUP_COLOR screen
@@ -699,7 +699,7 @@ void SCR_UpdateScreen( void ) {
 	} else if( cls.state == CA_DISCONNECTED ) {
 		CL_UIModule_Refresh( true, true );
 		SCR_DrawConsole();
-	} else if( cls.state == CA_GETTING_TICKET || cls.state == CA_CONNECTING  || cls.state == CA_HANDSHAKE ) {
+	} else if( cls.state == CA_GETTING_TICKET || cls.state == CA_CONNECTING || cls.state == CA_HANDSHAKE ) {
 		CL_UIModule_UpdateConnectScreen( true );
 	} else if( cls.state == CA_CONNECTED ) {
 		if( cls.cgameActive ) {

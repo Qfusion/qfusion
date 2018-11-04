@@ -131,8 +131,6 @@ cvar_t *r_polyblend;
 cvar_t *r_screenshot_fmtstr;
 cvar_t *r_screenshot_jpeg;
 cvar_t *r_screenshot_jpeg_quality;
-cvar_t *r_swapinterval;
-cvar_t *r_swapinterval_min;
 
 cvar_t *r_temp1;
 
@@ -308,9 +306,6 @@ static void R_FinalizeGLExtensions( void ) {
 	ri.Cvar_Get( "r_texturefilter_max", "0", CVAR_READONLY );
 	ri.Cvar_ForceSet( "r_texturefilter_max", va_r( tmp, sizeof( tmp ), "%i", glConfig.maxTextureFilterAnisotropic ) );
 
-	ri.Cvar_Get( "r_soft_particles_available", "0", CVAR_READONLY );
-	ri.Cvar_ForceSet( "r_soft_particles_available", "1" );
-
 	// don't allow too high values for lightmap block size as they negatively impact performance
 	if( r_lighting_maxlmblocksize->integer > glConfig.maxTextureSize / 4 &&
 		!( glConfig.maxTextureSize / 4 < min( QF_LIGHTMAP_WIDTH,QF_LIGHTMAP_HEIGHT ) * 2 ) ) {
@@ -444,9 +439,6 @@ static void R_Register() {
 	r_screenshot_jpeg_quality = ri.Cvar_Get( "r_screenshot_jpeg_quality", "90", CVAR_ARCHIVE );
 	r_screenshot_fmtstr = ri.Cvar_Get( "r_screenshot_fmtstr", va_r( tmp, sizeof( tmp ), "%s%%y%%m%%d_%%H%%M%%S", APP_SCREENSHOTS_PREFIX ), CVAR_ARCHIVE );
 
-	r_swapinterval = ri.Cvar_Get( "r_swapinterval", "0", CVAR_ARCHIVE );
-	r_swapinterval_min = ri.Cvar_Get( "r_swapinterval_min", "0", CVAR_READONLY ); // exposes vsync support to UI
-
 	r_temp1 = ri.Cvar_Get( "r_temp1", "0", 0 );
 
 	r_drawflat = ri.Cvar_Get( "r_drawflat", "1", CVAR_ARCHIVE | CVAR_READONLY );
@@ -499,7 +491,6 @@ static void R_GfxInfo_f( void ) {
 	Com_Printf( "mode: %ix%i%s\n", glConfig.width, glConfig.height,
 				glConfig.fullScreen ? ", fullscreen" : ", windowed" );
 	Com_Printf( "anisotropic filtering: %i\n", r_texturefilter->integer );
-	Com_Printf( "vertical sync: %s\n", ( r_swapinterval->integer || r_swapinterval_min->integer ) ? "enabled" : "disabled" );
 	Com_Printf( "multithreading: %s\n", glConfig.multithreading ? "enabled" : "disabled" );
 
 	R_PrintGLExtensionsInfo();
@@ -614,7 +605,6 @@ static rserr_t R_PostInit( void ) {
 		rsh.sinTableByte[i] = sin( (float)i / 255.0 * M_TWOPI );
 
 	rf.frameTime.average = 1;
-	rf.swapInterval = -1;
 	rf.speedsMsgLock = ri.Mutex_Create();
 	rf.debugSurfaceLock = ri.Mutex_Create();
 
@@ -625,8 +615,6 @@ static rserr_t R_PostInit( void ) {
 	if( !R_RegisterGLExtensions() ) {
 		return rserr_unknown;
 	}
-
-	R_SetSwapInterval( 0, -1 );
 
 	R_FillStartupBackgroundColor( COLOR_R( APP_STARTUP_COLOR ) / 255.0f,
 								  COLOR_G( APP_STARTUP_COLOR ) / 255.0f, COLOR_B( APP_STARTUP_COLOR ) / 255.0f );

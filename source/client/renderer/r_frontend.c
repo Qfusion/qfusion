@@ -256,9 +256,7 @@ static void RF_CheckCvars( void ) {
 	}
 }
 
-void RF_BeginFrame( bool forceClear, bool forceVsync, bool uncappedFPS ) {
-	int swapInterval;
-
+void RF_BeginFrame( bool forceClear, bool uncappedFPS ) {
 	RF_CheckCvars();
 
 	// run cinematic passes on shaders
@@ -285,10 +283,7 @@ void RF_BeginFrame( bool forceClear, bool forceVsync, bool uncappedFPS ) {
 
 	R_DataSync();
 
-	swapInterval = r_swapinterval->integer || forceVsync ? 1 : 0;
-	clamp_low( swapInterval, r_swapinterval_min->integer );
-
-	rrf.frame->BeginFrame( rrf.frame, forceClear, swapInterval );
+	rrf.frame->BeginFrame( rrf.frame, forceClear );
 }
 
 void RF_EndFrame( void ) {

@@ -325,8 +325,6 @@ typedef struct {
 
 	int frameBufferWidth, frameBufferHeight;
 
-	int swapInterval;
-
 	// used for dlight push checking
 	unsigned int frameCount;
 
@@ -478,8 +476,6 @@ extern cvar_t *r_polyblend;
 extern cvar_t *r_screenshot_fmtstr;
 extern cvar_t *r_screenshot_jpeg;
 extern cvar_t *r_screenshot_jpeg_quality;
-extern cvar_t *r_swapinterval;
-extern cvar_t *r_swapinterval_min;
 
 extern cvar_t *r_temp1;
 
@@ -490,8 +486,6 @@ extern cvar_t *r_floorcolor;
 extern cvar_t *r_maxglslbones;
 
 extern cvar_t *r_multithreading;
-
-extern cvar_t *vid_displayfrequency;
 
 //====================================================================
 
@@ -621,9 +615,8 @@ void        R_FreeFile_( void *buffer, const char *filename, int fileline );
 #define     R_FreeFile( buffer ) R_FreeFile_( buffer,__FILE__,__LINE__ )
 
 bool        R_IsRenderingToScreen( void );
-void        R_BeginFrame( bool forceClear, int swapInterval );
+void        R_BeginFrame( bool forceClear );
 void        R_EndFrame( void );
-int         R_SetSwapInterval( int swapInterval, int oldSwapInterval );
 void        R_SetGamma( float gamma );
 void        R_SetWallFloorColors( const vec3_t wallColor, const vec3_t floorColor );
 void		R_SetupPVSFromCluster( int cluster, int area );

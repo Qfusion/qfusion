@@ -230,7 +230,7 @@ static drawSurfaceType_t spriteDrawSurf = ST_SPRITE;
 /*
 * R_BatchSpriteSurf
 */
-void R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, int lightStyleNum, 
+void R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, int lightStyleNum,
 	const portalSurface_t *portalSurface, drawSurfaceType_t *drawSurf, bool mergable ) {
 	int i;
 	vec3_t point;
@@ -323,7 +323,7 @@ static bool R_AddSpriteToDrawList( const entity_t *e ) {
 		return false;
 	}
 
-	if( !R_AddSurfToDrawList( rn.meshlist, e, shader, 
+	if( !R_AddSurfToDrawList( rn.meshlist, e, shader,
 		R_FogForSphere( e->origin, e->radius ), -1, dist, 0, NULL, &spriteDrawSurf ) ) {
 		return false;
 	}
@@ -387,7 +387,7 @@ mesh_vbo_t *R_InitNullModelVBO( void ) {
 /*
 * R_DrawNullSurf
 */
-void R_DrawNullSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, int lightStyleNum, 
+void R_DrawNullSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, int lightStyleNum,
 	const portalSurface_t *portalSurface, drawSurfaceType_t *drawSurf ) {
 	assert( rsh.nullVBO != NULL );
 	if( !rsh.nullVBO ) {
@@ -407,7 +407,7 @@ static bool R_AddNullSurfToDrawList( const entity_t *e ) {
 		return false;
 	}
 
-	if( !R_AddSurfToDrawList( rn.meshlist, e, rsh.whiteShader, 
+	if( !R_AddSurfToDrawList( rn.meshlist, e, rsh.whiteShader,
 		R_FogForSphere( e->origin, 0.1f ), -1, 0, 0, NULL, &nullDrawSurf ) ) {
 		return false;
 	}
@@ -954,7 +954,7 @@ static void R_SetupViewMatrices_( const refdef_t *rd, const mat4_t camTransform 
 * R_SetupViewMatrices
 */
 void R_SetupViewMatrices( const refdef_t *rd ) {
-	const mat4_t flip = { 
+	const mat4_t flip = {
 		0, 0, -1, 0,
 		-1, 0, 0, 0,
 		0, 1, 0, 0,
@@ -1552,16 +1552,6 @@ void R_DataSync( void ) {
 }
 
 /*
-* R_SetSwapInterval
-*/
-int R_SetSwapInterval( int swapInterval, int oldSwapInterval ) {
-	if( swapInterval != oldSwapInterval ) {
-		/* GLimp_SetSwapInterval( swapInterval ); */ // TODO: WTF
-	}
-	return swapInterval;
-}
-
-/*
 * R_SetGamma
 */
 void R_SetGamma( float gamma ) {
@@ -1752,7 +1742,7 @@ const char *R_WriteSpeedsMessage( char *out, size_t size ) {
 							 "%s",
 							 (int)(1000.0 / rf.frameTime.average),
 							 rf.stats.c_brush_polys, rf.stats.c_world_leafs, rf.stats.c_world_draw_surfs,
-							 rf.stats.t_cull_world_nodes, rf.stats.t_cull_world_surfs, rf.stats.t_cull_rtlights, 
+							 rf.stats.t_cull_world_nodes, rf.stats.t_cull_world_surfs, rf.stats.t_cull_rtlights,
 							 rf.stats.t_world_node, rf.stats.t_light_node,
 							 rf.stats.t_add_polys, rf.stats.t_add_entities, rf.stats.t_draw_meshes,
 							 rf.stats.c_world_lights, rf.stats.c_dynamic_lights, rf.stats.c_world_light_shadows, rf.stats.c_dynamic_light_shadows,
@@ -1878,17 +1868,11 @@ void R_RenderDebugSurface( const refdef_t *fd ) {
 /*
 * R_BeginFrame
 */
-void R_BeginFrame( bool forceClear, int swapInterval ) {
+void R_BeginFrame( bool forceClear ) {
 	int samples;
 	int64_t time = ri.Sys_Milliseconds();
 
 	RB_BeginFrame();
-
-	// TODO
-	/* glDrawBuffer( GL_BACK ); */
-
-	// set swap interval (vertical synchronization)
-	rf.swapInterval = R_SetSwapInterval( swapInterval, rf.swapInterval );
 
 	memset( &rf.stats, 0, sizeof( rf.stats ) );
 
@@ -1927,10 +1911,10 @@ void R_EndFrame( void ) {
 
 	// resolve multisampling and blit to default framebuffer
 	if( rf.renderTarget > 0 ) {
-		RB_BlitFrameBufferObject( rf.renderTarget, rsh.st2D.screenTex->fbo, 
+		RB_BlitFrameBufferObject( rf.renderTarget, rsh.st2D.screenTex->fbo,
 			GL_COLOR_BUFFER_BIT, FBO_COPY_NORMAL, GL_NEAREST, 0, 0 );
 
-		R_BlitTextureToScrFbo( NULL, rsh.st2D.screenTex, 0, GLSL_PROGRAM_TYPE_NONE, 
+		R_BlitTextureToScrFbo( NULL, rsh.st2D.screenTex, 0, GLSL_PROGRAM_TYPE_NONE,
 			colorWhite, 0, 0, NULL, 0 );
 
 		RB_FlushDynamicMeshes();
@@ -1954,13 +1938,13 @@ void R_EndFrame( void ) {
 			x = (1.0 * x + (side & 1) * size) / (float)rsh.shadowmapAtlasTexture->upload_width;
 			y = (1.0 * y + (side >> 1) * size) / (float)rsh.shadowmapAtlasTexture->upload_width;
 
-			R_DrawStretchQuick( 0, 0, 128, 128, 
-				x, y, 
+			R_DrawStretchQuick( 0, 0, 128, 128,
+				x, y,
 				x + st, y + st, colorRed, GLSL_PROGRAM_TYPE_NONE,
 				rsh.whiteTexture, 0 );
 
-			R_DrawStretchQuick( 0, 0, 128, 128, 
-				x, y, 
+			R_DrawStretchQuick( 0, 0, 128, 128,
+				x, y,
 				x + st, y + st, colorWhite, GLSL_PROGRAM_TYPE_NONE,
 				atlas, 0 );
 		}
@@ -2141,7 +2125,7 @@ r_framecache_t *R_FrameCache_NewBlock( size_t size ) {
 */
 void R_FrameCache_Clear( void ) {
 	size_t newSize;
-	
+
 	newSize = r_frameCacheTotalSize;
 	if( newSize < MIN_FRAMECACHE_SIZE )
 		newSize = MIN_FRAMECACHE_SIZE;

@@ -160,7 +160,6 @@ rserr_t GLimp_SetFullscreenMode( int displayFrequency, bool fullscreen );
 void    GLimp_AppActivate( bool active, bool minimize, bool destroy );
 bool    VID_GetGammaRamp( size_t stride, unsigned short *psize, unsigned short *ramp ); // TODO: this doesn't belong here
 void    VID_SetGammaRamp( size_t stride, unsigned short size, unsigned short *ramp );
-void    GLimp_SetSwapInterval( int swapInterval );
 
 bool    GLimp_MakeCurrent( void *context, void *surface );
 

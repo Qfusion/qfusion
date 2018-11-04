@@ -29,10 +29,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "renderer/r_frontend.h"
 #include "../sdl/sdl_window.h"
 
-cvar_t *vid_width, *vid_height;
-cvar_t *vid_fullscreen;
-cvar_t *vid_borderless;
-cvar_t *vid_displayfrequency;
+static cvar_t *vid_width, *vid_height;
+static cvar_t *vid_fullscreen;
+static cvar_t *vid_borderless;
+static cvar_t *vid_displayfrequency;
+
+static cvar_t *vid_vsync;
+static bool force_vsync;
 
 // Global variables used internally by this module
 viddef_t viddef;             // global video state; used by other modules
@@ -317,8 +320,13 @@ static bool VID_ChangeMode() {
 * update the rendering DLL and/or video mode to match.
 */
 void VID_CheckChanges( void ) {
-	bool changed = vid_fullscreen->modified || vid_borderless->modified || vid_width->modified || vid_height->modified;
-	if( !changed )
+	if( vid_vsync->modified ) {
+		VID_EnableVsync( force_vsync || vid_vsync->integer != 0 ? VsyncEnabled_Enabled : VsyncEnabled_Disabled );
+		vid_vsync->modified = false;
+	}
+
+	bool mode_changed = vid_fullscreen->modified || vid_borderless->modified || vid_width->modified || vid_height->modified;
+	if( !mode_changed )
 		return;
 
 	VID_ChangeMode();
@@ -338,6 +346,9 @@ void VID_Init() {
 	vid_fullscreen = Cvar_Get( "vid_fullscreen", "1", CVAR_ARCHIVE );
 	vid_borderless = Cvar_Get( "vid_borderless", "1", CVAR_ARCHIVE );
 	vid_displayfrequency = Cvar_Get( "vid_displayfrequency", "0", CVAR_ARCHIVE );
+
+	vid_vsync = Cvar_Get( "vid_vsync", "0", CVAR_ARCHIVE );
+	force_vsync = false;
 
 	vid_fullscreen->modified = false;
 	vid_borderless->modified = false;
@@ -404,6 +415,13 @@ void VID_Init() {
 
 	RF_EndRegistration();
 	CL_SoundModule_EndRegistration();
+}
+
+void CL_ForceVsync( bool force ) {
+	if( force != force_vsync ) {
+		force_vsync = force;
+		vid_vsync->modified = true;
+	}
 }
 
 void VID_Shutdown() {

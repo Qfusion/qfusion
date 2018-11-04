@@ -64,7 +64,6 @@ enum {
 typedef struct {
 	int id;
 	bool forceClear;
-	int swapInterval;
 } refCmdBeginFrame_t;
 
 typedef struct {
@@ -200,7 +199,7 @@ static const refCmdHandler_t refCmdHandlers[NUM_REF_CMDS] =
 
 static unsigned R_HandleBeginFrameCmd( uint8_t *pcmd ) {
 	refCmdBeginFrame_t *cmd = (void *)pcmd;
-	R_BeginFrame( cmd->forceClear, cmd->swapInterval );
+	R_BeginFrame( cmd->forceClear );
 	return sizeof( *cmd );
 }
 
@@ -330,12 +329,11 @@ static void RF_IssueAbstractCmd( ref_cmdbuf_t *cmdbuf, void *cmd, size_t struct_
 	}
 }
 
-static void RF_IssueBeginFrameCmd( ref_cmdbuf_t *cmdbuf, bool forceClear, int swapInterval ) {
+static void RF_IssueBeginFrameCmd( ref_cmdbuf_t *cmdbuf, bool forceClear ) {
 	refCmdBeginFrame_t cmd;
 
 	cmd.id = REF_CMD_BEGIN_FRAME;
 	cmd.forceClear = forceClear;
-	cmd.swapInterval = swapInterval;
 
 	RF_IssueAbstractCmd( cmdbuf, &cmd, sizeof( cmd ), sizeof( cmd ) );
 }
