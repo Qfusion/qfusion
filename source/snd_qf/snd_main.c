@@ -43,7 +43,6 @@ cvar_t *s_testsound;
 cvar_t *s_khz;
 cvar_t *s_show;
 cvar_t *s_mixahead;
-cvar_t *s_swapstereo;
 cvar_t *s_pseudoAcoustics;
 cvar_t *s_separationDelay;
 cvar_t *s_globalfocus;
@@ -264,7 +263,6 @@ bool SF_Init( int maxEntities, bool verbose ) {
 	s_mixahead = trap_Cvar_Get( "s_mixahead", "0.14", CVAR_ARCHIVE );
 	s_show = trap_Cvar_Get( "s_show", "0", CVAR_CHEAT );
 	s_testsound = trap_Cvar_Get( "s_testsound", "0", 0 );
-	s_swapstereo = trap_Cvar_Get( "s_swapstereo", "0", CVAR_ARCHIVE );
 	s_pseudoAcoustics = trap_Cvar_Get( "s_pseudoAcoustics", "0", CVAR_ARCHIVE );
 	s_separationDelay = trap_Cvar_Get( "s_separationDelay", "1.0", CVAR_ARCHIVE );
 	s_globalfocus = trap_Cvar_Get( "s_globalfocus", "0", CVAR_ARCHIVE );
