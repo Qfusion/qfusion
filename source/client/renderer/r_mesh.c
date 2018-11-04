@@ -322,9 +322,6 @@ static int R_DrawSurfCompare( const sortedDrawSurf_t *sbs1, const sortedDrawSurf
 * due to quicksort's unstable nature.
 */
 void R_SortDrawList( drawList_t *list ) {
-	if( r_draworder->integer ) {
-		return;
-	}
 	qsort( list->drawSurfs, list->numDrawSurfs, sizeof( sortedDrawSurf_t ),
 		   ( int ( * )( const void *, const void * ) )R_DrawSurfCompare );
 }

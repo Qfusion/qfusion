@@ -253,21 +253,6 @@ void R_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t d
 		}
 	}
 
-	// convert to grayscale
-	if( r_lighting_grayscale->integer ) {
-		vec_t grey;
-
-		if( ambient ) {
-			grey = ColorGrayscale( ambientLocal );
-			ambientLocal[0] = ambientLocal[1] = ambientLocal[2] = bound( 0, grey, 255 );
-		}
-
-		if( diffuse || radius ) {
-			grey = ColorGrayscale( diffuseLocal );
-			diffuseLocal[0] = diffuseLocal[1] = diffuseLocal[2] = bound( 0, grey, 255 );
-		}
-	}
-
 dynamic:
 	// add dynamic lights
 	if( radius && noDLight && r_dynamiclight->integer ) {
@@ -308,20 +293,15 @@ dynamic:
 
 	VectorNormalizeFast( dir );
 
-	if( r_fullbright->integer ) {
-		VectorSet( ambientLocal, 1, 1, 1 );
-		VectorSet( diffuseLocal, 1, 1, 1 );
-	} else {
-		float scale = ( 1 << 2 ) / 255.0f;
+	float scale = ( 1 << 2 ) / 255.0f;
 
-		for( i = 0; i < 3; i++ )
-			ambientLocal[i] = ambientLocal[i] * scale * bound( 0.0f, r_lighting_ambientscale->value, 1.0f );
-		ColorNormalize( ambientLocal, ambientLocal );
+	for( i = 0; i < 3; i++ )
+		ambientLocal[i] = ambientLocal[i] * scale * bound( 0.0f, r_lighting_ambientscale->value, 1.0f );
+	ColorNormalize( ambientLocal, ambientLocal );
 
-		for( i = 0; i < 3; i++ )
-			diffuseLocal[i] = diffuseLocal[i] * scale * bound( 0.0f, r_lighting_directedscale->value, 1.0f );
-		ColorNormalize( diffuseLocal, diffuseLocal );
-	}
+	for( i = 0; i < 3; i++ )
+		diffuseLocal[i] = diffuseLocal[i] * scale * bound( 0.0f, r_lighting_directedscale->value, 1.0f );
+	ColorNormalize( diffuseLocal, diffuseLocal );
 
 	if( ambient ) {
 		VectorCopy( ambientLocal, ambient );
@@ -351,12 +331,6 @@ float R_LightExposureForOrigin( const vec3_t origin ) {
 	}
 
 	return r_hdr_exposure->value;
-
-	//if( r_lighting_grayscale->integer ) {
-	//	return ambient[0] + diffuse[0];
-	//}
-	//Vector4Add( ambient, diffuse, total );
-	//return log( ( ColorGrayscale( total ) + 1.0f ) * r_hdr_exposure->value )*//*ColorGrayscale( total ) * *//*exp( mapConfig.averageLightingIntensity ) * r_hdr_exposure->value;
 }
 
 /*
@@ -382,38 +356,26 @@ static void R_BuildLightmap( int w, int h, bool deluxe, const uint8_t *data, uin
 	int x, y;
 	uint8_t *rgba;
 
-	if( !data || ( r_fullbright->integer && !deluxe ) ) {
+	if( !data ) {
 		int val = deluxe ? 127 : 255;
 		for( y = 0; y < h; y++ )
 			memset( dest + y * blockWidth, val, w * samples * sizeof( *dest ) );
 		return;
 	}
 
-	if( deluxe || !r_lighting_grayscale->integer ) { // samples == LIGHTMAP_BYTES in this case
+	if( deluxe ) { // samples == LIGHTMAP_BYTES in this case
 		int wB = w * LIGHTMAP_BYTES;
 		for( y = 0, rgba = dest; y < h; y++, data += wB, rgba += blockWidth )
 			memcpy( rgba, data, wB );
 		return;
 	}
 
-	if( r_lighting_grayscale->integer ) {
-		for( y = 0; y < h; y++ ) {
-			for( x = 0, rgba = dest + y * blockWidth; x < w; x++, data += LIGHTMAP_BYTES, rgba += samples ) {
-				rgba[0] = bound( 0, ColorGrayscale( data ), 255 );
-				if( samples > 1 ) {
-					rgba[1] = rgba[0];
-					rgba[2] = rgba[0];
-				}
-			}
-		}
-	} else {
-		for( y = 0; y < h; y++ ) {
-			for( x = 0, rgba = dest + y * blockWidth; x < w; x++, data += LIGHTMAP_BYTES, rgba += samples ) {
-				rgba[0] = data[0];
-				if( samples > 1 ) {
-					rgba[1] = data[1];
-					rgba[2] = data[2];
-				}
+	for( y = 0; y < h; y++ ) {
+		for( x = 0, rgba = dest + y * blockWidth; x < w; x++, data += LIGHTMAP_BYTES, rgba += samples ) {
+			rgba[0] = data[0];
+			if( samples > 1 ) {
+				rgba[1] = data[1];
+				rgba[2] = data[2];
 			}
 		}
 	}
@@ -591,7 +553,7 @@ void R_BuildLightmaps( model_t *mod, int numLightmaps, int w, int h, const uint8
 
 	loadbmodel = ( ( mbrushmodel_t * )mod->extradata );
 
-	samples = ( ( r_lighting_grayscale->integer && !mapConfig.deluxeMappingEnabled ) ? 1 : LIGHTMAP_BYTES );
+	samples = LIGHTMAP_BYTES;
 
 	layerWidth = w * ( 1 + ( int )mapConfig.deluxeMappingEnabled );
 

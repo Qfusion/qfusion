@@ -78,7 +78,6 @@ static void R_AddLightsToSurfaces( void ) {
 	unsigned i, j, k;
 	mmodel_t *bmodel = &rsh.worldBrushModel->submodels[0];
 	unsigned **lsi, *lc, *lrm, *lcm;
-	unsigned **lsip, *lcp;
 	void *cachemark = NULL;
 
 	if( rn.renderFlags & (RF_LIGHTVIEW|RF_SHADOWMAPVIEW) ) {
@@ -99,9 +98,6 @@ static void R_AddLightsToSurfaces( void ) {
 	memset( lc, 0, sizeof( *lc ) * rn.numRealtimeLights );
 	memset( lrm, 0, sizeof( *lrm ) * rn.numRealtimeLights );
 	memset( lcm, 0, sizeof( *lcm ) * rn.numRealtimeLights );
-
-	lsip = lsi;
-	lcp = lc;
 
 	for( j = 0; j < rn.numRealtimeLights; j++ ) {
 		lsi[j] = rn.rtlights[j]->surfaceInfo;
@@ -506,7 +502,6 @@ bool R_AddBrushModelToDrawList( const entity_t *e ) {
 	vec3_t origin;
 	model_t *model = e->model;
 	mbrushmodel_t *bmodel = ( mbrushmodel_t * )model->extradata;
-	mfog_t *fog;
 	unsigned numVisSurfaces;
 	const entSceneCache_t *cache = R_ENTCACHE( e );
 
@@ -520,8 +515,6 @@ bool R_AddBrushModelToDrawList( const entity_t *e ) {
 
 	VectorAdd( e->model->mins, e->model->maxs, origin );
 	VectorMA( e->origin, 0.5, origin, origin );
-
-	fog = cache->fog;
 
 	R_TransformPointToModelSpace( e, cache->rotated, rn.refdef.vieworg, modelOrg );
 
@@ -1037,28 +1030,26 @@ void R_DrawWorldNode( void ) {
 	//
 	// cull rtlights
 	//
-	if( !r_fullbright->integer ) {
-		if( speeds ) {
-			msec2 = ri.Sys_Milliseconds();
-		}
+	if( speeds ) {
+		msec2 = ri.Sys_Milliseconds();
+	}
 
-		if( r_lighting_realtime_world->integer != 0 ) {
-			R_CullRtLights( bm->numRtLights, 
-				bm->rtLights, clipFlags, r_lighting_realtime_world_shadows->integer != 0 );
-			R_CullRtLights( bm->numRtSkyLights, 
-				bm->rtSkyLights, clipFlags, r_lighting_realtime_world_shadows->integer != 0 );
-		}
+	if( r_lighting_realtime_world->integer != 0 ) {
+		R_CullRtLights( bm->numRtLights, 
+			bm->rtLights, clipFlags, r_lighting_realtime_world_shadows->integer != 0 );
+		R_CullRtLights( bm->numRtSkyLights, 
+			bm->rtSkyLights, clipFlags, r_lighting_realtime_world_shadows->integer != 0 );
+	}
 
-		if( r_lighting_realtime_dlight->integer != 0 ) {
-			if( !( rn.renderFlags & RF_ENVVIEW ) && r_dynamiclight->integer == 1 ) {
-				R_CullRtLights( rsc.numDlights, 
-					rsc.dlights, clipFlags, r_lighting_realtime_dlight_shadows->integer != 0 );
-			}
+	if( r_lighting_realtime_dlight->integer != 0 ) {
+		if( !( rn.renderFlags & RF_ENVVIEW ) && r_dynamiclight->integer == 1 ) {
+			R_CullRtLights( rsc.numDlights, 
+				rsc.dlights, clipFlags, r_lighting_realtime_dlight_shadows->integer != 0 );
 		}
+	}
 
-		if( speeds ) {
-			rf.stats.t_cull_rtlights += ri.Sys_Milliseconds() - msec;
-		}
+	if( speeds ) {
+		rf.stats.t_cull_rtlights += ri.Sys_Milliseconds() - msec;
 	}
 
 	//

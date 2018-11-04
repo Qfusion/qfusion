@@ -411,7 +411,7 @@ static mesh_t *Mod_BuildMeshForSurface( q2msurface_t *fa, msurface_t *out ) {
 	}
 	for( j = 0; j < max_style; j++ ) {
 		mesh->colorsArray[j] = ( byte_vec4_t * )buffer; buffer += numVerts * sizeof( byte_vec4_t );
-		memset( mesh->colorsArray[j], 255 * (r_fullbright->integer != 0), numVerts * sizeof( byte_vec4_t ) );
+		memset( mesh->colorsArray[j], 0, numVerts * sizeof( byte_vec4_t ) );
 	}
 	if( mapConfig.lightmapArrays ) {
 		for( j = 0; j < max_style; j++ ) {
@@ -476,27 +476,19 @@ static mesh_t *Mod_BuildMeshForSurface( q2msurface_t *fa, msurface_t *out ) {
 		}
 
 		// vertex colors
-		if( !r_fullbright->integer ) {
-			int ds, dt;
-			uint8_t     *lightmap;
+		int ds, dt;
+		uint8_t     *lightmap;
 
-			ds = base_s;
-			dt = base_t;
+		ds = base_s;
+		dt = base_t;
 
-			ds -= fa->texturemins[0];
-			dt -= fa->texturemins[1];
+		ds -= fa->texturemins[0];
+		dt -= fa->texturemins[1];
 
-			lightmap = fa->samples + LIGHTMAP_BYTES * ( ( dt >> 4 ) * smax + ( ds >> 4 ) );
-			for( j = 0; j < max_style; j++ ) {
-				// convert to grayscale if monochrome lighting is enabled
-				if( r_lighting_grayscale->integer ) {
-					vec_t grey = ColorGrayscale( lightmap );
-					VectorSet( mesh->colorsArray[j][i], grey, grey, grey );
-				} else {
-					VectorCopy( lightmap, mesh->colorsArray[j][i] );
-				}
-				lightmap += LIGHTMAP_BYTES * smax * tmax;
-			}
+		lightmap = fa->samples + LIGHTMAP_BYTES * ( ( dt >> 4 ) * smax + ( ds >> 4 ) );
+		for( j = 0; j < max_style; j++ ) {
+			VectorCopy( lightmap, mesh->colorsArray[j][i] );
+			lightmap += LIGHTMAP_BYTES * smax * tmax;
 		}
 	}
 
@@ -1566,7 +1558,6 @@ static void Mod_Q2LoadFaces( const lump_t *l ) {
 
 		// lighting info
 		for( j = 0; j < Q2_MAX_LIGHTMAPS; j++ ) {
-			out->styles[j] = ( r_fullbright->integer ? ( j ? 255 : 0 ) : in->styles[j] );
 			out->lightmapnum[j] = -1;
 		}
 		for( ; j < MAX_LIGHTMAPS; j++ ) {
@@ -2495,7 +2486,6 @@ static void Mod_Q1LoadFaces( const lump_t *l ) {
 
 		// lighting info
 		for( j = 0; j < Q1_MAX_LIGHTMAPS; j++ ) {
-			out->styles[j] = ( r_fullbright->integer ? ( j ? 255 : 0 ) : in->styles[j] );
 			out->lightmapnum[j] = -1;
 		}
 		for( ; j < MAX_LIGHTMAPS; j++ ) {
@@ -2625,7 +2615,6 @@ static void Mod_Q1LoadSurfedges( const lump_t *l ) {
 */
 static void Mod_Q1LoadLeafs( const lump_t *l, const lump_t *msLump, unsigned numvisleafs ) {
 	int i, j, k;
-	int numclusters;
 	int count, countMarkSurfaces;
 	q1dleaf_t   *in;
 	mleaf_t     *out;
@@ -2650,7 +2639,6 @@ static void Mod_Q1LoadLeafs( const lump_t *l, const lump_t *msLump, unsigned num
 
 	loadbmodel->leafs = out;
 	loadbmodel->numleafs = count;
-	numclusters = numvisleafs;
 
 	for( i = 0; i < count; i++, in++, out++ ) {
 		badBounds = false;

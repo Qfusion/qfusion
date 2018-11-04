@@ -223,11 +223,6 @@ static void Mod_PreloadFaces( const lump_t *l ) {
 		for( i = 0; i < loadmodel_numsurfaces; i++, in++ ) {
 			for( j = 0; j < MAX_LIGHTMAPS; j++ ) {
 				int lmNum = LittleLong( in->lm_texnum[j] );
-				// disable lightstyles for fullbright mode
-				if( j > 0 && r_fullbright->integer ) {
-					lmNum = -1;
-					in->vertexStyles[j] = 255;
-				}
 				if( lmNum < 0 || in->lightmapStyles[j] == 255 || r_lighting_vertexlight->integer ) {
 					in->lm_texnum[j] = LittleLong( -1 );
 					in->lightmapStyles[j] = 255;
@@ -398,21 +393,10 @@ static void Mod_LoadVertexes( const lump_t *l ) {
 			out_lmst[j] = LittleFloat( in->lm_st[j] );
 		}
 
-		if( r_fullbright->integer ) {
-			out_colors[0] = 255;
-			out_colors[1] = 255;
-			out_colors[2] = 255;
-			out_colors[3] = in->color[3];
-		} else if( r_lighting_grayscale->integer ) {
-			vec_t grey = ColorGrayscale( in->color );
-			out_colors[0] = out_colors[1] = out_colors[2] = bound( 0, grey, 255 );
-			out_colors[3] = in->color[3];
-		} else {
-			out_colors[0] = in->color[0];
-			out_colors[1] = in->color[1];
-			out_colors[2] = in->color[2];
-			out_colors[3] = in->color[3];
-		}
+		out_colors[0] = in->color[0];
+		out_colors[1] = in->color[1];
+		out_colors[2] = in->color[2];
+		out_colors[3] = in->color[3];
 	}
 }
 
@@ -466,21 +450,10 @@ static void Mod_LoadVertexes_RBSP( const lump_t *l ) {
 			out_lmst[j][0] = LittleFloat( in->lm_st[j][0] );
 			out_lmst[j][1] = LittleFloat( in->lm_st[j][1] );
 
-			if( r_fullbright->integer ) {
-				out_colors[j][0] = 255;
-				out_colors[j][1] = 255;
-				out_colors[j][2] = 255;
-				out_colors[j][3] = in->color[j][3];
-			} else if( r_lighting_grayscale->integer ) {
-				vec_t grey = ColorGrayscale( in->color[j] );
-				out_colors[j][0] = out_colors[j][1] = out_colors[j][2] = bound( 0, grey, 255 );
-				out_colors[j][3] = in->color[j][3];
-			} else {
-				out_colors[j][0] = in->color[j][0];
-				out_colors[j][1] = in->color[j][1];
-				out_colors[j][2] = in->color[j][2];
-				out_colors[j][3] = in->color[j][3];
-			}
+			out_colors[j][0] = in->color[j][0];
+			out_colors[j][1] = in->color[j][1];
+			out_colors[j][2] = in->color[j][2];
+			out_colors[j][3] = in->color[j][3];
 		}
 	}
 }

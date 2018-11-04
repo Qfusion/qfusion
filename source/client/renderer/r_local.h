@@ -375,12 +375,10 @@ extern r_globals_t rf;
 #define R_ENTNUMCACHE( num ) ( rsc.entSceneCache + num )
 #define R_ENTCACHE( ent ) R_ENTNUMCACHE( R_ENT2NUM( ent ) )
 
-extern cvar_t *r_norefresh;
 extern cvar_t *r_drawentities;
 extern cvar_t *r_drawworld;
 extern cvar_t *r_speeds;
 extern cvar_t *r_drawelements;
-extern cvar_t *r_fullbright;
 extern cvar_t *r_lightmap;
 extern cvar_t *r_novis;
 extern cvar_t *r_nocull;
@@ -412,7 +410,6 @@ extern cvar_t *r_lighting_packlightmaps;
 extern cvar_t *r_lighting_maxlmblocksize;
 extern cvar_t *r_lighting_vertexlight;
 extern cvar_t *r_lighting_maxglsldlights;
-extern cvar_t *r_lighting_grayscale;
 extern cvar_t *r_lighting_intensity;
 extern cvar_t *r_lighting_realtime_world;
 extern cvar_t *r_lighting_realtime_world_lightmaps;
@@ -477,11 +474,7 @@ extern cvar_t *r_gamma;
 extern cvar_t *r_texturefilter;
 extern cvar_t *r_texturecompression;
 extern cvar_t *r_mode;
-extern cvar_t *r_nobind;
-extern cvar_t *r_picmip;
-extern cvar_t *r_skymip;
 extern cvar_t *r_polyblend;
-extern cvar_t *r_lockpvs;
 extern cvar_t *r_screenshot_fmtstr;
 extern cvar_t *r_screenshot_jpeg;
 extern cvar_t *r_screenshot_jpeg_quality;
@@ -493,8 +486,6 @@ extern cvar_t *r_temp1;
 extern cvar_t *r_drawflat;
 extern cvar_t *r_wallcolor;
 extern cvar_t *r_floorcolor;
-
-extern cvar_t *r_usenotexture;
 
 extern cvar_t *r_maxglslbones;
 

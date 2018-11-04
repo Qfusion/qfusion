@@ -28,12 +28,10 @@ r_shared_t rsh;
 
 mempool_t *r_mempool;
 
-cvar_t *r_norefresh;
 cvar_t *r_drawentities;
 cvar_t *r_drawworld;
 cvar_t *r_speeds;
 cvar_t *r_drawelements;
-cvar_t *r_fullbright;
 cvar_t *r_lightmap;
 cvar_t *r_novis;
 cvar_t *r_nocull;
@@ -47,7 +45,6 @@ cvar_t *r_detailtextures;
 cvar_t *r_subdivisions;
 cvar_t *r_showtris;
 cvar_t *r_showtris2D;
-cvar_t *r_draworder;
 cvar_t *r_leafvis;
 
 cvar_t *r_fastsky;
@@ -65,7 +62,6 @@ cvar_t *r_lighting_packlightmaps;
 cvar_t *r_lighting_maxlmblocksize;
 cvar_t *r_lighting_vertexlight;
 cvar_t *r_lighting_maxglsldlights;
-cvar_t *r_lighting_grayscale;
 cvar_t *r_lighting_intensity;
 cvar_t *r_lighting_realtime_world;
 cvar_t *r_lighting_realtime_world_lightmaps;
@@ -130,11 +126,8 @@ cvar_t *r_stencilbits;
 cvar_t *r_gamma;
 cvar_t *r_texturefilter;
 cvar_t *r_texturecompression;
-cvar_t *r_picmip;
-cvar_t *r_skymip;
 cvar_t *r_nobind;
 cvar_t *r_polyblend;
-cvar_t *r_lockpvs;
 cvar_t *r_screenshot_fmtstr;
 cvar_t *r_screenshot_jpeg;
 cvar_t *r_screenshot_jpeg_quality;
@@ -340,8 +333,6 @@ static void R_FillStartupBackgroundColor( float r, float g, float b ) {
 static void R_Register() {
 	char tmp[128];
 
-	r_norefresh = ri.Cvar_Get( "r_norefresh", "0", 0 );
-	r_fullbright = ri.Cvar_Get( "r_fullbright", "0", CVAR_LATCH_VIDEO );
 	r_lightmap = ri.Cvar_Get( "r_lightmap", "0", 0 );
 	r_drawentities = ri.Cvar_Get( "r_drawentities", "1", CVAR_CHEAT );
 	r_drawworld = ri.Cvar_Get( "r_drawworld", "1", CVAR_CHEAT );
@@ -353,10 +344,6 @@ static void R_Register() {
 	r_showtris = ri.Cvar_Get( "r_showtris", "0", CVAR_CHEAT );
 	r_showtris2D = ri.Cvar_Get( "r_showtris2D", "0", CVAR_CHEAT );
 	r_leafvis = ri.Cvar_Get( "r_leafvis", "0", CVAR_CHEAT );
-	r_lockpvs = ri.Cvar_Get( "r_lockpvs", "0", CVAR_CHEAT );
-	r_nobind = ri.Cvar_Get( "r_nobind", "0", 0 );
-	r_picmip = ri.Cvar_Get( "r_picmip", "0", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
-	r_skymip = ri.Cvar_Get( "r_skymip", "0", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
 	r_polyblend = ri.Cvar_Get( "r_polyblend", "1", 0 );
 
 	r_brightness = ri.Cvar_Get( "r_brightness", "0", CVAR_ARCHIVE );
@@ -366,8 +353,7 @@ static void R_Register() {
 
 	r_dynamiclight = ri.Cvar_Get( "r_dynamiclight", "1", CVAR_ARCHIVE );
 	r_coronascale = ri.Cvar_Get( "r_coronascale", "0.4", 0 );
-	r_subdivisions = ri.Cvar_Get( "r_subdivisions", STR_TOSTR( SUBDIVISIONS_DEFAULT ), CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
-	r_draworder = ri.Cvar_Get( "r_draworder", "0", CVAR_CHEAT );
+	r_subdivisions = ri.Cvar_Get( "r_subdivisions", STR_TOSTR( SUBDIVISIONS_DEFAULT ), CVAR_ARCHIVE | CVAR_LATCH_VIDEO | CVAR_READONLY );
 
 	r_fastsky = ri.Cvar_Get( "r_fastsky", "0", CVAR_ARCHIVE );
 	r_portalonly = ri.Cvar_Get( "r_portalonly", "0", 0 );
@@ -385,7 +371,6 @@ static void R_Register() {
 	r_lighting_maxlmblocksize = ri.Cvar_Get( "r_lighting_maxlmblocksize", "2048", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
 	r_lighting_vertexlight = ri.Cvar_Get( "r_lighting_vertexlight", "0", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
 	r_lighting_maxglsldlights = ri.Cvar_Get( "r_lighting_maxglsldlights", "32", CVAR_ARCHIVE );
-	r_lighting_grayscale = ri.Cvar_Get( "r_lighting_grayscale", "0", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
 	r_lighting_intensity = ri.Cvar_Get( "r_lighting_intensity", "1.75", CVAR_ARCHIVE );
 	r_lighting_realtime_world = ri.Cvar_Get( "r_lighting_realtime_world", "0", CVAR_ARCHIVE );
 	r_lighting_realtime_world_lightmaps = ri.Cvar_Get( "r_lighting_realtime_world_lightmaps", "0", CVAR_ARCHIVE );
@@ -471,9 +456,6 @@ static void R_Register() {
 	// make sure we rebuild our 3D texture after vid_restart
 	r_wallcolor->modified = r_floorcolor->modified = true;
 
-	// set to 1 to enable use of the checkerboard texture for missing world and model images
-	r_usenotexture = ri.Cvar_Get( "r_usenotexture", "0", CVAR_ARCHIVE );
-
 	r_maxglslbones = ri.Cvar_Get( "r_maxglslbones", STR_TOSTR( MAX_GLSL_UNIFORM_BONES ), CVAR_LATCH_VIDEO );
 
 	r_multithreading = ri.Cvar_Get( "r_multithreading", "0", CVAR_ARCHIVE | CVAR_LATCH_VIDEO | CVAR_READONLY );
@@ -516,7 +498,6 @@ static void R_GfxInfo_f( void ) {
 
 	Com_Printf( "mode: %ix%i%s\n", glConfig.width, glConfig.height,
 				glConfig.fullScreen ? ", fullscreen" : ", windowed" );
-	Com_Printf( "picmip: %i\n", r_picmip->integer );
 	Com_Printf( "anisotropic filtering: %i\n", r_texturefilter->integer );
 	Com_Printf( "vertical sync: %s\n", ( r_swapinterval->integer || r_swapinterval_min->integer ) ? "enabled" : "disabled" );
 	Com_Printf( "multithreading: %s\n", glConfig.multithreading ? "enabled" : "disabled" );

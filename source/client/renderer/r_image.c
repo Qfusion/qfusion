@@ -388,22 +388,6 @@ static int R_ScaledImageSize( int width, int height, int *scaledWidth, int *scal
 		maxSize = glConfig.maxTextureSize;
 	}
 
-	if( !( flags & IT_NOPICMIP ) ) {
-		// let people sample down the sky textures for speed
-		int picmip = ( flags & IT_SKY ) ? r_skymip->integer : r_picmip->integer;
-		while( ( mip < picmip ) && ( ( width > minmipsize ) || ( height > minmipsize ) ) ) {
-			++mip;
-			width >>= 1;
-			height >>= 1;
-			if( !width ) {
-				width = 1;
-			}
-			if( !height ) {
-				height = 1;
-			}
-		}
-	}
-
 	// try to find the smallest supported texture size from mipmaps
 	clampedWidth = width;
 	clampedHeight = height;

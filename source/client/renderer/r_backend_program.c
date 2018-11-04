@@ -463,7 +463,7 @@ static inline const image_t *RB_ShaderpassTex( const shaderpass_t *pass ) {
 	if( !tex->missing ) {
 		return tex;
 	}
-	return r_usenotexture->integer == 0 ? rsh.greyTexture : rsh.noTexture;
+	return rsh.greyTexture;
 }
 
 //==================================================================================

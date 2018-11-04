@@ -211,12 +211,7 @@ void R_AddLightToScene( const vec3_t org, float intensity, float r, float g, flo
 	}
 
 	VectorSet( color, r, g, b );
-	if( r_lighting_grayscale->integer ) {
-		vec_t grey = ColorGrayscale( color );
-		color[0] = color[1] = color[2] = bound( 0, grey, 1 );
-	} else {
-		VectorScale( color, 1.0 / DLIGHT_SCALE, color );
-	}
+	VectorScale( color, 1.0 / DLIGHT_SCALE, color );
 
 	dl = &rsc.dlights[rsc.numDlights];
 	R_InitRtLight( dl, org, axis_identity, intensity * DLIGHT_SCALE, color );
@@ -329,16 +324,11 @@ static image_t *R_BlurTextureToScrFbo( const refdef_t *fd, image_t *image, image
 * R_RenderScene
 */
 void R_RenderScene( const refdef_t *fd ) {
-	int l;
 	int fbFlags = 0;
 	int ppFrontBuffer = 0;
 	int samples = 0;
 	image_t *ppSource;
 	shader_t *cc;
-
-	if( r_norefresh->integer ) {
-		return;
-	}
 
 	R_End2D();
 

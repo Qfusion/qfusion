@@ -548,7 +548,6 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, size_t *vbo_total_size
 			CopyBounds( surf->mins, surf->maxs, mins, maxs );
 
 			if( mergable ) {
-				vec_t testlen;
 				vec3_t testmins, testmaxs, testsize;
 
 				// scan remaining face checking whether we merge them with the current one
@@ -570,7 +569,6 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, size_t *vbo_total_size
 					testsize[0] = testmaxs[0] - testmins[0];
 					testsize[1] = testmaxs[1] - testmins[1];
 					testsize[2] = testmaxs[2] - testmins[2];
-					testlen = max( max( testsize[0], testsize[1] ), testsize[2] );
 
 					if( fcount == MAX_DRAWSURF_SURFS ) {
 						break;
@@ -1161,12 +1159,7 @@ static void R_InitMapConfig( const char *model ) {
 */
 static void R_FinishMapConfig( const model_t *mod ) {
 	// ambient lighting
-	if( r_fullbright->integer ) {
-		VectorSet( mapConfig.ambient, 1, 1, 1 );
-		mapConfig.averageLightingIntensity = 1;
-	} else {
-		ColorNormalize( mapConfig.ambient,  mapConfig.ambient );
-	}
+	ColorNormalize( mapConfig.ambient,  mapConfig.ambient );
 
 	mod_mapConfigs[mod - mod_known] = mapConfig;
 }
