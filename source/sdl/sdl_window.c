@@ -102,10 +102,10 @@ static void gl_debug_output_callback(
                 return;
         }
 
-	printf( "GL [%s - %s]: %s", type_string( type ), severity_string( severity ), message );
+	Com_Printf( "GL [%s - %s]: %s", type_string( type ), severity_string( severity ), message );
 	size_t len = strlen( message );
 	if( len == 0 || message[ len - 1 ] != '\n' )
-		printf( "\n" );
+		Com_Printf( "\n" );
 
         if( severity == GL_DEBUG_SEVERITY_HIGH ) {
 		abort();
@@ -182,10 +182,6 @@ void VID_WindowInit( VideoMode mode, int stencilbits ) {
 	if( sdl_window == NULL ) {
 		Sys_Error( "Couldn't create window: \"%s\"", SDL_GetError() );
 	}
-
-	int w, h;
-	SDL_GetWindowSize( sdl_window, &w, &h );
-	printf( "%d %d\n", w, h );
 
 #ifndef __APPLE__
 	uint32_t r = 0x00ff0000;
