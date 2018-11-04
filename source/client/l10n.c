@@ -41,7 +41,6 @@ typedef struct podomain_s {
 
 static mempool_t *pomempool;
 
-static cvar_t *cl_lang;
 static char posyslang[MAX_STRING_CHARS];
 
 static podomain_t *podomains_head;
@@ -429,9 +428,6 @@ static void L10n_DestroyPODomain( podomain_t *podomain ) {
 * L10n_GetUserLanguage
 */
 const char *L10n_GetUserLanguage( void ) {
-	if( cl_lang->string[0] ) {
-		return cl_lang->string;
-	}
 	return posyslang;
 }
 
@@ -439,19 +435,11 @@ const char *L10n_GetUserLanguage( void ) {
 * L10n_Init
 */
 void L10n_Init( void ) {
-	const char *syslang;
-
 	podomains_head = NULL;
 
 	pomempool = Mem_AllocPool( NULL, "L10n" );
 
-	cl_lang = Cvar_Get( "lang", "", CVAR_ARCHIVE
-#ifdef PUBLIC_BUILD
-						| CVAR_LATCH_VIDEO
-#endif
-						);
-
-	syslang = Sys_GetPreferredLanguage();
+	const char *syslang = Sys_GetPreferredLanguage();
 	if( !syslang || !syslang[0] ) {
 		syslang = APP_DEFAULT_LANGUAGE;
 	}
