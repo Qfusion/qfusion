@@ -446,7 +446,6 @@ void RocketModule::registerCustoms() {
 	registerElement( "idiv", GetInlineDivInstancer() );
 	registerElement( "img", GetImageWidgetInstancer() );
 	registerElement( "field", GetElementFieldInstancer() );
-	registerElement( "video", GetVideoInstancer() );
 	registerElement( "iframe", GetIFrameWidgetInstancer() );
 	registerElement( "l10n", GetElementL10nInstancer() );
 	registerElement( "blur", GetElementBlurInstancer() );

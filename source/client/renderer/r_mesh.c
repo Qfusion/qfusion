@@ -239,10 +239,6 @@ void *R_AddSurfToDrawList( drawList_t *list, const entity_t *e, const shader_t *
 		return NULL;
 	}
 
-	if( shader->cin ) {
-		R_UploadCinematicShader( shader );
-	}
-
 	// reallocate if numDrawSurfs
 	if( list->numDrawSurfs >= list->maxDrawSurfs ) {
 		int minMeshes = MIN_RENDER_MESHES;

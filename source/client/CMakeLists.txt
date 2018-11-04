@@ -1,6 +1,6 @@
 project(${QFUSION_CLIENT_NAME})
 
-include_directories(${ZLIB_INCLUDE_DIR} ${CURL_INCLUDE_DIR} ${SDL2_INCLUDE_DIR} ${OGG_INCLUDE_DIR} ${VORBIS_INCLUDE_DIR} ${THEORA_INCLUDE_DIR} ${CURL_INCLUDE_DIR} ${ZLIB_INCLUDE_DIR} ${FREETYPE_INCLUDE_DIRS})
+include_directories(${ZLIB_INCLUDE_DIR} ${CURL_INCLUDE_DIR} ${SDL2_INCLUDE_DIR} ${CURL_INCLUDE_DIR} ${ZLIB_INCLUDE_DIR} ${FREETYPE_INCLUDE_DIRS})
 
 if (NOT QFUSION_MAC_ICON)
 	set(QFUSION_MAC_ICON ../../icons/qfusion.icns)
@@ -8,8 +8,6 @@ endif()
 if (NOT QFUSION_MAC_INFO_PLIST)
 	set(QFUSION_MAC_INFO_PLIST ../mac/Qfusion-Info.plist)
 endif()
-
-add_definitions(-DCIN_HARD_LINKED)
 
 file(GLOB CLIENT_HEADERS
 	"*.h"
@@ -26,7 +24,6 @@ file(GLOB CLIENT_HEADERS
 	"../game/g_public.h"
 	"../ui/ui_public.h"
 	"../steamlib/steamlib_public.h"
-	"../cin/*.h"
 	"../matchmaker/*.h"
 	"../server/*.h"
 	)
@@ -40,9 +37,6 @@ file(GLOB CLIENT_COMMON_SOURCES
 	"../matchmaker/*.c"
 
 	"renderer/*.c"
-
-	"../cin/*.c"
-
 	"ftlib/*.c"
 
 	"../sdl/sdl_input.c"

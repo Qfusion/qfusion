@@ -529,10 +529,6 @@ void R_DrawRotatedStretchPic( int x, int y, int w, int h, float s1, float t1, fl
 		return;
 	}
 
-	if( shader->cin ) {
-		R_UploadCinematicShader( shader );
-	}
-
 	// lower-left
 	Vector2Set( pic_xyz[0], x, y );
 	Vector2Set( pic_st[0], s1, t1 );
@@ -585,131 +581,6 @@ void R_DrawRotatedStretchPic( int x, int y, int w, int h, float s1, float t1, fl
 void R_DrawStretchPic( int x, int y, int w, int h, float s1, float t1, float s2, float t2,
 					   const vec4_t color, const shader_t *shader ) {
 	R_DrawRotatedStretchPic( x, y, w, h, s1, t1, s2, t2, 0, color, shader );
-}
-
-/*
-* R_UploadRawPic
-*/
-void R_UploadRawPic( image_t *texture, int cols, int rows, uint8_t *data ) {
-	if( texture->width != cols || texture->height != rows ) {
-		uint8_t *nodata[1] = { NULL };
-		R_ReplaceImage( texture, nodata, cols, rows, texture->flags, 1, 3 );
-	}
-	R_ReplaceSubImage( texture, 0, 0, 0, &data, cols, rows );
-}
-
-/*
-* R_UploadRawYUVPic
-*/
-void R_UploadRawYUVPic( image_t **yuvTextures, ref_img_plane_t *yuv ) {
-	int i;
-
-	for( i = 0; i < 3; i++ ) {
-		uint8_t *data = yuv[i].data;
-		int flags = yuvTextures[i]->flags;
-		int stride = yuv[i].stride;
-		int height = yuv[i].height;
-
-		if( stride < 0 ) {
-			// negative stride flips the image vertically
-			data = data + stride * height;
-			flags = ( flags & ~( IT_FLIPX | IT_FLIPY | IT_FLIPDIAGONAL ) ) | IT_FLIPY;
-			stride = -stride;
-		}
-
-		if( yuvTextures[i]->width != stride || yuvTextures[i]->height != height ) {
-			uint8_t *nodata[1] = { NULL };
-			R_ReplaceImage( yuvTextures[i], nodata, stride, height, flags, 1, 1 );
-		}
-		R_ReplaceSubImage( yuvTextures[i], 0, 0, 0, &data, stride, height );
-	}
-}
-
-/*
-* R_DrawStretchRaw
-*/
-void R_DrawStretchRaw( int x, int y, int w, int h, float s1, float t1, float s2, float t2 ) {
-	float h_scale, v_scale;
-
-	h_scale = (float)rsh.rawTexture->width / rsh.rawTexture->upload_width;
-	v_scale = (float)rsh.rawTexture->height / rsh.rawTexture->upload_height;
-	s1 *= h_scale;
-	s2 *= h_scale;
-	t1 *= v_scale;
-	t2 *= v_scale;
-
-	R_DrawStretchQuick( x, y, w, h, s1, t1, s2, t2, colorWhite, GLSL_PROGRAM_TYPE_NONE, rsh.rawTexture, 0 );
-}
-
-/*
-* R_DrawStretchRawYUVBuiltin
-*
-* Set bit 0 in 'flip' to flip the image horizontally
-* Set bit 1 in 'flip' to flip the image vertically
-*/
-void R_DrawStretchRawYUVBuiltin( int x, int y, int w, int h,
-								 float s1, float t1, float s2, float t2, image_t **yuvTextures, int flip ) {
-	static char *s_name = "$builtinyuv";
-	static shaderpass_t p;
-	static shader_t s;
-	float h_scale, v_scale;
-	float s2_, t2_;
-	float h_ofs, v_ofs;
-
-	s.vattribs = VATTRIB_POSITION_BIT | VATTRIB_TEXCOORDS_BIT;
-	s.sort = SHADER_SORT_NEAREST;
-	s.numpasses = 1;
-	s.name = s_name;
-	s.passes = &p;
-
-	p.rgbgen.type = RGB_GEN_IDENTITY;
-	p.alphagen.type = ALPHA_GEN_IDENTITY;
-	p.tcgen = TC_GEN_BASE;
-	p.images[0] = yuvTextures[0];
-	p.images[1] = yuvTextures[1];
-	p.images[2] = yuvTextures[2];
-	p.flags = 0;
-	p.program_type = GLSL_PROGRAM_TYPE_YUV;
-
-	h_scale = (float)yuvTextures[0]->width / yuvTextures[0]->upload_width;
-	v_scale = (float)yuvTextures[0]->height / yuvTextures[0]->upload_height;
-	h_ofs = 1.0f / yuvTextures[0]->upload_width;
-	v_ofs = 1.0f / yuvTextures[0]->upload_height;
-
-	s1 *= h_scale;
-	s2 *= h_scale;
-	t1 *= v_scale;
-	t2 *= v_scale;
-
-	s2_ = s2;
-	t2_ = t2;
-	if( flip & 1 ) {
-		s1 = s2_ - s1, s2 = s2_ - s2;
-	}
-	if( flip & 2 ) {
-		t1 = t2_ - t1, t2 = t2_ - t2;
-	}
-
-	// avoid lerp seams
-	if( s1 > s2 ) {
-		s1 -= h_ofs, s2 += h_ofs;
-	} else {
-		s1 += h_ofs, s2 -= h_ofs;
-	}
-	if( t1 > t2 ) {
-		t1 -= v_ofs, t2 += v_ofs;
-	} else {
-		t1 += v_ofs, t2 -= v_ofs;
-	}
-
-	R_DrawRotatedStretchPic( x, y, w, h, s1, t1, s2, t2, 0, colorWhite, &s );
-}
-
-/*
-* R_DrawStretchRawYUV
-*/
-void R_DrawStretchRawYUV( int x, int y, int w, int h, float s1, float t1, float s2, float t2 ) {
-	R_DrawStretchRawYUVBuiltin( x, y, w, h, s1, t1, s2, t2, rsh.rawYUVTextures, 0 );
 }
 
 /*
@@ -1144,7 +1015,6 @@ static void R_CullEntities( void ) {
 	unsigned int i;
 	int entNum;
 	entity_t *e;
-	entSceneCache_t *cache;
 
 	rn.entities = NULL;
 	rn.entpvs = NULL;
@@ -1192,7 +1062,6 @@ static void R_CullEntities( void ) {
 		for( i = 0; i < rn.numRtLightEntities; i++ ) {
 			entNum = rn.rtLightEntities[i];
 			e = R_NUM2ENT( entNum );
-			cache = R_ENTCACHE( e );
 
 			if( R_CullModelEntity( e, false ) ) {
 				continue;
@@ -1868,7 +1737,7 @@ void R_RenderDebugSurface( const refdef_t *fd ) {
 /*
 * R_BeginFrame
 */
-void R_BeginFrame( bool forceClear ) {
+void R_BeginFrame() {
 	int samples;
 	int64_t time = ri.Sys_Milliseconds();
 
@@ -1890,10 +1759,6 @@ void R_BeginFrame( bool forceClear ) {
 	rf.renderTarget = R_RegisterMultisampleTarget( &rsh.st2D, samples, false, true );
 
 	R_Begin2D( true );
-
-	if( forceClear ) {
-		RB_Clear( GL_COLOR_BUFFER_BIT, 0, 0, 0, 1 );
-	}
 }
 
 /*

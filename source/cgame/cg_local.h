@@ -124,8 +124,6 @@ typedef struct {
 	bool jumpedLeft;
 	vec3_t animVelocity;
 	float yawVelocity;
-
-	struct cinematics_s *cin;
 } centity_t;
 
 #include "cg_pmodels.h"

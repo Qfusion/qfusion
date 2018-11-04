@@ -548,7 +548,7 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, size_t *vbo_total_size
 			CopyBounds( surf->mins, surf->maxs, mins, maxs );
 
 			if( mergable ) {
-				vec3_t testmins, testmaxs, testsize;
+				vec3_t testmins, testmaxs;
 
 				// scan remaining face checking whether we merge them with the current one
 				for( j = i + 1; j < bm->numModelSurfaces; j++ ) {
@@ -565,10 +565,6 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, size_t *vbo_total_size
 					CopyBounds( mins, maxs, testmins, testmaxs );
 					AddPointToBounds( surf2->mins, testmins, testmaxs );
 					AddPointToBounds( surf2->maxs, testmins, testmaxs );
-
-					testsize[0] = testmaxs[0] - testmins[0];
-					testsize[1] = testmaxs[1] - testmins[1];
-					testsize[2] = testmaxs[2] - testmins[2];
 
 					if( fcount == MAX_DRAWSURF_SURFS ) {
 						break;
@@ -1126,7 +1122,6 @@ static void R_InitMapConfig( const char *model ) {
 	mapConfig.maxLightmapSize = 0;
 	mapConfig.deluxeMaps = false;
 	mapConfig.deluxeMappingEnabled = false;
-	mapConfig.forceClear = false;
 	mapConfig.forceWorldOutlines = false;
 	mapConfig.averageLightingIntensity = 1;
 	mapConfig.writeSkyDepth = false;

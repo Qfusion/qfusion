@@ -229,8 +229,6 @@ typedef struct {
 	unsigned int numtcmods;
 	tcmod_t             *tcmods;
 
-	unsigned int cin;
-
 	unsigned int program_type;
 
 	image_t             *images[MAX_SHADER_IMAGES]; // texture refs
@@ -264,8 +262,6 @@ typedef struct shader_s {
 	uint8_t fog_color[4];
 	float fog_dist, fog_clearDist;
 
-	unsigned int cin;
-
 	float glossIntensity;
 	float glossExponent;
 	float offsetmappingScale;
@@ -290,8 +286,6 @@ typedef struct shader_s {
 void        R_InitShaders( void );
 void        R_ShutdownShaders( void );
 
-void        R_UploadCinematicShader( const shader_t *shader );
-
 void        R_PrintShaderList( const char *mask, bool ( *filter )( const char *filter, const char *value ) );
 void        R_PrintShaderCache( const char *name );
 
@@ -308,7 +302,6 @@ shader_t    *R_RegisterRawPic( const char *name, int width, int height, uint8_t 
 shader_t    *R_RegisterRawAlphaMask( const char *name, int width, int height, uint8_t *data );
 shader_t    *R_RegisterLevelshot( const char *name, shader_t *defaultShader, bool *matchesDefault );
 shader_t    *R_RegisterSkin( const char *name );
-shader_t    *R_RegisterVideo( const char *name );
 shader_t    *R_RegisterLinearPic( const char *name );
 
 unsigned    R_PackShaderOrder( const shader_t *shader );

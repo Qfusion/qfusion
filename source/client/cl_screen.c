@@ -25,7 +25,6 @@ full screen console
 put up loading plaque
 blanked background with loading plaque
 blanked background with menu
-cinematics
 full screen image for quit and victory
 
 end of unit intermissions
@@ -657,8 +656,6 @@ static void SCR_RenderView( bool timedemo ) {
 * text to the screen.
 */
 void SCR_UpdateScreen( void ) {
-	bool cinematic;
-	bool forceclear;
 	bool timedemo;
 
 	// if the screen is disabled (loading plaque is up, or vid mode changing)
@@ -679,23 +676,15 @@ void SCR_UpdateScreen( void ) {
 
 	SCR_CheckSystemFontsModified();
 
-	cinematic = cls.state == CA_CINEMATIC ? true : false;
-	CL_ForceVsync( cinematic || ( cls.state == CA_DISCONNECTED && scr_con_current ) );
-	forceclear = cinematic;
+	CL_ForceVsync( cls.state == CA_DISCONNECTED && scr_con_current );
 	timedemo = cl_timedemo->integer != 0 && cls.demo.playing;
 
-	re.BeginFrame( forceclear, timedemo );
+	re.BeginFrame( timedemo );
 
 	if( scr_draw_loading == 2 ) {
 		// loading plaque over APP_STARTUP_COLOR screen
 		scr_draw_loading = 0;
 		CL_UIModule_UpdateConnectScreen( true );
-	}
-	// if a cinematic is supposed to be running, handle menus
-	// and console specially
-	else if( cinematic ) {
-		SCR_DrawCinematic();
-		SCR_DrawConsole();
 	} else if( cls.state == CA_DISCONNECTED ) {
 		CL_UIModule_Refresh( true, true );
 		SCR_DrawConsole();

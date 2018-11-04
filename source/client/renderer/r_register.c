@@ -460,7 +460,6 @@ static void R_Register() {
 	ri.Cmd_AddCommand( "modellist", Mod_Modellist_f );
 	ri.Cmd_AddCommand( "gfxinfo", R_GfxInfo_f );
 	ri.Cmd_AddCommand( "glslprogramlist", RP_ProgramList_f );
-	ri.Cmd_AddCommand( "cinlist", R_CinList_f );
 }
 
 /*
@@ -634,8 +633,6 @@ static rserr_t R_PostInit( void ) {
 
 	R_InitShaders();
 
-	R_InitCinematics();
-
 	R_InitSkinFiles();
 
 	R_InitModels();
@@ -736,10 +733,7 @@ void R_EndRegistration( void ) {
 	R_FreeUnusedVBOs();
 	R_FreeUnusedSkinFiles();
 	R_FreeUnusedShaders();
-	R_FreeUnusedCinematics();
 	R_FreeUnusedImages();
-
-	R_RestartCinematics();
 
 	R_DeferDataSync();
 
@@ -760,7 +754,6 @@ void R_Shutdown( bool verbose ) {
 	ri.Cmd_RemoveCommand( "shaderdump" );
 	ri.Cmd_RemoveCommand( "shaderlist" );
 	ri.Cmd_RemoveCommand( "glslprogramlist" );
-	ri.Cmd_RemoveCommand( "cinlist" );
 
 	// free shaders, models, etc.
 
@@ -773,8 +766,6 @@ void R_Shutdown( bool verbose ) {
 	R_ShutdownVBO();
 
 	R_ShutdownShaders();
-
-	R_ShutdownCinematics();
 
 	R_ShutdownImages();
 

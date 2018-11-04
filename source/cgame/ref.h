@@ -176,40 +176,4 @@ typedef struct refdef_s {
 	struct shader_s *colorCorrection;   // post processing color correction lookup table to apply
 } refdef_t;
 
-typedef struct {
-	// MUST MATCH cin_img_plane_t
-	//===============================
-
-	// the width of this plane
-	// note that row data has to be continous
-	// so for planes where stride != image_width,
-	// the width should be max (stride, image_width)
-	int width;
-
-	// the height of this plane
-	int height;
-
-	// the offset in bytes between successive rows
-	int stride;
-
-	// pointer to the beginning of the first row
-	unsigned char *data;
-} ref_img_plane_t;
-
-typedef struct {
-	int image_width;
-	int image_height;
-
-	int width;
-	int height;
-
-	// cropping factors
-	int x_offset;
-	int y_offset;
-	ref_img_plane_t yuv[3];
-
-	// EVERYTHING ABOVE MATCH cin_yuv_t
-	//===============================
-} ref_yuv_t;
-
 #endif // __REF_H

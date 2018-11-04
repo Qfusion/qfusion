@@ -361,7 +361,6 @@ typedef enum {
 	CA_CONNECTED,                       // connection established, game module not loaded
 	CA_LOADING,                         // loading game module
 	CA_ACTIVE,                          // game views should be displayed
-	CA_CINEMATIC                        // fullscreen video should be displayed
 } connstate_t;
 
 enum {

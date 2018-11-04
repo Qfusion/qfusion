@@ -849,13 +849,10 @@ void CL_Disconnect( const char *message ) {
 		CL_Stop_f();
 	}
 
-	if( cls.state == CA_CINEMATIC ) {
-		SCR_StopCinematic();
-	} else if( cls.demo.playing ) {
+	if( cls.demo.playing ) {
 		CL_DemoCompleted();
 	} else {
 		CL_Disconnect_SendCommand(); // send a disconnect message to the server
-
 	}
 	FS_RemovePurePaks();
 
@@ -1308,7 +1305,7 @@ void CL_ReadPackets( void ) {
 				continue;
 			}
 
-			if( cls.state == CA_DISCONNECTED || cls.state == CA_GETTING_TICKET || cls.state == CA_CONNECTING || cls.state == CA_CINEMATIC ) {
+			if( cls.state == CA_DISCONNECTED || cls.state == CA_GETTING_TICKET || cls.state == CA_CONNECTING ) {
 				Com_DPrintf( "%s: Not connected\n", NET_AddressToString( &address ) );
 				continue; // dump it if not connected
 			}
@@ -1354,7 +1351,7 @@ void CL_ReadPackets( void ) {
 	}
 
 	// check timeout
-	if( cls.state >= CA_HANDSHAKE && cls.state != CA_CINEMATIC && cls.lastPacketReceivedTime ) {
+	if( cls.state >= CA_HANDSHAKE && cls.lastPacketReceivedTime ) {
 		if( cls.lastPacketReceivedTime + cl_timeout->value * 1000 < cls.realtime ) {
 			if( ++cl.timeoutcount > 5 ) { // timeoutcount saves debugger
 				Com_Printf( "\nServer connection timed out.\n" );
@@ -1744,7 +1741,6 @@ void CL_SetClientState( int state ) {
 			//SCR_UpdateScreen();
 			break;
 		case CA_ACTIVE:
-		case CA_CINEMATIC:
 			cl_connectChain[0] = '\0';
 			CL_EndRegistration();
 			Con_Close();
@@ -1821,8 +1817,6 @@ void CL_ShutdownMedia( void ) {
 	CL_UIModule_Shutdown();
 
 	SCR_ShutDownConsoleMedia();
-
-	SCR_StopCinematic();
 }
 
 /*
@@ -2288,7 +2282,7 @@ void CL_SendMessagesToServer( bool sendNow ) {
 	msg_t message;
 	uint8_t messageData[MAX_MSGLEN];
 
-	if( cls.state == CA_DISCONNECTED || cls.state == CA_GETTING_TICKET || cls.state == CA_CONNECTING || cls.state == CA_CINEMATIC ) {
+	if( cls.state == CA_DISCONNECTED || cls.state == CA_GETTING_TICKET || cls.state == CA_CONNECTING ) {
 		return;
 	}
 
@@ -2425,20 +2419,7 @@ void CL_Frame( int realMsec, int gameMsec ) {
 	CL_NetFrame( realMsec, gameMsec );
 	CL_MM_Frame();
 
-	if( cls.state == CA_CINEMATIC ) {
-#if 1
-		maxFps = 10000.0f;
-		minMsec = 1;
-		roundingMsec = 0;
-#else
-		maxFps = SCR_CinematicFramerate() * 2;
-		if( maxFps < 24 ) {
-			maxFps = 24.0f;
-		}
-		minMsec = max( ( 1000.0f / maxFps ), 1 );
-		roundingMsec += max( ( 1000.0f / maxFps ), 1.0f ) - minMsec;
-#endif
-	} else if( cls.state == CA_DISCONNECTED ) {
+	if( cls.state == CA_DISCONNECTED ) {
 		maxFps = 60;
 		minMsec = 1000.0f / maxFps;
 		roundingMsec += 1000.0f / maxFps - minMsec;
@@ -2465,11 +2446,8 @@ void CL_Frame( int realMsec, int gameMsec ) {
 	}
 
 	if( allRealMsec + extraMsec < minMsec ) {
-		// let CPU sleep while playing fullscreen video, while minimized
-		// or when cl_sleep is enabled
-		bool sleep = cl_sleep->integer != 0 ||
-			cls.state == CA_CINEMATIC || cls.state == CA_DISCONNECTED ||
-			!VID_AppIsActive() || VID_AppIsMinimized(); // FIXME: not sure about listen server here..
+		// let CPU sleep while minimized or when cl_sleep is enabled
+		bool sleep = cl_sleep->integer != 0 || cls.state == CA_DISCONNECTED || !VID_AppIsActive() || VID_AppIsMinimized(); // FIXME: not sure about listen server here..
 
 		if( sleep && minMsec - extraMsec > 1 ) {
 			Sys_Sleep( minMsec - extraMsec - 1 );
@@ -2525,7 +2503,6 @@ void CL_Frame( int realMsec, int gameMsec ) {
 	}
 
 	// advance local effects for next frame
-	SCR_RunCinematic();
 	SCR_RunConsole( allRealMsec );
 
 	allRealMsec = 0;
@@ -2874,8 +2851,6 @@ void CL_Init( void ) {
 	SCR_InitScreen();
 	cls.disable_screen = true; // don't draw yet
 
-	CL_InitCinematics();
-
 	CL_InitLocal();
 	CL_InitInput();
 
@@ -2931,8 +2906,6 @@ void CL_Shutdown( void ) {
 	VID_Shutdown();
 
 	CL_ShutdownMedia();
-
-	CL_ShutdownCinematics();
 
 	CL_ShutdownAsyncStream();
 

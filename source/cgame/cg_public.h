@@ -191,7 +191,6 @@ typedef struct {
 	int ( *R_SkeletalGetBoneInfo )( const struct model_s *mod, int bone, char *name, size_t name_size, int *flags );
 	void ( *R_SkeletalGetBonePose )( const struct model_s *mod, int bone, int frame, struct bonepose_s *bonepose );
 	struct shader_s *( *R_GetShaderForOrigin )( const vec3_t origin );
-	struct cinematics_s *( *R_GetShaderCinematic )( struct shader_s *shader );
 
 	void ( *VID_FlashWindow )( int count );
 
@@ -253,10 +252,6 @@ typedef struct {
 	void ( *L10n_ClearDomain )( void );
 	void ( *L10n_LoadLangPOFile )( const char *filepath );
 	const char *( *L10n_TranslateString )( const char *string );
-
-	// cinematics
-	bool ( *CIN_AddRawSamplesListener )( struct cinematics_s *cin, void *listener,
-										 cg_raw_samples_cb_t rs, cg_get_raw_samples_cb_t grs );
 
 	// input
 	void ( *IN_GetThumbsticks )( vec4_t sticks );

@@ -201,10 +201,6 @@ static inline struct shader_s *trap_R_GetShaderForOrigin( const vec3_t origin ) 
 	return CGAME_IMPORT.R_GetShaderForOrigin( origin );
 }
 
-static inline struct cinematics_s *trap_R_GetShaderCinematic( struct shader_s *shader ) {
-	return CGAME_IMPORT.R_GetShaderCinematic( shader );
-}
-
 static inline void trap_R_ClearScene( void ) {
 	CGAME_IMPORT.R_ClearScene();
 }
@@ -538,11 +534,6 @@ static inline void trap_L10n_LoadLangPOFile( const char *filepath ) {
 
 static inline const char *trap_L10n_TranslateString( const char *string ) {
 	return CGAME_IMPORT.L10n_TranslateString( string );
-}
-
-static inline bool trap_CIN_AddRawSamplesListener( struct cinematics_s *cin,
-												   void *listener, cg_raw_samples_cb_t rs,cg_get_raw_samples_cb_t grs ) {
-	return CGAME_IMPORT.CIN_AddRawSamplesListener( cin, listener, rs, grs );
 }
 
 static inline void trap_IN_GetThumbsticks( vec4_t sticks ) {

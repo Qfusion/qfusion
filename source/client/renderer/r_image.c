@@ -2502,9 +2502,6 @@ image_t *R_GetShadowmapAtlasTexture( void ) {
 */
 static void R_InitStretchRawImages( void ) {
 	rsh.rawTexture = R_CreateImage( "*** raw ***", 0, 0, 1, IT_SPECIAL | IT_SRGB, 1, IMAGE_TAG_BUILTIN, 3 );
-	rsh.rawYUVTextures[0] = R_CreateImage( "*** rawyuv0 ***", 0, 0, 1, IT_SPECIAL, 1, IMAGE_TAG_BUILTIN, 1 );
-	rsh.rawYUVTextures[1] = R_CreateImage( "*** rawyuv1 ***", 0, 0, 1, IT_SPECIAL, 1, IMAGE_TAG_BUILTIN, 1 );
-	rsh.rawYUVTextures[2] = R_CreateImage( "*** rawyuv2 ***", 0, 0, 1, IT_SPECIAL, 1, IMAGE_TAG_BUILTIN, 1 );
 }
 
 /*
@@ -2690,7 +2687,6 @@ static void R_InitBuiltinImages( void ) {
 */
 static void R_ReleaseBuiltinImages( void ) {
 	rsh.rawTexture = NULL;
-	rsh.rawYUVTextures[0] = rsh.rawYUVTextures[1] = rsh.rawYUVTextures[2] = NULL;
 	rsh.noTexture = NULL;
 	rsh.whiteTexture = rsh.blackTexture = rsh.greyTexture = NULL;
 	rsh.whiteCubemapTexture = NULL;

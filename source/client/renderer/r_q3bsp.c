@@ -1488,10 +1488,6 @@ static void Mod_LoadEntities( const lump_t *l, vec3_t gridSize, vec3_t ambient, 
 				}
 			} else if( !strcmp( key, "origin" ) ) {
 				n = sscanf( value, "%8f %8f %8f", &originf[0], &originf[1], &originf[2] );
-			} else if( !strcmp( key, "_forceclear" ) ) {
-				if( atof( value ) != 0 ) {
-					mapConfig.forceClear = true;
-				}
 			} else if( !strcmp( key, "_outlinecolor" ) ) {
 				n = sscanf( value, "%8f %8f %8f", &celcolorf[0], &celcolorf[1], &celcolorf[2] );
 				if( n != 3 ) {

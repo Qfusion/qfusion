@@ -22,7 +22,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // is used for both the software and OpenGL rendering versions of the
 // qfusion refresh engine.
 #include "client.h"
-#include "cin.h"
 #include "ftlib.h"
 #include "xpm.h"
 #include "renderer/r_local.h"
@@ -111,10 +110,6 @@ int VID_GetWindowHeight( void ) {
 	return viddef.height;
 }
 
-static struct cinematics_s *VID_RefModule_CIN_Open( const char *name, int64_t start_time, bool *yuv, float *framerate ) {
-	return CIN_Open( name, start_time, CIN_LOOP, yuv, framerate );
-}
-
 /*
 ** VID_LoadRefresh
 */
@@ -171,13 +166,6 @@ static bool VID_LoadRefresh() {
 	import.FS_WriteDirectory = &FS_WriteDirectory;
 	import.FS_MediaDirectory = &FS_MediaDirectory;
 	import.FS_AddFileToMedia = &FS_AddFileToMedia;
-
-	import.CIN_Open = &VID_RefModule_CIN_Open;
-	import.CIN_NeedNextFrame = &CIN_NeedNextFrame;
-	import.CIN_ReadNextFrame = &CIN_ReadNextFrame;
-	import.CIN_ReadNextFrameYUV = &CIN_ReadNextFrameYUV;
-	import.CIN_Reset = &CIN_Reset;
-	import.CIN_Close = &CIN_Close;
 
 	import.Thread_Create = QThread_Create;
 	import.Thread_Join = QThread_Join;

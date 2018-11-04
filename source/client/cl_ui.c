@@ -244,7 +244,6 @@ void CL_UIModule_Init( void ) {
 	import.R_RegisterLevelshot = re.RegisterLevelshot;
 	import.R_RegisterSkin = re.RegisterSkin;
 	import.R_RegisterSkinFile = re.RegisterSkinFile;
-	import.R_RegisterVideo = re.RegisterVideo;
 	import.R_RegisterLinearPic = re.RegisterLinearPic;
 	import.R_LerpTag = re.LerpTag;
 	import.R_DrawStretchPic = re.DrawStretchPic;
@@ -258,7 +257,6 @@ void CL_UIModule_Init( void ) {
 	import.R_SkeletalGetNumBones = re.SkeletalGetNumBones;
 	import.R_SkeletalGetBoneInfo = re.SkeletalGetBoneInfo;
 	import.R_SkeletalGetBonePose = re.SkeletalGetBonePose;
-	import.R_GetShaderCinematic = re.GetShaderCinematic;
 
 	import.R_PushTransformMatrix = re.PushTransformMatrix;
 	import.R_PopTransformMatrix = re.PopTransformMatrix;

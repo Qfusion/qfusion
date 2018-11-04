@@ -19,7 +19,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "client.h"
-#include "cin.h"
 #include "../qcommon/asyncstream.h"
 
 static cgame_export_t *cge;
@@ -251,108 +250,6 @@ static void CL_GameModule_S_RawSamples( unsigned int samples, unsigned int rate,
 
 //==============================================
 
-// wrap cgame listeners into proxies so that
-// cinematics won't attempt to pass samples to
-// entities which are not valid anymore due to
-// module reload
-
-#define MAX_CGAME_RAW_SAMPLES_LISTENERS 8
-
-typedef struct {
-	bool inuse;
-	struct cinematics_s *cin;
-	void *ptr;
-	int load_seq;
-	cg_raw_samples_cb_t rs;
-	cg_get_raw_samples_cb_t grs;
-} cg_raw_samples_listener_t;
-
-cg_raw_samples_listener_t cg_raw_samples_listeners[MAX_CGAME_RAW_SAMPLES_LISTENERS];
-
-/*
-* CL_GameModule_RawSamples
-*/
-static void CL_GameModule_RawSamples( void *ptr, unsigned int samples,
-									  unsigned int rate, unsigned short width, unsigned short channels,
-									  const uint8_t *data ) {
-	cg_raw_samples_listener_t *cglistener;
-
-	// free listener
-	cglistener = ( cg_raw_samples_listener_t * )ptr;
-
-	// each listener gets samples passed exactly once
-	cglistener->inuse = false;
-
-	if( cglistener->load_seq != cg_load_seq ) {
-		return;
-	}
-	cglistener->rs( cglistener->ptr, samples, rate, width, channels, data );
-}
-
-/*
-* CL_GameModule_GetRawSamplesLength
-*/
-static unsigned int CL_GameModule_GetRawSamplesLength( void *ptr ) {
-	cg_raw_samples_listener_t *cglistener;
-
-	cglistener = ( cg_raw_samples_listener_t * )ptr;
-	if( cglistener->load_seq != cg_load_seq ) {
-		return 0;
-	}
-	return cglistener->grs( cglistener->ptr );
-}
-
-/*
-* CL_GameModule_AddRawSamplesListener
-*/
-static bool CL_GameModule_AddRawSamplesListener( struct cinematics_s *cin,
-												 void *listener, cg_raw_samples_cb_t rs, cg_get_raw_samples_cb_t grs ) {
-	int i;
-	cg_raw_samples_listener_t *cglistener, *freel;
-
-	freel = NULL;
-
-	cglistener = cg_raw_samples_listeners;
-	for( i = 0; i < MAX_CGAME_RAW_SAMPLES_LISTENERS; i++ ) {
-		if( !freel && !cglistener->inuse ) {
-			// grab a free one
-			freel = cglistener;
-		} else if( cglistener->inuse
-				   && cglistener->cin == cin
-				   && cglistener->ptr == listener
-				   && cglistener->rs == rs
-				   && cglistener->grs == grs ) {
-			// same listener
-			return true;
-		}
-		cglistener++;
-	}
-
-	if( !freel ) {
-		return false;
-	}
-
-	// fill in our proxy
-	cglistener = freel;
-	cglistener->inuse = true;
-	cglistener->cin = cin;
-	cglistener->ptr = listener;
-	cglistener->load_seq = cg_load_seq;
-	cglistener->rs = (cin_raw_samples_cb_t)rs;
-	cglistener->grs = (cin_get_raw_samples_cb_t)grs;
-
-	if( !CIN_AddRawSamplesListener( cin, cglistener, &CL_GameModule_RawSamples,
-									&CL_GameModule_GetRawSamplesLength ) ) {
-		// free listener
-		cglistener->inuse = false;
-		return false;
-	}
-
-	return true;
-}
-
-//==============================================
-
 void VID_FlashWindow( int count ) { }
 float VID_GetPixelRatio() { return 1; }
 
@@ -462,7 +359,6 @@ void CL_GameModule_Init( void ) {
 	import.R_SkeletalGetBonePose = re.SkeletalGetBonePose;
 
 	import.R_GetShaderForOrigin = re.GetShaderForOrigin;
-	import.R_GetShaderCinematic = re.GetShaderCinematic;
 
 	import.VID_FlashWindow = VID_FlashWindow;
 
@@ -523,8 +419,6 @@ void CL_GameModule_Init( void ) {
 	import.L10n_LoadLangPOFile = &CL_GameModule_L10n_LoadLangPOFile;
 	import.L10n_TranslateString = &CL_GameModule_L10n_TranslateString;
 	import.L10n_ClearDomain = &CL_GameModule_L10n_ClearDomain;
-
-	import.CIN_AddRawSamplesListener = &CL_GameModule_AddRawSamplesListener;
 
 	import.IN_GetThumbsticks = IN_GetThumbsticks;
 	import.IN_IME_GetCandidates = IN_IME_GetCandidates;
@@ -606,8 +500,6 @@ void CL_GameModule_Shutdown( void ) {
 void CL_GameModule_EscapeKey( void ) {
 	if( cge ) {
 		cge->EscapeKey();
-	} else if( cls.state == CA_CINEMATIC ) {
-		SCR_FinishCinematic();
 	}
 }
 

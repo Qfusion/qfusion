@@ -71,7 +71,6 @@ static size_t r_shortShaderNameSize;
 static bool Shader_Parsetok( shader_t *shader, shaderpass_t *pass, const shaderkey_t *keys, const char *token, const char **ptr );
 static void Shader_MakeCache( const char *filename );
 static unsigned int Shader_GetCache( const char *name, shadercache_t **cache );
-#define R_FreePassCinematics( pass ) if( ( pass )->cin ) { R_FreeCinematic( ( pass )->cin ); ( pass )->cin = 0; }
 
 //===========================================================================
 
@@ -551,9 +550,7 @@ static int Shader_SetImageFlags( shader_t *shader ) {
 	if( r_shaderNoFiltering ) {
 		flags |= IT_NOFILTERING;
 	}
-	if( shader->type == SHADER_TYPE_2D
-		|| shader->type == SHADER_TYPE_2D_RAW
-		|| shader->type == SHADER_TYPE_VIDEO ) {
+	if( shader->type == SHADER_TYPE_2D || shader->type == SHADER_TYPE_2D_RAW ) {
 		flags |= IT_SYNC;
 	}
 	//if( r_shaderHasAutosprite )
@@ -1031,8 +1028,6 @@ static void Shaderpass_MapExt( shader_t *shader, shaderpass_t *pass, int addFlag
 	int flags;
 	char *token;
 
-	R_FreePassCinematics( pass );
-
 	token = Shader_ParseString( ptr );
 	if( token[0] == '$' ) {
 		token++;
@@ -1070,8 +1065,6 @@ static void Shaderpass_AnimMapExt( shader_t *shader, shaderpass_t *pass, int add
 	int flags;
 	char *token;
 
-	R_FreePassCinematics( pass );
-
 	flags = Shader_SetImageFlags( shader ) | addFlags | IT_SRGB;
 
 	pass->tcgen = TC_GEN_BASE;
@@ -1097,8 +1090,6 @@ static void Shaderpass_AnimMapExt( shader_t *shader, shaderpass_t *pass, int add
 static void Shaderpass_CubeMapExt( shader_t *shader, shaderpass_t *pass, int addFlags, int tcgen, const char **ptr ) {
 	int flags;
 	char *token;
-
-	R_FreePassCinematics( pass );
 
 	token = Shader_ParseString( ptr );
 	flags = Shader_SetImageFlags( shader ) | addFlags | IT_SRGB;
@@ -1143,25 +1134,10 @@ static void Shaderpass_SurroundMap( shader_t *shader, shaderpass_t *pass, const 
 	Shaderpass_CubeMapExt( shader, pass, IT_CLAMP, TC_GEN_SURROUND, ptr );
 }
 
-static void Shaderpass_VideoMap( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
-	char *token;
-
-	R_FreePassCinematics( pass );
-
-	token = Shader_ParseString( ptr );
-
-	pass->cin = R_StartCinematic( token );
-	pass->tcgen = TC_GEN_BASE;
-	pass->anim_fps = 0;
-	pass->flags &= ~( SHADERPASS_LIGHTMAP | SHADERPASS_PORTALMAP );
-}
-
 static void Shaderpass_Material( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
 	int i, flags;
 	char *token;
 	bool endl;
-
-	R_FreePassCinematics( pass );
 
 	flags = Shader_SetImageFlags( shader );
 	token = Shader_ParseString( ptr );
@@ -1257,8 +1233,6 @@ static void Shaderpass_Distortion( shader_t *shader, shaderpass_t *pass, const c
 		return;
 	}
 
-	R_FreePassCinematics( pass );
-
 	flags = Shader_SetImageFlags( shader );
 	pass->flags &= ~( SHADERPASS_LIGHTMAP | SHADERPASS_PORTALMAP );
 	pass->images[0] = pass->images[1] = NULL;
@@ -1295,8 +1269,6 @@ static void Shaderpass_Celshade( shader_t *shader, shaderpass_t *pass, const cha
 	int i;
 	int flags;
 	char *token;
-
-	R_FreePassCinematics( pass );
 
 	flags = Shader_SetImageFlags( shader ) | IT_SRGB;
 	pass->tcgen = TC_GEN_BASE;
@@ -1637,7 +1609,6 @@ static const shaderkey_t shaderpasskeys[] =
 	{ "cubemap", Shaderpass_CubeMap },
 	{ "shadecubemap", Shaderpass_ShadeCubeMap },
 	{ "surroundmap", Shaderpass_SurroundMap },
-	{ "videomap", Shaderpass_VideoMap },
 	{ "clampmap", Shaderpass_ClampMap },
 	{ "animclampmap", Shaderpass_AnimClampMap },
 	{ "material", Shaderpass_Material },
@@ -1905,14 +1876,6 @@ void R_InitShaders( void ) {
 * R_FreeShader
 */
 static void R_FreeShader( shader_t *shader ) {
-	unsigned i;
-	shaderpass_t *pass;
-
-	if( shader->cin ) {
-		for( i = 0, pass = shader->passes; i < shader->numpasses; i++, pass++ )
-			R_FreePassCinematics( pass );
-	}
-
 	if( shader->deforms ) {
 		R_Free( shader->deforms );
 		shader->deforms = 0;
@@ -1967,10 +1930,6 @@ void R_TouchShader( shader_t *s ) {
 				// only programs can have gaps in images
 				break;
 			}
-		}
-
-		if( pass->cin ) {
-			R_TouchCinematic( pass->cin );
 		}
 	}
 
@@ -2377,9 +2336,6 @@ static void Shader_Finish( shader_t *s ) {
 		if( !blendmask ) {
 			pass->flags |= GLSTATE_DEPTHWRITE;
 		}
-		if( pass->cin ) {
-			s->cin = pass->cin;
-		}
 		if( ( pass->flags & SHADERPASS_LIGHTMAP ||
 			  pass->program_type == GLSL_PROGRAM_TYPE_MATERIAL ) && ( s->type >= SHADER_TYPE_DELUXEMAP ) ) {
 			s->flags |= SHADER_LIGHTMAP;
@@ -2428,21 +2384,6 @@ static void Shader_Finish( shader_t *s ) {
 	}
 
 	Shader_SetVertexAttribs( s );
-}
-
-/*
-* R_UploadCinematicShader
-*/
-void R_UploadCinematicShader( const shader_t *shader ) {
-	unsigned j;
-	const shaderpass_t *pass;
-
-	// upload cinematics
-	for( j = 0, pass = shader->passes; j < shader->numpasses; j++, pass++ ) {
- 		if( pass->cin ) {
-			R_UploadCinematic( pass->cin );
-		}
-	}
 }
 
 /*
@@ -2639,7 +2580,6 @@ create_default:
 				break;
 			case SHADER_TYPE_2D:
 			case SHADER_TYPE_2D_RAW:
-			case SHADER_TYPE_VIDEO:
 			case SHADER_TYPE_2D_LINEAR:
 				data = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) );
 
@@ -2656,16 +2596,7 @@ create_default:
 				pass->rgbgen.type = RGB_GEN_VERTEX;
 				pass->alphagen.type = ALPHA_GEN_VERTEX;
 				pass->tcgen = TC_GEN_BASE;
-				if( type == SHADER_TYPE_VIDEO ) {
-					// we don't want "video/" to be there since it's hardcoded into cinematics
-					if( !Q_strnicmp( shortname, "video/", 6 ) ) {
-						pass->cin = R_StartCinematic( shortname + 6 );
-					} else {
-						pass->cin = R_StartCinematic( shortname );
-					}
-					s->cin = pass->cin;
-					pass->images[0] = rsh.noTexture;
-				} else if( type == SHADER_TYPE_2D_LINEAR ) {
+				if( type == SHADER_TYPE_2D_LINEAR ) {
 					pass->images[0] = Shader_FindImage( s, longname, IT_SPECIAL | IT_SYNC );
 				} else if( type != SHADER_TYPE_2D_RAW ) {
 					pass->images[0] = Shader_FindImage( s, longname, IT_SPECIAL | IT_SYNC | IT_SRGB );
@@ -3029,13 +2960,6 @@ shader_t *R_RegisterShader( const char *name, shaderType_e type ) {
 */
 shader_t *R_RegisterSkin( const char *name ) {
 	return R_LoadShader( name, SHADER_TYPE_DIFFUSE, false, NULL );
-}
-
-/*
-* R_RegisterVideo
-*/
-shader_t *R_RegisterVideo( const char *name ) {
-	return R_LoadShader( name, SHADER_TYPE_VIDEO, false, NULL );
 }
 
 /*
