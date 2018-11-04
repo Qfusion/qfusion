@@ -591,7 +591,7 @@ static void CG_UpdatePointedNum( void ) {
 		CG_ClearPointedNum();
 	}
 
-	if( cg.pointedNum && cg_showPointedPlayer->integer == 2 ) {
+	if( cg.pointedNum ) {
 		if( cg_entities[cg.pointedNum].current.team != cg.predictedPlayerState.stats[STAT_TEAM] ) {
 			CG_ClearPointedNum();
 		}
