@@ -398,6 +398,7 @@ void CL_AsyncStreamRequest( const char *url, const char **headers, int timeout, 
 // cl_game.c
 //
 void CL_GameModule_Init( void );
+void CL_GameModule_ResizeWindow( int width, int height );
 void CL_GameModule_Reset( void );
 void CL_GameModule_Shutdown( void );
 void CL_GameModule_ConfigString( int number, const char *value );

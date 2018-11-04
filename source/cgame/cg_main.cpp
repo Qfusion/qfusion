@@ -1204,6 +1204,11 @@ void CG_Init( const char *serverName, unsigned int playerNum,
 	CG_DemocamInit();
 }
 
+void CG_ResizeWindow( int width, int height ) {
+	cgs.vidWidth = width;
+	cgs.vidHeight = height;
+}
+
 /*
 * CG_Shutdown
 */

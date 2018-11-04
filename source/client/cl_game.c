@@ -566,6 +566,12 @@ void CL_GameModule_Init( void ) {
 	cls.cgameActive = true;
 }
 
+void CL_GameModule_ResizeWindow( int width, int height ) {
+	if( cge ) {
+		cge->ResizeWindow( width, height );
+	}
+}
+
 /*
 * CL_GameModule_Reset
 */

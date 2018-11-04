@@ -36,6 +36,7 @@ extern "C" QF_DLL_EXPORT cgame_export_t * GetCGameAPI( cgame_import_t * import )
 	globals.API = CG_API;
 
 	globals.Init = CG_Init;
+	globals.ResizeWindow = CG_ResizeWindow;
 	globals.Reset = CG_Reset;
 	globals.Shutdown = CG_Shutdown;
 

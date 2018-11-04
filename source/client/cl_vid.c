@@ -297,6 +297,7 @@ static bool VID_ChangeMode() {
 	bool ok = VID_SetVideoMode( new_mode );
 	if( ok ) {
 		Retarded_SetWindowSize( new_mode.width, new_mode.height );
+		CL_GameModule_ResizeWindow( new_mode.width, new_mode.height );
 		RF_ResizeFramebuffers();
 		return true;
 	}

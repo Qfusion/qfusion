@@ -281,6 +281,8 @@ typedef struct {
 					bool demoplaying, const char *demoName, bool pure, unsigned int snapFrameTime,
 					int protocol, const char *demoExtension, int sharedSeed, bool gameStart );
 
+	void ( *ResizeWindow )( int width, int height );
+
 	// "soft restarts" at demo jumps
 	void ( *Reset )( void );
 
