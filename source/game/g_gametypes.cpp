@@ -1817,14 +1817,14 @@ void G_Gametype_Init( void ) {
 	g_gametype = trap_Cvar_Get( "g_gametype", "bomb", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_LATCH | CVAR_READONLY );
 	g_gametype_generic = trap_Cvar_Get( "g_gametype_generic", "1", CVAR_ARCHIVE );
 
-	//get the match cvars too
+	// get the match cvars too
 	g_warmup_timelimit = trap_Cvar_Get( "g_warmup_timelimit", "5", CVAR_ARCHIVE );
 	g_postmatch_timelimit = trap_Cvar_Get( "g_postmatch_timelimit", "4", CVAR_ARCHIVE );
 	g_countdown_time = trap_Cvar_Get( "g_countdown_time", "5", CVAR_ARCHIVE );
 	g_match_extendedtime = trap_Cvar_Get( "g_match_extendedtime", "2", CVAR_ARCHIVE );
 
 	// game settings
-	g_timelimit = trap_Cvar_Get( "g_timelimit", "10", CVAR_ARCHIVE );
+	g_timelimit = trap_Cvar_Get( "g_timelimit", "0", CVAR_ARCHIVE );
 	g_scorelimit = trap_Cvar_Get( "g_scorelimit", "0", CVAR_ARCHIVE );
 	g_allow_falldamage = trap_Cvar_Get( "g_allow_falldamage", "0", CVAR_ARCHIVE );
 	g_allow_selfdamage = trap_Cvar_Get( "g_allow_selfdamage", "1", CVAR_ARCHIVE );
