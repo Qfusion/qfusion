@@ -1986,7 +1986,7 @@ void R_ScreenShot( const char *filename, int x, int y, int width, int height, in
 		}
 
 	} else {
-		if( WriteTGA( filename, &imginfo, 100 ) && !silent ) {
+		if( WriteTGA( filename, &imginfo ) && !silent ) {
 			Com_Printf( "Wrote %s\n", filename );
 		}
 	}
