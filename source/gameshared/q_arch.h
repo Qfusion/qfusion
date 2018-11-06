@@ -18,8 +18,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#ifndef GAME_QARCH_H
-#define GAME_QARCH_H
+#pragma once
 
 #ifdef __cplusplus
 extern "C" {
@@ -68,18 +67,12 @@ extern "C" {
 
 #ifdef _WIN32
 
-// wsw : pb : zlib 1.2.3
-//# define ZLIB_WINAPI
-
 #ifdef _MSC_VER
 
 // unknown pragmas are SUPPOSED to be ignored, but....
 #pragma warning( disable : 4244 )       // MIPS
 #pragma warning( disable : 4136 )       // X86
 #pragma warning( disable : 4051 )       // ALPHA
-
-//# pragma warning(disable : 4018)		// signed/unsigned mismatch
-//# pragma warning(disable : 4305)		// truncation from const double to float
 #pragma warning( disable : 4514 )       // unreferenced inline function has been removed
 #pragma warning( disable : 4152 )       // nonstandard extension, function/data pointer conversion in expression
 #pragma warning( disable : 4201 )       // nonstandard extension used : nameless struct/union
@@ -105,8 +98,6 @@ extern "C" {
 # define HAVE___STRTOI64
 #endif
 
-#define HAVE___INLINE
-
 #define HAVE__SNPRINTF
 
 #define HAVE__VSNPRINTF
@@ -115,24 +106,10 @@ extern "C" {
 
 #define HAVE_STRTOK_S
 
-#ifdef LCC_WIN32
-#ifndef C_ONLY
-#define C_ONLY
-#endif
-#define HAVE_TCHAR
-#define HAVE_MMSYSTEM
-#define HAVE_DLLMAIN
-#else
-#define HAVE_WSIPX
-#endif
-
 #define LIB_DIRECTORY "libs"
 #define LIB_PREFIX ""
 #define LIB_SUFFIX ".dll"
 
-#define VID_INITFIRST
-
-#define MUMBLE_SUPPORT
 #define OPENAL_RUNTIME
 
 // FIXME: move these to CMakeLists.txt
@@ -155,29 +132,6 @@ extern "C" {
 
 #define STEAMQUERY_OS 'w'
 
-#ifdef _M_IX86
-#define CPUSTRING "x86"
-#define ARCH "x86"
-#elif defined ( __x86_64__ ) || defined( _M_AMD64 )
-#define CPUSTRING "x64"
-#define ARCH "x64"
-#elif defined ( _M_ALPHA )
-#define CPUSTRING "axp"
-#define ARCH      "axp"
-#endif
-
-// doh, some compilers need a _ prefix for variables so they can be
-// used in asm code
-#ifdef __GNUC__     // mingw
-#define VAR( x )    "_" # x
-#else
-#define VAR( x )    # x
-#endif
-
-#ifdef _MSC_VER
-#define HAVE___CDECL
-#endif
-
 #ifdef __GNUC__
 #define HAVE_TYPEOF
 #endif
@@ -192,6 +146,8 @@ typedef unsigned long ioctl_param_t;
 typedef uintptr_t socket_handle_t;
 
 #endif
+
+#define ARCH "x86_64"
 
 //==============================================
 
@@ -209,10 +165,7 @@ typedef uintptr_t socket_handle_t;
 #define LIB_PREFIX "lib"
 #define LIB_SUFFIX ".so"
 
-#ifndef __ANDROID__
-#define MUMBLE_SUPPORT
 #define OPENAL_RUNTIME
-#endif
 
 // FIXME: move these to CMakeLists.txt
 #define LIBZ_LIBNAME "libz.so.1|libz.so"
@@ -227,63 +180,12 @@ typedef uintptr_t socket_handle_t;
 #if defined ( __FreeBSD__ )
 #define BUILDSTRING "FreeBSD"
 #define OSNAME "FreeBSD"
-#elif defined ( __ANDROID__ )
-#define BUILDSTRING "Android"
-#define OSNAME "Android"
 #else
 #define BUILDSTRING "Linux"
 #define OSNAME "Linux"
 #endif
 
 #define STEAMQUERY_OS 'l'
-
-#ifdef __i386__
-#if defined ( __FreeBSD__ )
-#define ARCH "freebsd_i386"
-#define CPUSTRING "i386"
-#elif defined ( __ANDROID__ )
-#define ARCH "android_x86"
-#define CPUSTRING "i386"
-#else
-#define ARCH "i386"
-#define CPUSTRING "i386"
-#endif
-#elif defined ( __x86_64__ )
-#if defined __FreeBSD__
-#define ARCH "freebsd_x86_64"
-#define CPUSTRING "x86_64"
-#else
-#define ARCH "x86_64"
-#define CPUSTRING "x86_64"
-#endif
-#elif defined ( __powerpc__ )
-#define ARCH "ppc"
-#define CPUSTRING "ppc"
-#elif defined ( __alpha__ )
-#define ARCH "axp"
-#define CPUSTRING "axp"
-#elif defined ( __arm__ )
-#if defined ( __ANDROID__ )
-#define ARCH "android_armeabi-v7a"
-#define CPUSTRING "arm"
-#else
-#define ARCH "arm"
-#define CPUSTRING "arm"
-#endif
-#elif defined ( _MIPS_ARCH )
-#if defined ( __ANDROID__ )
-#define ARCH "android_mips"
-#define CPUSTRING "mips"
-#else
-#define ARCH "mips"
-#define CPUSTRING "mips"
-#endif
-#else
-#define CPUSTRING "Unknown"
-#define ARCH "Unknown"
-#endif
-
-#define VAR( x ) # x
 
 #include <alloca.h>
 
@@ -317,7 +219,6 @@ typedef int socket_handle_t;
 #define LIB_PREFIX "lib"
 #define LIB_SUFFIX ".dylib"
 
-#define MUMBLE_SUPPORT
 #define OPENAL_RUNTIME
 
 // FIXME: move these to CMakeLists.txt
@@ -334,10 +235,6 @@ typedef int socket_handle_t;
 #define BUILDSTRING "MacOSX"
 #define OSNAME "MacOSX"
 #define STEAMQUERY_OS 'o'
-#define CPUSTRING "universal"
-#define ARCH "mac"
-
-#define VAR( x ) # x
 
 #include <alloca.h>
 
@@ -351,28 +248,6 @@ typedef int socket_handle_t;
 #endif
 
 //==============================================
-
-#if ( defined __i386__ || defined __x86_64__ ) && defined __GNUC__
-#define HAVE__BUILTIN_ATOMIC
-#elif ( defined _WIN32 )
-#define HAVE__INTERLOCKED_API
-#endif
-
-//==============================================
-
-#if !defined( __cplusplus )
-
-#ifdef HAVE___INLINE
-#ifndef inline
-#define inline __inline
-#endif
-#elif !defined ( HAVE_INLINE )
-#ifndef inline
-#define inline
-#endif
-#endif
-
-#endif
 
 #ifdef HAVE__SNPRINTF
 #ifndef snprintf
@@ -416,53 +291,21 @@ typedef int socket_handle_t;
 #endif
 #endif
 
-#if ( defined ( _M_IX86 ) || defined ( __i386__ ) || defined ( __ia64__ ) ) && !defined ( C_ONLY )
-#define id386
-#else
-#ifdef id386
-#undef id386
-#endif
-#endif
-
 #ifndef BUILDSTRING
 #define BUILDSTRING "NON-WIN32"
 #endif
 
-#ifndef CPUSTRING
-#define CPUSTRING  "NON-WIN32"
-#endif
-
-#ifdef HAVE_TCHAR
-#include <tchar.h>
-#endif
-
-#ifdef HAVE___CDECL
-#define qcdecl __cdecl
-#else
-#define qcdecl
-#endif
-
 #if defined ( __GNUC__ )
 #define ATTRIBUTE_ALIGNED( x ) __attribute__( ( aligned( x ) ) )
-#define ATTRIBUTE_NOINLINE     __attribute__( ( noinline ) )
-#define ATTRIBUTE_NAKED
 #elif defined ( _MSC_VER )
 #define ATTRIBUTE_ALIGNED( x ) __declspec( align( x ) )
-#define ATTRIBUTE_NOINLINE
-#define ATTRIBUTE_NAKED        __declspec( naked )
 #else
 #define ATTRIBUTE_ALIGNED( x )
-#define ATTRIBUTE_NOINLINE
-#define ATTRIBUTE_NAKED
 #endif
 
 #ifdef HAVE___STRTOI64
 #define strtoll _strtoi64
 #define strtoull _strtoi64
-#endif
-
-#ifdef ALIGN
-#undef ALIGN
 #endif
 
 // the ALIGN macro as defined by Linux kernel
@@ -471,12 +314,6 @@ typedef int socket_handle_t;
 #define ALIGN( x,a )              __ALIGN_MASK( x,( typeof( x ) )( a ) - 1 )
 #else
 #define ALIGN( x, a ) ( ( ( x ) + ( ( size_t )( a ) - 1 ) ) & ~( ( size_t )( a ) - 1 ) )
-#endif
-
-#ifdef _M_AMD64
-#define STR_TO_POINTER( str ) (void *)strtoll( str,NULL,0 )
-#else
-#define STR_TO_POINTER( str ) (void *)strtol( str,NULL,0 )
 #endif
 
 // The `malloc' attribute is used to tell the compiler that a function
@@ -508,13 +345,6 @@ typedef int socket_handle_t;
 # endif
 #endif
 
-//==============================================
-
-#ifndef NULL
-#define NULL ( (void *)0 )
-#endif
 #ifdef __cplusplus
 };
 #endif
-
-#endif // GAME_QARCH_H

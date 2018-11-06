@@ -911,7 +911,7 @@ void Qcommon_Init( int argc, char **argv ) {
 	com_showtrace =     Cvar_Get( "com_showtrace", "0", 0 );
 
 	Cvar_Get( "gamename", APPLICATION, CVAR_READONLY );
-	versioncvar = Cvar_Get( "version", APP_VERSION_STR " " CPUSTRING " " __DATE__ " " BUILDSTRING, CVAR_SERVERINFO | CVAR_READONLY );
+	versioncvar = Cvar_Get( "version", APP_VERSION_STR " " ARCH " " __DATE__ " " BUILDSTRING, CVAR_SERVERINFO | CVAR_READONLY );
 
 	Sys_Init();
 
