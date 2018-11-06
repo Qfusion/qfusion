@@ -9,5 +9,4 @@ build_script:
 
 artifacts:
 - path: source/build/Release
-- name: cocaine_diesel_windows
-- type: zip
+- name: cocaine_diesel_windows.zip
