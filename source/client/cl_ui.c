@@ -316,7 +316,7 @@ void CL_UIModule_Init( void ) {
 	funcs[0].name = "GetUIAPI";
 	funcs[0].funcPointer = ( void ** ) &GetUIAPI;
 	funcs[1].name = NULL;
-	module_handle = Com_LoadLibrary( LIB_DIRECTORY "/" LIB_PREFIX "ui_" ARCH LIB_SUFFIX, funcs );
+	module_handle = Com_LoadLibrary( LIB_DIRECTORY "/" LIB_PREFIX "ui" LIB_SUFFIX, funcs );
 	if( !module_handle ) {
 		Mem_FreePool( &ui_mempool );
 		Com_Error( ERR_FATAL, "Failed to load UI dll" );
