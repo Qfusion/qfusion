@@ -1214,7 +1214,7 @@ void G_Match_CheckReadys( void ) {
 * G_Match_Ready
 */
 void G_Match_Ready( edict_t *ent ) {
-	if( ent->r.svflags & SVF_FAKECLIENT && level.ready[PLAYERNUM( ent )] == true ) {
+	if( ( ent->r.svflags & SVF_FAKECLIENT ) && ( level.ready[PLAYERNUM( ent )] == true ) ) {
 		return;
 	}
 
