@@ -76,10 +76,10 @@ static void VID_ModeList_f( void ) {
 /*
 ** VID_AppActivate
 */
-void VID_AppActivate( bool active, bool minimize, bool destroy ) {
+void VID_AppActivate( bool active, bool minimize ) {
 	vid_app_active = active;
 	vid_app_minimized = minimize;
-	re.AppActivate( active, minimize, destroy );
+	re.AppActivate( active, minimize );
 }
 
 /*

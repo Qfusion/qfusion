@@ -176,7 +176,7 @@ typedef struct {
 	void ( *WriteAviFrame )( int frame, bool scissor );
 	void ( *StopAviDemo )( void );
 
-	void ( *AppActivate )( bool active, bool minimize, bool destroy );
+	void ( *AppActivate )( bool active, bool minimize );
 
 	/**
 	* PushTransformMatrix

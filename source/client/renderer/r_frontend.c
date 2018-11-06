@@ -203,7 +203,7 @@ rserr_t RF_Init() {
 	return rserr_ok;
 }
 
-void RF_AppActivate( bool active, bool minimize, bool destroy ) {
+void RF_AppActivate( bool active, bool minimize ) {
 	R_Flush();
 }
 

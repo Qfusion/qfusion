@@ -43,7 +43,7 @@ void VID_FlashWindow( int count );
 bool VID_GetDefaultMode( int *width, int *height );
 unsigned int VID_GetSysModes( vidmode_t *modes );
 bool VID_GetModeInfo( int *width, int *height, unsigned int mode );
-void VID_AppActivate( bool active, bool minimize, bool destroy );
+void VID_AppActivate( bool active, bool minimize );
 bool VID_RefreshIsActive( void );
 bool VID_AppIsActive( void );
 bool VID_AppIsMinimized( void );
