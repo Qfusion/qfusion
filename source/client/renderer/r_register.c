@@ -498,8 +498,7 @@ static void R_GfxInfo_f( void ) {
 /*
 * R_GLVersionHash
 */
-static unsigned R_GLVersionHash( const char *vendorString,
-								 const char *rendererString, const char *versionString ) {
+static unsigned R_GLVersionHash( const char *vendorString, const char *rendererString, const char *versionString ) {
 	uint8_t *tmp;
 	size_t csize;
 	size_t tmp_size, pos;
@@ -528,7 +527,7 @@ static unsigned R_GLVersionHash( const char *vendorString,
 	memcpy( tmp + pos, ARCH, csize );
 	pos += csize;
 
-	hash = COM_SuperFastHash( tmp, tmp_size, tmp_size );
+	hash = fnv1a32( tmp, tmp_size );
 
 	R_Free( tmp );
 

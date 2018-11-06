@@ -1778,12 +1778,10 @@ done:
 static unsigned int Shader_GetCache( const char *name, shadercache_t **cache ) {
 	unsigned int key;
 	shadercache_t *c;
-	unsigned int len;
 
 	*cache = NULL;
 
-	len = strlen( name );
-	key = COM_SuperFastHash( ( const uint8_t * )name, len, len ) % SHADERCACHE_HASH_SIZE;
+	key = fnv1a32( name, strlen( name ) ) % SHADERCACHE_HASH_SIZE;
 	for( c = shadercache_hash[key]; c; c = c->hash_next ) {
 		if( !Q_stricmp( c->name, name ) ) {
 			*cache = c;
@@ -2777,7 +2775,7 @@ void R_TouchShadersByName( const char *name ) {
 		return;
 	}
 
-	key = COM_SuperFastHash( ( const uint8_t * )shortName, nameLength, nameLength ) % SHADERS_HASH_SIZE;
+	key = fnv1a32( shortName, nameLength ) % SHADERS_HASH_SIZE;
 	hnode = &r_shaders_hash_headnode[key];
 	for( s = hnode->next; s != hnode; s = s->next ) {
 		if( !strcmp( s->name, shortName ) ) {
@@ -2818,7 +2816,7 @@ shader_t *R_LoadShader( const char *name, shaderType_e type, bool forceDefault, 
 	}
 
 	// test if already loaded
-	key = COM_SuperFastHash( ( const uint8_t *)shortname, nameLength, nameLength ) % SHADERS_HASH_SIZE;
+	key = fnv1a32( shortname, nameLength ) % SHADERS_HASH_SIZE;
 	hnode = &r_shaders_hash_headnode[key];
 
 	// scan all instances of the same shader for exact match of the type

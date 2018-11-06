@@ -1890,7 +1890,7 @@ static void CL_ShowServerIP_f( void ) {
 * CL_InitLocal
 */
 static void CL_InitLocal( void ) {
-	cvar_t *name, *color;
+	cvar_t *name;
 
 	cls.state = CA_DISCONNECTED;
 	Com_SetClientState( CA_DISCONNECTED );
@@ -1965,16 +1965,7 @@ static void CL_InitLocal( void ) {
 	Cvar_Get( "cl_download_name", "", CVAR_READONLY );
 	Cvar_Get( "cl_download_percent", "0", CVAR_READONLY );
 
-	color = Cvar_Get( "color", "", CVAR_ARCHIVE | CVAR_USERINFO );
-	if( COM_ReadColorRGBString( color->string ) == -1 ) {
-		time_t long_time; // random isn't working fine at this point.
-		unsigned int hash; // so we get the user local time and use its hash
-		int rgbcolor;
-		time( &long_time );
-		hash = COM_SuperFastHash64BitInt( ( uint64_t )long_time );
-		rgbcolor = COM_ValidatePlayerColor( COLOR_RGB( hash & 0xff, ( hash >> 8 ) & 0xff, ( hash >> 16 ) & 0xff ) );
-		Cvar_Set( color->name, va( "%i %i %i", COLOR_R( rgbcolor ), COLOR_G( rgbcolor ), COLOR_B( rgbcolor ) ) );
-	}
+	Cvar_Get( "color", "", CVAR_ARCHIVE | CVAR_USERINFO );
 
 	//
 	// register our commands
