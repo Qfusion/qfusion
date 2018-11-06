@@ -47,7 +47,6 @@ cvar_t *cl_demoavi_scissor;
 // userinfo
 //
 cvar_t *info_password;
-cvar_t *rate;
 
 cvar_t *cl_masterservers;
 
@@ -1934,7 +1933,6 @@ static void CL_InitLocal( void ) {
 	// userinfo
 	//
 	info_password =     Cvar_Get( "password", "", CVAR_USERINFO );
-	rate =          Cvar_Get( "rate", "60000", CVAR_DEVELOPER ); // FIXME
 
 	name = Cvar_Get( "name", "", CVAR_USERINFO | CVAR_ARCHIVE );
 	if( !name->string[0] ) {
