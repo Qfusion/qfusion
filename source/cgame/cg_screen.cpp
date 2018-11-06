@@ -44,13 +44,7 @@ cvar_t *cg_draw2D;
 cvar_t *cg_weaponlist;
 
 cvar_t *cg_crosshair;
-cvar_t *cg_crosshair_size;
 cvar_t *cg_crosshair_color;
-cvar_t *cg_crosshair_font;
-
-cvar_t *cg_crosshair_strong;
-cvar_t *cg_crosshair_strong_size;
-cvar_t *cg_crosshair_strong_color;
 
 cvar_t *cg_crosshair_damage_color;
 
@@ -85,7 +79,7 @@ cvar_t *cg_scoreboardStats;
 cvar_t *cg_showTeamLocations;
 cvar_t *cg_showViewBlends;
 
-static int scr_damagetime_off;
+static int64_t scr_damagetime = 0;
 
 /*
 ===============================================================================
@@ -136,27 +130,9 @@ static void CG_DrawCenterString( void ) {
 	trap_SCR_DrawMultilineString( cgs.vidWidth / 2, y, helpmessage, ALIGN_CENTER_TOP, cgs.vidWidth, 0, font, colorWhite );
 }
 
-//=============================================================================
-
-static void CG_CheckDamageCrosshair( void ) {
-	scr_damagetime_off -= cg.frameTime;
-	if( scr_damagetime_off <= 0 ) {
-		if( !cg_crosshair_damage_color->modified ) {
-			return;
-		}
-
-		// Reset crosshair
-		cg_crosshair_color->modified = true;
-		cg_crosshair_strong_color->modified = true;
-		cg_crosshair_damage_color->modified = false;
-	}
-}
-
 void CG_ScreenCrosshairDamageUpdate( void ) {
-	cg_crosshair_damage_color->modified = true;
+	scr_damagetime = cg.time;
 }
-
-//=============================================================================
 
 /*
 * CG_RefreshInGamekMenu
@@ -216,17 +192,10 @@ void CG_ScreenInit( void ) {
 	cg_weaponlist =     trap_Cvar_Get( "cg_weaponlist", "1", CVAR_ARCHIVE );
 
 	cg_crosshair =      trap_Cvar_Get( "cg_crosshair", "1", CVAR_ARCHIVE );
-	cg_crosshair_size = trap_Cvar_Get( "cg_crosshair_size", "24", CVAR_ARCHIVE );
 	cg_crosshair_color =    trap_Cvar_Get( "cg_crosshair_color", "255 255 255", CVAR_ARCHIVE );
-	cg_crosshair_font =     trap_Cvar_Get( "cg_crosshair_font", "Warsow Crosshairs", CVAR_ARCHIVE );
 	cg_crosshair_damage_color = trap_Cvar_Get( "cg_crosshair_damage_color", "255 0 0", CVAR_ARCHIVE );
 	cg_crosshair_color->modified = true;
 	cg_crosshair_damage_color->modified = false;
-
-	cg_crosshair_strong =       trap_Cvar_Get( "cg_crosshair_strong", "0", CVAR_ARCHIVE );
-	cg_crosshair_strong_size =  trap_Cvar_Get( "cg_crosshair_strong_size", "24", CVAR_ARCHIVE );
-	cg_crosshair_strong_color = trap_Cvar_Get( "cg_crosshair_strong_color", "255 255 255", CVAR_ARCHIVE );
-	cg_crosshair_strong_color->modified = true;
 
 	cg_clientHUD =      trap_Cvar_Get( "cg_clientHUD", "", CVAR_ARCHIVE );
 	cg_specHUD =        trap_Cvar_Get( "cg_specHUD", "", CVAR_ARCHIVE );
@@ -325,48 +294,16 @@ void CG_DrawNet( int x, int y, int w, int h, int align, vec4_t color ) {
 }
 
 /*
-* CG_CrosshairDimensions
-*/
-static int CG_CrosshairDimensions( int x, int y, int size, int align, int *sx, int *sy ) {
-	// odd sizes look sharper
-	size = ( int )ceilf( size * (float)( cgs.vidHeight / 600.0f ) ) | 1;
-	*sx = CG_HorizontalAlignForWidth( x, align, size );
-	*sy = CG_VerticalAlignForHeight( y, align, size );
-	return size;
-}
-
-/*
-* CG_DrawCrosshairChar
-*/
-static void CG_DrawCrosshairChar( int x, int y, int size, int num, vec_t *color ) {
-	struct qfontface_s *font = trap_SCR_RegisterSpecialFont( cg_crosshair_font->string, QFONT_STYLE_NONE, size );
-	if( !font ) {
-		trap_Cvar_Set( cg_crosshair_font->name, cg_crosshair_font->dvalue );
-		font = trap_SCR_RegisterSpecialFont( cg_crosshair_font->string, QFONT_STYLE_NONE, size );
-	}
-
-	wchar_t blackChar, colorChar;
-	if( num ) {
-		blackChar = 'A' - 1 + num;
-		colorChar = 'a' - 1 + num;
-	} else {
-		blackChar = '?';
-		colorChar = '!';
-	}
-
-	trap_SCR_DrawRawChar( x, y, blackChar, font, colorBlack );
-	trap_SCR_DrawRawChar( x, y, colorChar, font, color );
-}
-
-/*
 * CG_DrawCrosshair
 */
-void CG_DrawCrosshair( int x, int y, int align ) {
-	static vec4_t chColor = { 1.0f, 1.0f, 1.0f, 1.0f };
-	static vec4_t chColorStrong = { 1.0f, 1.0f, 1.0f, 1.0f };
-	int rgbcolor;
-	int sx, sy, size;
+static void CG_FillRect( int x, int y, int w, int h, vec4_t color ) {
+	trap_R_DrawStretchPic( x, y, w, h, x, y, x + w, y + h, color, cgs.shaderWhite );
+}
 
+static vec4_t crosshair_color = { 1, 1, 1, 1 };
+static vec4_t crosshair_damage_color = { 1, 0, 0, 1 };
+
+void CG_DrawCrosshair( int x, int y, int align ) {
 	if( cg_crosshair->modified ) {
 		if( cg_crosshair->integer > 26 || cg_crosshair->integer < 0 ) {
 			trap_Cvar_Set( cg_crosshair->name, "0" );
@@ -374,80 +311,42 @@ void CG_DrawCrosshair( int x, int y, int align ) {
 		cg_crosshair->modified = false;
 	}
 
-	if( cg_crosshair_size->modified ) {
-		if( cg_crosshair_size->integer < 0 ) {
-			trap_Cvar_Set( cg_crosshair_size->name, "0" );
-		} else if( cg_crosshair_size->integer > 64 ) {
-			trap_Cvar_Set( cg_crosshair_size->name, "64" );
-		}
-		cg_crosshair_size->modified = false;
-	}
+	float s = 1.0f / 255.0f;
 
-	if( cg_crosshair_color->modified || cg_crosshair_damage_color->modified ) {
-		if( cg_crosshair_damage_color->modified ) {
-			if( scr_damagetime_off <= 0 ) {
-				scr_damagetime_off = 300;
-			}
-			rgbcolor = COM_ReadColorRGBString( cg_crosshair_damage_color->string );
-		} else {
-			rgbcolor = COM_ReadColorRGBString( cg_crosshair_color->string );
-		}
-		if( rgbcolor != -1 ) {
-			Vector4Set( chColor,
-						COLOR_R( rgbcolor ) * ( 1.0f / 255.0f ),
-						COLOR_G( rgbcolor ) * ( 1.0f / 255.0f ),
-						COLOR_B( rgbcolor ) * ( 1.0f / 255.0f ), 1.0f );
-		} else {
-			Vector4Set( chColor, 1.0f, 1.0f, 1.0f, 1.0f );
-		}
+	if( cg_crosshair_color->modified ) {
 		cg_crosshair_color->modified = false;
-	}
-
-	if( cg_crosshair_strong->modified ) {
-		if( cg_crosshair_strong->integer > 26 || cg_crosshair_strong->integer < 0 ) {
-			trap_Cvar_Set( cg_crosshair_strong->name, "0" );
-		}
-		cg_crosshair_strong->modified = false;
-	}
-
-	if( cg_crosshair_strong_size->modified ) {
-		if( cg_crosshair_strong_size->integer < 0 ) {
-			trap_Cvar_Set( cg_crosshair_strong_size->name, "0" );
-		} else if( cg_crosshair_strong_size->integer > 64 ) {
-			trap_Cvar_Set( cg_crosshair_strong_size->name, "64" );
-		}
-		cg_crosshair_strong_size->modified = false;
-	}
-
-	if( cg_crosshair_strong_color->modified || cg_crosshair_damage_color->modified ) {
-		if( cg_crosshair_damage_color->modified ) {
-			rgbcolor = COM_ReadColorRGBString( cg_crosshair_damage_color->string );
+		int rgb = COM_ReadColorRGBString( cg_crosshair_color->string );
+		if( rgb != -1 ) {
+			Vector4Set( crosshair_color, COLOR_R( rgb ) * s, COLOR_G( rgb ) * s, COLOR_B( rgb ) * s, 255 );
 		} else {
-			rgbcolor = COM_ReadColorRGBString( cg_crosshair_strong_color->string );
+			Vector4Set( crosshair_color, 1, 1, 1, 1 );
+			trap_Cvar_Set( cg_crosshair_color->name, "255 255 255" );
 		}
-		if( rgbcolor != -1 ) {
-			Vector4Set( chColorStrong,
-						COLOR_R( rgbcolor ) * ( 1.0f / 255.0f ),
-						COLOR_G( rgbcolor ) * ( 1.0f / 255.0f ),
-						COLOR_B( rgbcolor ) * ( 1.0f / 255.0f ), 1.0f );
+	}
+
+	if( cg_crosshair_damage_color->modified ) {
+		cg_crosshair_damage_color->modified = false;
+		int rgb = COM_ReadColorRGBString( cg_crosshair_damage_color->string );
+		if( rgb != -1 ) {
+			Vector4Set( crosshair_damage_color, COLOR_R( rgb ) * s, COLOR_G( rgb ) * s, COLOR_B( rgb ) * s, 255 );
 		} else {
-			Vector4Set( chColorStrong, 1.0f, 1.0f, 1.0f, 1.0f );
-		}
-		cg_crosshair_strong_color->modified = false;
-	}
-
-	if( cg_crosshair_strong->integer && cg_crosshair_strong_size->integer ) {
-		firedef_t *firedef = GS_FiredefForPlayerState( &cg.predictedPlayerState, cg.predictedPlayerState.stats[STAT_WEAPON] );
-		if( firedef && firedef->fire_mode == FIRE_MODE_STRONG ) { // strong
-			size = CG_CrosshairDimensions( x, y, cg_crosshair_strong_size->integer, align, &sx, &sy );
-			CG_DrawCrosshairChar( sx, sy, size, cg_crosshair_strong->integer, chColorStrong );
+			Vector4Set( crosshair_damage_color, 1, 0, 0, 1 );
+			trap_Cvar_Set( cg_crosshair_damage_color->name, "255 255 255" );
 		}
 	}
 
-	if( cg_crosshair->integer && cg_crosshair_size->integer && ( cg.predictedPlayerState.stats[STAT_WEAPON] != WEAP_NONE ) ) {
-		size = CG_CrosshairDimensions( x, y, cg_crosshair_size->integer, align, &sx, &sy );
-		CG_DrawCrosshairChar( sx, sy, size, cg_crosshair->integer, chColor );
-	}
+	vec4_t inner;
+	Vector4Copy( crosshair_color, inner );
+	vec4_t border = { 0, 0, 0, 1 };
+	if( cg.time - scr_damagetime <= 300 )
+		Vector4Copy( crosshair_damage_color, inner );
+
+	int w = cgs.vidWidth;
+	int h = cgs.vidHeight;
+	CG_FillRect( w / 2 - 2, h / 2 - 5, 4, 10, border );
+	CG_FillRect( w / 2 - 5, h / 2 - 2, 10, 4, border );
+	CG_FillRect( w / 2 - 1, h / 2 - 4, 2, 8, inner );
+	CG_FillRect( w / 2 - 4, h / 2 - 1, 8, 2, inner );
 }
 
 void CG_DrawKeyState( int x, int y, int w, int h, int align, const char *key ) {
@@ -1332,8 +1231,6 @@ void CG_Draw2DView( void ) {
 	CG_DrawHUD( false );
 
 	CG_UpdateHUDPostDraw();
-
-	CG_CheckDamageCrosshair();
 
 	scr_centertime_off -= cg.frameTime;
 	if( !( ( trap_IN_SupportedDevices() & IN_DEVICE_SOFTKEYBOARD ) && ( int )trap_Cvar_Value( "con_messageMode" ) ) ) {
