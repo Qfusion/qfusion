@@ -4,5 +4,5 @@ clone_depth: 1
 build_script:
 - cmd: git submodule update --init --recursive
 - cmd: cd source
-- cmd: cmake .
+- cmd: cmake -DCMAKE_GENERATOR_PLATFORM=x64 .
 - cmd: msbuild -maxcpucount ALL_BUILD.vcxproj
