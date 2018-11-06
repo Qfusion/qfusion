@@ -364,10 +364,6 @@ static inline int trap_CM_TransformedPointContents( vec3_t p, struct cmodel_s *c
 	return CGAME_IMPORT.CM_TransformedPointContents( p, cmodel, origin, angles );
 }
 
-static inline void trap_CM_RoundUpToHullSize( vec3_t mins, vec3_t maxs, struct cmodel_s *cmodel ) {
-	CGAME_IMPORT.CM_RoundUpToHullSize( mins, maxs, cmodel );
-}
-
 static inline void trap_CM_InlineModelBounds( struct cmodel_s *cmodel, vec3_t mins, vec3_t maxs ) {
 	CGAME_IMPORT.CM_InlineModelBounds( cmodel, mins, maxs );
 }

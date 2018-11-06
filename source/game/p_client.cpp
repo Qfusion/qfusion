@@ -484,7 +484,6 @@ void G_GhostClient( edict_t *ent ) {
 void G_ClientRespawn( edict_t *self, bool ghost ) {
 	int i;
 	edict_t *spawnpoint;
-	vec3_t hull_mins, hull_maxs;
 	vec3_t spawn_origin, spawn_angles;
 	gclient_t *client;
 	int old_team;
@@ -567,13 +566,6 @@ void G_ClientRespawn( edict_t *self, bool ghost ) {
 	VectorCopy( playerbox_stand_maxs, self->r.maxs );
 	VectorClear( self->velocity );
 	VectorClear( self->avelocity );
-
-	VectorCopy( self->r.mins, hull_mins );
-	VectorCopy( self->r.maxs, hull_maxs );
-	trap_CM_RoundUpToHullSize( hull_mins, hull_maxs, NULL );
-	if( self->r.maxs[2] > hull_maxs[2] ) {
-		self->viewheight -= ( self->r.maxs[2] - hull_maxs[2] );
-	}
 
 	client->ps.POVnum = ENTNUM( self );
 

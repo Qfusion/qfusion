@@ -331,21 +331,6 @@ int CM_BoxLeafnums( cmodel_state_t *cms, vec3_t mins, vec3_t maxs, int *list, in
 }
 
 /*
-* CM_RoundUpToHullSize
-*/
-void CM_RoundUpToHullSize( cmodel_state_t *cms, vec3_t mins, vec3_t maxs, cmodel_t *cmodel ) {
-	if( !cmodel ) {
-		cmodel = cms->map_cmodels;
-	}
-
-	// special rounding code
-	if( !cmodel->builtin && cms->CM_RoundUpToHullSize ) {
-		cms->CM_RoundUpToHullSize( cms, mins, maxs, cmodel );
-		return;
-	}
-}
-
-/*
 * CM_BrushContents
 */
 static inline int CM_BrushContents( cbrush_t *brush, vec3_t p ) {
@@ -470,11 +455,6 @@ int CM_TransformedPointContents( cmodel_state_t *cms, vec3_t p, cmodel_t *cmodel
 		if( !angles ) {
 			angles = vec3_origin;
 		}
-	}
-
-	// special point contents code
-	if( !cmodel->builtin && cms->CM_TransformedPointContents ) {
-		return cms->CM_TransformedPointContents( cms, p, cmodel, origin, angles );
 	}
 
 	// subtract origin offset
@@ -1120,12 +1100,6 @@ void CM_TransformedBoxTrace( cmodel_state_t *cms, trace_t *tr, vec3_t start, vec
 		if( !angles ) {
 			angles = vec3_origin;
 		}
-	}
-
-	// special tracing code
-	if( !cmodel->builtin && cms->CM_TransformedBoxTrace ) {
-		cms->CM_TransformedBoxTrace( cms, tr, start, end, mins, maxs, cmodel, brushmask, origin, angles );
-		return;
 	}
 
 	// cylinder offset

@@ -53,10 +53,6 @@ static inline void CL_GameModule_CM_TransformedBoxTrace( trace_t *tr, vec3_t sta
 	CM_TransformedBoxTrace( cl.cms, tr, start, end, mins, maxs, cmodel, brushmask, origin, angles );
 }
 
-static inline void CL_GameModule_CM_RoundUpToHullSize( vec3_t mins, vec3_t maxs, struct cmodel_s *cmodel ) {
-	CM_RoundUpToHullSize( cl.cms, mins, maxs, cmodel );
-}
-
 static inline struct cmodel_s *CL_GameModule_CM_InlineModel( int num ) {
 	return CM_InlineModel( cl.cms, num );
 }
@@ -365,7 +361,6 @@ void CL_GameModule_Init( void ) {
 	import.CM_NumInlineModels = CL_GameModule_CM_NumInlineModels;
 	import.CM_InlineModel = CL_GameModule_CM_InlineModel;
 	import.CM_TransformedBoxTrace = CL_GameModule_CM_TransformedBoxTrace;
-	import.CM_RoundUpToHullSize = CL_GameModule_CM_RoundUpToHullSize;
 	import.CM_TransformedPointContents = CL_GameModule_CM_TransformedPointContents;
 	import.CM_ModelForBBox = CL_GameModule_CM_ModelForBBox;
 	import.CM_OctagonModelForBBox = CL_GameModule_CM_OctagonModelForBBox;

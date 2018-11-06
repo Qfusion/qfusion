@@ -1,4 +1,3 @@
-uniform vec4 u_DeluxemapOffset[(NUM_LIGHTMAPS + 3) / 4]; // s-offset for v_LightmapTexCoord
 uniform LightmapSampler u_LightmapTexture0;
 #if NUM_LIGHTMAPS >= 2
 uniform LightmapSampler u_LightmapTexture1;

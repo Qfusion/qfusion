@@ -30,28 +30,6 @@ BSP FORMATS
 ==============================================================
 */
 
-static const int mod_IBSPQ1Versions[] = { Q1_BSPVERSION, 0 };
-
-const bspFormatDesc_t q1BSPFormats[] =
-{
-	{ "", mod_IBSPQ1Versions, 0, 0, 0, Q1_LUMP_ENTITIES },
-
-	// trailing NULL
-	{ NULL, NULL, 0, 0, 0, 0 }
-
-};
-
-static const int mod_IBSPQ2Versions[] = { Q2_BSPVERSION, 0 };
-
-const bspFormatDesc_t q2BSPFormats[] =
-{
-	{ IDBSPHEADER, mod_IBSPQ2Versions, 0, 0, 0, Q2_LUMP_ENTITIES },
-
-	// trailing NULL
-	{ NULL, NULL, 0, 0, 0, 0 }
-
-};
-
 static const int mod_IBSPQ3Versions[] = { Q3BSPVERSION, RTCWBSPVERSION, 0 };
 static const int mod_RBSPQ3Versions[] = { RBSPVERSION, 0 };
 static const int mod_FBSPQ3Versions[] = { QFBSPVERSION, 0 };

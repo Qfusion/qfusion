@@ -329,13 +329,6 @@ static const char *CG_GS_GetConfigString( int index ) {
 }
 
 /*
-* CG_GS_RoundUpToHullSize
-*/
-static void CG_GS_RoundUpToHullSize( vec3_t mins, vec3_t maxs ) {
-	trap_CM_RoundUpToHullSize( mins, maxs, NULL );
-}
-
-/*
 * CG_InitGameShared
 *
 * Give gameshared access to some utilities
@@ -361,7 +354,6 @@ static void CG_InitGameShared( void ) {
 	api.GetEntityState = CG_GS_GetEntityState;
 	api.PointContents = CG_GS_PointContents;
 	api.PMoveTouchTriggers = CG_Predict_TouchTriggers;
-	api.RoundUpToHullSize = CG_GS_RoundUpToHullSize;
 	api.GetConfigString = CG_GS_GetConfigString;
 	api.GetAngelExport = NULL;
 

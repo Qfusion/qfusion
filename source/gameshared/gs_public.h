@@ -45,7 +45,6 @@ typedef struct {
 	int ( *PointContents )( vec3_t point, int timeDelta );
 	void ( *PredictedEvent )( int entNum, int ev, int parm );
 	void ( *PMoveTouchTriggers )( pmove_t *pm, vec3_t previous_origin );
-	void ( *RoundUpToHullSize )( vec3_t mins, vec3_t maxs );
 	const char *( *GetConfigString )( int index );
 	struct angelwrap_api_s *( *GetAngelExport )( void );
 } gs_module_api_t;

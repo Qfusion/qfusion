@@ -29,9 +29,6 @@ struct cmodel_s *CM_LoadMap( cmodel_state_t *cms, const char *name, bool clientl
 struct cmodel_s *CM_InlineModel( cmodel_state_t *cms, int num ); // 1, 2, etc
 char *CM_LoadMapMessage( char *name, char *message, int size );
 
-dvis_t *CM_PVSData( cmodel_state_t *cms );
-dvis_t *CM_PHSData( cmodel_state_t *cms );
-
 int CM_NumClusters( cmodel_state_t *cms );
 int CM_NumAreas( cmodel_state_t *cms );
 int CM_NumInlineModels( cmodel_state_t *cms );
@@ -49,8 +46,6 @@ int CM_TransformedPointContents( cmodel_state_t *cms, vec3_t p, struct cmodel_s 
 
 void CM_TransformedBoxTrace( cmodel_state_t *cms, trace_t *tr, vec3_t start, vec3_t end, vec3_t mins, vec3_t maxs,
 							 struct cmodel_s *cmodel, int brushmask, vec3_t origin, vec3_t angles );
-
-void CM_RoundUpToHullSize( cmodel_state_t *cms, vec3_t mins, vec3_t maxs, struct cmodel_s *cmodel );
 
 int CM_ClusterRowSize( cmodel_state_t *cms );
 int CM_AreaRowSize( cmodel_state_t *cms );

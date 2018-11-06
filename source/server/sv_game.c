@@ -44,10 +44,6 @@ static inline void PF_CM_TransformedBoxTrace( trace_t *tr, vec3_t start, vec3_t 
 	CM_TransformedBoxTrace( svs.cms, tr, start, end, mins, maxs, cmodel, brushmask, origin, angles );
 }
 
-static inline void PF_CM_RoundUpToHullSize( vec3_t mins, vec3_t maxs, struct cmodel_s *cmodel ) {
-	CM_RoundUpToHullSize( svs.cms, mins, maxs, cmodel );
-}
-
 static inline int PF_CM_NumInlineModels( void ) {
 	return CM_NumInlineModels( svs.cms );
 }
@@ -479,7 +475,6 @@ void SV_InitGameProgs( void ) {
 
 	import.CM_TransformedPointContents = PF_CM_TransformedPointContents;
 	import.CM_TransformedBoxTrace = PF_CM_TransformedBoxTrace;
-	import.CM_RoundUpToHullSize = PF_CM_RoundUpToHullSize;
 	import.CM_NumInlineModels = PF_CM_NumInlineModels;
 	import.CM_InlineModel = PF_CM_InlineModel;
 	import.CM_InlineModelBounds = PF_CM_InlineModelBounds;

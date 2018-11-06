@@ -480,10 +480,6 @@ void SP_func_plat( edict_t *ent ) {
 #define DOOR_CRUSHER        4
 #define DOOR_NOMONSTER      8
 
-#define Q1_DOOR_DONT_LINK   4
-#define Q1_DOOR_GOLD_KEY    8
-#define Q1_DOOR_SILVER_KEY  16
-
 #define DOOR_TOGGLE         32
 #define DOOR_X_AXIS         64
 #define DOOR_Y_AXIS         128

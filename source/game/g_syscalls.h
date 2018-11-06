@@ -90,10 +90,6 @@ static inline void trap_CM_TransformedBoxTrace( trace_t *tr, vec3_t start, vec3_
 	GAME_IMPORT.CM_TransformedBoxTrace( tr, start, end, mins, maxs, cmodel, brushmask, origin, angles );
 }
 
-static inline void trap_CM_RoundUpToHullSize( vec3_t mins, vec3_t maxs, struct cmodel_s *cmodel ) {
-	GAME_IMPORT.CM_RoundUpToHullSize( mins, maxs, cmodel );
-}
-
 static inline int trap_CM_NumInlineModels( void ) {
 	return GAME_IMPORT.CM_NumInlineModels();
 }

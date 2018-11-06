@@ -340,8 +340,6 @@ void R_RenderScene( const refdef_t *fd ) {
 		if( rsc.worldModelSequence != rsh.worldModelSequence ) {
 			rsc.frameCount = !rsc.frameCount;
 			rsc.worldModelSequence = rsh.worldModelSequence;
-
-			R_WaitWorldModel();
 		}
 
 		// FIXME: find a better place for this

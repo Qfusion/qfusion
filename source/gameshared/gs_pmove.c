@@ -1674,30 +1674,6 @@ static void PM_AdjustBBox( void ) {
 	pm->playerState->viewheight = playerbox_stand_viewheight;
 }
 
-/*
-* PM_AdjustViewheight
-*/
-void PM_AdjustViewheight( void ) {
-	float height;
-	vec3_t pm_maxs, mins, maxs;
-
-	if( pm->playerState->pmove.pm_type == PM_SPECTATOR ) {
-		VectorCopy( playerbox_stand_mins, mins );
-		VectorCopy( playerbox_stand_maxs, maxs );
-	} else {
-		VectorCopy( pm->mins, mins );
-		VectorCopy( pm->maxs, maxs );
-	}
-
-	VectorCopy( maxs, pm_maxs );
-	gs.api.RoundUpToHullSize( mins, maxs );
-
-	height = pm_maxs[2] - maxs[2];
-	if( height > 0 ) {
-		pm->playerState->viewheight -= height;
-	}
-}
-
 static void PM_UpdateDeltaAngles( void ) {
 	int i;
 
@@ -1968,8 +1944,6 @@ void Pmove( pmove_t *pmove ) {
 			PM_AdjustBBox();
 		}
 
-		PM_AdjustViewheight();
-
 		if( pm->playerState->pmove.pm_type == PM_SPECTATOR ) {
 			PM_ApplyMouseAnglesClamp();
 
@@ -1990,9 +1964,6 @@ void Pmove( pmove_t *pmove ) {
 	PM_AdjustBBox();
 
 	PM_CheckZoom();
-
-	// round up mins/maxs to hull size and adjust the viewheight, if needed
-	PM_AdjustViewheight();
 
 	// set groundentity, watertype, and waterlevel
 	PM_CategorizePosition();
