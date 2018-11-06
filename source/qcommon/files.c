@@ -1110,7 +1110,6 @@ static int _FS_FOpenFile( const char *filename, int *filenum, int mode, bool bas
 	bool noSize;
 	bool gz;
 	bool update;
-	bool secure;
 	bool cache;
 	packfile_t *pakFile = NULL;
 	gzFile gzf = NULL;
@@ -1125,7 +1124,6 @@ static int _FS_FOpenFile( const char *filename, int *filenum, int mode, bool bas
 	gz = mode & FS_GZ ? true : false;
 	noSize = mode & FS_NOSIZE ? true : false;
 	update = mode & FS_UPDATE ? true : false;
-	secure = mode & FS_SECURE ? true : false;
 	cache = mode & FS_CACHE ? true : false;
 	mode = mode & FS_RWA_MASK;
 
@@ -1186,16 +1184,14 @@ static int _FS_FOpenFile( const char *filename, int *filenum, int mode, bool bas
 		return rxSize;
 	}
 
-	if( ( mode == FS_WRITE || mode == FS_APPEND ) || update || secure || cache ) {
+	if( ( mode == FS_WRITE || mode == FS_APPEND ) || update || cache ) {
 		int end;
 		char modestr[4] = { 0, 0, 0, 0 };
 		FILE *f = NULL;
 		const char *dir;
 
 		dir = FS_WriteDirectory();
-		if( secure ) {
-			dir = FS_SecureDirectory();
-		} else if( cache ) {
+		if( cache ) {
 			dir = FS_CacheDirectory();
 		}
 
@@ -3553,25 +3549,6 @@ const char *FS_CacheDirectory( void ) {
 }
 
 /*
-* FS_SecureDirectory
-*
-* Returns directory with higher security (for instance, not accessible for other apps)
-*/
-const char *FS_SecureDirectory( void ) {
-	const char *dir = Sys_FS_GetSecureDirectory();
-	return dir ? dir : FS_WriteDirectory();
-}
-
-/*
-* FS_MediaDirectory
-*
-* Returns the external directory for media files
-*/
-const char *FS_MediaDirectory( fs_mediatype_t type ) {
-	return Sys_FS_GetMediaDirectory( type );
-}
-
-/*
 * FS_DownloadsDirectory
 *
 * Returns directory where we can store downloads to, no gamedir attached.
@@ -3582,16 +3559,6 @@ const char *FS_DownloadsDirectory( void ) {
 		return fs_downloads_searchpath->path;
 	}
 	return NULL;
-}
-
-/*
-* FS_RuntimeDirectory
-*
-* Returns directory where we can write non-essential runtime files to, no gamedir attached
-*/
-const char *FS_RuntimeDirectory( void ) {
-	const char *dir = Sys_FS_GetRuntimeDirectory();
-	return dir ? dir : FS_WriteDirectory();
 }
 
 /*
@@ -4279,13 +4246,6 @@ static int FS_AddNotifications( int bitmask ) {
 int FS_RemoveNotifications( int bitmask ) {
 	fs_notifications &= ~bitmask;
 	return fs_notifications;
-}
-
-/*
-* FS_AddFileToMedia
-*/
-void FS_AddFileToMedia( const char *filename ) {
-	Sys_FS_AddFileToMedia( filename );
 }
 
 /*

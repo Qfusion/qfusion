@@ -164,8 +164,6 @@ static bool VID_LoadRefresh() {
 	import.FS_RemoveDirectory = &FS_RemoveDirectory;
 	import.FS_GameDirectory = &FS_GameDirectory;
 	import.FS_WriteDirectory = &FS_WriteDirectory;
-	import.FS_MediaDirectory = &FS_MediaDirectory;
-	import.FS_AddFileToMedia = &FS_AddFileToMedia;
 
 	import.Thread_Create = QThread_Create;
 	import.Thread_Join = QThread_Join;

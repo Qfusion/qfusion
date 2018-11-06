@@ -246,8 +246,6 @@ void *Com_LoadGameLibrary( const char *basename, const char *apifuncname, void *
 		return NULL;
 	}
 
-	COM_SanitizeFilePath( abspath );
-
 	// pure check
 	if( pure && !FS_IsPureFile( abspath ) ) {
 		Com_Printf( "LoadLibrary (%s):(Unpure file)\n", abspath );
@@ -258,6 +256,7 @@ void *Com_LoadGameLibrary( const char *basename, const char *apifuncname, void *
 
 	gamelib->fullname = ( char * )Mem_ZoneMalloc( strlen( abspath ) + 1 );
 	strcpy( gamelib->fullname, abspath );
+	COM_SanitizeFilePath( gamelib->fullname );
 
 	gamelib->lib = Sys_Library_Open( gamelib->fullname );
 	gamelib->next = gamelibs;

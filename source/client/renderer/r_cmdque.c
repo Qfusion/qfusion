@@ -684,7 +684,6 @@ typedef struct {
 	int id;
 	unsigned pixels;
 	bool silent;
-	bool media;
 	int x, y, w, h;
 	char fmtstring[64];
 	char path[512];
@@ -789,7 +788,7 @@ static unsigned R_HandleResizeFramebuffersCmd( void *pcmd ) {
 static unsigned R_HandleScreenShotReliableCmd( void *pcmd ) {
 	refReliableCmdScreenShot_t *cmd = pcmd;
 
-	R_TakeScreenShot( cmd->path, cmd->name, cmd->fmtstring, cmd->x, cmd->y, cmd->w, cmd->h, cmd->silent, cmd->media );
+	R_TakeScreenShot( cmd->path, cmd->name, cmd->fmtstring, cmd->x, cmd->y, cmd->w, cmd->h, cmd->silent );
 
 	return sizeof( *cmd );
 }
@@ -886,7 +885,7 @@ static void RF_IssueResizeFramebuffersCmd( ref_cmdpipe_t *cmdpipe ) {
 }
 
 static void RF_IssueEnvScreenShotReliableCmd( ref_cmdpipe_t *cmdpipe, int id, const char *path, const char *name,
-											  const char *fmtstring, int x, int y, int w, int h, unsigned pixels, bool silent, bool media ) {
+											  const char *fmtstring, int x, int y, int w, int h, unsigned pixels, bool silent ) {
 	refReliableCmdScreenShot_t cmd = { 0 };
 
 	cmd.id = id;
@@ -896,7 +895,6 @@ static void RF_IssueEnvScreenShotReliableCmd( ref_cmdpipe_t *cmdpipe, int id, co
 	cmd.h = h;
 	cmd.pixels = pixels;
 	cmd.silent = silent;
-	cmd.media = media;
 	Q_strncpyz( cmd.path, path, sizeof( cmd.path ) );
 	Q_strncpyz( cmd.name, name, sizeof( cmd.name ) );
 	Q_strncpyz( cmd.fmtstring, fmtstring, sizeof( cmd.fmtstring ) );
@@ -905,15 +903,15 @@ static void RF_IssueEnvScreenShotReliableCmd( ref_cmdpipe_t *cmdpipe, int id, co
 }
 
 static void RF_IssueScreenShotReliableCmd( ref_cmdpipe_t *cmdpipe, const char *path, const char *name, const char *fmtstring, bool silent ) {
-	RF_IssueEnvScreenShotReliableCmd( cmdpipe, REF_PIPE_CMD_SCREEN_SHOT, path, name, fmtstring, 0, 0, glConfig.width, glConfig.height, 0, silent, true );
+	RF_IssueEnvScreenShotReliableCmd( cmdpipe, REF_PIPE_CMD_SCREEN_SHOT, path, name, fmtstring, 0, 0, glConfig.width, glConfig.height, 0, silent );
 }
 
 static void RF_IssueEnvShotReliableCmd( ref_cmdpipe_t *cmdpipe, const char *path, const char *name, unsigned pixels ) {
-	RF_IssueEnvScreenShotReliableCmd( cmdpipe, REF_PIPE_CMD_ENV_SHOT, path, name, "", 0, 0, glConfig.width, glConfig.height, pixels, false, false );
+	RF_IssueEnvScreenShotReliableCmd( cmdpipe, REF_PIPE_CMD_ENV_SHOT, path, name, "", 0, 0, glConfig.width, glConfig.height, pixels, false );
 }
 
 static void RF_IssueAviShotReliableCmd( ref_cmdpipe_t *cmdpipe, const char *path, const char *name, int x, int y, int w, int h ) {
-	RF_IssueEnvScreenShotReliableCmd( cmdpipe, REF_PIPE_CMD_SCREEN_SHOT, path, name, "", x, y, w, h, 0, true, false );
+	RF_IssueEnvScreenShotReliableCmd( cmdpipe, REF_PIPE_CMD_SCREEN_SHOT, path, name, "", x, y, w, h, 0, true );
 }
 
 static void RF_IssueBeginRegistrationReliableCmd( ref_cmdpipe_t *cmdpipe ) {

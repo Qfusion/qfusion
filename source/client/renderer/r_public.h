@@ -84,8 +84,6 @@ typedef struct {
 	bool ( *FS_RemoveDirectory )( const char *dirname );
 	const char * ( *FS_GameDirectory )( void );
 	const char * ( *FS_WriteDirectory )( void );
-	const char * ( *FS_MediaDirectory )( fs_mediatype_t type );
-	void ( *FS_AddFileToMedia )( const char *filename );
 
 	// multithreading
 	struct qthread_s *( *Thread_Create )( void *( *routine )( void* ), void *param );

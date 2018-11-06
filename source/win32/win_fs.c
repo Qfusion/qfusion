@@ -252,28 +252,6 @@ const char *Sys_FS_GetHomeDirectory( void ) {
 }
 
 /*
-* Sys_FS_GetCacheDirectory
-*/
-const char *Sys_FS_GetCacheDirectory( void ) {
-	return NULL;
-}
-
-/*
-* Sys_FS_GetSecureDirectory
-*/
-const char *Sys_FS_GetSecureDirectory( void ) {
-	return NULL;
-}
-
-/*
-* Sys_FS_GetMediaDirectory
-*/
-const char *Sys_FS_GetMediaDirectory( fs_mediatype_t type ) {
-	// TODO: Libraries / My Pictures?
-	return NULL;
-}
-
-/*
 * Sys_FS_GetRuntimeDirectory
 */
 const char *Sys_FS_GetRuntimeDirectory( void ) {
@@ -408,10 +386,4 @@ void Sys_FS_UnMMapFile( void *mapping, void *data, size_t size, size_t mapping_o
 	if( mapping ) {
 		CloseHandle( (HANDLE)mapping );
 	}
-}
-
-/*
-* Sys_FS_AddFileToMedia
-*/
-void Sys_FS_AddFileToMedia( const char *filename ) {
 }

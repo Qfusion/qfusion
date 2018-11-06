@@ -511,7 +511,7 @@ void        R_AliasModelFrameBounds( const model_t *mod, int frame, vec3_t mins,
 //
 // r_cmds.c
 //
-void        R_TakeScreenShot( const char *path, const char *name, const char *fmtString, int x, int y, int w, int h, bool silent, bool media );
+void        R_TakeScreenShot( const char *path, const char *name, const char *fmtString, int x, int y, int w, int h, bool silent );
 void        R_ScreenShot_f( void );
 void        R_TakeEnvShot( const char *path, const char *name, unsigned maxPixels );
 void        R_EnvShot_f( void );

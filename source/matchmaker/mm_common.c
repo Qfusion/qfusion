@@ -56,7 +56,7 @@ const char *MM_PasswordRead( const char *user ) {
 	Com_DPrintf( "MM_PasswordRead %s\n", user );
 
 	filename = MM_PasswordFilename( user );
-	if( FS_FOpenFile( filename, &filenum, FS_READ | FS_SECURE ) == -1 ) {
+	if( FS_FOpenFile( filename, &filenum, FS_READ ) == -1 ) {
 		Com_Printf( "MM_PasswordRead: Couldnt open file %s\n", filename );
 		return NULL;
 	}
@@ -80,7 +80,7 @@ void MM_PasswordWrite( const char *user, const char *password ) {
 	Com_DPrintf( "MM_PasswordWrite: %s %s\n", user, password );
 
 	filename = MM_PasswordFilename( user );
-	if( FS_FOpenFile( filename, &filenum, FS_WRITE | FS_SECURE ) == -1 ) {
+	if( FS_FOpenFile( filename, &filenum, FS_WRITE ) == -1 ) {
 		Com_Printf( "MM_PasswordWrite: Failed to open %s for writing\n", filename );
 		return;
 	}
