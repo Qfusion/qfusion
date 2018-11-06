@@ -39,11 +39,7 @@ set(NANOSVG_INCLUDE_DIR ${NANOSVG_DIR}/src)
 
 # Windows specific settings
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-	set(QFUSION_WINDOWS_ARCH "x86")
-
-	if ((MINGW AND CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64") OR (CMAKE_SIZEOF_VOID_P EQUAL 8))
-		set(QFUSION_WINDOWS_ARCH "x64")
-	endif()
+	set(QFUSION_WINDOWS_ARCH "x64")
 
 	set(CMAKE_INCLUDE_PATH
 		"../libsrcs/src/libogg"

@@ -68,7 +68,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 		"../win32/qfusion.rc"
 		)
 
-	set(CLIENT_PLATFORM_LIBRARIES ${SDL2_LIBRARY} ${SDL2MAIN_LIBRARY} "ws2_32.lib" "winmm.lib")
+	set(CLIENT_PLATFORM_LIBRARIES ${SDL2_LIBRARY} ${SDL2MAIN_LIBRARY} ${FREETYPE_LIBRARY} "kernel32.lib" "ws2_32.lib" "winmm.lib")
 
 	set(CLIENT_BINARY_TYPE WIN32)
 

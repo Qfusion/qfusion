@@ -394,6 +394,9 @@ MouseMovement IN_GetMouseMovement() {
 }
 
 #if _WIN32
+#define _WIN32_WINNT 0x4000
+#include <windows.h>
+
 static bool being_debugged() {
 	return IsDebuggerPresent() != 0;
 }

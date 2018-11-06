@@ -8,6 +8,8 @@ source/ipch
 *.opensdf
 *.vcxproj.user
 *.suo
+*.opendb
+*.db
 
 # Ignore cmake generated files
 **/CMakeCache.txt
