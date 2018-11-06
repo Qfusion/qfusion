@@ -12,4 +12,4 @@ build_script:
 
 artifacts:
 - path: source/build
-  name: cocaine_diesel_linux.zip
+  name: cocaine_diesel_linux
