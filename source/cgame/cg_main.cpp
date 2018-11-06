@@ -728,7 +728,7 @@ static void CG_RegisterVariables( void ) {
 	cg_movementStyle =  trap_Cvar_Get( "cg_movementStyle", "0", CVAR_USERINFO | CVAR_ARCHIVE );
 	cg_noAutohop =  trap_Cvar_Get( "cg_noAutohop", "0", CVAR_USERINFO | CVAR_ARCHIVE );
 	cg_fov =        trap_Cvar_Get( "fov", "100", CVAR_ARCHIVE );
-	cg_zoomfov =    trap_Cvar_Get( "zoomfov", "30", CVAR_ARCHIVE );
+	cg_zoomfov =    trap_Cvar_Get( "zoomfov", "75", CVAR_ARCHIVE );
 
 	cg_addDecals =      trap_Cvar_Get( "cg_decals", "1", CVAR_ARCHIVE );
 

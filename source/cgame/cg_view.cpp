@@ -1037,10 +1037,10 @@ void CG_RenderView( int frameTime, int realFrameTime, int64_t realTime, int64_t 
 	}
 
 	if( cg_zoomfov->modified ) {
-		if( cg_zoomfov->value < MIN_ZOOMFOV ) {
-			trap_Cvar_ForceSet( cg_zoomfov->name, STR_TOSTR( MIN_ZOOMFOV ) );
-		} else if( cg_zoomfov->value > MAX_ZOOMFOV ) {
-			trap_Cvar_ForceSet( cg_zoomfov->name, STR_TOSTR( MAX_ZOOMFOV ) );
+		if( cg_zoomfov->value < MIN_FOV ) {
+			trap_Cvar_ForceSet( cg_zoomfov->name, STR_TOSTR( MIN_FOV ) );
+		} else if( cg_zoomfov->value > MAX_FOV ) {
+			trap_Cvar_ForceSet( cg_zoomfov->name, STR_TOSTR( MAX_FOV ) );
 		}
 		cg_zoomfov->modified = false;
 	}
