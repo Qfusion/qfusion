@@ -6,3 +6,8 @@ build_script:
 - cmd: cd source
 - cmd: cmake -G "Visual Studio 14 2015 Win64" .
 - cmd: msbuild -maxcpucount ALL_BUILD.vcxproj
+
+artifacts:
+- path: source/build/Release
+- name: cocaine_diesel_windows
+- type: zip

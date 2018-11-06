@@ -9,3 +9,8 @@ build_script:
 - sh: cd source
 - sh: cmake .
 - sh: make -j$(nproc --all)
+
+artifacts:
+- path: source/build
+- name: cocaine_diesel_linux
+- type: zip
