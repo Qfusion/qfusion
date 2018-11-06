@@ -156,9 +156,6 @@ void R_AddEntityToScene( const entity_t *ent ) {
 		}
 
 		if( de->rtype == RT_MODEL ) {
-			de->outlineHeight = rsc.worldent->outlineHeight;
-			Vector4Copy( rsc.worldent->outlineRGBA, de->outlineColor );
-
 			if( de->model && de->model->type == mod_brush ) {
 				de->flags |= RF_FORCENOLOD;
 				rsc.bmodelEntities[rsc.numBmodelEntities++] = eNum;
