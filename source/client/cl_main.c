@@ -1900,7 +1900,7 @@ static void CL_InitLocal( void ) {
 	// register our variables
 	//
 	cl_maxfps =     Cvar_Get( "cl_maxfps", "250", CVAR_ARCHIVE );
-	cl_sleep =      Cvar_Get( "cl_sleep", "1", CVAR_ARCHIVE );
+	cl_sleep =      Cvar_Get( "cl_sleep", "0", CVAR_ARCHIVE );
 	cl_pps =        Cvar_Get( "cl_pps", "40", CVAR_ARCHIVE );
 
 	cl_extrapolationTime =  Cvar_Get( "cl_extrapolationTime", "0", CVAR_DEVELOPER );
