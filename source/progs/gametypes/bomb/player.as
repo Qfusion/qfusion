@@ -282,7 +282,7 @@ class cPlayer
 		// this code shouldn't be reachable in insta
 		assert( !gametype.isInstagib, "player.as showPrimarySelection: insta" );
 
-		if ( this.client.team == TEAM_SPECTATOR || @this.client.getBot() != null ) 
+		if ( this.client.team == TEAM_SPECTATOR )
 		{
 			return;
 		}
@@ -314,7 +314,7 @@ class cPlayer
 		// this code shouldn't be reachable in insta
 		assert( !gametype.isInstagib, "player.as showSecondarySelection: insta" );
 
-		if ( this.client.team == TEAM_SPECTATOR || @this.client.getBot() != null )
+		if ( this.client.team == TEAM_SPECTATOR )
 		{
 			return;
 		}

@@ -342,10 +342,6 @@ void G_Teams_SetTeam( edict_t *ent, int team ) {
 
 	G_Match_CheckReadys();
 	G_UpdatePlayerMatchMsg( ent );
-
-	if( ent->ai ) {
-		AI_JoinedTeam( ent, team );
-	}
 }
 
 enum
@@ -414,7 +410,7 @@ static int G_GameTypes_DenyJoinTeam( edict_t *ent, int team ) {
 	}
 
 	if( GS_TeamBasedGametype() && ( team >= TEAM_ALPHA && team < GS_MAX_TEAMS ) ) {
-		if( ent->r.svflags & SVF_FAKECLIENT && AI_GetType( ent->ai ) == AI_ISBOT ) {
+		if( ent->r.svflags & SVF_FAKECLIENT ) {
 			if( level.gametype.forceTeamBots != TEAM_SPECTATOR ) {
 				return team == level.gametype.forceTeamBots ? ER_TEAM_OK : ER_TEAM_INVALID;
 			}

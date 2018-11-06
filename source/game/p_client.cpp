@@ -553,10 +553,7 @@ void G_ClientRespawn( edict_t *self, bool ghost ) {
 	self->max_health = 100;
 	self->health = self->max_health;
 
-	if( AI_GetType( self->ai ) == AI_ISBOT ) {
-		self->think = NULL;
-		self->classname = "bot";
-	} else if( self->r.svflags & SVF_FAKECLIENT ) {
+	if( self->r.svflags & SVF_FAKECLIENT ) {
 		self->classname = "fakeclient";
 	} else {
 		self->classname = "player";
@@ -619,9 +616,6 @@ void G_ClientRespawn( edict_t *self, bool ghost ) {
 	self->s.attenuation = ATTN_NORM;
 
 	self->s.teleported = true;
-
-	self->aiIntrinsicEnemyWeight = 1.0f;
-	self->aiVisibilityDistance = 999999.9f;
 
 	// hold in place briefly
 	client->ps.pmove.pm_flags = PMF_TIME_TELEPORT;
@@ -1665,9 +1659,7 @@ void G_ClientThink( edict_t *ent ) {
 
 	// run bots thinking with the rest of clients
 	if( ent->r.svflags & SVF_FAKECLIENT ) {
-		if( !ent->think && AI_GetType( ent->ai ) == AI_ISBOT ) {
-			AI_Think( ent );
-		}
+		AI_Think( ent );
 	}
 
 	trap_ExecuteClientThinks( PLAYERNUM( ent ) );

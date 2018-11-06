@@ -1198,10 +1198,10 @@ void G_Match_CheckReadys( void ) {
 		}
 	}
 
-	if( allready == true && GS_MatchState() != MATCH_STATE_COUNTDOWN ) {
+	if( allready && GS_MatchState() != MATCH_STATE_COUNTDOWN ) {
 		G_PrintMsg( NULL, "All players are ready. Match starting!\n" );
 		G_Match_LaunchState( MATCH_STATE_COUNTDOWN );
-	} else if( allready == false && GS_MatchState() == MATCH_STATE_COUNTDOWN ) {
+	} else if( !allready && GS_MatchState() == MATCH_STATE_COUNTDOWN ) {
 		G_PrintMsg( NULL, "Countdown aborted.\n" );
 		G_CenterPrintMsg( NULL, "COUNTDOWN ABORTED" );
 		G_Match_Autorecord_Cancel();
@@ -1213,7 +1213,7 @@ void G_Match_CheckReadys( void ) {
 * G_Match_Ready
 */
 void G_Match_Ready( edict_t *ent ) {
-	if( ent->r.svflags & SVF_FAKECLIENT && level.ready[PLAYERNUM( ent )] == true ) {
+	if( ( ent->r.svflags & SVF_FAKECLIENT ) && level.ready[PLAYERNUM( ent )] ) {
 		return;
 	}
 
@@ -1560,10 +1560,8 @@ static void G_CheckNumBots( void ) {
 			if( !ent->r.inuse || !( ent->r.svflags & SVF_FAKECLIENT ) ) {
 				continue;
 			}
-			if( AI_GetType( ent->ai ) == AI_ISBOT ) {
-				AI_RemoveBot( ent->r.client->netname );
-				break;
-			}
+			AI_RemoveBot( ent->r.client->netname );
+			break;
 		}
 		return;
 	}

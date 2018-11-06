@@ -1,24 +1,21 @@
 /*
-Copyright (C) 2009-2010 Chasseur de bots
+   Copyright (C) 2009-2010 Chasseur de bots
 
-This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License
-as published by the Free Software Foundation; either version 2
-of the License, or (at your option) any later version.
+   This program is free software; you can redistribute it and/or
+   modify it under the terms of the GNU General Public License
+   as published by the Free Software Foundation; either version 2
+   of the License, or (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-See the GNU General Public License for more details.
+   See the GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-*/
-
-// XXX: i waive all rights to this code and the warsow dev team can do
-//      what they like with it etc cba to paste gpl
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+   */
 
 // XXX: should all timers be instant in ibomb?
 
@@ -85,9 +82,6 @@ const float SITE_EXPLOSION_MAX_DIST    = 512.0f;
 Vec3 BOMB_MINS( -16, -16, -8 );
 Vec3 BOMB_MAXS(  16,  16, 48 ); // same size as player i guess
 
-// Bots
-cBombSite @BOMB_BOTS_SITE = null;
-
 // cvars
 Cvar cvarRoundTime(       "g_bomb_roundtime",       "60", CVAR_ARCHIVE );
 Cvar cvarExplodeTime(     "g_bomb_bombtimer",       "30", CVAR_ARCHIVE );
@@ -144,7 +138,7 @@ void setTeamProgress( int teamNum, int progress )
 void BOMB_SetVoicecommOverlayMenu( Client @client )
 {
 	String menuStr = '';
-	
+
 	if ( client.getEnt().team == attackingTeam )
 	{	
 		menuStr += 
@@ -258,7 +252,7 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
 	if ( cmdString == "weapselect" )
 	{
 		cPlayer @player = @playerFromClient( @client );
-		
+
 		player.selectWeapon( argsString );
 
 		// TODO: block them from shooting for 0.5s or something instead
@@ -331,7 +325,7 @@ String @GT_ScoreboardMessage( uint maxlen )
 {
 	String scoreboardMessage = "";
 	int matchState = match.getState();
-			
+
 	for ( int t = TEAM_ALPHA; t < GS_MAX_TEAMS; t++ )
 	{
 		Team @team = @G_GetTeam( t );
@@ -433,9 +427,9 @@ void GT_updateScore( Client @client )
 
 	// 2 * teamDamage because totalDamage includes it
 	client.stats.setScore( int(
-		( stats.frags - stats.teamFrags ) * 0.5
-		+ ( stats.totalDamageGiven - 2 * stats.totalTeamDamageGiven ) * 0.01
-		+ player.defuses * POINTS_DEFUSE )
+			( stats.frags - stats.teamFrags ) * 0.5
+			+ ( stats.totalDamageGiven - 2 * stats.totalTeamDamageGiven ) * 0.01
+			+ player.defuses * POINTS_DEFUSE )
 	);
 }
 
@@ -490,7 +484,7 @@ void GT_ScoreEvent( Client @client, const String &score_event, const String &arg
 		Entity @victim = @G_GetEntity( args.getToken( 0 ).toInt() );
 
 		if ( @victim == null || @victim == @attacker || victim.team != attacker.team
-			|| attacker.isGhosting() || attacker.health < 0 // becase every rg pellet counts as a dmg event...
+		    || attacker.isGhosting() || attacker.health < 0 // becase every rg pellet counts as a dmg event...
 		)
 		{
 			return;
@@ -548,7 +542,7 @@ void GT_ScoreEvent( Client @client, const String &score_event, const String &arg
 	if ( score_event == "kill" )
 	{
 		Entity @attacker = null;
-		
+
 		if ( @client != null )
 		{
 			@attacker = @client.getEnt();
@@ -563,7 +557,7 @@ void GT_ScoreEvent( Client @client, const String &score_event, const String &arg
 
 		return;
 	}
-	
+
 	if ( score_event == "disconnect" )
 	{
 		// clean up
@@ -571,7 +565,7 @@ void GT_ScoreEvent( Client @client, const String &score_event, const String &arg
 
 		return;
 	}
-	
+
 	if( score_event == "rebalance" || score_event == "shuffle" )
 	{
 		// end round when in match
@@ -600,10 +594,7 @@ void GT_PlayerRespawn( Entity @ent, int old_team, int new_team )
 
 		if ( !gametype.isInstagib )
 		{
-			if ( @client.getBot() == null )
-                player.showPrimarySelection();
-            else 
-                player.selectRandomBotWeapons();
+			player.showPrimarySelection();
 		}
 
 		if ( matchState == MATCH_STATE_PLAYTIME )
@@ -638,9 +629,9 @@ void GT_PlayerRespawn( Entity @ent, int old_team, int new_team )
 	}
 
 	BOMB_SetVoicecommOverlayMenu( @client );
-	
+
 	player.giveInventory();
-	
+
 	ent.svflags |= SVF_FORCETEAM;
 	ent.respawnEffect();
 }
@@ -719,7 +710,7 @@ void GT_ThinkRules()
 			}
 		}
 	}
-	
+
 	if ( bombState == BOMBSTATE_CARRIED )
 	{
 		bombCarrier.client.setHUDStat( STAT_IMAGE_SELF, iconCarrying );
@@ -850,7 +841,7 @@ void GT_InitGametype()
 	gametype.removeInactivePlayers = true;
 
 	gametype.mmCompatible = true;
-	
+
 	gametype.spawnpointRadius = 256;
 
 	// set spawnsystem type to instant while players join
@@ -892,38 +883,6 @@ void GT_InitGametype()
 	//G_RegisterCallvote( "bombtimer", "> 0", "integer", "The bomb's fuse length (seconds)" );
 
 	mediaInit();
-
-	/*if(!G_FileExists("configs/server/gametypes/" + gametype.name + ".cfg")) {
-		String config;
-		// the config file doesn't exist or it's empty, create it
-		config = "// '" + gametype.title + "' gametype configuration file\n"
-			+ "// This config will be executed each time the gametype is started\n"
-			+ "\n// " + gametype.title + " specific settings\n"
-			+ "set ftag_allowPowerups \"1\"\n"
-			+ "set ftag_powerupDrop \"1\"\n"
-			+ "\n// map rotation\n"
-			+ "set g_maplist \"wdm1 wdm2 wdm4 wdm5 wdm6 wdm7 wdm9 wdm10 wdm11 wdm12 wdm13 wdm14 wdm15 wdm16 wdm17\" // list of maps in automatic rotation\n"
-			+ "set g_maprotation \"1\"   // 0 = same map, 1 = in order, 2 = random\n"
-			+ "\n// game settings\n"
-			+ "set g_scorelimit \"15\"\n"
-			+ "set g_timelimit \"0\"\n"
-			+ "set g_warmup_enabled \"1\"\n"
-			+ "set g_warmup_timelimit \"1.5\"\n"
-			+ "set g_match_extendedtime \"0\"\n"
-			+ "set g_allow_falldamage \"1\"\n"
-			+ "set g_allow_selfdamage \"1\"\n"
-			+ "set g_allow_teamdamage \"1\"\n"
-			+ "set g_allow_stun \"1\"\n"
-			+ "set g_teams_maxplayers \"0\"\n"
-			+ "set g_teams_allow_uneven \"0\"\n"
-			+ "set g_countdown_time \"5\"\n"
-			+ "set g_maxtimeouts \"3\" // -1 = unlimited\n"
-			+ "\necho \"" + gametype.name + ".cfg executed\"\n";
-
-		G_WriteFile("configs/server/gametypes/" + gametype.name + ".cfg", config);
-		G_Print("Created default config file for '" + gametype.name + "'\n");
-		G_CmdExecute("exec configs/server/gametypes/" + gametype.name + ".cfg silent");
-	}*/
 
 	G_CmdExecute( "exec configs/server/gametypes/bomb.cfg silent" ); // TODO XXX FIXME
 

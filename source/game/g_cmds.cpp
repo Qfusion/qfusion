@@ -1267,9 +1267,6 @@ void G_InitGameCommands( void ) {
 	G_AddCommand( "vsay", G_vsay_Cmd );
 	G_AddCommand( "vsay_team", G_Teams_vsay_Cmd );
 
-	// bot commands
-	G_AddCommand( "botnotarget", AI_Cheat_NoTarget );
-
 	// ch : added awards
 	G_AddCommand( "awards", Cmd_Awards_f );
 

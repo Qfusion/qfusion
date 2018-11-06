@@ -704,7 +704,6 @@ void G_FreeEdict( edict_t *ed ) {
 	GClip_UnlinkEntity( ed );   // unlink from world
 
 	AI_RemoveNavEntity( ed );
-	G_FreeAI( ed );
 
 	G_asReleaseEntityBehaviors( ed );
 
@@ -736,10 +735,6 @@ void G_InitEdict( edict_t *e ) {
 	e->s.number = ENTNUM( e );
 
 	G_asResetEntityBehaviors( e );
-
-	// Reset AI intrinsic properties
-	e->aiIntrinsicEnemyWeight = 0.0f;
-	e->aiVisibilityDistance = 999999.9f;
 
 	// mark all entities to not be sent by default
 	e->r.svflags = SVF_NOCLIENT | (e->r.svflags & SVF_FAKECLIENT);
@@ -934,22 +929,14 @@ void G_CallThink( edict_t *ent ) {
 * G_CallTouch
 */
 void G_CallTouch( edict_t *self, edict_t *other, cplane_t *plane, int surfFlags ) {
-	bool touched = false;
-
 	if( self == other ) {
 		return;
 	}
 
 	if( self->touch ) {
-		touched = true;
 		self->touch( self, other, plane, surfFlags );
 	} else if( self->scriptSpawned && self->asTouchFunc ) {
-		touched = true;
 		G_asCallMapEntityTouch( self, other, plane, surfFlags );
-	}
-
-	if( touched && other->ai ) {
-		AI_TouchedEntity( other, self );
 	}
 }
 
@@ -979,10 +966,6 @@ void G_CallStop( edict_t *self ) {
 * G_CallPain
 */
 void G_CallPain( edict_t *ent, edict_t *attacker, float kick, float damage ) {
-	if( ent->ai ) {
-		AI_Pain( ent, attacker, kick, damage );
-	}
-
 	if( ent->pain ) {
 		ent->pain( ent, attacker, kick, damage );
 	} else if( ent->scriptSpawned && ent->asPainFunc ) {
@@ -1585,14 +1568,7 @@ void G_RespawnEffect( edict_t *ent ) {
 * G_SolidMaskForEnt
 */
 int G_SolidMaskForEnt( edict_t *ent ) {
-	int solidmask;
-	if( AI_GetType( ent->ai ) == AI_ISMONSTER ) {
-		solidmask = MASK_MONSTERSOLID;
-	} else {
-		solidmask = ent->r.clipmask ? ent->r.clipmask : MASK_SOLID;
-	}
-
-	return solidmask;
+	return ent->r.clipmask ? ent->r.clipmask : MASK_SOLID;
 }
 
 /*

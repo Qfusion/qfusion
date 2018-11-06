@@ -1,35 +1,35 @@
 /*
-Copyright (C) 2009-2010 Chasseur de bots
+   Copyright (C) 2009-2010 Chasseur de bots
 
-This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License
-as published by the Free Software Foundation; either version 2
-of the License, or (at your option) any later version.
+   This program is free software; you can redistribute it and/or
+   modify it under the terms of the GNU General Public License
+   as published by the Free Software Foundation; either version 2
+   of the License, or (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-See the GNU General Public License for more details.
+   See the GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-*/
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+   */
 
 // i trust bomb will never have more than 1 bomb
 
 /*enum eBombStates FIXME enum
-{
-	BOMBSTATE_IDLE,
-	BOMBSTATE_CARRIED,
-	BOMBSTATE_DROPPING, // bomb was dropped but is still in the air
-	BOMBSTATE_DROPPED,
-	BOMBSTATE_PLANTING, // bomb has just been planted and we're animating
-	BOMBSTATE_PLANTED,
-	BOMBSTATE_ARMED,
-	BOMBSTATE_EXPLODING // bomb has just exploded and we're animating
-}*/
+  {
+  BOMBSTATE_IDLE,
+  BOMBSTATE_CARRIED,
+  BOMBSTATE_DROPPING, // bomb was dropped but is still in the air
+  BOMBSTATE_DROPPED,
+  BOMBSTATE_PLANTING, // bomb has just been planted and we're animating
+  BOMBSTATE_PLANTED,
+  BOMBSTATE_ARMED,
+  BOMBSTATE_EXPLODING // bomb has just exploded and we're animating
+  }*/
 
 const uint BOMBSTATE_IDLE = 0;
 const uint BOMBSTATE_CARRIED = 1;
@@ -130,7 +130,7 @@ void bombInit()
 {
 	// i'm not setting svflags &= ~SVF_NOCLIENT yet
 	// no need to link either 
-	
+
 	bombModelCreate();
 
 	@bombSprite = @G_SpawnEntity( "capture_indicator_sprite" );
@@ -159,43 +159,11 @@ void bombInit()
 
 void bombSetCarrier( Entity @ent )
 {
-    // If the bomb did not touch a solid (is in the DROPPING state),
-    // site defence spots were kept, as well as weight of the site chosen for planting.
-    if ( bombState != BOMBSTATE_DROPPING )
-    {
-        // Clear the bomb model weight
-        BOMB_SetEntityGoalWeightForTeam( attackingTeam, bombModel, 0.0f );
-        // Attack the site chosen by bots.
-        if ( @BOMB_BOTS_SITE != null )
-        {
-            // Set a small weight for all bots so they will attack the site alone
-            // if they are not assigned as carrier supporters by native code.
-            // Otherwise they should follow the carrier, thus the weight is small to be overridden.
-            BOMB_SetEntityGoalWeightForTeam( attackingTeam, BOMB_BOTS_SITE.indicator, 0.5f );
-            // Set a huge site weight for the carrier        
-            Bot @botCarrier = ent.client.getBot();
-            if ( @botCarrier != null )
-                botCarrier.overrideEntityWeight( BOMB_BOTS_SITE.indicator, 12.0f );
-        }
-    }
-
 	if ( @bombCarrier != null )
 	{
 		bombCarrier.effects &= ~EF_CARRIER;
 		bombCarrier.modelindex2 = 0;
 	}
-    // If a bomb was dropped and now is carried again
-    else if ( bombState == BOMBSTATE_DROPPED ) 
-    {
-        // Defenders should stop leave the dropped bomb spot
-        AI::RemoveDefenceSpot( defendingTeam, 0 );
-        // Tell attackers that the bomb has been picked up
-        AI::NavEntityReached( bombModel );
-        // Remove the goal 
-        AI::RemoveNavEntity( bombModel );
-        // Defend the bomb sites
-        BOMB_AddDefenceSpotsForSites();
-    }
 
 	@bombCarrier = @ent;
 	bombCarrier.effects |= EF_CARRIER;
@@ -226,34 +194,34 @@ void bombDrop( uint dropType )
 	{
 		case BOMBDROP_NORMAL:
 		case BOMBDROP_KILLED: // TODO XXX FIXME
-		{
-			bombPickTime = levelTime + BOMB_DROP_RETAKE_DELAY;
-			@bombDropper = @bombCarrier;
+			{
+				bombPickTime = levelTime + BOMB_DROP_RETAKE_DELAY;
+				@bombDropper = @bombCarrier;
 
-			// throw from the player's eye
-			start.z += bombCarrier.viewHeight;
+				// throw from the player's eye
+				start.z += bombCarrier.viewHeight;
 
-			// aim it up by 10 degrees like nades
-			Vec3 angles = bombCarrier.angles;
+				// aim it up by 10 degrees like nades
+				Vec3 angles = bombCarrier.angles;
 
-			Vec3 forward, right, up;
-			angles.angleVectors( forward, right, up );
+				Vec3 forward, right, up;
+				angles.angleVectors( forward, right, up );
 
-			// put it a little infront of the player
-			Vec3 offset( 24.0, 0.0, -16.0 );
-			end.x = start.x + forward.x * offset.x;
-			end.y = start.y + forward.y * offset.x;
-			end.z = start.z + forward.z * offset.x + offset.z;
+				// put it a little infront of the player
+				Vec3 offset( 24.0, 0.0, -16.0 );
+				end.x = start.x + forward.x * offset.x;
+				end.y = start.y + forward.y * offset.x;
+				end.z = start.z + forward.z * offset.x + offset.z;
 
-			velocity = bombCarrier.velocity + forward * 200;
-			velocity.z = BOMB_THROW_SPEED;
-			if( dropType == BOMBDROP_KILLED ) {
-				velocity.z *= 0.5;
+				velocity = bombCarrier.velocity + forward * 200;
+				velocity.z = BOMB_THROW_SPEED;
+				if( dropType == BOMBDROP_KILLED ) {
+					velocity.z *= 0.5;
+				}
+				break;
 			}
-			break;
-		}
 
-		/*case BOMBDROP_KILLED:
+			/*case BOMBDROP_KILLED:
 			// to avoid issues with a player dropping it then
 			// someone else picking it up and immediately dying
 			@bombDropper = null;
@@ -295,7 +263,7 @@ void bombDrop( uint dropType )
 
 	bombCarrier.effects &= ~EF_CARRIER;
 	bombCarrier.modelindex2 = 0;
-	
+
 	@bombCarrier = null;
 
 	bombState = BOMBSTATE_DROPPING;
@@ -357,24 +325,6 @@ void bombPlant( cBombSite @site )
 	bombProgress = 0;
 	bombActionTime = levelTime;
 	bombState = BOMBSTATE_PLANTING;
-
-    // Tell attackers they have reached the site
-    AI::NavEntityReached( site.indicator ); 
-    // Clear site weight for attackers
-    BOMB_SetEntityGoalWeightForTeam( attackingTeam, site.indicator, 0.0f );
-    // Add a goal for bombModel
-	AI::AddNavEntity( bombModel, AI_NAV_REACH_ON_EVENT );
-    // Set bomb model weight for attackers
-    BOMB_SetEntityGoalWeightForTeam( attackingTeam, bombModel, 12.0f );
-    // Remove old defending team defence spots
-    BOMB_RemoveDefenceSpotsForSites();
-    // Defending team should defend the bomb model
-    AIDefenceSpot defenceSpot( 0, bombModel, 768.0f );
-    defenceSpot.minDefenders = 5;
-    defenceSpot.maxDefenders = 999;
-    AI::AddDefenceSpot( defendingTeam, defenceSpot );
-    // Force all defenders to reach the defence spot
-    AI::DefenceSpotAlert( defendingTeam, 0, 1.0f, uint(15000) );
 }
 
 void bombArm(array<Entity @> @nearby)
@@ -401,24 +351,8 @@ void bombArm(array<Entity @> @nearby)
 	bombState = BOMBSTATE_ARMED;
 
 	// reset fast plant if arming took too long
-	if( @fastPlanter != null && ! isFastPlant() )
+	if( @fastPlanter != null && !isFastPlant() )
 		@fastPlanter = null;
-
-    // Notify attackers that the bomb has been armed
-	AI::NavEntityReached( bombModel );
-    // Clear bomb weight for attackers. The weight will be managed by defense spot native code.
-    BOMB_SetEntityGoalWeightForTeam( attackingTeam, bombModel, 0.0f ); 
-    // Remove a defence spot for defending team
-    AI::RemoveDefenceSpot( defendingTeam, 0 );
-    // Add a defence spot for attacking team
-    AIDefenceSpot defenceSpot( 0, bombModel, 768.0f );
-    defenceSpot.minDefenders = 5;
-    defenceSpot.maxDefenders = 999;    
-    AI::AddDefenceSpot( attackingTeam, defenceSpot );
-    // Force all attackers to reach the spot
-    AI::DefenceSpotAlert( attackingTeam, 0, 1.0f, uint(15000) );
-    // Set bomb model weight for defenders
-    BOMB_SetEntityGoalWeightForTeam( defendingTeam, bombModel, 12.0f );
 }
 
 // missing an and :DD
@@ -438,7 +372,7 @@ void bombDefuse(array<Entity @> @nearby)
 	@fastPlanter = null;
 
 	// print defusing players, add score/awards
-	
+
 	String awardMsg = playersAliveOnTeam( attackingTeam ) == 0 ? "Bomb defused!" : "Ninja defuse!";
 
 	Entity @stop = @G_GetClient( maxClients - 1 ).getEnt();
@@ -515,7 +449,7 @@ void resetBomb()
 
 	bombSprite.team = bombDecal.team = bombMinimap.team = attackingTeam;
 
-    oldBombState = bombState;
+	oldBombState = bombState;
 	bombState = BOMBSTATE_IDLE;
 }
 
@@ -530,163 +464,163 @@ void bombThink()
 			break;
 
 		case BOMBSTATE_DROPPING:
-		{
-			Vec3 origin = bombModel.origin;
+			{
+				Vec3 origin = bombModel.origin;
 
-			bombSprite.origin = origin;
-			bombMinimap.origin = origin;
+				bombSprite.origin = origin;
+				bombMinimap.origin = origin;
 
-			bombSprite.linkEntity();
-			bombMinimap.linkEntity();
+				bombSprite.linkEntity();
+				bombMinimap.linkEntity();
 
-			break;
-		}
+				break;
+			}
 
 		case BOMBSTATE_DROPPED:
 			bombModel.effects = EF_ROTATE_AND_BOB;
 			break;
 
 		case BOMBSTATE_PLANTING:
-		{
-			float frac = float( levelTime - bombActionTime ) / float( BOMB_SPRITE_RESIZE_TIME ) ;
-			
-			if ( frac >= 1.0f )
 			{
-				bombState = BOMBSTATE_PLANTED;
+				float frac = float( levelTime - bombActionTime ) / float( BOMB_SPRITE_RESIZE_TIME ) ;
 
-				return;
+				if ( frac >= 1.0f )
+				{
+					bombState = BOMBSTATE_PLANTED;
+
+					return;
+				}
+
+				bombSprite.frame = bombDecal.frame = int( BOMB_ARM_DEFUSE_RADIUS * frac );
 			}
 
-			bombSprite.frame = bombDecal.frame = int( BOMB_ARM_DEFUSE_RADIUS * frac );
-		}
-
-		// fallthrough
+			// fallthrough
 
 		case BOMBSTATE_PLANTED:
-		{
-			array<Entity @> @nearby = nearbyPlayers( bombModel.origin, attackingTeam );
-			bool progressing = nearby.size() > 0;
-
-			if ( progressing )
 			{
-				bombProgress += frameTime;
+				array<Entity @> @nearby = nearbyPlayers( bombModel.origin, attackingTeam );
+				bool progressing = nearby.size() > 0;
 
-				if ( bombProgress >= uint( cvarArmTime.value * 1000.0f ) ) // uint to avoid mismatch
+				if ( progressing )
 				{
-					bombArm(nearby);
+					bombProgress += frameTime;
 
-					break;
-				}
-			}
-			else
-			{
-				if ( bombProgress < frameTime )
-				{
-					bombProgress = 0;
+					if ( bombProgress >= uint( cvarArmTime.value * 1000.0f ) ) // uint to avoid mismatch
+					{
+						bombArm(nearby);
+
+						break;
+					}
 				}
 				else
 				{
-					bombProgress -= frameTime;
+					if ( bombProgress < frameTime )
+					{
+						bombProgress = 0;
+					}
+					else
+					{
+						bombProgress -= frameTime;
+					}
 				}
-			}
 
-			// this needs to be done every frame...
-			bombSprite.effects |= EF_TEAMCOLOR_TRANSITION;
-			bombDecal.effects |= EF_TEAMCOLOR_TRANSITION;
-
-			if ( bombProgress != 0 )
-			{
-				float frac = bombProgress / ( cvarArmTime.value * 1000.0f );
-
-				int progress = int( frac * 100.0f );
-
-				if ( !progressing )
-				{
-					progress = -progress;
-				}
-				
-				setTeamProgress( attackingTeam, progress );
-
-				bombSprite.counterNum = bombDecal.counterNum = int( frac * 255.0f );
-			}
-			else
-			{
-				bombSprite.counterNum = bombDecal.counterNum = 0;
-			}
-
-			break;
-		}
-
-		case BOMBSTATE_ARMED:
-		{
-			array<Entity @> @nearby = nearbyPlayers( bombModel.origin, defendingTeam );
-			bool progressing = nearby.size() > 0;
-
-			if ( progressing )
-			{
-				bombProgress += frameTime;
-
-				if ( bombProgress >= uint( cvarDefuseTime.value * 1000.0f ) ) // cast to avoid mismatch
-				{
-					bombDefuse( nearby );
-
-					break;
-				}
-			}
-			else
-			{
-				if ( bombProgress < frameTime )
-				{
-					bombProgress = 0;
-				}
-				else
-				{
-					bombProgress -= frameTime;
-				}
-			}
-
-			if ( levelTime >= bombActionTime )
-			{
-				bombExplode();
-			}
-			else
-			{
+				// this needs to be done every frame...
+				bombSprite.effects |= EF_TEAMCOLOR_TRANSITION;
+				bombDecal.effects |= EF_TEAMCOLOR_TRANSITION;
 
 				if ( bombProgress != 0 )
 				{
-					int progress = int( ( bombProgress * 100.0f ) / ( cvarDefuseTime.value * 1000.0f ) );
+					float frac = bombProgress / ( cvarArmTime.value * 1000.0f );
+
+					int progress = int( frac * 100.0f );
 
 					if ( !progressing )
 					{
 						progress = -progress;
 					}
 
-					setTeamProgress( defendingTeam, progress );
-				}
+					setTeamProgress( attackingTeam, progress );
 
-				if ( levelTime > bombNextBeep )
+					bombSprite.counterNum = bombDecal.counterNum = int( frac * 255.0f );
+				}
+				else
 				{
-					G_PositionedSound( bombModel.origin, CHAN_AUTO, sndBeep, ATTN_DISTANT );
-
-					uint remainingTime = bombActionTime - levelTime;
-
-					uint nextBeepDelta = uint( BOMB_BEEP_FRACTION * remainingTime );
-
-					if ( nextBeepDelta > BOMB_BEEP_MAX )
-					{
-						nextBeepDelta = BOMB_BEEP_MAX;
-					}
-					else if ( nextBeepDelta < BOMB_BEEP_MIN )
-					{
-						nextBeepDelta = BOMB_BEEP_MIN;
-					}
-
-					bombNextBeep = levelTime + nextBeepDelta;
+					bombSprite.counterNum = bombDecal.counterNum = 0;
 				}
+
+				break;
 			}
 
-			break;
-		}
+		case BOMBSTATE_ARMED:
+			{
+				array<Entity @> @nearby = nearbyPlayers( bombModel.origin, defendingTeam );
+				bool progressing = nearby.size() > 0;
+
+				if ( progressing )
+				{
+					bombProgress += frameTime;
+
+					if ( bombProgress >= uint( cvarDefuseTime.value * 1000.0f ) ) // cast to avoid mismatch
+					{
+						bombDefuse( nearby );
+
+						break;
+					}
+				}
+				else
+				{
+					if ( bombProgress < frameTime )
+					{
+						bombProgress = 0;
+					}
+					else
+					{
+						bombProgress -= frameTime;
+					}
+				}
+
+				if ( levelTime >= bombActionTime )
+				{
+					bombExplode();
+				}
+				else
+				{
+
+					if ( bombProgress != 0 )
+					{
+						int progress = int( ( bombProgress * 100.0f ) / ( cvarDefuseTime.value * 1000.0f ) );
+
+						if ( !progressing )
+						{
+							progress = -progress;
+						}
+
+						setTeamProgress( defendingTeam, progress );
+					}
+
+					if ( levelTime > bombNextBeep )
+					{
+						G_PositionedSound( bombModel.origin, CHAN_AUTO, sndBeep, ATTN_DISTANT );
+
+						uint remainingTime = bombActionTime - levelTime;
+
+						uint nextBeepDelta = uint( BOMB_BEEP_FRACTION * remainingTime );
+
+						if ( nextBeepDelta > BOMB_BEEP_MAX )
+						{
+							nextBeepDelta = BOMB_BEEP_MAX;
+						}
+						else if ( nextBeepDelta < BOMB_BEEP_MIN )
+						{
+							nextBeepDelta = BOMB_BEEP_MIN;
+						}
+
+						bombNextBeep = levelTime + nextBeepDelta;
+					}
+				}
+
+				break;
+			}
 
 		default:
 			assert( false, "bomb.as bombThink: invalid bombState" );
@@ -702,17 +636,17 @@ void bombAltThink()
 	switch( bombState )
 	{
 		case BOMBSTATE_DROPPING:
-		{
-			Vec3 origin = bombModel.origin;
+			{
+				Vec3 origin = bombModel.origin;
 
-			bombSprite.origin = origin;
-			bombMinimap.origin = origin;
+				bombSprite.origin = origin;
+				bombMinimap.origin = origin;
 
-			bombSprite.linkEntity();
-			bombMinimap.linkEntity();
+				bombSprite.linkEntity();
+				bombMinimap.linkEntity();
 
-			break;
-		}
+				break;
+			}
 
 		case BOMBSTATE_PLANTED:
 			bombSprite.effects |= EF_TEAMCOLOR_TRANSITION;
@@ -732,22 +666,22 @@ void bombAltThink()
 			break;
 
 		case BOMBSTATE_EXPLODING_ANIM:
-		{
-			float frac = float( levelTime - bombActionTime ) / float( BOMB_SPRITE_RESIZE_TIME ) ;
-
-			if ( frac >= 1.0f )
 			{
-				hide( @bombSprite );
+				float frac = float( levelTime - bombActionTime ) / float( BOMB_SPRITE_RESIZE_TIME ) ;
 
-				bombState = BOMBSTATE_EXPLODING;
+				if ( frac >= 1.0f )
+				{
+					hide( @bombSprite );
 
-				return;
+					bombState = BOMBSTATE_EXPLODING;
+
+					return;
+				}
+
+				bombSprite.frame = int( BOMB_ARM_DEFUSE_RADIUS * ( 1.0f - frac ) );
 			}
 
-			bombSprite.frame = int( BOMB_ARM_DEFUSE_RADIUS * ( 1.0f - frac ) );
-		}
-
-		// fallthrough
+			// fallthrough
 
 		case BOMBSTATE_EXPLODING:
 			// TODO: i guess this would fit better as a routine in cBombSite
@@ -795,7 +729,7 @@ array<Entity @> @nearbyPlayers( Vec3 origin, int team )
 		if( target.team != team || target.isGhosting() || !entCanSee( target, origin ) ) {
 			continue;
 		}
-		
+
 		filtered.resize( count + 1 );
 		@filtered[count++] = target;
 	}
@@ -807,7 +741,7 @@ bool bombCanPlant()
 {
 	// check carrier is moving slowly enough
 	// comparing squared length because it's faster
-	
+
 	Vec3 velocity = bombCarrier.velocity;
 
 	if ( velocity * velocity > BOMB_MAX_PLANT_SPEED * BOMB_MAX_PLANT_SPEED )
@@ -840,7 +774,7 @@ bool bombCanPlant()
 	//      imo the old way is really bad - it traced a ray down and forwards
 	//      but it removes some plant spots (wbomb1 B ramp) and makes some
 	//      others easier (shepas A rail, reactors B upper)
-	
+
 	// fast dot product with ( 0, 0, 1 )
 	if ( trace.planeNormal.z < BOMB_MIN_DOT_GROUND )
 	{
@@ -944,7 +878,7 @@ void bombLookAt( Entity @ent )
 	Vec3 dir = bombOrigin - center;
 
 	float dist = dir.length();
-	
+
 	dir *= 1.0 / dist; // save a sqrt? Vec3 has no /=...
 
 	Vec3 end = center + dir * ( dist + BOMB_DEAD_CAMERA_DIST );
@@ -1018,22 +952,5 @@ void dynamite_stop( Entity @ent )
 
 		bombSprite.origin = origin;
 		bombMinimap.origin = origin;
-
-        // Add a goal entity for the bombModel entity
-		AI::AddNavEntity( bombModel, AI_NAV_REACH_AT_TOUCH );
-        // Set a weight for the bombModel goal
-        BOMB_SetEntityGoalWeightForTeam( attackingTeam, bombModel, 12.0f );
-        // Stop attacking the site
-        if ( @BOMB_BOTS_SITE != null )
-            BOMB_SetEntityGoalWeightForTeam( attackingTeam, BOMB_BOTS_SITE.indicator, 0.0f );
-        // The bomb location is known, stop defend the spots
-        BOMB_RemoveDefenceSpotsForSites();    
-        // Defending team should protect the bomb from being picked up
-        AIDefenceSpot defenceSpot( 0, bombModel, 768.0f );
-        defenceSpot.minDefenders = 5;
-        defenceSpot.maxDefenders = 999;
-        AI::AddDefenceSpot( defendingTeam, defenceSpot );
-        // Force all defenders to reach the spot
-        AI::DefenceSpotAlert( defendingTeam, 0, 1.0f, uint(15000) );
 	}
 }

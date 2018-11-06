@@ -12,7 +12,6 @@ file(GLOB GAME_HEADERS
 
 file(GLOB GAME_SOURCES
 	"*.cpp"
-	"ai/*.cpp"
 	"../gameshared/*.c"
 	"../gameshared/gs_ascript.cpp"
 	"../matchmaker/mm_rating.c"
