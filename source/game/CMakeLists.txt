@@ -4,7 +4,6 @@ include_directories(${ANGELSCRIPT_INCLUDE_DIR})
 
 file(GLOB GAME_HEADERS
 	"*.h"
-	"ai/*.h"
 	"../gameshared/*.h"
 	"../qalgo/base64.h"
 	"../qalgo/md5.h"
