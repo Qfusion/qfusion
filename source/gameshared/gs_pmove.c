@@ -48,8 +48,6 @@ int playerbox_gib_viewheight = 8;
 #define PM_SPECIAL_CROUCH_INHIBIT 400
 #define PM_AIRCONTROL_BOUNCE_DELAY 200
 #define PM_OVERBOUNCE       1.01f
-#define PM_CROUCHSLIDE_TIMEDELAY 700
-#define PM_CROUCHSLIDE_CONTROL 3
 #define PM_FORWARD_ACCEL_TIMEDELAY 0 // delay before the forward acceleration kicks in
 #define PM_SKIM_TIME 230
 
@@ -547,13 +545,6 @@ static void PM_Friction( void ) {
 		if( pm->playerState->pmove.stats[PM_STAT_KNOCKBACK] <= 0 ) {
 			friction = pm_friction;
 			control = speed < pm_decelerate ? pm_decelerate : speed;
-			if( pm->playerState->pmove.pm_flags & PMF_CROUCH_SLIDING ) {
-				if( pm->playerState->pmove.stats[PM_STAT_CROUCHSLIDETIME] < PM_CROUCHSLIDE_FADE ) {
-					friction *= 1 - sqrt( (float)pm->playerState->pmove.stats[PM_STAT_CROUCHSLIDETIME] / PM_CROUCHSLIDE_FADE );
-				} else {
-					friction = 0;
-				}
-			}
 			drop += control * friction * pml.frametime;
 		}
 	}
@@ -580,10 +571,7 @@ static void PM_Friction( void ) {
 * Handles user intended acceleration
 */
 static void PM_Accelerate( vec3_t wishdir, float wishspeed, float accel ) {
-	float addspeed, accelspeed, currentspeed, realspeed, newspeed;
-	bool crouchslide;
-
-	realspeed = VectorLengthFast( pml.velocity );
+	float addspeed, accelspeed, currentspeed;
 
 	currentspeed = DotProduct( pml.velocity, wishdir );
 	addspeed = wishspeed - currentspeed;
@@ -596,20 +584,7 @@ static void PM_Accelerate( vec3_t wishdir, float wishspeed, float accel ) {
 		accelspeed = addspeed;
 	}
 
-	crouchslide = ( pm->playerState->pmove.pm_flags & PMF_CROUCH_SLIDING ) && pm->groundentity != -1 && !( pml.groundsurfFlags & SURF_SLICK );
-
-	if( crouchslide ) {
-		accelspeed *= PM_CROUCHSLIDE_CONTROL;
-	}
-
 	VectorMA( pml.velocity, accelspeed, wishdir, pml.velocity );
-
-	if( crouchslide ) { // disable overacceleration while crouch sliding
-		newspeed = VectorLengthFast( pml.velocity );
-		if( newspeed > wishspeed && newspeed != 0 ) {
-			VectorScale( pml.velocity, fmax( wishspeed, realspeed ) / newspeed, pml.velocity );
-		}
-	}
 }
 
 static void PM_AirAccelerate( vec3_t wishdir, float wishspeed ) {
@@ -843,8 +818,7 @@ static void PM_Move( void ) {
 		}
 
 		PM_StepSlideMove();
-	} else if( ( pm->playerState->pmove.stats[PM_STAT_FEATURES] & PMFEAT_AIRCONTROL )
-			   && !( pm->playerState->pmove.stats[PM_STAT_FEATURES] & PMFEAT_FWDBUNNY ) ) {
+	} else {
 		// Air Control
 		wishspeed2 = wishspeed;
 		if( DotProduct( pml.velocity, wishdir ) < 0
@@ -872,81 +846,6 @@ static void PM_Move( void ) {
 		PM_Accelerate( wishdir, wishspeed, accel );
 		if( pm_aircontrol && !( pm->playerState->pmove.pm_flags & PMF_WALLJUMPING ) && ( pm->playerState->pmove.stats[PM_STAT_KNOCKBACK] <= 0 ) ) { // no air ctrl while wjing
 			PM_Aircontrol( wishdir, wishspeed2 );
-		}
-
-		// add gravity
-		pml.velocity[2] -= pm->playerState->pmove.gravity * pml.frametime;
-		PM_StepSlideMove();
-	} else {   // air movement (old school)
-		bool inhibit = false;
-		bool accelerating, decelerating;
-
-		accelerating = ( DotProduct( pml.velocity, wishdir ) > 0.0f ) ? true : false;
-		decelerating = ( DotProduct( pml.velocity, wishdir ) < -0.0f ) ? true : false;
-
-		if( ( pm->playerState->pmove.pm_flags & PMF_WALLJUMPING ) &&
-			( pm->playerState->pmove.stats[PM_STAT_WJTIME] >= ( PM_WALLJUMP_TIMEDELAY - PM_AIRCONTROL_BOUNCE_DELAY ) ) ) {
-			inhibit = true;
-		}
-
-		if( ( pm->playerState->pmove.pm_flags & PMF_DASHING ) &&
-			( pm->playerState->pmove.stats[PM_STAT_DASHTIME] >= ( PM_DASHJUMP_TIMEDELAY - PM_AIRCONTROL_BOUNCE_DELAY ) ) ) {
-			inhibit = true;
-		}
-
-		if( !( pm->playerState->pmove.stats[PM_STAT_FEATURES] & PMFEAT_FWDBUNNY ) ||
-			pm->playerState->pmove.stats[PM_STAT_FWDTIME] > 0 ) {
-			inhibit = true;
-		}
-
-		// ch : remove this because of the knockback 'bug'?
-		/*
-		if( pm->playerState->pmove.stats[PM_STAT_KNOCKBACK] > 0 )
-		    inhibit = true;
-		*/
-
-		// (aka +fwdbunny) pressing forward or backward but not pressing strafe and not dashing
-		if( accelerating && !inhibit && !smove && fmove ) {
-			PM_AirAccelerate( wishdir, wishspeed );
-			PM_Aircontrol( wishdir, wishspeed );
-		} else {   // strafe running
-			bool aircontrol = true;
-
-			wishspeed2 = wishspeed;
-			if( decelerating &&
-				!( pm->playerState->pmove.pm_flags & PMF_WALLJUMPING ) ) {
-				accel = pm_airdecelerate;
-			} else {
-				accel = pm_airaccelerate;
-			}
-
-			// ch : knockback out
-			if( pm->playerState->pmove.pm_flags & PMF_WALLJUMPING
-			    /*	|| ( pm->playerState->pmove.stats[PM_STAT_KNOCKBACK] > 0 ) */) {
-				accel = 0; // no stop-move while wall-jumping
-				aircontrol = false;
-			}
-
-			if( ( pm->playerState->pmove.pm_flags & PMF_DASHING ) &&
-				( pm->playerState->pmove.stats[PM_STAT_DASHTIME] >= ( PM_DASHJUMP_TIMEDELAY - PM_AIRCONTROL_BOUNCE_DELAY ) ) ) {
-				aircontrol = false;
-			}
-
-			if( !( pm->playerState->pmove.stats[PM_STAT_FEATURES] & PMFEAT_AIRCONTROL ) ) {
-				aircontrol = false;
-			}
-
-			// +strafe bunnyhopping
-			if( aircontrol && smove && !fmove ) {
-				if( wishspeed > pm_wishspeed ) {
-					wishspeed = pm_wishspeed;
-				}
-
-				PM_Accelerate( wishdir, wishspeed, pm_strafebunnyaccel );
-				PM_Aircontrol( wishdir, wishspeed2 );
-			} else {   // standard movement (includes strafejumping)
-				PM_Accelerate( wishdir, wishspeed, accel );
-			}
 		}
 
 		// add gravity
@@ -1121,18 +1020,7 @@ static void PM_ClearStun( void ) {
 */
 static void PM_CheckJump( void ) {
 	if( pml.upPush < 10 ) {
-		// not holding jump
-		if( !( pm->playerState->pmove.stats[PM_STAT_FEATURES] & PMFEAT_CONTINOUSJUMP ) ) {
-			pm->playerState->pmove.pm_flags &= ~PMF_JUMP_HELD;
-		}
 		return;
-	}
-
-	if( !( pm->playerState->pmove.stats[PM_STAT_FEATURES] & PMFEAT_CONTINOUSJUMP ) ) {
-		// must wait for jump to be released
-		if( pm->playerState->pmove.pm_flags & PMF_JUMP_HELD ) {
-			return;
-		}
 	}
 
 	if( pm->playerState->pmove.pm_type != PM_NORMAL ) {
@@ -1150,10 +1038,6 @@ static void PM_CheckJump( void ) {
 
 	if( !( pm->playerState->pmove.stats[PM_STAT_FEATURES] & PMFEAT_JUMP ) ) {
 		return;
-	}
-
-	if( !( pm->playerState->pmove.stats[PM_STAT_FEATURES] & PMFEAT_CONTINOUSJUMP ) ) {
-		pm->playerState->pmove.pm_flags |= PMF_JUMP_HELD;
 	}
 
 	pm->groundentity = -1;
@@ -1392,31 +1276,6 @@ static void PM_CheckWallJump( void ) {
 		}
 	} else {
 		pm->playerState->pmove.pm_flags &= ~PMF_WALLJUMPING;
-	}
-}
-
-/*
-* PM_CheckCrouchSlide
-*/
-static void PM_CheckCrouchSlide( void ) {
-	if( !( pm->playerState->pmove.stats[PM_STAT_FEATURES] & PMFEAT_CROUCHSLIDING ) ) {
-		return;
-	}
-
-	if( pml.upPush < 0 && VectorLengthFast( tv( pml.velocity[0], pml.velocity[1], 0 ) ) > pml.maxWalkSpeed ) {
-		if( pm->playerState->pmove.stats[PM_STAT_CROUCHSLIDETIME] > 0 ) {
-			return; // cooldown or already sliding
-
-		}
-		if( pm->groundentity != -1 ) {
-			return; // already on the ground
-
-		}
-		// start sliding when we land
-		pm->playerState->pmove.pm_flags |= PMF_CROUCH_SLIDING;
-		pm->playerState->pmove.stats[PM_STAT_CROUCHSLIDETIME] = PM_CROUCHSLIDE + PM_CROUCHSLIDE_FADE;
-	} else if( pm->playerState->pmove.pm_flags & PMF_CROUCH_SLIDING ) {
-		pm->playerState->pmove.stats[PM_STAT_CROUCHSLIDETIME] = min( pm->playerState->pmove.stats[PM_STAT_CROUCHSLIDETIME], PM_CROUCHSLIDE_FADE );
 	}
 }
 
@@ -1897,18 +1756,6 @@ void Pmove( pmove_t *pmove ) {
 		} else if( pm->playerState->pmove.stats[PM_STAT_FWDTIME] < 0 ) {
 			pm->playerState->pmove.stats[PM_STAT_FWDTIME] = 0;
 		}
-
-		if( pm->playerState->pmove.stats[PM_STAT_CROUCHSLIDETIME] > 0 ) {
-			pm->playerState->pmove.stats[PM_STAT_CROUCHSLIDETIME] -= pm->cmd.msec;
-			if( pm->playerState->pmove.stats[PM_STAT_CROUCHSLIDETIME] <= 0 ) {
-				if( pm->playerState->pmove.pm_flags & PMF_CROUCH_SLIDING ) {
-					pm->playerState->pmove.stats[PM_STAT_CROUCHSLIDETIME] = PM_CROUCHSLIDE_TIMEDELAY;
-				} else {
-					pm->playerState->pmove.stats[PM_STAT_CROUCHSLIDETIME] = 0;
-				}
-				pm->playerState->pmove.pm_flags &= ~PMF_CROUCH_SLIDING;
-			}
-		}
 	}
 
 	pml.forwardPush = pm->cmd.forwardmove * SPEEDKEY / 127.0f;
@@ -1992,8 +1839,6 @@ void Pmove( pmove_t *pmove ) {
 		PM_CheckDash();
 
 		PM_CheckWallJump();
-
-		PM_CheckCrouchSlide();
 
 		PM_Friction();
 

@@ -316,7 +316,6 @@ extern cvar_t *g_armor_protection;
 extern cvar_t *g_allow_falldamage;
 extern cvar_t *g_allow_selfdamage;
 extern cvar_t *g_allow_teamdamage;
-extern cvar_t *g_allow_bunny;
 extern cvar_t *g_ammo_respawn;
 extern cvar_t *g_weapon_respawn;
 extern cvar_t *g_health_respawn;
@@ -1179,8 +1178,6 @@ struct gclient_s {
 	int hand;
 	unsigned mmflags;
 	int handicap;
-	int movestyle;
-	int movestyle_latched;
 	bool isoperator;
 	int64_t queueTimeStamp;
 	int muted;     // & 1 = chat disabled, & 2 = vsay disabled

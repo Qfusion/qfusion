@@ -263,12 +263,6 @@ void GS_LinearMovementDelta( const entity_state_t *ent, int64_t oldTime, int64_t
 //==============================================================
 
 #define STEPSIZE 18
-enum {
-	GS_CLASSICBUNNY,
-	GS_NEWBUNNY,
-
-	GS_MAXBUNNIES
-};
 
 void Pmove( pmove_t *pmove );
 
@@ -627,19 +621,15 @@ float GS_FrameForTime( int *frame, int64_t curTime, int64_t startTimeStamp, floa
 #define PMFEAT_JUMP             ( 1 << 2 )
 #define PMFEAT_DASH             ( 1 << 3 )
 #define PMFEAT_WALLJUMP         ( 1 << 4 )
-#define PMFEAT_FWDBUNNY         ( 1 << 5 )
-#define PMFEAT_AIRCONTROL       ( 1 << 6 )
-#define PMFEAT_ZOOM             ( 1 << 7 )
-#define PMFEAT_GHOSTMOVE        ( 1 << 8 )
-#define PMFEAT_CONTINOUSJUMP    ( 1 << 9 )
-#define PMFEAT_ITEMPICK         ( 1 << 10 )
-#define PMFEAT_GUNBLADEAUTOATTACK ( 1 << 11 )
-#define PMFEAT_WEAPONSWITCH     ( 1 << 12 )
-#define PMFEAT_CORNERSKIMMING   ( 1 << 13 )
-#define PMFEAT_CROUCHSLIDING    ( 1 << 14 )
+#define PMFEAT_ZOOM             ( 1 << 5 )
+#define PMFEAT_GHOSTMOVE        ( 1 << 6 )
+#define PMFEAT_ITEMPICK         ( 1 << 7 )
+#define PMFEAT_GUNBLADEAUTOATTACK ( 1 << 8 )
+#define PMFEAT_WEAPONSWITCH     ( 1 << 9 )
+#define PMFEAT_CORNERSKIMMING   ( 1 << 10 )
 
 #define PMFEAT_ALL              ( 0xFFFF )
-#define PMFEAT_DEFAULT          ( PMFEAT_ALL & ~(PMFEAT_GHOSTMOVE|PMFEAT_CORNERSKIMMING|PMFEAT_CROUCHSLIDING) )
+#define PMFEAT_DEFAULT          ( PMFEAT_ALL & ~(PMFEAT_GHOSTMOVE|PMFEAT_CORNERSKIMMING) )
 
 enum {
 	STAT_LAYOUTS = 0

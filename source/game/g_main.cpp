@@ -77,7 +77,6 @@ cvar_t *g_armor_protection;
 cvar_t *g_allow_falldamage;
 cvar_t *g_allow_selfdamage;
 cvar_t *g_allow_teamdamage;
-cvar_t *g_allow_bunny;
 
 cvar_t *g_respawn_delay_min;
 cvar_t *g_respawn_delay_max;

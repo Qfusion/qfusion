@@ -79,7 +79,6 @@ cvar_t *cg_drawEntityBoxes;
 cvar_t *cg_fov;
 cvar_t *cg_zoomfov;
 cvar_t *cg_movementStyle;
-cvar_t *cg_noAutohop;
 cvar_t *cg_predictLaserBeam;
 cvar_t *cg_voiceChats;
 cvar_t *cg_shadows;
@@ -726,7 +725,6 @@ static void CG_RegisterVariables( void ) {
 	cg_handicap =       trap_Cvar_Get( "handicap", "0", CVAR_USERINFO | CVAR_ARCHIVE );
 	cg_clan =           trap_Cvar_Get( "clan", "", CVAR_USERINFO | CVAR_ARCHIVE );
 	cg_movementStyle =  trap_Cvar_Get( "cg_movementStyle", "0", CVAR_USERINFO | CVAR_ARCHIVE );
-	cg_noAutohop =  trap_Cvar_Get( "cg_noAutohop", "0", CVAR_USERINFO | CVAR_ARCHIVE );
 	cg_fov =        trap_Cvar_Get( "fov", "100", CVAR_ARCHIVE );
 	cg_zoomfov =    trap_Cvar_Get( "zoomfov", "75", CVAR_ARCHIVE );
 
