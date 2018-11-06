@@ -372,13 +372,9 @@ void G_Shutdown( void ) {
 	GT_asCallShutdown();
 	G_asCallMapExit();
 
-	AI_BeforeLevelLevelScriptShutdown();
-
 	G_asShutdownMapScript();
 	GT_asShutdownScript();
 	G_asShutdownGameModuleEngine();
-
-	AI_AfterLevelScriptShutdown();
 
 	SV_WriteIPList();
 

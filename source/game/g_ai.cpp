@@ -1,7 +1,5 @@
 #include "g_local.h"
 #include "../gameshared/gs_public.h"
-// #include "../gameshared/q_math.h"
-// #include "../gameshared/q_comref.h"
 
 static struct {
 	const char * name;
@@ -50,12 +48,6 @@ static edict_t * ConnectFakeClient() {
 	return game.edicts + entNum;
 }
 
-class asIScriptModule;
-void AI_InitGametypeScript( asIScriptModule * asModule ) { }
-void AI_ResetGametypeScript() { }
-void AI_BeforeLevelLevelScriptShutdown() { }
-void AI_AfterLevelScriptShutdown() { }
-
 void AI_InitLevel() { }
 void AI_Shutdown() { }
 void AI_RemoveBots() { }
@@ -73,7 +65,7 @@ void AI_SpawnBot( const char * teamName ) {
 	}
 
 	if( edict_t * ent = ConnectFakeClient() ) {
-		//init this bot
+		// init this bot
 		ent->think = nullptr;
 		ent->nextThink = level.time + 1;
 		ent->classname = "bot";
@@ -159,7 +151,7 @@ static void AI_GameThink( edict_t * self ) {
 	usercmd_t ucmd;
 	memset( &ucmd, 0, sizeof( usercmd_t ) );
 
-	//set up for pmove
+	// set up for pmove
 	for( int i = 0; i < 3; i++ )
 		ucmd.angles[i] = (short)ANGLE2SHORT( self->s.angles[i] ) - self->r.client->ps.pmove.delta_angles[i];
 

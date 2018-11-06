@@ -33,8 +33,6 @@ static void GT_ResetScriptData( void ) {
 	level.gametype.selectSpawnPointFunc = NULL;
 	level.gametype.clientCommandFunc = NULL;
 	level.gametype.shutdownFunc = NULL;
-
-	AI_ResetGametypeScript();
 }
 
 void GT_asShutdownScript( void ) {
@@ -479,11 +477,6 @@ static bool G_asInitializeGametypeScript( asIScriptModule *asModule ) {
 	} else {
 		funcCount++;
 	}
-
-	//
-	// Initialize AI gametype exports
-	//
-	AI_InitGametypeScript( asModule );
 
 	//
 	// execute the GT_InitGametype function

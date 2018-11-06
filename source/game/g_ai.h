@@ -33,12 +33,6 @@ enum ai_nav_entity_flags {
 };
 struct ai_handle_t;
 
-struct asIScriptModule;
-void AI_InitGametypeScript( asIScriptModule * asModule );
-void AI_ResetGametypeScript();
-void AI_BeforeLevelLevelScriptShutdown();
-void AI_AfterLevelScriptShutdown();
-
 void AI_InitLevel();
 void AI_Shutdown();
 void AI_RemoveBots();
