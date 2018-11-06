@@ -117,7 +117,6 @@ cvar_t *r_hdr_exposure;
 
 cvar_t *r_fxaa;
 cvar_t *r_samples;
-cvar_t *r_samples2D;
 
 cvar_t *r_lodbias;
 cvar_t *r_lodscale;
@@ -425,7 +424,6 @@ static void R_Register() {
 
 	r_fxaa = ri.Cvar_Get( "r_fxaa", "0", CVAR_ARCHIVE );
 	r_samples = ri.Cvar_Get( "r_samples", "0", CVAR_ARCHIVE );
-	r_samples2D = ri.Cvar_Get( "r_samples2D", "0", CVAR_ARCHIVE );
 
 	r_lodbias = ri.Cvar_Get( "r_lodbias", "0", CVAR_ARCHIVE );
 	r_lodscale = ri.Cvar_Get( "r_lodscale", "5.0", CVAR_ARCHIVE );

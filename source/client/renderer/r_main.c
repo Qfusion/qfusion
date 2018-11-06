@@ -1738,7 +1738,6 @@ void R_RenderDebugSurface( const refdef_t *fd ) {
 * R_BeginFrame
 */
 void R_BeginFrame() {
-	int samples;
 	int64_t time = ri.Sys_Milliseconds();
 
 	RB_BeginFrame();
@@ -1755,8 +1754,7 @@ void R_BeginFrame() {
 		rf.frameTime.oldCount = rf.frameTime.count;
 	}
 
-	samples = R_MultisampleSamples( r_samples2D->integer );
-	rf.renderTarget = R_RegisterMultisampleTarget( &rsh.st2D, samples, false, true );
+	rf.renderTarget = R_RegisterMultisampleTarget( &rsh.st2D, 0, false, true );
 
 	R_Begin2D( true );
 }

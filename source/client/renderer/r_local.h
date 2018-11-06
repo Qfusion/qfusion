@@ -461,7 +461,6 @@ extern cvar_t *r_hdr_exposure;
 
 extern cvar_t *r_fxaa;
 extern cvar_t *r_samples;
-extern cvar_t *r_samples2D;
 
 extern cvar_t *r_lodbias;
 extern cvar_t *r_lodscale;
