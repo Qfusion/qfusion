@@ -43,9 +43,7 @@ cvar_t *cg_showHUD;
 cvar_t *cg_draw2D;
 cvar_t *cg_weaponlist;
 
-cvar_t *cg_crosshair;
 cvar_t *cg_crosshair_color;
-
 cvar_t *cg_crosshair_damage_color;
 
 cvar_t *cg_clientHUD;
@@ -130,10 +128,6 @@ static void CG_DrawCenterString( void ) {
 	trap_SCR_DrawMultilineString( cgs.vidWidth / 2, y, helpmessage, ALIGN_CENTER_TOP, cgs.vidWidth, 0, font, colorWhite );
 }
 
-void CG_ScreenCrosshairDamageUpdate( void ) {
-	scr_damagetime = cg.time;
-}
-
 /*
 * CG_RefreshInGamekMenu
 */
@@ -191,7 +185,6 @@ void CG_ScreenInit( void ) {
 	cg_centerTime =     trap_Cvar_Get( "cg_centerTime", "2.5", 0 );
 	cg_weaponlist =     trap_Cvar_Get( "cg_weaponlist", "1", CVAR_ARCHIVE );
 
-	cg_crosshair =      trap_Cvar_Get( "cg_crosshair", "1", CVAR_ARCHIVE );
 	cg_crosshair_color =    trap_Cvar_Get( "cg_crosshair_color", "255 255 255", CVAR_ARCHIVE );
 	cg_crosshair_damage_color = trap_Cvar_Get( "cg_crosshair_damage_color", "255 0 0", CVAR_ARCHIVE );
 	cg_crosshair_color->modified = true;
@@ -296,6 +289,10 @@ void CG_DrawNet( int x, int y, int w, int h, int align, vec4_t color ) {
 /*
 * CG_DrawCrosshair
 */
+void CG_ScreenCrosshairDamageUpdate( void ) {
+	scr_damagetime = cg.time;
+}
+
 static void CG_FillRect( int x, int y, int w, int h, vec4_t color ) {
 	trap_R_DrawStretchPic( x, y, w, h, x, y, x + w, y + h, color, cgs.shaderWhite );
 }
@@ -303,14 +300,7 @@ static void CG_FillRect( int x, int y, int w, int h, vec4_t color ) {
 static vec4_t crosshair_color = { 1, 1, 1, 1 };
 static vec4_t crosshair_damage_color = { 1, 0, 0, 1 };
 
-void CG_DrawCrosshair( int x, int y, int align ) {
-	if( cg_crosshair->modified ) {
-		if( cg_crosshair->integer > 26 || cg_crosshair->integer < 0 ) {
-			trap_Cvar_Set( cg_crosshair->name, "0" );
-		}
-		cg_crosshair->modified = false;
-	}
-
+void CG_DrawCrosshair() {
 	float s = 1.0f / 255.0f;
 
 	if( cg_crosshair_color->modified ) {
