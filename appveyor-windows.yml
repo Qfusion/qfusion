@@ -4,5 +4,9 @@ clone_depth: 1
 build_script:
 - cmd: git submodule update --init --recursive
 - cmd: cd source
-- cmd: cmake .
-- cmd: msbuild -maxcpucount ALL_BUILD.vcxproj
+- cmd: cmake -G "Visual Studio 14 2015 Win64" --config Release .
+- cmd: msbuild /maxcpucount /p:Configuration=Release ALL_BUILD.vcxproj
+
+artifacts:
+- path: source/build/Release
+  name: cocaine_diesel_windows

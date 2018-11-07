@@ -34,9 +34,6 @@ typedef struct {
 void Mod_LoadAliasMD3Model( model_t *mod, model_t *parent, void *buffer, bspFormatDesc_t *unused );
 void Mod_LoadSkeletalModel( model_t *mod, model_t *parent, void *buffer, bspFormatDesc_t *unused );
 void Mod_LoadQ3BrushModel( model_t *mod, model_t *parent, void *buffer, bspFormatDesc_t *format );
-void Mod_LoadQ2BrushModel( model_t *mod, model_t *parent, void *buffer, bspFormatDesc_t *format );
-void Mod_LoadQ1BrushModel( model_t *mod, model_t *parent, void *buffer, bspFormatDesc_t *format );
-void Mod_FixupQ1MipTex( model_t *mod );
 
 static void R_InitMapConfig( const char *model );
 static void R_FinishMapConfig( const model_t *mod );
@@ -65,12 +62,6 @@ static const modelFormatDescr_t mod_supportedformats[] =
 
 	// Q3-alike .bsp models
 	{ "*", 4, q3BSPFormats, 0, ( const modelLoader_t )Mod_LoadQ3BrushModel },
-
-	// Q2 .bsp models
-	{ "*", 4, q2BSPFormats, 0, ( const modelLoader_t )Mod_LoadQ2BrushModel },
-
-	// Q1 .bsp models
-	{ "*", 0, q1BSPFormats, 0, ( const modelLoader_t )Mod_LoadQ1BrushModel },
 
 	// trailing NULL
 	{ NULL, 0, NULL, 0, NULL }
@@ -548,7 +539,7 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, size_t *vbo_total_size
 			CopyBounds( surf->mins, surf->maxs, mins, maxs );
 
 			if( mergable ) {
-				vec3_t testmins, testmaxs, testsize;
+				vec3_t testmins, testmaxs;
 
 				// scan remaining face checking whether we merge them with the current one
 				for( j = i + 1; j < bm->numModelSurfaces; j++ ) {
@@ -565,10 +556,6 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, size_t *vbo_total_size
 					CopyBounds( mins, maxs, testmins, testmaxs );
 					AddPointToBounds( surf2->mins, testmins, testmaxs );
 					AddPointToBounds( surf2->maxs, testmins, testmaxs );
-
-					testsize[0] = testmaxs[0] - testmins[0];
-					testsize[1] = testmaxs[1] - testmins[1];
-					testsize[2] = testmaxs[2] - testmins[2];
 
 					if( fcount == MAX_DRAWSURF_SURFS ) {
 						break;
@@ -1126,7 +1113,6 @@ static void R_InitMapConfig( const char *model ) {
 	mapConfig.maxLightmapSize = 0;
 	mapConfig.deluxeMaps = false;
 	mapConfig.deluxeMappingEnabled = false;
-	mapConfig.forceClear = false;
 	mapConfig.forceWorldOutlines = false;
 	mapConfig.averageLightingIntensity = 1;
 	mapConfig.writeSkyDepth = false;
@@ -1195,14 +1181,6 @@ void R_RegisterWorldModel( const char *model ) {
 
 	// lazy-compile realtime light shadows
 	r_lighting_realtime_world_shadows->modified = true;
-}
-
-/*
-* R_WaitWorldModel
-*/
-void R_WaitWorldModel( void ) {
-	// if it's a Quake1 .bsp, load default miptex's for all missing high res images
-	Mod_FixupQ1MipTex( rsh.worldModel );
 }
 
 /*

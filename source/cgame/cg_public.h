@@ -140,9 +140,6 @@ typedef struct {
 	int64_t ( *Milliseconds )( void );
 	bool ( *DownloadRequest )( const char *filename, bool requestpak );
 
-	unsigned int ( * Hash_BlockChecksum )( const uint8_t * data, size_t len );
-	unsigned int ( * Hash_SuperFastHash )( const uint8_t * data, size_t len, unsigned int seed );
-
 	void ( *NET_GetUserCmd )( int frame, usercmd_t *cmd );
 	int ( *NET_GetCurrentUserCmdNum )( void );
 	void ( *NET_GetCurrentState )( int64_t *incomingAcknowledged, int64_t *outgoingSequence, int64_t *outgoingSent );
@@ -191,7 +188,6 @@ typedef struct {
 	int ( *R_SkeletalGetBoneInfo )( const struct model_s *mod, int bone, char *name, size_t name_size, int *flags );
 	void ( *R_SkeletalGetBonePose )( const struct model_s *mod, int bone, int frame, struct bonepose_s *bonepose );
 	struct shader_s *( *R_GetShaderForOrigin )( const vec3_t origin );
-	struct cinematics_s *( *R_GetShaderCinematic )( struct shader_s *shader );
 
 	void ( *VID_FlashWindow )( int count );
 
@@ -202,7 +198,6 @@ typedef struct {
 	struct cmodel_s *( *CM_OctagonModelForBBox )( vec3_t mins, vec3_t maxs );
 	void ( *CM_TransformedBoxTrace )( trace_t *tr, vec3_t start, vec3_t end, vec3_t mins, vec3_t maxs, struct cmodel_s *cmodel, int brushmask, vec3_t origin, vec3_t angles );
 	int ( *CM_TransformedPointContents )( vec3_t p, struct cmodel_s *cmodel, vec3_t origin, vec3_t angles );
-	void ( *CM_RoundUpToHullSize )( vec3_t mins, vec3_t maxs, struct cmodel_s *cmodel );
 	void ( *CM_InlineModelBounds )( struct cmodel_s *cmodel, vec3_t mins, vec3_t maxs );
 	bool ( *CM_InPVS )( const vec3_t p1, const vec3_t p2 );
 
@@ -253,10 +248,6 @@ typedef struct {
 	void ( *L10n_ClearDomain )( void );
 	void ( *L10n_LoadLangPOFile )( const char *filepath );
 	const char *( *L10n_TranslateString )( const char *string );
-
-	// cinematics
-	bool ( *CIN_AddRawSamplesListener )( struct cinematics_s *cin, void *listener,
-										 cg_raw_samples_cb_t rs, cg_get_raw_samples_cb_t grs );
 
 	// input
 	void ( *IN_GetThumbsticks )( vec4_t sticks );

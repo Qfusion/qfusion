@@ -510,7 +510,7 @@ void UI_Main::customRender( void ) {
 }
 
 bool UI_Main::preloadEnabled( void ) {
-#if defined( NDEBUG ) && !defined( __ANDROID__ )
+#if defined( NDEBUG )
 	return ( self != nullptr && self->ui_preload && self->ui_preload->integer != 0 );
 #else
 	return false;

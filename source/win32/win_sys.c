@@ -202,56 +202,7 @@ int Sys_GetCurrentProcessId( void ) {
 * Get the preferred language through the MUI API. Works on Vista and newer.
 */
 const char *Sys_GetPreferredLanguage( void ) {
-	typedef BOOL ( WINAPI * GetUserPreferredUILanguages_t )( DWORD, PULONG, PWSTR, PULONG );
-	BOOL hr;
-	ULONG numLanguages = 0;
-	DWORD cchLanguagesBuffer = 0;
-	HINSTANCE kernel32Dll;
-	GetUserPreferredUILanguages_t GetUserPreferredUILanguages_f;
-	static char lang[10];
-
-// mingw doesn't define this
-#ifndef MUI_LANGUAGE_NAME
-# define MUI_LANGUAGE_NAME 0x8
-#endif
-
-	lang[0] = '\0';
-
-	kernel32Dll = LoadLibrary( "kernel32.dll" );
-
-	hr = FALSE;
-	GetUserPreferredUILanguages_f = (void *)GetProcAddress( kernel32Dll, "GetUserPreferredUILanguages" );
-	if( GetUserPreferredUILanguages_f ) {
-		hr = GetUserPreferredUILanguages_f( MUI_LANGUAGE_NAME, &numLanguages, NULL, &cchLanguagesBuffer );
-	}
-
-	if( hr ) {
-		WCHAR *pwszLanguagesBuffer;
-
-		pwszLanguagesBuffer = Q_malloc( sizeof( WCHAR ) * cchLanguagesBuffer );
-		hr = GetUserPreferredUILanguages_f( MUI_LANGUAGE_NAME, &numLanguages, pwszLanguagesBuffer, &cchLanguagesBuffer );
-
-		if( hr ) {
-			char *p;
-
-			WideCharToMultiByte( CP_ACP, 0, pwszLanguagesBuffer, cchLanguagesBuffer, lang, sizeof( lang ), NULL, NULL );
-			lang[sizeof( lang ) - 1] = '\0';
-
-			p = strchr( lang, '-' );
-			if( p ) {
-				*p = '_';
-			}
-		}
-
-		Q_free( pwszLanguagesBuffer );
-	}
-
-	FreeLibrary( kernel32Dll );
-
-	if( !lang[0] ) {
-		return APP_DEFAULT_LANGUAGE;
-	}
-	return Q_strlwr( lang );
+	return APP_DEFAULT_LANGUAGE;
 }
 
 #if !defined( USE_SDL2 ) || defined( DEDICATED_ONLY )

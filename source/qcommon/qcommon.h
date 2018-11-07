@@ -616,10 +616,7 @@ bool        FS_IsExplicitPurePak( const char *pakname, bool *wrongver );
 // only to be used if necessary (library not supporting custom file handling functions etc.)
 const char *FS_WriteDirectory( void );
 const char *FS_CacheDirectory( void );
-const char *FS_SecureDirectory( void );
-const char *FS_MediaDirectory( fs_mediatype_t type );
 const char *FS_DownloadsDirectory( void );
-const char *FS_RuntimeDirectory( void );
 void        FS_CreateAbsolutePath( const char *path );
 const char *FS_AbsoluteNameForFile( const char *filename );
 const char *FS_AbsoluteNameForBaseFile( const char *filename );
@@ -707,8 +704,6 @@ int         FS_GetFileListExt( const char *dir, const char *extension, char *buf
 bool    FS_IsPakValid( const char *filename, unsigned *checksum );
 bool    FS_AddPurePak( unsigned checksum );
 void    FS_RemovePurePaks( void );
-
-void    FS_AddFileToMedia( const char *filename );
 
 /*
 ==============================================================

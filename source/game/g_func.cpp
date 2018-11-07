@@ -480,10 +480,6 @@ void SP_func_plat( edict_t *ent ) {
 #define DOOR_CRUSHER        4
 #define DOOR_NOMONSTER      8
 
-#define Q1_DOOR_DONT_LINK   4
-#define Q1_DOOR_GOLD_KEY    8
-#define Q1_DOOR_SILVER_KEY  16
-
 #define DOOR_TOGGLE         32
 #define DOOR_X_AXIS         64
 #define DOOR_Y_AXIS         128
@@ -655,10 +651,7 @@ static void Touch_DoorTrigger( edict_t *self, edict_t *other, cplane_t *plane, i
 	if( self->s.team && other->s.team != self->s.team ) {
 		return;
 	}
-	if( ( !other->r.client ) && ( AI_GetType( other->ai ) != AI_ISMONSTER ) ) {
-		return;
-	}
-	if( ( self->r.owner->spawnflags & DOOR_NOMONSTER ) && ( AI_GetType( other->ai ) == AI_ISMONSTER ) ) {
+	if( ( !other->r.client ) ) {
 		return;
 	}
 	if( level.time < self->timeStamp + 1000 ) {

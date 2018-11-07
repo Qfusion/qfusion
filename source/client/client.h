@@ -48,23 +48,6 @@ typedef struct {
 	int counts[100];
 } cl_timedemo_t;
 
-typedef struct {
-	void *h;
-	int width, height;
-	bool keepRatio;
-	bool allowConsole;
-	bool redraw;
-	bool paused;
-	int pause_cnt;
-	bool yuv;
-	int64_t startTime;
-	int64_t pauseTime;
-	uint8_t *pic;
-	int aspect_numerator, aspect_denominator;
-	ref_yuv_t *cyuv;
-	float framerate;
-} cl_cintematics_t;
-
 //
 // the client_state_t structure is wiped completely at every
 // server map change
@@ -100,10 +83,6 @@ typedef struct {
 	int serverTimeDelta;            // the time difference with the server time, or at least our best guess about it
 	int64_t serverTime;             // the best match we can guess about current time in the server
 	unsigned int snapFrameTime;
-
-	//
-	// non-gameserver information
-	cl_cintematics_t cin;
 
 	//
 	// server state information
@@ -335,20 +314,6 @@ extern cvar_t *cl_download_allow_modules;
 extern entity_state_t cl_baselines[MAX_EDICTS];
 
 //=============================================================================
-
-
-//
-// cl_cin.c
-//
-bool SCR_DrawCinematic( void );
-void SCR_RunCinematic( void );
-void SCR_StopCinematic( void );
-void SCR_FinishCinematic( void );
-bool SCR_AllowCinematicConsole( void );
-void SCR_PauseCinematic( bool pause );
-void CL_InitCinematics( void );
-void CL_ShutdownCinematics( void );
-float SCR_CinematicFramerate( void );
 
 //
 // cl_main.c

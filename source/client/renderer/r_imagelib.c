@@ -45,127 +45,14 @@ r_imginfo_t IMG_LoadImage( const char * filename, uint8_t * ( *allocbuf )( void 
 	return ret;
 }
 
-bool WriteTGA( const char * filename, r_imginfo_t * img, int quality ) {
+bool WriteTGA( const char * filename, r_imginfo_t * img ) {
+	FS_CreateAbsolutePath( filename );
 	return stbi_write_tga( filename, img->width, img->height, img->samples, img->pixels ) != 0;
 }
 
 bool WriteJPG( const char * filename, r_imginfo_t * img, int quality ) {
+	FS_CreateAbsolutePath( filename );
 	return stbi_write_jpg( filename, img->width, img->height, img->samples, img->pixels, quality ) != 0;
-}
-
-/*
-=================================================================
-
-PCX LOADING
-
-=================================================================
-*/
-
-typedef struct {
-	char manufacturer;
-	char version;
-	char encoding;
-	char bits_per_pixel;
-	unsigned short xmin, ymin, xmax, ymax;
-	unsigned short hres, vres;
-	unsigned char palette[48];
-	char reserved;
-	char color_planes;
-	unsigned short bytes_per_line;
-	unsigned short palette_type;
-	char filler[58];
-	unsigned char data;         // unbounded
-} pcx_t;
-
-/*
-* LoadPCX
-*/
-r_imginfo_t LoadPCX( const char *name, uint8_t *( *allocbuf )( void *, size_t, const char *, int ), void *uptr ) {
-	uint8_t *raw;
-	pcx_t *pcx;
-	int x, y;
-	int len, columns, rows;
-	int dataByte, runLength;
-	uint8_t *pal, *pix, *c;
-	r_imginfo_t imginfo;
-
-	memset( &imginfo, 0, sizeof( imginfo ) );
-
-	//
-	// load the file
-	//
-	len = R_LoadFile( name, (void **)&raw );
-	if( !raw ) {
-		return imginfo;
-	}
-
-	//
-	// parse the PCX file
-	//
-	pcx = (pcx_t *)raw;
-
-	pcx->xmin = LittleShort( pcx->xmin );
-	pcx->ymin = LittleShort( pcx->ymin );
-	pcx->xmax = LittleShort( pcx->xmax );
-	pcx->ymax = LittleShort( pcx->ymax );
-	pcx->hres = LittleShort( pcx->hres );
-	pcx->vres = LittleShort( pcx->vres );
-	pcx->bytes_per_line = LittleShort( pcx->bytes_per_line );
-	pcx->palette_type = LittleShort( pcx->palette_type );
-
-	raw = &pcx->data;
-
-	if( pcx->manufacturer != 0x0a
-		|| pcx->version != 5
-		|| pcx->encoding != 1
-		|| pcx->bits_per_pixel != 8
-		|| len < 768 ) {
-		ri.Com_DPrintf( S_COLOR_YELLOW "Bad pcx file %s\n", name );
-		R_FreeFile( pcx );
-		return imginfo;
-	}
-
-	columns = pcx->xmax + 1;
-	rows = pcx->ymax + 1;
-	pix = allocbuf( uptr, columns * rows * 3 + 768, __FILE__, __LINE__ );
-	pal = pix + columns * rows * 3;
-	memcpy( pal, (uint8_t *)pcx + len - 768, 768 );
-
-	c = pix;
-	for( y = 0; y < rows; y++ ) {
-		for( x = 0; x < columns; ) {
-			dataByte = *raw++;
-
-			if( ( dataByte & 0xC0 ) == 0xC0 ) {
-				runLength = dataByte & 0x3F;
-				dataByte = *raw++;
-			} else {
-				runLength = 1;
-			}
-
-			while( runLength-- > 0 ) {
-				c[0] = pal[dataByte * 3 + 0];
-				c[1] = pal[dataByte * 3 + 1];
-				c[2] = pal[dataByte * 3 + 2];
-				x++;
-				c += 3;
-			}
-		}
-	}
-
-	R_FreeFile( pcx );
-
-	if( raw - (uint8_t *)pcx > len ) {
-		ri.Com_DPrintf( S_COLOR_YELLOW "PCX file %s was malformed", name );
-		return imginfo;
-	}
-
-	imginfo.comp = IMGCOMP_RGB;
-	imginfo.width = rows;
-	imginfo.height = columns;
-	imginfo.samples = 3;
-	imginfo.pixels = pix;
-	return imginfo;
 }
 
 /*

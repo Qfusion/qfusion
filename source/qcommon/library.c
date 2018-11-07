@@ -234,9 +234,9 @@ void *Com_LoadGameLibrary( const char *basename, const char *apifuncname, void *
 	gamelib_t *gamelib = ( gamelib_t* )Mem_ZoneMalloc( sizeof( gamelib_t ) );
 	gamelib->lib = NULL;
 
-	int libname_size = strlen( LIB_PREFIX ) + strlen( basename ) + 1 + strlen( ARCH ) + strlen( LIB_SUFFIX ) + 1;
+	int libname_size = strlen( LIB_PREFIX ) + strlen( basename ) + strlen( LIB_SUFFIX ) + 1;
 	char *libname = ( char* )Mem_TempMalloc( libname_size );
-	Q_snprintfz( libname, libname_size, LIB_PREFIX "%s_" ARCH LIB_SUFFIX, basename );
+	Q_snprintfz( libname, libname_size, LIB_PREFIX "%s" LIB_SUFFIX, basename );
 
 	const char *abspath = FS_BaseNameForFile( libname );
 	if( abspath == NULL ) {
@@ -245,8 +245,6 @@ void *Com_LoadGameLibrary( const char *basename, const char *apifuncname, void *
 		Mem_ZoneFree( gamelib );
 		return NULL;
 	}
-
-	COM_SanitizeFilePath( abspath );
 
 	// pure check
 	if( pure && !FS_IsPureFile( abspath ) ) {
@@ -258,6 +256,7 @@ void *Com_LoadGameLibrary( const char *basename, const char *apifuncname, void *
 
 	gamelib->fullname = ( char * )Mem_ZoneMalloc( strlen( abspath ) + 1 );
 	strcpy( gamelib->fullname, abspath );
+	COM_SanitizeFilePath( gamelib->fullname );
 
 	gamelib->lib = Sys_Library_Open( gamelib->fullname );
 	gamelib->next = gamelibs;

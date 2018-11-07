@@ -52,9 +52,6 @@ enum {
 	REF_CMD_SET_SCISSOR,
 	REF_CMD_RESET_SCISSOR,
 
-	REF_CMD_DRAW_STRETCH_RAW,
-	REF_CMD_DRAW_STRETCH_RAW_YUV,
-
 	REF_CMD_PUSH_TRANSFORM_MATRIX,
 	REF_CMD_POP_TRANSFORM_MATRIX,
 
@@ -63,7 +60,6 @@ enum {
 
 typedef struct {
 	int id;
-	bool forceClear;
 } refCmdBeginFrame_t;
 
 typedef struct {
@@ -140,12 +136,6 @@ typedef struct {
 
 typedef struct {
 	int id;
-	int x, y, w, h;
-	float s1, t1, s2, t2;
-} refCmdDrawStretchRaw_t;
-
-typedef struct {
-	int id;
 	int proj;
 	float m[16];
 } refCmdPushProjectionMatrix_t;
@@ -170,8 +160,6 @@ static unsigned R_HandleRenderSceneCmd( uint8_t *cmdbuf );
 static unsigned R_HandleBlurScreenCmd( uint8_t *cmdbuf );
 static unsigned R_HandleSetScissorCmd( uint8_t *cmdbuf );
 static unsigned R_HandleResetScissorCmd( uint8_t *cmdbuf );
-static unsigned R_HandleDrawStretchRawCmd( uint8_t *cmdbuf );
-static unsigned R_HandleDrawStretchRawYUVCmd( uint8_t *cmdbuf );
 static unsigned R_HandlePushProjectionMatrixCmd( uint8_t *cmdbuf );
 static unsigned R_HandlePopProjectionMatrixCmd( uint8_t *cmdbuf );
 
@@ -191,15 +179,13 @@ static const refCmdHandler_t refCmdHandlers[NUM_REF_CMDS] =
 	(refCmdHandler_t)R_HandleBlurScreenCmd,
 	(refCmdHandler_t)R_HandleSetScissorCmd,
 	(refCmdHandler_t)R_HandleResetScissorCmd,
-	(refCmdHandler_t)R_HandleDrawStretchRawCmd,
-	(refCmdHandler_t)R_HandleDrawStretchRawYUVCmd,
 	(refCmdHandler_t)R_HandlePushProjectionMatrixCmd,
 	(refCmdHandler_t)R_HandlePopProjectionMatrixCmd,
 };
 
 static unsigned R_HandleBeginFrameCmd( uint8_t *pcmd ) {
 	refCmdBeginFrame_t *cmd = (void *)pcmd;
-	R_BeginFrame( cmd->forceClear );
+	R_BeginFrame();
 	return sizeof( *cmd );
 }
 
@@ -287,20 +273,6 @@ static unsigned R_HandleResetScissorCmd( uint8_t *pcmd ) {
 	return sizeof( *cmd );
 }
 
-static unsigned R_HandleDrawStretchRawCmd( uint8_t *pcmd ) {
-	refCmdDrawStretchRaw_t *cmd = (void *)pcmd;
-	R_Begin2D( true );
-	R_DrawStretchRaw( cmd->x, cmd->y, cmd->w, cmd->h, cmd->s1, cmd->t1, cmd->s2, cmd->t2 );
-	return sizeof( *cmd );
-}
-
-static unsigned R_HandleDrawStretchRawYUVCmd( uint8_t *pcmd ) {
-	refCmdDrawStretchRaw_t *cmd = (void *)pcmd;
-	R_Begin2D( true );
-	R_DrawStretchRawYUV( cmd->x, cmd->y, cmd->w, cmd->h, cmd->s1, cmd->t1, cmd->s2, cmd->t2 );
-	return sizeof( *cmd );
-}
-
 static unsigned R_HandlePushProjectionMatrixCmd( uint8_t *pcmd ) {
 	refCmdPushProjectionMatrix_t *cmd = (void *)pcmd;
 	R_PushTransformMatrix( cmd->proj != 0, cmd->m );
@@ -329,11 +301,8 @@ static void RF_IssueAbstractCmd( ref_cmdbuf_t *cmdbuf, void *cmd, size_t struct_
 	}
 }
 
-static void RF_IssueBeginFrameCmd( ref_cmdbuf_t *cmdbuf, bool forceClear ) {
-	refCmdBeginFrame_t cmd;
-
-	cmd.id = REF_CMD_BEGIN_FRAME;
-	cmd.forceClear = forceClear;
+static void RF_IssueBeginFrameCmd( ref_cmdbuf_t *cmdbuf ) {
+	refCmdBeginFrame_t cmd = { REF_CMD_BEGIN_FRAME };
 
 	RF_IssueAbstractCmd( cmdbuf, &cmd, sizeof( cmd ), sizeof( cmd ) );
 }
@@ -573,30 +542,6 @@ static void RF_IssueResetScissorCmd( ref_cmdbuf_t *cmdbuf ) {
 	RF_IssueAbstractCmd( cmdbuf, &cmd, sizeof( cmd ), sizeof( cmd ) );
 }
 
-static void RF_IssueDrawStretchRawOrRawYUVCmd( ref_cmdbuf_t *cmdbuf, int id, int x, int y, int w, int h, float s1, float t1, float s2, float t2 ) {
-	refCmdDrawStretchRaw_t cmd;
-
-	cmd.id = id;
-	cmd.x = x;
-	cmd.y = y;
-	cmd.w = w;
-	cmd.h = h;
-	cmd.s1 = s1;
-	cmd.t1 = t1;
-	cmd.s2 = s2;
-	cmd.t2 = t2;
-
-	RF_IssueAbstractCmd( cmdbuf, &cmd, sizeof( cmd ), sizeof( cmd ) );
-}
-
-static void RF_IssueDrawStretchRawCmd( ref_cmdbuf_t *cmdbuf, int x, int y, int w, int h, float s1, float t1, float s2, float t2 ) {
-	RF_IssueDrawStretchRawOrRawYUVCmd( cmdbuf, REF_CMD_DRAW_STRETCH_RAW, x, y, w, h, s1, t1, s2, t2 );
-}
-
-static void RF_IssueDrawStretchRawYUVCmd( ref_cmdbuf_t *cmdbuf, int x, int y, int w, int h, float s1, float t1, float s2, float t2 ) {
-	RF_IssueDrawStretchRawOrRawYUVCmd( cmdbuf, REF_CMD_DRAW_STRETCH_RAW_YUV, x, y, w, h, s1, t1, s2, t2 );
-}
-
 void RF_IssuePushProjectionMatrixCmd( struct ref_cmdbuf_s *cmdbuf, bool projection, const float *m ) {
 	refCmdPushProjectionMatrix_t cmd;
 
@@ -674,8 +619,6 @@ ref_cmdbuf_t *RF_CreateCmdBuf( bool sync ) {
 	cmdbuf->BlurScreen = &RF_IssueBlurScreenCmd;
 	cmdbuf->SetScissor = &RF_IssueSetScissorCmd;
 	cmdbuf->ResetScissor = &RF_IssueResetScissorCmd;
-	cmdbuf->DrawStretchRaw = &RF_IssueDrawStretchRawCmd;
-	cmdbuf->DrawStretchRawYUV = &RF_IssueDrawStretchRawYUVCmd;
 	cmdbuf->PushTransformMatrix = &RF_IssuePushProjectionMatrixCmd;
 	cmdbuf->PopTransformMatrix = &RF_IssuePopProjectionMatrixCmd;
 
@@ -741,7 +684,6 @@ typedef struct {
 	int id;
 	unsigned pixels;
 	bool silent;
-	bool media;
 	int x, y, w, h;
 	char fmtstring[64];
 	char path[512];
@@ -846,7 +788,7 @@ static unsigned R_HandleResizeFramebuffersCmd( void *pcmd ) {
 static unsigned R_HandleScreenShotReliableCmd( void *pcmd ) {
 	refReliableCmdScreenShot_t *cmd = pcmd;
 
-	R_TakeScreenShot( cmd->path, cmd->name, cmd->fmtstring, cmd->x, cmd->y, cmd->w, cmd->h, cmd->silent, cmd->media );
+	R_TakeScreenShot( cmd->path, cmd->name, cmd->fmtstring, cmd->x, cmd->y, cmd->w, cmd->h, cmd->silent );
 
 	return sizeof( *cmd );
 }
@@ -943,7 +885,7 @@ static void RF_IssueResizeFramebuffersCmd( ref_cmdpipe_t *cmdpipe ) {
 }
 
 static void RF_IssueEnvScreenShotReliableCmd( ref_cmdpipe_t *cmdpipe, int id, const char *path, const char *name,
-											  const char *fmtstring, int x, int y, int w, int h, unsigned pixels, bool silent, bool media ) {
+											  const char *fmtstring, int x, int y, int w, int h, unsigned pixels, bool silent ) {
 	refReliableCmdScreenShot_t cmd = { 0 };
 
 	cmd.id = id;
@@ -953,7 +895,6 @@ static void RF_IssueEnvScreenShotReliableCmd( ref_cmdpipe_t *cmdpipe, int id, co
 	cmd.h = h;
 	cmd.pixels = pixels;
 	cmd.silent = silent;
-	cmd.media = media;
 	Q_strncpyz( cmd.path, path, sizeof( cmd.path ) );
 	Q_strncpyz( cmd.name, name, sizeof( cmd.name ) );
 	Q_strncpyz( cmd.fmtstring, fmtstring, sizeof( cmd.fmtstring ) );
@@ -962,15 +903,15 @@ static void RF_IssueEnvScreenShotReliableCmd( ref_cmdpipe_t *cmdpipe, int id, co
 }
 
 static void RF_IssueScreenShotReliableCmd( ref_cmdpipe_t *cmdpipe, const char *path, const char *name, const char *fmtstring, bool silent ) {
-	RF_IssueEnvScreenShotReliableCmd( cmdpipe, REF_PIPE_CMD_SCREEN_SHOT, path, name, fmtstring, 0, 0, glConfig.width, glConfig.height, 0, silent, true );
+	RF_IssueEnvScreenShotReliableCmd( cmdpipe, REF_PIPE_CMD_SCREEN_SHOT, path, name, fmtstring, 0, 0, glConfig.width, glConfig.height, 0, silent );
 }
 
 static void RF_IssueEnvShotReliableCmd( ref_cmdpipe_t *cmdpipe, const char *path, const char *name, unsigned pixels ) {
-	RF_IssueEnvScreenShotReliableCmd( cmdpipe, REF_PIPE_CMD_ENV_SHOT, path, name, "", 0, 0, glConfig.width, glConfig.height, pixels, false, false );
+	RF_IssueEnvScreenShotReliableCmd( cmdpipe, REF_PIPE_CMD_ENV_SHOT, path, name, "", 0, 0, glConfig.width, glConfig.height, pixels, false );
 }
 
 static void RF_IssueAviShotReliableCmd( ref_cmdpipe_t *cmdpipe, const char *path, const char *name, int x, int y, int w, int h ) {
-	RF_IssueEnvScreenShotReliableCmd( cmdpipe, REF_PIPE_CMD_SCREEN_SHOT, path, name, "", x, y, w, h, 0, true, false );
+	RF_IssueEnvScreenShotReliableCmd( cmdpipe, REF_PIPE_CMD_SCREEN_SHOT, path, name, "", x, y, w, h, 0, true );
 }
 
 static void RF_IssueBeginRegistrationReliableCmd( ref_cmdpipe_t *cmdpipe ) {

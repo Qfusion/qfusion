@@ -39,16 +39,11 @@ set(NANOSVG_INCLUDE_DIR ${NANOSVG_DIR}/src)
 
 # Windows specific settings
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-	set(QFUSION_WINDOWS_ARCH "x86")
-
-	if ((MINGW AND CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64") OR (CMAKE_SIZEOF_VOID_P EQUAL 8))
-		set(QFUSION_WINDOWS_ARCH "x64")
-	endif()
+	set(QFUSION_WINDOWS_ARCH "x64")
 
 	set(CMAKE_INCLUDE_PATH
 		"../libsrcs/src/libogg"
 		"../libsrcs/src/libvorbis"
-		"../libsrcs/src/libtheora"
 		"../libsrcs/src/libcurl/include"
 		"../libsrcs/src/zlib"
 		"../libsrcs/src/libfreetype"
@@ -163,7 +158,6 @@ if (NOT GAME_MODULES_ONLY)
 	if (NOT SERVER_ONLY)
 		find_package(Ogg REQUIRED)
 		find_package(Vorbis REQUIRED)
-		find_package(Theora REQUIRED)
 		find_package(Freetype REQUIRED)
 		find_package(OpenAL)
 		find_package(SDL2 REQUIRED)
@@ -186,12 +180,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR MINGW)
 	add_dependencies(tar_gz ${QFUSION_CLIENT_NAME} game ${QFUSION_SERVER_NAME})
 endif()
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-	set(CMAKE_EXECUTABLE_SUFFIX "_${QFUSION_WINDOWS_ARCH}${CMAKE_EXECUTABLE_SUFFIX}")
-	set(CMAKE_SHARED_LIBRARY_PREFIX "")
-	set(CMAKE_SHARED_LIBRARY_SUFFIX "_${QFUSION_WINDOWS_ARCH}${CMAKE_SHARED_LIBRARY_SUFFIX}")
-endif()
-
 if (NOT GAME_MODULES_ONLY)
 	if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 		find_windows_release_libs(ZLIB_LIBRARY)
@@ -201,7 +189,6 @@ if (NOT GAME_MODULES_ONLY)
 			find_windows_release_libs(FREETYPE_LIBRARIES)
 			find_windows_release_libs(OGG_LIBRARY)
 			find_windows_release_libs(VORBIS_LIBRARIES)
-			find_windows_release_libs(THEORA_LIBRARY)
 			find_windows_release_libs(SDL2_LIBRARIES)
 		endif()
 	endif()
@@ -217,17 +204,11 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux") # Do not add 'OR MINGW' here - we need
 	set(VORBIS_LIBRARIES "")
 	add_definitions(-DVORBISLIB_RUNTIME)
 
-	set(THEORA_LIBRARIES "")
-	add_definitions(-DTHEORALIB_RUNTIME)
-
 	set(FREETYPE_LIBRARIES "")
 	add_definitions(-DFREETYPELIB_RUNTIME)
 
 	set(ZLIB_LIBRARY "")
 	add_definitions(-DZLIB_RUNTIME)
-
-	set(CMAKE_EXECUTABLE_SUFFIX ".${CMAKE_SYSTEM_PROCESSOR}${CMAKE_EXECUTABLE_SUFFIX}")
-	set(CMAKE_SHARED_LIBRARY_SUFFIX "_${CMAKE_SYSTEM_PROCESSOR}${CMAKE_SHARED_LIBRARY_SUFFIX}")
 endif()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")

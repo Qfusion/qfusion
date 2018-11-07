@@ -124,8 +124,6 @@ typedef struct {
 	bool jumpedLeft;
 	vec3_t animVelocity;
 	float yawVelocity;
-
-	struct cinematics_s *cin;
 } centity_t;
 
 #include "cg_pmodels.h"
@@ -264,6 +262,7 @@ typedef struct {
 	cgs_media_handle_t *shaderLaser;
 	cgs_media_handle_t *shaderNet;
 	cgs_media_handle_t *shaderBackTile;
+	cgs_media_handle_t *shaderWhiteTile;
 	cgs_media_handle_t *shaderSelect;
 	cgs_media_handle_t *shaderChatBalloon;
 	cgs_media_handle_t *shaderDownArrow;

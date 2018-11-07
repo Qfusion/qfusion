@@ -77,7 +77,6 @@ cvar_t *g_armor_protection;
 cvar_t *g_allow_falldamage;
 cvar_t *g_allow_selfdamage;
 cvar_t *g_allow_teamdamage;
-cvar_t *g_allow_bunny;
 
 cvar_t *g_respawn_delay_min;
 cvar_t *g_respawn_delay_max;
@@ -177,13 +176,6 @@ static void G_GS_Trace( trace_t *tr, vec3_t start, vec3_t mins, vec3_t maxs, vec
 }
 
 /*
-* G_GS_RoundUpToHullSize
-*/
-static void G_GS_RoundUpToHullSize( vec3_t mins, vec3_t maxs ) {
-	trap_CM_RoundUpToHullSize( mins, maxs, NULL );
-}
-
-/*
 * G_InitGameShared
 * give gameshared access to some utilities
 */
@@ -206,7 +198,6 @@ static void G_InitGameShared( void ) {
 	api.GetEntityState = G_GetEntityStateForDeltaTime;
 	api.PointContents = G_PointContents4D;
 	api.PMoveTouchTriggers = G_PMoveTouchTriggers;
-	api.RoundUpToHullSize = G_GS_RoundUpToHullSize;
 	api.GetConfigString = trap_GetConfigString;
 	api.GetAngelExport = trap_asGetAngelExport;
 
@@ -380,13 +371,9 @@ void G_Shutdown( void ) {
 	GT_asCallShutdown();
 	G_asCallMapExit();
 
-	AI_BeforeLevelLevelScriptShutdown();
-
 	G_asShutdownMapScript();
 	GT_asShutdownScript();
 	G_asShutdownGameModuleEngine();
-
-	AI_AfterLevelScriptShutdown();
 
 	SV_WriteIPList();
 

@@ -61,7 +61,6 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 static void RB_RenderMeshGLSL_Celshade( const shaderpass_t *pass, r_glslfeat_t programFeatures );
 static void RB_RenderMeshGLSL_Fog( const shaderpass_t *pass, r_glslfeat_t programFeatures );
 static void RB_RenderMeshGLSL_FXAA( const shaderpass_t *pass, r_glslfeat_t programFeatures );
-static void RB_RenderMeshGLSL_YUV( const shaderpass_t *pass, r_glslfeat_t programFeatures );
 
 /*
 * RB_InitBuiltinPasses
@@ -451,11 +450,7 @@ static inline const image_t *RB_ShaderpassTex( const shaderpass_t *pass ) {
 		return rb.skyboxShader->skyParms.images[rb.skyboxSide];
 	}
 
-	if( pass->cin ) {
-		tex = R_GetCinematicImage( pass->cin );
-	} else {
-		tex = pass->images[0];
-	}
+	tex = pass->images[0];
 
 	if( !tex ) {
 		return rsh.noTexture;
@@ -1604,35 +1599,9 @@ static void RB_RenderMeshGLSL_FXAA( const shaderpass_t *pass, r_glslfeat_t progr
 }
 
 /*
-* RB_RenderMeshGLSL_YUV
-*/
-static void RB_RenderMeshGLSL_YUV( const shaderpass_t *pass, r_glslfeat_t programFeatures ) {
-	int program;
-	mat4_t texMatrix = { 0 };
-
-	// set shaderpass state (blending, depthwrite, etc)
-	RB_SetState( RB_GetShaderpassState( pass->flags ) );
-
-	RB_BindImage( 0, pass->images[0] );
-	RB_BindImage( 1, pass->images[1] );
-	RB_BindImage( 2, pass->images[2] );
-
-	// update uniforms
-	program = RB_RegisterProgram( GLSL_PROGRAM_TYPE_YUV, NULL,
-		rb.currentShader->deformsKey, rb.currentShader->deforms, rb.currentShader->numdeforms, 0 );
-
-	if( RB_BindProgram( program ) ) {
-		RB_UpdateCommonUniforms( program, pass, texMatrix );
-
-		RB_DrawElementsReal( &rb.drawElements );
-	}
-}
-
-/*
 * RB_RenderMeshGLSL_ColorCorrection
 */
 static void RB_RenderMeshGLSL_ColorCorrection( const shaderpass_t *pass, r_glslfeat_t programFeatures ) {
-	int i;
 	int program;
 	mat4_t texMatrix;
 
@@ -1744,9 +1713,6 @@ void RB_RenderMeshGLSLProgrammed( const shaderpass_t *pass, int programType ) {
 			break;
 		case GLSL_PROGRAM_TYPE_FXAA:
 			RB_RenderMeshGLSL_FXAA( pass, features );
-			break;
-		case GLSL_PROGRAM_TYPE_YUV:
-			RB_RenderMeshGLSL_YUV( pass, features );
 			break;
 		case GLSL_PROGRAM_TYPE_COLOR_CORRECTION:
 			RB_RenderMeshGLSL_ColorCorrection( pass, features );

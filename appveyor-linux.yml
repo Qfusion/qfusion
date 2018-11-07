@@ -4,8 +4,12 @@ image: Ubuntu
 
 build_script:
 - sh: sudo apt-get -y update
-- sh: sudo apt-get -y install libsdl2-dev libopenal-dev libogg-dev libvorbis-dev libtheora-dev
+- sh: sudo apt-get -y install libsdl2-dev libopenal-dev libogg-dev libvorbis-dev
 - sh: git submodule update --init --recursive
 - sh: cd source
 - sh: cmake .
 - sh: make -j$(nproc --all)
+
+artifacts:
+- path: source/build
+  name: cocaine_diesel_linux

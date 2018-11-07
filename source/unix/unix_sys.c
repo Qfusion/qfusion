@@ -234,29 +234,7 @@ int Sys_GetCurrentProcessId( void ) {
 * Sys_GetPreferredLanguage
 */
 const char *Sys_GetPreferredLanguage( void ) {
-	static char lang[10];
-	const char *locale;
-	char *p;
-
-	setlocale( LC_ALL, "" );
-	locale = setlocale( LC_ALL, NULL );
-
-	Q_strncpyz( lang, locale, sizeof( lang ) );
-
-	setlocale( LC_ALL, "C" );
-
-	p = strchr( lang, '.' );
-	if( p ) {
-		*p = '\0';
-	}
-
-	if( !lang[0] ) {
-		return APP_DEFAULT_LANGUAGE;
-	}
-	if( !Q_stricmp( lang, "C" ) ) {
-		return APP_DEFAULT_LANGUAGE;
-	}
-	return Q_strlwr( lang );
+	return APP_DEFAULT_LANGUAGE;
 }
 
 #if !defined( USE_SDL2 ) || defined( DEDICATED_ONLY )

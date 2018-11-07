@@ -4,7 +4,6 @@
 
 generic/overlaymenu.as;
 generic/matchstates.as;
-generic/bots.as;
 generic/items.as;
 
 bomb/main.as;
@@ -13,6 +12,3 @@ bomb/bomb.as;
 bomb/site.as;
 bomb/round.as;
 bomb/media.as;
-bomb/bots.as;
-
-legacy/quake1.as;

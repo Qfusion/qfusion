@@ -31,7 +31,7 @@ typedef struct ref_cmdbuf_s {
 	// command procs
 
 	// a valid frame should begin and end with BeginFrame and EndFrame respectively
-	void ( *BeginFrame )( struct ref_cmdbuf_s *cmdbuf, bool forceClear );
+	void ( *BeginFrame )( struct ref_cmdbuf_s *cmdbuf );
 	void ( *EndFrame )( struct ref_cmdbuf_s *cmdbuf );
 	void ( *DrawRotatedStretchPic )( struct ref_cmdbuf_s *cmdbuf, int x, int y, int w, int h,
 									 float s1, float t1, float s2, float t2, float angle, const vec4_t color, const shader_t *shader );
@@ -45,8 +45,6 @@ typedef struct ref_cmdbuf_s {
 	void ( *BlurScreen )( struct ref_cmdbuf_s *cmdbuf );
 	void ( *SetScissor )( struct ref_cmdbuf_s *cmdbuf, int x, int y, int w, int h );
 	void ( *ResetScissor )( struct ref_cmdbuf_s *cmdbuf );
-	void ( *DrawStretchRaw )( struct ref_cmdbuf_s *cmdbuf, int x, int y, int w, int h, float s1, float t1, float s2, float t2 );
-	void ( *DrawStretchRawYUV )( struct ref_cmdbuf_s *cmdbuf, int x, int y, int w, int h, float s1, float t1, float s2, float t2 );
 	void ( *PushTransformMatrix )( struct ref_cmdbuf_s *cmdbuf, bool projection, const float *m );
 	void ( *PopTransformMatrix )( struct ref_cmdbuf_s *cmdbuf, bool projection );
 

@@ -261,9 +261,6 @@ void CG_CalcViewWeapon( cg_viewweapon_t *viewweapon ) {
 
 	CG_ViewWeapon_RefreshAnimation( viewweapon );
 
-	//if( cg.view.thirdperson )
-	//	return;
-
 	weaponInfo = CG_GetWeaponInfo( viewweapon->weapon );
 	viewweapon->ent.model = weaponInfo->model[WEAPMODEL_HAND];
 	viewweapon->ent.renderfx = RF_MINLIGHT | RF_WEAPONMODEL | RF_FORCENOLOD | ( cg_shadows->integer < 2 ? RF_NOSHADOW : 0 );
@@ -280,12 +277,7 @@ void CG_CalcViewWeapon( cg_viewweapon_t *viewweapon ) {
 	}
 
 	// calculate the entity position
-#if 1
 	VectorCopy( cg.view.origin, viewweapon->ent.origin );
-#else
-	VectorCopy( cg.predictedPlayerState.pmove.origin, viewweapon->ent.origin );
-	viewweapon->ent.origin[2] += cg.predictedPlayerState.viewheight;
-#endif
 
 	skel = weaponInfo->skel[WEAPMODEL_HAND];
 	if( skel ) {
@@ -326,16 +318,9 @@ void CG_CalcViewWeapon( cg_viewweapon_t *viewweapon ) {
 	}
 
 	// apply the offsets
-#if 1
 	VectorMA( viewweapon->ent.origin, gunOffset[FORWARD], &cg.view.axis[AXIS_FORWARD], viewweapon->ent.origin );
 	VectorMA( viewweapon->ent.origin, gunOffset[RIGHT], &cg.view.axis[AXIS_RIGHT], viewweapon->ent.origin );
 	VectorMA( viewweapon->ent.origin, gunOffset[UP], &cg.view.axis[AXIS_UP], viewweapon->ent.origin );
-#else
-	Matrix3_FromAngles( cg.predictedPlayerState.viewangles, offsetAxis );
-	VectorMA( viewweapon->ent.origin, gunOffset[FORWARD], &offsetAxis[AXIS_FORWARD], viewweapon->ent.origin );
-	VectorMA( viewweapon->ent.origin, gunOffset[RIGHT], &offsetAxis[AXIS_RIGHT], viewweapon->ent.origin );
-	VectorMA( viewweapon->ent.origin, gunOffset[UP], &offsetAxis[AXIS_UP], viewweapon->ent.origin );
-#endif
 
 	// add angles effects
 	CG_ViewWeapon_AddAngleEffects( gunAngles );

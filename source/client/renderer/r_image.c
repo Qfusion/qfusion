@@ -1007,101 +1007,6 @@ static int R_PixelFormatSize( int format, int type ) {
 }
 
 /*
-=================================================================
-
-PALETTES
-
-=================================================================
-*/
-
-/*
-* R_LoadQuake1Palette
-*/
-static void R_LoadQuake1Palette( unsigned *out ) {
-	uint8_t *raw;
-	int r, g, b;
-	unsigned v;
-	int i, len;
-	const uint8_t *pal;
-	static const uint8_t host_quakepal[768] =
-#include "../../qcommon/quake1pal.h"
-	;
-
-	// get the palette
-	len = R_LoadFile( "gfx/palette.lmp", (void **)&raw );
-	pal = ( raw && len >= 768 ) ? raw : host_quakepal;
-
-	for( i = 0; i < 256; i++ ) {
-		r = pal[i * 3 + 0];
-		g = pal[i * 3 + 1];
-		b = pal[i * 3 + 2];
-
-		v = COLOR_RGBA( r, g, b, 255 );
-		out[i] = LittleLong( v );
-	}
-
-	R_FreeFile( raw );
-
-	out[255] = 0;   // 255 is transparent
-}
-
-/*
-* R_LoadQuake2Palette
-*/
-static void R_LoadQuake2Palette( unsigned *out ) {
-	int i;
-	uint8_t     *pal;
-	int r, g, b;
-	unsigned v;
-	loaderCbInfo_t cbinfo = { QGL_CONTEXT_MAIN, 0 };
-	r_imginfo_t imginfo;
-
-	imginfo = LoadPCX( "pics/colormap.pcx", _R_AllocImageBufferCb, (void *)&cbinfo );
-	if( !imginfo.pixels ) {
-		return;
-	}
-
-	pal = imginfo.pixels + imginfo.width * imginfo.height * imginfo.samples;
-	for( i = 0; i < 256; i++ ) {
-		r = pal[i * 3 + 0];
-		g = pal[i * 3 + 1];
-		b = pal[i * 3 + 2];
-
-		v = COLOR_RGBA( r, g, b, 255 );
-		out[i] = LittleLong( v );
-	}
-
-	out[255] &= LittleLong( 0xffffff ); // 255 is transparent
-}
-
-/*
-* R_LoadPalette
-*
-* Loads Q1 or Q2 palette from disk if not already loaded.
-*/
-unsigned *R_LoadPalette( int flags ) {
-	assert( ( flags & ( IT_MIPTEX | IT_WAL ) ) != 0 );
-
-	if( flags & IT_MIPTEX ) {
-		if( !r_8to24table[0] ) {
-			r_8to24table[0] = R_MallocExt( r_imagesPool, sizeof( unsigned ) * 256, 0, 1 );
-			R_LoadQuake1Palette( r_8to24table[0] );
-		}
-		return r_8to24table[0];
-	}
-
-	if( flags & IT_WAL ) {
-		if( !r_8to24table[1] ) {
-			r_8to24table[1] = R_MallocExt( r_imagesPool, sizeof( unsigned ) * 256, 0, 1 );
-			R_LoadQuake2Palette( r_8to24table[1] );
-		}
-		return r_8to24table[1];
-	}
-
-	return NULL;
-}
-
-/*
 * R_MipCount
 */
 static int R_MipCount( int width, int height, int minmipsize ) {
@@ -1515,84 +1420,6 @@ error: // must not be reached after actually starting uploading the texture
 }
 
 /*
-=========================================================
-
-MIPTEX LOADING
-
-=========================================================
-*/
-
-/*
-* LoadMipTex
-*/
-static int LoadMipTex( uint8_t **pic, int width, int height, int flags ) {
-	unsigned int i;
-	unsigned int s, *trans;
-	uint8_t *imgbuf, *data;
-	const unsigned *table8to24 = R_LoadPalette( IT_MIPTEX );
-
-	data = *pic;
-	s = width * height;
-	imgbuf = R_PrepareImageBuffer( QGL_CONTEXT_MAIN, TEXTURE_LOADING_BUF0, s * 4 );
-	*pic = imgbuf;
-	trans = ( unsigned int * )imgbuf;
-
-	if( flags & IT_SKY ) {
-		unsigned j;
-		unsigned r, g, b;
-		unsigned transpix;
-		unsigned rgba;
-		int halfwidth = width >> 1;
-
-		// a sky texture is 256*128, with the right side being a masked overlay
-		r = g = b = 0;
-		for( i = 0; i < (unsigned)height; i++ ) {
-			for( j = 0; j < (unsigned)halfwidth; j++ ) {
-				uint8_t p = data[i * width + halfwidth + j];
-				rgba = table8to24[p];
-				trans[i * width + halfwidth + j] = rgba;
-				r += COLOR_R( rgba );
-				g += COLOR_G( rgba );
-				b += COLOR_B( rgba );
-			}
-		}
-
-		// make an average value for the back to avoid
-		// a fringe on the top level
-		transpix = COLOR_RGBA( r / ( halfwidth * height ), g / ( halfwidth * height ), b / ( halfwidth * height ), 0 );
-
-		for( i = 0; i < (unsigned)height; i++ ) {
-			for( j = 0; j < (unsigned)halfwidth; j++ ) {
-				uint8_t p = data[i * width + j];
-				trans[i * width + j] = p ? table8to24[p] : transpix;
-			}
-		}
-		return 4;
-	} else if( flags & IT_MIPTEX_FULLBRIGHT ) {
-		// this is a fullbright mask, so make all non-fullbright
-		// colors transparent
-		for( i = 0; i < s; i++ ) {
-			uint8_t p = data[i];
-			if( p < 224 ) {
-				trans[i] = 0; // transparent
-			} else {
-				trans[i] = table8to24[p];   // fullbright
-			}
-		}
-		return 4;
-	} else {
-		// copy rgb components
-		for( i = 0; i < s; i++ ) {
-			uint8_t p = data[i];
-			*imgbuf++ = ( (uint8_t *)&table8to24[p] )[0];
-			*imgbuf++ = ( (uint8_t *)&table8to24[p] )[1];
-			*imgbuf++ = ( (uint8_t *)&table8to24[p] )[2];
-		}
-		return 3;
-	}
-}
-
-/*
 * R_LoadImageFromDisk
 */
 static bool R_LoadImageFromDisk( int ctx, image_t *image ) {
@@ -1784,9 +1611,8 @@ static void R_UnlinkPic( image_t *image ) {
 static image_t *R_CreateImage( const char *name, int width, int height, int layers, int flags, int minmipsize, int tags, int samples ) {
 	image_t *image;
 	int name_len = strlen( name );
-	unsigned hash;
 
-	hash = COM_SuperFastHash( ( const uint8_t *)name, name_len, name_len );
+	unsigned hash = fnv1a32( name, name_len );
 
 	image = R_LinkPic( hash );
 	if( !image ) {
@@ -1820,15 +1646,11 @@ static image_t *R_CreateImage( const char *name, int width, int height, int laye
 */
 image_t *R_LoadImage( const char *name, uint8_t **pic, int width, int height, int flags, int minmipsize, int tags, int samples ) {
 	image_t *image;
-	uint8_t **data = pic;
 
 	if( !glConfig.sSRGB ) {
 		flags &= ~IT_SRGB;
 	}
 
-	if( flags & IT_MIPTEX ) {
-		samples = LoadMipTex( data, width, height, flags );
-	}
 	if( !( flags & IT_CUBEMAP ) && ( flags & ( IT_LEFTHALF | IT_RIGHTHALF ) ) ) {
 		width /= 2;
 	}
@@ -2044,7 +1866,7 @@ image_t *R_FindImage( const char *name, const char *suffix, int flags, int minmi
 	searchFlags = flags & ~IT_LOADFLAGS;
 
 	// look for it
-	key = COM_SuperFastHash( ( const uint8_t *)pathname, len, len ) % IMAGES_HASH_SIZE;
+	key = fnv1a32( pathname, len ) % IMAGES_HASH_SIZE;
 	hnode = &r_images_hash_headnode[key];
 	for( image = hnode->prev; image != hnode; image = image->prev ) {
 		if( ( ( image->flags & ~IT_LOADFLAGS ) == searchFlags ) &&
@@ -2163,7 +1985,7 @@ void R_ScreenShot( const char *filename, int x, int y, int width, int height, in
 		}
 
 	} else {
-		if( WriteTGA( filename, &imginfo, 100 ) && !silent ) {
+		if( WriteTGA( filename, &imginfo ) && !silent ) {
 			Com_Printf( "Wrote %s\n", filename );
 		}
 	}
@@ -2502,9 +2324,6 @@ image_t *R_GetShadowmapAtlasTexture( void ) {
 */
 static void R_InitStretchRawImages( void ) {
 	rsh.rawTexture = R_CreateImage( "*** raw ***", 0, 0, 1, IT_SPECIAL | IT_SRGB, 1, IMAGE_TAG_BUILTIN, 3 );
-	rsh.rawYUVTextures[0] = R_CreateImage( "*** rawyuv0 ***", 0, 0, 1, IT_SPECIAL, 1, IMAGE_TAG_BUILTIN, 1 );
-	rsh.rawYUVTextures[1] = R_CreateImage( "*** rawyuv1 ***", 0, 0, 1, IT_SPECIAL, 1, IMAGE_TAG_BUILTIN, 1 );
-	rsh.rawYUVTextures[2] = R_CreateImage( "*** rawyuv2 ***", 0, 0, 1, IT_SPECIAL, 1, IMAGE_TAG_BUILTIN, 1 );
 }
 
 /*
@@ -2690,7 +2509,6 @@ static void R_InitBuiltinImages( void ) {
 */
 static void R_ReleaseBuiltinImages( void ) {
 	rsh.rawTexture = NULL;
-	rsh.rawYUVTextures[0] = rsh.rawYUVTextures[1] = rsh.rawYUVTextures[2] = NULL;
 	rsh.noTexture = NULL;
 	rsh.whiteTexture = rsh.blackTexture = rsh.greyTexture = NULL;
 	rsh.whiteCubemapTexture = NULL;

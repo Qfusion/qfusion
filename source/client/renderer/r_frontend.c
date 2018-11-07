@@ -203,7 +203,7 @@ rserr_t RF_Init() {
 	return rserr_ok;
 }
 
-void RF_AppActivate( bool active, bool minimize, bool destroy ) {
+void RF_AppActivate( bool active, bool minimize ) {
 	R_Flush();
 }
 
@@ -256,11 +256,8 @@ static void RF_CheckCvars( void ) {
 	}
 }
 
-void RF_BeginFrame( bool forceClear, bool uncappedFPS ) {
+void RF_BeginFrame( bool uncappedFPS ) {
 	RF_CheckCvars();
-
-	// run cinematic passes on shaders
-	R_RunAllCinematics();
 
 	rrf.adapter.noWait = uncappedFPS;
 
@@ -283,7 +280,7 @@ void RF_BeginFrame( bool forceClear, bool uncappedFPS ) {
 
 	R_DataSync();
 
-	rrf.frame->BeginFrame( rrf.frame, forceClear );
+	rrf.frame->BeginFrame( rrf.frame );
 }
 
 void RF_EndFrame( void ) {
@@ -361,28 +358,6 @@ void RF_DrawStretchPic( int x, int y, int w, int h, float s1, float t1, float s2
 void RF_DrawRotatedStretchPic( int x, int y, int w, int h, float s1, float t1, float s2, float t2, float angle,
 							   const vec4_t color, const shader_t *shader ) {
 	rrf.frame->DrawRotatedStretchPic( rrf.frame, x, y, w, h, s1, t1, s2, t2, angle, color, shader );
-}
-
-void RF_DrawStretchRaw( int x, int y, int w, int h, int cols, int rows,
-						float s1, float t1, float s2, float t2, uint8_t *data ) {
-	if( !cols || !rows ) {
-		return;
-	}
-
-	if( data ) {
-		R_UploadRawPic( rsh.rawTexture, cols, rows, data );
-	}
-
-	rrf.frame->DrawStretchRaw( rrf.frame, x, y, w, h, s1, t1, s2, t2 );
-}
-
-void RF_DrawStretchRawYUV( int x, int y, int w, int h,
-						   float s1, float t1, float s2, float t2, ref_img_plane_t *yuv ) {
-	if( yuv ) {
-		R_UploadRawYUVPic( rsh.rawYUVTextures, yuv );
-	}
-
-	rrf.frame->DrawStretchRawYUV( rrf.frame, x, y, w, h, s1, t1, s2, t2 );
 }
 
 void RF_DrawStretchPoly( const poly_t *poly, float x_offset, float y_offset ) {
@@ -584,13 +559,6 @@ shader_t *RF_GetShaderForOrigin( const vec3_t origin ) {
 	}
 
 	return best;
-}
-
-struct cinematics_s *RF_GetShaderCinematic( shader_t *shader ) {
-	if( !shader ) {
-		return NULL;
-	}
-	return R_GetCinematicById( shader->cin );
 }
 
 void RF_PushTransformMatrix( bool projection, const float *m ) {

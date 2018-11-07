@@ -1198,10 +1198,10 @@ void G_Match_CheckReadys( void ) {
 		}
 	}
 
-	if( allready == true && GS_MatchState() != MATCH_STATE_COUNTDOWN ) {
+	if( allready && GS_MatchState() != MATCH_STATE_COUNTDOWN ) {
 		G_PrintMsg( NULL, "All players are ready. Match starting!\n" );
 		G_Match_LaunchState( MATCH_STATE_COUNTDOWN );
-	} else if( allready == false && GS_MatchState() == MATCH_STATE_COUNTDOWN ) {
+	} else if( !allready && GS_MatchState() == MATCH_STATE_COUNTDOWN ) {
 		G_PrintMsg( NULL, "Countdown aborted.\n" );
 		G_CenterPrintMsg( NULL, "COUNTDOWN ABORTED" );
 		G_Match_Autorecord_Cancel();
@@ -1213,7 +1213,7 @@ void G_Match_CheckReadys( void ) {
 * G_Match_Ready
 */
 void G_Match_Ready( edict_t *ent ) {
-	if( ent->r.svflags & SVF_FAKECLIENT && level.ready[PLAYERNUM( ent )] == true ) {
+	if( ( ent->r.svflags & SVF_FAKECLIENT ) && level.ready[PLAYERNUM( ent )] ) {
 		return;
 	}
 
@@ -1560,10 +1560,8 @@ static void G_CheckNumBots( void ) {
 			if( !ent->r.inuse || !( ent->r.svflags & SVF_FAKECLIENT ) ) {
 				continue;
 			}
-			if( AI_GetType( ent->ai ) == AI_ISBOT ) {
-				AI_RemoveBot( ent->r.client->netname );
-				break;
-			}
+			AI_RemoveBot( ent->r.client->netname );
+			break;
 		}
 		return;
 	}
@@ -1819,19 +1817,18 @@ void G_Gametype_Init( void ) {
 	g_gametype = trap_Cvar_Get( "g_gametype", "bomb", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_LATCH | CVAR_READONLY );
 	g_gametype_generic = trap_Cvar_Get( "g_gametype_generic", "1", CVAR_ARCHIVE );
 
-	//get the match cvars too
+	// get the match cvars too
 	g_warmup_timelimit = trap_Cvar_Get( "g_warmup_timelimit", "5", CVAR_ARCHIVE );
 	g_postmatch_timelimit = trap_Cvar_Get( "g_postmatch_timelimit", "4", CVAR_ARCHIVE );
 	g_countdown_time = trap_Cvar_Get( "g_countdown_time", "5", CVAR_ARCHIVE );
 	g_match_extendedtime = trap_Cvar_Get( "g_match_extendedtime", "2", CVAR_ARCHIVE );
 
 	// game settings
-	g_timelimit = trap_Cvar_Get( "g_timelimit", "10", CVAR_ARCHIVE );
-	g_scorelimit = trap_Cvar_Get( "g_scorelimit", "0", CVAR_ARCHIVE );
+	g_timelimit = trap_Cvar_Get( "g_timelimit", "0", CVAR_ARCHIVE );
+	g_scorelimit = trap_Cvar_Get( "g_scorelimit", "10", CVAR_ARCHIVE );
 	g_allow_falldamage = trap_Cvar_Get( "g_allow_falldamage", "0", CVAR_ARCHIVE );
 	g_allow_selfdamage = trap_Cvar_Get( "g_allow_selfdamage", "1", CVAR_ARCHIVE );
 	g_allow_teamdamage = trap_Cvar_Get( "g_allow_teamdamage", "0", CVAR_ARCHIVE );
-	g_allow_bunny = trap_Cvar_Get( "g_allow_bunny", "1", CVAR_ARCHIVE | CVAR_READONLY );
 
 	// update latched gametype change
 	if( g_gametype->latched_string ) {

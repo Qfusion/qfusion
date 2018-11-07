@@ -31,6 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "g_public.h"
 #include "g_syscalls.h"
 #include "g_gametypes.h"
+#include "g_ai.h"
 
 #include "../matchmaker/mm_rating.h"
 
@@ -75,45 +76,15 @@ typedef enum {
 
 // deadflag
 #define DEAD_NO         0
-#define DEAD_DYING      1
-#define DEAD_DEAD       2
-#define DEAD_RESPAWNABLE    3
-
-// monster ai flags
-#define AI_STAND_GROUND     0x00000001
-#define AI_TEMP_STAND_GROUND    0x00000002
-#define AI_SOUND_TARGET     0x00000004
-#define AI_LOST_SIGHT       0x00000008
-#define AI_PURSUIT_LAST_SEEN    0x00000010
-#define AI_PURSUE_NEXT      0x00000020
-#define AI_PURSUE_TEMP      0x00000040
-#define AI_HOLD_FRAME       0x00000080
-#define AI_GOOD_GUY     0x00000100
-#define AI_BRUTAL       0x00000200
-#define AI_NOSTEP       0x00000400
-#define AI_DUCKED       0x00000800
-#define AI_COMBAT_POINT     0x00001000
-#define AI_MEDIC        0x00002000
-#define AI_RESURRECTING     0x00004000
+#define DEAD_DEAD       1
 
 // game.serverflags values
-#define SFL_CROSS_TRIGGER_1 0x00000001
-#define SFL_CROSS_TRIGGER_2 0x00000002
-#define SFL_CROSS_TRIGGER_3 0x00000004
-#define SFL_CROSS_TRIGGER_4 0x00000008
-#define SFL_CROSS_TRIGGER_5 0x00000010
-#define SFL_CROSS_TRIGGER_6 0x00000020
-#define SFL_CROSS_TRIGGER_7 0x00000040
-#define SFL_CROSS_TRIGGER_8 0x00000080
 #define SFL_CROSS_TRIGGER_MASK  0x000000ff
 
 // handedness values
 #define RIGHT_HANDED        0
 #define LEFT_HANDED     1
 #define CENTER_HANDED       2
-
-// milliseconds before allowing fire after respawn
-#define WEAPON_RESPAWN_DELAY            350
 
 // edict->movetype values
 typedef enum {
@@ -345,7 +316,6 @@ extern cvar_t *g_armor_protection;
 extern cvar_t *g_allow_falldamage;
 extern cvar_t *g_allow_selfdamage;
 extern cvar_t *g_allow_teamdamage;
-extern cvar_t *g_allow_bunny;
 extern cvar_t *g_ammo_respawn;
 extern cvar_t *g_weapon_respawn;
 extern cvar_t *g_health_respawn;
@@ -997,16 +967,7 @@ void G_AwardResetPlayerComboStats( edict_t *ent );
 void G_AwardRaceRecord( edict_t *self );
 void G_DeathAwards( edict_t *ent );
 
-/**
- * Gives the player the Fair Play award if all conditions are met.
- *
- * @param ent the player entity
- */
-void G_AwardFairPlay( edict_t *ent );
-
 //============================================================================
-
-#include "ai/ai.h"
 
 typedef struct {
 	int radius;
@@ -1217,8 +1178,6 @@ struct gclient_s {
 	int hand;
 	unsigned mmflags;
 	int handicap;
-	int movestyle;
-	int movestyle_latched;
 	bool isoperator;
 	int64_t queueTimeStamp;
 	int muted;     // & 1 = chat disabled, & 2 = vsay disabled
@@ -1398,10 +1357,6 @@ struct edict_s {
 
 	// common data blocks
 	moveinfo_t moveinfo;        // func movers movement
-
-	ai_handle_t *ai;
-	float aiIntrinsicEnemyWeight;
-	float aiVisibilityDistance;
 
 	snap_edict_t snap; // information that is cleared each frame snap
 

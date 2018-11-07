@@ -79,7 +79,6 @@ cvar_t *cg_drawEntityBoxes;
 cvar_t *cg_fov;
 cvar_t *cg_zoomfov;
 cvar_t *cg_movementStyle;
-cvar_t *cg_noAutohop;
 cvar_t *cg_predictLaserBeam;
 cvar_t *cg_voiceChats;
 cvar_t *cg_shadows;
@@ -329,13 +328,6 @@ static const char *CG_GS_GetConfigString( int index ) {
 }
 
 /*
-* CG_GS_RoundUpToHullSize
-*/
-static void CG_GS_RoundUpToHullSize( vec3_t mins, vec3_t maxs ) {
-	trap_CM_RoundUpToHullSize( mins, maxs, NULL );
-}
-
-/*
 * CG_InitGameShared
 *
 * Give gameshared access to some utilities
@@ -361,7 +353,6 @@ static void CG_InitGameShared( void ) {
 	api.GetEntityState = CG_GS_GetEntityState;
 	api.PointContents = CG_GS_PointContents;
 	api.PMoveTouchTriggers = CG_Predict_TouchTriggers;
-	api.RoundUpToHullSize = CG_GS_RoundUpToHullSize;
 	api.GetConfigString = CG_GS_GetConfigString;
 	api.GetAngelExport = NULL;
 
@@ -734,9 +725,8 @@ static void CG_RegisterVariables( void ) {
 	cg_handicap =       trap_Cvar_Get( "handicap", "0", CVAR_USERINFO | CVAR_ARCHIVE );
 	cg_clan =           trap_Cvar_Get( "clan", "", CVAR_USERINFO | CVAR_ARCHIVE );
 	cg_movementStyle =  trap_Cvar_Get( "cg_movementStyle", "0", CVAR_USERINFO | CVAR_ARCHIVE );
-	cg_noAutohop =  trap_Cvar_Get( "cg_noAutohop", "0", CVAR_USERINFO | CVAR_ARCHIVE );
 	cg_fov =        trap_Cvar_Get( "fov", "100", CVAR_ARCHIVE );
-	cg_zoomfov =    trap_Cvar_Get( "zoomfov", "30", CVAR_ARCHIVE );
+	cg_zoomfov =    trap_Cvar_Get( "zoomfov", "75", CVAR_ARCHIVE );
 
 	cg_addDecals =      trap_Cvar_Get( "cg_decals", "1", CVAR_ARCHIVE );
 
@@ -774,9 +764,9 @@ static void CG_RegisterVariables( void ) {
 	cg_explosionsRing = trap_Cvar_Get( "cg_explosionsRing", "0", CVAR_ARCHIVE );
 	cg_explosionsDust =    trap_Cvar_Get( "cg_explosionsDust", "0", CVAR_ARCHIVE );
 	cg_gibs =       trap_Cvar_Get( "cg_gibs", "1", CVAR_ARCHIVE );
-	cg_outlineModels =  trap_Cvar_Get( "cg_outlineModels", "0", CVAR_ARCHIVE );
-	cg_outlineWorld =   trap_Cvar_Get( "cg_outlineWorld", "0", CVAR_ARCHIVE );
-	cg_outlinePlayers = trap_Cvar_Get( "cg_outlinePlayers", "0", CVAR_ARCHIVE );
+	cg_outlineModels =  trap_Cvar_Get( "cg_outlineModels", "1", CVAR_ARCHIVE );
+	cg_outlineWorld =   trap_Cvar_Get( "cg_outlineWorld", "1", CVAR_ARCHIVE );
+	cg_outlinePlayers = trap_Cvar_Get( "cg_outlinePlayers", "1", CVAR_ARCHIVE );
 	cg_drawEntityBoxes =    trap_Cvar_Get( "cg_drawEntityBoxes", "0", CVAR_DEVELOPER );
 	cg_showObituaries = trap_Cvar_Get( "cg_showObituaries", va( "%i", CG_OBITUARY_HUD | CG_OBITUARY_CENTER ), CVAR_ARCHIVE );
 	cg_autoaction_demo =    trap_Cvar_Get( "cg_autoaction_demo", "0", CVAR_ARCHIVE );
@@ -829,8 +819,8 @@ static void CG_RegisterVariables( void ) {
 
 	cg_teamALPHAmodel = trap_Cvar_Get( "cg_teamALPHAmodel", "bigvic", CVAR_ARCHIVE );
 	cg_teamALPHAmodelForce = trap_Cvar_Get( "cg_teamALPHAmodelForce", "0", CVAR_ARCHIVE );
-	cg_teamALPHAskin = trap_Cvar_Get( "cg_teamALPHAskin", DEFAULT_PLAYERSKIN, CVAR_ARCHIVE | CVAR_READONLY );
-	cg_teamALPHAcolor = trap_Cvar_Get( "cg_teamALPHAcolor", DEFAULT_TEAMALPHA_COLOR, CVAR_ARCHIVE | CVAR_READONLY );
+	cg_teamALPHAskin = trap_Cvar_Get( "cg_teamALPHAskin", DEFAULT_PLAYERSKIN, CVAR_ARCHIVE );
+	cg_teamALPHAcolor = trap_Cvar_Get( "cg_teamALPHAcolor", DEFAULT_TEAMALPHA_COLOR, CVAR_ARCHIVE );
 	cg_teamALPHAmodel->modified = true;
 	cg_teamALPHAmodelForce->modified = true;
 	cg_teamALPHAskin->modified = true;
@@ -838,8 +828,8 @@ static void CG_RegisterVariables( void ) {
 
 	cg_teamBETAmodel = trap_Cvar_Get( "cg_teamBETAmodel", "padpork", CVAR_ARCHIVE );
 	cg_teamBETAmodelForce = trap_Cvar_Get( "cg_teamBETAmodelForce", "0", CVAR_ARCHIVE );
-	cg_teamBETAskin = trap_Cvar_Get( "cg_teamBETAskin", DEFAULT_PLAYERSKIN, CVAR_ARCHIVE | CVAR_READONLY );
-	cg_teamBETAcolor = trap_Cvar_Get( "cg_teamBETAcolor", DEFAULT_TEAMBETA_COLOR, CVAR_ARCHIVE | CVAR_READONLY );
+	cg_teamBETAskin = trap_Cvar_Get( "cg_teamBETAskin", DEFAULT_PLAYERSKIN, CVAR_ARCHIVE );
+	cg_teamBETAcolor = trap_Cvar_Get( "cg_teamBETAcolor", DEFAULT_TEAMBETA_COLOR, CVAR_ARCHIVE );
 	cg_teamBETAmodel->modified = true;
 	cg_teamBETAmodelForce->modified = true;
 	cg_teamBETAskin->modified = true;

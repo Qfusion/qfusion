@@ -84,17 +84,6 @@ typedef struct {
 	bool ( *FS_RemoveDirectory )( const char *dirname );
 	const char * ( *FS_GameDirectory )( void );
 	const char * ( *FS_WriteDirectory )( void );
-	const char * ( *FS_MediaDirectory )( fs_mediatype_t type );
-	void ( *FS_AddFileToMedia )( const char *filename );
-
-	struct cinematics_s *( *CIN_Open )( const char *name, int64_t start_time, bool *yuv, float *framerate );
-	bool ( *CIN_NeedNextFrame )( struct cinematics_s *cin, int64_t curtime );
-	uint8_t *( *CIN_ReadNextFrame )( struct cinematics_s *cin, int *width, int *height,
-									 int *aspect_numerator, int *aspect_denominator, bool *redraw );
-	ref_yuv_t *( *CIN_ReadNextFrameYUV )( struct cinematics_s *cin, int *width, int *height,
-										  int *aspect_numerator, int *aspect_denominator, bool *redraw );
-	void ( *CIN_Reset )( struct cinematics_s *cin, int64_t cur_time );
-	void ( *CIN_Close )( struct cinematics_s *cin );
 
 	// multithreading
 	struct qthread_s *( *Thread_Create )( void *( *routine )( void* ), void *param );
@@ -155,14 +144,6 @@ typedef struct {
 	void ( *DrawRotatedStretchPic )( int x, int y, int w, int h, float s1, float t1, float s2, float t2,
 									 float angle, const vec4_t color, const struct shader_s *shader );
 
-	// Passing NULL for data redraws last uploaded frame
-	void ( *DrawStretchRaw )( int x, int y, int w, int h, int cols, int rows,
-							  float s1, float t1, float s2, float t2, uint8_t *data );
-
-	// Passing NULL for yuv redraws last uploaded frame
-	void ( *DrawStretchRawYUV )( int x, int y, int w, int h,
-								 float s1, float t1, float s2, float t2, ref_img_plane_t *yuv );
-
 	void ( *DrawStretchPoly )( const poly_t *poly, float x_offset, float y_offset );
 	void ( *Scissor )( int x, int y, int w, int h );
 	void ( *GetScissor )( int *x, int *y, int *w, int *h );
@@ -182,11 +163,10 @@ typedef struct {
 								  int maxfragments, fragment_t *fragments );
 
 	struct shader_s * ( *GetShaderForOrigin )( const vec3_t origin );
-	struct cinematics_s * ( *GetShaderCinematic )( struct shader_s *shader );
 
 	void ( *TransformVectorToScreen )( const refdef_t *rd, const vec3_t in, vec2_t out );
 
-	void ( *BeginFrame )( bool forceClear, bool uncappedFPS );
+	void ( *BeginFrame )( bool uncappedFPS );
 	void ( *EndFrame )( void );
 	const char *( *GetSpeedsMessage )( char *out, size_t size );
 	int ( *GetAverageFrametime )( void );
@@ -196,7 +176,7 @@ typedef struct {
 	void ( *WriteAviFrame )( int frame, bool scissor );
 	void ( *StopAviDemo )( void );
 
-	void ( *AppActivate )( bool active, bool minimize, bool destroy );
+	void ( *AppActivate )( bool active, bool minimize );
 
 	/**
 	* PushTransformMatrix

@@ -117,7 +117,6 @@ cvar_t *r_hdr_exposure;
 
 cvar_t *r_fxaa;
 cvar_t *r_samples;
-cvar_t *r_samples2D;
 
 cvar_t *r_lodbias;
 cvar_t *r_lodscale;
@@ -355,8 +354,8 @@ static void R_Register() {
 	r_portalmaps = ri.Cvar_Get( "r_portalmaps", "1", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
 	r_portalmaps_maxtexsize = ri.Cvar_Get( "r_portalmaps_maxtexsize", "1024", CVAR_ARCHIVE );
 
-	r_lighting_deluxemapping = ri.Cvar_Get( "r_lighting_deluxemapping", "1", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
-	r_lighting_specular = ri.Cvar_Get( "r_lighting_specular", "1", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
+	r_lighting_deluxemapping = ri.Cvar_Get( "r_lighting_deluxemapping", "0", CVAR_ARCHIVE | CVAR_LATCH_VIDEO | CVAR_READONLY );
+	r_lighting_specular = ri.Cvar_Get( "r_lighting_specular", "0", CVAR_ARCHIVE | CVAR_LATCH_VIDEO | CVAR_READONLY );
 	r_lighting_glossintensity = ri.Cvar_Get( "r_lighting_glossintensity", "1.5", CVAR_ARCHIVE );
 	r_lighting_glossexponent = ri.Cvar_Get( "r_lighting_glossexponent", "24", CVAR_ARCHIVE );
 	r_lighting_ambientscale = ri.Cvar_Get( "r_lighting_ambientscale", "1", 0 );
@@ -425,7 +424,6 @@ static void R_Register() {
 
 	r_fxaa = ri.Cvar_Get( "r_fxaa", "0", CVAR_ARCHIVE );
 	r_samples = ri.Cvar_Get( "r_samples", "0", CVAR_ARCHIVE );
-	r_samples2D = ri.Cvar_Get( "r_samples2D", "0", CVAR_ARCHIVE );
 
 	r_lodbias = ri.Cvar_Get( "r_lodbias", "0", CVAR_ARCHIVE );
 	r_lodscale = ri.Cvar_Get( "r_lodscale", "5.0", CVAR_ARCHIVE );
@@ -460,7 +458,6 @@ static void R_Register() {
 	ri.Cmd_AddCommand( "modellist", Mod_Modellist_f );
 	ri.Cmd_AddCommand( "gfxinfo", R_GfxInfo_f );
 	ri.Cmd_AddCommand( "glslprogramlist", RP_ProgramList_f );
-	ri.Cmd_AddCommand( "cinlist", R_CinList_f );
 }
 
 /*
@@ -501,8 +498,7 @@ static void R_GfxInfo_f( void ) {
 /*
 * R_GLVersionHash
 */
-static unsigned R_GLVersionHash( const char *vendorString,
-								 const char *rendererString, const char *versionString ) {
+static unsigned R_GLVersionHash( const char *vendorString, const char *rendererString, const char *versionString ) {
 	uint8_t *tmp;
 	size_t csize;
 	size_t tmp_size, pos;
@@ -531,7 +527,7 @@ static unsigned R_GLVersionHash( const char *vendorString,
 	memcpy( tmp + pos, ARCH, csize );
 	pos += csize;
 
-	hash = COM_SuperFastHash( tmp, tmp_size, tmp_size );
+	hash = fnv1a32( tmp, tmp_size );
 
 	R_Free( tmp );
 
@@ -634,8 +630,6 @@ static rserr_t R_PostInit( void ) {
 
 	R_InitShaders();
 
-	R_InitCinematics();
-
 	R_InitSkinFiles();
 
 	R_InitModels();
@@ -736,10 +730,7 @@ void R_EndRegistration( void ) {
 	R_FreeUnusedVBOs();
 	R_FreeUnusedSkinFiles();
 	R_FreeUnusedShaders();
-	R_FreeUnusedCinematics();
 	R_FreeUnusedImages();
-
-	R_RestartCinematics();
 
 	R_DeferDataSync();
 
@@ -760,7 +751,6 @@ void R_Shutdown( bool verbose ) {
 	ri.Cmd_RemoveCommand( "shaderdump" );
 	ri.Cmd_RemoveCommand( "shaderlist" );
 	ri.Cmd_RemoveCommand( "glslprogramlist" );
-	ri.Cmd_RemoveCommand( "cinlist" );
 
 	// free shaders, models, etc.
 
@@ -773,8 +763,6 @@ void R_Shutdown( bool verbose ) {
 	R_ShutdownVBO();
 
 	R_ShutdownShaders();
-
-	R_ShutdownCinematics();
 
 	R_ShutdownImages();
 

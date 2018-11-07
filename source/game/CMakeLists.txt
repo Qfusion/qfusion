@@ -4,7 +4,6 @@ include_directories(${ANGELSCRIPT_INCLUDE_DIR})
 
 file(GLOB GAME_HEADERS
 	"*.h"
-	"ai/*.h"
 	"../gameshared/*.h"
 	"../qalgo/base64.h"
 	"../qalgo/md5.h"
@@ -12,7 +11,6 @@ file(GLOB GAME_HEADERS
 
 file(GLOB GAME_SOURCES
 	"*.cpp"
-	"ai/*.cpp"
 	"../gameshared/*.c"
 	"../gameshared/gs_ascript.cpp"
 	"../matchmaker/mm_rating.c"

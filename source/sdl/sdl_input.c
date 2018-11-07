@@ -264,9 +264,8 @@ static void key_event( const SDL_KeyboardEvent *event, const bool state ) {
 static void AppActivate( SDL_Window *window, bool active ) {
 	bool minimized = ( SDL_GetWindowFlags( window ) & SDL_WINDOW_MINIMIZED ) != 0;
 
-	SCR_PauseCinematic( !active );
 	CL_SoundModule_Activate( active );
-	VID_AppActivate( active, minimized, false );
+	VID_AppActivate( active, minimized );
 }
 
 static void IN_HandleEvents( void ) {
@@ -395,6 +394,9 @@ MouseMovement IN_GetMouseMovement() {
 }
 
 #if _WIN32
+#define _WIN32_WINNT 0x4000
+#include <windows.h>
+
 static bool being_debugged() {
 	return IsDebuggerPresent() != 0;
 }

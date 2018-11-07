@@ -187,7 +187,6 @@ void RP_Init( void ) {
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_CELSHADE, DEFAULT_GLSL_CELSHADE_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_FOG, DEFAULT_GLSL_FOG_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_FXAA, DEFAULT_GLSL_FXAA_PROGRAM, NULL, NULL, 0, 0 );
-	RP_RegisterProgram( GLSL_PROGRAM_TYPE_YUV, DEFAULT_GLSL_YUV_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_COLOR_CORRECTION, DEFAULT_GLSL_COLORCORRECTION_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_KAWASE_BLUR, DEFAULT_GLSL_KAWASE_BLUR_PROGRAM, NULL, NULL, 0, 0 );
 
@@ -893,8 +892,6 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 	glsl_features_fog,
 	// GLSL_PROGRAM_TYPE_FXAA
 	glsl_features_fxaa,
-	// GLSL_PROGRAM_TYPE_YUV
-	glsl_features_empty,
 	// GLSL_PROGRAM_TYPE_COLOR_CORRECTION
 	glsl_features_colcorrection,
 	// GLSL_PROGRAM_TYPE_KAWASE_BLUR
@@ -2323,9 +2320,6 @@ static void RP_GetUniformLocations( glsl_program_t *program ) {
 	int locDiffuseTexture;
 	int locStripesTexture;
 	int locDepthTexture;
-	int locYUVTextureY;
-	int locYUVTextureU;
-	int locYUVTextureV;
 	int locColorLUT;
 	int locCubeFilter;
 
@@ -2368,10 +2362,6 @@ static void RP_GetUniformLocations( glsl_program_t *program ) {
 	locStripesTexture = glGetUniformLocation( program->object, "u_StripesTexture" );
 
 	locDepthTexture = glGetUniformLocation( program->object, "u_DepthTexture" );
-
-	locYUVTextureY = glGetUniformLocation( program->object, "u_YUVTextureY" );
-	locYUVTextureU = glGetUniformLocation( program->object, "u_YUVTextureU" );
-	locYUVTextureV = glGetUniformLocation( program->object, "u_YUVTextureV" );
 
 	locColorLUT = glGetUniformLocation( program->object, "u_ColorLUT" );
 	locCubeFilter = glGetUniformLocation( program->object, "u_CubeFilter" );
@@ -2509,16 +2499,6 @@ static void RP_GetUniformLocations( glsl_program_t *program ) {
 
 	for( i = 0; i < MAX_LIGHTMAPS && locLightmapTexture[i] >= 0; i++ )
 		glUniform1i( locLightmapTexture[i], i + 4 );
-
-	if( locYUVTextureY >= 0 ) {
-		glUniform1i( locYUVTextureY, 0 );
-	}
-	if( locYUVTextureU >= 0 ) {
-		glUniform1i( locYUVTextureU, 1 );
-	}
-	if( locYUVTextureV >= 0 ) {
-		glUniform1i( locYUVTextureV, 2 );
-	}
 
 	if( locColorLUT >= 0 ) {
 		glUniform1i( locColorLUT, 1 );

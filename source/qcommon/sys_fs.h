@@ -44,8 +44,6 @@ int         Sys_FS_FileNo( FILE *fp );
 void        *Sys_FS_MMapFile( int fileno, size_t size, size_t offset, void **mapping, size_t *mapping_offset );
 void        Sys_FS_UnMMapFile( void *mapping, void *data, size_t size, size_t mapping_offset );
 
-void        Sys_FS_AddFileToMedia( const char *filename );
-
 // virtual storage of pack files, such as .obb on Android
 void        Sys_VFS_Init( void );
 void        Sys_VFS_TouchGamePath( const char *gamedir, bool initial );

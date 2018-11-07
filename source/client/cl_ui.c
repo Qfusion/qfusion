@@ -244,7 +244,6 @@ void CL_UIModule_Init( void ) {
 	import.R_RegisterLevelshot = re.RegisterLevelshot;
 	import.R_RegisterSkin = re.RegisterSkin;
 	import.R_RegisterSkinFile = re.RegisterSkinFile;
-	import.R_RegisterVideo = re.RegisterVideo;
 	import.R_RegisterLinearPic = re.RegisterLinearPic;
 	import.R_LerpTag = re.LerpTag;
 	import.R_DrawStretchPic = re.DrawStretchPic;
@@ -258,7 +257,6 @@ void CL_UIModule_Init( void ) {
 	import.R_SkeletalGetNumBones = re.SkeletalGetNumBones;
 	import.R_SkeletalGetBoneInfo = re.SkeletalGetBoneInfo;
 	import.R_SkeletalGetBonePose = re.SkeletalGetBonePose;
-	import.R_GetShaderCinematic = re.GetShaderCinematic;
 
 	import.R_PushTransformMatrix = re.PushTransformMatrix;
 	import.R_PopTransformMatrix = re.PopTransformMatrix;
@@ -318,7 +316,7 @@ void CL_UIModule_Init( void ) {
 	funcs[0].name = "GetUIAPI";
 	funcs[0].funcPointer = ( void ** ) &GetUIAPI;
 	funcs[1].name = NULL;
-	module_handle = Com_LoadLibrary( LIB_DIRECTORY "/" LIB_PREFIX "ui_" ARCH LIB_SUFFIX, funcs );
+	module_handle = Com_LoadLibrary( LIB_DIRECTORY "/" LIB_PREFIX "ui" LIB_SUFFIX, funcs );
 	if( !module_handle ) {
 		Mem_FreePool( &ui_mempool );
 		Com_Error( ERR_FATAL, "Failed to load UI dll" );

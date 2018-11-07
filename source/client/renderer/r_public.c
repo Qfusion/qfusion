@@ -52,8 +52,6 @@ ref_export_t *GetRefAPI( ref_import_t *import ) {
 	globals.RenderScene = RF_RenderScene;
 	globals.DrawStretchPic = RF_DrawStretchPic;
 	globals.DrawRotatedStretchPic = RF_DrawRotatedStretchPic;
-	globals.DrawStretchRaw = RF_DrawStretchRaw;
-	globals.DrawStretchRawYUV = RF_DrawStretchRawYUV;
 	globals.DrawStretchPoly = RF_DrawStretchPoly;
 	globals.Scissor = RF_SetScissor;
 	globals.GetScissor = RF_GetScissor;
@@ -64,7 +62,6 @@ ref_export_t *GetRefAPI( ref_import_t *import ) {
 	globals.BlurScreen = RF_BlurScreen;
 
 	globals.GetShaderForOrigin = RF_GetShaderForOrigin;
-	globals.GetShaderCinematic = RF_GetShaderCinematic;
 
 	globals.LightForOrigin = RF_LightForOrigin;
 	globals.LerpTag = RF_LerpTag;
@@ -85,7 +82,6 @@ ref_export_t *GetRefAPI( ref_import_t *import ) {
 	globals.RegisterLevelshot = R_RegisterLevelshot;
 	globals.RegisterSkin = R_RegisterSkin;
 	globals.RegisterSkinFile = R_RegisterSkinFile;
-	globals.RegisterVideo = R_RegisterVideo;
 	globals.RegisterLinearPic = R_RegisterLinearPic;
 
 	globals.RemapShader = R_RemapShader;

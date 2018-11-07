@@ -484,7 +484,6 @@ void G_GhostClient( edict_t *ent ) {
 void G_ClientRespawn( edict_t *self, bool ghost ) {
 	int i;
 	edict_t *spawnpoint;
-	vec3_t hull_mins, hull_maxs;
 	vec3_t spawn_origin, spawn_angles;
 	gclient_t *client;
 	int old_team;
@@ -554,10 +553,7 @@ void G_ClientRespawn( edict_t *self, bool ghost ) {
 	self->max_health = 100;
 	self->health = self->max_health;
 
-	if( AI_GetType( self->ai ) == AI_ISBOT ) {
-		self->think = NULL;
-		self->classname = "bot";
-	} else if( self->r.svflags & SVF_FAKECLIENT ) {
+	if( self->r.svflags & SVF_FAKECLIENT ) {
 		self->classname = "fakeclient";
 	} else {
 		self->classname = "player";
@@ -567,13 +563,6 @@ void G_ClientRespawn( edict_t *self, bool ghost ) {
 	VectorCopy( playerbox_stand_maxs, self->r.maxs );
 	VectorClear( self->velocity );
 	VectorClear( self->avelocity );
-
-	VectorCopy( self->r.mins, hull_mins );
-	VectorCopy( self->r.maxs, hull_maxs );
-	trap_CM_RoundUpToHullSize( hull_mins, hull_maxs, NULL );
-	if( self->r.maxs[2] > hull_maxs[2] ) {
-		self->viewheight -= ( self->r.maxs[2] - hull_maxs[2] );
-	}
 
 	client->ps.POVnum = ENTNUM( self );
 
@@ -593,9 +582,6 @@ void G_ClientRespawn( edict_t *self, bool ghost ) {
 		self->r.solid = SOLID_YES;
 		self->movetype = MOVETYPE_PLAYER;
 		client->ps.pmove.stats[PM_STAT_FEATURES] = static_cast<unsigned short>( PMFEAT_DEFAULT );
-		if( !g_allow_bunny->integer ) {
-			client->ps.pmove.stats[PM_STAT_FEATURES] &= ~( PMFEAT_AIRCONTROL | PMFEAT_FWDBUNNY );
-		}
 	}
 
 	ClientUserinfoChanged( self, client->userinfo );
@@ -627,9 +613,6 @@ void G_ClientRespawn( edict_t *self, bool ghost ) {
 	self->s.attenuation = ATTN_NORM;
 
 	self->s.teleported = true;
-
-	self->aiIntrinsicEnemyWeight = 1.0f;
-	self->aiVisibilityDistance = 999999.9f;
 
 	// hold in place briefly
 	client->ps.pmove.pm_flags = PMF_TIME_TELEPORT;
@@ -984,24 +967,6 @@ static void G_SetClan( edict_t *ent, const char *original_clan ) {
 }
 
 /*
-* think_MoveTypeSwitcher - Used to add a delay to bunnyhop style changes
-*/
-void think_MoveTypeSwitcher( edict_t *ent ) {
-	edict_t *owner;
-
-	if( ent->s.ownerNum > 0 && ent->s.ownerNum <= gs.maxclients ) {
-		owner = &game.edicts[ent->s.ownerNum];
-		if( owner->r.client ) {
-			owner->r.client->movestyle = owner->r.client->movestyle_latched;
-			ClientUserinfoChanged( owner, owner->r.client->userinfo );
-			G_PrintMsg( owner, "Your movement style has been updated to %i\n", owner->r.client->movestyle );
-		}
-	}
-
-	G_FreeEdict( ent );
-}
-
-/*
 * G_UpdatePlayerInfoString
 */
 static void G_UpdatePlayerInfoString( int playerNum ) {
@@ -1138,47 +1103,6 @@ void ClientUserinfoChanged( edict_t *ent, char *userinfo ) {
 			cl->handicap = 0;
 		} else {
 			cl->handicap = i;
-		}
-	}
-
-	s = Info_ValueForKey( userinfo, "cg_movementStyle" );
-	if( s ) {
-		i = bound( atoi( s ), 0, GS_MAXBUNNIES - 1 );
-		if( trap_GetClientState( PLAYERNUM( ent ) ) < CS_SPAWNED ) {
-			if( i != cl->movestyle ) {
-				cl->movestyle = cl->movestyle_latched = i;
-			}
-		} else if( cl->movestyle_latched != cl->movestyle ) {
-			G_PrintMsg( ent, "A movement style change is already in progress. Please wait.\n" );
-		} else if( i != cl->movestyle_latched ) {
-			cl->movestyle_latched = i;
-			if( cl->movestyle_latched != cl->movestyle ) {
-				edict_t *switcher;
-
-				switcher = G_Spawn();
-				switcher->think = think_MoveTypeSwitcher;
-				switcher->nextThink = level.time + 10000;
-				switcher->s.ownerNum = ENTNUM( ent );
-				G_PrintMsg( ent, "Movement style will change in 10 seconds.\n" );
-			}
-		}
-	}
-
-	// update the movement features depending on the movestyle
-	if( !G_ISGHOSTING( ent ) && g_allow_bunny->integer ) {
-		if( cl->movestyle == GS_CLASSICBUNNY ) {
-			cl->ps.pmove.stats[PM_STAT_FEATURES] &= ~PMFEAT_FWDBUNNY;
-		} else {
-			cl->ps.pmove.stats[PM_STAT_FEATURES] |= PMFEAT_FWDBUNNY;
-		}
-	}
-
-	s = Info_ValueForKey( userinfo, "cg_noAutohop" );
-	if( s && s[0] ) {
-		if( atoi( s ) != 0 ) {
-			cl->ps.pmove.stats[PM_STAT_FEATURES] &= ~PMFEAT_CONTINOUSJUMP;
-		} else {
-			cl->ps.pmove.stats[PM_STAT_FEATURES] |= PMFEAT_CONTINOUSJUMP;
 		}
 	}
 
@@ -1673,9 +1597,7 @@ void G_ClientThink( edict_t *ent ) {
 
 	// run bots thinking with the rest of clients
 	if( ent->r.svflags & SVF_FAKECLIENT ) {
-		if( !ent->think && AI_GetType( ent->ai ) == AI_ISBOT ) {
-			AI_Think( ent );
-		}
+		AI_Think( ent );
 	}
 
 	trap_ExecuteClientThinks( PLAYERNUM( ent ) );

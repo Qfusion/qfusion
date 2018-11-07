@@ -80,7 +80,6 @@ enum {
 	PM_STAT_JUMPSPEED,
 	PM_STAT_DASHSPEED,
 	PM_STAT_FWDTIME,
-	PM_STAT_CROUCHSLIDETIME,
 
 	PM_STAT_SIZE = MAX_PM_STATS
 };
@@ -100,18 +99,16 @@ typedef enum {
 
 // pmove->pm_flags
 #define PMF_WALLJUMPCOUNT   ( 1 << 0 )
-#define PMF_JUMP_HELD       ( 1 << 1 )
-#define PMF_ON_GROUND       ( 1 << 2 )
-#define PMF_TIME_WATERJUMP  ( 1 << 3 )   // pm_time is waterjump
-#define PMF_TIME_LAND       ( 1 << 4 )  // pm_time is time before rejump
-#define PMF_TIME_TELEPORT   ( 1 << 5 )  // pm_time is non-moving time
-#define PMF_NO_PREDICTION   ( 1 << 6 )  // temporarily disables prediction (used for grappling hook)
-#define PMF_DASHING         ( 1 << 7 ) // Dashing flag
-#define PMF_SPECIAL_HELD    ( 1 << 8 ) // Special flag
-#define PMF_WALLJUMPING     ( 1 << 9 ) // WJ starting flag
-#define PMF_DOUBLEJUMPED    ( 1 << 10 ) // DJ stat flag
-#define PMF_JUMPPAD_TIME    ( 1 << 11 )    // temporarily disables fall damage
-#define PMF_CROUCH_SLIDING  ( 1 << 12 )    // Crouch slide flag
+#define PMF_ON_GROUND       ( 1 << 1 )
+#define PMF_TIME_WATERJUMP  ( 1 << 2 )   // pm_time is waterjump
+#define PMF_TIME_LAND       ( 1 << 3 )  // pm_time is time before rejump
+#define PMF_TIME_TELEPORT   ( 1 << 4 )  // pm_time is non-moving time
+#define PMF_NO_PREDICTION   ( 1 << 5 )  // temporarily disables prediction (used for grappling hook)
+#define PMF_DASHING         ( 1 << 6 ) // Dashing flag
+#define PMF_SPECIAL_HELD    ( 1 << 7 ) // Special flag
+#define PMF_WALLJUMPING     ( 1 << 8 ) // WJ starting flag
+#define PMF_DOUBLEJUMPED    ( 1 << 9 ) // DJ stat flag
+#define PMF_JUMPPAD_TIME    ( 1 << 10 )    // temporarily disables fall damage
 
 typedef struct {
 	int pm_type;
@@ -129,9 +126,6 @@ typedef struct {
 } pmove_state_t;
 
 #define MAXTOUCH    32
-
-#define PM_CROUCHSLIDE 1500
-#define PM_CROUCHSLIDE_FADE 500
 
 
 //==========================================================
@@ -361,7 +355,6 @@ typedef enum {
 	CA_CONNECTED,                       // connection established, game module not loaded
 	CA_LOADING,                         // loading game module
 	CA_ACTIVE,                          // game views should be displayed
-	CA_CINEMATIC                        // fullscreen video should be displayed
 } connstate_t;
 
 enum {

@@ -27,73 +27,6 @@ static int snd_scaletable[32][256];
 static int *snd_p, snd_linear_count, snd_vol, music_vol;
 static short *snd_out;
 
-#if defined ( __arm__ ) && defined ( __GNUC__ )
-// 40-50% faster than the C version.
-// Uses signed saturation instruction (available since ARMv6 or Thumb2) instead of comparisons,
-// with the right shift being a part of the saturation instruction.
-
-static void S_WriteLinearBlastStereo16( void ) {
-	int i;
-	int val;
-
-	for( i = 0; i < snd_linear_count; i += 2 ) {
-		val = snd_p[i];
-		__asm__ ( "ssat %0, #16, %0, asr #8\n" : "+r" ( val ) );
-		snd_out[i] = val;
-
-		val = snd_p[i + 1];
-		__asm__ ( "ssat %0, #16, %0, asr #8\n" : "+r" ( val ) );
-		snd_out[i + 1] = val;
-	}
-}
-#elif defined ( _MSC_VER ) && defined( id386 )
-static ATTRIBUTE_NAKED void S_WriteLinearBlastStereo16( void ) {
-	__asm {
-		push edi
-		push ebx
-		mov ecx, ds:dword ptr[snd_linear_count]
-		mov ebx, ds:dword ptr[snd_p]
-		mov edi, ds:dword ptr[snd_out]
-
-LWLBLoopTop:
-		mov eax, ds:dword ptr[-8 + ebx + ecx * 4]
-		sar eax, 8
-		cmp eax, 07FFFh
-		jg LClampHigh
-		cmp eax, 0FFFF8000h
-		jnl LClampDone
-		mov eax, 0FFFF8000h
-		jmp LClampDone
-
-LClampHigh:
-		mov eax, 07FFFh
-
-LClampDone:
-		mov edx, ds:dword ptr[-4 + ebx + ecx * 4]
-		sar edx, 8
-		cmp edx, 07FFFh
-		jg LClampHigh2
-		cmp edx, 0FFFF8000h
-		jnl LClampDone2
-		mov edx, 0FFFF8000h
-		jmp LClampDone2
-
-LClampHigh2:
-		mov edx, 07FFFh
-
-LClampDone2:
-		shl edx, 16
-		and eax, 0FFFFh
-		or edx, eax
-		mov ds:dword ptr[-4 + edi + ecx * 2], edx
-		sub ecx, 2
-		jnz LWLBLoopTop
-		pop ebx
-		pop edi
-		ret
-	}
-}
-#else
 #ifdef _MSC_VER
 #pragma warning( push )
 #pragma warning( disable : 4310 )       // cast truncates constant value
@@ -112,7 +45,6 @@ static void S_WriteLinearBlastStereo16( void ) {
 }
 #ifdef _MSC_VER
 #pragma warning( pop )
-#endif
 #endif
 
 static void S_TransferStereo16( unsigned int *pbuf, int endtime ) {

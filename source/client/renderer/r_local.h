@@ -30,7 +30,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../../qcommon/patch.h"
 
 typedef struct mempool_s mempool_t;
-typedef struct cinematics_s cinematics_t;
 typedef struct qthread_s qthread_t;
 typedef struct qmutex_s qmutex_t;
 typedef struct qbufPipe_s qbufPipe_t;
@@ -254,7 +253,6 @@ typedef struct {
 	vec3_t wallColor, floorColor;
 
 	image_t         *rawTexture;                // cinematic texture (RGB)
-	image_t         *rawYUVTextures[3];         // 8bit cinematic textures (YCbCr)
 	image_t         *noTexture;                 // use for bad textures
 	image_t         *whiteTexture;
 	image_t         *whiteCubemapTexture;
@@ -463,7 +461,6 @@ extern cvar_t *r_hdr_exposure;
 
 extern cvar_t *r_fxaa;
 extern cvar_t *r_samples;
-extern cvar_t *r_samples2D;
 
 extern cvar_t *r_lodbias;
 extern cvar_t *r_lodscale;
@@ -512,26 +509,9 @@ bool    R_AliasModelLerpTag( orientation_t *orient, const maliasmodel_t *aliasmo
 void        R_AliasModelFrameBounds( const model_t *mod, int frame, vec3_t mins, vec3_t maxs );
 
 //
-// r_cin.c
-//
-void        R_InitCinematics( void );
-void        R_ShutdownCinematics( void );
-unsigned int R_StartCinematic( const char *arg );
-void        R_FreeCinematic( unsigned int id );
-void        R_RunAllCinematics( void );
-void        R_TouchCinematic( unsigned int id );
-void        R_FreeUnusedCinematics( void );
-void        R_FinishLoadingImages( void );
-void        R_UploadCinematic( unsigned int id );
-image_t     *R_GetCinematicImage( unsigned int id );
-struct cinematics_s *R_GetCinematicById( unsigned int id );
-void        R_RestartCinematics( void );
-void        R_CinList_f( void );
-
-//
 // r_cmds.c
 //
-void        R_TakeScreenShot( const char *path, const char *name, const char *fmtString, int x, int y, int w, int h, bool silent, bool media );
+void        R_TakeScreenShot( const char *path, const char *name, const char *fmtString, int x, int y, int w, int h, bool silent );
 void        R_ScreenShot_f( void );
 void        R_TakeEnvShot( const char *path, const char *name, unsigned maxPixels );
 void        R_EnvShot_f( void );
@@ -615,7 +595,7 @@ void        R_FreeFile_( void *buffer, const char *filename, int fileline );
 #define     R_FreeFile( buffer ) R_FreeFile_( buffer,__FILE__,__LINE__ )
 
 bool        R_IsRenderingToScreen( void );
-void        R_BeginFrame( bool forceClear );
+void        R_BeginFrame();
 void        R_EndFrame( void );
 void        R_SetGamma( float gamma );
 void        R_SetWallFloorColors( const vec3_t wallColor, const vec3_t floorColor );
@@ -680,12 +660,6 @@ void        R_DrawStretchPic( int x, int y, int w, int h, float s1, float t1, fl
 							  const vec4_t color, const shader_t *shader );
 void        R_DrawRotatedStretchPic( int x, int y, int w, int h, float s1, float t1, float s2, float t2,
 									 float angle, const vec4_t color, const shader_t *shader );
-void        R_UploadRawPic( image_t *texture, int cols, int rows, uint8_t *data );
-void        R_UploadRawYUVPic( image_t **yuvTextures, ref_img_plane_t *yuv );
-void        R_DrawStretchRawYUVBuiltin( int x, int y, int w, int h, float s1, float t1, float s2, float t2,
-										image_t **yuvTextures, int flip );
-void        R_DrawStretchRaw( int x, int y, int w, int h, float s1, float t1, float s2, float t2 );
-void        R_DrawStretchRawYUV( int x, int y, int w, int h, float s1, float t1, float s2, float t2 );
 void        R_DrawStretchQuick( int x, int y, int w, int h, float s1, float t1, float s2, float t2,
 								const vec4_t color, int program_type, image_t *image, int blendMask );
 
@@ -931,8 +905,6 @@ typedef struct {
 	int maxLightmapSize;                    // biggest dimension of the largest lightmap
 	bool deluxeMaps;                        // true if there are valid deluxemaps in the .bsp
 	bool deluxeMappingEnabled;              // true if deluxeMaps is true and r_lighting_deluxemaps->integer != 0
-
-	bool forceClear;
 
 	bool forceWorldOutlines;
 	bool writeSkyDepth;

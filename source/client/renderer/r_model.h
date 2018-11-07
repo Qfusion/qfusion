@@ -415,7 +415,6 @@ void        R_FreeUnusedModels( void );
 void        R_ModelBounds( const model_t *model, vec3_t mins, vec3_t maxs );
 void        R_ModelFrameBounds( const struct model_s *model, int frame, vec3_t mins, vec3_t maxs );
 void        R_RegisterWorldModel( const char *model );
-void        R_WaitWorldModel( void );
 struct model_s *R_RegisterModel( const char *name );
 bool		R_UpdateWorldRtSkyLights( model_t *model );
 

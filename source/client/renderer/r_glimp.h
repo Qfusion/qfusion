@@ -157,7 +157,7 @@ void    GLimp_Shutdown( void );
 rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullscreen, bool stereo, bool borderless );
 rserr_t GLimp_SetWindow( void *hinstance, void *wndproc, void *parenthWnd, bool *surfaceChangePending );
 rserr_t GLimp_SetFullscreenMode( int displayFrequency, bool fullscreen );
-void    GLimp_AppActivate( bool active, bool minimize, bool destroy );
+void    GLimp_AppActivate( bool active, bool minimize );
 bool    VID_GetGammaRamp( size_t stride, unsigned short *psize, unsigned short *ramp ); // TODO: this doesn't belong here
 void    VID_SetGammaRamp( size_t stride, unsigned short size, unsigned short *ramp );
 

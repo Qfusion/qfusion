@@ -156,9 +156,6 @@ void R_AddEntityToScene( const entity_t *ent ) {
 		}
 
 		if( de->rtype == RT_MODEL ) {
-			de->outlineHeight = rsc.worldent->outlineHeight;
-			Vector4Copy( rsc.worldent->outlineRGBA, de->outlineColor );
-
 			if( de->model && de->model->type == mod_brush ) {
 				de->flags |= RF_FORCENOLOD;
 				rsc.bmodelEntities[rsc.numBmodelEntities++] = eNum;
@@ -340,8 +337,6 @@ void R_RenderScene( const refdef_t *fd ) {
 		if( rsc.worldModelSequence != rsh.worldModelSequence ) {
 			rsc.frameCount = !rsc.frameCount;
 			rsc.worldModelSequence = rsh.worldModelSequence;
-
-			R_WaitWorldModel();
 		}
 
 		// FIXME: find a better place for this
