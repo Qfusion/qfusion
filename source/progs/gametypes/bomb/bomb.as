@@ -451,15 +451,8 @@ void bombThink()
 				Vec3 origin = bombModel.origin;
 
 				bombSprite.origin = origin;
-<<<<<<< HEAD
 
 				bombSprite.linkEntity();
-=======
-				bombMinimap.origin = origin;
-
-				bombSprite.linkEntity();
-				bombMinimap.linkEntity();
->>>>>>> 108bdc84820d1f70ccbdbf502a2ecf70eda4044e
 
 				break;
 			}
@@ -628,15 +621,8 @@ void bombAltThink()
 				Vec3 origin = bombModel.origin;
 
 				bombSprite.origin = origin;
-<<<<<<< HEAD
 
 				bombSprite.linkEntity();
-=======
-				bombMinimap.origin = origin;
-
-				bombSprite.linkEntity();
-				bombMinimap.linkEntity();
->>>>>>> 108bdc84820d1f70ccbdbf502a2ecf70eda4044e
 
 				break;
 			}
@@ -670,17 +656,10 @@ void bombAltThink()
 
 					return;
 				}
-<<<<<<< HEAD
 
 				bombSprite.frame = int( BOMB_ARM_DEFUSE_RADIUS * ( 1.0f - frac ) );
 			}
 
-=======
-
-				bombSprite.frame = int( BOMB_ARM_DEFUSE_RADIUS * ( 1.0f - frac ) );
-			}
-
->>>>>>> 108bdc84820d1f70ccbdbf502a2ecf70eda4044e
 			// fallthrough
 
 		case BOMBSTATE_EXPLODING:
@@ -951,9 +930,5 @@ void dynamite_stop( Entity @ent )
 		Vec3 origin = bombModel.origin;
 
 		bombSprite.origin = origin;
-<<<<<<< HEAD
-=======
-		bombMinimap.origin = origin;
->>>>>>> 108bdc84820d1f70ccbdbf502a2ecf70eda4044e
 	}
 }
