@@ -349,16 +349,9 @@ void roundNewState( uint state )
 
 			resetBomb();
 
-			// i guess you could merge these loops for speed
-			//  but if you do it this way it stops the function
-			//  ballooning into a 200 line wall of stupid
-
 			resetKillCounters();
 			respawnAllPlayers();
 			disableMovement();
-
-			// This call clears site weights, so it should be done before bombGiveToRandom()/botSetCarrier()
-			BOMB_SetupNewBotsRound();
 
 			bombGiveToRandom();
 

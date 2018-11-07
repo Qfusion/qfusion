@@ -33,7 +33,6 @@ int modelIndicator;
 
 // SPRITES ETC
 int imgBombSprite;
-int imgBombMinimap;
 int imgBombDecal;
 
 // SOUNDS
@@ -119,7 +118,6 @@ void mediaInit()
 
 	imgBombSprite  = G_ImageIndex( "gfx/indicators/radar" );
 	imgBombDecal   = G_ImageIndex( "gfx/indicators/radar_decal" );
-	imgBombMinimap = G_ImageIndex( "gfx/hud/icons/vsay/gotoquad" );
 
 	//sndBeep      = G_SoundIndex( "sounds/bomb/bombtimer", true ); FIXME pure
 	sndBeep      = G_SoundIndex( "sounds/bomb/bombtimer", false );

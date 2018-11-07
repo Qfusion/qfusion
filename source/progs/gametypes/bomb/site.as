@@ -1,21 +1,21 @@
 /*
-Copyright (C) 2009-2010 Chasseur de bots
+   Copyright (C) 2009-2010 Chasseur de bots
 
-This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License
-as published by the Free Software Foundation; either version 2
-of the License, or (at your option) any later version.
+   This program is free software; you can redistribute it and/or
+   modify it under the terms of the GNU General Public License
+   as published by the Free Software Foundation; either version 2
+   of the License, or (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-See the GNU General Public License for more details.
+   See the GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-*/
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+   */
 
 cBombSite @siteHead = null;
 uint siteCount = 0;
@@ -42,7 +42,6 @@ class cBombSite
 
 	Entity @model;
 	Entity @sprite;
-	Entity @minimap;
 
 	bool useExplosionPoints;
 	Vec3[] explosionPoints;
@@ -66,7 +65,6 @@ class cBombSite
 		this.indicator.solid = SOLID_TRIGGER;
 		this.indicator.nextThink = levelTime + 1;
 		this.indicator.team = 0;
-        AI::AddNavEntity( this.indicator, AI_NAV_REACH_ON_EVENT );
 		this.indicator.linkEntity();
 
 		Vec3 origin = this.indicator.origin;
@@ -91,15 +89,6 @@ class cBombSite
 		this.sprite.svflags = ( this.sprite.svflags & ~SVF_NOCLIENT ) | SVF_BROADCAST;
 		this.sprite.frame = BOMB_ARM_DEFUSE_RADIUS;
 		this.sprite.linkEntity();
-
-		@this.minimap = @G_SpawnEntity( "capture_indicator_minimap" );
-		this.minimap.type = ET_MINIMAP_ICON;
-		this.minimap.solid = SOLID_NOT;
-		this.minimap.origin = origin;
-		this.minimap.modelindex = G_ImageIndex( "gfx/bomb/minimap_" + this.letter );
-		this.minimap.frame = 32; // size in case of a ET_MINIMAP_ICON
-		this.minimap.svflags = ( this.minimap.svflags & ~SVF_NOCLIENT ) | SVF_BROADCAST;
-		this.minimap.linkEntity();
 
 		if ( hasTargets )
 		{
@@ -231,7 +220,7 @@ cBombSite @getSiteFromIndicator( Entity @ent )
 	}
 
 	assert( false, "site.as getSiteFromIndicator: couldn't find a site" );
-	
+
 	return null; // shut up compiler
 }
 
@@ -277,7 +266,7 @@ void misc_capture_area_indicator_think( Entity @ent )
 {
 	// if AS had static this could be approx 1 bajillion times
 	// faster on subsequent calls
-	
+
 	array<Entity @> @triggers = @ent.findTargeting();
 
 	// we are being targeted, never think again
@@ -356,14 +345,14 @@ void trigger_capture_area_think( Entity @ent )
 void trigger_capture_area_touch( Entity @ent, Entity @other, const Vec3 planeNormal, int surfFlags )
 {
 	// i'm under your thumb, under your spell, can't you see?
-	
+
 	if ( @other.client == null )
 	{
 		return;
 	}
 
 	// IF I COULD ONLY REACH YOU
-	
+
 	if ( roundState != ROUNDSTATE_ROUND )
 	{
 		return;
@@ -377,18 +366,18 @@ void trigger_capture_area_touch( Entity @ent, Entity @other, const Vec3 planeNor
 	}
 
 	// IF I COULD ONLY REACH YOU
-	
+
 	if ( match.getState() != MATCH_STATE_PLAYTIME )
 	{
 		return;
 	}
 
 	// THAT WOULD REALLY BE A
-	
+
 	// we know target isn't null because we checked earlier
-	
+
 	cBombSite @site = null;
-	
+
 	array<Entity @> @targets = ent.findTargets();
 	@site = getSiteFromIndicator( targets[0] );
 
