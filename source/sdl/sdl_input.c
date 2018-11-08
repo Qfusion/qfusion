@@ -393,6 +393,14 @@ MouseMovement IN_GetMouseMovement() {
 	return movement;
 }
 
+#if PUBLIC_BUILD
+
+static bool being_debugged() {
+	return false;
+}
+
+#else
+
 #if _WIN32
 #define _WIN32_WINNT 0x4000
 #include <windows.h>
@@ -445,6 +453,8 @@ static bool being_debugged() {
 
         return WEXITSTATUS( status ) == 1;
 }
+#endif
+
 #endif
 
 void IN_Init() {
