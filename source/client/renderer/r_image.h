@@ -60,7 +60,7 @@ enum {
  * The loader threads may modify these flags (but no other flags),
  * so they must not be used for anything that has a long-term effect.
  */
-#define IT_LOADFLAGS        ( IT_ALPHAMASK | IT_SYNC | IT_SRGB )
+#define IT_LOADFLAGS        ( IT_ALPHAMASK | IT_BGRA | IT_SYNC | IT_SRGB )
 
 #define IT_SPECIAL          ( IT_CLAMP | IT_NOMIPMAP | IT_NOCOMPRESS )
 #define IT_SKYFLAGS         ( IT_SKY | IT_NOMIPMAP | IT_CLAMP | IT_SYNC )
