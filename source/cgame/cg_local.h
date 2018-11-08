@@ -713,7 +713,6 @@ struct shader_s *CG_MediaShader( cgs_media_handle_t *mediashader );
 // cg_players.c
 //
 extern cvar_t *cg_model;
-extern cvar_t *cg_skin;
 extern cvar_t *cg_hand;
 
 void CG_ResetClientInfos( void );
@@ -908,10 +907,6 @@ extern cvar_t *cg_teamALPHAmodel;
 extern cvar_t *cg_teamALPHAmodelForce;
 extern cvar_t *cg_teamBETAmodel;
 extern cvar_t *cg_teamBETAmodelForce;
-
-extern cvar_t *cg_teamPLAYERSskin;
-extern cvar_t *cg_teamALPHAskin;
-extern cvar_t *cg_teamBETAskin;
 
 extern cvar_t *cg_teamPLAYERScolor;
 extern cvar_t *cg_teamPLAYERScolorForce;

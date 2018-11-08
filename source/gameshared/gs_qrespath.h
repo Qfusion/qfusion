@@ -189,13 +189,7 @@ extern "C" {
 // flags
 #define PATH_FLAG_BASE_MODEL        "models/objects/flag/flag_base.md3"
 #define PATH_FLAG_MODEL         "models/objects/flag/flag.md3"
-/*
-// captureAreaIndicators
-#define PATH_CAPTUREAREA_A_MODEL	    "models/objects/capture_a/capture_a.md3"
-#define PATH_CAPTUREAREA_B_MODEL	    "models/objects/capture_b/capture_b.md3"
-#define PATH_CAPTUREAREA_C_MODEL	    "models/objects/capture_c/capture_c.md3"
-#define PATH_CAPTUREAREA_D_MODEL	    "models/objects/capture_d/capture_d.md3"
-*/
+
 // powerups
 #define PATH_QUAD_MODEL         "models/powerups/instant/quad.md3"
 #define PATH_QUAD_LIGHT_MODEL       "models/powerups/instant/quad_light.md3"

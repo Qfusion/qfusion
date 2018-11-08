@@ -59,7 +59,7 @@ void CG_SetSceneTeamColors( void ) {
 /*
 * CG_RegisterForceModel
 */
-static void CG_RegisterForceModel( cvar_t *teamForceModel, cvar_t *teamForceModelToggle, cvar_t *teamForceSkin, pmodelinfo_t **ppmodelinfo, struct skinfile_s **pskin ) {
+static void CG_RegisterForceModel( cvar_t *teamForceModel, cvar_t *teamForceModelToggle, pmodelinfo_t **ppmodelinfo, struct skinfile_s **pskin ) {
 	pmodelinfo_t *pmodelinfo;
 	struct skinfile_s *skin = NULL;
 
@@ -69,10 +69,6 @@ static void CG_RegisterForceModel( cvar_t *teamForceModel, cvar_t *teamForceMode
 
 	if( teamForceModelToggle->modified ) {
 		teamForceModelToggle->modified = false;
-	}
-
-	if( teamForceSkin->modified ) {
-		teamForceSkin->modified = false;
 	}
 
 	if( !ppmodelinfo || !pskin ) {
@@ -89,13 +85,13 @@ static void CG_RegisterForceModel( cvar_t *teamForceModel, cvar_t *teamForceMode
 		// if it failed, it will be NULL, so also disabled
 		if( pmodelinfo ) {
 			// when we register a new model, we must re-register the skin, even if the cvar is not modified
-			if( !cgs.pure || trap_FS_IsPureFile( va( "models/players/%s/%s.skin", teamForceModel->string, teamForceSkin->string ) ) ) {
-				skin = trap_R_RegisterSkinFile( va( "models/players/%s/%s", teamForceModel->string, teamForceSkin->string ) );
+			if( !cgs.pure || trap_FS_IsPureFile( va( "models/players/%s/" DEFAULT_PLAYERSKIN ".skin", teamForceModel->string ) ) ) {
+				skin = trap_R_RegisterSkinFile( va( "models/players/%s/" DEFAULT_PLAYERSKIN, teamForceModel->string ) );
 			}
 
 			// if the skin failed, we can still try with default value (so only setting model cvar has a visible effect)
 			if( !skin ) {
-				skin = trap_R_RegisterSkinFile( va( "models/players/%s/%s", teamForceModel->string, teamForceSkin->dvalue ) );
+				skin = trap_R_RegisterSkinFile( va( "models/players/%s/" DEFAULT_PLAYERSKIN, teamForceModel->string ) );
 			}
 		}
 
@@ -112,18 +108,18 @@ static void CG_RegisterForceModel( cvar_t *teamForceModel, cvar_t *teamForceMode
 static void CG_CheckUpdateTeamModelRegistration( int team ) {
 	switch( team ) {
 		case TEAM_ALPHA:
-			if( cg_teamALPHAmodel->modified || cg_teamALPHAmodelForce->modified || cg_teamALPHAskin->modified ) {
-				CG_RegisterForceModel( cg_teamALPHAmodel, cg_teamALPHAmodelForce, cg_teamALPHAskin, &cgs.teamModelInfo[TEAM_ALPHA], &cgs.teamCustomSkin[TEAM_ALPHA] );
+			if( cg_teamALPHAmodel->modified || cg_teamALPHAmodelForce->modified ) {
+				CG_RegisterForceModel( cg_teamALPHAmodel, cg_teamALPHAmodelForce, &cgs.teamModelInfo[TEAM_ALPHA], &cgs.teamCustomSkin[TEAM_ALPHA] );
 			}
 			break;
 		case TEAM_BETA:
-			if( cg_teamBETAmodel->modified || cg_teamBETAmodelForce->modified || cg_teamBETAskin->modified ) {
-				CG_RegisterForceModel( cg_teamBETAmodel, cg_teamBETAmodelForce, cg_teamBETAskin, &cgs.teamModelInfo[TEAM_BETA], &cgs.teamCustomSkin[TEAM_BETA] );
+			if( cg_teamBETAmodel->modified || cg_teamBETAmodelForce->modified ) {
+				CG_RegisterForceModel( cg_teamBETAmodel, cg_teamBETAmodelForce, &cgs.teamModelInfo[TEAM_BETA], &cgs.teamCustomSkin[TEAM_BETA] );
 			}
 			break;
 		case TEAM_PLAYERS:
-			if( cg_teamPLAYERSmodel->modified || cg_teamPLAYERSmodelForce->modified || cg_teamPLAYERSskin->modified ) {
-				CG_RegisterForceModel( cg_teamPLAYERSmodel, cg_teamPLAYERSmodelForce, cg_teamPLAYERSskin, &cgs.teamModelInfo[TEAM_PLAYERS], &cgs.teamCustomSkin[TEAM_PLAYERS] );
+			if( cg_teamPLAYERSmodel->modified || cg_teamPLAYERSmodelForce->modified ) {
+				CG_RegisterForceModel( cg_teamPLAYERSmodel, cg_teamPLAYERSmodelForce, &cgs.teamModelInfo[TEAM_PLAYERS], &cgs.teamCustomSkin[TEAM_PLAYERS] );
 			}
 			break;
 		case TEAM_SPECTATOR:
@@ -384,9 +380,9 @@ uint8_t *CG_PlayerColorForEntity( int entNum, byte_vec4_t color ) {
 void CG_RegisterForceModels( void ) {
 	int team;
 
-	CG_RegisterForceModel( cg_teamPLAYERSmodel, cg_teamPLAYERSmodelForce, cg_teamPLAYERSskin, &cgs.teamModelInfo[TEAM_PLAYERS], &cgs.teamCustomSkin[TEAM_PLAYERS] );
-	CG_RegisterForceModel( cg_teamALPHAmodel, cg_teamALPHAmodelForce, cg_teamALPHAskin, &cgs.teamModelInfo[TEAM_ALPHA], &cgs.teamCustomSkin[TEAM_ALPHA] );
-	CG_RegisterForceModel( cg_teamBETAmodel, cg_teamBETAmodelForce, cg_teamBETAskin, &cgs.teamModelInfo[TEAM_BETA], &cgs.teamCustomSkin[TEAM_BETA] );
+	CG_RegisterForceModel( cg_teamPLAYERSmodel, cg_teamPLAYERSmodelForce, &cgs.teamModelInfo[TEAM_PLAYERS], &cgs.teamCustomSkin[TEAM_PLAYERS] );
+	CG_RegisterForceModel( cg_teamALPHAmodel, cg_teamALPHAmodelForce, &cgs.teamModelInfo[TEAM_ALPHA], &cgs.teamCustomSkin[TEAM_ALPHA] );
+	CG_RegisterForceModel( cg_teamBETAmodel, cg_teamBETAmodelForce, &cgs.teamModelInfo[TEAM_BETA], &cgs.teamCustomSkin[TEAM_BETA] );
 
 	for( team = TEAM_ALPHA; team < GS_MAX_TEAMS; team++ ) {
 		CG_RegisterTeamColor( team );
