@@ -25,35 +25,33 @@ enum {
 	IT_NONE,
 	IT_CLAMP           = 1 << 0,
 	IT_NOMIPMAP        = 1 << 1,
-	IT_NOPICMIP        = 1 << 2,
-	IT_SKY             = 1 << 3,
-	IT_CUBEMAP         = 1 << 4,
-	IT_FLIPX           = 1 << 5,
-	IT_FLIPY           = 1 << 6,
-	IT_FLIPDIAGONAL    = 1 << 7,     // when used alone, equals to rotating 90 CW and flipping X; with FLIPX|Y, 90 CCW and flipping X
-	IT_NOCOMPRESS      = 1 << 8,
-	IT_DEPTH           = 1 << 9,
-	IT_NORMALMAP       = 1 << 10,
-	IT_FRAMEBUFFER     = 1 << 11,
-	IT_DEPTHRB         = 1 << 12,    // framebuffer has a depth renderbuffer
-	IT_NOFILTERING     = 1 << 13,
-	IT_ALPHAMASK       = 1 << 14,    // image only contains an alpha mask
-	IT_BGRA            = 1 << 15,
-	IT_SYNC            = 1 << 16,    // load image synchronously
-	IT_DEPTHCOMPARE    = 1 << 17,
-	IT_ARRAY           = 1 << 18,
-	IT_3D              = 1 << 19,
-	IT_STENCIL         = 1 << 20,    // for IT_DEPTH or IT_DEPTHRB textures, whether there's stencil
-	IT_NO_DATA_SYNC    = 1 << 21,    // owned by the drawing thread, do not sync in the frontend thread
-	IT_FLOAT           = 1 << 22,
-	IT_SRGB            = 1 << 23,
-	IT_WAL             = 1 << 24,
-	IT_MIPTEX          = 1 << 25,
-	IT_MIPTEX_FULLBRIGHT = 1 << 26,
-	IT_LEFTHALF        = 1 << 27,
-	IT_RIGHTHALF       = 1 << 28,
-	IT_LUM             = 1 << 29, // some KTX textures use GL_LUMINANCE/GL_LUMINANCE_ALPHA
-	IT_LUMALPHA        = 1 << 30, // so these flags are here to support that
+	IT_SKY             = 1 << 2,
+	IT_CUBEMAP         = 1 << 3,
+	IT_FLIPX           = 1 << 4,
+	IT_FLIPY           = 1 << 5,
+	IT_FLIPDIAGONAL    = 1 << 6,     // when used alone, equals to rotating 90 CW and flipping X; with FLIPX|Y, 90 CCW and flipping X
+	IT_NOCOMPRESS      = 1 << 7,
+	IT_DEPTH           = 1 << 8,
+	IT_NORMALMAP       = 1 << 9,
+	IT_FRAMEBUFFER     = 1 << 10,
+	IT_DEPTHRB         = 1 << 11,    // framebuffer has a depth renderbuffer
+	IT_NOFILTERING     = 1 << 12,
+	IT_ALPHAMASK       = 1 << 13,    // image only contains an alpha mask
+	IT_BGRA            = 1 << 14,
+	IT_SYNC            = 1 << 15,    // load image synchronously
+	IT_DEPTHCOMPARE    = 1 << 16,
+	IT_ARRAY           = 1 << 17,
+	IT_3D              = 1 << 18,
+	IT_STENCIL         = 1 << 19,    // for IT_DEPTH or IT_DEPTHRB textures, whether there's stencil
+	IT_NO_DATA_SYNC    = 1 << 20,    // owned by the drawing thread, do not sync in the frontend thread
+	IT_FLOAT           = 1 << 21,
+	IT_SRGB            = 1 << 22,
+	IT_MIPTEX          = 1 << 23,
+	IT_MIPTEX_FULLBRIGHT = 1 << 24,
+	IT_LEFTHALF        = 1 << 25,
+	IT_RIGHTHALF       = 1 << 26,
+	IT_LUM             = 1 << 27, // some KTX textures use GL_LUMINANCE/GL_LUMINANCE_ALPHA
+	IT_LUMALPHA        = 1 << 28, // so these flags are here to support that
 };
 
 /**
@@ -62,9 +60,9 @@ enum {
  * The loader threads may modify these flags (but no other flags),
  * so they must not be used for anything that has a long-term effect.
  */
-#define IT_LOADFLAGS        ( IT_ALPHAMASK | IT_BGRA | IT_SYNC | IT_SRGB )
+#define IT_LOADFLAGS        ( IT_ALPHAMASK | IT_SYNC | IT_SRGB )
 
-#define IT_SPECIAL          ( IT_CLAMP | IT_NOMIPMAP | IT_NOPICMIP | IT_NOCOMPRESS )
+#define IT_SPECIAL          ( IT_CLAMP | IT_NOMIPMAP | IT_NOCOMPRESS )
 #define IT_SKYFLAGS         ( IT_SKY | IT_NOMIPMAP | IT_CLAMP | IT_SYNC )
 
 /**

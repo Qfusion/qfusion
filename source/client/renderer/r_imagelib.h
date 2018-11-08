@@ -20,19 +20,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #pragma once
 
-// odd values include alpha channel
-typedef enum {
-	IMGCOMP_RGB,
-	IMGCOMP_RGBA,
-	IMGCOMP_BGR,
-	IMGCOMP_BGRA,
-} r_imgcomp_t;
-
 typedef struct {
 	int width;
 	int height;
 	int samples;
-	r_imgcomp_t comp;
 	uint8_t *pixels;
 } r_imginfo_t;
 

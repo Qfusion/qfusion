@@ -52,7 +52,6 @@ static tcmod_t r_currentTcmods[MAX_SHADER_PASSES][MAX_SHADER_TCMODS];
 static vec4_t r_currentTcGen[MAX_SHADER_PASSES][2];
 
 static bool r_shaderNoMipMaps;
-static bool r_shaderNoPicMip;
 static bool r_shaderNoFiltering;
 static bool r_shaderNoCompress;
 static int r_shaderMinMipSize;
@@ -541,9 +540,6 @@ static int Shader_SetImageFlags( shader_t *shader ) {
 	if( r_shaderNoMipMaps ) {
 		flags |= IT_NOMIPMAP;
 	}
-	if( r_shaderNoPicMip ) {
-		flags |= IT_NOPICMIP;
-	}
 	if( r_shaderNoCompress ) {
 		flags |= IT_NOCOMPRESS;
 	}
@@ -613,12 +609,11 @@ static void Shader_Cull( shader_t *shader, shaderpass_t *pass, const char **ptr 
 }
 
 static void Shader_NoMipMaps( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
-	r_shaderNoMipMaps = r_shaderNoPicMip = true;
+	r_shaderNoMipMaps = true;
 	r_shaderMinMipSize = 1;
 }
 
 static void Shader_NoPicMip( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
-	r_shaderNoPicMip = true;
 }
 
 static void Shader_NoCompress( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
@@ -2450,7 +2445,6 @@ static void R_LoadShaderReal( shader_t *s, const char *shortname,
 	s->offsetmappingScale = 1;
 
 	r_shaderNoMipMaps = false;
-	r_shaderNoPicMip = false;
 	r_shaderNoCompress = false;
 	r_shaderNoFiltering = false;
 	r_shaderMinMipSize = 1;

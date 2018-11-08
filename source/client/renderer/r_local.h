@@ -98,12 +98,6 @@ typedef vec_t instancePoint_t[8]; // quaternion for rotation + xyz pos + uniform
 #define MAX_ENT_RTLIGHTS		8
 #define MAX_SCENE_RTLIGHTS		1024
 
-enum {
-	QGL_CONTEXT_MAIN,
-	QGL_CONTEXT_LOADER,
-	NUM_QGL_CONTEXTS = QGL_CONTEXT_LOADER
-};
-
 #include "r_public.h"
 #include "r_vattribs.h"
 #include "r_light.h"

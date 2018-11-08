@@ -38,7 +38,6 @@ r_imginfo_t IMG_LoadImage( const char * filename, uint8_t * ( *allocbuf )( void 
 		return ret;
 
 	ret.pixels = stbi_load_from_memory( data, size, &ret.width, &ret.height, &ret.samples, 0 );
-	ret.comp = ret.samples == 4 ? IMGCOMP_RGBA : IMGCOMP_RGB;
 
 	R_FreeFile( data );
 
