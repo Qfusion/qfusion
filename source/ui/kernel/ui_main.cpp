@@ -9,6 +9,7 @@
 #include "kernel/ui_common.h"
 #include "kernel/ui_main.h"
 #include "widgets/ui_widgets.h"
+#include "../qcommon/version.h"
 
 #include "as/asui.h"
 #include "as/asmodule.h"
@@ -59,12 +60,11 @@ UI_Main::UI_Main( int vidWidth, int vidHeight, float pixelRatio,
 	mousex( 0 ), mousey( 0 ), gameProtocol( protocol ),
 	menuVisible( false ), overlayMenuVisible( false ), forceMenu( false ), showNavigationStack( false ),
 	demoExtension( demoExtension ), invalidateAjaxCache( false ),
-	ui_basepath( nullptr ), ui_cursor( nullptr ), ui_developer( nullptr ), ui_preload( nullptr ) {
+	ui_cursor( nullptr ), ui_developer( nullptr ), ui_preload( nullptr ) {
 	// instance
 	self = this;
 
 	Vector4Set( colorWhite, 1, 1, 1, 1 );
-	ui_basepath = trap::Cvar_Get( "ui_basepath", basePath, CVAR_ARCHIVE );
 	ui_cursor = trap::Cvar_Get( "ui_cursor", "cursors/default.rml", CVAR_DEVELOPER );
 	ui_developer = trap::Cvar_Get( "developer", "0", 0 );
 	ui_preload = trap::Cvar_Get( "ui_preload", "1", CVAR_ARCHIVE );
@@ -203,7 +203,7 @@ void UI_Main::preloadUI( void ) {
 
 		navigation.push_front( navigator );
 
-		navigator->setDefaultPath( ui_basepath->string );
+		navigator->setDefaultPath( APP_UI_BASEPATH );
 	}
 
 	// load translation strings
@@ -285,7 +285,7 @@ void UI_Main::loadCursor( void ) {
 	assert( rocketModule != NULL );
 
 	// setup cursor
-	std::string basecursor( ui_basepath->string );
+	std::string basecursor( APP_UI_BASEPATH );
 
 	basecursor += "/";
 	basecursor += ui_cursor->string;
@@ -371,7 +371,7 @@ NavigationStack *UI_Main::createStack( int contextId ) {
 	if( contextId < 0 || contextId >= UI_NUM_CONTEXTS ) {
 		return NULL;
 	}
-	stack->setDefaultPath( ui_basepath->string );
+	stack->setDefaultPath( APP_UI_BASEPATH );
 	navigations[contextId].push_back( stack );
 	return stack;
 }

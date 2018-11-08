@@ -239,7 +239,6 @@ private:
 	static const std::string ui_index;
 	static const std::string ui_connectscreen;
 
-	cvar_t *ui_basepath;
 	cvar_t *ui_cursor;
 	cvar_t *ui_developer;
 	cvar_t *ui_preload;
