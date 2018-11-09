@@ -353,8 +353,10 @@ void G_Damage( edict_t *targ, edict_t *inflictor, edict_t *attacker, const vec3_
 		}
 	}
 
+	bool teamdamage = GS_IsTeamDamage( &targ->s, &attacker->s ) && !G_Gametype_CanTeamDamage( dflags );
+
 	// push
-	if( !( dflags & DAMAGE_NO_KNOCKBACK ) ) {
+	if( !( dflags & DAMAGE_NO_KNOCKBACK ) && !teamdamage ) {
 		G_KnockBackPush( targ, attacker, pushdir, knockback, dflags );
 	}
 
@@ -408,7 +410,7 @@ void G_Damage( edict_t *targ, edict_t *inflictor, edict_t *attacker, const vec3_
 			take = save = 0;
 		}
 		// team damage avoidance
-		else if( GS_IsTeamDamage( &targ->s, &attacker->s ) && !G_Gametype_CanTeamDamage( dflags ) ) {
+		else if( teamdamage ) {
 			take = save = 0;
 		}
 		// apply warShell powerup protection
