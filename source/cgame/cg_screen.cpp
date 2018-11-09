@@ -505,8 +505,6 @@ void CG_DrawPlayerNames( struct qfontface_s *font, vec4_t color ) {
 	}
 
 	for( i = 0; i < gs.maxclients; i++ ) {
-		int pointed_health, pointed_armor;
-
 		if( !cgs.clientInfo[i].name[0] || ISVIEWERENTITY( i + 1 ) ) {
 			continue;
 		}
@@ -569,7 +567,7 @@ void CG_DrawPlayerNames( struct qfontface_s *font, vec4_t color ) {
 			continue;
 		}
 
-		VectorSet( drawOrigin, cent->ent.origin[0], cent->ent.origin[1], cent->ent.origin[2] + playerbox_stand_maxs[2] + 16 );
+		VectorSet( drawOrigin, cent->ent.origin[0], cent->ent.origin[1], cent->ent.origin[2] + playerbox_stand_maxs[2] + 8 );
 
 		// find the 3d point in 2d screen
 		trap_R_TransformVectorToScreen( &cg.view.refdef, drawOrigin, coords );
@@ -584,8 +582,7 @@ void CG_DrawPlayerNames( struct qfontface_s *font, vec4_t color ) {
 			continue;
 		}
 
-		pointed_health = cg.pointedHealth;
-		pointed_armor = cg.pointedArmor;
+		int pointed_health = cg.pointedHealth / 2;
 
 		// pointed player hasn't a health value to be drawn, so skip adding the bars
 		if( pointed_health && cg_showPlayerNames_barWidth->integer > 0 ) {
@@ -603,29 +600,19 @@ void CG_DrawPlayerNames( struct qfontface_s *font, vec4_t color ) {
 			x = CG_HorizontalAlignForWidth( coords[0], ALIGN_CENTER_TOP, barwidth );
 			y = CG_VerticalAlignForHeight( coords[1], ALIGN_CENTER_TOP, barheight );
 
+			y += barseparator;
+
 			// draw the background box
-			CG_DrawHUDRect( x, y, ALIGN_LEFT_TOP, barwidth, barheight * 3, 100, 100, tmpcolor, NULL );
+			CG_DrawHUDRect( x, y, ALIGN_LEFT_TOP, barwidth, barheight + 2 * barseparator, 100, 100, tmpcolor, NULL );
 
 			y += barseparator;
 
-			if( pointed_health > 100 ) {
-				alphagreen[3] = alphamagenta[3] = 1.0f;
-				CG_DrawHUDRect( x, y, ALIGN_LEFT_TOP, barwidth, barheight, 100, 100, alphagreen, NULL );
-				CG_DrawHUDRect( x, y, ALIGN_LEFT_TOP, barwidth, barheight, pointed_health - 100, 100, alphamagenta, NULL );
-				alphagreen[3] = alphamagenta[3] = alphared[3];
+			if( pointed_health <= 33 ) {
+				CG_DrawHUDRect( x, y, ALIGN_LEFT_TOP, barwidth, barheight, pointed_health, 100, alphared, NULL );
+			} else if( pointed_health <= 66 ) {
+				CG_DrawHUDRect( x, y, ALIGN_LEFT_TOP, barwidth, barheight, pointed_health, 100, alphayellow, NULL );
 			} else {
-				if( pointed_health <= 33 ) {
-					CG_DrawHUDRect( x, y, ALIGN_LEFT_TOP, barwidth, barheight, pointed_health, 100, alphared, NULL );
-				} else if( pointed_health <= 66 ) {
-					CG_DrawHUDRect( x, y, ALIGN_LEFT_TOP, barwidth, barheight, pointed_health, 100, alphayellow, NULL );
-				} else {
-					CG_DrawHUDRect( x, y, ALIGN_LEFT_TOP, barwidth, barheight, pointed_health, 100, alphagreen, NULL );
-				}
-			}
-
-			if( pointed_armor ) {
-				y += barseparator + barheight;
-				CG_DrawHUDRect( x, y, ALIGN_LEFT_TOP, barwidth, barheight, pointed_armor, 150, alphagrey, NULL );
+				CG_DrawHUDRect( x, y, ALIGN_LEFT_TOP, barwidth, barheight, pointed_health, 100, alphagreen, NULL );
 			}
 		}
 	}
