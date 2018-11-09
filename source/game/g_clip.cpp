@@ -810,6 +810,15 @@ typedef struct {
 			continue;
 		}
 
+		if( touch->r.client != NULL ) {
+			int teammask = clip->contentmask & ( CONTENTS_TEAMALPHA | CONTENTS_TEAMBETA );
+			if( teammask != 0 ) {
+				int team = teammask == CONTENTS_TEAMALPHA ? TEAM_ALPHA : TEAM_BETA;
+				if( touch->s.team != team )
+					continue;
+			}
+		}
+
 		// might intersect, so do an exact clip
 		cmodel = GClip_CollisionModelForEntity( &touch->s, &touch->r );
 

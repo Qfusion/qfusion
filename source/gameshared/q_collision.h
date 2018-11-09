@@ -51,6 +51,9 @@ extern "C" {
 #define CONTENTS_CLUSTERPORTAL  0x100000
 #define CONTENTS_DONOTENTER     0x200000
 
+#define CONTENTS_TEAMALPHA      0x400000
+#define CONTENTS_TEAMBETA       0x800000
+
 #define CONTENTS_ORIGIN         0x1000000   // removed before bsping an entity
 
 #define CONTENTS_BODY           0x2000000   // should never be on a brush, only in game
@@ -93,6 +96,9 @@ extern "C" {
 #define MASK_WATER          ( CONTENTS_WATER | CONTENTS_LAVA | CONTENTS_SLIME )
 #define MASK_OPAQUE         ( CONTENTS_SOLID | CONTENTS_SLIME | CONTENTS_LAVA )
 #define MASK_SHOT           ( CONTENTS_SOLID | CONTENTS_BODY | CONTENTS_CORPSE )
+
+#define MASK_ALPHAPLAYERSOLID  ( CONTENTS_SOLID | CONTENTS_PLAYERCLIP | CONTENTS_BODY | CONTENTS_TEAMBETA )
+#define MASK_BETAPLAYERSOLID   ( CONTENTS_SOLID | CONTENTS_PLAYERCLIP | CONTENTS_BODY | CONTENTS_TEAMALPHA )
 
 // a trace is returned when a box is swept through the world
 typedef struct {
