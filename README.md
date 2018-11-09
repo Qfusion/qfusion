@@ -22,4 +22,10 @@ Windows: [![Windows build](https://ci.appveyor.com/api/projects/status/0xprq9d61
 
 Linux: [![Linux build](https://ci.appveyor.com/api/projects/status/bj5c143bdn2juabl?svg=true)](https://ci.appveyor.com/project/mikejsavage/forksow-launcher-jbg0q)
 
+#### [Libs](https://github.com/mikejsavage/forksow-libs)
+
+Windows: [![Windows build](https://ci.appveyor.com/api/projects/status/09ds7hu7mkhan9lk?svg=true)](https://ci.appveyor.com/project/mikejsavage/forksow-libs)
+
+Linux: [![Linux build](https://ci.appveyor.com/api/projects/status/3f2klr95870lfxhg?svg=true)](https://ci.appveyor.com/project/mikejsavage/forksow-libs-1j5tj)
+
 #### [Assets](https://github.com/mikejsavage/forksow-assets)
