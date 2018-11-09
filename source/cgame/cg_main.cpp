@@ -838,14 +838,7 @@ static void CG_RegisterVariables( void ) {
 	cg_instabeam_alpha = trap_Cvar_Get( "cg_instabeam_alpha", "0.4", CVAR_ARCHIVE );
 	cg_instabeam_time = trap_Cvar_Get( "cg_instabeam_time", "0.4", CVAR_ARCHIVE );
 
-	cg_showminimap = trap_Cvar_Get( "cg_showMiniMap", "0", CVAR_ARCHIVE );
-	cg_showitemtimers = trap_Cvar_Get( "cg_showItemTimers", "3", CVAR_ARCHIVE );
 	cg_strafeHUD = trap_Cvar_Get( "cg_strafeHUD", "0", CVAR_ARCHIVE );
-	cg_touch_flip = trap_Cvar_Get( "cg_touch_flip", "0", CVAR_ARCHIVE );
-	cg_touch_scale = trap_Cvar_Get( "cg_touch_scale", "100", CVAR_ARCHIVE );
-	cg_touch_showMoveDir = trap_Cvar_Get( "cg_touch_showMoveDir", "1", CVAR_ARCHIVE );
-	cg_touch_zoomThres = trap_Cvar_Get( "cg_touch_zoomThres", "24", CVAR_ARCHIVE );
-	cg_touch_zoomTime = trap_Cvar_Get( "cg_touch_zoomTime", "250", CVAR_ARCHIVE );
 
 	cg_playList = trap_Cvar_Get( "cg_playList", S_PLAYLIST_MATCH, CVAR_ARCHIVE );
 	cg_playListShuffle = trap_Cvar_Get( "cg_playListShuffle", "1", CVAR_ARCHIVE );
@@ -1151,8 +1144,6 @@ void CG_Init( const char *serverName, unsigned int playerNum,
 
 	// l10n
 	CG_InitL10n();
-
-	CG_RegisterLevelMinimap();
 
 	CG_RegisterCGameCommands();
 	CG_RegisterLightStyles();

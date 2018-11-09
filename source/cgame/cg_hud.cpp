@@ -33,33 +33,7 @@ extern cvar_t *cg_debugHUD;
 extern cvar_t *cg_clientHUD;
 extern cvar_t *cg_specHUD;
 
-cvar_t *cg_showminimap;
-cvar_t *cg_showitemtimers;
 cvar_t *cg_strafeHUD;
-cvar_t *cg_touch_flip;
-cvar_t *cg_touch_scale;
-cvar_t *cg_touch_showMoveDir;
-cvar_t *cg_touch_zoomThres;
-cvar_t *cg_touch_zoomTime;
-
-static int cg_hud_touch_buttons, cg_hud_touch_upmove;
-static int64_t cg_hud_touch_zoomSeq, cg_hud_touch_zoomLastTouch;
-static int cg_hud_touch_zoomX, cg_hud_touch_zoomY;
-
-enum
-{
-	TOUCHAREA_HUD_MOVE = TOUCHAREA_HUD,
-	TOUCHAREA_HUD_VIEW,
-	TOUCHAREA_HUD_JUMP,
-	TOUCHAREA_HUD_CROUCH,
-	TOUCHAREA_HUD_ATTACK,
-	TOUCHAREA_HUD_SPECIAL,
-	TOUCHAREA_HUD_CLASSACTION,
-	TOUCHAREA_HUD_DROPITEM,
-	TOUCHAREA_HUD_SCORES,
-	TOUCHAREA_HUD_WEAPON,
-	TOUCHAREA_HUD_QUICKMENU
-};
 
 //=============================================================================
 
@@ -362,54 +336,6 @@ static int CG_DownloadInProgress( const void *parameter ) {
 	return 0;
 }
 
-static int CG_GetShowItemTimers( const void *parameter ) {
-	return (int)trap_Cvar_Value( (char *)parameter ) & 1;
-}
-
-static int CG_GetItemTimer( const void *parameter ) {
-	int num = (intptr_t)parameter;
-	centity_t *cent;
-
-	cent = CG_GetItemTimerEnt( num );
-	if( !cent ) {
-		return 0;
-	}
-	return cent->item->tag;
-}
-
-static int CG_GetItemTimerCount( const void *parameter ) {
-	int num = (intptr_t)parameter;
-	centity_t *cent;
-
-	cent = CG_GetItemTimerEnt( num );
-	if( !cent ) {
-		return 0;
-	}
-	return cent->ent.frame;
-}
-
-static int CG_GetItemTimerLocation( const void *parameter ) {
-	int num = (intptr_t)parameter;
-	centity_t *cent;
-
-	cent = CG_GetItemTimerEnt( num );
-	if( !cent ) {
-		return 0;
-	}
-	return cent->current.modelindex2;
-}
-
-static int CG_GetItemTimerTeam( const void *parameter ) {
-	int num = (intptr_t)parameter;
-	centity_t *cent;
-
-	cent = CG_GetItemTimerEnt( num );
-	if( !cent ) {
-		return 0;
-	}
-	return max( (int)cent->current.modelindex - 1, 0 );
-}
-
 static int CG_InputDeviceSupported( const void *parameter ) {
 	return ( trap_IN_SupportedDevices() & ( ( intptr_t )parameter ) ) ? 1 : 0;
 }
@@ -531,44 +457,6 @@ static int CG_GetAccel( const void* parameter ) {
 	}
 
 	return (int)accel;
-}
-
-static int CG_GetTouchFlip( const void *parameter ) {
-	return cg_touch_flip->integer ? -1 : 1;
-}
-
-static int CG_GetTouchButtonPressed( const void *parameter ) {
-	return ( cg_hud_touch_buttons & ( intptr_t )parameter ) ? 1 : 0;
-}
-
-static int CG_GetTouchUpmove( const void *parameter ) {
-	return cg_hud_touch_upmove;
-}
-
-static int CG_GetTouchMovementDirection( const void *parameter ) {
-	vec3_t movement;
-
-	CG_GetMovement( movement );
-
-	if( !movement[0] && !movement[1] ) {
-		return STAT_NOTSET;
-	}
-
-	if( movement[0] > 0.0f ) {
-		if( !movement[1] ) {
-			return 0;
-		}
-		return ( movement[1] > 0.0f ) ? 45 : -45;
-	}
-
-	if( movement[0] < 0.0f ) {
-		if( !movement[1] ) {
-			return 180;
-		}
-		return 180 - ( ( movement[1] > 0.0f ) ? 45 : -45 );
-	}
-
-	return ( movement[1] > 0.0f ) ? 90 : -90;
 }
 
 static int CG_GetScoreboardShown( const void *parameter ) {
@@ -699,62 +587,16 @@ static const reference_numeric_t cg_numeric_references[] =
 	{ "SHOW_POINTED_PLAYER", CG_GetCvar, "cg_showPointedPlayer" },
 	{ "SHOW_PRESSED_KEYS", CG_GetCvar, "cg_showPressedKeys" },
 	{ "SHOW_SPEED", CG_GetCvar, "cg_showSpeed" },
-	{ "SHOW_TEAM_LOCATIONS", CG_GetCvar, "cg_showTeamLocations" },
 	{ "SHOW_TIMER", CG_GetCvar, "cg_showTimer" },
 	{ "SHOW_AWARDS", CG_GetCvar, "cg_showAwards" },
 	{ "SHOW_ZOOM_EFFECT", CG_GetCvar, "cg_showZoomEffect" },
 	{ "SHOW_R_SPEEDS", CG_GetCvar, "r_speeds" },
-	{ "SHOW_ITEM_TIMERS", CG_GetShowItemTimers, "cg_showItemTimers" },
 	{ "SHOW_STRAFE", CG_GetCvar, "cg_strafeHUD" },
-	{ "SHOW_TOUCH_MOVEDIR", CG_GetCvar, "cg_touch_showMoveDir" },
 
 	{ "DOWNLOAD_IN_PROGRESS", CG_DownloadInProgress, NULL },
 	{ "DOWNLOAD_PERCENT", CG_GetCvar, "cl_download_percent" },
 
 	{ "CHAT_MODE", CG_GetCvar, "con_messageMode" },
-	{ "SOFTKEYBOARD", CG_InputDeviceSupported, (void *)IN_DEVICE_SOFTKEYBOARD },
-	{ "TOUCHSCREEN", CG_InputDeviceSupported, (void *)IN_DEVICE_TOUCHSCREEN },
-
-	{ "TOUCH_FLIP", CG_GetTouchFlip, NULL },
-	{ "TOUCH_SCALE", CG_GetCvar, "cg_touch_scale" },
-
-	{ "ITEM_TIMER0", CG_GetItemTimer, (void *)0 },
-	{ "ITEM_TIMER0_COUNT", CG_GetItemTimerCount, (void *)0 },
-	{ "ITEM_TIMER0_LOCATION", CG_GetItemTimerLocation, (void *)0 },
-	{ "ITEM_TIMER0_TEAM", CG_GetItemTimerTeam, (void *)0 },
-	{ "ITEM_TIMER1", CG_GetItemTimer, (void *)1 },
-	{ "ITEM_TIMER1_COUNT", CG_GetItemTimerCount, (void *)1 },
-	{ "ITEM_TIMER1_LOCATION", CG_GetItemTimerLocation, (void *)1 },
-	{ "ITEM_TIMER1_TEAM", CG_GetItemTimerTeam, (void *)1 },
-	{ "ITEM_TIMER2", CG_GetItemTimer, (void *)2 },
-	{ "ITEM_TIMER2_COUNT", CG_GetItemTimerCount, (void *)2 },
-	{ "ITEM_TIMER2_LOCATION", CG_GetItemTimerLocation, (void *)2 },
-	{ "ITEM_TIMER2_TEAM", CG_GetItemTimerTeam, (void *)2 },
-	{ "ITEM_TIMER3", CG_GetItemTimer, (void *)3 },
-	{ "ITEM_TIMER3_COUNT", CG_GetItemTimerCount, (void *)3 },
-	{ "ITEM_TIMER3_LOCATION", CG_GetItemTimerLocation, (void *)3 },
-	{ "ITEM_TIMER3_TEAM", CG_GetItemTimerTeam, (void *)3 },
-	{ "ITEM_TIMER4", CG_GetItemTimer, (void *)4 },
-	{ "ITEM_TIMER4_COUNT", CG_GetItemTimerCount, (void *)4 },
-	{ "ITEM_TIMER4_LOCATION", CG_GetItemTimerLocation, (void *)4 },
-	{ "ITEM_TIMER4_TEAM", CG_GetItemTimerTeam, (void *)4 },
-	{ "ITEM_TIMER5", CG_GetItemTimer, (void *)5 },
-	{ "ITEM_TIMER5_COUNT", CG_GetItemTimerCount, (void *)5 },
-	{ "ITEM_TIMER5_LOCATION", CG_GetItemTimerLocation, (void *)5 },
-	{ "ITEM_TIMER5_TEAM", CG_GetItemTimerTeam, (void *)5 },
-	{ "ITEM_TIMER6", CG_GetItemTimer, (void *)6 },
-	{ "ITEM_TIMER6_COUNT", CG_GetItemTimerCount, (void *)6 },
-	{ "ITEM_TIMER6_LOCATION", CG_GetItemTimerLocation, (void *)6 },
-	{ "ITEM_TIMER6_TEAM", CG_GetItemTimerTeam, (void *)6 },
-	{ "ITEM_TIMER7", CG_GetItemTimer, (void *)7 },
-	{ "ITEM_TIMER7_COUNT", CG_GetItemTimerCount, (void *)7 },
-	{ "ITEM_TIMER7_LOCATION", CG_GetItemTimerLocation, (void *)7 },
-	{ "ITEM_TIMER7_TEAM", CG_GetItemTimerTeam, (void *)7 },
-
-	{ "TOUCH_ATTACK", CG_GetTouchButtonPressed, (void *)BUTTON_ATTACK },
-	{ "TOUCH_SPECIAL", CG_GetTouchButtonPressed, (void *)BUTTON_SPECIAL },
-	{ "TOUCH_UPMOVE", CG_GetTouchUpmove, NULL },
-	{ "TOUCH_MOVEDIR", CG_GetTouchMovementDirection, NULL },
 
 	{ NULL, NULL, NULL }
 };
@@ -1157,59 +999,10 @@ static struct shader_s *CG_GetWeaponIcon( int weapon ) {
 	return CG_MediaShader( cgs.media.shaderWeaponIcon[weapon - WEAP_GUNBLADE] );
 }
 
-static int cg_touch_dropWeapon;
-static float cg_touch_dropWeaponTime;
-
-/**
- * Offset for the weapon icon when dropping the weapon on the touch HUD.
- */
-static float cg_touch_dropWeaponX, cg_touch_dropWeaponY;
-
-/**
- * Resets touch weapon dropping if needed.
- */
-static void CG_CheckTouchWeaponDrop( void ) {
-	if( !cg_touch_dropWeapon ||
-		!GS_CanDropWeapon() ||
-		( cg.frame.playerState.pmove.pm_type != PM_NORMAL ) ||
-		!( cg.predictedPlayerState.inventory[cg_touch_dropWeapon] ) ) {
-		cg_touch_dropWeapon = 0;
-		cg_touch_dropWeaponTime = 0.0f;
-		return;
-	}
-
-	if( cg_touch_dropWeaponTime > 1.0f ) {
-		gsitem_t *item = GS_FindItemByTag( cg_touch_dropWeapon );
-		if( item ) {
-			trap_Cmd_ExecuteText( EXEC_NOW, va( "drop \"%s\"", item->name ) );
-		}
-		cg_touch_dropWeapon = 0;
-		cg_touch_dropWeaponTime = 0.0f;
-	}
-}
-
-/**
- * Sets the weapon to drop by holding its icon on the touch HUD.
- *
- * @param weaponTag tag of the weapon item to drop
- */
-static void CG_SetTouchWeaponDrop( int weaponTag ) {
-	cg_touch_dropWeapon = weaponTag;
-	cg_touch_dropWeaponTime = 0.0f;
-	CG_CheckTouchWeaponDrop();
-}
-
-/**
- * Touch release handler for the weapon icons.
- */
-static void CG_WeaponUpFunc( int id, int64_t time ) {
-	CG_SetTouchWeaponDrop( 0 );
-}
-
 /*
 * CG_DrawWeaponIcons
 */
-static void CG_DrawWeaponIcons( int x, int y, int offx, int offy, int iw, int ih, int align, bool touch ) {
+static void CG_DrawWeaponIcons( int x, int y, int offx, int offy, int iw, int ih, int align ) {
 	int curx, cury, curw, curh;
 	int i, j, n;
 	float fj, fn;
@@ -1252,49 +1045,25 @@ static void CG_DrawWeaponIcons( int x, int y, int offx, int offy, int iw, int ih
 		curx = CG_HorizontalAlignForWidth( x + (int)( offx * ( fj - fn / 2.0f ) ), align, curw );
 		cury = CG_VerticalAlignForHeight( y + (int)( offy * ( fj - fn / 2.0f ) ), align, curh );
 
-		if( touch ) {
-			if( cg.predictedPlayerState.inventory[WEAP_GUNBLADE + i] ) {
-				if( CG_TouchArea( TOUCHAREA_HUD_WEAPON | ( i << TOUCHAREA_SUB_SHIFT ), curx, cury, curw, curh, CG_WeaponUpFunc ) >= 0 ) {
-					if( !selected_weapon ) {
-						gsitem_t *item = GS_FindItemByTag( WEAP_GUNBLADE + i );
-						if( item ) {
-							trap_Cmd_ExecuteText( EXEC_NOW, va( "use %s", item->name ) ); // without quotes!
-						}
-					}
-					if( i ) { // don't drop gunblade
-						CG_SetTouchWeaponDrop( WEAP_GUNBLADE + i );
-					}
-					break;
-				}
-			}
-		} else {
-			if( cg.predictedPlayerState.inventory[WEAP_GUNBLADE + i] ) {
-				// swipe the weapon icon
-				if( cg_touch_dropWeapon == WEAP_GUNBLADE + i ) {
-					float dropOffset = ( bound( 0.75f, cg_touch_dropWeaponTime, 1.0f ) - 0.75f ) * 4.0f;
-					curx += cg_touch_dropWeaponX * dropOffset;
-					cury += cg_touch_dropWeaponY * dropOffset;
-				}
-
-				// wsw : pb : display a little box around selected weapon in weaponlist
-				if( selected_weapon ) {
-					if( customWeaponSelectPic ) {
-						trap_R_DrawStretchPic( curx, cury, curw, curh, 0, 0, 1, 1, colorTrans, trap_R_RegisterPic( customWeaponSelectPic ) );
-					} else {
-						trap_R_DrawStretchPic( curx, cury, curw, curh, 0, 0, 1, 1, colorTrans, CG_MediaShader( cgs.media.shaderSelect ) );
-					}
-				}
-				if( customWeaponPics[i] ) {
-					trap_R_DrawStretchPic( curx, cury, curw, curh, 0, 0, 1, 1, colorWhite, trap_R_RegisterPic( customWeaponPics[i] ) );
+		if( cg.predictedPlayerState.inventory[WEAP_GUNBLADE + i] ) {
+			// wsw : pb : display a little box around selected weapon in weaponlist
+			if( selected_weapon ) {
+				if( customWeaponSelectPic ) {
+					trap_R_DrawStretchPic( curx, cury, curw, curh, 0, 0, 1, 1, colorTrans, trap_R_RegisterPic( customWeaponSelectPic ) );
 				} else {
-					trap_R_DrawStretchPic( curx, cury, curw, curh, 0, 0, 1, 1, colorWhite, CG_GetWeaponIcon( WEAP_GUNBLADE + i ) );
+					trap_R_DrawStretchPic( curx, cury, curw, curh, 0, 0, 1, 1, colorTrans, CG_MediaShader( cgs.media.shaderSelect ) );
 				}
-			} else
-			if( customNoGunWeaponPics[i] ) {
-				trap_R_DrawStretchPic( curx, cury, curw, curh, 0, 0, 1, 1, colorWhite, trap_R_RegisterPic( customNoGunWeaponPics[i] ) );
-			} else {
-				trap_R_DrawStretchPic( curx, cury, curw, curh, 0, 0, 1, 1, colorWhite, CG_MediaShader( cgs.media.shaderNoGunWeaponIcon[i] ) );
 			}
+			if( customWeaponPics[i] ) {
+				trap_R_DrawStretchPic( curx, cury, curw, curh, 0, 0, 1, 1, colorWhite, trap_R_RegisterPic( customWeaponPics[i] ) );
+			} else {
+				trap_R_DrawStretchPic( curx, cury, curw, curh, 0, 0, 1, 1, colorWhite, CG_GetWeaponIcon( WEAP_GUNBLADE + i ) );
+			}
+		} else
+		if( customNoGunWeaponPics[i] ) {
+			trap_R_DrawStretchPic( curx, cury, curw, curh, 0, 0, 1, 1, colorWhite, trap_R_RegisterPic( customNoGunWeaponPics[i] ) );
+		} else {
+			trap_R_DrawStretchPic( curx, cury, curw, curh, 0, 0, 1, 1, colorWhite, CG_MediaShader( cgs.media.shaderNoGunWeaponIcon[i] ) );
 		}
 		j++;
 	}
@@ -1355,102 +1124,12 @@ static void CG_DrawWeaponAmmos( int x, int y, int offx, int offy, int fontsize, 
 			curx = x + (int)( offx * ( fj - fn / 2.0f ) );
 			cury = y + (int)( offy * ( fj - fn / 2.0f ) );
 
-			if( cg_touch_dropWeapon == WEAP_GUNBLADE + i ) {
-				float dropOffset = ( bound( 0.75f, cg_touch_dropWeaponTime, 1.0f ) - 0.75f ) * 4.0f;
-				curx += cg_touch_dropWeaponX * dropOffset;
-				cury += cg_touch_dropWeaponY * dropOffset;
-			}
-
 			if( cg.predictedPlayerState.inventory[i + startammo] ) {
 				CG_DrawHUDNumeric( curx, cury, align, color, curwh, curwh, cg.predictedPlayerState.inventory[i + startammo] );
 			}
 		}
 		j++;
 	}
-}
-
-static int cg_hud_weaponcrosstime;
-
-/*
-* CG_DrawWeaponCrossQuarter
-*/
-static void CG_DrawWeaponCrossQuarter( int ammopass, int quarter, int x, int y, int dirx, int diry, int iw, int ih, int ammoofs, int ammosize ) {
-	int i;
-	int first = quarter << 1;
-	int w[2], count = 0, t;
-	vec4_t color, colorTrans;
-
-	x += dirx * iw - ( iw >> 1 );
-	y += diry * ih - ( ih >> 1 );
-
-	for( i = 0; i < 2; i++ ) {
-		if( !cg.predictedPlayerState.inventory[WEAP_GUNBLADE + first + i] ) {
-			continue;
-		}
-		if( ( first + i ) /* show uncharged gunblade */ &&
-			!cg.predictedPlayerState.inventory[AMMO_GUNBLADE + first + i] &&
-			!cg.predictedPlayerState.inventory[AMMO_WEAK_GUNBLADE + first + i] ) {
-			continue;
-		}
-
-		w[count] = first + i;
-		count++;
-	}
-
-	if( !count ) {
-		return;
-	}
-
-	if( ( count == 2 ) && !CG_IsWeaponSelected( WEAP_GUNBLADE + w[0] ) &&
-		( CG_IsWeaponSelected( WEAP_GUNBLADE + w[1] ) || ( cg.lastCrossWeapons & ( 1 << quarter ) ) ) ) {
-		t = w[0];
-		w[0] = w[1];
-		w[1] = t;
-	}
-
-	VectorCopy( colorWhite, color );
-	color[3] = (float)cg_hud_weaponcrosstime * 0.004f;
-	clamp_high( color[3], 1.0f );
-	VectorCopy( colorWhite, colorTrans );
-	colorTrans[3] = color[3] * 0.5f;
-
-	if( !ammopass && CG_IsWeaponSelected( WEAP_GUNBLADE + w[0] ) ) {
-		if( customWeaponSelectPic ) {
-			trap_R_DrawStretchPic( x, y, iw, ih, 0.0f, 0.0f, 1.0f, 1.0f, colorTrans, trap_R_RegisterPic( customWeaponSelectPic ) );
-		} else {
-			trap_R_DrawStretchPic( x, y, iw, ih, 0.0f, 0.0f, 1.0f, 1.0f, colorTrans, CG_MediaShader( cgs.media.shaderSelect ) );
-		}
-	}
-
-	for( i = 0; i < count; i++ ) {
-		if( !ammopass ) {
-			if( customWeaponPics[w[i]] ) {
-				trap_R_DrawStretchPic( x, y, iw, ih, 0.0f, 0.0f, 1.0f, 1.0f, color, trap_R_RegisterPic( customWeaponPics[w[i]] ) );
-			} else {
-				trap_R_DrawStretchPic( x, y, iw, ih, 0.0f, 0.0f, 1.0f, 1.0f, color, CG_GetWeaponIcon( WEAP_GUNBLADE + w[i] ) );
-			}
-		}
-
-		if( ammopass && w[i] /* don't show 1 for charged gunblade */ && cg.predictedPlayerState.inventory[AMMO_GUNBLADE + w[i]] ) {
-			CG_DrawHUDNumeric( x + ( iw >> 1 ), y + ( ih >> 1 ) + ammoofs, ALIGN_CENTER_MIDDLE,
-							   CG_IsWeaponSelected( WEAP_GUNBLADE + w[i] ) ? color : colorTrans, ammosize, ammosize,
-							   cg.predictedPlayerState.inventory[AMMO_GUNBLADE + w[i]] );
-		}
-
-		x += dirx * iw;
-		y += diry * ih;
-	}
-}
-
-static void CG_CheckWeaponCross( void ) {
-	if( cg.frame.playerState.pmove.pm_type != PM_NORMAL ) {
-		cg_hud_weaponcrosstime = 0;
-	}
-}
-
-void CG_ShowWeaponCross( void ) {
-	cg_hud_weaponcrosstime = 600;
-	CG_CheckWeaponCross();
 }
 
 //=============================================================================
@@ -2418,7 +2097,7 @@ static bool CG_LFuncCustomWeaponSelect( struct cg_layoutnode_s *commandnode, str
 	return true;
 }
 
-static void CG_LFuncsWeaponIcons( struct cg_layoutnode_s *argumentnode, bool touch ) {
+static void CG_LFuncsWeaponIcons( struct cg_layoutnode_s *argumentnode ) {
 	int offx, offy, w, h;
 
 	offx = (int)( CG_GetNumericArg( &argumentnode ) * cgs.vidWidth / 800 );
@@ -2426,63 +2105,11 @@ static void CG_LFuncsWeaponIcons( struct cg_layoutnode_s *argumentnode, bool tou
 	w = (int)( CG_GetNumericArg( &argumentnode ) * cgs.vidWidth / 800 );
 	h = (int)( CG_GetNumericArg( &argumentnode ) * cgs.vidHeight / 600 );
 
-	CG_DrawWeaponIcons( layout_cursor_x, layout_cursor_y, offx, offy, w, h, layout_cursor_align, touch );
+	CG_DrawWeaponIcons( layout_cursor_x, layout_cursor_y, offx, offy, w, h, layout_cursor_align );
 }
 
 static bool CG_LFuncDrawWeaponIcons( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
-	CG_LFuncsWeaponIcons( argumentnode, false );
-	return true;
-}
-
-static bool CG_LFuncTouchWeaponIcons( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
-	CG_LFuncsWeaponIcons( argumentnode, true );
-	return true;
-}
-
-static bool CG_LFuncSetTouchWeaponDropOffset( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
-	float x, y;
-
-	x = CG_GetNumericArg( &argumentnode );
-	x = SCALE_X( x );
-	y = CG_GetNumericArg( &argumentnode );
-	y = SCALE_Y( y );
-
-	cg_touch_dropWeaponX = Q_rint( x );
-	cg_touch_dropWeaponY = Q_rint( y );
-	return true;
-}
-
-static bool CG_LFuncDrawWeaponCross( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
-	int ammoofs = (int)( CG_GetNumericArg( &argumentnode ) * cgs.vidHeight / 600 );
-	int ammosize = (int)( CG_GetNumericArg( &argumentnode ) * cgs.vidHeight / 600 );
-	int ammopass;
-
-	if( cg_hud_weaponcrosstime > 0 ) {
-		for( ammopass = 0; ammopass < 2; ammopass++ ) {
-			CG_DrawWeaponCrossQuarter( ammopass, 0, layout_cursor_x, layout_cursor_y,  0, -1, layout_cursor_width, layout_cursor_height, ammoofs, ammosize );
-			CG_DrawWeaponCrossQuarter( ammopass, 1, layout_cursor_x, layout_cursor_y,  1,  0, layout_cursor_width, layout_cursor_height, ammoofs, ammosize );
-			CG_DrawWeaponCrossQuarter( ammopass, 2, layout_cursor_x, layout_cursor_y,  0,  1, layout_cursor_width, layout_cursor_height, ammoofs, ammosize );
-			CG_DrawWeaponCrossQuarter( ammopass, 3, layout_cursor_x, layout_cursor_y, -1,  0, layout_cursor_width, layout_cursor_height, ammoofs, ammosize );
-			if( ammosize <= 0 ) {
-				break;
-			}
-		}
-	}
-	return true;
-}
-
-static bool CG_LFuncDrawCaptureAreas( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
-	// FIXME: DELETE ME
-	return true;
-}
-
-static bool CG_LFuncDrawMiniMap( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
-	float viewDist;
-
-	viewDist = CG_GetNumericArg( &argumentnode );
-
-	CG_DrawMiniMap( layout_cursor_x, layout_cursor_y, layout_cursor_width, layout_cursor_height, viewDist, layout_cursor_align, layout_cursor_color );
-
+	CG_LFuncsWeaponIcons( argumentnode );
 	return true;
 }
 
@@ -2524,11 +2151,6 @@ static bool CG_LFuncDrawWeaponStrongAmmo( struct cg_layoutnode_s *commandnode, s
 	return true;
 }
 
-static bool CG_LFuncDrawTeamInfo( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
-	CG_DrawTeamInfo( layout_cursor_x, layout_cursor_y, layout_cursor_align, CG_GetLayoutCursorFont(), layout_cursor_color );
-	return true;
-}
-
 static bool CG_LFuncDrawCrossHair( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	CG_DrawCrosshair();
 	return true;
@@ -2559,167 +2181,6 @@ static bool CG_LFuncDrawChat( struct cg_layoutnode_s *commandnode, struct cg_lay
 	return true;
 }
 
-static void CG_MoveUpFunc( int id, int64_t time ) {
-	CG_SetTouchpad( TOUCHPAD_MOVE, -1 );
-}
-
-static bool CG_LFuncTouchMove( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
-	int touch = CG_TouchArea( TOUCHAREA_HUD_MOVE,
-							  CG_HorizontalAlignForWidth( layout_cursor_x, layout_cursor_align, layout_cursor_width ),
-							  CG_VerticalAlignForHeight( layout_cursor_y, layout_cursor_align, layout_cursor_height ),
-							  layout_cursor_width, layout_cursor_height, CG_MoveUpFunc );
-	if( touch >= 0 ) {
-		CG_SetTouchpad( TOUCHPAD_MOVE, touch );
-	}
-	return true;
-}
-
-static void CG_ViewUpFunc( int id, int64_t time ) {
-	CG_SetTouchpad( TOUCHPAD_VIEW, -1 );
-
-	if( cg_hud_touch_zoomSeq ) {
-		cg_touch_t *touch = CG_GetTouch( id );
-
-		if( !touch )
-			return;
-
-		int threshold = ( int )( cg_touch_zoomThres->value * cgs.pixelRatio );
-		if( !time || ( (int)( time - cg_hud_touch_zoomLastTouch ) > cg_touch_zoomTime->integer ) ||
-			( abs( touch->x - cg_hud_touch_zoomX ) > threshold ) ||
-			( abs( touch->y - cg_hud_touch_zoomY ) > threshold ) ) {
-			cg_hud_touch_zoomSeq = 0;
-		}
-
-		if( cg_hud_touch_zoomSeq == 1 ) {
-			cg_hud_touch_zoomSeq = 2;
-			cg_hud_touch_zoomLastTouch = time;
-			cg_hud_touch_zoomX = touch->x;
-			cg_hud_touch_zoomY = touch->y;
-		} else if( cg_hud_touch_zoomSeq == 3 ) {
-			cg_hud_touch_zoomSeq = 0;
-			cg_hud_touch_buttons ^= BUTTON_ZOOM; // toggle zoom after a double tap
-		}
-	}
-}
-
-static bool CG_LFuncTouchView( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
-	int touchID = CG_TouchArea( TOUCHAREA_HUD_VIEW,
-								CG_HorizontalAlignForWidth( layout_cursor_x, layout_cursor_align, layout_cursor_width ),
-								CG_VerticalAlignForHeight( layout_cursor_y, layout_cursor_align, layout_cursor_height ),
-								layout_cursor_width, layout_cursor_height, CG_ViewUpFunc );
-	if( touchID >= 0 ) {
-		CG_SetTouchpad( TOUCHPAD_VIEW, touchID );
-
-		cg_touch_t *touch = CG_GetTouch( touchID );
-		if( !touch ) {
-			return true;
-		}
-
-		if( cg_hud_touch_zoomSeq ) {
-			int threshold = ( int )( cg_touch_zoomThres->value * cgs.pixelRatio );
-			if( ( ( int )( touch->time - cg_hud_touch_zoomLastTouch ) > cg_touch_zoomTime->integer ) ||
-				( abs( touch->x - cg_hud_touch_zoomX ) > threshold ) ||
-				( abs( touch->y - cg_hud_touch_zoomY ) > threshold ) ) {
-				cg_hud_touch_zoomSeq = 0;
-			}
-		}
-		if( !cg_hud_touch_zoomSeq || ( cg_hud_touch_zoomSeq == 2 ) ) {
-			cg_hud_touch_zoomSeq++;
-			cg_hud_touch_zoomLastTouch = touch->time;
-			cg_hud_touch_zoomX = touch->x;
-			cg_hud_touch_zoomY = touch->y;
-		}
-	}
-
-	return true;
-}
-
-static void CG_UpmoveUpFunc( int id, int64_t time ) {
-	cg_hud_touch_upmove = 0;
-}
-
-static bool CG_LFuncTouchJump( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
-	if( CG_TouchArea( TOUCHAREA_HUD_JUMP,
-					  CG_HorizontalAlignForWidth( layout_cursor_x, layout_cursor_align, layout_cursor_width ),
-					  CG_VerticalAlignForHeight( layout_cursor_y, layout_cursor_align, layout_cursor_height ),
-					  layout_cursor_width, layout_cursor_height, CG_UpmoveUpFunc ) >= 0 ) {
-		cg_hud_touch_upmove = 1;
-	}
-	return true;
-}
-
-static bool CG_LFuncTouchCrouch( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
-	if( CG_TouchArea( TOUCHAREA_HUD_CROUCH,
-					  CG_HorizontalAlignForWidth( layout_cursor_x, layout_cursor_align, layout_cursor_width ),
-					  CG_VerticalAlignForHeight( layout_cursor_y, layout_cursor_align, layout_cursor_height ),
-					  layout_cursor_width, layout_cursor_height, CG_UpmoveUpFunc ) >= 0 ) {
-		cg_hud_touch_upmove = -1;
-	}
-	return true;
-}
-
-static void CG_AttackUpFunc( int id, int64_t time ) {
-	cg_hud_touch_buttons &= ~BUTTON_ATTACK;
-}
-
-static bool CG_LFuncTouchAttack( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
-	if( CG_TouchArea( TOUCHAREA_HUD_ATTACK,
-					  CG_HorizontalAlignForWidth( layout_cursor_x, layout_cursor_align, layout_cursor_width ),
-					  CG_VerticalAlignForHeight( layout_cursor_y, layout_cursor_align, layout_cursor_height ),
-					  layout_cursor_width, layout_cursor_height, CG_AttackUpFunc ) >= 0 ) {
-		cg_hud_touch_buttons |= BUTTON_ATTACK;
-	}
-	return true;
-}
-
-static void CG_SpecialUpFunc( int id, int64_t time ) {
-	cg_hud_touch_buttons &= ~BUTTON_SPECIAL;
-}
-
-static bool CG_LFuncTouchSpecial( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
-	if( CG_TouchArea( TOUCHAREA_HUD_SPECIAL,
-					  CG_HorizontalAlignForWidth( layout_cursor_x, layout_cursor_align, layout_cursor_width ),
-					  CG_VerticalAlignForHeight( layout_cursor_y, layout_cursor_align, layout_cursor_height ),
-					  layout_cursor_width, layout_cursor_height, CG_SpecialUpFunc ) >= 0 ) {
-		cg_hud_touch_buttons |= BUTTON_SPECIAL;
-	}
-	return true;
-}
-
-static bool CG_LFuncTouchClassAction( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
-	if( CG_TouchArea( TOUCHAREA_HUD_CLASSACTION,
-					  CG_HorizontalAlignForWidth( layout_cursor_x, layout_cursor_align, layout_cursor_width ),
-					  CG_VerticalAlignForHeight( layout_cursor_y, layout_cursor_align, layout_cursor_height ),
-					  layout_cursor_width, layout_cursor_height, NULL ) >= 0 ) {
-		trap_Cmd_ExecuteText( EXEC_NOW, va( "classAction%i", ( int )CG_GetNumericArg( &argumentnode ) ) );
-	}
-	return true;
-}
-
-static bool CG_LFuncTouchDropItem( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
-	if( CG_TouchArea( TOUCHAREA_HUD_DROPITEM,
-					  CG_HorizontalAlignForWidth( layout_cursor_x, layout_cursor_align, layout_cursor_width ),
-					  CG_VerticalAlignForHeight( layout_cursor_y, layout_cursor_align, layout_cursor_height ),
-					  layout_cursor_width, layout_cursor_height, NULL ) >= 0 ) {
-		trap_Cmd_ExecuteText( EXEC_NOW, va( "drop \"%s\"", CG_GetStringArg( &argumentnode ) ) );
-	}
-	return true;
-}
-
-static void CG_ScoresUpFunc( int id, int64_t time ) {
-	CG_ScoresOff_f();
-}
-
-static bool CG_LFuncTouchScores( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
-	if( CG_TouchArea( TOUCHAREA_HUD_SCORES,
-					  CG_HorizontalAlignForWidth( layout_cursor_x, layout_cursor_align, layout_cursor_width ),
-					  CG_VerticalAlignForHeight( layout_cursor_y, layout_cursor_align, layout_cursor_height ),
-					  layout_cursor_width, layout_cursor_height, CG_ScoresUpFunc ) >= 0 ) {
-		CG_ScoresOn_f();
-	}
-	return true;
-}
-
 static bool CG_LFuncIf( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	return (int)CG_GetNumericArg( &argumentnode ) != 0;
 }
@@ -2733,7 +2194,6 @@ typedef struct cg_layoutcommand_s
 {
 	const char *name;
 	bool ( *func )( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments );
-	bool ( *touchfunc )( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments );
 	int numparms;
 	const char *help;
 	bool precache;
@@ -2744,7 +2204,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"setScale",
 		CG_LFuncScale,
-		CG_LFuncScale,
 		1,
 		"Sets the cursor scaling method.",
 		false
@@ -2752,7 +2211,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 
 	{
 		"setCursor",
-		CG_LFuncCursor,
 		CG_LFuncCursor,
 		2,
 		"Sets the cursor position to x and y coordinates.",
@@ -2762,7 +2220,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"setCursorX",
 		CG_LFuncCursorX,
-		CG_LFuncCursorX,
 		1,
 		"Sets the cursor x position.",
 		false
@@ -2770,7 +2227,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 
 	{
 		"setCursorY",
-		CG_LFuncCursorY,
 		CG_LFuncCursorY,
 		1,
 		"Sets the cursor y position.",
@@ -2780,7 +2236,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"moveCursor",
 		CG_LFuncMoveCursor,
-		CG_LFuncMoveCursor,
 		2,
 		"Moves the cursor position by dx and dy.",
 		false
@@ -2788,7 +2243,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 
 	{
 		"setAlign",
-		CG_LFuncAlign,
 		CG_LFuncAlign,
 		2,
 		"Changes align setting. Parameters: horizontal alignment, vertical alignment",
@@ -2798,7 +2252,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"setSize",
 		CG_LFuncSize,
-		CG_LFuncSize,
 		2,
 		"Sets width and height. Used for pictures and models.",
 		false
@@ -2806,7 +2259,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 
 	{
 		"setWidth",
-		CG_LFuncSizeWidth,
 		CG_LFuncSizeWidth,
 		1,
 		"Sets width. Used for pictures and models.",
@@ -2816,7 +2268,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"setHeight",
 		CG_LFuncSizeHeight,
-		CG_LFuncSizeHeight,
 		1,
 		"Sets height. Used for pictures and models.",
 		false
@@ -2824,7 +2275,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 
 	{
 		"setFontFamily",
-		CG_LFuncFontFamily,
 		CG_LFuncFontFamily,
 		1,
 		"Sets font by font family. Accepts 'con_fontSystem', as a shortcut to default game font family.",
@@ -2834,7 +2284,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"setSpecialFontFamily",
 		CG_LFuncSpecialFontFamily,
-		CG_LFuncSpecialFontFamily,
 		1,
 		"Sets font by font family. The font will not overriden by the fallback font used when CJK is detected.",
 		false
@@ -2842,7 +2291,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 
 	{
 		"setFontSize",
-		CG_LFuncFontSize,
 		CG_LFuncFontSize,
 		1,
 		"Sets font by font name. Accepts 'con_fontSystemSmall', 'con_fontSystemMedium' and 'con_fontSystemBig' as shortcuts to default game fonts sizes.",
@@ -2852,7 +2300,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"setFontStyle",
 		CG_LFuncFontStyle,
-		CG_LFuncFontStyle,
 		1,
 		"Sets font style. Possible values are: 'normal', 'italic', 'bold' and 'bold-italic'.",
 		false
@@ -2861,7 +2308,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"setColor",
 		CG_LFuncColor,
-		NULL,
 		4,
 		"Sets color setting in RGBA mode. Used for text and pictures",
 		false
@@ -2870,7 +2316,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"setColorToTeamColor",
 		CG_LFuncColorToTeamColor,
-		NULL,
 		1,
 		"Sets cursor color to the color of the team provided in the argument",
 		false
@@ -2879,7 +2324,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"setColorAlpha",
 		CG_LFuncColorAlpha,
-		NULL,
 		1,
 		"Changes the alpha value of the current color",
 		false
@@ -2888,7 +2332,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"setRotationSpeed",
 		CG_LFuncRotationSpeed,
-		NULL,
 		3,
 		"Sets rotation speeds as vector. Used for models",
 		false
@@ -2897,7 +2340,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"setCustomWeaponIcons",
 		CG_LFuncCustomWeaponIcons,
-		NULL,
 		3,
 		"Sets a custom shader for weapon icons",
 		false
@@ -2906,7 +2348,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"resetCustomWeaponIcons",
 		CG_LFuncResetCustomWeaponIcons,
-		NULL,
 		0,
 		"Resets the custom shaders for weapon icons",
 		false
@@ -2915,7 +2356,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"setCustomWeaponSelect",
 		CG_LFuncCustomWeaponSelect,
-		NULL,
 		1,
 		"Sets a custom shader for weapon icons",
 		false
@@ -2924,7 +2364,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"drawObituaries",
 		CG_LFuncDrawObituaries,
-		NULL,
 		2,
 		"Draws graphical death messages",
 		false
@@ -2933,7 +2372,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"drawAwards",
 		CG_LFuncDrawAwards,
-		NULL,
 		0,
 		"Draws award messages",
 		false
@@ -2942,7 +2380,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"drawClock",
 		CG_LFuncDrawClock,
-		NULL,
 		0,
 		"Draws clock",
 		false
@@ -2951,7 +2388,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"drawHelpString",
 		CG_LFuncDrawHelpMessage,
-		NULL,
 		0,
 		"Draws the help message",
 		false
@@ -2960,7 +2396,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"drawPlayerName",
 		CG_LFuncDrawPlayerName,
-		NULL,
 		1,
 		"Draws the name of the player with id provided by the argument, colored with color tokens, white by default",
 		false
@@ -2969,7 +2404,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"drawCleanPlayerName",
 		CG_LFuncDrawCleanPlayerName,
-		NULL,
 		1,
 		"Draws the name of the player with id provided by the argument, using the current color",
 		false
@@ -2978,7 +2412,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"drawPointing",
 		CG_LFuncDrawPointed,
-		NULL,
 		0,
 		"Draws the name of the player in the crosshair",
 		false
@@ -2987,7 +2420,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"drawTeamMates",
 		CG_LFuncDrawTeamMates,
-		NULL,
 		0,
 		"Draws indicators where team mates are",
 		false
@@ -2996,7 +2428,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"drawStatString",
 		CG_LFuncDrawConfigstring,
-		NULL,
 		1,
 		"Draws configstring of argument id",
 		false
@@ -3005,7 +2436,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"drawCleanStatString",
 		CG_LFuncDrawCleanConfigstring,
-		NULL,
 		1,
 		"Draws configstring of argument id, ignoring color codes",
 		false
@@ -3014,7 +2444,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"drawItemName",
 		CG_LFuncDrawItemNameFromIndex,
-		NULL,
 		1,
 		"Draws the name of the item with given item index",
 		false
@@ -3023,7 +2452,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"drawString",
 		CG_LFuncDrawString,
-		NULL,
 		1,
 		"Draws the string in the argument",
 		false
@@ -3032,7 +2460,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"drawStringNum",
 		CG_LFuncDrawNumeric2,
-		NULL,
 		1,
 		"Draws numbers as text",
 		false
@@ -3041,7 +2468,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"drawStringRepeat",
 		CG_LFuncDrawStringRepeat,
-		NULL,
 		2,
 		"Draws argument string multiple times",
 		false
@@ -3050,7 +2476,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"drawStringRepeatConfigString",
 		CG_LFuncDrawStringRepeatConfigString,
-		NULL,
 		2,
 		"Draws argument string multiple times",
 		false
@@ -3059,7 +2484,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"drawNum",
 		CG_LFuncDrawNumeric,
-		NULL,
 		1,
 		"Draws numbers of given character size",
 		false
@@ -3068,7 +2492,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"drawStretchNum",
 		CG_LFuncDrawStretchNum,
-		NULL,
 		1,
 		"Draws numbers stretch inside a given size",
 		false
@@ -3077,7 +2500,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"drawBar",
 		CG_LFuncDrawBar,
-		NULL,
 		2,
 		"Draws a bar of size setting, the bar is filled in proportion to the arguments",
 		false
@@ -3086,7 +2508,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"drawPicBar",
 		CG_LFuncDrawPicBar,
-		NULL,
 		3,
 		"Draws a picture of size setting, is filled in proportion to the 2 arguments (value, maxvalue). 3rd argument is the picture path",
 		false
@@ -3095,7 +2516,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"drawCrosshair",
 		CG_LFuncDrawCrossHair,
-		NULL,
 		0,
 		"Draws the game crosshair",
 		false
@@ -3104,7 +2524,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"drawKeyState",
 		CG_LFuncDrawKeyState,
-		NULL,
 		1,
 		"Draws icons showing if the argument key is pressed. Possible arg: forward, backward, left, right, fire, jump, crouch, special",
 		false
@@ -3113,7 +2532,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"drawNetIcon",
 		CG_LFuncDrawNet,
-		NULL,
 		0,
 		"Draws the disconnection icon",
 		false
@@ -3122,7 +2540,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"drawChat",
 		CG_LFuncDrawChat,
-		NULL,
 		3,
 		"Draws the game chat messages",
 		false
@@ -3131,7 +2548,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"drawPicByIndex",
 		CG_LFuncDrawPicByIndex,
-		NULL,
 		1,
 		"Draws a pic with argument as imageIndex",
 		true
@@ -3140,7 +2556,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"drawPicByItemIndex",
 		CG_LFuncDrawPicByItemIndex,
-		NULL,
 		1,
 		"Draws a item icon pic with argument as itemIndex",
 		false
@@ -3149,7 +2564,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"drawPicByName",
 		CG_LFuncDrawPicByName,
-		NULL,
 		1,
 		"Draws a pic with argument being the file path",
 		true
@@ -3158,7 +2572,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"drawSubPicByName",
 		CG_LFuncDrawSubPicByName,
-		NULL,
 		5,
 		"Draws a part of a pic with arguments being the file path and the texture coordinates",
 		true
@@ -3167,7 +2580,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"drawRotatedPicByName",
 		CG_LFuncDrawRotatedPicByName,
-		NULL,
 		2,
 		"Draws a pic with arguments being the file path and the rotation",
 		true
@@ -3176,7 +2588,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"drawModelByIndex",
 		CG_LFuncDrawModelByIndex,
-		NULL,
 		1,
 		"Draws a model with argument being the modelIndex",
 		true
@@ -3185,7 +2596,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"drawModelByName",
 		CG_LFuncDrawModelByName,
-		NULL,
 		2,
 		"Draws a model with argument being the path to the model file",
 		true
@@ -3194,7 +2604,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"drawModelByItemIndex",
 		CG_LFuncDrawModelByItemIndex,
-		NULL,
 		1,
 		"Draws a item model with argument being the item index",
 		false
@@ -3203,51 +2612,14 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"drawWeaponIcons",
 		CG_LFuncDrawWeaponIcons,
-		CG_LFuncTouchWeaponIcons,
 		4,
 		"Draws the icons of weapon/ammo owned by the player, arguments are offset x, offset y, size x, size y",
 		false
 	},
 
 	{
-		"setTouchWeaponDropOffset",
-		CG_LFuncSetTouchWeaponDropOffset,
-		CG_LFuncSetTouchWeaponDropOffset,
-		2,
-		"Sets the movement of weapon icons when dropping weapons on touch HUDs"
-	},
-
-	{
-		"drawWeaponCross",
-		CG_LFuncDrawWeaponCross,
-		NULL,
-		2,
-		"Draws the weapon selection cross, cursor sets the center, size sets the size of each icon, arguments are ammo y offset and size",
-		false
-	},
-
-	{
-		"drawCaptureAreas",
-		CG_LFuncDrawCaptureAreas,
-		NULL,
-		3,
-		"Draws the capture areas for iTDM",
-		false
-	},
-
-	{
-		"drawMiniMap",
-		CG_LFuncDrawMiniMap,
-		NULL,
-		2,
-		"Draws a minimap (radar). Arguments are : draw_playernames, draw_itemnames",
-		false
-	},
-
-	{
 		"drawWeaponWeakAmmo",
 		CG_LFuncDrawWeaponWeakAmmo,
-		NULL,
 		3,
 		"Draws the amount of weak ammo owned by the player, arguments are offset x, offset y, fontsize",
 		false
@@ -3256,7 +2628,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"drawWeaponStrongAmmo",
 		CG_LFuncDrawWeaponStrongAmmo,
-		NULL,
 		3,
 		"Draws the amount of strong ammo owned by the player,  arguments are offset x, offset y, fontsize",
 		false
@@ -3265,24 +2636,13 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"drawWeaponIcon",
 		CG_LFuncDrawWeaponIcon,
-		NULL,
 		0,
 		"Draws the icon of the current weapon",
 		false
 	},
 
 	{
-		"drawTeamInfo",
-		CG_LFuncDrawTeamInfo,
-		NULL,
-		0,
-		"Draws the Team Info (locations) box",
-		false
-	},
-
-	{
 		"if",
-		CG_LFuncIf,
 		CG_LFuncIf,
 		1,
 		"Conditional expression. Argument accepts operations >, <, ==, >=, <=, etc",
@@ -3292,7 +2652,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"ifnot",
 		CG_LFuncIfNot,
-		CG_LFuncIfNot,
 		1,
 		"Negative conditional expression. Argument accepts operations >, <, ==, >=, <=, etc",
 		false
@@ -3300,7 +2659,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 
 	{
 		"endif",
-		NULL,
 		NULL,
 		0,
 		"End of conditional expression block",
@@ -3310,7 +2668,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"drawTimer",
 		CG_LFuncDrawTimer,
-		NULL,
 		1,
 		"Draws a timer clock for the race gametype",
 		false
@@ -3318,104 +2675,12 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"drawPicVar",
 		CG_LFuncDrawPicVar,
-		NULL,
 		6,
 		"Draws a picture from a sequence, depending on the value of a given parameter. Parameters: minval, maxval, value, firstimg, lastimg, imagename (replacing ## by the picture number, no leading zeros), starting at 0)",
 		false
 	},
 
 	{
-		"drawLocationName",
-		CG_LFuncDrawLocationName,
-		NULL,
-		1,
-		"Draws the location name with argument being location tag/index",
-		false
-	},
-
-	{
-		"touchMove",
-		NULL,
-		CG_LFuncTouchMove,
-		0,
-		"Places movement touchpad",
-		false
-	},
-
-	{
-		"touchView",
-		NULL,
-		CG_LFuncTouchView,
-		0,
-		"Places view rotation touchpad",
-		false
-	},
-
-	{
-		"touchJump",
-		NULL,
-		CG_LFuncTouchJump,
-		0,
-		"Places jump button",
-		false
-	},
-
-	{
-		"touchCrouch",
-		NULL,
-		CG_LFuncTouchCrouch,
-		0,
-		"Places crouch button",
-		false
-	},
-
-	{
-		"touchAttack",
-		NULL,
-		CG_LFuncTouchAttack,
-		0,
-		"Places attack button",
-		false
-	},
-
-	{
-		"touchSpecial",
-		NULL,
-		CG_LFuncTouchSpecial,
-		0,
-		"Places special button",
-		false
-	},
-
-	{
-		"touchClassAction",
-		NULL,
-		CG_LFuncTouchClassAction,
-		1,
-		"Places class action button",
-		false
-	},
-
-	{
-		"touchDropItem",
-		NULL,
-		CG_LFuncTouchDropItem,
-		1,
-		"Places item drop button",
-		false
-	},
-
-	{
-		"touchScores",
-		NULL,
-		CG_LFuncTouchScores,
-		0,
-		"Places scoreboard button",
-		false
-	},
-
-	{
-		NULL,
 		NULL,
 		NULL,
 		0,
@@ -3476,7 +2741,6 @@ void Cmd_CG_PrintHudHelp_f( void ) {
 typedef struct cg_layoutnode_s
 {
 	bool ( *func )( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments );
-	bool ( *touchfunc )( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments );
 	int type;
 	char *string;
 	int integer;
@@ -3560,7 +2824,6 @@ static cg_layoutnode_t *CG_LayoutParseCommandNode( const char *token ) {
 	node->value = 0.0f;
 	node->string = CG_CopyString( command->name );
 	node->func = command->func;
-	node->touchfunc = command->touchfunc;
 	node->ifthread = NULL;
 	node->precache = command->precache;
 
@@ -3669,7 +2932,6 @@ static cg_layoutnode_t *CG_LayoutParseArgumentNode( const char *token ) {
 	node->value = atof( valuetok );
 	node->string = CG_CopyString( token );
 	node->func = NULL;
-	node->touchfunc = NULL;
 	node->ifthread = NULL;
 	node->precache = false;
 
@@ -4010,7 +3272,7 @@ static void CG_ParseLayoutScript( char *string, cg_layoutnode_t *rootnode ) {
 * When finding an "if" command with a subtree, we execute the "if" command. In the case it
 * returns any value, we recurse execute the subtree
 */
-static void CG_RecurseExecuteLayoutThread( cg_layoutnode_t *rootnode, bool touch ) {
+static void CG_RecurseExecuteLayoutThread( cg_layoutnode_t *rootnode ) {
 	cg_layoutnode_t *argumentnode = NULL;
 	cg_layoutnode_t *commandnode = NULL;
 	int numArguments;
@@ -4048,20 +3310,12 @@ static void CG_RecurseExecuteLayoutThread( cg_layoutnode_t *rootnode, bool touch
 			CG_Printf( "ERROR: Layout command %s: invalid argument count (expecting %i, found %i)\n", commandnode->string, commandnode->integer, numArguments );
 			return;
 		}
-		if( !touch && commandnode->func ) {
+		if( commandnode->func ) {
 			//special case for if commands
 			if( commandnode->func( commandnode, argumentnode, numArguments ) ) {
 				// execute the "if" thread when command returns a value
 				if( commandnode->ifthread ) {
-					CG_RecurseExecuteLayoutThread( commandnode->ifthread, touch );
-				}
-			}
-		} else if( touch && commandnode->touchfunc ) {
-			//special case for if commands
-			if( commandnode->touchfunc( commandnode, argumentnode, numArguments ) ) {
-				// execute the "if" thread when command returns a value
-				if( commandnode->ifthread ) {
-					CG_RecurseExecuteLayoutThread( commandnode->ifthread, touch );
+					CG_RecurseExecuteLayoutThread( commandnode->ifthread );
 				}
 			}
 		}
@@ -4081,8 +3335,8 @@ static void CG_RecurseExecuteLayoutThread( cg_layoutnode_t *rootnode, bool touch
 /*
 * CG_ExecuteLayoutProgram
 */
-void CG_ExecuteLayoutProgram( struct cg_layoutnode_s *rootnode, bool touch ) {
-	CG_RecurseExecuteLayoutThread( rootnode, touch );
+void CG_ExecuteLayoutProgram( struct cg_layoutnode_s *rootnode ) {
+	CG_RecurseExecuteLayoutThread( rootnode );
 }
 
 //=============================================================================
@@ -4453,8 +3707,6 @@ static void CG_LoadStatusBarFile( char *path ) {
 		return;
 	}
 
-	CG_ClearHUDInputState();
-
 	// load the new status bar program
 	CG_ParseLayoutScript( opt, cg.statusBar );
 
@@ -4473,8 +3725,6 @@ static void CG_LoadStatusBarFile( char *path ) {
 		customNoGunWeaponPics[i] = NULL;
 	}
 	customWeaponSelectPic = NULL;
-
-	cg_touch_dropWeaponX = cg_touch_dropWeaponY = 0.0f;
 }
 
 /*
@@ -4482,7 +3732,7 @@ static void CG_LoadStatusBarFile( char *path ) {
 */
 void CG_LoadStatusBar( void ) {
 	cvar_t *hud = ISREALSPECTATOR() ? cg_specHUD : cg_clientHUD;
-	const char *default_hud = ( ( trap_IN_SupportedDevices() & IN_DEVICE_TOUCHSCREEN ) ? "default_touch" : "default" );
+	const char *default_hud = "default";
 	size_t filename_size;
 	char *filename;
 
@@ -4512,46 +3762,4 @@ void CG_LoadStatusBar( void ) {
 	} else {
 		trap_Cvar_Set( hud->name, default_hud );
 	}
-}
-
-/*
-* CG_GetHUDTouchButtons
-*/
-void CG_GetHUDTouchButtons( int *buttons, int *upmove ) {
-	if( buttons ) {
-		*buttons = cg_hud_touch_buttons;
-	}
-	if( upmove ) {
-		*upmove = cg_hud_touch_upmove;
-	}
-}
-
-/*
-* CG_UpdateHUDPostDraw
-*/
-void CG_UpdateHUDPostDraw( void ) {
-	cg_hud_weaponcrosstime -= cg.frameTime;
-	CG_CheckWeaponCross();
-
-	cg_touch_dropWeaponTime += cg.frameTime;
-	CG_CheckTouchWeaponDrop();
-}
-
-/*
-* CG_UpdateHUDPostTouch
-*/
-void CG_UpdateHUDPostTouch( void ) {
-	if( cg.frame.playerState.pmove.pm_type != PM_NORMAL ) {
-		cg_hud_touch_buttons &= ~BUTTON_ZOOM;
-	}
-}
-
-/*
-* CG_ClearHUDInputState
-*/
-void CG_ClearHUDInputState( void ) {
-	CG_CancelTouches();
-
-	cg_hud_touch_zoomSeq = 0;
-	cg_hud_touch_buttons &= ~BUTTON_ZOOM;
 }

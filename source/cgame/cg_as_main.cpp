@@ -43,13 +43,6 @@ static cg_asApiFuncPtr_t cg_asCGameAPI[] = {
 
 //=======================================================================
 
-static const gs_asEnumVal_t asLimitsEnumVals[] =
-{
-	ASLIB_ENUM_VAL( CG_MAX_TOUCHES ),
-
-	ASLIB_ENUM_VAL_NULL
-};
-
 static const gs_asEnumVal_t asOverlayMenuEnumVals[] =
 {
 	ASLIB_ENUM_VAL( OVERLAY_MENU_LEFT ),
@@ -61,7 +54,6 @@ static const gs_asEnumVal_t asOverlayMenuEnumVals[] =
 
 static const gs_asEnum_t asCGameEnums[] =
 {
-	{ "cg_limits_e", asLimitsEnumVals },
 	{ "cg_overlayMenuState_e", asOverlayMenuEnumVals },
 
 	ASLIB_ENUM_VAL_NULL
@@ -99,18 +91,15 @@ static void CG_asInitializeCGameEngineSyntax( asIScriptEngine *asEngine ) {
 
 	// register global enums
 	GS_asRegisterEnums( asEngine, asCGameEnums, "CGame" );
-	GS_asRegisterEnums( asEngine, asCGameInputEnums, "CGame" );
 	GS_asRegisterEnums( asEngine, asCGameCameraEnums, "CGame" );
 
 	// register global funcdefs
 	GS_asRegisterFuncdefs( asEngine, asCGameCmdFuncdefs, "CGame::Cmd" );
 
 	// first register all class names so methods using custom classes work
-	GS_asRegisterObjectClassNames( asEngine, asCGameInputClassesDescriptors, "CGame::Input" );
 	GS_asRegisterObjectClassNames( asEngine, asCGameCameraClassesDescriptors, "CGame::Camera" );
 
 	// register classes
-	GS_asRegisterObjectClasses( asEngine, asCGameInputClassesDescriptors, "CGame::Input" );
 	GS_asRegisterObjectClasses( asEngine, asCGameCameraClassesDescriptors, "CGame::Camera" );
 
 	// register global functions

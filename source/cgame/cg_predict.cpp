@@ -133,7 +133,6 @@ void CG_BuildSolidList( void ) {
 				case ET_PLASMA:
 				case ET_LASERBEAM:
 				case ET_CURVELASERBEAM:
-				case ET_MINIMAP_ICON:
 				case ET_DECAL:
 				case ET_ITEM_TIMER:
 				case ET_PARTICLES:

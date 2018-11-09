@@ -114,9 +114,7 @@ void CG_ConfigString( int i, const char *s ) {
 	Q_strncpyz( cgs.configStrings[i], s, sizeof( cgs.configStrings[i] ) );
 
 	// do something apropriate
-	if( i == CS_MAPNAME ) {
-		CG_RegisterLevelMinimap();
-	} else if( i == CS_GAMETYPETITLE ) {
+	if( i == CS_GAMETYPETITLE ) {
 	} else if( i == CS_GAMETYPENAME ) {
 		GS_SetGametypeName( cgs.configStrings[CS_GAMETYPENAME] );
 	} else if( i == CS_AUTORECORDSTATE ) {
@@ -960,102 +958,6 @@ static void CG_Cmd_LastWeapon_f( void ) {
 }
 
 /*
-* CG_Cmd_WeaponCross_f
-*/
-static void CG_Cmd_WeaponCross_f( void ) {
-	int i;
-	int quarter = -1, first;
-	int w[2], count = 0, selected = -1, select;
-	gsitem_t *item;
-
-	if( !cg.frame.valid ) {
-		return;
-	}
-
-	if( trap_Cmd_Argc() > 1 ) {
-		quarter = atoi( trap_Cmd_Argv( 1 ) );
-	}
-
-	if( ( quarter < 0 ) || ( quarter > 4 ) ) {
-		CG_Printf( "Usage: '%s <0-4>' (0 - just show, 1 - GB/MG, 2 - RG/GL, 3 - RL/PG, 4 - LG/EB)\n", trap_Cmd_Argv( 0 ) );
-		return;
-	}
-
-	if( cgs.demoPlaying || ( cg.predictedPlayerState.pmove.pm_type != PM_NORMAL ) ) {
-		if( cgs.demoPlaying ||
-			( cg.predictedPlayerState.pmove.pm_type == PM_SPECTATOR ) ||
-			( cg.predictedPlayerState.pmove.pm_type == PM_CHASECAM ) ) {
-			switch( quarter ) {
-				case 1:
-				case 3:
-					CG_SwitchChaseCamMode();
-					break;
-				case 2:
-					CG_ChaseStep( 1 );
-					break;
-				case 4:
-					CG_ChaseStep( -1 );
-					break;
-			}
-		}
-		return;
-	}
-
-	CG_ShowWeaponCross();
-
-	if( !quarter ) {
-		return;
-	}
-
-	quarter--;
-	first = quarter << 1;
-
-	for( i = 0; i < 2; i++ ) {
-		if( !cg.predictedPlayerState.inventory[WEAP_GUNBLADE + first + i] ) {
-			continue;
-		}
-		if( ( first + i ) /* show uncharged gunblade */ &&
-			!cg.predictedPlayerState.inventory[AMMO_GUNBLADE + first + i] &&
-			!cg.predictedPlayerState.inventory[AMMO_WEAK_GUNBLADE + first + i] ) {
-			continue;
-		}
-
-		if( cg.predictedPlayerState.stats[STAT_PENDING_WEAPON] == ( WEAP_GUNBLADE + first + i ) ) {
-			selected = i;
-		}
-
-		w[count] = first + i;
-		count++;
-	}
-
-	if( !count ) {
-		return;
-	}
-
-	if( count == 2 ) {
-		if( selected >= 0 ) {
-			select = selected ^ 1;
-		} else {
-			select = ( cg.lastCrossWeapons >> quarter ) & 1;
-		}
-	} else {
-		if( selected >= 0 ) {
-			return;
-		}
-		select = 0;
-	}
-
-	item = GS_Cmd_UseItem( &cg.frame.playerState, va( "%i", WEAP_GUNBLADE + w[select] ), IT_WEAPON );
-	if( item ) {
-		if( item->type & IT_WEAPON ) {
-			CG_Predict_ChangeWeapon( item->tag );
-		}
-		trap_Cmd_ExecuteText( EXEC_NOW, va( "cmd use %i", item->tag ) );
-		cg.lastCrossWeapons = ( cg.lastCrossWeapons & ~( 1 << quarter ) ) | ( ( w[select] & 1 ) << quarter );
-	}
-}
-
-/*
 * CG_Viewpos_f
 */
 static void CG_Viewpos_f( void ) {
@@ -1185,7 +1087,6 @@ static const cgcmd_t cgcmds[] =
 	{ "weapnext", CG_Cmd_NextWeapon_f, true },
 	{ "weapprev", CG_Cmd_PrevWeapon_f, true },
 	{ "weaplast", CG_Cmd_LastWeapon_f, true },
-	{ "weapcross", CG_Cmd_WeaponCross_f, true },
 	{ "viewpos", CG_Viewpos_f, true },
 	{ "centerview", CG_CenterViewCmd_f, false },
 	{ "players", NULL, false },

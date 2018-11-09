@@ -248,10 +248,6 @@ typedef struct {
 	*/
 	bool ( *MouseHover )( int context );
 
-	bool ( *TouchEvent )( int context, int id, touchevent_t type, int x, int y );
-	bool ( *IsTouchDown )( int context, int id );
-	void ( *CancelTouches )( int context );
-
 	void ( *ForceMenuOff )( void );
 	bool ( *HaveOverlayMenu )( void );
 	void ( *ShowOverlayMenu )( bool show, bool showCursor );

@@ -312,10 +312,6 @@ public:
 		return trap::IN_SupportedDevices();
 	}
 
-	void showSoftKeyboard( bool show ) {
-		trap::IN_ShowSoftKeyboard( show ? true : false );
-	}
-
 	bool isBrowserAvailable( void ) {
 		return trap::CL_IsBrowserAvailable();
 	}
@@ -427,8 +423,6 @@ void BindWindow( ASInterface *as ) {
 		( "IN_DEVICE_KEYBOARD", IN_DEVICE_KEYBOARD )
 		( "IN_DEVICE_MOUSE", IN_DEVICE_MOUSE )
 		( "IN_DEVICE_JOYSTICK", IN_DEVICE_JOYSTICK )
-		( "IN_DEVICE_TOUCHSCREEN", IN_DEVICE_TOUCHSCREEN )
-		( "IN_DEVICE_SOFTKEYBOARD", IN_DEVICE_SOFTKEYBOARD )
 	;
 
 	ASBind::GetClass<ASWindow>( as->getEngine() )
@@ -474,8 +468,6 @@ void BindWindow( ASInterface *as ) {
 	.method( &ASWindow::getConnectCount, "get_connectCount" )
 
 	.method( &ASWindow::getSupportedInputDevices, "get_supportedInputDevices" )
-
-	.method( &ASWindow::showSoftKeyboard, "showSoftKeyboard" )
 
 	.method( &ASWindow::isBrowserAvailable, "get_browserAvailable" )
 

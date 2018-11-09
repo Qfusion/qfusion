@@ -86,7 +86,6 @@ RocketModule::RocketModule( int vidWidth, int vidHeight, float pixelRatio )
 	contextQuick = Rocket::Core::CreateContext( contextName + "_quick", Vector2i( vidWidth, vidHeight ) );
 
 	memset( hideCursorBits, 0, sizeof( *hideCursorBits ) * UI_NUM_CONTEXTS );
-	memset( contextsTouch, -1, sizeof( *contextsTouch ) * UI_NUM_CONTEXTS );
 }
 
 // here for hax0rz, TODO: move to "common" area
@@ -212,98 +211,6 @@ void RocketModule::keyEvent( int contextId, int key, bool pressed ) {
 	}
 }
 
-bool RocketModule::touchEvent( int contextId, int id, touchevent_t type, int x, int y ) {
-	auto &contextTouch = contextsTouch[contextId];
-	auto *context = contextForId( contextId );
-
-	if( ( type == TOUCH_DOWN ) && ( contextTouch.id < 0 ) ) {
-		if( contextId == UI_CONTEXT_OVERLAY ) {
-			Rocket::Core::Vector2f position( ( float )x, ( float )y );
-			Element *element = context->GetElementAtPoint( position );
-			if( !element || element->GetTagName() == "body" ) {
-				return false;
-			}
-		}
-
-		contextTouch.id = id;
-		contextTouch.origin.x = x;
-		contextTouch.origin.y = y;
-		contextTouch.y = y;
-		contextTouch.scroll = false;
-	}
-
-	if( id != contextTouch.id ) {
-		return false;
-	}
-
-	UI_Main::Get()->mouseMove( contextId, 0, x, y, true, false );
-
-	if( type == TOUCH_DOWN ) {
-		context->ProcessMouseButtonDown( 0, KeyConverter::getModifiers() );
-	} else {
-		int delta = contextTouch.y - y;
-		if( delta ) {
-			if( !contextTouch.scroll ) {
-				int threshold = 32 * ( renderInterface->GetPixelsPerInch() / renderInterface->GetBasePixelsPerInch() );
-				if( abs( delta ) > threshold ) {
-					contextTouch.scroll = true;
-					contextTouch.y += ( ( delta < 0 ) ? threshold : -threshold );
-					delta = contextTouch.y - y;
-				}
-			}
-
-			if( contextTouch.scroll ) {
-				Element *focusElement = context->GetFocusElement();
-				if( !focusElement || ( focusElement->GetTagName() != "keyselect" ) ) {
-					Element *element;
-					for( element = context->GetElementAtPoint( contextTouch.origin ); element; element = element->GetParentNode() ) {
-						if( element->GetTagName() == "scrollbarvertical" ) {
-							break;
-						}
-
-						int overflow = element->GetProperty< int >( "overflow-y" );
-						if( ( overflow != Rocket::Core::OVERFLOW_AUTO ) && ( overflow != Rocket::Core::OVERFLOW_SCROLL ) ) {
-							continue;
-						}
-
-						int scrollTop = element->GetScrollTop();
-						if( ( ( delta < 0 ) && ( scrollTop > 0 ) ) ||
-							( ( delta > 0 ) && ( element->GetScrollHeight() > scrollTop + element->GetClientHeight() ) ) ) {
-							element->SetScrollTop( element->GetScrollTop() + delta );
-							break;
-						}
-					}
-				}
-				contextTouch.y = y;
-			}
-		}
-
-		if( type == TOUCH_UP ) {
-			cancelTouches( contextId );
-		}
-	}
-
-	return true;
-}
-
-bool RocketModule::isTouchDown( int contextId, int id ) {
-	return contextsTouch[contextId].id == id;
-}
-
-void RocketModule::cancelTouches( int contextId ) {
-	auto &contextTouch = contextsTouch[contextId];
-
-	if( contextTouch.id < 0 ) {
-		return;
-	}
-
-	auto *context = contextForId( contextId );
-
-	contextTouch.id = -1;
-	context->ProcessMouseButtonUp( 0, KeyConverter::getModifiers() );
-	UI_Main::Get()->mouseMove( contextId, 0, 0, 0, true, false );
-}
-
 //==================================================
 
 Rocket::Core::ElementDocument *RocketModule::loadDocument( int contextId, const char *filename, bool show, void *user_data ) {
@@ -425,12 +332,6 @@ void RocketModule::registerCustoms() {
 
 	// Main document that implements <script> tags
 	registerElement( "body", ASUI::GetScriptDocumentInstancer() );
-
-	// Soft keyboard listener
-	registerElement( "input",
-					 __new__( GenericElementInstancerSoftKeyboard<Rocket::Controls::ElementFormControlInput> )() );
-	registerElement( "textarea",
-					 __new__( GenericElementInstancerSoftKeyboard<Rocket::Controls::ElementFormControlTextArea> )() );
 
 	// other widgets
 	registerElement( "keyselect", GetKeySelectInstancer() );

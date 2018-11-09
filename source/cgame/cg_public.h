@@ -328,25 +328,6 @@ typedef struct {
 	void ( *AddMovement )( vec3_t movement );
 
 	/**
-	 * Responds to a touch event.
-	 *
-	 * @param id   finger number
-	 * @param type event type
-	 * @param x    finger x position
-	 * @param y    finger y position
-	 * @param time when the event was fired
-	 */
-	void ( *TouchEvent )( int id, touchevent_t type, int x, int y, int64_t time );
-
-	/**
-	 * Returns whether a finger is currently being handled by cgame.
-	 *
-	 * @param id finger number
-	 * @return whether the finger is in cgame touch context
-	 */
-	bool ( *IsTouchDown )( int id );
-
-	/**
 	* Passes the key press/up event to clientside game module.
 	* Returns true if the action bound to the key should not be sent to the interpreter.
 	*

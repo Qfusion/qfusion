@@ -22,132 +22,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 //=======================================================================
 
-static const gs_asEnumVal_t asTouchpadEnumVals[] =
-{
-	ASLIB_ENUM_VAL( TOUCHPAD_MOVE ),
-	ASLIB_ENUM_VAL( TOUCHPAD_VIEW ),
-	ASLIB_ENUM_VAL( TOUCHPAD_COUNT ),
-
-	ASLIB_ENUM_VAL_NULL
-};
-
-static const gs_asEnumVal_t asTouchareaEnumVals[] =
-{
-	ASLIB_ENUM_VAL( TOUCHAREA_NONE ),
-	ASLIB_ENUM_VAL( TOUCHAREA_HUD ),
-	ASLIB_ENUM_VAL( TOUCHAREA_SUB_SHIFT ),
-	ASLIB_ENUM_VAL( TOUCHAREA_MASK ),
-
-	ASLIB_ENUM_VAL_NULL
-};
-
-const gs_asEnum_t asCGameInputEnums[] =
-{
-	{ "cg_touchpad_e", asTouchpadEnumVals },
-	{ "cg_toucharea_e", asTouchareaEnumVals },
-
-	ASLIB_ENUM_VAL_NULL
-};
-
-//=======================================================================
-
-static const gs_asFuncdef_t astouch_Funcdefs[] =
-{
-	ASLIB_FUNCDEF_NULL
-};
-
-static const gs_asBehavior_t astouch_ObjectBehaviors[] =
-{
-	ASLIB_BEHAVIOR_NULL
-};
-
-static const gs_asMethod_t astouch_Methods[] =
-{
-	ASLIB_METHOD_NULL
-};
-
-static const gs_asProperty_t astouch_Properties[] =
-{
-	{ ASLIB_PROPERTY_DECL( const bool, down ), ASLIB_FOFFSET( cg_touch_t, down ) },
-	{ ASLIB_PROPERTY_DECL( const int, x ), ASLIB_FOFFSET( cg_touch_t, x ) },
-	{ ASLIB_PROPERTY_DECL( const int, y ), ASLIB_FOFFSET( cg_touch_t, y ) },
-	{ ASLIB_PROPERTY_DECL( const int64, time ), ASLIB_FOFFSET( cg_touch_t, time ) },
-	{ ASLIB_PROPERTY_DECL( const int, area ), ASLIB_FOFFSET( cg_touch_t, area ) },
-	{ ASLIB_PROPERTY_DECL( const bool, areaValid ), ASLIB_FOFFSET( cg_touch_t, area_valid ) },
-
-	ASLIB_PROPERTY_NULL
-};
-
-static const gs_asClassDescriptor_t asTouchClassDescriptor =
-{
-	"Touch",                    /* name */
-	asOBJ_REF | asOBJ_NOCOUNT,  /* object type flags */
-	sizeof( cg_touch_t ),       /* size */
-	astouch_Funcdefs,           /* funcdefs */
-	astouch_ObjectBehaviors,    /* object behaviors */
-	astouch_Methods,            /* methods */
-	astouch_Properties,         /* properties */
-	NULL, NULL                  /* string factory hack */
-};
-
-//=======================================================================
-
-static const gs_asFuncdef_t astouchpad_Funcdefs[] =
-{
-	ASLIB_FUNCDEF_NULL
-};
-
-static const gs_asBehavior_t astouchpad_ObjectBehaviors[] =
-{
-	ASLIB_BEHAVIOR_NULL
-};
-
-static const gs_asMethod_t astouchpad_Methods[] =
-{
-	ASLIB_METHOD_NULL
-};
-
-static const gs_asProperty_t astouchpad_Properties[] =
-{
-	{ ASLIB_PROPERTY_DECL( int, x ), ASLIB_FOFFSET( cg_touchpad_t, x ) },
-	{ ASLIB_PROPERTY_DECL( int, y ), ASLIB_FOFFSET( cg_touch_t, y ) },
-	{ ASLIB_PROPERTY_DECL( const int, touch ), ASLIB_FOFFSET( cg_touchpad_t, touch ) },
-
-	ASLIB_PROPERTY_NULL
-};
-
-static const gs_asClassDescriptor_t asTouchpadClassDescriptor =
-{
-	"Touchpad",                 /* name */
-	asOBJ_REF | asOBJ_NOCOUNT,  /* object type flags */
-	sizeof( cg_touchpad_t ),    /* size */
-	astouchpad_Funcdefs,        /* funcdefs */
-	astouchpad_ObjectBehaviors, /* object behaviors */
-	astouchpad_Methods,         /* methods */
-	astouchpad_Properties,      /* properties */
-	NULL, NULL                  /* string factory hack */
-};
-
-//=======================================================================
-
 static asvec4_t CG_asInputGetThumbsticks( void ) {
 	asvec4_t sticks;
 	trap_IN_GetThumbsticks( sticks.v );
 	return sticks;
 }
 
-const gs_asClassDescriptor_t * const asCGameInputClassesDescriptors[] =
-{
-	&asTouchClassDescriptor,
-	&asTouchpadClassDescriptor,
-
-	NULL
-};
-
 const gs_asglobfuncs_t asCGameInputGlobalFuncs[] =
 {
-	{ "Touch @GetTouch( int id )", asFUNCTION( CG_GetTouch ), NULL },
-	{ "Touchpad @GetTouchpad( int id )", asFUNCTION( CG_GetTouchpad ), NULL },
 	{ "Vec4 GetThumbsticks()", asFUNCTION( CG_asInputGetThumbsticks ), NULL },
 	{ "float GetSensitivityScale( float sens, float zoomSens )", asFUNCTION( CG_GetSensitivityScale ), NULL },
 

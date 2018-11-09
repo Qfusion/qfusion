@@ -45,8 +45,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define GAMECHAT_STRING_SIZE    1024
 #define GAMECHAT_STACK_SIZE     20
 
-#define CG_MAX_TOUCHES 10
-
 enum {
 	LOCALEFFECT_EV_PLAYER_TELEPORT_IN,
 	LOCALEFFECT_EV_PLAYER_TELEPORT_OUT,
@@ -420,7 +418,6 @@ typedef struct {
 
 	// shaders
 	struct shader_s *shaderWhite;
-	struct shader_s *shaderMiniMap;
 
 	// AngelScript
 	struct angelwrap_api_s *asExport;
@@ -682,15 +679,12 @@ centity_t *CG_GetItemTimerEnt( int num );
 //
 // cg_draw.c
 //
-#define DEFAULT_MINIMAP_VIEW_DISTANCE 4096
-
 int CG_HorizontalAlignForWidth( const int x, int align, int width );
 int CG_VerticalAlignForHeight( const int y, int align, int height );
 int CG_HorizontalMovementForAlign( int align );
 
 void CG_DrawHUDField( int x, int y, int align, float *color, int size, int width, int value );
 void CG_DrawHUDModel( int x, int y, int align, int w, int h, struct model_s *model, struct shader_s *shader, float yawspeed );
-void CG_DrawMiniMap( int x, int y, int iw, int ih, float viewDist, int align, vec4_t color );
 void CG_DrawHUDRect( int x, int y, int align, int w, int h, int val, int maxval, vec4_t color, struct shader_s *shader );
 void CG_DrawPicBar( int x, int y, int width, int height, int align, float percent, struct shader_s *shader, vec4_t backColor, vec4_t color );
 
@@ -700,7 +694,6 @@ void CG_DrawPicBar( int x, int y, int width, int height, int align, float percen
 void CG_RegisterMediaSounds( void );
 void CG_RegisterMediaModels( void );
 void CG_RegisterMediaShaders( void );
-void CG_RegisterLevelMinimap( void );
 void CG_RegisterFonts( void );
 
 struct model_s *CG_RegisterModel( const char *name );
@@ -764,7 +757,7 @@ extern cvar_t *cg_showChasers;
 void CG_ScreenInit( void );
 void CG_ScreenShutdown( void );
 void CG_Draw2D( void );
-void CG_DrawHUD( bool touch );
+void CG_DrawHUD( void );
 void CG_CalcVrect( void );
 void CG_DrawLoading( void );
 void CG_CenterPrint( const char *str );
@@ -786,7 +779,6 @@ void CG_DrawClock( int x, int y, int align, struct qfontface_s *font, vec4_t col
 void CG_DrawPlayerNames( struct qfontface_s *font, vec4_t color );
 void CG_DrawTeamMates( void );
 void CG_DrawHUDNumeric( int x, int y, int align, float *color, int charwidth, int charheight, int value );
-void CG_DrawTeamInfo( int x, int y, int align, struct qfontface_s *font, vec4_t color );
 void CG_DrawNet( int x, int y, int w, int h, int align, vec4_t color );
 
 void CG_GameMenu_f( void );
@@ -808,24 +800,12 @@ void CG_ShowOverlayMenu( int state, bool showCursor );
 //
 // cg_hud.c
 //
-extern cvar_t *cg_showminimap;
-extern cvar_t *cg_showitemtimers;
 extern cvar_t *cg_strafeHUD;
-extern cvar_t *cg_touch_flip;
-extern cvar_t *cg_touch_scale;
-extern cvar_t *cg_touch_showMoveDir;
-extern cvar_t *cg_touch_zoomThres;
-extern cvar_t *cg_touch_zoomTime;
 
 void CG_SC_ResetObituaries( void );
 void CG_SC_Obituary( void );
 void Cmd_CG_PrintHudHelp_f( void );
-void CG_ExecuteLayoutProgram( struct cg_layoutnode_s *rootnode, bool touch );
-void CG_GetHUDTouchButtons( int *buttons, int *upmove );
-void CG_UpdateHUDPostDraw( void );
-void CG_UpdateHUDPostTouch( void );
-void CG_ShowWeaponCross( void );
-void CG_ClearHUDInputState( void );
+void CG_ExecuteLayoutProgram( struct cg_layoutnode_s *rootnode );
 void CG_ClearAwards( void );
 
 //
@@ -1192,38 +1172,6 @@ void CG_asSetupRefdef( cg_viewdef_t *view, refdef_t *rd );
 // cg_input.cpp
 //
 
-/**
-* Touch area ID namespaces.
-*/
-enum {
-	TOUCHAREA_NONE,
-	TOUCHAREA_HUD
-	// next would be 0x101, 0x201... until 0xf01
-};
-
-enum {
-	TOUCHPAD_MOVE,
-	TOUCHPAD_VIEW,
-	TOUCHPAD_COUNT
-};
-
-#define TOUCHAREA_SUB_SHIFT 16
-#define TOUCHAREA_MASK ( ( 1 << TOUCHAREA_SUB_SHIFT ) - 1 )
-
-typedef struct {
-	bool down; // is the finger currently down?
-	int x, y; // current x and y of the touch
-	int64_t time; // system time when pressed
-	int area; // hud area unique id (TOUCHAREA_NONE = not caught by hud)
-	bool area_valid; // was the area of this touch checked this frame, if not, the area doesn't exist anymore
-	void ( *upfunc )( int id, int64_t time ); // function to call when the finger is released, time is 0 if cancelled
-} cg_touch_t;
-
-typedef struct {
-	int touch;
-	float x, y;
-} cg_touchpad_t;
-
 void CG_InitInput( void );
 void CG_ShutdownInput( void );
 void CG_InputFrame( int frameTime );
@@ -1247,11 +1195,6 @@ void CG_GetAngularMovement( vec3_t movement );
 */
 void CG_GetMovement( vec3_t movement );
 
-void CG_SetTouchpad( int padID, int touchID );
-cg_touchpad_t *CG_GetTouchpad( int padID );
-
-int CG_TouchArea( int area, int x, int y, int w, int h, void ( *upfunc )( int id, int64_t time ) );
-
 /**
 * Passes the key press/up event to clientside game module.
 * Returns true if the action bound to the key should not be sent to the interpreter.
@@ -1260,11 +1203,6 @@ int CG_TouchArea( int area, int x, int y, int w, int h, void ( *upfunc )( int id
 * @param down true, if it's a button down event
 */
 bool CG_KeyEvent( int key, bool down );
-
-void CG_TouchEvent( int id, touchevent_t type, int x, int y, int64_t time );
-cg_touch_t *CG_GetTouch( int id );
-bool CG_IsTouchDown( int id );
-void CG_CancelTouches( void );
 
 /**
  * Gets up to two bound keys for a command.

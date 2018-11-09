@@ -449,17 +449,9 @@ typedef enum {
 } textdrawflag_t;
 
 typedef enum {
-	TOUCH_DOWN,
-	TOUCH_UP,
-	TOUCH_MOVE
-} touchevent_t;
-
-typedef enum {
 	IN_DEVICE_KEYBOARD      = 1 << 0,
 	IN_DEVICE_MOUSE         = 1 << 1,
 	IN_DEVICE_JOYSTICK      = 1 << 2,
-	IN_DEVICE_TOUCHSCREEN   = 1 << 3,
-	IN_DEVICE_SOFTKEYBOARD  = 1 << 4
 } in_devicemask_t;
 
 #ifdef __cplusplus

@@ -593,23 +593,3 @@ bool CL_GameModule_KeyEvent( int key, bool down ) {
 	}
 	return false;
 }
-
-/*
-* CL_GameModule_TouchEvent
-*/
-void CL_GameModule_TouchEvent( int id, touchevent_t type, int x, int y, int64_t time ) {
-	if( cge ) {
-		cge->TouchEvent( id, type, x, y, time );
-	}
-}
-
-/*
-* CL_GameModule_IsTouchDown
-*/
-bool CL_GameModule_IsTouchDown( int id ) {
-	if( cge ) {
-		return cge->IsTouchDown( id );
-	}
-
-	return false;
-}

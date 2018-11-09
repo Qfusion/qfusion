@@ -317,9 +317,6 @@ inline void IN_GetThumbsticks( vec4_t sticks ) {
 	UI_IMPORT.IN_GetThumbsticks( sticks );
 }
 
-inline void IN_ShowSoftKeyboard( bool show ) {
-}
-
 inline unsigned int IN_SupportedDevices( void ) {
 	return UI_IMPORT.IN_SupportedDevices();
 }

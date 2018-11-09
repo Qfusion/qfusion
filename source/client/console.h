@@ -60,7 +60,6 @@ void Con_KeyDown( int key );
 void Con_CharEvent( wchar_t key );
 void Con_MessageKeyDown( int key );
 void Con_MessageCharEvent( wchar_t key );
-void Con_TouchEvent( bool down, int x, int y );
 
 int Q_ColorCharCount( const char *s, int byteofs );
 int Q_ColorCharOffset( const char *s, int charcount );

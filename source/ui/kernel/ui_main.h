@@ -71,9 +71,6 @@ public:
 	bool mouseHover( int contextId );
 	void textInput( int contextId, wchar_t c );
 	void keyEvent( int contextId, int key, bool pressed );
-	bool touchEvent( int contextId, int id, touchevent_t type, int x, int y );
-	bool isTouchDown( int contextId, int id );
-	void cancelTouches( int contextId );
 	void getMouseMoveDelta( int *dx, int *dy );
 
 	// Commands (these could be private)

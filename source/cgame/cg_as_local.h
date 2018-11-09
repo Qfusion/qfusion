@@ -71,8 +71,6 @@ extern const gs_asglobfuncs_t asCGameCameraGlobalFuncs[];
 // cg_as_input.cpp
 //
 
-extern const gs_asEnum_t asCGameInputEnums[];
-extern const gs_asClassDescriptor_t * const asCGameInputClassesDescriptors[];
 extern const gs_asglobfuncs_t asCGameInputGlobalFuncs[];
 
 

@@ -481,60 +481,6 @@ void CL_UIModule_CharEvent( bool mainContext, wchar_t key ) {
 }
 
 /*
-* CL_UIModule_TouchEvent
-*/
-bool CL_UIModule_TouchEvent( bool mainContext, int id, touchevent_t type, int x, int y ) {
-	if( uie ) {
-		return uie->TouchEvent( mainContext ? UI_CONTEXT_MAIN : UI_CONTEXT_OVERLAY, id, type, x, y );
-	}
-
-	return false;
-}
-
-/*
-* CL_UIModule_TouchEventQuick
-*/
-bool CL_UIModule_TouchEventQuick( int id, touchevent_t type, int x, int y ) {
-	if( uie ) {
-		return uie->TouchEvent( UI_CONTEXT_OVERLAY, id, type, x, y );
-	}
-
-	return false;
-}
-
-/*
-* CL_UIModule_IsTouchDown
-*/
-bool CL_UIModule_IsTouchDown( int id ) {
-	if( uie ) {
-		return uie->IsTouchDown( UI_CONTEXT_MAIN, id );
-	}
-
-	return false;
-}
-
-/*
-* CL_UIModule_IsTouchDownQuick
-*/
-bool CL_UIModule_IsTouchDownQuick( int id ) {
-	if( uie ) {
-		return uie->IsTouchDown( UI_CONTEXT_OVERLAY, id );
-	}
-
-	return false;
-}
-
-/*
-* CL_UIModule_CancelTouches
-*/
-void CL_UIModule_CancelTouches( void ) {
-	if( uie ) {
-		uie->CancelTouches( UI_CONTEXT_OVERLAY );
-		uie->CancelTouches( UI_CONTEXT_MAIN );
-	}
-}
-
-/*
 * CL_UIModule_ForceMenuOn
 */
 void CL_UIModule_ForceMenuOn( void ) {

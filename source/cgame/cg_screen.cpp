@@ -74,7 +74,6 @@ cvar_t *cg_scoreboardTitleFontSize;
 cvar_t *cg_scoreboardWidthScale;
 cvar_t *cg_scoreboardStats;
 
-cvar_t *cg_showTeamLocations;
 cvar_t *cg_showViewBlends;
 
 static int64_t scr_damagetime = 0;
@@ -177,8 +176,6 @@ void CG_CalcVrect( void ) {
 * CG_ScreenInit
 */
 void CG_ScreenInit( void ) {
-	int i;
-
 	cg_showFPS =        trap_Cvar_Get( "cg_showFPS", "0", CVAR_ARCHIVE );
 	cg_showHUD =        trap_Cvar_Get( "cg_showHUD", "1", CVAR_ARCHIVE );
 	cg_draw2D =     trap_Cvar_Get( "cg_draw2D", "1", 0 );
@@ -196,7 +193,6 @@ void CG_ScreenInit( void ) {
 	cg_showSpeed =      trap_Cvar_Get( "cg_showSpeed", "1", CVAR_ARCHIVE );
 	cg_showPickup =     trap_Cvar_Get( "cg_showPickup", "1", CVAR_ARCHIVE );
 	cg_showPointedPlayer =  trap_Cvar_Get( "cg_showPointedPlayer", "1", CVAR_ARCHIVE );
-	cg_showTeamLocations =  trap_Cvar_Get( "cg_showTeamLocations", "0", CVAR_ARCHIVE );
 	cg_showViewBlends = trap_Cvar_Get( "cg_showViewBlends", "1", CVAR_ARCHIVE );
 	cg_showAwards =     trap_Cvar_Get( "cg_showAwards", "1", CVAR_ARCHIVE );
 	cg_showZoomEffect = trap_Cvar_Get( "cg_showZoomEffect", "0", CVAR_ARCHIVE );
@@ -227,9 +223,6 @@ void CG_ScreenInit( void ) {
 	//
 	trap_Cmd_AddCommand( "help_hud", Cmd_CG_PrintHudHelp_f );
 	trap_Cmd_AddCommand( "gamemenu", CG_GameMenu_f );
-
-	for( i = 0; i < TOUCHPAD_COUNT; ++i )
-		CG_SetTouchpad( i, -1 );
 }
 
 /*
@@ -729,199 +722,6 @@ void CG_DrawTeamMates( void ) {
 }
 
 /*
-* CG_DrawTeamInfo
-*/
-void CG_DrawTeamInfo( int x, int y, int align, struct qfontface_s *font, vec4_t color ) {
-	char string[128];
-	int team;
-	int teammate;
-	char *ptr, *tok, *loc, *hp, *ap;
-	int height;
-	int locationTag;
-	int health, armor;
-	centity_t *cent;
-	int icons[16][3], iconX = x;
-	unsigned int icon, numIcons = 0;
-	int xalign = align % 3;
-
-	if( !( cg.predictedPlayerState.stats[STAT_LAYOUTS] & STAT_LAYOUT_TEAMTAB ) ) {
-		return;
-	}
-
-	// don't draw when scoreboard is up
-	if( CG_IsScoreboardShown() ) {
-		return;
-	}
-
-	if( cg.view.type != VIEWDEF_PLAYERVIEW || !cg_showTeamLocations->integer ) {
-		return;
-	}
-
-	team = cg.predictedPlayerState.stats[STAT_TEAM];
-	if( team <= TEAM_PLAYERS || team >= GS_MAX_TEAMS
-		|| !GS_TeamBasedGametype() || GS_InvidualGameType() ) {
-		return;
-	}
-
-	// time to parse the teaminfo string
-	if( !cg.teaminfo || !strlen( cg.teaminfo ) ) {
-		return;
-	}
-
-	height = trap_SCR_FontHeight( font );
-
-	switch( xalign ) {
-		case 0:
-			x += height;
-			break;
-		case 1:
-			iconX -= height;
-			break;
-		case 2:
-			iconX -= height;
-			x -= height;
-			break;
-	}
-
-	// vertically align the list
-	if( align / 3 ) {
-		int pixheight = 0;
-		ptr = cg.teaminfo;
-		while( ptr ) {
-			tok = COM_Parse( &ptr );
-			if( !tok[0] ) {
-				break;
-			}
-
-			teammate = atoi( tok );
-			if( teammate < 0 || teammate >= gs.maxclients ) {
-				break;
-			}
-
-			loc = COM_Parse( &ptr );
-			if( !loc[0] ) {
-				break;
-			}
-
-			locationTag = atoi( loc );
-			if( locationTag >= MAX_LOCATIONS ) {
-				locationTag = 0;
-			}
-
-			hp = COM_Parse( &ptr );
-			if( !hp[0] ) {
-				break;
-			}
-
-			health = atoi( hp );
-			if( health < 0 ) {
-				health = 0;
-			}
-
-			ap = COM_Parse( &ptr );
-			if( !ap[0] ) {
-				break;
-			}
-
-			armor = atoi( ap );
-			if( armor < 0 ) {
-				armor = 0;
-			}
-
-			// we don't display ourselves
-			if( !ISVIEWERENTITY( teammate + 1 ) ) {
-				pixheight += height;
-			}
-		}
-
-		y = CG_VerticalAlignForHeight( y, align, pixheight );
-	}
-
-	ptr = cg.teaminfo;
-	while( ptr ) {
-		tok = COM_Parse( &ptr );
-		if( !tok[0] ) {
-			break;
-		}
-
-		teammate = atoi( tok );
-		if( teammate < 0 || teammate >= gs.maxclients ) {
-			break;
-		}
-
-		loc = COM_Parse( &ptr );
-		if( !loc[0] ) {
-			break;
-		}
-
-		locationTag = atoi( loc );
-		if( locationTag >= MAX_LOCATIONS ) {
-			locationTag = 0;
-		}
-
-		hp = COM_Parse( &ptr );
-		if( !hp[0] ) {
-			return;
-		}
-
-		health = atoi( hp );
-		if( health < 0 ) {
-			health = 0;
-		}
-
-		ap = COM_Parse( &ptr );
-		if( !ap[0] ) {
-			break;
-		}
-
-		armor = atoi( ap );
-		if( armor < 0 ) {
-			armor = 0;
-		}
-
-		// we don't display ourselves
-		if( ISVIEWERENTITY( teammate + 1 ) ) {
-			continue;
-		}
-
-		Q_snprintfz( string, sizeof( string ), "%s%s %s%s (%s%i%s/%i)%s", cgs.clientInfo[teammate].name, S_COLOR_WHITE,
-					 CG_TranslateString( cgs.configStrings[CS_LOCATIONS + locationTag] ), S_COLOR_WHITE,
-					 ( health < 25 ) ? S_COLOR_RED : "", health, S_COLOR_WHITE, armor, S_COLOR_WHITE );
-
-		// draw the head-icon in the case this player has one
-		cent = &cg_entities[teammate + 1];
-		if( cent->localEffects[LOCALEFFECT_VSAY_HEADICON_TIMEOUT] > cg.time &&
-			cent->localEffects[LOCALEFFECT_VSAY_HEADICON] > 0 && cent->localEffects[LOCALEFFECT_VSAY_HEADICON] < VSAY_TOTAL ) {
-			// draw the text in one batch
-			icons[numIcons][0] = iconX;
-			if( xalign == 1 ) {
-				icons[numIcons][0] -= ( trap_SCR_strWidth( string, font, 0 ) >> 1 );
-			}
-			icons[numIcons][1] = y;
-			icons[numIcons][2] = cent->localEffects[LOCALEFFECT_VSAY_HEADICON];
-			numIcons++;
-
-			if( numIcons >= ( sizeof( icons ) / sizeof( icons[0] ) ) ) {
-				for( icon = 0; icon < numIcons; icon++ ) {
-					trap_R_DrawStretchPic( icons[icon][0], icons[icon][1], height, height, 0, 0, 1, 1, color,
-										   CG_MediaShader( cgs.media.shaderVSayIcon[icons[icon][2]] ) );
-				}
-				numIcons = 0;
-			}
-		}
-
-		trap_SCR_DrawString( x, y, xalign, string, font, color );
-
-		y += height;
-	}
-
-	for( icon = 0; icon < numIcons; icon++ ) {
-		trap_R_DrawStretchPic( icons[icon][0], icons[icon][1], height, height, 0, 0, 1, 1, color,
-							   CG_MediaShader( cgs.media.shaderVSayIcon[icons[icon][2]] ) );
-	}
-}
-
-/*
 * CG_DrawRSpeeds
 */
 void CG_DrawRSpeeds( int x, int y, int align, struct qfontface_s *font, vec4_t color ) {
@@ -1175,7 +975,7 @@ static void CG_SCRDrawViewBlend( void ) {
 /*
 * CG_DrawHUD
 */
-void CG_DrawHUD( bool touch ) {
+void CG_DrawHUD() {
 	if( !cg_showHUD->integer ) {
 		return;
 	}
@@ -1192,7 +992,7 @@ void CG_DrawHUD( bool touch ) {
 		hud->modified = false;
 	}
 
-	CG_ExecuteLayoutProgram( cg.statusBar, touch );
+	CG_ExecuteLayoutProgram( cg.statusBar );
 }
 
 /*
@@ -1218,17 +1018,13 @@ void CG_Draw2DView( void ) {
 		cg.motd = NULL;
 	}
 
-	CG_DrawHUD( false );
-
-	CG_UpdateHUDPostDraw();
+	CG_DrawHUD();
 
 	scr_centertime_off -= cg.frameTime;
-	if( !( ( trap_IN_SupportedDevices() & IN_DEVICE_SOFTKEYBOARD ) && ( int )trap_Cvar_Value( "con_messageMode" ) ) ) {
-		if( CG_IsScoreboardShown() ) {
-			CG_DrawScoreboard();
-		} else if( scr_centertime_off > 0 ) {
-			CG_DrawCenterString();
-		}
+	if( CG_IsScoreboardShown() ) {
+		CG_DrawScoreboard();
+	} else if( scr_centertime_off > 0 ) {
+		CG_DrawCenterString();
 	}
 
 	CG_DrawRSpeeds( cgs.vidWidth, cgs.vidHeight / 2 + 8 * cgs.vidHeight / 600,

@@ -41,9 +41,6 @@ public:
 	bool mouseHover( int contextId );
 	void textInput( int contextId, wchar_t c );
 	void keyEvent( int contextId, int key, bool pressed );
-	bool touchEvent( int contextId, int id, touchevent_t type, int x, int y );
-	bool isTouchDown( int contextId, int id );
-	void cancelTouches( int contextId );
 
 	void update( void );
 	void render( int contextId );
@@ -77,14 +74,6 @@ private:
 
 	bool rocketInitialized;
 	unsigned int hideCursorBits[UI_NUM_CONTEXTS];
-
-	struct contextTouch {
-		int id;
-		Rocket::Core::Vector2f origin;
-		int y;
-		bool scroll;
-	};
-	contextTouch contextsTouch[UI_NUM_CONTEXTS];
 
 	UI_SystemInterface *systemInterface;
 	UI_FileInterface *fsInterface;

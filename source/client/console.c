@@ -68,8 +68,6 @@ static int chat_prestep = 0;
 static unsigned int chat_linepos = 0;
 static unsigned int chat_bufferlen = 0;
 
-static int touch_x, touch_y;
-
 #define ctrl_is_down ( Key_IsDown( K_LCTRL ) || Key_IsDown( K_RCTRL ) )
 
 /*
@@ -402,8 +400,6 @@ void Con_Init( void ) {
 	con.linecolor = COLOR_WHITE;
 	con.mutex = QMutex_Create();
 
-	touch_x = touch_y = -1;
-
 	Com_Printf( "Console initialized.\n" );
 
 	//
@@ -710,8 +706,6 @@ static const char *Con_ChatPrompt( void ) {
 
 	if( chat_team || ctrl_is_down ) {
 		text = "say (to team):";
-	} else if( IN_SupportedDevices() & IN_DEVICE_TOUCHSCREEN ) {
-		text = "say (to all):";
 	} else {
 		text = "say:";
 	}

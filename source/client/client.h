@@ -389,9 +389,6 @@ void CL_GameModule_MouseMove( int dx, int dy );
 */
 bool CL_GameModule_KeyEvent( int key, bool down );
 
-void CL_GameModule_TouchEvent( int id, touchevent_t type, int x, int y, int64_t time );
-bool CL_GameModule_IsTouchDown( int id );
-
 //
 // cl_sound.c
 //
@@ -425,11 +422,6 @@ void CL_UIModule_TouchAllAssets( void );
 void CL_UIModule_KeyEvent( bool mainContext, int key, bool down );
 void CL_UIModule_KeyEventQuick( int key, bool down );
 void CL_UIModule_CharEvent( bool mainContext, wchar_t key );
-bool CL_UIModule_TouchEvent( bool mainContext, int id, touchevent_t type, int x, int y );
-bool CL_UIModule_TouchEventQuick( int id, touchevent_t type, int x, int y );
-bool CL_UIModule_IsTouchDown( int id );
-bool CL_UIModule_IsTouchDownQuick( int id );
-void CL_UIModule_CancelTouches( void );
 void CL_UIModule_Refresh( bool backGround, bool showCursor );
 void CL_UIModule_UpdateConnectScreen( bool backGround );
 void CL_UIModule_ForceMenuOn( void );

@@ -229,11 +229,7 @@ void UI_Main::preloadUI( void ) {
 	showNavigationStack = navigator->hasDocuments();
 
 	// initial cursor setup
-	if( trap::IN_SupportedDevices() & IN_DEVICE_TOUCHSCREEN ) {
-		mouseMove( UI_CONTEXT_MAIN, 0, 0, 0, true, false );
-	} else {
-		mouseMove( UI_CONTEXT_MAIN, 0, refreshState.width >> 1, refreshState.height >> 1, true, true );
-	}
+	mouseMove( UI_CONTEXT_MAIN, 0, refreshState.width >> 1, refreshState.height >> 1, true, true );
 
 	if( !overlayMenuURL.Empty() ) {
 		navigator = navigations[UI_CONTEXT_OVERLAY].front();
@@ -440,8 +436,6 @@ void UI_Main::showUI( bool show ) {
 	trap::CL_SetKeyDest( show ? key_menu : key_game );
 
 	if( !show ) {
-		cancelTouches( UI_CONTEXT_MAIN );
-
 		UI_Navigation &navigation = navigations[UI_CONTEXT_MAIN];
 		NavigationStack *navigator = navigation.front();
 		for( UI_Navigation::iterator it = navigation.begin(); it != navigation.end(); ++it ) {
@@ -460,10 +454,6 @@ void UI_Main::showUI( bool show ) {
 
 void UI_Main::showOverlayMenu( bool show, bool showCursor ) {
 	overlayMenuVisible = show;
-
-	if( !show ) {
-		cancelTouches( UI_CONTEXT_OVERLAY );
-	}
 
 	if( showCursor ) {
 		rocketModule->hideCursor( UI_CONTEXT_OVERLAY, 0, RocketModule::HIDECURSOR_INPUT );
@@ -668,19 +658,7 @@ void UI_Main::keyEvent( int contextId, int key, bool pressed ) {
 	rocketModule->keyEvent( contextId, key, pressed );
 }
 
-bool UI_Main::touchEvent( int contextId, int id, touchevent_t type, int x, int y ) {
-	return rocketModule->touchEvent( contextId, id, type, x, y );
-}
-
 bool ( *MouseHover )( int context );
-
-bool UI_Main::isTouchDown( int contextId, int id ) {
-	return rocketModule->isTouchDown( contextId, id );
-}
-
-void UI_Main::cancelTouches( int contextId ) {
-	rocketModule->cancelTouches( contextId );
-}
 
 void UI_Main::getMouseMoveDelta( int *dx, int *dy ) {
 	*dx = mousedx;
@@ -932,7 +910,7 @@ void UI_Main::M_Menu_Quick_f( void ) {
 		return;
 	}
 
-	if( !( trap::IN_SupportedDevices() & ( IN_DEVICE_KEYBOARD | IN_DEVICE_TOUCHSCREEN ) ) ) {
+	if( !( trap::IN_SupportedDevices() & IN_DEVICE_KEYBOARD ) ) {
 		return;
 	}
 

@@ -203,37 +203,4 @@ EventListener *UI_GetMainListener( void ) {
 	return &ui_mainListener;
 }
 
-//===================================================
-
-class UI_SoftKeyboardListener : public EventListener
-{
-public:
-	virtual void ProcessEvent( Event &event ) {
-		if( event.GetPhase() != Rocket::Core::Event::PHASE_TARGET ) {
-			return;
-		}
-
-		Rocket::Controls::ElementFormControl *input =
-			dynamic_cast< Rocket::Controls::ElementFormControl * >( event.GetTargetElement() );
-		if( !input || input->IsDisabled() ) {
-			return;
-		}
-
-		String inputType = input->GetAttribute< String >( "type", "" );
-		if( ( inputType != "text" ) && ( inputType != "password" ) &&
-			!dynamic_cast< Rocket::Controls::ElementFormControlTextArea * >( input ) ) {
-			return;
-		}
-
-		trap::IN_ShowSoftKeyboard( ( event.GetType() == "click" ) ? true : false );
-	}
-};
-
-
-static UI_SoftKeyboardListener ui_softKeyboardListener;
-
-EventListener *UI_GetSoftKeyboardListener( void ) {
-	return &ui_softKeyboardListener;
-}
-
 }

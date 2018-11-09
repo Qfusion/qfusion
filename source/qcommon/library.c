@@ -264,7 +264,6 @@ void *Com_LoadGameLibrary( const char *basename, const char *apifuncname, void *
 
 	if( !gamelib->lib ) {
 		Com_Printf( "LoadLibrary (%s):(%s)\n", abspath, Sys_Library_ErrorString() );
-		Mem_ZoneFree( gamelib->fullname );
 		Mem_TempFree( libname );
 		Com_UnloadGameLibrary( (void **)&gamelib );
 		return NULL;
@@ -273,7 +272,6 @@ void *Com_LoadGameLibrary( const char *basename, const char *apifuncname, void *
 	void *( *APIfunc )( void * ) = ( void* ( * )( void * ) )Sys_Library_ProcAddress( gamelib->lib, apifuncname );
 	if( !APIfunc ) {
 		Com_Printf( "LoadLibrary (%s):(%s)\n", abspath, Sys_Library_ErrorString() );
-		Mem_ZoneFree( gamelib->fullname );
 		Mem_TempFree( libname );
 		Mem_TempFree( libname );
 		Com_UnloadGameLibrary( (void **)&gamelib );

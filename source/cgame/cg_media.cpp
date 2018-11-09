@@ -435,25 +435,6 @@ void CG_RegisterMediaShaders( void ) {
 	cgs.media.shaderVSayIcon[VSAY_ATTACK_B] = CG_RegisterMediaShader( PATH_VSAY_ATTACK_B_ICON, true );
 }
 
-void CG_RegisterLevelMinimap( void ) {
-	size_t i;
-	int file;
-	char *name, minimap[MAX_QPATH];
-
-	cgs.shaderMiniMap = NULL;
-
-	name = cgs.configStrings[CS_MAPNAME];
-
-	for( i = 0; i < NUM_IMAGE_EXTENSIONS; i++ ) {
-		Q_snprintfz( minimap, sizeof( minimap ), "minimaps/%s%s", name, IMAGE_EXTENSIONS[i] );
-		file = trap_FS_FOpenFile( minimap, NULL, FS_READ );
-		if( file != -1 ) {
-			cgs.shaderMiniMap = trap_R_RegisterPic( minimap );
-			break;
-		}
-	}
-}
-
 /*
 * CG_RegisterFonts
 */

@@ -1878,12 +1878,6 @@ void CG_AddEntities( void ) {
 				canLight = true;
 				break;
 
-			case ET_MINIMAP_ICON:
-				if( cent->effects & EF_TEAMCOLOR_TRANSITION ) {
-					CG_EntAddTeamColorTransitionEffect( cent );
-				}
-				break;
-
 			case ET_DECAL:
 				CG_AddDecalEnt( cent );
 				CG_EntityLoopSound( state, ATTN_STATIC );
@@ -1973,7 +1967,6 @@ void CG_LerpEntities( void ) {
 				break;
 
 			case ET_BEAM:
-
 				// beams aren't interpolated
 				break;
 
@@ -1982,11 +1975,7 @@ void CG_LerpEntities( void ) {
 				CG_LerpLaserbeamEnt( cent );
 				break;
 
-			case ET_MINIMAP_ICON:
-				break;
-
 			case ET_PORTALSURFACE:
-
 				//portals aren't interpolated
 				break;
 
@@ -2088,17 +2077,6 @@ void CG_UpdateEntities( void ) {
 			case ET_FLAG_BASE:
 				CG_UpdateFlagBaseEnt( cent );
 				break;
-
-			case ET_MINIMAP_ICON:
-			{
-				CG_TeamColorForEntity( cent->current.number, cent->ent.shaderRGBA );
-				if( cent->current.modelindex > 0 && cent->current.modelindex < MAX_IMAGES ) {
-					cent->ent.customShader = cgs.imagePrecache[ cent->current.modelindex ];
-				} else {
-					cent->ent.customShader = NULL;
-				}
-			}
-			break;
 
 			case ET_DECAL:
 				CG_UpdateDecalEnt( cent );
