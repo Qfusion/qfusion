@@ -410,13 +410,6 @@ void CL_SoundModule_StartRelativeSound( struct sfx_s *sfx, int entnum, int chann
 void CL_SoundModule_StartGlobalSound( struct sfx_s *sfx, int channel, float fvol );
 void CL_SoundModule_StartLocalSound( struct sfx_s *sfx, int channel, float fvol );
 void CL_SoundModule_AddLoopSound( struct sfx_s *sfx, int entnum, float fvol, float attenuation );
-void CL_SoundModule_RawSamples( unsigned int samples, unsigned int rate,
-								unsigned short width, unsigned short channels, const uint8_t *data, bool music );
-void CL_SoundModule_PositionedRawSamples( int entnum, float fvol, float attenuation,
-										  unsigned int samples, unsigned int rate,
-										  unsigned short width, unsigned short channels, const uint8_t *data );
-unsigned int CL_SoundModule_GetRawSamplesLength( void );
-unsigned int CL_SoundModule_GetPositionedRawSamplesLength( int entnum );
 void CL_SoundModule_StartBackgroundTrack( const char *intro, const char *loop, int mode );
 void CL_SoundModule_StopBackgroundTrack( void );
 void CL_SoundModule_LockBackgroundTrack( bool lock );

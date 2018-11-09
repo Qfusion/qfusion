@@ -36,9 +36,6 @@ typedef size_t ( *cg_async_stream_read_cb_t )( const void *buf, size_t numb, flo
 											 int status, const char *contentType, void *privatep );
 typedef void ( *cg_async_stream_done_cb_t )( int status, const char *contentType, void *privatep );
 
-typedef void ( *cg_raw_samples_cb_t )( void *, unsigned int, unsigned int, unsigned short, unsigned short, const uint8_t * );
-typedef unsigned int ( *cg_get_raw_samples_cb_t )( void* );
-
 typedef void ( *cg_fdrawchar_t )( int x, int y, int w, int h, float s1, float t1, float s2, float t2, const vec4_t color, const struct shader_s *shader );
 
 // cg_public.h -- client game dll information visible to engine
@@ -211,11 +208,6 @@ typedef struct {
 	void ( *S_AddLoopSound )( struct sfx_s *sfx, int entnum, float fvol, float attenuation );
 	void ( *S_StartBackgroundTrack )( const char *intro, const char *loop, int mode );
 	void ( *S_StopBackgroundTrack )( void );
-	void ( *S_RawSamples )( unsigned int samples, unsigned int rate, unsigned short width, unsigned short channels, const uint8_t *data );
-	void ( *S_PositionedRawSamples )( int entnum, float fvol, float attenuation,
-									  unsigned int samples, unsigned int rate, unsigned short width, unsigned short channels, const uint8_t *data );
-	unsigned int ( *S_GetRawSamplesLength )( void );
-	unsigned int ( *S_GetPositionedRawSamplesLength )( int entnum );
 	void ( *S_SetEntitySpatilization )( int entNum, vec3_t origin, vec3_t velocity );
 
 	// fonts

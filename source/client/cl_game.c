@@ -236,14 +236,6 @@ void CL_GameModule_L10n_ClearDomain( void ) {
 	L10n_ClearDomain( CGAME_L10N_DOMAIN );
 }
 
-/*
-* CL_GameModule_S_RawSamples
-*/
-static void CL_GameModule_S_RawSamples( unsigned int samples, unsigned int rate,
-										unsigned short width, unsigned short channels, const uint8_t *data ) {
-	CL_SoundModule_RawSamples( samples, rate, width, channels, data, false );
-}
-
 //==============================================
 
 void VID_FlashWindow( int count ) { }
@@ -376,10 +368,6 @@ void CL_GameModule_Init( void ) {
 	import.S_AddLoopSound = CL_SoundModule_AddLoopSound;
 	import.S_StartBackgroundTrack = CL_SoundModule_StartBackgroundTrack;
 	import.S_StopBackgroundTrack = CL_SoundModule_StopBackgroundTrack;
-	import.S_RawSamples = CL_GameModule_S_RawSamples;
-	import.S_PositionedRawSamples = CL_SoundModule_PositionedRawSamples;
-	import.S_GetRawSamplesLength = CL_SoundModule_GetRawSamplesLength;
-	import.S_GetPositionedRawSamplesLength = CL_SoundModule_GetPositionedRawSamplesLength;
 	import.S_SetEntitySpatilization = CL_SoundModule_SetEntitySpatilization;
 
 	import.SCR_RegisterFont = SCR_RegisterFont;

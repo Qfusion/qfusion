@@ -408,25 +408,6 @@ static inline void trap_S_StopBackgroundTrack( void ) {
 	CGAME_IMPORT.S_StopBackgroundTrack();
 }
 
-static inline void trap_S_RawSamples( unsigned int samples, unsigned int rate,
-									  unsigned short width, unsigned short channels, const uint8_t *data ) {
-	CGAME_IMPORT.S_RawSamples( samples, rate, width, channels, data );
-}
-
-static inline void trap_S_PositionedRawSamples( int entnum, float fvol, float attenuation,
-												unsigned int samples, unsigned int rate, unsigned short width,
-												unsigned short channels, const uint8_t *data ) {
-	CGAME_IMPORT.S_PositionedRawSamples( entnum, fvol, attenuation, samples, rate, width, channels, data );
-}
-
-static inline unsigned int trap_S_GetRawSamplesLength( void ) {
-	return CGAME_IMPORT.S_GetRawSamplesLength();
-}
-
-static inline unsigned int trap_S_GetPositionedRawSamplesLength( int entnum ) {
-	return CGAME_IMPORT.S_GetPositionedRawSamplesLength( entnum );
-}
-
 static inline void trap_S_SetEntitySpatilization( int entNum, vec3_t origin, vec3_t velocity ) {
 	return CGAME_IMPORT.S_SetEntitySpatilization( entNum, origin, velocity );
 }

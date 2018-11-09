@@ -141,14 +141,6 @@ typedef struct {
 	void ( *StartLocalSound )( struct sfx_s *sfx, int channel, float fvol );
 	void ( *AddLoopSound )( struct sfx_s *sfx, int entnum, float fvol, float attenuation );
 
-	// cinema
-	void ( *RawSamples )( unsigned int samples, unsigned int rate, unsigned short width, unsigned short channels, const uint8_t *data, bool music );
-	void ( *PositionedRawSamples )( int entnum, float fvol, float attenuation,
-									unsigned int samples, unsigned int rate,
-									unsigned short width, unsigned short channels, const uint8_t *data );
-	unsigned int ( *GetRawSamplesLength )( void );
-	unsigned int ( *GetPositionedRawSamplesLength )( int entnum );
-
 	// music
 	void ( *StartBackgroundTrack )( const char *intro, const char *loop, int mode );
 	void ( *StopBackgroundTrack )( void );

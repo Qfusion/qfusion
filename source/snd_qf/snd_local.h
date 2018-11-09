@@ -172,7 +172,6 @@ void S_UpdateBackgroundTrack( void );
 void S_RawSamples2( unsigned int samples, unsigned int rate, unsigned short width,
 					unsigned short channels, const uint8_t *data, int snd_vol );
 unsigned int S_GetRawSamplesLength( void );
-unsigned int S_GetPositionedRawSamplesLength( int entnum );
 
 /*
 ====================================================================
@@ -289,11 +288,6 @@ void SF_StartLocalSound( sfx_t *sfx, int channel, float fvol );
 void SF_Clear( void );
 void SF_AddLoopSound( sfx_t *sfx, int entnum, float fvol, float attenuation );
 void SF_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis, bool avidump );
-void SF_RawSamples( unsigned int samples, unsigned int rate, unsigned short width,
-					unsigned short channels, const uint8_t *data, bool music );
-void SF_PositionedRawSamples( int entnum, float fvol, float attenuation,
-							  unsigned int samples, unsigned int rate,
-							  unsigned short width, unsigned short channels, const uint8_t *data );
 
 //====================================================================
 

@@ -482,42 +482,6 @@ void CL_SoundModule_AddLoopSound( struct sfx_s *sfx, int entnum, float fvol, flo
 }
 
 /*
-* CL_SoundModule_RawSamples
-*/
-void CL_SoundModule_RawSamples( unsigned int samples, unsigned int rate,
-								unsigned short width, unsigned short channels, const uint8_t *data, bool music ) {
-	if( se ) {
-		se->RawSamples( samples, rate, width, channels, data, music );
-	}
-}
-
-/*
-* CL_SoundModule_PositionedRawSamples
-*/
-void CL_SoundModule_PositionedRawSamples( int entnum, float fvol, float attenuation,
-										  unsigned int samples, unsigned int rate,
-										  unsigned short width, unsigned short channels, const uint8_t *data ) {
-	if( se ) {
-		se->PositionedRawSamples( entnum, fvol, attenuation,
-								  samples, rate, width, channels, data );
-	}
-}
-
-/*
-* CL_SoundModule_GetRawSamplesLength
-*/
-unsigned int CL_SoundModule_GetRawSamplesLength( void ) {
-	return se ? se->GetRawSamplesLength() : 0;
-}
-
-/*
-* CL_SoundModule_GetPositionedRawSamplesLength
-*/
-unsigned int CL_SoundModule_GetPositionedRawSamplesLength( int entnum ) {
-	return se ? se->GetPositionedRawSamplesLength( entnum ) : 0;
-}
-
-/*
 * CL_SoundModule_StartBackgroundTrack
 */
 void CL_SoundModule_StartBackgroundTrack( const char *intro, const char *loop, int mode ) {

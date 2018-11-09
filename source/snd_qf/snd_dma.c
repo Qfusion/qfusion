@@ -1618,10 +1618,6 @@ static pipeCmdHandler_t sndCmdHandlers[SND_CMD_NUM_CMDS] =
 	(pipeCmdHandler_t)S_HandleActivateCmd,
 	/* SND_CMD_AVI_DEMO */
 	(pipeCmdHandler_t)S_HandleAviDemoCmd,
-	/* SND_CMD_RAW_SAMPLES */
-	(pipeCmdHandler_t)S_HandleRawSamplesCmd,
-	/* SND_CMD_POSITIONED_RAW_SAMPLES */
-	(pipeCmdHandler_t)S_HandlePositionedRawSamplesCmd,
 	/* SND_CMD_STUFFCMD */
 	(pipeCmdHandler_t)S_HandleStuffCmd,
 	/* SND_CMD_SET_MUL_ENTITY_SPATIALIZATION */

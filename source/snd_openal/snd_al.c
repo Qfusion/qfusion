@@ -598,26 +598,6 @@ static unsigned S_HandleAviDemoCmd( const sndAviDemo_t *cmd ) {
 }
 
 /*
-* S_HandleRawSamplesCmd
-*/
-static unsigned S_HandleRawSamplesCmd( const sndRawSamplesCmd_t *cmd ) {
-	S_RawSamples( cmd->samples, cmd->rate, cmd->width, cmd->channels,
-				  cmd->data, cmd->music );
-	S_Free( ( void * )cmd->data );
-	return sizeof( *cmd );
-}
-
-/*
-* S_HandlePositionedRawSamplesCmd
-*/
-static unsigned S_HandlePositionedRawSamplesCmd( const sndPositionedRawSamplesCmd_t *cmd ) {
-	S_PositionedRawSamples( cmd->entnum, cmd->fvol, cmd->attenuation,
-							cmd->samples, cmd->rate, cmd->width, cmd->channels, cmd->data );
-	S_Free( ( void * )cmd->data );
-	return sizeof( *cmd );
-}
-
-/*
 * S_HandleStuffCmd
 */
 static unsigned S_HandleStuffCmd( const sndStuffCmd_t *cmd ) {
@@ -684,10 +664,6 @@ static pipeCmdHandler_t sndCmdHandlers[SND_CMD_NUM_CMDS] =
 	(pipeCmdHandler_t)S_HandleActivateCmd,
 	/* SND_CMD_AVI_DEMO */
 	(pipeCmdHandler_t)S_HandleAviDemoCmd,
-	/* SND_CMD_RAW_SAMPLES */
-	(pipeCmdHandler_t)S_HandleRawSamplesCmd,
-	/* SND_CMD_POSITIONED_RAW_SAMPLES */
-	(pipeCmdHandler_t)S_HandlePositionedRawSamplesCmd,
 	/* SND_CMD_STUFFCMD */
 	(pipeCmdHandler_t)S_HandleStuffCmd,
 	/* SND_CMD_SET_MUL_ENTITY_SPATIALIZATION */

@@ -253,64 +253,12 @@ void S_RawSamples2( unsigned int samples, unsigned int rate, unsigned short widt
 }
 
 /*
-* Global functions (sound.h)
-*/
-void S_RawSamples( unsigned int samples, unsigned int rate, unsigned short width,
-				   unsigned short channels, const uint8_t *data, bool music ) {
-	S_RawSamples_( RAW_SOUND_ENTNUM, 1, ATTN_NONE, samples, rate, width,
-				   channels, data, music ? s_musicvolume : s_volume );
-}
-
-/*
-* S_PositionedRawSamples
-*/
-void S_PositionedRawSamples( int entnum, float fvol, float attenuation,
-							 unsigned int samples, unsigned int rate,
-							 unsigned short width, unsigned short channels, const uint8_t *data ) {
-	if( entnum < 0 ) {
-		entnum = 0;
-	}
-	if( entnum == 0 ) {
-		attenuation = 0;
-	}
-
-	// allocate separate sources because OpenAL doesn't spatialize stereo sounds
-	if( attenuation > 0 && channels == 2 ) {
-		const uint8_t *split_data = split_stereo( samples, width, data );
-		const uint8_t *left = split_data, *right = split_data + samples * width;
-
-		S_RawSamples_( entnum, fvol, attenuation, samples, rate, width, 1, left, s_volume );
-		S_RawSamples_( -entnum, fvol, attenuation, samples, rate, width, 1, right, s_volume );
-		return;
-	}
-
-	S_RawSamples_( entnum, fvol, attenuation, samples, rate, width, channels, data, s_volume );
-}
-
-/*
 * S_GetRawSamplesLength
 */
 unsigned int S_GetRawSamplesLength( void ) {
 	rawsrc_t *rs;
 
 	rs = find_rawsound( RAW_SOUND_ENTNUM );
-	if( rs && rs->src ) {
-		return rs->samples_length;
-	}
-	return 0;
-}
-
-/*
-* S_GetPositionedRawSamplesLength
-*/
-unsigned int S_GetPositionedRawSamplesLength( int entnum ) {
-	rawsrc_t *rs;
-
-	if( entnum < 0 ) {
-		entnum = 0;
-	}
-
-	rs = find_rawsound( entnum );
 	if( rs && rs->src ) {
 		return rs->samples_length;
 	}
