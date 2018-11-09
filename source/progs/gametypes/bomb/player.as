@@ -60,8 +60,6 @@ const int AMMO_MG = 150;
 const int AMMO_GL = 10;
 const int AMMO_GB = 1; // might as well spawn with it fully charged
 
-const float PLAYER_ARMOR = 100.0f;
-
 cPlayer@[] players( maxClients ); // array of handles
 bool playersInitialized = false;
 
@@ -142,7 +140,7 @@ class cPlayer
 		}
 
 		this.client.inventorySetCount( WEAP_GUNBLADE, 1 );
-		this.client.armor = PLAYER_ARMOR;
+		this.client.getEnt().health = 200;
 
 		// XXX: old bomb would set the player's model depending on their
 		//      primary weapon but i don't see the point
