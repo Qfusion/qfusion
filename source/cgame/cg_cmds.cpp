@@ -57,8 +57,8 @@ static void CG_SC_ChatPrint( void ) {
 		CG_LocalPrint( "%s" S_COLOR_GREEN ": %s\n", name, text );
 	}
 
-	if( cg_chatBeep->integer ) {
-		trap_S_StartLocalSound( CG_MediaSfx( cgs.media.sfxChat ), CHAN_AUTO, 1.0f );
+	if( cg_chatBeep->value > 0 ) {
+		trap_S_StartLocalSound( CG_MediaSfx( cgs.media.sfxChat ), CHAN_AUTO, cg_chatBeep->value );
 	}
 }
 

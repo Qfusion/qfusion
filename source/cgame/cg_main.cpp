@@ -780,7 +780,7 @@ static void CG_RegisterVariables( void ) {
 	cg_raceGhosts =     trap_Cvar_Get( "cg_raceGhosts", "0", CVAR_ARCHIVE );
 	cg_raceGhostsAlpha =    trap_Cvar_Get( "cg_raceGhostsAlpha", "0.25", CVAR_ARCHIVE );
 
-	cg_chatBeep =       trap_Cvar_Get( "cg_chatBeep", "1", CVAR_ARCHIVE );
+	cg_chatBeep =       trap_Cvar_Get( "cg_chatBeep", "0.3", CVAR_ARCHIVE );
 	cg_chatFilter =     trap_Cvar_Get( "cg_chatFilter", "0", CVAR_ARCHIVE );
 
 	// developer cvars
