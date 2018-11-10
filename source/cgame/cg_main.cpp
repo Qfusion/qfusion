@@ -829,10 +829,10 @@ static void CG_RegisterVariables( void ) {
 	cg_teamColoredBeams = trap_Cvar_Get( "cg_teamColoredBeams", "1", CVAR_ARCHIVE | CVAR_READONLY );
 	cg_teamColoredInstaBeams = trap_Cvar_Get( "cg_teamColoredInstaBeams", "1", CVAR_ARCHIVE );
 
-	cg_ebbeam_old = trap_Cvar_Get( "cg_ebbeam_old", "0", CVAR_ARCHIVE );
-	cg_ebbeam_width = trap_Cvar_Get( "cg_ebbeam_width", "64", CVAR_ARCHIVE );
+	cg_ebbeam_old = trap_Cvar_Get( "cg_ebbeam_old", "1", CVAR_ARCHIVE );
+	cg_ebbeam_width = trap_Cvar_Get( "cg_ebbeam_width", "128", CVAR_ARCHIVE );
 	cg_ebbeam_alpha = trap_Cvar_Get( "cg_ebbeam_alpha", "0.4", CVAR_ARCHIVE );
-	cg_ebbeam_time = trap_Cvar_Get( "cg_ebbeam_time", "0.6", CVAR_ARCHIVE );
+	cg_ebbeam_time = trap_Cvar_Get( "cg_ebbeam_time", "0.25", CVAR_ARCHIVE );
 
 	cg_instabeam_width = trap_Cvar_Get( "cg_instabeam_width", "7", CVAR_ARCHIVE );
 	cg_instabeam_alpha = trap_Cvar_Get( "cg_instabeam_alpha", "0.4", CVAR_ARCHIVE );
