@@ -4,7 +4,7 @@ clone_depth: 1
 build_script:
 - cmd: git submodule update --init --recursive
 - cmd: cd source
-- cmd: cmake -G "Visual Studio 14 2015 Win64" --config Release .
+- cmd: cmake -G "Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE=Release .
 - cmd: msbuild /maxcpucount /p:Configuration=Release ALL_BUILD.vcxproj
 
 artifacts:
