@@ -10,7 +10,7 @@ extern SDL_Window * sdl_window;
 
 static bool input_inited = false;
 static bool input_focus = false;
-static bool mouse_relative = false;
+static bool warped = false;
 
 static int mx = 0, my = 0;
 static int rx = 0, ry = 0;
@@ -56,8 +56,12 @@ static void mouse_motion_event( SDL_MouseMotionEvent *event ) {
 
 	mx = event->x;
 	my = event->y;
-	rx += event->xrel;
-	ry += event->yrel;
+	if( !warped ) {
+		rx += event->xrel;
+		ry += event->yrel;
+	}
+
+	warped = false;
 }
 
 /**
@@ -365,19 +369,8 @@ static void IN_HandleEvents( void ) {
 	}
 }
 
-/**
- * Skips relative mouse movement for current frame.
- * We need to ignore the movement event generated when
- * mouse cursor is warped to window centre for the first time.
- */
-static void IN_SkipRelativeMouseMove( void ) {
-	if( mouse_relative ) {
-		SDL_GetRelativeMouseState( &rx, &ry );
-		rx = ry = 0;
-	}
-}
-
 static void IN_WarpMouseToCenter() {
+	warped = true;
 	int w, h;
 	SDL_GetWindowSize( sdl_window, &w, &h );
 	SDL_WarpMouseInWindow( sdl_window, w / 2, h / 2 );
@@ -474,20 +467,11 @@ void IN_Init() {
 
 	SDL_SetHint( SDL_HINT_MOUSE_RELATIVE_MODE_WARP, "0" );
 
-	mouse_relative = SDL_SetRelativeMouseMode( SDL_TRUE ) == 0;
-	if( mouse_relative ) {
-		IN_SetMouseScalingEnabled( false );
-	} else {
-		IN_WarpMouseToCenter( NULL, NULL );
-	}
-
 	IN_SDL_JoyInit( true );
 
 	input_focus = true;
 	input_inited = true;
 	bugged_rawXevents = linked.major == 2 && linked.minor == 0 && linked.patch < 4;
-
-	IN_SkipRelativeMouseMove();
 }
 
 /**
@@ -519,14 +503,18 @@ void IN_Frame() {
 
 	if( cls.key_dest == key_game && input_focus ) {
 		if( running_in_debugger ) {
+			// don't grab input if we're running a debugger
 			IN_WarpMouseToCenter();
-			IN_SkipRelativeMouseMove();
 			SDL_SetRelativeMouseMode( SDL_FALSE );
 			SDL_ShowCursor( SDL_ENABLE );
 		}
 		else {
 			SDL_SetRelativeMouseMode( SDL_TRUE );
 		}
+	}
+	else if( cls.key_dest == key_console ) {
+		SDL_SetRelativeMouseMode( SDL_FALSE );
+		SDL_ShowCursor( SDL_ENABLE );
 	}
 	else {
 		SDL_SetRelativeMouseMode( SDL_FALSE );
