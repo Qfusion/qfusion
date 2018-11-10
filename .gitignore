@@ -27,6 +27,7 @@ source/ipch
 
 # Ignore windows cmake generated files
 **/*.dir/
+.vs
 
 # Ignore SDL2 build files
 libsrcs/SDL2/VisualC/Win32
