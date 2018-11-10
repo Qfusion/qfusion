@@ -584,7 +584,6 @@ static const reference_numeric_t cg_numeric_references[] =
 	{ "SHOW_SPEED", CG_GetCvar, "cg_showSpeed" },
 	{ "SHOW_TIMER", CG_GetCvar, "cg_showTimer" },
 	{ "SHOW_AWARDS", CG_GetCvar, "cg_showAwards" },
-	{ "SHOW_ZOOM_EFFECT", CG_GetCvar, "cg_showZoomEffect" },
 	{ "SHOW_R_SPEEDS", CG_GetCvar, "r_speeds" },
 	{ "SHOW_STRAFE", CG_GetCvar, "cg_strafeHUD" },
 

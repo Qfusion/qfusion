@@ -52,7 +52,6 @@ cvar_t *cg_showSpeed;
 cvar_t *cg_showPickup;
 cvar_t *cg_showTimer;
 cvar_t *cg_showAwards;
-cvar_t *cg_showZoomEffect;
 cvar_t *cg_showCaptureAreas;
 
 cvar_t *cg_showPlayerNames;
@@ -193,7 +192,6 @@ void CG_ScreenInit( void ) {
 	cg_showPointedPlayer =  trap_Cvar_Get( "cg_showPointedPlayer", "1", CVAR_ARCHIVE );
 	cg_showViewBlends = trap_Cvar_Get( "cg_showViewBlends", "1", CVAR_ARCHIVE );
 	cg_showAwards =     trap_Cvar_Get( "cg_showAwards", "1", CVAR_ARCHIVE );
-	cg_showZoomEffect = trap_Cvar_Get( "cg_showZoomEffect", "0", CVAR_ARCHIVE );
 	cg_showCaptureAreas = trap_Cvar_Get( "cg_showCaptureAreas", "1", CVAR_ARCHIVE );
 
 	cg_showPlayerNames =        trap_Cvar_Get( "cg_showPlayerNames", "1", CVAR_ARCHIVE );
