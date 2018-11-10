@@ -968,61 +968,6 @@ void CG_BloodDamageEffect( const vec3_t origin, const vec3_t dir, int damage ) {
 }
 
 /*
-* CG_CartoonHitEffect
-*/
-void CG_CartoonHitEffect( const vec3_t origin, const vec3_t dir, int damage ) {
-	lentity_t *le;
-	int time = 6;
-	float radius = 11.0f, alpha = cg_bloodTrailAlpha->value;
-	struct shader_s *shader = CG_MediaShader( cgs.media.shaderCartoonHit );
-	struct shader_s *shader2 = CG_MediaShader( cgs.media.shaderCartoonHit2 );
-	struct shader_s *shader3 = CG_MediaShader( cgs.media.shaderCartoonHit3 );
-	vec3_t local_origin, local_dir;
-
-	if( !cg_cartoonHitEffect->integer ) {
-		return;
-	}
-
-	if( damage < 39 ) {
-		return;
-	}
-
-	if( !VectorLength( dir ) ) {
-		VectorNegate( &cg.view.axis[AXIS_FORWARD], local_dir );
-	} else {
-		VectorNormalize2( dir, local_dir );
-	}
-
-	// Move effect a bit up from player
-	VectorCopy( origin, local_origin );
-	local_origin[2] += 65;
-
-	// small buff
-	if( damage < 64 ) {
-		if( damage < 50 ) {
-			// SPLITZOW!
-			radius = 7.0f;
-			le = CG_AllocSprite( LE_SCALE_ALPHA_FADE, local_origin, radius, time, 1, 1, 1, alpha, 0, 0, 0, 0, shader2 );
-		} else {
-			// POW!
-			radius = 9.0f;
-			le = CG_AllocSprite( LE_SCALE_ALPHA_FADE, local_origin, radius, time, 1, 1, 1, alpha, 0, 0, 0, 0, shader );
-		}
-	} else {
-		// big buff
-		// OUCH!
-		le = CG_AllocSprite( LE_SCALE_ALPHA_FADE, local_origin, radius, time, 1, 1, 1, alpha, 0, 0, 0, 0, shader3 );
-	}
-
-	// randomize dir
-	VectorSet( le->velocity,
-			   -local_dir[0] * 5 + crandom() * 5,
-			   -local_dir[1] * 5 + crandom() * 5,
-			   -local_dir[2] * 5 + crandom() * 5 + 3 );
-	VectorMA( local_dir, 1, le->velocity, le->velocity );
-}
-
-/*
 * CG_PModel_SpawnTeleportEffect
 */
 void CG_PModel_SpawnTeleportEffect( centity_t *cent ) {

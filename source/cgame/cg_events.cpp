@@ -1526,7 +1526,6 @@ void CG_EntityEvent( entity_state_t *ent, int ev, int parm, bool predicted ) {
 			}
 			ByteToDir( parm, dir );
 			CG_BloodDamageEffect( ent->origin, dir, ent->damage );
-			CG_CartoonHitEffect( ent->origin, dir, ent->damage );
 			break;
 
 		// func movers
