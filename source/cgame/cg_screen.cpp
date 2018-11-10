@@ -41,7 +41,6 @@ cvar_t *cg_showFPS;
 cvar_t *cg_showPointedPlayer;
 cvar_t *cg_showHUD;
 cvar_t *cg_draw2D;
-cvar_t *cg_weaponlist;
 
 cvar_t *cg_crosshair_color;
 cvar_t *cg_crosshair_damage_color;
@@ -180,7 +179,6 @@ void CG_ScreenInit( void ) {
 	cg_showHUD =        trap_Cvar_Get( "cg_showHUD", "1", CVAR_ARCHIVE );
 	cg_draw2D =     trap_Cvar_Get( "cg_draw2D", "1", 0 );
 	cg_centerTime =     trap_Cvar_Get( "cg_centerTime", "2.5", 0 );
-	cg_weaponlist =     trap_Cvar_Get( "cg_weaponlist", "1", CVAR_ARCHIVE );
 
 	cg_crosshair_color =    trap_Cvar_Get( "cg_crosshair_color", "255 255 255", CVAR_ARCHIVE );
 	cg_crosshair_damage_color = trap_Cvar_Get( "cg_crosshair_damage_color", "255 0 0", CVAR_ARCHIVE );
@@ -420,13 +418,13 @@ void CG_DrawClock( int x, int y, int align, struct qfontface_s *font, vec4_t col
 	// fixme?: this could have its own HUD drawing, I guess.
 
 	if( GS_RaceGametype() ) {
-		Q_snprintfz( string, sizeof( string ), "%02i:%02i.%i",
+		Q_snprintfz( string, sizeof( string ), "%i:%02i.%i",
 					 minutes, ( int )seconds, ( int )( seconds * 10.0 ) % 10 );
 	} else if( cg.predictedPlayerState.stats[STAT_NEXT_RESPAWN] ) {
 		int respawn = cg.predictedPlayerState.stats[STAT_NEXT_RESPAWN];
-		Q_snprintfz( string, sizeof( string ), "%02i:%02i R:%02i", minutes, (int)seconds, respawn );
+		Q_snprintfz( string, sizeof( string ), "%i:%02i R:%02i", minutes, (int)seconds, respawn );
 	} else {
-		Q_snprintfz( string, sizeof( string ), "%02i:%02i", minutes, (int)seconds );
+		Q_snprintfz( string, sizeof( string ), "%i:%02i", minutes, (int)seconds );
 	}
 
 	trap_SCR_DrawString( x, y, align, string, font, color );

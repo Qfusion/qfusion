@@ -1609,13 +1609,6 @@ static void CG_FirePlayerStateEvents( void ) {
 					CG_ScreenCrosshairDamageUpdate();
 				} else {  // hit a teammate
 					trap_S_StartLocalSound( CG_MediaSfx( cgs.media.sfxWeaponHitTeam ), CHAN_AUTO, cg_volume_hitsound->value );
-					if( cg_showhelp->integer ) {
-						if( random() <= 0.5f ) {
-							CG_CenterPrint( "Don't shoot at members of your team!" );
-						} else {
-							CG_CenterPrint( "You are shooting at your team-mates!" );
-						}
-					}
 				}
 				break;
 

@@ -28,7 +28,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define TEAM_OWN    ( GS_MAX_TEAMS + 1 )
 #define TEAM_ENEMY  ( GS_MAX_TEAMS + 2 )
 
-extern cvar_t *cg_weaponlist;
 extern cvar_t *cg_debugHUD;
 extern cvar_t *cg_clientHUD;
 extern cvar_t *cg_specHUD;
@@ -108,11 +107,6 @@ static const constant_numeric_t cg_numeric_constants[] = {
 
 	{ NULL, 0 }
 };
-
-// picnames for custom icons (weaponlist)
-static const char *customWeaponPics[WEAP_TOTAL - 1];
-static const char *customNoGunWeaponPics[WEAP_TOTAL - 1];
-static const char *customWeaponSelectPic;
 
 //=============================================================================
 
@@ -546,6 +540,7 @@ static const reference_numeric_t cg_numeric_references[] =
 	{ "MATCH_STATE", CG_GetMatchState, NULL },
 	{ "MATCH_DURATION", CG_GetMatchDuration, NULL },
 	{ "OVERTIME", CG_GetOvertime, NULL },
+	{ "MATCH_POINT", CG_GetOvertime, NULL },
 	{ "INSTAGIB", CG_GetInstagib, NULL },
 	{ "TEAMBASED", CG_GetTeamBased, NULL },
 	{ "INDIVIDUAL", CG_InvidualGameType, NULL },
@@ -602,6 +597,8 @@ static const reference_numeric_t cg_numeric_references[] =
 };
 
 //=============================================================================
+
+static struct qfontface_s *CG_GetLayoutCursorFont( void );
 
 #define MAX_OBITUARIES 32
 
@@ -965,174 +962,6 @@ static void CG_DrawAwards( int x, int y, int align, struct qfontface_s *font, ve
 }
 
 //=============================================================================
-
-static bool CG_IsWeaponSelected( int weapon ) {
-	if( cg.view.playerPrediction && cg.predictedWeaponSwitch && cg.predictedWeaponSwitch != cg.predictedPlayerState.stats[STAT_PENDING_WEAPON] ) {
-		return ( weapon == cg.predictedWeaponSwitch );
-	}
-
-	return ( weapon == cg.predictedPlayerState.stats[STAT_PENDING_WEAPON] );
-}
-
-static struct shader_s *CG_GetWeaponIcon( int weapon ) {
-	int currentWeapon = cg.predictedPlayerState.stats[STAT_WEAPON];
-	int weaponState = cg.predictedPlayerState.weaponState;
-
-	if( weapon == WEAP_GUNBLADE && cg.predictedPlayerState.inventory[AMMO_GUNBLADE] ) {
-		if( currentWeapon != WEAP_GUNBLADE || ( weaponState != WEAPON_STATE_REFIRESTRONG && weaponState != WEAPON_STATE_REFIRE ) ) {
-			return CG_MediaShader( cgs.media.shaderGunbladeBlastIcon );
-		}
-	}
-
-	if( weapon == WEAP_INSTAGUN ) {
-		if( currentWeapon == WEAP_INSTAGUN && weaponState == WEAPON_STATE_REFIRESTRONG ) {
-			int chargeTime = GS_GetWeaponDef( WEAP_INSTAGUN )->firedef.reload_time;
-			int chargeTimeStep = chargeTime / 3;
-			if( chargeTimeStep > 0 ) {
-				int charge = ( chargeTime - cg.predictedPlayerState.stats[STAT_WEAPON_TIME] ) / chargeTimeStep;
-				clamp( charge, 0, 2 );
-				return CG_MediaShader( cgs.media.shaderInstagunChargeIcon[charge] );
-			}
-		}
-	}
-
-	return CG_MediaShader( cgs.media.shaderWeaponIcon[weapon - WEAP_GUNBLADE] );
-}
-
-/*
-* CG_DrawWeaponIcons
-*/
-static void CG_DrawWeaponIcons( int x, int y, int offx, int offy, int iw, int ih, int align ) {
-	int curx, cury, curw, curh;
-	int i, j, n;
-	float fj, fn;
-	bool selected_weapon;
-	vec4_t colorTrans = { 1.0f, 1.0f, 1.0f, 0.5f };
-
-	if( !cg_weaponlist || !cg_weaponlist->integer ) {
-		return;
-	}
-
-	if( iw > 0 ) {
-		curw = iw;
-	} else {
-		curw = 32 * cgs.vidWidth / 800; // 32 = default size for icons
-	}
-	if( ih > 0 ) {
-		curh = ih;
-	} else {
-		curh = 32 * cgs.vidHeight / 600; // 32 = default size for icons
-
-	}
-	n = 0;
-
-	for( i = 0; i < WEAP_TOTAL - 1; i++ ) {
-		if( CG_IsWeaponInList( WEAP_GUNBLADE + i ) ) {
-			n++;
-		}
-	}
-
-	for( i = j = 0; i < WEAP_TOTAL - 1; i++ ) {
-		// if player doesnt have this weapon, skip it
-		if( !CG_IsWeaponInList( WEAP_GUNBLADE + i ) ) {
-			continue;
-		}
-
-		selected_weapon = CG_IsWeaponSelected( WEAP_GUNBLADE + i );
-
-		fj = (float)j;
-		fn = (float)n;
-		curx = CG_HorizontalAlignForWidth( x + (int)( offx * ( fj - fn / 2.0f ) ), align, curw );
-		cury = CG_VerticalAlignForHeight( y + (int)( offy * ( fj - fn / 2.0f ) ), align, curh );
-
-		if( cg.predictedPlayerState.inventory[WEAP_GUNBLADE + i] ) {
-			// wsw : pb : display a little box around selected weapon in weaponlist
-			if( selected_weapon ) {
-				if( customWeaponSelectPic ) {
-					trap_R_DrawStretchPic( curx, cury, curw, curh, 0, 0, 1, 1, colorTrans, trap_R_RegisterPic( customWeaponSelectPic ) );
-				} else {
-					trap_R_DrawStretchPic( curx, cury, curw, curh, 0, 0, 1, 1, colorTrans, CG_MediaShader( cgs.media.shaderSelect ) );
-				}
-			}
-			if( customWeaponPics[i] ) {
-				trap_R_DrawStretchPic( curx, cury, curw, curh, 0, 0, 1, 1, colorWhite, trap_R_RegisterPic( customWeaponPics[i] ) );
-			} else {
-				trap_R_DrawStretchPic( curx, cury, curw, curh, 0, 0, 1, 1, colorWhite, CG_GetWeaponIcon( WEAP_GUNBLADE + i ) );
-			}
-		} else
-		if( customNoGunWeaponPics[i] ) {
-			trap_R_DrawStretchPic( curx, cury, curw, curh, 0, 0, 1, 1, colorWhite, trap_R_RegisterPic( customNoGunWeaponPics[i] ) );
-		} else {
-			trap_R_DrawStretchPic( curx, cury, curw, curh, 0, 0, 1, 1, colorWhite, CG_MediaShader( cgs.media.shaderNoGunWeaponIcon[i] ) );
-		}
-		j++;
-	}
-}
-
-/*
-* CG_DrawWeaponAmmos
-*/
-static void CG_DrawWeaponAmmos( int x, int y, int offx, int offy, int fontsize, int ammotype, int align ) {
-	int curx, cury, curwh;
-	int i, j, n, fs;
-	float fj, fn;
-	vec4_t color;
-	int startammo;
-
-	if( !cg_weaponlist || !cg_weaponlist->integer ) {
-		return;
-	}
-
-	if( ammotype == 1 ) {
-		startammo = AMMO_GUNBLADE;
-	} else {
-		startammo = AMMO_WEAK_GUNBLADE;
-	}
-
-	if( fontsize > 0 ) {
-		fs = fontsize;
-	} else {
-		fs = 12; // 12 = default size for font
-	}
-	curwh = (int)( fs * cgs.vidHeight / 600 );
-
-	n = 0;
-
-	for( i = 0; i < WEAP_TOTAL - 1; i++ ) {
-		if( CG_IsWeaponInList( WEAP_GUNBLADE + i ) ) {
-			n++;
-		}
-	}
-
-	VectorCopy( colorWhite, color );
-
-	for( i = j = 0; i < WEAP_TOTAL - 1; i++ ) {
-		// if player doesn't have this weapon, skip it
-		if( !CG_IsWeaponInList( WEAP_GUNBLADE + i ) ) {
-			continue;
-		}
-
-		if( i ) { // skip gunblade because it uses a different icon instead of the ammo count
-			if( CG_IsWeaponSelected( WEAP_GUNBLADE + i ) ) {
-				color[3] = 1.0;
-			} else {
-				color[3] = 0.5;
-			}
-
-			fj = (float)j;
-			fn = (float)n;
-			curx = x + (int)( offx * ( fj - fn / 2.0f ) );
-			cury = y + (int)( offy * ( fj - fn / 2.0f ) );
-
-			if( cg.predictedPlayerState.inventory[i + startammo] ) {
-				CG_DrawHUDNumeric( curx, cury, align, color, curwh, curwh, cg.predictedPlayerState.inventory[i + startammo] );
-			}
-		}
-		j++;
-	}
-}
-
-//=============================================================================
 //	STATUS BAR PROGRAMS
 //=============================================================================
 
@@ -1331,8 +1160,6 @@ static int layout_cursor_font_style;
 struct qfontface_s *(*layout_cursor_font_regfunc)( const char *, int, unsigned int );
 static bool layout_cursor_font_dirty = true;
 
-static struct qfontface_s *CG_GetLayoutCursorFont( void );
-
 enum
 {
 	LNODE_NUMERIC,
@@ -1344,6 +1171,109 @@ enum
 //=============================================================================
 // Commands' Functions
 //=============================================================================
+
+static bool CG_IsWeaponSelected( int weapon ) {
+	if( cg.view.playerPrediction && cg.predictedWeaponSwitch && cg.predictedWeaponSwitch != cg.predictedPlayerState.stats[STAT_PENDING_WEAPON] ) {
+		return ( weapon == cg.predictedWeaponSwitch );
+	}
+
+	return ( weapon == cg.predictedPlayerState.stats[STAT_PENDING_WEAPON] );
+}
+
+static struct shader_s *CG_GetWeaponIcon( int weapon ) {
+	int currentWeapon = cg.predictedPlayerState.stats[STAT_WEAPON];
+	int weaponState = cg.predictedPlayerState.weaponState;
+
+	if( weapon == WEAP_GUNBLADE && cg.predictedPlayerState.inventory[AMMO_GUNBLADE] ) {
+		if( currentWeapon != WEAP_GUNBLADE || ( weaponState != WEAPON_STATE_REFIRESTRONG && weaponState != WEAPON_STATE_REFIRE ) ) {
+			return CG_MediaShader( cgs.media.shaderGunbladeBlastIcon );
+		}
+	}
+
+	if( weapon == WEAP_INSTAGUN ) {
+		if( currentWeapon == WEAP_INSTAGUN && weaponState == WEAPON_STATE_REFIRESTRONG ) {
+			int chargeTime = GS_GetWeaponDef( WEAP_INSTAGUN )->firedef.reload_time;
+			int chargeTimeStep = chargeTime / 3;
+			if( chargeTimeStep > 0 ) {
+				int charge = ( chargeTime - cg.predictedPlayerState.stats[STAT_WEAPON_TIME] ) / chargeTimeStep;
+				clamp( charge, 0, 2 );
+				return CG_MediaShader( cgs.media.shaderInstagunChargeIcon[charge] );
+			}
+		}
+	}
+
+	return CG_MediaShader( cgs.media.shaderWeaponIcon[weapon - WEAP_GUNBLADE] );
+}
+
+constexpr float SELECTED_WEAPON_Y_OFFSET = 0.0125;
+
+static void CG_DrawWeaponIcons( int x, int y, int offx, int offy, int iw, int ih, int align ) {
+	int num_weapons = 0;
+	for( int i = 0; i < WEAP_TOTAL - 1; i++ ) {
+		if( CG_IsWeaponInList( WEAP_GUNBLADE + i ) ) {
+			num_weapons++;
+		}
+	}
+
+	int padx = offx - iw;
+	int pady = offy - ih;
+	int total_width = max( 0, num_weapons * offx - padx );
+	int total_height = max( 0, num_weapons * offy - pady );
+
+	int drawn_weapons = 0;
+	for( int i = 0; i < WEAP_TOTAL - 1; i++ ) {
+		if( !CG_IsWeaponInList( WEAP_GUNBLADE + i ) )
+			continue;
+
+		int curx = CG_HorizontalAlignForWidth( x + offx * drawn_weapons, align, total_width );
+		int cury = CG_VerticalAlignForHeight( y + offy * drawn_weapons, align, total_height );
+
+		if( CG_IsWeaponSelected( WEAP_GUNBLADE + i ) )
+			cury -= SELECTED_WEAPON_Y_OFFSET * cgs.vidHeight;
+
+		if( cg.predictedPlayerState.inventory[WEAP_GUNBLADE + i] ) {
+			trap_R_DrawStretchPic( curx, cury, iw, ih, 0, 0, 1, 1, colorWhite, CG_GetWeaponIcon( WEAP_GUNBLADE + i ) );
+		} else {
+			trap_R_DrawStretchPic( curx, cury, iw, ih, 0, 0, 1, 1, colorWhite, CG_MediaShader( cgs.media.shaderNoGunWeaponIcon[i] ) );
+		}
+
+		drawn_weapons++;
+	}
+}
+
+static void CG_DrawWeaponAmmos( int x, int y, int offx, int offy, int fontsize, int align ) {
+	/*
+	 * we don't draw ammo text for GB
+	 * so all the loops in this function skip it by starting at 1
+	 */
+	int num_weapons = 0;
+	for( int i = 1; i < WEAP_TOTAL - 1; i++ ) {
+		if( CG_IsWeaponInList( WEAP_GUNBLADE + i ) ) {
+			num_weapons++;
+		}
+	}
+
+	int total_width = max( 0, num_weapons * offx );
+
+	int drawn_weapons = 1;
+	for( int i = 1; i < WEAP_TOTAL - 1; i++ ) {
+		if( !CG_IsWeaponInList( WEAP_GUNBLADE + i ) )
+			continue;
+
+		int curx = CG_HorizontalAlignForWidth( x + offx * drawn_weapons, align, total_width );
+		int cury = y + offy * drawn_weapons;
+
+		if( CG_IsWeaponSelected( WEAP_GUNBLADE + i ) )
+			cury -= SELECTED_WEAPON_Y_OFFSET * cgs.vidHeight;
+
+		int ammo = cg.predictedPlayerState.inventory[AMMO_GUNBLADE + i];
+
+		trap_SCR_DrawString( curx, cury, ALIGN_RIGHT_BOTTOM, va( "%i", ammo ), CG_GetLayoutCursorFont(), layout_cursor_color );
+
+		drawn_weapons++;
+	}
+}
+
 static bool CG_LFuncDrawTimer( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	char time[64];
 	int min, sec, milli;
@@ -2065,38 +1995,6 @@ static bool CG_LFuncDrawWeaponIcon( struct cg_layoutnode_s *commandnode, struct 
 	return true;
 }
 
-static bool CG_LFuncCustomWeaponIcons( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
-	int weapon = (int)CG_GetNumericArg( &argumentnode );
-	int hasgun = (int)CG_GetNumericArg( &argumentnode );
-
-	if( weapon <= WEAP_NONE || weapon >= WEAP_TOTAL ) {
-		return false;
-	}
-
-	if( hasgun ) {
-		customWeaponPics[weapon - 1] = CG_GetStringArg( &argumentnode );
-	} else {
-		customNoGunWeaponPics[weapon - 1] = CG_GetStringArg( &argumentnode );
-	}
-
-	return true;
-}
-
-static bool CG_LFuncResetCustomWeaponIcons( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
-	int weapon;
-	for( weapon = 0; weapon < WEAP_TOTAL - 1; weapon++ ) {
-		customWeaponPics[weapon] = NULL;
-		customNoGunWeaponPics[weapon] = NULL;
-	}
-	customWeaponSelectPic = NULL;
-	return true;
-}
-
-static bool CG_LFuncCustomWeaponSelect( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
-	customWeaponSelectPic = CG_GetStringArg( &argumentnode );
-	return true;
-}
-
 static void CG_LFuncsWeaponIcons( struct cg_layoutnode_s *argumentnode ) {
 	int offx, offy, w, h;
 
@@ -2127,18 +2025,6 @@ static bool CG_LFuncDrawLocationName( struct cg_layoutnode_s *commandnode, struc
 	return true;
 }
 
-static bool CG_LFuncDrawWeaponWeakAmmo( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
-	int offx, offy, fontsize;
-
-	offx = (int)( CG_GetNumericArg( &argumentnode ) * cgs.vidWidth / 800 );
-	offy = (int)( CG_GetNumericArg( &argumentnode ) * cgs.vidHeight / 600 );
-	fontsize = (int)CG_GetNumericArg( &argumentnode );
-
-	CG_DrawWeaponAmmos( layout_cursor_x, layout_cursor_y, offx, offy, fontsize, 2, layout_cursor_align );
-
-	return true;
-}
-
 static bool CG_LFuncDrawWeaponStrongAmmo( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	int offx, offy, fontsize;
 
@@ -2146,7 +2032,7 @@ static bool CG_LFuncDrawWeaponStrongAmmo( struct cg_layoutnode_s *commandnode, s
 	offy = (int)( CG_GetNumericArg( &argumentnode ) * cgs.vidHeight / 600 );
 	fontsize = (int)CG_GetNumericArg( &argumentnode );
 
-	CG_DrawWeaponAmmos( layout_cursor_x, layout_cursor_y, offx, offy, fontsize, 1, layout_cursor_align );
+	CG_DrawWeaponAmmos( layout_cursor_x, layout_cursor_y, offx, offy, fontsize, layout_cursor_align );
 
 	return true;
 }
@@ -2334,30 +2220,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 		CG_LFuncRotationSpeed,
 		3,
 		"Sets rotation speeds as vector. Used for models",
-		false
-	},
-
-	{
-		"setCustomWeaponIcons",
-		CG_LFuncCustomWeaponIcons,
-		3,
-		"Sets a custom shader for weapon icons",
-		false
-	},
-
-	{
-		"resetCustomWeaponIcons",
-		CG_LFuncResetCustomWeaponIcons,
-		0,
-		"Resets the custom shaders for weapon icons",
-		false
-	},
-
-	{
-		"setCustomWeaponSelect",
-		CG_LFuncCustomWeaponSelect,
-		1,
-		"Sets a custom shader for weapon icons",
 		false
 	},
 
@@ -2614,14 +2476,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 		CG_LFuncDrawWeaponIcons,
 		4,
 		"Draws the icons of weapon/ammo owned by the player, arguments are offset x, offset y, size x, size y",
-		false
-	},
-
-	{
-		"drawWeaponWeakAmmo",
-		CG_LFuncDrawWeaponWeakAmmo,
-		3,
-		"Draws the amount of weak ammo owned by the player, arguments are offset x, offset y, fontsize",
 		false
 	},
 
@@ -3695,7 +3549,6 @@ static char *CG_LoadHUDFile( char *path ) {
 */
 static void CG_LoadStatusBarFile( char *path ) {
 	char *opt;
-	int i;
 
 	assert( path && path[0] );
 
@@ -3719,12 +3572,6 @@ static void CG_LoadStatusBarFile( char *path ) {
 	layout_cursor_font_size = DEFAULT_SYSTEM_FONT_SMALL_SIZE;
 	layout_cursor_font_dirty = true;
 	layout_cursor_font_regfunc = trap_SCR_RegisterFont;
-
-	for( i = 0; i < WEAP_TOTAL - 1; i++ ) {
-		customWeaponPics[i] = NULL;
-		customNoGunWeaponPics[i] = NULL;
-	}
-	customWeaponSelectPic = NULL;
 }
 
 /*
