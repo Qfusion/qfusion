@@ -415,48 +415,6 @@ void CG_ResetColorBlend( void ) {
 	memset( cg.colorblends, 0, sizeof( cg.colorblends ) );
 }
 
-/*
-* CG_StartColorBlendEffect
-*/
-void CG_StartColorBlendEffect( float r, float g, float b, float a, int time ) {
-	int i, bnum = -1;
-
-	if( a <= 0.0f || time <= 0 ) {
-		return;
-	}
-
-	//find first free colorblend spot, or the one closer to be finished
-	for( i = 0; i < MAX_COLORBLENDS; i++ ) {
-		if( cg.time > cg.colorblends[i].timestamp + cg.colorblends[i].blendtime ) {
-			bnum = i;
-			break;
-		}
-	}
-
-	// all in use. Choose the closer to be finished
-	if( bnum == -1 ) {
-		int remaintime;
-		int best = ( cg.colorblends[0].timestamp + cg.colorblends[0].blendtime ) - cg.time;
-		bnum = 0;
-		for( i = 1; i < MAX_COLORBLENDS; i++ ) {
-			remaintime = ( cg.colorblends[i].timestamp + cg.colorblends[i].blendtime ) - cg.time;
-			if( remaintime < best ) {
-				best = remaintime;
-				bnum = i;
-			}
-		}
-	}
-
-	// assign the color blend
-	cg.colorblends[bnum].blend[0] = r;
-	cg.colorblends[bnum].blend[1] = g;
-	cg.colorblends[bnum].blend[2] = b;
-	cg.colorblends[bnum].blend[3] = a;
-
-	cg.colorblends[bnum].timestamp = cg.time;
-	cg.colorblends[bnum].blendtime = time;
-}
-
 //============================================================================
 
 /*

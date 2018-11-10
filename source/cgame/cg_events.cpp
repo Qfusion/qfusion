@@ -1612,10 +1612,6 @@ static void CG_FirePlayerStateEvents( void ) {
 				break;
 
 			case PSEV_PICKUP:
-				if( cg_pickup_flash->integer && !cg.view.thirdperson ) {
-					CG_StartColorBlendEffect( 1.0f, 1.0f, 1.0f, 0.25f, 150 );
-				}
-
 				// auto-switch
 				if( cg_weaponAutoSwitch->integer && ( parm > WEAP_NONE && parm < WEAP_TOTAL ) ) {
 					if( !cgs.demoPlaying && cg.predictedPlayerState.pmove.pm_type == PM_NORMAL

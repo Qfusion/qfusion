@@ -971,7 +971,6 @@ void CG_ResetKickAngles( void );
 void CG_ResetColorBlend( void );
 
 void CG_StartKickAnglesEffect( vec3_t source, float knockback, float radius, int time );
-void CG_StartColorBlendEffect( float r, float g, float b, float a, int time );
 void CG_StartFallKickEffect( int bounceTime );
 void CG_ViewSmoothPredictedSteps( vec3_t vieworg );
 float CG_ViewSmoothFallKick( void );
@@ -1106,7 +1105,6 @@ void CG_ViewWeapon_RefreshAnimation( cg_viewweapon_t *viewweapon );
 //extern cvar_t *cg_footSteps;
 extern cvar_t *cg_damage_indicator;
 extern cvar_t *cg_damage_indicator_time;
-extern cvar_t *cg_pickup_flash;
 extern cvar_t *cg_weaponAutoSwitch;
 
 void CG_FireEvents( bool early );
