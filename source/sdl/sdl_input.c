@@ -15,8 +15,6 @@ static bool warped = false;
 static int mx = 0, my = 0;
 static int rx = 0, ry = 0;
 
-static bool bugged_rawXevents = false;
-
 static bool running_in_debugger = false;
 
 #if defined( __APPLE__ )
@@ -35,25 +33,6 @@ void IN_Commands( void ) {
  * @param ev the SDL event object containing the mouse position et all
  */
 static void mouse_motion_event( SDL_MouseMotionEvent *event ) {
-	// See:
-	// https://bugzilla.libsdl.org/show_bug.cgi?id=2963
-	// https://bugs.freedesktop.org/show_bug.cgi?id=71609
-	if( mouse_relative && bugged_rawXevents ) {
-		static Uint32 last_timestamp;
-		static Uint32 last_which;
-		static Sint32 last_xrel, last_yrel;
-
-		if( last_timestamp == event->timestamp && last_which == event->which
-			&& last_xrel == event->xrel && last_yrel == event->yrel ) {
-			return;
-		}
-
-		last_timestamp = event->timestamp;
-		last_which = event->which;
-		last_xrel = event->xrel;
-		last_yrel = event->yrel;
-	}
-
 	mx = event->x;
 	my = event->y;
 	if( !warped ) {
@@ -467,7 +446,6 @@ void IN_Init() {
 
 	input_focus = true;
 	input_inited = true;
-	bugged_rawXevents = linked.major == 2 && linked.minor == 0 && linked.patch < 4;
 }
 
 /**
