@@ -122,16 +122,8 @@ cvar_t *cg_teamPLAYERScolorForce;
 cvar_t *cg_teamALPHAcolor;
 cvar_t *cg_teamBETAcolor;
 
-cvar_t *cg_forceMyTeamAlpha;
-cvar_t *cg_teamColoredBeams;
 cvar_t *cg_teamColoredInstaBeams;
 
-//cvar_t *cg_teamColorBeamMinimum;
-
-cvar_t *cg_ebbeam_old;
-cvar_t *cg_ebbeam_width;
-cvar_t *cg_ebbeam_alpha;
-cvar_t *cg_ebbeam_time;
 cvar_t *cg_instabeam_width;
 cvar_t *cg_instabeam_alpha;
 cvar_t *cg_instabeam_time;
@@ -821,16 +813,8 @@ static void CG_RegisterVariables( void ) {
 	cg_teamBETAmodelForce->modified = true;
 	cg_teamBETAcolor->modified = true;
 
-	cg_forceMyTeamAlpha = trap_Cvar_Get( "cg_forceMyTeamAlpha", "1", CVAR_ARCHIVE | CVAR_READONLY );
-
 	// dmh - learn0more's team colored beams
-	cg_teamColoredBeams = trap_Cvar_Get( "cg_teamColoredBeams", "1", CVAR_ARCHIVE | CVAR_READONLY );
 	cg_teamColoredInstaBeams = trap_Cvar_Get( "cg_teamColoredInstaBeams", "1", CVAR_ARCHIVE );
-
-	cg_ebbeam_old = trap_Cvar_Get( "cg_ebbeam_old", "1", CVAR_ARCHIVE );
-	cg_ebbeam_width = trap_Cvar_Get( "cg_ebbeam_width", "128", CVAR_ARCHIVE );
-	cg_ebbeam_alpha = trap_Cvar_Get( "cg_ebbeam_alpha", "0.4", CVAR_ARCHIVE );
-	cg_ebbeam_time = trap_Cvar_Get( "cg_ebbeam_time", "0.25", CVAR_ARCHIVE );
 
 	cg_instabeam_width = trap_Cvar_Get( "cg_instabeam_width", "7", CVAR_ARCHIVE );
 	cg_instabeam_alpha = trap_Cvar_Get( "cg_instabeam_alpha", "0.4", CVAR_ARCHIVE );

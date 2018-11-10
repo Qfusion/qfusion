@@ -285,59 +285,17 @@ void CG_SpawnSprite( const vec3_t origin, const vec3_t velocity, const vec3_t ac
 }
 
 /*
-* CG_ElectroRings
-*/
-static void CG_ElectroRings( const vec3_t start, const vec3_t end, const vec4_t color ) {
-	vec3_t dir, origin;
-	int i, numrings;
-	float len;
-	float timeFrac;
-	float space = 15.0f;
-	lentity_t *le;
-	struct shader_s *s = CG_MediaShader( cgs.media.shaderElectroBeamRing );
-
-	VectorSubtract( end, start, dir );
-	len = VectorNormalize( dir );
-	if( !len ) {
-		return;
-	}
-
-	numrings = len / space + 1;
-	timeFrac = 0.6f / (float)numrings;
-	for( i = 0; i < numrings; i++ ) {
-		float t = ( (float)i * timeFrac + 7.5f + ( i * 0.20f ) ) * (float)cg_ebbeam_time->value;
-		float l = i * space;
-
-		VectorMA( start, l, dir, origin );
-		le = CG_AllocSprite( LE_ALPHA_FADE, origin, 4.25f, t,
-							 color[0], color[1], color[2], color[3], 0, 0, 0, 0,
-							 s );
-		le->ent.rotation = rand() % 360;
-	}
-}
-
-/*
 * CG_ElectroTrail2
 */
 void CG_ElectroTrail2( const vec3_t start, const vec3_t end, int team ) {
 	vec4_t color = { 1.0f, 1.0f, 1.0f, 1.0f };
 
-	if( cg_ebbeam_time->value < 0.05f ) {
-		return;
-	}
-
-	if( cg_teamColoredBeams->integer && ( ( team == TEAM_ALPHA ) || ( team == TEAM_BETA ) ) ) {
+	if( team == TEAM_ALPHA || team == TEAM_BETA ) {
 		CG_TeamColor( team, color );
 	}
 
-	if( cg_ebbeam_old->integer ) {
-		CG_ElectroPolyBeam( start, end, team );
-		CG_ElectroIonsTrail( start, end, color );
-	} else {
-		CG_ElectroPolyBeam( start, end, team );
-		CG_ElectroRings( start, end, color );
-		CG_ElectroIonsTrail2( start, end, color );
-	}
+	CG_ElectroPolyBeam( start, end, team );
+	CG_ElectroIonsTrail( start, end, color );
 }
 
 /*

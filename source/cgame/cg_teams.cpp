@@ -25,15 +25,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 * CG_ForceTeam
 */
 static int CG_ForceTeam( int entNum, int team ) {
-	if( cg_forceMyTeamAlpha->integer ) {
-		int myteam = cg.predictedPlayerState.stats[STAT_TEAM];
-		if( myteam == TEAM_BETA ) {
-			if( team == TEAM_ALPHA ) {
-				return TEAM_BETA;
-			}
-			if( team == TEAM_BETA ) {
-				return TEAM_ALPHA;
-			}
+	int myteam = cg.predictedPlayerState.stats[STAT_TEAM];
+	if( myteam == TEAM_BETA ) {
+		if( team == TEAM_ALPHA ) {
+			return TEAM_BETA;
+		}
+		if( team == TEAM_BETA ) {
+			return TEAM_ALPHA;
 		}
 	}
 	return team;

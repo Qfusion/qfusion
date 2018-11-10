@@ -397,37 +397,17 @@ void CG_ElectroPolyboardBeam( const vec3_t start, const vec3_t end, int subdivis
 void CG_ElectroPolyBeam( const vec3_t start, const vec3_t end, int team ) {
 	struct shader_s *shader;
 
-	if( cg_ebbeam_time->value <= 0.0f || cg_ebbeam_width->integer <= 0 ) {
-		return;
-	}
-
-	if( cg_ebbeam_old->integer ) {
-		if( cg_teamColoredBeams->integer && ( team == TEAM_ALPHA || team == TEAM_BETA ) ) {
-			if( team == TEAM_ALPHA ) {
-				shader = CG_MediaShader( cgs.media.shaderElectroBeamOldAlpha );
-			} else {
-				shader = CG_MediaShader( cgs.media.shaderElectroBeamOldBeta );
-			}
+	if( team == TEAM_ALPHA || team == TEAM_BETA ) {
+		if( team == TEAM_ALPHA ) {
+			shader = CG_MediaShader( cgs.media.shaderElectroBeamAlpha );
 		} else {
-			shader = CG_MediaShader( cgs.media.shaderElectroBeamOld );
+			shader = CG_MediaShader( cgs.media.shaderElectroBeamBeta );
 		}
-
-		CG_SpawnPolyBeam( start, end, NULL, cg_ebbeam_width->integer, cg_ebbeam_time->value * 1000, cg_ebbeam_time->value * 1000 * 0.4f, shader, 128, 0 );
 	} else {
-		if( cg_teamColoredBeams->integer && ( team == TEAM_ALPHA || team == TEAM_BETA ) ) {
-			if( team == TEAM_ALPHA ) {
-				shader = CG_MediaShader( cgs.media.shaderElectroBeamAAlpha );
-			} else {
-				shader = CG_MediaShader( cgs.media.shaderElectroBeamABeta );
-			}
-		} else {
-			shader = CG_MediaShader( cgs.media.shaderElectroBeamA );
-		}
-
-		CG_SpawnPolyBeam( start, end, NULL, cg_ebbeam_width->integer, 
-			cg_ebbeam_time->value * 1000, cg_ebbeam_time->value * 1000 * 0.4f, 
-			shader, 128, 0 );
+		shader = CG_MediaShader( cgs.media.shaderElectroBeam );
 	}
+
+	CG_SpawnPolyBeam( start, end, NULL, EBBEAM_WIDTH, EBBEAM_TIME, EBBEAM_TIME * 0.4f, shader, 128, 0 );
 }
 
 /*
@@ -443,7 +423,7 @@ void CG_InstaPolyBeam( const vec3_t start, const vec3_t end, int team ) {
 		return;
 	}
 
-	if( cg_teamColoredInstaBeams->integer && ( team == TEAM_ALPHA || team == TEAM_BETA ) ) {
+	if( team == TEAM_ALPHA || team == TEAM_BETA ) {
 		CG_TeamColor( team, tcolor );
 		min = 90 * ( 1.0f / 255.0f );
 		min_team_color[0] = min_team_color[1] = min_team_color[2] = min;

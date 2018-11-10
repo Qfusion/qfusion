@@ -333,16 +333,9 @@ void CG_RegisterMediaShaders( void ) {
 	cgs.media.shaderElectroboltMark = CG_RegisterMediaShader( "gfx/decals/d_electrobolt_hit", true );
 	cgs.media.shaderInstagunMark = CG_RegisterMediaShader( "gfx/decals/d_instagun_hit", true );
 
-	cgs.media.shaderElectroBeamOld = CG_RegisterMediaShader( "gfx/misc/electro", true );
-	cgs.media.shaderElectroBeamOldAlpha = CG_RegisterMediaShader( "gfx/misc/electro_alpha", true );
-	cgs.media.shaderElectroBeamOldBeta = CG_RegisterMediaShader( "gfx/misc/electro_beta", true );
-	cgs.media.shaderElectroBeamA = CG_RegisterMediaShader( "gfx/misc/electro2a", true );
-	cgs.media.shaderElectroBeamAAlpha = CG_RegisterMediaShader( "gfx/misc/electro2a_alpha", true );
-	cgs.media.shaderElectroBeamABeta = CG_RegisterMediaShader( "gfx/misc/electro2a_beta", true );
-	cgs.media.shaderElectroBeamB = CG_RegisterMediaShader( "gfx/misc/electro2b", true );
-	cgs.media.shaderElectroBeamBAlpha = CG_RegisterMediaShader( "gfx/misc/electro2b_alpha", true );
-	cgs.media.shaderElectroBeamBBeta = CG_RegisterMediaShader( "gfx/misc/electro2b_beta", true );
-	cgs.media.shaderElectroBeamRing = CG_RegisterMediaShader( "gfx/misc/beamring.tga", true );
+	cgs.media.shaderElectroBeam = CG_RegisterMediaShader( "gfx/misc/electro", true );
+	cgs.media.shaderElectroBeamAlpha = CG_RegisterMediaShader( "gfx/misc/electro_alpha", true );
+	cgs.media.shaderElectroBeamBeta = CG_RegisterMediaShader( "gfx/misc/electro_beta", true );
 	cgs.media.shaderInstaBeam = CG_RegisterMediaShader( "gfx/misc/instagun", true );
 	cgs.media.shaderLaserGunBeam = CG_RegisterMediaShader( "gfx/misc/laserbeam", true );
 	cgs.media.shaderRocketExplosion = CG_RegisterMediaShader( PATH_ROCKET_EXPLOSION_SPRITE, true );

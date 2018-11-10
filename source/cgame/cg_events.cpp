@@ -88,7 +88,7 @@ static centity_t *laserOwner = NULL;
 
 static vec_t *_LaserColor( vec4_t color ) {
 	Vector4Set( color, 1, 1, 1, 1 );
-	if( cg_teamColoredBeams->integer && ( laserOwner != NULL ) && ( laserOwner->current.team == TEAM_ALPHA || laserOwner->current.team == TEAM_BETA ) ) {
+	if( laserOwner != NULL && ( laserOwner->current.team == TEAM_ALPHA || laserOwner->current.team == TEAM_BETA ) ) {
 		CG_TeamColor( laserOwner->current.team, color );
 	}
 	return color;

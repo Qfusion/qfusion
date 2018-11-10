@@ -269,16 +269,9 @@ typedef struct {
 
 	//wsw weapon sfx
 	cgs_media_handle_t *shaderPlasmaMark;
-	cgs_media_handle_t *shaderElectroBeamOld;
-	cgs_media_handle_t *shaderElectroBeamOldAlpha;
-	cgs_media_handle_t *shaderElectroBeamOldBeta;
-	cgs_media_handle_t *shaderElectroBeamA;
-	cgs_media_handle_t *shaderElectroBeamAAlpha;
-	cgs_media_handle_t *shaderElectroBeamABeta;
-	cgs_media_handle_t *shaderElectroBeamB;
-	cgs_media_handle_t *shaderElectroBeamBAlpha;
-	cgs_media_handle_t *shaderElectroBeamBBeta;
-	cgs_media_handle_t *shaderElectroBeamRing;
+	cgs_media_handle_t *shaderElectroBeam;
+	cgs_media_handle_t *shaderElectroBeamAlpha;
+	cgs_media_handle_t *shaderElectroBeamBeta;
 	cgs_media_handle_t *shaderInstaBeam;
 	cgs_media_handle_t *shaderLaserGunBeam;
 	cgs_media_handle_t *shaderElectroboltMark;
@@ -887,9 +880,6 @@ extern cvar_t *cg_teamPLAYERScolorForce;
 extern cvar_t *cg_teamALPHAcolor;
 extern cvar_t *cg_teamBETAcolor;
 
-extern cvar_t *cg_forceMyTeamAlpha;
-
-extern cvar_t *cg_teamColoredBeams;
 extern cvar_t *cg_teamColoredInstaBeams;
 
 extern cvar_t *cg_playList;
@@ -1046,10 +1036,9 @@ void CG_AddDecals( void );
 //
 // cg_polys.c	-	wsw	: jal
 //
-extern cvar_t *cg_ebbeam_old;
-extern cvar_t *cg_ebbeam_width;
-extern cvar_t *cg_ebbeam_alpha;
-extern cvar_t *cg_ebbeam_time;
+constexpr int EBBEAM_WIDTH = 128;
+constexpr int EBBEAM_TIME = 250;
+
 extern cvar_t *cg_instabeam_width;
 extern cvar_t *cg_instabeam_alpha;
 extern cvar_t *cg_instabeam_time;
@@ -1090,7 +1079,6 @@ void CG_ParticleExplosionEffect( const vec3_t org, const vec3_t dir, float r, fl
 void CG_BlasterTrail( const vec3_t start, const vec3_t end );
 void CG_FlyEffect( centity_t *ent, const vec3_t origin );
 void CG_ElectroIonsTrail( const vec3_t start, const vec3_t end, const vec4_t color );
-void CG_ElectroIonsTrail2( const vec3_t start, const vec3_t end, const vec4_t color );
 void CG_ElectroWeakTrail( const vec3_t start, const vec3_t end, const vec4_t color );
 void CG_ImpactPuffParticles( const vec3_t org, const vec3_t dir, int count, float scale, float r, float g, float b, float a, struct shader_s *shader );
 void CG_HighVelImpactPuffParticles( const vec3_t org, const vec3_t dir, int count, float scale, float r, float g, float b, float a, struct shader_s *shader );
