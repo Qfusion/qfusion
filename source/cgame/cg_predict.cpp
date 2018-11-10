@@ -244,6 +244,15 @@ static void CG_ClipMoveToEntities( const vec3_t start, const vec3_t mins, const 
 			continue;
 		}
 
+		if( ent->type == ET_PLAYER ) {
+			int teammask = contentmask & ( CONTENTS_TEAMALPHA | CONTENTS_TEAMBETA );
+			if( teammask != 0 ) {
+				int team = teammask == CONTENTS_TEAMALPHA ? TEAM_ALPHA : TEAM_BETA;
+				if( ent->team != team )
+					continue;
+			}
+		}
+
 		if( ent->solid == SOLID_BMODEL ) { // special value for bmodel
 			cmodel = trap_CM_InlineModel( ent->modelindex );
 			if( !cmodel ) {

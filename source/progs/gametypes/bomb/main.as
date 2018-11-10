@@ -583,6 +583,8 @@ void GT_PlayerRespawn( Entity @ent, int old_team, int new_team )
 	Client @client = @ent.client;
 	cPlayer @player = @playerFromClient( @client );
 
+	client.pmoveFeatures = client.pmoveFeatures | PMFEAT_TEAMGHOST;
+
 	int matchState = match.getState();
 
 	if ( new_team != old_team )

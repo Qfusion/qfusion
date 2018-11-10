@@ -1689,6 +1689,9 @@ void Pmove( pmove_t *pmove ) {
 			}
 			if( pm->playerState->pmove.stats[PM_STAT_FEATURES] & PMFEAT_GHOSTMOVE ) {
 				pm->contentmask = MASK_DEADSOLID;
+			} else if( pm->playerState->pmove.stats[PM_STAT_FEATURES] & PMFEAT_TEAMGHOST ) {
+				int team = gs.api.GetEntityState( pm->playerState->POVnum, 0 )->team;
+				pm->contentmask = team == TEAM_ALPHA ? MASK_ALPHAPLAYERSOLID : MASK_BETAPLAYERSOLID;
 			} else {
 				pm->contentmask = MASK_PLAYERSOLID;
 			}
