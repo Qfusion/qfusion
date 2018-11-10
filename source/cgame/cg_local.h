@@ -40,7 +40,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define ITEM_RESPAWN_TIME   1000
 
 #define FLAG_TRAIL_DROP_DELAY 300
-#define HEADICON_TIMEOUT 4000
+#define HEADICON_TIMEOUT 2000
 
 #define GAMECHAT_STRING_SIZE    1024
 #define GAMECHAT_STACK_SIZE     20
