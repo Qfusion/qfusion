@@ -958,14 +958,8 @@ const char *G_GetEntitySpawnKey( const char *key, edict_t *self );
 //
 void G_PlayerAward( edict_t *ent, const char *awardMsg );
 void G_PlayerMetaAward( edict_t *ent, const char *awardMsg );
-void G_AwardPlayerHit( edict_t *targ, edict_t *attacker, int mod );
-void G_AwardPlayerMissedElectrobolt( edict_t *self, int mod );
-void G_AwardPlayerMissedLasergun( edict_t *self, int mod );
 void G_AwardPlayerKilled( edict_t *self, edict_t *inflictor, edict_t *attacker, int mod );
-void G_AwardPlayerPickup( edict_t *self, edict_t *item );
-void G_AwardResetPlayerComboStats( edict_t *ent );
 void G_AwardRaceRecord( edict_t *self );
-void G_DeathAwards( edict_t *ent );
 
 //============================================================================
 
@@ -1021,30 +1015,8 @@ typedef struct {
 } moveinfo_t;
 
 typedef struct {
-	int ebhit_count;
-	int directrocket_count;
-	int directgrenade_count;
 	int multifrag_timer;
 	int multifrag_count;
-	int frag_count;
-
-	int accuracy_award;
-	int directrocket_award;
-	int directgrenade_award;
-	int multifrag_award;
-	int spree_award;
-	int gl_midair_award;
-	int rl_midair_award;
-
-	int uh_control_award;
-	int mh_control_award;
-	int ra_control_award;
-
-	uint8_t combo[MAX_CLIENTS]; // combo management for award
-	edict_t *lasthit;
-	int64_t lasthit_time;
-
-	bool fairplay_award;
 } award_info_t;
 
 #define MAX_CLIENT_EVENTS   16

@@ -322,9 +322,6 @@ void player_die( edict_t *ent, edict_t *inflictor, edict_t *attacker, int damage
 	CopyToBodyQue( ent, attacker, damage );
 	ent->enemy = NULL;
 
-	// clear his combo stats
-	G_AwardResetPlayerComboStats( ent );
-
 	// go ghost (also resets snap)
 	G_GhostClient( ent );
 
@@ -445,8 +442,6 @@ void G_ClientClearStats( edict_t *ent ) {
 * G_GhostClient
 */
 void G_GhostClient( edict_t *ent ) {
-	G_DeathAwards( ent );
-
 	ent->movetype = MOVETYPE_NONE;
 	ent->r.solid = SOLID_NOT;
 
@@ -487,8 +482,6 @@ void G_ClientRespawn( edict_t *self, bool ghost ) {
 	vec3_t spawn_origin, spawn_angles;
 	gclient_t *client;
 	int old_team;
-
-	G_DeathAwards( self );
 
 	G_SpawnQueue_RemoveClient( self );
 
@@ -1494,8 +1487,6 @@ void ClientThink( edict_t *ent, usercmd_t *ucmd, int timeDelta ) {
 	if( pm.groundentity == -1 ) {
 		ent->groundentity = NULL;
 	} else {
-		G_AwardResetPlayerComboStats( ent );
-
 		ent->groundentity = &game.edicts[pm.groundentity];
 		ent->groundentity_linkcount = ent->groundentity->linkcount;
 	}

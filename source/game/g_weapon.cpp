@@ -106,14 +106,11 @@ static void W_Fire_Lead( edict_t *self, vec3_t start, vec3_t aimdir, vec3_t axis
 }
 #endif
 
-#define DIRECTAIRTHIT_DAMAGE_BONUS 0
-#define DIRECTHIT_DAMAGE_BONUS 0
-
 enum {
 	PROJECTILE_TOUCH_NOT = 0,
 	PROJECTILE_TOUCH_DIRECTHIT,
 	PROJECTILE_TOUCH_DIRECTAIRHIT,
-	PROJECTILE_TOUCH_DIRECTSPLASH // treat direct hits as pseudo-splash impacts
+	PROJECTILE_TOUCH_DIRECTSPLASH, // treat direct hits as pseudo-splash impacts
 };
 
 /*
@@ -634,25 +631,15 @@ static void W_Touch_Grenade( edict_t *ent, edict_t *other, cplane_t *plane, int 
 	}
 
 	if( other->takedamage ) {
-		int directHitDamage = ent->projectileInfo.maxDamage;
-
 		VectorNormalize2( ent->velocity, dir );
 
 		if( hitType == PROJECTILE_TOUCH_DIRECTSPLASH ) { // use hybrid direction from splash and projectile
 			G_SplashFrac4D( ENTNUM( other ), ent->s.origin, ent->projectileInfo.radius, dir, NULL, NULL, ent->timeDelta );
 		} else {
 			VectorNormalize2( ent->velocity, dir );
-
-			// no direct hit bonuses for grenades
-			/*
-			if( hitType == PROJECTILE_TOUCH_DIRECTAIRHIT )
-			    directHitDamage += DIRECTAIRTHIT_DAMAGE_BONUS;
-			else if( hitType == PROJECTILE_TOUCH_DIRECTHIT )
-			    directHitDamage += DIRECTHIT_DAMAGE_BONUS;
-			*/
 		}
 
-		G_Damage( other, ent, ent->r.owner, dir, ent->velocity, ent->s.origin, directHitDamage, ent->projectileInfo.maxKnockback, ent->projectileInfo.stun, 0, ent->style );
+		G_Damage( other, ent, ent->r.owner, dir, ent->velocity, ent->s.origin, ent->projectileInfo.maxDamage, ent->projectileInfo.maxKnockback, ent->projectileInfo.stun, 0, ent->style );
 	}
 
 	ent->enemy = other;
@@ -719,8 +706,6 @@ static void W_Touch_Rocket( edict_t *ent, edict_t *other, cplane_t *plane, int s
 	}
 
 	if( other->takedamage ) {
-		int directHitDamage = ent->projectileInfo.maxDamage;
-
 		VectorNormalize2( ent->velocity, dir );
 
 		if( hitType == PROJECTILE_TOUCH_DIRECTSPLASH ) { // use hybrid direction from splash and projectile
@@ -728,15 +713,9 @@ static void W_Touch_Rocket( edict_t *ent, edict_t *other, cplane_t *plane, int s
 			G_SplashFrac4D( ENTNUM( other ), ent->s.origin, ent->projectileInfo.radius, dir, NULL, NULL, ent->timeDelta );
 		} else {
 			VectorNormalize2( ent->velocity, dir );
-
-			if( hitType == PROJECTILE_TOUCH_DIRECTAIRHIT ) {
-				directHitDamage += DIRECTAIRTHIT_DAMAGE_BONUS;
-			} else if( hitType == PROJECTILE_TOUCH_DIRECTHIT ) {
-				directHitDamage += DIRECTHIT_DAMAGE_BONUS;
-			}
 		}
 
-		G_Damage( other, ent, ent->r.owner, dir, ent->velocity, ent->s.origin, directHitDamage, ent->projectileInfo.maxKnockback, ent->projectileInfo.stun, 0, ent->style );
+		G_Damage( other, ent, ent->r.owner, dir, ent->velocity, ent->s.origin, ent->projectileInfo.maxDamage, ent->projectileInfo.maxKnockback, ent->projectileInfo.stun, 0, ent->style );
 	}
 
 	if( ent->s.effects & EF_STRONG_WEAPON ) {
@@ -945,7 +924,6 @@ edict_t *W_Fire_Plasma( edict_t *self, vec3_t start, vec3_t angles, float damage
 */
 static void W_Touch_Bolt( edict_t *self, edict_t *other, cplane_t *plane, int surfFlags ) {
 	edict_t *event;
-	bool missed = true;
 	int hitType;
 
 	if( surfFlags & SURF_NOIMPACT ) {
@@ -969,19 +947,12 @@ static void W_Touch_Bolt( edict_t *self, edict_t *other, cplane_t *plane, int su
 		VectorScale( invdir, -1, invdir );
 		event = G_SpawnEvent( EV_BOLT_EXPLOSION, DirToByte( invdir ), self->s.origin );
 		event->s.firemode = FIRE_MODE_WEAK;
-		if( other->r.client ) {
-			missed = false;
-		}
 	} else if( !( surfFlags & SURF_NOIMPACT ) ) {
 		// add explosion event
 		event = G_SpawnEvent( EV_BOLT_EXPLOSION, DirToByte( plane ? plane->normal : NULL ), self->s.origin );
 		event->s.firemode = FIRE_MODE_WEAK;
 	}
 
-	if( missed && self->r.client ) {
-		G_AwardPlayerMissedElectrobolt( self->r.owner, MOD_ELECTROBOLT_W ); // hit something that isnt a player
-
-	}
 	G_FreeEdict( self );
 }
 
@@ -994,7 +965,6 @@ void W_Fire_Electrobolt_Combined( edict_t *self, vec3_t start, vec3_t angles, fl
 	edict_t *ignore, *event, *hit, *damaged;
 	int hit_movetype;
 	int mask;
-	bool missed = true;
 	int dmgflags = 0;
 	int fireMode;
 
@@ -1060,9 +1030,6 @@ void W_Fire_Electrobolt_Combined( edict_t *self, vec3_t start, vec3_t angles, fl
 			// spawn a impact event on each damaged ent
 			event = G_SpawnEvent( EV_BOLT_EXPLOSION, DirToByte( tr.plane.normal ), tr.endpos );
 			event->s.firemode = fireMode;
-			if( hit->r.client ) {
-				missed = false;
-			}
 
 			damaged = hit;
 		}
@@ -1071,10 +1038,6 @@ void W_Fire_Electrobolt_Combined( edict_t *self, vec3_t start, vec3_t angles, fl
 			damaged = NULL;
 			break;
 		}
-	}
-
-	if( missed && self->r.client ) {
-		G_AwardPlayerMissedElectrobolt( self, mod );
 	}
 
 	// send the weapon fire effect
@@ -1098,7 +1061,6 @@ void W_Fire_Electrobolt_FullInstant( edict_t *self, vec3_t start, vec3_t angles,
 	edict_t *ignore, *event, *hit;
 	int hit_movetype;
 	int mask;
-	bool missed = true;
 	int dmgflags = 0;
 
 #define FULL_DAMAGE_RANGE g_projectile_prestep->value
@@ -1173,18 +1135,11 @@ void W_Fire_Electrobolt_FullInstant( edict_t *self, vec3_t start, vec3_t angles,
 			// spawn a impact event on each damaged ent
 			event = G_SpawnEvent( EV_BOLT_EXPLOSION, DirToByte( tr.plane.normal ), tr.endpos );
 			event->s.firemode = FIRE_MODE_STRONG;
-			if( hit->r.client ) {
-				missed = false;
-			}
 		}
 
 		if( hit_movetype == MOVETYPE_NONE || hit_movetype == MOVETYPE_PUSH ) {
 			break;
 		}
-	}
-
-	if( missed && self->r.client ) {
-		G_AwardPlayerMissedElectrobolt( self, mod );
 	}
 
 	// send the weapon fire effect
@@ -1228,7 +1183,6 @@ void W_Fire_Instagun( edict_t *self, vec3_t start, vec3_t angles, float damage, 
 	edict_t *ignore, *event, *hit;
 	int hit_movetype;
 	int mask;
-	bool missed = true;
 	int dmgflags = 0;
 
 	if( GS_Instagib() ) {
@@ -1267,9 +1221,6 @@ void W_Fire_Instagun( edict_t *self, vec3_t start, vec3_t angles, float damage, 
 			event = G_SpawnEvent( EV_INSTA_EXPLOSION, DirToByte( tr.plane.normal ), tr.endpos );
 			event->s.ownerNum = ENTNUM( self );
 			event->s.firemode = FIRE_MODE_STRONG;
-			if( hit->r.client ) {
-				missed = false;
-			}
 		}
 
 		// some entity was touched
@@ -1298,10 +1249,6 @@ void W_Fire_Instagun( edict_t *self, vec3_t start, vec3_t angles, float damage, 
 			}
 			break;
 		}
-	}
-
-	if( missed && self->r.client ) {
-		G_AwardPlayerMissedElectrobolt( self, mod );
 	}
 
 	// send the weapon fire effect
@@ -1351,7 +1298,6 @@ static int laser_knockback;
 static int laser_stun;
 static int laser_attackerNum;
 static int laser_mod;
-static int laser_missed;
 
 static void _LaserImpact( trace_t *trace, vec3_t dir ) {
 	edict_t *attacker;
@@ -1367,7 +1313,6 @@ static void _LaserImpact( trace_t *trace, vec3_t dir ) {
 
 	if( game.edicts[trace->ent].takedamage ) {
 		G_Damage( &game.edicts[trace->ent], attacker, attacker, dir, dir, trace->endpos, laser_damage, laser_knockback, laser_stun, DAMAGE_STUN_CLAMP | DAMAGE_KNOCKBACK_SOFT, laser_mod );
-		laser_missed = false;
 	}
 }
 
@@ -1435,7 +1380,6 @@ edict_t *W_Fire_Lasergun( edict_t *self, vec3_t start, vec3_t angles, float dama
 	laser_stun = stun;
 	laser_attackerNum = ENTNUM( self );
 	laser_mod = mod;
-	laser_missed = true;
 
 	GS_TraceLaserBeam( &tr, start, angles, range, ENTNUM( self ), timeDelta, _LaserImpact );
 
@@ -1446,10 +1390,6 @@ edict_t *W_Fire_Lasergun( edict_t *self, vec3_t start, vec3_t angles, float dama
 
 	laser->think = G_Laser_Think;
 	laser->nextThink = level.time + 100;
-
-	if( laser_missed && self->r.client ) {
-		G_AwardPlayerMissedLasergun( self, mod );
-	}
 
 	// calculate laser's mins and maxs for linkEntity
 	G_SetBoundsForSpanEntity( laser, 8 );
@@ -1484,7 +1424,6 @@ edict_t *W_Fire_Lasergun_Weak( edict_t *self, vec3_t start, vec3_t end, float da
 	laser_stun = stun;
 	laser_attackerNum = ENTNUM( self );
 	laser_mod = mod;
-	laser_missed = true;
 
 	GS_TraceCurveLaserBeam( &trace, start, self->s.angles, end, ENTNUM( self ), timeDelta, _LaserImpact );
 
@@ -1494,10 +1433,6 @@ edict_t *W_Fire_Lasergun_Weak( edict_t *self, vec3_t start, vec3_t end, float da
 
 	laser->think = G_Laser_Think;
 	laser->nextThink = level.time + 100;
-
-	if( laser_missed && self->r.client ) {
-		G_AwardPlayerMissedLasergun( self, mod );
-	}
 
 	// calculate laser's mins and maxs for linkEntity
 	G_SetBoundsForSpanEntity( laser, 8 );

@@ -414,8 +414,6 @@ void Touch_Item( edict_t *ent, edict_t *other, cplane_t *plane, int surfFlags ) 
 	// flash the screen
 	G_AddPlayerStateEvent( other->r.client, PSEV_PICKUP, ( item->flags & IT_WEAPON ? item->tag : 0 ) );
 
-	G_AwardPlayerPickup( other, ent );
-
 	// for messages
 	other->r.client->teamstate.last_pickup = ent;
 
