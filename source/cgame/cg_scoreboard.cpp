@@ -36,8 +36,6 @@ typedef struct {
 	int ping;
 } scr_spectator_t;
 
-void CG_DrawHUDNumeric( int x, int y, int align, float *color, int charwidth, int charheight, int value );
-
 /*
 * CG_DrawAlignPic
 */
@@ -548,10 +546,9 @@ static int SCR_DrawTeamTab( const char **ptrptr, int *curteam, int x, int y, int
 	const char *token;
 	const char *layout, *titles;
 	char type;
-	int team, team_score, team_ping;
 	int yoffset = 0, xoffset = 0;
 	int dir = 0, align, width, height;
-	vec4_t teamcolor = { 0.0f, 0.0f, 0.0f, 1.0f }, pingcolor;
+	vec4_t teamcolor = { 0.0f, 0.0f, 0.0f, 1.0f };
 
 	// team tab is always the same. Sets the current team and draws its score
 
@@ -559,7 +556,7 @@ static int SCR_DrawTeamTab( const char **ptrptr, int *curteam, int x, int y, int
 		return yoffset;
 	}
 
-	team = CG_ParseValue( ptrptr );
+	int team = CG_ParseValue( ptrptr );
 	if( team < TEAM_PLAYERS || team > TEAM_BETA ) {
 		CG_Error( "SCR_ParseTeamTab: Invalid team value\n" );
 	}
@@ -570,13 +567,12 @@ static int SCR_DrawTeamTab( const char **ptrptr, int *curteam, int x, int y, int
 		return yoffset;
 	}
 
-	team_score = CG_ParseValue( ptrptr );
+	int team_score = CG_ParseValue( ptrptr );
+	( void ) team_score;
 
 	if( *ptrptr[0] == '&' ) {
 		return yoffset;
 	}
-
-	team_ping = CG_ParseValue( ptrptr );
 
 	if( ( team == TEAM_ALPHA ) || ( team == TEAM_BETA ) ) {
 		CG_TeamColor( team, teamcolor );
@@ -600,20 +596,9 @@ static int SCR_DrawTeamTab( const char **ptrptr, int *curteam, int x, int y, int
 		}
 
 		if( pass ) {
-			xoffset += ( ( 16 * cgs.vidHeight / 600 ) * dir );
-
-			CG_DrawHUDNumeric( x + xoffset, y + yoffset, align, colorWhite,
-							   SCB_SCORENUMBER_SIZE, SCB_SCORENUMBER_SIZE, team_score );
-
-			xoffset += ( ( SCB_SCORENUMBER_SIZE * strlen( va( "%i", team_score ) ) + ( 16 * cgs.vidHeight / 600 ) ) * dir );
 			trap_SCR_DrawStringWidth( x + xoffset + ( ( SCB_TINYFIELD_PIXELWIDTH + ( 16 * cgs.vidHeight / 600 ) ) * dir ),
 									  y + yoffset + SCB_SCORENUMBER_SIZE - ( trap_SCR_FontHeight( titleFont ) + 1 ),
 									  align, GS_TeamName( team ), SCB_TEAMNAME_PIXELWIDTH, titleFont, colorWhite );
-
-			CG_PingColor( team_ping, pingcolor );
-			trap_SCR_DrawStringWidth( x + xoffset,
-									  y + yoffset + SCB_SCORENUMBER_SIZE - ( trap_SCR_FontHeight( font ) + 1 ),
-									  align, va( "%i", team_ping ), SCB_TINYFIELD_PIXELWIDTH, font, pingcolor );
 		}
 
 		yoffset += SCB_SCORENUMBER_SIZE;
@@ -920,7 +905,7 @@ struct qfontface_s *CG_ScoreboardFont( cvar_t *familyCvar, cvar_t *sizeCvar ) {
 void CG_DrawScoreboard( void ) {
 	int pass;
 	const char *ptr, *token, *layout;
-	char title[MAX_CONFIGSTRING_CHARS], type;
+	char type;
 	int team = TEAM_PLAYERS;
 	int xpos;
 	int ypos, yoffset, maxyoffset;
@@ -944,17 +929,9 @@ void CG_DrawScoreboard( void ) {
 	titlefont = CG_ScoreboardFont( cg_scoreboardTitleFontFamily, cg_scoreboardTitleFontSize );
 
 	xpos = (int)( cgs.vidWidth * 0.5 );
-	ypos = (int)( cgs.vidHeight * 0.2 ) - 24 * cgs.vidHeight / 600;
+	ypos = (int)( cgs.vidHeight * 0.3 );
 
 	// draw title
-	Q_strncpyz( title, cgs.configStrings[CS_GAMETYPETITLE], sizeof( title ) );
-	if( !title[0] ) {
-		Q_strncpyz( title, gs.gametypeName, sizeof( title ) );
-	}
-	Q_strupr( title );
-
-	trap_SCR_DrawString( xpos, ypos, ALIGN_CENTER_TOP, title, titlefont, whiteTransparent );
-	ypos += trap_SCR_FontHeight( titlefont );
 	trap_SCR_DrawStringWidth( xpos, ypos, ALIGN_CENTER_TOP, cgs.configStrings[CS_HOSTNAME], cgs.vidWidth * 0.75, font, whiteTransparent );
 	ypos += trap_SCR_FontHeight( font );
 

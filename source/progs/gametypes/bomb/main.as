@@ -334,7 +334,7 @@ String @GT_ScoreboardMessage( uint maxlen )
 	{
 		Team @team = @G_GetTeam( t );
 
-		String entry = "&t " + t + " " + team.stats.score + " " + team.ping + " ";
+		String entry = "&t " + t + " " + team.stats.score + " ";
 
 		if ( scoreboardMessage.len() + entry.len() < maxlen )
 		{
