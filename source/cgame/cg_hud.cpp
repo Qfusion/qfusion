@@ -641,6 +641,31 @@ void CG_SC_ResetObituaries( void ) {
 	cg_obituaries_current = -1;
 }
 
+static const char * obituaries[] = {
+	"BODYBAGGED",
+	"CANNED",
+	"CASHED OUT ON",
+	"DEPOSITED",
+	"DUMPED ON",
+	"ELABORATED ON",
+	"FUCKED",
+	"ICED",
+	"MURDERED",
+	"PILED",
+	"PISSED ON",
+	"POUNDED",
+	"SHAFTED",
+	"SHITTED ON",
+	"SWIPED LEFT ON",
+	"TOILET STORED",
+	"TRASHED",
+	"WHACKED",
+};
+
+static const char * RandomObituary() {
+	return obituaries[ rand() % ( sizeof( obituaries ) / sizeof( obituaries[ 0 ] ) ) ];
+}
+
 /*
 * CG_SC_Obituary
 */
@@ -702,7 +727,7 @@ void CG_SC_Obituary( void ) {
 					Q_strncpyz( name, victim->name, sizeof( name ) );
 					Q_strupr( name );
 					Q_strncatz( name, S_COLOR_WHITE, sizeof( name ) );
-					CG_CenterPrint( va( CG_TranslateString( "YOU TEAMFRAGGED %s" ), name ) );
+					CG_CenterPrint( va( "YOU TEAM%s %s", RandomObituary(), name ) );
 				}
 			} else {   // good kill
 				current->type = OBITUARY_NORMAL;
@@ -716,7 +741,7 @@ void CG_SC_Obituary( void ) {
 					Q_strncpyz( name, victim->name, sizeof( name ) );
 					Q_strupr( name );
 					Q_strncatz( name, S_COLOR_WHITE, sizeof( name ) );
-					CG_CenterPrint( va( CG_TranslateString( "YOU FRAGGED %s" ), name ) );
+					CG_CenterPrint( va( "YOU %s %s", RandomObituary(), name ) );
 				}
 			}
 		} else {   // suicide
