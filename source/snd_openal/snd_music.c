@@ -174,10 +174,10 @@ static void *S_OpenBackgroundTrackProc( void *ptrack ) {
 		if( trap_Milliseconds() > start + BACKGROUND_TRACK_BUFFERING_TIMEOUT ) {
 		} else if( S_EoStream( track->stream ) ) {
 		} else {
-			if( S_SeekSteam( track->stream, MUSIC_BUFFERING_SIZE, SEEK_SET ) < 0 ) {
+			if( S_SeekStream( track->stream, MUSIC_BUFFERING_SIZE, SEEK_SET ) < 0 ) {
 				continue;
 			}
-			S_SeekSteam( track->stream, 0, SEEK_SET );
+			S_SeekStream( track->stream, 0, SEEK_SET );
 		}
 
 		// in case we delayed openening to let the stream be cached for a while,

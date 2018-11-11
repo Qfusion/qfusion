@@ -126,7 +126,7 @@ bool S_EoStream( snd_stream_t *stream ) {
 	return stream->decoder->eof( stream );
 }
 
-int S_SeekSteam( snd_stream_t *stream, int ofs, int whence ) {
+int S_SeekStream( snd_stream_t *stream, int ofs, int whence ) {
 	return stream->decoder->seek( stream, ofs, whence );
 }
 
