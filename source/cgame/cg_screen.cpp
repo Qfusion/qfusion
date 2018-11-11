@@ -58,7 +58,6 @@ cvar_t *cg_showPlayerNames;
 cvar_t *cg_showPlayerNames_alpha;
 cvar_t *cg_showPlayerNames_zfar;
 cvar_t *cg_showPlayerNames_barWidth;
-cvar_t *cg_showTeamMates;
 
 cvar_t *cg_showPressedKeys;
 
@@ -198,7 +197,6 @@ void CG_ScreenInit( void ) {
 	cg_showPlayerNames_alpha =  trap_Cvar_Get( "cg_showPlayerNames_alpha", "0.4", CVAR_ARCHIVE );
 	cg_showPlayerNames_zfar =   trap_Cvar_Get( "cg_showPlayerNames_zfar", "1024", CVAR_ARCHIVE );
 	cg_showPlayerNames_barWidth =   trap_Cvar_Get( "cg_showPlayerNames_barWidth", "8", CVAR_ARCHIVE );
-	cg_showTeamMates =      trap_Cvar_Get( "cg_showTeamMates", "1", CVAR_ARCHIVE );
 
 	cg_showPressedKeys = trap_Cvar_Get( "cg_showPressedKeys", "0", CVAR_ARCHIVE );
 	cg_showChasers = trap_Cvar_Get( "cg_showChasers", "1", CVAR_ARCHIVE );
@@ -625,10 +623,6 @@ void CG_DrawTeamMates( void ) {
 	int i;
 	int pic_size = 18 * cgs.vidHeight / 600;
 
-	if( !cg_showTeamMates->integer ) {
-		return;
-	}
-
 	// don't draw when scoreboard is up
 	if( CG_IsScoreboardShown() ) {
 		return;
@@ -679,7 +673,7 @@ void CG_DrawTeamMates( void ) {
 		}
 
 		CG_Trace( &trace, cg.view.origin, vec3_origin, vec3_origin, cent->ent.origin, cg.predictedPlayerState.POVnum, MASK_OPAQUE );
-		if( cg_showTeamMates->integer == 1 && trace.fraction == 1.0f ) {
+		if( trace.fraction == 1.0f ) {
 			continue;
 		}
 
