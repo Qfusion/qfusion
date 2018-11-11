@@ -41,7 +41,7 @@ namespace WSWUI
 {
 UI_Main *UI_Main::self = 0;
 
-const std::string UI_Main::ui_index( "game_join.rml" );
+const std::string UI_Main::ui_index( "serverbrowser.rml" );
 const std::string UI_Main::ui_connectscreen( "connectscreen.rml" );
 
 UI_Main::UI_Main( int vidWidth, int vidHeight, float pixelRatio,
