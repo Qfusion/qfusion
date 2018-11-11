@@ -31,15 +31,12 @@ public:
 };
 
 class ServerBrowserDataSource;
-class GameTypesDataSource;
 class MapsDataSource;
 class ProfilesDataSource;
-class HudsDataSource;
 class VideoDataSource;
 class DemosDataSource;
 class ModsDataSource;
 class ModelsDataSource;
-class TVChannelsDataSource;
 class GameAjaxDataSource;
 
 class LevelShotFormatter;
@@ -81,8 +78,6 @@ public:
 	static void M_Menu_Open_f( void );
 	static void M_Menu_Modal_f( void );
 	static void M_Menu_Close_f( void );
-	static void M_Menu_AddTVChannel_f( void );
-	static void M_Menu_RemoveTVChannel_f( void );
 
 	// pops all documents from stack and inserts a new one _if_ the overlayMenuURL is different
 	static void M_Menu_Quick_f( void );
@@ -191,15 +186,12 @@ private:
 	ServerFlagsFormatter *serverflags_fmt;
 
 	ServerBrowserDataSource *serverBrowser;
-	GameTypesDataSource *gameTypes;
 	MapsDataSource *maps;
 	ProfilesDataSource *vidProfiles;
-	HudsDataSource *huds;
 	VideoDataSource *videoModes;
 	DemosDataSource *demos;
 	ModsDataSource *mods;
 	ModelsDataSource *playerModels;
-	TVChannelsDataSource *tvchannels;
 	GameAjaxDataSource *gameajax;
 
 	UI_Navigation navigations[UI_NUM_CONTEXTS];
