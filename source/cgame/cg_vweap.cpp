@@ -371,11 +371,7 @@ void CG_AddViewWeapon( cg_viewweapon_t *viewweapon ) {
 
 	// add attached weapon
 	if( CG_GrabTag( &tag, &viewweapon->ent, "tag_weapon" ) ) {
-		firedef_t *firedef;
-		
-		firedef = GS_FiredefForPlayerState( &cg.predictedPlayerState, cg.predictedPlayerState.stats[STAT_WEAPON] );
-
 		CG_AddWeaponOnTag( &viewweapon->ent, &tag, viewweapon->weapon, cg.effects | EF_OUTLINE, NULL, flash_time, 
-			cg_entPModels[viewweapon->POVnum].barrel_time, cg.predictedPlayerState.inventory[firedef->ammo_id] );
+			cg_entPModels[viewweapon->POVnum].barrel_time );
 	}
 }

@@ -888,11 +888,9 @@ static void CG_AddItemIconOnTag( entity_t *weapon, const weaponinfo_t *weaponInf
 * CG_AddWeaponOnTag
 *
 * Add weapon model(s) positioned at the tag
-*
-* @param ammo_count Current ammo count for the counter. Negative value skips rendering of the counter. 
 */
 void CG_AddWeaponOnTag( entity_t *ent, orientation_t *tag, int weaponid, int effects, 
-	orientation_t *projectionSource, int64_t flash_time, int64_t barrel_time, int ammo_count ) {
+	orientation_t *projectionSource, int64_t flash_time, int64_t barrel_time ) {
 	entity_t weapon;
 	weaponinfo_t *weaponInfo;
 	gsitem_t *weaponItem, *ammoItem;
@@ -960,13 +958,6 @@ void CG_AddWeaponOnTag( entity_t *ent, orientation_t *tag, int weaponid, int eff
 
 	// flash
 	CG_AddWeaponFlashOnTag( &weapon, weaponInfo, WEAPMODEL_FLASH, "tag_flash", effects, flash_time );
-
-	// ammo counter
-	if( ammo_count >= 0 ) {
-		CG_AddAmmoDigitOnTag( &weapon, weaponInfo, ammoItem, ammo_count % 10, "tag_ammo_digit_1" );
-		CG_AddAmmoDigitOnTag( &weapon, weaponInfo, ammoItem, (ammo_count % 100) / 10, "tag_ammo_digit_10" );
-		CG_AddAmmoDigitOnTag( &weapon, weaponInfo, ammoItem, ammo_count / 100, "tag_ammo_digit_100" );
-	}
 
 	// icons
 	CG_AddItemIconOnTag( &weapon, weaponInfo, weaponItem, "tag_weapon_icon" );
