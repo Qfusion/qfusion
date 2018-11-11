@@ -127,9 +127,6 @@ cvar_t *cg_instabeam_width;
 cvar_t *cg_instabeam_alpha;
 cvar_t *cg_instabeam_time;
 
-cvar_t *cg_playList;
-cvar_t *cg_playListShuffle;
-
 cvar_t *cg_flashWindowCount;
 
 /*
@@ -820,9 +817,6 @@ static void CG_RegisterVariables( void ) {
 
 	cg_strafeHUD = trap_Cvar_Get( "cg_strafeHUD", "0", CVAR_ARCHIVE );
 
-	cg_playList = trap_Cvar_Get( "cg_playList", S_PLAYLIST_MATCH, CVAR_ARCHIVE );
-	cg_playListShuffle = trap_Cvar_Get( "cg_playListShuffle", "1", CVAR_ARCHIVE );
-
 	cg_flashWindowCount = trap_Cvar_Get( "cg_flashWindowCount", "4", CVAR_ARCHIVE );
 }
 
@@ -1002,8 +996,6 @@ void CG_StartBackgroundTrack( void ) {
 
 	if( intro[0] ) {
 		trap_S_StartBackgroundTrack( intro, loop, 0 );
-	} else if( cg_playList->string[0] ) {
-		trap_S_StartBackgroundTrack( cg_playList->string, NULL, cg_playListShuffle->integer ? 1 : 0 );
 	}
 }
 

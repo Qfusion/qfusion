@@ -882,9 +882,6 @@ extern cvar_t *cg_teamBETAcolor;
 
 extern cvar_t *cg_teamColoredInstaBeams;
 
-extern cvar_t *cg_playList;
-extern cvar_t *cg_playListShuffle;
-
 extern cvar_t *cg_flashWindowCount;
 
 #define CG_Malloc( size ) trap_MemAlloc( size, __FILE__, __LINE__ )
