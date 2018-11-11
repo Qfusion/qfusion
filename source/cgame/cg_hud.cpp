@@ -1989,20 +1989,6 @@ static bool CG_LFuncDrawWeaponIcons( struct cg_layoutnode_s *commandnode, struct
 	return true;
 }
 
-static bool CG_LFuncDrawLocationName( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
-	int loc_tag = CG_GetNumericArg( &argumentnode );
-	char string[MAX_CONFIGSTRING_CHARS];
-
-	if( loc_tag < 0 || loc_tag >= MAX_LOCATIONS ) {
-		return false;
-	}
-
-	trap_GetConfigString( CS_LOCATIONS + loc_tag, string, sizeof( string ) );
-
-	trap_SCR_DrawString( layout_cursor_x, layout_cursor_y, layout_cursor_align, CG_TranslateString( string ), CG_GetLayoutCursorFont(), layout_cursor_color );
-	return true;
-}
-
 static bool CG_LFuncDrawWeaponStrongAmmo( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	int offx, offy, fontsize;
 
