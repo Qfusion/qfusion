@@ -189,7 +189,7 @@ void CG_ScreenInit( void ) {
 	cg_showViewBlends = trap_Cvar_Get( "cg_showViewBlends", "1", CVAR_ARCHIVE );
 	cg_showAwards =     trap_Cvar_Get( "cg_showAwards", "1", CVAR_ARCHIVE );
 
-	cg_showPlayerNames =        trap_Cvar_Get( "cg_showPlayerNames", "1", CVAR_ARCHIVE );
+	cg_showPlayerNames =        trap_Cvar_Get( "cg_showPlayerNames", "2", CVAR_ARCHIVE );
 	cg_showPlayerNames_alpha =  trap_Cvar_Get( "cg_showPlayerNames_alpha", "0.4", CVAR_ARCHIVE );
 	cg_showPlayerNames_zfar =   trap_Cvar_Get( "cg_showPlayerNames_zfar", "1024", CVAR_ARCHIVE );
 	cg_showPlayerNames_barWidth =   trap_Cvar_Get( "cg_showPlayerNames_barWidth", "8", CVAR_ARCHIVE );
