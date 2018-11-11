@@ -2,9 +2,7 @@
 #include "../client/client.h"
 #include "sdl_input_joy.h"
 
-cvar_t *in_grabinconsole;
 cvar_t *in_disablemacosxmouseaccel;
-cvar_t *in_mousehack;
 
 extern SDL_Window * sdl_window;
 
@@ -53,7 +51,6 @@ static void mouse_button_event( SDL_MouseButtonEvent *event, bool state ) {
 
 	if( button <= 10 ) {
 		// The engine only supports up to 8 buttons plus the mousewheel.
-
 		switch( button ) {
 			case SDL_BUTTON_LEFT:
 				Key_MouseEvent( K_MOUSE1, state, Sys_Milliseconds() );
@@ -64,15 +61,11 @@ static void mouse_button_event( SDL_MouseButtonEvent *event, bool state ) {
 			case SDL_BUTTON_RIGHT:
 				Key_MouseEvent( K_MOUSE2, state, Sys_Milliseconds() );
 				break;
-			case 4:
-				if( in_mousehack->integer ) {
-					Key_MouseEvent( K_MOUSE6, state, Sys_Milliseconds() );
-				}
+			case SDL_BUTTON_X1:
+				Key_MouseEvent( K_MOUSE4, state, Sys_Milliseconds() );
 				break;
-			case 5:
-				if( in_mousehack->integer ) {
-					Key_MouseEvent( K_MOUSE7, state, Sys_Milliseconds() );
-				}
+			case SDL_BUTTON_X2:
+				Key_MouseEvent( K_MOUSE5, state, Sys_Milliseconds() );
 				break;
 			case 6:
 				Key_MouseEvent( K_MOUSE6, state, Sys_Milliseconds() );
@@ -430,9 +423,7 @@ void IN_Init() {
 
 	assert( !input_inited );
 
-	in_grabinconsole = Cvar_Get( "in_grabinconsole", "0", CVAR_ARCHIVE );
 	in_disablemacosxmouseaccel = Cvar_Get( "in_disablemacosxmouseaccel", "1", CVAR_ARCHIVE );
-	in_mousehack = Cvar_Get( "in_mousehack", "0", CVAR_ARCHIVE );
 
 	SDL_GetVersion( &linked );
 
