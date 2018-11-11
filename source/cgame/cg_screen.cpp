@@ -52,7 +52,6 @@ cvar_t *cg_showSpeed;
 cvar_t *cg_showPickup;
 cvar_t *cg_showTimer;
 cvar_t *cg_showAwards;
-cvar_t *cg_showCaptureAreas;
 
 cvar_t *cg_showPlayerNames;
 cvar_t *cg_showPlayerNames_alpha;
@@ -60,8 +59,6 @@ cvar_t *cg_showPlayerNames_zfar;
 cvar_t *cg_showPlayerNames_barWidth;
 
 cvar_t *cg_showPressedKeys;
-
-cvar_t *cg_showChasers;
 
 cvar_t *cg_scoreboardFontFamily;
 cvar_t *cg_scoreboardMonoFontFamily;
@@ -191,7 +188,6 @@ void CG_ScreenInit( void ) {
 	cg_showPointedPlayer =  trap_Cvar_Get( "cg_showPointedPlayer", "1", CVAR_ARCHIVE );
 	cg_showViewBlends = trap_Cvar_Get( "cg_showViewBlends", "1", CVAR_ARCHIVE );
 	cg_showAwards =     trap_Cvar_Get( "cg_showAwards", "1", CVAR_ARCHIVE );
-	cg_showCaptureAreas = trap_Cvar_Get( "cg_showCaptureAreas", "1", CVAR_ARCHIVE );
 
 	cg_showPlayerNames =        trap_Cvar_Get( "cg_showPlayerNames", "1", CVAR_ARCHIVE );
 	cg_showPlayerNames_alpha =  trap_Cvar_Get( "cg_showPlayerNames_alpha", "0.4", CVAR_ARCHIVE );
@@ -199,7 +195,6 @@ void CG_ScreenInit( void ) {
 	cg_showPlayerNames_barWidth =   trap_Cvar_Get( "cg_showPlayerNames_barWidth", "8", CVAR_ARCHIVE );
 
 	cg_showPressedKeys = trap_Cvar_Get( "cg_showPressedKeys", "0", CVAR_ARCHIVE );
-	cg_showChasers = trap_Cvar_Get( "cg_showChasers", "1", CVAR_ARCHIVE );
 
 	cg_scoreboardFontFamily = trap_Cvar_Get( "cg_scoreboardFontFamily", DEFAULT_SCOREBOARD_FONT_FAMILY, CVAR_ARCHIVE );
 	cg_scoreboardMonoFontFamily = trap_Cvar_Get( "cg_scoreboardMonoFontFamily", DEFAULT_SCOREBOARD_MONO_FONT_FAMILY, CVAR_ARCHIVE );

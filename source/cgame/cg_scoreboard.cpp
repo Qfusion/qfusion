@@ -996,16 +996,6 @@ void CG_DrawScoreboard( void ) {
 				}
 
 				maxyoffset += SCR_DrawSpectators( &ptr, xpos, ypos + yoffset, panelWidth, font, true, "Spectators", colorYellow, pass );
-			} else if( !Q_stricmp( token, "&y" ) ) {   // list of chasers
-				if( yoffset < maxyoffset ) {
-					yoffset = maxyoffset;
-				}
-
-				if( cg_showChasers->integer ) {
-					maxyoffset += SCR_DrawSpectators( &ptr, xpos, ypos + yoffset, panelWidth, font, false, "Chasers", colorOrange, pass );
-				} else {
-					SCR_IgnoreSpectators( &ptr, false );
-				}
 			}
 
 			if( yoffset > maxyoffset ) {

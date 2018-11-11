@@ -1027,26 +1027,6 @@ void G_PrintMsg( edict_t *ent, const char *format, ... ) {
 	}
 }
 
-void G_PrintChasersf( edict_t *self, const char *format, ... ) {
-	char msg[1024];
-	va_list argptr;
-	edict_t *ent;
-
-	if( !self ) {
-		return;
-	}
-
-	va_start( argptr, format );
-	Q_vsnprintfz( msg, sizeof( msg ), format, argptr );
-	va_end( argptr );
-
-	for( ent = game.edicts + 1; PLAYERNUM( ent ) < gs.maxclients; ent++ ) {
-		if( ent->r.client->resp.chase.active && ent->r.client->resp.chase.target == ENTNUM( self ) ) {
-			G_PrintMsg( ent, "%s", msg );
-		}
-	}
-}
-
 /*
 * G_ChatMsg
 *

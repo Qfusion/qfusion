@@ -74,11 +74,6 @@ update:
 
 		if( forcedUpdate || ( client->ps.stats[STAT_LAYOUTS] & STAT_LAYOUT_SCOREBOARD ) ) {
 			scoreboardString[staticlen] = '\0';
-			if( client->resp.chase.active ) {
-				G_ScoreboardMessage_AddChasers( client->resp.chase.target, ENTNUM( ent ) );
-			} else {
-				G_ScoreboardMessage_AddChasers( ENTNUM( ent ), ENTNUM( ent ) );
-			}
 			Q_snprintfz( command, sizeof( command ), "scb \"%s\"", scoreboardString );
 
 			client->level.scoreboard_time = game.realtime + scoreboardInterval - ( game.realtime % scoreboardInterval );
@@ -179,41 +174,6 @@ void G_ScoreboardMessage_AddSpectators( void ) {
 			Q_snprintfz( entry, sizeof( entry ), "%i %i ", PLAYERNUM( e ), -1 );
 			ADD_SCOREBOARD_ENTRY( scoreboardString, len, entry );
 		}
-	}
-}
-
-void G_ScoreboardMessage_AddChasers( int entnum, int entnum_self ) {
-	char entry[MAX_TOKEN_CHARS];
-	int i;
-	edict_t *e;
-	size_t len;
-
-	len = strlen( scoreboardString );
-	if( !len ) {
-		return;
-	}
-
-	// add personal spectators
-	Q_strncpyz( entry, "&y ", sizeof( entry ) );
-	ADD_SCOREBOARD_ENTRY( scoreboardString, len, entry );
-
-	for( i = 0; i < teamlist[TEAM_SPECTATOR].numplayers; i++ ) {
-		e = game.edicts + teamlist[TEAM_SPECTATOR].playerIndices[i];
-
-		if( ENTNUM( e ) == entnum_self ) {
-			continue;
-		}
-
-		if( e->r.client->connecting || trap_GetClientState( PLAYERNUM( e ) ) < CS_SPAWNED ) {
-			continue;
-		}
-
-		if( !e->r.client->resp.chase.active || e->r.client->resp.chase.target != entnum ) {
-			continue;
-		}
-
-		Q_snprintfz( entry, sizeof( entry ), "%i ", PLAYERNUM( e ) );
-		ADD_SCOREBOARD_ENTRY( scoreboardString, len, entry );
 	}
 }
 
