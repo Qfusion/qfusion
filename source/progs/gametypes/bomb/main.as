@@ -108,6 +108,10 @@ void assert( const bool test, const String msg )
 	}
 }
 
+uint min( uint a, uint b ) {
+	return a < b ? a : b;
+}
+
 void setTeamProgress( int teamNum, int progress )
 {
 	for ( int t = TEAM_ALPHA; t < GS_MAX_TEAMS; t++)

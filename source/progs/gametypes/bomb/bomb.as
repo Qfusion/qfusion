@@ -488,21 +488,14 @@ void bombThink()
 
 					if ( bombProgress >= uint( cvarArmTime.value * 1000.0f ) ) // uint to avoid mismatch
 					{
-						bombArm(nearby);
+						bombArm( nearby );
 
 						break;
 					}
 				}
 				else
 				{
-					if ( bombProgress < frameTime )
-					{
-						bombProgress = 0;
-					}
-					else
-					{
-						bombProgress -= frameTime;
-					}
+					bombProgress -= min( bombProgress, frameTime );
 				}
 
 				// this needs to be done every frame...
@@ -545,59 +538,52 @@ void bombThink()
 					{
 						bombDefuse( nearby );
 
+						setTeamProgress( defendingTeam, 100 );
+
 						break;
 					}
 				}
 				else
 				{
-					if ( bombProgress < frameTime )
-					{
-						bombProgress = 0;
-					}
-					else
-					{
-						bombProgress -= frameTime;
-					}
+					bombProgress -= min( bombProgress, frameTime );
 				}
 
 				if ( levelTime >= bombActionTime )
 				{
 					bombExplode();
+					break;
 				}
-				else
+
+				if ( bombProgress != 0 )
 				{
+					int progress = int( ( bombProgress * 100.0f ) / ( cvarDefuseTime.value * 1000.0f ) );
 
-					if ( bombProgress != 0 )
+					if ( !progressing )
 					{
-						int progress = int( ( bombProgress * 100.0f ) / ( cvarDefuseTime.value * 1000.0f ) );
-
-						if ( !progressing )
-						{
-							progress = -progress;
-						}
-
-						setTeamProgress( defendingTeam, progress );
+						progress = -progress;
 					}
 
-					if ( levelTime > bombNextBeep )
+					setTeamProgress( defendingTeam, progress );
+				}
+
+				if ( levelTime > bombNextBeep )
+				{
+					G_PositionedSound( bombModel.origin, CHAN_AUTO, sndBeep, ATTN_DISTANT );
+
+					uint remainingTime = bombActionTime - levelTime;
+
+					uint nextBeepDelta = uint( BOMB_BEEP_FRACTION * remainingTime );
+
+					if ( nextBeepDelta > BOMB_BEEP_MAX )
 					{
-						G_PositionedSound( bombModel.origin, CHAN_AUTO, sndBeep, ATTN_DISTANT );
-
-						uint remainingTime = bombActionTime - levelTime;
-
-						uint nextBeepDelta = uint( BOMB_BEEP_FRACTION * remainingTime );
-
-						if ( nextBeepDelta > BOMB_BEEP_MAX )
-						{
-							nextBeepDelta = BOMB_BEEP_MAX;
-						}
-						else if ( nextBeepDelta < BOMB_BEEP_MIN )
-						{
-							nextBeepDelta = BOMB_BEEP_MIN;
-						}
-
-						bombNextBeep = levelTime + nextBeepDelta;
+						nextBeepDelta = BOMB_BEEP_MAX;
 					}
+					else if ( nextBeepDelta < BOMB_BEEP_MIN )
+					{
+						nextBeepDelta = BOMB_BEEP_MIN;
+					}
+
+					bombNextBeep = levelTime + nextBeepDelta;
 				}
 
 				break;
