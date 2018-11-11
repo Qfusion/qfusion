@@ -1935,27 +1935,6 @@ static bool CG_LFuncDrawCleanPlayerName( struct cg_layoutnode_s *commandnode, st
 
 static bool CG_LFuncDrawNumeric( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	int value = (int)CG_GetNumericArg( &argumentnode );
-	CG_DrawHUDNumeric( layout_cursor_x, layout_cursor_y, layout_cursor_align, layout_cursor_color, layout_cursor_width, layout_cursor_height, value );
-	return true;
-}
-
-static bool CG_LFuncDrawStretchNum( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
-	static char num[16];
-	int len;
-	int value = (int)CG_GetNumericArg( &argumentnode );
-
-	Q_snprintfz( num, sizeof( num ), "%i", value );
-	len = strlen( num );
-	if( len * layout_cursor_height <= layout_cursor_width ) {
-		CG_DrawHUDNumeric( layout_cursor_x, layout_cursor_y, layout_cursor_align, layout_cursor_color, layout_cursor_height, layout_cursor_height, value );
-	} else {   //stretch numbers
-		CG_DrawHUDNumeric( layout_cursor_x, layout_cursor_y, layout_cursor_align, layout_cursor_color, layout_cursor_width / len, layout_cursor_height, value );
-	}
-	return true;
-}
-
-static bool CG_LFuncDrawNumeric2( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
-	int value = (int)CG_GetNumericArg( &argumentnode );
 
 	trap_SCR_DrawString( layout_cursor_x, layout_cursor_y, layout_cursor_align, va( "%i", value ), CG_GetLayoutCursorFont(), layout_cursor_color );
 	return true;
@@ -2320,7 +2299,7 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 
 	{
 		"drawStringNum",
-		CG_LFuncDrawNumeric2,
+		CG_LFuncDrawNumeric,
 		1,
 		"Draws numbers as text",
 		false
@@ -2339,22 +2318,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 		CG_LFuncDrawStringRepeatConfigString,
 		2,
 		"Draws argument string multiple times",
-		false
-	},
-
-	{
-		"drawNum",
-		CG_LFuncDrawNumeric,
-		1,
-		"Draws numbers of given character size",
-		false
-	},
-
-	{
-		"drawStretchNum",
-		CG_LFuncDrawStretchNum,
-		1,
-		"Draws numbers stretch inside a given size",
 		false
 	},
 
