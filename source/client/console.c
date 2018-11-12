@@ -998,7 +998,7 @@ void Con_DrawConsole( void ) {
 	// draw the background
 	re.DrawStretchPic( 0, 0, viddef.width, lines, 0, 0, 1, 1, colorWhite, cls.consoleShader );
 	scaled = 2 * pixelRatio;
-	SCR_DrawFillRect( 0, lines - scaled, viddef.width, scaled, colorOrange );
+	SCR_DrawFillRect( 0, lines - scaled, viddef.width, scaled, colorMdGrey );
 
 	// get date from system
 	time( &long_time );
@@ -1010,7 +1010,7 @@ void Con_DrawConsole( void ) {
 	scaled = 4 * pixelRatio;
 	SCR_DrawString( viddef.width - SCR_strWidth( version, cls.consoleFont, 0, 0 ) - scaled,
 					lines - SCR_FontHeight( cls.consoleFont ) - scaled,
-					ALIGN_LEFT_TOP, version, cls.consoleFont, colorOrange, 0 );
+					ALIGN_LEFT_TOP, version, cls.consoleFont, colorWhite, 0 );
 
 	// prepare to draw the text
 	scaled = 14 * pixelRatio;
@@ -1023,7 +1023,7 @@ void Con_DrawConsole( void ) {
 
 		// draw arrows to show the buffer is backscrolled
 		for( x = 0; x < con.linewidth; x += 4 )
-			SCR_DrawRawChar( ( x + 1 ) * width, y, '^', cls.consoleFont, colorOrange );
+			SCR_DrawRawChar( ( x + 1 ) * width, y, '^', cls.consoleFont, colorMdGrey );
 
 		// the arrows obscure one line of scrollback
 		y -= smallCharHeight;
