@@ -207,24 +207,21 @@ void setTeams()
 
 	bool even = roundCount % 2 == 0;
 
-	if( limit == 0 || roundCount >= limit * 2 ) {
+	if( limit == 0 || roundCount >= ( limit - 1 ) * 2 ) {
 		attackingTeam = even ? INITIAL_ATTACKERS : INITIAL_DEFENDERS;
 		defendingTeam = even ? INITIAL_DEFENDERS : INITIAL_ATTACKERS;
 		return;
 	}
 
-	bool first_half = roundCount < limit;
+	bool first_half = roundCount < limit - 1;
 	attackingTeam = first_half ? INITIAL_ATTACKERS : INITIAL_DEFENDERS;
 	defendingTeam = first_half ? INITIAL_DEFENDERS : INITIAL_ATTACKERS;
 }
 
 void newGame()
 {
-	// these should already be set from warmup but who cares
-	attackingTeam = INITIAL_ATTACKERS;
-	defendingTeam = INITIAL_DEFENDERS;
-
 	roundCount = 0;
+	setTeams();
 
 	for ( int t = TEAM_PLAYERS; t < GS_MAX_TEAMS; t++ )
 	{
