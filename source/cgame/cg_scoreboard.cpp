@@ -596,6 +596,12 @@ static int SCR_DrawTeamTab( const char **ptrptr, int *curteam, int x, int y, int
 		}
 
 		if( pass ) {
+			trap_SCR_DrawStringWidth( x + ( ( SCB_TINYFIELD_PIXELWIDTH + ( 16 * cgs.vidHeight / 600 ) ) * dir ),
+									  y + yoffset + SCB_SCORENUMBER_SIZE - ( trap_SCR_FontHeight( titleFont ) + 1 ),
+									  align, va( "%i", team_score ), SCB_SCORENUMBER_SIZE, titleFont, colorWhite );
+
+			xoffset += ( ( SCB_SCORENUMBER_SIZE * strlen( va( "%i", team_score ) ) + ( 16 * cgs.vidHeight / 600 ) ) * dir );
+
 			trap_SCR_DrawStringWidth( x + xoffset + ( ( SCB_TINYFIELD_PIXELWIDTH + ( 16 * cgs.vidHeight / 600 ) ) * dir ),
 									  y + yoffset + SCB_SCORENUMBER_SIZE - ( trap_SCR_FontHeight( titleFont ) + 1 ),
 									  align, GS_TeamName( team ), SCB_TEAMNAME_PIXELWIDTH, titleFont, colorWhite );
