@@ -47,6 +47,7 @@ typedef int cvar_flag_t;
 #define CVAR_CHEAT          128     // will be reset to default unless cheats are enabled
 #define CVAR_READONLY       256     // don't allow changing by user, ever
 #define CVAR_DEVELOPER      512     // allow changing in dev builds, hide in release builds
+#define CVAR_FROMCONFIG    1024     // set by the user's config, don't trim it
 
 // nothing outside the Cvar_*() functions should access these fields!!!
 typedef struct cvar_s {

@@ -1,5 +1,4 @@
-#ifndef CVAR_H
-#define CVAR_H
+#pragma once
 
 /*
 
@@ -126,5 +125,3 @@ static inline cvar_flag_t Cvar_FlagsClear( cvar_flag_t *flags ) {
 static inline bool Cvar_FlagIsSet( cvar_flag_t flags, cvar_flag_t flag ) {
 	return ( bool )( ( flags & flag ) != 0 );
 }
-
-#endif      // CVAR_H

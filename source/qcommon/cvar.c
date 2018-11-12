@@ -486,15 +486,15 @@ static void Cvar_SetWithFlag_f( cvar_flag_t flag ) {
 }
 
 static void Cvar_Seta_f( void ) {
-	Cvar_SetWithFlag_f( CVAR_ARCHIVE );
+	Cvar_SetWithFlag_f( CVAR_ARCHIVE | CVAR_FROMCONFIG );
 }
 
 static void Cvar_Setau_f( void ) {
-	Cvar_SetWithFlag_f( CVAR_ARCHIVE | CVAR_USERINFO );
+	Cvar_SetWithFlag_f( CVAR_ARCHIVE | CVAR_USERINFO | CVAR_FROMCONFIG );
 }
 
 static void Cvar_Setas_f( void ) {
-	Cvar_SetWithFlag_f( CVAR_ARCHIVE | CVAR_SERVERINFO );
+	Cvar_SetWithFlag_f( CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_FROMCONFIG );
 }
 
 static void Cvar_Sets_f( void ) {
@@ -561,6 +561,8 @@ void Cvar_WriteVariables( int file ) {
 	QMutex_Unlock( cvar_mutex );
 	for( i = 0; i < dump->size; ++i ) {
 		cvar_t *const var = dump->key_value_vector[i].value;
+		if( ( var->flags & CVAR_FROMCONFIG ) == 0 && strcmp( var->string, var->dvalue ) == 0 )
+			continue;
 		const char *cmd;
 
 		if( Cvar_FlagIsSet( var->flags, CVAR_USERINFO ) ) {
