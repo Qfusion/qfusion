@@ -1589,7 +1589,8 @@ void G_ClientThink( edict_t *ent ) {
 	}
 
 	// run bots thinking with the rest of clients
-	if( ( ent->r.svflags & SVF_FAKECLIENT ) && ent->think == NULL ) {
+	// if( ( ent->r.svflags & SVF_FAKECLIENT ) && ent->think == NULL ) { TODO
+	if( ent->r.svflags & SVF_FAKECLIENT ) {
 		AI_Think( ent );
 	}
 

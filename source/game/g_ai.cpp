@@ -66,7 +66,7 @@ void AI_SpawnBot( const char * teamName ) {
 
 	if( edict_t * ent = ConnectFakeClient() ) {
 		// init this bot
-		ent->think = nullptr;
+		ent->think = NULL;
 		ent->nextThink = level.time + 1;
 		ent->classname = "bot";
 		ent->die = player_die;
