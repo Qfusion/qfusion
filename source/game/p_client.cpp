@@ -633,7 +633,9 @@ void G_ClientRespawn( edict_t *self, bool ghost ) {
 		G_Gametype_GENERIC_ClientRespawn( self, old_team, self->s.team );
 	}
 
-	AI_Respawn( self );
+	if( self->r.svflags & SVF_FAKECLIENT ) {
+		AI_Respawn( self );
+	}
 }
 
 /*
