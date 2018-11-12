@@ -642,15 +642,20 @@ void CG_SC_ResetObituaries( void ) {
 }
 
 static const char * obituaries[] = {
+	"BLASTED",
 	"BODYBAGGED",
 	"CANNED",
 	"CASHED OUT",
+	"DEEPWATER HORIZONED",
 	"DEPOSITED",
 	"DUMPED ON",
+	"DUMPSTERED",
 	"ELABORATED ON",
+	"FRAGGED",
 	"FUCKED",
 	"ICED",
 	"MURDERED",
+	"NUKED",
 	"PILED",
 	"PISSED ON",
 	"POUNDED",
