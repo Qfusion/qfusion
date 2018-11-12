@@ -32,9 +32,7 @@ enum eSecondaries
 	SECONDARY_MIN = WEAP_PLASMAGUN,
 	SECONDARY_PG = WEAP_PLASMAGUN,
 	SECONDARY_RG = WEAP_RIOTGUN,
-	SECONDARY_MG = WEAP_MACHINEGUN,
 	SECONDARY_GL = WEAP_GRENADELAUNCHER,
-	SECONDARY_GB = WEAP_GUNBLADE
 }*/
 
 const uint PRIMARY_NONE = 0; // used for pending test
@@ -47,18 +45,14 @@ const uint SECONDARY_NONE = 0; // used for pending test
 const uint SECONDARY_MIN = WEAP_PLASMAGUN;
 const uint SECONDARY_PG = WEAP_PLASMAGUN;
 const uint SECONDARY_RG = WEAP_RIOTGUN;
-const uint SECONDARY_MG = WEAP_MACHINEGUN;
 const uint SECONDARY_GL = WEAP_GRENADELAUNCHER;
-const uint SECONDARY_GB = WEAP_GUNBLADE;
 
 const int AMMO_EB = 15;
 const int AMMO_RL = 15;
 const int AMMO_LG = 180;
 const int AMMO_PG = 140;
 const int AMMO_RG = 15;
-const int AMMO_MG = 150;
 const int AMMO_GL = 10;
-const int AMMO_GB = 1; // might as well spawn with it fully charged
 
 cPlayer@[] players( maxClients ); // array of handles
 bool playersInitialized = false;
@@ -210,26 +204,12 @@ class cPlayer
 
 				break;
 
-			case SECONDARY_MG:
-				this.client.inventoryGiveItem( WEAP_MACHINEGUN );
-
-				this.client.inventorySetCount( AMMO_BULLETS, AMMO_MG );
-
-				//this.client.inventorySetCount( AMMO_WEAK_BULLETS, 0 );
-
-				break;
-
 			case SECONDARY_GL:
 				this.client.inventoryGiveItem( WEAP_GRENADELAUNCHER );
 
 				this.client.inventorySetCount( AMMO_GRENADES, AMMO_GL );
 
 				this.client.inventorySetCount( AMMO_WEAK_GRENADES, 0 );
-
-				break;
-
-			case SECONDARY_GB:
-				this.client.inventorySetCount( AMMO_GUNBLADE, AMMO_GB );
 
 				break;
 
@@ -322,9 +302,7 @@ class cPlayer
 		this.client.execGameCommand( "mecu \"Secondary weapons\""
 			+ " \"Plasmagun\" \"weapselect pg\""
 			+ " \"Riotgun\" \"weapselect rg\""
-			+ " \"Machinegun\" \"weapselect mg\""
 			+ " \"Grenade Launcher\" \"weapselect gl\""
-			+ " \"Strong Gunblade\" \"weapselect gb\""
 		);
 	}
 
@@ -339,39 +317,6 @@ class cPlayer
 	{
 		this.pendingSecondary = weapon;
 	}
-
-    void selectRandomBotWeapons() 
-    {
-        // Prefer EB + LG
-        if ( random() < 0.7f )
-        {
-            this.pendingPrimary = PRIMARY_EBLG;
-            // Choose RG to compensate lack of RL
-            if ( random() < 0.7f )
-                this.pendingSecondary = SECONDARY_RG;
-            else if ( random() < 0.7f )
-                this.pendingSecondary = SECONDARY_PG;
-            else 
-                this.pendingSecondary = SECONDARY_GL;
-        }        
-        // Otherwise prefer EB + RL
-        else if ( random() < 0.7f )
-        {
-            this.pendingPrimary = PRIMARY_EBRL;
-            // Choose PG to compensate lack of continous fire weapons
-            if ( random() < 0.7f )            
-                this.pendingSecondary = SECONDARY_PG;
-            else
-                this.pendingSecondary = SECONDARY_MG;    
-        }
-        // RL + LG
-        else    
-        {
-            this.pendingPrimary = PRIMARY_RLLG;
-            // Choose MG to compensate lack of long-range weapons 
-            this.pendingSecondary = SECONDARY_MG;
-        }
-    }
 
 	void selectWeapon( String &weapon )
 	{
@@ -414,17 +359,9 @@ class cPlayer
 			{
 				this.selectSecondaryWeapon( SECONDARY_RG );
 			}
-			else if ( token == "MG" )
-			{
-				this.selectSecondaryWeapon( SECONDARY_MG );
-			}
 			else if ( token == "GL" )
 			{
 				this.selectSecondaryWeapon( SECONDARY_GL );
-			}
-			else if ( token == "GB" )
-			{
-				this.selectSecondaryWeapon( SECONDARY_GB );
 			}
 			else
 			{
