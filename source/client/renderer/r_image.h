@@ -50,8 +50,6 @@ enum {
 	IT_MIPTEX_FULLBRIGHT = 1 << 24,
 	IT_LEFTHALF        = 1 << 25,
 	IT_RIGHTHALF       = 1 << 26,
-	IT_LUM             = 1 << 27, // some KTX textures use GL_LUMINANCE/GL_LUMINANCE_ALPHA
-	IT_LUMALPHA        = 1 << 28, // so these flags are here to support that
 };
 
 /**

@@ -1113,6 +1113,10 @@ static void Shaderpass_AnimMap( shader_t *shader, shaderpass_t *pass, const char
 	Shaderpass_AnimMapExt( shader, pass, 0, ptr );
 }
 
+static void Shaderpass_AlphaMaskClampMap( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
+	Shaderpass_MapExt( shader, pass, IT_CLAMP | IT_ALPHAMASK, ptr );
+}
+
 static void Shaderpass_AnimClampMap( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
 	Shaderpass_AnimMapExt( shader, pass, IT_CLAMP, ptr );
 }
@@ -1606,6 +1610,7 @@ static const shaderkey_t shaderpasskeys[] =
 	{ "surroundmap", Shaderpass_SurroundMap },
 	{ "clampmap", Shaderpass_ClampMap },
 	{ "animclampmap", Shaderpass_AnimClampMap },
+	{ "alphamaskclampmap", Shaderpass_AlphaMaskClampMap },
 	{ "material", Shaderpass_Material },
 	{ "distortion", Shaderpass_Distortion },
 	{ "celshade", Shaderpass_Celshade },
@@ -2932,7 +2937,7 @@ shader_t *R_RegisterLevelshot( const char *name, shader_t *defaultShader, bool *
 	shader = R_LoadShader( name, SHADER_TYPE_2D, true, NULL );
 
 	if( matchesDefault ) {
-		*matchesDefault = ( ( shader->passes[0].images[0] == r_defaultImage ) ? true : false );
+		*matchesDefault = shader->passes[0].images[0] == r_defaultImage;
 	}
 
 	r_defaultImage = NULL;
