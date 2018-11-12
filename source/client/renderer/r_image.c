@@ -1697,7 +1697,7 @@ static uint8_t *R_InitSolidColorTexture( int *w, int *h, int *flags, int *sample
 	// solid color texture
 	//
 	*w = *h = 1;
-	*flags = IT_NOCOMPRESS;
+	*flags = 0;
 	*samples = 3;
 	if( srgb ) {
 		*flags |= IT_SRGB;
@@ -1753,7 +1753,7 @@ static void R_InitWhiteCubemapTexture( int *w, int *h, int *flags, int *samples 
 	int i;
 
 	*w = *h = 1;
-	*flags = IT_NOCOMPRESS | IT_CUBEMAP | IT_SRGB;
+	*flags = IT_CUBEMAP | IT_SRGB;
 	*samples = 3;
 
 	for( i = 0; i < 6; i++ ) {

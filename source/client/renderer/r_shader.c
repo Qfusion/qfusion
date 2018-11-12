@@ -53,7 +53,6 @@ static vec4_t r_currentTcGen[MAX_SHADER_PASSES][2];
 
 static bool r_shaderNoMipMaps;
 static bool r_shaderNoFiltering;
-static bool r_shaderNoCompress;
 static int r_shaderMinMipSize;
 static bool r_shaderHasLightmapPass;
 static bool r_shaderHasAutosprite;
@@ -540,9 +539,6 @@ static int Shader_SetImageFlags( shader_t *shader ) {
 	if( r_shaderNoMipMaps ) {
 		flags |= IT_NOMIPMAP;
 	}
-	if( r_shaderNoCompress ) {
-		flags |= IT_NOCOMPRESS;
-	}
 	if( r_shaderNoFiltering ) {
 		flags |= IT_NOFILTERING;
 	}
@@ -614,10 +610,6 @@ static void Shader_NoMipMaps( shader_t *shader, shaderpass_t *pass, const char *
 }
 
 static void Shader_NoPicMip( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
-}
-
-static void Shader_NoCompress( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
-	r_shaderNoCompress = true;
 }
 
 static void Shader_NoFiltering( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
@@ -971,7 +963,6 @@ static const shaderkey_t shaderkeys[] =
 	{ "fogparms", Shader_FogParms },
 	{ "nomipmaps", Shader_NoMipMaps },
 	{ "nopicmip", Shader_NoPicMip },
-	{ "nocompress", Shader_NoCompress },
 	{ "nofiltering", Shader_NoFiltering },
 	{ "smallestmipmapsize", Shader_SmallestMipMapSize },
 	{ "polygonoffset", Shader_PolygonOffset },
@@ -2450,7 +2441,6 @@ static void R_LoadShaderReal( shader_t *s, const char *shortname,
 	s->offsetmappingScale = 1;
 
 	r_shaderNoMipMaps = false;
-	r_shaderNoCompress = false;
 	r_shaderNoFiltering = false;
 	r_shaderMinMipSize = 1;
 	r_shaderHasLightmapPass = false;

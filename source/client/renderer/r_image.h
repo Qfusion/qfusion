@@ -23,33 +23,32 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 enum {
 	IT_NONE,
-	IT_CLAMP           = 1 << 0,
-	IT_NOMIPMAP        = 1 << 1,
-	IT_SKY             = 1 << 2,
-	IT_CUBEMAP         = 1 << 3,
-	IT_FLIPX           = 1 << 4,
-	IT_FLIPY           = 1 << 5,
-	IT_FLIPDIAGONAL    = 1 << 6,     // when used alone, equals to rotating 90 CW and flipping X; with FLIPX|Y, 90 CCW and flipping X
-	IT_NOCOMPRESS      = 1 << 7,
-	IT_DEPTH           = 1 << 8,
-	IT_NORMALMAP       = 1 << 9,
-	IT_FRAMEBUFFER     = 1 << 10,
-	IT_DEPTHRB         = 1 << 11,    // framebuffer has a depth renderbuffer
-	IT_NOFILTERING     = 1 << 12,
-	IT_ALPHAMASK       = 1 << 13,    // image only contains an alpha mask
-	IT_BGRA            = 1 << 14,
-	IT_SYNC            = 1 << 15,    // load image synchronously
-	IT_DEPTHCOMPARE    = 1 << 16,
-	IT_ARRAY           = 1 << 17,
-	IT_3D              = 1 << 18,
-	IT_STENCIL         = 1 << 19,    // for IT_DEPTH or IT_DEPTHRB textures, whether there's stencil
-	IT_NO_DATA_SYNC    = 1 << 20,    // owned by the drawing thread, do not sync in the frontend thread
-	IT_FLOAT           = 1 << 21,
-	IT_SRGB            = 1 << 22,
-	IT_MIPTEX          = 1 << 23,
-	IT_MIPTEX_FULLBRIGHT = 1 << 24,
-	IT_LEFTHALF        = 1 << 25,
-	IT_RIGHTHALF       = 1 << 26,
+	IT_CLAMP             = 1 << 0,
+	IT_NOMIPMAP          = 1 << 1,
+	IT_SKY               = 1 << 2,
+	IT_CUBEMAP           = 1 << 3,
+	IT_FLIPX             = 1 << 4,
+	IT_FLIPY             = 1 << 5,
+	IT_FLIPDIAGONAL      = 1 << 6,     // when used alone, equals to rotating 90 CW and flipping X; with FLIPX|Y, 90 CCW and flipping X
+	IT_DEPTH             = 1 << 7,
+	IT_NORMALMAP         = 1 << 8,
+	IT_FRAMEBUFFER       = 1 << 9,
+	IT_DEPTHRB           = 1 << 10,    // framebuffer has a depth renderbuffer
+	IT_NOFILTERING       = 1 << 11,
+	IT_ALPHAMASK         = 1 << 12,    // image only contains an alpha mask
+	IT_BGRA              = 1 << 13,
+	IT_SYNC              = 1 << 14,    // load image synchronously
+	IT_DEPTHCOMPARE      = 1 << 15,
+	IT_ARRAY             = 1 << 16,
+	IT_3D                = 1 << 17,
+	IT_STENCIL           = 1 << 18,    // for IT_DEPTH or IT_DEPTHRB textures, whether there's stencil
+	IT_NO_DATA_SYNC      = 1 << 19,    // owned by the drawing thread, do not sync in the frontend thread
+	IT_FLOAT             = 1 << 20,
+	IT_SRGB              = 1 << 21,
+	IT_MIPTEX            = 1 << 22,
+	IT_MIPTEX_FULLBRIGHT = 1 << 23,
+	IT_LEFTHALF          = 1 << 24,
+	IT_RIGHTHALF         = 1 << 25,
 };
 
 /**
@@ -60,7 +59,7 @@ enum {
  */
 #define IT_LOADFLAGS        ( IT_ALPHAMASK | IT_BGRA | IT_SYNC | IT_SRGB )
 
-#define IT_SPECIAL          ( IT_CLAMP | IT_NOMIPMAP | IT_NOCOMPRESS )
+#define IT_SPECIAL          ( IT_CLAMP | IT_NOMIPMAP )
 #define IT_SKYFLAGS         ( IT_SKY | IT_NOMIPMAP | IT_CLAMP | IT_SYNC )
 
 /**
