@@ -624,24 +624,6 @@ static void R_MipMap16( unsigned short *in, int width, int height, int rMask, in
 static int R_TextureInternalFormat( int samples, int flags, int pixelType ) {
 	bool sRGB = ( flags & IT_SRGB ) != 0;
 
-	if( !( flags & IT_NOCOMPRESS ) && r_texturecompression->integer && glConfig.ext.texture_compression ) {
-		if( sRGB ) {
-			if( samples == 4 ) {
-				return GL_COMPRESSED_SRGB_ALPHA_EXT;
-			}
-			if( samples == 3 ) {
-				return GL_COMPRESSED_SRGB_EXT;
-			}
-		} else {
-			if( samples == 4 ) {
-				return GL_COMPRESSED_RGBA;
-			}
-			if( samples == 3 ) {
-				return GL_COMPRESSED_RGB;
-			}
-		}
-	}
-
 	if( samples == 3 ) {
 		if( sRGB ) {
 			return GL_SRGB;

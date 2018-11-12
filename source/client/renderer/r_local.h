@@ -461,7 +461,6 @@ extern cvar_t *r_lodscale;
 
 extern cvar_t *r_gamma;
 extern cvar_t *r_texturefilter;
-extern cvar_t *r_texturecompression;
 extern cvar_t *r_mode;
 extern cvar_t *r_polyblend;
 extern cvar_t *r_screenshot_fmtstr;

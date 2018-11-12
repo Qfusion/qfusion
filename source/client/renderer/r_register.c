@@ -124,7 +124,6 @@ cvar_t *r_lodscale;
 cvar_t *r_stencilbits;
 cvar_t *r_gamma;
 cvar_t *r_texturefilter;
-cvar_t *r_texturecompression;
 cvar_t *r_nobind;
 cvar_t *r_polyblend;
 cvar_t *r_screenshot_fmtstr;
@@ -430,7 +429,6 @@ static void R_Register() {
 
 	r_gamma = ri.Cvar_Get( "r_gamma", "1.0", CVAR_ARCHIVE );
 	r_texturefilter = ri.Cvar_Get( "r_texturefilter", "4", CVAR_ARCHIVE );
-	r_texturecompression = ri.Cvar_Get( "r_texturecompression", "0", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
 	r_stencilbits = ri.Cvar_Get( "r_stencilbits", "0", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
 
 	r_screenshot_jpeg = ri.Cvar_Get( "r_screenshot_jpeg", "1", CVAR_ARCHIVE );
