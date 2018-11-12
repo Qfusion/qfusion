@@ -561,9 +561,6 @@ void Cvar_WriteVariables( int file ) {
 	QMutex_Unlock( cvar_mutex );
 	for( i = 0; i < dump->size; ++i ) {
 		cvar_t *const var = dump->key_value_vector[i].value;
-		if( strcmp( var->string, var->dvalue ) == 0 )
-			continue;
-
 		const char *cmd;
 
 		if( Cvar_FlagIsSet( var->flags, CVAR_USERINFO ) ) {
