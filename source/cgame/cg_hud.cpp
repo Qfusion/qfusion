@@ -644,7 +644,7 @@ void CG_SC_ResetObituaries( void ) {
 static const char * obituaries[] = {
 	"BODYBAGGED",
 	"CANNED",
-	"CASHED OUT ON",
+	"CASHED OUT",
 	"DEPOSITED",
 	"DUMPED ON",
 	"ELABORATED ON",
