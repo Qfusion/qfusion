@@ -31,5 +31,3 @@ r_imginfo_t IMG_LoadImage( const char * filename, uint8_t *( *allocbuf )( void *
 
 bool WriteTGA( const char * filename, r_imginfo_t *info );
 bool WriteJPG( const char * filename, r_imginfo_t *info, int quality );
-
-void DecompressETC1( const uint8_t *in, int width, int height, uint8_t *out, bool bgr );
