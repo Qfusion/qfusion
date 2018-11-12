@@ -676,7 +676,7 @@ void SCR_UpdateScreen( void ) {
 
 	SCR_CheckSystemFontsModified();
 
-	CL_ForceVsync( cls.state == CA_DISCONNECTED && scr_con_current );
+	CL_ForceVsync( cls.state == CA_DISCONNECTED );
 	timedemo = cl_timedemo->integer != 0 && cls.demo.playing;
 
 	re.BeginFrame( timedemo );
