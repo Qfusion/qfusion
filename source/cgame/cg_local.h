@@ -845,8 +845,6 @@ extern cvar_t *cg_outlinePlayers;
 extern cvar_t *cg_drawEntityBoxes;
 extern cvar_t *cg_fov;
 extern cvar_t *cg_zoomfov;
-extern cvar_t *cg_movementStyle;
-extern cvar_t *cg_noAutohop;
 extern cvar_t *cg_particles;
 extern cvar_t *cg_showhelp;
 extern cvar_t *cg_predictLaserBeam;
