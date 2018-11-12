@@ -440,8 +440,8 @@ static void R_Register() {
 	r_temp1 = ri.Cvar_Get( "r_temp1", "0", 0 );
 
 	r_drawflat = ri.Cvar_Get( "r_drawflat", "1", CVAR_ARCHIVE | CVAR_READONLY );
-	r_wallcolor = ri.Cvar_Get( "r_wallcolor", "192 192 192", CVAR_ARCHIVE );
-	r_floorcolor = ri.Cvar_Get( "r_floorcolor", "255 255 255", CVAR_ARCHIVE );
+	r_wallcolor = ri.Cvar_Get( "r_wallcolor", "128 128 128", CVAR_ARCHIVE );
+	r_floorcolor = ri.Cvar_Get( "r_floorcolor", "192 192 192", CVAR_ARCHIVE );
 
 	// make sure we rebuild our 3D texture after vid_restart
 	r_wallcolor->modified = r_floorcolor->modified = true;
