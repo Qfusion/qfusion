@@ -120,7 +120,8 @@ void R_TakeScreenShot( const char *path, const char *name, const char *fmtString
 		lastIndex++;
 	}
 
-	R_ScreenShot( checkname, x, y, w, h, quality, false, false, false, silent );
+	// flip Y because 0,0 is bottom left in OpenGL
+	R_ScreenShot( checkname, x, y, w, h, quality, false, true, false, silent );
 }
 
 /*
