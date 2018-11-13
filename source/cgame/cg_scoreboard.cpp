@@ -453,18 +453,6 @@ static int SCR_DrawSpectators( const char **ptrptr, int x, int y, int panelWidth
 }
 
 /*
-* SCR_IgnoreSpectators
-*/
-static void SCR_IgnoreSpectators( const char **ptrptr, bool havePing ) {
-	scr_spectator_t spec;
-
-	assert( ptrptr && *ptrptr );
-
-	while( !SCR_ParseSpectator( &spec, ptrptr, havePing ) )
-		;
-}
-
-/*
 * SCR_GetNextColumnLayout
 */
 static const char *SCR_GetNextColumnLayout( const char **ptrlay, const char **ptrtitle, char *type, int *width, struct qfontface_s *font ) {

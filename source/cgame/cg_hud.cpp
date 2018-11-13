@@ -330,10 +330,6 @@ static int CG_DownloadInProgress( const void *parameter ) {
 	return 0;
 }
 
-static int CG_InputDeviceSupported( const void *parameter ) {
-	return ( trap_IN_SupportedDevices() & ( ( intptr_t )parameter ) ) ? 1 : 0;
-}
-
 // ch : backport some of racesow hud elements
 /*********************************************************************************
 lm: edit for race mod,

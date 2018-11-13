@@ -816,53 +816,6 @@ static void CG_AddPolyOnTag( const entity_t *weapon, const orientation_t *tag, f
 	trap_R_AddPolyToScene( &p );
 }
 
-static int char_w, char_h;
-static float char_s1, char_t1, char_s2, char_t2;
-static struct shader_s *char_shader;
-
-static void DrawCharCallback( int x, int y, int w, int h, float s1, 
-	float t1, float s2, float t2, const vec4_t color, const struct shader_s *shader ) {
-	char_w = w;
-	char_h = h;
-	char_s1 = s1, char_t1 = t1, char_s2 = s2, char_t2 = t2;
-	char_shader = (struct shader_s *)shader;
-}
-
-/*
-* CG_AddAmmoDigitOnTag
-*/
-static void CG_AddAmmoDigitOnTag( entity_t *weapon, const weaponinfo_t *weaponInfo, 
-	const gsitem_t *ammoItem, int num, const char *tag_name ) {
-	float width, height;
-	float x_width, x_offset;
-	cg_fdrawchar_t pop;
-	orientation_t tag_digit;
-
-	if( !weaponInfo->acFont ) {
-		return;
-	}
-	if( !weaponInfo->acDigitWidth || !weaponInfo->acDigitHeight ) {
-		return;
-	}
-	if( !CG_GrabTag( &tag_digit, weapon, tag_name ) ) {
-		return;
-	}
-	
-	width = weaponInfo->acDigitWidth;
-	height = weaponInfo->acDigitHeight;
-
-	pop = trap_SCR_SetDrawCharIntercept( (cg_fdrawchar_t)&DrawCharCallback );
-	trap_SCR_DrawRawChar( 0, 0, '0' + num, weaponInfo->acFont, colorWhite );
-
-	trap_SCR_SetDrawCharIntercept( pop );
-
-	x_width = weaponInfo->acFontWidth;
-	x_offset = width * (1.0 - (float)char_w / x_width);
-
-	CG_AddPolyOnTag( weapon, &tag_digit, width, height, x_offset, char_s1, char_t1, char_s2, char_t2, 
-		color_table[ColorIndex( ammoItem->color[1] )], weaponInfo->acDigitAlpha, char_shader );
-}
-
 /*
 * CG_AddItemIconOnTag
 */
