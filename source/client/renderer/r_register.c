@@ -74,6 +74,7 @@ cvar_t *r_lighting_realtime_sky_direction;
 cvar_t *r_lighting_realtime_sky_color;
 cvar_t *r_lighting_showlightvolumes;
 cvar_t *r_lighting_debuglight;
+cvar_t *r_lighting_bicubic;
 
 cvar_t *r_offsetmapping;
 cvar_t *r_offsetmapping_scale;
@@ -375,6 +376,7 @@ static void R_Register() {
 	r_lighting_realtime_sky_color = ri.Cvar_Get( "r_lighting_realtime_sky_color", "", CVAR_ARCHIVE );
 	r_lighting_showlightvolumes = ri.Cvar_Get( "r_lighting_showlightvolumes", "0", 0 );
 	r_lighting_debuglight = ri.Cvar_Get( "r_lighting_debuglight", "-1", 0 );
+	r_lighting_bicubic = ri.Cvar_Get( "r_lighting_bicubic", "1", CVAR_ARCHIVE );
 
 	r_offsetmapping = ri.Cvar_Get( "r_offsetmapping", "2", CVAR_ARCHIVE );
 	r_offsetmapping_scale = ri.Cvar_Get( "r_offsetmapping_scale", "0.02", CVAR_ARCHIVE );

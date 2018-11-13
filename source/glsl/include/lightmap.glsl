@@ -1,3 +1,5 @@
+#ifdef LIGHTMAP_BICUBIC
+
 vec4 cubic( float v ) {
 	vec4 n = vec4( 1.0, 2.0, 3.0, 4.0 ) - v;
 	vec4 s = n * n * n;
@@ -64,6 +66,18 @@ vec4 texturearray_bicubic( sampler2DArray tex, vec2 uv, float l ) {
 #else
 #define LightmapSampler sampler2D
 #define LightmapAt(t, c, l) texture_bicubic(t, c)
+#endif
+
+#else
+
+#ifdef LIGHTMAP_ARRAYS
+#define LightmapSampler sampler2DArray
+#define LightmapAt(t, c, l) texture(t, vec3(c, l))
+#else
+#define LightmapSampler sampler2D
+#define LightmapAt(t, c, l) texture_bicubic(t, c)
+#endif
+
 #endif
 
 #ifdef APPLY_SRGB2LINEAR

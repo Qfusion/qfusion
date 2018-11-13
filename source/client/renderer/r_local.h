@@ -382,7 +382,6 @@ extern cvar_t *r_detailtextures;
 extern cvar_t *r_subdivisions;
 extern cvar_t *r_showtris;
 extern cvar_t *r_showtris2D;
-extern cvar_t *r_draworder;
 extern cvar_t *r_leafvis;
 
 extern cvar_t *r_fastsky;
@@ -412,6 +411,7 @@ extern cvar_t *r_lighting_realtime_sky_direction;
 extern cvar_t *r_lighting_realtime_sky_color;
 extern cvar_t *r_lighting_showlightvolumes;
 extern cvar_t *r_lighting_debuglight;
+extern cvar_t *r_lighting_bicubic;
 
 extern cvar_t *r_offsetmapping;
 extern cvar_t *r_offsetmapping_scale;

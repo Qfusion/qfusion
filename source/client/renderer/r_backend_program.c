@@ -932,6 +932,9 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 					programFeatures |= GLSL_SHADER_MATERIAL_LIGHTMAP_ARRAYS;
 				}
 
+				if( r_lighting_bicubic->integer )
+					programFeatures |= GLSL_SHADER_MATERIAL_LIGHTMAP_BICUBIC;
+
 				if( i == 1 ) {
 					vec_t *rgb = rsc.lightStyles[lightStyle->lightmapStyles[0]].rgb;
 
@@ -1387,9 +1390,11 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 			}
 
 			if( isLightmapped && lightStyle && lightStyle->lightmapStyles[0] != 255 ) {
-				int i;
+				if( r_lighting_bicubic->integer )
+					programFeatures |= GLSL_SHADER_Q3_LIGHTMAP_BICUBIC;
 
-				// bindr lightmap textures and set program's features for lightstyles
+				// bind lightmap textures and set program's features for lightstyles
+				int i;
 				for( i = 0; i < MAX_LIGHTMAPS && lightStyle->lightmapStyles[i] != 255; i++ )
 					RB_BindImage( i + 4, rsh.worldBrushModel->lightmapImages[lightStyle->lightmapNum[i]] ); // lightmap
 				programFeatures |= ( i * GLSL_SHADER_Q3_LIGHTSTYLE0 );
