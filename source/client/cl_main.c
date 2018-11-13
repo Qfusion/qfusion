@@ -1852,19 +1852,6 @@ void CL_RestartMedia( void ) {
 }
 
 /*
-* CL_S_Restart_f
-*
-* Restart the sound subsystem so it can pick up new parameters and flush all sounds
-*/
-static void CL_S_Restart_f() {
-	/* bool verbose = ( Cmd_Argc() >= 2 ? true : false ); */
-
-	// The cgame and game must also be forced to restart because handles will become invalid
-	// VID_Restart also forces an audio restart
-	/* VID_Restart( verbose, true ); */
-}
-
-/*
 * CL_ShowIP_f - wsw : jal : taken from Q3 (it only shows the ip when server was started)
 */
 static void CL_ShowIP_f( void ) {
@@ -1967,7 +1954,6 @@ static void CL_InitLocal( void ) {
 	//
 	// register our commands
 	//
-	Cmd_AddCommand( "s_restart", CL_S_Restart_f );
 	Cmd_AddCommand( "cmd", CL_ForwardToServer_f );
 	Cmd_AddCommand( "requestservers", CL_GetServers_f );
 	Cmd_AddCommand( "getinfo", CL_QueryGetInfoMessage_f ); // wsw : jal : ask for server info
