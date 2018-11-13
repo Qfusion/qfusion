@@ -115,7 +115,6 @@ cvar_t *r_hdr;
 cvar_t *r_hdr_gamma;
 cvar_t *r_hdr_exposure;
 
-cvar_t *r_fxaa;
 cvar_t *r_samples;
 
 cvar_t *r_lodbias;
@@ -421,7 +420,6 @@ static void R_Register() {
 	r_hdr_gamma = ri.Cvar_Get( "r_hdr_gamma", "2.2", CVAR_ARCHIVE );
 	r_hdr_exposure = ri.Cvar_Get( "r_hdr_exposure", "1.0", CVAR_ARCHIVE );
 
-	r_fxaa = ri.Cvar_Get( "r_fxaa", "0", CVAR_ARCHIVE );
 	r_samples = ri.Cvar_Get( "r_samples", "0", CVAR_ARCHIVE );
 
 	r_lodbias = ri.Cvar_Get( "r_lodbias", "0", CVAR_ARCHIVE );

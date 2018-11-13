@@ -24,7 +24,6 @@ enum {
 	PPFX_SOFT_PARTICLES,
 	PPFX_TONE_MAPPING,
 	PPFX_COLOR_CORRECTION,
-	PPFX_FXAA,
 	PPFX_BLUR,
 };
 
@@ -32,7 +31,6 @@ enum {
 	PPFX_BIT_SOFT_PARTICLES = RF_BIT( PPFX_SOFT_PARTICLES ),
 	PPFX_BIT_TONE_MAPPING = RF_BIT( PPFX_TONE_MAPPING ),
 	PPFX_BIT_COLOR_CORRECTION = RF_BIT( PPFX_COLOR_CORRECTION ),
-	PPFX_BIT_FXAA = RF_BIT( PPFX_FXAA ),
 	PPFX_BIT_BLUR = RF_BIT( PPFX_BLUR ),
 };
 
@@ -422,12 +420,8 @@ void R_RenderScene( const refdef_t *fd ) {
 			if( cc ) {
 				fbFlags |= PPFX_BIT_COLOR_CORRECTION;
 			}
-			if( r_fxaa->integer ) {
-				fbFlags |= PPFX_BIT_FXAA;
-			}
 			if( fd->rdflags & RDF_BLURRED ) {
 				fbFlags |= PPFX_BIT_BLUR;
-				fbFlags &= ~PPFX_BIT_FXAA;
 			}
 
 			if( fbFlags != oldFlags ) {
@@ -561,19 +555,6 @@ void R_RenderScene( const refdef_t *fd ) {
 
 		ppFrontBuffer ^= 1;
 		ppSource = dest;
-	}
-
-	// apply FXAA
-	if( fbFlags & PPFX_BIT_FXAA ) {
-		assert( fbFlags == PPFX_BIT_FXAA );
-
-		// not that FXAA only works on LDR input
-		R_BlitTextureToScrFbo( fd,
-							   ppSource, rf.renderTarget,
-							   GLSL_PROGRAM_TYPE_FXAA,
-							   colorWhite, 0,
-							   0, NULL, 0 );
-		goto done;
 	}
 
 	if( fbFlags & PPFX_BIT_BLUR ) {

@@ -453,7 +453,6 @@ extern cvar_t *r_hdr;
 extern cvar_t *r_hdr_gamma;
 extern cvar_t *r_hdr_exposure;
 
-extern cvar_t *r_fxaa;
 extern cvar_t *r_samples;
 
 extern cvar_t *r_lodbias;

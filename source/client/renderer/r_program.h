@@ -33,7 +33,6 @@ typedef uint64_t r_glslfeat_t;
 #define DEFAULT_GLSL_Q3A_SHADER_PROGRAM         "defaultQ3AShader"
 #define DEFAULT_GLSL_CELSHADE_PROGRAM           "defaultCelshade"
 #define DEFAULT_GLSL_FOG_PROGRAM                "defaultFog"
-#define DEFAULT_GLSL_FXAA_PROGRAM               "defaultFXAA"
 #define DEFAULT_GLSL_COLORCORRECTION_PROGRAM    "defaultColorCorrection"
 #define DEFAULT_GLSL_KAWASE_BLUR_PROGRAM        "defaultKawaseBlur"
 
@@ -48,7 +47,6 @@ enum {
 	GLSL_PROGRAM_TYPE_Q3A_SHADER,
 	GLSL_PROGRAM_TYPE_CELSHADE,
 	GLSL_PROGRAM_TYPE_FOG,
-	GLSL_PROGRAM_TYPE_FXAA,
 	GLSL_PROGRAM_TYPE_COLOR_CORRECTION,
 	GLSL_PROGRAM_TYPE_KAWASE_BLUR,
 
@@ -169,9 +167,6 @@ enum {
 #define GLSL_SHADER_CELSHADE_STRIPES_ADD        GLSL_BIT( 38 )
 #define GLSL_SHADER_CELSHADE_CEL_LIGHT          GLSL_BIT( 39 )
 #define GLSL_SHADER_CELSHADE_CEL_LIGHT_ADD      GLSL_BIT( 40 )
-
-// fxaa
-#define GLSL_SHADER_FXAA_FXAA3                  GLSL_BIT( 32 )
 
 // hdr/color-correction
 #define GLSL_SHADER_COLOR_CORRECTION_LUT        GLSL_BIT( 32 )
