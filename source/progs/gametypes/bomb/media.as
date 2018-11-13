@@ -123,7 +123,7 @@ void mediaInit()
 	sndBeep      = G_SoundIndex( "sounds/bomb/bombtimer", false );
 	//sndBombTaken = G_SoundIndex( "sounds/announcer/bomb/offense/taken", true ); FIXME pure
 	sndBombTaken = G_SoundIndex( "sounds/announcer/bomb/offense/taken", false );
-	sndBongo     = G_SoundIndex( "sounds/announcer/midair/bongo02", false );
+	sndBongo     = G_SoundIndex( "sounds/announcer/bomb/bongo", false );
 
 	int[] ggASIsBad =
 	{
