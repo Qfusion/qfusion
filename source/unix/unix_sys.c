@@ -161,23 +161,6 @@ void Sys_Sleep( unsigned int millis ) {
 	usleep( millis * 1000 );
 }
 
-/*
-* Sys_GetSymbol
-*/
-#ifdef SYS_SYMBOL
-void *Sys_GetSymbol( const char *moduleName, const char *symbolName ) {
-	// FIXME: Does not work on Debian64 for unknown reasons (dlsym always returns NULL)
-	void *const module = dlopen( moduleName, RTLD_NOW );
-	if( module ) {
-		void *const symbol = dlsym( module, symbolName );
-		dlclose( module );
-		return symbol;
-	} else {
-		return NULL;
-	}
-}
-#endif // SYS_SYMBOL
-
 //===============================================================================
 
 /*
