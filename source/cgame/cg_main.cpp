@@ -57,7 +57,6 @@ cvar_t *developer;
 
 cvar_t *cg_handOffset;
 cvar_t *cg_gun_fov;
-cvar_t *cg_gun_alpha;
 cvar_t *cg_volume_players;
 cvar_t *cg_volume_effects;
 cvar_t *cg_volume_announcer;
@@ -724,7 +723,6 @@ static void CG_RegisterVariables( void ) {
 	cg_gunbob =     trap_Cvar_Get( "cg_gunbob", "1", CVAR_ARCHIVE );
 
 	cg_gun_fov =        trap_Cvar_Get( "cg_gun_fov", "75", CVAR_ARCHIVE );
-	cg_gun_alpha =      trap_Cvar_Get( "cg_gun_alpha", "1", CVAR_ARCHIVE );
 	cg_weaponFlashes =  trap_Cvar_Get( "cg_weaponFlashes", "2", CVAR_ARCHIVE );
 
 	// wsw

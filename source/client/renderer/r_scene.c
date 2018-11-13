@@ -182,14 +182,6 @@ void R_AddEntityToScene( const entity_t *ent ) {
 		R_CacheSceneEntity( de );
 
 		rsc.numEntities++;
-
-		// add invisible fake entity for depth write
-		if( ( de->renderfx & ( RF_WEAPONMODEL | RF_ALPHAHACK ) ) == ( RF_WEAPONMODEL | RF_ALPHAHACK ) ) {
-			entity_t tent = *ent;
-			tent.renderfx &= ~RF_ALPHAHACK;
-			tent.renderfx |= RF_NOCOLORWRITE | RF_NOSHADOW;
-			R_AddEntityToScene( &tent );
-		}
 	}
 }
 

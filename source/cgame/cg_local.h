@@ -642,7 +642,6 @@ extern centity_t cg_entities[MAX_EDICTS];
 // cg_ents.c
 //
 extern cvar_t *cg_gun;
-extern cvar_t *cg_gun_alpha;
 
 bool CG_NewFrameSnap( snapshot_t *frame, snapshot_t *lerpframe );
 struct cmodel_s *CG_CModelForEntity( int entNum );

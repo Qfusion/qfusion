@@ -271,11 +271,6 @@ void CG_CalcViewWeapon( cg_viewweapon_t *viewweapon ) {
 	viewweapon->ent.boneposes = viewweapon->ent.oldboneposes = NULL;
 	Vector4Set( viewweapon->ent.shaderRGBA, 255, 255, 255, 255 );
 
-	if( cg_gun_alpha->value < 1.0f ) {
-		viewweapon->ent.renderfx |= RF_ALPHAHACK;
-		viewweapon->ent.shaderRGBA[3] = bound( 0, cg_gun_alpha->value, 1 ) * 255.0f;
-	}
-
 	// calculate the entity position
 	VectorCopy( cg.view.origin, viewweapon->ent.origin );
 

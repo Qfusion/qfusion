@@ -816,7 +816,7 @@ static void CG_SetupViewDef( cg_viewdef_t *view, int type ) {
 		if( !view->thirdperson && view->POVent > 0 && view->POVent <= gs.maxclients ) {
 			if( ( cg_entities[view->POVent].serverFrame == cg.frame.serverFrame ) &&
 				( cg_entities[view->POVent].current.weapon != 0 ) ) {
-				view->drawWeapon = ( cg_gun->integer != 0 ) && ( cg_gun_alpha->value > 0 );
+				view->drawWeapon = cg_gun->integer != 0;
 			}
 		}
 
