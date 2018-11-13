@@ -718,9 +718,6 @@ typedef struct
 } g_vsays_t;
 
 static const g_vsays_t g_vsays[] = {
-	{ "needhealth", VSAY_NEEDHEALTH },
-	{ "needweapon", VSAY_NEEDWEAPON },
-	{ "needarmor", VSAY_NEEDARMOR },
 	{ "affirmative", VSAY_AFFIRMATIVE },
 	{ "negative", VSAY_NEGATIVE },
 	{ "yes", VSAY_YES },
@@ -741,16 +738,9 @@ static const g_vsays_t g_vsays[] = {
 	{ "needoffense", VSAY_NEEDOFFENSE },
 	{ "needhelp", VSAY_NEEDHELP },
 	{ "roger", VSAY_ROGER },
-	{ "armorfree", VSAY_ARMORFREE },
 	{ "areasecured", VSAY_AREASECURED },
 	{ "boomstick", VSAY_BOOMSTICK },
-	{ "gotopowerup", VSAY_GOTOPOWERUP },
-	{ "gotoquad", VSAY_GOTOQUAD },
 	{ "ok", VSAY_OK },
-	{ "defend_a", VSAY_DEFEND_A },
-	{ "attack_a", VSAY_ATTACK_A },
-	{ "defend_b", VSAY_DEFEND_B },
-	{ "attack_b", VSAY_ATTACK_B },
 
 	{ NULL, 0 }
 };

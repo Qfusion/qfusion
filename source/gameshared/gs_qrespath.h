@@ -453,9 +453,6 @@ extern "C" {
 
 // vsay icons
 #define PATH_VSAY_GENERIC_ICON      "gfx/hud/icons/vsay/generic"
-#define PATH_VSAY_NEEDHEALTH_ICON   "gfx/hud/icons/vsay/needhealth"
-#define PATH_VSAY_NEEDWEAPON_ICON   "gfx/hud/icons/vsay/needweapon"
-#define PATH_VSAY_NEEDARMOR_ICON    "gfx/hud/icons/vsay/needarmor"
 #define PATH_VSAY_AFFIRMATIVE_ICON  "gfx/hud/icons/vsay/affirmative"
 #define PATH_VSAY_NEGATIVE_ICON     "gfx/hud/icons/vsay/negative"
 #define PATH_VSAY_YES_ICON      "gfx/hud/icons/vsay/yes"
@@ -476,21 +473,11 @@ extern "C" {
 #define PATH_VSAY_NEEDOFFENSE_ICON  "gfx/hud/icons/vsay/needoffense"
 #define PATH_VSAY_NEEDHELP_ICON     "gfx/hud/icons/vsay/needhelp"
 #define PATH_VSAY_ROGER_ICON        "gfx/hud/icons/vsay/roger"
-#define PATH_VSAY_ARMORFREE_ICON    "gfx/hud/icons/vsay/armorfree"
 #define PATH_VSAY_AREASECURED_ICON  "gfx/hud/icons/vsay/areasecured"
 #define PATH_VSAY_BOOMSTICK_ICON    "gfx/hud/icons/vsay/boomstick"
-#define PATH_VSAY_GOTOPOWERUP_ICON  "gfx/hud/icons/vsay/gotopowerup"
-#define PATH_VSAY_GOTOQUAD_ICON     "gfx/hud/icons/vsay/gotoquad"
 #define PATH_VSAY_OK_ICON       "gfx/hud/icons/vsay/ok"
-#define PATH_VSAY_DEFEND_A_ICON     "gfx/hud/icons/vsay/defend"
-#define PATH_VSAY_ATTACK_A_ICON     "gfx/hud/icons/vsay/attack"
-#define PATH_VSAY_DEFEND_B_ICON     "gfx/hud/icons/vsay/defend"
-#define PATH_VSAY_ATTACK_B_ICON     "gfx/hud/icons/vsay/attack"
 
 // vsay sounds
-#define S_VSAY_NEEDHEALTH           "sounds/vsay/needhealth"
-#define S_VSAY_NEEDWEAPON           "sounds/vsay/needweapon"
-#define S_VSAY_NEEDARMOR            "sounds/vsay/needarmor"
 #define S_VSAY_AFFIRMATIVE          "sounds/vsay/affirmative"
 #define S_VSAY_NEGATIVE             "sounds/vsay/negative"
 #define S_VSAY_YES              "sounds/vsay/yes"
@@ -511,16 +498,9 @@ extern "C" {
 #define S_VSAY_NEEDOFFENSE          "sounds/vsay/needoffense"
 #define S_VSAY_NEEDHELP             "sounds/vsay/needhelp"
 #define S_VSAY_ROGER                "sounds/vsay/roger"
-#define S_VSAY_ARMORFREE            "sounds/vsay/armorfree"
 #define S_VSAY_AREASECURED          "sounds/vsay/areasecured"
 #define S_VSAY_BOOMSTICK            "sounds/vsay/boomstick"
-#define S_VSAY_GOTOPOWERUP          "sounds/vsay/gotopowerup"
-#define S_VSAY_GOTOQUAD             "sounds/vsay/gotoquad"
 #define S_VSAY_OK               "sounds/vsay/ok"
-#define S_VSAY_DEFEND_A             "sounds/vsay/defend_a"
-#define S_VSAY_ATTACK_A             "sounds/vsay/attack_a"
-#define S_VSAY_DEFEND_B             "sounds/vsay/defend_b"
-#define S_VSAY_ATTACK_B             "sounds/vsay/attack_b"
 
 //===============================
 // Lightstyles

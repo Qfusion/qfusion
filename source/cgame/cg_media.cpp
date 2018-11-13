@@ -125,9 +125,6 @@ void CG_RegisterMediaSounds( void ) {
 
 	// VSAY sounds
 	cgs.media.sfxVSaySounds[VSAY_GENERIC] = CG_RegisterMediaSfx( S_VSAY_GOODGAME );
-	cgs.media.sfxVSaySounds[VSAY_NEEDHEALTH] = CG_RegisterMediaSfx( S_VSAY_NEEDHEALTH );
-	cgs.media.sfxVSaySounds[VSAY_NEEDWEAPON] = CG_RegisterMediaSfx( S_VSAY_NEEDWEAPON );
-	cgs.media.sfxVSaySounds[VSAY_NEEDARMOR] = CG_RegisterMediaSfx( S_VSAY_NEEDARMOR );
 	cgs.media.sfxVSaySounds[VSAY_AFFIRMATIVE] = CG_RegisterMediaSfx( S_VSAY_AFFIRMATIVE );
 	cgs.media.sfxVSaySounds[VSAY_NEGATIVE] = CG_RegisterMediaSfx( S_VSAY_NEGATIVE );
 	cgs.media.sfxVSaySounds[VSAY_YES] = CG_RegisterMediaSfx( S_VSAY_YES );
@@ -148,16 +145,9 @@ void CG_RegisterMediaSounds( void ) {
 	cgs.media.sfxVSaySounds[VSAY_NEEDOFFENSE] = CG_RegisterMediaSfx( S_VSAY_NEEDOFFENSE );
 	cgs.media.sfxVSaySounds[VSAY_NEEDHELP] = CG_RegisterMediaSfx( S_VSAY_NEEDHELP );
 	cgs.media.sfxVSaySounds[VSAY_ROGER] = CG_RegisterMediaSfx( S_VSAY_ROGER );
-	cgs.media.sfxVSaySounds[VSAY_ARMORFREE] = CG_RegisterMediaSfx( S_VSAY_ARMORFREE );
 	cgs.media.sfxVSaySounds[VSAY_AREASECURED] = CG_RegisterMediaSfx( S_VSAY_AREASECURED );
 	cgs.media.sfxVSaySounds[VSAY_BOOMSTICK] = CG_RegisterMediaSfx( S_VSAY_BOOMSTICK );
-	cgs.media.sfxVSaySounds[VSAY_GOTOPOWERUP] = CG_RegisterMediaSfx( S_VSAY_GOTOPOWERUP );
-	cgs.media.sfxVSaySounds[VSAY_GOTOQUAD] = CG_RegisterMediaSfx( S_VSAY_GOTOQUAD );
 	cgs.media.sfxVSaySounds[VSAY_OK] = CG_RegisterMediaSfx( S_VSAY_OK );
-	cgs.media.sfxVSaySounds[VSAY_DEFEND_A] = CG_RegisterMediaSfx( S_VSAY_DEFEND_A );
-	cgs.media.sfxVSaySounds[VSAY_ATTACK_A] = CG_RegisterMediaSfx( S_VSAY_ATTACK_A );
-	cgs.media.sfxVSaySounds[VSAY_DEFEND_B] = CG_RegisterMediaSfx( S_VSAY_DEFEND_B );
-	cgs.media.sfxVSaySounds[VSAY_ATTACK_B] = CG_RegisterMediaSfx( S_VSAY_ATTACK_B );
 }
 
 //======================================================================
@@ -380,9 +370,6 @@ void CG_RegisterMediaShaders( void ) {
 
 	// VSAY icons
 	cgs.media.shaderVSayIcon[VSAY_GENERIC] = CG_RegisterMediaShader( PATH_VSAY_GENERIC_ICON );
-	cgs.media.shaderVSayIcon[VSAY_NEEDHEALTH] = CG_RegisterMediaShader( PATH_VSAY_NEEDHEALTH_ICON );
-	cgs.media.shaderVSayIcon[VSAY_NEEDWEAPON] = CG_RegisterMediaShader( PATH_VSAY_NEEDWEAPON_ICON );
-	cgs.media.shaderVSayIcon[VSAY_NEEDARMOR] = CG_RegisterMediaShader( PATH_VSAY_NEEDARMOR_ICON );
 	cgs.media.shaderVSayIcon[VSAY_AFFIRMATIVE] = CG_RegisterMediaShader( PATH_VSAY_AFFIRMATIVE_ICON );
 	cgs.media.shaderVSayIcon[VSAY_NEGATIVE] = CG_RegisterMediaShader( PATH_VSAY_NEGATIVE_ICON );
 	cgs.media.shaderVSayIcon[VSAY_YES] = CG_RegisterMediaShader( PATH_VSAY_YES_ICON );
@@ -403,16 +390,9 @@ void CG_RegisterMediaShaders( void ) {
 	cgs.media.shaderVSayIcon[VSAY_NEEDOFFENSE] = CG_RegisterMediaShader( PATH_VSAY_NEEDOFFENSE_ICON );
 	cgs.media.shaderVSayIcon[VSAY_NEEDHELP] = CG_RegisterMediaShader( PATH_VSAY_NEEDHELP_ICON );
 	cgs.media.shaderVSayIcon[VSAY_ROGER] = CG_RegisterMediaShader( PATH_VSAY_ROGER_ICON );
-	cgs.media.shaderVSayIcon[VSAY_ARMORFREE] = CG_RegisterMediaShader( PATH_VSAY_ARMORFREE_ICON );
 	cgs.media.shaderVSayIcon[VSAY_AREASECURED] = CG_RegisterMediaShader( PATH_VSAY_AREASECURED_ICON );
 	cgs.media.shaderVSayIcon[VSAY_BOOMSTICK] = CG_RegisterMediaShader( PATH_VSAY_BOOMSTICK_ICON );
-	cgs.media.shaderVSayIcon[VSAY_GOTOPOWERUP] = CG_RegisterMediaShader( PATH_VSAY_GOTOPOWERUP_ICON );
-	cgs.media.shaderVSayIcon[VSAY_GOTOQUAD] = CG_RegisterMediaShader( PATH_VSAY_GOTOQUAD_ICON );
 	cgs.media.shaderVSayIcon[VSAY_OK] = CG_RegisterMediaShader( PATH_VSAY_OK_ICON );
-	cgs.media.shaderVSayIcon[VSAY_DEFEND_A] = CG_RegisterMediaShader( PATH_VSAY_DEFEND_A_ICON );
-	cgs.media.shaderVSayIcon[VSAY_ATTACK_A] = CG_RegisterMediaShader( PATH_VSAY_ATTACK_A_ICON );
-	cgs.media.shaderVSayIcon[VSAY_DEFEND_B] = CG_RegisterMediaShader( PATH_VSAY_DEFEND_B_ICON );
-	cgs.media.shaderVSayIcon[VSAY_ATTACK_B] = CG_RegisterMediaShader( PATH_VSAY_ATTACK_B_ICON );
 }
 
 /*
