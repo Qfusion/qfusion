@@ -1992,7 +1992,6 @@ static void CL_ShutdownLocal( void ) {
 	cls.state = CA_UNINITIALIZED;
 	Com_SetClientState( CA_UNINITIALIZED );
 
-	Cmd_RemoveCommand( "s_restart" );
 	Cmd_RemoveCommand( "cmd" );
 	Cmd_RemoveCommand( "requestservers" );
 	Cmd_RemoveCommand( "getinfo" );
