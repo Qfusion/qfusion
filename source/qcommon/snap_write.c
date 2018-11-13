@@ -270,7 +270,7 @@ void SNAP_WriteFrameSnapToClient( ginfo_t *gi, client_t *client, msg_t *msg, int
 								  entity_state_t *baselines, client_entities_t *client_entities,
 								  int numcmds, gcommand_t *commands, const char *commandsData ) {
 	client_snapshot_t *frame, *oldframe;
-	int flags, i, index, pos, length, supcnt;
+	int flags, i, index, pos, length;
 
 	// this is the frame we are creating
 	frame = &client->snapShots[frameNum & UPDATE_MASK];
@@ -325,15 +325,6 @@ void SNAP_WriteFrameSnapToClient( ginfo_t *gi, client_t *client, msg_t *msg, int
 		flags |= FRAMESNAP_FLAG_MULTIPOV;
 	}
 	MSG_WriteUint8( msg, flags );
-
-#ifdef RATEKILLED
-	supcnt = client->suppressCount;
-#else
-	supcnt = 0;
-#endif
-
-	client->suppressCount = 0;
-	MSG_WriteUint8( msg, supcnt );   // rate dropped packets
 
 	// add game comands
 	MSG_WriteUint8( msg, svc_gamecommands );

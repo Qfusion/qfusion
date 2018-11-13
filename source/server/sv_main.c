@@ -821,33 +821,6 @@ void SV_UserinfoChanged( client_t *client ) {
 	}
 	Q_strncpyz( client->name, val, sizeof( client->name ) );
 
-#ifndef RATEKILLED
-	// rate command
-	if( NET_IsLANAddress( &client->netchan.remoteAddress ) ) {
-		client->rate = 99999; // lans should not rate limit
-	} else {
-		val = Info_ValueForKey( client->userinfo, "rate" );
-		if( val && val[0] ) {
-			int newrate;
-
-			newrate = atoi( val );
-			if( sv_maxrate->integer && newrate > sv_maxrate->integer ) {
-				newrate = sv_maxrate->integer;
-			} else if( newrate > 90000 ) {
-				newrate = 90000;
-			}
-			if( newrate < 1000 ) {
-				newrate = 1000;
-			}
-			if( client->rate != newrate ) {
-				client->rate = newrate;
-				Com_Printf( "%s%s has rate %i\n", client->name, S_COLOR_WHITE, client->rate );
-			}
-		} else {
-			client->rate = 5000;
-		}
-	}
-#endif
 }
 
 

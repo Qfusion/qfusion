@@ -111,7 +111,6 @@ typedef struct {
 } game_command_t;
 
 #define LATENCY_COUNTS  16
-#define RATE_MESSAGES   25  // wsw : jal : was 10: I think it must fit sv_pps, I have to calculate it
 
 #define HTTP_CLIENT_SESSION_SIZE 16
 
@@ -154,11 +153,6 @@ typedef struct client_s {
 
 	int frame_latency[LATENCY_COUNTS];
 	int ping;
-#ifndef RATEKILLED
-	//int				message_size[RATE_MESSAGES];	// used to rate drop packets
-	int rate;
-	int suppressCount;              // number of messages rate suppressed
-#endif
 	edict_t *edict;                 // EDICT_NUM(clientnum+1)
 	char name[MAX_INFO_VALUE];      // extracted from userinfo, high bits masked
 	char session[HTTP_CLIENT_SESSION_SIZE];  // session id for HTTP requests
@@ -318,7 +312,6 @@ extern cvar_t *sv_showInfoQueries;
 extern cvar_t *sv_highchars;
 
 //wsw : jal
-extern cvar_t *sv_maxrate;
 extern cvar_t *sv_compresspackets;
 extern cvar_t *sv_public;         // should heartbeats be sent
 

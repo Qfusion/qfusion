@@ -228,8 +228,8 @@ void SV_Status_f( void ) {
 	}
 	Com_Printf( "map              : %s\n", sv.mapname );
 
-	Com_Printf( "num score ping name            lastmsg address               port   rate  \n" );
-	Com_Printf( "--- ----- ---- --------------- ------- --------------------- ------ ------\n" );
+	Com_Printf( "num score ping name            lastmsg address               port  \n" );
+	Com_Printf( "--- ----- ---- --------------- ------- --------------------- ------\n" );
 	for( i = 0, cl = svs.clients; i < sv_maxclients->integer; i++, cl++ ) {
 		if( !cl->state ) {
 			continue;
@@ -264,17 +264,6 @@ void SV_Status_f( void ) {
 		Com_Printf( " " ); // always add at least one space between the columns because IPv6 addresses are long
 
 		Com_Printf( "%5i", cl->netchan.game_port );
-#ifndef RATEKILLED
-		// wsw : jal : print real rate in use
-		Com_Printf( "  " );
-		if( cl->edict && ( cl->edict->r.svflags & SVF_FAKECLIENT ) ) {
-			Com_Printf( "BOT" );
-		} else if( cl->rate == 99999 ) {
-			Com_Printf( "LAN" );
-		} else {
-			Com_Printf( "%5i", cl->rate );
-		}
-#endif
 		Com_Printf( "\n" );
 	}
 	Com_Printf( "\n" );

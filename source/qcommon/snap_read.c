@@ -244,12 +244,12 @@ static void SNAP_ParsePacketEntities( msg_t *msg, snapshot_t *oldframe, snapshot
 /*
 * SNAP_ParseFrameHeader
 */
-static snapshot_t *SNAP_ParseFrameHeader( msg_t *msg, snapshot_t *newframe, int *suppressCount, snapshot_t *backup, bool skipBody ) {
+static snapshot_t *SNAP_ParseFrameHeader( msg_t *msg, snapshot_t *newframe, snapshot_t *backup, bool skipBody ) {
 	int len, pos;
 	int areabytes;
 	uint8_t *areabits;
 	int64_t serverTime;
-	int flags, snapNum, supCnt;
+	int flags, snapNum;
 
 	// get total length
 	len = MSG_ReadInt16( msg );
@@ -278,14 +278,6 @@ static snapshot_t *SNAP_ParseFrameHeader( msg_t *msg, snapshot_t *newframe, int 
 	newframe->delta = ( flags & FRAMESNAP_FLAG_DELTA ) ? true : false;
 	newframe->multipov = ( flags & FRAMESNAP_FLAG_MULTIPOV ) ? true : false;
 	newframe->allentities = ( flags & FRAMESNAP_FLAG_ALLENTITIES ) ? true : false;
-
-	supCnt = MSG_ReadUint8( msg );
-	if( suppressCount ) {
-		*suppressCount = supCnt;
-#ifdef RATEKILLED
-		*suppressCount = 0;
-#endif
-	}
 
 	// validate the new frame
 	newframe->valid = false;
@@ -328,13 +320,13 @@ static snapshot_t *SNAP_ParseFrameHeader( msg_t *msg, snapshot_t *newframe, int 
 */
 void SNAP_SkipFrame( msg_t *msg, snapshot_t *header ) {
 	static snapshot_t frame;
-	SNAP_ParseFrameHeader( msg, header ? header : &frame, NULL, NULL, true );
+	SNAP_ParseFrameHeader( msg, header ? header : &frame, NULL, true );
 }
 
 /*
 * SNAP_ParseFrame
 */
-snapshot_t *SNAP_ParseFrame( msg_t *msg, snapshot_t *lastFrame, int *suppressCount, snapshot_t *backup, entity_state_t *baselines, int showNet ) {
+snapshot_t *SNAP_ParseFrame( msg_t *msg, snapshot_t *lastFrame, snapshot_t *backup, entity_state_t *baselines, int showNet ) {
 	int cmd;
 	size_t len;
 	snapshot_t  *deltaframe;
@@ -345,7 +337,7 @@ snapshot_t *SNAP_ParseFrame( msg_t *msg, snapshot_t *lastFrame, int *suppressCou
 	snapshot_t  *newframe;
 
 	// read header
-	newframe = SNAP_ParseFrameHeader( msg, NULL, suppressCount, backup, false );
+	newframe = SNAP_ParseFrameHeader( msg, NULL, backup, false );
 	deltaframe = NULL;
 
 	if( showNet == 3 ) {
