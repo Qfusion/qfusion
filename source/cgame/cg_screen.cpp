@@ -178,7 +178,7 @@ void CG_ScreenInit( void ) {
 	cg_crosshair_color =    trap_Cvar_Get( "cg_crosshair_color", "255 255 255", CVAR_ARCHIVE );
 	cg_crosshair_damage_color = trap_Cvar_Get( "cg_crosshair_damage_color", "255 0 0", CVAR_ARCHIVE );
 	cg_crosshair_color->modified = true;
-	cg_crosshair_damage_color->modified = false;
+	cg_crosshair_damage_color->modified = true;
 
 	cg_clientHUD =      trap_Cvar_Get( "cg_clientHUD", "", CVAR_ARCHIVE );
 	cg_specHUD =        trap_Cvar_Get( "cg_specHUD", "", CVAR_ARCHIVE );
