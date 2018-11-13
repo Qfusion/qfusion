@@ -13,8 +13,6 @@ include(QfusionUtils)
 set(QFUSION_GAME_DIR base)
 set(QFUSION_CLIENT_NAME client)
 set(QFUSION_SERVER_NAME server)
-set(QFUSION_MAC_ICON ../../icons/warsow.icns)
-set(QFUSION_MAC_INFO_PLIST ../mac/Warsow-Info.plist)
 
 if (NOT CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE "Debug")
@@ -41,6 +39,7 @@ set(NANOSVG_DIR ${CMAKE_HOME_DIRECTORY}/../third-party/nanosvg)
 set(NANOSVG_INCLUDE_DIR ${NANOSVG_DIR}/src)
 
 add_definitions(-DCURL_STATICLIB)
+include_directories("${CMAKE_SOURCE_DIR}" "${CMAKE_SOURCE_DIR}/../libs")
 
 # Windows specific settings
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
@@ -102,10 +101,10 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 	add_release_link_flags("-s")
 endif()
 
-set(CURL_LIBRARY "../../libs/curl/${LIBS_ARCH}/${CMAKE_STATIC_LIB_PREFIX}curl${CMAKE_STATIC_LIB_SUFFIX}")
-set(SDL2_LIBRARY "../../libs/sdl/${LIBS_ARCH}/${CMAKE_STATIC_LIB_PREFIX}SDL2${CMAKE_STATIC_LIB_SUFFIX}")
-set(SDL2MAIN_LIBRARY "../../libs/sdl/${LIBS_ARCH}/${CMAKE_STATIC_LIB_PREFIX}SDL2main${CMAKE_STATIC_LIB_SUFFIX}")
-set(OPENAL_LIBRARY "../../libs/openal/${LIBS_ARCH}/${CMAKE_STATIC_LIB_PREFIX}openal${CMAKE_STATIC_LIB_SUFFIX}")
+set(CURL_LIBRARY "${CMAKE_SOURCE_DIR}/../libs/curl/${LIBS_ARCH}/${CMAKE_STATIC_LIBRARY_PREFIX}curl${CMAKE_STATIC_LIBRARY_SUFFIX}")
+set(SDL2_LIBRARY "${CMAKE_SOURCE_DIR}/../libs/sdl/${LIBS_ARCH}/${CMAKE_STATIC_LIBRARY_PREFIX}SDL2${CMAKE_STATIC_LIBRARY_SUFFIX}")
+set(SDL2MAIN_LIBRARY "${CMAKE_SOURCE_DIR}/../libs/sdl/${LIBS_ARCH}/${CMAKE_STATIC_LIBRARY_PREFIX}SDL2main${CMAKE_STATIC_LIBRARY_SUFFIX}")
+set(OPENAL_LIBRARY "${CMAKE_SOURCE_DIR}/../libs/openal/${LIBS_ARCH}/${CMAKE_STATIC_LIBRARY_PREFIX}openal${CMAKE_STATIC_LIBRARY_SUFFIX}")
 
 # Linux-only specific settings
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
@@ -186,7 +185,6 @@ if (NOT GAME_MODULES_ONLY)
 	add_subdirectory(server)
 
 	if (NOT SERVER_ONLY)
-		add_subdirectory(snd_openal)
 		add_subdirectory(ui)
 		add_subdirectory(steamlib)
 		add_subdirectory(client)

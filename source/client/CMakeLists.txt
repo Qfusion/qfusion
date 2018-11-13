@@ -1,18 +1,14 @@
 project(${QFUSION_CLIENT_NAME})
 
-include_directories(${ZLIB_INCLUDE_DIR} "../../libs" ${FREETYPE_INCLUDE_DIRS})
+include_directories(${ZLIB_INCLUDE_DIR} ${FREETYPE_INCLUDE_DIRS})
 
-if (NOT QFUSION_MAC_ICON)
-	set(QFUSION_MAC_ICON ../../icons/qfusion.icns)
-endif()
-if (NOT QFUSION_MAC_INFO_PLIST)
-	set(QFUSION_MAC_INFO_PLIST ../mac/Qfusion-Info.plist)
-endif()
+add_definitions(-DAL_LIBTYPE_STATIC)
 
 file(GLOB CLIENT_HEADERS
 	"*.h"
 	"renderer/*.h"
 	"ftlib/*.h"
+	"sound/*.h"
 	"../gameshared/q_*.h"
 	"../gameshared/anorms.h"
 	"../gameshared/config.h"
@@ -38,6 +34,7 @@ file(GLOB CLIENT_COMMON_SOURCES
 
 	"renderer/*.c"
 	"ftlib/*.c"
+	"sound/*.c"
 
 	"../sdl/sdl_input.c"
 	"../sdl/sdl_input_joy.c"
@@ -68,7 +65,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 		"../win32/qfusion.rc"
 		)
 
-	set(CLIENT_PLATFORM_LIBRARIES ${SDL2_LIBRARY} ${SDL2MAIN_LIBRARY} ${FREETYPE_LIBRARY} "kernel32.lib" "ws2_32.lib" "winmm.lib" "version.lib" "imm32.lib")
+	set(CLIENT_PLATFORM_LIBRARIES ${SDL2MAIN_LIBRARY} ${FREETYPE_LIBRARY} "kernel32.lib" "ws2_32.lib" "winmm.lib" "version.lib" "imm32.lib")
 
 	set(CLIENT_BINARY_TYPE WIN32)
 
@@ -87,14 +84,14 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 		"../null/sys_vfs_null.c"
 		)
 
-	set(CLIENT_PLATFORM_LIBRARIES ${SDL2_LIBRARY} "pthread" "m" "dl" "rt")
+	set(CLIENT_PLATFORM_LIBRARIES "pthread" "m" "dl" "rt")
 	set(CLIENT_BINARY_TYPE "")
 
 	set(BUNDLE_RESOURCES "")
 endif()
 
 add_executable(${QFUSION_CLIENT_NAME} ${CLIENT_BINARY_TYPE} ${CLIENT_HEADERS} ${CLIENT_PLATFORM_HEADERS} ${CLIENT_COMMON_SOURCES} ${CLIENT_PLATFORM_SOURCES} ${BUNDLE_RESOURCES})
-add_dependencies(${QFUSION_CLIENT_NAME} angelwrap cgame game snd_openal steamlib ui)
+add_dependencies(${QFUSION_CLIENT_NAME} angelwrap cgame game steamlib ui)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 	set_target_properties(${QFUSION_CLIENT_NAME} PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${QFUSION_MAC_INFO_PLIST})
@@ -116,5 +113,5 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 	add_custom_command(TARGET ${QFUSION_CLIENT_NAME} POST_BUILD COMMAND ${COPY_DYLIBS})
 endif()
 
-target_link_libraries(${QFUSION_CLIENT_NAME} PRIVATE ${CURL_LIBRARY} ${ZLIB_LIBRARY} ${CLIENT_PLATFORM_LIBRARIES})
+target_link_libraries(${QFUSION_CLIENT_NAME} PRIVATE ${CURL_LIBRARY} ${SDL2_LIBRARY} ${ZLIB_LIBRARY} ${OPENAL_LIBRARY} ${CLIENT_PLATFORM_LIBRARIES})
 qf_set_output_dir(${QFUSION_CLIENT_NAME} "")

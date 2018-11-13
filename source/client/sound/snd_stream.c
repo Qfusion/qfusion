@@ -110,11 +110,11 @@ static ALuint unqueue_buffers( rawsrc_t *rs ) {
 	processed_length = 0;
 
 	// Un-queue any processed buffers, and delete them
-	qalGetSourcei( rs->source, AL_BUFFERS_PROCESSED, &processed );
+	alGetSourcei( rs->source, AL_BUFFERS_PROCESSED, &processed );
 	while( processed-- ) {
-		qalSourceUnqueueBuffers( rs->source, 1, &buffer );
+		alSourceUnqueueBuffers( rs->source, 1, &buffer );
 		processed_length += S_GetBufferLength( buffer );
-		qalDeleteBuffers( 1, &buffer );
+		alDeleteBuffers( 1, &buffer );
 	}
 
 	return processed_length;
@@ -140,7 +140,7 @@ static void stop_rawsound( rawsrc_t *rs ) {
 	if( !rs->src ) {
 		return;
 	}
-	qalSourceStop( rs->source );
+	alSourceStop( rs->source );
 	unqueue_buffers( rs );
 	memset( rs, 0, sizeof( *rs ) );
 }
@@ -212,22 +212,22 @@ static void S_RawSamples_( int entNum, float fvol, float attenuation,
 		rs->entNum = entNum;
 	}
 
-	qalGenBuffers( 1, &buffer );
-	if( ( error = qalGetError() ) != AL_NO_ERROR ) {
+	alGenBuffers( 1, &buffer );
+	if( ( error = alGetError() ) != AL_NO_ERROR ) {
 		Com_Printf( "Couldn't create a sound buffer (%s)\n", S_ErrorMessage( error ) );
 		return;
 	}
 
 	format = S_SoundFormat( width, channels );
 
-	qalBufferData( buffer, format, data, ( samples * width * channels ), rate );
-	if( ( error = qalGetError() ) != AL_NO_ERROR ) {
+	alBufferData( buffer, format, data, ( samples * width * channels ), rate );
+	if( ( error = alGetError() ) != AL_NO_ERROR ) {
 		Com_Printf( "Couldn't fill sound buffer (%s)\n", S_ErrorMessage( error ) );
 		return;
 	}
 
-	qalSourceQueueBuffers( rs->source, 1, &buffer );
-	if( ( error = qalGetError() ) != AL_NO_ERROR ) {
+	alSourceQueueBuffers( rs->source, 1, &buffer );
+	if( ( error = alGetError() ) != AL_NO_ERROR ) {
 		Com_Printf( "Couldn't queue sound buffer (%s)\n", S_ErrorMessage( error ) );
 		return;
 	}
@@ -235,11 +235,11 @@ static void S_RawSamples_( int entNum, float fvol, float attenuation,
 	rs->samples_length += (ALuint)( (ALfloat)samples * 1000.0 / rate + 0.5f );
 
 	rs->src->fvol = fvol;
-	qalSourcef( rs->source, AL_GAIN, rs->src->fvol * rs->src->volumeVar->value );
+	alSourcef( rs->source, AL_GAIN, rs->src->fvol * rs->src->volumeVar->value );
 
-	qalGetSourcei( rs->source, AL_SOURCE_STATE, &state );
+	alGetSourcei( rs->source, AL_SOURCE_STATE, &state );
 	if( state != AL_PLAYING ) {
-		qalSourcePlay( rs->source );
+		alSourcePlay( rs->source );
 	}
 }
 

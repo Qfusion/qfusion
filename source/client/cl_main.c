@@ -58,7 +58,6 @@ cvar_t *cl_downloads;
 cvar_t *cl_downloads_from_web;
 cvar_t *cl_downloads_from_web_timeout;
 cvar_t *cl_download_allow_modules;
-cvar_t *cl_checkForUpdate;
 
 
 static char cl_nextString[MAX_STRING_CHARS];
@@ -1927,7 +1926,6 @@ static void CL_InitLocal( void ) {
 	cl_downloads_from_web = Cvar_Get( "cl_downloads_from_web", "1", CVAR_ARCHIVE | CVAR_READONLY );
 	cl_downloads_from_web_timeout = Cvar_Get( "cl_downloads_from_web_timeout", "600", CVAR_ARCHIVE );
 	cl_download_allow_modules = Cvar_Get( "cl_download_allow_modules", "1", CVAR_ARCHIVE );
-	cl_checkForUpdate = Cvar_Get( "cl_checkForUpdate", "1", CVAR_ARCHIVE );
 
 	//
 	// userinfo
@@ -2499,210 +2497,6 @@ void CL_Frame( int realMsec, int gameMsec ) {
 	cls.framecount++;
 }
 
-
-//============================================================================
-
-static char *updateRemoteData;
-static size_t updateRemoteDataSize;
-
-/*
-* CL_CheckForUpdateDoneCb
-*/
-static void CL_CheckForUpdateDoneCb( int status, const char *contentType, void *privatep ) {
-	float local_version, net_version;
-
-	if( status != 200 ) {
-		goto done;
-	}
-
-	// got the file
-	// this look stupid but is the safe way to do it
-	local_version = atof( va( "%4.3f", APP_VERSION ) );
-	net_version = atof( updateRemoteData );
-
-	// we have the version
-	//Com_Printf("CheckForUpdate: local: %f net: %f\n", local_version, net_version);
-	if( net_version > local_version ) {
-		char cmd[1024];
-		char net_version_str[16], *s;
-
-		Q_snprintfz( net_version_str, sizeof( net_version_str ), "%4.3f", net_version );
-		s = net_version_str + strlen( net_version_str ) - 1;
-		while( *s == '0' ) s--;
-		if( *s == '.' && *( s + 1 ) == '0' ) {
-			s++;                                // for whole version numbers
-		}
-		net_version_str[s - net_version_str + 1] = '\0';
-
-		// you should update
-		Com_Printf( APPLICATION " version %s is available.\nVisit " APP_URL " for more information\n", net_version_str );
-		Q_snprintfz( cmd, sizeof( cmd ), "menu_modal modal_update version \"%s\" app \"" APPLICATION "\""
-					 " url " "\"" APP_URL "\"", net_version_str );
-		Cbuf_ExecuteText( EXEC_APPEND, cmd );
-	} else if( net_version == local_version ) {
-		Com_Printf( "Your %s version is up-to-date.\n", APPLICATION );
-	}
-
-done:
-	if( updateRemoteData ) {
-		Mem_Free( updateRemoteData );
-		updateRemoteData = NULL;
-		updateRemoteDataSize = 0;
-	}
-}
-
-/*
-* CL_CheckForUpdateReadCb
-*/
-static size_t CL_CheckForUpdateReadCb( const void *buf, size_t numb, float percentage,
-									   int status, const char *contentType, void *privatep ) {
-	char *newbuf;
-
-	if( status < 0 || status >= 300 ) {
-		return 0;
-	}
-
-	newbuf = Mem_ZoneMalloc( updateRemoteDataSize + numb + 1 );
-	memcpy( newbuf, updateRemoteData, updateRemoteDataSize - 1 );
-	memcpy( newbuf + updateRemoteDataSize - 1, buf, numb );
-	newbuf[numb] = '\0'; // EOF
-
-	Mem_Free( updateRemoteData );
-	updateRemoteData = newbuf;
-	updateRemoteDataSize = updateRemoteDataSize + numb + 1;
-
-	return numb;
-}
-
-#define TRACKING_PROFILE_ID "profile.id"
-
-/*
-* CL_CheckForUpdateHeaderCb
-*
-* Read the Set-Profile-Id header which works as a cookie and
-* store the read value in a file. All subsequent update requests
-* will echo back this id.
-*/
-static void CL_CheckForUpdateHeaderCb( const char *buf, void *privatep ) {
-	const char *str;
-
-	if( ( str  = (char*)strstr( buf, "SET-PROFILE-ID:" ) ) ) {
-		const char *val;
-		size_t val_size;
-
-		str += 15;
-		while( *str && ( *str == ' ' ) ) {
-			str++;
-		}
-
-		val = str;
-		while( *str && ( *str != '\r' ) && ( *str != '\n' ) ) {
-			str++;
-		}
-		val_size = str - val;
-
-		if( val_size > 0 ) {
-			int filenum;
-
-			if( FS_FOpenFile( TRACKING_PROFILE_ID, &filenum, FS_WRITE ) < 0 ) {
-				return;
-			}
-
-			FS_Write( val, val_size - 1, filenum );
-			FS_FCloseFile( filenum );
-		}
-	}
-}
-
-/*
-* CL_CheckForUpdate
-*
-* retrieve a file with the last version umber on a web server, compare with current version
-* display a message box in case the user need to update
-*/
-static void CL_CheckForUpdate( void ) {
-#ifdef PUBLIC_BUILD
-#define HTTP_HEADER_SIZE    128
-
-	char url[MAX_STRING_CHARS];
-	char *resolution;
-	char *campaign;
-	int campaignSize;
-	char *profileId;
-	int profileIdSize;
-	int headerNum = 0;
-	const char *headers[] = {
-		NULL, NULL,
-		NULL, NULL,
-		NULL, NULL,
-		NULL, NULL,
-		NULL, NULL,
-		NULL, NULL,
-		NULL
-	};
-
-	if( !cl_checkForUpdate->integer ) {
-		return;
-	}
-	if( Steam_GetSteamID() ) {
-		return;
-	}
-
-	if( updateRemoteData ) {
-		return; // still not done with the previous iteration?..
-
-	}
-	// step one get the last version file
-	Com_Printf( "Checking for " APPLICATION " update.\n" );
-
-	Q_snprintfz( url, sizeof( url ), "%s%s", APP_UPDATE_URL, APP_CLIENT_UPDATE_FILE );
-
-	updateRemoteDataSize = 1;
-	updateRemoteData = Mem_ZoneMalloc( 1 );
-	*updateRemoteData = '\0';
-
-	// send screen resolution in UA-pixels header
-	resolution = Mem_TempMalloc( HTTP_HEADER_SIZE );
-	Q_snprintfz( resolution, HTTP_HEADER_SIZE, "%ix%i", viddef.width, viddef.height );
-	headers[headerNum++] = "UA-pixels";
-	headers[headerNum++] = resolution;
-
-	// send campaign ID
-	campaign = NULL;
-	campaignSize = FS_LoadBaseFile( "campaign.txt", (void **)&campaign, NULL, 0 );
-	if( campaignSize > 0 ) {
-		headers[headerNum++] = "X-Campaign";
-		headers[headerNum++] = campaign;
-	}
-
-	// send profile ID
-	profileId = NULL;
-	profileIdSize = FS_LoadFile( TRACKING_PROFILE_ID, (void **)&profileId, NULL, 0 );
-	if( profileIdSize > 0 ) {
-		headers[headerNum++] = "X-Profile-Id";
-		headers[headerNum++] = Q_strlwr( profileId );
-	}
-
-	// send language
-	headers[headerNum++] = "X-Lang";
-	headers[headerNum++] = L10n_GetUserLanguage();
-
-	headerNum += CL_AddSessionHttpRequestHeaders( url, &headers[headerNum] );
-
-	CL_AsyncStreamRequest( url, headers, 15, 0, CL_CheckForUpdateReadCb, CL_CheckForUpdateDoneCb,
-						   CL_CheckForUpdateHeaderCb, NULL, false );
-
-	Mem_TempFree( resolution );
-
-	if( campaign ) {
-		FS_FreeBaseFile( campaign );
-	}
-	if( profileId ) {
-		FS_FreeBaseFile( profileId );
-	}
-#endif
-}
-
 //============================================================================
 
 /*
@@ -2847,9 +2641,6 @@ void CL_Init( void ) {
 	CL_InitMedia();
 
 	CL_UIModule_ForceMenuOn();
-
-	// check for update
-	CL_CheckForUpdate();
 
 	CL_InitServerList();
 

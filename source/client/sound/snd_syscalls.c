@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "snd_local.h"
 
-sound_import_t SOUND_IMPORT;
+sound_import_t sndi_imp_local;
 
 /*
 * GetCGameAPI
@@ -30,7 +30,7 @@ sound_import_t SOUND_IMPORT;
 QF_DLL_EXPORT sound_export_t *GetSoundAPI( sound_import_t *import ) {
 	static sound_export_t globals;
 
-	SOUND_IMPORT = *import;
+	sndi_imp_local = *import;
 
 	globals.API = S_API;
 

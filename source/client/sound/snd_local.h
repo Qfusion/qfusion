@@ -24,15 +24,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // it's in qcommon.h too, but we don't include it for modules
 typedef struct { char *name; void **funcPointer; } dllfunc_t;
 
-#include "../gameshared/q_arch.h"
-#include "../gameshared/q_math.h"
-#include "../gameshared/q_shared.h"
-#include "../gameshared/q_cvar.h"
+#include "gameshared/q_arch.h"
+#include "gameshared/q_math.h"
+#include "gameshared/q_shared.h"
+#include "gameshared/q_cvar.h"
 
-#include "../client/snd_public.h"
+#include "client/snd_public.h"
 #include "snd_syscalls.h"
 
-#include "qal.h"
+#include "openal/al.h"
+#include "openal/alc.h"
 
 #ifdef _WIN32
 #define ALDRIVER "OpenAL32.dll"

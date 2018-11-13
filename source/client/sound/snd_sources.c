@@ -71,16 +71,16 @@ static void source_setup( src_t *src, sfx_t *sfx, int priority, int entNum,
 	VectorClear( src->origin );
 	VectorClear( src->velocity );
 
-	qalSourcefv( src->source, AL_POSITION, vec3_origin );
-	qalSourcefv( src->source, AL_VELOCITY, vec3_origin );
-	qalSourcef( src->source, AL_GAIN, fvol * s_volume->value );
-	qalSourcei( src->source, AL_SOURCE_RELATIVE, AL_FALSE );
-	qalSourcei( src->source, AL_LOOPING, AL_FALSE );
-	qalSourcei( src->source, AL_BUFFER, buffer );
+	alSourcefv( src->source, AL_POSITION, vec3_origin );
+	alSourcefv( src->source, AL_VELOCITY, vec3_origin );
+	alSourcef( src->source, AL_GAIN, fvol * s_volume->value );
+	alSourcei( src->source, AL_SOURCE_RELATIVE, AL_FALSE );
+	alSourcei( src->source, AL_LOOPING, AL_FALSE );
+	alSourcei( src->source, AL_BUFFER, buffer );
 
-	qalSourcef( src->source, AL_REFERENCE_DISTANCE, s_attenuation_refdistance );
-	qalSourcef( src->source, AL_MAX_DISTANCE, s_attenuation_maxdistance );
-	qalSourcef( src->source, AL_ROLLOFF_FACTOR, attenuation );
+	alSourcef( src->source, AL_REFERENCE_DISTANCE, s_attenuation_refdistance );
+	alSourcef( src->source, AL_MAX_DISTANCE, s_attenuation_maxdistance );
+	alSourcef( src->source, AL_ROLLOFF_FACTOR, attenuation );
 }
 
 /*
@@ -96,22 +96,22 @@ static void source_kill( src_t *src ) {
 	}
 
 	if( src->isActive ) {
-		qalSourceStop( source );
+		alSourceStop( source );
 	} else {
 		// Un-queue all queued buffers
-		qalGetSourcei( source, AL_BUFFERS_QUEUED, &numbufs );
+		alGetSourcei( source, AL_BUFFERS_QUEUED, &numbufs );
 		while( numbufs-- ) {
-			qalSourceUnqueueBuffers( source, 1, &buffer );
+			alSourceUnqueueBuffers( source, 1, &buffer );
 		}
 	}
 
 	// Un-queue all processed buffers
-	qalGetSourcei( source, AL_BUFFERS_PROCESSED, &numbufs );
+	alGetSourcei( source, AL_BUFFERS_PROCESSED, &numbufs );
 	while( numbufs-- ) {
-		qalSourceUnqueueBuffers( source, 1, &buffer );
+		alSourceUnqueueBuffers( source, 1, &buffer );
 	}
 
-	qalSourcei( src->source, AL_BUFFER, AL_NONE );
+	alSourcei( src->source, AL_BUFFER, AL_NONE );
 
 	src->sfx = 0;
 	src->lastUse = 0;
@@ -130,10 +130,10 @@ static void source_kill( src_t *src ) {
 */
 static void source_spatialize( src_t *src ) {
 	if( !src->attenuation ) {
-		qalSourcei( src->source, AL_SOURCE_RELATIVE, AL_TRUE );
+		alSourcei( src->source, AL_SOURCE_RELATIVE, AL_TRUE );
 		// this was set at source_setup, no need to redo every frame
-		//qalSourcefv( src->source, AL_POSITION, vec3_origin );
-		//qalSourcefv( src->source, AL_VELOCITY, vec3_origin );
+		//alSourcefv( src->source, AL_POSITION, vec3_origin );
+		//alSourcefv( src->source, AL_VELOCITY, vec3_origin );
 		return;
 	}
 
@@ -142,9 +142,9 @@ static void source_spatialize( src_t *src ) {
 		VectorCopy( entlist[src->entNum].velocity, src->velocity );
 	}
 
-	qalSourcei( src->source, AL_SOURCE_RELATIVE, AL_FALSE );
-	qalSourcefv( src->source, AL_POSITION, src->origin );
-	qalSourcefv( src->source, AL_VELOCITY, src->velocity );
+	alSourcei( src->source, AL_SOURCE_RELATIVE, AL_FALSE );
+	alSourcefv( src->source, AL_POSITION, src->origin );
+	alSourcefv( src->source, AL_VELOCITY, src->velocity );
 }
 
 /*
@@ -180,17 +180,17 @@ static void source_loop( int priority, sfx_t *sfx, int entNum, float fvol, float
 
 	if( new_source ) {
 		source_setup( src, sfx, priority, entNum, -1, fvol, attenuation );
-		qalSourcei( src->source, AL_LOOPING, AL_TRUE );
+		alSourcei( src->source, AL_LOOPING, AL_TRUE );
 		src->isLooping = true;
 
 		entlist[entNum].src = src;
 	}
 
-	qalSourcef( src->source, AL_GAIN, src->fvol * src->volumeVar->value );
+	alSourcef( src->source, AL_GAIN, src->fvol * src->volumeVar->value );
 
-	qalSourcef( src->source, AL_REFERENCE_DISTANCE, s_attenuation_refdistance );
-	qalSourcef( src->source, AL_MAX_DISTANCE, s_attenuation_maxdistance );
-	qalSourcef( src->source, AL_ROLLOFF_FACTOR, attenuation );
+	alSourcef( src->source, AL_REFERENCE_DISTANCE, s_attenuation_refdistance );
+	alSourcef( src->source, AL_MAX_DISTANCE, s_attenuation_maxdistance );
+	alSourcef( src->source, AL_ROLLOFF_FACTOR, attenuation );
 
 	if( new_source ) {
 		if( src->attenuation ) {
@@ -199,7 +199,7 @@ static void source_loop( int priority, sfx_t *sfx, int entNum, float fvol, float
 
 		source_spatialize( src );
 
-		qalSourcePlay( src->source );
+		alSourcePlay( src->source );
 	}
 
 	entlist[entNum].touched = true;
@@ -216,8 +216,8 @@ bool S_InitSources( int maxEntities, bool verbose ) {
 
 	// Allocate as many sources as possible
 	for( i = 0; i < MAX_SRC; i++ ) {
-		qalGenSources( 1, &srclist[i].source );
-		if( qalGetError() != AL_NO_ERROR ) {
+		alGenSources( 1, &srclist[i].source );
+		if( alGetError() != AL_NO_ERROR ) {
 			break;
 		}
 		src_count++;
@@ -253,8 +253,8 @@ void S_ShutdownSources( void ) {
 
 	// Destroy all the sources
 	for( i = 0; i < src_count; i++ ) {
-		qalSourceStop( srclist[i].source );
-		qalDeleteSources( 1, &srclist[i].source );
+		alSourceStop( srclist[i].source );
+		alDeleteSources( 1, &srclist[i].source );
 	}
 
 	memset( srclist, 0, sizeof( srclist ) );
@@ -296,13 +296,13 @@ void S_UpdateSources( void ) {
 		}
 
 		if( srclist[i].volumeVar->modified ) {
-			qalSourcef( srclist[i].source, AL_GAIN, srclist[i].fvol * srclist[i].volumeVar->value );
+			alSourcef( srclist[i].source, AL_GAIN, srclist[i].fvol * srclist[i].volumeVar->value );
 		}
 
 		entNum = srclist[i].entNum;
 
 		// Check if it's done, and flag it
-		qalGetSourcei( srclist[i].source, AL_SOURCE_STATE, &state );
+		alGetSourcei( srclist[i].source, AL_SOURCE_STATE, &state );
 		if( state == AL_STOPPED ) {
 			source_kill( &srclist[i] );
 			if( entNum >= 0 && entNum < max_ents ) {
@@ -416,9 +416,9 @@ void S_StartLocalSound( sfx_t *sfx, int channel, float fvol ) {
 	S_UseBuffer( sfx );
 
 	source_setup( src, sfx, SRCPRI_LOCAL, -1, channel, fvol, ATTN_NONE );
-	qalSourcei( src->source, AL_SOURCE_RELATIVE, AL_TRUE );
+	alSourcei( src->source, AL_SOURCE_RELATIVE, AL_TRUE );
 
-	qalSourcePlay( src->source );
+	alSourcePlay( src->source );
 }
 
 /*
@@ -448,7 +448,7 @@ static void S_StartSound( sfx_t *sfx, const vec3_t origin, int entNum, int chann
 
 	source_spatialize( src );
 
-	qalSourcePlay( src->source );
+	alSourcePlay( src->source );
 }
 
 /*
@@ -501,7 +501,7 @@ src_t *S_AllocRawSource( int entNum, float fvol, float attenuation, cvar_t *volu
 	}
 
 	src->volumeVar = volumeVar;
-	qalSourcef( src->source, AL_GAIN, src->fvol * src->volumeVar->value );
+	alSourcef( src->source, AL_GAIN, src->fvol * src->volumeVar->value );
 
 	source_spatialize( src );
 	return src;

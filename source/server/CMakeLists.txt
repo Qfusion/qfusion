@@ -1,6 +1,6 @@
 project(${QFUSION_SERVER_NAME})
 
-include_directories(${ZLIB_INCLUDE_DIR} "../../libs")
+include_directories(${ZLIB_INCLUDE_DIR})
 
 file(GLOB SERVER_HEADERS
 	"*.h"

@@ -99,8 +99,8 @@ bool S_UnloadBuffer( sfx_t *sfx ) {
 		return false;
 	}
 
-	qalDeleteBuffers( 1, &sfx->buffer );
-	if( ( error = qalGetError() ) != AL_NO_ERROR ) {
+	alDeleteBuffers( 1, &sfx->buffer );
+	if( ( error = alGetError() ) != AL_NO_ERROR ) {
 		Com_Printf( "Couldn't delete sound buffer for %s (%s)", sfx->filename, S_ErrorMessage( error ) );
 		sfx->isLocked = true;
 		return false;
@@ -167,15 +167,15 @@ bool S_LoadBuffer( sfx_t *sfx ) {
 
 	format = S_SoundFormat( info.width, info.channels );
 
-	qalGenBuffers( 1, &sfx->buffer );
-	if( ( error = qalGetError() ) != AL_NO_ERROR ) {
+	alGenBuffers( 1, &sfx->buffer );
+	if( ( error = alGetError() ) != AL_NO_ERROR ) {
 		S_Free( data );
 		Com_Printf( "Couldn't create a sound buffer for %s (%s)\n", sfx->filename, S_ErrorMessage( error ) );
 		return false;
 	}
 
-	qalBufferData( sfx->buffer, format, data, info.size, info.rate );
-	error = qalGetError();
+	alBufferData( sfx->buffer, format, data, info.size, info.rate );
+	error = alGetError();
 
 	// If we ran out of memory, start evicting the least recently used sounds
 	while( error == AL_OUT_OF_MEMORY ) {
@@ -186,9 +186,9 @@ bool S_LoadBuffer( sfx_t *sfx ) {
 		}
 
 		// Try load it again
-		qalGetError();
-		qalBufferData( sfx->buffer, format, data, info.size, info.rate );
-		error = qalGetError();
+		alGetError();
+		alBufferData( sfx->buffer, format, data, info.size, info.rate );
+		error = alGetError();
 	}
 
 	// Some other error condition

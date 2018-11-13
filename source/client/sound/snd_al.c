@@ -45,9 +45,9 @@ static void S_ListDevices_f( void ) {
 
 	Com_Printf( "Available OpenAL devices:\n" );
 
-	defaultDevice = ( char * )qalcGetString( NULL, ALC_DEFAULT_DEVICE_SPECIFIER );
-	curDevice = ( char * )qalcGetString( alDevice, ALC_DEVICE_SPECIFIER );
-	device = ( char * )qalcGetString( NULL, ALC_DEVICE_SPECIFIER );
+	defaultDevice = ( char * )alcGetString( NULL, ALC_DEFAULT_DEVICE_SPECIFIER );
+	curDevice = ( char * )alcGetString( alDevice, ALC_DEVICE_SPECIFIER );
+	device = ( char * )alcGetString( NULL, ALC_DEVICE_SPECIFIER );
 
 	for( ; *device; device += strlen( device ) + 1 ) {
 		if( defaultDevice && !strcmp( device, defaultDevice ) ) {
@@ -92,12 +92,12 @@ ALuint S_SoundFormat( int width, int channels ) {
 ALuint S_GetBufferLength( ALuint buffer ) {
 	ALint size, bits, channels, freq;
 
-	qalGetBufferi( buffer, AL_SIZE, &size );
-	qalGetBufferi( buffer, AL_BITS, &bits );
-	qalGetBufferi( buffer, AL_FREQUENCY, &freq );
-	qalGetBufferi( buffer, AL_CHANNELS, &channels );
+	alGetBufferi( buffer, AL_SIZE, &size );
+	alGetBufferi( buffer, AL_BITS, &bits );
+	alGetBufferi( buffer, AL_FREQUENCY, &freq );
+	alGetBufferi( buffer, AL_CHANNELS, &channels );
 
-	if( qalGetError() != AL_NO_ERROR ) {
+	if( alGetError() != AL_NO_ERROR ) {
 		return 0;
 	}
 	return (ALuint)( (ALfloat)( size / ( bits / 8 ) / channels ) * 1000.0 / freq + 0.5f );
@@ -140,7 +140,7 @@ static bool S_Init( int maxEntities, bool verbose ) {
 	s_last_update_time = 0;
 
 	// get system default device identifier
-	defaultDevice = ( char * )qalcGetString( NULL, ALC_DEFAULT_DEVICE_SPECIFIER );
+	defaultDevice = ( char * )alcGetString( NULL, ALC_DEFAULT_DEVICE_SPECIFIER );
 	if( !defaultDevice ) {
 		Com_Printf( "Failed to get openAL default device\n" );
 		return false;
@@ -148,7 +148,7 @@ static bool S_Init( int maxEntities, bool verbose ) {
 
 	s_openAL_device = trap_Cvar_Get( "s_openAL_device", ALDEVICE_DEFAULT ? ALDEVICE_DEFAULT : defaultDevice, CVAR_ARCHIVE | CVAR_LATCH_SOUND );
 
-	devices = ( char * )qalcGetString( NULL, ALC_DEVICE_SPECIFIER );
+	devices = ( char * )alcGetString( NULL, ALC_DEVICE_SPECIFIER );
 	for( numDevices = 0; *devices; devices += strlen( devices ) + 1, numDevices++ ) {
 		if( !Q_stricmp( s_openAL_device->string, devices ) ) {
 			userDeviceNum = numDevices;
@@ -171,7 +171,7 @@ static bool S_Init( int maxEntities, bool verbose ) {
 
 		trap_Cvar_ForceSet( "s_openAL_device", ALDEVICE_DEFAULT ? ALDEVICE_DEFAULT : defaultDevice );
 
-		devices = ( char * )qalcGetString( NULL, ALC_DEVICE_SPECIFIER );
+		devices = ( char * )alcGetString( NULL, ALC_DEVICE_SPECIFIER );
 		for( numDevices = 0; *devices; devices += strlen( devices ) + 1, numDevices++ ) {
 			if( !Q_stricmp( s_openAL_device->string, devices ) ) {
 				userDeviceNum = numDevices;
@@ -183,19 +183,19 @@ static bool S_Init( int maxEntities, bool verbose ) {
 		}
 	}
 
-	alDevice = qalcOpenDevice( (const ALchar *)s_openAL_device->string );
+	alDevice = alcOpenDevice( (const ALchar *)s_openAL_device->string );
 	if( !alDevice ) {
 		Com_Printf( "Failed to open device\n" );
 		return false;
 	}
 
 	// Create context
-	alContext = qalcCreateContext( alDevice, NULL );
+	alContext = alcCreateContext( alDevice, NULL );
 	if( !alContext ) {
 		Com_Printf( "Failed to create context\n" );
 		return false;
 	}
-	qalcMakeContextCurrent( alContext );
+	alcMakeContextCurrent( alContext );
 
 	if( verbose ) {
 		Com_Printf( "OpenAL initialized\n" );
@@ -205,7 +205,7 @@ static bool S_Init( int maxEntities, bool verbose ) {
 
 			Com_Printf( "  Devices:    " );
 
-			devices = ( char * )qalcGetString( NULL, ALC_DEVICE_SPECIFIER );
+			devices = ( char * )alcGetString( NULL, ALC_DEVICE_SPECIFIER );
 			for( i = 0; *devices; devices += strlen( devices ) + 1, i++ )
 				Com_Printf( "%s%s", devices, ( i < numDevices - 1 ) ? ", " : "" );
 			Com_Printf( "\n" );
@@ -217,23 +217,21 @@ static bool S_Init( int maxEntities, bool verbose ) {
 			Com_Printf( "\n" );
 		}
 
-		Com_Printf( "  Device:     %s\n", qalcGetString( alDevice, ALC_DEVICE_SPECIFIER ) );
-		Com_Printf( "  Vendor:     %s\n", qalGetString( AL_VENDOR ) );
-		Com_Printf( "  Version:    %s\n", qalGetString( AL_VERSION ) );
-		Com_Printf( "  Renderer:   %s\n", qalGetString( AL_RENDERER ) );
-		Com_Printf( "  Extensions: %s\n", qalGetString( AL_EXTENSIONS ) );
+		Com_Printf( "  Device:     %s\n", alcGetString( alDevice, ALC_DEVICE_SPECIFIER ) );
+		Com_Printf( "  Vendor:     %s\n", alGetString( AL_VENDOR ) );
+		Com_Printf( "  Version:    %s\n", alGetString( AL_VERSION ) );
+		Com_Printf( "  Renderer:   %s\n", alGetString( AL_RENDERER ) );
+		Com_Printf( "  Extensions: %s\n", alGetString( AL_EXTENSIONS ) );
 	}
 
 	// Check for Linux shutdown race condition
-	if( !Q_stricmp( qalGetString( AL_VENDOR ), "J. Valenzuela" ) ) {
+	if( !Q_stricmp( alGetString( AL_VENDOR ), "J. Valenzuela" ) ) {
 		snd_shutdown_bug = true;
 	}
 
-	qalDopplerFactor( s_doppler->value );
-	qalDopplerVelocity( s_sound_velocity->value > 0.0f ? s_sound_velocity->value : 0.0f );
-	if( qalSpeedOfSound ) { // opelAL 1.1 only. alDopplerVelocity being deprecated
-		qalSpeedOfSound( s_sound_velocity->value > 0.0f ? s_sound_velocity->value : 0.0f );
-	}
+	alDopplerFactor( s_doppler->value );
+	/* alDopplerVelocity( s_sound_velocity->value > 0.0f ? s_sound_velocity->value : 0.0f ); */
+	alSpeedOfSound( s_sound_velocity->value > 0.0f ? s_sound_velocity->value : 0.0f );
 
 	s_doppler->modified = false;
 
@@ -266,15 +264,15 @@ static void S_Shutdown( bool verbose ) {
 
 	if( alContext ) {
 		if( !snd_shutdown_bug ) {
-			qalcMakeContextCurrent( NULL );
+			alcMakeContextCurrent( NULL );
 		}
 
-		qalcDestroyContext( alContext );
+		alcDestroyContext( alContext );
 		alContext = NULL;
 	}
 
 	if( alDevice ) {
-		qalcCloseDevice( alDevice );
+		alcCloseDevice( alDevice );
 		alDevice = NULL;
 	}
 }
@@ -289,23 +287,23 @@ void S_SetAttenuationModel( int model, float maxdistance, float refdistance ) {
 
 	switch( model ) {
 		case 0:
-			qalDistanceModel( AL_LINEAR_DISTANCE );
+			alDistanceModel( AL_LINEAR_DISTANCE );
 			break;
 		case 1:
 		default:
-			qalDistanceModel( AL_LINEAR_DISTANCE_CLAMPED );
+			alDistanceModel( AL_LINEAR_DISTANCE_CLAMPED );
 			break;
 		case 2:
-			qalDistanceModel( AL_INVERSE_DISTANCE );
+			alDistanceModel( AL_INVERSE_DISTANCE );
 			break;
 		case 3:
-			qalDistanceModel( AL_INVERSE_DISTANCE_CLAMPED );
+			alDistanceModel( AL_INVERSE_DISTANCE_CLAMPED );
 			break;
 		case 4:
-			qalDistanceModel( AL_EXPONENT_DISTANCE );
+			alDistanceModel( AL_EXPONENT_DISTANCE );
 			break;
 		case 5:
-			qalDistanceModel( AL_EXPONENT_DISTANCE_CLAMPED );
+			alDistanceModel( AL_EXPONENT_DISTANCE_CLAMPED );
 			break;
 	}
 }
@@ -323,9 +321,9 @@ static void S_SetListener( const vec3_t origin, const vec3_t velocity, const mat
 	orientation[4] = axis[AXIS_UP + 1];
 	orientation[5] = axis[AXIS_UP + 2];
 
-	qalListenerfv( AL_POSITION, origin );
-	qalListenerfv( AL_VELOCITY, velocity );
-	qalListenerfv( AL_ORIENTATION, orientation );
+	alListenerfv( AL_POSITION, origin );
+	alListenerfv( AL_VELOCITY, velocity );
+	alListenerfv( AL_ORIENTATION, orientation );
 }
 
 /*
@@ -341,17 +339,17 @@ static void S_Update( void ) {
 
 	if( s_doppler->modified ) {
 		if( s_doppler->value > 0.0f ) {
-			qalDopplerFactor( s_doppler->value );
+			alDopplerFactor( s_doppler->value );
 		} else {
-			qalDopplerFactor( 0.0f );
+			alDopplerFactor( 0.0f );
 		}
 		s_doppler->modified = false;
 	}
 
 	if( s_sound_velocity->modified ) {
-		qalDopplerVelocity( s_sound_velocity->value > 0.0f ? s_sound_velocity->value : 0.0f );
-		if( qalSpeedOfSound ) {
-			qalSpeedOfSound( s_sound_velocity->value > 0.0f ? s_sound_velocity->value : 0.0f );
+		alDopplerVelocity( s_sound_velocity->value > 0.0f ? s_sound_velocity->value : 0.0f );
+		if( alSpeedOfSound ) {
+			alSpeedOfSound( s_sound_velocity->value > 0.0f ? s_sound_velocity->value : 0.0f );
 		}
 		s_sound_velocity->modified = false;
 	}
@@ -376,9 +374,9 @@ void S_Activate( bool activate ) {
 
 	// TODO: Actually stop playing sounds while not active?
 	if( activate ) {
-		qalListenerf( AL_GAIN, 1 );
+		alListenerf( AL_GAIN, 1 );
 	} else {
-		qalListenerf( AL_GAIN, 0 );
+		alListenerf( AL_GAIN, 0 );
 	}
 }
 
