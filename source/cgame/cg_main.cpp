@@ -794,14 +794,14 @@ static void CG_RegisterVariables( void ) {
 
 	cg_teamALPHAmodel = trap_Cvar_Get( "cg_teamALPHAmodel", "bigvic", CVAR_ARCHIVE );
 	cg_teamALPHAmodelForce = trap_Cvar_Get( "cg_teamALPHAmodelForce", "0", CVAR_ARCHIVE );
-	cg_teamALPHAcolor = trap_Cvar_Get( "cg_teamALPHAcolor", "0 160 255", CVAR_ARCHIVE | CVAR_READONLY );
+	cg_teamALPHAcolor = trap_Cvar_Get( "cg_teamALPHAcolor", "0 160 255", CVAR_ARCHIVE );
 	cg_teamALPHAmodel->modified = true;
 	cg_teamALPHAmodelForce->modified = true;
 	cg_teamALPHAcolor->modified = true;
 
 	cg_teamBETAmodel = trap_Cvar_Get( "cg_teamBETAmodel", "padpork", CVAR_ARCHIVE );
 	cg_teamBETAmodelForce = trap_Cvar_Get( "cg_teamBETAmodelForce", "0", CVAR_ARCHIVE );
-	cg_teamBETAcolor = trap_Cvar_Get( "cg_teamBETAcolor", "255 20 60", CVAR_ARCHIVE | CVAR_READONLY );
+	cg_teamBETAcolor = trap_Cvar_Get( "cg_teamBETAcolor", "255 20 60", CVAR_ARCHIVE );
 	cg_teamBETAmodel->modified = true;
 	cg_teamBETAmodelForce->modified = true;
 	cg_teamBETAcolor->modified = true;
