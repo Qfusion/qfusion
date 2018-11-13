@@ -20,12 +20,12 @@ void LevelShot::OnAttributeChange( const Rocket::Core::AttributeNameList& anl ) 
 			if( !fullPath.Empty() ) {
 				// precache fallback shader
 				if( !fallbackShader ) {
-					fallbackShader = trap::R_RegisterPic( PATH_UKNOWN_MAP_PIC );
+					fallbackShader = trap::R_RegisterPic( PATH_UNKNOWN_MAP_PIC );
 
 					// let the global shader cache know about the fallback shader
 					UI_RenderInterface *renderer = dynamic_cast<UI_RenderInterface *>( GetRenderInterface() );
 					if( renderer ) {
-						renderer->AddShaderToCache( PATH_UKNOWN_MAP_PIC );
+						renderer->AddShaderToCache( PATH_UNKNOWN_MAP_PIC );
 					}
 				}
 
