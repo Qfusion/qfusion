@@ -1314,46 +1314,25 @@ void CG_ExplosionsDust( const vec3_t pos, const vec3_t dir, float radius ) {
 
 void CG_SmallPileOfGibs( const vec3_t origin, int damage, const vec3_t initialVelocity, int team ) {
 	lentity_t *le;
-	int i, j, count;
 	vec3_t angles, velocity;
-	int time;
 
 	if( !cg_gibs->integer ) {
 		return;
 	}
 
-	time = 50;
-	count = 14 + cg_gibs->integer; // 15 models minimum
+	int time = 50;
+	int count = 14 + cg_gibs->integer; // 15 models minimum
 	clamp( count, 15, 128 );
 
-	for( i = 0; i < count; i++ ) {
+	for( int i = 0; i < count; i++ ) {
 		vec4_t color;
 
-		// coloring
-		switch( rand() % 3 ) {
-			case 0:
-
-				// orange
-				Vector4Set( color, 1, 0.5, 0, 1 );
-				break;
-			case 1:
-
-				// purple
-				Vector4Set( color, 1, 0, 1, 1 );
-				break;
-			case 2:
-			default:
-				if( ( team == TEAM_ALPHA ) || ( team == TEAM_BETA ) ) {
-					// team
-					CG_TeamColor( team, color );
-					for( j = 0; j < 3; j++ ) {
-						color[j] = bound( 60.0f / 255.0f, color[j], 1.0f );
-					}
-				} else {
-					// grey
-					Vector4Set( color, 60.0f / 255.0f, 60.0f / 255.0f, 60.0f / 255.0f, 1.0f );
-				}
-				break;
+		if( ( team == TEAM_ALPHA ) || ( team == TEAM_BETA ) ) {
+			// team
+			CG_TeamColor( team, color );
+		} else {
+			// grey
+			Vector4Set( color, 60.0f / 255.0f, 60.0f / 255.0f, 60.0f / 255.0f, 1.0f );
 		}
 
 		le = CG_AllocModel( LE_ALPHA_FADE, origin, vec3_origin, time + time * random(),
