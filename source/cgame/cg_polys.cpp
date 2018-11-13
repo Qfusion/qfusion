@@ -311,7 +311,7 @@ void CG_ElectroPolyboardBeam( const vec3_t start, const vec3_t end, int subdivis
 	float dist;
 	int segments;
 	const float frequency = 0.1244;
-	struct shader_s *shader = CG_MediaShader( cgs.media.shaderLaserGunBeam );
+	struct shader_s *shader = CG_MediaShader( cgs.media.shaderLaserGunSparks );
 
 	VectorSubtract( end, start, dir );
 	dist = VectorNormalize2( dir, dir );
