@@ -84,14 +84,7 @@ static void SF_Music_f( void ) {
 * SF_SoundList
 */
 static void SF_SoundList_f( void ) {
-	S_IssueStuffCmd( s_cmdPipe, "soundlist" );
-}
-
-/*
-* SF_ListDevices_f
-*/
-static void SF_ListDevices_f( void ) {
-	S_IssueStuffCmd( s_cmdPipe, "devicelist" );
+	S_IssueSoundListCmd( s_cmdPipe );
 }
 
 /*
@@ -118,7 +111,6 @@ bool SF_Init( int maxEntities, bool verbose ) {
 	trap_Cmd_AddCommand( "nextmusic", SF_NextBackgroundTrack );
 	trap_Cmd_AddCommand( "pausemusic", SF_PauseBackgroundTrack );
 	trap_Cmd_AddCommand( "soundlist", SF_SoundList_f );
-	trap_Cmd_AddCommand( "s_devices", SF_ListDevices_f );
 
 	s_cmdPipe = S_CreateSoundCmdPipe();
 	if( !s_cmdPipe ) {
@@ -179,7 +171,6 @@ void SF_Shutdown( bool verbose ) {
 	trap_Cmd_RemoveCommand( "nextmusic" );
 	trap_Cmd_RemoveCommand( "pausemusic" );
 	trap_Cmd_RemoveCommand( "soundlist" );
-	trap_Cmd_RemoveCommand( "s_devices" );
 
 	S_MemFreePool( &soundpool );
 }

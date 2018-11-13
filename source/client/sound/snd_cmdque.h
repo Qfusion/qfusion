@@ -50,7 +50,7 @@ enum {
 	SND_CMD_PAUSE_BACKGROUND_TRACK,
 	SND_CMD_ACTIVATE,
 	SND_CMD_AVI_DEMO,
-	SND_CMD_STUFFCMD,
+	SND_CMD_SOUNDLIST_CMD,
 	SND_CMD_SET_MUL_ENTITY_SPATIALIZATION,
 
 	SND_CMD_NUM_CMDS
@@ -214,8 +214,7 @@ typedef struct {
 
 typedef struct {
 	int id;
-	char text[80];
-} sndStuffCmd_t;
+} sndSoundListCmd_t;
 
 typedef struct {
 	int id;
@@ -266,7 +265,7 @@ void S_IssueRawSamplesCmd( sndCmdPipe_t *queue, unsigned int samples,
 void S_IssuePositionedRawSamplesCmd( sndCmdPipe_t *queue, int entnum,
 									 float fvol, float attenuation, unsigned int samples, unsigned int rate,
 									 unsigned short width, unsigned short channels, uint8_t *data );
-void S_IssueStuffCmd( sndCmdPipe_t *queue, const char *text );
+void S_IssueSoundListCmd( sndCmdPipe_t *queue );
 void S_IssueSetMulEntitySpatializationCmd( sndCmdPipe_t *queue, unsigned numEnts,
 										   const smdCmdSpatialization_t *spat );
 

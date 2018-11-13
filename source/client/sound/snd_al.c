@@ -33,37 +33,6 @@ int s_attenuation_model = 0;
 float s_attenuation_maxdistance = 0;
 float s_attenuation_refdistance = 0;
 
-static bool snd_shutdown_bug = false;
-
-/*
-* Commands
-*/
-
-/*
-* S_ListDevices_f
-*/
-static void S_ListDevices_f( void ) {
-	char *device, *defaultDevice, *curDevice;
-
-	Com_Printf( "Available OpenAL devices:\n" );
-
-	defaultDevice = ( char * )alcGetString( NULL, ALC_DEFAULT_DEVICE_SPECIFIER );
-	curDevice = ( char * )alcGetString( alDevice, ALC_DEVICE_SPECIFIER );
-	device = ( char * )alcGetString( NULL, ALC_DEVICE_SPECIFIER );
-
-	for( ; *device; device += strlen( device ) + 1 ) {
-		if( defaultDevice && !strcmp( device, defaultDevice ) ) {
-			Com_Printf( "(def) : " );
-		} else if( curDevice && !strcmp( device, curDevice ) ) {
-			Com_Printf( "(cur) : " );
-		} else {
-			Com_Printf( "      : " );
-		}
-
-		Com_Printf( "%s\n", device );
-	}
-}
-
 /*
 * S_SoundFormat
 */
@@ -131,10 +100,7 @@ const char *S_ErrorMessage( ALenum error ) {
 * S_Init
 */
 static bool S_Init( int maxEntities, bool verbose ) {
-	int numDevices;
-	int userDeviceNum = -1;
-	char *devices, *defaultDevice;
-	cvar_t *s_openAL_device;
+	char *defaultDevice;
 
 	alDevice = NULL;
 	alContext = NULL;
@@ -148,44 +114,7 @@ static bool S_Init( int maxEntities, bool verbose ) {
 		return false;
 	}
 
-	s_openAL_device = trap_Cvar_Get( "s_openAL_device", ALDEVICE_DEFAULT ? ALDEVICE_DEFAULT : defaultDevice, CVAR_ARCHIVE | CVAR_LATCH_SOUND );
-
-	devices = ( char * )alcGetString( NULL, ALC_DEVICE_SPECIFIER );
-	for( numDevices = 0; *devices; devices += strlen( devices ) + 1, numDevices++ ) {
-		if( !Q_stricmp( s_openAL_device->string, devices ) ) {
-			userDeviceNum = numDevices;
-
-			// force case sensitive
-			if( strcmp( s_openAL_device->string, devices ) ) {
-				trap_Cvar_ForceSet( "s_openAL_device", devices );
-			}
-		}
-	}
-
-	if( !numDevices ) {
-		Com_Printf( "Failed to get openAL devices\n" );
-		return false;
-	}
-
-	// the device assigned by the user is not available
-	if( userDeviceNum == -1 ) {
-		Com_Printf( "'s_openAL_device': incorrect device name, reseting to default\n" );
-
-		trap_Cvar_ForceSet( "s_openAL_device", ALDEVICE_DEFAULT ? ALDEVICE_DEFAULT : defaultDevice );
-
-		devices = ( char * )alcGetString( NULL, ALC_DEVICE_SPECIFIER );
-		for( numDevices = 0; *devices; devices += strlen( devices ) + 1, numDevices++ ) {
-			if( !Q_stricmp( s_openAL_device->string, devices ) ) {
-				userDeviceNum = numDevices;
-			}
-		}
-
-		if( userDeviceNum == -1 ) {
-			trap_Cvar_ForceSet( "s_openAL_device", defaultDevice );
-		}
-	}
-
-	alDevice = alcOpenDevice( (const ALchar *)s_openAL_device->string );
+	alDevice = alcOpenDevice( (const ALchar *)defaultDevice );
 	if( !alDevice ) {
 		Com_Printf( "Failed to open device\n" );
 		return false;
@@ -203,33 +132,11 @@ static bool S_Init( int maxEntities, bool verbose ) {
 	if( verbose ) {
 		Com_Printf( "OpenAL initialized\n" );
 
-		if( numDevices ) {
-			int i;
-
-			Com_Printf( "  Devices:    " );
-
-			devices = ( char * )alcGetString( NULL, ALC_DEVICE_SPECIFIER );
-			for( i = 0; *devices; devices += strlen( devices ) + 1, i++ )
-				Com_Printf( "%s%s", devices, ( i < numDevices - 1 ) ? ", " : "" );
-			Com_Printf( "\n" );
-
-			if( defaultDevice && *defaultDevice ) {
-				Com_Printf( "  Default system device: %s\n", defaultDevice );
-			}
-
-			Com_Printf( "\n" );
-		}
-
 		Com_Printf( "  Device:     %s\n", alcGetString( alDevice, ALC_DEVICE_SPECIFIER ) );
 		Com_Printf( "  Vendor:     %s\n", alGetString( AL_VENDOR ) );
 		Com_Printf( "  Version:    %s\n", alGetString( AL_VERSION ) );
 		Com_Printf( "  Renderer:   %s\n", alGetString( AL_RENDERER ) );
 		Com_Printf( "  Extensions: %s\n", alGetString( AL_EXTENSIONS ) );
-	}
-
-	// Check for Linux shutdown race condition
-	if( !Q_stricmp( alGetString( AL_VENDOR ), "J. Valenzuela" ) ) {
-		snd_shutdown_bug = true;
 	}
 
 	alDopplerFactor( s_doppler->value );
@@ -266,10 +173,6 @@ static void S_Shutdown( bool verbose ) {
 	S_ShutdownDecoders( verbose );
 
 	if( alContext ) {
-		if( !snd_shutdown_bug ) {
-			alcMakeContextCurrent( NULL );
-		}
-
 		alcDestroyContext( alContext );
 		alContext = NULL;
 	}
@@ -597,14 +500,10 @@ static unsigned S_HandleAviDemoCmd( const sndAviDemo_t *cmd ) {
 }
 
 /*
-* S_HandleStuffCmd
+* S_HandleSoundListCmd
 */
-static unsigned S_HandleStuffCmd( const sndStuffCmd_t *cmd ) {
-	if( !Q_stricmp( cmd->text, "soundlist" ) ) {
-		S_SoundList_f();
-	} else if( !Q_stricmp( cmd->text, "devicelist" ) ) {
-		S_ListDevices_f();
-	}
+static unsigned S_HandleSoundListCmd( const sndSoundListCmd_t *cmd ) {
+	S_SoundList_f();
 	return sizeof( *cmd );
 }
 
@@ -663,8 +562,8 @@ static pipeCmdHandler_t sndCmdHandlers[SND_CMD_NUM_CMDS] =
 	(pipeCmdHandler_t)S_HandleActivateCmd,
 	/* SND_CMD_AVI_DEMO */
 	(pipeCmdHandler_t)S_HandleAviDemoCmd,
-	/* SND_CMD_STUFFCMD */
-	(pipeCmdHandler_t)S_HandleStuffCmd,
+	/* SND_CMD_SOUNDLIST_CMD */
+	(pipeCmdHandler_t)S_HandleSoundListCmd,
 	/* SND_CMD_SET_MUL_ENTITY_SPATIALIZATION */
 	(pipeCmdHandler_t)S_HandleSetMulEntitySpatializationCmd,
 };

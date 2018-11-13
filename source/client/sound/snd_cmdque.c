@@ -314,12 +314,11 @@ void S_IssueAviDemoCmd( sndCmdPipe_t *queue, bool begin ) {
 }
 
 /*
-* S_IssueStuffCmd
+* S_IssueSoundListCmd
 */
-void S_IssueStuffCmd( sndCmdPipe_t *queue, const char *text ) {
-	sndStuffCmd_t cmd;
-	cmd.id = SND_CMD_STUFFCMD;
-	Q_strncpyz( cmd.text, text, sizeof( cmd.text ) );
+void S_IssueSoundListCmd( sndCmdPipe_t *queue ) {
+	sndSoundListCmd_t cmd;
+	cmd.id = SND_CMD_SOUNDLIST_CMD;
 	S_EnqueueCmd( queue, &cmd, sizeof( cmd ) );
 }
 
