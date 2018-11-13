@@ -248,10 +248,10 @@ void roundWonBy( int winner )
 	// ololo
 	G_CenterPrintMsg( null, S_COLOR_CYAN + ( winner == attackingTeam ? "OFF" : "DEF" ) + "ENSE WINS!");
 
-	int soundIndex = G_SoundIndex( "sounds/announcer/ctf/score_team0" + (1 + (rand() & 1)) );
+	int soundIndex = G_SoundIndex( "sounds/announcer/bomb/score_team0" + (1 + (rand() & 1)) );
 	G_AnnouncerSound( null, soundIndex, winner, true, null );
 
-	soundIndex = G_SoundIndex( "sounds/announcer/ctf/score_enemy0" + (1 + (rand() & 1)) );
+	soundIndex = G_SoundIndex( "sounds/announcer/bomb/score_enemy0" + (1 + (rand() & 1)) );
 	G_AnnouncerSound( null, soundIndex, loser, true, null );
 
 	Team @teamWinner = @G_GetTeam( winner );
