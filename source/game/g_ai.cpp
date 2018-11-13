@@ -113,10 +113,8 @@ void AI_TouchedEntity( edict_t * self, edict_t * ent ) {
 static void AI_SpecThink( edict_t * self ) {
 	self->nextThink = level.time + 100;
 
-	// wait 4 seconds after entering the level
-	if( self->r.client->level.timeStamp + 4000 > level.time || !level.canSpawnEntities ) {
+	if( !level.canSpawnEntities )
 		return;
-	}
 
 	if( self->r.client->team == TEAM_SPECTATOR ) {
 		// try to join a team
@@ -126,7 +124,7 @@ static void AI_SpecThink( edict_t * self ) {
 		}
 
 		if( self->r.client->team == TEAM_SPECTATOR ) { // couldn't join, delay the next think
-			self->nextThink = level.time + 2000 + (int)( 4000 * random() );
+			self->nextThink = level.time + 100;
 		} else {
 			self->nextThink = level.time + 1;
 		}
@@ -144,7 +142,7 @@ static void AI_SpecThink( edict_t * self ) {
 }
 
 static void AI_GameThink( edict_t * self ) {
-	if( GS_MatchState() <= MATCH_STATE_WARMUP && self->r.client->teamstate.timeStamp + 4000 < level.time ) {
+	if( GS_MatchState() <= MATCH_STATE_WARMUP ) {
                 G_Match_Ready( self );
         }
 
