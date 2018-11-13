@@ -140,7 +140,7 @@ static bool S_Init( int maxEntities, bool verbose ) {
 	}
 
 	alDopplerFactor( s_doppler->value );
-	/* alDopplerVelocity( s_sound_velocity->value > 0.0f ? s_sound_velocity->value : 0.0f ); */
+	alDopplerVelocity( s_sound_velocity->value > 0.0f ? s_sound_velocity->value : 0.0f );
 	alSpeedOfSound( s_sound_velocity->value > 0.0f ? s_sound_velocity->value : 0.0f );
 
 	s_doppler->modified = false;
@@ -253,7 +253,7 @@ static void S_Update( void ) {
 	}
 
 	if( s_sound_velocity->modified ) {
-		/* alDopplerVelocity( s_sound_velocity->value > 0.0f ? s_sound_velocity->value : 0.0f ); */
+		alDopplerVelocity( s_sound_velocity->value > 0.0f ? s_sound_velocity->value : 0.0f );
 		alSpeedOfSound( s_sound_velocity->value > 0.0f ? s_sound_velocity->value : 0.0f );
 		s_sound_velocity->modified = false;
 	}
