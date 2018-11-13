@@ -454,6 +454,7 @@ void roundThink()
 			}
 		}
 
+		match.setClockOverride( roundStateEndTime - levelTime + int( cvarRoundTime.value * 1000.0f ) );
 	}
 
 	// i suppose the following blocks could be merged to save an if or 2
@@ -521,8 +522,6 @@ void roundThink()
 	}
 	else
 	{
-		match.setClockOverride( 0 );
-
 		if ( roundState > ROUNDSTATE_ROUND )
 		{
 			bombAltThink();
