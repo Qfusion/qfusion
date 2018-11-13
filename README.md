@@ -7,9 +7,9 @@
     3. DANK VISUALS !
     4. NO BULLSHIT !
     5. AHA CHEERS !
-
-| WINDOWS |  |
-| --- | :-: |
+| | |
+| --- | --- |
+| **WINDOWS** |  |
 | [Engine](https://github.com/mikejsavage/forksow)  | [![Windows build](https://ci.appveyor.com/api/projects/status/gm4uucsa58bpgx57?svg=true)](https://ci.appveyor.com/project/mikejsavage/forksow) |
 | [Launcher](https://github.com/mikejsavage/forksow-launcher) | [![Windows build](https://ci.appveyor.com/api/projects/status/0xprq9d61lojw3yn?svg=true)](https://ci.appveyor.com/project/mikejsavage/forksow-launcher) |
 | [Libs](https://github.com/mikejsavage/forksow-libs) | [![Windows build](https://ci.appveyor.com/api/projects/status/09ds7hu7mkhan9lk?svg=true)](https://ci.appveyor.com/project/mikejsavage/forksow-libs) |
