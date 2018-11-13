@@ -124,36 +124,14 @@ static void CL_SoundModule_MemEmptyPool( mempool_t *pool, const char *filename, 
 * Helper function to try loading sound module with certain name
 */
 static bool CL_SoundModule_Load( const char *name, sound_import_t *import, bool verbose ) {
-	int apiversion;
-	size_t file_size;
-	char *file;
-	void *( *GetSoundAPI )( void * );
-	dllfunc_t funcs[2];
-
 	if( verbose ) {
 		Com_Printf( "Loading sound module: %s\n", name );
-	}
-
-	file_size = strlen( LIB_DIRECTORY "/" LIB_PREFIX "snd_" ) + strlen( name ) + strlen( LIB_SUFFIX ) + 1;
-	file = Mem_TempMalloc( file_size );
-	Q_snprintfz( file, file_size, LIB_DIRECTORY "/" LIB_PREFIX "snd_%s" LIB_SUFFIX, name );
-
-	funcs[0].name = "GetSoundAPI";
-	funcs[0].funcPointer = ( void ** )&GetSoundAPI;
-	funcs[1].name = NULL;
-	sound_library = Com_LoadLibrary( file, funcs );
-
-	Mem_TempFree( file );
-
-	if( !sound_library ) {
-		Com_Printf( "Loading %s failed\n", name );
-		return false;
 	}
 
 	s_loaded = true;
 
 	se = ( sound_export_t * )GetSoundAPI( import );
-	apiversion = se->API();
+	int apiversion = se->API();
 	if( apiversion != SOUND_API_VERSION ) {
 		CL_SoundModule_Shutdown( verbose );
 		Com_Printf( "Wrong module version for %s: %i, not %i\n", name, apiversion, SOUND_API_VERSION );

@@ -150,3 +150,5 @@ typedef struct {
 	void ( *BeginAviDemo )( void );
 	void ( *StopAviDemo )( void );
 } sound_export_t;
+
+QF_DLL_EXPORT sound_export_t *GetSoundAPI( sound_import_t *import );

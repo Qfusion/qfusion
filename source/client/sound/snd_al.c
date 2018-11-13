@@ -347,10 +347,8 @@ static void S_Update( void ) {
 	}
 
 	if( s_sound_velocity->modified ) {
-		alDopplerVelocity( s_sound_velocity->value > 0.0f ? s_sound_velocity->value : 0.0f );
-		if( alSpeedOfSound ) {
-			alSpeedOfSound( s_sound_velocity->value > 0.0f ? s_sound_velocity->value : 0.0f );
-		}
+		/* alDopplerVelocity( s_sound_velocity->value > 0.0f ? s_sound_velocity->value : 0.0f ); */
+		alSpeedOfSound( s_sound_velocity->value > 0.0f ? s_sound_velocity->value : 0.0f );
 		s_sound_velocity->modified = false;
 	}
 }

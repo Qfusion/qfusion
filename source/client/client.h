@@ -19,13 +19,13 @@
  */
 // client.h -- primary header for client
 
-#include "../qcommon/qcommon.h"
+#include "qcommon/qcommon.h"
 #include "renderer/r_public.h"
-#include "../cgame/cg_public.h"
+#include "cgame/cg_public.h"
 #include "ftlib/ftlib_public.h"
-#include "../matchmaker/mm_rating.h"
-#include "snd_public.h"
-#include "../qcommon/steam.h"
+#include "matchmaker/mm_rating.h"
+#include "sound/snd_public.h"
+#include "qcommon/steam.h"
 
 #include "vid.h"
 #include "input.h"

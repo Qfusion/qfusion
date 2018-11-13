@@ -29,7 +29,7 @@ typedef struct { char *name; void **funcPointer; } dllfunc_t;
 #include "gameshared/q_shared.h"
 #include "gameshared/q_cvar.h"
 
-#include "client/snd_public.h"
+#include "snd_public.h"
 #include "snd_syscalls.h"
 
 #include "openal/al.h"
