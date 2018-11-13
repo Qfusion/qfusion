@@ -60,10 +60,6 @@ uid_t saved_euid;
 // General routines
 // =======================================================================
 
-#ifndef DEDICATED_ONLY
-extern void CL_Shutdown( void );
-#endif
-
 static void sigusr_handler( int sig ) {
 	if( sig == SIGUSR1 ) {
 		Com_DeferConsoleLogReopen();
@@ -198,7 +194,7 @@ void Sys_SendKeyEvents( void ) {
 	sys_frame_time = Sys_Milliseconds();
 }
 
-#endif defined(DEDICATED_ONLY)
+#endif // defined( DEDICATED_ONLY )
 
 #ifndef __APPLE__
 /*
