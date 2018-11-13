@@ -305,11 +305,6 @@ static void Cmd_Kill_f( edict_t *ent ) {
 		return;
 	}
 
-	// can suicide after 5 seconds
-	if( level.time < ent->r.client->resp.timeStamp + ( GS_RaceGametype() ? 1000 : 5000 ) ) {
-		return;
-	}
-
 	ent->flags &= ~FL_GODMODE;
 	ent->health = 0;
 	meansOfDeath = MOD_SUICIDE;
