@@ -127,10 +127,6 @@ extern "C" {
 
 #define STEAMQUERY_OS 'w'
 
-#ifdef __GNUC__
-#define HAVE_TYPEOF
-#endif
-
 #include <malloc.h>
 #define HAVE__ALLOCA
 
@@ -153,8 +149,6 @@ typedef uintptr_t socket_handle_t;
 #ifndef HAVE_STRCASECMP // SDL_config.h seems to define this too...
 #define HAVE_STRCASECMP
 #endif
-
-#define HAVE_TYPEOF
 
 #define LIB_DIRECTORY "libs"
 #define LIB_PREFIX "lib"
@@ -202,8 +196,6 @@ typedef int socket_handle_t;
 #ifndef HAVE_STRCASECMP // SDL_config.h seems to define this too...
 #define HAVE_STRCASECMP
 #endif
-
-//#define HAVE_TYPEOF
 
 #define LIB_DIRECTORY "libs"
 #define LIB_PREFIX "lib"
@@ -299,12 +291,7 @@ typedef int socket_handle_t;
 #endif
 
 // the ALIGN macro as defined by Linux kernel
-#ifdef HAVE_TYPEOF
-#define __ALIGN_MASK( x,mask )    ( ( ( x ) + ( mask ) ) & ~( mask ) )
-#define ALIGN( x,a )              __ALIGN_MASK( x,( typeof( x ) )( a ) - 1 )
-#else
 #define ALIGN( x, a ) ( ( ( x ) + ( ( size_t )( a ) - 1 ) ) & ~( ( size_t )( a ) - 1 ) )
-#endif
 
 // The `malloc' attribute is used to tell the compiler that a function
 // may be treated as if it were the malloc function.  The compiler
