@@ -147,8 +147,6 @@ typedef struct {
 	cgs_media_handle_t *sfxWeaponUp;
 	cgs_media_handle_t *sfxWeaponUpNoAmmo;
 
-	cgs_media_handle_t *sfxWalljumpFailed;
-
 	//--------------------------------------
 
 	cgs_media_handle_t *sfxWeaponHit[4];
@@ -207,7 +205,6 @@ typedef struct {
 	// models
 	//	cgs_media_handle_t		*modTeleportEffect;
 	cgs_media_handle_t *modDash;
-	cgs_media_handle_t *modHeadStun;
 
 	cgs_media_handle_t *modIlluminatiGibs;
 

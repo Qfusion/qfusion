@@ -436,7 +436,7 @@ static void func_object_touch( edict_t *self, edict_t *other, cplane_t *plane, i
 		return;
 	}
 
-	G_Damage( other, self, self, vec3_origin, vec3_origin, self->s.origin, self->dmg, 1, 0, 0, MOD_CRUSH );
+	G_Damage( other, self, self, vec3_origin, vec3_origin, self->s.origin, self->dmg, 1, 0, MOD_CRUSH );
 }
 
 static void func_object_release( edict_t *self ) {
@@ -632,7 +632,6 @@ void SP_func_explosive( edict_t *self ) {
 	self->projectileInfo.minDamage = min( self->dmg, 1 );
 	self->projectileInfo.maxKnockback = self->projectileInfo.maxDamage;
 	self->projectileInfo.minKnockback = self->projectileInfo.minDamage;
-	self->projectileInfo.stun = self->projectileInfo.maxDamage * 100;
 	self->projectileInfo.radius = st.radius;
 	if( !self->projectileInfo.radius ) {
 		self->projectileInfo.radius = self->dmg + 100;

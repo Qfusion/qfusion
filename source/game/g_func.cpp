@@ -296,7 +296,7 @@ static void plat_go_up( edict_t *ent ) {
 static void plat_blocked( edict_t *self, edict_t *other ) {
 	if( !other->r.client ) {
 		// give it a chance to go away on its own terms (like gibs)
-		G_Damage( other, self, self, vec3_origin, vec3_origin, other->s.origin, 100000, 1, 0, 0, MOD_CRUSH );
+		G_Damage( other, self, self, vec3_origin, vec3_origin, other->s.origin, 100000, 1, 0, MOD_CRUSH );
 
 		// if it's still there, nuke it
 		if( other->r.inuse ) {
@@ -305,7 +305,7 @@ static void plat_blocked( edict_t *self, edict_t *other ) {
 		return;
 	}
 
-	G_Damage( other, self, self, vec3_origin, vec3_origin, other->s.origin, self->dmg, 1, 0, 0, MOD_CRUSH );
+	G_Damage( other, self, self, vec3_origin, vec3_origin, other->s.origin, self->dmg, 1, 0, MOD_CRUSH );
 
 	if( self->moveinfo.state == STATE_UP ) {
 		plat_go_down( self );
@@ -735,7 +735,7 @@ static void door_blocked( edict_t *self, edict_t *other ) {
 
 	if( !other->r.client ) {
 		// give it a chance to go away on its own terms (like gibs)
-		G_Damage( other, self, self, vec3_origin, vec3_origin, other->s.origin, 100000, 1, 0, 0, MOD_CRUSH );
+		G_Damage( other, self, self, vec3_origin, vec3_origin, other->s.origin, 100000, 1, 0, MOD_CRUSH );
 
 		// if it's still there, nuke it
 		if( other->r.inuse ) {
@@ -744,7 +744,7 @@ static void door_blocked( edict_t *self, edict_t *other ) {
 		return;
 	}
 
-	G_Damage( other, self, self, vec3_origin, vec3_origin, other->s.origin, self->dmg, 1, 0, 0, MOD_CRUSH );
+	G_Damage( other, self, self, vec3_origin, vec3_origin, other->s.origin, self->dmg, 1, 0, MOD_CRUSH );
 
 	if( self->spawnflags & DOOR_CRUSHER ) {
 		return;
@@ -1184,12 +1184,12 @@ static void Think_RotateDecel( edict_t *self ) {
 }
 
 static void rotating_blocked( edict_t *self, edict_t *other ) {
-	G_Damage( other, self, self, vec3_origin, vec3_origin, other->s.origin, self->dmg, 1, 0, 0, MOD_CRUSH );
+	G_Damage( other, self, self, vec3_origin, vec3_origin, other->s.origin, self->dmg, 1, 0, MOD_CRUSH );
 }
 
 static void rotating_touch( edict_t *self, edict_t *other, cplane_t *plane, int surfFlags ) {
 	if( self->avelocity[0] || self->avelocity[1] || self->avelocity[2] ) {
-		G_Damage( other, self, self, vec3_origin, vec3_origin, other->s.origin, self->dmg, 1, 0, 0, MOD_CRUSH );
+		G_Damage( other, self, self, vec3_origin, vec3_origin, other->s.origin, self->dmg, 1, 0, MOD_CRUSH );
 	}
 }
 
@@ -1475,7 +1475,7 @@ static void train_next( edict_t *self );
 static void train_blocked( edict_t *self, edict_t *other ) {
 	if( !other->r.client ) {
 		// give it a chance to go away on its own terms (like gibs)
-		G_Damage( other, self, self, vec3_origin, vec3_origin, other->s.origin, 100000, 1, 0, 0, MOD_CRUSH );
+		G_Damage( other, self, self, vec3_origin, vec3_origin, other->s.origin, 100000, 1, 0, MOD_CRUSH );
 
 		// if it's still there, nuke it
 		if( other->r.inuse ) {
@@ -1492,7 +1492,7 @@ static void train_blocked( edict_t *self, edict_t *other ) {
 		return;
 	}
 	self->timeStamp = level.time;
-	G_Damage( other, self, world, vec3_origin, vec3_origin, other->s.origin, self->dmg, 1, 0, 0, MOD_CRUSH );
+	G_Damage( other, self, world, vec3_origin, vec3_origin, other->s.origin, self->dmg, 1, 0, MOD_CRUSH );
 }
 
 static void train_wait( edict_t *self ) {
@@ -1906,7 +1906,7 @@ void SP_func_killbox( edict_t *ent ) {
 * func_bobbing_blocked
 */
 static void func_bobbing_blocked( edict_t *self, edict_t *other ) {
-	G_Damage( other, self, self, vec3_origin, vec3_origin, other->s.origin, 100000, 1, 0, 0, MOD_CRUSH );
+	G_Damage( other, self, self, vec3_origin, vec3_origin, other->s.origin, 100000, 1, 0, MOD_CRUSH );
 }
 
 /*
@@ -1992,7 +1992,7 @@ void SP_func_bobbing( edict_t *ent ) {
 * func_pendulum_blocked
 */
 static void func_pendulum_blocked( edict_t *self, edict_t *other ) {
-	G_Damage( other, self, self, vec3_origin, vec3_origin, other->s.origin, 100000, 1, 0, 0, MOD_CRUSH );
+	G_Damage( other, self, self, vec3_origin, vec3_origin, other->s.origin, 100000, 1, 0, MOD_CRUSH );
 }
 
 /*

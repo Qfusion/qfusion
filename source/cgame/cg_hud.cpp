@@ -237,10 +237,6 @@ static int CG_GetVidHeight( const void *parameter ) {
 	return cgs.vidHeight;
 }
 
-static int CG_GetStunned( const void *parameter ) {
-	return cg.predictedPlayerState.pmove.stats[PM_STAT_STUN];
-}
-
 static int CG_GetCvar( const void *parameter ) {
 	return trap_Cvar_Value( (const char *)parameter );
 }
@@ -546,7 +542,6 @@ static const reference_numeric_t cg_numeric_references[] =
 	{ "ZOOM", CG_GetZoom, NULL },
 	{ "VIDWIDTH", CG_GetVidWidth, NULL },
 	{ "VIDHEIGHT", CG_GetVidHeight, NULL },
-	{ "STUNNED", CG_GetStunned, NULL },
 	{ "SCOREBOARD", CG_GetScoreboardShown, NULL },
 	{ "PMOVE_TYPE", CG_GetPmoveType, NULL },
 	{ "DEMOPLAYING", CG_IsDemoPlaying, NULL },

@@ -798,7 +798,7 @@ static void CG_PModel_AddFlag( centity_t *cent ) {
 */
 static void CG_AddHeadIcon( centity_t *cent ) {
 	entity_t balloon;
-	bool stunned = false, showIcon = false;
+	bool showIcon = false;
 	struct shader_s *iconShader = NULL;
 	float radius = 6, upoffset = 8;
 	orientation_t tag_head;
@@ -822,8 +822,7 @@ static void CG_AddHeadIcon( centity_t *cent ) {
 		upoffset = 0;
 	}
 
-	stunned = ( ( cent->effects & EF_PLAYER_STUNNED || cent->prev.effects & EF_PLAYER_STUNNED ) ? true : false );
-	if( iconShader != NULL || stunned ) {
+	if( iconShader != NULL ) {
 		showIcon = true;
 	}
 
@@ -854,20 +853,6 @@ static void CG_AddHeadIcon( centity_t *cent ) {
 			balloon.customShader = iconShader;
 			balloon.radius = radius;
 			balloon.model = NULL;
-
-			trap_R_AddEntityToScene( &balloon );
-		}
-
-		// add stun effect: not really a head icon, but there's no point in finding the head location twice
-		if( stunned ) {
-			balloon.rtype = RT_MODEL;
-			balloon.customShader = NULL;
-			balloon.radius = 0;
-			balloon.model = CG_MediaModel( cgs.media.modHeadStun );
-
-			if( !( cent->current.effects & EF_PLAYER_STUNNED ) ) {
-				balloon.shaderRGBA[3] = ( 255 * ( 1.0f - cg.lerpfrac ) );
-			}
 
 			trap_R_AddEntityToScene( &balloon );
 		}

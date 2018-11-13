@@ -73,8 +73,6 @@ void CG_RegisterMediaSounds( void ) {
 	cgs.media.sfxWeaponUp = CG_RegisterMediaSfx( S_WEAPON_SWITCH );
 	cgs.media.sfxWeaponUpNoAmmo = CG_RegisterMediaSfx( S_WEAPON_NOAMMO );
 
-	cgs.media.sfxWalljumpFailed = CG_RegisterMediaSfx( "sounds/world/ft_walljump_failed" );
-
 	cgs.media.sfxItemRespawn = CG_RegisterMediaSfx( S_ITEM_RESPAWN );
 	cgs.media.sfxPlayerRespawn = CG_RegisterMediaSfx( S_PLAYER_RESPAWN );
 	cgs.media.sfxTeleportIn = CG_RegisterMediaSfx( S_TELEPORT );
@@ -221,7 +219,6 @@ void CG_RegisterMediaModels( void ) {
 	//	cgs.media.modTeleportEffect = CG_RegisterMediaModel( "models/misc/telep.md3", false );
 
 	cgs.media.modDash = CG_RegisterMediaModel( "models/effects/dash_burst.md3" );
-	cgs.media.modHeadStun = CG_RegisterMediaModel( "models/effects/head_stun.md3" );
 
 	cgs.media.modBulletExplode = CG_RegisterMediaModel( PATH_BULLET_EXPLOSION_MODEL );
 	cgs.media.modBladeWallHit = CG_RegisterMediaModel( PATH_GUNBLADEBLAST_IMPACT_MODEL );

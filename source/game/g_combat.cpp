@@ -326,7 +326,7 @@ static void G_KnockBackPush( edict_t *targ, edict_t *attacker, const vec3_t base
 *
 * dflags		these flags are used to control how T_Damage works
 */
-void G_Damage( edict_t *targ, edict_t *inflictor, edict_t *attacker, const vec3_t pushdir, const vec3_t dmgdir, const vec3_t point, float damage, float knockback, float stun, int dflags, int mod ) {
+void G_Damage( edict_t *targ, edict_t *inflictor, edict_t *attacker, const vec3_t pushdir, const vec3_t dmgdir, const vec3_t point, float damage, float knockback, int dflags, int mod ) {
 	gclient_t *client;
 	float take;
 	float save;
@@ -358,21 +358,6 @@ void G_Damage( edict_t *targ, edict_t *inflictor, edict_t *attacker, const vec3_
 	// push
 	if( !( dflags & DAMAGE_NO_KNOCKBACK ) && !teamdamage ) {
 		G_KnockBackPush( targ, attacker, pushdir, knockback, dflags );
-	}
-
-	// stun
-	if( g_allow_stun->integer && !( dflags & ( DAMAGE_NO_STUN | FL_GODMODE ) )
-		&& (int)stun > 0 && targ->r.client && targ->r.client->resp.takeStun &&
-		!GS_IsTeamDamage( &targ->s, &attacker->s ) && ( targ != attacker ) ) {
-		if( dflags & DAMAGE_STUN_CLAMP ) {
-			if( targ->r.client->ps.pmove.stats[PM_STAT_STUN] < (int)stun ) {
-				targ->r.client->ps.pmove.stats[PM_STAT_STUN] = (int)stun;
-			}
-		} else {
-			targ->r.client->ps.pmove.stats[PM_STAT_STUN] += (int)stun;
-		}
-
-		clamp( targ->r.client->ps.pmove.stats[PM_STAT_STUN], 0, MAX_STUN_TIME );
 	}
 
 	// dont count self-damage cause it just adds the same to both stats
@@ -699,11 +684,11 @@ void G_RadiusDamage( edict_t *inflictor, edict_t *attacker, cplane_t *plane, edi
 	int i, numtouch;
 	int touch[MAX_EDICTS];
 	edict_t *ent = NULL;
-	float dmgFrac, kickFrac, damage, knockback, stun;
+	float dmgFrac, kickFrac, damage, knockback;
 	vec3_t pushDir;
 	int timeDelta;
 
-	float maxdamage, mindamage, maxknockback, minknockback, maxstun, minstun, radius;
+	float maxdamage, mindamage, maxknockback, minknockback, radius;
 
 	assert( inflictor );
 
@@ -711,8 +696,6 @@ void G_RadiusDamage( edict_t *inflictor, edict_t *attacker, cplane_t *plane, edi
 	mindamage = inflictor->projectileInfo.minDamage;
 	maxknockback = inflictor->projectileInfo.maxKnockback;
 	minknockback = inflictor->projectileInfo.minKnockback;
-	maxstun = inflictor->projectileInfo.stun;
-	minstun = 1;
 	radius = inflictor->projectileInfo.radius;
 
 	if( radius <= 1.0f || ( maxdamage <= 0.0f && maxknockback <= 0.0f ) ) {
@@ -721,7 +704,6 @@ void G_RadiusDamage( edict_t *inflictor, edict_t *attacker, cplane_t *plane, edi
 
 	clamp_high( mindamage, maxdamage );
 	clamp_high( minknockback, maxknockback );
-	clamp_high( minstun, maxstun );
 
 	numtouch = GClip_FindInRadius4D( inflictor->s.origin, radius, touch, MAX_EDICTS, inflictor->timeDelta );
 	for( i = 0; i < numtouch; i++ ) {
@@ -739,7 +721,6 @@ void G_RadiusDamage( edict_t *inflictor, edict_t *attacker, cplane_t *plane, edi
 		G_SplashFrac4D( ENTNUM( ent ), inflictor->s.origin, radius, pushDir, &kickFrac, &dmgFrac, timeDelta );
 
 		damage = max( 0, mindamage + ( ( maxdamage - mindamage ) * dmgFrac ) );
-		stun = max( 0, minstun + ( ( maxstun - minstun ) * dmgFrac ) );
 		knockback = max( 0, minknockback + ( ( maxknockback - minknockback ) * kickFrac ) );
 
 		// weapon jumps hack : when knockback on self, use strong weapon definition
@@ -770,16 +751,12 @@ void G_RadiusDamage( edict_t *inflictor, edict_t *attacker, cplane_t *plane, edi
 			knockback = 0.0f;
 		}
 
-		if( stun < 1.0f ) {
-			stun = 0.0f;
-		}
-
-		if( damage <= 0.0f && knockback <= 0.0f && stun <= 0.0f ) {
+		if( damage <= 0.0f && knockback <= 0.0f ) {
 			continue;
 		}
 
 		if( G_CanSplashDamage( ent, inflictor, plane ) ) {
-			G_Damage( ent, inflictor, attacker, pushDir, inflictor->velocity, inflictor->s.origin, damage, knockback, stun, DAMAGE_RADIUS, mod );
+			G_Damage( ent, inflictor, attacker, pushDir, inflictor->velocity, inflictor->s.origin, damage, knockback, DAMAGE_RADIUS, mod );
 		}
 	}
 }

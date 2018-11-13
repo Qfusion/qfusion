@@ -1465,7 +1465,7 @@ bool KillBox( edict_t *ent ) {
 
 		}
 		// nail it
-		G_Damage( &game.edicts[tr.ent], ent, ent, vec3_origin, vec3_origin, ent->s.origin, 100000, 0, 0, DAMAGE_NO_PROTECTION, MOD_TELEFRAG );
+		G_Damage( &game.edicts[tr.ent], ent, ent, vec3_origin, vec3_origin, ent->s.origin, 100000, 0, DAMAGE_NO_PROTECTION, MOD_TELEFRAG );
 		telefragged = true;
 
 		// if we didn't kill it, fail
@@ -2051,7 +2051,6 @@ static bool G_ParseFiredefFile( uint8_t *buf, int weapon, firedef_t *firedef ) {
 	firedef->damage = (float)parm[count++];
 	firedef->selfdamage = parm[count++];
 	firedef->knockback = (int)parm[count++];
-	firedef->stun = (int)parm[count++];
 	firedef->splash_radius = (int)parm[count++];
 	firedef->mindamage = (int)parm[count++];
 	firedef->minknockback = (int)parm[count++];

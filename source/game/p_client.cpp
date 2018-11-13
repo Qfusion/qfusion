@@ -571,7 +571,6 @@ void G_ClientRespawn( edict_t *self, bool ghost ) {
 			self->r.svflags |= SVF_NOCLIENT;
 		}
 	} else {
-		self->r.client->resp.takeStun = true;
 		self->r.solid = SOLID_YES;
 		self->movetype = MOVETYPE_PLAYER;
 		client->ps.pmove.stats[PM_STAT_FEATURES] = static_cast<unsigned short>( PMFEAT_DEFAULT );
@@ -1297,7 +1296,7 @@ void G_PredictedEvent( int entNum, int ev, int parm ) {
 			damage = parm;
 
 			if( damage ) {
-				G_Damage( ent, world, world, vec3_origin, upDir, ent->s.origin, damage, 0, 0, dflags, MOD_FALLING );
+				G_Damage( ent, world, world, vec3_origin, upDir, ent->s.origin, damage, 0, dflags, MOD_FALLING );
 			}
 
 			G_AddEvent( ent, ev, damage, true );

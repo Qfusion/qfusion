@@ -75,7 +75,6 @@ enum {
 	PM_STAT_DASHTIME,
 	PM_STAT_WJTIME,
 	PM_STAT_NOAUTOATTACK,
-	PM_STAT_STUN,
 	PM_STAT_MAXSPEED,
 	PM_STAT_JUMPSPEED,
 	PM_STAT_DASHSPEED,
@@ -119,7 +118,7 @@ typedef struct {
 	int pm_flags;               // ducked, jump_held, etc
 	int pm_time;                // each unit = 8 ms
 	int skim_time;
-	short stats[PM_STAT_SIZE];  // Kurim : timers for knockback, stun, doublejump, walljump
+	short stats[PM_STAT_SIZE];  // Kurim : timers for knockback, doublejump, walljump
 	int gravity;
 	short delta_angles[3];      // add to command angles to get view direction
 	                            // changed by spawns, rotating objects, and teleporters

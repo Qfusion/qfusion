@@ -499,7 +499,7 @@ static void hurt_delayer_think( edict_t *self ) {
 
 	if( target->r.client && target->r.client->resp.timeStamp == self->deathTimeStamp ) {
 		target->takedamage = true;
-		G_Damage( target, target, world, vec3_origin, vec3_origin, target->s.origin, damage, 0, 0, DAMAGE_NO_PROTECTION, MOD_TRIGGER_HURT );
+		G_Damage( target, target, world, vec3_origin, vec3_origin, target->s.origin, damage, 0, DAMAGE_NO_PROTECTION, MOD_TRIGGER_HURT );
 	}
 
 	G_FreeEdict( self );
@@ -573,7 +573,7 @@ static void hurt_touch( edict_t *self, edict_t *other, cplane_t *plane, int surf
 		}
 	}
 
-	G_Damage( other, self, world, vec3_origin, vec3_origin, other->s.origin, damage, damage, 0, dflags, MOD_TRIGGER_HURT );
+	G_Damage( other, self, world, vec3_origin, vec3_origin, other->s.origin, damage, damage, dflags, MOD_TRIGGER_HURT );
 }
 
 void SP_trigger_hurt( edict_t *self ) {

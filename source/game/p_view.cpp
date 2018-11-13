@@ -301,7 +301,7 @@ static void G_PlayerWorldEffects( edict_t *ent ) {
 				}
 				ent->pain_debounce_time = level.time;
 
-				G_Damage( ent, world, world, vec3_origin, vec3_origin, ent->s.origin, ent->r.client->resp.drowningDamage, 0, 0, DAMAGE_NO_ARMOR, MOD_WATER );
+				G_Damage( ent, world, world, vec3_origin, vec3_origin, ent->s.origin, ent->r.client->resp.drowningDamage, 0, DAMAGE_NO_ARMOR, MOD_WATER );
 			}
 		}
 	} else {
@@ -321,12 +321,12 @@ static void G_PlayerWorldEffects( edict_t *ent ) {
 			//	ent->pain_debounce_time = level.time + 1000;
 			//}
 			G_Damage( ent, world, world, vec3_origin, vec3_origin, ent->s.origin,
-					  ( 30 * waterlevel ) * game.snapFrameTime / 1000.0f, 0, 0, 0, MOD_LAVA );
+					  ( 30 * waterlevel ) * game.snapFrameTime / 1000.0f, 0, 0, MOD_LAVA );
 		}
 
 		if( ent->watertype & CONTENTS_SLIME ) {
 			G_Damage( ent, world, world, vec3_origin, vec3_origin, ent->s.origin,
-					  ( 10 * waterlevel ) * game.snapFrameTime / 1000.0f, 0, 0, 0, MOD_SLIME );
+					  ( 10 * waterlevel ) * game.snapFrameTime / 1000.0f, 0, 0, MOD_SLIME );
 		}
 	}
 }
@@ -367,12 +367,6 @@ static void G_SetClientEffects( edict_t *ent ) {
 		if( firedef && firedef->fire_mode == FIRE_MODE_STRONG ) {
 			ent->s.effects |= EF_STRONG_WEAPON;
 		}
-	}
-
-	if( client->ps.pmove.stats[PM_STAT_STUN] ) {
-		ent->s.effects |= EF_PLAYER_STUNNED;
-	} else {
-		ent->s.effects &= ~EF_PLAYER_STUNNED;
 	}
 
 	// show cheaters!!!

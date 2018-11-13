@@ -179,7 +179,6 @@ void SP_target_explosion( edict_t *self ) {
 	self->projectileInfo.minDamage = min( self->dmg, 1 );
 	self->projectileInfo.maxKnockback = self->projectileInfo.maxDamage;
 	self->projectileInfo.minKnockback = self->projectileInfo.minDamage;
-	self->projectileInfo.stun = self->projectileInfo.maxDamage * 100;
 	self->projectileInfo.radius = st.radius;
 	if( !self->projectileInfo.radius ) {
 		self->projectileInfo.radius = self->dmg + 100;
@@ -330,10 +329,10 @@ static void target_laser_think( edict_t *self ) {
 			if( game.edicts[tr.ent].r.client && self->activator->r.client ) {
 				if( !GS_TeamBasedGametype() ||
 					game.edicts[tr.ent].s.team != self->activator->s.team ) {
-					G_Damage( &game.edicts[tr.ent], self, self->activator, self->moveinfo.movedir, self->moveinfo.movedir, tr.endpos, self->dmg, 1, 0, 0, self->count );
+					G_Damage( &game.edicts[tr.ent], self, self->activator, self->moveinfo.movedir, self->moveinfo.movedir, tr.endpos, self->dmg, 1, 0, self->count );
 				}
 			} else {
-				G_Damage( &game.edicts[tr.ent], self, self->activator, self->moveinfo.movedir, self->moveinfo.movedir, tr.endpos, self->dmg, 1, 0, 0, self->count );
+				G_Damage( &game.edicts[tr.ent], self, self->activator, self->moveinfo.movedir, self->moveinfo.movedir, tr.endpos, self->dmg, 1, 0, self->count );
 			}
 		}
 
@@ -925,7 +924,7 @@ void SP_target_teleporter( edict_t *self ) {
 //Kills the activator.
 
 static void target_kill_use( edict_t *self, edict_t *other, edict_t *activator ) {
-	G_Damage( activator, self, world, vec3_origin, vec3_origin, activator->s.origin, 100000, 0, 0, DAMAGE_NO_PROTECTION, MOD_TRIGGER_HURT );
+	G_Damage( activator, self, world, vec3_origin, vec3_origin, activator->s.origin, 100000, 0, DAMAGE_NO_PROTECTION, MOD_TRIGGER_HURT );
 }
 
 void SP_target_kill( edict_t *self ) {

@@ -1014,7 +1014,6 @@ enum {
 
 // oh, this is so nasty... (reuse effect bits for different entity types)
 #define EF_NOPORTALENTS             EF_CARRIER
-#define EF_PLAYER_STUNNED           EF_ROTATE_AND_BOB
 #define EF_PLAYER_HIDENAME          EF_TEAMCOLOR_TRANSITION
 
 // these ones can be only set from client side
@@ -1060,7 +1059,6 @@ typedef struct firedef_s {
 	float damage;
 	float selfdamage;
 	int knockback;
-	int stun;
 	int splash_radius;
 	int mindamage;
 	int minknockback;

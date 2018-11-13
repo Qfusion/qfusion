@@ -1011,10 +1011,6 @@ static void PM_ClearWallJump( void ) {
 	pm->playerState->pmove.stats[PM_STAT_WJTIME] = 0;
 }
 
-static void PM_ClearStun( void ) {
-	pm->playerState->pmove.stats[PM_STAT_STUN] = 0;
-}
-
 /*
 * PM_CheckJump
 */
@@ -1228,28 +1224,17 @@ static void PM_CheckWallJump( void ) {
 
 				hspeed = VectorNormalize2D( pml.velocity );
 
-				// if stunned almost do nothing
-				if( pm->playerState->pmove.stats[PM_STAT_STUN] > 0 ) {
-					GS_ClipVelocity( pml.velocity, normal, pml.velocity, 1.0f );
-					VectorMA( pml.velocity, pm_failedwjbouncefactor, normal, pml.velocity );
+				GS_ClipVelocity( pml.velocity, normal, pml.velocity, 1.0005f );
+				VectorMA( pml.velocity, pm_wjbouncefactor, normal, pml.velocity );
 
-					VectorNormalize( pml.velocity );
-
-					VectorScale( pml.velocity, hspeed, pml.velocity );
-					pml.velocity[2] = ( oldupvelocity + pm_failedwjupspeed > pm_failedwjupspeed ) ? oldupvelocity : oldupvelocity + pm_failedwjupspeed;
-				} else {
-					GS_ClipVelocity( pml.velocity, normal, pml.velocity, 1.0005f );
-					VectorMA( pml.velocity, pm_wjbouncefactor, normal, pml.velocity );
-
-					if( hspeed < pm_wjminspeed ) {
-						hspeed = pm_wjminspeed;
-					}
-
-					VectorNormalize( pml.velocity );
-
-					VectorScale( pml.velocity, hspeed, pml.velocity );
-					pml.velocity[2] = ( oldupvelocity > pm_wjupspeed ) ? oldupvelocity : pm_wjupspeed; // jal: if we had a faster upwards speed, keep it
+				if( hspeed < pm_wjminspeed ) {
+					hspeed = pm_wjminspeed;
 				}
+
+				VectorNormalize( pml.velocity );
+
+				VectorScale( pml.velocity, hspeed, pml.velocity );
+				pml.velocity[2] = ( oldupvelocity > pm_wjupspeed ) ? oldupvelocity : pm_wjupspeed; // jal: if we had a faster upwards speed, keep it
 
 				// set the walljumping state
 				PM_ClearDash();
@@ -1260,18 +1245,11 @@ static void PM_CheckWallJump( void ) {
 
 				pm->playerState->pmove.pm_flags |= PMF_WALLJUMPCOUNT;
 
-				if( pm->playerState->pmove.stats[PM_STAT_STUN] > 0 ) {
-					pm->playerState->pmove.stats[PM_STAT_WJTIME] = PM_WALLJUMP_FAILED_TIMEDELAY;
+				pm->playerState->pmove.stats[PM_STAT_WJTIME] = PM_WALLJUMP_TIMEDELAY;
+				pm->playerState->pmove.skim_time = PM_SKIM_TIME;
 
-					// Create the event
-					gs.api.PredictedEvent( pm->playerState->POVnum, EV_WALLJUMP_FAILED, DirToByte( normal ) );
-				} else {
-					pm->playerState->pmove.stats[PM_STAT_WJTIME] = PM_WALLJUMP_TIMEDELAY;
-					pm->playerState->pmove.skim_time = PM_SKIM_TIME;
-
-					// Create the event
-					gs.api.PredictedEvent( pm->playerState->POVnum, EV_WALLJUMP, DirToByte( normal ) );
-				}
+				// Create the event
+				gs.api.PredictedEvent( pm->playerState->POVnum, EV_WALLJUMP, DirToByte( normal ) );
 			}
 		}
 	} else {
@@ -1748,12 +1726,6 @@ void Pmove( pmove_t *pmove ) {
 			pm->playerState->pmove.stats[PM_STAT_NOAUTOATTACK] = 0;
 		}
 
-		if( pm->playerState->pmove.stats[PM_STAT_STUN] > 0 ) {
-			pm->playerState->pmove.stats[PM_STAT_STUN] -= pm->cmd.msec;
-		} else if( pm->playerState->pmove.stats[PM_STAT_STUN] < 0 ) {
-			pm->playerState->pmove.stats[PM_STAT_STUN] = 0;
-		}
-
 		if( pm->playerState->pmove.stats[PM_STAT_FWDTIME] > 0 ) {
 			pm->playerState->pmove.stats[PM_STAT_FWDTIME] -= pm->cmd.msec;
 		} else if( pm->playerState->pmove.stats[PM_STAT_FWDTIME] < 0 ) {
@@ -1783,8 +1755,6 @@ void Pmove( pmove_t *pmove ) {
 			PM_ClearDash();
 
 			PM_ClearWallJump();
-
-			PM_ClearStun();
 
 			pm->playerState->pmove.stats[PM_STAT_KNOCKBACK] = 0;
 			pm->playerState->pmove.stats[PM_STAT_CROUCHTIME] = 0;

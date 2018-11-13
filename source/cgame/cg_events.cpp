@@ -1038,24 +1038,15 @@ void CG_Event_WallJump( entity_state_t *state, int parm, int ev ) {
 		CG_PModel_AddAnimation( state->number, LEGS_WALLJUMP, 0, 0, EVENT_CHANNEL );
 	}
 
-	if( ev == EV_WALLJUMP_FAILED ) {
-		if( ISVIEWERENTITY( state->number ) ) {
-			trap_S_StartGlobalSound( CG_MediaSfx( cgs.media.sfxWalljumpFailed ), CHAN_BODY,
-									 cg_volume_effects->value );
-		} else {
-			trap_S_StartRelativeSound( CG_MediaSfx( cgs.media.sfxWalljumpFailed ), state->number, CHAN_BODY, cg_volume_effects->value, ATTN_NORM );
-		}
-	} else {
-		CG_SexedSound( state->number, CHAN_BODY, va( S_PLAYER_WALLJUMP_1_to_2, ( rand() & 1 ) + 1 ),
-					   cg_volume_players->value, state->attenuation );
+	CG_SexedSound( state->number, CHAN_BODY, va( S_PLAYER_WALLJUMP_1_to_2, ( rand() & 1 ) + 1 ),
+				   cg_volume_players->value, state->attenuation );
 
-		// smoke effect
-		if( cg_cartoonEffects->integer & 1 ) {
-			vec3_t pos;
-			VectorCopy( state->origin, pos );
-			pos[2] += 15;
-			CG_DustCircle( pos, normal, 65, 12 );
-		}
+	// smoke effect
+	if( cg_cartoonEffects->integer & 1 ) {
+		vec3_t pos;
+		VectorCopy( state->origin, pos );
+		pos[2] += 15;
+		CG_DustCircle( pos, normal, 65, 12 );
 	}
 }
 
@@ -1274,7 +1265,6 @@ void CG_EntityEvent( entity_state_t *ent, int ev, int parm, bool predicted ) {
 			break;
 
 		case EV_WALLJUMP:
-		case EV_WALLJUMP_FAILED:
 			CG_Event_WallJump( ent, parm, ev );
 			break;
 
