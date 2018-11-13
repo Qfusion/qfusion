@@ -21,6 +21,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "snd_local.h"
 #include "snd_cmdque.h"
 
+#include "openal/alext.h"
+
 ALCdevice *alDevice = NULL;
 ALCcontext *alContext = NULL;
 
@@ -190,7 +192,8 @@ static bool S_Init( int maxEntities, bool verbose ) {
 	}
 
 	// Create context
-	alContext = alcCreateContext( alDevice, NULL );
+	ALCint attrs[] = { ALC_HRTF_SOFT, ALC_HRTF_ENABLED_SOFT, 0 };
+	alContext = alcCreateContext( alDevice, attrs );
 	if( !alContext ) {
 		Com_Printf( "Failed to create context\n" );
 		return false;
