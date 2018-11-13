@@ -598,7 +598,7 @@ void GT_PlayerRespawn( Entity @ent, int old_team, int new_team )
 			bombDrop( BOMBDROP_TEAM );
 		}
 
-		if ( !gametype.isInstagib )
+		if ( !gametype.isInstagib && old_team != TEAM_SPECTATOR && new_team != TEAM_SPECTATOR )
 		{
 			player.showPrimarySelection();
 		}
