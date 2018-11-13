@@ -1081,7 +1081,6 @@ void CG_Init( const char *serverName, unsigned int playerNum,
 	cgs.snapFrameTime = snapFrameTime;
 
 	cgs.hasGametypeMenu = false; // this will update as soon as we receive configstrings
-	cgs.gameMenuRequested = !gameStart;
 
 	CG_asInitScriptEngine();
 

@@ -454,7 +454,6 @@ typedef struct {
 	bool demoPlaying;
 	bool demoTutorial;
 	bool pure;
-	bool gameMenuRequested;
 	int gameProtocol;
 	char demoExtension[MAX_QPATH];
 	unsigned snapFrameTime;
