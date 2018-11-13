@@ -146,7 +146,7 @@ extern "C" {
 // weapon firing
 #define PATH_SMOKE_PUFF         "smokePuff"
 
-#define PATH_UKNOWN_MAP_PIC             "gfx/ui/unknownmap"
+#define PATH_UKNOWN_MAP_PIC             "levelshots/unknownmap"
 
 //
 //
