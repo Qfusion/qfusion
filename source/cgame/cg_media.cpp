@@ -62,8 +62,6 @@ void CG_RegisterMediaSounds( void ) {
 
 	sfx_headnode = NULL;
 
-	cgs.media.sfxChat = CG_RegisterMediaSfx( S_CHAT );
-
 	for( i = 0; i < 2; i++ )
 		cgs.media.sfxRic[i] = CG_RegisterMediaSfx( va( "sounds/weapons/ric%i", i + 1 ) );
 
@@ -126,7 +124,7 @@ void CG_RegisterMediaSounds( void ) {
 	cgs.media.sfxQuadFireSound = CG_RegisterMediaSfx( S_QUAD_FIRE );
 
 	// VSAY sounds
-	cgs.media.sfxVSaySounds[VSAY_GENERIC] = CG_RegisterMediaSfx( S_CHAT );
+	cgs.media.sfxVSaySounds[VSAY_GENERIC] = CG_RegisterMediaSfx( S_VSAY_GOODGAME );
 	cgs.media.sfxVSaySounds[VSAY_NEEDHEALTH] = CG_RegisterMediaSfx( S_VSAY_NEEDHEALTH );
 	cgs.media.sfxVSaySounds[VSAY_NEEDWEAPON] = CG_RegisterMediaSfx( S_VSAY_NEEDWEAPON );
 	cgs.media.sfxVSaySounds[VSAY_NEEDARMOR] = CG_RegisterMediaSfx( S_VSAY_NEEDARMOR );

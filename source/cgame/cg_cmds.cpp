@@ -56,10 +56,6 @@ static void CG_SC_ChatPrint( void ) {
 	} else {
 		CG_LocalPrint( "%s" S_COLOR_GREEN ": %s\n", name, text );
 	}
-
-	if( cg_chatBeep->value > 0 ) {
-		trap_S_StartLocalSound( CG_MediaSfx( cgs.media.sfxChat ), CHAN_AUTO, cg_chatBeep->value );
-	}
 }
 
 /*

@@ -255,7 +255,6 @@ extern "C" {
 #define S_ITEM_REGEN_RESPAWN    "sounds/items/regen_spawn"        // Regen respawn
 
 // misc sounds
-#define S_CHAT          "sounds/misc/chat"
 #define S_TIMER_BIP_BIP     "sounds/misc/timer_bip_bip"
 #define S_TIMER_PLOINK      "sounds/misc/timer_ploink"
 
