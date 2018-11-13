@@ -260,7 +260,7 @@ static VideoMode VID_MakeVideoMode() {
 	VideoMode mode;
 	mode.width = w;
 	mode.height = h;
-	mode.frequency = 144; // TODO
+	mode.frequency = vid_displayfrequency->integer;
 	mode.fullscreen = FullScreenMode_Windowed;
 	if( vid_fullscreen->integer )
 		mode.fullscreen = vid_borderless->integer ? FullScreenMode_FullscreenBorderless : FullScreenMode_Fullscreen;
@@ -346,20 +346,36 @@ void VID_Init() {
 
 	/* Cvar_GetLatchedVars( CVAR_LATCH_VIDEO ); */
 
-	// if they haven't set vid_width/vid_height set them to the default
+	// if they haven't set vid_width/vid_height just make it fullscreen
+	bool unset = false;
 	if( vid_width->integer <= 0 || vid_height->integer <= 0 ) {
-		VideoMode def = VID_GetDefaultVideoMode();
+		Cvar_ForceSet( vid_fullscreen->name, "1" );
+		unset = true;
+	}
+
+	VideoMode mode = VID_MakeVideoMode();
+	VID_WindowInit( mode, 8 );
+
+	if( unset ) {
+		VideoMode def = VID_GetCurrentVideoMode();
+
+		Cvar_ForceSet( vid_fullscreen->name, def.fullscreen == FullScreenMode_Windowed ? "0" : "1" );
+		if( vid_fullscreen->integer ) {
+			Cvar_ForceSet( vid_borderless->name, def.fullscreen == FullScreenMode_Fullscreen ? "0" : "1" );
+		}
 
 		char buf[ 16 ];
 		Q_snprintfz( buf, sizeof( buf ), "%i", def.width );
 		Cvar_ForceSet( vid_width->name, buf );
 		Q_snprintfz( buf, sizeof( buf ), "%i", def.height );
 		Cvar_ForceSet( vid_height->name, buf );
+		Q_snprintfz( buf, sizeof( buf ), "%i", def.frequency );
+		Cvar_ForceSet( vid_displayfrequency->name, buf );
+
+		mode = def;
 	}
 
-	VideoMode mode = VID_MakeVideoMode();
 	Retarded_SetWindowSize( mode.width, mode.height ); // TODO: this should get the window size
-	VID_WindowInit( mode, 8 );
 
 	if( !VID_LoadRefresh() ) {
 		Sys_Error( "Failed to load renderer" );
