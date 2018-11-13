@@ -1,6 +1,6 @@
 project(${QFUSION_CLIENT_NAME})
 
-include_directories(${ZLIB_INCLUDE_DIR} ${CURL_INCLUDE_DIR} ${SDL2_INCLUDE_DIR} ${CURL_INCLUDE_DIR} ${ZLIB_INCLUDE_DIR} ${FREETYPE_INCLUDE_DIRS})
+include_directories(${ZLIB_INCLUDE_DIR} "../../libs" ${FREETYPE_INCLUDE_DIRS})
 
 if (NOT QFUSION_MAC_ICON)
 	set(QFUSION_MAC_ICON ../../icons/qfusion.icns)
@@ -68,43 +68,11 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 		"../win32/qfusion.rc"
 		)
 
-	set(CLIENT_PLATFORM_LIBRARIES ${SDL2_LIBRARY} ${SDL2MAIN_LIBRARY} ${FREETYPE_LIBRARY} "kernel32.lib" "ws2_32.lib" "winmm.lib")
+	set(CLIENT_PLATFORM_LIBRARIES ${SDL2_LIBRARY} ${SDL2MAIN_LIBRARY} ${FREETYPE_LIBRARY} "kernel32.lib" "ws2_32.lib" "winmm.lib" "version.lib" "imm32.lib")
 
 	set(CLIENT_BINARY_TYPE WIN32)
 
 	set(BUNDLE_RESOURCES "")
-endif()
-
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-	set(CLIENT_PLATFORM_HEADERS "")
-
-	file(GLOB CLIENT_PLATFORM_SOURCES
-		"../unix/unix_fs.c"
-		"../unix/unix_net.c"
-		"../unix/unix_sys.c"
-		"../unix/unix_console.c"
-		"../unix/unix_threads.c"
-		"../null/sys_vfs_null.c"
-
-		"../sdl/sdl_input_osx.m"
-
-		"../mac/mac_sys.m"
-		"${QFUSION_MAC_INFO_PLIST}"
-		)
-
-	set(CLIENT_PLATFORM_LIBRARIES ${SDL2_LIBRARY} "-framework IOKit" "-framework Cocoa")
-	set(CLIENT_BINARY_TYPE MACOSX_BUNDLE)
-
-	set(BUNDLE_RESOURCES
-		../../libsrcs/lib/mac/Frameworks
-		${QFUSION_MAC_ICON}
-		)
-	if (QFUSION_DATA_DIR)
-		list(APPEND BUNDLE_RESOURCES
-			${QFUSION_DATA_DIR}/${QFUSION_GAME_DIR}
-			${QFUSION_DATA_DIR}/docs
-			)
-	endif()
 endif()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
@@ -126,7 +94,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 endif()
 
 add_executable(${QFUSION_CLIENT_NAME} ${CLIENT_BINARY_TYPE} ${CLIENT_HEADERS} ${CLIENT_PLATFORM_HEADERS} ${CLIENT_COMMON_SOURCES} ${CLIENT_PLATFORM_SOURCES} ${BUNDLE_RESOURCES})
-add_dependencies(${QFUSION_CLIENT_NAME} angelwrap cgame game snd_openal snd_qf steamlib ui)
+add_dependencies(${QFUSION_CLIENT_NAME} angelwrap cgame game snd_openal steamlib ui)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 	set_target_properties(${QFUSION_CLIENT_NAME} PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${QFUSION_MAC_INFO_PLIST})

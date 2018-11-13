@@ -50,7 +50,7 @@ FIXME:  This will be remidied once a native Mac port is complete
 #include "../qcommon/qcommon.h"
 #include "glob.h"
 
-#if !defined( USE_SDL2 ) || defined( DEDICATED_ONLY )
+#if defined( DEDICATED_ONLY )
 
 int64_t sys_frame_time;
 
@@ -198,7 +198,7 @@ void Sys_SendKeyEvents( void ) {
 	sys_frame_time = Sys_Milliseconds();
 }
 
-#endif // !defined(USE_SDL2) || defined(DEDICATED_ONLY)
+#endif defined(DEDICATED_ONLY)
 
 #ifndef __APPLE__
 /*
@@ -237,7 +237,7 @@ const char *Sys_GetPreferredLanguage( void ) {
 	return APP_DEFAULT_LANGUAGE;
 }
 
-#if !defined( USE_SDL2 ) || defined( DEDICATED_ONLY )
+#if defined( DEDICATED_ONLY )
 
 /*
 * Sys_AcquireWakeLock
@@ -293,4 +293,4 @@ int main( int argc, char **argv ) {
 #endif
 }
 
-#endif // !defined(USE_SDL2) || defined(DEDICATED_ONLY)
+#endif // defined(DEDICATED_ONLY)

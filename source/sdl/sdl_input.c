@@ -1,4 +1,4 @@
-#include <SDL.h>
+#include "sdl/SDL.h"
 #include "../client/client.h"
 #include "sdl_input_joy.h"
 

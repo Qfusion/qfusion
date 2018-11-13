@@ -21,8 +21,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
 
-#ifndef __QAL_H__
-#define __QAL_H__
+#pragma once
 
 #ifdef OPENAL_RUNTIME
 #define AL_NO_PROTOTYPES
@@ -33,8 +32,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include <OpenAL/al.h>
 #include <OpenAL/alc.h>
 #else
-#include <al.h>
-#include <alc.h>
+#include "openal/al.h"
+#include "openal/alc.h"
 #endif
 
 #ifdef OPENAL_RUNTIME
@@ -231,5 +230,3 @@ extern LPALCCAPTURESAMPLES qalcCaptureSamples;
 
 bool QAL_Init( const char *libname, bool verbose );
 void QAL_Shutdown( void );
-
-#endif  // __QAL_H__

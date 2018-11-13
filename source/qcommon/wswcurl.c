@@ -15,7 +15,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <time.h>
-#include <curl/curl.h>
+#include "curl/curl.h"
 #ifdef USE_OPENSSL
 #include <openssl/crypto.h>
 #endif

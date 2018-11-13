@@ -37,7 +37,7 @@ QF_DLL_EXPORT DWORD NvOptimusEnablement = 0x00000001;
 QF_DLL_EXPORT int AmdPowerXpressRequestHighPerformance = 1;
 #endif
 
-#if !defined( USE_SDL2 ) || defined( DEDICATED_ONLY )
+#if defined( DEDICATED_ONLY )
 
 int starttime;
 int ActiveApp;
@@ -174,7 +174,7 @@ void Sys_SendKeyEvents( void ) {
 	}
 }
 
-#endif // !defined(USE_SDL2) || defined(DEDICATED_ONLY)
+#endif // defined(DEDICATED_ONLY)
 
 /*
 * Sys_IsBrowserAvailable
@@ -205,7 +205,7 @@ const char *Sys_GetPreferredLanguage( void ) {
 	return APP_DEFAULT_LANGUAGE;
 }
 
-#if !defined( USE_SDL2 ) || defined( DEDICATED_ONLY )
+#if defined( DEDICATED_ONLY )
 
 /*
 * Sys_AcquireWakeLock
@@ -320,4 +320,4 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	return TRUE;
 }
 
-#endif // !defined(USE_SDL2) || defined(DEDICATED_ONLY)
+#endif // defined(DEDICATED_ONLY)

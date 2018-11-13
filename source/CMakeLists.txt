@@ -16,8 +16,12 @@ set(QFUSION_SERVER_NAME server)
 set(QFUSION_MAC_ICON ../../icons/warsow.icns)
 set(QFUSION_MAC_INFO_PLIST ../mac/Warsow-Info.plist)
 
+if (NOT CMAKE_BUILD_TYPE)
+	set(CMAKE_BUILD_TYPE "Debug")
+endif()
+
 if (CMAKE_BUILD_TYPE STREQUAL "Release")
-	ADD_DEFINITIONS(-DPUBLIC_BUILD)
+	add_definitions(-DPUBLIC_BUILD)
 endif()
 
 option(GAME_MODULES_ONLY "Only build game modules" OFF)
@@ -36,26 +40,25 @@ set(LIBROCKET_SOURCE_DIR ${LIBROCKET_DIR}/Source)
 set(NANOSVG_DIR ${CMAKE_HOME_DIRECTORY}/../third-party/nanosvg)
 set(NANOSVG_INCLUDE_DIR ${NANOSVG_DIR}/src)
 
+add_definitions(-DCURL_STATICLIB)
+
 # Windows specific settings
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-	set(QFUSION_WINDOWS_ARCH "x64")
+	add_definitions(-D_CRT_SECURE_NO_WARNINGS -DWIN32 -D_WINDOWS)
 
 	set(CMAKE_INCLUDE_PATH
 		"../libsrcs/src/libogg"
 		"../libsrcs/src/libvorbis"
-		"../libsrcs/src/libcurl/include"
 		"../libsrcs/src/zlib"
 		"../libsrcs/src/libfreetype"
-		"../libsrcs/src/SDL2/include"
-		"../libsrcs/src/OpenAL-MOB/include/AL"
 		)
 
-	add_definitions(-D_CRT_SECURE_NO_WARNINGS -DCURL_STATICLIB -DWIN32 -D_WINDOWS)
-
-	if (MSVC)
-		set(CMAKE_LIBRARY_PATH "../libsrcs/lib/win32/${QFUSION_WINDOWS_ARCH}/debug")
+	if (CMAKE_BUILD_TYPE STREQUAL "Release")
+		set(LIBS_ARCH "windows-release")
+		set(CMAKE_LIBRARY_PATH "../libsrcs/lib/win32/x64/release")
 	else()
-		set(CMAKE_LIBRARY_PATH "../libsrcs/lib/win32/${QFUSION_WINDOWS_ARCH}/mingw")
+		set(LIBS_ARCH "windows-debug")
+		set(CMAKE_LIBRARY_PATH "../libsrcs/lib/win32/x64/debug")
 	endif()
 
 	if (MSVC)
@@ -72,63 +75,37 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 	endif()
 endif()
 
-# OS X specific settings
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-	set(CMAKE_OSX_ARCHITECTURES "$(ARCHS_STANDARD_64_BIT)")        # Compile only 64-bit version
-	set(CMAKE_OSX_SYSROOT "macosx")                                # Compile with latest available OS X sdk
-	set(CMAKE_XCODE_ATTRIBUTE_MACOSX_DEPLOYMENT_TARGET "10.8")     # Use 10.8 as deployment target
-	set(CMAKE_XCODE_ATTRIBUTE_GCC_C_LANGUAGE_STANDARD "gnu99")     # Use GNU99 standart for compiling C files
-	set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++11") # Use C++11 standart for compiling C++ files
-	set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libc++")          # Use modern libc++ instead of libstdc++
-	set(CMAKE_FRAMEWORK_PATH "../libsrcs/lib/mac/Frameworks")
-	set(CMAKE_MACOSX_RPATH 1)
-
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wno-unused-function -fvisibility=hidden -Winvalid-pch")
-	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 -D_DEBUG")
-	set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -fno-strict-aliasing -ffast-math -funroll-loops -msse2")
-
-	set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS}")
-	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
-	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
-endif()
-
 # Linux or mingw specific settings
-if (${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR MINGW)
-	# If no build type was specified - use release build settings
-	if (NOT CMAKE_BUILD_TYPE)
-		set(CMAKE_BUILD_TYPE "Release")
-	endif()
-
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 	add_definitions(-D_LARGEFILE64_SOURCE -D_LARGEFILE_SOURCE)
 
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pipe -Wall -Wno-unused-function -Werror=implicit-function-declaration -fvisibility=hidden -Winvalid-pch")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pipe -Wall -Wno-unused-function -Werror=implicit-function-declaration -fvisibility=hidden -fno-strict-aliasing -Winvalid-pch")
 	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 -D_DEBUG")
-	set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -fno-strict-aliasing -ffast-math -funroll-loops -msse2 -O2")
+	set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -ffast-math -msse2 -O2")
 
-	if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-		set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -std=c++11")
-	else()
-		set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -std=c++11")
-	endif()
-
+	set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -std=c++11")
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
 	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
 
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99 -D_POSIX_C_SOURCE=200112L -D_XOPEN_SOURCE=500")
+
+	if (CMAKE_BUILD_TYPE STREQUAL "Release")
+		set(LIBS_ARCH "linux-release")
+	else()
+		set(LIBS_ARCH "linux-debug")
+	endif()
 
 	# -Wl,--as-needed
 	add_common_link_flags("-Wl,--as-needed")
 
 	# -s in release link flags
 	add_release_link_flags("-s")
-
-	if (MINGW)
-		add_definitions(-D_WIN32_WINNT=_WIN32_WINNT_VISTA)
-		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-unknown-pragmas")
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unknown-pragmas")
-		add_common_link_flags("-static -static-libgcc -static-libstdc++")
-	endif()
 endif()
+
+set(CURL_LIBRARY "../../libs/curl/${LIBS_ARCH}/${CMAKE_STATIC_LIB_PREFIX}curl${CMAKE_STATIC_LIB_SUFFIX}")
+set(SDL2_LIBRARY "../../libs/sdl/${LIBS_ARCH}/${CMAKE_STATIC_LIB_PREFIX}SDL2${CMAKE_STATIC_LIB_SUFFIX}")
+set(SDL2MAIN_LIBRARY "../../libs/sdl/${LIBS_ARCH}/${CMAKE_STATIC_LIB_PREFIX}SDL2main${CMAKE_STATIC_LIB_SUFFIX}")
+set(OPENAL_LIBRARY "../../libs/openal/${LIBS_ARCH}/${CMAKE_STATIC_LIB_PREFIX}openal${CMAKE_STATIC_LIB_SUFFIX}")
 
 # Linux-only specific settings
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
@@ -152,21 +129,17 @@ endif()
 
 if (NOT GAME_MODULES_ONLY)
 	find_package(ZLIB REQUIRED)
-	find_package(CURL REQUIRED)
 
 	if (NOT SERVER_ONLY)
 		find_package(Ogg REQUIRED)
 		find_package(Vorbis REQUIRED)
 		find_package(Freetype REQUIRED)
-		find_package(OpenAL)
-		find_package(SDL2 REQUIRED)
-		add_definitions(-DUSE_SDL2)
 	endif()
 endif()
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR MINGW)
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 	if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-		STRING(TOLOWER "win32_${QFUSION_WINDOWS_ARCH}.tar.gz" TAR_GZ_NAME)
+		STRING(TOLOWER "win32_x64.tar.gz" TAR_GZ_NAME)
 	else()
 		STRING(TOLOWER "${CMAKE_SYSTEM_NAME}_${CMAKE_SYSTEM_PROCESSOR}.tar.gz" TAR_GZ_NAME)
 	endif()
@@ -182,21 +155,16 @@ endif()
 if (NOT GAME_MODULES_ONLY)
 	if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 		find_windows_release_libs(ZLIB_LIBRARY)
-		find_windows_release_libs(CURL_LIBRARY)
 		find_windows_release_libs(ANGELSCRIPT_LIBRARY)
 		if (NOT SERVER_ONLY)
 			find_windows_release_libs(FREETYPE_LIBRARIES)
 			find_windows_release_libs(OGG_LIBRARY)
 			find_windows_release_libs(VORBIS_LIBRARIES)
-			find_windows_release_libs(SDL2_LIBRARIES)
 		endif()
 	endif()
 endif()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux") # Do not add 'OR MINGW' here - we need to use suffix-prefix settings from Windows
-	set(CURL_LIBRARY "")
-	add_definitions(-DLIBCURL_RUNTIME)
-
 	set(OGG_LIBRARY "")
 	add_definitions(-DOGGLIB_RUNTIME)
 
@@ -210,12 +178,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux") # Do not add 'OR MINGW' here - we need
 	add_definitions(-DZLIB_RUNTIME)
 endif()
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-	set(CMAKE_SHARED_LIBRARY_SUFFIX "_mac${CMAKE_SHARED_LIBRARY_SUFFIX}")
-
-	capitalize(QFUSION_CLIENT_NAME)
-endif()
-
 add_subdirectory(angelwrap)
 add_subdirectory(cgame)
 add_subdirectory(game)
@@ -225,7 +187,6 @@ if (NOT GAME_MODULES_ONLY)
 
 	if (NOT SERVER_ONLY)
 		add_subdirectory(snd_openal)
-		add_subdirectory(snd_qf)
 		add_subdirectory(ui)
 		add_subdirectory(steamlib)
 		add_subdirectory(client)

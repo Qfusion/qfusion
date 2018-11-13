@@ -110,13 +110,8 @@ extern "C" {
 #define LIB_PREFIX ""
 #define LIB_SUFFIX ".dll"
 
-#define OPENAL_RUNTIME
-
 // FIXME: move these to CMakeLists.txt
 #define LIBZ_LIBNAME "zlib1.dll"
-#define LIBCURL_LIBNAME "libcurl-4.dll|libcurl-3.dll"
-#define LIBPNG_LIBNAME "libpng16.dll|libpng16-16.dll|libpng15-15.dll|libpng15.dll|libpng14-14.dll|libpng14.dll|libpng12.dll"
-#define LIBJPEG_LIBNAME "libjpeg.dll"
 #define LIBOGG_LIBNAME "libogg-0.dll|libogg.dll"
 #define LIBVORBIS_LIBNAME "libvorbis-0.dll|libvorbis.dll|vorbis.dll"
 #define LIBVORBISFILE_LIBNAME "libvorbisfile-3.dll|libvorbisfile.dll|vorbisfile.dll"
@@ -165,13 +160,8 @@ typedef uintptr_t socket_handle_t;
 #define LIB_PREFIX "lib"
 #define LIB_SUFFIX ".so"
 
-#define OPENAL_RUNTIME
-
 // FIXME: move these to CMakeLists.txt
 #define LIBZ_LIBNAME "libz.so.1|libz.so"
-#define LIBCURL_LIBNAME "libcurl.so.4|libcurl.so.3|libcurl.so"
-#define LIBPNG_LIBNAME "libpng16.so.16|libpng15.so.15|libpng14.so.14|libpng12.so.0|libpng.so"
-#define LIBJPEG_LIBNAME "libjpeg.so.8|libjpeg.so"
 #define LIBOGG_LIBNAME "libogg.so.0|libogg.so"
 #define LIBVORBIS_LIBNAME "libvorbis.so.0|libvorbis.so"
 #define LIBVORBISFILE_LIBNAME "libvorbisfile.so.3|libvorbisfile.so"
