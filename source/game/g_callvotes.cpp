@@ -1807,10 +1807,10 @@ void G_CallVotes_ResetClient( int n ) {
 /*
 * G_CallVotes_Reset
 */
-void G_CallVotes_Reset( void ) {
+static void G_CallVotes_Reset( bool vote_happened ) {
 	int i;
 
-	if( callvoteState.vote.caller && callvoteState.vote.caller->r.client ) {
+	if( vote_happened && callvoteState.vote.caller && callvoteState.vote.caller->r.client ) {
 		callvoteState.vote.caller->r.client->level.callvote_when = game.realtime;
 	}
 
@@ -1943,7 +1943,7 @@ static void G_CallVotes_CheckState( void ) {
 		G_AnnouncerSound( NULL, trap_SoundIndex( va( S_ANNOUNCER_CALLVOTE_FAILED_1_to_2, ( rand() & 1 ) + 1 ) ), GS_MAX_TEAMS, true, NULL );
 		G_PrintMsg( NULL, "Vote is no longer valid\nVote %s%s%s canceled\n", S_COLOR_YELLOW,
 					G_CallVotes_String( &callvoteState.vote ), S_COLOR_WHITE );
-		G_CallVotes_Reset();
+		G_CallVotes_Reset( true );
 		return;
 	}
 
@@ -1989,7 +1989,7 @@ static void G_CallVotes_CheckState( void ) {
 		if( callvoteState.vote.callvote->execute != NULL ) {
 			callvoteState.vote.callvote->execute( &callvoteState.vote );
 		}
-		G_CallVotes_Reset();
+		G_CallVotes_Reset( true );
 		return;
 	}
 
@@ -1998,7 +1998,7 @@ static void G_CallVotes_CheckState( void ) {
 		G_AnnouncerSound( NULL, trap_SoundIndex( va( S_ANNOUNCER_CALLVOTE_FAILED_1_to_2, ( rand() & 1 ) + 1 ) ), GS_MAX_TEAMS, true, NULL );
 		G_PrintMsg( NULL, "Vote %s%s%s failed\n", S_COLOR_YELLOW,
 					G_CallVotes_String( &callvoteState.vote ), S_COLOR_WHITE );
-		G_CallVotes_Reset();
+		G_CallVotes_Reset( true );
 		return;
 	}
 
@@ -2224,7 +2224,7 @@ static void G_CallVote( edict_t *ent, bool isopcall ) {
 	//validate if there's a validation func
 	if( callvote->validate != NULL && !callvote->validate( &callvoteState.vote, true ) ) {
 		G_CallVotes_PrintHelpToPlayer( ent, callvote );
-		G_CallVotes_Reset(); // free the args
+		G_CallVotes_Reset( false ); // free the args
 		return;
 	}
 
@@ -2751,7 +2751,7 @@ void G_CallVotes_Init( void ) {
 		trap_Cvar_Get( va( "g_disable_vote_%s", callvote->name ), "0", CVAR_ARCHIVE );
 	}
 
-	G_CallVotes_Reset();
+	G_CallVotes_Reset( true );
 }
 
 /*
