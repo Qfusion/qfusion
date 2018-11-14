@@ -1178,9 +1178,6 @@ void R_RegisterWorldModel( const char *model ) {
 
 	R_TouchModel( rsh.worldModel );
 	rsh.worldBrushModel = ( mbrushmodel_t * )rsh.worldModel->extradata;
-
-	// lazy-compile realtime light shadows
-	r_lighting_realtime_world_shadows->modified = true;
 }
 
 /*
@@ -1203,8 +1200,8 @@ static void R_LoadWorldRtLightsFromMap( model_t *model ) {
 	char *data;
 	char key[MAX_KEY], value[MAX_VALUE], *token;
 	char cubemap[MAX_QPATH];
-	bool islight, shadow, radiusset;
-	int style, flags, noshadow;
+	bool islight, radiusset;
+	int style, flags;
 	float radius;
 	float colorf[3], originf[3], angles[3];
 	mbrushmodel_t *bmodel;
@@ -1225,8 +1222,6 @@ static void R_LoadWorldRtLightsFromMap( model_t *model ) {
 		radiusset = false;
 		radius = 0;
 		style = 0;
-		shadow = true;
-		noshadow = -1;
 		flags = LIGHTFLAG_REALTIMEMODE;
 		VectorSet( colorf, 1, 1, 1 );
 		VectorClear( angles );
@@ -1268,9 +1263,6 @@ static void R_LoadWorldRtLightsFromMap( model_t *model ) {
 				Q_strncpyz( cubemap, value, sizeof( cubemap ) );
 			} else if( !strcmp( key, "angles" ) ) {
 				sscanf( value, "%f %f %f", &angles[0], &angles[1], &angles[2] );
-			} else if( !strcmp( key, "_noshadow" ) ) {
-				noshadow = 0;
-				sscanf( value, "%d", &noshadow );
 			} else if( !strcmp( key, "_rtflags" ) ) {
 				sscanf( value, "%d", &flags );
 			}
@@ -1293,19 +1285,12 @@ static void R_LoadWorldRtLightsFromMap( model_t *model ) {
 			if( style >= MAX_LIGHTSTYLES )
 				style = 0;
 
-			if( noshadow >= 0 ) {
-				shadow = noshadow == 0;
-			} else {
-				shadow = radius >= MAPLIGHT_MIN_SHADOW_RADIUS;
-			}
-
 			AnglesToAxis( angles, axis );
 
 			l = &lights[numLights++];
 			R_InitRtLight( l, originf, axis, radius, colorf );
 
 			l->flags = flags;
-			l->shadow = shadow;
 			l->style = style;
 			l->world = true;
 			l->worldModel = model;
@@ -1373,7 +1358,6 @@ static void R_LoadWorldRtLights( model_t *model ) {
 	n = 0;
 	while( *s ) {
 		int a;
-		bool shadow;
 		int style, flags;
 		float origin[3], radius, color[3], angles[3], corona, coronasizescale, ambientscale, diffusescale, specularscale;
 		mat3_t axis;
@@ -1387,13 +1371,6 @@ static void R_LoadWorldRtLights( model_t *model ) {
 			break;
 
 		tempchar = *s;
-		shadow = true;
-
-		// check for modifier flags
-		if( *t == '!' ) {
-			shadow = false;
-			t++;
-		}
 
 		cubemap[0] = '\0';
 
@@ -1435,7 +1412,6 @@ static void R_LoadWorldRtLights( model_t *model ) {
 		R_InitRtLight( l, origin, axis, radius, color );
 		l->flags = flags;
 		l->style = style;
-		l->shadow = shadow;
 		l->world = true;
 		l->worldModel = model;
 
@@ -1749,7 +1725,6 @@ static void R_LoadWorldRtSkyLights( model_t *model ) {
 
 		l->flags = LIGHTFLAG_REALTIMEMODE;
 		l->style = 0;
-		l->shadow = true;
 		l->world = true;
 		l->worldModel = model;
 		l->sky = true;

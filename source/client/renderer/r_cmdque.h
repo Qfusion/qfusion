@@ -18,8 +18,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#ifndef R_CMDQUEUE_H
-#define R_CMDQUEUE_H
+#pragma once
 
 #include "r_local.h"
 
@@ -50,14 +49,12 @@ typedef struct ref_cmdbuf_s {
 
 	// execution proc
 	void ( *Clear )( struct ref_cmdbuf_s *cmdbuf );
-	void ( *RunCmds )( struct ref_cmdbuf_s *cmdbuf );
 
-	bool sync;            // if true, commands are executes in immediate mode
 	size_t buf_size;
 	uint8_t         *buf;
 } ref_cmdbuf_t;
 
-ref_cmdbuf_t *RF_CreateCmdBuf( bool sync );
+ref_cmdbuf_t *RF_CreateCmdBuf();
 void RF_DestroyCmdBuf( ref_cmdbuf_t **pcmdbuf );
 
 // ==========
@@ -81,15 +78,8 @@ typedef struct ref_cmdpipe_s {
 	void ( *SetGamma )( struct ref_cmdpipe_s *cmdpipe, float gamma );
 	void ( *Fence )( struct ref_cmdpipe_s *cmdpipe );
 
-	int ( *RunCmds )( struct ref_cmdpipe_s *cmdpipe );
-	void ( *WaitForCmds )( struct ref_cmdpipe_s *cmdpipe, unsigned timeout );
-	void ( *FinishCmds )( struct ref_cmdpipe_s *cmdpipe );
-
-	bool sync;            // if true, commands are executes in immediate mode
 	qbufPipe_t      *pipe;
 } ref_cmdpipe_t;
 
-ref_cmdpipe_t *RF_CreateCmdPipe( bool sync );
+ref_cmdpipe_t *RF_CreateCmdPipe();
 void RF_DestroyCmdPipe( ref_cmdpipe_t **pcmdpipe );
-
-#endif // R_CMDQUEUE_H

@@ -203,7 +203,6 @@ void R_AddLightToScene( const vec3_t org, float intensity, float r, float g, flo
 	dl = &rsc.dlights[rsc.numDlights];
 	R_InitRtLight( dl, org, axis_identity, intensity * DLIGHT_SCALE, color );
 	dl->worldModel = rsh.worldModel;
-	dl->shadow = dl->intensity >= DLIGHT_MIN_SHADOW_RADIUS;
 
 	rsc.numDlights++;
 }
@@ -327,28 +326,6 @@ void R_RenderScene( const refdef_t *fd ) {
 		if( rsc.worldModelSequence != rsh.worldModelSequence ) {
 			rsc.frameCount = !rsc.frameCount;
 			rsc.worldModelSequence = rsh.worldModelSequence;
-		}
-
-		// FIXME: find a better place for this
-		if( rsh.worldBrushModel ) {
-			bool skyUpdated = R_UpdateWorldRtSkyLights( rsh.worldModel );
-
-			if( r_lighting_realtime_world->modified || r_lighting_realtime_world_shadows->modified || skyUpdated ) {
-				if( r_lighting_realtime_world_shadows->integer ) {
-					unsigned i;
-
-					for( i = 0; i < rsh.worldBrushModel->numRtLights; i++ ) {
-						R_CompileRtLight( rsh.worldBrushModel->rtLights + i );
-					}
-
-					for( i = 0; i < rsh.worldBrushModel->numRtSkyLights; i++ ) {
-						R_CompileRtLight( rsh.worldBrushModel->rtSkyLights + i );
-					}
-				}
-			}
-
-			r_lighting_realtime_world->modified = false;
-			r_lighting_realtime_world_shadows->modified = false;
 		}
 	}
 

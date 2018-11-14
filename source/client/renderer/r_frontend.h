@@ -27,13 +27,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // sync-to-async frontend adapter
 typedef struct {
 	void            *owner;             // pointer to parent ref_frontend_t
-	void            *GLcontext;
 	unsigned        frameNum;
-	qthread_t       *thread;
-	qmutex_t        *frameLock;
 	ref_cmdpipe_t   *cmdPipe;
 	volatile bool   shutdown;
-	volatile bool   noWait;
 } ref_frontendAdapter_t;
 
 typedef struct {
@@ -93,7 +89,6 @@ void RF_TransformVectorToScreen( const refdef_t *rd, const vec3_t in, vec2_t out
 bool RF_LerpTag( orientation_t *orient, const model_t *mod, int oldframe, int frame, float lerpfrac, const char *name );
 void RF_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t diffuse, float radius );
 shader_t *RF_GetShaderForOrigin( const vec3_t origin );
-void RF_Finish( void );
 
 /**
 * Called by UI when it wants to set the current transform matrix to a new matrix

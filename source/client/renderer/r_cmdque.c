@@ -295,10 +295,8 @@ static void RF_IssueAbstractCmd( ref_cmdbuf_t *cmdbuf, void *cmd, size_t struct_
 	memcpy( cmdbuf->buf + cmdbuf->len, cmd, struct_len );
 	cmdbuf->len += cmd_len;
 
-	if( cmdbuf->sync ) {
-		int id = *( (int *)cmd );
-		refCmdHandlers[id]( (uint8_t *)cmd );
-	}
+	int id = *( (int *)cmd );
+	refCmdHandlers[id]( (uint8_t *)cmd );
 }
 
 static void RF_IssueBeginFrameCmd( ref_cmdbuf_t *cmdbuf ) {
@@ -563,47 +561,14 @@ void RF_IssuePopProjectionMatrixCmd( struct ref_cmdbuf_s *cmdbuf, bool projectio
 
 // ============================================================================
 
-static void RF_RunCmdBufProc( ref_cmdbuf_t *cmdbuf ) {
-	size_t t, e;
-
-	if( cmdbuf->sync ) {
-		return;
-	}
-
-	assert( cmdbuf->len <= cmdbuf->buf_size );
-
-	e = cmdbuf->len;
-	if( e > cmdbuf->buf_size ) {
-		e = cmdbuf->buf_size;
-	}
-
-	for( t = 0; t < e; ) {
-		uint8_t *cmd = cmdbuf->buf + t;
-		int id = *(int *)cmd;
-
-		if( id < 0 || id >= NUM_REF_CMDS ) {
-			break;
-		}
-
-		size_t len = refCmdHandlers[id]( cmd );
-
-		if( len == 0 ) {
-			break;
-		}
-
-		t += len;
-	}
-}
-
 static void RF_ClearCmdBuf( ref_cmdbuf_t *cmdbuf ) {
 	cmdbuf->len = 0;
 }
 
-ref_cmdbuf_t *RF_CreateCmdBuf( bool sync ) {
+ref_cmdbuf_t *RF_CreateCmdBuf() {
 	ref_cmdbuf_t *cmdbuf;
 
 	cmdbuf = R_Malloc( sizeof( *cmdbuf ) );
-	cmdbuf->sync = sync;
 	cmdbuf->buf = R_Malloc( REF_CMD_BUF_SIZE );
 	cmdbuf->buf_size = REF_CMD_BUF_SIZE;
 	cmdbuf->BeginFrame = &RF_IssueBeginFrameCmd;
@@ -623,7 +588,6 @@ ref_cmdbuf_t *RF_CreateCmdBuf( bool sync ) {
 	cmdbuf->PopTransformMatrix = &RF_IssuePopProjectionMatrixCmd;
 
 	cmdbuf->Clear = &RF_ClearCmdBuf;
-	cmdbuf->RunCmds = &RF_RunCmdBufProc;
 
 	return cmdbuf;
 }
@@ -860,13 +824,9 @@ static unsigned R_HandleFenceReliableCmd( void *pcmd ) {
 // ============================================================================
 
 static void RF_IssueAbstractReliableCmd( ref_cmdpipe_t *cmdpipe, void *cmd, size_t cmd_len ) {
-	if( cmdpipe->sync ) {
-		int id = *( (int *)cmd );
-		refPipeCmdHandlers[id]( cmd );
-		return;
-	}
-
-	ri.BufPipe_WriteCmd( cmdpipe->pipe, cmd, cmd_len );
+	int id = *( (int *)cmd );
+	refPipeCmdHandlers[id]( cmd );
+	return;
 }
 
 static void RF_IssueInitReliableCmd( ref_cmdpipe_t *cmdpipe ) {
@@ -918,7 +878,6 @@ static void RF_IssueBeginRegistrationReliableCmd( ref_cmdpipe_t *cmdpipe ) {
 	refReliableCmdBeginEndRegistration_t cmd = { REF_PIPE_CMD_BEGIN_REGISTRATION };
 
 	R_DeferDataSync();
-	R_DataSync();
 
 	RF_IssueAbstractReliableCmd( cmdpipe, &cmd, sizeof( cmd ) );
 }
@@ -927,7 +886,6 @@ static void RF_IssueEndRegistrationReliableCmd( ref_cmdpipe_t *cmdpipe ) {
 	refReliableCmdBeginEndRegistration_t cmd = { REF_PIPE_CMD_END_REGISTRATION };
 
 	R_DeferDataSync();
-	R_DataSync();
 
 	RF_IssueAbstractReliableCmd( cmdpipe, &cmd, sizeof( cmd ) );
 }
@@ -987,36 +945,10 @@ static int RF_CmdPipeWaiter( qbufPipe_t *queue, refPipeCmdHandler_t *cmdHandlers
 	return -1;
 }
 
-static int RF_RunCmdPipeProc( ref_cmdpipe_t *cmdpipe ) {
-	if( cmdpipe->sync ) {
-		return 0;
-	}
-	return ri.BufPipe_ReadCmds( cmdpipe->pipe, refPipeCmdHandlers );
-}
-
-static void RF_WaitForCmdPipeProc( ref_cmdpipe_t *cmdpipe, unsigned timeout ) {
-	if( cmdpipe->sync ) {
-		return;
-	}
-	ri.BufPipe_Wait( cmdpipe->pipe, RF_CmdPipeWaiter, refPipeCmdHandlers, timeout );
-}
-
-static void RF_FinishCmdPipeProc( ref_cmdpipe_t *cmdpipe ) {
-	if( cmdpipe->sync ) {
-		return;
-	}
-	ri.BufPipe_Finish( cmdpipe->pipe );
-}
-
-ref_cmdpipe_t *RF_CreateCmdPipe( bool sync ) {
+ref_cmdpipe_t *RF_CreateCmdPipe() {
 	ref_cmdpipe_t *cmdpipe;
 
 	cmdpipe = R_Malloc( sizeof( *cmdpipe ) );
-	if( sync ) {
-		cmdpipe->sync = sync;
-	} else {
-		cmdpipe->pipe = ri.BufPipe_Create( REF_PIPE_CMD_BUF_SIZE, 1 );
-	}
 
 	cmdpipe->Init = &RF_IssueInitReliableCmd;
 	cmdpipe->Shutdown = &RF_IssueShutdownReliableCmd;
@@ -1031,10 +963,6 @@ ref_cmdpipe_t *RF_CreateCmdPipe( bool sync ) {
 	cmdpipe->SetTextureFilter = &RF_IssueSetTextureFilterReliableCmd;
 	cmdpipe->SetGamma = &RF_IssueSetGammaReliableCmd;
 	cmdpipe->Fence = &RF_IssueFenceReliableCmd;
-
-	cmdpipe->RunCmds = &RF_RunCmdPipeProc;
-	cmdpipe->WaitForCmds = &RF_WaitForCmdPipeProc;
-	cmdpipe->FinishCmds = &RF_FinishCmdPipeProc;
 
 	return cmdpipe;
 }

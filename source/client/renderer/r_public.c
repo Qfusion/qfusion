@@ -58,7 +58,6 @@ ref_export_t *GetRefAPI( ref_import_t *import ) {
 	globals.ResetScissor = RF_ResetScissor;
 	globals.SetCustomColor = RF_SetCustomColor;
 	globals.ReplaceRawSubPic = RF_ReplaceRawSubPic;
-	globals.Finish = RF_Finish;
 	globals.BlurScreen = RF_BlurScreen;
 
 	globals.GetShaderForOrigin = RF_GetShaderForOrigin;

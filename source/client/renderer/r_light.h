@@ -18,8 +18,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#ifndef R_LIGHT_H
-#define R_LIGHT_H
+#pragma once
 
 #include "r_public.h"
 #include "r_math.h"
@@ -39,8 +38,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define DLIGHT_SCALE				0.5f
 #define MAX_SUPER_STYLES			128
-
-#define MAX_SHADOW_CASCADES			4
 
 typedef struct superLightStyle_s {
 	vattribmask_t vattribs;
@@ -78,7 +75,6 @@ typedef struct rtlight_s {
 	int cluster;
 	int area;
 	bool world;
-	bool shadow;
 	bool rotated;
 	bool directional;
 	bool sky;
@@ -92,16 +88,10 @@ typedef struct rtlight_s {
 	int entCasterMask;
 	int sort;
 	int lod;
-	int shadowCascades;
-	int shadowBorder;
-	int shadowSize;
-	int shadowOffset[2];
 
 	unsigned numReceieveEnts;
-	unsigned numShadowEnts;
 
 	int *receiveEnts;
-	int *shadowEnts;
 
 	vec4_t color; // r, g, b, 1.0 / intensity
 	vec4_t linearColor; // r, g, b, 1.0 / intensity
@@ -131,14 +121,8 @@ typedef struct rtlight_s {
 	vec_t ortho[6];
 	mat4_t projectionMatrix;
 
-	// ortho cascades
-	vec_t splitOrtho[MAX_SHADOW_CASCADES][8];	// [6] if set to 1, indicates that a single cascade with projectionMatrix should be used
-												// [7] is farclip offset
-	mat4_t splitProjectionMatrix[MAX_SHADOW_CASCADES];
-
 	unsigned numVisLeafs;
 	unsigned numReceiveSurfaces;
-	unsigned numShadowSurfaces;
 
 	image_t *cubemapFilter;
 
@@ -177,7 +161,7 @@ void		R_GetRtLightVisInfo( mbrushmodel_t *bm, rtlight_t *l );
 
 void		R_SetRtLightColor( rtlight_t *l, const vec3_t color );
 
-unsigned	R_CullRtLights( unsigned numLights, rtlight_t *lights, unsigned clipFlags, bool shadows );
+unsigned	R_CullRtLights( unsigned numLights, rtlight_t *lights, unsigned clipFlags );
 void		R_DrawRtLights( void );
 
 int			R_CalcRtLightBBoxSidemask( const rtlight_t *l, const vec3_t mins, const vec3_t maxs );
@@ -191,4 +175,8 @@ void		R_TouchRtLight( rtlight_t *l );
 
 void		R_RenderDebugLightVolumes( void );
 
-#endif // R_LIGHT_H
+extern drawList_t r_shadowlist;
+extern drawList_t r_shadowportallist;
+
+void R_DrawCompiledLightSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog,
+	int lightStyleNum, const portalSurface_t *portalSurface, drawSurfaceCompiledLight_t *drawSurf );

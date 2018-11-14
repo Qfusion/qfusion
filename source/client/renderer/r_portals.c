@@ -435,32 +435,6 @@ static void R_DrawPortalsDepthMask( void ) {
 void R_DrawPortals( void ) {
 	unsigned int i;
 
-	if( rn.renderFlags & RF_SKYSHADOWVIEW ) {
-		// render depth mask for skylights
-		// TODO: rewrite this!
-		float depthmin, depthmax;
-
-		RB_GetDepthRange( &depthmin, &depthmax );
-
-		RB_ClearDepth( depthmin );
-
-		RB_Clear( GL_DEPTH_BUFFER_BIT, 0, 0, 0, 0 );
-
-		if( rn.portalmasklist && rn.portalmasklist->numDrawSurfs ) {
-			RB_SetShaderStateMask( ~0, GLSTATE_DEPTHWRITE | GLSTATE_NO_COLORWRITE | GLSTATE_OFFSET_FILL | GLSTATE_DEPTHFUNC_GT );
-			RB_FlipFrontFace();
-			RB_DepthRange( depthmax, depthmax );
-			R_DrawPortalSurfaces( rn.portalmasklist );
-			RB_SetShaderStateMask( ~0, GLSTATE_DEPTHWRITE | GLSTATE_NO_COLORWRITE | GLSTATE_OFFSET_FILL );
-			RB_FlipFrontFace();
-			RB_DepthRange( depthmin, depthmax );
-		}
-
-		RB_ClearDepth( depthmax );
-
-		return;
-	}
-
 	if( rn.renderFlags & ( RF_MIRRORVIEW | RF_LIGHTVIEW | RF_PORTALVIEW ) ) {
 		return;
 	}

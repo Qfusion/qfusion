@@ -1488,16 +1488,6 @@ bool R_AddSkeletalModelToDrawList( const entity_t *e, int lod ) {
 			continue;
 		}
 
-		if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
-			if( R_ShaderNoShadow( shader ) ) {
-				continue;
-			}
-			shader = R_OpaqueShadowShader( shader );
-			if( !shader ) {
-				continue;
-			}
-		}
-
 		if( rn.renderFlags & RF_LIGHTVIEW ) {
 			if( R_ShaderNoDlight( shader ) ) {
 				continue;

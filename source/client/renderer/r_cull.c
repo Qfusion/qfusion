@@ -682,11 +682,6 @@ int R_CullSpriteEntity( const entity_t *e ) {
 			return 1;
 		}
 	}
-	if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
-		if( !R_ShaderNoShadow( e->customShader ) ) {
-			return 1;
-		}
-	}
 	return 0;
 }
 

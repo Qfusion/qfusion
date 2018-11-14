@@ -106,12 +106,6 @@ typedef struct glsl_program_s {
 			DynamicLightsDiffuseAndInvRadius,
 			DynamicLightVector,
 
-			ShadowmapParams,
-			ShadowmapTextureScale,
-			ShadowmapNumCascades,
-			ShadowmapCascadeMatrix[MAX_SHADOW_CASCADES],
-			ShadowmapCascadesBlendArea,
-
 			AttrBonesIndices,
 			AttrBonesWeights,
 			DualQuats,
@@ -120,11 +114,6 @@ typedef struct glsl_program_s {
 
 			WallColor,
 			FloorColor,
-
-			ShadowmapTextureSize,
-			//ShadowAlpha[( GLSL_SHADOWMAP_LIMIT + 3 ) / 4],
-			//ShadowDir[GLSL_SHADOWMAP_LIMIT],
-			//ShadowEntityDist[GLSL_SHADOWMAP_LIMIT],
 
 			BlendMix,
 			ColorMod,
@@ -181,7 +170,6 @@ void RP_Init( void ) {
 	// register base programs
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_MATERIAL, DEFAULT_GLSL_MATERIAL_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_DISTORTION, DEFAULT_GLSL_DISTORTION_PROGRAM, NULL, NULL, 0, 0 );
-	RP_RegisterProgram( GLSL_PROGRAM_TYPE_SHADOW, DEFAULT_GLSL_SHADOW_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_OUTLINE, DEFAULT_GLSL_OUTLINE_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_Q3A_SHADER, DEFAULT_GLSL_Q3A_SHADER_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_CELSHADE, DEFAULT_GLSL_CELSHADE_PROGRAM, NULL, NULL, 0, 0 );
@@ -593,12 +581,6 @@ static const glsl_feature_t glsl_features_material[] =
 	{ GLSL_SHADER_COMMON_DLIGHT_CUBEFILTER, "#define APPLY_DLIGHT_CUBEFILTER\n", "_dlcf" },
 	{ GLSL_SHADER_COMMON_DLIGHT_DIRECTIONAL, "#define APPLY_DLIGHT_DIRECTIONAL\n", "_dir" },
 
-	{ GLSL_SHADER_COMMON_REALTIME_SHADOWS, "#define APPLY_REALTIME_SHADOWS\n", "_rtshadow" },
-	{ GLSL_SHADER_COMMON_SHADOWMAP_SAMPLERS, "#define APPLY_SHADOW_SAMPLERS\n", "_ss" },
-	{ GLSL_SHADER_COMMON_RGBSHADOW_24BIT, "#define APPLY_RGB_SHADOW_24BIT\n", "_rgb24b" },
-	{ GLSL_SHADER_COMMON_SHADOWMAP_PCF, "#define APPLY_SHADOW_PCF 1\n", "_spcf" },
-	{ GLSL_SHADER_COMMON_SHADOWMAP_PCF2, "#define APPLY_SHADOW_PCF 2\n", "_spcf2" },
-
 	{ GLSL_SHADER_COMMON_DRAWFLAT, "#define APPLY_DRAWFLAT\n", "_flat" },
 
 	{ GLSL_SHADER_COMMON_AUTOSPRITE, "#define APPLY_AUTOSPRITE\n", "" },
@@ -675,26 +657,6 @@ static const glsl_feature_t glsl_features_distortion[] =
 	{ 0, NULL, NULL }
 };
 
-static const glsl_feature_t glsl_features_shadow[] =
-{
-	{ GLSL_SHADER_COMMON_BONE_TRANSFORMS4, "#define QF_NUM_BONE_INFLUENCES 4\n", "_bones4" },
-	{ GLSL_SHADER_COMMON_BONE_TRANSFORMS3, "#define QF_NUM_BONE_INFLUENCES 3\n", "_bones3" },
-	{ GLSL_SHADER_COMMON_BONE_TRANSFORMS2, "#define QF_NUM_BONE_INFLUENCES 2\n", "_bones2" },
-	{ GLSL_SHADER_COMMON_BONE_TRANSFORMS1, "#define QF_NUM_BONE_INFLUENCES 1\n", "_bones1" },
-
-	{ GLSL_SHADER_COMMON_INSTANCED_TRANSFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n", "_instanced" },
-	{ GLSL_SHADER_COMMON_INSTANCED_ATTRIB_TRANSFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n#define APPLY_INSTANCED_ATTRIB_TRANSFORMS\n", "_instanced_va" },
-
-	{ GLSL_SHADER_COMMON_AFUNC_GE128, "#define QF_ALPHATEST(a) { if ((a) < 0.5) discard; }\n", "_afunc_ge128" },
-	{ GLSL_SHADER_COMMON_AFUNC_LT128, "#define QF_ALPHATEST(a) { if ((a) >= 0.5) discard; }\n", "_afunc_lt128" },
-	{ GLSL_SHADER_COMMON_AFUNC_GT0, "#define QF_ALPHATEST(a) { if ((a) <= 0.0) discard; }\n", "_afunc_gt0" },
-
-	{ GLSL_SHADER_COMMON_SHADOWMAP_SAMPLERS, "#define APPLY_SHADOW_SAMPLERS\n", "_ss" },
-	{ GLSL_SHADER_COMMON_RGBSHADOW_24BIT, "#define APPLY_RGB_SHADOW_24BIT\n", "_rgb24b" },
-
-	{ 0, NULL, NULL }
-};
-
 static const glsl_feature_t glsl_features_outline[] =
 {
 	{ GLSL_SHADER_COMMON_BONE_TRANSFORMS4, "#define QF_NUM_BONE_INFLUENCES 4\n", "_bones4" },
@@ -736,12 +698,6 @@ static const glsl_feature_t glsl_features_q3a[] =
 	{ GLSL_SHADER_COMMON_DLIGHTS, "#define NUM_DLIGHTS 1\n", "_dl" },
 	{ GLSL_SHADER_COMMON_DLIGHT_CUBEFILTER, "#define APPLY_DLIGHT_CUBEFILTER\n", "_dlcf" },
 	{ GLSL_SHADER_COMMON_DLIGHT_DIRECTIONAL, "#define APPLY_DLIGHT_DIRECTIONAL\n", "_ortho" },
-
-	{ GLSL_SHADER_COMMON_REALTIME_SHADOWS, "#define APPLY_REALTIME_SHADOWS\n", "_rtshadow" },
-	{ GLSL_SHADER_COMMON_SHADOWMAP_SAMPLERS, "#define APPLY_SHADOW_SAMPLERS\n", "_ss" },
-	{ GLSL_SHADER_COMMON_RGBSHADOW_24BIT, "#define APPLY_RGB_SHADOW_24BIT\n", "_rgb24b" },
-	{ GLSL_SHADER_COMMON_SHADOWMAP_PCF, "#define APPLY_SHADOW_PCF 1\n", "_spcf" },
-	{ GLSL_SHADER_COMMON_SHADOWMAP_PCF2, "#define APPLY_SHADOW_PCF 2\n", "_spcf2" },
 
 	{ GLSL_SHADER_COMMON_DRAWFLAT, "#define APPLY_DRAWFLAT\n", "_flat" },
 
@@ -872,8 +828,6 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 	glsl_features_material,
 	// GLSL_PROGRAM_TYPE_DISTORTION
 	glsl_features_distortion,
-	// GLSL_PROGRAM_TYPE_SHADOW
-	glsl_features_shadow,
 	// GLSL_PROGRAM_TYPE_OUTLINE
 	glsl_features_outline,
 	// GLSL_PROGRAM_TYPE_UNUSED
@@ -937,7 +891,6 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 	"#define qf_textureArray texture\n" \
 	"#define qf_texture3D texture\n" \
 	"#define qf_textureOffset(a,b,c,d) textureOffset(a,b,ivec2(c,d))\n" \
-	"#define qf_shadow texture\n" \
 	"\n"
 
 #define QF_GLSL_PI "" \
@@ -954,10 +907,6 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 	"#ifndef MAX_UNIFORM_INSTANCES\n" \
 	"#define MAX_UNIFORM_INSTANCES " STR_TOSTR( MAX_GLSL_UNIFORM_INSTANCES ) "\n" \
 	"#endif\n" \
-	"\n" \
-	"#ifndef MAX_SHADOW_CASCADES\n" \
-	"#define MAX_SHADOW_CASCADES " STR_TOSTR( MAX_SHADOW_CASCADES ) "\n" \
-	"#endif\n"
 
 #define QF_BUILTIN_GLSL_UNIFORMS \
 	"uniform vec3 u_QF_ViewOrigin;\n" \
@@ -1331,8 +1280,6 @@ static bool RF_LoadShaderFromFile_r( glslParser_t *parser, const char *fileName,
 				( !Q_stricmp( token, "NUM_DLIGHTS)" ) && ( features & GLSL_SHADER_COMMON_DLIGHTS ) ) ||
 
 				( !Q_stricmp( token, "APPLY_GREYSCALE)" ) && ( features & GLSL_SHADER_COMMON_GREYSCALE ) ) ||
-
-				( !Q_stricmp( token, "APPLY_REALTIME_SHADOWS)" ) && ( features & GLSL_SHADER_COMMON_REALTIME_SHADOWS ) ) ||
 
 				( ( programType == GLSL_PROGRAM_TYPE_Q3A_SHADER ) && !Q_stricmp( token, "NUM_LIGHTMAPS)" )
 				  && ( features & GLSL_SHADER_Q3_LIGHTSTYLE ) ) ||
@@ -2102,34 +2049,6 @@ void RP_UpdateRealtimeLightsUniforms( int elem, const vec3_t lightVec, const mat
 				glUniformMatrix4fv( program->loc.DynamicLightsMatrix, 1, GL_FALSE, objectToLightMatrix );
 			}
 
-			if( program->loc.ShadowmapCascadeMatrix >= 0 ) {
-				int j;
-				mat4_t bias;
-
-				Matrix4_Identity( bias );
-				bias[0] = bias[5] = bias[12] = bias[13] = rl->shadowSize * 0.5;
-				bias[10] = 0.5, bias[14] += 0.5;
-
-				for( j = 0; j < rl->shadowCascades; j++ ) {
-					mat4_t m, mb;
-					Matrix4_Multiply( rl->splitProjectionMatrix[j], objectToLightMatrix, m );
-					Matrix4_Multiply( bias, m, mb );
-					glUniformMatrix4fv( program->loc.ShadowmapCascadeMatrix[j], 1, GL_FALSE, mb );
-				}
-			}
-
-			if( program->loc.ShadowmapNumCascades >= 0 ) {
-				glUniform1i( program->loc.ShadowmapNumCascades, rl->shadowCascades );
-			}
-
-			if( program->loc.ShadowmapCascadesBlendArea >= 0 ) {
-				if( r_shadows_cascades_blendarea->integer > 0 ) {
-					glUniform1f( program->loc.ShadowmapCascadesBlendArea, bound( 1, r_shadows_cascades_blendarea->value, 100 ) * 0.01f );
-				} else {
-					glUniform1f( program->loc.ShadowmapCascadesBlendArea, 0.0 );
-				}
-			}
-
 			if( glConfig.sSRGB ) {
 				shaderColor[0] = rl->linearColor[0];
 				shaderColor[1] = rl->linearColor[1];
@@ -2151,46 +2070,6 @@ void RP_UpdateRealtimeLightsUniforms( int elem, const vec3_t lightVec, const mat
 
 			// DynamicLightsDiffuseAndInvRadius is transposed for SIMD, but it's still 4x4
 			glUniform4fv( program->loc.DynamicLightsDiffuseAndInvRadius, 1, shaderColor );
-
-			if( program->loc.ShadowmapParams >= 0 ) {
-				GLfloat params[4] = { 0, 0, 0, 0 };
-				int size = rl->shadowSize;
-				int border = rl->shadowBorder;
-
-				if( rl->directional ) {
-					params[0] = 2.0 * border;
-					params[1] = size - 2.0 * border;
-					params[2] = size;
-					params[3] = r_shadows_cascades_debug->integer ? rl->splitOrtho[0][6] : 0.0f;
-				} else {
-					if( size > 0 ) {
-						float nearclip = r_shadows_nearclip->value;
-						float farclip = rl->intensity;
-						float bias = r_shadows_bias->value * nearclip * (1024.0f / (size/* * 3*/));
-
-						params[0] = 0.5f * (size - border);
-						params[1] = -nearclip * farclip / (farclip - nearclip) - 0.5f * bias;
-						params[2] = size;
-						params[3] = 0.5f + 0.5f * (farclip + nearclip) / (farclip - nearclip);
-					}
-				}
-
-				glUniform4fv( program->loc.ShadowmapParams, 1, params );
-			}
-
-			if( program->loc.ShadowmapTextureScale >= 0 ) {
-				GLfloat scale[4] = { 0, 0, 0, 0 };
-				int size = rl->shadowSize;
-
-				if( size > 0 ) {
-					scale[0] = 1.0f / rsh.shadowmapAtlasTexture->upload_width;
-					scale[1] = 1.0f / rsh.shadowmapAtlasTexture->upload_height;
-					scale[2] = rl->shadowOffset[0];
-					scale[3] = rl->shadowOffset[1];
-				}
-
-				glUniform4fv( program->loc.ShadowmapTextureScale, 1, scale );
-			}
 
 			if( program->loc.DynamicLightVector >= 0 ) {
 				glUniform3fv( program->loc.DynamicLightVector, 1, lightVec );
@@ -2306,7 +2185,6 @@ static void RP_GetUniformLocations( glsl_program_t *program ) {
 	int locDuDvMapTexture;
 	int locReflectionTexture;
 	int locRefractionTexture;
-	int locShadowmapTexture;
 	int locCelShadeTexture;
 	int locCelLightTexture;
 	int locDiffuseTexture;
@@ -2345,8 +2223,6 @@ static void RP_GetUniformLocations( glsl_program_t *program ) {
 	locDuDvMapTexture = glGetUniformLocation( program->object, "u_DuDvMapTexture" );
 	locReflectionTexture = glGetUniformLocation( program->object, "u_ReflectionTexture" );
 	locRefractionTexture = glGetUniformLocation( program->object, "u_RefractionTexture" );
-
-	locShadowmapTexture = glGetUniformLocation( program->object, "u_ShadowmapTexture" );
 
 	locCelShadeTexture = glGetUniformLocation( program->object, "u_CelShadeTexture" );
 	locCelLightTexture = glGetUniformLocation( program->object, "u_CelLightTexture" );
@@ -2412,16 +2288,6 @@ static void RP_GetUniformLocations( glsl_program_t *program ) {
 	program->loc.DynamicLightsMatrix = glGetUniformLocation( program->object, "u_DlightMatrix" );
 	program->loc.DynamicLightVector = glGetUniformLocation( program->object, "u_DlightVector" );
 
-	// shadow maps
-	program->loc.ShadowmapTextureSize =	glGetUniformLocation( program->object, "u_ShadowmapTextureSize" );
-	program->loc.ShadowmapParams = glGetUniformLocation( program->object, "u_ShadowmapParams" );
-	program->loc.ShadowmapTextureScale = glGetUniformLocation( program->object, "u_ShadowmapTextureScale" );
-	for( i = 0; i < MAX_SHADOW_CASCADES; i++ ) {
-		program->loc.ShadowmapCascadeMatrix[i] = glGetUniformLocation( program->object, va_r( tmp, sizeof( tmp ), "u_ShadowmapCascadeMatrix[%i]", i ) );
-	}
-	program->loc.ShadowmapNumCascades = glGetUniformLocation( program->object, "u_ShadowmapNumCascades" );
-	program->loc.ShadowmapCascadesBlendArea = glGetUniformLocation( program->object, "u_ShadowmapCascadesBlendArea" );
-
 	program->loc.BlendMix = glGetUniformLocation( program->object, "u_BlendMix" );
 	program->loc.ColorMod = glGetUniformLocation( program->object, "u_ColorMod" );
 
@@ -2463,8 +2329,6 @@ static void RP_GetUniformLocations( glsl_program_t *program ) {
 	if( locRefractionTexture >= 0 ) {
 		glUniform1i( locRefractionTexture, 3 );
 	}
-
-	glUniform1i( locShadowmapTexture, 7 );
 
 //	if( locBaseTexture >= 0 )
 //		qglUniform1i( locBaseTexture, 0 );

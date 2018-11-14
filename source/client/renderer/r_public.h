@@ -170,7 +170,6 @@ typedef struct {
 	void ( *EndFrame )( void );
 	const char *( *GetSpeedsMessage )( char *out, size_t size );
 	int ( *GetAverageFrametime )( void );
-	void ( *Finish )( void );
 
 	void ( *BeginAviDemo )( void );
 	void ( *WriteAviFrame )( int frame, bool scissor );

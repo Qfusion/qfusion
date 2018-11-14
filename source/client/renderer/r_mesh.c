@@ -654,15 +654,6 @@ static void R_DrawLightSurfaces( drawList_t *list ) {
 }
 
 /*
-* R_DrawShadowSurfaces
-*/
-static void R_DrawShadowSurfaces( drawList_t *list ) {
-	bool depthCopied = false;
-
-	_R_DrawSurfaces( list, &depthCopied, RB_MODE_DEPTH, ST_NONE, ST_SKY, SHADER_SORT_NONE, SHADER_SORT_BANNER );
-}
-
-/*
 * R_DrawForwardRtLightSurfaces
 */
 static void R_DrawForwardRtLightSurfaces( drawList_t *list ) {
@@ -712,8 +703,6 @@ void R_DrawSurfaces( drawList_t *list ) {
 	if( !triOutlines ) {
 		if( rn.renderFlags & RF_LIGHTVIEW ) {
 			R_DrawLightSurfaces( list );
-		} else if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
-			R_DrawShadowSurfaces( list );
 		} else if( r_lighting_realtime_world->integer || r_lighting_realtime_dlight->integer ) {
 			R_DrawForwardRtLightSurfaces( list );
 		} else {
@@ -746,7 +735,7 @@ void R_DrawOutlinedSurfaces( drawList_t *list ) {
 	bool triOutlines;
 	bool depthCopied = false;
 
-	if( rn.renderFlags & (RF_LIGHTVIEW|RF_SHADOWMAPVIEW) ) {
+	if( rn.renderFlags & RF_LIGHTVIEW ) {
 		return;
 	}
 

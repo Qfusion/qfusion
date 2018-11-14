@@ -1031,13 +1031,6 @@ static void R_GetRtLightLeafVisInfo_r( rtlight_t *l, const mnode_t *node, mbrush
 		}
 	}
 
-	if( l->shadow && !l->sky ) {
-		const uint8_t *pvs = Mod_ClusterPVS( l->cluster, bm );
-		if( !( pvs[leaf->cluster >> 3] & ( 1 << ( leaf->cluster & 7 ) ) ) ) {
-			return;
-		}
-	}
-
 	numLeafs = vis->visLeafs;
 	nextLeaf = vis->visLeafs + 1 + *numLeafs;
 	*nextLeaf = leaf - bm->leafs;
@@ -1089,7 +1082,7 @@ static void R_GetRtLightSurfaceVisInfo( rtlight_t *l, mbrushmodel_t *bm, r_light
 		const mleaf_t *leaf = bm->leafs + leafNum;
 
 		for( j = 0; j < leaf->numVisSurfaces; j++ ) {
-			bool nolight, noshadow;
+			bool nolight;
 			unsigned s = leaf->visSurfaces[j];
 			const msurface_t *surf = bm->surfaces + s;
 			unsigned ds = surf->drawSurf - 1;
@@ -1104,10 +1097,6 @@ static void R_GetRtLightSurfaceVisInfo( rtlight_t *l, mbrushmodel_t *bm, r_light
 			}
 
 			nolight = R_SurfNoDlight( surf );
-			noshadow = R_SurfNoShadow( surf );
-			if( l->sky && ( surf->flags & SURF_SKY ) ) {
-				noshadow = false;
-			}
 
 #ifdef ENABLE_SURFNORMAL_CHECK
 			if( l->directional && !nolight ) {
@@ -1132,7 +1121,7 @@ static void R_GetRtLightSurfaceVisInfo( rtlight_t *l, mbrushmodel_t *bm, r_light
 			}
 #endif
 
-			if( nolight && noshadow ) {
+			if( nolight ) {
 				continue;
 			}
 
@@ -1150,7 +1139,7 @@ static void R_GetRtLightSurfaceVisInfo( rtlight_t *l, mbrushmodel_t *bm, r_light
 			}
 
 			smasks[s*2+0] = nolight ? 0 : mask;
-			smasks[s*2+1] = noshadow ? 0 : mask;
+			smasks[s*2+1] = 0;
 			dspvs[ds>>3] |= (1<<(ds&7));
 		}
 	}
@@ -1230,7 +1219,6 @@ static void R_CompileRtLightVisInfo( rtlight_t *l, mbrushmodel_t *bm, r_lightWor
 
 	*l->surfaceInfo = nds;
 	l->numReceiveSurfaces = rscount;
-	l->numShadowSurfaces = sscount;
 }
 
 /*
@@ -1415,16 +1403,15 @@ static int R_RtLightsShadowSizeCmp( const void *pl1, const void *pl2 ) {
 */
 static void R_PrepareRtLightEntities( rtlight_t *l ) {
 	unsigned i;
-	int nre, nse;
+	int nre;
 	unsigned receiverMask, casterMask;
-	static int re[MAX_REF_ENTITIES], se[MAX_REF_ENTITIES];
+	static int re[MAX_REF_ENTITIES];
 
 	nre = 0;
-	nse = 0;
 	receiverMask = casterMask = 0;
 
 	for( i = rsc.numLocalEntities; i < rsc.numEntities; i++ ) {
-		bool elight, eshadow;
+		bool elight;
 		entity_t *e = R_NUM2ENT( i );
 		int entNum = R_ENT2NUM( e );
 		entSceneCache_t *cache = R_ENTCACHE( e );
@@ -1447,15 +1434,12 @@ static void R_PrepareRtLightEntities( rtlight_t *l ) {
 			}
 		}
 
-		elight = eshadow = false;
+		elight = false;
 		if( !(e->flags & RF_FULLBRIGHT) ) {
 			elight = true;
 		}
-		if( !(e->flags & (RF_NOSHADOW|RF_WEAPONMODEL|RF_NODEPTHTEST)) ) {
-			eshadow = true;
-		}
 
-		if( !elight && !eshadow ) {
+		if( !elight ) {
 			continue;
 		}
 
@@ -1472,23 +1456,15 @@ static void R_PrepareRtLightEntities( rtlight_t *l ) {
 			re[nre++] = entNum;
 			receiverMask |= sideMask;
 		}
-		if( eshadow ) {
-			se[nse++] = entNum;
-			casterMask |= sideMask;
-		}
 	}
 
 	l->entReceiverMask = receiverMask;
 	l->numReceieveEnts = nre;
 
 	l->entCasterMask = casterMask;
-	l->numShadowEnts = nse;
 
 	l->receiveEnts = R_FrameCache_Alloc( sizeof( int ) * l->numReceieveEnts );
 	memcpy( l->receiveEnts, re, sizeof( int ) * l->numReceieveEnts );
-
-	l->shadowEnts = R_FrameCache_Alloc( sizeof( int ) * l->numShadowEnts );
-	memcpy( l->shadowEnts, se, sizeof( int ) * l->numShadowEnts );
 }
 
 /*
@@ -1512,13 +1488,13 @@ void R_PrepareRtLightFrameData( rtlight_t *l ) {
 /*
 * R_CullRtLights
 */
-unsigned R_CullRtLights( unsigned numLights, rtlight_t *lights, unsigned clipFlags, bool shadows ) {
+unsigned R_CullRtLights( unsigned numLights, rtlight_t *lights, unsigned clipFlags ) {
 	unsigned i, j;
 	unsigned count;
 	const uint8_t *areabits = rn.areabits;
 	const uint8_t *pvs = rn.pvs;
 
-	if( rn.renderFlags & (RF_LIGHTVIEW|RF_SHADOWMAPVIEW) ) {
+	if( rn.renderFlags & RF_LIGHTVIEW ) {
 		return 0;
 	}
 
@@ -1621,8 +1597,6 @@ unsigned R_CullRtLights( unsigned numLights, rtlight_t *lights, unsigned clipFla
 		dist = BoundsNearestDistance( rn.viewOrigin, l->lightmins, l->lightmaxs );
 		l->receiverMask = l->entReceiverMask;
 		l->casterMask = l->entCasterMask;
-		l->shadowSize = 0;
-		l->shadowCascades = 1;
 		l->lod = R_ComputeLOD( dist, l->radius, 1.0, 0 );
 		l->sort = l->radius / (l->lod + 1.0);
 
@@ -1631,14 +1605,8 @@ unsigned R_CullRtLights( unsigned numLights, rtlight_t *lights, unsigned clipFla
 
 		if( l->world ) {
 			rf.stats.c_world_lights++;
-			if( l->shadow ) {
-				rf.stats.c_world_light_shadows++;
-			}
 		} else {
 			rf.stats.c_dynamic_lights++;
-			if( l->shadow ) {
-				rf.stats.c_dynamic_light_shadows++;
-			}
 		}
 		count++;
 	}
@@ -1800,16 +1768,12 @@ void R_CompileRtLight( rtlight_t *l ) {
 	if( !l->world ) {
 		return;
 	}
-
-	R_CompileRtLightShadow( l );
 }
 
 /*
 * R_UncompileRtLight
 */
 void R_UncompileRtLight( rtlight_t *l ) {
-	R_UncompileRtLightShadow( l );
-
 	R_RtLightFree( l, l->visLeafs );
 	R_RtLightFree( l, l->surfaceInfo );
 
@@ -1826,7 +1790,6 @@ void R_TouchRtLight( rtlight_t *l ) {
 	if( l->cubemapFilter ) {
 		R_TouchImage( l->cubemapFilter, IMAGE_TAG_WORLD );
 	}
-	R_TouchCompiledRtLightShadows( l );
 }
 
 /*
@@ -1921,4 +1884,24 @@ void R_DrawRtLights( void ) {
 	}
 
 	R_PopRefInst();
+}
+
+/*
+ * R_DrawCompiledLightSurf
+ */
+void R_DrawCompiledLightSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog,
+	int lightStyleNum, const portalSurface_t *portalSurface, drawSurfaceCompiledLight_t *drawSurf ) {
+	if( !drawSurf->numElems ) {
+		return;
+	}
+
+	RB_BindVBO( drawSurf->vbo, GL_TRIANGLES );
+
+	if( drawSurf->numInstances ) {
+		RB_DrawElementsInstanced( drawSurf->firstVert, drawSurf->numVerts,
+			drawSurf->firstElem, drawSurf->numElems, drawSurf->numInstances, drawSurf->instances );
+		return;
+	}
+
+	RB_DrawElements( drawSurf->firstVert, drawSurf->numVerts, drawSurf->firstElem, drawSurf->numElems );
 }

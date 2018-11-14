@@ -1958,26 +1958,6 @@ image_t *R_GetPortalTexture( int viewportWidth, int viewportHeight,
 }
 
 /*
-* R_GetShadowmapAtlasTexture
-*/
-image_t *R_GetShadowmapAtlasTexture( void ) {
-	int flags;
-	int samples;
-	int size;
-
-	size = max( r_shadows_texturesize->integer, SHADOWMAP_MIN_ATLAS_SIZE );
-
-	flags = IT_DEPTH;
-	samples = 1;
-
-	R_InitViewportTexture( &rsh.shadowmapAtlasTexture, "r_shadowmap", 0,
-		size, size, size,
-		IT_SPECIAL | IT_FRAMEBUFFER | IT_DEPTHCOMPARE | flags, IMAGE_TAG_BUILTIN, samples );
-
-	return rsh.shadowmapAtlasTexture;
-}
-
-/*
 * R_InitStretchRawImages
 */
 static void R_InitStretchRawImages( void ) {
@@ -2173,7 +2153,6 @@ static void R_ReleaseBuiltinImages( void ) {
 	rsh.blankBumpTexture = NULL;
 	rsh.particleTexture = NULL;
 	rsh.coronaTexture = NULL;
-	rsh.shadowmapAtlasTexture = NULL;
 }
 
 //=======================================================

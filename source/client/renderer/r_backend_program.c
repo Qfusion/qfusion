@@ -55,7 +55,6 @@ static int RB_GetShaderpassState( int state );
 
 static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t programFeatures );
 static void RB_RenderMeshGLSL_Distortion( const shaderpass_t *pass, r_glslfeat_t programFeatures );
-static void RB_RenderMeshGLSL_Shadow( const shaderpass_t *pass, r_glslfeat_t programFeatures );
 static void RB_RenderMeshGLSL_Outline( const shaderpass_t *pass, r_glslfeat_t programFeatures );
 static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t programFeatures );
 static void RB_RenderMeshGLSL_Celshade( const shaderpass_t *pass, r_glslfeat_t programFeatures );
@@ -230,7 +229,7 @@ void RB_VertexTCCelshadeMatrix( mat4_t matrix ) {
 	mat4_t m;
 	const entity_t *e = rb.currentEntity;
 
-	if( e->model != NULL && !( rb.renderFlags & RF_SHADOWMAPVIEW ) ) {
+	if( e->model != NULL ) {
 		R_LightForOrigin( e->lightingOrigin, dir, NULL, NULL, e->model->radius * e->scale, rb.noWorldLight, false );
 
 		Matrix4_Identity( m );
@@ -528,22 +527,9 @@ static r_glslfeat_t RB_BonesTransformsToProgramFeatures( void ) {
 * RB_RtLightsToProgramFeatures
 */
 static r_glslfeat_t RB_RtlightbitsToProgramFeatures( void ) {
-	r_glslfeat_t bits;
-	unsigned int numRtlights = rb.numRealtimeLights;
+	r_glslfeat_t bits = 0;
 
-	bits = 0;
-
-	if( rb.numRealtimeLights > 0 && rb.rtlights[0]->shadowSize > 0 && rsh.shadowmapAtlasTexture ) {
-		bits |= GLSL_SHADER_COMMON_REALTIME_SHADOWS;
-		bits |= GLSL_SHADER_COMMON_SHADOWMAP_SAMPLERS;
-		if( r_shadows_pcf->integer > 1 ) {
-			bits |= GLSL_SHADER_COMMON_SHADOWMAP_PCF2;
-		} else if( r_shadows_pcf->integer > 0 ) {
-			bits |= GLSL_SHADER_COMMON_SHADOWMAP_PCF;
-		}
-	}
-
-	if( !numRtlights ) {
+	if( !rb.numRealtimeLights ) {
 		return bits;
 	}
 
@@ -980,10 +966,6 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 		}
 	}
 
-	if( programFeatures & GLSL_SHADER_COMMON_REALTIME_SHADOWS ) {
-		RB_BindImage( 7, rsh.shadowmapAtlasTexture );
-	}
-
 	program = RB_RegisterProgram( GLSL_PROGRAM_TYPE_MATERIAL, NULL,
 								  rb.currentShader->deformsKey, rb.currentShader->deforms, rb.currentShader->numdeforms, programFeatures );
 	if( RB_BindProgram( program ) ) {
@@ -1099,44 +1081,6 @@ static void RB_RenderMeshGLSL_Distortion( const shaderpass_t *pass, r_glslfeat_t
 		RP_UpdateDistortionUniforms( program, frontPlane );
 
 		RP_UpdateTextureUniforms( program, width, height );
-
-		RB_DrawElementsReal( &rb.drawElements );
-	}
-}
-
-/*
-* RB_RenderMeshGLSL_Shadow
-*/
-static void RB_RenderMeshGLSL_Shadow( const shaderpass_t *pass, r_glslfeat_t programFeatures ) {
-	int program;
-	mat4_t texMatrix;
-	const image_t *base;
-
-	programFeatures |= GLSL_SHADER_COMMON_SHADOWMAP_SAMPLERS;
-
-	if( pass->flags & SHADERPASS_ALPHAFUNC ) {
-		base = RB_ShaderpassTex( pass );
-	} else {
-		base = rsh.whiteTexture;
-	}
-
-	RB_BindImage( 0, base );
-
-	Matrix4_Identity( texMatrix );
-
-	// set shaderpass state (blending, depthwrite, etc)
-	RB_SetState( RB_GetShaderpassState( pass->flags ) );
-
-	// update uniforms
-	program = RB_RegisterProgram( GLSL_PROGRAM_TYPE_SHADOW, NULL,
-								  rb.currentShader->deformsKey, rb.currentShader->deforms, rb.currentShader->numdeforms, programFeatures );
-	if( RB_BindProgram( program ) ) {
-		RB_UpdateCommonUniforms( program, pass, texMatrix );
-
-		// submit animation data
-		if( programFeatures & GLSL_SHADER_COMMON_BONE_TRANSFORMS ) {
-			RP_UpdateBonesUniforms( program, rb.bonesData.numBones, rb.bonesData.dualQuats );
-		}
 
 		RB_DrawElementsReal( &rb.drawElements );
 	}
@@ -1405,10 +1349,6 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 		}
 	}
 
-	if( programFeatures & GLSL_SHADER_COMMON_REALTIME_SHADOWS ) {
-		RB_BindImage( 7, rsh.shadowmapAtlasTexture );
-	}
-
 	// update uniforms
 	program = RB_RegisterProgram( GLSL_PROGRAM_TYPE_Q3A_SHADER, NULL,
 								  rb.currentShader->deformsKey, rb.currentShader->deforms, rb.currentShader->numdeforms, programFeatures );
@@ -1497,15 +1437,11 @@ static void RB_RenderMeshGLSL_Celshade( const shaderpass_t *pass, r_glslfeat_t p
 #define CELSHADE_BIND( tmu,tex,feature,canAdd,replacement ) \
 	if( tex && !tex->missing ) { \
 		image_t *btex = tex; \
-		if( rb.renderFlags & RF_SHADOWMAPVIEW ) { \
-			btex = tex->flags & IT_CUBEMAP ? rsh.whiteCubemapTexture : rsh.whiteTexture; \
-		} else { \
-			btex = tex->loaded ? tex : replacement; \
-			if( btex ) { \
-				programFeatures |= feature; \
-				if( canAdd && ( btex->samples & 1 ) ) { \
-					programFeatures |= ( ( feature ) << 1 );} \
-			} \
+		btex = tex->loaded ? tex : replacement; \
+		if( btex ) { \
+			programFeatures |= feature; \
+			if( canAdd && ( btex->samples & 1 ) ) { \
+				programFeatures |= ( ( feature ) << 1 );} \
 		} \
 		if( btex ) { \
 			RB_BindImage( tmu, btex ); \
@@ -1669,9 +1605,6 @@ void RB_RenderMeshGLSLProgrammed( const shaderpass_t *pass, int programType ) {
 			break;
 		case GLSL_PROGRAM_TYPE_DISTORTION:
 			RB_RenderMeshGLSL_Distortion( pass, features );
-			break;
-		case GLSL_PROGRAM_TYPE_SHADOW:
-			RB_RenderMeshGLSL_Shadow( pass, features );
 			break;
 		case GLSL_PROGRAM_TYPE_OUTLINE:
 			RB_RenderMeshGLSL_Outline( pass, features );
@@ -1945,7 +1878,7 @@ void RB_SetRtLightParams( unsigned numRtLights, rtlight_t **rtlights, unsigned n
 		numSurfs = MAX_DRAWSURF_SURFS;
 	}
 
-	if( rb.triangleOutlines || ( rb.renderFlags & RF_SHADOWMAPVIEW ) ) {
+	if( rb.triangleOutlines ) {
 		numSurfs = 0;
 		numRtLights = 0;
 	}
@@ -2024,14 +1957,7 @@ int RB_BindProgram( int program ) {
 * RB_RenderPass
 */
 static void RB_RenderPass( const shaderpass_t *pass ) {
-	// for depth texture we render light's view to, ignore passes that do not write into depth buffer
-	if( ( rb.renderFlags & RF_SHADOWMAPVIEW ) && !( pass->flags & GLSTATE_DEPTHWRITE ) ) {
-		return;
-	}
-
-	if( rb.renderFlags & RF_SHADOWMAPVIEW ) {
-		RB_RenderMeshGLSLProgrammed( pass, GLSL_PROGRAM_TYPE_SHADOW );
-	} else if( pass->program_type ) {
+	if( pass->program_type ) {
 		RB_RenderMeshGLSLProgrammed( pass, pass->program_type );
 	} else {
 		RB_RenderMeshGLSLProgrammed( pass, GLSL_PROGRAM_TYPE_Q3A_SHADER );

@@ -23,57 +23,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_frontend.h"
 
 static ref_frontend_t rrf;
-static ref_cmdbuf_t *RF_GetNextAdapterFrame( ref_frontendAdapter_t *adapter );
-
-/*
-* RF_AdapterFrame
-*
-* Handles polling for the next frame at fixed time intervals, yielding in between.
-* If vsync is enabled, only yields if got nothing to do.
-*/
-static void RF_AdapterFrame( ref_frontendAdapter_t *adapter ) {
-	ref_cmdbuf_t *frame;
-
-	if( adapter->noWait )
-		adapter->cmdPipe->RunCmds( adapter->cmdPipe );
-	else
-		adapter->cmdPipe->WaitForCmds( adapter->cmdPipe, Q_THREADS_WAIT_INFINITE );
-
-	frame = RF_GetNextAdapterFrame( adapter );
-	if( frame ) {
-		frame->RunCmds( frame );
-	}
-}
-
-/*
-* RF_AdapterThreadProc
-*/
-static void *RF_AdapterThreadProc( void *param ) {
-	ref_frontendAdapter_t *adapter = param;
-
-	/* GLimp_MakeCurrent( adapter->GLcontext, NULL ); */
-
-	while( !adapter->shutdown ) {
-		RF_AdapterFrame( adapter );
-	}
-
-	/* GLimp_MakeCurrent( NULL, NULL ); */
-
-	return NULL;
-}
-
-/*
-* RF_AdapterWait
-*
-* Blocks the current thread until adapter is finished processing frame and inter-frame commands.
-*/
-static void RF_AdapterWait( ref_frontendAdapter_t *adapter ) {
-	if( adapter->thread == NULL ) {
-		return;
-	}
-
-	adapter->cmdPipe->FinishCmds( adapter->cmdPipe );
-}
 
 /*
 * RF_AdapterShutdown
@@ -83,24 +32,8 @@ static void RF_AdapterShutdown( ref_frontendAdapter_t *adapter ) {
 		return;
 	}
 
-	RF_AdapterWait( adapter );
-
 	adapter->cmdPipe->Shutdown( adapter->cmdPipe );
-	adapter->cmdPipe->FinishCmds( adapter->cmdPipe );
-
-	if( adapter->thread ) {
-		adapter->shutdown = true;
-		ri.Thread_Join( adapter->thread );
-		ri.Mutex_Destroy( &adapter->frameLock );
-	}
-
 	RF_DestroyCmdPipe( &adapter->cmdPipe );
-
-	/* if( adapter->GLcontext ) { */
-	/* 	GLimp_SharedContext_Destroy( adapter->GLcontext, NULL ); */
-	/* } */
-
-	/* GLimp_EnableMultithreadedRendering( false ); */
 
 	memset( adapter, 0, sizeof( *adapter ) );
 }
@@ -109,84 +42,11 @@ static void RF_AdapterShutdown( ref_frontendAdapter_t *adapter ) {
 * RF_AdapterInit
 */
 static bool RF_AdapterInit( ref_frontendAdapter_t *adapter ) {
-	adapter->cmdPipe = RF_CreateCmdPipe( !glConfig.multithreading );
-
-	/* if( glConfig.multithreading ) { */
-	/* 	adapter->frameLock = ri.Mutex_Create(); */
-        /*  */
-	/* 	GLimp_EnableMultithreadedRendering( true ); */
-        /*  */
-	/* 	if( !GLimp_SharedContext_Create( &adapter->GLcontext, NULL ) ) { */
-	/* 		return false; */
-	/* 	} */
-        /*  */
-	/* 	adapter->shutdown = false; */
-	/* 	adapter->thread = ri.Thread_Create( RF_AdapterThreadProc, adapter ); */
-	/* 	if( !adapter->thread ) { */
-	/* 		GLimp_EnableMultithreadedRendering( false ); */
-	/* 		return false; */
-	/* 	} */
-	/* } */
-
+	adapter->cmdPipe = RF_CreateCmdPipe();
 	adapter->cmdPipe->Init( adapter->cmdPipe );
 
 	return true;
 }
-
-static ref_cmdbuf_t *RF_GetNextAdapterFrame( ref_frontendAdapter_t *adapter ) {
-	ref_cmdbuf_t *result = NULL;
-	ref_frontend_t *fe = adapter->owner;
-
-	ri.Mutex_Lock( adapter->frameLock );
-	if( adapter->frameNum != fe->lastFrameNum ) {
-		adapter->frameNum = fe->lastFrameNum;
-		result = fe->frames[adapter->frameNum];
-	}
-	ri.Mutex_Unlock( adapter->frameLock );
-
-	return result;
-}
-
-/* rserr_t RF_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullScreen, bool borderless ) { */
-/* 	rserr_t err; */
-/*  */
-/* 	if( glConfig.width == width && glConfig.height == height && glConfig.fullScreen != fullScreen ) { */
-/* 		return GLimp_SetFullscreenMode( displayFrequency, fullScreen ); */
-/* 	} */
-/*  */
-/* 	RF_AdapterShutdown( &rrf.adapter ); */
-/*  */
-/* 	err = R_SetMode( x, y, width, height, displayFrequency, fullScreen, borderless ); */
-/* 	if( err != rserr_ok ) { */
-/* 		return err; */
-/* 	} */
-/*  */
-/* 	rrf.frameNum = rrf.lastFrameNum = 0; */
-/*  */
-/* 	if( !rrf.frame ) { */
-/* 		if( glConfig.multithreading ) { */
-/* 			int i; */
-/* 			for( i = 0; i < 3; i++ ) */
-/* 				rrf.frames[i] = RF_CreateCmdBuf( false ); */
-/* 		} else { */
-/* 			rrf.frame = RF_CreateCmdBuf( true ); */
-/* 		} */
-/* 	} */
-/*  */
-/* 	if( glConfig.multithreading ) { */
-/* 		rrf.frame = rrf.frames[0]; */
-/* 	} */
-/*  */
-/* 	rrf.frame->Clear( rrf.frame ); */
-/* 	memset( rrf.customColors, 255, sizeof( rrf.customColors ) ); */
-/*  */
-/* 	rrf.adapter.owner = (void *)&rrf; */
-/* 	if( RF_AdapterInit( &rrf.adapter ) != true ) { */
-/* 		return rserr_unknown; */
-/* 	} */
-/*  */
-/* 	return rserr_ok; */
-/* } */
 
 rserr_t RF_Init() {
 	rrf.frameNum = rrf.lastFrameNum = 0;
@@ -210,13 +70,7 @@ void RF_AppActivate( bool active, bool minimize ) {
 void RF_Shutdown( bool verbose ) {
 	RF_AdapterShutdown( &rrf.adapter );
 
-	if( glConfig.multithreading ) {
-		int i;
-		for( i = 0; i < 3; i++ )
-			RF_DestroyCmdBuf( &rrf.frames[i] );
-	} else {
-		RF_DestroyCmdBuf( &rrf.frame );
-	}
+	RF_DestroyCmdBuf( &rrf.frame );
 	memset( &rrf, 0, sizeof( rrf ) );
 
 	R_Shutdown( verbose );
@@ -259,71 +113,31 @@ static void RF_CheckCvars( void ) {
 void RF_BeginFrame( bool uncappedFPS ) {
 	RF_CheckCvars();
 
-	rrf.adapter.noWait = uncappedFPS;
-
-	// take the frame the backend is not busy processing
-	if( glConfig.multithreading ) {
-		ri.Mutex_Lock( rrf.adapter.frameLock );
-		if( rrf.lastFrameNum == rrf.adapter.frameNum ) {
-			rrf.frameNum = ( rrf.adapter.frameNum + 1 ) % 3;
-		} else {
-			rrf.frameNum = 3 - ( rrf.adapter.frameNum + rrf.lastFrameNum );
-		}
-		if( rrf.frameNum == 3 ) {
-			rrf.frameNum = 1;
-		}
-		rrf.frame = rrf.frames[rrf.frameNum];
-		ri.Mutex_Unlock( rrf.adapter.frameLock );
-	}
-
 	rrf.frame->Clear( rrf.frame );
-
-	R_DataSync();
-
 	rrf.frame->BeginFrame( rrf.frame );
 }
 
 void RF_EndFrame( void ) {
-	R_DataSync();
-
 	rrf.frame->EndFrame( rrf.frame );
-
-	if( glConfig.multithreading ) {
-		ri.Mutex_Lock( rrf.adapter.frameLock );
-		rrf.lastFrameNum = rrf.frameNum;
-		ri.Mutex_Unlock( rrf.adapter.frameLock );
-	}
-
 	rrf.adapter.cmdPipe->Fence( rrf.adapter.cmdPipe );
 }
 
 void RF_BeginRegistration( void ) {
-	// sync to the backend thread to ensure it's not using old assets for drawing
-	RF_AdapterWait( &rrf.adapter );
 	R_BeginRegistration();
 	rrf.adapter.cmdPipe->BeginRegistration( rrf.adapter.cmdPipe );
-	RF_AdapterWait( &rrf.adapter );
 }
 
 void RF_EndRegistration( void ) {
-	// sync to the backend thread to ensure it's not using old assets for drawing
-	RF_AdapterWait( &rrf.adapter );
 	R_EndRegistration();
 	rrf.adapter.cmdPipe->EndRegistration( rrf.adapter.cmdPipe );
-	RF_AdapterWait( &rrf.adapter );
 }
 
 void RF_RegisterWorldModel( const char *model ) {
-	RF_AdapterWait( &rrf.adapter );
 	R_RegisterWorldModel( model );
 }
 
 void RF_ClearScene( void ) {
 	rrf.frame->ClearScene( rrf.frame );
-}
-
-void RF_Finish( void ) {
-	RF_AdapterWait( &rrf.adapter );
 }
 
 void RF_AddEntityToScene( const entity_t *ent ) {
@@ -428,7 +242,6 @@ void RF_ReplaceRawSubPic( shader_t *shader, int x, int y, int width, int height,
 }
 
 void RF_BeginAviDemo( void ) {
-	RF_AdapterWait( &rrf.adapter );
 }
 
 void RF_WriteAviFrame( int frame, bool scissor ) {
@@ -457,13 +270,10 @@ void RF_WriteAviFrame( int frame, bool scissor ) {
 	Q_snprintfz( path, path_size, "%s/%s/avi/", writedir, gamedir );
 	Q_snprintfz( name, sizeof( name ), "%06i", frame );
 
-	RF_AdapterWait( &rrf.adapter );
-
 	rrf.adapter.cmdPipe->AviShot( rrf.adapter.cmdPipe, path, name, x, y, w, h );
 }
 
 void RF_StopAviDemo( void ) {
-	RF_AdapterWait( &rrf.adapter );
 }
 
 void RF_TransformVectorToScreen( const refdef_t *rd, const vec3_t in, vec2_t out ) {

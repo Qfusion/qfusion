@@ -97,12 +97,6 @@ cvar_t *r_shadows_polygonoffset_factor;
 cvar_t *r_shadows_polygonoffset_units;
 cvar_t *r_shadows_sky_polygonoffset_factor;
 cvar_t *r_shadows_sky_polygonoffset_units;
-cvar_t *r_shadows_cascades_minradius;
-cvar_t *r_shadows_cascades_lambda;
-cvar_t *r_shadows_cascades_minsize;
-cvar_t *r_shadows_cascades_maxsize;
-cvar_t *r_shadows_cascades_debug;
-cvar_t *r_shadows_cascades_blendarea;
 cvar_t *r_shadows_lodbias;
 
 cvar_t *r_outlines_world;
@@ -139,8 +133,6 @@ cvar_t *r_floorcolor;
 cvar_t *r_usenotexture;
 
 cvar_t *r_maxglslbones;
-
-cvar_t *r_multithreading;
 
 static bool r_verbose;
 
@@ -382,11 +374,7 @@ static void R_Register() {
 	r_offsetmapping_scale = ri.Cvar_Get( "r_offsetmapping_scale", "0.02", CVAR_ARCHIVE );
 	r_offsetmapping_reliefmapping = ri.Cvar_Get( "r_offsetmapping_reliefmapping", "0", CVAR_ARCHIVE );
 
-#ifdef CGAMEGETLIGHTORIGIN
-	r_shadows = ri.Cvar_Get( "cg_shadows", "1", CVAR_ARCHIVE );
-#else
 	r_shadows = ri.Cvar_Get( "r_shadows", "0", CVAR_ARCHIVE );
-#endif
 	r_shadows_minsize = ri.Cvar_Get( "r_shadows_minsize", "32", CVAR_ARCHIVE );
 	r_shadows_maxsize = ri.Cvar_Get( "r_shadows_maxsize", "512", CVAR_ARCHIVE );
 	r_shadows_texturesize = ri.Cvar_Get( "r_shadows_texturesize", "8192", CVAR_ARCHIVE );
@@ -404,12 +392,6 @@ static void R_Register() {
 	r_shadows_sky_polygonoffset_factor = ri.Cvar_Get( "r_shadows_sky_polygonoffset_factor", "8", CVAR_ARCHIVE );
 	r_shadows_sky_polygonoffset_units = ri.Cvar_Get( "r_shadows_sky_polygonoffset_units", "2", CVAR_ARCHIVE );
 	r_shadows_lodbias = ri.Cvar_Get( "r_shadows_lodbias", "100", CVAR_ARCHIVE );
-	r_shadows_cascades_minradius = ri.Cvar_Get( "r_shadows_cascades_minradius", "1536", CVAR_ARCHIVE );
-	r_shadows_cascades_lambda = ri.Cvar_Get( "r_shadows_cascades_lambda", "0.8", CVAR_ARCHIVE );
-	r_shadows_cascades_minsize = ri.Cvar_Get( "r_shadows_cascades_minsize", "512", CVAR_ARCHIVE );
-	r_shadows_cascades_maxsize = ri.Cvar_Get( "r_shadows_cascades_maxsize", "2048", CVAR_ARCHIVE );
-	r_shadows_cascades_debug = ri.Cvar_Get( "r_shadows_cascades_debug", "0", 0 );
-	r_shadows_cascades_blendarea = ri.Cvar_Get( "r_shadows_cascades_blendarea", "15", 0 );
 
 	r_outlines_world = ri.Cvar_Get( "r_outlines_world", "1.8", CVAR_ARCHIVE );
 	r_outlines_scale = ri.Cvar_Get( "r_outlines_scale", "1", CVAR_ARCHIVE );
@@ -445,8 +427,6 @@ static void R_Register() {
 	r_wallcolor->modified = r_floorcolor->modified = true;
 
 	r_maxglslbones = ri.Cvar_Get( "r_maxglslbones", STR_TOSTR( MAX_GLSL_UNIFORM_BONES ), CVAR_LATCH_VIDEO );
-
-	r_multithreading = ri.Cvar_Get( "r_multithreading", "0", CVAR_ARCHIVE | CVAR_LATCH_VIDEO | CVAR_READONLY );
 
 	ri.Cmd_AddCommand( "imagelist", R_ImageList_f );
 	ri.Cmd_AddCommand( "shaderlist", R_ShaderList_f );
@@ -486,7 +466,6 @@ static void R_GfxInfo_f( void ) {
 	Com_Printf( "mode: %ix%i%s\n", glConfig.width, glConfig.height,
 				glConfig.fullScreen ? ", fullscreen" : ", windowed" );
 	Com_Printf( "anisotropic filtering: %i\n", r_texturefilter->integer );
-	Com_Printf( "multithreading: %s\n", glConfig.multithreading ? "enabled" : "disabled" );
 
 	R_PrintGLExtensionsInfo();
 
@@ -585,7 +564,6 @@ static rserr_t R_PostInit( void ) {
 
 	glConfig.versionHash = R_GLVersionHash( glConfig.vendorString, glConfig.rendererString,
 											glConfig.versionString );
-	glConfig.multithreading = 0;
 
 	memset( &rsh, 0, sizeof( rsh ) );
 	memset( &rf, 0, sizeof( rf ) );
@@ -709,8 +687,6 @@ void R_BeginRegistration( void ) {
 
 	R_DeferDataSync();
 
-	R_DataSync();
-
 	R_ClearScene();
 }
 
@@ -731,8 +707,6 @@ void R_EndRegistration( void ) {
 	R_FreeUnusedImages();
 
 	R_DeferDataSync();
-
-	R_DataSync();
 
 	R_ClearScene();
 }

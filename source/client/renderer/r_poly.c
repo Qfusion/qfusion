@@ -76,7 +76,7 @@ void R_DrawPolys( void ) {
 		}
 
 		if( renderfx & RF_VIEWERMODEL ) {
-			if( !( rn.renderFlags & ( RF_MIRRORVIEW | RF_SHADOWMAPVIEW ) ) ) {
+			if( !( rn.renderFlags & RF_MIRRORVIEW ) ) {
 				continue;
 			}
 		}

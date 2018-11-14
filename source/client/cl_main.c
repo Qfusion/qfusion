@@ -872,8 +872,6 @@ void CL_Disconnect( const char *message ) {
 		cls.httpbaseurl = NULL;
 	}
 
-	re.Finish();
-
 	CL_EndRegistration();
 
 	CL_RestartMedia();

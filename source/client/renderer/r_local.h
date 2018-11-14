@@ -42,12 +42,6 @@ typedef vec_t instancePoint_t[8]; // quaternion for rotation + xyz pos + uniform
 
 #define NUM_CUSTOMCOLORS        16
 
-#ifdef CGAMEGETLIGHTORIGIN
-#define SHADOW_MAPPING          2
-#else
-#define SHADOW_MAPPING          1
-#endif
-
 #define SUBDIVISIONS_MIN        3
 #define SUBDIVISIONS_MAX        16
 #define SUBDIVISIONS_DEFAULT    5
@@ -77,21 +71,18 @@ typedef vec_t instancePoint_t[8]; // quaternion for rotation + xyz pos + uniform
 #define RF_MIRRORVIEW           RF_BIT( 0 )
 #define RF_PORTALVIEW           RF_BIT( 1 )
 #define RF_ENVVIEW              RF_BIT( 2 )
-#define RF_SHADOWMAPVIEW        RF_BIT( 3 )
-#define RF_FLIPFRONTFACE        RF_BIT( 4 )
-#define RF_DRAWFLAT             RF_BIT( 5 )
-#define RF_CLIPPLANE            RF_BIT( 6 )
-#define RF_NOVIS                RF_BIT( 7 )
-#define RF_LIGHTMAP             RF_BIT( 8 )
-#define RF_SOFT_PARTICLES       RF_BIT( 9 )
-#define RF_PORTAL_CAPTURE       RF_BIT( 10 )
-#define RF_SHADOWMAPVIEW_RGB    RF_BIT( 11 )
-#define RF_LIGHTVIEW            RF_BIT( 12 )
-#define RF_NOENTS               RF_BIT( 13 )
-#define RF_SKYSHADOWVIEW        RF_BIT( 14 )
+#define RF_FLIPFRONTFACE        RF_BIT( 3 )
+#define RF_DRAWFLAT             RF_BIT( 4 )
+#define RF_CLIPPLANE            RF_BIT( 5 )
+#define RF_NOVIS                RF_BIT( 6 )
+#define RF_LIGHTMAP             RF_BIT( 7 )
+#define RF_SOFT_PARTICLES       RF_BIT( 8 )
+#define RF_PORTAL_CAPTURE       RF_BIT( 9 )
+#define RF_LIGHTVIEW            RF_BIT( 10 )
+#define RF_NOENTS               RF_BIT( 11 )
 
 #define RF_CUBEMAPVIEW          ( RF_ENVVIEW )
-#define RF_NONVIEWERREF         ( RF_PORTALVIEW | RF_MIRRORVIEW | RF_ENVVIEW | RF_SHADOWMAPVIEW | RF_LIGHTVIEW | RF_SKYSHADOWVIEW )
+#define RF_NONVIEWERREF         ( RF_PORTALVIEW | RF_MIRRORVIEW | RF_ENVVIEW | RF_LIGHTVIEW )
 
 #define MAX_REF_ENTITIES        ( MAX_ENTITIES + 48 ) // must not exceed 2048 because of sort key packing
 
@@ -107,7 +98,6 @@ typedef vec_t instancePoint_t[8]; // quaternion for rotation + xyz pos + uniform
 #include "r_mesh.h"
 #include "r_shader.h"
 #include "r_backend.h"
-#include "r_shadow.h"
 #include "r_model.h"
 #include "r_trace.h"
 #include "r_program.h"
@@ -256,7 +246,6 @@ typedef struct {
 	image_t         *particleTexture;           // little dot for particles
 	image_t         *coronaTexture;
 	image_t         *portalTextures[MAX_PORTAL_TEXTURES + 1];
-	image_t         *shadowmapAtlasTexture;
 
 	refScreenTexSet_t st, stf, st2D;
 
@@ -324,7 +313,6 @@ typedef struct {
 		unsigned int c_brush_polys, c_world_leafs;
 		unsigned int c_world_draw_surfs;
 		unsigned int c_world_lights, c_dynamic_lights;
-		unsigned int c_world_light_shadows, c_dynamic_light_shadows;
 		unsigned int c_ents_total, c_ents_bmodels;
 		unsigned int t_cull_world_nodes, t_cull_world_surfs;
 		unsigned int t_cull_rtlights;
@@ -339,8 +327,6 @@ typedef struct {
 		int64_t time, oldTime;
 		unsigned count, oldCount;
 	} frameTime;
-
-	volatile bool dataSync;   // call R_Finish
 
 	char speedsMsg[2048];
 	qmutex_t        *speedsMsgLock;
@@ -402,10 +388,8 @@ extern cvar_t *r_lighting_maxglsldlights;
 extern cvar_t *r_lighting_intensity;
 extern cvar_t *r_lighting_realtime_world;
 extern cvar_t *r_lighting_realtime_world_lightmaps;
-extern cvar_t *r_lighting_realtime_world_shadows;
 extern cvar_t *r_lighting_realtime_world_importfrommap;
 extern cvar_t *r_lighting_realtime_dlight;
-extern cvar_t *r_lighting_realtime_dlight_shadows;
 extern cvar_t *r_lighting_realtime_sky;
 extern cvar_t *r_lighting_realtime_sky_direction;
 extern cvar_t *r_lighting_realtime_sky_color;
@@ -416,31 +400,6 @@ extern cvar_t *r_lighting_bicubic;
 extern cvar_t *r_offsetmapping;
 extern cvar_t *r_offsetmapping_scale;
 extern cvar_t *r_offsetmapping_reliefmapping;
-
-extern cvar_t *r_shadows;
-extern cvar_t *r_shadows_minsize;
-extern cvar_t *r_shadows_maxsize;
-extern cvar_t *r_shadows_texturesize;
-extern cvar_t *r_shadows_bordersize;
-extern cvar_t *r_shadows_pcf;
-extern cvar_t *r_shadows_self_shadow;
-extern cvar_t *r_shadows_dither;
-extern cvar_t *r_shadows_precision;
-extern cvar_t *r_shadows_nearclip;
-extern cvar_t *r_shadows_bias;
-extern cvar_t *r_shadows_usecompiled;
-extern cvar_t *r_shadows_culltriangles;
-extern cvar_t *r_shadows_polygonoffset_factor;
-extern cvar_t *r_shadows_polygonoffset_units;
-extern cvar_t *r_shadows_sky_polygonoffset_factor;
-extern cvar_t *r_shadows_sky_polygonoffset_units;
-extern cvar_t *r_shadows_cascades_minradius;
-extern cvar_t *r_shadows_cascades_lambda;
-extern cvar_t *r_shadows_cascades_minsize;
-extern cvar_t *r_shadows_cascades_maxsize;
-extern cvar_t *r_shadows_cascades_debug;
-extern cvar_t *r_shadows_cascades_blendarea;
-extern cvar_t *r_shadows_lodbias;
 
 extern cvar_t *r_outlines_world;
 extern cvar_t *r_outlines_scale;
@@ -473,8 +432,6 @@ extern cvar_t *r_wallcolor;
 extern cvar_t *r_floorcolor;
 
 extern cvar_t *r_maxglslbones;
-
-extern cvar_t *r_multithreading;
 
 //====================================================================
 
@@ -564,7 +521,7 @@ void        RFB_Shutdown( void );
 //
 // r_main.c
 //
-#define R_FASTSKY() ( r_fastsky->integer || (rn.viewcluster == -1 && !(rn.renderFlags & RF_SKYSHADOWVIEW)) )
+#define R_FASTSKY() ( r_fastsky->integer || rn.viewcluster == -1 )
 
 extern mempool_t *r_mempool;
 
@@ -613,11 +570,6 @@ int			R_RegisterMultisampleTarget( refScreenTexSet_t *st, int samples, bool useF
 void		R_BlitTextureToScrFbo( const refdef_t *fd, image_t *image, int dstFbo,
 	int program_type, const vec4_t color, int blendMask, int numShaderImages, image_t **shaderImages,
 	int iParam0 );
-
-/**
- * Calls R_Finish if data sync was previously deferred.
- */
-void        R_DataSync( void );
 
 /**
  * Defer R_DataSync call at the start/end of the next frame.
@@ -756,7 +708,6 @@ void    R_DrawWorldNode( void );
 void	R_DrawWorldShadowNode( void );
 bool    R_SurfNoDraw( const msurface_t *surf );
 bool    R_SurfNoDlight( const msurface_t *surf );
-bool    R_SurfNoShadow( const msurface_t *surf );
 void	R_CacheBrushModelEntity( const entity_t *e );
 bool    R_AddBrushModelToDrawList( const entity_t *e );
 float   R_BrushModelBBox( const entity_t *e, vec3_t mins, vec3_t maxs, bool *rotated );

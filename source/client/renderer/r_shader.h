@@ -292,7 +292,6 @@ void        R_PrintShaderCache( const char *name );
 shader_t    *R_ShaderById( unsigned int id );
 
 bool		R_ShaderNoDlight( const shader_t *shader );
-bool		R_ShaderNoShadow( const shader_t *shader );
 
 shader_t    *R_LoadShader( const char *name, shaderType_e type, bool forceDefault, const char *text );
 

@@ -59,19 +59,6 @@ bool R_SurfNoDlight( const msurface_t *surf ) {
 }
 
 /*
-* R_SurfNoShadow
-*/
-bool R_SurfNoShadow( const msurface_t *surf ) {
-	if( surf->flags & SURF_NODRAW ) {
-		return true;
-	}
-	if( ( surf->flags & SURF_SKY ) && mapConfig.writeSkyDepth ) {
-		return false;
-	}
-	return R_ShaderNoShadow( surf->shader );
-}
-
-/*
 * R_AddLightsToSurfaces
 */
 static void R_AddLightsToSurfaces( void ) {
@@ -80,7 +67,7 @@ static void R_AddLightsToSurfaces( void ) {
 	unsigned **lsi, *lc, *lrm, *lcm;
 	void *cachemark = NULL;
 
-	if( rn.renderFlags & (RF_LIGHTVIEW|RF_SHADOWMAPVIEW) ) {
+	if( rn.renderFlags & RF_LIGHTVIEW ) {
 		return;
 	}
 	if( !rn.numRealtimeLights ) {
@@ -305,29 +292,16 @@ static bool R_AddWorldDrawSurfaceToDrawList( const entity_t *e, unsigned ds ) {
 
 	sky = ( shader->flags & SHADER_SKY ) != 0;
 	portal = ( shader->flags & SHADER_PORTAL ) != 0;
-	if( rn.renderFlags & (RF_LIGHTVIEW|RF_SHADOWMAPVIEW) ) {
+	if( rn.renderFlags & RF_LIGHTVIEW ) {
 		fog = NULL;
 		lightStyleNum = -1;
-	}
-
-	if( rn.renderFlags & RF_LIGHTVIEW ) {
 		if( sky || portal ) {
-			return false;
-		}
-	} else if( rn.renderFlags & RF_SKYSHADOWVIEW ) {
-		shader = sky ? rsh.depthOnlyShader : R_OpaqueShadowShader( shader );
-		if( !shader ) {
-			return false;
-		}
-	} else if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
-		shader = R_OpaqueShadowShader( shader );
-		if( !shader ) {
 			return false;
 		}
 	}
 
 	if( sky ) {
-		bool writeDepth = mapConfig.writeSkyDepth || ( rn.renderFlags & RF_SKYSHADOWVIEW );
+		bool writeDepth = mapConfig.writeSkyDepth;
 
 		if( R_FASTSKY() ) {
 			return false;
@@ -350,10 +324,8 @@ static bool R_AddWorldDrawSurfaceToDrawList( const entity_t *e, unsigned ds ) {
 				fog, lightStyleNum, 0, drawOrder, portalSurface, drawSurf );
 		}
 
-		if( !(rn.renderFlags & RF_SHADOWMAPVIEW ) ) {
-			// the actual skydome surface
-			R_AddSkySurfToDrawList( rn.meshlist, shader, portalSurface, &rn.skyDrawSurface );
-		}
+		// the actual skydome surface
+		R_AddSkySurfToDrawList( rn.meshlist, shader, portalSurface, &rn.skyDrawSurface );
 
 		rf.stats.c_world_draw_surfs++;
 		return true;
@@ -530,10 +502,6 @@ bool R_AddBrushModelToDrawList( const entity_t *e ) {
 
 		if( rn.renderFlags & RF_LIGHTMAP ) {
 			if( R_SurfNoDlight( surf ) ) {
-				continue;
-			}
-		} else if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
-			if( R_SurfNoShadow( surf ) ) {
 				continue;
 			}
 		}
@@ -837,7 +805,7 @@ void R_DrawWorldShadowNode( void ) {
 	if( !l ) {
 		return;
 	}
-	if( !( rn.renderFlags & (RF_SHADOWMAPVIEW|RF_LIGHTVIEW) ) ) {
+	if( !( rn.renderFlags & RF_LIGHTVIEW ) ) {
 		return;
 	}
 
@@ -966,9 +934,6 @@ void R_DrawWorldNode( void ) {
 	if( rn.refdef.rdflags & RDF_NOWORLDMODEL ) {
 		return;
 	}
-	if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
-		return;
-	}
 
 	VectorCopy( rn.refdef.vieworg, modelOrg );
 
@@ -1035,16 +1000,13 @@ void R_DrawWorldNode( void ) {
 	}
 
 	if( r_lighting_realtime_world->integer != 0 ) {
-		R_CullRtLights( bm->numRtLights, 
-			bm->rtLights, clipFlags, r_lighting_realtime_world_shadows->integer != 0 );
-		R_CullRtLights( bm->numRtSkyLights, 
-			bm->rtSkyLights, clipFlags, r_lighting_realtime_world_shadows->integer != 0 );
+		R_CullRtLights( bm->numRtLights, bm->rtLights, clipFlags );
+		R_CullRtLights( bm->numRtSkyLights, bm->rtSkyLights, clipFlags );
 	}
 
 	if( r_lighting_realtime_dlight->integer != 0 ) {
 		if( !( rn.renderFlags & RF_ENVVIEW ) && r_dynamiclight->integer == 1 ) {
-			R_CullRtLights( rsc.numDlights, 
-				rsc.dlights, clipFlags, r_lighting_realtime_dlight_shadows->integer != 0 );
+			R_CullRtLights( rsc.numDlights, rsc.dlights, clipFlags );
 		}
 	}
 

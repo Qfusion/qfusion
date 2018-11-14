@@ -133,7 +133,6 @@ typedef struct {
 	unsigned int maxGLSLBones;      // the maximum amount of bones we can handle in a vertex shader
 
 	bool forceRGBAFramebuffers;             // PowerVR hack - its blending interprets alpha in RGB FBs as 0, not 1
-	bool multithreading;
 	bool sSRGB;
 
 	glextinfo_t ext;
@@ -160,15 +159,3 @@ rserr_t GLimp_SetFullscreenMode( int displayFrequency, bool fullscreen );
 void    GLimp_AppActivate( bool active, bool minimize );
 bool    VID_GetGammaRamp( size_t stride, unsigned short *psize, unsigned short *ramp ); // TODO: this doesn't belong here
 void    VID_SetGammaRamp( size_t stride, unsigned short size, unsigned short *ramp );
-
-bool    GLimp_MakeCurrent( void *context, void *surface );
-
-void    GLimp_EnableMultithreadedRendering( bool enable );
-// When multithreaded rendering is enabled, GetWindowSurface must be called from the rendering thread, not the main one.
-// The window surface may be managed by the rendering thread in this case, and the main thread may have a fake surface instead
-// if the context implementation doesn't support multiple contexts bound to the same surface.
-void    *GLimp_GetWindowSurface( bool *renderable );
-void    GLimp_UpdatePendingWindowSurface( void ); // Call from the rendering thread.
-
-bool    GLimp_SharedContext_Create( void **context, void **surface );
-void    GLimp_SharedContext_Destroy( void *context, void *surface );
