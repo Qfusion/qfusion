@@ -112,7 +112,7 @@ static const gs_asClassDescriptor_t asViewportClassDescriptor =
 {
 	"Viewport",                  /* name */
 	asOBJ_REF | asOBJ_NOCOUNT,   /* object type flags */
-	sizeof( cg_touch_t ),        /* size */
+	sizeof( vrect_t ),           /* size */
 	asviewport_Funcdefs,         /* funcdefs */
 	asviewport_ObjectBehaviors,  /* object behaviors */
 	asviewport_Methods,          /* methods */
