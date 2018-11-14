@@ -455,6 +455,8 @@ void CG_PlasmaExplosion( const vec3_t pos, const vec3_t dir, int fire_mode, floa
 		le->ent.scale = radius / model_radius;
 	}
 
+	CG_ImpactPuffParticles( origin, dir, 15, 0.75f, 1, 1, 1, 1, NULL );
+
 	le->ent.rotation = rand() % 360;
 
 	CG_SpawnDecal( pos, dir, 90, 16,
