@@ -108,7 +108,9 @@ extern "C" {
 
 // explosions
 #define PATH_ROCKET_EXPLOSION_SPRITE    "gfx/rocket_explosion"
-#define PATH_ROCKET_EXPLOSION_RING_SPRITE   "gfx/misc/rlexplo_ring"
+#define PATH_ROCKET_EXPLOSION_RING_SPRITE   "gfx/rocket_explosion_ring"
+#define PATH_GRENADE_EXPLOSION_SPRITE    "gfx/grenade_explosion"
+#define PATH_GRENADE_EXPLOSION_RING_SPRITE   "gfx/grenade_explosion_ring"
 
 // simpleitems
 

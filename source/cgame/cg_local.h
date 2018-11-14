@@ -224,9 +224,10 @@ typedef struct {
 	//no wsw
 
 	cgs_media_handle_t *shaderParticle;
-	cgs_media_handle_t *shaderGrenadeExplosion;
 	cgs_media_handle_t *shaderRocketExplosion;
 	cgs_media_handle_t *shaderRocketExplosionRing;
+	cgs_media_handle_t *shaderGrenadeExplosion;
+	cgs_media_handle_t *shaderGrenadeExplosionRing;
 	cgs_media_handle_t *shaderBulletExplosion;
 	cgs_media_handle_t *shaderRaceGhostEffect;
 	cgs_media_handle_t *shaderWaterBubble;

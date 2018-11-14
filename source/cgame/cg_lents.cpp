@@ -1008,7 +1008,7 @@ void CG_GrenadeExplosionMode( const vec3_t pos, const vec3_t dir, int fire_mode,
 	le = CG_AllocSprite( LE_ALPHA_FADE, origin, radius * 0.5f, 8,
 						 1, 1, 1, 1,
 						 radius * 4, 0.75f, 0.533f, 0, // yellow dlight
-						 CG_MediaShader( cgs.media.shaderRocketExplosion ) );
+						 CG_MediaShader( cgs.media.shaderGrenadeExplosion ) );
 
 	VectorSet( vec, crandom() * expvelocity, crandom() * expvelocity, crandom() * expvelocity );
 	VectorScale( dir, expvelocity, le->velocity );
@@ -1021,7 +1021,7 @@ void CG_GrenadeExplosionMode( const vec3_t pos, const vec3_t dir, int fire_mode,
 		le = CG_AllocSprite( LE_ALPHA_FADE, origin, radius, 3,
 							 1, 1, 1, 1,
 							 0, 0, 0, 0, // no dlight
-							 CG_MediaShader( cgs.media.shaderRocketExplosionRing ) );
+							 CG_MediaShader( cgs.media.shaderGrenadeExplosionRing ) );
 
 		le->ent.rotation = rand() % 360;
 	}

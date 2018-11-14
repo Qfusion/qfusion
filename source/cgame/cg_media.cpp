@@ -323,6 +323,8 @@ void CG_RegisterMediaShaders( void ) {
 	cgs.media.shaderLaserGunBeam2 = CG_RegisterMediaShader( "gfx/misc/laserbeam2" );
 	cgs.media.shaderRocketExplosion = CG_RegisterMediaShader( PATH_ROCKET_EXPLOSION_SPRITE );
 	cgs.media.shaderRocketExplosionRing = CG_RegisterMediaShader( PATH_ROCKET_EXPLOSION_RING_SPRITE );
+	cgs.media.shaderGrenadeExplosion = CG_RegisterMediaShader( PATH_ROCKET_EXPLOSION_SPRITE );
+	cgs.media.shaderGrenadeExplosionRing = CG_RegisterMediaShader( PATH_ROCKET_EXPLOSION_RING_SPRITE );
 
 	cgs.media.shaderLaser = CG_RegisterMediaShader( "gfx/misc/laser" );
 
