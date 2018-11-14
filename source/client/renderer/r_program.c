@@ -2190,6 +2190,7 @@ static void RP_GetUniformLocations( glsl_program_t *program ) {
 	int locDiffuseTexture;
 	int locStripesTexture;
 	int locDepthTexture;
+	int locBlueNoiseTexture;
 	int locColorLUT;
 	int locCubeFilter;
 
@@ -2230,6 +2231,8 @@ static void RP_GetUniformLocations( glsl_program_t *program ) {
 	locStripesTexture = glGetUniformLocation( program->object, "u_StripesTexture" );
 
 	locDepthTexture = glGetUniformLocation( program->object, "u_DepthTexture" );
+
+	locBlueNoiseTexture = glGetUniformLocation( program->object, "u_BlueNoiseTexture" );
 
 	locColorLUT = glGetUniformLocation( program->object, "u_ColorLUT" );
 	locCubeFilter = glGetUniformLocation( program->object, "u_CubeFilter" );
@@ -2355,6 +2358,10 @@ static void RP_GetUniformLocations( glsl_program_t *program ) {
 
 	for( i = 0; i < MAX_LIGHTMAPS && locLightmapTexture[i] >= 0; i++ )
 		glUniform1i( locLightmapTexture[i], i + 4 );
+
+	if( locBlueNoiseTexture >= 0 ) {
+		glUniform1i( locBlueNoiseTexture, 7 );
+	}
 
 	if( locColorLUT >= 0 ) {
 		glUniform1i( locColorLUT, 1 );

@@ -883,7 +883,6 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 						   GLSL_SHADER_MATERIAL_RELIEFMAPPING : GLSL_SHADER_MATERIAL_OFFSETMAPPING;
 	}
 
-
 	programFeatures |= GLSL_SHADER_COMMON_LIGHTING;
 
 	if( rb.mode == RB_MODE_POST_LIGHT ) {
@@ -965,6 +964,8 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 			}
 		}
 	}
+
+	RB_BindImage( 7, rsh.blueNoiseTexture );
 
 	program = RB_RegisterProgram( GLSL_PROGRAM_TYPE_MATERIAL, NULL,
 								  rb.currentShader->deformsKey, rb.currentShader->deforms, rb.currentShader->numdeforms, programFeatures );
@@ -1306,7 +1307,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 	}
 
 	if( rb.mode == RB_MODE_DEPTH ) {
-		if( !(state & GLSTATE_DEPTHWRITE) ) {
+		if( !( state & GLSTATE_DEPTHWRITE ) ) {
 			return;
 		}
 	}
@@ -1348,6 +1349,8 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 			}
 		}
 	}
+
+	RB_BindImage( 7, rsh.blueNoiseTexture );
 
 	// update uniforms
 	program = RB_RegisterProgram( GLSL_PROGRAM_TYPE_Q3A_SHADER, NULL,

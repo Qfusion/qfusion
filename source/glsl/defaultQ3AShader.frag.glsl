@@ -36,6 +36,8 @@ uniform LightmapSampler u_LightmapTexture3;
 uniform sampler2D u_DepthTexture;
 #endif
 
+#include "include/dither.glsl"
+
 void main(void)
 {
 	myhalf4 color;
@@ -109,6 +111,8 @@ void main(void)
 #ifdef QF_ALPHATEST
 	QF_ALPHATEST(color.a);
 #endif
+
+	color.rgb += dither();
 
 	qf_FragColor = vec4(sRGBColor(color));
 }

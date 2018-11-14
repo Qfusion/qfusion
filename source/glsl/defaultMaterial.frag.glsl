@@ -32,6 +32,7 @@ uniform myhalf3 u_FloorColor;
 
 uniform myhalf2 u_GlossFactors; // gloss scaling and exponent factors
 
+#include "include/dither.glsl"
 
 void main()
 {
@@ -149,6 +150,8 @@ void main()
 	myhalf fogDensity = FogDensity(v_TexCoord_FogCoord.pq);
 	color.rgb = mix(color.rgb, LinearColor(u_FogColor), fogDensity);
 #endif
+
+	color.rgb += dither();
 
 	qf_FragColor = vec4(sRGBColor(color));
 }

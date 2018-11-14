@@ -21,6 +21,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_imagelib.h"
 #include "../../qalgo/hash.h"
 
+#include "blue_noise.h"
+#include "stb_image.h"
+
 #define MAX_GLIMAGES        8192
 #define IMAGES_HASH_SIZE    64
 
@@ -1819,6 +1822,24 @@ static void R_InitCoronaTexture( int *w, int *h, int *flags, int *samples ) {
 }
 
 /*
+ * R_InitBlueNoiseTexture
+ */
+static void R_InitBlueNoiseTexture( int * w, int * h, int * flags, int * samples ) {
+	uint8_t * data = stbi_load_from_memory( blue_noise_png, blue_noise_png_len, w, h, NULL, 1 );
+	*flags = IT_NOMIPMAP;
+	*samples = 1;
+
+	if( data == NULL ) {
+		ri.Com_Error( ERR_FATAL, "stbi_load_from_memory: out of memory (alloc at %s:%i)", __FILE__, __LINE__ );
+	}
+
+	uint8_t * ibuf = R_PrepareImageBuffer( TEXTURE_LOADING_BUF0, *w * *h );
+	memcpy( ibuf, data, *w * *h );
+
+	stbi_image_free( data );
+}
+
+/*
 * R_GetRenderBufferSize
 */
 void R_GetRenderBufferSize( const int inWidth, const int inHeight,
@@ -2127,6 +2148,7 @@ static void R_InitBuiltinImages( void ) {
 		{ "***r_blankbumptexture***", &rsh.blankBumpTexture, &R_InitBlankBumpTexture },
 		{ "***r_particletexture***", &rsh.particleTexture, &R_InitParticleTexture },
 		{ "***r_coronatexture***", &rsh.coronaTexture, &R_InitCoronaTexture },
+		{ "***r_bluenoisetexture***", &rsh.blueNoiseTexture, &R_InitBlueNoiseTexture },
 		{ NULL, NULL, NULL }
 	};
 	size_t i, num_builtin_textures = sizeof( textures ) / sizeof( textures[0] ) - 1;
@@ -2136,9 +2158,7 @@ static void R_InitBuiltinImages( void ) {
 
 		image = R_LoadImage( textures[i].name, r_imageBuffers, w, h, flags, 1, IMAGE_TAG_BUILTIN, samples );
 
-		if( textures[i].image ) {
-			*( textures[i].image ) = image;
-		}
+		*textures[i].image = image;
 	}
 }
 
@@ -2148,11 +2168,14 @@ static void R_InitBuiltinImages( void ) {
 static void R_ReleaseBuiltinImages( void ) {
 	rsh.rawTexture = NULL;
 	rsh.noTexture = NULL;
-	rsh.whiteTexture = rsh.blackTexture = rsh.greyTexture = NULL;
+	rsh.whiteTexture = NULL;
+	rsh.blackTexture = NULL;
+	rsh.greyTexture = NULL;
 	rsh.whiteCubemapTexture = NULL;
 	rsh.blankBumpTexture = NULL;
 	rsh.particleTexture = NULL;
 	rsh.coronaTexture = NULL;
+	rsh.blueNoiseTexture = NULL;
 }
 
 //=======================================================

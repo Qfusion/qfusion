@@ -245,6 +245,7 @@ typedef struct {
 	image_t         *blankBumpTexture;
 	image_t         *particleTexture;           // little dot for particles
 	image_t         *coronaTexture;
+	image_t         *blueNoiseTexture;
 	image_t         *portalTextures[MAX_PORTAL_TEXTURES + 1];
 
 	refScreenTexSet_t st, stf, st2D;
