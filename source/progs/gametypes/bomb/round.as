@@ -514,6 +514,13 @@ void roundThink()
 		}
 		else {
 			last_time = roundStateEndTime - levelTime;
+
+			if ( !attackersHurried && levelTime + BOMB_HURRYUP_TIME >= roundStateEndTime )
+			{
+				announceOff( ANNOUNCEMENT_HURRY );
+
+				attackersHurried = true;
+			}
 		}
 
 		match.setClockOverride( last_time );
