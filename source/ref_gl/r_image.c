@@ -2316,7 +2316,7 @@ void R_ScreenShot( const char *filename, int x, int y, int width, int height, in
 	}
 
 	size = width * height * 3;
-	buf_size = width * height * 4;
+	buf_size = width * height * 4 * 2; // reserve extra space for flipped images, hence x2
 	if( buf_size > r_screenShotBufferSize ) {
 		if( r_screenShotBuffer ) {
 			R_Free( r_screenShotBuffer );
