@@ -369,7 +369,6 @@ static http_response_code_t G_VoteMapWebRequest( http_query_method_t method, con
 	return HTTP_RESP_OK;
 }
 
-
 /*
 * restart
 */
@@ -377,7 +376,6 @@ static http_response_code_t G_VoteMapWebRequest( http_query_method_t method, con
 static void G_VoteRestartPassed( callvotedata_t *vote ) {
 	G_RestartLevel();
 }
-
 
 /*
 * nextmap
@@ -387,7 +385,6 @@ static void G_VoteNextMapPassed( callvotedata_t *vote ) {
 	level.forcemap[0] = 0;
 	G_EndMatch();
 }
-
 
 /*
 * scorelimit
@@ -453,130 +450,6 @@ static const char *G_VoteTimelimitCurrent( void ) {
 	return va( "%i", g_timelimit->integer );
 }
 
-
-/*
-* gametype
-*/
-
-static void G_VoteGametypeExtraHelp( edict_t *ent ) {
-	char message[2048], *name; // use buffer to send only one print message
-	int count;
-
-	message[0] = 0;
-
-	if( g_gametype->latched_string && g_gametype->latched_string[0] != '\0' &&
-		G_Gametype_Exists( g_gametype->latched_string ) ) {
-		Q_strncatz( message, "- Will be changed to: ", sizeof( message ) );
-		Q_strncatz( message, g_gametype->latched_string, sizeof( message ) );
-		Q_strncatz( message, "\n", sizeof( message ) );
-	}
-
-	Q_strncatz( message, "- Available gametypes:", sizeof( message ) );
-
-	for( count = 0; ( name = COM_ListNameForPosition( g_gametypes_list->string, count, CHAR_GAMETYPE_SEPARATOR ) ) != NULL;
-		 count++ ) {
-		if( G_Gametype_IsVotable( name ) ) {
-			Q_strncatz( message, " ", sizeof( message ) );
-			Q_strncatz( message, name, sizeof( message ) );
-		}
-	}
-
-	G_PrintMsg( ent, "%s\n", message );
-}
-
-static http_response_code_t G_VoteGametypeWebRequest( http_query_method_t method, const char *resource,
-													  const char *query_string, char **content, size_t *content_length ) {
-	char *name; // use buffer to send only one print message
-	int count;
-	char *msg = NULL;
-	size_t msg_len = 0, msg_size = 0;
-
-	if( method != HTTP_METHOD_GET && method != HTTP_METHOD_HEAD ) {
-		return HTTP_RESP_BAD_REQUEST;
-	}
-
-	for( count = 0; ( name = COM_ListNameForPosition( g_gametypes_list->string, count, CHAR_GAMETYPE_SEPARATOR ) ) != NULL;
-		 count++ ) {
-		if( G_Gametype_IsVotable( name ) ) {
-			G_AppendString( &msg, va(
-								"{\n"
-								"\"value\"" " " "\"%s\"" "\n"
-								"\"name\"" " " "\"%s\"" "\n"
-								"}\n",
-								name,
-								name
-								), &msg_len, &msg_size );
-		}
-	}
-
-	*content = msg;
-	*content_length = msg_len;
-	return HTTP_RESP_OK;
-}
-
-static bool G_VoteGametypeValidate( callvotedata_t *vote, bool first ) {
-	if( !G_Gametype_Exists( vote->argv[0] ) ) {
-		if( first ) {
-			G_PrintMsg( vote->caller, "%sgametype %s is not available\n", S_COLOR_RED, vote->argv[0] );
-		}
-		return false;
-	}
-
-	if( g_gametype->latched_string && G_Gametype_Exists( g_gametype->latched_string ) ) {
-		if( ( GS_MatchState() > MATCH_STATE_PLAYTIME ) &&
-			!Q_stricmp( vote->argv[0], g_gametype->latched_string ) ) {
-			if( first ) {
-				G_PrintMsg( vote->caller, "%s%s is already the next gametype\n", S_COLOR_RED, vote->argv[0] );
-			}
-			return false;
-		}
-	}
-
-	if( ( GS_MatchState() <= MATCH_STATE_PLAYTIME || g_gametype->latched_string == NULL )
-		&& !Q_stricmp( gs.gametypeName, vote->argv[0] ) ) {
-		if( first ) {
-			G_PrintMsg( vote->caller, "%s%s is the current gametype\n", S_COLOR_RED, vote->argv[0] );
-		}
-		return false;
-	}
-
-	// if the g_votable_gametypes is empty, allow all gametypes
-	if( !G_Gametype_IsVotable( vote->argv[0] ) ) {
-		if( first ) {
-			G_PrintMsg( vote->caller, "%sVoting gametype %s is not allowed on this server\n",
-						S_COLOR_RED, vote->argv[0] );
-		}
-		return false;
-	}
-
-	return true;
-}
-
-static void G_VoteGametypePassed( callvotedata_t *vote ) {
-	char *gametype_string;
-	char next_gametype_string[MAX_STRING_TOKENS];
-
-	gametype_string = vote->argv[0];
-	Q_strncpyz( next_gametype_string, gametype_string, sizeof( next_gametype_string ) );
-
-	trap_Cvar_Set( "g_gametype", gametype_string );
-
-	if( GS_MatchState() == MATCH_STATE_COUNTDOWN ||
-		GS_MatchState() == MATCH_STATE_PLAYTIME || !G_RespawnLevel() ) {
-		// go to scoreboard if in game
-		Q_strncpyz( level.forcemap, level.mapname, sizeof( level.forcemap ) );
-		G_EndMatch();
-	}
-
-	// we can't use gametype_string here, because there's a big chance it has just been freed after G_EndMatch
-	G_PrintMsg( NULL, "Gametype changed to %s\n", next_gametype_string );
-}
-
-static const char *G_VoteGametypeCurrent( void ) {
-	return gs.gametypeName;
-}
-
-
 /*
 * warmup_timelimit
 */
@@ -607,39 +480,6 @@ static void G_VoteWarmupTimelimitPassed( callvotedata_t *vote ) {
 
 static const char *G_VoteWarmupTimelimitCurrent( void ) {
 	return va( "%i", g_warmup_timelimit->integer );
-}
-
-
-/*
-* extended_time
-*/
-
-static bool G_VoteExtendedTimeValidate( callvotedata_t *vote, bool first ) {
-	int extended_time = atoi( vote->argv[0] );
-
-	if( extended_time < 0 ) {
-		if( first ) {
-			G_PrintMsg( vote->caller, "%sCan't set negative extended time\n", S_COLOR_RED );
-		}
-		return false;
-	}
-
-	if( extended_time == g_match_extendedtime->integer ) {
-		if( first ) {
-			G_PrintMsg( vote->caller, "%sExtended time is already set to %i\n", S_COLOR_RED, extended_time );
-		}
-		return false;
-	}
-
-	return true;
-}
-
-static void G_VoteExtendedTimePassed( callvotedata_t *vote ) {
-	trap_Cvar_Set( "g_match_extendedtime", va( "%i", atoi( vote->argv[0] ) ) );
-}
-
-static const char *G_VoteExtendedTimeCurrent( void ) {
-	return va( "%i", g_match_extendedtime->integer );
 }
 
 /*
@@ -1263,259 +1103,6 @@ static void G_VoteVUnmutePassed( callvotedata_t *vote ) {
 	}
 
 	ent->r.client->muted &= ~2;
-}
-
-/*
-* addbots
-*/
-
-static bool G_VoteNumBotsValidate( callvotedata_t *vote, bool first ) {
-	int numbots = atoi( vote->argv[0] );
-
-	if( g_numbots->integer == numbots ) {
-		if( first ) {
-			G_PrintMsg( vote->caller, "%sNumber of bots is already %i\n", S_COLOR_RED, numbots );
-		}
-		return false;
-	}
-
-	if( numbots < 0 ) {
-		if( first ) {
-			G_PrintMsg( vote->caller, "%sNegative number of bots is not allowed\n", S_COLOR_RED );
-		}
-		return false;
-	}
-
-	if( numbots > gs.maxclients ) {
-		if( first ) {
-			G_PrintMsg( vote->caller, "%sNumber of bots can't be higher than the number of client spots (%i)\n",
-						S_COLOR_RED, gs.maxclients );
-		}
-		return false;
-	}
-
-	return true;
-}
-
-static void G_VoteNumBotsPassed( callvotedata_t *vote ) {
-	trap_Cvar_Set( "g_numbots", vote->argv[0] );
-}
-
-static const char *G_VoteNumBotsCurrent( void ) {
-	return va( "%i", g_numbots->integer );
-}
-
-/*
-* allow_teamdamage
-*/
-
-static bool G_VoteAllowTeamDamageValidate( callvotedata_t *vote, bool first ) {
-	int teamdamage = atoi( vote->argv[0] );
-
-	if( teamdamage != 0 && teamdamage != 1 ) {
-		return false;
-	}
-
-	if( teamdamage && g_allow_teamdamage->integer ) {
-		if( first ) {
-			G_PrintMsg( vote->caller, "%sTeam damage is already allowed\n", S_COLOR_RED );
-		}
-		return false;
-	}
-
-	if( !teamdamage && !g_allow_teamdamage->integer ) {
-		if( first ) {
-			G_PrintMsg( vote->caller, "%sTeam damage is already disabled\n", S_COLOR_RED );
-		}
-		return false;
-	}
-
-	return true;
-}
-
-static void G_VoteAllowTeamDamagePassed( callvotedata_t *vote ) {
-	trap_Cvar_Set( "g_allow_teamdamage", va( "%i", atoi( vote->argv[0] ) ) );
-}
-
-static const char *G_VoteAllowTeamDamageCurrent( void ) {
-	if( g_allow_teamdamage->integer ) {
-		return "1";
-	} else {
-		return "0";
-	}
-}
-
-/*
-* instajump
-*/
-
-static bool G_VoteAllowInstajumpValidate( callvotedata_t *vote, bool first ) {
-	int instajump = atoi( vote->argv[0] );
-
-	if( instajump != 0 && instajump != 1 ) {
-		return false;
-	}
-
-	if( instajump && g_instajump->integer ) {
-		if( first ) {
-			G_PrintMsg( vote->caller, "%sInstajump is already allowed\n", S_COLOR_RED );
-		}
-		return false;
-	}
-
-	if( !instajump && !g_instajump->integer ) {
-		if( first ) {
-			G_PrintMsg( vote->caller, "%sInstajump is already disabled\n", S_COLOR_RED );
-		}
-		return false;
-	}
-
-	return true;
-}
-
-static void G_VoteAllowInstajumpPassed( callvotedata_t *vote ) {
-	trap_Cvar_Set( "g_instajump", va( "%i", atoi( vote->argv[0] ) ) );
-}
-
-static const char *G_VoteAllowInstajumpCurrent( void ) {
-	if( g_instajump->integer ) {
-		return "1";
-	} else {
-		return "0";
-	}
-}
-
-/*
-* instashield
-*/
-
-static bool G_VoteAllowInstashieldValidate( callvotedata_t *vote, bool first ) {
-	int instashield = atoi( vote->argv[0] );
-
-	if( instashield != 0 && instashield != 1 ) {
-		return false;
-	}
-
-	if( instashield && g_instashield->integer ) {
-		if( first ) {
-			G_PrintMsg( vote->caller, "%sInstashield is already allowed\n", S_COLOR_RED );
-		}
-		return false;
-	}
-
-	if( !instashield && !g_instashield->integer ) {
-		if( first ) {
-			G_PrintMsg( vote->caller, "%sInstashield is already disabled\n", S_COLOR_RED );
-		}
-		return false;
-	}
-
-	return true;
-}
-
-static void G_VoteAllowInstashieldPassed( callvotedata_t *vote ) {
-	trap_Cvar_Set( "g_instashield", va( "%i", atoi( vote->argv[0] ) ) );
-
-	// remove the shield from all players
-	if( !g_instashield->integer ) {
-		int i;
-
-		for( i = 0; i < gs.maxclients; i++ ) {
-			if( trap_GetClientState( i ) < CS_SPAWNED ) {
-				continue;
-			}
-
-			game.clients[i].ps.inventory[POWERUP_SHELL] = 0;
-		}
-	}
-}
-
-static const char *G_VoteAllowInstashieldCurrent( void ) {
-	if( g_instashield->integer ) {
-		return "1";
-	} else {
-		return "0";
-	}
-}
-
-/*
-* allow_falldamage
-*/
-
-static bool G_VoteAllowFallDamageValidate( callvotedata_t *vote, bool first ) {
-	int falldamage = atoi( vote->argv[0] );
-
-	if( falldamage != 0 && falldamage != 1 ) {
-		return false;
-	}
-
-	if( falldamage && GS_FallDamage() ) {
-		if( first ) {
-			G_PrintMsg( vote->caller, "%sFall damage is already allowed\n", S_COLOR_RED );
-		}
-		return false;
-	}
-
-	if( !falldamage && !GS_FallDamage() ) {
-		if( first ) {
-			G_PrintMsg( vote->caller, "%sFall damage is already disabled\n", S_COLOR_RED );
-		}
-		return false;
-	}
-
-	return true;
-}
-
-static void G_VoteAllowFallDamagePassed( callvotedata_t *vote ) {
-	trap_Cvar_Set( "g_allow_falldamage", va( "%i", atoi( vote->argv[0] ) ) );
-}
-
-static const char *G_VoteAllowFallDamageCurrent( void ) {
-	if( GS_FallDamage() ) {
-		return "1";
-	} else {
-		return "0";
-	}
-}
-
-/*
-* allow_selfdamage
-*/
-
-static bool G_VoteAllowSelfDamageValidate( callvotedata_t *vote, bool first ) {
-	int selfdamage = atoi( vote->argv[0] );
-
-	if( selfdamage != 0 && selfdamage != 1 ) {
-		return false;
-	}
-
-	if( selfdamage && GS_SelfDamage() ) {
-		if( first ) {
-			G_PrintMsg( vote->caller, "%sSelf damage is already allowed\n", S_COLOR_RED );
-		}
-		return false;
-	}
-
-	if( !selfdamage && !GS_SelfDamage() ) {
-		if( first ) {
-			G_PrintMsg( vote->caller, "%sSelf damage is already disabled\n", S_COLOR_RED );
-		}
-		return false;
-	}
-
-	return true;
-}
-
-static void G_VoteAllowSelfDamagePassed( callvotedata_t *vote ) {
-	trap_Cvar_Set( "g_allow_selfdamage", va( "%i", atoi( vote->argv[0] ) ) );
-}
-
-static const char *G_VoteAllowSelfDamageCurrent( void ) {
-	if( GS_SelfDamage() ) {
-		return "1";
-	} else {
-		return "0";
-	}
 }
 
 /*
@@ -2479,17 +2066,6 @@ void G_CallVotes_Init( void ) {
 	callvote->argument_type = G_LevelCopyString( "integer" );
 	callvote->help = G_LevelCopyString( "Sets number of minutes after which the match ends\nSpecify 0 to disable" );
 
-	callvote = G_RegisterCallvote( "gametype" );
-	callvote->expectedargs = 1;
-	callvote->validate = G_VoteGametypeValidate;
-	callvote->execute = G_VoteGametypePassed;
-	callvote->current = G_VoteGametypeCurrent;
-	callvote->extraHelp = G_VoteGametypeExtraHelp;
-	callvote->argument_format = G_LevelCopyString( "<name>" );
-	callvote->argument_type = G_LevelCopyString( "option" );
-	callvote->webRequest = G_VoteGametypeWebRequest;
-	callvote->help = G_LevelCopyString( "Changes the gametype" );
-
 	callvote = G_RegisterCallvote( "warmup_timelimit" );
 	callvote->expectedargs = 1;
 	callvote->validate = G_VoteWarmupTimelimitValidate;
@@ -2499,16 +2075,6 @@ void G_CallVotes_Init( void ) {
 	callvote->argument_format = G_LevelCopyString( "<minutes>" );
 	callvote->argument_type = G_LevelCopyString( "integer" );
 	callvote->help = G_LevelCopyString( "Sets the number of minutes after which the warmup ends\nSpecify 0 to disable" );
-
-	callvote = G_RegisterCallvote( "extended_time" );
-	callvote->expectedargs = 1;
-	callvote->validate = G_VoteExtendedTimeValidate;
-	callvote->execute = G_VoteExtendedTimePassed;
-	callvote->current = G_VoteExtendedTimeCurrent;
-	callvote->extraHelp = NULL;
-	callvote->argument_format = G_LevelCopyString( "<minutes>" );
-	callvote->argument_type = G_LevelCopyString( "integer" );
-	callvote->help = G_LevelCopyString( "Sets the length of the overtime\nSpecify 0 to enable sudden death mode" );
 
 	callvote = G_RegisterCallvote( "maxteamplayers" );
 	callvote->expectedargs = 1;
@@ -2633,68 +2199,6 @@ void G_CallVotes_Init( void ) {
 	callvote->webRequest = G_PlayerlistWebRequest;
 	callvote->need_auth = true;
 	callvote->help = G_LevelCopyString( "Reallows voice chat messages from the unmuted player" );
-
-	callvote = G_RegisterCallvote( "numbots" );
-	callvote->expectedargs = 1;
-	callvote->validate = G_VoteNumBotsValidate;
-	callvote->execute = G_VoteNumBotsPassed;
-	callvote->current = G_VoteNumBotsCurrent;
-	callvote->extraHelp = NULL;
-	callvote->argument_format = G_LevelCopyString( "<number>" );
-	callvote->argument_type = G_LevelCopyString( "integer" );
-	callvote->need_auth = true;
-	callvote->help = G_LevelCopyString( "Sets the number of bots to play on the server" );
-
-	callvote = G_RegisterCallvote( "allow_teamdamage" );
-	callvote->expectedargs = 1;
-	callvote->validate = G_VoteAllowTeamDamageValidate;
-	callvote->execute = G_VoteAllowTeamDamagePassed;
-	callvote->current = G_VoteAllowTeamDamageCurrent;
-	callvote->extraHelp = NULL;
-	callvote->argument_format = G_LevelCopyString( "<1 or 0>" );
-	callvote->argument_type = G_LevelCopyString( "bool" );
-	callvote->need_auth = true;
-	callvote->help = G_LevelCopyString( "Toggles whether shooting teammates will do damage to them" );
-
-	callvote = G_RegisterCallvote( "instajump" );
-	callvote->expectedargs = 1;
-	callvote->validate = G_VoteAllowInstajumpValidate;
-	callvote->execute = G_VoteAllowInstajumpPassed;
-	callvote->current = G_VoteAllowInstajumpCurrent;
-	callvote->extraHelp = NULL;
-	callvote->argument_format = G_LevelCopyString( "<1 or 0>" );
-	callvote->argument_type = G_LevelCopyString( "bool" );
-	callvote->help = G_LevelCopyString( "Toggles whether instagun can be used for weapon jumping" );
-
-	callvote = G_RegisterCallvote( "instashield" );
-	callvote->expectedargs = 1;
-	callvote->validate = G_VoteAllowInstashieldValidate;
-	callvote->execute = G_VoteAllowInstashieldPassed;
-	callvote->current = G_VoteAllowInstashieldCurrent;
-	callvote->extraHelp = NULL;
-	callvote->argument_format = G_LevelCopyString( "<1 or 0>" );
-	callvote->argument_type = G_LevelCopyString( "bool" );
-	callvote->help = G_LevelCopyString( "Toggles the availability of instashield in instagib" );
-
-	callvote = G_RegisterCallvote( "allow_falldamage" );
-	callvote->expectedargs = 1;
-	callvote->validate = G_VoteAllowFallDamageValidate;
-	callvote->execute = G_VoteAllowFallDamagePassed;
-	callvote->current = G_VoteAllowFallDamageCurrent;
-	callvote->extraHelp = NULL;
-	callvote->argument_format = G_LevelCopyString( "<1 or 0>" );
-	callvote->argument_type = G_LevelCopyString( "bool" );
-	callvote->help = G_LevelCopyString( "Toggles whether falling long distances deals damage" );
-
-	callvote = G_RegisterCallvote( "allow_selfdamage" );
-	callvote->expectedargs = 1;
-	callvote->validate = G_VoteAllowSelfDamageValidate;
-	callvote->execute = G_VoteAllowSelfDamagePassed;
-	callvote->current = G_VoteAllowSelfDamageCurrent;
-	callvote->extraHelp = NULL;
-	callvote->argument_format = G_LevelCopyString( "<1 or 0>" );
-	callvote->argument_type = G_LevelCopyString( "bool" );
-	callvote->help = G_LevelCopyString( "Toggles whether weapon splashes can damage self" );
 
 	callvote = G_RegisterCallvote( "timeout" );
 	callvote->expectedargs = 0;
