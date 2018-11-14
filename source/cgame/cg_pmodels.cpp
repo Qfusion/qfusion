@@ -1143,9 +1143,7 @@ void CG_AddPModel( centity_t *cent ) {
 
 		// (cheap trick) if not thirdperson offset it some units back so the shadow looks more at our feet
 		if( cent->ent.renderfx & RF_VIEWERMODEL && !( cent->renderfx & RF_NOSHADOW ) ) {
-			if( cg_shadows->integer == 1 ) {
-				VectorMA( org, -24, &cent->ent.axis[AXIS_FORWARD], org );
-			}
+			VectorMA( org, -24, &cent->ent.axis[AXIS_FORWARD], org );
 		}
 
 		VectorCopy( org, cent->ent.origin );
@@ -1240,12 +1238,8 @@ void CG_AddPModel( centity_t *cent ) {
 	cent->ent.customSkin = pmodel->skin;
 	cent->ent.renderfx |= RF_NOSHADOW;
 
-	if( !( cent->renderfx & RF_NOSHADOW ) && ( cg_showSelfShadow->integer || !( cent->ent.renderfx & RF_VIEWERMODEL ) ) ) {
-		if( cg_shadows->integer == 1 ) {
-			CG_AllocShadeBox( cent->current.number, cent->ent.origin, playerbox_stand_mins, playerbox_stand_maxs, NULL );
-		} else if( cg_shadows->integer ) {
-			cent->ent.renderfx &= ~RF_NOSHADOW;
-		}
+	if( !( cent->renderfx & RF_NOSHADOW ) ) {
+		CG_AllocShadeBox( cent->current.number, cent->ent.origin, playerbox_stand_mins, playerbox_stand_maxs, NULL );
 	}
 
 	if( !( cent->effects & EF_RACEGHOST ) ) {

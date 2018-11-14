@@ -76,10 +76,7 @@ cvar_t *cg_outlinePlayers;
 cvar_t *cg_drawEntityBoxes;
 cvar_t *cg_fov;
 cvar_t *cg_zoomfov;
-cvar_t *cg_predictLaserBeam;
 cvar_t *cg_voiceChats;
-cvar_t *cg_shadows;
-cvar_t *cg_showSelfShadow;
 cvar_t *cg_laserBeamSubdivisions;
 cvar_t *cg_projectileAntilagOffset;
 cvar_t *cg_raceGhosts;
@@ -753,8 +750,6 @@ static void CG_RegisterVariables( void ) {
 	cg_simpleItemsSize =    trap_Cvar_Get( "cg_simpleItemsSize", "16", CVAR_ARCHIVE );
 	cg_particles =      trap_Cvar_Get( "cg_particles", "1", CVAR_ARCHIVE );
 	cg_showhelp =       trap_Cvar_Get( "cg_showhelp", "1", CVAR_ARCHIVE );
-	cg_predictLaserBeam =   trap_Cvar_Get( "cg_predictLaserBeam", "1", CVAR_ARCHIVE );
-	cg_showSelfShadow = trap_Cvar_Get( "cg_showSelfShadow", "0", CVAR_ARCHIVE );
 
 	cg_cartoonEffects =     trap_Cvar_Get( "cg_cartoonEffects", "7", CVAR_ARCHIVE );
 
@@ -764,7 +759,6 @@ static void CG_RegisterVariables( void ) {
 	cg_weaponAutoSwitch =   trap_Cvar_Get( "cg_weaponAutoSwitch", "2", CVAR_ARCHIVE );
 
 	cg_voiceChats =     trap_Cvar_Get( "cg_voiceChats", "1", CVAR_ARCHIVE );
-	cg_shadows =        trap_Cvar_Get( "cg_shadows", "1", CVAR_ARCHIVE );
 
 	cg_laserBeamSubdivisions = trap_Cvar_Get( "cg_laserBeamSubdivisions", STR_TOSTR( CURVELASERBEAM_SUBDIVISIONS ), CVAR_ARCHIVE );
 	cg_projectileAntilagOffset = trap_Cvar_Get( "cg_projectileAntilagOffset", "1.0", CVAR_ARCHIVE );

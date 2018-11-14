@@ -284,9 +284,6 @@ void CG_AllocShadeBox( int entNum, const vec3_t origin, const vec3_t mins, const
 	vec3_t dir;
 	cgshadebox_t *sb;
 
-	if( !cg_shadows->integer ) {
-		return;
-	}
 	if( cg_numShadeBoxes == MAX_CGSHADEBOXES ) {
 		return;
 	}
@@ -324,10 +321,6 @@ void CG_AllocShadeBox( int entNum, const vec3_t origin, const vec3_t mins, const
 
 void CG_AddShadeBoxes( void ) {
 	vec3_t lightdir, end;
-
-	if( !cg_shadows->integer ) {
-		return;
-	}
 
 	VectorSet( lightdir, 0, 0, -1 );
 

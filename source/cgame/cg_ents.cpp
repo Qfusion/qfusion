@@ -835,11 +835,9 @@ static void CG_AddGenericEnt( centity_t *cent ) {
 		}
 
 		// add shadows for items (do it before offseting for weapons)
-		if( cg_shadows->integer && !( cent->renderfx & RF_NOSHADOW ) ) {
-			if( cg_shadows->integer == 1 ) {
-				CG_AllocShadeBox( cent->current.number, cent->ent.origin, item_box_mins, item_box_maxs, NULL );
-				cent->ent.renderfx |= RF_NOSHADOW;
-			}
+		if( !( cent->renderfx & RF_NOSHADOW ) ) {
+			CG_AllocShadeBox( cent->current.number, cent->ent.origin, item_box_mins, item_box_maxs, NULL );
+			cent->ent.renderfx |= RF_NOSHADOW;
 		} else {
 			cent->ent.renderfx |= RF_NOSHADOW;
 		}
@@ -1463,8 +1461,7 @@ static void CG_AddBeamEnt( centity_t *cent ) {
 static void CG_UpdateLaserbeamEnt( centity_t *cent ) {
 	centity_t *owner;
 
-	if( cg.view.playerPrediction && cg_predictLaserBeam->integer
-		&& ISVIEWERENTITY( cent->current.ownerNum ) ) {
+	if( cg.view.playerPrediction && ISVIEWERENTITY( cent->current.ownerNum ) ) {
 		return;
 	}
 
@@ -1492,8 +1489,7 @@ static void CG_UpdateLaserbeamEnt( centity_t *cent ) {
 static void CG_LerpLaserbeamEnt( centity_t *cent ) {
 	centity_t *owner = &cg_entities[cent->current.ownerNum];
 
-	if( cg.view.playerPrediction && cg_predictLaserBeam->integer
-		&& ISVIEWERENTITY( cent->current.ownerNum ) ) {
+	if( cg.view.playerPrediction && ISVIEWERENTITY( cent->current.ownerNum ) ) {
 		return;
 	}
 

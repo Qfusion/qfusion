@@ -284,10 +284,6 @@ void CG_Event_LaserBeam( int entNum, int weapon, int fireMode ) {
 	unsigned int timeout;
 	vec3_t dir;
 
-	if( !cg_predictLaserBeam->integer ) {
-		return;
-	}
-
 	// lasergun's smooth refire
 	if( fireMode == FIRE_MODE_STRONG ) {
 		cent->laserCurved = false;
