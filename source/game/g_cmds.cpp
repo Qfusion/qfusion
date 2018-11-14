@@ -741,6 +741,7 @@ static const g_vsays_t g_vsays[] = {
 	{ "areasecured", VSAY_AREASECURED },
 	{ "boomstick", VSAY_BOOMSTICK },
 	{ "ok", VSAY_OK },
+	{ "shutup", VSAY_SHUTUP },
 
 	{ NULL, 0 }
 };
