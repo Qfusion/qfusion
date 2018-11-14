@@ -417,6 +417,8 @@ void roundNewState( uint state )
 	}
 }
 
+int last_time = 0;
+
 void roundThink()
 {
 	if ( roundState == ROUNDSTATE_NONE )
@@ -454,7 +456,8 @@ void roundThink()
 			}
 		}
 
-		match.setClockOverride( roundStateEndTime - levelTime + int( cvarRoundTime.value * 1000.0f ) );
+		last_time = roundStateEndTime - levelTime + int( cvarRoundTime.value * 1000.0f );
+		match.setClockOverride( last_time );
 	}
 
 	// i suppose the following blocks could be merged to save an if or 2
@@ -465,6 +468,7 @@ void roundThink()
 			if ( bombState != BOMBSTATE_ARMED )
 			{
 				roundWonBy( defendingTeam );
+				last_time = 1; // kinda hacky, this shows at 0:00
 
 				// put this after roundWonBy or it gets overwritten
 				G_CenterPrintMsg( null, S_COLOR_RED + "Timelimit hit!" );
@@ -499,6 +503,8 @@ void roundThink()
 		// warn offs if the round ends soon and they haven't planted
 		if ( bombState == BOMBSTATE_ARMED )
 		{
+			last_time = -1;
+
 			if ( !defendersHurried && levelTime + BOMB_HURRYUP_TIME >= bombActionTime )
 			{
 				announceDef( ANNOUNCEMENT_HURRY );
@@ -506,22 +512,18 @@ void roundThink()
 				defendersHurried = true;
 			}
 		}
-		else if ( !attackersHurried && levelTime + BOMB_HURRYUP_TIME >= roundStateEndTime )
-		{
-			announceOff( ANNOUNCEMENT_HURRY );
-
-			attackersHurried = true;
+		else {
+			last_time = roundStateEndTime - levelTime;
 		}
 
-		if ( bombState < BOMBSTATE_ARMED )
-		{
-			match.setClockOverride( roundStateEndTime - levelTime );
-		}
+		match.setClockOverride( last_time );
 
 		bombThink();
 	}
 	else
 	{
+		match.setClockOverride( last_time );
+
 		if ( roundState > ROUNDSTATE_ROUND )
 		{
 			bombAltThink();

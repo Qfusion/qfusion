@@ -381,6 +381,8 @@ void CG_DrawClock( int x, int y, int align, struct qfontface_s *font, vec4_t col
 		}
 	} else if( GS_MatchClockOverride() ) {
 		clocktime = GS_MatchClockOverride();
+		if( clocktime < 0 )
+			return;
 	} else {
 		curtime = ( GS_MatchWaiting() || GS_MatchPaused() ) ? cg.frame.serverTime : cg.time;
 		duration = GS_MatchDuration();
