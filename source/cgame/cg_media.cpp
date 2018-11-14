@@ -228,7 +228,7 @@ void CG_RegisterMediaModels( void ) {
 	cgs.media.modLasergunWallExplo = CG_RegisterMediaModel( PATH_LASERGUN_IMPACT_MODEL );
 
 	// gibs model
-	cgs.media.modIlluminatiGibs = CG_RegisterMediaModel( "models/objects/gibs/illuminati/illuminati1.md3" );
+	cgs.media.modGib = CG_RegisterMediaModel( "models/objects/gibs/gib.md3" );
 }
 
 //======================================================================

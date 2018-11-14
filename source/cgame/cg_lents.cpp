@@ -1338,7 +1338,7 @@ void CG_SmallPileOfGibs( const vec3_t origin, int damage, const vec3_t initialVe
 		le = CG_AllocModel( LE_ALPHA_FADE, origin, vec3_origin, time + time * random(),
 							color[0], color[1], color[2], color[3],
 							0, 0, 0, 0,
-							CG_MediaModel( cgs.media.modIlluminatiGibs ),
+							CG_MediaModel( cgs.media.modGib ),
 							NULL );
 
 		// random rotation and scale variations

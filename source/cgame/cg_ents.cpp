@@ -2037,7 +2037,7 @@ void CG_UpdateEntities( void ) {
 					CG_UpdateGenericEnt( cent );
 
 					// set the gib model ignoring the modelindex one
-					cent->ent.model = CG_MediaModel( cgs.media.modIlluminatiGibs );
+					cent->ent.model = CG_MediaModel( cgs.media.modGib );
 				}
 				break;
 

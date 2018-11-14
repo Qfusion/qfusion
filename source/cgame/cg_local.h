@@ -206,7 +206,7 @@ typedef struct {
 	//	cgs_media_handle_t		*modTeleportEffect;
 	cgs_media_handle_t *modDash;
 
-	cgs_media_handle_t *modIlluminatiGibs;
+	cgs_media_handle_t *modGib;
 
 	//wsw weapon sfx
 	cgs_media_handle_t *modRocketExplosion;
