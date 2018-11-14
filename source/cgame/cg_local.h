@@ -271,7 +271,9 @@ typedef struct {
 	cgs_media_handle_t *shaderElectroBeamBeta;
 	cgs_media_handle_t *shaderInstaBeam;
 	cgs_media_handle_t *shaderLaserGunBeam;
-	cgs_media_handle_t *shaderLaserGunSparks;
+	cgs_media_handle_t *shaderLaserGunBeam0;
+	cgs_media_handle_t *shaderLaserGunBeam1;
+	cgs_media_handle_t *shaderLaserGunBeam2;
 	cgs_media_handle_t *shaderElectroboltMark;
 	cgs_media_handle_t *shaderInstagunMark;
 
@@ -1027,7 +1029,7 @@ void CG_AddPolys( void );
 void CG_KillPolyBeamsByTag( int key );
 void CG_QuickPolyBeam( const vec3_t start, const vec3_t end, int width, struct shader_s *shader );
 void CG_LaserGunPolyBeam( const vec3_t start, const vec3_t end, const vec4_t color, int key );
-void CG_ElectroPolyboardBeam( const vec3_t start, const vec3_t end, int subdivisions, float phase, 
+void CG_ElectroPolyboardBeam( const vec3_t start, const vec3_t end, int subdivisions, int phase,
 	float range, const vec4_t color, int key, bool firstPerson );
 void CG_ElectroPolyBeam( const vec3_t start, const vec3_t end, int team );
 void CG_InstaPolyBeam( const vec3_t start, const vec3_t end, int team );

@@ -148,7 +148,7 @@ static cpoly_t *CG_SpawnPolygon( float r, float g, float b, float a,
 /*
 * CG_SpawnPolyQuad
 */
-static cpoly_t *CG_SpawnPolyQuad( const vec3_t v1, const vec3_t v2, const vec3_t v3, const vec3_t v4, 
+static cpoly_t *CG_SpawnPolyQuad( const vec3_t v1, const vec3_t v2, const vec3_t v3, const vec3_t v4,
 	float stx, float sty, const vec4_t color, int64_t dietime, int64_t fadetime, struct shader_s *shader, int tag ) {
 	int i;
 	cpoly_t *cgpoly;
@@ -207,7 +207,7 @@ static cpoly_t *CG_SpawnPolyQuad( const vec3_t v1, const vec3_t v2, const vec3_t
 * shaderlenght makes reference to size of the texture it will draw, so it can be tiled.
 * the beam shader must be an autosprite2!
 */
-static cpoly_t *CG_SpawnPolyBeam( const vec3_t start, const vec3_t end, const vec4_t color, 
+static cpoly_t *CG_SpawnPolyBeam( const vec3_t start, const vec3_t end, const vec4_t color,
 	int width, int64_t dietime, int64_t fadetime, struct shader_s *shader, int shaderlength, int tag ) {
 	vec3_t dir, right, up;
 	vec3_t v[4];
@@ -293,43 +293,42 @@ void CG_LaserGunPolyBeam( const vec3_t start, const vec3_t end, const vec4_t col
 /*
 * CG_ElectroPolyboardBeam
 *
-* Spawns a segmented lightning beam, pseudo-randomly disturbing each segment's 
+* Spawns a segmented lightning beam, pseudo-randomly disturbing each segment's
 * placement along the given line.
 *
 * For more information please refer to
 * Mathematics for 3D Game Programming and Computer Graphics, section "Polyboards"
 */
-void CG_ElectroPolyboardBeam( const vec3_t start, const vec3_t end, int subdivisions, float phase, 
+void CG_ElectroPolyboardBeam( const vec3_t start, const vec3_t end, int subdivisions, int iphase,
 	float range, const vec4_t color, int key, bool firstPerson ) {
-	vec4_t tcolor = { 0, 0, 0, 0.35f };
-	vec_t total;
-	vec_t min;
-	vec4_t min_team_color;
 	vec3_t from, to;
 	vec3_t dir;
 	vec3_t c, d, e, f, g, h;
 	float dist;
 	int segments;
-	const float frequency = 0.1244;
-	struct shader_s *shader = CG_MediaShader( cgs.media.shaderLaserGunSparks );
+
+	const char * freqcvars[] = { "lg_freq0", "lg_freq1", "lg_freq2" };
+	cvar_t * freq = trap_Cvar_Get( freqcvars[ iphase ], "0.1244", CVAR_ARCHIVE );
+	const float frequency = freq->value;
+
+	const char * widthcvars[] = { "lg_width0", "lg_width1", "lg_width2" };
+	cvar_t * wid = trap_Cvar_Get( widthcvars[ iphase ], "4", CVAR_ARCHIVE );
+	const int cwidth = wid->integer;
+
+	struct shader_s *shader;
+	if( iphase == 0 )
+		shader = CG_MediaShader( cgs.media.shaderLaserGunBeam0 );
+	else if( iphase == 1 )
+		shader = CG_MediaShader( cgs.media.shaderLaserGunBeam1 );
+	else
+		shader = CG_MediaShader( cgs.media.shaderLaserGunBeam2 );
 
 	VectorSubtract( end, start, dir );
 	dist = VectorNormalize2( dir, dir );
 
 	clamp( subdivisions, CURVELASERBEAM_SUBDIVISIONS - 10, CURVELASERBEAM_SUBDIVISIONS + 10 );
-	segments = subdivisions * (( dist + 500.0f ) / range); // nudge the number of segments
-
-	// learn0more: this kinda looks best
-	if( color ) {
-		// dmh: if teamcolor is too dark set color to default brighter
-		VectorCopy( color, tcolor );
-		min = 90 * ( 1.0f / 255.0f );
-		min_team_color[0] = min_team_color[1] = min_team_color[2] = min;
-		total = tcolor[0] + tcolor[1] + tcolor[2];
-		if( total < min ) {
-			VectorCopy( min_team_color, tcolor );
-		}
-	}
+	segments = subdivisions * (( dist + 500.0f ) / range ); // nudge the number of segments
+	float phase = float( iphase );
 
 	VectorCopy( start, from );
 
@@ -339,13 +338,13 @@ void CG_ElectroPolyboardBeam( const vec3_t start, const vec3_t end, int subdivis
 		float frac = range * (double)i / segments;
 		float width;
 		bool last = false;
-		
+
 		amplitude = Q_GetNoiseValue( 0, 0, 0, (cg.realTime + phase) ) * sqrt( (float)i / segments );
 		if( firstPerson ) {
-			width = (phase + 1) * 4 * i;
+			width = (phase + 1) * cwidth * i;
 			amplitude *= (phase + 1) * (phase + 1) * (i > 1);
 		} else {
-			width = 12;
+			width = cwidth * 3;
 			amplitude *= (phase + 1);
 		}
 
@@ -358,7 +357,7 @@ void CG_ElectroPolyboardBeam( const vec3_t start, const vec3_t end, int subdivis
 		x *= frequency;
 		t = 0.01 * (-cg.time * 0.01 * 130.0);
 
-		y = sin( x );		
+		y = sin( x );
 		y += sin( x * 2.1 + t * 2.0 ) * 4.5;
 		y += sin( x * 1.72 + t * 6.121 ) * 4.0;
 		y += sin( x * 2.221 + t * 10.437 ) * 5.0;
@@ -379,7 +378,7 @@ void CG_ElectroPolyboardBeam( const vec3_t start, const vec3_t end, int subdivis
 		VectorMA( f, y, c, f );
 
 		if( i > 0 )
-			CG_SpawnPolyQuad( e, f, h, g, 1, 1, color ? tcolor : NULL, 1, 0, shader, key );
+			CG_SpawnPolyQuad( e, f, h, g, 1, 1, color, 1, 0, shader, key );
 
 		VectorCopy( to, from );
 		VectorCopy( e, g );
@@ -442,8 +441,8 @@ void CG_InstaPolyBeam( const vec3_t start, const vec3_t end, int team ) {
 		return;
 	}
 
-	CG_SpawnPolyBeam( start, end, tcolor, cg_instabeam_width->integer, 
-		cg_instabeam_time->value * 1000, cg_instabeam_time->value * 1000 * 0.4f, 
+	CG_SpawnPolyBeam( start, end, tcolor, cg_instabeam_width->integer,
+		cg_instabeam_time->value * 1000, cg_instabeam_time->value * 1000 * 0.4f,
 		CG_MediaShader( cgs.media.shaderInstaBeam ), 128, 0 );
 }
 
