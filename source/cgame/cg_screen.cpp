@@ -574,6 +574,8 @@ void CG_DrawPlayerNames( struct qfontface_s *font, vec4_t color ) {
 		}
 
 		int pointed_health = cg.pointedHealth / 2;
+		if( cg.pointedHealth == 1 )
+			pointed_health = 1;
 
 		// pointed player hasn't a health value to be drawn, so skip adding the bars
 		if( pointed_health && cg_showPlayerNames_barWidth->integer > 0 ) {
