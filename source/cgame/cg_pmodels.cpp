@@ -704,13 +704,13 @@ void CG_AddColoredOutLineEffect( entity_t *ent, int effects, uint8_t r, uint8_t 
 
 	if( effects & ( EF_QUAD | EF_SHELL | EF_REGEN | EF_GODMODE ) ) {
 		float pulse;
-		scale = CG_OutlineScaleForDist( ent, 2048, 3.5f );
+		scale = CG_OutlineScaleForDist( ent, 4096, 3.5f );
 		pulse = fabs( sin( cg.time * 0.005f ) );
 		scale += 1.25f * scale * pulse * pulse;
 	} else if( !cg_outlineModels->integer || !( effects & EF_OUTLINE ) ) {
 		scale = 0;
 	} else {
-		scale = CG_OutlineScaleForDist( ent, 1024, 1.0f );
+		scale = CG_OutlineScaleForDist( ent, 4096, 1.0f );
 	}
 
 	if( !scale ) {
