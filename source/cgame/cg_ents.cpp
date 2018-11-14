@@ -1261,7 +1261,6 @@ static void CG_UpdateItemEnt( centity_t *cent ) {
 
 		if( cent->effects & EF_OUTLINE ) {
 			Vector4Set( cent->outlineColor, 0, 0, 0, 255 ); // black
-
 		}
 
 		// set up the model

@@ -291,7 +291,7 @@ void CG_AllocShadeBox( int entNum, const vec3_t origin, const vec3_t mins, const
 	// Kill if behind the view or if too far away
 	VectorSubtract( origin, cg.view.origin, dir );
 	dist = VectorNormalize2( dir, dir ) * cg.view.fracDistFOV;
-	if( dist > 1024 ) {
+	if( dist > 4096 ) {
 		return;
 	}
 
