@@ -40,19 +40,10 @@ static struct tm *R_Localtime( const time_t time, struct tm* _tm ) {
 * R_TakeScreenShot
 */
 void R_TakeScreenShot( const char *path, const char *name, const char *fmtString, int x, int y, int w, int h, bool silent ) {
-	const char *extension;
+	const char *extension = ".png";
 	size_t path_size = strlen( path ) + 1;
 	char *checkname = NULL;
 	size_t checkname_size = 0;
-	int quality;
-
-	if( r_screenshot_jpeg->integer ) {
-		extension = ".jpg";
-		quality = r_screenshot_jpeg_quality->integer;
-	} else {
-		extension = ".tga";
-		quality = 100;
-	}
 
 	if( name && name[0] && Q_stricmp( name, "*" ) ) {
 		if( !COM_ValidateRelativeFilename( name ) ) {
@@ -93,10 +84,6 @@ void R_TakeScreenShot( const char *path, const char *name, const char *fmtString
 				Q_strncpyz( lastFmtString, fmtString, sizeof( lastFmtString ) );
 				r_screenshot_fmtstr->modified = false;
 			}
-			if( r_screenshot_jpeg->modified ) {
-				lastIndex = 0;
-				r_screenshot_jpeg->modified = false;
-			}
 		} else {
 			Q_snprintfz( checkname, checkname_size, "%s%s%s", path, timestampString, extension );
 			if( ri.FS_FOpenAbsoluteFile( checkname, NULL, FS_READ ) != -1 ) {
@@ -121,7 +108,7 @@ void R_TakeScreenShot( const char *path, const char *name, const char *fmtString
 	}
 
 	// flip Y because 0,0 is bottom left in OpenGL
-	R_ScreenShot( checkname, x, y, w, h, quality, false, true, false, silent );
+	R_ScreenShot( checkname, x, y, w, h, false, true, false, silent );
 }
 
 /*
@@ -233,7 +220,7 @@ void R_TakeEnvShot( const char *path, const char *name, unsigned maxPixels ) {
 		Q_snprintfz( checkname, checkname_size, "%s%s_%s", path, name, cubemapShots[i].suf );
 		COM_DefaultExtension( checkname, ".tga", checkname_size );
 
-		R_ScreenShot( checkname, 0, 0, size, size, 100,
+		R_ScreenShot( checkname, 0, 0, size, size,
 					  ( cubemapShots[i].flags & IT_FLIPX ) ? true : false,
 					  ( cubemapShots[i].flags & IT_FLIPY ) ? true : false,
 					  ( cubemapShots[i].flags & IT_FLIPDIAGONAL ) ? true : false,

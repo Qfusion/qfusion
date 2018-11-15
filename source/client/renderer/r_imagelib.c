@@ -44,12 +44,7 @@ r_imginfo_t IMG_LoadImage( const char * filename, uint8_t * ( *allocbuf )( void 
 	return ret;
 }
 
-bool WriteTGA( const char * filename, r_imginfo_t * img ) {
+bool WritePNG( const char * filename, r_imginfo_t * img ) {
 	FS_CreateAbsolutePath( filename );
-	return stbi_write_tga( filename, img->width, img->height, img->samples, img->pixels ) != 0;
-}
-
-bool WriteJPG( const char * filename, r_imginfo_t * img, int quality ) {
-	FS_CreateAbsolutePath( filename );
-	return stbi_write_jpg( filename, img->width, img->height, img->samples, img->pixels, quality ) != 0;
+	return stbi_write_png( filename, img->width, img->height, img->samples, img->pixels, 0 ) != 0;
 }

@@ -423,8 +423,6 @@ extern cvar_t *r_texturefilter;
 extern cvar_t *r_mode;
 extern cvar_t *r_polyblend;
 extern cvar_t *r_screenshot_fmtstr;
-extern cvar_t *r_screenshot_jpeg;
-extern cvar_t *r_screenshot_jpeg_quality;
 
 extern cvar_t *r_temp1;
 

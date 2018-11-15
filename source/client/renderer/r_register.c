@@ -100,8 +100,6 @@ cvar_t *r_texturefilter;
 cvar_t *r_nobind;
 cvar_t *r_polyblend;
 cvar_t *r_screenshot_fmtstr;
-cvar_t *r_screenshot_jpeg;
-cvar_t *r_screenshot_jpeg_quality;
 
 cvar_t *r_temp1;
 
@@ -371,8 +369,6 @@ static void R_Register() {
 	r_texturefilter = ri.Cvar_Get( "r_texturefilter", "4", CVAR_ARCHIVE );
 	r_stencilbits = ri.Cvar_Get( "r_stencilbits", "0", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
 
-	r_screenshot_jpeg = ri.Cvar_Get( "r_screenshot_jpeg", "1", CVAR_ARCHIVE );
-	r_screenshot_jpeg_quality = ri.Cvar_Get( "r_screenshot_jpeg_quality", "90", CVAR_ARCHIVE );
 	r_screenshot_fmtstr = ri.Cvar_Get( "r_screenshot_fmtstr", va_r( tmp, sizeof( tmp ), "%s%%y%%m%%d_%%H%%M%%S", APP_SCREENSHOTS_PREFIX ), CVAR_ARCHIVE );
 
 	r_temp1 = ri.Cvar_Get( "r_temp1", "0", 0 );
