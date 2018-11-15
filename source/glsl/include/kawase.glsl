@@ -6,7 +6,7 @@
 vec3 KawaseBlurFilter( sampler2D tex, vec2 texCoord, vec2 pixelSize, float iteration )
 {
     vec2 texCoordSample;
-    vec2 halfPixelSize = pixelSize / 2.0f;
+    vec2 halfPixelSize = pixelSize / 2.0;
     vec2 dUV = ( pixelSize.xy * vec2( iteration, iteration ) ) + halfPixelSize.xy;
 
     vec3 cOut;

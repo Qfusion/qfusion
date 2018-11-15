@@ -72,10 +72,10 @@ vec4 texturearray_bicubic( sampler2DArray tex, vec2 uv, float l ) {
 
 #ifdef LIGHTMAP_ARRAYS
 #define LightmapSampler sampler2DArray
-#define LightmapAt(t, c, l) texture(t, vec3(c, l))
+#define LightmapAt(t, c, l) qf_texture(t, vec3(c, l))
 #else
 #define LightmapSampler sampler2D
-#define LightmapAt(t, c, l) texture(t, c)
+#define LightmapAt(t, c, l) qf_texture(t, c)
 #endif
 
 #endif

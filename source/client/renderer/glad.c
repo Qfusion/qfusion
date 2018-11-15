@@ -4,7 +4,7 @@
 
     Language/Generator: C/C++
     Specification: gl
-    APIs: gl=2.0
+    APIs: gl=2.1
     Profile: core
     Extensions:
         GL_AMD_debug_output,
@@ -33,9 +33,9 @@
     Reproducible: True
 
     Commandline:
-        --profile="core" --api="gl=2.0" --generator="c" --spec="gl" --omit-khrplatform --extensions="GL_AMD_debug_output,GL_ARB_draw_instanced,GL_ARB_explicit_attrib_location,GL_ARB_framebuffer_object,GL_ARB_get_program_binary,GL_ARB_half_float_pixel,GL_ARB_half_float_vertex,GL_ARB_instanced_arrays,GL_ARB_texture_float,GL_ARB_texture_rg,GL_ARB_texture_swizzle,GL_ARB_vertex_array_object,GL_ATI_meminfo,GL_EXT_texture_array,GL_EXT_texture_compression_s3tc,GL_EXT_texture_filter_anisotropic,GL_EXT_texture_sRGB,GL_EXT_texture_sRGB_decode,GL_KHR_debug,GL_NVX_gpu_memory_info"
+        --profile="core" --api="gl=2.1" --generator="c" --spec="gl" --omit-khrplatform --extensions="GL_AMD_debug_output,GL_ARB_draw_instanced,GL_ARB_explicit_attrib_location,GL_ARB_framebuffer_object,GL_ARB_get_program_binary,GL_ARB_half_float_pixel,GL_ARB_half_float_vertex,GL_ARB_instanced_arrays,GL_ARB_texture_float,GL_ARB_texture_rg,GL_ARB_texture_swizzle,GL_ARB_vertex_array_object,GL_ATI_meminfo,GL_EXT_texture_array,GL_EXT_texture_compression_s3tc,GL_EXT_texture_filter_anisotropic,GL_EXT_texture_sRGB,GL_EXT_texture_sRGB_decode,GL_KHR_debug,GL_NVX_gpu_memory_info"
     Online:
-        https://glad.dav1d.de/#profile=core&language=c&specification=gl&loader=on&api=gl%3D2.0&extensions=GL_AMD_debug_output&extensions=GL_ARB_draw_instanced&extensions=GL_ARB_explicit_attrib_location&extensions=GL_ARB_framebuffer_object&extensions=GL_ARB_get_program_binary&extensions=GL_ARB_half_float_pixel&extensions=GL_ARB_half_float_vertex&extensions=GL_ARB_instanced_arrays&extensions=GL_ARB_texture_float&extensions=GL_ARB_texture_rg&extensions=GL_ARB_texture_swizzle&extensions=GL_ARB_vertex_array_object&extensions=GL_ATI_meminfo&extensions=GL_EXT_texture_array&extensions=GL_EXT_texture_compression_s3tc&extensions=GL_EXT_texture_filter_anisotropic&extensions=GL_EXT_texture_sRGB&extensions=GL_EXT_texture_sRGB_decode&extensions=GL_KHR_debug&extensions=GL_NVX_gpu_memory_info
+        https://glad.dav1d.de/#profile=core&language=c&specification=gl&loader=on&api=gl%3D2.1&extensions=GL_AMD_debug_output&extensions=GL_ARB_draw_instanced&extensions=GL_ARB_explicit_attrib_location&extensions=GL_ARB_framebuffer_object&extensions=GL_ARB_get_program_binary&extensions=GL_ARB_half_float_pixel&extensions=GL_ARB_half_float_vertex&extensions=GL_ARB_instanced_arrays&extensions=GL_ARB_texture_float&extensions=GL_ARB_texture_rg&extensions=GL_ARB_texture_swizzle&extensions=GL_ARB_vertex_array_object&extensions=GL_ATI_meminfo&extensions=GL_EXT_texture_array&extensions=GL_EXT_texture_compression_s3tc&extensions=GL_EXT_texture_filter_anisotropic&extensions=GL_EXT_texture_sRGB&extensions=GL_EXT_texture_sRGB_decode&extensions=GL_KHR_debug&extensions=GL_NVX_gpu_memory_info
 */
 
 #include <stdio.h>
@@ -282,6 +282,7 @@ int GLAD_GL_VERSION_1_3 = 0;
 int GLAD_GL_VERSION_1_4 = 0;
 int GLAD_GL_VERSION_1_5 = 0;
 int GLAD_GL_VERSION_2_0 = 0;
+int GLAD_GL_VERSION_2_1 = 0;
 PFNGLACTIVETEXTUREPROC glad_glActiveTexture = NULL;
 PFNGLATTACHSHADERPROC glad_glAttachShader = NULL;
 PFNGLBEGINQUERYPROC glad_glBeginQuery = NULL;
@@ -434,8 +435,14 @@ PFNGLUNIFORM4FVPROC glad_glUniform4fv = NULL;
 PFNGLUNIFORM4IPROC glad_glUniform4i = NULL;
 PFNGLUNIFORM4IVPROC glad_glUniform4iv = NULL;
 PFNGLUNIFORMMATRIX2FVPROC glad_glUniformMatrix2fv = NULL;
+PFNGLUNIFORMMATRIX2X3FVPROC glad_glUniformMatrix2x3fv = NULL;
+PFNGLUNIFORMMATRIX2X4FVPROC glad_glUniformMatrix2x4fv = NULL;
 PFNGLUNIFORMMATRIX3FVPROC glad_glUniformMatrix3fv = NULL;
+PFNGLUNIFORMMATRIX3X2FVPROC glad_glUniformMatrix3x2fv = NULL;
+PFNGLUNIFORMMATRIX3X4FVPROC glad_glUniformMatrix3x4fv = NULL;
 PFNGLUNIFORMMATRIX4FVPROC glad_glUniformMatrix4fv = NULL;
+PFNGLUNIFORMMATRIX4X2FVPROC glad_glUniformMatrix4x2fv = NULL;
+PFNGLUNIFORMMATRIX4X3FVPROC glad_glUniformMatrix4x3fv = NULL;
 PFNGLUNMAPBUFFERPROC glad_glUnmapBuffer = NULL;
 PFNGLUSEPROGRAMPROC glad_glUseProgram = NULL;
 PFNGLVALIDATEPROGRAMPROC glad_glValidateProgram = NULL;
@@ -770,6 +777,15 @@ static void load_GL_VERSION_2_0(GLADloadproc load) {
 	glad_glVertexAttrib4usv = (PFNGLVERTEXATTRIB4USVPROC)load("glVertexAttrib4usv");
 	glad_glVertexAttribPointer = (PFNGLVERTEXATTRIBPOINTERPROC)load("glVertexAttribPointer");
 }
+static void load_GL_VERSION_2_1(GLADloadproc load) {
+	if(!GLAD_GL_VERSION_2_1) return;
+	glad_glUniformMatrix2x3fv = (PFNGLUNIFORMMATRIX2X3FVPROC)load("glUniformMatrix2x3fv");
+	glad_glUniformMatrix3x2fv = (PFNGLUNIFORMMATRIX3X2FVPROC)load("glUniformMatrix3x2fv");
+	glad_glUniformMatrix2x4fv = (PFNGLUNIFORMMATRIX2X4FVPROC)load("glUniformMatrix2x4fv");
+	glad_glUniformMatrix4x2fv = (PFNGLUNIFORMMATRIX4X2FVPROC)load("glUniformMatrix4x2fv");
+	glad_glUniformMatrix3x4fv = (PFNGLUNIFORMMATRIX3X4FVPROC)load("glUniformMatrix3x4fv");
+	glad_glUniformMatrix4x3fv = (PFNGLUNIFORMMATRIX4X3FVPROC)load("glUniformMatrix4x3fv");
+}
 static void load_GL_AMD_debug_output(GLADloadproc load) {
 	if(!GLAD_GL_AMD_debug_output) return;
 	glad_glDebugMessageEnableAMD = (PFNGLDEBUGMESSAGEENABLEAMDPROC)load("glDebugMessageEnableAMD");
@@ -920,9 +936,10 @@ static void find_coreGL(void) {
 	GLAD_GL_VERSION_1_4 = (major == 1 && minor >= 4) || major > 1;
 	GLAD_GL_VERSION_1_5 = (major == 1 && minor >= 5) || major > 1;
 	GLAD_GL_VERSION_2_0 = (major == 2 && minor >= 0) || major > 2;
-	if (GLVersion.major > 2 || (GLVersion.major >= 2 && GLVersion.minor >= 0)) {
+	GLAD_GL_VERSION_2_1 = (major == 2 && minor >= 1) || major > 2;
+	if (GLVersion.major > 2 || (GLVersion.major >= 2 && GLVersion.minor >= 1)) {
 		max_loaded_major = 2;
-		max_loaded_minor = 0;
+		max_loaded_minor = 1;
 	}
 }
 
@@ -939,6 +956,7 @@ int gladLoadGLLoader(GLADloadproc load) {
 	load_GL_VERSION_1_4(load);
 	load_GL_VERSION_1_5(load);
 	load_GL_VERSION_2_0(load);
+	load_GL_VERSION_2_1(load);
 
 	if (!find_extensionsGL()) return 0;
 	load_GL_AMD_debug_output(load);

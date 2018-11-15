@@ -19,11 +19,11 @@ uniform myhalf u_HDRExposure;
 
 vec3 ACESFilm(vec3 x)
 {
-    float a = 2.51f;
-    float b = 0.03f;
-    float c = 2.43f;
-    float d = 0.59f;
-    float e = 0.14f;
+    float a = 2.51;
+    float b = 0.03;
+    float c = 2.43;
+    float d = 0.59;
+    float e = 0.14;
     vec3 s = ((x*(a*x+b))/(x*(c*x+d)+e));
 	return s;
 }
@@ -55,7 +55,7 @@ vec3 ColorMap(vec3 c)
 
 void main(void)
 {
-	vec4 texel = texture(u_BaseTexture, v_TexCoord);
+	vec4 texel = qf_texture(u_BaseTexture, v_TexCoord);
 	vec3 coords = texel.rgb;
 
 #ifdef APPLY_HDR

@@ -4,7 +4,7 @@
 
     Language/Generator: C/C++
     Specification: gl
-    APIs: gl=2.0
+    APIs: gl=2.1
     Profile: core
     Extensions:
         GL_AMD_debug_output,
@@ -33,9 +33,9 @@
     Reproducible: True
 
     Commandline:
-        --profile="core" --api="gl=2.0" --generator="c" --spec="gl" --omit-khrplatform --extensions="GL_AMD_debug_output,GL_ARB_draw_instanced,GL_ARB_explicit_attrib_location,GL_ARB_framebuffer_object,GL_ARB_get_program_binary,GL_ARB_half_float_pixel,GL_ARB_half_float_vertex,GL_ARB_instanced_arrays,GL_ARB_texture_float,GL_ARB_texture_rg,GL_ARB_texture_swizzle,GL_ARB_vertex_array_object,GL_ATI_meminfo,GL_EXT_texture_array,GL_EXT_texture_compression_s3tc,GL_EXT_texture_filter_anisotropic,GL_EXT_texture_sRGB,GL_EXT_texture_sRGB_decode,GL_KHR_debug,GL_NVX_gpu_memory_info"
+        --profile="core" --api="gl=2.1" --generator="c" --spec="gl" --omit-khrplatform --extensions="GL_AMD_debug_output,GL_ARB_draw_instanced,GL_ARB_explicit_attrib_location,GL_ARB_framebuffer_object,GL_ARB_get_program_binary,GL_ARB_half_float_pixel,GL_ARB_half_float_vertex,GL_ARB_instanced_arrays,GL_ARB_texture_float,GL_ARB_texture_rg,GL_ARB_texture_swizzle,GL_ARB_vertex_array_object,GL_ATI_meminfo,GL_EXT_texture_array,GL_EXT_texture_compression_s3tc,GL_EXT_texture_filter_anisotropic,GL_EXT_texture_sRGB,GL_EXT_texture_sRGB_decode,GL_KHR_debug,GL_NVX_gpu_memory_info"
     Online:
-        https://glad.dav1d.de/#profile=core&language=c&specification=gl&loader=on&api=gl%3D2.0&extensions=GL_AMD_debug_output&extensions=GL_ARB_draw_instanced&extensions=GL_ARB_explicit_attrib_location&extensions=GL_ARB_framebuffer_object&extensions=GL_ARB_get_program_binary&extensions=GL_ARB_half_float_pixel&extensions=GL_ARB_half_float_vertex&extensions=GL_ARB_instanced_arrays&extensions=GL_ARB_texture_float&extensions=GL_ARB_texture_rg&extensions=GL_ARB_texture_swizzle&extensions=GL_ARB_vertex_array_object&extensions=GL_ATI_meminfo&extensions=GL_EXT_texture_array&extensions=GL_EXT_texture_compression_s3tc&extensions=GL_EXT_texture_filter_anisotropic&extensions=GL_EXT_texture_sRGB&extensions=GL_EXT_texture_sRGB_decode&extensions=GL_KHR_debug&extensions=GL_NVX_gpu_memory_info
+        https://glad.dav1d.de/#profile=core&language=c&specification=gl&loader=on&api=gl%3D2.1&extensions=GL_AMD_debug_output&extensions=GL_ARB_draw_instanced&extensions=GL_ARB_explicit_attrib_location&extensions=GL_ARB_framebuffer_object&extensions=GL_ARB_get_program_binary&extensions=GL_ARB_half_float_pixel&extensions=GL_ARB_half_float_vertex&extensions=GL_ARB_instanced_arrays&extensions=GL_ARB_texture_float&extensions=GL_ARB_texture_rg&extensions=GL_ARB_texture_swizzle&extensions=GL_ARB_vertex_array_object&extensions=GL_ATI_meminfo&extensions=GL_EXT_texture_array&extensions=GL_EXT_texture_compression_s3tc&extensions=GL_EXT_texture_filter_anisotropic&extensions=GL_EXT_texture_sRGB&extensions=GL_EXT_texture_sRGB_decode&extensions=GL_KHR_debug&extensions=GL_NVX_gpu_memory_info
 */
 
 
@@ -657,6 +657,22 @@ typedef void (APIENTRY *GLVULKANPROCNV)(void);
 #define GL_STENCIL_BACK_REF 0x8CA3
 #define GL_STENCIL_BACK_VALUE_MASK 0x8CA4
 #define GL_STENCIL_BACK_WRITEMASK 0x8CA5
+#define GL_PIXEL_PACK_BUFFER 0x88EB
+#define GL_PIXEL_UNPACK_BUFFER 0x88EC
+#define GL_PIXEL_PACK_BUFFER_BINDING 0x88ED
+#define GL_PIXEL_UNPACK_BUFFER_BINDING 0x88EF
+#define GL_FLOAT_MAT2x3 0x8B65
+#define GL_FLOAT_MAT2x4 0x8B66
+#define GL_FLOAT_MAT3x2 0x8B67
+#define GL_FLOAT_MAT3x4 0x8B68
+#define GL_FLOAT_MAT4x2 0x8B69
+#define GL_FLOAT_MAT4x3 0x8B6A
+#define GL_SRGB 0x8C40
+#define GL_SRGB8 0x8C41
+#define GL_SRGB_ALPHA 0x8C42
+#define GL_SRGB8_ALPHA8 0x8C43
+#define GL_COMPRESSED_SRGB 0x8C48
+#define GL_COMPRESSED_SRGB_ALPHA 0x8C49
 #ifndef GL_VERSION_1_0
 #define GL_VERSION_1_0 1
 GLAPI int GLAD_GL_VERSION_1_0;
@@ -1269,6 +1285,28 @@ GLAPI PFNGLVERTEXATTRIB4USVPROC glad_glVertexAttrib4usv;
 typedef void (APIENTRYP PFNGLVERTEXATTRIBPOINTERPROC)(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void *pointer);
 GLAPI PFNGLVERTEXATTRIBPOINTERPROC glad_glVertexAttribPointer;
 #define glVertexAttribPointer glad_glVertexAttribPointer
+#endif
+#ifndef GL_VERSION_2_1
+#define GL_VERSION_2_1 1
+GLAPI int GLAD_GL_VERSION_2_1;
+typedef void (APIENTRYP PFNGLUNIFORMMATRIX2X3FVPROC)(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
+GLAPI PFNGLUNIFORMMATRIX2X3FVPROC glad_glUniformMatrix2x3fv;
+#define glUniformMatrix2x3fv glad_glUniformMatrix2x3fv
+typedef void (APIENTRYP PFNGLUNIFORMMATRIX3X2FVPROC)(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
+GLAPI PFNGLUNIFORMMATRIX3X2FVPROC glad_glUniformMatrix3x2fv;
+#define glUniformMatrix3x2fv glad_glUniformMatrix3x2fv
+typedef void (APIENTRYP PFNGLUNIFORMMATRIX2X4FVPROC)(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
+GLAPI PFNGLUNIFORMMATRIX2X4FVPROC glad_glUniformMatrix2x4fv;
+#define glUniformMatrix2x4fv glad_glUniformMatrix2x4fv
+typedef void (APIENTRYP PFNGLUNIFORMMATRIX4X2FVPROC)(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
+GLAPI PFNGLUNIFORMMATRIX4X2FVPROC glad_glUniformMatrix4x2fv;
+#define glUniformMatrix4x2fv glad_glUniformMatrix4x2fv
+typedef void (APIENTRYP PFNGLUNIFORMMATRIX3X4FVPROC)(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
+GLAPI PFNGLUNIFORMMATRIX3X4FVPROC glad_glUniformMatrix3x4fv;
+#define glUniformMatrix3x4fv glad_glUniformMatrix3x4fv
+typedef void (APIENTRYP PFNGLUNIFORMMATRIX4X3FVPROC)(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
+GLAPI PFNGLUNIFORMMATRIX4X3FVPROC glad_glUniformMatrix4x3fv;
+#define glUniformMatrix4x3fv glad_glUniformMatrix4x3fv
 #endif
 #define GL_MAX_DEBUG_MESSAGE_LENGTH_AMD 0x9143
 #define GL_MAX_DEBUG_LOGGED_MESSAGES_AMD 0x9144

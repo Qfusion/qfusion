@@ -219,6 +219,13 @@ static void R_PrintMemoryInfo( void ) {
 static void R_FinalizeGLExtensions( void ) {
 	char tmp[128];
 
+	const char * glslVersionString = ( const char * ) glGetString( GL_SHADING_LANGUAGE_VERSION );
+	int glslMajor, glslMinor;
+	sscanf( glslVersionString, "%d.%d", &glslMajor, &glslMinor );
+	int glslVersion = glslMajor * 100 + glslMinor * 10;
+	glConfig.ext.texture_size = glslVersion >= 130;
+	glConfig.ext.glsl330 = glslVersion >= 330;
+
 	glConfig.maxTextureSize = 0;
 	glGetIntegerv( GL_MAX_TEXTURE_SIZE, &glConfig.maxTextureSize );
 	if( glConfig.maxTextureSize <= 0 ) {

@@ -871,27 +871,48 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 	"#define qf_lowp_vec4 vec4\n" \
 	"\n"
 
-#define QF_BUILTIN_GLSL_MACROS_GLSL130 "" \
+#define QF_BUILTIN_GLSL_MACROS_GLSL120 "" \
+	"#define qf_varying varying\n" \
+	"#define qf_flat_varying varying\n" \
 	"#ifdef VERTEX_SHADER\n" \
-	"  out myhalf4 qf_FrontColor;\n" \
-	"# define qf_varying out\n" \
-	"# define qf_flat_varying flat out\n" \
-	"# define qf_attribute in\n" \
+	"# define qf_FrontColor gl_FrontColor\n" \
+	"# define qf_attribute attribute\n" \
 	"#endif\n" \
 	"#ifdef FRAGMENT_SHADER\n" \
-	"  in myhalf4 qf_FrontColor;\n" \
-	"  layout(location = 0) out myhalf4 qf_FragColor;\n" \
-	"  layout(location = 1) out myhalf4 qf_BrightColor;\n" \
-	"# define qf_varying in\n" \
-	"# define qf_flat_varying flat in\n" \
+	"# define qf_FrontColor gl_Color\n" \
+	"# define qf_FragColor gl_FragColor\n" \
+	"# define qf_BrightColor gl_FragData[1]\n" \
 	"#endif\n" \
-	"#define qf_texture texture\n" \
-	"#define qf_textureCube texture\n" \
-	"#define qf_textureLod textureLod\n" \
-	"#define qf_textureArray texture\n" \
-	"#define qf_texture3D texture\n" \
-	"#define qf_textureOffset(a,b,c,d) textureOffset(a,b,ivec2(c,d))\n" \
+	"#define qf_texture texture2D\n" \
+        "#define qf_textureLod texture2DLod\n" \
+        "#define qf_textureCube textureCube\n" \
+        "#define qf_textureArray texture2DArray\n" \
+        "#define qf_texture3D texture3D\n" \
+        "#define qf_textureOffset(a,b,c,d) texture2DOffset(a,b,ivec2(c,d))\n" \
 	"\n"
+
+#define QF_BUILTIN_GLSL_MACROS_GLSL330 "" \
+	"precision highp float;\n" \
+        "#ifdef VERTEX_SHADER\n" \
+        "  out myhalf4 qf_FrontColor;\n" \
+        "# define qf_varying out\n" \
+        "# define qf_flat_varying flat out\n" \
+        "# define qf_attribute in\n" \
+        "#endif\n" \
+        "#ifdef FRAGMENT_SHADER\n" \
+        "  in myhalf4 qf_FrontColor;\n" \
+        "  layout( location = 0 ) out myhalf4 qf_FragColor;\n" \
+        "  layout( location = 1 ) out myhalf4 qf_BrightColor;\n" \
+        "# define qf_varying in\n" \
+        "# define qf_flat_varying flat in\n" \
+        "#endif\n" \
+        "#define qf_texture texture\n" \
+        "#define qf_textureCube texture\n" \
+        "#define qf_textureLod textureLod\n" \
+        "#define qf_textureArray texture\n" \
+        "#define qf_texture3D texture\n" \
+        "#define qf_textureOffset(a,b,c,d) textureOffset(a,b,ivec2(c,d))\n" \
+        "\n"
 
 #define QF_GLSL_PI "" \
 	"#ifndef M_PI\n" \
@@ -1532,13 +1553,23 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 	ri.Com_DPrintf( "Registering GLSL program %s\n", fullName );
 
 	i = 0;
-	shaderStrings[i++] = "#version 120\n";
-	shaderStrings[i++] = "#extension GL_ARB_explicit_attrib_location : enable\n";
-	shaderStrings[i++] = "#define QF_GLSL_VERSION 120\n";
+	if( glConfig.ext.glsl330 ) {
+		shaderStrings[i++] = "#version 330\n";
+		shaderStrings[i++] = "#define QF_GLSL_VERSION 330\n";
+	}
+	else {
+		shaderStrings[i++] = "#version 120\n";
+		shaderStrings[i++] = "#extension GL_ARB_explicit_attrib_location : enable\n";
+		shaderStrings[i++] = "#extension GL_EXT_texture_array : enable\n";
+		shaderStrings[i++] = "#define QF_GLSL_VERSION 120\n";
+	}
 	shaderTypeIdx = i;
 	shaderStrings[i++] = "\n";
 	shaderStrings[i++] = QF_BUILTIN_GLSL_MACROS;
-	shaderStrings[i++] = QF_BUILTIN_GLSL_MACROS_GLSL130;
+	if( glConfig.ext.glsl330 )
+		shaderStrings[i++] = QF_BUILTIN_GLSL_MACROS_GLSL330;
+	else
+		shaderStrings[i++] = QF_BUILTIN_GLSL_MACROS_GLSL120;
 	shaderStrings[i++] = QF_BUILTIN_GLSL_CONSTANTS;
 	Q_snprintfz( maxBones, sizeof( maxBones ),
 				 "#define MAX_UNIFORM_BONES %i\n", glConfig.maxGLSLBones );
@@ -2175,26 +2206,6 @@ void RP_UpdateKawaseUniforms( int elem, int TexWidth, int TexHeight, int iterati
 * RP_GetUniformLocations
 */
 static void RP_GetUniformLocations( glsl_program_t *program ) {
-	char tmp[1024];
-	unsigned int i;
-	int locBaseTexture;
-	int locNormalmapTexture;
-	int locGlossTexture;
-	int locDecalTexture;
-	int locEntityDecalTexture;
-	int locLightmapTexture[MAX_LIGHTMAPS];
-	int locDuDvMapTexture;
-	int locReflectionTexture;
-	int locRefractionTexture;
-	int locCelShadeTexture;
-	int locCelLightTexture;
-	int locDiffuseTexture;
-	int locStripesTexture;
-	int locDepthTexture;
-	int locBlueNoiseTexture;
-	int locColorLUT;
-	int locCubeFilter;
-
 	memset( &program->loc, -1, sizeof( program->loc ) );
 
 	program->loc.ModelViewMatrix = glGetUniformLocation( program->object, "u_ModelViewMatrix" );
@@ -2216,31 +2227,34 @@ static void RP_GetUniformLocations( glsl_program_t *program ) {
 
 	program->loc.TextureMatrix = glGetUniformLocation( program->object, "u_TextureMatrix" );
 
-	locBaseTexture = glGetUniformLocation( program->object, "u_BaseTexture" );
-	locNormalmapTexture = glGetUniformLocation( program->object, "u_NormalmapTexture" );
-	locGlossTexture = glGetUniformLocation( program->object, "u_GlossTexture" );
-	locDecalTexture = glGetUniformLocation( program->object, "u_DecalTexture" );
-	locEntityDecalTexture = glGetUniformLocation( program->object, "u_EntityDecalTexture" );
+	int locBaseTexture = glGetUniformLocation( program->object, "u_BaseTexture" );
+	int locNormalmapTexture = glGetUniformLocation( program->object, "u_NormalmapTexture" );
+	int locGlossTexture = glGetUniformLocation( program->object, "u_GlossTexture" );
+	int locDecalTexture = glGetUniformLocation( program->object, "u_DecalTexture" );
+	int locEntityDecalTexture = glGetUniformLocation( program->object, "u_EntityDecalTexture" );
 
-	locDuDvMapTexture = glGetUniformLocation( program->object, "u_DuDvMapTexture" );
-	locReflectionTexture = glGetUniformLocation( program->object, "u_ReflectionTexture" );
-	locRefractionTexture = glGetUniformLocation( program->object, "u_RefractionTexture" );
+	int locDuDvMapTexture = glGetUniformLocation( program->object, "u_DuDvMapTexture" );
+	int locReflectionTexture = glGetUniformLocation( program->object, "u_ReflectionTexture" );
+	int locRefractionTexture = glGetUniformLocation( program->object, "u_RefractionTexture" );
 
-	locCelShadeTexture = glGetUniformLocation( program->object, "u_CelShadeTexture" );
-	locCelLightTexture = glGetUniformLocation( program->object, "u_CelLightTexture" );
-	locDiffuseTexture = glGetUniformLocation( program->object, "u_DiffuseTexture" );
-	locStripesTexture = glGetUniformLocation( program->object, "u_StripesTexture" );
+	int locCelShadeTexture = glGetUniformLocation( program->object, "u_CelShadeTexture" );
+	int locCelLightTexture = glGetUniformLocation( program->object, "u_CelLightTexture" );
+	int locDiffuseTexture = glGetUniformLocation( program->object, "u_DiffuseTexture" );
+	int locStripesTexture = glGetUniformLocation( program->object, "u_StripesTexture" );
 
-	locDepthTexture = glGetUniformLocation( program->object, "u_DepthTexture" );
+	int locDepthTexture = glGetUniformLocation( program->object, "u_DepthTexture" );
 
-	locBlueNoiseTexture = glGetUniformLocation( program->object, "u_BlueNoiseTexture" );
+	int locBlueNoiseTexture = glGetUniformLocation( program->object, "u_BlueNoiseTexture" );
+	int locBlueNoiseTextureSize = glGetUniformLocation( program->object, "u_BlueNoiseTextureSize" );
 
-	locColorLUT = glGetUniformLocation( program->object, "u_ColorLUT" );
-	locCubeFilter = glGetUniformLocation( program->object, "u_CubeFilter" );
+	int locColorLUT = glGetUniformLocation( program->object, "u_ColorLUT" );
+	int locCubeFilter = glGetUniformLocation( program->object, "u_CubeFilter" );
 
 	program->loc.DeluxemapOffset = glGetUniformLocation( program->object, "u_DeluxemapOffset" );
 
-	for( i = 0; i < MAX_LIGHTMAPS; i++ ) {
+	int locLightmapTexture[MAX_LIGHTMAPS];
+	for( unsigned int i = 0; i < MAX_LIGHTMAPS; i++ ) {
+		char tmp[1024];
 		// arrays of samplers are broken on ARM Mali so get u_LightmapTexture%i instead of u_LightmapTexture[%i]
 		locLightmapTexture[i] = glGetUniformLocation( program->object,
 			va_r( tmp, sizeof( tmp ), "u_LightmapTexture%i", i ) );
@@ -2357,11 +2371,13 @@ static void RP_GetUniformLocations( glsl_program_t *program ) {
 		glUniform1i( locDepthTexture, 3 );
 	}
 
-	for( i = 0; i < MAX_LIGHTMAPS && locLightmapTexture[i] >= 0; i++ )
+	for( unsigned int i = 0; i < MAX_LIGHTMAPS && locLightmapTexture[i] >= 0; i++ )
 		glUniform1i( locLightmapTexture[i], i + 4 );
 
 	if( locBlueNoiseTexture >= 0 ) {
+		assert( locBlueNoiseTextureSize >= 0 );
 		glUniform1i( locBlueNoiseTexture, 7 );
+		glUniform2f( locBlueNoiseTextureSize, 256.0f, 256.0f );
 	}
 
 	if( locColorLUT >= 0 ) {

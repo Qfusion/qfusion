@@ -11,7 +11,3 @@
 // GL_ARB_texture_float
 #define GL_RGB16F GL_RGB16F_ARB
 #define GL_RGBA16F GL_RGBA16F_ARB
-
-#define GL_SRGB GL_SRGB_EXT
-#define GL_SRGB_ALPHA GL_SRGB_ALPHA_EXT
-
