@@ -78,7 +78,6 @@ class cBombSite
 		this.model.solid = SOLID_TRIGGER; // so bots can touch it
 		this.model.origin = origin;
 		this.model.modelindex = G_ModelIndex( "models/objects/bomb/spot_indicator_" + pathLetter + ".md3", true );
-		G_Print( "models/objects/bomb/spot_indicator_" + pathLetter + ".md3" );
 		this.model.svflags &= ~SVF_NOCLIENT;
 		this.model.effects = EF_ROTATE_AND_BOB;
 		this.model.linkEntity();

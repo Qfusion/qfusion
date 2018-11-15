@@ -277,8 +277,6 @@ static char *SV_LongInfoString( bool fullStatus ) {
 		}
 	}
 
-	count = 99;
-
 	if( bots ) {
 		Q_snprintfz( tempstr, sizeof( tempstr ), "\\bots\\%i", bots );
 	}
@@ -306,10 +304,7 @@ static char *SV_LongInfoString( bool fullStatus ) {
 		}
 	}
 
-	static char * realstatus = "\\version\\2.10 x86_64 Nov 13 2018 Linux\\fs_game\\basewsw\\g_antilag\\1\\g_gametypes_available\\\\g_instagib\\0\\g_match_score\\\\g_match_time\\Warmup\\g_needpass\\1\\g_race_gametype\\0\\gamedate\\Nov 14 2018\\gamename\\Warsow\\mapname\\wbomb1\\protocol\\2200\\sv_cheats\\0\\sv_hostname\\WARSOW SEQUEL RELEASED - tinyurl.com/warsow2\\sv_http\\1\\sv_maxclients\\20\\sv_mm_enable\\1\\sv_mm_loginonly\\0\\sv_pps\\20\\sv_pure\\0\\sv_skilllevel\\2\\sv_skillRating\\0\\gametype\\diesel\\clients\\4";
-	printf( "long: %s\n", status );
-
-	return realstatus;
+	return status;
 }
 
 /*
@@ -340,10 +335,6 @@ static char *SV_ShortInfoString( void ) {
 	}
 	maxcount = sv_maxclients->integer - bots;
 
-	strcpy( hostname, "WARSOW SEQUEL RELEASED - tinyurl.com/warsow2" );
-	count = 4;
-	maxcount = 20;
-
 	//format:
 	//" \377\377\377\377info\\n\\server_name\\m\\map name\\u\\clients/maxclients\\g\\gametype\\s\\skill\\EOT "
 
@@ -357,7 +348,7 @@ static char *SV_ShortInfoString( void ) {
 				 );
 
 	len = strlen( string );
-	Q_snprintfz( entry, sizeof( entry ), "g\\\\%6s\\\\", "diesel" );
+	Q_snprintfz( entry, sizeof( entry ), "g\\\\%6s\\\\", Cvar_String( "g_gametype" ) );
 	if( MAX_SVCINFOSTRING_LEN - len > strlen( entry ) ) {
 		Q_strncatz( string, entry, sizeof( string ) );
 		len = strlen( string );
@@ -421,9 +412,6 @@ static char *SV_ShortInfoString( void ) {
 
 	// finish it
 	Q_strncatz( string, "EOT", sizeof( string ) );
-
-	printf( "short: %s\n", string );
-
 	return string;
 }
 
@@ -484,9 +472,9 @@ static void SVC_InfoResponse( const socket_t *socket, const netadr_t *address ) 
 	//	return;
 
 	// different protocol version
-	/* if( atoi( Cmd_Argv( 1 ) ) != APP_PROTOCOL_VERSION ) { */
-	/* 	return; */
-	/* } */
+	if( atoi( Cmd_Argv( 1 ) ) != APP_PROTOCOL_VERSION ) {
+		return;
+	}
 
 	// check for full/empty filtered states
 	for( i = 0; i < Cmd_Argc(); i++ ) {
@@ -527,7 +515,7 @@ static void SVC_SendInfoString( const socket_t *socket, const netadr_t *address,
 	char *string;
 
 	if( sv_showInfoQueries->integer ) {
-		Com_Printf( "son %s Packet %s\n", requestType, NET_AddressToString( address ) );
+		Com_Printf( "%s Packet %s\n", requestType, NET_AddressToString( address ) );
 	}
 
 	// KoFFiE: When not public and coming from a LAN address
