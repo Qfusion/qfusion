@@ -1532,9 +1532,9 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 	ri.Com_DPrintf( "Registering GLSL program %s\n", fullName );
 
 	i = 0;
-	shaderStrings[i++] = "#version 150\n";
+	shaderStrings[i++] = "#version 120\n";
 	shaderStrings[i++] = "#extension GL_ARB_explicit_attrib_location : enable\n";
-	shaderStrings[i++] = "#define QF_GLSL_VERSION 150\n";
+	shaderStrings[i++] = "#define QF_GLSL_VERSION 120\n";
 	shaderTypeIdx = i;
 	shaderStrings[i++] = "\n";
 	shaderStrings[i++] = QF_BUILTIN_GLSL_MACROS;
