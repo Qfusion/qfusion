@@ -1213,18 +1213,6 @@ static struct shader_s *CG_GetWeaponIcon( int weapon ) {
 		}
 	}
 
-	if( weapon == WEAP_INSTAGUN ) {
-		if( currentWeapon == WEAP_INSTAGUN && weaponState == WEAPON_STATE_REFIRESTRONG ) {
-			int chargeTime = GS_GetWeaponDef( WEAP_INSTAGUN )->firedef.reload_time;
-			int chargeTimeStep = chargeTime / 3;
-			if( chargeTimeStep > 0 ) {
-				int charge = ( chargeTime - cg.predictedPlayerState.stats[STAT_WEAPON_TIME] ) / chargeTimeStep;
-				clamp( charge, 0, 2 );
-				return CG_MediaShader( cgs.media.shaderInstagunChargeIcon[charge] );
-			}
-		}
-	}
-
 	return CG_MediaShader( cgs.media.shaderWeaponIcon[weapon - WEAP_GUNBLADE] );
 }
 
@@ -1254,11 +1242,7 @@ static void CG_DrawWeaponIcons( int x, int y, int offx, int offy, int iw, int ih
 		if( CG_IsWeaponSelected( WEAP_GUNBLADE + i ) )
 			cury -= SELECTED_WEAPON_Y_OFFSET * cgs.vidHeight;
 
-		if( cg.predictedPlayerState.inventory[WEAP_GUNBLADE + i] ) {
-			trap_R_DrawStretchPic( curx, cury, iw, ih, 0, 0, 1, 1, colorWhite, CG_GetWeaponIcon( WEAP_GUNBLADE + i ) );
-		} else {
-			trap_R_DrawStretchPic( curx, cury, iw, ih, 0, 0, 1, 1, colorWhite, CG_MediaShader( cgs.media.shaderNoGunWeaponIcon[i] ) );
-		}
+		trap_R_DrawStretchPic( curx, cury, iw, ih, 0, 0, 1, 1, colorWhite, CG_GetWeaponIcon( WEAP_GUNBLADE + i ) );
 
 		drawn_weapons++;
 	}

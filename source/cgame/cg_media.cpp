@@ -344,21 +344,7 @@ void CG_RegisterMediaShaders( void ) {
 	cgs.media.shaderWeaponIcon[WEAP_ELECTROBOLT - 1] = CG_RegisterMediaShader( PATH_ELECTROBOLT_ICON );
 	cgs.media.shaderWeaponIcon[WEAP_INSTAGUN - 1] = CG_RegisterMediaShader( PATH_INSTAGUN_ICON );
 
-	cgs.media.shaderNoGunWeaponIcon[WEAP_GUNBLADE - 1] = CG_RegisterMediaShader( PATH_NG_GUNBLADE_ICON );
-	cgs.media.shaderNoGunWeaponIcon[WEAP_MACHINEGUN - 1] = CG_RegisterMediaShader( PATH_NG_MACHINEGUN_ICON );
-	cgs.media.shaderNoGunWeaponIcon[WEAP_RIOTGUN - 1] = CG_RegisterMediaShader( PATH_NG_RIOTGUN_ICON );
-	cgs.media.shaderNoGunWeaponIcon[WEAP_GRENADELAUNCHER - 1] = CG_RegisterMediaShader( PATH_NG_GRENADELAUNCHER_ICON );
-	cgs.media.shaderNoGunWeaponIcon[WEAP_ROCKETLAUNCHER - 1] = CG_RegisterMediaShader( PATH_NG_ROCKETLAUNCHER_ICON );
-	cgs.media.shaderNoGunWeaponIcon[WEAP_PLASMAGUN - 1] = CG_RegisterMediaShader( PATH_NG_PLASMAGUN_ICON );
-	cgs.media.shaderNoGunWeaponIcon[WEAP_LASERGUN - 1] = CG_RegisterMediaShader( PATH_NG_LASERGUN_ICON );
-	cgs.media.shaderNoGunWeaponIcon[WEAP_ELECTROBOLT - 1] = CG_RegisterMediaShader( PATH_NG_ELECTROBOLT_ICON );
-	cgs.media.shaderNoGunWeaponIcon[WEAP_INSTAGUN - 1] = CG_RegisterMediaShader( PATH_NG_INSTAGUN_ICON );
-
 	cgs.media.shaderGunbladeBlastIcon = CG_RegisterMediaShader( PATH_GUNBLADE_BLAST_ICON );
-
-	cgs.media.shaderInstagunChargeIcon[0] = CG_RegisterMediaShader( "gfx/hud/icons/weapon/instagun_0" );
-	cgs.media.shaderInstagunChargeIcon[1] = CG_RegisterMediaShader( "gfx/hud/icons/weapon/instagun_1" );
-	cgs.media.shaderInstagunChargeIcon[2] = CG_RegisterMediaShader( "gfx/hud/icons/weapon/instagun_2" );
 
 	// Kurim : keyicons
 	cgs.media.shaderKeyIcon[KEYICON_FORWARD] = CG_RegisterMediaShader( PATH_KEYICON_FORWARD );

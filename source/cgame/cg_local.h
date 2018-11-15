@@ -284,9 +284,7 @@ typedef struct {
 
 	// hud icons
 	cgs_media_handle_t *shaderWeaponIcon[WEAP_TOTAL];
-	cgs_media_handle_t *shaderNoGunWeaponIcon[WEAP_TOTAL];
 	cgs_media_handle_t *shaderGunbladeBlastIcon;
-	cgs_media_handle_t *shaderInstagunChargeIcon[3];
 
 	cgs_media_handle_t *shaderKeyIcon[KEYICON_TOTAL];
 

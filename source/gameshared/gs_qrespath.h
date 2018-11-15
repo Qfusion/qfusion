@@ -71,17 +71,6 @@ extern "C" {
 
 #define PATH_AMMOPACK_ICON      "gfx/hud/icons/ammo/pack"
 
-// nogun weap
-#define PATH_NG_GUNBLADE_ICON       "gfx/hud/icons/weapon/nogun_gunblade"
-#define PATH_NG_MACHINEGUN_ICON     "gfx/hud/icons/weapon/nogun_machinegun"
-#define PATH_NG_RIOTGUN_ICON        "gfx/hud/icons/weapon/nogun_riot"
-#define PATH_NG_GRENADELAUNCHER_ICON    "gfx/hud/icons/weapon/nogun_grenade"
-#define PATH_NG_ROCKETLAUNCHER_ICON "gfx/hud/icons/weapon/nogun_rocket"
-#define PATH_NG_PLASMAGUN_ICON      "gfx/hud/icons/weapon/nogun_plasma"
-#define PATH_NG_ELECTROBOLT_ICON    "gfx/hud/icons/weapon/nogun_electro"
-#define PATH_NG_LASERGUN_ICON       "gfx/hud/icons/weapon/nogun_laser"
-#define PATH_NG_INSTAGUN_ICON       "gfx/hud/icons/weapon/nogun_instagun"
-
 // misc
 #define PATH_BALLONCHAT_ICON        "gfx/2d/bubblechat"
 
