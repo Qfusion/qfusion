@@ -2377,7 +2377,7 @@ static void RP_GetUniformLocations( glsl_program_t *program ) {
 	if( locBlueNoiseTexture >= 0 ) {
 		assert( locBlueNoiseTextureSize >= 0 );
 		glUniform1i( locBlueNoiseTexture, 7 );
-		glUniform2f( locBlueNoiseTextureSize, 256.0f, 256.0f );
+		glUniform2f( locBlueNoiseTextureSize, BLUENOISE_TEXTURE_SIZE, BLUENOISE_TEXTURE_SIZE );
 	}
 
 	if( locColorLUT >= 0 ) {

@@ -1814,6 +1814,7 @@ static void R_InitCoronaTexture( int *w, int *h, int *flags, int *samples ) {
  */
 static void R_InitBlueNoiseTexture( int * w, int * h, int * flags, int * samples ) {
 	uint8_t * data = stbi_load_from_memory( blue_noise_png, blue_noise_png_len, w, h, NULL, 1 );
+	assert( *w == BLUENOISE_TEXTURE_SIZE && *h == BLUENOISE_TEXTURE_SIZE );
 	*flags = IT_NOMIPMAP;
 	*samples = 1;
 
