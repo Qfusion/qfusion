@@ -270,24 +270,7 @@ void CG_QuickPolyBeam( const vec3_t start, const vec3_t end, int width, struct s
 * CG_LaserGunPolyBeam
 */
 void CG_LaserGunPolyBeam( const vec3_t start, const vec3_t end, const vec4_t color, int tag ) {
-	vec4_t tcolor = { 0, 0, 0, 0.35f };
-	vec_t total;
-	vec_t min;
-	vec4_t min_team_color;
-
-	// learn0more: this kinda looks best
-	if( color ) {
-		// dmh: if teamcolor is too dark set color to default brighter
-		VectorCopy( color, tcolor );
-		min = 90 * ( 1.0f / 255.0f );
-		min_team_color[0] = min_team_color[1] = min_team_color[2] = min;
-		total = tcolor[0] + tcolor[1] + tcolor[2];
-		if( total < min ) {
-			VectorCopy( min_team_color, tcolor );
-		}
-	}
-
-	CG_SpawnPolyBeam( start, end, color ? tcolor : NULL, 12, 1, 0, CG_MediaShader( cgs.media.shaderLaserGunBeam ), 64, tag );
+	CG_SpawnPolyBeam( start, end, color, 12, 1, 0, CG_MediaShader( cgs.media.shaderLaserGunBeam ), 64, tag );
 }
 
 /*

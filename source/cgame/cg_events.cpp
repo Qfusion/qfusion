@@ -205,6 +205,8 @@ void CG_LaserBeamEffect( centity_t *cent ) {
 
 		CG_KillPolyBeamsByTag( cent->current.number );
 
+		CG_LaserGunPolyBeam( laserOrigin, trace.endpos, color, cent->current.number );
+
 		for( int phase = 0; phase < 3; phase++ ) {
 			CG_ElectroPolyboardBeam( laserOrigin, trace.endpos, cg_laserBeamSubdivisions->integer, 
 				phase, range, color, cent->current.number, firstPerson );
