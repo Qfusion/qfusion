@@ -21,11 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "g_local.h"
 
-extern cvar_t *g_votable_gametypes;
-extern cvar_t *g_disable_vote_gametype;
-
-//===================================================================
-
 /*
 * G_Timeout_Reset
 */
@@ -177,44 +172,6 @@ static void G_UpdateServerInfo( void ) {
 			trap_Cvar_ForceSet( "g_needpass", "0" );
 		}
 		password->modified = false;
-	}
-
-	// g_gametypes_available
-	if( g_votable_gametypes->modified || g_disable_vote_gametype->modified ) {
-		if( g_disable_vote_gametype->integer || !g_votable_gametypes->string || !strlen( g_votable_gametypes->string ) ) {
-			trap_Cvar_ForceSet( "g_gametypes_available", "" );
-		} else {
-			char *votable;
-			char *name;
-			size_t len;
-			int count;
-
-			len = 0;
-
-			for( count = 0; ( name = COM_ListNameForPosition( g_gametypes_list->string, count, CHAR_GAMETYPE_SEPARATOR ) ) != NULL; count++ ) {
-				if( G_Gametype_IsVotable( name ) ) {
-					len += strlen( name ) + 1;
-				}
-			}
-
-			len++;
-			votable = ( char * )G_Malloc( len );
-			votable[0] = 0;
-
-			for( count = 0; ( name = COM_ListNameForPosition( g_gametypes_list->string, count, CHAR_GAMETYPE_SEPARATOR ) ) != NULL; count++ ) {
-				if( G_Gametype_IsVotable( name ) ) {
-					Q_strncatz( votable, name, len );
-					Q_strncatz( votable, " ", len );
-				}
-			}
-
-			//votable[ strlen( votable )-2 ] = 0; // remove the last space
-			trap_Cvar_ForceSet( "g_gametypes_available", votable );
-			G_Free( votable );
-		}
-
-		g_votable_gametypes->modified = false;
-		g_disable_vote_gametype->modified = false;
 	}
 
 	if( GS_RaceGametype() ) {

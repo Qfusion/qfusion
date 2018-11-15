@@ -18,18 +18,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#ifndef __G_GAMETYPE_H__
-#define __G_GAMETYPE_H__
+#pragma once
 
 //g_gametypes.c
 extern cvar_t *g_warmup_timelimit;
 extern cvar_t *g_postmatch_timelimit;
 extern cvar_t *g_countdown_time;
 extern cvar_t *g_match_extendedtime;
-extern cvar_t *g_votable_gametypes;
 extern cvar_t *g_gametype; // only for use in function that deal with changing gametype, use GS_Gametype()
 extern cvar_t *g_gametype_generic;
-extern cvar_t *g_gametypes_list;
 
 
 #define G_CHALLENGERS_MIN_JOINTEAM_MAPTIME  9000 // must wait 10 seconds before joining
@@ -231,5 +228,3 @@ void G_Teams_CoachRemovePlayer( edict_t *ent );
 bool G_Gametype_Exists( const char *name );
 void G_Gametype_GENERIC_ScoreboardMessage( void );
 void G_Gametype_GENERIC_ClientRespawn( edict_t *self, int old_team, int new_team );
-
-#endif //  __G_GAMETYPE_H__

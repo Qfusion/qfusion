@@ -90,8 +90,6 @@ cvar_t *g_instagib;
 cvar_t *g_instajump;
 cvar_t *g_instashield;
 
-cvar_t *g_disable_vote_gametype;
-
 cvar_t *g_allow_spectator_voting;
 
 cvar_t *g_asGC_stats;
@@ -316,11 +314,7 @@ void G_Init( unsigned int seed, unsigned int framemsec, int protocol, const char
 	trap_Cvar_Get( "g_match_time", "", CVAR_SERVERINFO | CVAR_READONLY );
 	trap_Cvar_Get( "g_match_score", "", CVAR_SERVERINFO | CVAR_READONLY );
 	trap_Cvar_Get( "g_needpass", "", CVAR_SERVERINFO | CVAR_READONLY );
-	trap_Cvar_Get( "g_gametypes_available", "", CVAR_SERVERINFO | CVAR_READONLY );
 	trap_Cvar_Get( "g_race_gametype", "0", CVAR_SERVERINFO | CVAR_READONLY );
-
-	// define this one here so we can see when it's modified
-	g_disable_vote_gametype = trap_Cvar_Get( "g_disable_vote_gametype", "0", CVAR_ARCHIVE );
 
 	g_asGC_stats = trap_Cvar_Get( "g_asGC_stats", "0", CVAR_ARCHIVE );
 	g_asGC_interval = trap_Cvar_Get( "g_asGC_interval", "10", CVAR_ARCHIVE );

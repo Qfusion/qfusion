@@ -426,12 +426,10 @@ cvar_t *g_warmup_timelimit;
 cvar_t *g_postmatch_timelimit;
 cvar_t *g_match_extendedtime;
 cvar_t *g_countdown_time;
-cvar_t *g_votable_gametypes;
 cvar_t *g_scorelimit;
 cvar_t *g_timelimit;
 cvar_t *g_gametype;
 cvar_t *g_gametype_generic;
-cvar_t *g_gametypes_list;
 
 void G_MatchSendReport( void );
 
@@ -1340,37 +1338,6 @@ void G_Match_FreeBodyQueue( void ) {
 //======================================================
 
 /*
-* G_Gametype_IsVotable
-*/
-bool G_Gametype_IsVotable( const char *name ) {
-	char *ptr = g_votable_gametypes->string;
-	char *validname;
-
-	if( !name ) {
-		return false;
-	}
-
-	// if the votable gametypes list is empty, allow all but SP
-	if( ptr == NULL || ptr[0] == 0 ) {
-		return true;
-	}
-
-	// check for the gametype being in the votable gametypes list
-	while( ptr && *ptr ) {
-		validname = COM_Parse( &ptr );
-		if( !validname[0] ) {
-			break;
-		}
-
-		if( !Q_stricmp( validname, name ) ) {
-			return true;
-		}
-	}
-
-	return false;
-}
-
-/*
 * G_Gametype_CanPickUpItem
 */
 bool G_Gametype_CanPickUpItem( const gsitem_t *item ) {
@@ -1731,26 +1698,6 @@ void G_RunGametype( void ) {
 //======================================================
 
 /*
-* G_Gametype_Exists
-*/
-bool G_Gametype_Exists( const char *name ) {
-	char *str;
-	int count;
-
-	if( !name ) {
-		return false;
-	}
-
-	for( count = 0; ( str = COM_ListNameForPosition( g_gametypes_list->string, count, CHAR_GAMETYPE_SEPARATOR ) ) != NULL; count++ ) {
-		if( !Q_stricmp( name, str ) ) {
-			return true;
-		}
-	}
-
-	return false;
-}
-
-/*
 * G_Gametype_SetDefaults
 */
 void G_Gametype_SetDefaults( void ) {
@@ -1805,11 +1752,6 @@ void G_Gametype_SetDefaults( void ) {
 void G_Gametype_Init( void ) {
 	bool changed = false;
 
-	g_gametypes_list = trap_Cvar_Get( "g_gametypes_list", "bomb", CVAR_NOSET | CVAR_ARCHIVE );
-
-	// empty string to allow all
-	g_votable_gametypes = trap_Cvar_Get( "g_votable_gametypes", "", CVAR_ARCHIVE );
-
 	if( !g_gametype ) { // first time initialized
 		changed = true;
 	}
@@ -1829,23 +1771,6 @@ void G_Gametype_Init( void ) {
 	g_allow_falldamage = trap_Cvar_Get( "g_allow_falldamage", "0", CVAR_ARCHIVE );
 	g_allow_selfdamage = trap_Cvar_Get( "g_allow_selfdamage", "1", CVAR_ARCHIVE );
 	g_allow_teamdamage = trap_Cvar_Get( "g_allow_teamdamage", "0", CVAR_ARCHIVE );
-
-	// update latched gametype change
-	if( g_gametype->latched_string ) {
-		if( G_Gametype_Exists( g_gametype->latched_string ) ) {
-			trap_Cvar_ForceSet( "g_gametype", va( "%s", g_gametype->latched_string ) );
-			changed = true;
-		} else {
-			G_Printf( "G_Gametype: Invalid new gametype, change ignored\n" );
-			trap_Cvar_ForceSet( "g_gametype", va( "%s", g_gametype->string ) );
-		}
-	}
-
-	if( !G_Gametype_Exists( g_gametype->string ) ) {
-		G_Printf( "G_Gametype: Wrong value: '%s'. Setting up with default (bomb)\n", g_gametype->string );
-		trap_Cvar_ForceSet( "g_gametype", "bomb" );
-		changed = true;
-	}
 
 	G_Printf( "-------------------------------------\n" );
 	G_Printf( "Initalizing '%s' gametype\n", g_gametype->string );

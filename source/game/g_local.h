@@ -370,7 +370,6 @@ void G_InitChallengersQueue( void );
 void G_MoveClientToPostMatchScoreBoards( edict_t *ent, edict_t *spawnpoint );
 void G_Gametype_Init( void );
 void G_Gametype_GenerateAllowedGametypesList( void );
-bool G_Gametype_IsVotable( const char *name );
 void G_Gametype_ScoreEvent( gclient_t *client, const char *score_event, const char *args );
 void G_RunGametype( void );
 bool G_Gametype_CanPickUpItem( const gsitem_t *item );
