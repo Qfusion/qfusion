@@ -24,17 +24,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define STR_HELPER( s )                 # s
 #define STR_TOSTR( x )                  STR_HELPER( x )
 
-#ifndef APPLICATION
 #define APPLICATION                     "Cocaine Diesel"
-#endif
-
-#ifndef APPLICATION_UTF8
-#define APPLICATION_UTF8                "Cocaine Diesel"
-#endif
-
-#ifndef DEFAULT_BASEGAME
+#define APPLICATION_NOSPACES            "CocaineDiesel"
 #define DEFAULT_BASEGAME                "base"
-#endif
 
 #ifndef APP_VERSION_MAJOR
 #define APP_VERSION_MAJOR               0

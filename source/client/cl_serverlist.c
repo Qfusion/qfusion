@@ -17,19 +17,13 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
-// cl_serverlist.c  -- interactuates with the master server
 
 #include "client.h"
 
 //#define UNSAFE_EXIT
 #define MAX_MASTER_SERVERS                  4
 
-#ifdef PUBLIC_BUILD
 #define SERVERBROWSER_PROTOCOL_VERSION      APP_PROTOCOL_VERSION
-#else
-#define SERVERBROWSER_PROTOCOL_VERSION      APP_PROTOCOL_VERSION
-//#define SERVERBROWSER_PROTOCOL_VERSION	12
-#endif
 
 //=========================================================
 
@@ -650,7 +644,7 @@ void CL_GetServers_f( void ) {
 	modname = Cmd_Argv( 3 );
 	// never allow anyone to use DEFAULT_BASEGAME as mod name
 	if( !modname || !modname[0] || !Q_stricmp( modname, DEFAULT_BASEGAME ) ) {
-		modname = APPLICATION;
+		modname = APPLICATION_NOSPACES;
 	}
 	assert( modname[0] );
 
