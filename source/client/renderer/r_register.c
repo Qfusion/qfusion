@@ -223,7 +223,6 @@ static void R_FinalizeGLExtensions( void ) {
 	int glslMajor, glslMinor;
 	sscanf( glslVersionString, "%d.%d", &glslMajor, &glslMinor );
 	int glslVersion = glslMajor * 100 + glslMinor * 10;
-	glConfig.ext.texture_size = glslVersion >= 130;
 	glConfig.ext.glsl330 = glslVersion >= 330;
 
 	glConfig.maxTextureSize = 0;
