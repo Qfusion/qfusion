@@ -71,12 +71,14 @@ class cBombSite
 		origin.z += 128;
 
 		this.letter = SITE_LETTERS[siteCount];
+		String pathLetter = SITE_LETTERS_LOWERCASE[siteCount];
 
 		@this.model = @G_SpawnEntity( "capture_indicator_model" );
 		this.model.type = ET_GENERIC;
 		this.model.solid = SOLID_TRIGGER; // so bots can touch it
 		this.model.origin = origin;
-		this.model.modelindex = G_ModelIndex( "models/objects/bomb/spot_indicator_" + this.letter + ".md3", true );
+		this.model.modelindex = G_ModelIndex( "models/objects/bomb/spot_indicator_" + pathLetter + ".md3", true );
+		G_Print( "models/objects/bomb/spot_indicator_" + pathLetter + ".md3" );
 		this.model.svflags &= ~SVF_NOCLIENT;
 		this.model.effects = EF_ROTATE_AND_BOB;
 		this.model.linkEntity();
@@ -85,7 +87,7 @@ class cBombSite
 		this.sprite.type = ET_RADAR;
 		this.sprite.solid = SOLID_NOT;
 		this.sprite.origin = origin;
-		this.sprite.modelindex = G_ImageIndex( "gfx/bomb/radar_" + this.letter );
+		this.sprite.modelindex = G_ImageIndex( "gfx/bomb/radar_" + pathLetter );
 		this.sprite.svflags = ( this.sprite.svflags & ~SVF_NOCLIENT ) | SVF_BROADCAST;
 		this.sprite.frame = BOMB_ARM_DEFUSE_RADIUS;
 		this.sprite.linkEntity();
