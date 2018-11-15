@@ -76,7 +76,7 @@ class cBombSite
 		this.model.type = ET_GENERIC;
 		this.model.solid = SOLID_TRIGGER; // so bots can touch it
 		this.model.origin = origin;
-		this.model.modelindex = modelIndicator;
+		this.model.modelindex = G_ImageIndex( "models/objects/bomb/spot_indicator_.md3" + this.letter, true );
 		this.model.svflags &= ~SVF_NOCLIENT;
 		this.model.effects = EF_ROTATE_AND_BOB;
 		this.model.linkEntity();

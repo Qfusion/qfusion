@@ -114,7 +114,6 @@ void mediaInit()
 	modelBombModel    = G_ModelIndex( "models/objects/misc/bomb_centered.md3", true );
 	modelBombModelActive    = G_ModelIndex( "models/objects/misc/bomb_centered_active.md3", true );
 	modelBombBackpack = G_ModelIndex( "models/objects/misc/bomb.md3", true );
-	modelIndicator    = G_ModelIndex( "models/objects/capture_area/indicator.md3", true );
 
 	imgBombSprite  = G_ImageIndex( "gfx/indicators/radar" );
 	imgBombDecal   = G_ImageIndex( "gfx/indicators/radar_decal" );
