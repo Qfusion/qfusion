@@ -917,7 +917,7 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 					programFeatures |= GLSL_SHADER_MATERIAL_LIGHTMAP_ARRAYS;
 				}
 
-				if( glConfig.ext.glsl330 && r_lighting_bicubic->integer )
+				if( glConfig.ext.glsl130 && r_lighting_bicubic->integer )
 					programFeatures |= GLSL_SHADER_MATERIAL_LIGHTMAP_BICUBIC;
 
 				if( i == 1 ) {
@@ -1335,7 +1335,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 			}
 
 			if( isLightmapped && lightStyle && lightStyle->lightmapStyles[0] != 255 ) {
-				if( glConfig.ext.glsl330 && r_lighting_bicubic->integer )
+				if( glConfig.ext.glsl130 && r_lighting_bicubic->integer )
 					programFeatures |= GLSL_SHADER_Q3_LIGHTMAP_BICUBIC;
 
 				// bind lightmap textures and set program's features for lightstyles

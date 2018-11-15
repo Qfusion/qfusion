@@ -852,19 +852,10 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 #endif
 
 #define QF_BUILTIN_GLSL_MACROS "" \
-	"#if !defined(myhalf)\n" \
-	"//#if !defined(__GLSL_CG_DATA_TYPES)\n" \
 	"#define myhalf float\n" \
 	"#define myhalf2 vec2\n" \
 	"#define myhalf3 vec3\n" \
 	"#define myhalf4 vec4\n" \
-	"//#else\n" \
-	"//#define myhalf half\n" \
-	"//#define myhalf2 half2\n" \
-	"//#define myhalf3 half3\n" \
-	"//#define myhalf4 half4\n" \
-	"//#endif\n" \
-	"#endif\n" \
 	"#define qf_lowp_float float\n" \
 	"#define qf_lowp_vec2 vec2\n" \
 	"#define qf_lowp_vec3 vec3\n" \
@@ -891,7 +882,7 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
         "#define qf_textureOffset(a,b,c,d) texture2DOffset(a,b,ivec2(c,d))\n" \
 	"\n"
 
-#define QF_BUILTIN_GLSL_MACROS_GLSL330 "" \
+#define QF_BUILTIN_GLSL_MACROS_GLSL130 "" \
 	"precision highp float;\n" \
         "#ifdef VERTEX_SHADER\n" \
         "  out myhalf4 qf_FrontColor;\n" \
@@ -1553,21 +1544,21 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 	ri.Com_DPrintf( "Registering GLSL program %s\n", fullName );
 
 	i = 0;
-	if( glConfig.ext.glsl330 ) {
-		shaderStrings[i++] = "#version 330\n";
-		shaderStrings[i++] = "#define QF_GLSL_VERSION 330\n";
+	if( glConfig.ext.glsl130 ) {
+		shaderStrings[i++] = "#version 130\n";
+		shaderStrings[i++] = "#extension GL_ARB_explicit_attrib_location : enable\n";
+		shaderStrings[i++] = "#define QF_GLSL_VERSION 130\n";
 	}
 	else {
 		shaderStrings[i++] = "#version 120\n";
-		shaderStrings[i++] = "#extension GL_ARB_explicit_attrib_location : enable\n";
 		shaderStrings[i++] = "#extension GL_EXT_texture_array : enable\n";
 		shaderStrings[i++] = "#define QF_GLSL_VERSION 120\n";
 	}
 	shaderTypeIdx = i;
 	shaderStrings[i++] = "\n";
 	shaderStrings[i++] = QF_BUILTIN_GLSL_MACROS;
-	if( glConfig.ext.glsl330 )
-		shaderStrings[i++] = QF_BUILTIN_GLSL_MACROS_GLSL330;
+	if( glConfig.ext.glsl130 )
+		shaderStrings[i++] = QF_BUILTIN_GLSL_MACROS_GLSL130;
 	else
 		shaderStrings[i++] = QF_BUILTIN_GLSL_MACROS_GLSL120;
 	shaderStrings[i++] = QF_BUILTIN_GLSL_CONSTANTS;

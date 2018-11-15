@@ -100,7 +100,7 @@ typedef struct {
 	bool nvidia_meminfo;
 	bool ati_meminfo;
 
-	bool glsl330;
+	bool glsl130;
 
 	bool ARB_half_float_pixel;
 	bool ARB_half_float_vertex;
