@@ -768,11 +768,6 @@ static void R_SetupTexParameters( int flags, int upload_width, int upload_height
 		glTexParameteri( target, GL_TEXTURE_WRAP_R, wrap );
 	}
 
-	if( ( flags & IT_DEPTH ) && ( flags & IT_DEPTHCOMPARE ) ) {
-		glTexParameteri( target, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE );
-		glTexParameteri( target, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL );
-	}
-
 	if( flags & IT_ALPHAMASK ) {
 		glTexParameteri( target, GL_TEXTURE_SWIZZLE_R, GL_ONE );
 		glTexParameteri( target, GL_TEXTURE_SWIZZLE_G, GL_ONE );

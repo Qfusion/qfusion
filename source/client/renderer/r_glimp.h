@@ -19,7 +19,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 #pragma once
 
-#include "qgl.h"
+#include "glad.h"
+#include "gl2to3.h"
 
 //====================================================================
 
@@ -98,6 +99,18 @@ typedef struct {
 	bool amd_debug;
 	bool nvidia_meminfo;
 	bool ati_meminfo;
+
+	bool ARB_half_float_pixel;
+	bool ARB_half_float_vertex;
+	bool ARB_texture_float;
+	bool ARB_draw_instanced;
+	bool ARB_instanced_arrays;
+	bool ARB_framebuffer_object;
+	bool ARB_texture_swizzle;
+	bool EXT_texture_array;
+	bool ARB_texture_rg;
+	bool ARB_vertex_array_object;
+	bool ARB_explicit_attrib_location;
 } glextinfo_t;
 
 typedef struct {

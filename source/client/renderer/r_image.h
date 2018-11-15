@@ -38,17 +38,16 @@ enum {
 	IT_ALPHAMASK         = 1 << 12,    // image only contains an alpha mask
 	IT_BGRA              = 1 << 13,
 	IT_SYNC              = 1 << 14,    // load image synchronously
-	IT_DEPTHCOMPARE      = 1 << 15,
-	IT_ARRAY             = 1 << 16,
-	IT_3D                = 1 << 17,
-	IT_STENCIL           = 1 << 18,    // for IT_DEPTH or IT_DEPTHRB textures, whether there's stencil
-	IT_NO_DATA_SYNC      = 1 << 19,    // owned by the drawing thread, do not sync in the frontend thread
-	IT_FLOAT             = 1 << 20,
-	IT_SRGB              = 1 << 21,
-	IT_MIPTEX            = 1 << 22,
-	IT_MIPTEX_FULLBRIGHT = 1 << 23,
-	IT_LEFTHALF          = 1 << 24,
-	IT_RIGHTHALF         = 1 << 25,
+	IT_ARRAY             = 1 << 15,
+	IT_3D                = 1 << 16,
+	IT_STENCIL           = 1 << 17,    // for IT_DEPTH or IT_DEPTHRB textures, whether there's stencil
+	IT_NO_DATA_SYNC      = 1 << 18,    // owned by the drawing thread, do not sync in the frontend thread
+	IT_FLOAT             = 1 << 19,
+	IT_SRGB              = 1 << 20,
+	IT_MIPTEX            = 1 << 21,
+	IT_MIPTEX_FULLBRIGHT = 1 << 22,
+	IT_LEFTHALF          = 1 << 23,
+	IT_RIGHTHALF         = 1 << 24,
 };
 
 /**

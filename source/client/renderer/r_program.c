@@ -880,8 +880,8 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 	"#endif\n" \
 	"#ifdef FRAGMENT_SHADER\n" \
 	"  in myhalf4 qf_FrontColor;\n" \
-	"  out myhalf4 qf_FragColor;\n" \
-	"  out myhalf4 qf_BrightColor;\n" \
+	"  layout(location = 0) out myhalf4 qf_FragColor;\n" \
+	"  layout(location = 1) out myhalf4 qf_BrightColor;\n" \
 	"# define qf_varying in\n" \
 	"# define qf_flat_varying flat in\n" \
 	"#endif\n" \
@@ -1532,8 +1532,9 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 	ri.Com_DPrintf( "Registering GLSL program %s\n", fullName );
 
 	i = 0;
-	shaderStrings[i++] = "#version 330\n";
-	shaderStrings[i++] = "#define QF_GLSL_VERSION 330\n";
+	shaderStrings[i++] = "#version 150\n";
+	shaderStrings[i++] = "#extension GL_ARB_explicit_attrib_location : enable\n";
+	shaderStrings[i++] = "#define QF_GLSL_VERSION 150\n";
 	shaderTypeIdx = i;
 	shaderStrings[i++] = "\n";
 	shaderStrings[i++] = QF_BUILTIN_GLSL_MACROS;
@@ -2398,8 +2399,8 @@ static void RP_BindAttrbibutesLocations( glsl_program_t *program ) {
 	glBindAttribLocation( program->object, VATTRIB_INSTANCE_QUAT, "a_InstanceQuat" );
 	glBindAttribLocation( program->object, VATTRIB_INSTANCE_XYZS, "a_InstancePosAndScale" );
 
-	glBindFragDataLocation( program->object, 0, "qf_FragColor" );
-	glBindFragDataLocation( program->object, 1, "qf_BrightColor" );
+	/* glBindFragDataLocation( program->object, 0, "qf_FragColor" ); */
+	/* glBindFragDataLocation( program->object, 1, "qf_BrightColor" ); */
 }
 
 /*
