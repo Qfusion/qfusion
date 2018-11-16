@@ -137,12 +137,7 @@ static void body_die( edict_t *self, edict_t *inflictor, edict_t *attacker, int 
 static void body_think( edict_t *self ) {
 	self->health = GIB_HEALTH - 1;
 
-	//effect: small gibs, and only when it is still a body, not a gibbed head.
-	if( self->s.type == ET_CORPSE ) {
-		ThrowSmallPileOfGibs( self, 25 );
-	}
-
-	//disallow interaction with the world.
+	// disallow interaction with the world.
 	self->takedamage = DAMAGE_NO;
 	self->r.solid = SOLID_NOT;
 	self->s.sound = 0;
@@ -157,7 +152,6 @@ static void body_think( edict_t *self ) {
 	self->movetype = MOVETYPE_NONE;
 	self->think = NULL;
 
-	//memset( &self->snap, 0, sizeof(self->snap) );
 	GClip_UnlinkEntity( self );
 }
 
@@ -168,7 +162,7 @@ static void body_ready( edict_t *body ) {
 	body->takedamage = DAMAGE_YES;
 	body->r.solid = SOLID_YES;
 	body->think = body_think; // body self destruction countdown
-	body->nextThink = level.time + g_deadbody_autogib_delay->integer + ( crandom() * g_deadbody_autogib_delay->value * 0.25f ) ;
+	body->nextThink = level.time + 3000;
 	GClip_LinkEntity( body );
 }
 

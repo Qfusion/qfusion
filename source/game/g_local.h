@@ -321,7 +321,6 @@ extern cvar_t *g_armor_respawn;
 extern cvar_t *g_respawn_delay_min;
 extern cvar_t *g_respawn_delay_max;
 extern cvar_t *g_deadbody_followkiller;
-extern cvar_t *g_deadbody_autogib_delay;
 extern cvar_t *g_antilag_timenudge;
 extern cvar_t *g_antilag_maxtimedelta;
 

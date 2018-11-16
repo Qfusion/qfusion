@@ -80,7 +80,6 @@ cvar_t *g_allow_teamdamage;
 cvar_t *g_respawn_delay_min;
 cvar_t *g_respawn_delay_max;
 cvar_t *g_deadbody_followkiller;
-cvar_t *g_deadbody_autogib_delay;
 cvar_t *g_ammo_respawn;
 cvar_t *g_weapon_respawn;
 cvar_t *g_health_respawn;
@@ -266,7 +265,6 @@ void G_Init( unsigned int seed, unsigned int framemsec, int protocol, const char
 	g_respawn_delay_max = trap_Cvar_Get( "g_respawn_delay_max", "6000", CVAR_DEVELOPER );
 	g_numbots = trap_Cvar_Get( "g_numbots", "0", CVAR_ARCHIVE );
 	g_deadbody_followkiller = trap_Cvar_Get( "g_deadbody_followkiller", "1", CVAR_DEVELOPER );
-	g_deadbody_autogib_delay = trap_Cvar_Get( "g_deadbody_autogib_delay", "2000", CVAR_DEVELOPER );
 	g_maxtimeouts = trap_Cvar_Get( "g_maxtimeouts", "2", CVAR_ARCHIVE );
 	g_antilag = trap_Cvar_Get( "g_antilag", "1", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_LATCH );
 	g_antilag_maxtimedelta = trap_Cvar_Get( "g_antilag_maxtimedelta", "200", CVAR_ARCHIVE );
