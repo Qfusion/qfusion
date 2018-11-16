@@ -44,6 +44,7 @@ cvar_t *cg_draw2D;
 
 cvar_t *cg_crosshair_color;
 cvar_t *cg_crosshair_damage_color;
+cvar_t *cg_crosshair_size;
 
 cvar_t *cg_clientHUD;
 cvar_t *cg_specHUD;
@@ -177,6 +178,7 @@ void CG_ScreenInit( void ) {
 
 	cg_crosshair_color =    trap_Cvar_Get( "cg_crosshair_color", "255 255 255", CVAR_ARCHIVE );
 	cg_crosshair_damage_color = trap_Cvar_Get( "cg_crosshair_damage_color", "255 0 0", CVAR_ARCHIVE );
+	cg_crosshair_size = trap_Cvar_Get( "cg_crosshair_size", "3", CVAR_ARCHIVE );
 	cg_crosshair_color->modified = true;
 	cg_crosshair_damage_color->modified = true;
 
@@ -315,10 +317,12 @@ void CG_DrawCrosshair() {
 
 	int w = cgs.vidWidth;
 	int h = cgs.vidHeight;
-	CG_FillRect( w / 2 - 2, h / 2 - 5, 4, 10, border );
-	CG_FillRect( w / 2 - 5, h / 2 - 2, 10, 4, border );
-	CG_FillRect( w / 2 - 1, h / 2 - 4, 2, 8, inner );
-	CG_FillRect( w / 2 - 4, h / 2 - 1, 8, 2, inner );
+	int size = cg_crosshair_size->integer > 0 ? cg_crosshair_size->integer : 0;
+
+	CG_FillRect( w / 2 - 2, h / 2 - 2 - size, 4, 4 + 2 * size, border );
+	CG_FillRect( w / 2 - 2 - size, h / 2 - 2, 4 + 2 * size, 4, border );
+	CG_FillRect( w / 2 - 1, h / 2 - 1 - size, 2, 2 + 2 * size, inner );
+	CG_FillRect( w / 2 - 1 - size, h / 2 - 1, 2 + 2 * size, 2, inner );
 }
 
 void CG_DrawKeyState( int x, int y, int w, int h, int align, const char *key ) {
