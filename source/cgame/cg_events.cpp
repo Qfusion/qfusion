@@ -664,7 +664,7 @@ static void CG_Event_FireMachinegun( vec3_t origin, vec3_t dir, int weapon, int 
 /*
 * CG_Fire_SunflowerPattern
 */
-static void CG_Fire_SunflowerPattern( vec3_t start, vec3_t dir, int *seed, int ignore, int count,
+static void CG_Fire_SunflowerPattern( vec3_t start, vec3_t dir, int ignore, int count,
 									  int hspread, int vspread, int range, void ( *impact )( trace_t *tr ) ) {
 	int i;
 	float r;
@@ -672,12 +672,10 @@ static void CG_Fire_SunflowerPattern( vec3_t start, vec3_t dir, int *seed, int i
 	float fi;
 	trace_t trace, *water_trace;
 
-	assert( seed );
-
 	for( i = 0; i < count; i++ ) {
-		fi = i * 2.4; //magic value creating Fibonacci numbers
-		r = cos( (float)*seed + fi ) * hspread * sqrt( fi );
-		u = sin( (float)*seed + fi ) * vspread * sqrt( fi );
+		fi = i * 2.4f; //magic value creating Fibonacci numbers
+		r = cosf( fi ) * hspread * sqrt( fi );
+		u = sinf( fi ) * vspread * sqrt( fi );
 
 		water_trace = GS_TraceBullet( &trace, start, dir, r, u, range, ignore, 0 );
 		if( water_trace ) {
@@ -736,13 +734,13 @@ static void CG_Fire_RandomPattern( vec3_t start, vec3_t dir, int *seed, int igno
 /*
 * CG_Event_FireRiotgun
 */
-static void CG_Event_FireRiotgun( vec3_t origin, vec3_t dir, int weapon, int firemode, int seed, int owner ) {
+static void CG_Event_FireRiotgun( vec3_t origin, vec3_t dir, int weapon, int firemode, int owner ) {
 	trace_t trace;
 	vec3_t end;
 	gs_weapon_definition_t *weapondef = GS_GetWeaponDef( weapon );
 	firedef_t *firedef = ( firemode ) ? &weapondef->firedef : &weapondef->firedef_weak;
 
-	CG_Fire_SunflowerPattern( origin, dir, &seed, owner, firedef->projectile_count,
+	CG_Fire_SunflowerPattern( origin, dir, owner, firedef->projectile_count,
 							  firedef->spread, firedef->v_spread, firedef->timeout, CG_BulletImpact );
 
 	// spawn a single sound at the impact
@@ -1204,7 +1202,7 @@ void CG_EntityEvent( entity_state_t *ent, int ev, int parm, bool predicted ) {
 					AngleVectors( cg.predictedPlayerState.viewangles, dir, NULL, NULL );
 
 					if( weapon == WEAP_RIOTGUN ) {
-						CG_Event_FireRiotgun( origin, dir, weapon, fireMode, seed, cg.predictedPlayerState.POVnum );
+						CG_Event_FireRiotgun( origin, dir, weapon, fireMode, cg.predictedPlayerState.POVnum );
 					} else {
 						CG_Event_FireMachinegun( origin, dir, weapon, fireMode, seed, cg.predictedPlayerState.POVnum );
 					}
@@ -1215,7 +1213,6 @@ void CG_EntityEvent( entity_state_t *ent, int ev, int parm, bool predicted ) {
 			break;
 
 		case EV_ELECTROTRAIL:
-
 			// check the owner for predicted case
 			if( ISVIEWERENTITY( parm ) && ( ev < PREDICTABLE_EVENTS_MAX ) && ( predicted != cg.view.playerPrediction ) ) {
 				return;
@@ -1224,7 +1221,6 @@ void CG_EntityEvent( entity_state_t *ent, int ev, int parm, bool predicted ) {
 			break;
 
 		case EV_INSTATRAIL:
-
 			// check the owner for predicted case
 			if( ISVIEWERENTITY( parm ) && ( ev < PREDICTABLE_EVENTS_MAX ) && ( predicted != cg.view.playerPrediction ) ) {
 				return;
@@ -1233,16 +1229,14 @@ void CG_EntityEvent( entity_state_t *ent, int ev, int parm, bool predicted ) {
 			break;
 
 		case EV_FIRE_RIOTGUN:
-
 			// check the owner for predicted case
 			if( ISVIEWERENTITY( ent->ownerNum ) && ( ev < PREDICTABLE_EVENTS_MAX ) && ( predicted != cg.view.playerPrediction ) ) {
 				return;
 			}
-			CG_Event_FireRiotgun( ent->origin, ent->origin2, ent->weapon, ent->firemode, parm, ent->ownerNum );
+			CG_Event_FireRiotgun( ent->origin, ent->origin2, ent->weapon, ent->firemode, ent->ownerNum );
 			break;
 
 		case EV_FIRE_BULLET:
-
 			// check the owner for predicted case
 			if( ISVIEWERENTITY( ent->ownerNum ) && ( ev < PREDICTABLE_EVENTS_MAX ) && ( predicted != cg.view.playerPrediction ) ) {
 				return;

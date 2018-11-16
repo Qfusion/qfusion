@@ -413,7 +413,7 @@ void W_Fire_Bullet( edict_t *self, vec3_t start, vec3_t angles, int seed, int ra
 }
 
 //Sunflower spiral with Fibonacci numbers
-static void G_Fire_SunflowerPattern( edict_t *self, vec3_t start, vec3_t dir, int *seed, int count,
+static void G_Fire_SunflowerPattern( edict_t *self, vec3_t start, vec3_t dir, int count,
 									 int hspread, int vspread, int range, float damage, int kick, int dflags, int mod, int timeDelta ) {
 	int i;
 	float r;
@@ -422,9 +422,9 @@ static void G_Fire_SunflowerPattern( edict_t *self, vec3_t start, vec3_t dir, in
 	trace_t trace;
 
 	for( i = 0; i < count; i++ ) {
-		fi = i * 2.4; //magic value creating Fibonacci numbers
-		r = cos( (float)*seed + fi ) * hspread * sqrt( fi );
-		u = sin( (float)*seed + fi ) * vspread * sqrt( fi );
+		fi = i * 2.4f; //magic value creating Fibonacci numbers
+		r = cosf( fi ) * hspread * sqrt( fi );
+		u = sinf( fi ) * vspread * sqrt( fi );
 
 		GS_TraceBullet( &trace, start, dir, r, u, range, ENTNUM( self ), timeDelta );
 		if( trace.ent != -1 ) {
@@ -438,7 +438,7 @@ static void G_Fire_SunflowerPattern( edict_t *self, vec3_t start, vec3_t dir, in
 	}
 }
 
-void W_Fire_Riotgun( edict_t *self, vec3_t start, vec3_t angles, int seed, int range, int hspread, int vspread,
+void W_Fire_Riotgun( edict_t *self, vec3_t start, vec3_t angles, int range, int hspread, int vspread,
 					 int count, float damage, int knockback, int mod, int timeDelta ) {
 	vec3_t dir;
 	edict_t *event;
@@ -451,13 +451,13 @@ void W_Fire_Riotgun( edict_t *self, vec3_t start, vec3_t angles, int seed, int r
 	AngleVectors( angles, dir, NULL, NULL );
 
 	// send the event
-	event = G_SpawnEvent( EV_FIRE_RIOTGUN, seed, start );
+	event = G_SpawnEvent( EV_FIRE_RIOTGUN, 0, start );
 	event->s.ownerNum = ENTNUM( self );
 	VectorScale( dir, 4096, event->s.origin2 ); // DirToByte is too inaccurate
 	event->s.weapon = WEAP_RIOTGUN;
 	event->s.firemode = ( mod == MOD_RIOTGUN_S ) ? FIRE_MODE_STRONG : FIRE_MODE_WEAK;
 
-	G_Fire_SunflowerPattern( self, start, dir, &seed, count, hspread, vspread,
+	G_Fire_SunflowerPattern( self, start, dir, count, hspread, vspread,
 							 range, damage, knockback, dmgflags, mod, timeDelta );
 }
 

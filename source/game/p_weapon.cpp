@@ -407,7 +407,7 @@ static edict_t *G_Fire_Machinegun( vec3_t origin, vec3_t angles, firedef_t *fire
 /*
 * G_Fire_Riotgun
 */
-static edict_t *G_Fire_Riotgun( vec3_t origin, vec3_t angles, firedef_t *firedef, edict_t *owner, int seed ) {
+static edict_t *G_Fire_Riotgun( vec3_t origin, vec3_t angles, firedef_t *firedef, edict_t *owner ) {
 	int range, knockback, mod;
 	float damage;
 	int timeDelta;
@@ -428,7 +428,7 @@ static edict_t *G_Fire_Riotgun( vec3_t origin, vec3_t angles, firedef_t *firedef
 		knockback *= QUAD_KNOCKBACK_SCALE;
 	}
 
-	W_Fire_Riotgun( owner, origin, angles, seed, range, firedef->spread, firedef->v_spread,
+	W_Fire_Riotgun( owner, origin, angles, range, firedef->spread, firedef->v_spread,
 					firedef->projectile_count, damage, knockback, mod, timeDelta );
 
 	return NULL;
@@ -679,7 +679,7 @@ void G_FireWeapon( edict_t *ent, int parm ) {
 			break;
 
 		case WEAP_RIOTGUN:
-			projectile = G_Fire_Riotgun( origin, angles, firedef, ent, ucmdSeed );
+			projectile = G_Fire_Riotgun( origin, angles, firedef, ent );
 			break;
 
 		case WEAP_GRENADELAUNCHER:

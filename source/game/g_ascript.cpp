@@ -2221,7 +2221,7 @@ static edict_t *asFunc_FireGrenade( asvec3_t *origin, asvec3_t *angles, int spee
 }
 
 static void asFunc_FireRiotgun( asvec3_t *origin, asvec3_t *angles, int range, int spread, int count, int damage, int knockback, edict_t *owner ) {
-	W_Fire_Riotgun( owner, origin->v, angles->v, rand() & 255, range, spread, spread, count, damage, knockback, MOD_RIOTGUN_S, 0 );
+	W_Fire_Riotgun( owner, origin->v, angles->v, range, spread, spread, count, damage, knockback, MOD_RIOTGUN_S, 0 );
 }
 
 static void asFunc_FireBullet( asvec3_t *origin, asvec3_t *angles, int range, int spread, int damage, int knockback, edict_t *owner ) {

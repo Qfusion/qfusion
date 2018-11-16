@@ -27,14 +27,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "q_collision.h"
 #include "gs_public.h"
 
-
-#define BULLET_WATER_REFRACTION 1.5f
-
 /*
 * GS_TraceBullet
 */
 trace_t *GS_TraceBullet( trace_t *trace, vec3_t start, vec3_t dir, float r, float u, int range, int ignore, int timeDelta ) {
-	mat3_t axis;
 	vec3_t end;
 	bool water = false;
 	vec3_t water_start;
@@ -43,26 +39,27 @@ trace_t *GS_TraceBullet( trace_t *trace, vec3_t start, vec3_t dir, float r, floa
 
 	assert( trace );
 
-	VectorNormalizeFast( dir );
-	NormalVectorToAxis( dir, axis );
+	VectorNormalize( dir );
+	vec3_t world_up = { 0, 0, 1 };
+
+	vec3_t right, up;
+	CrossProduct( dir, world_up, right );
+	VectorNormalize( right );
+	CrossProduct( right, dir, up );
+	VectorNormalize( up );
+
+	VectorMA( start, range, dir, end );
+	if( r ) {
+		VectorMA( end, r, right, end );
+	}
+	if( u ) {
+		VectorMA( end, u, up, end );
+	}
 
 	if( gs.api.PointContents( start, timeDelta ) & MASK_WATER ) {
 		water = true;
 		VectorCopy( start, water_start );
 		content_mask &= ~MASK_WATER;
-
-		// ok, this isn't randomized, but I think we can live with it
-		// the effect on water has never been properly noticed anyway
-		//r *= BULLET_WATER_REFRACTION;
-		//u *= BULLET_WATER_REFRACTION;
-	}
-
-	VectorMA( start, range, &axis[AXIS_FORWARD], end );
-	if( r ) {
-		VectorMA( end, r, &axis[AXIS_RIGHT], end );
-	}
-	if( u ) {
-		VectorMA( end, u, &axis[AXIS_UP], end );
 	}
 
 	gs.api.Trace( trace, start, vec3_origin, vec3_origin, end, ignore, content_mask, timeDelta );
@@ -72,25 +69,6 @@ trace_t *GS_TraceBullet( trace_t *trace, vec3_t start, vec3_t dir, float r, floa
 		water_trace = *trace;
 
 		VectorCopy( trace->endpos, water_start );
-#if 0
-		if( !VectorCompare( start, trace->endpos ) ) {
-			vec3_t forward, right, up;
-
-			// change bullet's course when it enters water
-			VectorSubtract( end, start, dir );
-			VecToAngles( dir, dir );
-			AngleVectors( dir, forward, right, up );
-
-			// ok, this isn't randomized, but I think we can live with it
-			// the effect on water has never been properly noticed anyway
-			r *= BULLET_WATER_REFRACTION;
-			u *= BULLET_WATER_REFRACTION;
-
-			VectorMA( water_start, range, forward, end );
-			VectorMA( end, r, right, end );
-			VectorMA( end, u, up, end );
-		}
-#endif
 
 		// re-trace ignoring water this time
 		gs.api.Trace( trace, water_start, vec3_origin, vec3_origin, end, ignore, MASK_SHOT, timeDelta );
@@ -106,7 +84,6 @@ trace_t *GS_TraceBullet( trace_t *trace, vec3_t start, vec3_t dir, float r, floa
 
 	return NULL;
 }
-#undef BULLET_WATER_REFRACTION
 
 #define MAX_BEAM_HIT_ENTITIES 16
 
