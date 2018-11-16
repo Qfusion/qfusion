@@ -222,7 +222,7 @@ static void R_FinalizeGLExtensions( void ) {
 	const char * glslVersionString = ( const char * ) glGetString( GL_SHADING_LANGUAGE_VERSION );
 	int glslMajor, glslMinor;
 	sscanf( glslVersionString, "%d.%d", &glslMajor, &glslMinor );
-	int glslVersion = glslMajor * 100 + glslMinor * 10;
+	int glslVersion = glslMajor * 100 + glslMinor;
 	glConfig.ext.glsl130 = glslVersion >= 130;
 
 	glConfig.maxTextureSize = 0;
