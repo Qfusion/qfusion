@@ -95,7 +95,6 @@ Cvar cvarScoreLimit( "g_scorelimit", "10", CVAR_ARCHIVE );
 
 // why doesn't AS have char arithmetic...
 const String[] SITE_LETTERS = { 'A', 'B' };
-const String[] SITE_LETTERS_LOWERCASE = { 'a', 'b' };
 
 const int COUNTDOWN_MAX = 6; // was 4, but this gives people more time to change weapons
 

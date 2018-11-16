@@ -71,7 +71,7 @@ class cBombSite
 		origin.z += 128;
 
 		this.letter = SITE_LETTERS[siteCount];
-		String pathLetter = SITE_LETTERS_LOWERCASE[siteCount];
+		String pathLetter = letter.tolower();
 
 		@this.model = @G_SpawnEntity( "capture_indicator_model" );
 		this.model.type = ET_GENERIC;
