@@ -35,8 +35,8 @@ static const char *gs_teamNames[] =
 {
 	"SPECTATOR",
 	"PLAYERS",
-	"ALPHA",
-	"BETA",
+	"COCAINE",
+	"DIESEL",
 	NULL
 };
 
