@@ -22,6 +22,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "q_shared.h"
 #include "q_collision.h"
 
+#include <emmintrin.h>
+
 vec3_t vec3_origin = { 0, 0, 0 };
 mat3_t axis_identity = { 1, 0, 0, 0, 1, 0, 0, 0, 1 };
 quat_t quat_identity = { 0, 0, 0, 1 };
@@ -365,22 +367,8 @@ float DistanceFromLineSquared( const vec3_t p, const vec3_t lp1, const vec3_t lp
 
 //============================================================================
 
-float Q_RSqrt( float number ) {
-	int i;
-	float x2, y;
-
-	if( number == 0.0 ) {
-		return 0.0;
-	}
-
-	x2 = number * 0.5f;
-	y = number;
-	i = *(int *) &y;    // evil floating point bit level hacking
-	i = 0x5f3759df - ( i >> 1 ); // what the fuck?
-	y = *(float *) &i;
-	y = y * ( 1.5f - ( x2 * y * y ) ); // this can be done a second time
-
-	return y;
+float Q_RSqrt( float x ) {
+	return _mm_cvtss_f32( _mm_rsqrt_ss( _mm_set_ss( x ) ) );
 }
 
 int Q_rand( int *seed ) {
@@ -903,13 +891,11 @@ vec_t BoundsFurthestDistance( const vec3_t point, const vec3_t mins, const vec3_
 
 
 vec_t VectorNormalize( vec3_t v ) {
-	float length, ilength;
-
-	length = v[0] * v[0] + v[1] * v[1] + v[2] * v[2];
+	float length = v[0] * v[0] + v[1] * v[1] + v[2] * v[2];
 
 	if( length ) {
-		length = sqrt( length ); // FIXME
-		ilength = 1.0 / length;
+		length = sqrtf( length ); // FIXME
+		float ilength = 1.0 / length;
 		v[0] *= ilength;
 		v[1] *= ilength;
 		v[2] *= ilength;
