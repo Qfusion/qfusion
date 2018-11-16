@@ -633,11 +633,13 @@ void CG_SC_ResetObituaries( void ) {
 }
 
 static const char * obituaries[] = {
+	"BINNED",
 	"BLASTED",
 	"BODYBAGGED",
 	"CANNED",
 	"CASHED OUT",
 	"DEEPWATER HORIZONED",
+	"DELETED",
 	"DEPOSITED",
 	"DUMPED ON",
 	"DUMPSTERED",
