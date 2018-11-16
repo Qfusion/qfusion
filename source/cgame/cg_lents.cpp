@@ -1318,12 +1318,8 @@ void CG_SmallPileOfGibs( const vec3_t origin, int damage, const vec3_t initialVe
 	lentity_t *le;
 	vec3_t angles, velocity;
 
-	if( !cg_gibs->integer ) {
-		return;
-	}
-
 	int time = 50;
-	int count = 14 + cg_gibs->integer; // 15 models minimum
+	int count = 30;
 	clamp( count, 15, 128 );
 
 	for( int i = 0; i < count; i++ ) {

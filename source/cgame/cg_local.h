@@ -834,7 +834,6 @@ extern cvar_t *cg_cartoonEffects;
 
 extern cvar_t *cg_explosionsRing;
 extern cvar_t *cg_explosionsDust;
-extern cvar_t *cg_gibs;
 extern cvar_t *cg_outlineModels;
 extern cvar_t *cg_outlineWorld;
 extern cvar_t *cg_outlinePlayers;

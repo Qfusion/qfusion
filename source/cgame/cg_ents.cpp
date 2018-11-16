@@ -1780,11 +1780,9 @@ void CG_AddEntities( void ) {
 				canLight = true;
 				break;
 			case ET_GIB:
-				if( cg_gibs->integer ) {
-					CG_AddGenericEnt( cent );
-					CG_EntityLoopSound( state, ATTN_STATIC );
-					canLight = true;
-				}
+				CG_AddGenericEnt( cent );
+				CG_EntityLoopSound( state, ATTN_STATIC );
+				canLight = true;
 				break;
 			case ET_BLASTER:
 				CG_AddGenericEnt( cent );
@@ -2027,13 +2025,11 @@ void CG_UpdateEntities( void ) {
 				CG_UpdateGenericEnt( cent );
 				break;
 			case ET_GIB:
-				if( cg_gibs->integer ) {
-					cent->renderfx |= RF_NOSHADOW;
-					CG_UpdateGenericEnt( cent );
+				cent->renderfx |= RF_NOSHADOW;
+				CG_UpdateGenericEnt( cent );
 
-					// set the gib model ignoring the modelindex one
-					cent->ent.model = CG_MediaModel( cgs.media.modGib );
-				}
+				// set the gib model ignoring the modelindex one
+				cent->ent.model = CG_MediaModel( cgs.media.modGib );
 				break;
 
 			// projectiles with linear trajectories
