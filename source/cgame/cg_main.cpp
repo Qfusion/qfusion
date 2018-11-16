@@ -804,6 +804,8 @@ static void CG_RegisterVariables( void ) {
 	cg_strafeHUD = trap_Cvar_Get( "cg_strafeHUD", "0", CVAR_ARCHIVE );
 
 	cg_flashWindowCount = trap_Cvar_Get( "cg_flashWindowCount", "4", CVAR_ARCHIVE );
+
+	trap_Cvar_Get( "cg_loadout", "", CVAR_ARCHIVE | CVAR_USERINFO );
 }
 
 /*

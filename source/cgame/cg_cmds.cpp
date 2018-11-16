@@ -731,6 +731,15 @@ static void CG_SC_MenuQuick( void ) {
 	CG_RefreshOverlayMenu();
 }
 
+static void CG_SC_SaveLoadout() {
+	if( trap_Cmd_Argc() != 3 )
+		return;
+
+	char loadout[ 32 ];
+	snprintf( loadout, sizeof( loadout ), "%s %s", trap_Cmd_Argv( 1 ), trap_Cmd_Argv( 2 ) );
+	trap_Cvar_Set( "cg_loadout", loadout );
+}
+
 /*
 * CG_SC_MenuOpen
 */
@@ -815,6 +824,7 @@ static const svcmd_t cg_svcmds[] =
 	{ "motd", CG_SC_MOTD },
 	{ "aw", CG_SC_AddAward },
 	{ "qm", CG_SC_MenuQuick },
+	{ "saveloadout", CG_SC_SaveLoadout },
 
 	{ NULL }
 };

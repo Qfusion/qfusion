@@ -87,8 +87,34 @@ class cPlayer
 	{
 		@this.client = @player;
 
-		this.weapPrimary = PRIMARY_MIN;
-		this.weapSecondary = SECONDARY_MIN;
+		String loadout = this.client.getUserInfoKey( "cg_loadout" );
+		String primary = loadout.getToken( 0 );
+		String secondary = loadout.getToken( 1 );
+		bool primaryOk = true;
+		bool secondaryOk = true;
+
+		if( primary == "ebrl" )
+			this.weapPrimary = PRIMARY_EBRL;
+		else if( primary == "rllg" )
+			this.weapPrimary = PRIMARY_RLLG;
+		else if( primary == "eblg" )
+			this.weapPrimary = PRIMARY_EBLG;
+		else
+			primaryOk = false;
+
+		if( secondary == "pg" )
+			this.weapSecondary = SECONDARY_PG;
+		else if( secondary == "rg" )
+			this.weapSecondary = SECONDARY_RG;
+		else if( secondary == "gl" )
+			this.weapSecondary = SECONDARY_GL;
+		else
+			secondaryOk = false;
+
+		if( !primaryOk || !secondaryOk ) {
+			this.weapPrimary = PRIMARY_MIN;
+			this.weapSecondary = SECONDARY_MIN;
+		}
 
 		this.pendingPrimary = PRIMARY_NONE;
 		this.pendingSecondary = SECONDARY_NONE;
@@ -376,6 +402,28 @@ class cPlayer
 			// no need to add a space before error because it's already there
 			G_PrintMsg( @this.client.getEnt(), "Unrecognised token" + ( errorCount == 1 ? "" : "s" ) + ":" + error );
 		}
+
+		// set cg_loadout
+		String loadout = "";
+		if( this.pendingPrimary == PRIMARY_EBRL )
+			loadout = "ebrl";
+		else if( this.pendingPrimary == PRIMARY_RLLG )
+			loadout = "rllg";
+		else if( this.pendingPrimary == PRIMARY_EBLG )
+			loadout = "eblg";
+		else
+			return;
+
+		if( this.pendingSecondary == SECONDARY_PG )
+			loadout += " pg";
+		else if( this.pendingSecondary == SECONDARY_RG )
+			loadout += " rg";
+		else if( this.pendingSecondary == SECONDARY_GL )
+			loadout += " gl";
+		else
+			return;
+
+		this.client.execGameCommand( "saveloadout " + loadout );
 	}
 }
 
