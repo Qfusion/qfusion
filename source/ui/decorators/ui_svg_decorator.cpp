@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "ui_svg_rasterizer.h"
 
 #define NANOSVG_IMPLEMENTATION
-#include "nanosvg.h"
+#include "nanosvg/nanosvg.h"
 
 namespace WSWUI
 {

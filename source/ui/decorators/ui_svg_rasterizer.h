@@ -1,10 +1,7 @@
 #pragma once
-#ifndef __UI_SVG_RASTERIZER_H__
-#define __UI_SVG_RASTERIZER_H__
-
 #include "ui_precompiled.h"
-#include "nanosvg.h"
-#include "nanosvgrast.h"
+#include "nanosvg/nanosvg.h"
+#include "nanosvg/nanosvgrast.h"
 
 namespace WSWUI
 {
@@ -27,4 +24,3 @@ public:
 };
 
 }
-#endif

@@ -10,7 +10,3 @@
 	path = libsrcs
 	url = https://github.com/Qfusion/qfusion-libsrcs.git
 	shallow = true
-[submodule "third-party/nanosvg"]
-	path = third-party/nanosvg
-	url = https://github.com/Qfusion/nanosvg
-	shallow = true

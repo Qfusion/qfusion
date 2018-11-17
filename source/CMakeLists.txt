@@ -35,8 +35,7 @@ set(LIBROCKET_DIR ${CMAKE_HOME_DIRECTORY}/../third-party/libRocket)
 set(LIBROCKET_INCLUDE_DIR ${LIBROCKET_DIR}/Include)
 set(LIBROCKET_SOURCE_DIR ${LIBROCKET_DIR}/Source)
 
-set(NANOSVG_DIR ${CMAKE_HOME_DIRECTORY}/../third-party/nanosvg)
-set(NANOSVG_INCLUDE_DIR ${NANOSVG_DIR}/src)
+set(NANOSVG_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/../libs-party/nanosvg)
 
 add_definitions(-DCURL_STATICLIB)
 include_directories("${CMAKE_SOURCE_DIR}" "${CMAKE_SOURCE_DIR}/../libs")

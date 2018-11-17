@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "kernel/ui_common.h"
 
 #define NANOSVGRAST_IMPLEMENTATION
-#include "nanosvgrast.h"
+#include "nanosvg/nanosvgrast.h"
 
 namespace WSWUI
 {
