@@ -562,7 +562,7 @@ void CG_ParticleEffect( const vec3_t org, const vec3_t dir, float r, float g, fl
 		count = MAX_PARTICLES - cg_numparticles;
 	}
 	for( p = &particles[cg_numparticles], cg_numparticles += count; count > 0; count--, p++ ) {
-		CG_InitParticle( p, 0.75, 1, r + random() * 0.1, g + random() * 0.1, b + random() * 0.1, NULL );
+		CG_InitParticle( p, 0.75, 1, r, g, b, NULL );
 
 		d = rand() & 31;
 		for( j = 0; j < 3; j++ ) {
