@@ -549,7 +549,6 @@ void CG_InstaExplosionMode( const vec3_t pos, const vec3_t dir, int fire_mode, i
 void CG_RocketExplosionMode( const vec3_t pos, const vec3_t dir, int fire_mode, float radius ) {
 	lentity_t *le;
 	vec3_t angles, vec;
-	vec3_t origin;
 	float expvelocity = 8.0f;
 
 	VecToAngles( dir, angles );
@@ -564,8 +563,7 @@ void CG_RocketExplosionMode( const vec3_t pos, const vec3_t dir, int fire_mode, 
 	}
 
 	// animmap shader of the explosion
-	VectorMA( pos, radius * 0.12f, dir, origin );
-	le = CG_AllocSprite( LE_ALPHA_FADE, origin, radius * 0.5f, 8,
+	le = CG_AllocSprite( LE_ALPHA_FADE, pos, radius * 0.75f, 8,
 						 1, 1, 1, 1,
 						 radius * 4, 0.8f, 0.6f, 0, // orange dlight
 						 CG_MediaShader( cgs.media.shaderRocketExplosion ) );
@@ -577,6 +575,7 @@ void CG_RocketExplosionMode( const vec3_t pos, const vec3_t dir, int fire_mode, 
 
 	if( cg_explosionsRing->integer ) {
 		// explosion ring sprite
+		vec3_t origin;
 		VectorMA( pos, radius * 0.20f, dir, origin );
 		le = CG_AllocSprite( LE_ALPHA_FADE, origin, radius, 3,
 							 1, 1, 1, 1,
