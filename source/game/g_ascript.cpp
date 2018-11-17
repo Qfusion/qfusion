@@ -670,10 +670,6 @@ static bool objectGameClient_isBot( gclient_t *self ) {
 	return ( ent->r.svflags & SVF_FAKECLIENT ) != 0;
 }
 
-static ai_handle_t *objectGameClient_getBot( gclient_t *self ) {
-	return NULL;
-}
-
 static int objectGameClient_ClientState( gclient_t *self ) {
 	if( self->asFactored ) {
 		return CS_FREE;
