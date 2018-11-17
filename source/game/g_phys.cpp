@@ -708,7 +708,7 @@ void SV_Physics_LinearProjectile( edict_t *ent ) {
 	// find it's current position given the starting timeStamp
 	flyTime = (float)( game.serverTime - ent->s.linearMovementTimeStamp ) * 0.001f;
 
-	VectorCopy( ent->s.linearMovementBegin, start );
+	VectorMA( ent->s.linearMovementBegin, flyTime - FRAMETIME, ent->s.linearMovementVelocity, start );
 	VectorMA( ent->s.linearMovementBegin, flyTime, ent->s.linearMovementVelocity, end );
 
 	G_Trace4D( &trace, start, ent->r.mins, ent->r.maxs, end, ent, mask, ent->timeDelta );
