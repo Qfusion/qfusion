@@ -469,7 +469,6 @@ static void SV_Physics_Pusher( edict_t *ent ) {
 	// make sure all team slaves can move before commiting
 	// any moves or calling any think functions
 	// if the move is blocked, all moved objects will be backed out
-	//retry:
 	pushed_p = pushed;
 	for( part = ent; part; part = part->teamchain ) {
 		if( part->velocity[0] || part->velocity[1] || part->velocity[2] ||
@@ -506,13 +505,6 @@ static void SV_Physics_Pusher( edict_t *ent ) {
 		if( part->moveinfo.blocked ) {
 			part->moveinfo.blocked( part, obstacle );
 		}
-#if 0
-
-		// if the obstacle went away and the pusher is still there
-		if( !obstacle->r.inuse && part->r.inuse ) {
-			goto retry;
-		}
-#endif
 	}
 }
 
@@ -719,9 +711,6 @@ void SV_Physics_LinearProjectile( edict_t *ent ) {
 	if( !ent->r.inuse ) { // the projectile may be freed if touched something
 		return;
 	}
-
-	// update some data required for the transmission
-	//VectorCopy( ent->velocity, ent->s.linearMovementVelocity );
 
 	GClip_TouchTriggers( ent );
 	ent->groundentity = NULL; // projectiles never have ground entity

@@ -663,7 +663,6 @@ void G_RunFrame( unsigned int msec, int64_t serverTime ) {
 
 	game.localTime = time( NULL );
 
-	unsigned int serverTimeDelta = serverTime - game.serverTime;
 	game.serverTime = serverTime;
 	G_UpdateFrameTime( msec );
 
@@ -674,6 +673,7 @@ void G_RunFrame( unsigned int msec, int64_t serverTime ) {
 	G_CallVotes_Think();
 
 	if( GS_MatchPaused() ) {
+		unsigned int serverTimeDelta = serverTime - game.serverTime;
 		// freeze match clock and linear projectiles
 		gs.gameState.stats[GAMESTAT_MATCHSTART] += serverTimeDelta;
 		for( edict_t *ent = game.edicts + gs.maxclients; ENTNUM( ent ) < game.numentities; ent++ ) {
