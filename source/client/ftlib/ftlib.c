@@ -25,7 +25,7 @@ static qfontfamily_t *fontFamilies;
 
 // ============================================================================
 
-#include <ft2build.h>
+#include "freetype/ft2build.h"
 #include FT_FREETYPE_H
 #include FT_ERRORS_H
 #include FT_SYSTEM_H
@@ -74,88 +74,6 @@ typedef struct {
 	FT_UInt gindex;
 } qftglyph_t;
 
-static void *q_freetypeLibrary;
-
-#ifdef FREETYPELIB_RUNTIME
-
-static FT_Error ( *q_FT_New_Size )( FT_Face face, FT_Size* size );
-static FT_Error (*q_FT_Activate_Size)( FT_Size size );
-static FT_Error (*q_FT_Set_Pixel_Sizes)( FT_Face face, FT_UInt pixel_width, FT_UInt pixel_height );
-static FT_Error (*q_FT_Done_Size)( FT_Size size );
-static FT_UInt (*q_FT_Get_Char_Index)( FT_Face face, FT_ULong charcode );
-static FT_Error (*q_FT_Get_Kerning)( FT_Face face, FT_UInt left_glyph, FT_UInt right_glyph, FT_UInt kern_mode, FT_Vector *akerning );
-static FT_Error (*q_FT_Load_Glyph)( FT_Face face, FT_UInt glyph_index, FT_Int32 load_flags );
-static FT_Error (*q_FT_New_Memory_Face)( FT_Library library, const FT_Byte* file_base, FT_Long file_size, FT_Long face_index, FT_Face *aface );
-static FT_Error (*q_FT_Done_Face)( FT_Face face );
-static FT_Error (*q_FT_Init_FreeType)( FT_Library  *alibrary );
-static FT_Error (*q_FT_Done_FreeType)( FT_Library library );
-#ifdef FT_MULFIX_INLINED
-#define q_FT_MulFix FT_MulFix
-#else
-static FT_Long ( *q_FT_MulFix )( FT_Long a, FT_Long b );
-#endif
-
-static dllfunc_t freetypefuncs[] =
-{
-	{ "FT_New_Size", ( void **)&q_FT_New_Size },
-	{ "FT_Activate_Size", ( void **)&q_FT_Activate_Size },
-	{ "FT_Set_Pixel_Sizes", ( void **)&q_FT_Set_Pixel_Sizes },
-	{ "FT_Done_Size", ( void **)&q_FT_Done_Size },
-	{ "FT_Get_Char_Index", ( void **)&q_FT_Get_Char_Index },
-	{ "FT_Get_Kerning", ( void **)&q_FT_Get_Kerning },
-	{ "FT_Load_Glyph", ( void **)&q_FT_Load_Glyph },
-	{ "FT_New_Memory_Face", ( void **)&q_FT_New_Memory_Face },
-	{ "FT_Done_Face", ( void **)&q_FT_Done_Face },
-	{ "FT_Init_FreeType", ( void **)&q_FT_Init_FreeType },
-	{ "FT_Done_FreeType", ( void **)&q_FT_Done_FreeType },
-#ifndef FT_MULFIX_INLINED
-	{ "FT_MulFix", ( void **)&q_FT_MulFix },
-#endif
-	{ NULL, NULL },
-};
-
-#else
-
-#define q_FT_New_Size FT_New_Size
-#define q_FT_Activate_Size FT_Activate_Size
-#define q_FT_Set_Pixel_Sizes FT_Set_Pixel_Sizes
-#define q_FT_Done_Size FT_Done_Size
-#define q_FT_Get_Char_Index FT_Get_Char_Index
-#define q_FT_Get_Kerning FT_Get_Kerning
-#define q_FT_Load_Glyph FT_Load_Glyph
-#define q_FT_New_Memory_Face FT_New_Memory_Face
-#define q_FT_Done_Face FT_Done_Face
-#define q_FT_Init_FreeType FT_Init_FreeType
-#define q_FT_Done_FreeType FT_Done_FreeType
-#define q_FT_MulFix FT_MulFix
-
-#endif
-
-/*
-* QFT_UnloadFreetypeLibrary
-*/
-static void QFT_UnloadFreetypeLibrary( void ) {
-#ifdef FREETYPELIB_RUNTIME
-	if( q_freetypeLibrary ) {
-		trap_UnloadLibrary( &q_freetypeLibrary );
-	}
-#endif
-	q_freetypeLibrary = NULL;
-}
-
-/*
-* QFT_LoadFreetypeLibrary
-*/
-static void QFT_LoadFreetypeLibrary( void ) {
-	QFT_UnloadFreetypeLibrary();
-
-#ifdef FREETYPELIB_RUNTIME
-	q_freetypeLibrary = trap_LoadLibrary( LIBFREETYPE_LIBNAME, freetypefuncs );
-#else
-	q_freetypeLibrary = (void *)1;
-#endif
-}
-
 /*
 * QFT_AllocGlyphs
 */
@@ -182,9 +100,9 @@ static qftfallback_t *QFT_GetFallbackFace( qfontfamily_t *qfamily, unsigned int 
 
 	fallback = FTLIB_Alloc( ftlibPool, sizeof( qftfallback_t ) );
 
-	q_FT_New_Size( qftfamily->ftface, &( fallback->ftsize ) );
-	q_FT_Activate_Size( fallback->ftsize );
-	q_FT_Set_Pixel_Sizes( qftfamily->ftface, size, 0 );
+	FT_New_Size( qftfamily->ftface, &( fallback->ftsize ) );
+	FT_Activate_Size( fallback->ftsize );
+	FT_Set_Pixel_Sizes( qftfamily->ftface, size, 0 );
 
 	fallback->size = size;
 	fallback->next = qftfamily->fallbacks;
@@ -203,7 +121,7 @@ static qglyph_t *QFT_GetGlyph( qfontface_t *qfont, void *glyphArray, unsigned in
 	if( !qftglyph->gindex ) {
 		if( !( qftglyph->flags & QFTGLYPH_SEARCHED_MAIN ) ) {
 			qftglyph->flags |= QFTGLYPH_SEARCHED_MAIN;
-			qftglyph->gindex = q_FT_Get_Char_Index( qttf->ftsize->face, num );
+			qftglyph->gindex = FT_Get_Char_Index( qttf->ftsize->face, num );
 			if( qftglyph->gindex ) {
 				return &( qftglyph->qglyph );
 			}
@@ -225,7 +143,7 @@ static qglyph_t *QFT_GetGlyph( qfontface_t *qfont, void *glyphArray, unsigned in
 
 			if( qttf->ftfallbacksize && !( qftglyph->flags & QFTGLYPH_SEARCHED_FALLBACK ) ) {
 				qftglyph->flags |= QFTGLYPH_SEARCHED_FALLBACK;
-				qftglyph->gindex = q_FT_Get_Char_Index( qttf->ftfallbacksize->face, num );
+				qftglyph->gindex = FT_Get_Char_Index( qttf->ftfallbacksize->face, num );
 				if( qftglyph->gindex ) {
 					qftglyph->flags |= QFTGLYPH_FROM_FALLBACK;
 				}
@@ -272,8 +190,8 @@ static int QFT_GetKerning( qfontface_t *qfont, qglyph_t *g1_, qglyph_t *g2_ ) {
 
 	qttf = ( qftface_t * )( qfont->facedata );
 	ftsize = ( ( g1->flags & QFTGLYPH_FROM_FALLBACK ) ? qttf->ftfallbacksize : qttf->ftsize );
-	q_FT_Activate_Size( ftsize );
-	q_FT_Get_Kerning( ftsize->face, gi1, gi2, FT_KERNING_DEFAULT, &kvec );
+	FT_Activate_Size( ftsize );
+	FT_Get_Kerning( ftsize->face, gi1, gi2, FT_KERNING_DEFAULT, &kvec );
 	return kvec.x >> 6;
 }
 
@@ -342,8 +260,8 @@ static void QFT_RenderString( qfontface_t *qfont, const char *str ) {
 		// so if continue is used, any shader, even an empty one, should be assigned to the glyph
 
 		ftsize = ( ( qftglyph->flags & QFTGLYPH_FROM_FALLBACK ) ? qttf->ftfallbacksize : qttf->ftsize );
-		q_FT_Activate_Size( ftsize );
-		fterror = q_FT_Load_Glyph( ftsize->face, qftglyph->gindex, FT_LOAD_RENDER | FT_LOAD_TARGET_NORMAL );
+		FT_Activate_Size( ftsize );
+		fterror = FT_Load_Glyph( ftsize->face, qftglyph->gindex, FT_LOAD_RENDER | FT_LOAD_TARGET_NORMAL );
 		if( fterror ) {
 			Com_Printf( S_COLOR_YELLOW "Warning: Failed to load and render glyph %i for '%s', error %i\n",
 						num, qfont->family->name, fterror );
@@ -489,9 +407,9 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size ) {
 	int maxShaderWidth, maxShaderHeight;
 
 	// set the font size
-	q_FT_New_Size( ftface, &ftsize );
-	q_FT_Activate_Size( ftsize );
-	q_FT_Set_Pixel_Sizes( ftface, 0, size );
+	FT_New_Size( ftface, &ftsize );
+	FT_Activate_Size( ftsize );
+	FT_Set_Pixel_Sizes( ftface, 0, size );
 
 	hasKerning = FT_HAS_KERNING( ftface ) ? true : false;
 
@@ -509,7 +427,7 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size ) {
 	qfont->family = family;
 	qfont->size = size;
 	qfont->height = fontHeight;
-	qfont->advance = ( ( q_FT_MulFix( ftface->max_advance_width, ftsize->metrics.x_scale ) ) >> 6 );
+	qfont->advance = ( ( FT_MulFix( ftface->max_advance_width, ftsize->metrics.x_scale ) ) >> 6 );
 	qfont->glyphYOffset = ftsize->metrics.ascender >> 6;
 	qfont->underlineThickness = ftface->underline_thickness * unitScale + 0.5f;
 	if( qfont->underlineThickness <= 0 ) {
@@ -533,8 +451,8 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size ) {
 		int numCols, numRows;
 
 		// calculate estimate on texture size
-		maxAdvanceX = ( ( ( q_FT_MulFix( ftface->max_advance_width, ftsize->metrics.x_scale ) + 63 ) & ~63 ) >> 6 ) + 2;
-		maxAdvanceY = ( ( ( q_FT_MulFix( ftface->max_advance_height, ftsize->metrics.y_scale ) + 63 ) & ~63 ) >> 6 ) + 2;
+		maxAdvanceX = ( ( ( FT_MulFix( ftface->max_advance_width, ftsize->metrics.x_scale ) + 63 ) & ~63 ) >> 6 ) + 2;
+		maxAdvanceY = ( ( ( FT_MulFix( ftface->max_advance_height, ftsize->metrics.y_scale ) + 63 ) & ~63 ) >> 6 ) + 2;
 
 		numCols = maxShaderWidth / maxAdvanceX;
 		clamp( numCols, 1, ftface->num_glyphs );
@@ -588,7 +506,7 @@ static void QFT_UnloadFace( qfontface_t *qfont ) {
 		return;
 	}
 
-	q_FT_Done_Size( qttf->ftsize );
+	FT_Done_Size( qttf->ftsize );
 
 	FTLIB_Free( qttf );
 }
@@ -604,13 +522,13 @@ static void QFT_UnloadFamily( qfontfamily_t *qfamily ) {
 	for( fallback = qftfamily->fallbacks; fallback; fallback = nextfallback ) {
 		nextfallback = fallback->next;
 		if( fallback->ftsize ) {
-			q_FT_Done_Size( fallback->ftsize );
+			FT_Done_Size( fallback->ftsize );
 		}
 		FTLIB_Free( fallback );
 	}
 
 	if( qftfamily->ftface ) {
-		q_FT_Done_Face( qftfamily->ftface );
+		FT_Done_Face( qftfamily->ftface );
 		qftfamily->ftface = NULL;
 	}
 
@@ -636,7 +554,7 @@ static bool QFT_LoadFamily( const char *fileName, uint8_t *data, size_t dataSize
 	qftfamily_t *qftfamily;
 
 	ftface = NULL;
-	error = q_FT_New_Memory_Face( ftLibrary, ( const FT_Byte* )data, dataSize, 0, &ftface );
+	error = FT_New_Memory_Face( ftLibrary, ( const FT_Byte* )data, dataSize, 0, &ftface );
 	if( error != 0 ) {
 		if( verbose ) {
 			Com_Printf( S_COLOR_YELLOW "Warning: Error loading font face '%s': %i\n", fileName, error );
@@ -648,10 +566,10 @@ static bool QFT_LoadFamily( const char *fileName, uint8_t *data, size_t dataSize
 	styleName = ftface->style_name;
 
 	// check if the font has the replacement glyph
-	if( !q_FT_Get_Char_Index( ftface, FTLIB_REPLACEMENT_GLYPH ) ) {
+	if( !FT_Get_Char_Index( ftface, FTLIB_REPLACEMENT_GLYPH ) ) {
 		Com_Printf( S_COLOR_YELLOW "Warning: Font face '%s' doesn't have the replacement glyph %i\n",
 					familyName, FTLIB_REPLACEMENT_GLYPH );
-		q_FT_Done_Face( ftface );
+		FT_Done_Face( ftface );
 		return false;
 	}
 
@@ -660,7 +578,7 @@ static bool QFT_LoadFamily( const char *fileName, uint8_t *data, size_t dataSize
 		if( verbose ) {
 			Com_Printf( S_COLOR_YELLOW "Warning: '%s' is not a scalable font face\n", familyName );
 		}
-		q_FT_Done_Face( ftface );
+		FT_Done_Face( ftface );
 		return false;
 	}
 
@@ -768,14 +686,8 @@ static void QFT_PrecacheFonts( bool verbose ) {
 static void QFT_Init( bool verbose ) {
 	int error;
 
-	QFT_LoadFreetypeLibrary();
-
-	if( q_freetypeLibrary ) {
-		assert( ftLibrary == NULL );
-		error = q_FT_Init_FreeType( &ftLibrary );
-	} else {
-		error = 1;
-	}
+	assert( ftLibrary == NULL );
+	error = FT_Init_FreeType( &ftLibrary );
 
 	if( error != 0 ) {
 		ftLibrary = NULL;
@@ -794,7 +706,7 @@ static void QFT_Init( bool verbose ) {
 */
 static void QFT_Shutdown( void ) {
 	if( ftLibrary != NULL ) {
-		q_FT_Done_FreeType( ftLibrary );
+		FT_Done_FreeType( ftLibrary );
 		ftLibrary = NULL;
 	}
 
@@ -803,8 +715,6 @@ static void QFT_Shutdown( void ) {
 		qftGlyphTempBitmap = NULL;
 		qftGlyphTempBitmapHeight = 0;
 	}
-
-	QFT_UnloadFreetypeLibrary();
 }
 
 // ============================================================================

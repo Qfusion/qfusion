@@ -48,7 +48,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 		"../libsrcs/src/libogg"
 		"../libsrcs/src/libvorbis"
 		"../libsrcs/src/zlib"
-		"../libsrcs/src/libfreetype"
 		)
 
 	if (CMAKE_BUILD_TYPE STREQUAL "Release")
@@ -102,9 +101,13 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 endif()
 
 set(CURL_LIBRARY "${CMAKE_SOURCE_DIR}/../libs/curl/${LIBS_ARCH}/${CMAKE_STATIC_LIBRARY_PREFIX}curl${CMAKE_STATIC_LIBRARY_SUFFIX}")
+set(FREETYPE_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/../libs/freetype")
+set(FREETYPE_LIBRARY "${CMAKE_SOURCE_DIR}/../libs/freetype/${LIBS_ARCH}/${CMAKE_STATIC_LIBRARY_PREFIX}freetype${CMAKE_STATIC_LIBRARY_SUFFIX}")
+# set(LIBROCKET_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/../libs/librocket")
+# set(LIBROCKET_LIBRARY "${CMAKE_SOURCE_DIR}/../libs/librocket/${LIBS_ARCH}/${CMAKE_STATIC_LIBRARY_PREFIX}librocket${CMAKE_STATIC_LIBRARY_SUFFIX}")
+set(OPENAL_LIBRARY "${CMAKE_SOURCE_DIR}/../libs/openal/${LIBS_ARCH}/${CMAKE_STATIC_LIBRARY_PREFIX}openal${CMAKE_STATIC_LIBRARY_SUFFIX}")
 set(SDL2_LIBRARY "${CMAKE_SOURCE_DIR}/../libs/sdl/${LIBS_ARCH}/${CMAKE_STATIC_LIBRARY_PREFIX}SDL2${CMAKE_STATIC_LIBRARY_SUFFIX}")
 set(SDL2MAIN_LIBRARY "${CMAKE_SOURCE_DIR}/../libs/sdl/${LIBS_ARCH}/${CMAKE_STATIC_LIBRARY_PREFIX}SDL2main${CMAKE_STATIC_LIBRARY_SUFFIX}")
-set(OPENAL_LIBRARY "${CMAKE_SOURCE_DIR}/../libs/openal/${LIBS_ARCH}/${CMAKE_STATIC_LIBRARY_PREFIX}openal${CMAKE_STATIC_LIBRARY_SUFFIX}")
 
 # Linux-only specific settings
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
@@ -132,7 +135,6 @@ if (NOT GAME_MODULES_ONLY)
 	if (NOT SERVER_ONLY)
 		find_package(Ogg REQUIRED)
 		find_package(Vorbis REQUIRED)
-		find_package(Freetype REQUIRED)
 	endif()
 endif()
 
@@ -156,7 +158,6 @@ if (NOT GAME_MODULES_ONLY)
 		find_windows_release_libs(ZLIB_LIBRARY)
 		find_windows_release_libs(ANGELSCRIPT_LIBRARY)
 		if (NOT SERVER_ONLY)
-			find_windows_release_libs(FREETYPE_LIBRARIES)
 			find_windows_release_libs(OGG_LIBRARY)
 			find_windows_release_libs(VORBIS_LIBRARIES)
 		endif()
@@ -169,9 +170,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux") # Do not add 'OR MINGW' here - we need
 
 	set(VORBIS_LIBRARIES "")
 	add_definitions(-DVORBISLIB_RUNTIME)
-
-	set(FREETYPE_LIBRARIES "")
-	add_definitions(-DFREETYPELIB_RUNTIME)
 
 	set(ZLIB_LIBRARY "")
 	add_definitions(-DZLIB_RUNTIME)
