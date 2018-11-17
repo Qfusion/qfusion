@@ -31,27 +31,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 static void SV_AddGravity( edict_t *ent ) {
 	ent->velocity[2] -= ent->gravity * level.gravity * FRAMETIME;
 }
-/*
-typedef struct
-{
-vec3_t velocity;
-vec3_t origin;
-vec3_t mins, maxs;
-float remainingTime;
-
-vec3_t gravityDir;
-float slideBounce;
-int groundEntity;
-
-int passent, contentmask;
-
-int numClipPlanes;
-vec3_t clipPlaneNormals[MAX_SLIDEMOVE_CLIP_PLANES];
-
-int numtouch;
-int touchents[MAXTOUCH];
-} move_t;
-*/
 
 void G_AddGroundFriction( edict_t *ent, float friction ) {
 	vec3_t v, frictionVec;
@@ -253,135 +232,6 @@ void SV_Impact( edict_t *e1, trace_t *trace ) {
 	}
 }
 
-/*
-* SV_FlyMove
-*
-* The basic solid body movement clip that slides along multiple planes
-* Returns the clipflags if the velocity was modified (hit something solid)
-* 1 = floor
-* 2 = wall / step
-* 4 = dead stop
-*/
-#if 0
-#define MAX_CLIP_PLANES 5
-int SV_FlyMove( edict_t *ent, float time, int mask ) {
-	edict_t *hit;
-	int bumpcount, numbumps;
-	vec3_t dir;
-	float d;
-	int numplanes;
-	vec3_t planes[MAX_CLIP_PLANES];
-	vec3_t primal_velocity, original_velocity, new_velocity;
-	int i, j;
-	trace_t trace;
-	vec3_t end;
-	float time_left;
-	int blocked;
-
-	numbumps = 4;
-
-	blocked = 0;
-	VectorCopy( ent->velocity, original_velocity );
-	VectorCopy( ent->velocity, primal_velocity );
-	numplanes = 0;
-
-	time_left = time;
-
-	ent->groundentity = NULL;
-	for( bumpcount = 0; bumpcount < numbumps; bumpcount++ ) {
-		for( i = 0; i < 3; i++ )
-			end[i] = ent->s.origin[i] + time_left * ent->velocity[i];
-
-		G_Trace4D( &trace, ent->s.origin, ent->r.mins, ent->r.maxs, end, ent, mask, ent->timeDelta );
-		if( trace.allsolid ) { // entity is trapped in another solid
-			VectorClear( ent->velocity );
-			return 3;
-		}
-
-		if( trace.fraction > 0 ) { // actually covered some distance
-			VectorCopy( trace.endpos, ent->s.origin );
-			VectorCopy( ent->velocity, original_velocity );
-			numplanes = 0;
-		}
-
-		if( trace.fraction == 1 ) {
-			break; // moved the entire distance
-
-		}
-		hit = &game.edicts[trace.ent];
-
-		if( ISWALKABLEPLANE( &trace.plane ) ) {
-			blocked |= 1; // floor
-			if( hit->r.solid == SOLID_BSP ) {
-				ent->groundentity = hit;
-				ent->groundentity_linkcount = hit->r.linkcount;
-			}
-		}
-		if( !trace.plane.normal[2] ) {
-			blocked |= 2; // step
-		}
-
-		//
-		// run the impact function
-		//
-		SV_Impact( ent, &trace );
-		if( !ent->r.inuse ) {
-			break; // removed by the impact function
-
-		}
-		time_left -= time_left * trace.fraction;
-
-		// cliped to another plane
-		if( numplanes >= MAX_CLIP_PLANES ) { // this shouldn't really happen
-			VectorClear( ent->velocity );
-			return 3;
-		}
-
-		VectorCopy( trace.plane.normal, planes[numplanes] );
-		numplanes++;
-
-		//
-		// modify original_velocity so it parallels all of the clip planes
-		//
-		for( i = 0; i < numplanes; i++ ) {
-			GS_ClipVelocity( original_velocity, planes[i], new_velocity, 1 );
-			for( j = 0; j < numplanes; j++ )
-				if( j != i ) {
-					if( DotProduct( new_velocity, planes[j] ) < 0 ) {
-						break; // not ok
-					}
-				}
-			if( j == numplanes ) {
-				break;
-			}
-		}
-
-		if( i != numplanes ) { // go along this plane
-			VectorCopy( new_velocity, ent->velocity );
-		} else {   // go along the crease
-			if( numplanes != 2 ) {
-				VectorClear( ent->velocity );
-				return 7;
-			}
-			CrossProduct( planes[0], planes[1], dir );
-			VectorNormalize( dir );
-			d = DotProduct( dir, ent->velocity );
-			VectorScale( dir, d, ent->velocity );
-		}
-
-		//
-		// if original velocity is against the original velocity, stop dead
-		// to avoid tiny occilations in sloping corners
-		//
-		if( DotProduct( ent->velocity, primal_velocity ) <= 0 ) {
-			VectorClear( ent->velocity );
-			return blocked;
-		}
-	}
-
-	return blocked;
-}
-#endif
 
 //===============================================================================
 //
@@ -675,20 +525,6 @@ static void SV_Physics_Pusher( edict_t *ent ) {
 static void SV_Physics_None( edict_t *ent ) {
 }
 
-/*
-* SV_Physics_Noclip
-*
-* A moving object that doesn't obey physics
-*/
-#if 0
-static void SV_Physics_Noclip( edict_t *ent ) {
-	VectorMA( ent->s.angles, FRAMETIME, ent->avelocity, ent->s.angles );
-	VectorMA( ent->s.origin, FRAMETIME, ent->velocity, ent->s.origin );
-
-	GClip_LinkEntity( ent );
-}
-#endif
-
 //==============================================================================
 //
 //TOSS / BOUNCE
@@ -809,17 +645,11 @@ static void SV_Physics_Toss( edict_t *ent ) {
 			}
 		} else {
 			// in movetype_toss things stop dead when touching ground
-#if 0
-			G_CheckGround( ent );
-
-			if( ent->groundentity ) {
-#else
 
 			// walkable or trapped inside solid brush
 			if( trace.allsolid || ISWALKABLEPLANE( &trace.plane ) ) {
 				ent->groundentity = trace.ent < 0 ? world : &game.edicts[trace.ent];
 				ent->groundentity_linkcount = ent->groundentity->linkcount;
-#endif
 				VectorClear( ent->velocity );
 				VectorClear( ent->avelocity );
 				G_CallStop( ent );
