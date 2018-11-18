@@ -174,7 +174,8 @@ typedef struct {
 	unsigned int frametime;         // in milliseconds
 	int snapFrameTime;              // in milliseconds
 	int64_t realtime;				// actual time, set with Sys_Milliseconds every frame
-	int64_t serverTime;				// actual time in the server
+	int64_t serverTime;				// actual time on the server
+	int64_t prevServerTime;			// old time on the server
 
 	time_t localTime;               // local time in milliseconds
 

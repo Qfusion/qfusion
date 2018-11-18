@@ -702,12 +702,14 @@ static edict_t *G_GetNextThinkClient( edict_t *current ) {
 * Advances the world
 */
 void G_RunFrame( unsigned int msec, int64_t serverTime ) {
+	int64_t serverTimeDelta = serverTime - game.serverTime;
+
 	G_CheckCvars();
 
 	game.localTime = time( NULL );
-
-	unsigned int serverTimeDelta = serverTime - game.serverTime;
+	game.prevServerTime = game.serverTime;
 	game.serverTime = serverTime;
+
 	G_UpdateFrameTime( msec );
 
 	if( !g_snapStarted ) {
