@@ -2732,7 +2732,6 @@ image_t *R_GetShadowmapAtlasTexture( void ) {
 	int flags;
 	int samples;
 	int size;
-	int err = GL_NO_ERROR;
 
 	size = max( r_shadows_texturesize->integer, SHADOWMAP_MIN_ATLAS_SIZE );
 
