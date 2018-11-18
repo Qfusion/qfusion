@@ -65,10 +65,11 @@ void playerKilled( Entity @victim, Entity @attacker, Entity @inflictor )
 	cPlayer @pVictim = @playerFromClient( @victim.client );
 	pVictim.oneVS = 0;
 	
-	if ( match.getState() != MATCH_STATE_PLAYTIME || roundState != ROUNDSTATE_ROUND )
-	{
+	if( match.getState() != MATCH_STATE_PLAYTIME )
 		return;
-	}
+
+	if( roundState >= ROUNDSTATE_FINISHED )
+		return;
 
 	if ( bombState == BOMBSTATE_CARRIED && @victim == @bombCarrier )
 	{
