@@ -316,7 +316,7 @@ void CG_AllocShadeBox( int entNum, const vec3_t origin, const vec3_t mins, const
 * ShadeBoxes exist for the solely reason of waiting until all dlights are sent before doing the shadows.
 */
 #define SHADOW_PROJECTION_DISTANCE 96
-#define SHADOW_MAX_SIZE 24
+#define SHADOW_MAX_SIZE 20
 #define SHADOW_MIN_SIZE 4
 
 void CG_AddShadeBoxes( void ) {
@@ -336,7 +336,7 @@ void CG_AddShadeBoxes( void ) {
 		if( frac > 1 )
 			frac = 1;
 		float radius = SHADOW_MAX_SIZE - frac * ( SHADOW_MAX_SIZE - SHADOW_MIN_SIZE );
-		float alpha = 0.15f + frac * 0.6f;
+		float alpha = 0.4f - frac * 0.25f;
 
 		CG_AddBlobShadow( trace.endpos, trace.plane.normal, radius, alpha, sb );
 	}
