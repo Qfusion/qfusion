@@ -315,8 +315,8 @@ void CG_AllocShadeBox( int entNum, const vec3_t origin, const vec3_t mins, const
 * Note:	This function should be called after every dynamic light has been added to the rendering list.
 * ShadeBoxes exist for the solely reason of waiting until all dlights are sent before doing the shadows.
 */
-#define SHADOW_PROJECTION_DISTANCE 96
-#define SHADOW_MAX_SIZE 20
+#define SHADOW_LERP_DISTANCE 256
+#define SHADOW_MAX_SIZE 24
 #define SHADOW_MIN_SIZE 4
 
 void CG_AddShadeBoxes( void ) {
@@ -332,11 +332,11 @@ void CG_AddShadeBoxes( void ) {
 		trace_t trace;
 		CG_Trace( &trace, sb->origin, vec3_origin, vec3_origin, end, sb->entNum, MASK_OPAQUE );
 
-		float frac = trace.fraction * 1024.0f / float( SHADOW_PROJECTION_DISTANCE );
+		float frac = trace.fraction * 1024.0f / float( SHADOW_LERP_DISTANCE );
 		if( frac > 1 )
 			frac = 1;
 		float radius = SHADOW_MAX_SIZE - frac * ( SHADOW_MAX_SIZE - SHADOW_MIN_SIZE );
-		float alpha = 0.4f - frac * 0.25f;
+		float alpha = 0.8f - frac * 0.4f;
 
 		CG_AddBlobShadow( trace.endpos, trace.plane.normal, radius, alpha, sb );
 	}
