@@ -141,7 +141,7 @@ void NormToLatLong( const vec3_t normal, float latlong[2] ) {
 	}
 }
 
-void MakeNormalVectors( const vec3_t forward, vec3_t right, vec3_t up ) {
+void OrthonormalBasis( const vec3_t forward, vec3_t right, vec3_t up ) {
 	float d;
 
 	// this rotate and negate guarantees a vector not colinear with the original
@@ -150,6 +150,15 @@ void MakeNormalVectors( const vec3_t forward, vec3_t right, vec3_t up ) {
 	VectorMA( right, -d, forward, right );
 	VectorNormalize( right );
 	CrossProduct( right, forward, up );
+}
+
+void ViewVectors( const vec3_t forward, vec3_t right, vec3_t up ) {
+	vec3_t world_up = { 0, 0, 1 };
+
+	CrossProduct( forward, world_up, right );
+	VectorNormalize( right );
+	CrossProduct( right, forward, up );
+	VectorNormalize( up );
 }
 
 void RotatePointAroundVector( vec3_t dst, const vec3_t dir, const vec3_t point, float degrees ) {
@@ -162,7 +171,7 @@ void RotatePointAroundVector( vec3_t dst, const vec3_t dir, const vec3_t point, 
 	s = sin( s );
 
 	VectorCopy( dir, vf );
-	MakeNormalVectors( vf, vr, vu );
+	OrthonormalBasis( vf, vr, vu );
 
 	t0 = vr[0] * c + vu[0] * -s;
 	t1 = vr[0] * s + vu[0] *  c;
@@ -1332,27 +1341,12 @@ void Quat_ToMatrix3( const quat_t q, mat3_t m ) {
 }
 
 void Quat_TransformVector( const quat_t q, const vec3_t v, vec3_t out ) {
-#if 0
-	vec_t wx, wy, wz, xx, yy, yz, xy, xz, zz, x2, y2, z2;
-
-	// 9 muls, 3 adds
-	x2 = q[0] + q[0]; y2 = q[1] + q[1]; z2 = q[2] + q[2];
-	xx = q[0] * x2; xy = q[0] * y2; xz = q[0] * z2;
-	yy = q[1] * y2; yz = q[1] * z2; zz = q[2] * z2;
-	wx = q[3] * x2; wy = q[3] * y2; wz = q[3] * z2;
-
-	// 9 muls, 9 subs, 9 adds
-	out[0] = ( 1.0f - yy - zz ) * v[0] + ( xy - wz ) * v[1] + ( xz + wy ) * v[2];
-	out[1] = ( xy + wz ) * v[0] + ( 1.0f - xx - zz ) * v[1] + ( yz - wx ) * v[2];
-	out[2] = ( xz - wy ) * v[0] + ( yz + wx ) * v[1] + ( 1.0f - xx - yy ) * v[2];
-#else
 	vec3_t t;
 
 	CrossProduct( &q[0], v, t ); // 6 muls, 3 subs
 	VectorScale( t, 2, t );      // 3 muls
 	CrossProduct( &q[0], t, out );// 6 muls, 3 subs
 	VectorMA( out, q[3], t, out );// 3 muls, 3 adds
-#endif
 }
 
 void Quat_ConcatTransforms( const quat_t q1, const vec3_t v1, const quat_t q2, const vec3_t v2, quat_t q, vec3_t v ) {

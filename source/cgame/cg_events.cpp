@@ -634,7 +634,10 @@ static void CG_Event_FireMachinegun( vec3_t origin, vec3_t dir, int weapon, int 
 	r = s * cos( alpha ) * hspread;
 	u = s * sin( alpha ) * vspread;
 
-	water_trace = GS_TraceBullet( &trace, origin, dir, r, u, range, owner, 0 );
+	vec3_t right, up;
+	ViewVectors( dir, right, up );
+
+	water_trace = GS_TraceBullet( &trace, origin, dir, right, up, r, u, range, owner, 0 );
 	if( water_trace ) {
 		if( !VectorCompare( water_trace->endpos, origin ) ) {
 			CG_LeadWaterSplash( water_trace );
@@ -672,12 +675,15 @@ static void CG_Fire_SunflowerPattern( vec3_t start, vec3_t dir, int ignore, int 
 	float fi;
 	trace_t trace, *water_trace;
 
+	vec3_t right, up;
+	ViewVectors( dir, right, up );
+
 	for( i = 0; i < count; i++ ) {
 		fi = i * 2.4f; //magic value creating Fibonacci numbers
 		r = cosf( fi ) * hspread * sqrt( fi );
 		u = sinf( fi ) * vspread * sqrt( fi );
 
-		water_trace = GS_TraceBullet( &trace, start, dir, r, u, range, ignore, 0 );
+		water_trace = GS_TraceBullet( &trace, start, dir, right, up, r, u, range, ignore, 0 );
 		if( water_trace ) {
 			trace_t *tr = water_trace;
 			if( !VectorCompare( tr->endpos, start ) ) {

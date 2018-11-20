@@ -401,7 +401,10 @@ void W_Fire_Bullet( edict_t *self, vec3_t start, vec3_t angles, int seed, int ra
 	r = s * cos( alpha ) * hspread;
 	u = s * sin( alpha ) * vspread;
 
-	GS_TraceBullet( &trace, start, dir, r, u, range, ENTNUM( self ), timeDelta );
+	vec3_t right, up;
+	ViewVectors( dir, right, up );
+
+	GS_TraceBullet( &trace, start, dir, right, up, r, u, range, ENTNUM( self ), timeDelta );
 	if( trace.ent != -1 ) {
 		if( game.edicts[trace.ent].takedamage ) {
 			G_Damage( &game.edicts[trace.ent], self, self, dir, dir, trace.endpos, damage, knockback, dmgflags, mod );
@@ -421,12 +424,15 @@ static void G_Fire_SunflowerPattern( edict_t *self, vec3_t start, vec3_t dir, in
 	float fi;
 	trace_t trace;
 
+	vec3_t right, up;
+	ViewVectors( dir, right, up );
+
 	for( i = 0; i < count; i++ ) {
 		fi = i * 2.4f; //magic value creating Fibonacci numbers
 		r = cosf( fi ) * hspread * sqrt( fi );
 		u = sinf( fi ) * vspread * sqrt( fi );
 
-		GS_TraceBullet( &trace, start, dir, r, u, range, ENTNUM( self ), timeDelta );
+		GS_TraceBullet( &trace, start, dir, right, up, r, u, range, ENTNUM( self ), timeDelta );
 		if( trace.ent != -1 ) {
 			if( game.edicts[trace.ent].takedamage ) {
 				G_Damage( &game.edicts[trace.ent], self, self, dir, dir, trace.endpos, damage, kick, dflags, mod );

@@ -30,7 +30,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 /*
 * GS_TraceBullet
 */
-trace_t *GS_TraceBullet( trace_t *trace, vec3_t start, vec3_t dir, float r, float u, int range, int ignore, int timeDelta ) {
+trace_t *GS_TraceBullet( trace_t *trace, vec3_t start, vec3_t dir, vec3_t right, vec3_t up, float r, float u, int range, int ignore, int timeDelta ) {
 	vec3_t end;
 	bool water = false;
 	vec3_t water_start;
@@ -38,15 +38,6 @@ trace_t *GS_TraceBullet( trace_t *trace, vec3_t start, vec3_t dir, float r, floa
 	static trace_t water_trace;
 
 	assert( trace );
-
-	VectorNormalize( dir );
-	vec3_t world_up = { 0, 0, 1 };
-
-	vec3_t right, up;
-	CrossProduct( dir, world_up, right );
-	VectorNormalize( right );
-	CrossProduct( right, dir, up );
-	VectorNormalize( up );
 
 	VectorMA( start, range, dir, end );
 	if( r ) {

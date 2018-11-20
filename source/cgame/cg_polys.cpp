@@ -230,7 +230,7 @@ static cpoly_t *CG_SpawnPolyBeam( const vec3_t start, const vec3_t end, const ve
 		return NULL;
 	}
 
-	MakeNormalVectors( dir, right, up );
+	ViewVectors( dir, right, up );
 
 	VectorMA( start, ymin, right, v[0] );
 	VectorMA( start, ymax, right, v[1] );

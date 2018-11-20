@@ -238,7 +238,7 @@ void RB_VertexTCCelshadeMatrix( mat4_t matrix ) {
 		Matrix3_TransformVector( e->axis, dir, &m[0] );
 		VectorNormalize( &m[0] );
 
-		MakeNormalVectors( &m[0], &m[4], &m[8] );
+		OrthonormalBasis( &m[0], &m[4], &m[8] );
 		Matrix4_Transpose( m, matrix );
 	}
 }

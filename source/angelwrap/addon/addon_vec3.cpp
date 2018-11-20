@@ -178,8 +178,8 @@ static asvec3_t objectVec3_Perpendicular( asvec3_t *self ) {
 	return dst;
 }
 
-static void objectVec3_MakeNormalVectors( asvec3_t *r, asvec3_t *u, asvec3_t *self ) {
-	MakeNormalVectors( self->v, r->v, u->v );
+static void objectVec3_OrthonormalBasis( asvec3_t *r, asvec3_t *u, asvec3_t *self ) {
+	OrthonormalBasis( self->v, r->v, u->v );
 }
 
 static float *objectVec3_Index( unsigned index, asvec3_t *self ) {
@@ -244,7 +244,7 @@ void RegisterVec3Addon( asIScriptEngine *engine ) {
 	r = engine->RegisterObjectMethod( "Vec3", "void angleVectors(Vec3 &out, Vec3 &out, Vec3 &out) const", asFUNCTION( objectVec3_AngleVectors ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "Vec3", "Vec3 toAngles() const", asFUNCTION( objectVec3_VecToAngles ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "Vec3", "Vec3 perpendicular() const", asFUNCTION( objectVec3_Perpendicular ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
-	r = engine->RegisterObjectMethod( "Vec3", "void makeNormalVectors(Vec3 &out, Vec3 &out) const", asFUNCTION( objectVec3_MakeNormalVectors ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
+	r = engine->RegisterObjectMethod( "Vec3", "void orthonormalBasis(Vec3 &out, Vec3 &out) const", asFUNCTION( objectVec3_OrthonormalBasis ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "Vec3", "float &opIndex(uint)", asFUNCTION( objectVec3_Index ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "Vec3", "const float &opIndex(uint) const", asFUNCTION( objectVec3_Index ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 

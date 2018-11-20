@@ -18,8 +18,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#ifndef GAME_QMATH_H
-#define GAME_QMATH_H
+#pragma once
 
 #include "q_arch.h"
 
@@ -282,7 +281,8 @@ void ByteToDir( int b, vec3_t dir );
 
 void NormToLatLong( const vec3_t normal, float latlong[2] );
 
-void MakeNormalVectors( const vec3_t forward, vec3_t right, vec3_t up );
+void OrthonormalBasis( const vec3_t forward, vec3_t right, vec3_t up );
+void ViewVectors( const vec3_t forward, vec3_t right, vec3_t up );
 void AngleVectors( const vec3_t angles, vec3_t forward, vec3_t right, vec3_t up );
 int BoxOnPlaneSide( const vec3_t emins, const vec3_t emaxs, const struct cplane_s *plane );
 float anglemod( float a );
@@ -409,5 +409,3 @@ float Q_GetNoiseValue( float x, float y, float z, float t );
 #ifdef __cplusplus
 };
 #endif
-
-#endif // GAME_QMATH_H
