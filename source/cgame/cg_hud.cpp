@@ -636,17 +636,23 @@ static const char * obituaries[] = {
 	"BINNED",
 	"BLASTED",
 	"BODYBAGGED",
+	"BURIED",
 	"CANNED",
 	"CASHED OUT",
+	"CRUSHED",
 	"DEEPWATER HORIZONED",
 	"DELETED",
 	"DEPOSITED",
+	"DESTROYED",
 	"DUMPED ON",
 	"DUMPSTERED",
+	"EXTERMINATED",
 	"ELABORATED ON",
 	"FLUSHED",
 	"FRAGGED",
+	"FOLDED",
 	"FUCKED",
+	"HOSED",
 	"ICED",
 	"MURDERED",
 	"NUKED",
@@ -654,14 +660,25 @@ static const char * obituaries[] = {
 	"PILED",
 	"PISSED ON",
 	"POUNDED",
+	"PUT DOWN",
+	"PYONGYANGED",
 	"SHAFTED",
 	"SHITTED ON",
+	"SLAMMED",
 	"SLICED",
+	"SMASHED",
+	"STYLED ON",
 	"SWIPED LEFT ON",
 	"TOILET STORED",
+	"TOSSED",
 	"TRASHED",
+	"TRUMPED",
 	"WHACKED",
 };
+
+static const char * RandomShit() {
+	return rand() % 4 == 0 ? "SHIT" : "";
+}
 
 static const char * RandomObituary() {
 	return obituaries[ rand() % ( sizeof( obituaries ) / sizeof( obituaries[ 0 ] ) ) ];
@@ -728,7 +745,7 @@ void CG_SC_Obituary( void ) {
 					Q_strncpyz( name, victim->name, sizeof( name ) );
 					Q_strupr( name );
 					Q_strncatz( name, S_COLOR_WHITE, sizeof( name ) );
-					CG_CenterPrint( va( "YOU TEAM%s %s", RandomObituary(), name ) );
+					CG_CenterPrint( va( "YOU TEAM%s%s %s", RandomShit(), RandomObituary(), name ) );
 				}
 			} else {   // good kill
 				current->type = OBITUARY_NORMAL;
@@ -742,7 +759,7 @@ void CG_SC_Obituary( void ) {
 					Q_strncpyz( name, victim->name, sizeof( name ) );
 					Q_strupr( name );
 					Q_strncatz( name, S_COLOR_WHITE, sizeof( name ) );
-					CG_CenterPrint( va( "YOU %s %s", RandomObituary(), name ) );
+					CG_CenterPrint( va( "YOU %s%s %s", RandomShit(), RandomObituary(), name ) );
 				}
 			}
 		} else {   // suicide
