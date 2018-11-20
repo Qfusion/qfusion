@@ -887,7 +887,7 @@ void CG_NewBloodTrail( centity_t *cent ) {
 /*
 * CG_BloodDamageEffect
 */
-void CG_BloodDamageEffect( const vec3_t origin, const vec3_t dir, int damage ) {
+void CG_BloodDamageEffect( const vec3_t origin, const vec3_t dir, int damage, int team ) {
 	lentity_t *le;
 	int count, i;
 	float radius = 5.0f, alpha = cg_bloodTrailAlpha->value;
@@ -918,9 +918,18 @@ void CG_BloodDamageEffect( const vec3_t origin, const vec3_t dir, int damage ) {
 		VectorNormalize2( dir, local_dir );
 	}
 
+	vec4_t color;
+	if( team == TEAM_ALPHA || team == TEAM_BETA ) {
+		CG_TeamColor( team, color );
+	}
+	else {
+		Vector4Set( color, 1, 1, 1, 1 );
+	}
+
 	for( i = 0; i < count; i++ ) {
 		le = CG_AllocSprite( LE_PUFF_SHRINK, origin, radius + crandom(), time,
-							 1, 1, 1, alpha, 0, 0, 0, 0, shader );
+			color[ 0 ], color[ 1 ], color[ 2 ], alpha,
+			0, 0, 0, 0, shader );
 
 		le->ent.rotation = rand() % 360;
 
@@ -1331,7 +1340,7 @@ void CG_SmallPileOfGibs( const vec3_t origin, int damage, const vec3_t initialVe
 	for( int i = 0; i < count; i++ ) {
 		vec4_t color;
 
-		if( ( team == TEAM_ALPHA ) || ( team == TEAM_BETA ) ) {
+		if( team == TEAM_ALPHA || team == TEAM_BETA ) {
 			// team
 			CG_TeamColor( team, color );
 		} else {

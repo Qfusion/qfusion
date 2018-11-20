@@ -973,7 +973,7 @@ void CG_Explosion1( const vec3_t pos );
 void CG_Explosion2( const vec3_t pos );
 void CG_ProjectileTrail( centity_t *cent );
 void CG_NewBloodTrail( centity_t *cent );
-void CG_BloodDamageEffect( const vec3_t origin, const vec3_t dir, int damage );
+void CG_BloodDamageEffect( const vec3_t origin, const vec3_t dir, int damage, int team );
 void CG_FlagTrail( const vec3_t origin, const vec3_t start, const vec3_t end, float r, float g, float b );
 void CG_GreenLaser( const vec3_t start, const vec3_t end );
 void CG_SmallPileOfGibs( const vec3_t origin, int damage, const vec3_t initialVelocity, int team );

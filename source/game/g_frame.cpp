@@ -378,6 +378,7 @@ static void G_SnapEntities( void ) {
 					event = G_SpawnEvent( EV_BLOOD, DirToByte( dir ), origin );
 					event->s.damage = HEALTH_TO_INT( damage );
 					event->s.ownerNum = i; // set owner
+					event->s.team = ent->s.team;
 
 					// ET_PLAYERS can also spawn sound events
 					if( ent->s.type == ET_PLAYER ) {
