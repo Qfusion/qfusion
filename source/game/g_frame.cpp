@@ -662,8 +662,9 @@ void G_RunFrame( unsigned int msec, int64_t serverTime ) {
 	G_CheckCvars();
 
 	game.localTime = time( NULL );
-
+	game.prevServerTime = game.serverTime;
 	game.serverTime = serverTime;
+
 	G_UpdateFrameTime( msec );
 
 	if( !g_snapStarted ) {

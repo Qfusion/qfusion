@@ -832,6 +832,7 @@ void G_InitLevel( char *mapname, char *entities, int entstrlen, int64_t levelTim
 	G_FreeCallvotes();
 
 	game.serverTime = serverTime;
+	game.prevServerTime = serverTime;
 	game.realtime = realTime;
 
 	GClip_ClearWorld(); // clear areas links

@@ -697,8 +697,8 @@ void SV_Physics_LinearProjectile( edict_t *ent ) {
 	mask = ( ent->r.clipmask ) ? ent->r.clipmask : MASK_SOLID;
 
 	// find its current position given the starting timeStamp
-	float endFlyTime = (float)( game.serverTime - ent->s.linearMovementTimeStamp ) * 0.001f;
-	float startFlyTime = max( 0, endFlyTime - FRAMETIME );
+	float endFlyTime = float( game.serverTime - ent->s.linearMovementTimeStamp ) * 0.001f;
+	float startFlyTime = float( max( 0, game.prevServerTime - ent->s.linearMovementTimeStamp ) ) * 0.001f;
 
 	VectorMA( ent->s.linearMovementBegin, startFlyTime, ent->s.linearMovementVelocity, start );
 	VectorMA( ent->s.linearMovementBegin, endFlyTime, ent->s.linearMovementVelocity, end );
