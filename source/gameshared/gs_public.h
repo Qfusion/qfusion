@@ -188,16 +188,6 @@ extern gs_state_t gs;
 #define ATTN_STATIC             5       // diminish very rapidly with distance
 #define ATTN_WHISPER            10      // must be very close to hear it
 
-#if 0
-// S_DEFAULT_ATTENUATION_MODEL			"1"
-#define ATTN_NONE               0   // full volume the entire level
-#define ATTN_DISTANT            2   // distant sound (most likely explosions)
-#define ATTN_NORM               5   // players, weapons, etc
-#define ATTN_IDLE               8   // stuff around you
-#define ATTN_STATIC             10  // diminish very rapidly with distance
-#define ATTN_WHISPER            15  // must be very close to hear it
-#endif
-
 // sound channels
 // channel 0 never willingly overrides
 // other channels (1-7) always override a playing sound on that channel

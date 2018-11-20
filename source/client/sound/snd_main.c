@@ -1,429 +1,425 @@
-/*
-Copyright (C) 1997-2001 Id Software, Inc.
+#include "qcommon/qcommon.h"
+#include "snd_public.h"
 
-This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License
-as published by the Free Software Foundation; either version 2
-of the License, or (at your option) any later version.
+#include "openal/al.h"
+#include "openal/alc.h"
+#include "openal/alext.h"
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+#include "stb_vorbis.h"
 
-See the GNU General Public License for more details.
+static cvar_t * s_volume;
+static cvar_t * s_musicvolume;
 
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+static ALCdevice * alDevice;
+static ALCcontext * alContext;
 
-*/
+typedef struct sfx_s {
+	int length_ms;
+	char filename[ MAX_QPATH ];
+	ALuint buffer;
+} SoundAsset;
 
-#include "snd_local.h"
-#include "snd_cmdque.h"
+typedef enum {
+	SoundType_Global, // plays at max volume everywhere
+	SoundType_Fixed, // plays from some point in the world
+	SoundType_Attached, // moves with an entity
+	SoundType_AttachedImmediate, // moves with an entity and loops so long as is gets touched every frame
+} SoundType;
 
-static sndCmdPipe_t *s_cmdPipe;
+typedef struct {
+	ALuint source;
 
-static struct qthread_s *s_backThread;
+	SoundType type;
+	int64_t last_touch;
+	int ent_num;
+	int channel;
+} PlayingSound;
 
-struct mempool_s *soundpool;
+typedef struct {
+	vec3_t origin;
+	vec3_t velocity;
+	PlayingSound * ps;
+} EntitySound;
 
-cvar_t *s_volume;
-cvar_t *s_musicvolume;
-cvar_t *s_openAL_device;
+static SoundAsset sound_assets[ 4096 ];
+static int num_sound_assets;
+static SoundAsset * menu_music_asset;
 
-cvar_t *s_doppler;
-cvar_t *s_sound_velocity;
-cvar_t *s_stereo2mono;
-cvar_t *s_globalfocus;
+static PlayingSound playing_sounds[ 128 ];
+static int num_playing_sounds;
 
-static int s_registration_sequence = 1;
-static bool s_registering;
+static ALuint music_source;
+static bool music_playing;
 
-// batch entity spatializations
-static unsigned s_num_ent_spats;
-static smdCmdSpatialization_t s_ent_spats[SND_SPATIALIZE_ENTS_MAX];
-static const unsigned s_max_ent_spats = sizeof( s_ent_spats ) / sizeof( s_ent_spats[0] );
+static EntitySound entities[ MAX_EDICTS ];
 
-static void SF_UnregisterSound( sfx_t *sfx );
-static void SF_FreeSound( sfx_t *sfx );
-
-/*
-* Commands
-*/
-
-#ifdef ENABLE_PLAY
-static void SF_Play_f( void ) {
-	int i;
-	char name[MAX_QPATH];
-
-	i = 1;
-	while( i < trap_Cmd_Argc() ) {
-		Q_strncpyz( name, trap_Cmd_Argv( i ), sizeof( name ) );
-
-		S_StartLocalSound( name, CHAN_AUTO, 1.0 );
-		i++;
-	}
-}
-#endif // ENABLE_PLAY
-
-/*
-* SF_Music
-*/
-static void SF_Music_f( void ) {
-	if( trap_Cmd_Argc() == 2 ) {
-		SF_StartBackgroundTrack( trap_Cmd_Argv( 1 ), trap_Cmd_Argv( 1 ), 0 );
-	} else if( trap_Cmd_Argc() == 3 ) {
-		SF_StartBackgroundTrack( trap_Cmd_Argv( 1 ), trap_Cmd_Argv( 2 ), 0 );
-	} else {
-		Com_Printf( "music <intro|playlist> [loop|shuffle]\n" );
-		return;
+const char *S_ErrorMessage( ALenum error ) {
+	switch( error ) {
+		case AL_NO_ERROR:
+			return "No error";
+		case AL_INVALID_NAME:
+			return "Invalid name";
+		case AL_INVALID_ENUM:
+			return "Invalid enumerator";
+		case AL_INVALID_VALUE:
+			return "Invalid value";
+		case AL_INVALID_OPERATION:
+			return "Invalid operation";
+		case AL_OUT_OF_MEMORY:
+			return "Out of memory";
+		default:
+			return "Unknown error";
 	}
 }
 
-/*
-* SF_SoundList
-*/
-static void SF_SoundList_f( void ) {
-	S_IssueSoundListCmd( s_cmdPipe );
+static void S_ALAssert() {
+	ALenum err = alGetError();
+	if( err != AL_NO_ERROR ) {
+		printf( "%s\n", S_ErrorMessage( err ) );
+		abort();
+		Sys_Error( "%s", S_ErrorMessage( err ) );
+	}
 }
 
-/*
-* SF_Init
-*/
-bool SF_Init( int maxEntities, bool verbose ) {
-	soundpool = S_MemAllocPool( "OpenAL sound module" );
+static void S_SoundList_f( void ) {
+	for( int i = 0; i < num_sound_assets; i++ ) {
+		Com_Printf( "%s\n", sound_assets[ i ].filename );
+	}
+}
 
-	s_num_ent_spats = 0;
-
-	s_volume = trap_Cvar_Get( "s_volume", "0.8", CVAR_ARCHIVE );
-	s_musicvolume = trap_Cvar_Get( "s_musicvolume", "1", CVAR_ARCHIVE );
-	s_doppler = trap_Cvar_Get( "s_doppler", "1.0", CVAR_ARCHIVE );
-	s_sound_velocity = trap_Cvar_Get( "s_sound_velocity", "10976", CVAR_DEVELOPER );
-	s_stereo2mono = trap_Cvar_Get( "s_stereo2mono", "0", CVAR_ARCHIVE );
-	s_globalfocus = trap_Cvar_Get( "s_globalfocus", "0", CVAR_ARCHIVE );
-
-#ifdef ENABLE_PLAY
-	trap_Cmd_AddCommand( "play", SF_Play_f );
-#endif
-	trap_Cmd_AddCommand( "music", SF_Music_f );
-	trap_Cmd_AddCommand( "stopmusic", SF_StopBackgroundTrack );
-	trap_Cmd_AddCommand( "prevmusic", SF_PrevBackgroundTrack );
-	trap_Cmd_AddCommand( "nextmusic", SF_NextBackgroundTrack );
-	trap_Cmd_AddCommand( "pausemusic", SF_PauseBackgroundTrack );
-	trap_Cmd_AddCommand( "soundlist", SF_SoundList_f );
-
-	s_cmdPipe = S_CreateSoundCmdPipe();
-	if( !s_cmdPipe ) {
+static bool S_InitAL() {
+	alDevice = alcOpenDevice( NULL );
+	if( alDevice == NULL ) {
+		Com_Printf( S_COLOR_RED "Failed to open device\n" );
 		return false;
 	}
 
-	s_backThread = trap_Thread_Create( S_BackgroundUpdateProc, s_cmdPipe );
+	ALCint attrs[] = { ALC_HRTF_SOFT, ALC_HRTF_ENABLED_SOFT, 0 };
+	alContext = alcCreateContext( alDevice, attrs );
+	if( alContext == NULL ) {
+		alcCloseDevice( alDevice );
+		Com_Printf( S_COLOR_RED "Failed to create context\n" );
+		return false;
+	}
+	alcMakeContextCurrent( alContext );
 
-	S_IssueInitCmd( s_cmdPipe, maxEntities, verbose );
+	alDopplerFactor( 1.0f );
+	alDopplerVelocity( 10976.0f );
+	alSpeedOfSound( 10976.0f );
 
-	S_FinishSoundCmdPipe( s_cmdPipe );
+	alDistanceModel( AL_INVERSE_DISTANCE_CLAMPED );
 
-	if( !alContext ) {
+	for( int i = 0; i < ARRAY_COUNT( playing_sounds ); i++ ) {
+		alGenSources( 1, &playing_sounds[ i ].source );
+	}
+	alGenSources( 1, &music_source );
+
+	if( alGetError() != AL_NO_ERROR ) {
+		Com_Printf( S_COLOR_RED "Failed to allocate sound sources\n" );
+		S_Shutdown();
 		return false;
 	}
 
-	S_InitBuffers();
+	Com_Printf( "OpenAL initialized\n" );
 
 	return true;
 }
 
-/*
-* SF_Shutdown
-*/
-void SF_Shutdown( bool verbose ) {
-	if( !soundpool ) {
-		return;
+static SoundAsset * S_Register( const char * filename, bool allow_stereo ) {
+	assert( num_sound_assets < ARRAY_COUNT( sound_assets ) );
+	SoundAsset * sfx = &sound_assets[ num_sound_assets ];
+
+	// TODO: maybe we need to dedupe this.
+	strncpy( sfx->filename, filename, sizeof( sfx->filename ) - 1 );
+	sfx->filename[ sizeof( sfx->filename ) - 1 ] = '\0';
+	strncat( sfx->filename, ".ogg", sizeof( sfx->filename ) -1 );
+	sfx->filename[ sizeof( sfx->filename ) - 1 ] = '\0';
+
+	uint8_t * compressed_data;
+	int compressed_len = FS_LoadFile( sfx->filename, ( void ** ) &compressed_data, NULL, 0 );
+	if( compressed_data == NULL ) {
+		Com_Printf( S_COLOR_RED "Couldn't read file %s\n", sfx->filename );
+		return NULL;
 	}
 
-	SF_StopAllSounds( true, true );
-
-	// wake up the mixer
-	SF_Activate( true );
-
-	// wait for the queue to be processed
-	S_FinishSoundCmdPipe( s_cmdPipe );
-
-	S_ShutdownBuffers();
-
-	// shutdown backend
-	S_IssueShutdownCmd( s_cmdPipe, verbose );
-
-	// wait for the queue to be processed
-	S_FinishSoundCmdPipe( s_cmdPipe );
-
-	// wait for the backend thread to die
-	trap_Thread_Join( s_backThread );
-	s_backThread = NULL;
-
-	S_DestroySoundCmdPipe( &s_cmdPipe );
-
-#ifdef ENABLE_PLAY
-	trap_Cmd_RemoveCommand( "play" );
-#endif
-	trap_Cmd_RemoveCommand( "music" );
-	trap_Cmd_RemoveCommand( "stopmusic" );
-	trap_Cmd_RemoveCommand( "prevmusic" );
-	trap_Cmd_RemoveCommand( "nextmusic" );
-	trap_Cmd_RemoveCommand( "pausemusic" );
-	trap_Cmd_RemoveCommand( "soundlist" );
-
-	S_MemFreePool( &soundpool );
-}
-
-void SF_BeginRegistration( void ) {
-	s_registration_sequence++;
-	if( !s_registration_sequence ) {
-		s_registration_sequence = 1;
+	int channels, sample_rate;
+	int16_t * data;
+	int num_samples = stb_vorbis_decode_memory( compressed_data, compressed_len, &channels, &sample_rate, &data );
+	if( channels == -1 ) {
+		Com_Printf( S_COLOR_RED "Couldn't decode sound %s\n", sfx->filename );
+		FS_FreeFile( compressed_data );
+		return NULL;
 	}
-	s_registering = true;
 
-	// wait for the queue to be processed
-	S_FinishSoundCmdPipe( s_cmdPipe );
-}
+	if( !allow_stereo && channels != 1 ) {
+		Com_Printf( S_COLOR_RED "Couldn't load sound %s: needs to be a mono file!\n", sfx->filename );
+		FS_FreeFile( compressed_data );
+		free( data );
+		return NULL;
+	}
 
-void SF_EndRegistration( void ) {
-	// wait for the queue to be processed
-	S_FinishSoundCmdPipe( s_cmdPipe );
+	sfx->length_ms = ( ( int64_t ) num_samples * 1000 ) / sample_rate;
 
-	S_ForEachBuffer( SF_UnregisterSound );
+	ALenum format = channels == 1 ? AL_FORMAT_MONO16 : AL_FORMAT_STEREO16;
+	alGenBuffers( 1, &sfx->buffer );
+	alBufferData( sfx->buffer, format, data, num_samples * channels * sizeof( int16_t ), sample_rate );
+	S_ALAssert();
 
-	// wait for the queue to be processed
-	S_FinishSoundCmdPipe( s_cmdPipe );
+	free( data );
+	FS_FreeFile( compressed_data );
 
-	S_ForEachBuffer( SF_FreeSound );
+	num_sound_assets++;
 
-	s_registering = false;
-
-}
-
-/*
-* SF_RegisterSound
-*/
-sfx_t *SF_RegisterSound( const char *name ) {
-	sfx_t *sfx;
-
-	assert( name );
-
-	sfx = S_FindBuffer( name );
-	S_IssueLoadSfxCmd( s_cmdPipe, sfx->id );
-	sfx->used = trap_Milliseconds();
-	sfx->registration_sequence = s_registration_sequence;
 	return sfx;
 }
 
-/*
-* SF_UnregisterSound
-*/
-static void SF_UnregisterSound( sfx_t *sfx ) {
-	if( sfx->filename[0] == '\0' ) {
+bool S_Init( bool verbose ) {
+	num_sound_assets = 0;
+	num_playing_sounds = 0;
+	music_playing = false;
+
+	memset( entities, 0, sizeof( entities ) );
+
+	s_volume = Cvar_Get( "s_volume", "0.8", CVAR_ARCHIVE );
+	s_musicvolume = Cvar_Get( "s_musicvolume", "1", CVAR_ARCHIVE );
+
+	Cmd_AddCommand( "soundlist", S_SoundList_f );
+
+	if( !S_InitAL() )
+		return false;
+
+	menu_music_asset = S_Register( "sounds/music/menu_1", true );
+
+	return true;
+}
+
+void S_Shutdown() {
+	printf( "shutting down\n" );
+	S_StopAllSounds( true );
+
+	for( int i = 0; i < ARRAY_COUNT( playing_sounds ); i++ ) {
+		alDeleteSources( 1, &playing_sounds[ i ].source );
+	}
+	alDeleteSources( 1, &music_source );
+
+	for( int i = 0; i < num_sound_assets; i++ ) {
+		alDeleteBuffers( 1, &sound_assets[ i ].buffer );
+	}
+
+	S_ALAssert();
+
+	alcDestroyContext( alContext );
+	alcCloseDevice( alDevice );
+
+	Cmd_RemoveCommand( "soundlist" );
+}
+
+SoundAsset * S_RegisterSound( const char * filename ) {
+	return S_Register( filename, false );
+}
+
+int64_t S_SoundLengthMilliseconds( const SoundAsset * sfx ) {
+	return sfx->length_ms;
+}
+
+static void swap( PlayingSound * a, PlayingSound * b ) {
+	PlayingSound t = *a;
+	*a = *b;
+	*b = t;
+}
+
+void S_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis, int64_t now ) {
+	float orientation[ 6 ];
+	VectorCopy( &axis[ AXIS_FORWARD ], &orientation[ 0 ] );
+	VectorCopy( &axis[ AXIS_UP ], &orientation[ 3 ] );
+
+	alListenerfv( AL_POSITION, origin );
+	alListenerfv( AL_VELOCITY, velocity );
+	alListenerfv( AL_ORIENTATION, orientation );
+
+	for( int i = 0; i < num_playing_sounds; i++ ) {
+		PlayingSound * ps = &playing_sounds[ i ];
+
+		ALint state;
+		alGetSourcei( ps->source, AL_SOURCE_STATE, &state );
+		bool not_touched = ps->type == SoundType_AttachedImmediate && ps->last_touch != now;
+		if( not_touched || state == AL_STOPPED ) {
+			alSourceStop( ps->source );
+
+			if( ps->ent_num >= 0 )
+				entities[ ps->ent_num ].ps = NULL;
+
+			num_playing_sounds--;
+			swap( ps, &playing_sounds[ num_playing_sounds ] );
+
+			if( ps->type == SoundType_AttachedImmediate )
+				entities[ ps->ent_num ].ps = ps;
+
+			i--;
+			continue;
+		}
+
+		if( ps->type == SoundType_Attached || ps->type == SoundType_AttachedImmediate ) {
+			alSourcefv( ps->source, AL_POSITION, entities[ ps->ent_num ].origin );
+			alSourcefv( ps->source, AL_VELOCITY, entities[ ps->ent_num ].velocity );
+		}
+	}
+
+	S_ALAssert();
+}
+
+void S_UpdateEntity( int ent_num, const vec3_t origin, const vec3_t velocity ) {
+	VectorCopy( origin, entities[ ent_num ].origin );
+	VectorCopy( velocity, entities[ ent_num ].velocity );
+}
+
+void S_SetWindowFocus( bool focused ) {
+	alListenerf( AL_GAIN, focused ? 1 : 0 );
+}
+
+static PlayingSound * S_FindEmptyPlayingSound( int ent_num, int channel ) {
+	for( int i = 0; i < num_playing_sounds; i++ ) {
+		PlayingSound * ps = &playing_sounds[ i ];
+		if( channel && ps->ent_num == ent_num && ps->channel == channel ) {
+			ALint state;
+			alGetSourcei( ps->source, AL_SOURCE_STATE, &state );
+			if( state != AL_INITIAL )
+				alSourceStop( ps->source );
+			return ps;
+		}
+	}
+
+	if( num_playing_sounds == ARRAY_COUNT( playing_sounds ) )
+		return NULL;
+
+	num_playing_sounds++;
+	return &playing_sounds[ num_playing_sounds - 1 ];
+}
+
+static bool S_StartSound( SoundAsset * sfx, const vec3_t origin, int ent_num, int channel, float volume, float attenuation, SoundType type ) {
+	if( sfx == NULL )
+		return false;
+
+	PlayingSound * ps = S_FindEmptyPlayingSound( ent_num, channel );
+	if( ps == NULL ) {
+		Com_Printf( S_COLOR_RED "Too many playing sounds!" );
+		return false;
+	}
+
+	alSourcei( ps->source, AL_BUFFER, sfx->buffer );
+	alSourcef( ps->source, AL_GAIN, volume * s_volume->value );
+	alSourcef( ps->source, AL_REFERENCE_DISTANCE, S_DEFAULT_ATTENUATION_REFDISTANCE );
+	alSourcef( ps->source, AL_MAX_DISTANCE, S_DEFAULT_ATTENUATION_MAXDISTANCE );
+	alSourcef( ps->source, AL_ROLLOFF_FACTOR, attenuation );
+
+	ps->type = type;
+	ps->ent_num = ent_num;
+	ps->channel = channel;
+
+	switch( type ) {
+		case SoundType_Global:
+			alSourcefv( ps->source, AL_POSITION, vec3_origin );
+			alSourcefv( ps->source, AL_VELOCITY, vec3_origin );
+			alSourcei( ps->source, AL_LOOPING, AL_FALSE );
+			alSourcei( ps->source, AL_SOURCE_RELATIVE, AL_TRUE );
+			break;
+
+		case SoundType_Fixed:
+			alSourcefv( ps->source, AL_POSITION, origin );
+			alSourcefv( ps->source, AL_VELOCITY, vec3_origin );
+			alSourcei( ps->source, AL_LOOPING, AL_FALSE );
+			alSourcei( ps->source, AL_SOURCE_RELATIVE, AL_FALSE );
+			break;
+
+		case SoundType_Attached:
+			alSourcefv( ps->source, AL_POSITION, entities[ ent_num ].origin );
+			alSourcefv( ps->source, AL_VELOCITY, entities[ ent_num ].velocity );
+			alSourcei( ps->source, AL_LOOPING, AL_FALSE );
+			alSourcei( ps->source, AL_SOURCE_RELATIVE, AL_FALSE );
+			break;
+
+		case SoundType_AttachedImmediate:
+			entities[ ent_num ].ps = ps;
+			alSourcefv( ps->source, AL_POSITION, entities[ ent_num ].origin );
+			alSourcefv( ps->source, AL_VELOCITY, entities[ ent_num ].velocity );
+			alSourcei( ps->source, AL_LOOPING, AL_FALSE );
+			alSourcei( ps->source, AL_SOURCE_RELATIVE, AL_FALSE );
+			break;
+	}
+
+	alSourcePlay( ps->source );
+
+	S_ALAssert();
+
+	return true;
+}
+
+void S_StartFixedSound( SoundAsset * sfx, const vec3_t origin, int channel, float volume, float attenuation ) {
+	S_StartSound( sfx, origin, 0, channel, volume, attenuation, SoundType_Fixed );
+}
+
+void S_StartEntitySound( SoundAsset * sfx, int ent_num, int channel, float volume, float attenuation ) {
+	S_StartSound( sfx, NULL, ent_num, channel, volume, attenuation, SoundType_Attached );
+}
+
+void S_StartGlobalSound( SoundAsset * sfx, int channel, float volume ) {
+	S_StartSound( sfx, NULL, 0, channel, volume, 0, SoundType_Global );
+}
+
+void S_StartLocalSound( SoundAsset * sfx, int channel, float volume ) {
+	S_StartSound( sfx, NULL, -1, channel, volume, 0, SoundType_Global );
+}
+
+void S_ImmediateSound( SoundAsset * sfx, int ent_num, float volume, float attenuation, int64_t now ) {
+	// TODO: replace old immediate sound if sfx changed
+	if( entities[ ent_num ].ps == NULL ) {
+		bool started = S_StartSound( sfx, NULL, ent_num, -1, volume, attenuation, SoundType_AttachedImmediate );
+		if( !started )
+			return;
+	}
+	entities[ ent_num ].ps->last_touch = now;
+}
+
+void S_StopAllSounds( bool stop_music ) {
+	for( int i = 0; i < num_playing_sounds; i++ ) {
+		alSourceStop( playing_sounds[ i ].source );
+	}
+	num_playing_sounds = 0;
+
+	if( stop_music )
+		S_StopBackgroundTrack();
+
+}
+
+void S_StartBackgroundTrack( SoundAsset * sfx ) {
+	if( sfx == NULL )
 		return;
-	}
-	if( sfx->registration_sequence != s_registration_sequence ) {
-		S_IssueFreeSfxCmd( s_cmdPipe, sfx->id );
-	}
+
+	alSourcefv( music_source, AL_POSITION, vec3_origin );
+	alSourcefv( music_source, AL_VELOCITY, vec3_origin );
+	alSourcef( music_source, AL_GAIN, s_musicvolume->value );
+	alSourcei( music_source, AL_SOURCE_RELATIVE, AL_FALSE );
+	alSourcei( music_source, AL_LOOPING, AL_TRUE );
+	alSourcei( music_source, AL_BUFFER, sfx->buffer );
+
+	alSourcePlay( music_source );
 }
 
-/*
-* SF_FreeSound
-*/
-static void SF_FreeSound( sfx_t *sfx ) {
-	if( !sfx->registration_sequence ) {
-		return;
-	}
-	if( sfx->registration_sequence != s_registration_sequence ) {
-		S_MarkBufferFree( sfx );
-	}
+void S_StartMenuMusic() {
+	S_StartBackgroundTrack( menu_music_asset );
+	music_playing = true;
 }
 
-/*
-* SF_Activate
-*/
-void SF_Activate( bool active ) {
-	if( !active && s_globalfocus->integer ) {
-		return;
-	}
-
-	SF_LockBackgroundTrack( !active );
-
-	S_IssueActivateCmd( s_cmdPipe, active );
+void S_StopBackgroundTrack() {
+	if( music_playing )
+		alSourceStop( music_source );
+	music_playing = false;
 }
 
-/*
-* SF_StartBackgroundTrack
-*/
-void SF_StartBackgroundTrack( const char *intro, const char *loop, int mode ) {
-	S_IssueStartBackgroundTrackCmd( s_cmdPipe, intro, loop, mode );
+void S_BeginAviDemo() {
+	// TODO
 }
 
-/*
-* SF_StopBackgroundTrack
-*/
-void SF_StopBackgroundTrack( void ) {
-	S_IssueStopBackgroundTrackCmd( s_cmdPipe );
-}
-
-/*
-* SF_LockBackgroundTrack
-*/
-void SF_LockBackgroundTrack( bool lock ) {
-	S_IssueLockBackgroundTrackCmd( s_cmdPipe, lock );
-}
-
-/*
-* SF_StopAllSounds
-*/
-void SF_StopAllSounds( bool clear, bool stopMusic ) {
-	S_IssueStopAllSoundsCmd( s_cmdPipe, clear, stopMusic );
-}
-
-/*
-* SF_PrevBackgroundTrack
-*/
-void SF_PrevBackgroundTrack( void ) {
-	S_IssueAdvanceBackgroundTrackCmd( s_cmdPipe, -1 );
-}
-
-/*
-* SF_NextBackgroundTrack
-*/
-void SF_NextBackgroundTrack( void ) {
-	S_IssueAdvanceBackgroundTrackCmd( s_cmdPipe, 1 );
-}
-
-/*
-* SF_PauseBackgroundTrack
-*/
-void SF_PauseBackgroundTrack( void ) {
-	S_IssuePauseBackgroundTrackCmd( s_cmdPipe );
-}
-
-/*
-* SF_BeginAviDemo
-*/
-void SF_BeginAviDemo( void ) {
-	S_IssueAviDemoCmd( s_cmdPipe, true );
-}
-
-/*
-* SF_StopAviDemo
-*/
-void SF_StopAviDemo( void ) {
-	S_IssueAviDemoCmd( s_cmdPipe, false );
-}
-
-/*
-* SF_SetAttenuationModel
-*/
-void SF_SetAttenuationModel( int model, float maxdistance, float refdistance ) {
-	S_IssueSetAttenuationCmd( s_cmdPipe, model, maxdistance, refdistance );
-}
-
-/*
-* SF_SetEntitySpatialization
-*/
-void SF_SetEntitySpatialization( int entnum, const vec3_t origin, const vec3_t velocity ) {
-	smdCmdSpatialization_t *spat;
-
-	if( s_num_ent_spats == s_max_ent_spats ) {
-		// flush all spatializations at once to free room
-		S_IssueSetMulEntitySpatializationCmd( s_cmdPipe, s_num_ent_spats, s_ent_spats );
-		s_num_ent_spats = 0;
-	}
-
-	spat = &s_ent_spats[s_num_ent_spats++];
-	spat->entnum = entnum;
-	VectorCopy( origin, spat->origin );
-	VectorCopy( velocity, spat->velocity );
-}
-
-/*
-* SF_StartFixedSound
-*/
-void SF_StartFixedSound( sfx_t *sfx, const vec3_t origin, int channel, float fvol, float attenuation ) {
-	if( sfx != NULL ) {
-		S_IssueStartFixedSoundCmd( s_cmdPipe, sfx->id, origin, channel, fvol, attenuation );
-	}
-}
-
-/*
-* SF_StartRelativeSound
-*/
-void SF_StartRelativeSound( sfx_t *sfx, int entnum, int channel, float fvol, float attenuation ) {
-	if( sfx != NULL ) {
-		S_IssueStartRelativeSoundCmd( s_cmdPipe, sfx->id, entnum, channel, fvol, attenuation );
-	}
-}
-
-/*
-* SF_StartGlobalSound
-*/
-void SF_StartGlobalSound( sfx_t *sfx, int channel, float fvol ) {
-	if( sfx != NULL ) {
-		S_IssueStartGlobalSoundCmd( s_cmdPipe, sfx->id, channel, fvol );
-	}
-}
-
-/*
-* SF_StartLocalSound
-*/
-void SF_StartLocalSound( sfx_t *sfx, int channel, float fvol ) {
-	if( sfx != NULL ) {
-		S_IssueStartLocalSoundCmd( s_cmdPipe, sfx->id, channel, fvol );
-	}
-}
-
-/*
-* SF_Clear
-*/
-void SF_Clear( void ) {
-	S_IssueClearCmd( s_cmdPipe );
-}
-
-/*
-* SF_AddLoopSound
-*/
-void SF_AddLoopSound( sfx_t *sfx, int entnum, float fvol, float attenuation ) {
-	if( sfx != NULL ) {
-		S_IssueAddLoopSoundCmd( s_cmdPipe, sfx->id, entnum, fvol, attenuation );
-	}
-}
-
-/*
-* SF_Update
-*/
-void SF_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis, bool avidump ) {
-	if( s_num_ent_spats ) {
-		S_IssueSetMulEntitySpatializationCmd( s_cmdPipe, s_num_ent_spats, s_ent_spats );
-		s_num_ent_spats = 0;
-	}
-
-	S_IssueSetListenerCmd( s_cmdPipe, origin, velocity, axis, avidump );
-}
-
-// =====================================================================
-
-/*
-* S_API
-*/
-int S_API( void ) {
-	return SOUND_API_VERSION;
-}
-
-/*
-* S_Error
-*/
-void S_Error( const char *format, ... ) {
-	va_list argptr;
-	char msg[1024];
-
-	va_start( argptr, format );
-	Q_vsnprintfz( msg, sizeof( msg ), format, argptr );
-	va_end( argptr );
-
-	trap_Error( msg );
+void S_StopAviDemo() {
+	// TODO
 }

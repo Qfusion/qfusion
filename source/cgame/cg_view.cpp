@@ -88,7 +88,6 @@ bool CG_ChaseStep( int step ) {
 * CG_AddLocalSounds
 */
 static void CG_AddLocalSounds( void ) {
-	static bool postmatchsound_set = false, demostream = false, background = false;
 	static unsigned lastSecond = 0;
 
 	// add local announces
@@ -123,31 +122,6 @@ static void CG_AddLocalSounds( void ) {
 
 	// add sounds from announcer
 	CG_ReleaseAnnouncerEvents();
-
-	// if in postmatch, play postmatch song
-	if( GS_MatchState() >= MATCH_STATE_POSTMATCH ) {
-		if( !postmatchsound_set && !demostream ) {
-			trap_S_StartBackgroundTrack( S_PLAYLIST_POSTMATCH, NULL, 3 ); // loop random track from the playlist
-			postmatchsound_set = true;
-			background = false;
-		}
-	} else {
-		if( cgs.demoPlaying && cgs.demoAudioStream && !demostream ) {
-			trap_S_StartBackgroundTrack( cgs.demoAudioStream, NULL, 0 );
-			demostream = true;
-		}
-
-		if( postmatchsound_set ) {
-			trap_S_StopBackgroundTrack();
-			postmatchsound_set = false;
-			background = false;
-		}
-
-		if( ( !postmatchsound_set && !demostream ) && !background ) {
-			CG_StartBackgroundTrack();
-			background = true;
-		}
-	}
 }
 
 /*
@@ -966,7 +940,7 @@ void CG_RenderView( int frameTime, int realFrameTime, int64_t realTime, int64_t 
 
 		trap_R_DrawStretchPic( 0, 0, cgs.vidWidth, cgs.vidHeight, 0, 0, 1, 1, colorBlack, cgs.shaderWhite );
 
-		trap_S_Update( vec3_origin, vec3_origin, axis_identity, cgs.clientInfo[cgs.playerNum].name );
+		trap_S_Update( vec3_origin, vec3_origin, axis_identity, cg.time );
 
 		return;
 	}
@@ -1041,7 +1015,7 @@ void CG_RenderView( int frameTime, int realFrameTime, int64_t realTime, int64_t 
 
 	cg.oldAreabits = true;
 
-	trap_S_Update( cg.view.origin, cg.view.velocity, cg.view.axis, cgs.clientInfo[cgs.playerNum].name );
+	trap_S_Update( cg.view.origin, cg.view.velocity, cg.view.axis, cg.time );
 
 	CG_Draw2D();
 

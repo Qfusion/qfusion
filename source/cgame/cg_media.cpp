@@ -268,7 +268,6 @@ struct shader_s *CG_MediaShader( cgs_media_handle_t *mediashader ) {
 	return ( struct shader_s * )mediashader->data;
 }
 
-
 /*
 * CG_RegisterMediaShaders
 */

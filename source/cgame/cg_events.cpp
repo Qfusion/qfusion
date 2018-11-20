@@ -152,7 +152,7 @@ void CG_LaserBeamEffect( centity_t *cent ) {
 			if( ISVIEWERENTITY( cent->current.number ) ) {
 				trap_S_StartGlobalSound( sound, CHAN_AUTO, cg_volume_effects->value );
 			} else {
-				trap_S_StartRelativeSound( sound, cent->current.number, CHAN_AUTO, cg_volume_effects->value, ATTN_NORM );
+				trap_S_StartEntitySound( sound, cent->current.number, CHAN_AUTO, cg_volume_effects->value, ATTN_NORM );
 			}
 		}
 		cent->localEffects[LOCALEFFECT_LASERBEAM] = 0;
@@ -272,9 +272,9 @@ void CG_LaserBeamEffect( centity_t *cent ) {
 
 	if( sound ) {
 		if( ISVIEWERENTITY( cent->current.number ) ) {
-			trap_S_AddLoopSound( sound, cent->current.number, cg_volume_effects->value, ATTN_NONE );
+			trap_S_ImmediateSound( sound, cent->current.number, cg_volume_effects->value, ATTN_NONE, cg.time );
 		} else {
-			trap_S_AddLoopSound( sound, cent->current.number, cg_volume_effects->value, ATTN_STATIC );
+			trap_S_ImmediateSound( sound, cent->current.number, cg_volume_effects->value, ATTN_STATIC, cg.time );
 		}
 	}
 
@@ -357,7 +357,7 @@ static void CG_FireWeaponEvent( int entNum, int weapon, int fireMode ) {
 		} else {
 			// fixed position is better for location, but the channels are used from worldspawn
 			// and openal runs out of channels quick on cheap cards. Relative sound uses per-entity channels.
-			trap_S_StartRelativeSound( sound, entNum, CHAN_MUZZLEFLASH, cg_volume_effects->value, attenuation );
+			trap_S_StartEntitySound( sound, entNum, CHAN_MUZZLEFLASH, cg_volume_effects->value, attenuation );
 		}
 
 		if( ( cg_entities[entNum].current.effects & EF_QUAD ) && ( weapon != WEAP_LASERGUN ) ) {
@@ -365,7 +365,7 @@ static void CG_FireWeaponEvent( int entNum, int weapon, int fireMode ) {
 			if( ISVIEWERENTITY( entNum ) ) {
 				trap_S_StartGlobalSound( quadSfx, CHAN_AUTO, cg_volume_effects->value );
 			} else {
-				trap_S_StartRelativeSound( quadSfx, entNum, CHAN_AUTO, cg_volume_effects->value, attenuation );
+				trap_S_StartEntitySound( quadSfx, entNum, CHAN_AUTO, cg_volume_effects->value, attenuation );
 			}
 		}
 	}
@@ -865,7 +865,7 @@ static void CG_StartVoiceTokenEffect( int entNum, int vsay ) {
 	}
 
 	// played as it was made by the 1st person player
-	trap_S_StartRelativeSound( CG_MediaSfx( sound ), entNum, CHAN_AUTO, cg_volume_voicechats->value, ATTN_DISTANT );
+	trap_S_StartEntitySound( CG_MediaSfx( sound ), entNum, CHAN_AUTO, cg_volume_voicechats->value, ATTN_DISTANT );
 }
 
 //==================================================================
@@ -943,7 +943,7 @@ void CG_Event_Pain( entity_state_t *state, int parm ) {
 			trap_S_StartGlobalSound( CG_MediaSfx( cgs.media.sfxShellHit ), CHAN_PAIN,
 									 cg_volume_players->value );
 		} else {
-			trap_S_StartRelativeSound( CG_MediaSfx( cgs.media.sfxShellHit ), state->number, CHAN_PAIN,
+			trap_S_StartEntitySound( CG_MediaSfx( cgs.media.sfxShellHit ), state->number, CHAN_PAIN,
 									   cg_volume_players->value, state->attenuation );
 		}
 	} else {
@@ -1373,7 +1373,7 @@ void CG_EntityEvent( entity_state_t *ent, int ev, int parm, bool predicted ) {
 
 		case EV_ITEM_RESPAWN:
 			cg_entities[ent->number].respawnTime = cg.time;
-			trap_S_StartRelativeSound( CG_MediaSfx( cgs.media.sfxItemRespawn ), ent->number, CHAN_AUTO,
+			trap_S_StartEntitySound( CG_MediaSfx( cgs.media.sfxItemRespawn ), ent->number, CHAN_AUTO,
 									   cg_volume_effects->value, ATTN_IDLE );
 			break;
 
@@ -1480,9 +1480,9 @@ void CG_EntityEvent( entity_state_t *ent, int ev, int parm, bool predicted ) {
 
 		case EV_GRENADE_BOUNCE:
 			if( parm == FIRE_MODE_STRONG ) {
-				trap_S_StartRelativeSound( CG_MediaSfx( cgs.media.sfxGrenadeStrongBounce[rand() & 1] ), ent->number, CHAN_AUTO, cg_volume_effects->value, ATTN_IDLE );
+				trap_S_StartEntitySound( CG_MediaSfx( cgs.media.sfxGrenadeStrongBounce[rand() & 1] ), ent->number, CHAN_AUTO, cg_volume_effects->value, ATTN_IDLE );
 			} else {
-				trap_S_StartRelativeSound( CG_MediaSfx( cgs.media.sfxGrenadeWeakBounce[rand() & 1] ), ent->number, CHAN_AUTO, cg_volume_effects->value, ATTN_IDLE );
+				trap_S_StartEntitySound( CG_MediaSfx( cgs.media.sfxGrenadeWeakBounce[rand() & 1] ), ent->number, CHAN_AUTO, cg_volume_effects->value, ATTN_IDLE );
 			}
 			break;
 

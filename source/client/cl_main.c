@@ -657,7 +657,6 @@ static void CL_BeginRegistration( void ) {
 	cls.registrationOpen = true;
 
 	RF_BeginRegistration();
-	CL_SoundModule_BeginRegistration();
 }
 
 /*
@@ -673,7 +672,6 @@ static void CL_EndRegistration( void ) {
 	FTLIB_TouchAllFonts();
 	CL_UIModule_TouchAllAssets();
 	RF_EndRegistration();
-	CL_SoundModule_EndRegistration();
 }
 
 /*
@@ -980,7 +978,7 @@ void CL_ServerReconnect_f( void ) {
 	cls.rejected = false;
 
 	CL_GameModule_Shutdown();
-	CL_SoundModule_StopAllSounds( true, true );
+	CL_SoundModule_StopAllSounds( true );
 
 	Com_Printf( "Reconnecting...\n" );
 
@@ -1622,7 +1620,7 @@ void CL_Precache_f( void ) {
 			CL_GameModule_Init();
 		} else {
 			CL_GameModule_Reset();
-			CL_SoundModule_StopAllSounds( false, false );
+			CL_SoundModule_StopAllSounds( false );
 		}
 
 		cls.demo.play_ignore_next_frametime = true;
@@ -1726,7 +1724,6 @@ void CL_SetClientState( int state ) {
 			Con_Close();
 			CL_UIModule_ForceMenuOff();
 			CL_SoundModule_StopBackgroundTrack();
-			CL_SoundModule_Clear();
 			CL_SetKeyDest( key_game );
 			//SCR_UpdateScreen();
 			break;
@@ -1747,7 +1744,6 @@ void CL_SetClientState( int state ) {
 			if( !cls.sv_tv ) {
 				CL_AddReliableCommand( "svmotd 1" );
 			}
-			CL_SoundModule_Clear();
 			break;
 		default:
 			break;
@@ -1780,7 +1776,7 @@ void CL_InitMedia( void ) {
 
 	cls.mediaInitialized = true;
 
-	CL_SoundModule_StopAllSounds( true, true );
+	CL_SoundModule_StopAllSounds( true );
 
 	// register console font and background
 	SCR_RegisterConsoleMedia();
@@ -1804,7 +1800,7 @@ void CL_ShutdownMedia( void ) {
 
 	cls.mediaInitialized = false;
 
-	CL_SoundModule_StopAllSounds( true, true );
+	CL_SoundModule_StopAllSounds( true );
 
 	// shutdown cgame
 	CL_GameModule_Shutdown();
@@ -1826,7 +1822,7 @@ void CL_RestartMedia( void ) {
 		cls.mediaInitialized = false;
 	}
 
-	CL_SoundModule_StopAllSounds( true, true );
+	CL_SoundModule_StopAllSounds( true );
 
 	// random seed to be shared among game modules so pseudo-random stuff is in sync
 	if( cls.state != CA_CONNECTED ) {
@@ -2426,7 +2422,6 @@ void CL_Frame( int realMsec, int gameMsec ) {
 
 	cls.frametime = allGameMsec;
 	cls.realFrameTime = allRealMsec;
-#if 1
 	if( allRealMsec < minMsec ) { // is compensating for a too slow frame
 		extraMsec -= ( minMsec - allRealMsec );
 		clamp( extraMsec, 0, 100 );
@@ -2434,10 +2429,6 @@ void CL_Frame( int realMsec, int gameMsec ) {
 		extraMsec = allRealMsec - minMsec;
 		clamp( extraMsec, 0, 100 );
 	}
-#else
-	extraMsec = allRealMsec - minMsec;
-	clamp( extraMsec, 0, minMsec );
-#endif
 
 	CL_TimedemoStats();
 
@@ -2460,15 +2451,8 @@ void CL_Frame( int realMsec, int gameMsec ) {
 	}
 
 	// update audio
-	if( cls.state != CA_ACTIVE ) {
-		// if the loading plaque is up, clear everything out to make sure we aren't looping a dirty
-		// dma buffer while loading
-		if( cls.disable_screen ) {
-			printf( "disable screen\n" );
-			CL_SoundModule_Clear();
-		} else {
-			CL_SoundModule_Update( vec3_origin, vec3_origin, axis_identity, NULL, false );
-		}
+	if( cls.state != CA_ACTIVE && !cls.disable_screen ) {
+		CL_SoundModule_Update( vec3_origin, vec3_origin, axis_identity, cls.gametime );
 	}
 
 	// advance local effects for next frame
@@ -2643,7 +2627,7 @@ void CL_Shutdown( void ) {
 		return;
 	}
 
-	CL_SoundModule_StopAllSounds( true, true );
+	CL_SoundModule_StopAllSounds( true );
 
 	ML_Shutdown();
 	CL_MM_Shutdown( true );
@@ -2662,7 +2646,7 @@ void CL_Shutdown( void ) {
 
 	CL_UIModule_Shutdown();
 	CL_GameModule_Shutdown();
-	CL_SoundModule_Shutdown( true );
+	CL_SoundModule_Shutdown();
 	CL_ShutdownInput();
 	L10n_Shutdown();
 	VID_Shutdown();

@@ -20,8 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // qcommon.h -- definitions common between client and server, but not game.dll
 
-#ifndef __QCOMMON_H
-#define __QCOMMON_H
+#pragma once
 
 #include "../gameshared/q_arch.h"
 #include "../gameshared/q_math.h"
@@ -37,6 +36,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "bsp.h"
 
 //#define	PARANOID			// speed sapping error checking
+
+#if __cplusplus
+template< typename T, size_t N >
+char ( &ArrayCountObj( const T ( & )[ N ] ) )[ N ];
+#define ARRAY_COUNT( arr ) ( sizeof( ArrayCountObj( arr ) ) )
+#else
+#define ARRAY_COUNT( arr ) ( sizeof( arr ) / sizeof( ( arr )[ 0 ] ) )
+#endif
 
 //============================================================================
 
@@ -994,5 +1001,3 @@ void Com_Autoupdate_Init( void );
 void Com_Autoupdate_Run( bool checkOnly, void ( *newfiles_cb )( void ) );
 void Com_Autoupdate_Cancel( void );
 void Com_Autoupdate_Shutdown( void );
-
-#endif // __QCOMMON_H

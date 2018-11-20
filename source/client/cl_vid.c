@@ -389,7 +389,6 @@ void VID_Init() {
 	CL_SoundModule_Init( false );
 
 	RF_BeginRegistration();
-	CL_SoundModule_BeginRegistration();
 
 	FTLIB_LoadLibrary( false );
 	FTLIB_PrecacheFonts( true );
@@ -416,7 +415,6 @@ void VID_Init() {
 	}
 
 	RF_EndRegistration();
-	CL_SoundModule_EndRegistration();
 }
 
 void CL_ForceVsync( bool force ) {
@@ -428,9 +426,6 @@ void CL_ForceVsync( bool force ) {
 
 void VID_Shutdown() {
 	CL_ShutdownMedia();
-
-	// stop and free all sounds
-	CL_SoundModule_Shutdown( false );
 
 	FTLIB_FreeFonts( false );
 

@@ -288,14 +288,14 @@ public:
 		trap::S_StartLocalSound( trap::S_RegisterSound( s.buffer ), 0, volume );
 	}
 
-	void startBackgroundTrack( const asstring_t &intro, const asstring_t &loop, bool stopIfPlaying ) {
-		if( stopIfPlaying || !backgroundTrackPlaying ) {
-			trap::S_StartBackgroundTrack( intro.buffer, loop.buffer, 3 );
+	void startMenuMusic() {
+		if( !backgroundTrackPlaying ) {
+			trap::S_StartMenuMusic();
 			backgroundTrackPlaying = true;
 		}
 	}
 
-	void stopBackgroundTrack( void ) {
+	void stopBackgroundTrack() {
 		trap::S_StopBackgroundTrack();
 		backgroundTrackPlaying = false;
 	}
@@ -447,7 +447,7 @@ void BindWindow( ASInterface *as ) {
 	.method( &ASWindow::historyBack, "history_back" )
 
 	.method2( &ASWindow::startLocalSound, "void startLocalSound( String &in sound, float volume = 1.0 ) const" )
-	.method2( &ASWindow::startBackgroundTrack, "void startBackgroundTrack( String &in intro, String &in loop, bool stopIfPlaying = true ) const" )
+	.method2( &ASWindow::startMenuMusic, "void startMenuMusic() const" )
 	.constmethod( &ASWindow::stopBackgroundTrack, "stopBackgroundTrack" )
 
 	.method2<int ( ASWindow::* )( asIScriptFunction *, unsigned int )>

@@ -200,15 +200,15 @@ typedef struct {
 
 	// sound system
 	struct sfx_s *( *S_RegisterSound )( const char *name );
-	void ( *S_StartFixedSound )( struct sfx_s *sfx, const vec3_t origin, int entchannel, float fvol, float attenuation );
-	void ( *S_StartRelativeSound )( struct sfx_s *sfx, int entnum, int entchannel, float fvol, float attenuation );
-	void ( *S_StartGlobalSound )( struct sfx_s *sfx, int entchannel, float fvol );
-	void ( *S_StartLocalSound )( struct sfx_s *sfx, int channel, float fvol );
-	void ( *S_Update )( const vec3_t origin, const vec3_t velocity, const mat3_t axis, const char *identity );
-	void ( *S_AddLoopSound )( struct sfx_s *sfx, int entnum, float fvol, float attenuation );
-	void ( *S_StartBackgroundTrack )( const char *intro, const char *loop, int mode );
+	void ( *S_Update )( const vec3_t origin, const vec3_t velocity, const mat3_t axis, int64_t now );
+	void ( *S_UpdateEntity )( int entNum, vec3_t origin, vec3_t velocity );
+	void ( *S_StartFixedSound )( struct sfx_s *sfx, const vec3_t origin, int entchannel, float volume, float attenuation );
+	void ( *S_StartEntitySound )( struct sfx_s *sfx, int entnum, int entchannel, float volume, float attenuation );
+	void ( *S_StartGlobalSound )( struct sfx_s *sfx, int entchannel, float volume );
+	void ( *S_StartLocalSound )( struct sfx_s *sfx, int channel, float volume );
+	void ( *S_ImmediateSound )( struct sfx_s *sfx, int entnum, float volume, float attenuation, int64_t now );
+	void ( *S_StartBackgroundTrack )( struct sfx_s *sfx );
 	void ( *S_StopBackgroundTrack )( void );
-	void ( *S_SetEntitySpatilization )( int entNum, vec3_t origin, vec3_t velocity );
 
 	// fonts
 	struct qfontface_s *( *SCR_RegisterFont )( const char *family, int style, unsigned int size );

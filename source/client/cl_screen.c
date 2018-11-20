@@ -587,7 +587,7 @@ static void SCR_DrawNotify( void ) {
 void SCR_BeginLoadingPlaque( void ) {
 	CL_UIModule_ForceMenuOff();
 
-	CL_SoundModule_StopAllSounds( true, true );
+	CL_SoundModule_StopAllSounds( true );
 
 	memset( cl.configstrings, 0, sizeof( cl.configstrings ) );
 

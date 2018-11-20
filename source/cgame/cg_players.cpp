@@ -158,18 +158,18 @@ struct sfx_s *CG_RegisterSexedSound( int entnum, const char *name ) {
 /*
 * CG_SexedSound
 */
-void CG_SexedSound( int entnum, int entchannel, const char *name, float fvol, float attn ) {
+void CG_SexedSound( int entnum, int entchannel, const char *name, float volume, float attn ) {
 	bool fixed;
 
 	fixed = entchannel & CHAN_FIXED ? true : false;
 	entchannel &= ~CHAN_FIXED;
 
 	if( fixed ) {
-		trap_S_StartFixedSound( CG_RegisterSexedSound( entnum, name ), cg_entities[entnum].current.origin, entchannel, fvol, attn );
+		trap_S_StartFixedSound( CG_RegisterSexedSound( entnum, name ), cg_entities[entnum].current.origin, entchannel, volume, attn );
 	} else if( ISVIEWERENTITY( entnum ) ) {
-		trap_S_StartGlobalSound( CG_RegisterSexedSound( entnum, name ), entchannel, fvol );
+		trap_S_StartGlobalSound( CG_RegisterSexedSound( entnum, name ), entchannel, volume );
 	} else {
-		trap_S_StartRelativeSound( CG_RegisterSexedSound( entnum, name ), entnum, entchannel, fvol, attn );
+		trap_S_StartEntitySound( CG_RegisterSexedSound( entnum, name ), entnum, entchannel, volume, attn );
 	}
 }
 

@@ -392,25 +392,22 @@ bool CL_GameModule_KeyEvent( int key, bool down );
 // cl_sound.c
 //
 void CL_SoundModule_Init( bool verbose );
-void CL_SoundModule_Shutdown( bool verbose );
-void CL_SoundModule_BeginRegistration( void );
-void CL_SoundModule_EndRegistration( void );
-void CL_SoundModule_StopAllSounds( bool clear, bool stopMusic );
-void CL_SoundModule_Clear( void );
-void CL_SoundModule_SetEntitySpatilization( int entNum, vec3_t origin, vec3_t velocity );
-void CL_SoundModule_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis, const char *identity, bool avidump );
-void CL_SoundModule_Activate( bool activate );
-struct sfx_s *CL_SoundModule_RegisterSound( const char *sample );
-void CL_SoundModule_StartFixedSound( struct sfx_s *sfx, const vec3_t origin, int channel, float fvol, float attenuation );
-void CL_SoundModule_StartRelativeSound( struct sfx_s *sfx, int entnum, int channel, float fvol, float attenuation );
-void CL_SoundModule_StartGlobalSound( struct sfx_s *sfx, int channel, float fvol );
-void CL_SoundModule_StartLocalSound( struct sfx_s *sfx, int channel, float fvol );
-void CL_SoundModule_AddLoopSound( struct sfx_s *sfx, int entnum, float fvol, float attenuation );
-void CL_SoundModule_StartBackgroundTrack( const char *intro, const char *loop, int mode );
-void CL_SoundModule_StopBackgroundTrack( void );
-void CL_SoundModule_LockBackgroundTrack( bool lock );
-void CL_SoundModule_BeginAviDemo( void );
-void CL_SoundModule_StopAviDemo( void );
+void CL_SoundModule_Shutdown();
+void CL_SoundModule_StopAllSounds( bool stopMusic );
+void CL_SoundModule_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis, int64_t now );
+void CL_SoundModule_UpdateEntity( int entNum, vec3_t origin, vec3_t velocity );
+void CL_SoundModule_SetWindowFocus( bool focused );
+struct sfx_s *CL_SoundModule_RegisterSound( const char * filename );
+void CL_SoundModule_StartFixedSound( struct sfx_s *sfx, const vec3_t origin, int channel, float volume, float attenuation );
+void CL_SoundModule_StartEntitySound( struct sfx_s *sfx, int entnum, int channel, float volume, float attenuation );
+void CL_SoundModule_StartGlobalSound( struct sfx_s *sfx, int channel, float volume );
+void CL_SoundModule_StartLocalSound( struct sfx_s *sfx, int channel, float volume );
+void CL_SoundModule_ImmediateSound( struct sfx_s *sfx, int entnum, float volume, float attenuation, int64_t now );
+void CL_SoundModule_StartBackgroundTrack( struct sfx_s *sfx );
+void CL_SoundModule_StartMenuMusic();
+void CL_SoundModule_StopBackgroundTrack();
+void CL_SoundModule_BeginAviDemo();
+void CL_SoundModule_StopAviDemo();
 
 //
 // cl_ui.c

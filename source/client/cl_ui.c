@@ -263,7 +263,7 @@ void CL_UIModule_Init( void ) {
 
 	import.S_RegisterSound = CL_SoundModule_RegisterSound;
 	import.S_StartLocalSound = CL_SoundModule_StartLocalSound;
-	import.S_StartBackgroundTrack = CL_SoundModule_StartBackgroundTrack;
+	import.S_StartMenuMusic = CL_SoundModule_StartMenuMusic;
 	import.S_StopBackgroundTrack = CL_SoundModule_StopBackgroundTrack;
 
 	import.SCR_RegisterFont = SCR_RegisterFont;

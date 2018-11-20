@@ -486,34 +486,6 @@ static float SNAP_GainForAttenuation( float dist, float attenuation ) {
 	float maxdistance = S_DEFAULT_ATTENUATION_MAXDISTANCE;
 	float refdistance = S_DEFAULT_ATTENUATION_REFDISTANCE;
 
-#if !defined( PUBLIC_BUILD ) && !defined( DEDICATED_ONLY ) && !defined( TV_SERVER_ONLY )
-#define DUMMY_CVAR ( cvar_t * )( (void *)1 )
-	static cvar_t *s_attenuation_model = DUMMY_CVAR;
-	static cvar_t *s_attenuation_maxdistance = DUMMY_CVAR;
-	static cvar_t *s_attenuation_refdistance = DUMMY_CVAR;
-
-	if( s_attenuation_model == DUMMY_CVAR ) {
-		s_attenuation_model = Cvar_Find( "s_attenuation_model" );
-	}
-	if( s_attenuation_maxdistance == DUMMY_CVAR ) {
-		s_attenuation_maxdistance = Cvar_Find( "s_attenuation_maxdistance" );
-	}
-	if( s_attenuation_refdistance == DUMMY_CVAR ) {
-		s_attenuation_refdistance = Cvar_Find( "s_attenuation_refdistance" );
-	}
-
-	if( s_attenuation_model && s_attenuation_model != DUMMY_CVAR ) {
-		model = s_attenuation_model->integer;
-	}
-	if( s_attenuation_maxdistance && s_attenuation_maxdistance != DUMMY_CVAR ) {
-		maxdistance = s_attenuation_maxdistance->value;
-	}
-	if( s_attenuation_refdistance && s_attenuation_refdistance != DUMMY_CVAR ) {
-		refdistance = s_attenuation_refdistance->value;
-	}
-#undef DUMMY_CVAR
-#endif
-
 	return Q_GainForAttenuation( model, maxdistance, refdistance, dist, attenuation );
 }
 

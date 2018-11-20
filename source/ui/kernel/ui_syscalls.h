@@ -193,15 +193,15 @@ inline struct sfx_s *S_RegisterSound( const char *name ) {
 	return UI_IMPORT.S_RegisterSound( name );
 }
 
-inline void S_StartLocalSound( struct sfx_s *sfx, int channel, float fvol ) {
-	UI_IMPORT.S_StartLocalSound( sfx, channel, fvol );
+inline void S_StartLocalSound( struct sfx_s *sfx, int channel, float volume ) {
+	UI_IMPORT.S_StartLocalSound( sfx, channel, volume );
 }
 
-inline void S_StartBackgroundTrack( const char *intro, const char *loop, int mode ) {
-	UI_IMPORT.S_StartBackgroundTrack( intro, loop, mode );
+inline void S_StartMenuMusic() {
+	UI_IMPORT.S_StartMenuMusic();
 }
 
-inline void S_StopBackgroundTrack( void ) {
+inline void S_StopBackgroundTrack() {
 	UI_IMPORT.S_StopBackgroundTrack();
 }
 

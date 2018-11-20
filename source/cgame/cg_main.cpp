@@ -972,22 +972,6 @@ static void CG_RegisterConfigStrings( void ) {
 }
 
 /*
-* CG_StartBackgroundTrack
-*/
-void CG_StartBackgroundTrack( void ) {
-	char *string;
-	char intro[MAX_QPATH], loop[MAX_QPATH];
-
-	string = cgs.configStrings[CS_AUDIOTRACK];
-	Q_strncpyz( intro, COM_Parse( &string ), sizeof( intro ) );
-	Q_strncpyz( loop, COM_Parse( &string ), sizeof( loop ) );
-
-	if( intro[0] ) {
-		trap_S_StartBackgroundTrack( intro, loop, 0 );
-	}
-}
-
-/*
 * CG_Reset
 */
 void CG_Reset( void ) {

@@ -116,9 +116,9 @@ typedef struct {
 	void ( *R_PopTransformMatrix )( bool projection );
 
 	struct sfx_s *( *S_RegisterSound )( const char *name );
-	void ( *S_StartLocalSound )( struct sfx_s *sfx, int channel, float fvol );
-	void ( *S_StartBackgroundTrack )( const char *intro, const char *loop, int mode );
-	void ( *S_StopBackgroundTrack )( void );
+	void ( *S_StartLocalSound )( struct sfx_s *sfx, int channel, float volume );
+	void ( *S_StartMenuMusic )();
+	void ( *S_StopBackgroundTrack )();
 
 	// fonts
 	struct qfontface_s *( *SCR_RegisterFont )( const char *name, int style, unsigned int size );

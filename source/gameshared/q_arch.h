@@ -112,10 +112,6 @@ extern "C" {
 
 // FIXME: move these to CMakeLists.txt
 #define LIBZ_LIBNAME "zlib1.dll"
-#define LIBOGG_LIBNAME "libogg-0.dll|libogg.dll"
-#define LIBVORBIS_LIBNAME "libvorbis-0.dll|libvorbis.dll|vorbis.dll"
-#define LIBVORBISFILE_LIBNAME "libvorbisfile-3.dll|libvorbisfile.dll|vorbisfile.dll"
-#define LIBFREETYPE_LIBNAME "libfreetype-6.dll|freetype6.dll"
 
 #ifdef NDEBUG
 #define BUILDSTRING "Win32 RELEASE"
@@ -156,10 +152,6 @@ typedef uintptr_t socket_handle_t;
 
 // FIXME: move these to CMakeLists.txt
 #define LIBZ_LIBNAME "libz.so.1|libz.so"
-#define LIBOGG_LIBNAME "libogg.so.0|libogg.so"
-#define LIBVORBIS_LIBNAME "libvorbis.so.0|libvorbis.so"
-#define LIBVORBISFILE_LIBNAME "libvorbisfile.so.3|libvorbisfile.so"
-#define LIBFREETYPE_LIBNAME "libfreetype.so.6|libfreetype.so"
 
 #if defined ( __FreeBSD__ )
 #define BUILDSTRING "FreeBSD"
@@ -205,13 +197,6 @@ typedef int socket_handle_t;
 
 // FIXME: move these to CMakeLists.txt
 #define LIBZ_LIBNAME "libz.dylib"
-#define LIBCURL_LIBNAME "libcurl.4.dylib|libcurl.3.dylib|libcurl.2.dylib"
-#define LIBPNG_LIBNAME "libpng16.16.dylib|libpng15.15.dylib|libpng14.14.dylib|libpng12.0.dylib"
-#define LIBJPEG_LIBNAME "libjpeg.62.dylib"
-#define LIBOGG_LIBNAME "libogg.0.dylib|libogg.dylib"
-#define LIBVORBIS_LIBNAME "libvorbis.dylib"
-#define LIBVORBISFILE_LIBNAME "libvorbisfile.dylib"
-#define LIBFREETYPE_LIBNAME "libfreetype.6.dylib|libfreetype.dylib"
 
 //Mac OSX has universal binaries, no need for cpu dependency
 #define BUILDSTRING "MacOSX"

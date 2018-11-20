@@ -44,11 +44,7 @@ include_directories("${CMAKE_SOURCE_DIR}" "${CMAKE_SOURCE_DIR}/../libs")
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 	add_definitions(-D_CRT_SECURE_NO_WARNINGS -DWIN32 -D_WINDOWS)
 
-	set(CMAKE_INCLUDE_PATH
-		"../libsrcs/src/libogg"
-		"../libsrcs/src/libvorbis"
-		"../libsrcs/src/zlib"
-		)
+	set(CMAKE_INCLUDE_PATH "../libsrcs/src/zlib")
 
 	if (CMAKE_BUILD_TYPE STREQUAL "Release")
 		set(LIBS_ARCH "windows-release")
@@ -133,11 +129,6 @@ endif()
 
 if (NOT GAME_MODULES_ONLY)
 	find_package(ZLIB REQUIRED)
-
-	if (NOT SERVER_ONLY)
-		find_package(Ogg REQUIRED)
-		find_package(Vorbis REQUIRED)
-	endif()
 endif()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
@@ -159,20 +150,10 @@ if (NOT GAME_MODULES_ONLY)
 	if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 		find_windows_release_libs(ZLIB_LIBRARY)
 		find_windows_release_libs(ANGELSCRIPT_LIBRARY)
-		if (NOT SERVER_ONLY)
-			find_windows_release_libs(OGG_LIBRARY)
-			find_windows_release_libs(VORBIS_LIBRARIES)
-		endif()
 	endif()
 endif()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux") # Do not add 'OR MINGW' here - we need to use suffix-prefix settings from Windows
-	set(OGG_LIBRARY "")
-	add_definitions(-DOGGLIB_RUNTIME)
-
-	set(VORBIS_LIBRARIES "")
-	add_definitions(-DVORBISLIB_RUNTIME)
-
 	set(ZLIB_LIBRARY "")
 	add_definitions(-DZLIB_RUNTIME)
 endif()

@@ -173,9 +173,8 @@ static void CL_GameModule_MemFree( void *data, const char *filename, int filelin
 /*
 * CL_GameModule_SoundUpdate
 */
-static void CL_GameModule_SoundUpdate( const vec3_t origin, const vec3_t velocity,
-									   const mat3_t axis, const char *identity ) {
-	CL_SoundModule_Update( origin, velocity, axis, identity, CL_WriteAvi() && cls.demo.avi_audio );
+static void CL_GameModule_SoundUpdate( const vec3_t origin, const vec3_t velocity, const mat3_t axis, int64_t now ) {
+	CL_SoundModule_Update( origin, velocity, axis, now );
 }
 
 //==============================================
@@ -254,7 +253,7 @@ void CL_GameModule_Init( void ) {
 #endif
 
 	// stop all playing sounds
-	CL_SoundModule_StopAllSounds( true, true );
+	CL_SoundModule_StopAllSounds( true );
 
 	CL_GameModule_Shutdown();
 
@@ -361,14 +360,14 @@ void CL_GameModule_Init( void ) {
 
 	import.S_RegisterSound = CL_SoundModule_RegisterSound;
 	import.S_StartFixedSound = CL_SoundModule_StartFixedSound;
-	import.S_StartRelativeSound = CL_SoundModule_StartRelativeSound;
+	import.S_StartEntitySound = CL_SoundModule_StartEntitySound;
 	import.S_StartGlobalSound = CL_SoundModule_StartGlobalSound;
 	import.S_StartLocalSound = CL_SoundModule_StartLocalSound;
 	import.S_Update = CL_GameModule_SoundUpdate;
-	import.S_AddLoopSound = CL_SoundModule_AddLoopSound;
+	import.S_ImmediateSound = CL_SoundModule_ImmediateSound;
 	import.S_StartBackgroundTrack = CL_SoundModule_StartBackgroundTrack;
 	import.S_StopBackgroundTrack = CL_SoundModule_StopBackgroundTrack;
-	import.S_SetEntitySpatilization = CL_SoundModule_SetEntitySpatilization;
+	import.S_UpdateEntity = CL_SoundModule_UpdateEntity;
 
 	import.SCR_RegisterFont = SCR_RegisterFont;
 	import.SCR_RegisterSpecialFont = SCR_RegisterSpecialFont;

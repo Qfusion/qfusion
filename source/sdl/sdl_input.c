@@ -242,7 +242,7 @@ static void key_event( const SDL_KeyboardEvent *event, const bool state ) {
 static void AppActivate( SDL_Window *window, bool active ) {
 	bool minimized = ( SDL_GetWindowFlags( window ) & SDL_WINDOW_MINIMIZED ) != 0;
 
-	CL_SoundModule_Activate( active );
+	CL_SoundModule_SetWindowFocus( active );
 	VID_AppActivate( active, minimized );
 }
 

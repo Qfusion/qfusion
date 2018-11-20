@@ -27,11 +27,11 @@ const String S_COLOR_WHITE = "^7";
 const String S_COLOR_ORANGE = "^8";
 const String S_COLOR_GREY = "^9";
 
-const float ATTN_NONE  			= 0.0; 		// full volume the entire level
-const float ATTN_DISTANT  		= 0.5; 		// distant sound (most likely explosions)
-const float ATTN_NORM  			= 0.875; 	// players, weapons, etc
-const float ATTN_IDLE  			= 2.5;  	// stuff around you
-const float ATTN_STATIC  		= 5.0; 		// diminish very rapidly with distance
-const float ATTN_FOOTSTEPS  	= 10.0; 	// must be very close to hear it
+const float ATTN_NONE      = 0.0;   // full volume the entire level
+const float ATTN_DISTANT   = 0.5;   // distant sound (most likely explosions)
+const float ATTN_NORM      = 0.875; // players, weapons, etc
+const float ATTN_IDLE      = 2.5;   // stuff around you
+const float ATTN_STATIC    = 5.0;   // diminish very rapidly with distance
+const float ATTN_FOOTSTEPS = 10.0;  // must be very close to hear it
 
 const Vec3 vec3Origin( 0.0f );

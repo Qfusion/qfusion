@@ -1727,7 +1727,7 @@ void CG_SoundEntityNewState( centity_t *cent ) {
 	} else if( ISVIEWERENTITY( owner ) ) {
 		trap_S_StartGlobalSound( cgs.soundPrecache[soundindex], channel, 1.0f );
 	} else {
-		trap_S_StartRelativeSound( cgs.soundPrecache[soundindex], owner, channel, 1.0f, attenuation );
+		trap_S_StartEntitySound( cgs.soundPrecache[soundindex], owner, channel, 1.0f, attenuation );
 	}
 }
 
@@ -1740,7 +1740,7 @@ void CG_EntityLoopSound( entity_state_t *state, float attenuation ) {
 		return;
 	}
 
-	trap_S_AddLoopSound( cgs.soundPrecache[state->sound], state->number, cg_volume_effects->value, ISVIEWERENTITY( state->number ) ? ATTN_NONE : ATTN_IDLE );
+	trap_S_ImmediateSound( cgs.soundPrecache[state->sound], state->number, cg_volume_effects->value, ISVIEWERENTITY( state->number ) ? ATTN_NONE : ATTN_IDLE, cg.time );
 }
 
 /*
@@ -1996,7 +1996,7 @@ void CG_LerpEntities( void ) {
 		if( spatialize ) {
 			vec3_t origin, velocity;
 			CG_GetEntitySpatilization( number, origin, velocity );
-			trap_S_SetEntitySpatilization( number, origin, velocity );
+			trap_S_UpdateEntity( number, origin, velocity );
 		}
 	}
 }
@@ -2114,7 +2114,7 @@ void CG_GetEntitySpatilization( int entNum, vec3_t origin, vec3_t velocity ) {
 	vec3_t mins, maxs;
 
 	if( entNum < -1 || entNum >= MAX_EDICTS ) {
-		CG_Error( "CG_GetEntitySoundOrigin: bad entnum" );
+		CG_Error( "CG_GetEntitySpatilization: bad entnum" );
 		return;
 	}
 

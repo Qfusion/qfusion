@@ -19,456 +19,86 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 #include "client.h"
 
-static sound_export_t *se;
-static mempool_t *cl_soundmodulepool;
-
-static void *sound_library = NULL;
-
-static bool s_loaded = false;
-
-static void CL_SoundModule_SetAttenuationModel( void );
-
-/*
-* CL_SetSoundExtension
-*/
-static char *CL_SetSoundExtension( const char *name ) {
-	unsigned int i;
-	char *finalname;
-	size_t finalname_size, maxlen;
-	const char *extension;
-
-	assert( name );
-
-	if( COM_FileExtension( name ) ) {
-		return TempCopyString( name );
-	}
-
-	maxlen = 0;
-	for( i = 0; i < NUM_SOUND_EXTENSIONS; i++ ) {
-		if( strlen( SOUND_EXTENSIONS[i] ) > maxlen ) {
-			maxlen = strlen( SOUND_EXTENSIONS[i] );
-		}
-	}
-
-	finalname_size = strlen( name ) + maxlen + 1;
-	finalname = Mem_TempMalloc( finalname_size );
-	Q_strncpyz( finalname, name, finalname_size );
-
-	extension = FS_FirstExtension( finalname, SOUND_EXTENSIONS, NUM_SOUND_EXTENSIONS );
-	if( extension ) {
-		Q_strncatz( finalname, extension, finalname_size );
-	}
-	// if not found, we just pass it without the extension
-
-	return finalname;
-}
-
 #ifndef _MSC_VER
 static void CL_SoundModule_Error( const char *msg ) __attribute__( ( noreturn ) );
 #else
 __declspec( noreturn ) static void CL_SoundModule_Error( const char *msg );
 #endif
 
-/*
-* CL_SoundModule_Error
-*/
 static void CL_SoundModule_Error( const char *msg ) {
 	Com_Error( ERR_FATAL, "%s", msg );
 }
 
-/*
-* CL_SoundModule_Print
-*/
-static void CL_SoundModule_Print( const char *msg ) {
-	Com_Printf( "%s", msg );
-}
-
-/*
-* CL_SoundModule_MemAlloc
-*/
-static void *CL_SoundModule_MemAlloc( mempool_t *pool, size_t size, const char *filename, int fileline ) {
-	return _Mem_Alloc( pool, size, MEMPOOL_SOUND, 0, filename, fileline );
-}
-
-/*
-* CL_SoundModule_MemFree
-*/
-static void CL_SoundModule_MemFree( void *data, const char *filename, int fileline ) {
-	_Mem_Free( data, MEMPOOL_SOUND, 0, filename, fileline );
-}
-
-/*
-* CL_SoundModule_MemAllocPool
-*/
-static mempool_t *CL_SoundModule_MemAllocPool( const char *name, const char *filename, int fileline ) {
-	return _Mem_AllocPool( cl_soundmodulepool, name, MEMPOOL_SOUND, filename, fileline );
-}
-
-/*
-* CL_SoundModule_MemFreePool
-*/
-static void CL_SoundModule_MemFreePool( mempool_t **pool, const char *filename, int fileline ) {
-	_Mem_FreePool( pool, MEMPOOL_SOUND, 0, filename, fileline );
-}
-
-/*
-* CL_SoundModule_MemEmptyPool
-*/
-static void CL_SoundModule_MemEmptyPool( mempool_t *pool, const char *filename, int fileline ) {
-	_Mem_EmptyPool( pool, MEMPOOL_SOUND, 0, filename, fileline );
-}
-
-/*
-* CL_SoundModule_Load
-*
-* Helper function to try loading sound module with certain name
-*/
-static bool CL_SoundModule_Load( const char *name, sound_import_t *import, bool verbose ) {
-	if( verbose ) {
-		Com_Printf( "Loading sound module: %s\n", name );
-	}
-
-	s_loaded = true;
-
-	se = ( sound_export_t * )GetSoundAPI( import );
-	int apiversion = se->API();
-	if( apiversion != SOUND_API_VERSION ) {
-		CL_SoundModule_Shutdown( verbose );
-		Com_Printf( "Wrong module version for %s: %i, not %i\n", name, apiversion, SOUND_API_VERSION );
-		return false;
-	}
-
-	if( !se->Init( MAX_EDICTS, verbose ) ) {
-		CL_SoundModule_Shutdown( verbose );
-		Com_Printf( "Initialization of %s failed\n", name );
-		return false;
-	}
-
-	if( verbose ) {
-		Com_Printf( "Initialization of %s successful\n", name );
-	}
-
-	return true;
-}
-
-/*
-* CL_SoundModule_Init
-*/
 void CL_SoundModule_Init( bool verbose ) {
-	sound_import_t import;
-
-	// unload anything we have now
-	CL_SoundModule_Shutdown( verbose );
-
-	if( verbose ) {
-		Com_Printf( "------- sound initialization -------\n" );
-	}
-
-	cl_soundmodulepool = Mem_AllocPool( NULL, "Client Sound Module" );
-
-	import.Error = CL_SoundModule_Error;
-	import.Print = CL_SoundModule_Print;
-
-	import.Cvar_Get = Cvar_Get;
-	import.Cvar_Set = Cvar_Set;
-	import.Cvar_SetValue = Cvar_SetValue;
-	import.Cvar_ForceSet = Cvar_ForceSet;
-	import.Cvar_String = Cvar_String;
-	import.Cvar_Value = Cvar_Value;
-
-	import.Cmd_Argc = Cmd_Argc;
-	import.Cmd_Argv = Cmd_Argv;
-	import.Cmd_Args = Cmd_Args;
-
-	import.Cmd_AddCommand = Cmd_AddCommand;
-	import.Cmd_RemoveCommand = Cmd_RemoveCommand;
-	import.Cmd_ExecuteText = Cbuf_ExecuteText;
-	import.Cmd_Execute = Cbuf_Execute;
-	import.Cmd_SetCompletionFunc = Cmd_SetCompletionFunc;
-
-	import.FS_FOpenFile = FS_FOpenFile;
-	import.FS_Read = FS_Read;
-	import.FS_Write = FS_Write;
-	import.FS_Print = FS_Print;
-	import.FS_Tell = FS_Tell;
-	import.FS_Seek = FS_Seek;
-	import.FS_Eof = FS_Eof;
-	import.FS_Flush = FS_Flush;
-	import.FS_FCloseFile = FS_FCloseFile;
-	import.FS_RemoveFile = FS_RemoveFile;
-	import.FS_GetFileList = FS_GetFileList;
-	import.FS_IsUrl = FS_IsUrl;
-
-	import.Sys_Milliseconds = Sys_Milliseconds;
-	import.Sys_Sleep = Sys_Sleep;
-
-	import.Sys_LoadLibrary = Com_LoadSysLibrary;
-	import.Sys_UnloadLibrary = Com_UnloadLibrary;
-
-	import.Mem_Alloc = CL_SoundModule_MemAlloc;
-	import.Mem_Free = CL_SoundModule_MemFree;
-	import.Mem_AllocPool = CL_SoundModule_MemAllocPool;
-	import.Mem_FreePool = CL_SoundModule_MemFreePool;
-	import.Mem_EmptyPool = CL_SoundModule_MemEmptyPool;
-
-	import.GetEntitySpatilization = CL_GameModule_GetEntitySpatilization;
-
-	import.Thread_Create = QThread_Create;
-	import.Thread_Join = QThread_Join;
-	import.Thread_Yield = QThread_Yield;
-	import.Mutex_Create = QMutex_Create;
-	import.Mutex_Destroy = QMutex_Destroy;
-	import.Mutex_Lock = QMutex_Lock;
-	import.Mutex_Unlock = QMutex_Unlock;
-
-	import.BufPipe_Create = QBufPipe_Create;
-	import.BufPipe_Destroy = QBufPipe_Destroy;
-	import.BufPipe_Finish = QBufPipe_Finish;
-	import.BufPipe_WriteCmd = QBufPipe_WriteCmd;
-	import.BufPipe_ReadCmds = QBufPipe_ReadCmds;
-	import.BufPipe_Wait = QBufPipe_Wait;
-
-	if( !CL_SoundModule_Load( "openal", &import, verbose ) ) {
+	if( !S_Init( verbose ) ) {
 		abort();
 	}
 
-	CL_SoundModule_SetAttenuationModel();
-
 	// check memory integrity
 	Mem_DebugCheckSentinelsGlobal();
-
-	if( verbose ) {
-		Com_Printf( "------------------------------------\n" );
-	}
 }
 
-/*
-* CL_SoundModule_Shutdown
-*/
-void CL_SoundModule_Shutdown( bool verbose ) {
-	if( !s_loaded ) {
-		return;
-	}
-
-	s_loaded = false;
-
-	if( se && se->API() == SOUND_API_VERSION ) {
-		se->Shutdown( verbose );
-		se = NULL;
-	}
-
-	Com_UnloadLibrary( &sound_library );
-	Mem_FreePool( &cl_soundmodulepool );
+void CL_SoundModule_Shutdown() {
+	S_Shutdown();
 }
 
-/*
-* CL_SoundModule_BeginRegistration
-*/
-void CL_SoundModule_BeginRegistration( void ) {
-	if( se ) {
-		se->BeginRegistration();
-	}
+void CL_SoundModule_StopAllSounds( bool stopMusic ) {
+	S_StopAllSounds( stopMusic );
 }
 
-/*
-* CL_SoundModule_EndRegistration
-*/
-void CL_SoundModule_EndRegistration( void ) {
-	if( se ) {
-		se->EndRegistration();
-	}
+void CL_SoundModule_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis, int64_t now ) {
+	S_Update( origin, velocity, axis, now );
 }
 
-/*
-* CL_SoundModule_StopAllSounds
-*/
-void CL_SoundModule_StopAllSounds( bool clear, bool stopMusic ) {
-	if( se ) {
-		se->StopAllSounds( clear, stopMusic );
-	}
+void CL_SoundModule_UpdateEntity( int entNum, vec3_t origin, vec3_t velocity ) {
+	S_UpdateEntity( entNum, origin, velocity );
 }
 
-/*
-* CL_SoundModule_Clear
-*/
-void CL_SoundModule_Clear( void ) {
-	if( se ) {
-		se->Clear();
-	}
+void CL_SoundModule_SetWindowFocus( bool focused ) {
+	S_SetWindowFocus( focused );
 }
 
-/*
-* CL_SoundModule_SetEntitySpatilization
-*/
-void CL_SoundModule_SetEntitySpatilization( int entNum, vec3_t origin, vec3_t velocity ) {
-	if( se ) {
-		se->SetEntitySpatialization( entNum, origin, velocity );
-	}
+struct sfx_s * CL_SoundModule_RegisterSound( const char * filename ) {
+	return S_RegisterSound( filename );
 }
 
-/*
-* CL_SoundModule_Update
-*/
-void CL_SoundModule_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis,
-							const char *identity, bool avidump ) {
-	if( se ) {
-		se->Update( origin, velocity, axis, avidump );
-	}
-}
-
-/*
-* CL_SoundModule_Activate
-*/
-void CL_SoundModule_Activate( bool activate ) {
-	if( se ) {
-		se->Activate( activate );
-	}
-}
-
-/*
-* CL_SoundModule_SetAttenuationModel
-*/
-static void CL_SoundModule_SetAttenuationModel( void ) {
-#ifdef PUBLIC_BUILD
-	const int model = S_DEFAULT_ATTENUATION_MODEL;
-	const float maxdistance = S_DEFAULT_ATTENUATION_MAXDISTANCE;
-	const float refdistance = S_DEFAULT_ATTENUATION_REFDISTANCE;
-#else
-	cvar_t *s_attenuation_model = Cvar_Get( "s_attenuation_model", va( "%i", S_DEFAULT_ATTENUATION_MODEL ), CVAR_DEVELOPER | CVAR_LATCH_SOUND );
-	cvar_t *s_attenuation_maxdistance = Cvar_Get( "s_attenuation_maxdistance", va( "%i", S_DEFAULT_ATTENUATION_MAXDISTANCE ), CVAR_DEVELOPER | CVAR_LATCH_SOUND );
-	cvar_t *s_attenuation_refdistance = Cvar_Get( "s_attenuation_refdistance", va( "%i", S_DEFAULT_ATTENUATION_REFDISTANCE ), CVAR_DEVELOPER | CVAR_LATCH_SOUND );
-
-	const int model = s_attenuation_model->integer;
-	const float maxdistance = s_attenuation_maxdistance->value;
-	const float refdistance = s_attenuation_refdistance->value;
-#endif
-
-	if( se ) {
-		se->SetAttenuationModel( model, maxdistance, refdistance );
-	}
-}
-
-/*
-* CL_SoundModule_RegisterSound
-*/
-struct sfx_s *CL_SoundModule_RegisterSound( const char *name ) {
-	assert( name );
-
-	if( se ) {
-		struct sfx_s *retval;
-		char *finalname;
-
-		finalname = CL_SetSoundExtension( name );
-		retval = se->RegisterSound( finalname );
-		Mem_TempFree( finalname );
-
-		return retval;
-	} else {
-		return NULL;
-	}
-}
-
-/*
-* CL_SoundModule_StartFixedSound
-*/
-void CL_SoundModule_StartFixedSound( struct sfx_s *sfx, const vec3_t origin, int channel, float fvol,
+void CL_SoundModule_StartFixedSound( struct sfx_s *sfx, const vec3_t origin, int channel, float volume,
 									 float attenuation ) {
-	if( se ) {
-		se->StartFixedSound( sfx, origin, channel, fvol, attenuation );
-	}
+	S_StartFixedSound( sfx, origin, channel, volume, attenuation );
 }
 
-/*
-* CL_SoundModule_StartRelativeSound
-*/
-void CL_SoundModule_StartRelativeSound( struct sfx_s *sfx, int entnum, int channel, float fvol, float attenuation ) {
-	if( se ) {
-		se->StartRelativeSound( sfx, entnum, channel, fvol, attenuation );
-	}
+void CL_SoundModule_StartEntitySound( struct sfx_s *sfx, int entnum, int channel, float volume, float attenuation ) {
+	S_StartEntitySound( sfx, entnum, channel, volume, attenuation );
 }
 
-/*
-* CL_SoundModule_StartGlobalSound
-*/
-void CL_SoundModule_StartGlobalSound( struct sfx_s *sfx, int channel, float fvol ) {
-	if( se ) {
-		se->StartGlobalSound( sfx, channel, fvol );
-	}
+void CL_SoundModule_StartGlobalSound( struct sfx_s *sfx, int channel, float volume ) {
+	S_StartGlobalSound( sfx, channel, volume );
 }
 
-/*
-* CL_SoundModule_StartLocalSound
-*/
-void CL_SoundModule_StartLocalSound( struct sfx_s *sfx, int channel, float fvol ) {
-	if( se ) {
-		se->StartLocalSound( sfx, channel, fvol );
-	}
+void CL_SoundModule_StartLocalSound( struct sfx_s *sfx, int channel, float volume ) {
+	S_StartLocalSound( sfx, channel, volume );
 }
 
-/*
-* CL_SoundModule_AddLoopSound
-*/
-void CL_SoundModule_AddLoopSound( struct sfx_s *sfx, int entnum, float fvol, float attenuation ) {
-	if( se ) {
-		se->AddLoopSound( sfx, entnum, fvol, attenuation );
-	}
+void CL_SoundModule_ImmediateSound( struct sfx_s *sfx, int entnum, float volume, float attenuation, int64_t now ) {
+	S_ImmediateSound( sfx, entnum, volume, attenuation, now );
 }
 
-/*
-* CL_SoundModule_StartBackgroundTrack
-*/
-void CL_SoundModule_StartBackgroundTrack( const char *intro, const char *loop, int mode ) {
-	assert( intro );
-
-	if( se ) {
-		char *finalintro, *finalloop;
-
-		finalintro = CL_SetSoundExtension( intro );
-		if( loop ) {
-			finalloop = CL_SetSoundExtension( loop );
-		} else {
-			finalloop = NULL;
-		}
-		se->StartBackgroundTrack( finalintro, finalloop, mode );
-		Mem_TempFree( finalintro );
-		if( finalloop ) {
-			Mem_TempFree( finalloop );
-		}
-	}
+void CL_SoundModule_StartBackgroundTrack( struct sfx_s *sfx ) {
+	S_StartBackgroundTrack( sfx );
 }
 
-/*
-* CL_SoundModule_StopBackgroundTrack
-*/
+void CL_SoundModule_StartMenuMusic() {
+	S_StartMenuMusic();
+}
+
 void CL_SoundModule_StopBackgroundTrack( void ) {
-	if( se ) {
-		se->StopBackgroundTrack();
-	}
+	S_StopBackgroundTrack();
 }
 
-/*
-* CL_SoundModule_LockBackgroundTrack
-*/
-void CL_SoundModule_LockBackgroundTrack( bool lock ) {
-	if( se ) {
-		se->LockBackgroundTrack( lock );
-	}
-}
-
-/*
-* CL_SoundModule_BeginAviDemo
-*/
 void CL_SoundModule_BeginAviDemo( void ) {
-	if( se ) {
-		se->BeginAviDemo();
-	}
+	S_BeginAviDemo();
 }
 
-/*
-* CL_SoundModule_StopAviDemo
-*/
 void CL_SoundModule_StopAviDemo( void ) {
-	if( se ) {
-		se->StopAviDemo();
-	}
+	S_StopAviDemo();
 }
