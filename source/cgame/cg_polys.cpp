@@ -270,7 +270,7 @@ void CG_QuickPolyBeam( const vec3_t start, const vec3_t end, int width, struct s
 * CG_LaserGunPolyBeam
 */
 void CG_LaserGunPolyBeam( const vec3_t start, const vec3_t end, const vec4_t color, int tag ) {
-	CG_SpawnPolyBeam( start, end, color, 12, 1, 0, CG_MediaShader( cgs.media.shaderLaserGunBeam ), 64, tag );
+	CG_SpawnPolyBeam( start, end, color, 12, 1, 0, CG_MediaShader( cgs.media.shaderLaserGunBeamSolid ), 64, tag );
 }
 
 /*
@@ -282,7 +282,7 @@ void CG_LaserGunPolyBeam( const vec3_t start, const vec3_t end, const vec4_t col
 * For more information please refer to
 * Mathematics for 3D Game Programming and Computer Graphics, section "Polyboards"
 */
-void CG_ElectroPolyboardBeam( const vec3_t start, const vec3_t end, int subdivisions, int iphase,
+void CG_ElectroPolyboardBeam( const vec3_t start, const vec3_t end, int subdivisions,
 	float range, const vec4_t color, int key, bool firstPerson ) {
 	vec3_t from, to;
 	vec3_t dir;
@@ -290,28 +290,15 @@ void CG_ElectroPolyboardBeam( const vec3_t start, const vec3_t end, int subdivis
 	float dist;
 	int segments;
 
-	const char * freqcvars[] = { "lg_freq0", "lg_freq1", "lg_freq2" };
-	cvar_t * freq = trap_Cvar_Get( freqcvars[ iphase ], "0.1244", CVAR_ARCHIVE );
-	const float frequency = freq->value;
+	float frequency = 0.1244;
 
-	const char * widthcvars[] = { "lg_width0", "lg_width1", "lg_width2" };
-	cvar_t * wid = trap_Cvar_Get( widthcvars[ iphase ], "4", CVAR_ARCHIVE );
-	const int cwidth = wid->integer;
-
-	struct shader_s *shader;
-	if( iphase == 0 )
-		shader = CG_MediaShader( cgs.media.shaderLaserGunBeam0 );
-	else if( iphase == 1 )
-		shader = CG_MediaShader( cgs.media.shaderLaserGunBeam1 );
-	else
-		shader = CG_MediaShader( cgs.media.shaderLaserGunBeam2 );
+	struct shader_s *shader = CG_MediaShader( cgs.media.shaderLaserGunBeamGlow );
 
 	VectorSubtract( end, start, dir );
 	dist = VectorNormalize2( dir, dir );
 
 	clamp( subdivisions, CURVELASERBEAM_SUBDIVISIONS - 10, CURVELASERBEAM_SUBDIVISIONS + 10 );
 	segments = subdivisions * (( dist + 500.0f ) / range ); // nudge the number of segments
-	float phase = float( iphase );
 
 	VectorCopy( start, from );
 
@@ -322,13 +309,12 @@ void CG_ElectroPolyboardBeam( const vec3_t start, const vec3_t end, int subdivis
 		float width;
 		bool last = false;
 
-		amplitude = Q_GetNoiseValue( 0, 0, 0, (cg.realTime + phase) ) * sqrt( (float)i / segments );
+		amplitude = Q_GetNoiseValue( 0, 0, 0, cg.realTime ) * sqrt( (float)i / segments );
 		if( firstPerson ) {
-			width = (phase + 1) * cwidth * i;
-			amplitude *= (phase + 1) * (phase + 1) * (i > 1);
+			width = 10 * i;
+			amplitude *= i > 1;
 		} else {
-			width = cwidth * 3;
-			amplitude *= (phase + 1);
+			width = 30;
 		}
 
 		if( frac >= dist + width * 2 ) {
@@ -336,7 +322,7 @@ void CG_ElectroPolyboardBeam( const vec3_t start, const vec3_t end, int subdivis
 			width = frac - dist - width * 2;
 		}
 
-		x = i * (phase + 1) * 400.0 / segments;
+		x = i * 400.0 / segments;
 		x *= frequency;
 		t = 0.01 * (-cg.time * 0.01 * 130.0);
 

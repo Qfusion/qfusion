@@ -678,10 +678,6 @@ void CG_LaserGunImpact( const vec3_t pos, float radius, const vec3_t laser_dir, 
 	ent.model = CG_MediaModel( cgs.media.modLasergunWallExplo );
 	VectorNegate( laser_dir, ndir );
 	VecToAngles( ndir, angles );
-
-	cvar_t * spin = trap_Cvar_Get( "lg_spin", "0.001", CVAR_ARCHIVE );
-	angles[2] = anglemod( -360.0f * cg.time * spin->value );
-
 	AnglesToAxis( angles, ent.axis );
 
 	trap_R_AddEntityToScene( &ent );
