@@ -33,9 +33,11 @@ void IN_Commands( void ) {
 static void mouse_motion_event( SDL_MouseMotionEvent *event ) {
 	mx = event->x;
 	my = event->y;
+
 	if( !warped ) {
-		rx += event->xrel;
-		ry += event->yrel;
+		int scale = running_in_debugger ? -1 : 1;
+		rx += event->xrel * scale;
+		ry += event->yrel * scale;
 	}
 
 	warped = false;
