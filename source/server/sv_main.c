@@ -453,23 +453,74 @@ static void SV_CheckLatchedUserinfoChanges( void ) {
 */
 static bool SV_RunGameFrame( int msec ) {
 	static int64_t accTime = 0;
+	bool refreshSnapshot;
+	bool refreshGameModule;
+	bool sentFragments;
+
 	accTime += msec;
 
-	// see if it's time for a new snapshot
-	bool sentFragments = SV_SendClientsFragments();
-	bool refreshSnapshot = !sentFragments && svs.gametime >= sv.nextSnapTime;
+	refreshSnapshot = false;
+	refreshGameModule = false;
 
-	while( accTime >= WORLDFRAMETIME ) {
+	sentFragments = SV_SendClientsFragments();
+
+	// see if it's time to run a new game frame
+	if( accTime >= WORLDFRAMETIME ) {
+		refreshGameModule = true;
+	}
+
+	// see if it's time for a new snapshot
+	if( !sentFragments && svs.gametime >= sv.nextSnapTime ) {
+		refreshSnapshot = true;
+		refreshGameModule = true;
+	}
+
+	// if there aren't pending packets to be sent, we can sleep
+	if( dedicated->integer && !sentFragments && !refreshSnapshot ) {
+		int sleeptime = min( WORLDFRAMETIME - ( accTime + 1 ), sv.nextSnapTime - ( svs.gametime + 1 ) );
+
+		if( sleeptime > 0 ) {
+			socket_t *sockets [] = { &svs.socket_udp, &svs.socket_udp6 };
+			socket_t *opened_sockets [sizeof( sockets ) / sizeof( sockets[0] ) + 1 ];
+			size_t sock_ind, open_ind;
+
+			// Pass only the opened sockets to the sleep function
+			open_ind = 0;
+			for( sock_ind = 0; sock_ind < sizeof( sockets ) / sizeof( sockets[0] ); sock_ind++ ) {
+				socket_t *sock = sockets[sock_ind];
+				if( sock->open ) {
+					opened_sockets[open_ind] = sock;
+					open_ind++;
+				}
+			}
+			opened_sockets[open_ind] = NULL;
+
+			NET_Sleep( sleeptime, opened_sockets );
+		}
+	}
+
+	if( refreshGameModule ) {
+		int64_t moduleTime;
+
 		// update ping based on the last known frame from all clients
 		SV_CalcPings();
 
-		accTime -= WORLDFRAMETIME;
+		if( accTime >= WORLDFRAMETIME ) {
+			moduleTime = WORLDFRAMETIME;
+			accTime -= WORLDFRAMETIME;
+			if( accTime >= WORLDFRAMETIME ) { // don't let it accumulate more than 1 frame
+				accTime = WORLDFRAMETIME - 1;
+			}
+		} else {
+			moduleTime = accTime;
+			accTime = 0;
+		}
 
 		if( host_speeds->integer ) {
 			time_before_game = Sys_Milliseconds();
 		}
 
-		ge->RunFrame( WORLDFRAMETIME, svs.gametime );
+		ge->RunFrame( moduleTime, svs.gametime );
 
 		if( host_speeds->integer ) {
 			time_after_game = Sys_Milliseconds();
