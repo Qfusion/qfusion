@@ -75,8 +75,6 @@ const char *S_ErrorMessage( ALenum error ) {
 static void S_ALAssert() {
 	ALenum err = alGetError();
 	if( err != AL_NO_ERROR ) {
-		printf( "%s\n", S_ErrorMessage( err ) );
-		abort();
 		Sys_Error( "%s", S_ErrorMessage( err ) );
 	}
 }
@@ -194,7 +192,6 @@ bool S_Init( bool verbose ) {
 }
 
 void S_Shutdown() {
-	printf( "shutting down\n" );
 	S_StopAllSounds( true );
 
 	for( int i = 0; i < ARRAY_COUNT( playing_sounds ); i++ ) {
