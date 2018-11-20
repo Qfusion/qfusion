@@ -977,7 +977,7 @@ void CG_BloodDamageEffect( const vec3_t origin, const vec3_t dir, int damage );
 void CG_FlagTrail( const vec3_t origin, const vec3_t start, const vec3_t end, float r, float g, float b );
 void CG_GreenLaser( const vec3_t start, const vec3_t end );
 void CG_SmallPileOfGibs( const vec3_t origin, int damage, const vec3_t initialVelocity, int team );
-void CG_PlasmaExplosion( const vec3_t pos, const vec3_t dir, int fire_mode, float radius );
+void CG_PlasmaExplosion( const vec3_t pos, const vec3_t dir, int team, int fire_mode, float radius );
 void CG_GrenadeExplosionMode( const vec3_t pos, const vec3_t dir, int fire_mode, float radius );
 void CG_GenericExplosion( const vec3_t pos, const vec3_t dir, int fire_mode, float radius );
 void CG_RocketExplosionMode( const vec3_t pos, const vec3_t dir, int fire_mode, float radius );

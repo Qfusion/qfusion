@@ -672,6 +672,7 @@ static void W_Plasma_Explosion( edict_t *ent, edict_t *ignore, cplane_t *plane, 
 	event = G_SpawnEvent( EV_PLASMA_EXPLOSION, DirToByte( plane ? plane->normal : NULL ), ent->s.origin );
 	event->s.firemode = ( ent->s.effects & EF_STRONG_WEAPON ) ? FIRE_MODE_STRONG : FIRE_MODE_WEAK;
 	event->s.weapon = radius & 127;
+	event->s.team = ent->s.team;;
 
 	G_RadiusDamage( ent, ent->r.owner, plane, ignore, ent->style );
 

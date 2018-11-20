@@ -430,7 +430,7 @@ void CG_BubbleTrail( const vec3_t start, const vec3_t end, int dist ) {
 /*
 * CG_PlasmaExplosion
 */
-void CG_PlasmaExplosion( const vec3_t pos, const vec3_t dir, int fire_mode, float radius ) {
+void CG_PlasmaExplosion( const vec3_t pos, const vec3_t dir, int team, int fire_mode, float radius ) {
 	lentity_t *le;
 	vec3_t angles;
 	vec3_t origin;
@@ -439,28 +439,37 @@ void CG_PlasmaExplosion( const vec3_t pos, const vec3_t dir, int fire_mode, floa
 	VecToAngles( dir, angles );
 	VectorMA( pos, IMPACT_POINT_OFFSET, dir, origin );
 
+	vec4_t color;
+	if( team == TEAM_ALPHA || team == TEAM_BETA ) {
+		CG_TeamColor( team, color );
+	}
+	else {
+		Vector4Set( color, 1, 1, 1, 1 );
+	}
+
 	if( fire_mode == FIRE_MODE_STRONG ) {
 		le = CG_AllocModel( LE_ALPHA_FADE, origin, angles, 4,
-							1, 1, 1, 1,
+							color[0], color[1], color[2], color[3],
 							150, 0, 0.75, 0,
 							CG_MediaModel( cgs.media.modPlasmaExplosion ),
 							NULL );
 		le->ent.scale = radius / model_radius;
 	} else {
 		le = CG_AllocModel( LE_ALPHA_FADE, origin, angles, 4,
-							1, 1, 1, 1,
+							color[0], color[1], color[2], color[3],
 							80, 0, 0.75, 0,
 							CG_MediaModel( cgs.media.modPlasmaExplosion ),
 							NULL );
 		le->ent.scale = radius / model_radius;
 	}
 
-	CG_ImpactPuffParticles( origin, dir, 15, 0.75f, 1, 1, 1, 1, NULL );
+	CG_ImpactPuffParticles( origin, dir, 15, 0.75f, color[0], color[1], color[2], color[3], NULL );
 
 	le->ent.rotation = rand() % 360;
 
 	CG_SpawnDecal( pos, dir, 90, 16,
-				   1, 1, 1, 1, 4, 1, true,
+				   color[0], color[1], color[2], color[3],
+				   4, 1, true,
 				   CG_MediaShader( cgs.media.shaderPlasmaMark ) );
 }
 

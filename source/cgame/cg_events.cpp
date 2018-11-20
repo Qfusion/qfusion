@@ -1428,7 +1428,7 @@ void CG_EntityEvent( entity_state_t *ent, int ev, int parm, bool predicted ) {
 
 		case EV_PLASMA_EXPLOSION:
 			ByteToDir( parm, dir );
-			CG_PlasmaExplosion( ent->origin, dir, ent->firemode, (float)ent->weapon * 8.0f );
+			CG_PlasmaExplosion( ent->origin, dir, ent->team, ent->firemode, (float)ent->weapon * 8.0f );
 			if( ent->firemode == FIRE_MODE_STRONG ) {
 				trap_S_StartFixedSound( CG_MediaSfx( cgs.media.sfxPlasmaStrongHit ), ent->origin, CHAN_AUTO, cg_volume_effects->value, ATTN_IDLE );
 				CG_StartKickAnglesEffect( ent->origin, 50, ent->weapon * 8, 100 );
