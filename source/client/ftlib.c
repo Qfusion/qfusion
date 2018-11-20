@@ -101,7 +101,6 @@ void FTLIB_LoadLibrary( bool verbose ) {
 	import.FS_FCloseFile = &FS_FCloseFile;
 	import.FS_RemoveFile = &FS_RemoveFile;
 	import.FS_GetFileList = &FS_GetFileList;
-	import.FS_IsUrl = &FS_IsUrl;
 
 	import.R_RegisterPic = &CL_FTLibModule_RegisterPic;
 	import.R_RegisterRawPic = &CL_FTLibModule_RegisterRawPic;

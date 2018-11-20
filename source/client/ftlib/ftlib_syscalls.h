@@ -125,10 +125,6 @@ static inline int trap_FS_GetFileList( const char *dir, const char *extension, c
 	return ftlibi_imp_local.FS_GetFileList( dir, extension, buf, bufsize, start, end );
 }
 
-static inline bool trap_FS_IsUrl( const char *url ) {
-	return ftlibi_imp_local.FS_IsUrl( url );
-}
-
 // clock
 static inline int64_t trap_Milliseconds( void ) {
 	return ftlibi_imp_local.Sys_Milliseconds();

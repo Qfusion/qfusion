@@ -23,7 +23,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "sys_fs.h"
 
 #include "compression.h"
-#include "wswcurl.h"
 #include "../qalgo/md5.h"
 #include "../qalgo/q_trie.h"
 
@@ -127,13 +126,6 @@ typedef struct filehandle_s {
 	zipEntry_t *zipEntry;
 	gzFile gzstream;
 	int gzlevel;
-
-	wswcurl_req *streamHandle;
-	bool streamDone;
-	size_t streamOffset;
-	fs_read_cb read_cb;
-	fs_done_cb done_cb;
-	void *customp;
 
 	void *mapping;
 	size_t mapping_size;
@@ -865,17 +857,7 @@ static int FS_FileExists( const char *filename, bool base, bool inVFS ) {
 	void *vfsHandle = NULL;
 	char tempname[FS_MAX_PATH];
 
-	if( FS_IsUrl( filename ) ) {
-		size_t rxSize;
-		int filenum;
-
-		rxSize = FS_FOpenFile( filename, &filenum, FS_READ );
-		if( !filenum ) {
-			return -1;
-		}
-
-		return rxSize;
-	}
+	assert( !FS_IsUrl( filename ) ); // WTF was this shit
 
 	if( base ) {
 		search = FS_SearchPathForBaseFile( filename, tempname, sizeof( tempname ), inVFS ? &vfsHandle : NULL );
@@ -952,9 +934,6 @@ int FS_FOpenAbsoluteFile( const char *filename, int *filenum, int mode ) {
 	int realmode;
 	char modestr[4] = { 0, 0, 0, 0 };
 
-	// FS_NOSIZE bit tells that we're not interested in real size of the file
-	// probably useful for streamed URLS
-
 	realmode = mode;
 	gz = mode & FS_GZ ? true : false;
 	update = mode & FS_UPDATE ? true : false;
@@ -1029,16 +1008,6 @@ bool FS_IsUrl( const char *url ) {
 }
 
 /*
-* FS_StreamDoneSimpleCb
-*
-* Callback for wswcurl
-*/
-static void FS_StreamDoneSimpleCb( wswcurl_req *req, int status, void *customp ) {
-	filehandle_t *fh = (filehandle_t *)customp;
-	fh->streamDone = true;
-}
-
-/*
 * _FS_FOpenPakFile
 */
 static int _FS_FOpenPakFile( packfile_t *pakFile, int *filenum ) {
@@ -1107,7 +1076,6 @@ static int _FS_FOpenPakFile( packfile_t *pakFile, int *filenum ) {
 static int _FS_FOpenFile( const char *filename, int *filenum, int mode, bool base ) {
 	searchpath_t *search;
 	filehandle_t *file;
-	bool noSize;
 	bool gz;
 	bool update;
 	bool cache;
@@ -1117,12 +1085,8 @@ static int _FS_FOpenFile( const char *filename, int *filenum, int mode, bool bas
 	int realmode;
 	char tempname[FS_MAX_PATH];
 
-	// FS_NOSIZE bit tells that we're not interested in real size of the file
-	// probably useful for streamed URLS
-
 	realmode = mode;
 	gz = mode & FS_GZ ? true : false;
-	noSize = mode & FS_NOSIZE ? true : false;
 	update = mode & FS_UPDATE ? true : false;
 	cache = mode & FS_CACHE ? true : false;
 	mode = mode & FS_RWA_MASK;
@@ -1141,48 +1105,7 @@ static int _FS_FOpenFile( const char *filename, int *filenum, int mode, bool bas
 		return -1;
 	}
 
-	if( FS_IsUrl( filename ) ) {
-		size_t rxSize, rxReceived;
-
-		if( mode == FS_WRITE || mode == FS_APPEND ) {
-			Com_DPrintf( "FS_OpenFile: Tried to open URL %s in write-mode!", filename );
-			return -1;
-		}
-
-		*filenum = FS_OpenFileHandle();
-		file = &fs_filehandles[*filenum - 1];
-		file->read_cb = NULL;
-		file->done_cb = NULL;
-		file->streamDone = false;
-		file->streamOffset = 0;
-		file->customp = file;
-
-		file->streamHandle = wswcurl_create( NULL, "%s", filename );
-
-		if( !file->streamHandle ) {
-			FS_FCloseFile( *filenum );
-			*filenum = 0;
-			return -1;
-		}
-
-		wswcurl_stream_callbacks( file->streamHandle, NULL, FS_StreamDoneSimpleCb, NULL, file );
-		wswcurl_start( file->streamHandle );
-
-		if( noSize ) {
-			return 0;
-		}
-
-		// check the expected file size..
-		rxSize = wswcurl_getsize( file->streamHandle, &rxReceived );
-
-		// if the size is 0 and it's EOF, return an error
-		if( rxSize == 0 && wswcurl_eof( file->streamHandle ) ) {
-			FS_FCloseFile( *filenum );
-			*filenum = 0;
-			return -1;
-		}
-		return rxSize;
-	}
+	assert( !FS_IsUrl( filename ) ); // WTF was this shit
 
 	if( ( mode == FS_WRITE || mode == FS_APPEND ) || update || cache ) {
 		int end;
@@ -1362,40 +1285,12 @@ void FS_FCloseFile( int file ) {
 		fclose( fh->fstream );
 		fh->fstream = NULL;
 	}
-	if( fh->streamHandle ) {
-		if( fh->done_cb && !fh->streamDone ) {
-			// premature closing of file, call done-callback
-			// ch : FIXME proper solution for status-code for FS_ callbacks
-			// as for curl, errors are negative values
-			fh->streamDone = true;
-			fh->done_cb( file, 0, fh->customp );
-		}
-		wswcurl_delete( fh->streamHandle );
-		fh->streamHandle = NULL;
-		fh->customp = NULL;
-		fh->done_cb = NULL;
-		fh->read_cb = NULL;
-	}
 	if( fh->gzstream ) {
 		qgzclose( fh->gzstream );
 		fh->gzstream = NULL;
 	}
 
 	FS_CloseFileHandle( fh );
-}
-
-/*
-* FS_ReadStream
-*/
-static int FS_ReadStream( uint8_t *buf, size_t len, filehandle_t *fh ) {
-	size_t numb;
-
-	numb = wswcurl_read( fh->streamHandle, buf, len );
-	if( numb < len ) {
-		fh->streamDone = true;
-	}
-
-	return numb;
 }
 
 /*
@@ -1480,8 +1375,6 @@ int FS_Read( void *buffer, size_t len, int file ) {
 
 	if( fh->zipEntry ) {
 		total = FS_ReadPK3File( ( uint8_t * )buffer, len, fh );
-	} else if( fh->streamHandle ) {
-		total = FS_ReadStream( (uint8_t *)buffer, len, fh );
 	} else if( fh->gzstream ) {
 		total = qgzread( fh->gzstream, buffer, len );
 	} else if( fh->fstream ) {
@@ -1572,9 +1465,6 @@ int FS_Tell( int file ) {
 	if( fh->gzstream ) {
 		return qgztell( fh->gzstream );
 	}
-	if( fh->streamHandle ) {
-		return wswcurl_tell( fh->streamHandle );
-	}
 	return (int)fh->offset;
 }
 
@@ -1597,10 +1487,6 @@ int FS_Seek( int file, int offset, int whence ) {
 						  ( whence == FS_SEEK_SET ? SEEK_SET : -1 ) ) );
 	}
 
-	if( fh->streamHandle ) {
-		fh->uncompressedSize = wswcurl_getsize( fh->streamHandle, NULL );
-	}
-
 	currentOffset = (int)fh->offset;
 
 	if( whence == FS_SEEK_CUR ) {
@@ -1614,48 +1500,6 @@ int FS_Seek( int file, int offset, int whence ) {
 	// clamp so we don't get out of bounds
 	if( offset < 0 ) {
 		return -1;
-	}
-
-	if( fh->streamHandle ) {
-		size_t rxReceived, returned;
-		wswcurl_req *newreq;
-		char *url;
-
-		if( offset == currentOffset ) {
-			wswcurl_ignore_bytes( fh->streamHandle, 0 );
-			return 0;
-		}
-
-		wswcurl_getsize( fh->streamHandle, &rxReceived );
-		returned = wswcurl_tell( fh->streamHandle );
-		if( (int)rxReceived < offset ) {
-			return -1;
-		} else if( offset >= (int)returned ) {
-			wswcurl_ignore_bytes( fh->streamHandle, offset - returned );
-			return 0;
-		}
-
-		// kill the current stream
-		// start a new one with byte offset
-		url = FS_CopyString( wswcurl_get_url( fh->streamHandle ) );
-
-		newreq = wswcurl_create( NULL, "%s", url );
-		if( !newreq ) {
-			FS_Free( url );
-			return -1;
-		}
-
-		wswcurl_delete( fh->streamHandle );
-		fh->streamHandle = newreq;
-
-		wswcurl_set_resume_from( newreq, offset );
-		wswcurl_stream_callbacks( newreq, NULL, FS_StreamDoneSimpleCb, NULL, fh );
-		wswcurl_start( newreq );
-
-		FS_Free( url );
-
-		fh->offset = offset;
-		return 0;
 	}
 
 	if( offset == currentOffset ) {
@@ -1715,9 +1559,6 @@ int FS_Eof( int file ) {
 	filehandle_t *fh;
 
 	fh = FS_FileHandleForNum( file );
-	if( fh->streamHandle ) {
-		return wswcurl_eof( fh->streamHandle );
-	}
 	if( fh->zipEntry ) {
 		return fh->zipEntry->restReadCompressed == 0;
 	}

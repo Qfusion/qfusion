@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #pragma once
 
-#include "../../qcommon/qcommon.h"
+#include "qcommon/qcommon.h"
 
 // ftlib_public.h - font provider subsystem
 
@@ -73,7 +73,6 @@ typedef struct {
 	void ( *FS_FCloseFile )( int file );
 	bool ( *FS_RemoveFile )( const char *filename );
 	int ( *FS_GetFileList )( const char *dir, const char *extension, char *buf, size_t bufsize, int start, int end );
-	bool ( *FS_IsUrl )( const char *url );
 
 	// clock
 	int64_t ( *Sys_Milliseconds )( void );
