@@ -628,6 +628,7 @@ void CG_SC_ResetObituaries( void ) {
 
 static const char * obituaries[] = {
 	"2.3'ED",
+	"AXED",
 	"BINNED",
 	"BLASTED",
 	"BODYBAGGED",
