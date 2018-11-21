@@ -128,10 +128,8 @@ static SoundAsset * S_Register( const char * filename, bool allow_stereo ) {
 	SoundAsset * sfx = &sound_assets[ num_sound_assets ];
 
 	// TODO: maybe we need to dedupe this.
-	strncpy( sfx->filename, filename, sizeof( sfx->filename ) - 1 );
-	sfx->filename[ sizeof( sfx->filename ) - 1 ] = '\0';
-	strncat( sfx->filename, ".ogg", sizeof( sfx->filename ) -1 );
-	sfx->filename[ sizeof( sfx->filename ) - 1 ] = '\0';
+	Q_strncpyz( sfx->filename, filename, sizeof( sfx->filename ) - 1 );
+	Q_strncatz( sfx->filename, ".ogg", sizeof( sfx->filename ) -1 );
 
 	uint8_t * compressed_data;
 	int compressed_len = FS_LoadFile( sfx->filename, ( void ** ) &compressed_data, NULL, 0 );
