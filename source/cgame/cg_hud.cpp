@@ -714,7 +714,7 @@ static const char * obituaries[] = {
 	"WAXED",
 	"WEEDED OUT",
 	"WHACKED",
-	"WIPED OUT"
+	"WIPED OUT",
 	"WRECKED"
 };
 
