@@ -32,7 +32,7 @@ end of unit intermissions
 */
 
 #include "client.h"
-#include "ftlib.h"
+#include "ftlib/ftlib_public.h"
 
 float scr_con_current;    // aproaches scr_conlines at scr_conspeed
 float scr_con_previous;

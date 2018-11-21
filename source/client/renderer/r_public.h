@@ -17,11 +17,10 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
-#ifndef R_PUBLIC_H
-#define R_PUBLIC_H
+#pragma once
 
-#include "../../qcommon/qcommon.h"
-#include "../../cgame/ref.h"
+#include "qcommon/qcommon.h"
+#include "cgame/ref.h"
 
 //
 // these are the functions exported by the refresh module
@@ -199,5 +198,3 @@ ref_export_t *GetRefAPI( ref_import_t *import );
 #ifdef __cplusplus
 }
 #endif
-
-#endif // R_PUBLIC_H

@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "ftlib_local.h"
+#include "client/renderer/r_local.h"
 
 static qfontfamily_t *fontFamilies;
 
@@ -78,7 +79,7 @@ typedef struct {
 * QFT_AllocGlyphs
 */
 static void *QFT_AllocGlyphs( qfontface_t *qfont, wchar_t first, unsigned int count ) {
-	return FTLIB_Alloc( ftlibPool, count * sizeof( qftglyph_t ) );
+	return Mem_Alloc( ftlibPool, count * sizeof( qftglyph_t ) );
 }
 
 /*
@@ -98,7 +99,7 @@ static qftfallback_t *QFT_GetFallbackFace( qfontfamily_t *qfamily, unsigned int 
 		return NULL;
 	}
 
-	fallback = FTLIB_Alloc( ftlibPool, sizeof( qftfallback_t ) );
+	fallback = Mem_Alloc( ftlibPool, sizeof( qftfallback_t ) );
 
 	FT_New_Size( qftfamily->ftface, &( fallback->ftsize ) );
 	FT_Activate_Size( fallback->ftsize );
@@ -210,7 +211,7 @@ static void QFT_UploadRenderedGlyphs( uint8_t *pic, struct shader_s *shader, int
 	for( i = 0; i < height; i++, src += src_width, dest += width ) {
 		memmove( dest, src, width );
 	}
-	trap_R_ReplaceRawSubPic( shader, x, y, width, height, pic );
+	R_ReplaceRawSubPic( shader, x, y, width, height, pic );
 }
 
 /*
@@ -306,7 +307,7 @@ static void QFT_RenderString( qfontface_t *qfont, const char *str ) {
 
 		if( bitmapHeight > qftGlyphTempBitmapHeight ) {
 			qftGlyphTempBitmapHeight = ALIGN( bitmapHeight, QFT_GLYPH_BITMAP_HEIGHT_INCREMENT );
-			qftGlyphTempBitmap = FTLIB_Realloc( qftGlyphTempBitmap, FTLIB_FONT_MAX_IMAGE_WIDTH * qftGlyphTempBitmapHeight );
+			qftGlyphTempBitmap = Mem_Realloc( qftGlyphTempBitmap, FTLIB_FONT_MAX_IMAGE_WIDTH * qftGlyphTempBitmapHeight );
 		}
 
 		if( bitmapHeight > tempLineHeight ) {
@@ -317,9 +318,9 @@ static void QFT_RenderString( qfontface_t *qfont, const char *str ) {
 					qttf->imageCurX = 0;
 					qttf->imageCurY = 0;
 					shaderNum = ( qfont->numShaders )++;
-					shader = trap_R_RegisterRawAlphaMask( FTLIB_FontShaderName( qfont, shaderNum ),
+					shader = R_RegisterRawAlphaMask( FTLIB_FontShaderName( qfont, shaderNum ),
 														  qfont->shaderWidth, qfont->shaderHeight, NULL );
-					qfont->shaders = FTLIB_Realloc( qfont->shaders, qfont->numShaders * sizeof( struct shader_s * ) );
+					qfont->shaders = Mem_Realloc( qfont->shaders, qfont->numShaders * sizeof( struct shader_s * ) );
 					qfont->shaders[shaderNum] = shader;
 				}
 				qttf->imageCurLineHeight = bitmapHeight;
@@ -414,7 +415,7 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size ) {
 	hasKerning = FT_HAS_KERNING( ftface ) ? true : false;
 
 	// we are going to need this for kerning
-	qttf = FTLIB_Alloc( ftlibPool, sizeof( *qttf ) );
+	qttf = Mem_Alloc( ftlibPool, sizeof( *qttf ) );
 	qttf->ftsize = ftsize;
 
 	// use scaled version of the original design text height (the vertical
@@ -423,7 +424,7 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size ) {
 	unitScale = ( float )fontHeight / ( float )ftface->units_per_EM;
 
 	// store font info
-	qfont = FTLIB_Alloc( ftlibPool, sizeof( qfontface_t ) );
+	qfont = Mem_Alloc( ftlibPool, sizeof( qfontface_t ) );
 	qfont->family = family;
 	qfont->size = size;
 	qfont->height = fontHeight;
@@ -476,8 +477,8 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size ) {
 	}
 
 	qfont->numShaders = 1;
-	qfont->shaders = FTLIB_Alloc( ftlibPool, sizeof( struct shader_s * ) );
-	qfont->shaders[0] = trap_R_RegisterRawAlphaMask( FTLIB_FontShaderName( qfont, 0 ),
+	qfont->shaders = Mem_Alloc( ftlibPool, sizeof( struct shader_s * ) );
+	qfont->shaders[0] = R_RegisterRawAlphaMask( FTLIB_FontShaderName( qfont, 0 ),
 													 qfont->shaderWidth, qfont->shaderHeight, NULL );
 	qfont->hasKerning = hasKerning;
 	qfont->f = &qft_face_funcs;
@@ -508,7 +509,7 @@ static void QFT_UnloadFace( qfontface_t *qfont ) {
 
 	FT_Done_Size( qttf->ftsize );
 
-	FTLIB_Free( qttf );
+	Mem_Free( qttf );
 }
 
 static void QFT_UnloadFamily( qfontfamily_t *qfamily ) {
@@ -524,7 +525,7 @@ static void QFT_UnloadFamily( qfontfamily_t *qfamily ) {
 		if( fallback->ftsize ) {
 			FT_Done_Size( fallback->ftsize );
 		}
-		FTLIB_Free( fallback );
+		Mem_Free( fallback );
 	}
 
 	if( qftfamily->ftface ) {
@@ -532,7 +533,7 @@ static void QFT_UnloadFamily( qfontfamily_t *qfamily ) {
 		qftfamily->ftface = NULL;
 	}
 
-	FTLIB_Free( qftfamily->file );
+	Mem_Free( qftfamily->file );
 }
 
 static const qfontfamily_funcs_t qft_family_funcs =
@@ -582,11 +583,11 @@ static bool QFT_LoadFamily( const char *fileName, uint8_t *data, size_t dataSize
 		return false;
 	}
 
-	qftfamily = FTLIB_Alloc( ftlibPool, sizeof( qftfamily_t ) );
+	qftfamily = Mem_Alloc( ftlibPool, sizeof( qftfamily_t ) );
 	qftfamily->ftface = ftface;
 	qftfamily->file = data;
 
-	qfamily = FTLIB_Alloc( ftlibPool, sizeof( qfontfamily_t ) );
+	qfamily = Mem_Alloc( ftlibPool, sizeof( qfontfamily_t ) );
 	qfamily->numFaces = 0;
 	qfamily->name = FTLIB_CopyString( familyName );
 	qfamily->f = &qft_family_funcs;
@@ -612,19 +613,19 @@ static void QFT_LoadFamilyFromFile( const char *name, const char *fileName, bool
 	int length;
 	uint8_t *buffer;
 
-	length = trap_FS_FOpenFile( fileName, &fileNum, FS_READ );
+	length = FS_FOpenFile( fileName, &fileNum, FS_READ );
 	if( length < 0 ) {
 		return;
 	}
 
-	buffer = ( uint8_t * )FTLIB_Alloc( ftlibPool, length );
-	trap_FS_Read( buffer, length, fileNum );
+	buffer = ( uint8_t * )Mem_Alloc( ftlibPool, length );
+	FS_Read( buffer, length, fileNum );
 
 	if( !QFT_LoadFamily( name, buffer, length, verbose, fallback ) ) {
-		FTLIB_Free( buffer );
+		Mem_Free( buffer );
 	}
 
-	trap_FS_FCloseFile( fileNum );
+	FS_FCloseFile( fileNum );
 }
 
 /*
@@ -647,14 +648,14 @@ static void QFT_PrecacheFontsByExt( bool verbose, const char *ext, bool fallback
 		return;
 	}
 
-	if( ( numfiles = trap_FS_GetFileList( dir, ext, NULL, 0, 0, 0 ) ) == 0 ) {
+	if( ( numfiles = FS_GetFileList( dir, ext, NULL, 0, 0, 0 ) ) == 0 ) {
 		return;
 	}
 
 	i = 0;
 	length = 0;
 	do {
-		if( ( j = trap_FS_GetFileList( dir, ext, buffer, sizeof( buffer ), i, numfiles ) ) == 0 ) {
+		if( ( j = FS_GetFileList( dir, ext, buffer, sizeof( buffer ), i, numfiles ) ) == 0 ) {
 			// can happen if the filename is too long to fit into the buffer or we're done
 			i++;
 			continue;
@@ -671,9 +672,9 @@ static void QFT_PrecacheFontsByExt( bool verbose, const char *ext, bool fallback
 }
 
 /*
-* QFT_PrecacheFonts
+* FTLIB_PrecacheFonts
 */
-static void QFT_PrecacheFonts( bool verbose ) {
+void FTLIB_PrecacheFonts( bool verbose ) {
 	QFT_PrecacheFontsByExt( verbose, QFT_FILE_EXTENSION_TRUETYPE, false );
 	QFT_PrecacheFontsByExt( verbose, QFT_FILE_EXTENSION_OPENTYPE, false );
 	QFT_PrecacheFontsByExt( verbose, QFT_FILE_EXTENSION_TRUETYPE, true );
@@ -681,9 +682,9 @@ static void QFT_PrecacheFonts( bool verbose ) {
 }
 
 /*
-* QFT_Init
+* FTLIB_InitSubsystems
 */
-static void QFT_Init( bool verbose ) {
+void FTLIB_InitSubsystems() {
 	int error;
 
 	assert( ftLibrary == NULL );
@@ -691,46 +692,28 @@ static void QFT_Init( bool verbose ) {
 
 	if( error != 0 ) {
 		ftLibrary = NULL;
-		if( verbose ) {
-			Com_Printf( S_COLOR_RED "Error initializing FreeType library: %i\n", error );
-		}
+		Com_Printf( S_COLOR_RED "Error initializing FreeType library: %i\n", error );
 	}
 
 	assert( !qftGlyphTempBitmap );
-	qftGlyphTempBitmap = FTLIB_Alloc( ftlibPool, FTLIB_FONT_MAX_IMAGE_WIDTH * QFT_GLYPH_BITMAP_HEIGHT_INCREMENT );
+	qftGlyphTempBitmap = Mem_Alloc( ftlibPool, FTLIB_FONT_MAX_IMAGE_WIDTH * QFT_GLYPH_BITMAP_HEIGHT_INCREMENT );
 	qftGlyphTempBitmapHeight = QFT_GLYPH_BITMAP_HEIGHT_INCREMENT;
 }
 
 /*
-* QFT_Shutdown
+* FTLIB_ShutdownSubsystems
 */
-static void QFT_Shutdown( void ) {
+void FTLIB_ShutdownSubsystems() {
 	if( ftLibrary != NULL ) {
 		FT_Done_FreeType( ftLibrary );
 		ftLibrary = NULL;
 	}
 
 	if( qftGlyphTempBitmap ) {
-		FTLIB_Free( qftGlyphTempBitmap );
+		Mem_Free( qftGlyphTempBitmap );
 		qftGlyphTempBitmap = NULL;
 		qftGlyphTempBitmapHeight = 0;
 	}
-}
-
-// ============================================================================
-
-/*
-* FTLIB_InitSubsystems
-*/
-void FTLIB_InitSubsystems( bool verbose ) {
-	QFT_Init( verbose );
-}
-
-/*
-* FTLIB_PrecacheFonts
-*/
-void FTLIB_PrecacheFonts( bool verbose ) {
-	QFT_PrecacheFonts( verbose );
 }
 
 /*
@@ -819,7 +802,7 @@ void FTLIB_TouchFont( qfontface_t *qfont ) {
 	unsigned int i;
 
 	for( i = 0; i < qfont->numShaders; i++ ) {
-		trap_R_RegisterPic( FTLIB_FontShaderName( qfont, i ) );
+		R_RegisterPic( FTLIB_FontShaderName( qfont, i ) );
 	}
 }
 
@@ -860,36 +843,29 @@ void FTLIB_FreeFonts( bool verbose ) {
 			}
 
 			if( qface->shaders ) {
-				FTLIB_Free( qface->shaders );
+				Mem_Free( qface->shaders );
 			}
 
 			for( i = 0; i < ( sizeof( qface->glyphs ) / sizeof( qface->glyphs[0] ) ); i++ ) {
 				if( qface->glyphs[i] ) {
-					FTLIB_Free( qface->glyphs[i] );
+					Mem_Free( qface->glyphs[i] );
 				}
 			}
 
-			FTLIB_Free( qface );
+			Mem_Free( qface );
 		}
 
 		if( qfamily->f->unloadFamily ) {
 			qfamily->f->unloadFamily( qfamily );
 		}
 		if( qfamily->name ) {
-			FTLIB_Free( qfamily->name );
+			Mem_Free( qfamily->name );
 		}
 
-		FTLIB_Free( qfamily );
+		Mem_Free( qfamily );
 	}
 
 	fontFamilies = NULL;
-}
-
-/*
-* FTLIB_ShutdownSubsystems
-*/
-void FTLIB_ShutdownSubsystems( bool verbose ) {
-	QFT_Shutdown();
 }
 
 /*

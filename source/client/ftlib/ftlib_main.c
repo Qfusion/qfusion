@@ -26,11 +26,9 @@ struct mempool_s *ftlibPool;
 * FTLIB_Init
 */
 bool FTLIB_Init( bool verbose ) {
-	ftlibPool = FTLIB_AllocPool( "Generic pool" );
+	ftlibPool = Mem_AllocPool( NULL, "Fonts Library Module" );
 
 	FTLIB_InitSubsystems( verbose );
-
-	trap_Cmd_AddCommand( "fontlist", &FTLIB_PrintFontList );
 
 	return true;
 }
@@ -38,12 +36,10 @@ bool FTLIB_Init( bool verbose ) {
 /*
 * FTLIB_Shutdown
 */
-void FTLIB_Shutdown( bool verbose ) {
-	FTLIB_ShutdownSubsystems( verbose );
+void FTLIB_Shutdown() {
+	FTLIB_ShutdownSubsystems();
 
-	FTLIB_FreePool( &ftlibPool );
-
-	trap_Cmd_RemoveCommand( "fontlist" );
+	Mem_FreePool( &ftlibPool );
 }
 
 /*
@@ -52,7 +48,7 @@ void FTLIB_Shutdown( bool verbose ) {
 char *FTLIB_CopyString( const char *in ) {
 	char *out;
 
-	out = ( char* )FTLIB_Alloc( ftlibPool, sizeof( char ) * ( strlen( in ) + 1 ) );
+	out = ( char* )Mem_Alloc( ftlibPool, sizeof( char ) * ( strlen( in ) + 1 ) );
 	Q_strncpyz( out, in, sizeof( char ) * ( strlen( in ) + 1 ) );
 
 	return out;

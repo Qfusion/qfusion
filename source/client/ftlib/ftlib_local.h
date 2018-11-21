@@ -18,27 +18,18 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#ifndef _FTLIB_LOCAL_H_
-#define _FTLIB_LOCAL_H_
+#pragma once
 
-#include "../../qcommon/qcommon.h"
-#include "../../gameshared/q_arch.h"
-#include "../../gameshared/q_math.h"
-#include "../../gameshared/q_shared.h"
-#include "../../gameshared/q_cvar.h"
+#include "qcommon/qcommon.h"
+#include "gameshared/q_arch.h"
+#include "gameshared/q_math.h"
+#include "gameshared/q_shared.h"
+#include "gameshared/q_cvar.h"
 
 #include "ftlib_public.h"
-#include "ftlib_syscalls.h"
 
 extern struct mempool_s *ftlibPool;
 typedef struct shader_s shader_t;
-
-#define FTLIB_Alloc( pool, size ) trap_MemAlloc( pool, size, __FILE__, __LINE__ )
-#define FTLIB_Realloc( data, size ) trap_MemRealloc( data, size, __FILE__, __LINE__ )
-#define FTLIB_Free( mem ) trap_MemFree( mem, __FILE__, __LINE__ )
-#define FTLIB_AllocPool( name ) trap_MemAllocPool( name, __FILE__, __LINE__ )
-#define FTLIB_FreePool( pool ) trap_MemFreePool( pool, __FILE__, __LINE__ )
-#define FTLIB_EmptyPool( pool ) trap_MemEmptyPool( pool, __FILE__, __LINE__ )
 
 #define FTLIB_REPLACEMENT_GLYPH         '?'
 
@@ -142,40 +133,9 @@ typedef struct qfontfamily_s {
 	struct qfontfamily_s *next;
 } qfontfamily_t;
 
-void Com_DPrintf( const char *format, ... );
+void FTLIB_InitSubsystems();
+void FTLIB_ShutdownSubsystems();
 
-bool FTLIB_Init( bool verbose );
-void FTLIB_Shutdown( bool verbose );
-
-char *FTLIB_CopyString( const char *in );
-
-void GetFTLibAPI( ftlib_import_t *import );
-
-// ftlib.c
-void FTLIB_InitSubsystems( bool verbose );
-void FTLIB_ShutdownSubsystems( bool verbose );
-void FTLIB_PrecacheFonts( bool verbose );
-qfontface_t *FTLIB_RegisterFont( const char *family, const char *fallback, int style, unsigned int size );
-void FTLIB_TouchFont( qfontface_t *qfont );
-void FTLIB_TouchAllFonts( void );
-void FTLIB_FreeFonts( bool verbose );
-void FTLIB_PrintFontList( void );
 qglyph_t *FTLIB_GetGlyph( qfontface_t *font, wchar_t num );
 const char *FTLIB_FontShaderName( qfontface_t *qfont, unsigned int shaderNum );
-
-// ftlib_draw.c
-size_t FTLIB_FontSize( qfontface_t *font );
-size_t FTLIB_FontHeight( qfontface_t *font );
-size_t FTLIB_strWidth( const char *str, qfontface_t *font, size_t maxlen, int flags );
-size_t FTLIB_StrlenForWidth( const char *str, qfontface_t *font, size_t maxwidth, int flags );
-int FTLIB_FontUnderline( qfontface_t *font, int *thickness );
-size_t FTLIB_FontAdvance( qfontface_t *font );
-size_t FTLIB_FontXHeight( qfontface_t *font );
-void FTLIB_DrawClampChar( int x, int y, wchar_t num, int xmin, int ymin, int xmax, int ymax, qfontface_t *font, vec4_t color );
-void FTLIB_DrawRawChar( int x, int y, wchar_t num, qfontface_t *font, vec4_t color );
-void FTLIB_DrawClampString( int x, int y, const char *str, int xmin, int ymin, int xmax, int ymax, qfontface_t *font, vec4_t color, int flags );
-size_t FTLIB_DrawRawString( int x, int y, const char *str, size_t maxwidth, int *width, qfontface_t *font, vec4_t color, int flags );
-int FTLIB_DrawMultilineString( int x, int y, const char *str, int halign, int maxwidth, int maxlines, qfontface_t *font, vec4_t color, int flags );
-fdrawchar_t FTLIB_SetDrawIntercept( fdrawchar_t intercept );
-
-#endif
+char *FTLIB_CopyString( const char *in );

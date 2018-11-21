@@ -17,10 +17,10 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
-#ifndef R_SHADER_H
-#define R_SHADER_H
+#pragma once
 
 #include "r_image.h"
+#include "r_vattribs.h"
 
 #define MAX_SHADERS                 4096
 #define MAX_SHADER_PASSES           8
@@ -315,5 +315,3 @@ void        R_RemapShader( const char *from, const char *to, int timeOffset );
 void        R_GetShaderDimensions( const shader_t *shader, int *width, int *height );
 
 void        R_ReplaceRawSubPic( shader_t *shader, int x, int y, int width, int height, uint8_t *data );
-
-#endif // R_SHADER_H

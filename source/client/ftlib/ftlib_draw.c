@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "ftlib_local.h"
+#include "client/renderer/r_local.h"
 
 static fdrawchar_t drawCharIntercept = NULL;
 
@@ -61,10 +62,10 @@ size_t FTLIB_FontHeight( qfontface_t *font ) {
 }
 
 /*
-* FTLIB_strWidth
+* FTLIB_StringWidth
 * doesn't count invisible characters. Counts up to given length, if any.
 */
-size_t FTLIB_strWidth( const char *str, qfontface_t *font, size_t maxlen, int flags ) {
+size_t FTLIB_StringWidth( const char *str, qfontface_t *font, size_t maxlen, int flags ) {
 	const char *s = str, *olds;
 	size_t width = 0;
 	wchar_t num, prev_num = 0;
@@ -246,9 +247,9 @@ size_t FTLIB_FontXHeight( qfontface_t *font ) {
 //===============================================================================
 
 /*
-* FTLIB_SetDrawIntercept
+* FTLIB_SetDrawCharIntercept
 */
-fdrawchar_t FTLIB_SetDrawIntercept( fdrawchar_t intercept ) {
+fdrawchar_t FTLIB_SetDrawCharIntercept( fdrawchar_t intercept ) {
 	fdrawchar_t old = drawCharIntercept;
 	drawCharIntercept = intercept;
 	return old;
@@ -263,7 +264,7 @@ fdrawchar_t FTLIB_SetDrawIntercept( fdrawchar_t intercept ) {
 */
 void FTLIB_DrawRawChar( int x, int y, wchar_t num, qfontface_t *font, vec4_t color ) {
 	qglyph_t *glyph;
-	fdrawchar_t draw = trap_R_DrawStretchPic;
+	fdrawchar_t draw = R_DrawStretchPic;
 
 	if( ( num <= ' ' ) || !font || ( y <= -font->height ) ) {
 		return;
@@ -304,7 +305,7 @@ void FTLIB_DrawClampChar( int x, int y, wchar_t num, int xmin, int ymin, int xma
 	int x2, y2;
 	float s1 = 0.0f, t1 = 0.0f, s2 = 1.0f, t2 = 1.0f;
 	float tw, th;
-	fdrawchar_t draw = trap_R_DrawStretchPic;
+	fdrawchar_t draw = R_DrawStretchPic;
 
 	if( ( num <= ' ' ) || !font || ( xmax <= xmin ) || ( ymax <= ymin ) ) {
 		return;

@@ -22,11 +22,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // is used for both the software and OpenGL rendering versions of the
 // qfusion refresh engine.
 #include "client.h"
-#include "ftlib.h"
 #include "xpm.h"
+#include "ftlib/ftlib_public.h"
 #include "renderer/r_local.h"
 #include "renderer/r_frontend.h"
-#include "../sdl/sdl_window.h"
+#include "sdl/sdl_window.h"
 
 static cvar_t *vid_width, *vid_height;
 static cvar_t *vid_fullscreen;
@@ -434,7 +434,7 @@ void VID_Shutdown() {
 	RF_Shutdown( false );
 	Mem_FreePool( &vid_ref_mempool );
 
-	FTLIB_UnloadLibrary( false );
+	FTLIB_Shutdown( false );
 
 	Cmd_RemoveCommand( "vid_modelist" );
 

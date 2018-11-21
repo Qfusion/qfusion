@@ -20,9 +20,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // cl_main.c  -- client main loop
 
 #include "client.h"
-#include "ftlib.h"
-#include "../qcommon/asyncstream.h"
-#include "../qalgo/hash.h"
+#include "qcommon/asyncstream.h"
+#include "qalgo/hash.h"
+#include "ftlib/ftlib_public.h"
 #include "renderer/r_frontend.h"
 
 cvar_t *rcon_client_password;
