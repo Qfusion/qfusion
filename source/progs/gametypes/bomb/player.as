@@ -135,18 +135,6 @@ class cPlayer
 	{
 		this.client.inventoryClear();
 
-		if ( gametype.isInstagib )
-		{
-			this.client.inventoryGiveItem( WEAP_INSTAGUN );
-
-			this.client.inventorySetCount( AMMO_INSTAS, 1 );
-			this.client.inventorySetCount( AMMO_WEAK_INSTAS, 1 );
-
-			this.client.selectWeapon( -1 );
-
-			return;
-		}
-
 		if ( this.pendingPrimary != PRIMARY_NONE )
 		{
 			this.weapPrimary = this.pendingPrimary;
@@ -283,9 +271,6 @@ class cPlayer
 
 	void showPrimarySelection()
 	{
-		// this code shouldn't be reachable in insta
-		assert( !gametype.isInstagib, "player.as showPrimarySelection: insta" );
-
 		if ( this.client.team == TEAM_SPECTATOR )
 		{
 			return;
@@ -315,9 +300,6 @@ class cPlayer
 
 	void showSecondarySelection()
 	{
-		// this code shouldn't be reachable in insta
-		assert( !gametype.isInstagib, "player.as showSecondarySelection: insta" );
-
 		if ( this.client.team == TEAM_SPECTATOR )
 		{
 			return;

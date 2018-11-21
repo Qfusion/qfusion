@@ -87,7 +87,6 @@ static const constant_numeric_t cg_numeric_constants[] = {
 	{ "WEAP_PLASMAGUN", WEAP_PLASMAGUN },
 	{ "WEAP_LASERGUN", WEAP_LASERGUN },
 	{ "WEAP_ELECTROBOLT", WEAP_ELECTROBOLT },
-	{ "WEAP_INSTAGUN", WEAP_INSTAGUN },
 
 	{ "NOGUN", 0 },
 	{ "GUN", 1 },
@@ -199,10 +198,6 @@ static int CG_GetMatchDuration( const void *parameter ) {
 
 static int CG_GetOvertime( const void *parameter ) {
 	return GS_MatchExtended();
-}
-
-static int CG_GetInstagib( const void *parameter ) {
-	return GS_Instagib();
 }
 
 static int CG_GetTeamBased( const void *parameter ) {
@@ -533,7 +528,6 @@ static const reference_numeric_t cg_numeric_references[] =
 	{ "MATCH_DURATION", CG_GetMatchDuration, NULL },
 	{ "OVERTIME", CG_GetOvertime, NULL },
 	{ "MATCH_POINT", CG_GetOvertime, NULL },
-	{ "INSTAGIB", CG_GetInstagib, NULL },
 	{ "TEAMBASED", CG_GetTeamBased, NULL },
 	{ "INDIVIDUAL", CG_InvidualGameType, NULL },
 	{ "RACE", CG_RaceGameType, NULL },
@@ -884,10 +878,6 @@ static void CG_DrawObituaries( int x, int y, int align, struct qfontface_s *font
 			case MOD_ELECTROBOLT_W:
 			case MOD_ELECTROBOLT_S:
 				pic = CG_MediaShader( cgs.media.shaderWeaponIcon[WEAP_ELECTROBOLT - 1] );
-				break;
-			case MOD_INSTAGUN_W:
-			case MOD_INSTAGUN_S:
-				pic = CG_MediaShader( cgs.media.shaderWeaponIcon[WEAP_INSTAGUN - 1] );
 				break;
 			case MOD_LASERGUN_W:
 			case MOD_LASERGUN_S:

@@ -1531,17 +1531,6 @@ void ClientThink( edict_t *ent, usercmd_t *ucmd, int timeDelta ) {
 		client->resp.snap.buttons |= ucmd->buttons;
 	}
 
-	// trigger the instashield
-	if( GS_Instagib() && g_instashield->integer ) {
-		if( client->ps.pmove.pm_type == PM_NORMAL && pm.cmd.upmove < 0 &&
-			client->resp.instashieldCharge == INSTA_SHIELD_MAX &&
-			client->ps.inventory[POWERUP_SHELL] == 0 ) {
-			client->ps.inventory[POWERUP_SHELL] = client->resp.instashieldCharge;
-			G_Sound( ent, CHAN_AUTO, trap_SoundIndex( GS_FindItemByTag( POWERUP_SHELL )->pickup_sound ), ATTN_NORM );
-		}
-	}
-
-	//
 	if( client->ps.pmove.pm_type == PM_NORMAL ) {
 		client->level.stats.had_playtime = true;
 	}
@@ -1564,22 +1553,6 @@ void G_ClientThink( edict_t *ent ) {
 	}
 
 	ent->r.client->ps.POVnum = ENTNUM( ent ); // set self
-
-	// load instashield
-	if( GS_Instagib() && g_instashield->integer ) {
-		if( ent->s.team >= TEAM_PLAYERS && ent->s.team < GS_MAX_TEAMS ) {
-			if( ent->r.client->ps.inventory[POWERUP_SHELL] > 0 ) {
-				ent->r.client->resp.instashieldCharge -= ( game.frametime * 0.001f ) * 60.0f;
-				clamp( ent->r.client->resp.instashieldCharge, 0, INSTA_SHIELD_MAX );
-				if( ent->r.client->resp.instashieldCharge == 0 ) {
-					ent->r.client->ps.inventory[POWERUP_SHELL] = 0;
-				}
-			} else {
-				ent->r.client->resp.instashieldCharge += ( game.frametime * 0.001f ) * 20.0f;
-				clamp( ent->r.client->resp.instashieldCharge, 0, INSTA_SHIELD_MAX );
-			}
-		}
-	}
 
 	// run bots thinking with the rest of clients
 	// if( ( ent->r.svflags & SVF_FAKECLIENT ) && ent->think == NULL ) { TODO

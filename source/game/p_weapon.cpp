@@ -591,39 +591,6 @@ static edict_t *G_Fire_StrongBolt( vec3_t origin, vec3_t angles, firedef_t *fire
 }
 
 /*
-* G_Fire_Instagun
-*/
-static edict_t *G_Fire_Instagun( vec3_t origin, vec3_t angles, firedef_t *firedef, edict_t *owner, int seed ) {
-	int range, knockback, radius, mod;
-	float damage;
-	int timeDelta;
-
-	timeDelta = 0;
-	if( owner && owner->r.client ) {
-		timeDelta = owner->r.client->timeDelta;
-	}
-
-	if( firedef->spread ) {
-		G_LocalSpread( angles, firedef->spread, seed );
-	}
-
-	mod = ( firedef->fire_mode == FIRE_MODE_STRONG ) ? MOD_INSTAGUN_S : MOD_INSTAGUN_W;
-	range = firedef->timeout;
-	damage = firedef->damage;
-	knockback = firedef->knockback;
-	radius = firedef->splash_radius;
-
-	if( is_quad ) {
-		damage *= QUAD_DAMAGE_SCALE;
-		knockback *= QUAD_KNOCKBACK_SCALE;
-	}
-
-	W_Fire_Instagun( owner, origin, angles, damage, knockback, radius, range, mod, timeDelta );
-
-	return NULL;
-}
-
-/*
 * G_FireWeapon
 */
 void G_FireWeapon( edict_t *ent, int parm ) {
@@ -694,10 +661,6 @@ void G_FireWeapon( edict_t *ent, int parm ) {
 
 		case WEAP_ELECTROBOLT:
 			projectile = G_Fire_StrongBolt( origin, angles, firedef, ent, ucmdSeed );
-			break;
-
-		case WEAP_INSTAGUN:
-			projectile = G_Fire_Instagun( origin, angles, firedef, ent, ucmdSeed );
 			break;
 	}
 

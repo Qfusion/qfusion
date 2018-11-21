@@ -620,14 +620,12 @@ static void g_mm_writeHeader( stat_query_t *query, int teamGame ) {
 	stat_query_section_t *matchsection = sq_api->CreateSection( query, 0, "match" );
 
 	// Write match properties
-	// sq_api->SetNumber( matchsection, "final", (target_cl==NULL) ? 1 : 0 );
 	sq_api->SetString( matchsection, "gametype", gs.gametypeName );
 	sq_api->SetString( matchsection, "map", level.mapname );
 	sq_api->SetString( matchsection, "hostname", trap_Cvar_String( "sv_hostname" ) );
 	sq_api->SetNumber( matchsection, "timeplayed", level.finalMatchDuration / 1000 );
 	sq_api->SetNumber( matchsection, "timelimit", GS_MatchDuration() / 1000 );
 	sq_api->SetNumber( matchsection, "scorelimit", g_scorelimit->integer );
-	sq_api->SetNumber( matchsection, "instagib", ( GS_Instagib() ? 1 : 0 ) );
 	sq_api->SetNumber( matchsection, "teamgame", teamGame );
 	sq_api->SetNumber( matchsection, "racegame", ( GS_RaceGametype() ? 1 : 0 ) );
 	sq_api->SetString( matchsection, "gamedir", trap_Cvar_String( "fs_game" ) );

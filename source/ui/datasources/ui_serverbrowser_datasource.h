@@ -21,7 +21,7 @@
     </datagrid>
 
     TODO: ServerBrowserOptions !
-    Backend should classificate by (full | empty | insta | passwd | ranked | reg-only)
+    Backend should classificate by (full | empty | passwd | ranked | reg-only)
     and either (exclude | show | only)
     ServerBrowserOptions could be used to filter servers.
 */
@@ -53,7 +53,6 @@ public:
 	int bots;
 	std::string gametype;
 	std::string modname;
-	bool instagib;
 	bool race;
 	int skilllevel;
 	bool password;
@@ -174,7 +173,7 @@ public:
 	};
 
 	ServerBrowserFilter() : 
-		full( HIDE ), empty( HIDE ), instagib( HIDE ), 
+		full( HIDE ), empty( HIDE ),
 		password( HIDE ), ranked( HIDE ), registered( HIDE ),
 		gametype( "" ) {}
 
@@ -186,7 +185,6 @@ public:
 	// options
 	VisibilityState full;
 	VisibilityState empty;
-	VisibilityState instagib;
 	VisibilityState password;
 	VisibilityState ranked;
 	VisibilityState registered;

@@ -77,7 +77,6 @@ extern vec3_t item_box_maxs;
 #define ZOOMTIME 60
 #define CROUCHTIME 100
 #define DEFAULT_PLAYERSPEED_STANDARD 320.0f
-#define DEFAULT_PLAYERSPEED_INSTAGIB 320.0f
 #define DEFAULT_PLAYERSPEED_RACE 320.0f
 #define DEFAULT_JUMPSPEED 280.0f
 #define DEFAULT_DASHSPEED 450.0f
@@ -118,7 +117,6 @@ enum {
 
 #define GAMESTAT_FLAG_PAUSED ( 1 << 0LL )
 #define GAMESTAT_FLAG_WAITING ( 1 << 1LL )
-#define GAMESTAT_FLAG_INSTAGIB ( 1 << 2LL )
 #define GAMESTAT_FLAG_MATCHEXTENDED ( 1 << 3LL )
 #define GAMESTAT_FLAG_FALLDAMAGE ( 1 << 4LL )
 #define GAMESTAT_FLAG_HASCHALLENGERS ( 1 << 5LL )
@@ -146,7 +144,6 @@ typedef struct {
 extern gs_state_t gs;
 
 #define GS_GamestatSetFlag( flag, b ) ( b ? ( gs.gameState.stats[GAMESTAT_FLAGS] |= flag ) : ( gs.gameState.stats[GAMESTAT_FLAGS] &= ~flag ) )
-#define GS_Instagib() ( ( gs.gameState.stats[GAMESTAT_FLAGS] & GAMESTAT_FLAG_INSTAGIB ) ? true : false )
 #define GS_FallDamage() ( ( gs.gameState.stats[GAMESTAT_FLAGS] & GAMESTAT_FLAG_FALLDAMAGE ) ? true : false )
 #define GS_ShootingDisabled() ( ( gs.gameState.stats[GAMESTAT_FLAGS] & GAMESTAT_FLAG_INHIBITSHOOTING ) ? true : false )
 #define GS_HasChallengers() ( ( gs.gameState.stats[GAMESTAT_FLAGS] & GAMESTAT_FLAG_HASCHALLENGERS ) ? true : false )
@@ -176,7 +173,7 @@ extern gs_state_t gs;
 
 #define GS_ColorCorrection() ( gs.gameState.stats[GAMESTAT_COLORCORRECTION] )
 
-#define DEFAULT_PLAYERSPEED ( GS_RaceGametype() ? DEFAULT_PLAYERSPEED_RACE : ( GS_Instagib() ? DEFAULT_PLAYERSPEED_INSTAGIB : DEFAULT_PLAYERSPEED_STANDARD ) )
+#define DEFAULT_PLAYERSPEED ( GS_RaceGametype() ? DEFAULT_PLAYERSPEED_RACE : DEFAULT_PLAYERSPEED_STANDARD )
 
 //==================================================================
 
@@ -359,8 +356,6 @@ enum {
 #define ARMOR_PROTECTION 0.66 // how much damage is removed per damage point taken
 #define ARMOR_DECAY_MAX_ARMOR 0 // decay to this value ( 0 disabled )
 
-#define INSTA_SHIELD_MAX    100.0f
-
 // gs_items - shared items definitions
 
 //==================
@@ -377,7 +372,6 @@ typedef enum {
 	WEAP_PLASMAGUN,
 	WEAP_LASERGUN,
 	WEAP_ELECTROBOLT,
-	WEAP_INSTAGUN,
 
 	WEAP_TOTAL
 } weapon_tag_t;
@@ -392,7 +386,6 @@ typedef enum {
 	AMMO_PLASMA,
 	AMMO_LASERS,
 	AMMO_BOLTS,
-	AMMO_INSTAS,
 
 	AMMO_WEAK_GUNBLADE, //this is the blade
 	AMMO_WEAK_BULLETS,
@@ -402,7 +395,6 @@ typedef enum {
 	AMMO_WEAK_PLASMA,
 	AMMO_WEAK_LASERS,
 	AMMO_WEAK_BOLTS,
-	AMMO_WEAK_INSTAS,
 
 	AMMO_TOTAL
 
@@ -468,8 +460,6 @@ typedef enum {
 	, IT_POWERUP = 8
 	, IT_HEALTH = 64
 } itemtype_t;
-
-#define G_INSTAGIB_NEGATE_ITEMMASK ( IT_WEAPON | IT_AMMO | IT_ARMOR | IT_POWERUP | IT_HEALTH )
 
 typedef struct gitem_s {
 	//header
@@ -732,8 +722,6 @@ typedef enum {
 	MOD_PLASMA_S,
 	MOD_ELECTROBOLT_W,
 	MOD_ELECTROBOLT_S,
-	MOD_INSTAGUN_W,
-	MOD_INSTAGUN_S,
 	MOD_LASERGUN_W,
 	MOD_LASERGUN_S,
 	MOD_GRENADE_SPLASH_W,
@@ -841,7 +829,6 @@ typedef enum {
 	EV_WEAPONACTIVATE,
 	EV_FIREWEAPON,
 	EV_ELECTROTRAIL,
-	EV_INSTATRAIL,
 	EV_FIRE_RIOTGUN,
 	EV_FIRE_BULLET,
 	EV_SMOOTHREFIREWEAPON,
@@ -882,7 +869,6 @@ typedef enum {
 	EV_ROCKET_EXPLOSION,
 	EV_PLASMA_EXPLOSION,
 	EV_BOLT_EXPLOSION,
-	EV_INSTA_EXPLOSION,
 
 	// 3 spots reserved for new weapons sfx, so
 	// the events below don't change their numbers easily

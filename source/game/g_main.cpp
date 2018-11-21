@@ -85,17 +85,12 @@ cvar_t *g_weapon_respawn;
 cvar_t *g_health_respawn;
 cvar_t *g_armor_respawn;
 
-cvar_t *g_instagib;
-cvar_t *g_instajump;
-cvar_t *g_instashield;
-
 cvar_t *g_allow_spectator_voting;
 
 cvar_t *g_asGC_stats;
 cvar_t *g_asGC_interval;
 
 cvar_t *g_skillRating;
-cvar_t *g_bot_evolution;
 
 static char *map_rotation_s = NULL;
 static char **map_rotation_p = NULL;
@@ -303,11 +298,6 @@ void G_Init( unsigned int seed, unsigned int framemsec, int protocol, const char
 	g_enforce_map_pool = trap_Cvar_Get( "g_enforce_map_pool", "0", CVAR_ARCHIVE );
 	g_map_pool = trap_Cvar_Get( "g_map_pool", "", CVAR_ARCHIVE );
 
-	//game switches
-	g_instagib = trap_Cvar_Get( "g_instagib", "0", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_LATCH );
-	g_instajump = trap_Cvar_Get( "g_instajump", "1", CVAR_ARCHIVE );
-	g_instashield = trap_Cvar_Get( "g_instashield", "1", CVAR_ARCHIVE );
-
 	// helper cvars to show current status in serverinfo reply
 	trap_Cvar_Get( "g_match_time", "", CVAR_SERVERINFO | CVAR_READONLY );
 	trap_Cvar_Get( "g_match_score", "", CVAR_SERVERINFO | CVAR_READONLY );
@@ -318,8 +308,6 @@ void G_Init( unsigned int seed, unsigned int framemsec, int protocol, const char
 	g_asGC_interval = trap_Cvar_Get( "g_asGC_interval", "10", CVAR_ARCHIVE );
 
 	g_skillRating = trap_Cvar_Get( "sv_skillRating", va( "%.0f", MM_RATING_DEFAULT ), CVAR_SERVERINFO | CVAR_READONLY );
-	// trap_Cvar_ForceSet( "sv_skillRating", va("%d", MM_RATING_DEFAULT) );
-	g_bot_evolution = trap_Cvar_Get( "g_bot_evolution", "0", CVAR_ARCHIVE | CVAR_LATCH );
 
 	// nextmap
 	trap_Cvar_ForceSet( "nextmap", "match \"advance\"" );

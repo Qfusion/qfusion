@@ -507,52 +507,6 @@ void CG_BoltExplosionMode( const vec3_t pos, const vec3_t dir, int fire_mode, in
 }
 
 /*
-* CG_InstaExplosionMode
-*/
-void CG_InstaExplosionMode( const vec3_t pos, const vec3_t dir, int fire_mode, int surfFlags, int owner ) {
-	int team = -1;
-	vec4_t tcolor = { 0.65f, 0.0f, 0.26f, 1.0f };
-	lentity_t *le;
-	vec3_t angles;
-	vec3_t origin;
-
-	if( cg_teamColoredInstaBeams->integer && owner && ( owner < gs.maxclients + 1 ) ) {
-		team = cg_entities[owner].current.team;
-	}
-	if( ( team == TEAM_ALPHA ) || ( team == TEAM_BETA ) ) {
-		CG_TeamColor( team, tcolor );
-		tcolor[0] *= 0.65f;
-		tcolor[1] *= 0.65f;
-		tcolor[2] *= 0.65f;
-	}
-
-	VecToAngles( dir, angles );
-	VectorMA( pos, IMPACT_POINT_OFFSET, dir, origin );
-
-	if( !CG_SpawnDecal( pos, dir, random() * 360, 12,
-						tcolor[0], tcolor[1], tcolor[2], 1.0f,
-						10, 1, true, CG_MediaShader( cgs.media.shaderInstagunMark ) ) ) {
-		if( surfFlags & ( SURF_SKY | SURF_NOMARKS | SURF_NOIMPACT ) ) {
-			return;
-		}
-	}
-
-	le = CG_AllocModel( LE_ALPHA_FADE, origin, angles, 6, // 6 is time
-						tcolor[0], tcolor[1], tcolor[2], 1,
-						250, 0.65, 0.65, 0.65, //white dlight
-						CG_MediaModel( cgs.media.modInstagunWallHit ), NULL );
-
-	le->ent.rotation = rand() % 360;
-	le->ent.scale = ( fire_mode == FIRE_MODE_STRONG ) ? 1.5f : 1.0f;
-
-	// add white energy particles on the impact
-	CG_ImpactPuffParticles( origin, dir, 15, 0.75f, 1, 1, 1, 1, NULL );
-
-	trap_S_StartFixedSound( CG_MediaSfx( cgs.media.sfxElectroboltHit ), origin, CHAN_AUTO,
-							cg_volume_effects->value, ATTN_STATIC );
-}
-
-/*
 * CG_RocketExplosionMode
 */
 void CG_RocketExplosionMode( const vec3_t pos, const vec3_t dir, int fire_mode, float radius ) {

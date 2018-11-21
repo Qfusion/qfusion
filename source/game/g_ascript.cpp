@@ -49,13 +49,6 @@ static const gs_asEnumVal_t asMovetypeEnumVals[] =
 	ASLIB_ENUM_VAL_NULL
 };
 
-static const gs_asEnumVal_t asInstagibNegItemMaskEnumVals[] =
-{
-	ASLIB_ENUM_VAL( G_INSTAGIB_NEGATE_ITEMMASK ),
-
-	ASLIB_ENUM_VAL_NULL
-};
-
 static const gs_asEnumVal_t asDamageEnumVals[] =
 {
 	ASLIB_ENUM_VAL( DAMAGE_NO ),
@@ -76,8 +69,6 @@ static const gs_asEnum_t asGameEnums[] =
 {
 	{ "spawnsystem_e", asSpawnSystemEnumVals },
 	{ "movetype_e", asMovetypeEnumVals },
-
-	{ "G_INSTAGIB_NEGATE_ITEMMASK_e", asInstagibNegItemMaskEnumVals },
 
 	{ "takedamage_e", asDamageEnumVals },
 	{ "miscelanea_e", asMiscelaneaEnumVals },
@@ -306,10 +297,6 @@ static void objectGametypeDescriptor_SetTeamSpawnsystem( int team, int spawnsyst
 	G_SpawnQueue_SetTeamSpawnsystem( team, spawnsystem, wave_time, wave_maxcount, spectate_team );
 }
 
-static bool objectGametypeDescriptor_isInstagib( gametype_descriptor_t *self ) {
-	return GS_Instagib();
-}
-
 static bool objectGametypeDescriptor_hasFallDamage( gametype_descriptor_t *self ) {
 	return GS_FallDamage();
 }
@@ -343,7 +330,6 @@ static const gs_asMethod_t gametypedescr_Methods[] =
 	{ ASLIB_FUNCTION_DECL( void, set_author, ( String & ) ), asFUNCTION( objectGametypeDescriptor_setAuthor ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( const String @, get_manifest, ( ) const ), asFUNCTION( objectGametypeDescriptor_getManifest ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, setTeamSpawnsystem, ( int team, int spawnsystem, int wave_time, int wave_maxcount, bool deadcam ) ), asFUNCTION( objectGametypeDescriptor_SetTeamSpawnsystem ), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL( bool, get_isInstagib, ( ) const ), asFUNCTION( objectGametypeDescriptor_isInstagib ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( bool, get_hasFallDamage, ( ) const ), asFUNCTION( objectGametypeDescriptor_hasFallDamage ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( bool, get_hasSelfDamage, ( ) const ), asFUNCTION( objectGametypeDescriptor_hasSelfDamage ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( bool, get_isInvidualGameType, ( ) const ), asFUNCTION( objectGametypeDescriptor_isInvidualGameType ), asCALL_CDECL_OBJLAST },
@@ -2192,10 +2178,6 @@ static asstring_t *asFunc_G_SpawnTempValue( asstring_t *key ) {
 	return game.asExport->asStringFactoryBuffer( val, strlen( val ) );
 }
 
-static void asFunc_FireInstaShot( asvec3_t *origin, asvec3_t *angles, int range, int damage, int knockback, edict_t *owner ) {
-	W_Fire_Instagun( owner, origin->v, angles->v, damage, knockback, 0, range, MOD_INSTAGUN_S, 0 );
-}
-
 static edict_t *asFunc_FireWeakBolt( asvec3_t *origin, asvec3_t *angles, int speed, int damage, int knockback, edict_t *owner ) {
 	return W_Fire_Electrobolt_Weak( owner, origin->v, angles->v, speed, damage, min( 1, knockback ), knockback, 5000, MOD_ELECTROBOLT_W, 0 );
 }
@@ -2313,7 +2295,6 @@ static const gs_asglobfuncs_t asGameGlobFuncs[] =
 	{ "void G_ConfigString( int index, const String &in )", asFUNCTION( asFunc_SetConfigString ), NULL },
 
 	// projectile firing
-	{ "void G_FireInstaShot( const Vec3 &in origin, const Vec3 &in angles, int range, int damage, int knockback, Entity @owner )", asFUNCTION( asFunc_FireInstaShot ), NULL },
 	{ "Entity @G_FireWeakBolt( const Vec3 &in origin, const Vec3 &in angles, int speed, int damage, int knockback, Entity @owner )", asFUNCTION( asFunc_FireWeakBolt ), NULL },
 	{ "void G_FireStrongBolt( const Vec3 &in origin, const Vec3 &in angles, int range, int damage, int knockback, Entity @owner )",asFUNCTION( asFunc_FireStrongBolt ), NULL },
 	{ "Entity @G_FirePlasma( const Vec3 &in origin, const Vec3 &in angles, int speed, int radius, int damage, int knockback, Entity @owner )", asFUNCTION( asFunc_FirePlasma ), NULL },

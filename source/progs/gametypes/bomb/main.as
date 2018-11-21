@@ -83,12 +83,12 @@ Vec3 BOMB_MINS( -16, -16, -8 );
 Vec3 BOMB_MAXS(  16,  16, 48 ); // same size as player i guess
 
 // cvars
-Cvar cvarRoundTime(       "g_bomb_roundtime",       "60", CVAR_ARCHIVE );
-Cvar cvarExplodeTime(     "g_bomb_bombtimer",       "30", CVAR_ARCHIVE );
-Cvar cvarArmTime(         "g_bomb_armtime",         "4",  CVAR_ARCHIVE );
-Cvar cvarDefuseTime(      "g_bomb_defusetime",      "7",  CVAR_ARCHIVE );
-Cvar cvarEnableCarriers(  "g_bomb_carriers",        "1",  CVAR_ARCHIVE );
-Cvar cvarSpawnProtection( "g_bomb_spawnprotection", "3",  CVAR_ARCHIVE );
+Cvar cvarRoundTime( "g_bomb_roundtime", "60", CVAR_ARCHIVE );
+Cvar cvarExplodeTime( "g_bomb_bombtimer", "30", CVAR_ARCHIVE );
+Cvar cvarArmTime( "g_bomb_armtime", "4", CVAR_ARCHIVE );
+Cvar cvarDefuseTime( "g_bomb_defusetime", "7", CVAR_ARCHIVE );
+Cvar cvarEnableCarriers( "g_bomb_carriers", "1", CVAR_ARCHIVE );
+Cvar cvarSpawnProtection( "g_bomb_spawnprotection", "3", CVAR_ARCHIVE );
 
 // read from this later
 Cvar cvarScoreLimit( "g_scorelimit", "10", CVAR_ARCHIVE );
@@ -378,31 +378,15 @@ String @GT_ScoreboardMessage( uint maxlen )
 
 			int playerId = ent.isGhosting() && matchState == MATCH_STATE_PLAYTIME ? -( ent.playerNum + 1 ) : ent.playerNum;
 
-			if ( gametype.isInstagib )
-			{
-				// Name Clan Score Frags Ping R
-
-				entry = "&p " + playerId
-					+ " " + client.clanName
-					+ " " + client.stats.score
-					+ " " + client.stats.frags
-					+ " " + client.ping
-					+ " " + statusIcon
-					+ " "; // don't delete me!
-			}
-			else
-			{
-				// Name Clan Score Frags W1 W2 W3 Ping R
-
-				entry = "&p " + playerId
-					+ " " + client.clanName
-					+ " " + client.stats.score
-					+ " " + client.stats.frags
-					+ " " + player.getInventoryLabel() // W1 W2 W3
-					+ " " + client.ping
-					+ " " + statusIcon
-					+ " "; // don't delete me!
-			}
+			// Name Clan Score Frags W1 W2 W3 Ping R
+			entry = "&p " + playerId
+				+ " " + client.clanName
+				+ " " + client.stats.score
+				+ " " + client.stats.frags
+				+ " " + player.getInventoryLabel() // W1 W2 W3
+				+ " " + client.ping
+				+ " " + statusIcon
+				+ " "; // don't delete me!
 
 			if ( scoreboardMessage.len() + entry.len() < maxlen )
 			{
@@ -418,16 +402,6 @@ void GT_updateScore( Client @client )
 {
 	cPlayer @player = @playerFromClient( @client );
 	Stats @stats = @client.stats;
-
-	if ( gametype.isInstagib )
-	{
-		client.stats.setScore(
-			stats.frags - stats.teamFrags
-			+ player.defuses * POINTS_DEFUSE
-		);
-
-		return;
-	}
 
 	// 2 * teamDamage because totalDamage includes it
 	client.stats.setScore( int(
@@ -598,7 +572,7 @@ void GT_PlayerRespawn( Entity @ent, int old_team, int new_team )
 			bombDrop( BOMBDROP_TEAM );
 		}
 
-		if ( !gametype.isInstagib && old_team != TEAM_SPECTATOR && new_team != TEAM_SPECTATOR )
+		if ( old_team != TEAM_SPECTATOR && new_team != TEAM_SPECTATOR )
 		{
 			player.showPrimarySelection();
 		}
@@ -857,16 +831,8 @@ void GT_InitGametype()
 	}
 
 	// define the scoreboard layout
-	if ( gametype.isInstagib )
-	{
-		G_ConfigString( CS_SCB_PLAYERTAB_LAYOUT, "%n 112 %s 52 %i 42 %i 42 %l 36 %p l1" );
-		G_ConfigString( CS_SCB_PLAYERTAB_TITLES, "Name Clan Score Frags Ping S" );
-	}
-	else
-	{
-		G_ConfigString( CS_SCB_PLAYERTAB_LAYOUT, "%n 112 %s 52 %i 42 %i 42 %p l1 %p l1 %p l1 %l 36 %p l1" );
-		G_ConfigString( CS_SCB_PLAYERTAB_TITLES, "Name Clan Score Frags " + S_COLOR_WHITE + " " + S_COLOR_WHITE + " " + S_COLOR_WHITE + " Ping S" );
-	}
+	G_ConfigString( CS_SCB_PLAYERTAB_LAYOUT, "%n 112 %s 52 %i 42 %i 42 %p l1 %p l1 %p l1 %l 36 %p l1" );
+	G_ConfigString( CS_SCB_PLAYERTAB_TITLES, "Name Clan Score Frags " + S_COLOR_WHITE + " " + S_COLOR_WHITE + " " + S_COLOR_WHITE + " Ping S" );
 
 	// add commands
 	G_RegisterCommand( "drop" );
@@ -874,19 +840,9 @@ void GT_InitGametype()
 
 	G_RegisterCommand( "gametype" );
 
-	// makes no sense to have these in insta
-	// merge with the above if to save an if?
-	if ( !gametype.isInstagib )
-	{
-		G_RegisterCommand( "gametypemenu" );
-		G_RegisterCommand( "gametypemenu2" );
-		G_RegisterCommand( "weapselect" );
-	}
-
-	// add callvotes
-	// XXX: vic says no to callvotes
-	//G_RegisterCallvote( "roundtime", "> 0", "integer", "How long the attacking team gets to plant and arm the bomb (seconds)" );
-	//G_RegisterCallvote( "bombtimer", "> 0", "integer", "The bomb's fuse length (seconds)" );
+	G_RegisterCommand( "gametypemenu" );
+	G_RegisterCommand( "gametypemenu2" );
+	G_RegisterCommand( "weapselect" );
 
 	mediaInit();
 

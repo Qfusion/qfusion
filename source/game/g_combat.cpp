@@ -54,10 +54,6 @@ int G_ModToAmmo( int mod ) {
 		return AMMO_WEAK_BOLTS;
 	} else if( mod == MOD_ELECTROBOLT_S ) {
 		return AMMO_BOLTS;
-	} else if( mod == MOD_INSTAGUN_W ) {
-		return AMMO_WEAK_INSTAS;
-	} else if( mod == MOD_INSTAGUN_S ) {
-		return AMMO_INSTAS;
 	} else if( mod == MOD_LASERGUN_W ) {
 		return AMMO_WEAK_LASERS;
 	} else if( mod == MOD_LASERGUN_S ) {
@@ -364,7 +360,7 @@ void G_Damage( edict_t *targ, edict_t *inflictor, edict_t *attacker, const vec3_
 	statDmg = ( attacker != targ ) && ( mod != MOD_TELEFRAG );
 
 	// apply handicap on the damage given
-	if( statDmg && attacker->r.client && !GS_Instagib() ) {
+	if( statDmg && attacker->r.client ) {
 		// handicap is a percentage value
 		if( attacker->r.client->handicap != 0 ) {
 			damage *= 1.0 - ( attacker->r.client->handicap * 0.01f );
@@ -400,16 +396,8 @@ void G_Damage( edict_t *targ, edict_t *inflictor, edict_t *attacker, const vec3_
 		}
 		// apply warShell powerup protection
 		else if( targ->r.client && targ->r.client->ps.inventory[POWERUP_SHELL] > 0 ) {
-			// warshell offers full protection in instagib
-			if( GS_Instagib() ) {
-				take = 0;
-				save = damage;
-			} else {
-				take = ( damage * 0.25f );
-				save = damage - take;
-			}
-
-			// todo : add protection sound
+			take = ( damage * 0.25f );
+			save = damage - take;
 		}
 	}
 

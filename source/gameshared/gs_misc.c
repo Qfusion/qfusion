@@ -254,11 +254,6 @@ void GS_Obituary( void *victim, int gender, void *attacker, int mod, char *messa
 			strcpy( message, "was bolted by" );
 			strcpy( message2, "'s electrobolt" );
 			break;
-		case MOD_INSTAGUN_W:
-		case MOD_INSTAGUN_S:
-			strcpy( message, "was instagibbed by" );
-			strcpy( message2, "'s instabeam" );
-			break;
 		case MOD_LASERGUN_W:
 		case MOD_LASERGUN_S:
 			strcpy( message, "was cut by" );

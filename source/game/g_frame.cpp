@@ -241,7 +241,6 @@ void G_CheckCvars( void ) {
 	// update gameshared server settings
 
 	// FIXME: This should be restructured so gameshared settings are the master settings
-	GS_GamestatSetFlag( GAMESTAT_FLAG_INSTAGIB, ( g_instagib->integer != 0 ) );
 	GS_GamestatSetFlag( GAMESTAT_FLAG_FALLDAMAGE, ( g_allow_falldamage->integer != 0 ) );
 	GS_GamestatSetFlag( GAMESTAT_FLAG_SELFDAMAGE, ( g_allow_selfdamage->integer != 0 ) );
 	GS_GamestatSetFlag( GAMESTAT_FLAG_HASCHALLENGERS, level.gametype.hasChallengersQueue );
@@ -251,7 +250,7 @@ void G_CheckCvars( void ) {
 
 	GS_GamestatSetFlag( GAMESTAT_FLAG_COUNTDOWN, level.gametype.countdownEnabled );
 	GS_GamestatSetFlag( GAMESTAT_FLAG_INHIBITSHOOTING, level.gametype.shootingDisabled );
-	GS_GamestatSetFlag( GAMESTAT_FLAG_INFINITEAMMO, ( level.gametype.infiniteAmmo || GS_Instagib() ) );
+	GS_GamestatSetFlag( GAMESTAT_FLAG_INFINITEAMMO, level.gametype.infiniteAmmo );
 	GS_GamestatSetFlag( GAMESTAT_FLAG_CANFORCEMODELS, level.gametype.canForceModels );
 	GS_GamestatSetFlag( GAMESTAT_FLAG_CANSHOWMINIMAP, level.gametype.canShowMinimap );
 	GS_GamestatSetFlag( GAMESTAT_FLAG_TEAMONLYMINIMAP, level.gametype.teamOnlyMinimap );

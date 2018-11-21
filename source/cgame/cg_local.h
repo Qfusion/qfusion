@@ -217,7 +217,6 @@ typedef struct {
 	cgs_media_handle_t *modBladeWallExplo;
 
 	cgs_media_handle_t *modElectroBoltWallHit;
-	cgs_media_handle_t *modInstagunWallHit;
 
 	cgs_media_handle_t *modLasergunWallExplo;
 
@@ -270,11 +269,9 @@ typedef struct {
 	cgs_media_handle_t *shaderElectroBeam;
 	cgs_media_handle_t *shaderElectroBeamAlpha;
 	cgs_media_handle_t *shaderElectroBeamBeta;
-	cgs_media_handle_t *shaderInstaBeam;
 	cgs_media_handle_t *shaderLaserGunBeamSolid;
 	cgs_media_handle_t *shaderLaserGunBeamGlow;
 	cgs_media_handle_t *shaderElectroboltMark;
-	cgs_media_handle_t *shaderInstagunMark;
 
 	//wsw
 	cgs_media_handle_t *shaderPlayerShadow;
@@ -861,8 +858,6 @@ extern cvar_t *cg_teamPLAYERScolorForce;
 extern cvar_t *cg_teamALPHAcolor;
 extern cvar_t *cg_teamBETAcolor;
 
-extern cvar_t *cg_teamColoredInstaBeams;
-
 extern cvar_t *cg_flashWindowCount;
 
 #define CG_Malloc( size ) trap_MemAlloc( size, __FILE__, __LINE__ )
@@ -984,7 +979,6 @@ void CG_RocketExplosionMode( const vec3_t pos, const vec3_t dir, int fire_mode, 
 void CG_ElectroTrail2( const vec3_t start, const vec3_t end, int team );
 void CG_ImpactSmokePuff( const vec3_t origin, const vec3_t dir, float radius, float alpha, int time, int speed );
 void CG_BoltExplosionMode( const vec3_t pos, const vec3_t dir, int fire_mode, int surfFlags );
-void CG_InstaExplosionMode( const vec3_t pos, const vec3_t dir, int fire_mode, int surfFlags, int owner );
 void CG_BladeImpact( const vec3_t pos, const vec3_t dir );
 void CG_GunBladeBlastImpact( const vec3_t pos, const vec3_t dir, float radius );
 void CG_PModel_SpawnTeleportEffect( centity_t *cent );
@@ -1016,10 +1010,6 @@ void CG_AddDecals( void );
 constexpr int EBBEAM_WIDTH = 128;
 constexpr int EBBEAM_TIME = 250;
 
-extern cvar_t *cg_instabeam_width;
-extern cvar_t *cg_instabeam_alpha;
-extern cvar_t *cg_instabeam_time;
-
 void CG_ClearPolys( void );
 void CG_AddPolys( void );
 void CG_KillPolyBeamsByTag( int key );
@@ -1028,7 +1018,6 @@ void CG_LaserGunPolyBeam( const vec3_t start, const vec3_t end, const vec4_t col
 void CG_ElectroPolyboardBeam( const vec3_t start, const vec3_t end, int subdivisions,
 	float range, const vec4_t color, int key, bool firstPerson );
 void CG_ElectroPolyBeam( const vec3_t start, const vec3_t end, int team );
-void CG_InstaPolyBeam( const vec3_t start, const vec3_t end, int team );
 void CG_PLink( const vec3_t start, const vec3_t end, const vec4_t color, int flags );
 
 //

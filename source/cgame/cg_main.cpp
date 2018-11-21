@@ -114,12 +114,6 @@ cvar_t *cg_teamPLAYERScolorForce;
 cvar_t *cg_teamALPHAcolor;
 cvar_t *cg_teamBETAcolor;
 
-cvar_t *cg_teamColoredInstaBeams;
-
-cvar_t *cg_instabeam_width;
-cvar_t *cg_instabeam_alpha;
-cvar_t *cg_instabeam_time;
-
 cvar_t *cg_flashWindowCount;
 
 /*
@@ -793,13 +787,6 @@ static void CG_RegisterVariables( void ) {
 	cg_teamBETAmodel->modified = true;
 	cg_teamBETAmodelForce->modified = true;
 	cg_teamBETAcolor->modified = true;
-
-	// dmh - learn0more's team colored beams
-	cg_teamColoredInstaBeams = trap_Cvar_Get( "cg_teamColoredInstaBeams", "1", CVAR_ARCHIVE );
-
-	cg_instabeam_width = trap_Cvar_Get( "cg_instabeam_width", "7", CVAR_ARCHIVE );
-	cg_instabeam_alpha = trap_Cvar_Get( "cg_instabeam_alpha", "0.4", CVAR_ARCHIVE );
-	cg_instabeam_time = trap_Cvar_Get( "cg_instabeam_time", "0.4", CVAR_ARCHIVE );
 
 	cg_strafeHUD = trap_Cvar_Get( "cg_strafeHUD", "0", CVAR_ARCHIVE );
 

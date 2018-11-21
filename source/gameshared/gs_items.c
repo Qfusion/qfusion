@@ -257,29 +257,6 @@ gsitem_t itemdefs[] =
 		NULL
 	},
 
-	//QUAKED instagun
-	{
-		"weapon_instagun",
-		WEAP_INSTAGUN,
-		IT_WEAPON,
-		ITFLAG_PICKABLE | ITFLAG_USABLE | ITFLAG_DROPABLE | ITFLAG_STAY_COOP,
-
-		{ PATH_INSTAGUN_MODEL, 0 },
-		PATH_INSTAGUN_ICON,
-		PATH_INSTAGUN_SIMPLEITEM,
-		S_PICKUP_WEAPON,
-		EF_ROTATE_AND_BOB | EF_OUTLINE,
-
-		"Instagun", "IG", S_COLOR_MAGENTA,
-		1,
-		1,
-		AMMO_INSTAS,
-		AMMO_WEAK_INSTAS,
-		NULL,
-		NULL, NULL, NULL
-	},
-
-
 	//-----------------------------------------------------------
 	// AMMO ITEMS
 	//-----------------------------------------------------------
@@ -454,27 +431,6 @@ gsitem_t itemdefs[] =
 		EF_ROTATE_AND_BOB | EF_OUTLINE | EF_AMMOBOX,
 
 		"Bolts", "bolts", S_COLOR_CYAN,
-		0, // actual value comes from weapondefs instead
-		0, // actual value comes from weapondefs instead
-		AMMO_NONE,
-		AMMO_NONE,
-		NULL,
-		NULL, NULL, NULL
-	},
-
-	{
-		"ammo_instagun",
-		AMMO_INSTAS,
-		IT_AMMO,
-		ITFLAG_PICKABLE | ITFLAG_DROPABLE,
-
-		{ PATH_AMMO_BOX_MODEL, PATH_AMMO_BOX_MODEL2 },
-		PATH_INSTAGUN_AMMO_ICON,
-		PATH_INSTAGUN_AMMO_ICON,
-		S_PICKUP_AMMO,
-		EF_ROTATE_AND_BOB | EF_OUTLINE | EF_AMMOBOX,
-
-		"Instas", "instas", S_COLOR_CYAN,
 		0, // actual value comes from weapondefs instead
 		0, // actual value comes from weapondefs instead
 		AMMO_NONE,
@@ -662,28 +618,6 @@ gsitem_t itemdefs[] =
 		NULL,
 		NULL, NULL, NULL
 	},
-
-	{
-		"ammo_instagun_weak",
-		AMMO_WEAK_INSTAS,
-		IT_AMMO,
-		0,
-
-		{ 0, 0 },
-		NULL,
-		NULL,
-		NULL,
-		0,
-
-		"Weak Instas", "weak instas", NULL,
-		0, // actual value comes from weapondefs instead
-		0, // actual value comes from weapondefs instead
-		AMMO_NONE,
-		AMMO_NONE,
-		NULL,
-		NULL, NULL, NULL
-	},
-
 
 	//------------------------
 	// ARMOR

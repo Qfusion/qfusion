@@ -505,10 +505,6 @@ edict_t *Drop_Item( edict_t *ent, const gsitem_t *item ) {
 			bool anything = false;
 
 			for( w = WEAP_GUNBLADE + 1; w < WEAP_TOTAL; w++ ) {
-				if( w == WEAP_INSTAGUN && !GS_Instagib() ) {
-					continue;
-				}
-
 				if( item->tag == AMMO_PACK_WEAK || item->tag == AMMO_PACK ) {
 					int weakTag = GS_FindItemByTag( w )->weakammo_tag;
 					if( ent->r.client->ps.inventory[weakTag] > 0 ) {
@@ -555,10 +551,6 @@ edict_t *Drop_Item( edict_t *ent, const gsitem_t *item ) {
 			int w;
 
 			for( w = WEAP_GUNBLADE + 1; w < WEAP_TOTAL; w++ ) {
-				if( w == WEAP_INSTAGUN && !GS_Instagib() ) {
-					continue;
-				}
-
 				if( item->tag == AMMO_PACK_WEAK || item->tag == AMMO_PACK ) {
 					gsitem_t *ammo = GS_FindItemByTag( GS_FindItemByTag( w )->weakammo_tag );
 					if( ammo ) {
@@ -1078,14 +1070,9 @@ void G_PrecacheItems( void ) {
 	}
 
 	// precache items
-	if( GS_Instagib() ) {
-		item = GS_FindItemByTag( WEAP_INSTAGUN );
+	for( i = WEAP_GUNBLADE; i < WEAP_TOTAL; i++ ) {
+		item = GS_FindItemByTag( i );
 		PrecacheItem( item );
-	} else {
-		for( i = WEAP_GUNBLADE; i < WEAP_TOTAL; i++ ) {
-			item = GS_FindItemByTag( i );
-			PrecacheItem( item );
-		}
 	}
 
 	// Vic: precache ammo pack if it's droppable

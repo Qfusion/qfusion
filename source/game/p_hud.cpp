@@ -350,15 +350,7 @@ void G_SetClientStats( edict_t *ent ) {
 	//
 	// armor
 	//
-	if( GS_Instagib() ) {
-		if( g_instashield->integer ) {
-			client->ps.stats[STAT_ARMOR] = ARMOR_TO_INT( 100.0f * ( client->resp.instashieldCharge / INSTA_SHIELD_MAX ) );
-		} else {
-			client->ps.stats[STAT_ARMOR] = 0;
-		}
-	} else {
-		client->ps.stats[STAT_ARMOR] = ARMOR_TO_INT( client->resp.armor );
-	}
+	client->ps.stats[STAT_ARMOR] = ARMOR_TO_INT( client->resp.armor );
 
 	//
 	// pickup message

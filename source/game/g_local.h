@@ -19,24 +19,23 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // g_local.h -- local definitions for game module
 
-#include "../gameshared/q_arch.h"
-#include "../gameshared/q_math.h"
-#include "../gameshared/q_shared.h"
-#include "../gameshared/q_cvar.h"
-#include "../gameshared/q_dynvar.h"
-#include "../gameshared/q_comref.h"
-#include "../gameshared/q_collision.h"
+#include "gameshared/q_arch.h"
+#include "gameshared/q_math.h"
+#include "gameshared/q_shared.h"
+#include "gameshared/q_cvar.h"
+#include "gameshared/q_dynvar.h"
+#include "gameshared/q_comref.h"
+#include "gameshared/q_collision.h"
 
-#include "../gameshared/gs_public.h"
+#include "gameshared/gs_public.h"
 #include "g_public.h"
 #include "g_syscalls.h"
 #include "g_gametypes.h"
 #include "g_ai.h"
 
-#include "../matchmaker/mm_rating.h"
+#include "matchmaker/mm_rating.h"
 
 //==================================================================
-// round(x)==floor(x+0.5f)
 
 // FIXME: Medar: Remove the spectator test and just make sure they always have health
 #define G_IsDead( ent )       ( ( !( ent )->r.client || ( ent )->s.team != TEAM_SPECTATOR ) && HEALTH_TO_INT( ( ent )->health ) <= 0 )
@@ -331,15 +330,11 @@ extern cvar_t *g_teams_allow_uneven;
 extern cvar_t *g_autorecord;
 extern cvar_t *g_autorecord_maxdemos;
 extern cvar_t *g_allow_spectator_voting;
-extern cvar_t *g_instagib;
-extern cvar_t *g_instajump;
-extern cvar_t *g_instashield;
 
 extern cvar_t *g_asGC_stats;
 extern cvar_t *g_asGC_interval;
 
 extern cvar_t *g_skillRating;
-extern cvar_t *g_bot_evolution;
 
 edict_t **G_Teams_ChallengersQueue( void );
 void G_Teams_Join_Cmd( edict_t *ent );
@@ -786,7 +781,6 @@ void W_Fire_Electrobolt_Combined( edict_t *self, vec3_t start, vec3_t angles, fl
 edict_t *W_Fire_Electrobolt_Weak( edict_t *self, vec3_t start, vec3_t angles, float speed, float damage, int minKnockback, int maxKnockback, int timeout, int mod, int timeDelta );
 edict_t *W_Fire_Lasergun( edict_t *self, vec3_t start, vec3_t angles, float damage, int knockback, int timeout, int mod, int timeDelta );
 edict_t *W_Fire_Lasergun_Weak( edict_t *self, vec3_t start, vec3_t end, float damage, int knockback, int timeout, int mod, int timeDelta );
-void W_Fire_Instagun( edict_t *self, vec3_t start, vec3_t angles, float damage, int knockback, int radius, int range, int mod, int timeDelta );
 
 bool Pickup_Weapon( edict_t *other, const gsitem_t *item, int flags, int ammo_count );
 edict_t *Drop_Weapon( edict_t *ent, const gsitem_t *item );
@@ -1038,7 +1032,6 @@ typedef struct {
 	gs_laserbeamtrail_t trail;
 
 	float armor;
-	float instashieldCharge;
 
 	int64_t next_drown_time;
 	int drowningDamage;

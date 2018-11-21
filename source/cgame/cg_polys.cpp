@@ -379,43 +379,6 @@ void CG_ElectroPolyBeam( const vec3_t start, const vec3_t end, int team ) {
 }
 
 /*
-* CG_InstaPolyBeam
-*/
-void CG_InstaPolyBeam( const vec3_t start, const vec3_t end, int team ) {
-	vec4_t tcolor = { 1, 1, 1, 0.35f };
-	vec_t total;
-	vec_t min;
-	vec4_t min_team_color;
-
-	if( cg_instabeam_time->value <= 0.0f || cg_instabeam_width->integer <= 0 ) {
-		return;
-	}
-
-	if( team == TEAM_ALPHA || team == TEAM_BETA ) {
-		CG_TeamColor( team, tcolor );
-		min = 90 * ( 1.0f / 255.0f );
-		min_team_color[0] = min_team_color[1] = min_team_color[2] = min;
-		total = tcolor[0] + tcolor[1] + tcolor[2];
-		if( total < min ) {
-			VectorCopy( min_team_color, tcolor );
-		}
-	} else {
-		tcolor[0] = 1.0f;
-		tcolor[1] = 0.0f;
-		tcolor[2] = 0.4f;
-	}
-
-	tcolor[3] = min( cg_instabeam_alpha->value, 1 );
-	if( !tcolor[3] ) {
-		return;
-	}
-
-	CG_SpawnPolyBeam( start, end, tcolor, cg_instabeam_width->integer,
-		cg_instabeam_time->value * 1000, cg_instabeam_time->value * 1000 * 0.4f,
-		CG_MediaShader( cgs.media.shaderInstaBeam ), 128, 0 );
-}
-
-/*
 * CG_PLink
 */
 void CG_PLink( const vec3_t start, const vec3_t end, const vec4_t color, int flags ) {

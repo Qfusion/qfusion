@@ -23,38 +23,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 * CG_Event_WeaponBeam
 */
 static void CG_Event_WeaponBeam( vec3_t origin, vec3_t dir, int ownerNum, int weapon, int firemode ) {
-	gs_weapon_definition_t *weapondef;
-	int range;
 	vec3_t end;
 	trace_t trace;
 
-	switch( weapon ) {
-		case WEAP_ELECTROBOLT:
-			weapondef = GS_GetWeaponDef( WEAP_ELECTROBOLT );
-			range = ELECTROBOLT_RANGE;
-			break;
-
-		case WEAP_INSTAGUN:
-			weapondef = GS_GetWeaponDef( WEAP_INSTAGUN );
-			range = weapondef->firedef.timeout;
-			break;
-
-		default:
-			return;
-	}
-
 	VectorNormalizeFast( dir );
 
-	VectorMA( origin, range, dir, end );
+	VectorMA( origin, ELECTROBOLT_RANGE, dir, end );
 
 	// retrace to spawn wall impact
 	CG_Trace( &trace, origin, vec3_origin, vec3_origin, end, cg.view.POVent, MASK_SOLID );
 	if( trace.ent != -1 ) {
-		if( weapondef->weapon_id == WEAP_ELECTROBOLT ) {
-			CG_BoltExplosionMode( trace.endpos, trace.plane.normal, FIRE_MODE_STRONG, trace.surfFlags );
-		} else if( weapondef->weapon_id == WEAP_INSTAGUN ) {
-			CG_InstaExplosionMode( trace.endpos, trace.plane.normal, FIRE_MODE_STRONG, trace.surfFlags, ownerNum );
-		}
+		CG_BoltExplosionMode( trace.endpos, trace.plane.normal, FIRE_MODE_STRONG, trace.surfFlags );
 	}
 
 	// when it's predicted we have to delay the drawing until the view weapon is calculated
@@ -75,11 +54,7 @@ void CG_WeaponBeamEffect( centity_t *cent ) {
 		VectorCopy( cent->laserOrigin, projection.origin );
 	}
 
-	if( cent->localEffects[LOCALEFFECT_EV_WEAPONBEAM] == WEAP_ELECTROBOLT ) {
-		CG_ElectroTrail2( projection.origin, cent->laserPoint, cent->current.team );
-	} else {
-		CG_InstaPolyBeam( projection.origin, cent->laserPoint, cent->current.team );
-	}
+	CG_ElectroTrail2( projection.origin, cent->laserPoint, cent->current.team );
 
 	cent->localEffects[LOCALEFFECT_EV_WEAPONBEAM] = 0;
 }
@@ -1184,11 +1159,11 @@ void CG_EntityEvent( entity_state_t *ent, int ev, int parm, bool predicted ) {
 
 			CG_FireWeaponEvent( ent->number, weapon, fireMode );
 
-			// riotgun bullets, electrobolt and instagun beams are predicted when the weapon is fired
+			// riotgun bullets and electrobolt beams are predicted when the weapon is fired
 			if( predicted ) {
 				vec3_t origin;
 
-				if( weapon == WEAP_ELECTROBOLT || weapon == WEAP_INSTAGUN ) {
+				if( weapon == WEAP_ELECTROBOLT ) {
 					VectorCopy( cg.predictedPlayerState.pmove.origin, origin );
 					origin[2] += cg.predictedPlayerState.viewheight;
 					AngleVectors( cg.predictedPlayerState.viewangles, dir, NULL, NULL );
@@ -1217,14 +1192,6 @@ void CG_EntityEvent( entity_state_t *ent, int ev, int parm, bool predicted ) {
 				return;
 			}
 			CG_Event_WeaponBeam( ent->origin, ent->origin2, parm, WEAP_ELECTROBOLT, ent->firemode );
-			break;
-
-		case EV_INSTATRAIL:
-			// check the owner for predicted case
-			if( ISVIEWERENTITY( parm ) && ( ev < PREDICTABLE_EVENTS_MAX ) && ( predicted != cg.view.playerPrediction ) ) {
-				return;
-			}
-			CG_Event_WeaponBeam( ent->origin, ent->origin2, parm, WEAP_INSTAGUN, FIRE_MODE_STRONG );
 			break;
 
 		case EV_FIRE_RIOTGUN:
@@ -1436,11 +1403,6 @@ void CG_EntityEvent( entity_state_t *ent, int ev, int parm, bool predicted ) {
 		case EV_BOLT_EXPLOSION:
 			ByteToDir( parm, dir );
 			CG_BoltExplosionMode( ent->origin, dir, ent->firemode, 0 );
-			break;
-
-		case EV_INSTA_EXPLOSION:
-			ByteToDir( parm, dir );
-			CG_InstaExplosionMode( ent->origin, dir, ent->firemode, 0, ent->ownerNum );
 			break;
 
 		case EV_GRENADE_EXPLOSION:

@@ -29,9 +29,6 @@ void G_Gametype_GENERIC_SetUpWarmup( void ) {
 	level.gametype.scoreAnnouncementEnabled = false;
 	level.gametype.countdownEnabled = false;
 	level.gametype.pickableItemsMask = ( level.gametype.spawnableItemsMask | level.gametype.dropableItemsMask );
-	if( GS_Instagib() ) {
-		level.gametype.pickableItemsMask &= ~G_INSTAGIB_NEGATE_ITEMMASK;
-	}
 
 	if( GS_TeamBasedGametype() ) {
 		bool any = false;
@@ -92,9 +89,6 @@ void G_Gametype_GENERIC_SetUpMatch( void ) {
 	level.gametype.scoreAnnouncementEnabled = true;
 	level.gametype.countdownEnabled = true;
 	level.gametype.pickableItemsMask = ( level.gametype.spawnableItemsMask | level.gametype.dropableItemsMask );
-	if( GS_Instagib() ) {
-		level.gametype.pickableItemsMask &= ~G_INSTAGIB_NEGATE_ITEMMASK;
-	}
 
 	// clear player stats and scores, team scores and respawn clients in team lists
 	for( i = TEAM_PLAYERS; i < GS_MAX_TEAMS; i++ ) {
@@ -240,36 +234,26 @@ void G_Gametype_GENERIC_ClientRespawn( edict_t *self, int old_team, int new_team
 		return;
 	}
 
-	//give default items
+	// give default items
 	if( self->s.team != TEAM_SPECTATOR ) {
-		if( GS_Instagib() ) {
-			client->ps.inventory[WEAP_INSTAGUN] = 1;
-			client->ps.inventory[AMMO_INSTAS] = 1;
-			client->ps.inventory[AMMO_WEAK_INSTAS] = 1;
-		} else {
-			if( GS_MatchState() <= MATCH_STATE_WARMUP ) {
-				for( i = WEAP_GUNBLADE; i < WEAP_TOTAL; i++ ) {
-					if( i == WEAP_INSTAGUN ) { // dont add instagun...
-						continue;
-					}
-
-					weapondef = GS_GetWeaponDef( i );
-					client->ps.inventory[i] = 1;
-					if( weapondef->firedef_weak.ammo_id ) {
-						client->ps.inventory[weapondef->firedef_weak.ammo_id] = weapondef->firedef_weak.ammo_max;
-					}
-					if( weapondef->firedef.ammo_id ) {
-						client->ps.inventory[weapondef->firedef.ammo_id] = weapondef->firedef.ammo_max;
-					}
+		if( GS_MatchState() <= MATCH_STATE_WARMUP ) {
+			for( i = WEAP_GUNBLADE; i < WEAP_TOTAL; i++ ) {
+				weapondef = GS_GetWeaponDef( i );
+				client->ps.inventory[i] = 1;
+				if( weapondef->firedef_weak.ammo_id ) {
+					client->ps.inventory[weapondef->firedef_weak.ammo_id] = weapondef->firedef_weak.ammo_max;
 				}
-
-				client->resp.armor = GS_Armor_MaxCountForTag( ARMOR_YA );
-			} else {
-				weapondef = GS_GetWeaponDef( WEAP_GUNBLADE );
-				client->ps.inventory[WEAP_GUNBLADE] = 1;
-				client->ps.inventory[AMMO_GUNBLADE] = 1;
-				client->ps.inventory[AMMO_WEAK_GUNBLADE] = 0;
+				if( weapondef->firedef.ammo_id ) {
+					client->ps.inventory[weapondef->firedef.ammo_id] = weapondef->firedef.ammo_max;
+				}
 			}
+
+			client->resp.armor = GS_Armor_MaxCountForTag( ARMOR_YA );
+		} else {
+			weapondef = GS_GetWeaponDef( WEAP_GUNBLADE );
+			client->ps.inventory[WEAP_GUNBLADE] = 1;
+			client->ps.inventory[AMMO_GUNBLADE] = 1;
+			client->ps.inventory[AMMO_WEAK_GUNBLADE] = 0;
 		}
 	}
 
@@ -372,9 +356,6 @@ static void G_Gametype_GENERIC_Init( void ) {
 	level.gametype.respawnableItemsMask = ( IT_WEAPON | IT_AMMO | IT_ARMOR | IT_POWERUP | IT_HEALTH );
 	level.gametype.dropableItemsMask = ( IT_WEAPON | IT_AMMO | IT_ARMOR | IT_POWERUP | IT_HEALTH );
 	level.gametype.pickableItemsMask = ( level.gametype.spawnableItemsMask | level.gametype.dropableItemsMask );
-	if( GS_Instagib() ) {
-		level.gametype.pickableItemsMask &= ~G_INSTAGIB_NEGATE_ITEMMASK;
-	}
 
 	level.gametype.isTeamBased = false;
 	level.gametype.isRace = false;
@@ -409,10 +390,6 @@ static void G_Gametype_GENERIC_Init( void ) {
 	level.gametype.forceTeamBots = TEAM_SPECTATOR;
 
 	level.gametype.mmCompatible = false;
-
-	if( GS_Instagib() ) {
-		level.gametype.spawnpointRadius *= 2;
-	}
 
 	trap_ConfigString( CS_SCB_PLAYERTAB_LAYOUT, "%n 164 %i 64 %l 48 %p 18 %p 18" );
 	trap_ConfigString( CS_SCB_PLAYERTAB_TITLES, "Name Score Ping C R" );
@@ -1370,9 +1347,6 @@ bool G_Gametype_CanRespawnItem( const gsitem_t *item ) {
 	}
 
 	itemmask = level.gametype.respawnableItemsMask;
-	if( GS_Instagib() ) {
-		itemmask &= ~G_INSTAGIB_NEGATE_ITEMMASK;
-	}
 
 	return ( ( itemmask & item->type ) != 0 ) ? true : false;
 }
@@ -1394,9 +1368,6 @@ bool G_Gametype_CanDropItem( const gsitem_t *item, bool ignoreMatchState ) {
 	}
 
 	itemmask = level.gametype.dropableItemsMask;
-	if( GS_Instagib() ) {
-		itemmask &= ~G_INSTAGIB_NEGATE_ITEMMASK;
-	}
 
 	return ( itemmask & item->type ) ? true : false;
 }
@@ -1791,8 +1762,7 @@ void G_Gametype_Init( void ) {
 		trap_Cbuf_Execute();
 	}
 
-	// fixme: we are doing this twice because the gametype may check for GS_Instagib
-	G_CheckCvars(); // update GS_Instagib, GS_FallDamage, etc
+	G_CheckCvars(); // update GS_FallDamage, etc
 
 	G_Gametype_SetDefaults();
 
@@ -1808,8 +1778,6 @@ void G_Gametype_Init( void ) {
 	}
 
 	trap_ConfigString( CS_GAMETYPENAME, g_gametype->string );
-
-	G_CheckCvars(); // update GS_Instagib, GS_FallDamage, etc
 
 	// ch : if new gametype has been initialized, transfer the
 	// client-specific ratings to gametype-specific list

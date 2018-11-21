@@ -362,15 +362,6 @@ static char *SV_ShortInfoString( void ) {
 		}
 	}
 
-	if( Cvar_Value( "g_instagib" ) ) {
-		Q_snprintfz( entry, sizeof( entry ), "ig\\\\1\\\\" );
-		if( MAX_SVCINFOSTRING_LEN - len > strlen( entry ) ) {
-			Q_strncatz( string, entry, sizeof( string ) );
-			len = strlen( string );
-		}
-	}
-
-
 	Q_snprintfz( entry, sizeof( entry ), "s\\\\%1d\\\\", sv_skilllevel->integer );
 	if( MAX_SVCINFOSTRING_LEN - len > strlen( entry ) ) {
 		Q_strncatz( string, entry, sizeof( string ) );
@@ -923,13 +914,6 @@ static void SV_GetSteamTags( char *tags ) {
 
 	Q_strncpyz( tags, Cvar_String( "g_gametype" ), MAX_STEAMQUERY_TAG_STRING );
 
-	if( Cvar_Value( "g_instagib" ) ) {
-		if( tags[0] ) {
-			Q_strncatz( tags, ",", MAX_STEAMQUERY_TAG_STRING );
-		}
-		Q_strncatz( tags, "instagib", MAX_STEAMQUERY_TAG_STRING );
-	}
-
 	// If sv_tags cvar is added, every comma-separated tag from the cvar must be added separately
 	// (so the last tag exceeding MAX_STEAMQUERY_TAG_STRING isn't cut off)
 	// and validated not to contain any characters disallowed in userinfo (CVAR_SERVERINFO).
@@ -992,9 +976,6 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 		Q_strncpyz( gamedir, FS_GameDirectory(), sizeof( gamedir ) );
 
 		Q_strncpyz( gamename, APPLICATION, sizeof( gamename ) );
-		if( Cvar_Value( "g_instagib" ) ) {
-			Q_strncatz( gamename, " IG", sizeof( gamename ) );
-		}
 		if( sv.configstrings[CS_GAMETYPETITLE][0] || sv.configstrings[CS_GAMETYPENAME][0] ) {
 			Q_strncatz( gamename, " ", sizeof( gamename ) );
 			Q_strncatz( gamename,

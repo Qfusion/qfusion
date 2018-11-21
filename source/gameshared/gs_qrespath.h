@@ -56,7 +56,6 @@ extern "C" {
 #define PATH_PLASMAGUN_ICON     "gfx/hud/icons/weapon/plasma"
 #define PATH_ELECTROBOLT_ICON       "gfx/hud/icons/weapon/electro"
 #define PATH_LASERGUN_ICON      "gfx/hud/icons/weapon/laser"
-#define PATH_INSTAGUN_ICON  "gfx/hud/icons/weapon/instagun"
 
 // ammo
 #define PATH_GUNBLADE_AMMO_ICON     "gfx/hud/icons/ammo/gunbladeammo"
@@ -67,7 +66,6 @@ extern "C" {
 #define PATH_PLASMAGUN_AMMO_ICON    "gfx/hud/icons/ammo/plasmaammo"
 #define PATH_ELECTROBOLT_AMMO_ICON  "gfx/hud/icons/ammo/electroammo"
 #define PATH_LASERGUN_AMMO_ICON     "gfx/hud/icons/ammo/laserammo"
-#define PATH_INSTAGUN_AMMO_ICON     "gfx/hud/icons/ammo/instaammo"
 
 #define PATH_AMMOPACK_ICON      "gfx/hud/icons/ammo/pack"
 
@@ -110,7 +108,6 @@ extern "C" {
 #define PATH_PLASMAGUN_SIMPLEITEM       "gfx/simpleitems/weapon/plasma"
 #define PATH_LASERGUN_SIMPLEITEM        "gfx/simpleitems/weapon/laser"
 #define PATH_ELECTROBOLT_SIMPLEITEM     "gfx/simpleitems/weapon/electro"
-#define PATH_INSTAGUN_SIMPLEITEM        "gfx/simpleitems/weapon/instagun"
 #define PATH_AMMOPACK_SIMPLEITEM        "gfx/simpleitems/ammo/pack"
 #define PATH_GA_SIMPLEITEM          "gfx/simpleitems/armor/ga"
 #define PATH_YA_SIMPLEITEM          "gfx/simpleitems/armor/ya"
@@ -163,7 +160,6 @@ extern "C" {
 #define PATH_PLASMAGUN_BARREL_MODEL   "models/weapons/plasmagun/plasmagun_barrel.iqm"
 #define PATH_ELECTROBOLT_MODEL      "models/weapons/electrobolt/electrobolt.iqm"
 #define PATH_LASERGUN_MODEL     "models/weapons/lasergun/lasergun.iqm"
-#define PATH_INSTAGUN_MODEL     "models/weapons/instagun/instagun.iqm"
 
 // ammoboxes
 #define PATH_AMMO_BOX_MODEL     "models/items/ammo/ammobox/ammobox.iqm"
@@ -207,7 +203,6 @@ extern "C" {
 #define PATH_GUNBLADEBLAST_IMPACT_MODEL     "models/weapon_hits/gunblade/hit_blast.md3"
 #define PATH_GUNBLADEBLAST_EXPLOSION_MODEL  "models/weapon_hits/gunblade/hit_blastexp.md3"
 #define PATH_ELECTROBLAST_IMPACT_MODEL      "models/weapon_hits/electrobolt/hit_electrobolt.md3"
-#define PATH_INSTABLAST_IMPACT_MODEL        "models/weapon_hits/instagun/hit_instagun.md3"
 #define PATH_LASERGUN_IMPACT_MODEL      "models/weapon_hits/lasergun/hit_blastexp.md3"
 
 #define GRENADE_EXPLOSION_MODEL_RADIUS      30.0

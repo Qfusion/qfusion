@@ -211,13 +211,8 @@ struct model_s *CG_MediaModel( cgs_media_handle_t *mediamodel ) {
 void CG_RegisterMediaModels( void ) {
 	model_headnode = NULL;
 
-	//	cgs.media.modGrenadeExplosion = CG_RegisterMediaModel( PATH_GRENADE_EXPLOSION_MODEL );
 	cgs.media.modRocketExplosion = CG_RegisterMediaModel( PATH_ROCKET_EXPLOSION_MODEL );
 	cgs.media.modPlasmaExplosion = CG_RegisterMediaModel( PATH_PLASMA_EXPLOSION_MODEL );
-
-	//	cgs.media.modBoltExplosion = CG_RegisterMediaModel( "models/weapon_hits/electrobolt/hit_electrobolt.md3" );
-	//	cgs.media.modInstaExplosion = CG_RegisterMediaModel( "models/weapon_hits/instagun/hit_instagun.md3" );
-	//	cgs.media.modTeleportEffect = CG_RegisterMediaModel( "models/misc/telep.md3", false );
 
 	cgs.media.modDash = CG_RegisterMediaModel( "models/effects/dash_burst.md3" );
 
@@ -225,7 +220,6 @@ void CG_RegisterMediaModels( void ) {
 	cgs.media.modBladeWallHit = CG_RegisterMediaModel( PATH_GUNBLADEBLAST_IMPACT_MODEL );
 	cgs.media.modBladeWallExplo = CG_RegisterMediaModel( PATH_GUNBLADEBLAST_EXPLOSION_MODEL );
 	cgs.media.modElectroBoltWallHit = CG_RegisterMediaModel( PATH_ELECTROBLAST_IMPACT_MODEL );
-	cgs.media.modInstagunWallHit = CG_RegisterMediaModel( PATH_INSTABLAST_IMPACT_MODEL );
 	cgs.media.modLasergunWallExplo = CG_RegisterMediaModel( PATH_LASERGUN_IMPACT_MODEL );
 
 	// gibs model
@@ -310,12 +304,10 @@ void CG_RegisterMediaShaders( void ) {
 	cgs.media.shaderExplosionMark = CG_RegisterMediaShader( "gfx/decals/d_explode_hit" );
 	cgs.media.shaderPlasmaMark = CG_RegisterMediaShader( "gfx/decals/d_plasma_hit" );
 	cgs.media.shaderElectroboltMark = CG_RegisterMediaShader( "gfx/decals/d_electrobolt_hit" );
-	cgs.media.shaderInstagunMark = CG_RegisterMediaShader( "gfx/decals/d_instagun_hit" );
 
 	cgs.media.shaderElectroBeam = CG_RegisterMediaShader( "gfx/misc/electro" );
 	cgs.media.shaderElectroBeamAlpha = CG_RegisterMediaShader( "gfx/misc/electro_alpha" );
 	cgs.media.shaderElectroBeamBeta = CG_RegisterMediaShader( "gfx/misc/electro_beta" );
-	cgs.media.shaderInstaBeam = CG_RegisterMediaShader( "gfx/misc/instagun" );
 	cgs.media.shaderLaserGunBeamSolid = CG_RegisterMediaShader( "gfx/misc/lgbeam_solid" );
 	cgs.media.shaderLaserGunBeamGlow = CG_RegisterMediaShader( "gfx/misc/lgbeam_glow" );
 	cgs.media.shaderRocketExplosion = CG_RegisterMediaShader( PATH_ROCKET_EXPLOSION_SPRITE );
@@ -339,7 +331,6 @@ void CG_RegisterMediaShaders( void ) {
 	cgs.media.shaderWeaponIcon[WEAP_PLASMAGUN - 1] = CG_RegisterMediaShader( PATH_PLASMAGUN_ICON );
 	cgs.media.shaderWeaponIcon[WEAP_LASERGUN - 1] = CG_RegisterMediaShader( PATH_LASERGUN_ICON );
 	cgs.media.shaderWeaponIcon[WEAP_ELECTROBOLT - 1] = CG_RegisterMediaShader( PATH_ELECTROBOLT_ICON );
-	cgs.media.shaderWeaponIcon[WEAP_INSTAGUN - 1] = CG_RegisterMediaShader( PATH_INSTAGUN_ICON );
 
 	cgs.media.shaderGunbladeBlastIcon = CG_RegisterMediaShader( PATH_GUNBLADE_BLAST_ICON );
 
