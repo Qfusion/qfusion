@@ -256,11 +256,20 @@ void S_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis, in
 			continue;
 		}
 
+		if( s_volume->modified )
+			alSourcef( ps->source, AL_GAIN, s_volume->value );
+
 		if( ps->type == SoundType_Attached || ps->type == SoundType_AttachedImmediate ) {
 			alSourcefv( ps->source, AL_POSITION, entities[ ps->ent_num ].origin );
 			alSourcefv( ps->source, AL_VELOCITY, entities[ ps->ent_num ].velocity );
 		}
 	}
+
+	if( s_musicvolume->modified && music_playing )
+		alSourcef( music_source, AL_GAIN, s_musicvolume->value );
+
+	s_volume->modified = false;
+	s_musicvolume->modified = false;
 
 	S_ALAssert();
 }
