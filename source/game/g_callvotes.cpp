@@ -256,7 +256,6 @@ static bool G_VoteMapValidate( callvotedata_t *data, bool first ) {
 	}
 
 	if( trap_ML_FilenameExists( mapname ) ) {
-		char msg[MAX_STRING_CHARS];
 		char fullname[MAX_TOKEN_CHARS];
 
 		Q_strncpyz( fullname, COM_RemoveColorTokens( trap_ML_GetFullname( mapname ) ), sizeof( fullname ) );
@@ -289,16 +288,10 @@ static bool G_VoteMapValidate( callvotedata_t *data, bool first ) {
 		}
 
 valid_map:
-		if( fullname[0] != '\0' ) {
-			Q_snprintfz( msg, sizeof( msg ), "%s (%s)", mapname, fullname );
-		} else {
-			Q_strncpyz( msg, mapname, sizeof( msg ) );
-		}
-
 		if( data->string ) {
 			G_Free( data->string );
 		}
-		data->string = G_CopyString( msg );
+		data->string = G_CopyString( mapname );
 		return true;
 	}
 
