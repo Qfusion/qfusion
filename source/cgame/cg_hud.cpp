@@ -658,6 +658,7 @@ static const char * obituaries[] = {
 	"DRENCHED",
 	"DUMPED ON",
 	"DUMPSTERED",
+	"DUNKED",
 	"ELABORATED ON",
 	"ENDED",
 	"ERASED",
@@ -715,7 +716,7 @@ static const char * obituaries[] = {
 	"WEEDED OUT",
 	"WHACKED",
 	"WIPED OUT",
-	"WRECKED"
+	"WRECKED",
 };
 
 static const char * RandomShit() {
