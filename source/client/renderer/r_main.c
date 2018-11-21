@@ -745,16 +745,11 @@ void R_SetupPVSFromCluster( int cluster, int area ) {
 
 	arearowbytes = ( ( rsh.worldBrushModel->numareas + 7 ) / 8 );
 	areabytes = arearowbytes;
-#ifdef AREAPORTALS_MATRIX
 	areabytes *= rsh.worldBrushModel->numareas;
-#endif
 
-	if( area > -1 && rn.refdef.areabits && area < rsh.worldBrushModel->numareas )
-#ifdef AREAPORTALS_MATRIX
-	{ areabits = rn.refdef.areabits + area * arearowbytes;}
-#else
-	{ areabits = rn.refdef.areabits;}
-#endif
+	if( area > -1 && rn.refdef.areabits && area < rsh.worldBrushModel->numareas ) {
+		areabits = rn.refdef.areabits + area * arearowbytes;
+	}
 	else {
 		areabits = NULL;
 	}

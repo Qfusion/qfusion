@@ -49,10 +49,6 @@ cvar_t *sv_pure_forcemodulepk3;
 
 cvar_t *sv_maxclients;
 
-#ifdef TCP_ALLOW_CONNECT
-cvar_t *sv_tcp;
-#endif
-
 #ifdef HTTP_SUPPORT
 cvar_t *sv_http;
 cvar_t *sv_http_ip;
@@ -179,23 +175,12 @@ static bool SV_ProcessPacket( netchan_t *netchan, msg_t *msg ) {
 static void SV_ReadPackets( void ) {
 	int i, socketind, ret;
 	client_t *cl;
-#ifdef TCP_ALLOW_CONNECT
-	socket_t newsocket;
-#endif
 	int game_port;
 	socket_t *socket;
 	netadr_t address;
 
 	static msg_t msg;
 	static uint8_t msgData[MAX_MSGLEN];
-
-#ifdef TCP_ALLOW_CONNECT
-	socket_t* tcpsockets [] =
-	{
-		&svs.socket_tcp,
-		&svs.socket_tcp6
-	};
-#endif
 
 	socket_t* sockets [] =
 	{
@@ -205,65 +190,6 @@ static void SV_ReadPackets( void ) {
 	};
 
 	MSG_Init( &msg, msgData, sizeof( msgData ) );
-
-#ifdef TCP_ALLOW_CONNECT
-	for( socketind = 0; socketind < sizeof( tcpsockets ) / sizeof( tcpsockets[0] ); socketind++ ) {
-		socket = tcpsockets[socketind];
-
-		if( socket->open ) {
-			while( true ) {
-				// find a free slot
-				for( i = 0; i < MAX_INCOMING_CONNECTIONS; i++ ) {
-					if( !svs.incoming[i].active ) {
-						break;
-					}
-				}
-				if( i == MAX_INCOMING_CONNECTIONS ) {
-					break;
-				}
-
-				if( ( ret = NET_Accept( socket, &newsocket, &address ) ) == 0 ) {
-					break;
-				}
-				if( ret == -1 ) {
-					Com_Printf( "NET_Accept: Error: %s\n", NET_ErrorString() );
-					continue;
-				}
-
-				Com_Printf( "New TCP connection from %s\n", NET_AddressToString( &address ) );
-
-				svs.incoming[i].active = true;
-				svs.incoming[i].socket = newsocket;
-				svs.incoming[i].address = address;
-				svs.incoming[i].time = svs.realtime;
-			}
-		}
-
-		for( i = 0; i < MAX_INCOMING_CONNECTIONS; i++ ) {
-			if( !svs.incoming[i].active ) {
-				continue;
-			}
-
-			ret = NET_GetPacket( &svs.incoming[i].socket, &address, &msg );
-			if( ret == -1 ) {
-				Com_Printf( "NET_GetPacket: Error: %s\n", NET_ErrorString() );
-				NET_CloseSocket( &svs.incoming[i].socket );
-				svs.incoming[i].active = false;
-			} else if( ret == 1 ) {
-				if( *(int *)msg.data != -1 ) {
-					Com_Printf( "Sequence packet without connection\n" );
-					NET_CloseSocket( &svs.incoming[i].socket );
-					svs.incoming[i].active = false;
-					continue;
-				}
-
-				Com_Printf( "Connectionless TCP packet from: %s\n", NET_AddressToString( &address ) );
-
-				SV_ConnectionlessPacket( &svs.incoming[i].socket, &address, &msg );
-			}
-		}
-	}
-#endif
 
 	for( socketind = 0; socketind < sizeof( sockets ) / sizeof( sockets[0] ); socketind++ ) {
 		socket = sockets[socketind];
@@ -369,17 +295,6 @@ static void SV_ReadPackets( void ) {
 static void SV_CheckTimeouts( void ) {
 	client_t *cl;
 	int i;
-
-#ifdef TCP_ALLOW_CONNECT
-	// timeout incoming connections
-	for( i = 0; i < MAX_INCOMING_CONNECTIONS; i++ ) {
-		if( svs.incoming[i].active && svs.incoming[i].time + 1000 * 15 < svs.realtime ) {
-			Com_Printf( "Incoming TCP connection from %s timed out\n", NET_AddressToString( &svs.incoming[i].address ) );
-			NET_CloseSocket( &svs.incoming[i].socket );
-			svs.incoming[i].active = false;
-		}
-	}
-#endif
 
 	// timeout clients
 	for( i = 0, cl = svs.clients; i < sv_maxclients->integer; i++, cl++ ) {
@@ -779,10 +694,6 @@ void SV_Init( void ) {
 
 	sv_ip6 =            Cvar_Get( "sv_ip6", "::", CVAR_ARCHIVE | CVAR_LATCH );
 	sv_port6 =          Cvar_Get( "sv_port6", va( "%i", PORT_SERVER ), CVAR_ARCHIVE | CVAR_LATCH );
-
-#ifdef TCP_ALLOW_CONNECT
-	sv_tcp =            Cvar_Get( "sv_tcp", "1", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_LATCH );
-#endif
 
 #ifdef HTTP_SUPPORT
 	sv_http =           Cvar_Get( "sv_http", "1", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_LATCH );

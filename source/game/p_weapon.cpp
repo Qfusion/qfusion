@@ -585,13 +585,8 @@ static edict_t *G_Fire_StrongBolt( vec3_t origin, vec3_t angles, firedef_t *fire
 		maxdamage *= QUAD_DAMAGE_SCALE;
 		maxknockback *= QUAD_KNOCKBACK_SCALE;
 	}
-#ifdef ELECTROBOLT_TEST
 	W_Fire_Electrobolt_FullInstant( owner, origin, angles, maxdamage, mindamage,
 									maxknockback, minknockback, ELECTROBOLT_RANGE, minDamageRange, mod, timeDelta );
-#else
-	W_Fire_Electrobolt_Combined( owner, origin, angles, maxdamage, mindamage,
-								 maxknockback, minknockback, range, mod, timeDelta );
-#endif
 	return NULL;
 }
 

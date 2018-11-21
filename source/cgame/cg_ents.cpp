@@ -808,9 +808,7 @@ static void CG_AddGenericEnt( centity_t *cent ) {
 		}
 
 		if( cent->effects & EF_AMMOBOX ) {
-#ifdef DOWNSCALE_ITEMS // Ugly hack for the release. Armor models are way too big
 			cent->ent.scale *= 0.90f;
-#endif
 
 			// find out the ammo box color
 			if( cent->item->color && strlen( cent->item->color ) > 1 ) {
@@ -1298,7 +1296,6 @@ static void CG_AddItemEnt( centity_t *cent ) {
 			cent->ent.scale *= 1.40f;
 		}
 
-#ifdef DOWNSCALE_ITEMS // Ugly hack for release. Armor models are way too big
 		if( cent->item ) {
 			if( cent->item->type & IT_ARMOR ) {
 				cent->ent.scale *= 0.85f;
@@ -1307,7 +1304,6 @@ static void CG_AddItemEnt( centity_t *cent ) {
 				cent->ent.scale *= 0.85f;
 			}
 		}
-#endif
 
 		// flags are special
 		if( cent->effects & EF_FLAG_TRAIL ) {

@@ -263,38 +263,6 @@ static void CL_CheckForResend( void ) {
 			return;
 		}
 
-#ifdef TCP_ALLOW_CONNECT
-		if( cls.socket->type == SOCKET_TCP && !cls.socket->connected ) {
-			connection_status_t status;
-
-			if( !cls.connect_count ) {
-				Com_Printf( "Connecting to %s...\n", cls.servername );
-
-				status = NET_Connect( cls.socket, &cls.serveraddress );
-			} else {
-				Com_Printf( "Checking connection to %s...\n", cls.servername );
-
-				status = NET_CheckConnect( cls.socket );
-			}
-
-			cls.connect_count++;
-			cls.connect_time = realtime;
-
-			if( status == CONNECTION_FAILED ) {
-				CL_Disconnect( va( "TCP connection failed: %s", NET_ErrorString() ) );
-				return;
-			}
-
-			if( status == CONNECTION_INPROGRESS ) {
-				return;
-			}
-
-			Com_Printf( "Connection made, asking for challenge %s...\n", cls.servername );
-			Netchan_OutOfBandPrint( cls.socket, &cls.serveraddress, "getchallenge\n" );
-			return;
-		}
-#endif
-
 		if( realtime - cls.connect_time < 10000 ) {
 			return;
 		}
@@ -330,19 +298,6 @@ static void CL_Connect( const char *servername, socket_type_t type, netadr_t *ad
 			cls.socket = ( address->type == NA_IP6 ?  &cls.socket_udp6 :  &cls.socket_udp );
 			cls.reliable = false;
 			break;
-
-#ifdef TCP_ALLOW_CONNECT
-		case SOCKET_TCP:
-			NET_InitAddress( &socketaddress, address->type );
-			if( !NET_OpenSocket( &cls.socket_tcp, SOCKET_TCP, &socketaddress, false ) ) {
-				Com_Error( ERR_FATAL, "Couldn't open the TCP socket\n" ); // FIXME
-				return;
-			}
-			NET_SetSocketNoDelay( &cls.socket_tcp, 1 );
-			cls.socket = &cls.socket_tcp;
-			cls.reliable = true;
-			break;
-#endif
 
 		default:
 			assert( false );
@@ -471,15 +426,6 @@ static void CL_Connect_Cmd_f( socket_type_t socket ) {
 static void CL_Connect_f( void ) {
 	CL_Connect_Cmd_f( SOCKET_UDP );
 }
-
-/*
-* CL_TCPConnect_f
-*/
-#if defined( TCP_ALLOW_CONNECT )
-static void CL_TCPConnect_f( void ) {
-	CL_Connect_Cmd_f( SOCKET_TCP );
-}
-#endif
 
 
 /*
@@ -982,11 +928,7 @@ void CL_ServerReconnect_f( void ) {
 
 	Com_Printf( "Reconnecting...\n" );
 
-#ifdef TCP_ALLOW_CONNECT
-	cls.connect_time = Sys_Milliseconds();
-#else
 	cls.connect_time = Sys_Milliseconds() - 1500;
-#endif
 
 	memset( cl.configstrings, 0, sizeof( cl.configstrings ) );
 	CL_SetClientState( CA_HANDSHAKE );
@@ -1262,21 +1204,12 @@ void CL_ReadPackets( void ) {
 		&cls.socket_loopback,
 		&cls.socket_udp,
 		&cls.socket_udp6,
-#ifdef TCP_ALLOW_CONNECT
-		&cls.socket_tcp
-#endif
 	};
 
 	MSG_Init( &msg, msgData, sizeof( msgData ) );
 
 	for( socketind = 0; socketind < sizeof( sockets ) / sizeof( sockets[0] ); socketind++ ) {
 		socket = sockets[socketind];
-
-#ifdef TCP_ALLOW_CONNECT
-		if( socket->type == SOCKET_TCP && !socket->connected ) {
-			continue;
-		}
-#endif
 
 		while( socket->open && ( ret = NET_GetPacket( socket, &address, &msg ) ) != 0 ) {
 			if( ret == -1 ) {
@@ -1325,13 +1258,6 @@ void CL_ReadPackets( void ) {
 			}
 			CL_ParseServerMessage( &msg );
 			cls.lastPacketReceivedTime = cls.realtime;
-
-#ifdef TCP_ALLOW_CONNECT
-			// we might have just been disconnected
-			if( socket->type == SOCKET_TCP && !socket->connected ) {
-				break;
-			}
-#endif
 		}
 	}
 
@@ -1958,9 +1884,6 @@ static void CL_InitLocal( void ) {
 	Cmd_AddCommand( "stop", CL_Stop_f );
 	Cmd_AddCommand( "quit", CL_Quit_f );
 	Cmd_AddCommand( "connect", CL_Connect_f );
-#if defined( TCP_ALLOW_CONNECT ) && defined( TCP_ALLOW_CONNECT_CLIENT )
-	Cmd_AddCommand( "tcpconnect", CL_TCPConnect_f );
-#endif
 	Cmd_AddCommand( "reconnect", CL_Reconnect_f );
 	Cmd_AddCommand( "rcon", CL_Rcon_f );
 	Cmd_AddCommand( "writeconfig", CL_WriteConfig_f );
@@ -1996,9 +1919,6 @@ static void CL_ShutdownLocal( void ) {
 	Cmd_RemoveCommand( "stop" );
 	Cmd_RemoveCommand( "quit" );
 	Cmd_RemoveCommand( "connect" );
-#if defined( TCP_ALLOW_CONNECT )
-	Cmd_RemoveCommand( "tcpconnect" );
-#endif
 	Cmd_RemoveCommand( "reconnect" );
 	Cmd_RemoveCommand( "rcon" );
 	Cmd_RemoveCommand( "writeconfig" );
