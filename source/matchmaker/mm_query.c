@@ -18,13 +18,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#include "../qcommon/qcommon.h"
-#include "../matchmaker/mm_common.h"
-#include "../matchmaker/mm_query.h"
-#include "../qcommon/wswcurl.h"
-#include "../qcommon/cjson.h"
-#include "../qalgo/base64.h"
-#include "../qcommon/compression.h"
+#include "qcommon/qcommon.h"
+#include "matchmaker/mm_common.h"
+#include "matchmaker/mm_query.h"
+#include "qcommon/wswcurl.h"
+#include "qcommon/cjson.h"
+#include "qalgo/base64.h"
+
+#include "zlib/zlib.h"
 
 #define SQALLOC( x )    Mem_Alloc( sq_mempool, ( x ) )
 #define SQFREE( x )     Mem_Free( ( x ) )
@@ -356,7 +357,7 @@ static void StatQuery_Prepare( stat_query_t *query ) {
 			Com_Printf( "StatQuery: Failed to allocate space for compressed JSON\n" );
 			return;
 		}
-		z_result = qzcompress( compData, &compSize, (unsigned char*)json_text, jsonSize );
+		z_result = compress( compData, &compSize, (unsigned char*)json_text, jsonSize );
 		if( z_result != Z_OK ) {
 			Com_Printf( "StatQuery: Failed to compress JSON\n" );
 			SQFREE( compData );

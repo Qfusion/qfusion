@@ -1,6 +1,6 @@
 project(${QFUSION_CLIENT_NAME})
 
-include_directories(${ZLIB_INCLUDE_DIR} ${FREETYPE_INCLUDE_DIR})
+include_directories(${FREETYPE_INCLUDE_DIR})
 
 add_definitions(-DAL_LIBTYPE_STATIC)
 

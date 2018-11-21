@@ -28,27 +28,6 @@ macro(capitalize s)
     set(${s} ${s_1}${s_2})
 endmacro()
 
-macro(find_windows_release_libs libs)
-    # workaround cmake confusing debug and release libs for zlib and png
-    set(${libs}_RELEASE NOTFOUND)
-
-    foreach (lib_name ${${libs}})
-        string(REPLACE "/debug" "/release" release_lib_name ${lib_name})
-        if (${libs}_DEBUG)
-            set(${libs}_DEBUG ${${libs}_DEBUG} debug ${lib_name})
-        else()
-            set(${libs}_DEBUG debug ${lib_name})
-        endif()
-        if (${libs}_RELEASE)
-            set(${libs}_RELEASE ${${libs}_RELEASE} optimized ${release_lib_name})
-        else()
-            set(${libs}_RELEASE optimized ${release_lib_name})
-        endif()
-    endforeach()
-
-    set(${libs} ${${libs}_RELEASE} ${${libs}_DEBUG})
-endmacro()
-
 macro(qf_set_output_dir name dir)
     foreach (OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES})
         string(TOUPPER ${OUTPUTCONFIG} OUTPUTCONFIGUPPERCASE)

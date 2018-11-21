@@ -44,14 +44,10 @@ include_directories("${CMAKE_SOURCE_DIR}" "${CMAKE_SOURCE_DIR}/../libs")
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 	add_definitions(-D_CRT_SECURE_NO_WARNINGS -DWIN32 -D_WINDOWS)
 
-	set(CMAKE_INCLUDE_PATH "../libsrcs/src/zlib")
-
 	if (CMAKE_BUILD_TYPE STREQUAL "Release")
 		set(LIBS_ARCH "windows-release")
-		set(CMAKE_LIBRARY_PATH "../libsrcs/lib/win32/x64/release")
 	else()
 		set(LIBS_ARCH "windows-debug")
-		set(CMAKE_LIBRARY_PATH "../libsrcs/lib/win32/x64/debug")
 	endif()
 
 	if (MSVC)
@@ -106,6 +102,8 @@ set(FREETYPE_LIBRARY "${CMAKE_SOURCE_DIR}/../libs/freetype/${LIBS_ARCH}/${CMAKE_
 set(OPENAL_LIBRARY "${CMAKE_SOURCE_DIR}/../libs/openal/${LIBS_ARCH}/${CMAKE_STATIC_LIBRARY_PREFIX}openal${CMAKE_STATIC_LIBRARY_SUFFIX}")
 set(SDL2_LIBRARY "${CMAKE_SOURCE_DIR}/../libs/sdl/${LIBS_ARCH}/${CMAKE_STATIC_LIBRARY_PREFIX}SDL2${CMAKE_STATIC_LIBRARY_SUFFIX}")
 set(SDL2MAIN_LIBRARY "${CMAKE_SOURCE_DIR}/../libs/sdl/${LIBS_ARCH}/${CMAKE_STATIC_LIBRARY_PREFIX}SDL2main${CMAKE_STATIC_LIBRARY_SUFFIX}")
+set(ZLIB_LIBRARY "${CMAKE_SOURCE_DIR}/../libs/zlib/${LIBS_ARCH}/${CMAKE_STATIC_LIBRARY_PREFIX}zlib${CMAKE_STATIC_LIBRARY_SUFFIX}")
+set(ZSTD_LIBRARY "${CMAKE_SOURCE_DIR}/../libs/zstd/${LIBS_ARCH}/${CMAKE_STATIC_LIBRARY_PREFIX}zstd${CMAKE_STATIC_LIBRARY_SUFFIX}")
 
 # Linux-only specific settings
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
@@ -127,10 +125,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 	string(REPLACE "-rdynamic" "" CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "${CMAKE_SHARED_LIBRARY_LINK_C_FLAGS}")
 endif()
 
-if (NOT GAME_MODULES_ONLY)
-	find_package(ZLIB REQUIRED)
-endif()
-
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 	if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 		STRING(TOLOWER "win32_x64.tar.gz" TAR_GZ_NAME)
@@ -148,14 +142,8 @@ endif()
 
 if (NOT GAME_MODULES_ONLY)
 	if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-		find_windows_release_libs(ZLIB_LIBRARY)
 		find_windows_release_libs(ANGELSCRIPT_LIBRARY)
 	endif()
-endif()
-
-if (${CMAKE_SYSTEM_NAME} MATCHES "Linux") # Do not add 'OR MINGW' here - we need to use suffix-prefix settings from Windows
-	set(ZLIB_LIBRARY "")
-	add_definitions(-DZLIB_RUNTIME)
 endif()
 
 add_subdirectory(angelwrap)

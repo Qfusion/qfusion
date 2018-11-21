@@ -110,9 +110,6 @@ extern "C" {
 #define LIB_PREFIX ""
 #define LIB_SUFFIX ".dll"
 
-// FIXME: move these to CMakeLists.txt
-#define LIBZ_LIBNAME "zlib1.dll"
-
 #ifdef NDEBUG
 #define BUILDSTRING "Win32 RELEASE"
 #else

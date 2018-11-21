@@ -896,24 +896,6 @@ int     Sys_GetCurrentProcessId( void );
 /*
 ==============================================================
 
-CPU FEATURES
-
-==============================================================
-*/
-
-#define QCPU_HAS_RDTSC      0x00000001
-#define QCPU_HAS_MMX        0x00000002
-#define QCPU_HAS_MMXEXT     0x00000004
-#define QCPU_HAS_3DNOW      0x00000010
-#define QCPU_HAS_3DNOWEXT   0x00000020
-#define QCPU_HAS_SSE        0x00000040
-#define QCPU_HAS_SSE2       0x00000080
-
-unsigned int COM_CPUFeatures( void );
-
-/*
-==============================================================
-
 CLIENT / SERVER SYSTEMS
 
 ==============================================================
