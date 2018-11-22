@@ -112,7 +112,7 @@ uint min( uint a, uint b ) {
 	return a < b ? a : b;
 }
 
-void setTeamProgress( int teamNum, int progress )
+void setTeamProgress( int teamNum, int progress, ProgressType type )
 {
 	for ( int t = TEAM_ALPHA; t < GS_MAX_TEAMS; t++)
 	{
@@ -135,6 +135,7 @@ void setTeamProgress( int teamNum, int progress )
 			Client @client = @ent.client;
 
 			client.setHUDStat( STAT_PROGRESS_SELF, progress );
+			client.setHUDStat( STAT_MESSAGE_SELF, type );
 		}
 	}
 }

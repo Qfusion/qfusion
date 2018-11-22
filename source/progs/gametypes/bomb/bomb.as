@@ -41,6 +41,12 @@ const uint BOMBSTATE_ARMED = 6;
 const uint BOMBSTATE_EXPLODING_ANIM = 7; // bomb has just exploded and we're animating the sprite (falls through)
 const uint BOMBSTATE_EXPLODING = 8; // bomb has just exploded and we're spamming explosions all over the place
 
+enum ProgressType {
+	ProgressType_Nothing,
+	ProgressType_Planting,
+	ProgressType_Defusing,
+};
+
 // FIXME enum
 const uint BOMBDROP_NORMAL = 0; // dropped manually
 const uint BOMBDROP_KILLED = 1; // died
@@ -330,7 +336,7 @@ void bombArm(array<Entity @> @nearby)
 
 	G_CenterPrintFormatMsg( null, "Bomb planted at %s!", bombSite.letter );
 
-	setTeamProgress( attackingTeam, 0 );
+	setTeamProgress( attackingTeam, 0, ProgressType_Nothing );
 
 	bombProgress = 0;
 	bombState = BOMBSTATE_ARMED;
@@ -513,7 +519,7 @@ void bombThink()
 						progress = -progress;
 					}
 
-					setTeamProgress( attackingTeam, progress );
+					setTeamProgress( attackingTeam, progress, ProgressType_Planting );
 
 					bombSprite.counterNum = bombDecal.counterNum = int( frac * 255.0f );
 				}
@@ -538,7 +544,7 @@ void bombThink()
 					{
 						bombDefuse( nearby );
 
-						setTeamProgress( defendingTeam, 100 );
+						setTeamProgress( defendingTeam, 100, ProgressType_Defusing );
 
 						break;
 					}
@@ -563,7 +569,7 @@ void bombThink()
 						progress = -progress;
 					}
 
-					setTeamProgress( defendingTeam, progress );
+					setTeamProgress( defendingTeam, progress, ProgressType_Defusing );
 				}
 
 				if ( levelTime > bombNextBeep )
