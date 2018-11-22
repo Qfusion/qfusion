@@ -33,8 +33,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 /*
 * GS_TraceBullet
 */
-trace_t *GS_TraceBullet( trace_t *trace, vec3_t start, vec3_t dir, float r, float u, int range, int ignore, int timeDelta ) {
-	mat3_t axis;
+trace_t *GS_TraceBullet( trace_t *trace, vec3_t start, const vec3_t fv, const vec3_t rv, const vec3_t uv, 
+	float r, float u, int range, int ignore, int timeDelta ) {
 	vec3_t end;
 	bool water = false;
 	vec3_t water_start;
@@ -42,9 +42,6 @@ trace_t *GS_TraceBullet( trace_t *trace, vec3_t start, vec3_t dir, float r, floa
 	static trace_t water_trace;
 
 	assert( trace );
-
-	VectorNormalizeFast( dir );
-	NormalVectorToAxis( dir, axis );
 
 	if( gs.api.PointContents( start, timeDelta ) & MASK_WATER ) {
 		water = true;
@@ -57,12 +54,12 @@ trace_t *GS_TraceBullet( trace_t *trace, vec3_t start, vec3_t dir, float r, floa
 		//u *= BULLET_WATER_REFRACTION;
 	}
 
-	VectorMA( start, range, &axis[AXIS_FORWARD], end );
+	VectorMA( start, range, fv, end );
 	if( r ) {
-		VectorMA( end, r, &axis[AXIS_RIGHT], end );
+		VectorMA( end, r, rv, end );
 	}
 	if( u ) {
-		VectorMA( end, u, &axis[AXIS_UP], end );
+		VectorMA( end, u, uv, end );
 	}
 
 	gs.api.Trace( trace, start, vec3_origin, vec3_origin, end, ignore, content_mask, timeDelta );

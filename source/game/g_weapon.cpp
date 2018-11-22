@@ -462,8 +462,8 @@ edict_t *W_Fire_GunbladeBlast( edict_t *self, vec3_t start, vec3_t dir, float da
 /*
 * W_Fire_Bullet
 */
-void W_Fire_Bullet( edict_t *self, vec3_t start, vec3_t dir, int seed, int range, int hspread, int vspread,
-					float damage, int knockback, int stun, int mod, int timeDelta ) {
+void W_Fire_Bullet( edict_t *self, vec3_t start, vec3_t fv, vec3_t rv, vec3_t uv, int seed, int range, 
+	int hspread, int vspread, float damage, int knockback, int stun, int mod, int timeDelta ) {
 	edict_t *event;
 	float r, u;
 	double alpha, s;
@@ -477,7 +477,8 @@ void W_Fire_Bullet( edict_t *self, vec3_t start, vec3_t dir, int seed, int range
 	// send the event
 	event = G_SpawnEvent( EV_FIRE_BULLET, seed, start );
 	event->s.ownerNum = ENTNUM( self );
-	VectorScale( dir, 4096, event->s.origin2 ); // DirToByte is too inaccurate
+	VectorCopy( fv, event->s.origin2 );
+	VectorCopy( rv, event->s.origin3 );
 	event->s.weapon = WEAP_MACHINEGUN;
 	event->s.firemode = ( mod == MOD_MACHINEGUN_S ) ? FIRE_MODE_STRONG : FIRE_MODE_WEAK;
 
@@ -487,10 +488,10 @@ void W_Fire_Bullet( edict_t *self, vec3_t start, vec3_t dir, int seed, int range
 	r = s * cos( alpha ) * hspread;
 	u = s * sin( alpha ) * vspread;
 
-	GS_TraceBullet( &trace, start, dir, r, u, range, ENTNUM( self ), timeDelta );
+	GS_TraceBullet( &trace, start, fv, rv, uv, r, u, range, ENTNUM( self ), timeDelta );
 	if( trace.ent != -1 ) {
 		if( game.edicts[trace.ent].takedamage ) {
-			G_Damage( &game.edicts[trace.ent], self, self, dir, dir, trace.endpos, damage, knockback, stun, dmgflags, mod );
+			G_Damage( &game.edicts[trace.ent], self, self, fv, fv, trace.endpos, damage, knockback, stun, dmgflags, mod );
 		} else {
 			if( !( trace.surfFlags & SURF_NOIMPACT ) ) {
 			}
@@ -499,8 +500,8 @@ void W_Fire_Bullet( edict_t *self, vec3_t start, vec3_t dir, int seed, int range
 }
 
 //Sunflower spiral with Fibonacci numbers
-void W_Fire_SunflowerBucket( edict_t *self, vec3_t start, vec3_t dir, int *seed, int count,
-									 int hspread, int vspread, int range, float damage, int kick, int stun, int dflags, int mod, int timeDelta ) {
+void W_Fire_SunflowerBucket( edict_t *self, vec3_t start, vec3_t fv, vec3_t rv, vec3_t uv, int *seed, int count, 
+	int hspread, int vspread, int range, float damage, int kick, int stun, int dflags, int mod, int timeDelta ) {
 	int i;
 	float r;
 	float u;
@@ -512,10 +513,10 @@ void W_Fire_SunflowerBucket( edict_t *self, vec3_t start, vec3_t dir, int *seed,
 		r = cos( (float)*seed + fi ) * hspread * sqrt( fi );
 		u = sin( (float)*seed + fi ) * vspread * sqrt( fi );
 
-		GS_TraceBullet( &trace, start, dir, r, u, range, ENTNUM( self ), timeDelta );
+		GS_TraceBullet( &trace, start, fv, rv, uv, r, u, range, ENTNUM( self ), timeDelta );
 		if( trace.ent != -1 ) {
 			if( game.edicts[trace.ent].takedamage ) {
-				G_Damage( &game.edicts[trace.ent], self, self, dir, dir, trace.endpos, damage, kick, stun, dflags, mod );
+				G_Damage( &game.edicts[trace.ent], self, self, fv, fv, trace.endpos, damage, kick, stun, dflags, mod );
 			} else {
 				if( !( trace.surfFlags & SURF_NOIMPACT ) ) {
 				}
@@ -524,7 +525,7 @@ void W_Fire_SunflowerBucket( edict_t *self, vec3_t start, vec3_t dir, int *seed,
 	}
 }
 
-void W_Fire_RandomBucket( edict_t *self, vec3_t start, vec3_t dir, int *seed, int count, 
+void W_Fire_RandomBucket( edict_t *self, vec3_t start, vec3_t fv, vec3_t rv, vec3_t uv, int *seed, int count, 
 	int hspread, int vspread, int range, float damage, int kick, int stun, int dflags, int mod, int timeDelta )
 {
 	int i;
@@ -536,10 +537,10 @@ void W_Fire_RandomBucket( edict_t *self, vec3_t start, vec3_t dir, int *seed, in
 		r = Q_crandom( seed ) * hspread;
 		u = Q_crandom( seed ) * vspread;
 
-		GS_TraceBullet( &trace, start, dir, r, u, range, ENTNUM( self ), timeDelta );
+		GS_TraceBullet( &trace, start, fv, rv, uv, r, u, range, ENTNUM( self ), timeDelta );
 		if( trace.ent != -1 ) {
 			if( game.edicts[trace.ent].takedamage ) {
-				G_Damage( &game.edicts[trace.ent], self, self, dir, dir, trace.endpos, damage, kick, stun, dflags, mod );
+				G_Damage( &game.edicts[trace.ent], self, self, fv, fv, trace.endpos, damage, kick, stun, dflags, mod );
 			} else {
 				if( !( trace.surfFlags & SURF_NOIMPACT ) ) {
 				}
@@ -548,8 +549,8 @@ void W_Fire_RandomBucket( edict_t *self, vec3_t start, vec3_t dir, int *seed, in
 	}
 }
 
-void W_Fire_Riotgun( edict_t *self, vec3_t start, vec3_t dir, int seed, int range, int hspread, int vspread,
-					 int count, float damage, int knockback, int stun, int mod, int timeDelta ) {
+void W_Fire_Riotgun( edict_t *self, vec3_t start, vec3_t fv, vec3_t rv, vec3_t uv, int seed, int range, 
+	int hspread, int vspread, int count, float damage, int knockback, int stun, int mod, int timeDelta ) {
 	edict_t *event;
 	int dmgflags = 0;
 
@@ -560,11 +561,12 @@ void W_Fire_Riotgun( edict_t *self, vec3_t start, vec3_t dir, int seed, int rang
 	// send the event
 	event = G_SpawnEvent( EV_FIRE_RIOTGUN, seed, start );
 	event->s.ownerNum = ENTNUM( self );
-	VectorScale( dir, 4096, event->s.origin2 ); // DirToByte is too inaccurate
+	VectorCopy( fv, event->s.origin2 );
+	VectorCopy( rv, event->s.origin3 );
 	event->s.weapon = WEAP_RIOTGUN;
 	event->s.firemode = ( mod == MOD_RIOTGUN_S ) ? FIRE_MODE_STRONG : FIRE_MODE_WEAK;
 
-	W_Fire_SunflowerBucket( self, start, dir, &seed, count, hspread, vspread,
+	W_Fire_SunflowerBucket( self, start, fv, rv, uv, &seed, count, hspread, vspread,
 		range, damage, knockback, stun, dmgflags, mod, timeDelta );
 }
 

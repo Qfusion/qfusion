@@ -390,7 +390,7 @@ static edict_t *G_Fire_Machinegun( vec3_t origin, vec3_t angles, firedef_t *fire
 	int range, knockback, stun, mod;
 	float damage;
 	int timeDelta;
-	vec3_t dir;
+	vec3_t fv, rv, uv;
 
 	if( owner && owner->r.client ) {
 		timeDelta = owner->r.client->timeDelta;
@@ -409,8 +409,8 @@ static edict_t *G_Fire_Machinegun( vec3_t origin, vec3_t angles, firedef_t *fire
 		knockback *= QUAD_KNOCKBACK_SCALE;
 	}
 
-	AngleVectors( angles, dir, NULL, NULL );
-	W_Fire_Bullet( owner, origin, dir, seed, range, firedef->spread, firedef->v_spread,
+	AngleVectors( angles, fv, rv, uv );
+	W_Fire_Bullet( owner, origin, fv, rv, uv, seed, range, firedef->spread, firedef->v_spread,
 				   damage, knockback, stun, mod, timeDelta );
 
 	return NULL;
@@ -423,7 +423,7 @@ static edict_t *G_Fire_Riotgun( vec3_t origin, vec3_t angles, firedef_t *firedef
 	int range, knockback, stun, mod;
 	float damage;
 	int timeDelta;
-	vec3_t dir;
+	vec3_t fv, rv, uv;
 
 	if( owner && owner->r.client ) {
 		timeDelta = owner->r.client->timeDelta;
@@ -442,8 +442,8 @@ static edict_t *G_Fire_Riotgun( vec3_t origin, vec3_t angles, firedef_t *firedef
 		knockback *= QUAD_KNOCKBACK_SCALE;
 	}
 
-	AngleVectors( angles, dir, NULL, NULL );
-	W_Fire_Riotgun( owner, origin, dir, seed, range, firedef->spread, firedef->v_spread,
+	AngleVectors( angles, fv, rv, uv );
+	W_Fire_Riotgun( owner, origin, fv, rv, uv, seed, range, firedef->spread, firedef->v_spread,
 					firedef->projectile_count, damage, knockback, stun, mod, timeDelta );
 
 	return NULL;

@@ -2241,11 +2241,21 @@ static edict_t *asFunc_FireGrenade( asvec3_t *origin, asvec3_t *dir, int speed, 
 }
 
 static void asFunc_FireRiotgun( asvec3_t *origin, asvec3_t *dir, int range, int spread, int count, int damage, int knockback, int stun, edict_t *owner ) {
-	W_Fire_Riotgun( owner, origin->v, dir->v, rand() & 255, range, spread, spread, count, damage, knockback, stun, MOD_RIOTGUN_S, 0 );
+	vec3_t fv, rv, uv;
+
+	VectorNormalize2( dir->v, fv );
+	MakeNormalVectors( fv, rv, uv );
+
+	W_Fire_Riotgun( owner, origin->v, fv, rv, uv, rand() & 255, range, spread, spread, count, damage, knockback, stun, MOD_RIOTGUN_S, 0 );
 }
 
 static void asFunc_FireBullet( asvec3_t *origin, asvec3_t *dir, int range, int spread, int damage, int knockback, int stun, edict_t *owner ) {
-	W_Fire_Bullet( owner, origin->v, dir->v, rand() & 255, range, spread, spread, damage, knockback, stun, MOD_MACHINEGUN_S, 0 );
+	vec3_t fv, rv, uv;
+
+	VectorNormalize2( dir->v, fv );
+	MakeNormalVectors( fv, rv, uv );
+
+	W_Fire_Bullet( owner, origin->v, fv, rv, uv, rand() & 255, range, spread, spread, damage, knockback, stun, MOD_MACHINEGUN_S, 0 );
 }
 
 static edict_t *asFunc_FireBlast( asvec3_t *origin, asvec3_t *dir, int speed, int radius, int damage, int knockback, int stun, edict_t *owner ) {
