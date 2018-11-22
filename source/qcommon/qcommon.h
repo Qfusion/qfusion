@@ -951,15 +951,11 @@ void ML_Shutdown( void );
 void ML_Restart( bool forcemaps );
 bool ML_Update( void );
 
-const char *ML_GetFilenameExt( const char *fullname, bool recursive );
-const char *ML_GetFilename( const char *fullname );
-const char *ML_GetFullname( const char *filename );
 size_t ML_GetMapByNum( int num, char *out, size_t size );
 
 bool ML_FilenameExists( const char *filename );
 
 bool ML_ValidateFilename( const char *filename );
-bool ML_ValidateFullname( const char *fullname );
 
 char **ML_CompleteBuildList( const char *partial );
 

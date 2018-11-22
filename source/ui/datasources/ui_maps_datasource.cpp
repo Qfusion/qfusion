@@ -4,7 +4,6 @@
 
 #define MAPS_SOURCE "maps"
 #define TABLE_NAME  "list"
-#define MAP_TITLE   "title"
 #define MAP_FILE    "name"
 
 namespace WSWUI
@@ -20,11 +19,10 @@ MapsDataSource::MapsDataSource() : Rocket::Controls::DataSource( MAPS_SOURCE ) {
 template<typename C>
 void MapsDataSource::getMapsList( C& maps_list ) {
 	char map_info[MAX_CONFIGSTRING_CHARS];
-	char* map_shortname, * map_fullname;
+	char * map_shortname;
 	for( int i = 0; trap::ML_GetMapByNum( i, map_info, sizeof( map_info ) ); ++i ) {
 		map_shortname = map_info;
-		map_fullname = map_info + strlen( map_shortname ) + 1;
-		maps_list.push_back( std::make_pair( std::string( map_shortname ), std::string( map_fullname ) ) );
+		maps_list.push_back( std::string( map_shortname ) );
 	}
 }
 
@@ -34,10 +32,8 @@ void MapsDataSource::GetRow( Rocket::Core::StringList &row, const Rocket::Core::
 	}
 
 	for( Rocket::Core::StringList::const_iterator it = cols.begin(); it != cols.end(); ++it ) {
-		if( *it == MAP_TITLE ) {
-			row.push_back( mapList[row_index].second.empty() ? mapList[row_index].first.c_str() : mapList[row_index].second.c_str() );
-		} else if( *it == MAP_FILE ) {
-			row.push_back( mapList[row_index].first.c_str() );
+		if( *it == MAP_FILE ) {
+			row.push_back( mapList[row_index].c_str() );
 		} else {
 			row.push_back( "" );
 		}

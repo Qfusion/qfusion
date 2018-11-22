@@ -245,10 +245,6 @@ static inline bool trap_ML_FilenameExists( const char *filename ) {
 	return GAME_IMPORT.ML_FilenameExists( filename ) == true;
 }
 
-static inline const char *trap_ML_GetFullname( const char *filename ) {
-	return GAME_IMPORT.ML_GetFullname( filename );
-}
-
 static inline size_t trap_ML_GetMapByNum( int num, char *out, size_t size ) {
 	return GAME_IMPORT.ML_GetMapByNum( num, out, size );
 }

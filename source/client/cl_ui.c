@@ -294,8 +294,6 @@ void CL_UIModule_Init( void ) {
 	import.Mem_Alloc = CL_UIModule_MemAlloc;
 	import.Mem_Free = CL_UIModule_MemFree;
 
-	import.ML_GetFilename = ML_GetFilename;
-	import.ML_GetFullname = ML_GetFullname;
 	import.ML_GetMapByNum = ML_GetMapByNum;
 
 	import.MM_Login = CL_MM_Login;

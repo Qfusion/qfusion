@@ -535,7 +535,6 @@ void SV_InitGameProgs( void ) {
 	import.ML_Update = ML_Update;
 	import.ML_GetMapByNum = ML_GetMapByNum;
 	import.ML_FilenameExists = ML_FilenameExists;
-	import.ML_GetFullname = ML_GetFullname;
 
 	import.Cmd_ExecuteText = Cbuf_ExecuteText;
 	import.Cbuf_Execute = Cbuf_Execute;

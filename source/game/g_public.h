@@ -160,7 +160,6 @@ typedef struct {
 	bool ( *ML_Update )( void );
 	size_t ( *ML_GetMapByNum )( int num, char *out, size_t size );
 	bool ( *ML_FilenameExists )( const char *filename );
-	const char *( *ML_GetFullname )( const char *filename );
 
 	// add commands to the server console as if they were typed in for map changing, etc
 	void ( *Cmd_ExecuteText )( int exec_when, const char *text );

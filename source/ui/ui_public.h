@@ -188,8 +188,6 @@ typedef struct {
 	bool ( *FS_RemoveDirectory )( const char *dirname );
 
 	// maplist
-	const char *( *ML_GetFilename )( const char *fullname );
-	const char *( *ML_GetFullname )( const char *filename );
 	size_t ( *ML_GetMapByNum )( int num, char *out, size_t size );
 
 	// MatchMaker

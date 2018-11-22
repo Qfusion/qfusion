@@ -179,12 +179,6 @@ inline void R_PopTransformMatrix( bool projection ) {
 	UI_IMPORT.R_PopTransformMatrix( projection );
 }
 
-inline const char *ML_GetFullname( const char *name ) {
-	return UI_IMPORT.ML_GetFullname( name );
-}
-inline const char *ML_GetFilename( const char *fullname ) {
-	return UI_IMPORT.ML_GetFilename( fullname );
-}
 inline size_t ML_GetMapByNum( int num, char *out, size_t size ) {
 	return UI_IMPORT.ML_GetMapByNum( num, out, size );
 }

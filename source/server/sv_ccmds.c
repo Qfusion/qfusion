@@ -176,17 +176,8 @@ static void SV_Map_f( void ) {
 	}
 
 	if( !found ) {
-		if( ML_ValidateFullname( map ) ) {
-			Q_strncpyz( mapname, ML_GetFilename( map ), sizeof( mapname ) );
-			if( *mapname ) {
-				found = true;
-			}
-		}
-
-		if( !found ) {
-			Com_Printf( "Couldn't find map: %s\n", map );
-			return;
-		}
+		Com_Printf( "Couldn't find map: %s\n", map );
+		return;
 	}
 
 	if( FS_GetNotifications() & FS_NOTIFY_NEWPAKS ) {

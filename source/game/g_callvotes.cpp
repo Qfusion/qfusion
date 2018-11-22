@@ -322,15 +322,13 @@ static http_response_code_t G_VoteMapWebRequest( http_query_method_t method, con
 		s = G_CopyString( g_map_pool->string );
 		tok = strtok( s, MAPLIST_SEPS );
 		while( tok != NULL ) {
-			const char *fullname = trap_ML_GetFullname( tok );
-
 			G_AppendString( &msg, va(
 								"{\n"
 								"\"value\"" " " "\"%s\"" "\n"
-								"\"name\"" " " "\"%s '%s'\"" "\n"
+								"\"name\"" " " "\"%s\"" "\n"
 								"}\n",
 								tok,
-								tok, fullname
+								tok
 								), &msg_len, &msg_size );
 
 			tok = strtok( NULL, MAPLIST_SEPS );

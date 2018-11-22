@@ -5,8 +5,7 @@
 
 namespace WSWUI
 {
-/// Provides a list of available maps, with their full names, short
-/// names and pictures
+/// Provides a list of available maps
 class MapsDataSource : public Rocket::Controls::DataSource
 {
 public:
@@ -16,8 +15,7 @@ public:
 	virtual int GetNumRows( const Rocket::Core::String &table );
 
 private:
-	typedef std::pair<std::string, std::string> MapInfo;
-	typedef std::vector<MapInfo> MapList;
+	typedef std::vector<std::string> MapList;
 
 	MapList mapList;
 
