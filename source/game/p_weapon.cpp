@@ -26,7 +26,6 @@ void SV_Physics_LinearProjectile( edict_t *ent );
 
 static bool is_quad;
 
-#define NO_ROCKET_ANTILAG
 #define PLASMAHACK // ffs : hack for the plasmagun
 
 #ifdef PLASMAHACK
@@ -677,20 +676,4 @@ void G_FireWeapon( edict_t *ent, int parm ) {
 		if( projectile->s.linearMovement )
 			VectorCopy( projectile->s.origin, projectile->s.linearMovementBegin );
 	}
-
-#ifdef NO_ROCKET_ANTILAG
-
-	// hack for disabling antilag on rockets
-	if( projectile && projectile->s.type == ET_ROCKET ) {
-		int timeOffset;
-
-		timeOffset = -projectile->timeDelta;
-		projectile->timeDelta = 0;
-		if( projectile->s.linearMovement ) {
-			projectile->s.modelindex2 = 0;
-		}
-
-		G_ProjectileTimePrestep( projectile, timeOffset );
-	}
-#endif
 }
