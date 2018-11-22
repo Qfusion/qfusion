@@ -943,6 +943,10 @@ static const msg_field_t ent_state_fields[] = {
 	{ ESOFS( origin2[1] ), 0, 1, WIRE_FLOAT },
 	{ ESOFS( origin2[2] ), 0, 1, WIRE_FLOAT },
 
+	{ ESOFS( origin3[0] ), 0, 1, WIRE_FLOAT },
+	{ ESOFS( origin3[1] ), 0, 1, WIRE_FLOAT },
+	{ ESOFS( origin3[2] ), 0, 1, WIRE_FLOAT },
+
 	{ ESOFS( linearMovementTimeStamp ), 32, 1, WIRE_UBASE128 },
 	{ ESOFS( linearMovement ), 1, 1, WIRE_BOOL },
 	{ ESOFS( linearMovementDuration ), 32, 1, WIRE_UBASE128 },

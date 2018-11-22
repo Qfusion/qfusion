@@ -301,6 +301,7 @@ typedef struct entity_state_s {
 	vec3_t origin;
 	vec3_t angles;
 	vec3_t origin2;                 // ET_BEAM, ET_PORTALSURFACE, ET_EVENT specific
+	vec3_t origin3;                 // event-specific
 
 	unsigned int modelindex;
 	unsigned int modelindex2;
@@ -329,9 +330,9 @@ typedef struct entity_state_s {
 	int range;                      // ET_LASERBEAM, ET_CURVELASERBEAM specific
 
 	bool linearMovement;
-	vec3_t linearMovementVelocity;      // this is transmitted instead of origin when linearProjectile is true
-	vec3_t linearMovementEnd;           // the end movement point for brush models
-	vec3_t linearMovementBegin;			// the starting movement point for brush models
+	vec3_t linearMovementVelocity;
+	vec3_t linearMovementEnd;           // the end movement point for objects moving along linear path
+	vec3_t linearMovementBegin;			// the starting movement point for objects moving along linear path
 	unsigned int linearMovementDuration;
 	int64_t linearMovementTimeStamp;
 
