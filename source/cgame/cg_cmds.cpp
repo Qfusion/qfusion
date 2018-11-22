@@ -110,8 +110,7 @@ void CG_ConfigString( int i, const char *s ) {
 	Q_strncpyz( cgs.configStrings[i], s, sizeof( cgs.configStrings[i] ) );
 
 	// do something apropriate
-	if( i == CS_GAMETYPETITLE ) {
-	} else if( i == CS_GAMETYPENAME ) {
+	if( i == CS_GAMETYPENAME ) {
 		GS_SetGametypeName( cgs.configStrings[CS_GAMETYPENAME] );
 	} else if( i == CS_AUTORECORDSTATE ) {
 		CG_SC_AutoRecordAction( cgs.configStrings[i] );
@@ -571,31 +570,6 @@ static void CG_SC_HelpMessage( void ) {
 }
 
 /*
-* CG_CS_UpdateTeamInfo
-*/
-static void CG_CS_UpdateTeamInfo( void ) {
-	char *ti;
-
-	ti = trap_Cmd_Argv( 1 );
-	if( !ti[0] ) {
-		cg.teaminfo_size = 0;
-		CG_Free( cg.teaminfo );
-		cg.teaminfo = NULL;
-		return;
-	}
-
-	if( strlen( ti ) + 1 > cg.teaminfo_size ) {
-		if( cg.teaminfo ) {
-			CG_Free( cg.teaminfo );
-		}
-		cg.teaminfo_size = strlen( ti ) + 1;
-		cg.teaminfo = ( char * )CG_Malloc( cg.teaminfo_size );
-	}
-
-	Q_strncpyz( cg.teaminfo, ti, cg.teaminfo_size );
-}
-
-/*
 * CG_Cmd_DemoGet_f
 */
 static bool demo_requested = false;
@@ -814,7 +788,6 @@ static const svcmd_t cg_svcmds[] =
 	{ "plstats", CG_SC_PlayerStats },
 	{ "mm", CG_SC_MatchMessage },
 	{ "mapmsg", CG_SC_HelpMessage },
-	{ "ti", CG_CS_UpdateTeamInfo },
 	{ "demoget", CG_SC_DemoGet },
 	{ "cha", CG_SC_ChannelAdd },
 	{ "chr", CG_SC_ChannelRemove },

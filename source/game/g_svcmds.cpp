@@ -340,21 +340,6 @@ static void Cmd_WriteIP_f( void ) {
 }
 
 /*
-* Cmd_ListLocations_f
-*/
-static void Cmd_ListLocations_f( void ) {
-	int i;
-
-	for( i = 0; i < MAX_LOCATIONS; i++ ) {
-		const char *cs = trap_GetConfigString( CS_LOCATIONS + i );
-		if( !cs[0] ) {
-			break;
-		}
-		G_Printf( "%2d %s\n", i, cs );
-	}
-}
-
-/*
 * G_AddCommands
 */
 void G_AddServerCommands( void ) {
@@ -376,8 +361,6 @@ void G_AddServerCommands( void ) {
 
 	trap_Cmd_AddCommand( "listratings", G_ListRatings_f );
 	trap_Cmd_AddCommand( "listraces", G_ListRaces_f );
-
-	trap_Cmd_AddCommand( "listlocations", Cmd_ListLocations_f );
 }
 
 /*
@@ -402,6 +385,4 @@ void G_RemoveCommands( void ) {
 
 	trap_Cmd_RemoveCommand( "listratings" );
 	trap_Cmd_RemoveCommand( "listraces" );
-
-	trap_Cmd_RemoveCommand( "listlocations" );
 }

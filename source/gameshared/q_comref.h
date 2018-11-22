@@ -18,8 +18,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#ifndef GAME_QCOMREF_H
-#define GAME_QCOMREF_H
+#pragma once
 
 #include "q_arch.h"
 
@@ -154,38 +153,33 @@ typedef struct {
 // Each config string can be at most MAX_QPATH characters.
 //
 #define CS_HOSTNAME         0
-#define CS_TVSERVER         1
-#define CS_MAXCLIENTS       2
-#define CS_MODMANIFEST      3
+#define CS_MAXCLIENTS       1
+#define CS_MODMANIFEST      2
 
-#define SERVER_PROTECTED_CONFIGSTRINGS 5
+#define SERVER_PROTECTED_CONFIGSTRINGS 4
 
-#define CS_MESSAGE          5
-#define CS_MAPNAME          6
-#define CS_AUDIOTRACK       7
-#define CS_SKYBOX           8
-#define CS_STATNUMS         9
-#define CS_POWERUPEFFECTS   10
-#define CS_GAMETYPETITLE    11
-#define CS_GAMETYPENAME     12
-#define CS_GAMETYPEVERSION  13
-#define CS_GAMETYPEAUTHOR   14
-#define CS_AUTORECORDSTATE  15
+#define CS_MESSAGE          4
+#define CS_MAPNAME          5
+#define CS_SKYBOX           6
+#define CS_STATNUMS         7
+#define CS_POWERUPEFFECTS   8
+#define CS_GAMETYPENAME     9
+#define CS_AUTORECORDSTATE  10
 
-#define CS_SCB_PLAYERTAB_LAYOUT 16
-#define CS_SCB_PLAYERTAB_TITLES 17
+#define CS_SCB_PLAYERTAB_LAYOUT 11
+#define CS_SCB_PLAYERTAB_TITLES 12
 
-#define CS_TEAM_SPECTATOR_NAME 18
-#define CS_TEAM_PLAYERS_NAME 19
-#define CS_TEAM_ALPHA_NAME  20
-#define CS_TEAM_BETA_NAME   21
+#define CS_TEAM_SPECTATOR_NAME 13
+#define CS_TEAM_PLAYERS_NAME 14
+#define CS_TEAM_ALPHA_NAME  15
+#define CS_TEAM_BETA_NAME   16
 
-#define CS_MATCHNAME        22
-#define CS_MATCHSCORE       23
-#define CS_MATCHUUID        24
+#define CS_MATCHNAME        17
+#define CS_MATCHSCORE       18
+#define CS_MATCHUUID        19
 
-#define CS_ACTIVE_CALLVOTE  25
-#define CS_ACTIVE_CALLVOTE_VOTES 26
+#define CS_ACTIVE_CALLVOTE  20
+#define CS_ACTIVE_CALLVOTE_VOTES 21
 
 #define CS_WORLDMODEL       30
 #define CS_MAPCHECKSUM      31      // for catching cheater maps
@@ -199,8 +193,7 @@ typedef struct {
 #define CS_ITEMS            ( CS_LIGHTS + MAX_LIGHTSTYLES )
 #define CS_PLAYERINFOS      ( CS_ITEMS + MAX_ITEMS )
 #define CS_GAMECOMMANDS     ( CS_PLAYERINFOS + MAX_CLIENTS )
-#define CS_LOCATIONS        ( CS_GAMECOMMANDS + MAX_GAMECOMMANDS )
-#define CS_WEAPONDEFS       ( CS_LOCATIONS + MAX_LOCATIONS )
+#define CS_WEAPONDEFS       ( CS_GAMECOMMANDS + MAX_GAMECOMMANDS )
 #define CS_GENERAL          ( CS_WEAPONDEFS + MAX_WEAPONDEFS )
 #define CS_MMPLAYERINFOS    ( CS_GENERAL + MAX_GENERAL )
 #define CS_HELPMESSAGES     ( CS_MMPLAYERINFOS + MAX_MMPLAYERINFOS ) // for localizable messages, that got a special place on the HUD
@@ -484,5 +477,3 @@ typedef struct {
 #ifdef __cplusplus
 };
 #endif
-
-#endif // GAME_QCOMREF_H

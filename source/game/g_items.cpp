@@ -778,10 +778,6 @@ static void item_timer_think( edict_t *ent ) {
 */
 static edict_t *Spawn_ItemTimer( edict_t *ent ) {
 	edict_t *timer;
-	int locationTag;
-
-	// location tag
-	locationTag = G_MapLocationTAGForOrigin( ent->s.origin );
 
 	// item timer is a special entity type, carrying information about its parent item entity
 	// which is only visible to spectators
@@ -792,7 +788,6 @@ static edict_t *Spawn_ItemTimer( edict_t *ent ) {
 	timer->r.svflags = SVF_ONLYTEAM | SVF_BROADCAST;
 	timer->r.owner = ent;
 	timer->s.modelindex = 0;
-	timer->s.modelindex2 = locationTag;
 	timer->nextThink = level.time + 250;
 	timer->think = item_timer_think;
 	VectorCopy( ent->s.origin, timer->s.origin ); // for z-sorting

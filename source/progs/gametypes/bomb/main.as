@@ -104,7 +104,7 @@ void assert( const bool test, const String msg )
 {
 	if ( !test )
 	{
-		G_Print( S_COLOR_RED + "assert failed [" + gametype.name + " " + gametype.version + "]: " + msg + "\n" );
+		G_Print( S_COLOR_RED + "assert failed: " + msg + "\n" );
 	}
 }
 
@@ -265,25 +265,6 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
 		{
 			player.giveInventory();
 		}
-
-		return true;
-	}
-
-	if ( cmdString == "gametype" )
-	{
-		String response = "";
-		Cvar fs_game( "fs_game", "", 0 );
-		String manifest = gametype.manifest;
-
-		response += "\n";
-		response += "Gametype " + gametype.name + " : " + gametype.title + "\n";
-		response += "----------------\n";
-		response += "Version: " + gametype.version + "\n";
-		response += "Author: " + gametype.author + "\n";
-		response += "Mod: " + fs_game.string + ( !manifest.empty() ? " (manifest: " + manifest + ")" : "" ) + "\n";
-		response += "----------------\n";
-
-		G_PrintMsg( client.getEnt(), response );
 
 		return true;
 	}
@@ -787,10 +768,6 @@ void GT_SpawnGametype()
 // right after the map entities spawning.
 void GT_InitGametype()
 {
-	gametype.title = "Bomb and Defuse";
-	gametype.version = "1.0";
-	gametype.author = "Warsow Development Team";
-
 	gametype.spawnableItemsMask = 0;
 	gametype.respawnableItemsMask = 0;
 	gametype.dropableItemsMask = 0; // XXX: old bomb lets you drop ammo
@@ -848,5 +825,5 @@ void GT_InitGametype()
 
 	G_CmdExecute( "exec configs/server/gametypes/bomb.cfg silent" ); // TODO XXX FIXME
 
-	G_Print( "Gametype '" + gametype.title + "' initialized\n" );
+	G_Print( "Gametype initialized\n" );
 }

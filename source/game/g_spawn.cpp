@@ -136,7 +136,6 @@ spawn_t spawns[] = {
 	{ "target_laser", SP_target_laser },
 	{ "target_lightramp", SP_target_lightramp },
 	{ "target_string", SP_target_string },
-	{ "target_location", SP_target_location },
 	{ "target_position", SP_target_position },
 	{ "target_print", SP_target_print },
 	{ "target_give", SP_target_give },
@@ -883,7 +882,6 @@ void G_InitLevel( char *mapname, char *entities, int entstrlen, int64_t levelTim
 	// initialize game subsystems
 	trap_ConfigString( CS_MAPNAME, level.mapname );
 	trap_ConfigString( CS_SKYBOX, "" );
-	trap_ConfigString( CS_AUDIOTRACK, "" );
 	trap_ConfigString( CS_STATNUMS, va( "%i %i %i", STAT_SCORE, STAT_HEALTH, STAT_LAST_KILLER ) );
 	trap_ConfigString( CS_POWERUPEFFECTS, va( "%i %i %i %i", EF_QUAD, EF_SHELL, EF_CARRIER, EF_REGEN ) );
 	trap_ConfigString( CS_SCB_PLAYERTAB_LAYOUT, "" );
@@ -897,7 +895,6 @@ void G_InitLevel( char *mapname, char *entities, int entstrlen, int64_t levelTim
 	}
 
 	G_InitGameCommands();
-	G_MapLocations_Init();
 	G_CallVotes_Init();
 	G_SpawnQueue_Init();
 	G_Teams_Init();
@@ -981,25 +978,12 @@ static void SP_worldspawn( edict_t *ent ) {
 		Q_strncpyz( level.nextmap, st.nextmap, sizeof( level.nextmap ) );
 	}
 
-	// make some data visible to the server
-	/*
-	message = trap_GetFullnameFromMapList( level.mapname );
-	if( message && message[0] )
-	    ent->message = G_LevelCopyString( message );
-	*/
-
 	if( ent->message && ent->message[0] ) {
 		trap_ConfigString( CS_MESSAGE, ent->message );
 		Q_strncpyz( level.level_name, ent->message, sizeof( level.level_name ) );
 	} else {
 		trap_ConfigString( CS_MESSAGE, level.mapname );
 		Q_strncpyz( level.level_name, level.mapname, sizeof( level.level_name ) );
-	}
-
-	// send music
-	if( st.music ) {
-		trap_ConfigString( CS_AUDIOTRACK, st.music );
-		trap_PureSound( st.music );
 	}
 
 	if( st.gravity ) {

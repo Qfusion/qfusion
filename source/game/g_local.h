@@ -646,12 +646,6 @@ edict_t *G_PlayerForText( const char *text );
 void G_LoadFiredefsFromDisk( void );
 void G_PrecacheWeapondef( int weapon, firedef_t *firedef );
 
-void G_MapLocations_Init( void );
-int G_RegisterMapLocationName( const char *name );
-int G_MapLocationTAGForName( const char *name );
-int G_MapLocationTAGForOrigin( const vec3_t origin );
-void G_MapLocationNameForTAG( int tag, char *buf, size_t buflen );
-
 void G_SetBoundsForSpanEntity( edict_t *ent, vec_t size );
 
 //
@@ -839,7 +833,6 @@ void SP_target_crosslevel_target( edict_t *ent );
 void SP_target_laser( edict_t *self );
 void SP_target_lightramp( edict_t *self );
 void SP_target_string( edict_t *ent );
-void SP_target_location( edict_t *self );
 void SP_target_position( edict_t *self );
 void SP_target_print( edict_t *self );
 void SP_target_give( edict_t *self );

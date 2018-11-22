@@ -241,50 +241,8 @@ static const gs_asClassDescriptor_t asMatchClassDescriptor =
 
 // CLASS: GametypeDesc
 
-static asstring_t *objectGametypeDescriptor_getTitle( gametype_descriptor_t *self ) {
-	const char *s = trap_GetConfigString( CS_GAMETYPETITLE );
-
-	return game.asExport->asStringFactoryBuffer( s, strlen( s ) );
-}
-
-static void objectGametypeDescriptor_setTitle( asstring_t *other, gametype_descriptor_t *self ) {
-	if( !other || !other->buffer ) {
-		return;
-	}
-
-	trap_ConfigString( CS_GAMETYPETITLE, other->buffer );
-}
-
 static asstring_t *objectGametypeDescriptor_getName( gametype_descriptor_t *self ) {
 	return game.asExport->asStringFactoryBuffer( gs.gametypeName, strlen( gs.gametypeName ) );
-}
-
-static asstring_t *objectGametypeDescriptor_getVersion( gametype_descriptor_t *self ) {
-	const char *s = trap_GetConfigString( CS_GAMETYPEVERSION );
-
-	return game.asExport->asStringFactoryBuffer( s, strlen( s ) );
-}
-
-static void objectGametypeDescriptor_setVersion( asstring_t *other, gametype_descriptor_t *self ) {
-	if( !other || !other->buffer ) {
-		return;
-	}
-
-	trap_ConfigString( CS_GAMETYPEVERSION, other->buffer );
-}
-
-static asstring_t *objectGametypeDescriptor_getAuthor( gametype_descriptor_t *self ) {
-	const char *s = trap_GetConfigString( CS_GAMETYPEAUTHOR );
-
-	return game.asExport->asStringFactoryBuffer( s, strlen( s ) );
-}
-
-static void objectGametypeDescriptor_setAuthor( asstring_t *other, gametype_descriptor_t *self ) {
-	if( !other || !other->buffer ) {
-		return;
-	}
-
-	trap_ConfigString( CS_GAMETYPEAUTHOR, other->buffer );
 }
 
 static asstring_t *objectGametypeDescriptor_getManifest( gametype_descriptor_t *self ) {
@@ -322,12 +280,6 @@ static const gs_asBehavior_t gametypedescr_ObjectBehaviors[] =
 static const gs_asMethod_t gametypedescr_Methods[] =
 {
 	{ ASLIB_FUNCTION_DECL( const String @, get_name, ( ) const ), asFUNCTION( objectGametypeDescriptor_getName ), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL( const String @, get_title, ( ) const ), asFUNCTION( objectGametypeDescriptor_getTitle ), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL( void, set_title, ( String & ) ), asFUNCTION( objectGametypeDescriptor_setTitle ), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL( const String @, get_version, ( ) const ), asFUNCTION( objectGametypeDescriptor_getVersion ), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL( void, set_version, ( String & ) ), asFUNCTION( objectGametypeDescriptor_setVersion ), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL( const String @, get_author, ( ) const ), asFUNCTION( objectGametypeDescriptor_getAuthor ), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL( void, set_author, ( String & ) ), asFUNCTION( objectGametypeDescriptor_setAuthor ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( const String @, get_manifest, ( ) const ), asFUNCTION( objectGametypeDescriptor_getManifest ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, setTeamSpawnsystem, ( int team, int spawnsystem, int wave_time, int wave_maxcount, bool deadcam ) ), asFUNCTION( objectGametypeDescriptor_SetTeamSpawnsystem ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( bool, get_hasFallDamage, ( ) const ), asFUNCTION( objectGametypeDescriptor_hasFallDamage ), asCALL_CDECL_OBJLAST },
@@ -1895,31 +1847,6 @@ static asstring_t *asFunc_ML_GetMapByNum( int num ) {
 	return data;
 }
 
-static asstring_t *asFunc_LocationName( asvec3_t *origin ) {
-	char buf[MAX_CONFIGSTRING_CHARS];
-	asstring_t *data;
-
-	G_MapLocationNameForTAG( G_MapLocationTAGForOrigin( origin->v ), buf, sizeof( buf ) );
-
-	data = game.asExport->asStringFactoryBuffer( (char *)buf, strlen( buf ) );
-	return data;
-}
-
-static int asFunc_LocationTag( asstring_t *str ) {
-	return G_MapLocationTAGForName( str->buffer );
-}
-
-static asstring_t *asFunc_LocationForTag( int tag ) {
-	char buf[MAX_CONFIGSTRING_CHARS];
-	asstring_t *data;
-
-	G_MapLocationNameForTAG( tag, buf, sizeof( buf ) );
-
-	data = game.asExport->asStringFactoryBuffer( (char *)buf, strlen( buf ) );
-
-	return data;
-}
-
 static int asFunc_ImageIndex( asstring_t *str ) {
 	if( !str || !str->buffer ) {
 		return 0;
@@ -2272,9 +2199,6 @@ static const gs_asglobfuncs_t asGameGlobFuncs[] =
 	{ "const String @G_LoadFile( const String & )", asFUNCTION( asFunc_LoadFile ), NULL },
 	{ "int G_FileLength( const String & )", asFUNCTION( asFunc_FileLength ), NULL },
 	{ "void G_CmdExecute( const String & )", asFUNCTION( asFunc_Cmd_ExecuteText ), NULL },
-	{ "const String @G_LocationName( const Vec3 &in origin )", asFUNCTION( asFunc_LocationName ), NULL },
-	{ "int G_LocationTag( const String & )", asFUNCTION( asFunc_LocationTag ), NULL },
-	{ "const String @G_LocationName( int tag )", asFUNCTION( asFunc_LocationForTag ), NULL },
 
 	{ "void __G_CallThink( Entity @ent )", asFUNCTION( G_CallThink ), &asEntityCallThinkFuncPtr },
 	{ "void __G_CallTouch( Entity @ent, Entity @other, const Vec3 planeNormal, int surfFlags )", asFUNCTION( G_CallTouch ), &asEntityCallTouchFuncPtr },

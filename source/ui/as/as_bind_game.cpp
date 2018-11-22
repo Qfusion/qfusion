@@ -112,26 +112,13 @@ static int Game_PlayerNum( Game *game ) {
 	return trap::CL_PlayerNum();
 }
 
-static bool Game_isTV( Game *game ) {
-	char tv[MAX_CONFIGSTRING_CHARS];
-
-	trap::GetConfigString( CS_TVSERVER, tv, sizeof( tv ) );
-
-	return atoi( tv ) != 0;
-}
-
 void BindGame( ASInterface *as ) {
 	ASBind::Enum( as->getEngine(), "eConfigString" )
-		( "CS_TVSERVER", CS_TVSERVER )
 		( "CS_MODMANIFEST", CS_MODMANIFEST )
 		( "CS_MESSAGE", CS_MESSAGE )
 		( "CS_MAPNAME", CS_MAPNAME )
-		( "CS_AUDIOTRACK", CS_AUDIOTRACK )
 		( "CS_HOSTNAME", CS_HOSTNAME )
-		( "CS_GAMETYPETITLE", CS_GAMETYPETITLE )
 		( "CS_GAMETYPENAME", CS_GAMETYPENAME )
-		( "CS_GAMETYPEVERSION", CS_GAMETYPEVERSION )
-		( "CS_GAMETYPEAUTHOR", CS_GAMETYPEAUTHOR )
 		( "CS_TEAM_ALPHA_NAME", CS_TEAM_ALPHA_NAME )
 		( "CS_TEAM_BETA_NAME", CS_TEAM_BETA_NAME )
 		( "CS_MATCHNAME", CS_MATCHNAME )
@@ -194,8 +181,6 @@ void BindGame( ASInterface *as ) {
 	.constmethod( Game_ServerName, "get_serverName", true )
 	.constmethod( Game_RejectMessage, "get_rejectMessage", true )
 	.constmethod( Game_GetDownloadInfo, "get_download", true )
-
-	.constmethod( Game_isTV, "get_isTV", true )
 	;
 }
 

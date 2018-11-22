@@ -211,7 +211,6 @@ static void SV_ReloadPureList( void ) {
 */
 void SV_SetServerConfigStrings( void ) {
 	Q_snprintfz( sv.configstrings[CS_MAXCLIENTS], sizeof( sv.configstrings[0] ), "%i", sv_maxclients->integer );
-	Q_strncpyz( sv.configstrings[CS_TVSERVER], "0", sizeof( sv.configstrings[0] ) );
 	Q_strncpyz( sv.configstrings[CS_HOSTNAME], Cvar_String( "sv_hostname" ), sizeof( sv.configstrings[0] ) );
 	Q_strncpyz( sv.configstrings[CS_MODMANIFEST], Cvar_String( "sv_modmanifest" ), sizeof( sv.configstrings[0] ) );
 }

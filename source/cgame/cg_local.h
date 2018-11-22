@@ -599,8 +599,6 @@ typedef struct {
 	const char *matchmessage;
 	char helpmessage[MAX_HELPMESSAGE_CHARS];
 	int64_t helpmessage_time;
-	char *teaminfo;
-	size_t teaminfo_size;
 	char *motd;
 	int64_t motd_time;
 	char overlayMenu[MAX_STRING_CHARS];

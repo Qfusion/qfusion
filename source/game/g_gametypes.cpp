@@ -348,10 +348,6 @@ void G_Gametype_GENERIC_ScoreEvent( gclient_t *client, const char *score_event, 
 }
 
 static void G_Gametype_GENERIC_Init( void ) {
-	trap_ConfigString( CS_GAMETYPETITLE, "Generic Deathmatch" );
-	trap_ConfigString( CS_GAMETYPEVERSION, "1.0" );
-	trap_ConfigString( CS_GAMETYPEAUTHOR, "Warsow Development Team" );
-
 	level.gametype.spawnableItemsMask = ( IT_WEAPON | IT_AMMO | IT_ARMOR | IT_POWERUP | IT_HEALTH );
 	level.gametype.respawnableItemsMask = ( IT_WEAPON | IT_AMMO | IT_ARMOR | IT_POWERUP | IT_HEALTH );
 	level.gametype.dropableItemsMask = ( IT_WEAPON | IT_AMMO | IT_ARMOR | IT_POWERUP | IT_HEALTH );
@@ -1656,10 +1652,6 @@ void G_RunGametype( void ) {
 
 	G_Match_ScoreAnnouncement();
 	G_Match_ReadyAnnouncement();
-
-	if( GS_TeamBasedGametype() ) {
-		G_Teams_UpdateTeamInfoMessages();
-	}
 
 	G_asGarbageCollect( false );
 }

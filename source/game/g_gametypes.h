@@ -206,7 +206,6 @@ void G_Match_LaunchState( int matchState );
 //	teams
 //
 void G_Teams_Init( void );
-void G_Teams_UpdateTeamInfoMessages( void );
 
 void G_Teams_ExecuteChallengersQueue( void );
 void G_Teams_AdvanceChallengersQueue( void );

@@ -976,11 +976,9 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 		Q_strncpyz( gamedir, FS_GameDirectory(), sizeof( gamedir ) );
 
 		Q_strncpyz( gamename, APPLICATION, sizeof( gamename ) );
-		if( sv.configstrings[CS_GAMETYPETITLE][0] || sv.configstrings[CS_GAMETYPENAME][0] ) {
+		if( sv.configstrings[CS_GAMETYPENAME][0] ) {
 			Q_strncatz( gamename, " ", sizeof( gamename ) );
-			Q_strncatz( gamename,
-						sv.configstrings[sv.configstrings[CS_GAMETYPETITLE][0] ? CS_GAMETYPETITLE : CS_GAMETYPENAME],
-						sizeof( gamename ) );
+			Q_strncatz( gamename, sv.configstrings[CS_GAMETYPENAME], sizeof( gamename ) );
 		}
 
 		for( i = 0; i < sv_maxclients->integer; i++ ) {

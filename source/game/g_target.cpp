@@ -597,41 +597,6 @@ void SP_target_position( edict_t *self ) {
 }
 
 
-//QUAKED target_location (0 .5 0) (-8 -8 -8) (8 8 8)
-//Location marker used by bots and players for team orders and team chat in the course of Teamplay games. The closest target_location in sight is used for the location. If none is in sight, the closest in distance is used.
-//-------- KEYS --------
-//message :  name of the location (text string). Displayed in parentheses in front of all team chat and order messages.
-//count : color of the location text displayed in parentheses during team chat. Set to 0-7 for color.
-//   0 : white (default)
-//   1 : red
-//   2 : green
-//   3 : yellow
-//   4 : blue
-//   5 : cyan
-//   6 : magenta
-//   7 : white
-//notsingle : when set to 1, entity will not spawn in Single Player mode
-//notfree : when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.
-//notduel : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jal: todo)
-//notteam : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.
-void SP_target_location( edict_t *self ) {
-	int location;
-
-	self->r.svflags |= SVF_NOCLIENT;
-
-	// wsw : jal : locations names
-	if( self->count > 0 && self->count < 10 ) {
-		location = G_RegisterMapLocationName( va( "%c%c%s", Q_COLOR_ESCAPE, self->count + '0', self->message ) );
-	} else {
-		location = G_RegisterMapLocationName( self->message );
-	}
-
-	clamp( self->count, 0, 7 );
-	self->style = location;
-}
-
-
-
 //QUAKED target_print (0 .5 0) (-8 -8 -8) (8 8 8) SAMETEAM OTHERTEAM PRIVATE
 //This will print a message on the center of the screen when triggered. By default, all the clients will see the message.
 //-------- KEYS --------
