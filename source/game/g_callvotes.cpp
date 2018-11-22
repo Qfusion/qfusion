@@ -256,13 +256,6 @@ static bool G_VoteMapValidate( callvotedata_t *data, bool first ) {
 	}
 
 	if( trap_ML_FilenameExists( mapname ) ) {
-		char fullname[MAX_TOKEN_CHARS];
-
-		Q_strncpyz( fullname, COM_RemoveColorTokens( trap_ML_GetFullname( mapname ) ), sizeof( fullname ) );
-		if( !Q_stricmp( mapname, fullname ) ) {
-			fullname[0] = '\0';
-		}
-
 		// check if valid map is in map pool when on
 		if( g_enforce_map_pool->integer ) {
 			char *s, *tok;
