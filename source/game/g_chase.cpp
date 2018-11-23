@@ -456,7 +456,6 @@ void G_ChasePlayer( edict_t *ent, const char *name, bool teamonly, int followmod
 		}
 		client->level.showscores = false;
 		G_Chase_SetChaseActive( ent, false );
-		G_CenterPrintMsg( ent, "No one to chase" );
 	}
 }
 
