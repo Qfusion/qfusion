@@ -795,8 +795,8 @@ static void CG_PModel_AddFlag( centity_t *cent ) {
 /*
 * CG_PModel_AddHeadIcon
 */
-static void CG_AddHeadIcon( centity_t *cent ) {
-	entity_t balloon;
+static void CG_AddIconAbovePlayer( centity_t *cent ) {
+	entity_t icon;
 	bool showIcon = false;
 	struct shader_s *iconShader = NULL;
 	float radius = 6, upoffset = 8;
@@ -806,11 +806,7 @@ static void CG_AddHeadIcon( centity_t *cent ) {
 		return;
 	}
 
-	if( cent->effects & EF_BUSYICON ) {
-		iconShader = CG_MediaShader( cgs.media.shaderChatBalloon );
-		radius = 12;
-		upoffset = 2;
-	} else if( cent->localEffects[LOCALEFFECT_VSAY_HEADICON_TIMEOUT] > cg.time ) {
+	if( cent->localEffects[LOCALEFFECT_VSAY_HEADICON_TIMEOUT] > cg.time ) {
 		if( cent->localEffects[LOCALEFFECT_VSAY_HEADICON] < VSAY_TOTAL ) {
 			iconShader = CG_MediaShader( cgs.media.shaderVSayIcon[cent->localEffects[LOCALEFFECT_VSAY_HEADICON]] );
 		} else {
@@ -827,33 +823,33 @@ static void CG_AddHeadIcon( centity_t *cent ) {
 
 	// add the current active icon
 	if( showIcon ) {
-		memset( &balloon, 0, sizeof( entity_t ) );
-		Vector4Set( balloon.shaderRGBA, 255, 255, 255, 255 );
-		balloon.renderfx = RF_NOSHADOW;
-		balloon.scale = 1.0f;
+		memset( &icon, 0, sizeof( entity_t ) );
+		Vector4Set( icon.shaderRGBA, 255, 255, 255, 255 );
+		icon.renderfx = RF_NOSHADOW;
+		icon.scale = 1.0f;
 
-		Matrix3_Identity( balloon.axis );
+		Matrix3_Identity( icon.axis );
 
 		if( CG_GrabTag( &tag_head, &cent->ent, "tag_head" ) ) {
-			balloon.origin[0] = tag_head.origin[0];
-			balloon.origin[1] = tag_head.origin[1];
-			balloon.origin[2] = tag_head.origin[2] + balloon.radius + upoffset;
-			VectorCopy( balloon.origin, balloon.origin2 );
-			CG_PlaceModelOnTag( &balloon, &cent->ent, &tag_head );
+			icon.origin[0] = tag_head.origin[0];
+			icon.origin[1] = tag_head.origin[1];
+			icon.origin[2] = tag_head.origin[2] + icon.radius + upoffset;
+			VectorCopy( icon.origin, icon.origin2 );
+			CG_PlaceModelOnTag( &icon, &cent->ent, &tag_head );
 		} else {
-			balloon.origin[0] = cent->ent.origin[0];
-			balloon.origin[1] = cent->ent.origin[1];
-			balloon.origin[2] = cent->ent.origin[2] + playerbox_stand_maxs[2] + balloon.radius + upoffset;
-			VectorCopy( balloon.origin, balloon.origin2 );
+			icon.origin[0] = cent->ent.origin[0];
+			icon.origin[1] = cent->ent.origin[1];
+			icon.origin[2] = cent->ent.origin[2] + playerbox_stand_maxs[2] + icon.radius + upoffset;
+			VectorCopy( icon.origin, icon.origin2 );
 		}
 
 		if( iconShader ) {
-			balloon.rtype = RT_SPRITE;
-			balloon.customShader = iconShader;
-			balloon.radius = radius;
-			balloon.model = NULL;
+			icon.rtype = RT_SPRITE;
+			icon.customShader = iconShader;
+			icon.radius = radius;
+			icon.model = NULL;
 
-			trap_R_AddEntityToScene( &balloon );
+			trap_R_AddEntityToScene( &icon );
 		}
 	}
 }
@@ -1254,7 +1250,7 @@ void CG_AddPModel( centity_t *cent ) {
 
 	CG_AddShellEffects( &cent->ent, cent->effects );
 
-	CG_AddHeadIcon( cent );
+	CG_AddIconAbovePlayer( cent );
 
 	// add teleporter sfx if needed
 	CG_PModel_SpawnTeleportEffect( cent );

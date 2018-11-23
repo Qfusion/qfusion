@@ -273,7 +273,6 @@ void CG_RegisterMediaShaders( void ) {
 	cgs.media.shaderNet = CG_RegisterMediaShader( "gfx/hud/net" );
 	cgs.media.shaderBackTile = CG_RegisterMediaShader( "gfx/ui/backtile" );
 	cgs.media.shaderWhiteTile = CG_RegisterMediaShader( "gfx/ui/whitetile" );
-	cgs.media.shaderChatBalloon = CG_RegisterMediaShader( PATH_BALLONCHAT_ICON );
 	cgs.media.shaderDownArrow = CG_RegisterMediaShader( "gfx/2d/arrow_down" );
 
 	cgs.media.shaderPlayerShadow = CG_RegisterMediaShader( "gfx/decals/shadow" );

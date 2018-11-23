@@ -70,8 +70,6 @@ extern "C" {
 #define PATH_AMMOPACK_ICON      "gfx/hud/icons/ammo/pack"
 
 // misc
-#define PATH_BALLONCHAT_ICON        "gfx/2d/bubblechat"
-
 #define PATH_HEALTH_5_ICON      "gfx/hud/icons/health/5"
 #define PATH_HEALTH_25_ICON     "gfx/hud/icons/health/25"
 #define PATH_HEALTH_50_ICON     "gfx/hud/icons/health/50"
@@ -100,7 +98,6 @@ extern "C" {
 #define PATH_GRENADE_EXPLOSION_RING_SPRITE   "gfx/grenade_explosion_ring"
 
 // simpleitems
-
 #define PATH_MACHINEGUN_SIMPLEITEM      "gfx/simpleitems/weapon/machinegun"
 #define PATH_RIOTGUN_SIMPLEITEM         "gfx/simpleitems/weapon/riot"
 #define PATH_GRENADELAUNCHER_SIMPLEITEM     "gfx/simpleitems/weapon/grenade"
