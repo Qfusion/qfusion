@@ -91,16 +91,9 @@ void playerKilled( Entity @victim, Entity @attacker, Entity @inflictor )
 
 		if ( player.killsThisRound >= IMPRESSIVE_KILLS )
 		{
-			if ( player.killsThisRound >= G_GetTeam( otherTeam( attacker.team ) ).numPlayers )
+			int required_for_bongo = attacker.team == TEAM_ALPHA ? betaAliveAtStart : alphaAliveAtStart;
+			if ( player.killsThisRound == required_for_bongo )
 			{
-				// XXX: this may fail if players leave/join during a game
-				//
-				// save numPlayers on team at the start of a round to fix joining
-				//
-				// to fix leaving i guess you'd give cPlayer a list of killed ids
-				// and store a list of all ids at the start of a round
-				// which i guess is a waste of time considering how rarely this happens
-
 				player.client.addAward( S_COLOR_YELLOW + "King of Bongo!" );
 
 				G_AnnouncerSound( null, sndBongo, GS_MAX_TEAMS, true, null );
