@@ -174,23 +174,7 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
 {
 	if ( cmdString == "drop" )
 	{
-		for ( int i = 0; i < argc; i++ )
-		{
-			String token = argsString.getToken( i );
-
-			if ( token.len() == 0 )
-			{
-				break;
-			}
-
-			if ( token == "bomb" || token == "flag" )
-			{
-				if ( @client.getEnt() == @bombCarrier )
-				{
-					bombDrop( BOMBDROP_NORMAL );
-				}
-			}
-		}
+		bombDrop( BOMBDROP_NORMAL );
 
 		return true;
 	}
