@@ -65,6 +65,7 @@ ref_export_t *GetRefAPI( ref_import_t *import ) {
 	globals.LightForOrigin = RF_LightForOrigin;
 	globals.LerpTag = RF_LerpTag;
 	globals.TransformVectorToScreen = RF_TransformVectorToScreen;
+	globals.TransformVectorToScreenClamped = RF_TransformVectorToScreenClamped;
 
 	globals.GetSpeedsMessage = RF_GetSpeedsMessage;
 	globals.GetAverageFrametime = RF_GetAverageFrametime;

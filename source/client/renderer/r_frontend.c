@@ -305,8 +305,54 @@ void RF_TransformVectorToScreen( const refdef_t *rd, const vec3_t in, vec2_t out
 		return;
 	}
 
-	out[0] = rd->x + ( temp[0] / temp[3] + 1.0f ) * rd->width * 0.5f;
-	out[1] = glConfig.height - ( rd->y + ( temp[1] / temp[3] + 1.0f ) * rd->height * 0.5f );
+	out[0] = rd->x + rd->width * ( temp[0] / temp[3] + 1.0f ) * 0.5f;
+	out[1] = rd->y + rd->height * ( 1.0f - ( temp[1] / temp[3] + 1.0f ) * 0.5f );
+}
+
+bool RF_TransformVectorToScreenClamped( const refdef_t *rd, const vec3_t target, int border, vec2_t out ) {
+	mat4_t p, v;
+	Matrix4_InfinitePerspectiveProjection( rd->fov_x, rd->fov_y, Z_NEAR, p, glConfig.depthEpsilon );
+	Matrix4_QuakeModelview( rd->vieworg, rd->viewaxis, v );
+
+	vec4_t homo, view, clip;
+	Vector4Set( homo, target[0], target[1], target[2], 1.0f );
+	Matrix4_Multiply_Vector( v, homo, view );
+	Matrix4_Multiply_Vector( p, view, clip );
+
+	if( fabsf( clip[2] ) < Z_NEAR ) {
+		Vector2Set( out, 0, 0 );
+		return false;
+	}
+
+	vec2_t res;
+	Vector2Set( res, clip[0] / clip[2], clip[1] / clip[2] );
+
+	vec3_t to_target;
+	VectorSubtract( target, rn.viewOrigin, to_target );
+	float d = DotProduct( &rn.viewAxis[AXIS_FORWARD], to_target );
+	if( d < 0 ) {
+		res[0] = -res[0];
+		res[1] = -res[1];
+	}
+
+	bool clamped = false;
+	vec2_t clamp;
+	Vector2Set( clamp, 1.0f - ( float ) border / rd->width, 1.0f - ( float ) border / rd->height );
+
+	if( d < 0 || fabsf( res[0] ) > clamp[0] || fabsf( res[1] ) > clamp[1] ) {
+		float rx = clamp[0] / fabsf( res[0] );
+		float ry = clamp[1] / fabsf( res[1] );
+
+		res[0] *= min( rx, ry );
+		res[1] *= min( rx, ry );
+
+		clamped = true;
+	}
+
+	out[0] = rd->x + rd->width * ( res[0] + 1.0f ) * 0.5f;
+	out[1] = rd->y + rd->height * ( 1.0f - ( res[1] + 1.0f ) * 0.5f );
+
+	return clamped;
 }
 
 bool RF_LerpTag( orientation_t *orient, const model_t *mod, int oldframe, int frame, float lerpfrac, const char *name ) {

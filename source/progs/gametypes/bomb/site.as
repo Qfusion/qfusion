@@ -40,8 +40,7 @@ class cBombSite
 
 	String letter;
 
-	Entity @model;
-	Entity @sprite;
+	Entity @hud;
 
 	bool useExplosionPoints;
 	Vec3[] explosionPoints;
@@ -73,23 +72,13 @@ class cBombSite
 		this.letter = SITE_LETTERS[siteCount];
 		String pathLetter = letter.tolower();
 
-		@this.model = @G_SpawnEntity( "capture_indicator_model" );
-		this.model.type = ET_GENERIC;
-		this.model.solid = SOLID_TRIGGER; // so bots can touch it
-		this.model.origin = origin;
-		this.model.modelindex = G_ModelIndex( "models/objects/bomb/spot_indicator_" + pathLetter + ".md3", true );
-		this.model.svflags &= ~SVF_NOCLIENT;
-		this.model.effects = EF_ROTATE_AND_BOB;
-		this.model.linkEntity();
-
-		@this.sprite = @G_SpawnEntity( "capture_indicator_sprite" );
-		this.sprite.type = ET_RADAR;
-		this.sprite.solid = SOLID_NOT;
-		this.sprite.origin = origin;
-		this.sprite.modelindex = G_ImageIndex( "gfx/bomb/radar_" + pathLetter );
-		this.sprite.svflags = ( this.sprite.svflags & ~SVF_NOCLIENT ) | SVF_BROADCAST;
-		this.sprite.frame = BOMB_ARM_DEFUSE_RADIUS;
-		this.sprite.linkEntity();
+		@this.hud = @G_SpawnEntity( "hud_bomb_site" );
+		this.hud.type = ET_HUD;
+		this.hud.solid = SOLID_NOT;
+		this.hud.origin = origin;
+		this.hud.svflags = ( this.hud.svflags & ~SVF_NOCLIENT ) | SVF_BROADCAST;
+		this.hud.counterNum = letter[0];
+		this.hud.linkEntity();
 
 		if ( hasTargets )
 		{

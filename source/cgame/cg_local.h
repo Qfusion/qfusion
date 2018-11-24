@@ -19,15 +19,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // cg_local.h -- local definitions for client game module
 
-#include "../gameshared/q_arch.h"
-#include "../gameshared/q_math.h"
-#include "../gameshared/q_shared.h"
-#include "../gameshared/q_cvar.h"
-#include "../gameshared/q_dynvar.h"
-#include "../gameshared/q_comref.h"
-#include "../gameshared/q_collision.h"
+#include "gameshared/q_arch.h"
+#include "gameshared/q_math.h"
+#include "gameshared/q_shared.h"
+#include "gameshared/q_cvar.h"
+#include "gameshared/q_dynvar.h"
+#include "gameshared/q_comref.h"
+#include "gameshared/q_collision.h"
 
-#include "../gameshared/gs_public.h"
+#include "gameshared/gs_public.h"
 #include "ref.h"
 
 #include "cg_public.h"
@@ -755,6 +755,10 @@ void CG_GameMenu_f( void );
 
 void CG_ClearPointedNum( void );
 
+void CG_AddBombSite( centity_t * cent );
+void CG_DrawBombHUD();
+void CG_ResetBombHUD();
+
 /**
  * Sends current quick menu string to the UI.
  */
@@ -1155,5 +1159,3 @@ bool CG_KeyEvent( int key, bool down );
  * @param keysSize output string buffer size
  */
 void CG_GetBoundKeysString( const char *cmd, char *keys, size_t keysSize );
-
-//=================================================

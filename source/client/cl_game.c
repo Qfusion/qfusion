@@ -338,6 +338,7 @@ void CL_GameModule_Init( void ) {
 	import.R_ResetScissor = re.ResetScissor;
 	import.R_GetShaderDimensions = re.GetShaderDimensions;
 	import.R_TransformVectorToScreen = re.TransformVectorToScreen;
+	import.R_TransformVectorToScreenClamped = re.TransformVectorToScreenClamped;
 	import.R_SkeletalGetNumBones = re.SkeletalGetNumBones;
 	import.R_SkeletalGetBoneInfo = re.SkeletalGetBoneInfo;
 	import.R_SkeletalGetBonePose = re.SkeletalGetBonePose;

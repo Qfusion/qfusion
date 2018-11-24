@@ -86,6 +86,7 @@ void RF_BeginAviDemo( void );
 void RF_WriteAviFrame( int frame, bool scissor );
 void RF_StopAviDemo( void );
 void RF_TransformVectorToScreen( const refdef_t *rd, const vec3_t in, vec2_t out );
+bool RF_TransformVectorToScreenClamped( const refdef_t *rd, const vec3_t target, int border, vec2_t out );
 bool RF_LerpTag( orientation_t *orient, const model_t *mod, int oldframe, int frame, float lerpfrac, const char *name );
 void RF_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t diffuse, float radius );
 shader_t *RF_GetShaderForOrigin( const vec3_t origin );

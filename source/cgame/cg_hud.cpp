@@ -1906,6 +1906,11 @@ static bool CG_LFuncDrawTeamMates( struct cg_layoutnode_s *commandnode, struct c
 	return true;
 }
 
+static bool CG_LFuncDrawBombIndicators( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
+	CG_DrawBombHUD();
+	return true;
+}
+
 static bool CG_LFuncDrawPointed( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	CG_DrawPlayerNames( CG_GetLayoutCursorFont(), layout_cursor_color );
 	return true;
@@ -2356,6 +2361,14 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 		CG_LFuncDrawTeamMates,
 		0,
 		"Draws indicators where team mates are",
+		false
+	},
+
+	{
+		"drawBombIndicators",
+		CG_LFuncDrawBombIndicators,
+		0,
+		"Draws bomb HUD",
 		false
 	},
 

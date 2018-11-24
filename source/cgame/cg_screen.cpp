@@ -33,6 +33,7 @@ end of unit intermissions
 */
 
 #include "cg_local.h"
+#include "qcommon/qcommon.h"
 
 vrect_t scr_vrect;
 
@@ -701,6 +702,48 @@ void CG_DrawTeamMates( void ) {
 	}
 }
 
+//=============================================================================
+
+struct BombSite {
+	vec3_t origin;
+	char letter;
+};
+
+static BombSite bomb_sites[ 2 ];
+static size_t num_bomb_sites;
+
+void CG_AddBombSite( centity_t * cent ) {
+	assert( num_bomb_sites < ARRAY_COUNT( bomb_sites ) );
+
+	BombSite * site = &bomb_sites[ num_bomb_sites ];
+	VectorCopy( cent->current.origin, site->origin );
+	site->letter = cent->current.counterNum;
+
+	num_bomb_sites++;
+}
+
+void CG_DrawBombHUD() {
+	for( size_t i = 0; i < num_bomb_sites; i++ ) {
+		const BombSite * site = &bomb_sites[ i ];
+		vec2_t coords;
+		bool clamped = trap_R_TransformVectorToScreenClamped( &cg.view.refdef, site->origin, 32, coords );
+
+		char buf[ 4 ];
+		Q_snprintfz( buf, sizeof( buf ), "%c", site->letter );
+		trap_SCR_DrawString( coords[0], coords[1], ALIGN_CENTER_MIDDLE, buf, cgs.fontSystemMedium, colorWhite );
+
+		if( clamped ) {
+			// TODO: draw arrow
+		}
+	}
+}
+
+void CG_ResetBombHUD() {
+	num_bomb_sites = 0;
+}
+
+//=============================================================================
+
 /*
 * CG_DrawRSpeeds
 */
@@ -722,8 +765,7 @@ void CG_DrawRSpeeds( int x, int y, int align, struct qfontface_s *font, vec4_t c
 				msg[end - start] = '\0';
 			}
 
-			trap_SCR_DrawString( x, y, align,
-								 p, font, color );
+			trap_SCR_DrawString( x, y, align, p, font, color );
 			y += height;
 
 			if( end ) {

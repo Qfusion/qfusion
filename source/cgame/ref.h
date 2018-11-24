@@ -171,7 +171,6 @@ typedef struct refdef_s {
 	int rdflags;                        // RDF_UNDERWATER, etc
 	skyportal_t skyportal;
 	uint8_t *areabits;                  // if not NULL, only areas with set bits will be drawn
-	float weaponAlpha;
 	float minLight;                     // minimum value of ambient lighting applied to RF_MINLIGHT entities
 	struct shader_s *colorCorrection;   // post processing color correction lookup table to apply
 } refdef_t;

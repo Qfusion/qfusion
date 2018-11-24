@@ -308,6 +308,10 @@ static inline void trap_R_TransformVectorToScreen( const refdef_t *rd, const vec
 	CGAME_IMPORT.R_TransformVectorToScreen( rd, in, out );
 }
 
+static inline bool trap_R_TransformVectorToScreenClamped( const refdef_t *rd, const vec3_t target, int border, vec2_t out ) {
+	return CGAME_IMPORT.R_TransformVectorToScreenClamped( rd, target, border, out );
+}
+
 static inline void trap_R_Scissor( int x, int y, int w, int h ) {
 	CGAME_IMPORT.R_Scissor( x, y, w, h );
 }

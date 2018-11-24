@@ -524,7 +524,7 @@ void G_SnapFrame( void ) {
 			ent->r.svflags |= SVF_NOCLIENT;
 			continue;
 		} else if( !( ent->r.svflags & SVF_NOCLIENT ) && !ent->s.modelindex && !ent->s.effects
-				   && !ent->s.sound && !ISEVENTENTITY( &ent->s ) && !ent->s.light && !ent->r.client ) {
+				   && !ent->s.sound && !ISEVENTENTITY( &ent->s ) && !ent->s.light && !ent->r.client && ent->s.type != ET_HUD ) {
 			if( developer->integer ) {
 				G_Printf( "'G_SnapFrame': fixing missing SVF_NOCLIENT flag (no effect)\n" );
 			}

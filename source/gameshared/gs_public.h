@@ -956,10 +956,11 @@ enum {
 	ET_DECAL,
 	ET_ITEM_TIMER,  // for specs only
 	ET_PARTICLES,
-	ET_SPAWN_INDICATOR,
 
 	ET_VIDEO_SPEAKER,
 	ET_RADAR,       // same as ET_SPRITE but sets NO_DEPTH_TEST bit
+
+	ET_HUD,
 
 	// eventual entities: types below this will get event treatment
 	ET_EVENT = EVENT_ENTITIES_START,

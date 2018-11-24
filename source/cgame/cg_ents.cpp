@@ -1891,8 +1891,12 @@ void CG_AddEntities( void ) {
 				CG_EntityLoopSound( state, ATTN_STATIC );
 				break;
 
+			case ET_HUD:
+				CG_AddBombSite( cent );
+				break;
+
 			default:
-				CG_Error( "CG_AddPacketEntities: unknown entity type" );
+				CG_Error( "CG_AddEntities: unknown entity type" );
 				break;
 		}
 
@@ -1982,6 +1986,9 @@ void CG_LerpEntities( void ) {
 				break;
 
 			case ET_VIDEO_SPEAKER:
+				break;
+
+			case ET_HUD:
 				break;
 
 			default:
@@ -2086,6 +2093,9 @@ void CG_UpdateEntities( void ) {
 
 			case ET_PARTICLES:
 				CG_UpdateParticlesEnt( cent );
+				break;
+
+			case ET_HUD:
 				break;
 
 			default:
