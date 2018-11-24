@@ -365,13 +365,13 @@ void CG_ElectroPolyboardBeam( const vec3_t start, const vec3_t end, int subdivis
 void CG_ElectroPolyBeam( const vec3_t start, const vec3_t end, int team ) {
 	struct shader_s *shader;
 
-	if( team == TEAM_ALPHA || team == TEAM_BETA ) {
-		if( team == TEAM_ALPHA ) {
-			shader = CG_MediaShader( cgs.media.shaderElectroBeamAlpha );
-		} else {
-			shader = CG_MediaShader( cgs.media.shaderElectroBeamBeta );
-		}
-	} else {
+	if( team == TEAM_ALPHA ) {
+		shader = CG_MediaShader( cgs.media.shaderElectroBeamAlpha );
+	}
+	else if( team == TEAM_BETA ) {
+		shader = CG_MediaShader( cgs.media.shaderElectroBeamBeta );
+	}
+	else {
 		shader = CG_MediaShader( cgs.media.shaderElectroBeam );
 	}
 

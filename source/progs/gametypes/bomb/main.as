@@ -624,7 +624,9 @@ void GT_ThinkRules()
 	uint aliveBeta  = playersAliveOnTeam( TEAM_BETA );
 
 	G_ConfigString( MSG_ALIVE_ALPHA, "" + aliveAlpha );
+	G_ConfigString( MSG_TOTAL_ALPHA, "" + alphaAliveAtStart );
 	G_ConfigString( MSG_ALIVE_BETA,  "" + aliveBeta );
+	G_ConfigString( MSG_TOTAL_BETA,  "" + betaAliveAtStart );
 
 	for ( int i = 0; i < maxClients; i++ )
 	{
@@ -638,7 +640,9 @@ void GT_ThinkRules()
 		client.setHUDStat( STAT_IMAGE_SELF, 0 );
 		client.setHUDStat( STAT_IMAGE_DROP_ITEM, 0 );
 		client.setHUDStat( STAT_MESSAGE_ALPHA, MSG_ALIVE_ALPHA );
+		client.setHUDStat( STAT_MESSAGE2_ALPHA, MSG_TOTAL_ALPHA );
 		client.setHUDStat( STAT_MESSAGE_BETA, MSG_ALIVE_BETA );
+		client.setHUDStat( STAT_MESSAGE2_BETA, MSG_TOTAL_BETA );
 	}
 
 	// i guess you could speed this up...

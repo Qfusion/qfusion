@@ -46,9 +46,9 @@ uint roundCount;
 
 int attackingTeam;
 int defendingTeam;
-// Team roles at the previous round.
-int oldAttackingTeam;
-int oldDefendingTeam;
+
+uint alphaAliveAtStart;
+uint betaAliveAtStart;
 
 bool attackersHurried;
 bool defendersHurried;
@@ -326,9 +326,6 @@ void roundNewState( uint state )
 		{
 			roundCountDown = COUNTDOWN_MAX;
 
-			oldAttackingTeam = attackingTeam;
-			oldDefendingTeam = defendingTeam;
-
 			setTeams();
 
 			roundCount++;
@@ -456,6 +453,9 @@ void roundThink()
 				}
 			}
 		}
+
+		alphaAliveAtStart = playersAliveOnTeam( TEAM_ALPHA );
+		betaAliveAtStart = playersAliveOnTeam( TEAM_BETA );
 
 		last_time = roundStateEndTime - levelTime + int( cvarRoundTime.value * 1000.0f );
 		match.setClockOverride( last_time );

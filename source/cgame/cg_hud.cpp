@@ -505,6 +505,8 @@ static const reference_numeric_t cg_numeric_references[] =
 	{ "MESSAGE_OTHER", CG_GetStatValue, (void *)STAT_MESSAGE_OTHER },
 	{ "MESSAGE_ALPHA", CG_GetStatValue, (void *)STAT_MESSAGE_ALPHA },
 	{ "MESSAGE_BETA", CG_GetStatValue, (void *)STAT_MESSAGE_BETA },
+	{ "MESSAGE2_ALPHA", CG_GetStatValue, (void *)STAT_MESSAGE2_ALPHA },
+	{ "MESSAGE2_BETA", CG_GetStatValue, (void *)STAT_MESSAGE2_BETA },
 
 	{ "IMAGE_CLASSACTION1", CG_GetStatValue, (void *)STAT_IMAGE_CLASSACTION1 },
 	{ "IMAGE_CLASSACTION2", CG_GetStatValue, (void *)STAT_IMAGE_CLASSACTION2 },
