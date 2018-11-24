@@ -392,20 +392,6 @@ void roundNewState( uint state )
 
 			enableMovement();
 
-			Team @team = @G_GetTeam( defendingTeam );
-
-			for ( int i = 0; @team.ent( i ) != null; i++ )
-			{
-				G_CenterPrintMsg( team.ent( i ), S_COLOR_ORANGE + "PROTECT THE BOMB SITES!" );
-			}
-
-			@team = @G_GetTeam( attackingTeam );
-
-			for ( int i = 0; @team.ent( i ) != null; i++ )
-			{
-				G_CenterPrintMsg( team.ent( i ), S_COLOR_ORANGE + "DESTROY THE TARGETS!" );
-			}
-
 			announce( ANNOUNCEMENT_STARTED );
 
 			break;
