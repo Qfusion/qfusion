@@ -685,9 +685,9 @@ static void CG_UpdateChaseCam( void ) {
 		}
 
 		int chaseStep = 0;
-		if( cmd.upmove > 0 || cmd.buttons & BUTTON_SPECIAL ) {
+		if( cmd.upmove > 0 || cmd.sidemove > 0 || ( cmd.buttons & BUTTON_SPECIAL ) ) {
 			chaseStep = 1;
-		} else if( cmd.upmove < 0 ) {
+		} else if( cmd.upmove < 0 || cmd.sidemove < 0 ) {
 			chaseStep = -1;
 		}
 		if( chaseStep ) {
