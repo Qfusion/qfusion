@@ -338,6 +338,8 @@ void bombArm(array<Entity @> @nearby)
 
 	setTeamProgress( attackingTeam, 0, ProgressType_Nothing );
 
+	hideSiteIndicators( bombSite );
+
 	bombProgress = 0;
 	bombState = BOMBSTATE_ARMED;
 

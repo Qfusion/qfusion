@@ -340,6 +340,7 @@ void roundNewState( uint state )
 			resetKillCounters();
 			respawnAllPlayers();
 			disableMovement();
+			showAllSiteIndicators();
 
 			bombGiveToRandom();
 

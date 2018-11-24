@@ -214,6 +214,20 @@ cBombSite @getSiteFromIndicator( Entity @ent )
 	return null; // shut up compiler
 }
 
+void showAllSiteIndicators() {
+	for ( cBombSite @site = @siteHead; @site != null; @site = @site.next ) {
+		site.hud.svflags &= ~SVF_NOCLIENT;
+	}
+}
+
+void hideSiteIndicators( cBombSite @except ) {
+	for ( cBombSite @site = @siteHead; @site != null; @site = @site.next ) {
+		if( @site != @except ) {
+			site.hud.svflags |= SVF_NOCLIENT;
+		}
+	}
+}
+
 void resetBombSites()
 {
 	@siteHead = null;
