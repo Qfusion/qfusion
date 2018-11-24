@@ -114,7 +114,7 @@ uint min( uint a, uint b ) {
 
 void setTeamProgress( int teamNum, int progress, ProgressType type )
 {
-	for ( int t = TEAM_ALPHA; t < GS_MAX_TEAMS; t++)
+	for ( int t = TEAM_ALPHA; t < GS_MAX_TEAMS; t++ )
 	{
 		Team @team = @G_GetTeam( t );
 

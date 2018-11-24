@@ -33,6 +33,13 @@ const uint ROUNDSTATE_ROUND = 2;
 const uint ROUNDSTATE_FINISHED = 3;
 const uint ROUNDSTATE_POST = 4;
 
+enum RoundType {
+	RoundType_Normal,
+	RoundType_MatchPoint,
+	RoundType_Overtime,
+	RoundType_OvertimeMatchPoint,
+};
+
 //eRoundStates roundState = ROUNDSTATE_NONE; FIXME enum
 uint roundState = ROUNDSTATE_NONE;
 
@@ -300,6 +307,34 @@ bool scoreLimitHit()
 	return match.scoreLimitHit() && abs( G_GetTeam( TEAM_ALPHA ).stats.score - G_GetTeam( TEAM_BETA ).stats.score ) > 1;
 }
 
+void setRoundType() {
+	RoundType type = RoundType_Normal;
+
+	uint limit = cvarScoreLimit.integer;
+
+	uint alpha_score = G_GetTeam( TEAM_ALPHA ).stats.score;
+	uint beta_score = G_GetTeam( TEAM_BETA ).stats.score;
+
+	bool match_point = alpha_score == limit - 1 || beta_score == limit - 1;
+	bool overtime = roundCount >= ( limit - 1 ) * 2;
+
+	if( overtime ) {
+		type = alpha_score == beta_score ? RoundType_Overtime : RoundType_OvertimeMatchPoint;
+	}
+	else if( match_point ) {
+		type = RoundType_MatchPoint;
+	}
+
+	for ( int t = TEAM_ALPHA; t < GS_MAX_TEAMS; t++ ) {
+		Team @team = @G_GetTeam( t );
+
+		for ( int i = 0; @team.ent( i ) != null; i++ ) {
+			Client @client = @team.ent( i ).client;
+			client.setHUDStat( STAT_MESSAGE_OTHER, int( type ) );
+		}
+	}
+}
+
 //void roundNewState( eRoundStates state ) FIXME enum
 void roundNewState( uint state )
 {
@@ -321,8 +356,6 @@ void roundNewState( uint state )
 
 			setTeams();
 
-			roundCount++;
-
 			roundCheckEndTime = true;
 			roundStateEndTime = levelTime + 5000;
 
@@ -341,6 +374,7 @@ void roundNewState( uint state )
 			respawnAllPlayers();
 			disableMovement();
 			showAllSiteIndicators();
+			setRoundType();
 
 			bombGiveToRandom();
 
@@ -399,6 +433,8 @@ void roundNewState( uint state )
 
 			roundCheckEndTime = true;
 			roundStateEndTime = levelTime + 3000; // XXX: old bomb did +5s but i don't see the point
+
+			roundCount++;
 
 			break;
 
