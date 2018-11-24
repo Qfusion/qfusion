@@ -298,9 +298,6 @@ static void G_EndFrame_UpdateChaseCam( edict_t *ent ) {
 
 	if( ent->r.client->resp.chase.teamonly ) {
 		ent->r.client->ps.stats[STAT_LAYOUTS] |= STAT_LAYOUT_SPECTEAMONLY;
-		if( !ent->r.client->teamstate.is_coach ) {
-			ent->r.client->ps.stats[STAT_LAYOUTS] |= STAT_LAYOUT_SPECDEAD; // show deadcam effect
-		}
 	}
 
 	if( ent->r.client->level.showscores || GS_MatchState() >= MATCH_STATE_POSTMATCH ) {

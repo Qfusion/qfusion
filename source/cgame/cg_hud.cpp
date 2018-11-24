@@ -521,7 +521,6 @@ static const reference_numeric_t cg_numeric_references[] =
 
 	// other
 	{ "CHASING", CG_GetPOVnum, NULL },
-	{ "SPECDEAD", CG_GetLayoutStatFlag, (void *)STAT_LAYOUT_SPECDEAD },
 	{ "ARMOR_ITEM", CG_GetArmorItem, NULL },
 	{ "SPEED", CG_GetSpeed, NULL },
 	{ "SPEED_VERTICAL", CG_GetSpeedVertical, NULL },
