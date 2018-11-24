@@ -1058,7 +1058,6 @@ void CG_ClearAwards( void ) {
 static void CG_DrawAwards( int x, int y, int align, struct qfontface_s *font, vec4_t color ) {
 	int i, count, current;
 	int yoffset;
-	int s_x, e_x, m_x;
 
 	if( !cg_showAwards->integer ) {
 		return;
@@ -1089,24 +1088,13 @@ static void CG_DrawAwards( int x, int y, int align, struct qfontface_s *font, ve
 
 	y = CG_VerticalAlignForHeight( y, align, trap_SCR_FontHeight( font ) * MAX_AWARD_LINES );
 
-	s_x = CG_HorizontalMovementForAlign( align ) < 0 ? cgs.vidWidth : 0;
-	e_x = x;
-
 	for( i = count; i > 0; i-- ) {
-		float moveTime;
-		const char *str;
-
 		current = ( cg.award_head - i ) % MAX_AWARD_LINES;
-		str = cg.award_lines[ current ];
+		const char *str = cg.award_lines[ current ];
 
 		yoffset = trap_SCR_FontHeight( font ) * ( MAX_AWARD_LINES - i );
-		moveTime = ( cg.time - cg.award_times[ current ] ) / 1000.0f;
 
-		m_x = LinearMovementWithOvershoot( s_x, e_x,
-										   AWARDS_OVERSHOOT_DURATION, AWARDS_OVERSHOOT_FREQUENCY, AWARDS_OVERSHOOT_DECAY,
-										   moveTime );
-
-		trap_SCR_DrawStringWidth( m_x, y + yoffset, align, str, 0, font, color );
+		trap_SCR_DrawStringWidth( x, y + yoffset, align, str, 0, font, color );
 	}
 }
 
@@ -1862,10 +1850,6 @@ static bool CG_LFuncDrawClock( struct cg_layoutnode_s *commandnode, struct cg_la
 	return true;
 }
 
-#define HELPMESSAGE_OVERSHOOT_DURATION 0.2f
-#define HELPMESSAGE_OVERSHOOT_FREQUENCY 6.0f
-#define HELPMESSAGE_OVERSHOOT_DECAY 10.0f
-
 static bool CG_LFuncDrawHelpMessage( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	// hide this one when scoreboard is up
 	if( !CG_IsScoreboardShown() ) {
@@ -1888,16 +1872,6 @@ static bool CG_LFuncDrawHelpMessage( struct cg_layoutnode_s *commandnode, struct
 						helpmessage = "";
 						if( showhelp ) {
 							if( cg.helpmessage[0] ) {
-								int s_x, e_x;
-								float moveTime = ( cg.time - cg.helpmessage_time ) / 1000.0f;
-
-								s_x = CG_HorizontalMovementForAlign( layout_cursor_align ) < 0 ? cgs.vidWidth : 0;
-								e_x = x;
-
-								x = LinearMovementWithOvershoot( s_x, e_x,
-																 HELPMESSAGE_OVERSHOOT_DURATION, HELPMESSAGE_OVERSHOOT_FREQUENCY, HELPMESSAGE_OVERSHOOT_DECAY,
-																 moveTime );
-
 								helpmessage = cg.helpmessage;
 							} else if( cg.matchmessage ) {
 								helpmessage = cg.matchmessage;

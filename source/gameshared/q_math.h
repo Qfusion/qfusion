@@ -340,8 +340,6 @@ void ProjectPointOntoVector( const vec3_t point, const vec3_t vStart, const vec3
 float DistanceFromLineSquared( const vec3_t p, const vec3_t lp1, const vec3_t lp2, const vec3_t dir );
 #define DistanceFromLine( p,lp1,lp2,dir ) ( sqrt( DistanceFromLineSquared( p,lp1,lp2,dir ) ) )
 
-float LinearMovementWithOvershoot( vec_t start, vec_t end, float duration, float freq, float decay, float t );
-
 void Matrix3_Identity( mat3_t m );
 void Matrix3_Copy( const mat3_t m1, mat3_t m2 );
 bool Matrix3_Compare( const mat3_t m1, const mat3_t m2 );

@@ -1006,29 +1006,6 @@ void VectorReflect( const vec3_t v, const vec3_t n, const vec_t dist, vec3_t out
 
 //============================================================================
 
-float LinearMovementWithOvershoot( vec_t start, vec_t end, float duration, float freq, float decay, float t ) {
-	float e;
-	vec_t amplitude;
-	float phase;
-
-	if( t < duration ) {
-		return start + ( end - start ) * t / duration;
-	}
-
-	e = decay * ( t - duration );
-	if( e > 5.0f ) {
-		// some reasonable exponent to stop oscillation
-		return end;
-	}
-
-	e = exp( e );
-	amplitude = (float)( end - start ) / duration;
-	phase = freq * M_TWOPI;
-	return end + amplitude * sin( ( t - duration ) * phase ) / e / phase;
-}
-
-//============================================================================
-
 void Matrix3_Identity( mat3_t m ) {
 	int i, j;
 
