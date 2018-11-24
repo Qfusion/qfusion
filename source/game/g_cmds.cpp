@@ -787,6 +787,10 @@ static void G_vsay_f( edict_t *ent, bool team ) {
 		return;
 	}
 
+	if( G_ISGHOSTING( ent ) ) {
+		return;
+	}
+
 	if( ( !GS_TeamBasedGametype() || GS_InvidualGameType() ) && ent->s.team != TEAM_SPECTATOR ) {
 		team = false;
 	}
