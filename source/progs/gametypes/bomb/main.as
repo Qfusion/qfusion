@@ -174,7 +174,9 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
 {
 	if ( cmdString == "drop" )
 	{
-		bombDrop( BOMBDROP_NORMAL );
+		if ( @client.getEnt() == @bombCarrier ) {
+			bombDrop( BOMBDROP_NORMAL );
+		}
 
 		return true;
 	}
