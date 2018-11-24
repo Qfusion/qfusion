@@ -70,7 +70,6 @@ class cBombSite
 		origin.z += 128;
 
 		this.letter = SITE_LETTERS[siteCount];
-		String pathLetter = letter.tolower();
 
 		@this.hud = @G_SpawnEntity( "hud_bomb_site" );
 		this.hud.type = ET_HUD;
