@@ -18,12 +18,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#include "../qcommon/qcommon.h"
-#include "../qcommon/sys_threads.h"
+#include "qcommon/qcommon.h"
+#include "qcommon/sys_threads.h"
 #include "winquake.h"
 #include <process.h>
-
-#define QF_USE_CRITICAL_SECTIONS
 
 struct qthread_s {
 	HANDLE h;
@@ -39,7 +37,6 @@ static void( WINAPI * pWakeConditionVariable )( PCONDITION_VARIABLE ConditionVar
 static BOOL( WINAPI * pSleepConditionVariableCS )( PCONDITION_VARIABLE ConditionVariable,
 												   PCRITICAL_SECTION CriticalSection, DWORD dwMilliseconds );
 
-#ifdef QF_USE_CRITICAL_SECTIONS
 struct qmutex_s {
 	CRITICAL_SECTION h;
 };
@@ -84,56 +81,6 @@ void Sys_Mutex_Lock( qmutex_t *mutex ) {
 void Sys_Mutex_Unlock( qmutex_t *mutex ) {
 	LeaveCriticalSection( &mutex->h );
 }
-#else
-struct qmutex_s {
-	HANDLE h;
-};
-
-/*
-* Sys_Mutex_Create
-*/
-int Sys_Mutex_Create( qmutex_t **pmutex ) {
-	qmutex_t *mutex;
-
-	HANDLE h = CreateMutex( NULL, FALSE, NULL );
-	if( h == NULL ) {
-		return GetLastError();
-	}
-
-	mutex = ( qmutex_t * )Q_malloc( sizeof( *mutex ) );
-	if( !mutex ) {
-		return -1;
-	}
-	mutex->h = h;
-	*pmutex = mutex;
-	return 0;
-}
-
-/*
-* Sys_Mutex_Destroy
-*/
-void Sys_Mutex_Destroy( qmutex_t *mutex ) {
-	if( !mutex ) {
-		return;
-	}
-	CloseHandle( mutex->h );
-	Q_free( mutex );
-}
-
-/*
-* Sys_Mutex_Lock
-*/
-void Sys_Mutex_Lock( qmutex_t *mutex ) {
-	WaitForSingleObject( mutex->h, INFINITE );
-}
-
-/*
-* Sys_Mutex_Unlock
-*/
-void Sys_Mutex_Unlock( qmutex_t *mutex ) {
-	ReleaseMutex( mutex->h );
-}
-#endif
 
 /*
 * Sys_Thread_Create
