@@ -90,8 +90,6 @@ cvar_t *g_allow_spectator_voting;
 cvar_t *g_asGC_stats;
 cvar_t *g_asGC_interval;
 
-cvar_t *g_skillRating;
-
 static char *map_rotation_s = NULL;
 static char **map_rotation_p = NULL;
 static int map_rotation_current = -1;
@@ -307,8 +305,6 @@ void G_Init( unsigned int seed, unsigned int framemsec, int protocol, const char
 	g_asGC_stats = trap_Cvar_Get( "g_asGC_stats", "0", CVAR_ARCHIVE );
 	g_asGC_interval = trap_Cvar_Get( "g_asGC_interval", "10", CVAR_ARCHIVE );
 
-	g_skillRating = trap_Cvar_Get( "sv_skillRating", va( "%.0f", MM_RATING_DEFAULT ), CVAR_SERVERINFO | CVAR_READONLY );
-
 	// nextmap
 	trap_Cvar_ForceSet( "nextmap", "match \"advance\"" );
 
@@ -319,8 +315,6 @@ void G_Init( unsigned int seed, unsigned int framemsec, int protocol, const char
 
 	// initialize all clients for this game
 	game.clients = ( gclient_t * )G_Malloc( gs.maxclients * sizeof( game.clients[0] ) );
-
-	game.quits = NULL;
 
 	game.numentities = gs.maxclients + 1;
 

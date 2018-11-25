@@ -280,16 +280,3 @@ static inline void trap_LocateEntities( struct edict_s *edicts, int edict_size, 
 static inline struct angelwrap_api_s *trap_asGetAngelExport( void ) {
 	return GAME_IMPORT.asGetAngelExport();
 }
-
-// Matchmaking
-static inline struct stat_query_api_s *trap_GetStatQueryAPI( void ) {
-	return GAME_IMPORT.GetStatQueryAPI();
-}
-
-static inline void trap_MM_SendQuery( struct stat_query_s *query ) {
-	GAME_IMPORT.MM_SendQuery( query );
-}
-
-static inline void trap_MM_GameState( bool state ) {
-	GAME_IMPORT.MM_GameState( state == true ? true : false );
-}

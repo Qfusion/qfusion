@@ -31,9 +31,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 void G_PlayerAward( edict_t *ent, const char *awardMsg ) {
 	edict_t *other;
 	char cmd[MAX_STRING_CHARS];
-	gameaward_t *ga;
-	int i, size;
-	score_stats_t *stats;
 
 	//asdasd
 	if( !awardMsg || !awardMsg[0] || !ent->r.client ) {
@@ -47,38 +44,7 @@ void G_PlayerAward( edict_t *ent, const char *awardMsg ) {
 		G_Printf( "%s", COM_RemoveColorTokens( va( "%s receives a '%s' award.\n", ent->r.client->netname, awardMsg ) ) );
 	}
 
-	ent->r.client->level.stats.awards++;
-	teamlist[ent->s.team].stats.awards++;
 	G_Gametype_ScoreEvent( ent->r.client, "award", awardMsg );
-
-	stats = &ent->r.client->level.stats;
-	if( !stats->awardAllocator ) {
-		stats->awardAllocator = LinearAllocator( sizeof( gameaward_t ), 0, _G_LevelMalloc, _G_LevelFree );
-	}
-
-	// ch : this doesnt work for race right?
-	if( GS_MatchState() == MATCH_STATE_PLAYTIME || GS_MatchState() == MATCH_STATE_POSTMATCH ) {
-		// ch : we store this locally to send to MM
-		// first check if we already have this one on the clients list
-		size = LA_Size( stats->awardAllocator );
-		ga = NULL;
-		for( i = 0; i < size; i++ ) {
-			ga = ( gameaward_t * )LA_Pointer( stats->awardAllocator, i );
-			if( !strncmp( ga->name, awardMsg, sizeof( ga->name ) - 1 ) ) {
-				break;
-			}
-		}
-
-		if( i >= size ) {
-			ga = ( gameaward_t * )LA_Alloc( stats->awardAllocator );
-			memset( ga, 0, sizeof( *ga ) );
-			ga->name = G_RegisterLevelString( awardMsg );
-		}
-
-		if( ga ) {
-			ga->count++;
-		}
-	}
 
 	// add it to every player who's chasing this player
 	for( other = game.edicts + 1; PLAYERNUM( other ) < gs.maxclients; other++ ) {
@@ -92,54 +58,7 @@ void G_PlayerAward( edict_t *ent, const char *awardMsg ) {
 	}
 }
 
-void G_PlayerMetaAward( edict_t *ent, const char *awardMsg ) {
-	int i, size;
-	gameaward_t *ga;
-	score_stats_t *stats;
-
-	/*
-	* ch : meta-award is an award that isn't announced but
-	* it is sent to MM
-	*/
-
-	if( !awardMsg || !awardMsg[0] || !ent->r.client ) {
-		return;
-	}
-
-	stats = &ent->r.client->level.stats;
-	if( !stats->awardAllocator ) {
-		stats->awardAllocator = LinearAllocator( sizeof( gameaward_t ), 0, _G_LevelMalloc, _G_LevelFree );
-	}
-
-	// ch : this doesnt work for race right?
-	if( GS_MatchState() == MATCH_STATE_PLAYTIME ) {
-		// ch : we store this locally to send to MM
-		// first check if we already have this one on the clients list
-		size = LA_Size( stats->awardAllocator );
-		ga = NULL;
-		for( i = 0; i < size; i++ ) {
-			ga = ( gameaward_t * )LA_Pointer( stats->awardAllocator, i );
-			if( !strncmp( ga->name, awardMsg, sizeof( ga->name ) - 1 ) ) {
-				break;
-			}
-		}
-
-		if( i >= size ) {
-			ga = ( gameaward_t * )LA_Alloc( stats->awardAllocator );
-			memset( ga, 0, sizeof( *ga ) );
-			ga->name = G_RegisterLevelString( awardMsg );
-		}
-
-		if( ga ) {
-			ga->count++;
-		}
-	}
-}
-
 void G_AwardPlayerKilled( edict_t *self, edict_t *inflictor, edict_t *attacker, int mod ) {
-	score_stats_t *stats;
-	loggedFrag_t *lfrag;
-
 	if( self->r.svflags & SVF_CORPSE ) {
 		return;
 	}
@@ -193,20 +112,6 @@ void G_AwardPlayerKilled( edict_t *self, edict_t *inflictor, edict_t *attacker, 
 		}
 
 		G_PlayerAward( attacker, s );
-	}
-
-	if( GS_MatchState() == MATCH_STATE_PLAYTIME /* && !strcmp( "duel", gs.gametypeName ) */ ) {
-		// ch : frag log
-		stats = &attacker->r.client->level.stats;
-		if( !stats->fragAllocator ) {
-			stats->fragAllocator = LinearAllocator( sizeof( loggedFrag_t ), 0, _G_LevelMalloc, _G_LevelFree );
-		}
-
-		lfrag = ( loggedFrag_t * )LA_Alloc( stats->fragAllocator );
-		lfrag->mm_attacker = attacker->r.client->mm_session;
-		lfrag->mm_victim = self->r.client->mm_session;
-		lfrag->weapon = G_ModToAmmo( mod ) - AMMO_GUNBLADE;
-		lfrag->time = ( game.serverTime - GS_MatchStartTime() ) / 1000;
 	}
 }
 

@@ -23,11 +23,11 @@ namespace
 {
 
 void DEBUG_PRINT_SERVERINFO( const ServerInfo &info ) {
-	Com_Printf( "^6Serverinfo:\n%s %s %s %d/%d %s %s %d %d %d %d\n",
+	Com_Printf( "^6Serverinfo:\n%s %s %s %d/%d %s %s %d %d %d\n",
 				info.address.c_str(), info.hostname.c_str(), info.map.c_str(),
 				info.curuser, info.maxuser, info.gametype.c_str(),
 				info.modname.c_str(), info.skilllevel,
-				int(info.password), int(info.mm), info.ping );
+				int(info.password), info.ping );
 }
 
 // TODO: move this as general utility
@@ -41,7 +41,7 @@ ServerInfo::ServerInfo( const char *adr, const char *info )
 	:   has_changed( false ), ping_updated( false ), has_ping( false ), address( adr ),
 	iaddress( addr_to_int( adr ) ), hostname( "" ), cleanname( "" ), map( "" ), curuser( 0 ),
 	maxuser( 0 ), bots( 0 ), gametype( "" ), modname( "" ), race( false ), skilllevel( 0 ),
-	password( false ), mm( false ), tv( false ), ping( 0 ), ping_retries( 0 ), favorite( false ) {
+	password( false ), tv( false ), ping( 0 ), ping_retries( 0 ), favorite( false ) {
 	if( info ) {
 		fromInfo( info );
 	}
@@ -74,7 +74,6 @@ void ServerInfo::fromOther( const ServerInfo &other ) {
 	race = other.race;
 	skilllevel = other.skilllevel;
 	password = other.password;
-	mm = other.mm;
 	tv = other.tv;
 	ping = other.ping;
 	ping_retries = other.ping_retries;
@@ -181,22 +180,6 @@ void ServerInfo::fromInfo( const char *info ) {
 						ping = 999;
 					}
 				}
-			}
-		} else if( cmd == "mm" ) {   // MATCHMAKING
-			int tmpmm;
-			std::stringstream toint( value );
-			toint >> tmpmm;
-			if( !toint.fail() && ( tmpmm != 0 ) != mm ) {
-				has_changed = true;
-				mm = tmpmm != 0;
-			}
-		} else if( cmd == "mo" ) {   // MOD NAME
-			std::string tmpmod;
-			std::stringstream trim( value );
-			trim >> tmpmod;
-			if( !trim.fail() && tmpmod != modname ) {
-				has_changed = true;
-				modname = tmpmod;
 			}
 		} else if( cmd == "r" ) {   // RACE
 			int tmprace;
@@ -306,13 +289,6 @@ void ServerInfo::fixStrings() {
 // 2) ping ASC
 // 3) hostname ASC
 bool ServerInfo::DefaultCompareBinary( const ServerInfo *lhs, const ServerInfo *rhs ) {
-	if( lhs->mm > rhs->mm ) {
-		return true;
-	}
-	if( lhs->mm < rhs->mm ) {
-		return false;
-	}
-
 	if( lhs->curuser > rhs->curuser ) {
 		return true;
 	}
@@ -457,8 +433,6 @@ void ServerBrowserDataSource::GetRow( StringList &row, const String &table, int 
 			row.push_back( va( "%d", info.skilllevel ) );
 		} else if( *it == "password" ) {
 			row.push_back( info.password ? "yes" : "no" );
-		} else if( *it == "mm" ) {
-			row.push_back( info.mm ? "yes" : "no" );
 		} else if( *it == "ping" ) {
 			row.push_back( va( "%d", info.ping ) );
 		} else if( *it == "address" ) {
@@ -740,7 +714,7 @@ void ServerBrowserDataSource::compileSuggestionsList( void ) {
 				insertInfo = true;
 			} else {
 				ServerInfo *gtBestInfo = *( gtBest->second ).begin();
-				if( gtBestInfo->curuser < info->curuser || int(gtBestInfo->mm) < int(info->mm) ) {
+				if( gtBestInfo->curuser < info->curuser ) {
 					insertInfo = true;
 				}
 			}
@@ -801,8 +775,6 @@ void ServerBrowserDataSource::sortByField( const char *field ) {
 		sortCompare = ServerInfo::LessPtrBinary<int, &ServerInfo::skilllevel>;
 	} else if( column == "password" ) {
 		sortCompare = ServerInfo::LessPtrBinary<bool, &ServerInfo::password>;
-	} else if( column == "mm" ) {
-		sortCompare = ServerInfo::LessPtrBinary<bool, &ServerInfo::mm>;
 	} else if( column == "ping" ) {
 		sortCompare = ServerInfo::LessPtrBinary<unsigned int, &ServerInfo::ping>;
 	} else if( column.empty() ) {

@@ -999,13 +999,6 @@ static void CG_StatsCmdAdd_f( void ) {
 	trap_Cmd_SetCompletionFunc( "stats", &CG_PlayerNamesCompletion_f );
 }
 
-/*
-* CG_WhoisCmdAdd_f
-*/
-static void CG_WhoisCmdAdd_f( void ) {
-	trap_Cmd_SetCompletionFunc( "whois", &CG_PlayerNamesCompletion_f );
-}
-
 // server commands
 static svcmd_t cg_consvcmds[] =
 {
@@ -1013,7 +1006,6 @@ static svcmd_t cg_consvcmds[] =
 	{ "say", CG_SayCmdAdd_f },
 	{ "say_team", CG_SayTeamCmdAdd_f },
 	{ "stats", CG_StatsCmdAdd_f },
-	{ "whois", CG_WhoisCmdAdd_f },
 
 	{ NULL, NULL }
 };

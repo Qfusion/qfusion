@@ -720,7 +720,6 @@ void G_TeleportPlayer( edict_t *player, edict_t *dest ) {
 */
 void ClientBegin( edict_t *ent ) {
 	gclient_t *client = ent->r.client;
-	const char *mm_login;
 
 	memset( &client->ucmd, 0, sizeof( client->ucmd ) );
 	memset( &client->level, 0, sizeof( client->level ) );
@@ -733,13 +732,8 @@ void ClientBegin( edict_t *ent ) {
 
 	G_UpdatePlayerMatchMsg( ent );
 
-	mm_login = Info_ValueForKey( client->userinfo, "cl_mm_login" );
-	if( mm_login && *mm_login && client->mm_session > 0 ) {
-		G_PrintMsg( NULL, "%s" S_COLOR_WHITE " (" S_COLOR_YELLOW "%s" S_COLOR_WHITE ") entered the game\n", client->netname, mm_login );
-	} else {
-		if( !level.gametype.disableObituaries || !( ent->r.svflags & SVF_FAKECLIENT ) ) {
-			G_PrintMsg( NULL, "%s" S_COLOR_WHITE " entered the game\n", client->netname );
-		}
+	if( !level.gametype.disableObituaries || !( ent->r.svflags & SVF_FAKECLIENT ) ) {
+		G_PrintMsg( NULL, "%s" S_COLOR_WHITE " entered the game\n", client->netname );
 	}
 
 	client->level.respawnCount = 0; // clear respawncount
@@ -977,31 +971,6 @@ static void G_UpdatePlayerInfoString( int playerNum ) {
 }
 
 /*
-* G_UpdateMMPlayerInfoString
-*/
-static void G_UpdateMMPlayerInfoString( int playerNum ) {
-	char playerString[MAX_INFO_STRING];
-	gclient_t *client;
-
-	assert( playerNum >= 0 && playerNum < gs.maxclients );
-	client = &game.clients[playerNum];
-
-	if( playerNum >= MAX_MMPLAYERINFOS ) {
-		return; // oops
-	}
-
-	// update client information in cgame
-	playerString[0] = 0;
-
-	if( client->mmflags != 0 ) {
-		Info_SetValueForKey( playerString, "f", va( "%x", client->mmflags ) ); // use hex for shorter representation
-	}
-
-	playerString[MAX_CONFIGSTRING_CHARS - 1] = 0;
-	trap_ConfigString( CS_MMPLAYERINFOS + playerNum, playerString );
-}
-
-/*
 * ClientUserinfoChanged
 * called whenever the player updates a userinfo variable.
 *
@@ -1104,14 +1073,6 @@ void ClientUserinfoChanged( edict_t *ent, char *userinfo ) {
 	}
 #endif
 
-	// mm session
-	// TODO: remove the key after storing it to gclient_t !
-	s = Info_ValueForKey( userinfo, "cl_mm_session" );
-	cl->mm_session = ( s == NULL ) ? 0 : atoi( s );
-
-	s = Info_ValueForKey( userinfo, "mmflags" );
-	cl->mmflags = ( s == NULL ) ? 0 : strtoul( s, NULL, 10 );
-
 	if( !G_ISGHOSTING( ent ) && trap_GetClientState( PLAYERNUM( ent ) ) >= CS_SPAWNED ) {
 		G_Client_AssignTeamSkin( ent, userinfo );
 	}
@@ -1120,7 +1081,6 @@ void ClientUserinfoChanged( edict_t *ent, char *userinfo ) {
 	Q_strncpyz( cl->userinfo, userinfo, sizeof( cl->userinfo ) );
 
 	G_UpdatePlayerInfoString( PLAYERNUM( ent ) );
-	G_UpdateMMPlayerInfoString( PLAYERNUM( ent ) );
 
 	G_Gametype_ScoreEvent( cl, "userinfochanged", oldname );
 }
@@ -1229,12 +1189,6 @@ void ClientDisconnect( edict_t *ent, const char *reason ) {
 
 	if( !ent->r.client || !ent->r.inuse ) {
 		return;
-	}
-
-	// always report in RACE mode
-	if( GS_RaceGametype()
-		|| ( ent->r.client->team != TEAM_SPECTATOR && ( GS_MatchState() == MATCH_STATE_PLAYTIME || GS_MatchState() == MATCH_STATE_POSTMATCH ) ) ) {
-		G_AddPlayerReport( ent, GS_MatchState() == MATCH_STATE_POSTMATCH );
 	}
 
 	for( team = TEAM_PLAYERS; team < GS_MAX_TEAMS; team++ )
@@ -1529,10 +1483,6 @@ void ClientThink( edict_t *ent, usercmd_t *ucmd, int timeDelta ) {
 		}
 	} else if( client->ps.pmove.stats[PM_STAT_NOUSERCONTROL] <= 0 ) {
 		client->resp.snap.buttons |= ucmd->buttons;
-	}
-
-	if( client->ps.pmove.pm_type == PM_NORMAL ) {
-		client->level.stats.had_playtime = true;
 	}
 
 	// generating plrkeys (optimized for net communication)

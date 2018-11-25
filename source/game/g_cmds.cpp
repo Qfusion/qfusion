@@ -452,7 +452,6 @@ static void Cmd_PlayersExt_f( edict_t *ent, bool onlyspecs ) {
 		if( trap_GetClientState( i ) >= CS_SPAWNED ) {
 			edict_t *clientEnt = &game.edicts[i + 1];
 			gclient_t *cl;
-			const char *login;
 
 			if( onlyspecs && clientEnt->s.team != TEAM_SPECTATOR ) {
 				continue;
@@ -460,17 +459,7 @@ static void Cmd_PlayersExt_f( edict_t *ent, bool onlyspecs ) {
 
 			cl = clientEnt->r.client;
 
-			login = NULL;
-			if( cl->mm_session > 0 ) {
-				login = Info_ValueForKey( cl->userinfo, "cl_mm_login" );
-			}
-			if( !login ) {
-				login = "";
-			}
-
-			Q_snprintfz( line, sizeof( line ), "%3i %s" S_COLOR_WHITE "%s%s%s%s\n", i, cl->netname,
-						 login[0] ? "(" S_COLOR_YELLOW : "", login, login[0] ? S_COLOR_WHITE ")" : "",
-						 cl->isoperator ? " op" : "" );
+			Q_snprintfz( line, sizeof( line ), "%3i %s" S_COLOR_WHITE "%s\n", i, cl->netname, cl->isoperator ? " op" : "" );
 
 			if( strlen( line ) + strlen( msg ) > sizeof( msg ) - 100 ) {
 				// can't print all of them in one packet
@@ -647,16 +636,6 @@ void Cmd_Say_f( edict_t *ent, bool arg0, bool checkflood ) {
 	char *p;
 	char text[2048];
 	size_t arg0len = 0;
-
-#ifdef AUTHED_SAY
-	if( sv_mm_enable->integer && ent->r.client && ent->r.client->mm_session <= 0 ) {
-		// unauthed players are only allowed to chat to public at non play-time
-		if( GS_MatchState() == MATCH_STATE_PLAYTIME ) {
-			G_PrintMsg( ent, "%s", S_COLOR_YELLOW "You must authenticate to be able to communicate to other players during the match.\n" );
-			return;
-		}
-	}
-#endif
 
 	if( checkflood ) {
 		if( CheckFlood( ent, false ) ) {
@@ -955,30 +934,6 @@ static void Cmd_Timein_f( edict_t *ent ) {
 }
 
 /*
-* Cmd_Awards_f
-*/
-static void Cmd_Awards_f( edict_t *ent ) {
-	gclient_t *client;
-	gameaward_t *ga;
-	int i, size;
-	static char entry[MAX_TOKEN_CHARS];
-
-	assert( ent && ent->r.client );
-	client = ent->r.client;
-
-	Q_snprintfz( entry, sizeof( entry ), "Awards for %s\n", client->netname );
-
-	if( client->level.stats.awardAllocator ) {
-		size = LA_Size( client->level.stats.awardAllocator );
-		for( i = 0; i < size; i++ ) {
-			ga = ( gameaward_t * )LA_Pointer( client->level.stats.awardAllocator, i );
-			Q_strncatz( entry, va( "\t%dx %s\n", ga->count, ga->name ), sizeof( entry ) );
-		}
-		G_PrintMsg( ent, "%s", entry );
-	}
-}
-
-/*
 * G_StatsMessage
 *
 * Generates stats message for the entity
@@ -1070,45 +1025,6 @@ static void Cmd_ShowStats_f( edict_t *ent ) {
 	}
 
 	trap_GameCmd( ent, va( "plstats 1 \"%s\"", G_StatsMessage( target ) ) );
-}
-
-/*
-* Cmd_Whois_f
-*/
-static void Cmd_Whois_f( edict_t *ent ) {
-	edict_t *target;
-	gclient_t *cl;
-	const char *login;
-
-	if( trap_Cmd_Argc() > 2 ) {
-		G_PrintMsg( ent, "Usage: whois [player]\n" );
-		return;
-	}
-
-	if( trap_Cmd_Argc() == 2 ) {
-		target = G_PlayerForText( trap_Cmd_Argv( 1 ) );
-		if( target == NULL ) {
-			G_PrintMsg( ent, "No such player\n" );
-			return;
-		}
-	} else {
-		if( ent->r.client->resp.chase.active && game.edicts[ent->r.client->resp.chase.target].r.client ) {
-			target = &game.edicts[ent->r.client->resp.chase.target];
-		} else {
-			target = ent;
-		}
-	}
-
-	cl = target->r.client;
-
-	if( cl->mm_session <= 0 ) {
-		G_PrintMsg( ent, "Unregistered player\n" );
-		return;
-	}
-
-	login = Info_ValueForKey( cl->userinfo, "cl_mm_login" );
-
-	G_PrintMsg( ent, "%s%s is %s\n", cl->netname, S_COLOR_WHITE, login ? login : "unknown" );
 }
 
 /*
@@ -1231,7 +1147,6 @@ void G_InitGameCommands( void ) {
 	G_AddCommand( "timeout", Cmd_Timeout_f );
 	G_AddCommand( "timein", Cmd_Timein_f );
 	G_AddCommand( "cointoss", Cmd_CoinToss_f );
-	G_AddCommand( "whois", Cmd_Whois_f );
 
 	// callvotes commands
 	G_AddCommand( "callvote", G_CallVote_Cmd );
@@ -1256,9 +1171,6 @@ void G_InitGameCommands( void ) {
 
 	G_AddCommand( "vsay", G_vsay_Cmd );
 	G_AddCommand( "vsay_team", G_Teams_vsay_Cmd );
-
-	// ch : added awards
-	G_AddCommand( "awards", Cmd_Awards_f );
 
 	// misc
 	G_AddCommand( "upstate", Cmd_Upstate_f );

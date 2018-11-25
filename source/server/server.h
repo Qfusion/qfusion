@@ -17,10 +17,9 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
  */
-// server.h
 
-#include "../qcommon/qcommon.h"
-#include "../game/g_public.h"
+#include "qcommon/qcommon.h"
+#include "game/g_public.h"
 
 //=============================================================================
 
@@ -315,10 +314,6 @@ extern cvar_t *sv_defaultmap;
 
 extern cvar_t *sv_demodir;
 
-extern cvar_t *sv_mm_authkey;
-extern cvar_t *sv_mm_loginonly;
-extern cvar_t *sv_mm_debug_reportbots;
-
 //===========================================================
 
 //
@@ -414,8 +409,7 @@ void SV_BroadcastCommand( _Printf_format_string_ const char *format, ... );
 //
 void SV_ParseClientMessage( client_t *client, msg_t *msg );
 bool SV_ClientConnect( const socket_t *socket, const netadr_t *address, client_t *client, char *userinfo,
-					   int game_port, int challenge, bool fakeClient,
-					   unsigned int ticket_id, int session_id );
+	int game_port, int challenge, bool fakeClient );
 
 #ifndef _MSC_VER
 void SV_DropClient( client_t *drop, int type, const char *format, ... ) __attribute__( ( format( printf, 3, 4 ) ) );
@@ -471,26 +465,6 @@ bool SV_IsDemoDownloadRequest( const char *request );
 //
 void SV_MOTD_Update( void );
 void SV_MOTD_Get_f( client_t *client );
-
-//
-// sv_mm.c
-//
-void SV_MM_Init( void );
-void SV_MM_Shutdown( bool logout );
-void SV_MM_Frame( void );
-bool SV_MM_Initialized( void );
-
-int SV_MM_ClientConnect( const netadr_t *address, char *userinfo, unsigned int ticket, int session );
-void SV_MM_ClientDisconnect( client_t *client );
-
-int SV_MM_GenerateLocalSession( void );
-
-// match report
-#include "../matchmaker/mm_common.h"
-struct stat_query_s *SV_MM_CreateQuery( const char *iface, const char *url, bool get );
-void SV_MM_SendQuery( stat_query_t *query );
-void SV_MM_GameState( bool state );
-void SV_MM_GetMatchUUID( void ( *callback_fn )( const char *uuid ) );
 
 //
 // sv_web.c

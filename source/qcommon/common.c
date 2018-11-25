@@ -24,8 +24,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "steam.h"
 #include "qalgo/glob.h"
 #include "qalgo/md5.h"
-#include "qcommon/cjson.h"
-#include "matchmaker/mm_common.h"
 
 #define MAX_NUM_ARGVS   50
 
@@ -278,7 +276,6 @@ void Com_Error( com_error_code_t code, const char *format, ... ) {
 		Com_Printf( "********************\nERROR: %s\n********************\n", msg );
 		SV_Shutdown( va( "Server fatal crashed: %s\n", msg ) );
 		CL_Shutdown();
-		MM_Shutdown();
 	}
 
 	if( log_file ) {
@@ -305,7 +302,6 @@ void Com_DeferQuit( void ) {
 void Com_Quit( void ) {
 	SV_Shutdown( "Server quit\n" );
 	CL_Shutdown();
-	MM_Shutdown();
 
 	Sys_Quit();
 }
@@ -674,9 +670,6 @@ void Qcommon_Init( int argc, char **argv ) {
 		Sys_Error( "Error during initialization: %s", com_errormsg );
 	}
 
-	// reset hooks to malloc and free
-	cJSON_InitHooks( NULL );
-
 	QThreads_Init();
 
 	com_print_mutex = QMutex_Create();
@@ -766,8 +759,6 @@ void Qcommon_Init( int argc, char **argv ) {
 #endif
 
 	Com_ScriptModule_Init();
-
-	MM_Init();
 
 	SV_Init();
 	CL_Init();
@@ -883,8 +874,6 @@ void Qcommon_Frame( unsigned int realMsec ) {
 		Com_Printf( "all:%3i sv:%3i gm:%3i cl:%3i rf:%3i\n",
 					all, sv, gm, cl, rf );
 	}
-
-	MM_Frame( realMsec );
 }
 
 /*

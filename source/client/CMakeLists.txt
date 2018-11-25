@@ -20,7 +20,6 @@ file(GLOB CLIENT_HEADERS
 	"../game/g_public.h"
 	"../ui/ui_public.h"
 	"../steamlib/steamlib_public.h"
-	"../matchmaker/*.h"
 	"../server/*.h"
 	)
 
@@ -30,7 +29,6 @@ file(GLOB CLIENT_COMMON_SOURCES
 	"*.c"
 	"../gameshared/q_*.c"
 	"../qalgo/*.c"
-	"../matchmaker/*.c"
 
 	"renderer/*.c"
 	"ftlib/*.c"

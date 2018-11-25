@@ -390,22 +390,6 @@ static void PF_MemFree( void *data, const char *filename, int fileline ) {
 	_Mem_Free( data, MEMPOOL_GAMEPROGS, 0, filename, fileline );
 }
 
-/*
-* PF_StatQuery_GetAPI
-*
-* Overrides CreateQuery entry with proxy function.
-*/
-static stat_query_api_t *PF_StatQuery_GetAPI( void ) {
-	static stat_query_api_t api;
-	stat_query_api_t *p;
-
-	p = StatQuery_GetAPI();
-	api = *p;
-	api.CreateQuery = SV_MM_CreateQuery;
-
-	return &api;
-}
-
 //==============================================
 
 /*
@@ -547,10 +531,6 @@ void SV_InitGameProgs( void ) {
 	import.LocateEntities = SV_LocateEntities;
 
 	import.asGetAngelExport = Com_asGetAngelExport;
-
-	import.GetStatQueryAPI = PF_StatQuery_GetAPI;
-	import.MM_SendQuery = SV_MM_SendQuery;
-	import.MM_GameState = SV_MM_GameState;
 
 	// clear module manifest string
 	assert( sizeof( manifest ) >= MAX_INFO_STRING );

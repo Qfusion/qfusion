@@ -221,7 +221,6 @@ PROTOCOL
 #define PORT_MASTER_STEAM   27011
 #define PORT_SERVER         44400
 #define PORT_HTTP_SERVER    44444
-#define PORT_MATCHMAKER     46002
 #define NUM_BROADCAST_PORTS 5
 
 //=========================================
@@ -279,9 +278,8 @@ enum clc_ops_e {
 // serverdata flags
 #define SV_BITFLAGS_PURE            ( 1 << 0 )
 #define SV_BITFLAGS_RELIABLE        ( 1 << 1 )
-#define SV_BITFLAGS_TVSERVER        ( 1 << 2 )
-#define SV_BITFLAGS_HTTP            ( 1 << 3 )
-#define SV_BITFLAGS_HTTP_BASEURL    ( 1 << 4 )
+#define SV_BITFLAGS_HTTP            ( 1 << 2 )
+#define SV_BITFLAGS_HTTP_BASEURL    ( 1 << 3 )
 
 // framesnap flags
 #define FRAMESNAP_FLAG_DELTA        ( 1 << 0 )

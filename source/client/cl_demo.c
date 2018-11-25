@@ -78,7 +78,6 @@ void CL_Stop_f( void ) {
 	CL_SetDemoMetaKeyValue( "levelname", cl.configstrings[CS_MESSAGE] );
 	CL_SetDemoMetaKeyValue( "matchname", cl.configstrings[CS_MATCHNAME] );
 	CL_SetDemoMetaKeyValue( "matchscore", cl.configstrings[CS_MATCHSCORE] );
-	CL_SetDemoMetaKeyValue( "matchuuid", cl.configstrings[CS_MATCHUUID] );
 
 	FS_FCloseFile( cls.demo.file );
 

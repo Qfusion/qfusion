@@ -19,7 +19,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "server.h"
-#include "../matchmaker/mm_common.h"
 
 typedef struct sv_master_s {
 	netadr_t address;
@@ -31,7 +30,6 @@ static sv_master_t sv_masters[MAX_MASTERS];
 extern cvar_t *sv_masterservers;
 extern cvar_t *sv_masterservers_steam;
 extern cvar_t *sv_hostname;
-extern cvar_t *sv_skilllevel;
 extern cvar_t *sv_reconnectlimit;     // minimum seconds between connect messages
 extern cvar_t *rcon_password;         // password for remote server commands
 extern cvar_t *sv_iplimit;
@@ -362,12 +360,6 @@ static char *SV_ShortInfoString( void ) {
 		}
 	}
 
-	Q_snprintfz( entry, sizeof( entry ), "s\\\\%1d\\\\", sv_skilllevel->integer );
-	if( MAX_SVCINFOSTRING_LEN - len > strlen( entry ) ) {
-		Q_strncatz( string, entry, sizeof( string ) );
-		len = strlen( string );
-	}
-
 	password = Cvar_String( "password" );
 	if( password[0] != '\0' ) {
 		Q_snprintfz( entry, sizeof( entry ), "p\\\\1\\\\" );
@@ -379,14 +371,6 @@ static char *SV_ShortInfoString( void ) {
 
 	if( bots ) {
 		Q_snprintfz( entry, sizeof( entry ), "b\\\\%2i\\\\", bots > 99 ? 99 : bots );
-		if( MAX_SVCINFOSTRING_LEN - len > strlen( entry ) ) {
-			Q_strncatz( string, entry, sizeof( string ) );
-			len = strlen( string );
-		}
-	}
-
-	if( SV_MM_Initialized() ) {
-		Q_snprintfz( entry, sizeof( entry ), "mm\\\\1\\\\" );
 		if( MAX_SVCINFOSTRING_LEN - len > strlen( entry ) ) {
 			Q_strncatz( string, entry, sizeof( string ) );
 			len = strlen( string );
@@ -458,10 +442,6 @@ static void SVC_InfoResponse( const socket_t *socket, const netadr_t *address ) 
 		return;
 	}
 
-	// don't reply when we are locked for mm
-	// if( SV_MM_IsLocked() )
-	//	return;
-
 	// different protocol version
 	if( atoi( Cmd_Argv( 1 ) ) != APP_PROTOCOL_VERSION ) {
 		return;
@@ -520,10 +500,6 @@ static void SVC_SendInfoString( const socket_t *socket, const netadr_t *address,
 	if( sv.state < ss_loading || sv.state > ss_game ) {
 		return;
 	}
-
-	// don't reply when we are locked for mm
-	// if( SV_MM_IsLocked() )
-	//	return;
 
 	// send the same string that we would give for a status OOB command
 	string = SV_LongInfoString( fullStatus );
@@ -600,9 +576,6 @@ static void SVC_DirectConnect( const socket_t *socket, const netadr_t *address )
 	client_t *cl, *newcl;
 	int i, version, game_port, challenge;
 	int previousclients;
-	int session_id;
-	char *session_id_str;
-	unsigned int ticket_id;
 	int64_t time;
 
 	Com_DPrintf( "SVC_DirectConnect (%s)\n", Cmd_Args() );
@@ -643,21 +616,6 @@ static void SVC_DirectConnect( const socket_t *socket, const netadr_t *address )
 								DROP_TYPE_GENERAL, 0 );
 		Com_DPrintf( "Connection from %s refused: couldn't set userinfo (ip)\n", NET_AddressToString( address ) );
 		return;
-	}
-
-	if( Cmd_Argc() >= 7 ) {
-		// we have extended information, ticket-id and session-id
-		Com_Printf( "Extended information %s\n", Cmd_Argv( 6 ) );
-		ticket_id = (unsigned int)atoi( Cmd_Argv( 6 ) );
-		session_id_str = Info_ValueForKey( userinfo, "cl_mm_session" );
-		if( session_id_str != NULL ) {
-			session_id = atoi( session_id_str );
-		} else {
-			session_id = 0;
-		}
-	} else {
-		ticket_id = 0;
-		session_id = 0;
 	}
 
 	// see if the challenge is valid
@@ -750,8 +708,7 @@ static void SVC_DirectConnect( const socket_t *socket, const netadr_t *address )
 	}
 
 	// get the game a chance to reject this connection or modify the userinfo
-	if( !SV_ClientConnect( socket, address, newcl, userinfo, game_port, challenge, false,
-						   ticket_id, session_id ) ) {
+	if( !SV_ClientConnect( socket, address, newcl, userinfo, game_port, challenge, false ) ) {
 		char *rejtype, *rejflag, *rejtypeflag, *rejmsg;
 
 		rejtype = Info_ValueForKey( userinfo, "rejtype" );
@@ -828,7 +785,7 @@ int SVC_FakeConnect( char *fakeUserinfo, char *fakeSocketType, const char *fakeI
 
 	NET_InitAddress( &address, NA_NOTRANSMIT );
 	// get the game a chance to reject this connection or modify the userinfo
-	if( !SV_ClientConnect( NULL, &address, newcl, userinfo, -1, -1, true, 0, 0 ) ) {
+	if( !SV_ClientConnect( NULL, &address, newcl, userinfo, -1, -1, true ) ) {
 		Com_DPrintf( "Game rejected a connection.\n" );
 		return -1;
 	}
@@ -1173,7 +1130,6 @@ connectionless_cmd_t connectionless_cmds[] =
 	{ "getchallenge", SVC_GetChallenge },
 	{ "connect", SVC_DirectConnect },
 	{ "rcon", SVC_RemoteCommand },
-	//{ "cmd", SV_MMC_Cmd },
 
 	{ NULL, NULL }
 };

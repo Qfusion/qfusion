@@ -99,22 +99,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define APP_VERSION_STR_MAJORMINOR      STR_TOSTR( APP_VERSION_MAJOR ) STR_TOSTR( APP_VERSION_MINOR )
 #endif
 
-#ifndef APP_MATCHMAKER_URL
-#ifdef PUBLIC_BUILD
-#define APP_MATCHMAKER_URL              "http://www.e4m5.net:1337"
-#else
-#define APP_MATCHMAKER_URL              "http://www.e4m5.net:1337"
-#endif
-#endif
-
-#ifndef APP_MATCHMAKER_WEB_URL
-#ifdef PUBLIC_BUILD
-#define APP_MATCHMAKER_WEB_URL          "http://www.e4m5.net/wmm/"
-#else
-#define APP_MATCHMAKER_WEB_URL          "http://www.e4m5.net/wmm/"
-#endif
-#endif
-
 #ifndef APP_UI_BASEPATH
 #define APP_UI_BASEPATH                 "ui/baseui"
 #endif

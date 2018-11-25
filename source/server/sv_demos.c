@@ -227,7 +227,6 @@ static void SV_Demo_Stop( bool cancel, bool silent ) {
 		SV_SetDemoMetaKeyValue( "levelname", sv.configstrings[CS_MESSAGE] );
 		SV_SetDemoMetaKeyValue( "matchname", sv.configstrings[CS_MATCHNAME] );
 		SV_SetDemoMetaKeyValue( "matchscore", sv.configstrings[CS_MATCHSCORE] );
-		SV_SetDemoMetaKeyValue( "matchuuid", sv.configstrings[CS_MATCHUUID] );
 
 		SNAP_WriteDemoMetaData( svs.demo.tempname, svs.demo.meta_data, svs.demo.meta_data_realsize );
 

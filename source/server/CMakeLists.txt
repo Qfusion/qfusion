@@ -7,7 +7,6 @@ file(GLOB SERVER_HEADERS
 	"../gameshared/config.h"	
 	"../qcommon/*.h"
 	"../qalgo/*.h"
-	"../matchmaker/*.h"
 	"../angelwrap/qas_public.h"
 	"../game/g_public.h"
 	"../server/*.h"
@@ -45,7 +44,6 @@ file(GLOB SERVER_SOURCES
 	"../null/cl_null.c"
 	"../gameshared/q_*.c"
 	"../qalgo/*.c"
-	"../matchmaker/mm_*.c"
 	)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")

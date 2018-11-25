@@ -25,7 +25,6 @@ void BindAPI( ASInterface *as ) {
 	PrebindDemoInfo( as );
 	PrebindDownloadInfo( as );
 	PrebindGame( as );
-	PrebindMatchMaker( as );
 	PrebindConsole( as );
 
 	// now bind the class functions
@@ -41,7 +40,6 @@ void BindAPI( ASInterface *as ) {
 	BindDemoInfo( as );
 	BindDownloadInfo( as );
 	BindGame( as );
-	BindMatchMaker( as );
 	BindConsole( as );
 }
 
@@ -51,20 +49,17 @@ void BindGlobals( ASInterface *as ) {
 	BindWindowGlobal( as );
 	BindServerbrowserGlobal( as );
 	BindGameGlobal( as );
-	BindMatchMakerGlobal( as );
 	BindConsoleGlobal( as );
 }
 
 // update function for bound api
 void BindFrame( ASInterface *as ) {
-	RunMatchMakerFrame();
 	RunWindowFrame();
 }
 
 // release bound resources (funcdefs, etc)
 void BindShutdown( ASInterface *as ) {
 	UnbindWindow();
-	UnbindMatchMaker();
 }
 
 }

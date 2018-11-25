@@ -187,14 +187,6 @@ typedef struct {
 	// maplist
 	size_t ( *ML_GetMapByNum )( int num, char *out, size_t size );
 
-	// MatchMaker
-	bool ( *MM_Login )( const char *user, const char *password );
-	bool ( *MM_Logout )( bool force );
-	int ( *MM_GetLoginState )( void );
-	size_t ( *MM_GetLastErrorMessage )( char *buffer, size_t buffer_size );
-	size_t ( *MM_GetProfileURL )( char *buffer, size_t buffer_size, bool rml );
-	size_t ( *MM_GetBaseWebURL )( char *buffer, size_t buffer_size );
-
 	void *( *Mem_Alloc )( size_t size, const char *filename, int fileline );
 	void ( *Mem_Free )( void *data, const char *filename, int fileline );
 

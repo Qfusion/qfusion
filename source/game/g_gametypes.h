@@ -35,13 +35,6 @@ extern cvar_t *g_gametype_generic;
 
 #define MAX_RACE_CHECKPOINTS    32
 
-typedef struct gameaward_s {
-	// ch : size of this?
-	const char *name;
-	int count;
-	// struct gameaward_s *next;
-} gameaward_t;
-
 typedef struct {
 	int mm_attacker;    // session-id
 	int mm_victim;      // session-id
@@ -62,8 +55,6 @@ typedef struct {
 	int frags;
 	int suicides;
 	int teamfrags;
-	int numrounds;
-	int awards;
 
 	int accuracy_shots[AMMO_TOTAL - AMMO_GUNBLADE];
 	int accuracy_hits[AMMO_TOTAL - AMMO_GUNBLADE];
@@ -77,31 +68,6 @@ typedef struct {
 	int total_teamdamage_received;
 	int health_taken;
 	int armor_taken;
-	// item counts for mm
-	int ga_taken;
-	int ya_taken;
-	int ra_taken;
-	int mh_taken;
-	int uh_taken;
-	int quads_taken;
-	int shells_taken;
-	int regens_taken;
-	int bombs_planted;
-	int bombs_defused;
-	int flags_capped;
-	int fairplay_count;
-	int muted_count;
-	bool had_playtime;
-
-	// loggedFrag_t
-	linear_allocator_t *fragAllocator;
-
-	// gameaward_t
-	linear_allocator_t *awardAllocator;
-	// gameaward_t *gameawards;
-
-	raceRun_t currentRun;
-	raceRun_t raceRecords;
 
 	int asFactored;
 	int asRefCount;

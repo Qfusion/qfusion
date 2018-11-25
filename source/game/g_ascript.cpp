@@ -515,10 +515,6 @@ static void objectScoreStats_ScoreAdd( int score, score_stats_t *obj ) {
 	obj->score += score;
 }
 
-static void objectScoreStats_RoundAdd( score_stats_t *obj ) {
-	obj->numrounds++;
-}
-
 static const gs_asFuncdef_t scorestats_Funcdefs[] =
 {
 	ASLIB_FUNCDEF_NULL
@@ -533,7 +529,6 @@ static const gs_asMethod_t scorestats_Methods[] =
 {
 	{ ASLIB_FUNCTION_DECL( void, setScore, ( int i ) ), asFUNCTION( objectScoreStats_ScoreSet ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, addScore, ( int i ) ), asFUNCTION( objectScoreStats_ScoreAdd ), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL( void, addRound, ( ) ), asFUNCTION( objectScoreStats_RoundAdd ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, clear, ( ) ), asFUNCTION( objectScoreStats_Clear ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( int, accuracyShots, ( int ammo ) const ), asFUNCTION( objectScoreStats_AccShots ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( int, accuracyHits, ( int ammo ) const ), asFUNCTION( objectScoreStats_AccHits ), asCALL_CDECL_OBJLAST },
@@ -551,7 +546,6 @@ static const gs_asProperty_t scorestats_Properties[] =
 	{ ASLIB_PROPERTY_DECL( const int, frags ), ASLIB_FOFFSET( score_stats_t, frags ) },
 	{ ASLIB_PROPERTY_DECL( const int, suicides ), ASLIB_FOFFSET( score_stats_t, suicides ) },
 	{ ASLIB_PROPERTY_DECL( const int, teamFrags ), ASLIB_FOFFSET( score_stats_t, teamfrags ) },
-	{ ASLIB_PROPERTY_DECL( const int, awards ), ASLIB_FOFFSET( score_stats_t, awards ) },
 	{ ASLIB_PROPERTY_DECL( const int, totalDamageGiven ), ASLIB_FOFFSET( score_stats_t, total_damage_given ) },
 	{ ASLIB_PROPERTY_DECL( const int, totalDamageReceived ), ASLIB_FOFFSET( score_stats_t, total_damage_received ) },
 	{ ASLIB_PROPERTY_DECL( const int, totalTeamDamageGiven ), ASLIB_FOFFSET( score_stats_t, total_teamdamage_given ) },
@@ -636,19 +630,6 @@ static asstring_t *objectGameClient_getClanName( gclient_t *self ) {
 	Q_strncatz( temp, S_COLOR_WHITE, sizeof( temp ) );
 
 	return game.asExport->asStringFactoryBuffer( temp, strlen( temp ) );
-}
-
-static asstring_t *objectGameClient_getMMLogin( gclient_t *self ) {
-	const char *login = NULL;
-
-	if( self->mm_session > 0 ) {
-		login = Info_ValueForKey( self->userinfo, "cl_mm_login" );
-	}
-	if( !login ) {
-		login = "";
-	}
-
-	return game.asExport->asStringFactoryBuffer( login, strlen( login ) );
 }
 
 static void objectGameClient_Respawn( bool ghost, gclient_t *self ) {
@@ -776,21 +757,6 @@ static void objectGameClient_addAward( asstring_t *msg, gclient_t *self ) {
 	}
 
 	G_PlayerAward( PLAYERENT( playerNum ), msg->buffer );
-}
-
-static void objectGameClient_addMetaAward( asstring_t *msg, gclient_t *self ) {
-	int playerNum;
-
-	if( !msg ) {
-		return;
-	}
-
-	playerNum = objectGameClient_PlayerNum( self );
-	if( playerNum < 0 || playerNum >= gs.maxclients ) {
-		return;
-	}
-
-	G_PlayerMetaAward( PLAYERENT( playerNum ), msg->buffer );
 }
 
 static void objectGameClient_execGameCommand( asstring_t *msg, gclient_t *self ) {
@@ -935,28 +901,6 @@ static bool objectGameClient_GetChaseActive( gclient_t *self ) {
 	return self->resp.chase.active;
 }
 
-static void objectGameClient_NewRaceRun( int numSectors, gclient_t *self ) {
-	int playerNum;
-
-	playerNum = objectGameClient_PlayerNum( self );
-	if( playerNum < 0 || playerNum >= gs.maxclients ) {
-		return;
-	}
-
-	G_NewRaceRun( PLAYERENT( playerNum ), numSectors );
-}
-
-static void objectGameClient_SetRaceTime( int sector, int64_t time, gclient_t *self ) {
-	int playerNum;
-
-	playerNum = objectGameClient_PlayerNum( self );
-	if( playerNum < 0 || playerNum >= gs.maxclients ) {
-		return;
-	}
-
-	G_SetRaceTime( PLAYERENT( playerNum ), sector, time );
-}
-
 static void objectGameClient_SetHelpMessage( unsigned int index, gclient_t *self ) {
 	int playerNum;
 
@@ -1008,7 +952,6 @@ static const gs_asMethod_t gameclient_Methods[] =
 	{ ASLIB_FUNCTION_DECL( void, clearPlayerStateEvents, ( ) ), asFUNCTION( objectGameClient_ClearPlayerStateEvents ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( const String @, get_name, ( ) const ), asFUNCTION( objectGameClient_getName ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( const String @, get_clanName, ( ) const ), asFUNCTION( objectGameClient_getClanName ), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL( const String @, getMMLogin, ( ) const ), asFUNCTION( objectGameClient_getMMLogin ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( Entity @, getEnt, ( ) const ), asFUNCTION( objectGameClient_GetEntity ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( int, inventoryCount, ( int tag ) const ), asFUNCTION( objectGameClient_InventoryCount ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, inventorySetCount, ( int tag, int count ) ), asFUNCTION( objectGameClient_InventorySetCount ), asCALL_CDECL_OBJLAST },
@@ -1018,7 +961,6 @@ static const gs_asMethod_t gameclient_Methods[] =
 	{ ASLIB_FUNCTION_DECL( bool, canSelectWeapon, ( int tag ) const ), asFUNCTION( objectGameClient_CanSelectWeapon ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, selectWeapon, ( int tag ) ), asFUNCTION( objectGameClient_SelectWeapon ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, addAward, ( const String &in ) ), asFUNCTION( objectGameClient_addAward ), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL( void, addMetaAward, ( const String &in ) ), asFUNCTION( objectGameClient_addMetaAward ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, execGameCommand, ( const String &in ) ), asFUNCTION( objectGameClient_execGameCommand ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, setHUDStat, ( int stat, int value ) ), asFUNCTION( objectGameClient_setHUDStat ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( int, getHUDStat, ( int stat ) const ), asFUNCTION( objectGameClient_getHUDStat ), asCALL_CDECL_OBJLAST },
@@ -1036,8 +978,6 @@ static const gs_asMethod_t gameclient_Methods[] =
 	{ ASLIB_FUNCTION_DECL( void, chaseCam, ( const String @, bool teamOnly ) ), asFUNCTION( objectGameClient_ChaseCam ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, set_chaseActive, ( const bool active ) ), asFUNCTION( objectGameClient_SetChaseActive ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( bool, get_chaseActive, ( ) const ), asFUNCTION( objectGameClient_GetChaseActive ), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL( void, newRaceRun, ( int numSectors ) ), asFUNCTION( objectGameClient_NewRaceRun ), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL( void, setRaceTime, ( int sector, int64 time ) ), asFUNCTION( objectGameClient_SetRaceTime ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, setHelpMessage, ( uint msg ) ), asFUNCTION( objectGameClient_SetHelpMessage ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, setOverlayMenuItems, ( const String &in ) ), asFUNCTION( objectGameClient_SetOverlayMenuItems ), asCALL_CDECL_OBJLAST },
 
@@ -1936,11 +1876,6 @@ static void asFunc_SetConfigString( int index, asstring_t *str ) {
 		|| index == CS_MAXCLIENTS
 		|| index == CS_WORLDMODEL
 		|| index == CS_MAPCHECKSUM ) {
-		G_Printf( "WARNING: ConfigString %i is write protected\n", index );
-		return;
-	}
-
-	if( index >= CS_MMPLAYERINFOS && index < CS_MMPLAYERINFOS + MAX_MMPLAYERINFOS ) {
 		G_Printf( "WARNING: ConfigString %i is write protected\n", index );
 		return;
 	}

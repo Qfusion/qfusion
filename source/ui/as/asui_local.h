@@ -97,13 +97,6 @@ void UnbindWindow( void );
 void PrebindURL( ASInterface *as );
 void BindURL( ASInterface *as );
 
-// as_bind_mm.cpp
-void PrebindMatchMaker( ASInterface *as );
-void BindMatchMaker( ASInterface *as );
-void BindMatchMakerGlobal( ASInterface *as );
-void RunMatchMakerFrame( void );
-void UnbindMatchMaker( void );
-
 // as_bind_l10n.cpp
 void PrebindL10n( ASInterface *as );
 void BindL10n( ASInterface *as );

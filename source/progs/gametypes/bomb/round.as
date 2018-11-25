@@ -106,9 +106,6 @@ void playerKilled( Entity @victim, Entity @attacker, Entity @inflictor )
 		}
 	}
 	
-	// add a round for the victim
-	victim.client.stats.addRound();
-	
 	// check if the player's team is now dead
 	checkPlayersAlive( victim.team );
 }
@@ -253,19 +250,7 @@ void roundWonBy( int winner )
 		if ( !ent.isGhosting() )
 		{
 			ent.client.addAward( S_COLOR_GREEN + "Victory!" );
-			
-			// ch : add a round for alive players on this team
-			ent.client.stats.addRound();
 		}
-	}
-
-	// ch : add a round for the losing team's alive players
-	Team @teamLoser = @G_GetTeam( loser );
-	for( int i = 0; @teamLoser.ent( i ) != null; i++ )
-	{
-		Entity @ent = @teamLoser.ent( i );
-		if( !ent.isGhosting() )
-			ent.client.stats.addRound();
 	}
 	
 	roundNewState( ROUNDSTATE_FINISHED );
