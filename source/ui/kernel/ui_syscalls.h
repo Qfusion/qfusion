@@ -307,14 +307,6 @@ inline bool Key_IsDown( int keynum ) {
 	return UI_IMPORT.Key_IsDown( keynum );
 }
 
-inline void IN_GetThumbsticks( vec4_t sticks ) {
-	UI_IMPORT.IN_GetThumbsticks( sticks );
-}
-
-inline unsigned int IN_SupportedDevices( void ) {
-	return UI_IMPORT.IN_SupportedDevices();
-}
-
 inline bool VID_GetModeInfo( int *width, int *height, int mode ) {
 	return UI_IMPORT.VID_GetModeInfo( width, height, mode );
 }

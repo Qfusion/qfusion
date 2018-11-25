@@ -424,29 +424,6 @@ static void CG_SC_ChannelRemove( void ) {
  * @return match message text
  */
 static const char *CG_MatchMessageString( matchmessage_t mm ) {
-	if( ( trap_IN_SupportedDevices() & ( IN_DEVICE_KEYBOARD | IN_DEVICE_MOUSE ) ) != ( IN_DEVICE_KEYBOARD | IN_DEVICE_MOUSE ) ) {
-		switch( mm ) {
-			case MATCHMESSAGE_CHALLENGERS_QUEUE:
-				return "You are inside the challengers queue waiting for your turn to play.\n"
-					   "Use the in-game menu to exit the queue.";
-
-			case MATCHMESSAGE_ENTER_CHALLENGERS_QUEUE:
-				return "Use the in-game menu to enter the challengers queue.\n"
-					   "Only players in the queue will have a turn to play against the last winner.";
-
-			case MATCHMESSAGE_GET_READY:
-				return "Set yourself READY using the in-game menu to start the match!";
-
-			case MATCHMESSAGE_WAITING_FOR_PLAYERS:
-				return "Waiting for players.";
-
-			default:
-				return "";
-		}
-
-		return "";
-	}
-
 	switch( mm ) {
 		case MATCHMESSAGE_CHALLENGERS_QUEUE:
 			return "'ESC' for in-game menu or 'ENTER' for in-game chat.\n"
@@ -519,12 +496,6 @@ static void CG_SC_HelpMessage( void ) {
 	id = cgs.configStrings[CS_HELPMESSAGES + index - 1];
 	if( !id[0] ) {
 		return;
-	}
-
-	if( !( trap_IN_SupportedDevices() & IN_DEVICE_KEYBOARD ) ) {
-		char nokeyboard[MAX_CONFIGSTRING_CHARS + 16];
-		Q_snprintfz( nokeyboard, sizeof( nokeyboard ), "%s_nokeyboard", id );
-		helpmessage = trap_L10n_TranslateString( nokeyboard );
 	}
 
 	if( !helpmessage ) {

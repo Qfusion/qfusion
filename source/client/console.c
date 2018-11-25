@@ -1655,12 +1655,12 @@ void Con_KeyDown( int key ) {
 
 	key = Con_NumPadValue( key );
 
-	if( ( ( key == K_INS ) || ( key == KP_INS ) ) && ( Key_IsDown( K_LSHIFT ) || Key_IsDown( K_RSHIFT ) ) ) {
+	if( ( key == K_INS || key == KP_INS ) && ( Key_IsDown( K_LSHIFT ) || Key_IsDown( K_RSHIFT ) ) ) {
 		Con_Key_Paste();
 		return;
 	}
 
-	if( ( key == K_ENTER ) || ( key == KP_ENTER ) || ( key == K_RSHOULDER ) || ( key == K_RTRIGGER ) ) {
+	if( key == K_ENTER || key == KP_ENTER ) {
 		Con_Key_Enter();
 		return;
 	}
@@ -1716,7 +1716,7 @@ void Con_KeyDown( int key ) {
 		return;
 	}
 
-	if( ( key == K_RIGHTARROW ) || ( key == KP_RIGHTARROW ) ) {
+	if( key == K_RIGHTARROW || key == KP_RIGHTARROW ) {
 		int charcount = Q_ColorCharCount( key_lines[edit_line], key_linepos );
 
 		if( strlen( key_lines[edit_line] ) == key_linepos ) {
@@ -1738,18 +1738,18 @@ void Con_KeyDown( int key ) {
 		return;
 	}
 
-	if( ( key == K_UPARROW ) || ( key == KP_UPARROW ) ) {
+	if( key == K_UPARROW || key == KP_UPARROW ) {
 		Con_HistoryUp();
 		return;
 	}
 
-	if( ( key == K_DOWNARROW ) || ( key == KP_DOWNARROW ) ) {
+	if( key == K_DOWNARROW || key == KP_DOWNARROW ) {
 		Con_HistoryDown();
 		return;
 	}
 
-	if( ( key == K_PGUP ) || ( key == KP_PGUP ) || ( key == K_MWHEELUP ) || ( key == K_DPAD_UP ) ) { // wsw : pb : support mwheel in console
-		if( ( key == K_MWHEELUP ) && ctrl_is_down ) {
+	if( key == K_PGUP || key == KP_PGUP || key == K_MWHEELUP ) { // wsw : pb : support mwheel in console
+		if( key == K_MWHEELUP && ctrl_is_down ) {
 			Con_ChangeFontSize( 1 );
 			return;
 		}
@@ -1759,7 +1759,7 @@ void Con_KeyDown( int key ) {
 		return;
 	}
 
-	if( ( key == K_PGDN ) || ( key == KP_PGDN ) || ( key == K_MWHEELDOWN ) || ( key == K_DPAD_DOWN ) ) { // wsw : pb : support mwheel in console
+	if( key == K_PGDN || key == KP_PGDN || key == K_MWHEELDOWN ) { // wsw : pb : support mwheel in console
 		if( ( key == K_MWHEELDOWN ) && ctrl_is_down ) {
 			Con_ChangeFontSize( -1 );
 			return;
@@ -1791,20 +1791,11 @@ void Con_KeyDown( int key ) {
 		return;
 	}
 
-	if( key == K_A_BUTTON ) {
-		return;
-	}
-
 	if( key == '0' ) {
 		if( ctrl_is_down ) {
 			Con_ResetFontSize();
 			return;
 		}
-	}
-
-	if( key == K_B_BUTTON ) {
-		Con_ToggleConsole_f();
-		return;
 	}
 
 	// key is a normal printable key normal which wil be HANDLE later in response to WM_CHAR event
@@ -2061,7 +2052,7 @@ void Con_MessageKeyDown( int key ) {
 
 	key = Con_NumPadValue( key );
 
-	if( ( key == K_ENTER ) || ( key == KP_ENTER ) || ( key == K_RSHOULDER ) || ( key == K_RTRIGGER ) ) {
+	if( key == K_ENTER || key == KP_ENTER ) {
 		if( chat_bufferlen > 0 ) {
 			Con_SendChatMessage( chat_buffer, chat_team || ctrl_is_down );
 			chat_bufferlen = 0;
@@ -2087,7 +2078,7 @@ void Con_MessageKeyDown( int key ) {
 		return;
 	}
 
-	if( ( ( key == K_INS ) || ( key == KP_INS ) ) && ( Key_IsDown( K_LSHIFT ) || Key_IsDown( K_RSHIFT ) ) ) {
+	if( ( key == K_INS || key == KP_INS ) && ( Key_IsDown( K_LSHIFT ) || Key_IsDown( K_RSHIFT ) ) ) {
 		Con_MessageKeyPaste();
 		return;
 	}
@@ -2097,7 +2088,7 @@ void Con_MessageKeyDown( int key ) {
 		return;
 	}
 
-	if( ( key == K_LEFTARROW ) || ( key == KP_LEFTARROW ) ) {
+	if( key == K_LEFTARROW || key == KP_LEFTARROW ) {
 		if( chat_linepos > 0 ) {
 			int charcount;
 
@@ -2108,7 +2099,7 @@ void Con_MessageKeyDown( int key ) {
 		return;
 	}
 
-	if( ( key == K_RIGHTARROW ) || ( key == KP_RIGHTARROW ) ) {
+	if( key == K_RIGHTARROW || key == KP_RIGHTARROW ) {
 		if( chat_linepos < chat_bufferlen ) {
 			int charcount;
 
@@ -2152,16 +2143,7 @@ void Con_MessageKeyDown( int key ) {
 		return;
 	}
 
-	if( key == K_A_BUTTON ) {
-		return;
-	}
-
-	if( key == K_Y_BUTTON ) {
-		chat_team = !chat_team && Cmd_Exists( "say_team" );
-		return;
-	}
-
-	if( ( key == K_ESCAPE ) || ( key == K_B_BUTTON ) ) {
+	if( key == K_ESCAPE ) {
 		CL_SetKeyDest( key_game );
 		chat_bufferlen = 0;
 		chat_linepos = 0;

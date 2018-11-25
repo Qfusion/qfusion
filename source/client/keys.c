@@ -109,24 +109,6 @@ const keyname_t keynames[] =
 	{ "MOUSE8", K_MOUSE8 },
 	{ "MOUSE1DBLCLK", K_MOUSE1DBLCLK },
 
-	{ "A_BUTTON", K_A_BUTTON },
-	{ "B_BUTTON", K_B_BUTTON },
-	{ "C_BUTTON", K_C_BUTTON },
-	{ "X_BUTTON", K_X_BUTTON },
-	{ "Y_BUTTON", K_Y_BUTTON },
-	{ "Z_BUTTON", K_Z_BUTTON },
-	{ "LSHOULDER", K_LSHOULDER },
-	{ "RSHOULDER", K_RSHOULDER },
-	{ "LTRIGGER", K_LTRIGGER },
-	{ "RTRIGGER", K_RTRIGGER },
-	{ "LSTICK", K_LSTICK },
-	{ "RSTICK", K_RSTICK },
-	{ "DPAD_UP", K_DPAD_UP },
-	{ "DPAD_DOWN", K_DPAD_DOWN },
-	{ "DPAD_LEFT", K_DPAD_LEFT },
-	{ "DPAD_RIGHT", K_DPAD_RIGHT },
-	{ "DPAD_CENTER", K_DPAD_CENTER },
-
 	{ "KP_HOME", KP_HOME },
 	{ "KP_UPARROW", KP_UPARROW },
 	{ "KP_PGUP", KP_PGUP },
@@ -403,8 +385,6 @@ void Key_Init( void ) {
 		consolekeys[i] = true;
 	consolekeys[K_ENTER] = true;
 	consolekeys[KP_ENTER] = true;
-	consolekeys[K_RSHOULDER] = true;
-	consolekeys[K_RTRIGGER] = true;
 	consolekeys[K_TAB] = true;
 	consolekeys[K_LEFTARROW] = true;
 	consolekeys[KP_LEFTARROW] = true;
@@ -421,10 +401,8 @@ void Key_Init( void ) {
 	consolekeys[KP_END] = true;
 	consolekeys[K_PGUP] = true;
 	consolekeys[KP_PGUP] = true;
-	consolekeys[K_DPAD_UP] = true;
 	consolekeys[K_PGDN] = true;
 	consolekeys[KP_PGDN] = true;
-	consolekeys[K_DPAD_DOWN] = true;
 	consolekeys[K_LSHIFT] = true;
 	consolekeys[K_RSHIFT] = true;
 	consolekeys[K_INS] = true;
@@ -435,8 +413,6 @@ void Key_Init( void ) {
 	consolekeys[KP_PLUS] = true;
 	consolekeys[KP_MINUS] = true;
 	consolekeys[KP_5] = true;
-	consolekeys[K_A_BUTTON] = true;
-	consolekeys[K_B_BUTTON] = true;
 
 	consolekeys[K_WIN] = true;
 	//	consolekeys[K_LWIN] = true;

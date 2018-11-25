@@ -308,10 +308,6 @@ public:
 		return UI_Main::Get()->getConnectCount();
 	}
 
-	unsigned int getSupportedInputDevices( void ) {
-		return trap::IN_SupportedDevices();
-	}
-
 	bool isBrowserAvailable( void ) {
 		return trap::CL_IsBrowserAvailable();
 	}
@@ -419,12 +415,6 @@ void BindWindow( ASInterface *as ) {
 	.funcdef( &FunctionCallScheduler::ASFuncdef2, "TimerCallback2" )
 	;
 
-	ASBind::Enum( as->getEngine(), "eInputDeviceMask" )
-		( "IN_DEVICE_KEYBOARD", IN_DEVICE_KEYBOARD )
-		( "IN_DEVICE_MOUSE", IN_DEVICE_MOUSE )
-		( "IN_DEVICE_JOYSTICK", IN_DEVICE_JOYSTICK )
-	;
-
 	ASBind::GetClass<ASWindow>( as->getEngine() )
 	.method( &ASWindow::open, "open" )
 	.method2( &ASWindow::close, "void close( int code = 0 )" )
@@ -466,8 +456,6 @@ void BindWindow( ASInterface *as ) {
 	.method( &ASWindow::flash, "flash" )
 
 	.method( &ASWindow::getConnectCount, "get_connectCount" )
-
-	.method( &ASWindow::getSupportedInputDevices, "get_supportedInputDevices" )
 
 	.method( &ASWindow::isBrowserAvailable, "get_browserAvailable" )
 

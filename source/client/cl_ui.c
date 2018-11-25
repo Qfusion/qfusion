@@ -224,9 +224,6 @@ void CL_UIModule_Init( void ) {
 	import.Key_SetBinding = Key_SetBinding;
 	import.Key_IsDown = Key_IsDown;
 
-	import.IN_GetThumbsticks = IN_GetThumbsticks;
-	import.IN_SupportedDevices = IN_SupportedDevices;
-
 	import.R_ClearScene = re.ClearScene;
 	import.R_AddEntityToScene = re.AddEntityToScene;
 	import.R_AddLightToScene = re.AddLightToScene;

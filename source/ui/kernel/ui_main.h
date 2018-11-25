@@ -147,27 +147,6 @@ private:
 
 	void loadCursor( void );
 
-
-	/**
-	 * Adds cursor movement from the gamepad sticks.
-	 *
-	 * @param milliseconds since last UI input update
-	 */
-	void gamepadStickCursorMove( int frameTimeMsec );
-
-	/**
-	 * Adds cursor movement from the directional pad.
-	 *
-	 * @param milliseconds since last UI input update
-	 */
-	void gamepadDpadCursorMove( int frameTimeMsec );
-
-	/**
-	 * Adds cursor movement from the gamepad.
-	 */
-	void gamepadCursorMove( void );
-
-
 	void customRender( void );
 
 	static UI_Main *self;   // for static functions

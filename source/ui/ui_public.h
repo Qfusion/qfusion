@@ -151,9 +151,6 @@ typedef struct {
 	void ( *Key_SetBinding )( int keynum, const char *binding );
 	bool ( *Key_IsDown )( int keynum );
 
-	void ( *IN_GetThumbsticks )( vec4_t sticks );
-	unsigned int ( *IN_SupportedDevices )( void );
-
 	bool ( *VID_GetModeInfo )( int *width, int *height, unsigned mode );
 	void ( *VID_FlashWindow )( int count );
 

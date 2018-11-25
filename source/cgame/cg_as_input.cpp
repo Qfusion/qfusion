@@ -22,15 +22,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 //=======================================================================
 
-static asvec4_t CG_asInputGetThumbsticks( void ) {
-	asvec4_t sticks;
-	trap_IN_GetThumbsticks( sticks.v );
-	return sticks;
-}
-
 const gs_asglobfuncs_t asCGameInputGlobalFuncs[] =
 {
-	{ "Vec4 GetThumbsticks()", asFUNCTION( CG_asInputGetThumbsticks ), NULL },
 	{ "float GetSensitivityScale( float sens, float zoomSens )", asFUNCTION( CG_GetSensitivityScale ), NULL },
 
 	{ NULL }

@@ -232,10 +232,8 @@ typedef struct {
 	const char *( *L10n_TranslateString )( const char *string );
 
 	// input
-	void ( *IN_GetThumbsticks )( vec4_t sticks );
 	unsigned int ( *IN_IME_GetCandidates )( char * const *cands, size_t candSize, unsigned int maxCands,
 											int *selected, int *firstKey );
-	unsigned int ( *IN_SupportedDevices )( void );
 
 	// angelscript api
 	struct angelwrap_api_s *( *asGetAngelExport )( void );

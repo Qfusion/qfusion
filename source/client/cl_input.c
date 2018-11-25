@@ -83,9 +83,6 @@ void CL_UserInputFrame( int realMsec ) {
 	// get new key events
 	Sys_SendKeyEvents();
 
-	// get new key events from mice or external controllers
-	IN_Commands();
-
 	// refresh mouse angles and movement velocity
 	CL_UpdateGameInput( realMsec );
 

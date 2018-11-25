@@ -488,97 +488,6 @@ bool UI_Main::preloadEnabled( void ) {
 #endif
 }
 
-void UI_Main::gamepadStickCursorMove( int frameTimeMsec ) {
-	float frameTime = frameTimeMsec * 0.001f;
-	const float threshold = 7849.0f / 32767.0f; // Xbox controller left stick dead zone.
-
-	vec4_t sticks;
-	trap::IN_GetThumbsticks( sticks );
-
-	float sx = sticks[0] * ( ( float )( fabsf( sticks[0] ) > threshold ) );
-	sx += sticks[2] * ( ( float )( fabsf( sticks[2] ) > threshold ) );
-	clamp( sx, -1.0f, 1.0f );
-	float sy = sticks[1] * ( ( float )( fabsf( sticks[1] ) > threshold ) );
-	sy += sticks[3] * ( ( float )( fabsf( sticks[3] ) > threshold ) );
-	clamp( sy, -1.0f, 1.0f );
-
-	static float x, y;
-	if( !sx && !sy ) {
-		x = 0.0f;
-		y = 0.0f;
-		return;
-	}
-
-	float speed = ( 600.0f * 1.5f ) * refreshState.pixelRatio * frameTime;
-	x += sx * sx * sx * speed;
-	y += sy * sy * sy * speed;
-
-	int mx = ( int )x, my = ( int )y;
-	x -= ( float )mx;
-	y -= ( float )my;
-	mouseMove( UI_CONTEXT_MAIN, frameTimeMsec, mx, my, false, true );
-}
-
-void UI_Main::gamepadDpadCursorMove( int frameTimeMsec ) {
-	float frameTime = frameTimeMsec * 0.001f;
-	static float holdTime;
-	static float x, y;
-
-	clamp_high( frameTime, 0.1f );
-
-	int dx = trap::Key_IsDown( K_DPAD_RIGHT ) - trap::Key_IsDown( K_DPAD_LEFT );
-	int dy = trap::Key_IsDown( K_DPAD_DOWN ) - trap::Key_IsDown( K_DPAD_UP );
-	if( !dx && !dy ) {
-		holdTime = x = y = 0.0f;
-		return;
-	}
-
-	// Goes from half minimum screen height to double minimum screen height.
-	float speed = ( 600.0f * 0.5f ) + bound( 0.0f, holdTime - 0.25f, 1.5f ) * 600.0f;
-	if( dx && dy ) {
-		speed *= 0.707106f;
-	}
-	speed *= refreshState.pixelRatio * frameTime;
-
-	if( dx ) {
-		x += ( ( dx < 0 ) ? -1.0f : 1.0f ) * speed;
-	} else {
-		x = 0.0f;
-	}
-
-	if( dy ) {
-		y += ( ( dy < 0 ) ? -1.0f : 1.0f ) * speed;
-	} else {
-		y = 0.0f;
-	}
-
-	holdTime += frameTime;
-
-	int mx = ( int )x, my = ( int )y;
-	x -= ( float )mx;
-	y -= ( float )my;
-	mouseMove( UI_CONTEXT_MAIN, frameTimeMsec, mx, my, false, true );
-}
-
-void UI_Main::gamepadCursorMove( void ) {
-	int64_t time = trap::Milliseconds();
-
-	static int64_t lastTime;
-	if( !lastTime ) {
-		lastTime = time;
-		return;
-	}
-	if( lastTime == time ) {
-		return;
-	}
-
-	int frameTimeMsec = time - lastTime;
-	clamp_high( frameTimeMsec, 100 );
-
-	gamepadStickCursorMove( frameTimeMsec );
-	gamepadDpadCursorMove( frameTimeMsec );
-}
-
 //===========================================
 
 // CALLBACKS FROM MAIN PROGRAM
@@ -736,7 +645,6 @@ void UI_Main::refreshScreen( unsigned int time, int clientState, int serverState
 		} else {
 			if( showCursor ) {
 				rocketModule->hideCursor( UI_CONTEXT_MAIN, 0, RocketModule::HIDECURSOR_REFRESH );
-				gamepadCursorMove();
 			} else {
 				rocketModule->hideCursor( UI_CONTEXT_MAIN, RocketModule::HIDECURSOR_REFRESH, 0 );
 			}
@@ -888,10 +796,6 @@ void UI_Main::M_Menu_Quick_f( void ) {
 	int i;
 
 	if( !self ) {
-		return;
-	}
-
-	if( !( trap::IN_SupportedDevices() & IN_DEVICE_KEYBOARD ) ) {
 		return;
 	}
 

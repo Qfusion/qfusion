@@ -41,15 +41,11 @@ void Frame( int64 curTime_, int frameTime_ )
 {
 	curTime = curTime_;
 	frameTime = frameTime_;
-
-	CGame::Input::Gamepad::Frame();
 }
 
 void ClearState()
 {
 	frameTime = 0;
-
-	CGame::Input::Gamepad::ClearState();
 }
 
 void MouseMove( int mx, int my )
@@ -72,7 +68,6 @@ Vec3 GetAngularMovement()
 	
 	move += CGame::Input::Keys::GetAngularMovement();
 	move += CGame::Input::Mouse::GetAngularMovement();
-	move += CGame::Input::Gamepad::GetAngularMovement();
 
 	return move;
 }
@@ -82,7 +77,6 @@ Vec3 GetMovement()
 	Vec3 move;
 
 	move += CGame::Input::Keys::GetMovement();
-	move += CGame::Input::Gamepad::GetMovement();
 
 	return move;
 }

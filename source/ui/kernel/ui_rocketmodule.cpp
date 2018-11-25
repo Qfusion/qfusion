@@ -184,28 +184,13 @@ void RocketModule::keyEvent( int contextId, int key, bool pressed ) {
 	} else if( key == K_MWHEELUP ) {
 		context->ProcessMouseWheel( -1, mod );
 	} else {
-		if( ( key == K_A_BUTTON ) || ( key == K_DPAD_CENTER ) ) {
+		int rkey = KeyConverter::toRocketKey( key );
+
+		if( rkey != 0 ) {
 			if( pressed ) {
-				context->ProcessMouseButtonDown( 0, mod );
+				context->ProcessKeyDown( Rocket::Core::Input::KeyIdentifier( rkey ), mod );
 			} else {
-				context->ProcessMouseButtonUp( 0, mod );
-			}
-		} else {
-			int rkey = KeyConverter::toRocketKey( key );
-
-			if( key == K_B_BUTTON ) {
-				rkey = Rocket::Core::Input::KI_ESCAPE;
-				if( element ) {
-					element->Blur();
-				}
-			}
-
-			if( rkey != 0 ) {
-				if( pressed ) {
-					context->ProcessKeyDown( Rocket::Core::Input::KeyIdentifier( rkey ), mod );
-				} else {
-					context->ProcessKeyUp( Rocket::Core::Input::KeyIdentifier( rkey ), mod );
-				}
+				context->ProcessKeyUp( Rocket::Core::Input::KeyIdentifier( rkey ), mod );
 			}
 		}
 	}

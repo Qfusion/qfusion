@@ -28,13 +28,9 @@ void IN_Init( void );
 void IN_Shutdown( void );
 void IN_Restart( void );
 
-void IN_Commands( void ); // opportunity for devices to stick commands on the script buffer
 MouseMovement IN_GetMouseMovement();
-void IN_GetThumbsticks( vec4_t sticks );
 
 void IN_Frame( void );
-
-unsigned int IN_SupportedDevices( void );
 
 void IN_IME_Enable( bool enable );
 size_t IN_IME_GetComposition( char *str, size_t strSize, size_t *cursorPos, size_t *convStart, size_t *convLen );

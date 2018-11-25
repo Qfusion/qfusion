@@ -18,8 +18,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#ifndef GAME_QCOMMON_H
-#define GAME_QCOMMON_H
+#pragma once
 
 #include "q_arch.h"
 
@@ -445,14 +444,6 @@ typedef enum {
 	TEXTDRAWFLAG_KERNING    = 1 << 1
 } textdrawflag_t;
 
-typedef enum {
-	IN_DEVICE_KEYBOARD      = 1 << 0,
-	IN_DEVICE_MOUSE         = 1 << 1,
-	IN_DEVICE_JOYSTICK      = 1 << 2,
-} in_devicemask_t;
-
 #ifdef __cplusplus
 };
-#endif
-
 #endif
