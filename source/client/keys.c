@@ -534,39 +534,6 @@ void Key_MouseEvent( int key, bool down, int64_t time ) {
 }
 
 /*
-* Key_NumPadKeyValue
-*
-* Translates numpad keys into 0-9, if possible.
-*/
-static int Key_NumPadKeyValue( int key ) {
-	switch( key ) {
-		case KP_HOME:
-			return '7';
-		case KP_UPARROW:
-			return '8';
-		case KP_PGUP:
-			return '9';
-		case KP_LEFTARROW:
-			return '4';
-		case KP_5:
-			return '5';
-		case KP_RIGHTARROW:
-			return '6';
-		case KP_END:
-			return '1';
-		case KP_DOWNARROW:
-			return '2';
-		case KP_PGDN:
-			return '3';
-		case KP_INS:
-			return '0';
-		default:
-			break;
-	}
-	return key;
-}
-
-/*
 * Key_Event
 *
 * Called by the system between frames for both key up and key down events

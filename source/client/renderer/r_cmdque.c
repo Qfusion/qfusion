@@ -938,11 +938,6 @@ static void RF_IssueFenceReliableCmd( ref_cmdpipe_t *cmdpipe ) {
 
 // ============================================================================
 
-static int RF_CmdPipeWaiter( qbufPipe_t *queue, refPipeCmdHandler_t *cmdHandlers, bool timeout ) {
-	ri.BufPipe_ReadCmds( queue, cmdHandlers );
-	return -1;
-}
-
 ref_cmdpipe_t *RF_CreateCmdPipe() {
 	ref_cmdpipe_t *cmdpipe;
 

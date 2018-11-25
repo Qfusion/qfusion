@@ -19,16 +19,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 #include "client.h"
 
-#ifndef _MSC_VER
-static void CL_SoundModule_Error( const char *msg ) __attribute__( ( noreturn ) );
-#else
-__declspec( noreturn ) static void CL_SoundModule_Error( const char *msg );
-#endif
-
-static void CL_SoundModule_Error( const char *msg ) {
-	Com_Error( ERR_FATAL, "%s", msg );
-}
-
 void CL_SoundModule_Init( bool verbose ) {
 	if( !S_Init( verbose ) ) {
 		abort();

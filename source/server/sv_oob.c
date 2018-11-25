@@ -857,6 +857,7 @@ static void SVC_RemoteCommand( const socket_t *socket, const netadr_t *address )
 	Com_EndRedirect();
 }
 
+#if APP_STEAMID
 #define MAX_STEAMQUERY_PACKETLEN 1260
 #define MAX_STEAMQUERY_TAG_STRING 128
 
@@ -875,6 +876,7 @@ static void SV_GetSteamTags( char *tags ) {
 	// (so the last tag exceeding MAX_STEAMQUERY_TAG_STRING isn't cut off)
 	// and validated not to contain any characters disallowed in userinfo (CVAR_SERVERINFO).
 }
+#endif
 
 /**
  * Responds to a Steam server query.

@@ -844,39 +844,6 @@ void Con_DrawChat( int x, int y, int width, struct qfontface_s *font ) {
 }
 
 /*
-* Con_GetMessageArea
-*/
-static bool Con_GetMessageArea( int *x1, int *y1, int *x2, int *y2, int *promptwidth ) {
-	int x, y;
-	int width;
-	struct qfontface_s *font = NULL;
-
-	QMutex_Lock( con.mutex );
-
-	x = con_chatX;
-	y = con_chatY;
-	width = con_chatWidth;
-	font = con_chatFont;
-
-	if( font ) {
-		// 48 is an arbitrary offset for not overlapping the FPS and clock prints
-		width -= 48 * viddef.height / 600;
-
-		*x1 = x;
-		*y1 = y;
-		*x2 = x + width;
-		*y2 = y + SCR_FontHeight( font );
-		if( promptwidth ) {
-			*promptwidth = SCR_strWidth( Con_ChatPrompt(), font, 0, 0 );
-		}
-	}
-
-	QMutex_Unlock( con.mutex );
-
-	return font ? true : false;
-}
-
-/*
 * Con_DrawConsole
 *
 * Draws the console with the solid background

@@ -692,27 +692,6 @@ static void R_AddWorldDrawSurfaces( unsigned firstDrawSurf, unsigned numDrawSurf
 }
 
 /*
-* R_AddWorldDrawSurfacesJob
-*/
-static void R_AddWorldDrawSurfacesJob( unsigned first, unsigned items, jobarg_t *j ) {
-	R_AddWorldDrawSurfaces( first, items );
-}
-
-/*
-* R_CullVisLeavesJob
-*/
-static void R_CullVisLeavesJob( unsigned first, unsigned items, jobarg_t *j ) {
-	R_CullVisLeaves( first, items, j->uarg );
-}
-
-/*
-* R_CullVisSurfacesJob
-*/
-static void R_CullVisSurfacesJob( unsigned first, unsigned items, jobarg_t *j ) {
-	R_CullVisSurfaces( first, items, j->uarg );
-}
-
-/*
 * R_GetVisFarClip
 */
 static float R_GetVisFarClip( void ) {

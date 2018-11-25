@@ -54,7 +54,6 @@ static size_t r_sizeof_imagePathBuf, r_sizeof_imagePathBuf2;
 	}
 
 static int gl_anisotropic_filter = 0;
-static bool R_LoadAsyncImageFromDisk( image_t *image );
 
 /*
 * R_AllocTextureNum
@@ -283,18 +282,6 @@ void R_FreeImageBuffers( void ) {
 }
 
 /*
-* R_EndianSwap16BitImage
-*/
-static void R_EndianSwap16BitImage( unsigned short *data, int width, int height ) {
-	int i;
-	while( height-- > 0 ) {
-		for( i = 0; i < width; i++, data++ )
-			*data = ( ( *data & 255 ) << 8 ) | ( *data >> 8 );
-		data += width & 1; // 4 unpack alignment
-	}
-}
-
-/*
 * R_AllocImageBufferCb
 */
 static uint8_t *_R_AllocImageBufferCb( void *ptr, size_t size, const char *filename, int linenum ) {
@@ -480,62 +467,6 @@ static void R_ResampleTexture( const uint8_t *in, int inwidth, int inheight, uin
 }
 
 /*
-* R_ResampleTexture16
-*
-* Assumes 16-bit unpack alignment
-*/
-static void R_ResampleTexture16( const unsigned short *in, int inwidth, int inheight,
-								 unsigned short *out, int outwidth, int outheight, int rMask, int gMask, int bMask, int aMask ) {
-	int i, j;
-	int inwidthA, outwidthA;
-	unsigned int frac, fracstep;
-	const unsigned short *inrow, *inrow2, *pix1, *pix2, *pix3, *pix4;
-	unsigned *p1, *p2;
-	unsigned short *opix;
-
-	if( inwidth == outwidth && inheight == outheight ) {
-		memcpy( out, in, inheight * ALIGN( inwidth * sizeof( unsigned short ), 4 ) );
-		return;
-	}
-
-	p1 = ( unsigned * )R_PrepareImageBuffer( TEXTURE_LINE_BUF, outwidth * sizeof( *p1 ) * 2 );
-	p2 = p1 + outwidth;
-
-	fracstep = inwidth * 0x10000 / outwidth;
-
-	frac = fracstep >> 2;
-	for( i = 0; i < outwidth; i++ ) {
-		p1[i] = frac >> 16;
-		frac += fracstep;
-	}
-
-	frac = 3 * ( fracstep >> 2 );
-	for( i = 0; i < outwidth; i++ ) {
-		p2[i] = frac >> 16;
-		frac += fracstep;
-	}
-
-	inwidthA = ALIGN( inwidth, 2 );
-	outwidthA = ALIGN( outwidth, 2 );
-	for( i = 0; i < outheight; i++, out += outwidthA ) {
-		inrow = in + inwidthA * (int)( ( i + 0.25 ) * inheight / outheight );
-		inrow2 = in + inwidthA * (int)( ( i + 0.75 ) * inheight / outheight );
-		for( j = 0; j < outwidth; j++ ) {
-			pix1 = inrow + p1[j];
-			pix2 = inrow + p2[j];
-			pix3 = inrow2 + p1[j];
-			pix4 = inrow2 + p2[j];
-			opix = out + j;
-
-			*opix = ( ( ( ( *pix1 & rMask ) + ( *pix2 & rMask ) + ( *pix3 & rMask ) + ( *pix4 & rMask ) ) >> 2 ) & rMask ) |
-					( ( ( ( *pix1 & gMask ) + ( *pix2 & gMask ) + ( *pix3 & gMask ) + ( *pix4 & gMask ) ) >> 2 ) & gMask ) |
-					( ( ( ( *pix1 & bMask ) + ( *pix2 & bMask ) + ( *pix3 & bMask ) + ( *pix4 & bMask ) ) >> 2 ) & bMask ) |
-					( ( ( ( *pix1 & aMask ) + ( *pix2 & aMask ) + ( *pix3 & aMask ) + ( *pix4 & aMask ) ) >> 2 ) & aMask );
-		}
-	}
-}
-
-/*
 * R_MipMap
 *
 * Operates in place, quartering the size of the texture
@@ -567,52 +498,6 @@ static void R_MipMap( uint8_t *in, int width, int height, int samples, int align
 			} else {
 				for( k = 0; k < samples; ++k, ++inofs )
 					*( out++ ) = ( in[inofs] + next[inofs] ) >> 1;
-			}
-		}
-	}
-}
-
-/*
-* R_MipMap16
-*
-* Operates in place, quartering the size of the 16-bit texture, assumes unpack alignment of 4
-*/
-static void R_MipMap16( unsigned short *in, int width, int height, int rMask, int gMask, int bMask, int aMask ) {
-	int i, j;
-	int instride = ALIGN( width, 2 );
-	int outwidth, outheight, outpadding;
-	unsigned short *out = in;
-	unsigned short *next;
-	int col, p[4];
-
-	outwidth = width >> 1;
-	outheight = height >> 1;
-	if( !outwidth ) {
-		outwidth = 1;
-	}
-	if( !outheight ) {
-		outheight = 1;
-	}
-	outpadding = outwidth & 1;
-
-	for( i = 0; i < outheight; i++, in += instride * 2, out += outpadding ) {
-		next = ( ( ( i << 1 ) + 1 ) < height ) ? ( in + instride ) : in;
-		for( j = 0; j < outwidth; j++ ) {
-			col = j << 1;
-			p[0] = in[col];
-			p[1] = next[col];
-			if( ( col + 1 ) < width ) {
-				p[2] = in[col + 1];
-				p[3] = next[col + 1];
-				*( out++ ) =    ( ( ( ( p[0] & rMask ) + ( p[1] & rMask ) + ( p[2] & rMask ) + ( p[3] & rMask ) ) >> 2 ) & rMask ) |
-							 ( ( ( ( p[0] & gMask ) + ( p[1] & gMask ) + ( p[2] & gMask ) + ( p[3] & gMask ) ) >> 2 ) & gMask ) |
-							 ( ( ( ( p[0] & bMask ) + ( p[1] & bMask ) + ( p[2] & bMask ) + ( p[3] & bMask ) ) >> 2 ) & bMask ) |
-							 ( ( ( ( p[0] & aMask ) + ( p[1] & aMask ) + ( p[2] & aMask ) + ( p[3] & aMask ) ) >> 2 ) & aMask );
-			} else {
-				*( out++ ) =    ( ( ( ( p[0] & rMask ) + ( p[1] & rMask ) ) >> 1 ) & rMask ) |
-							 ( ( ( ( p[0] & gMask ) + ( p[1] & gMask ) ) >> 1 ) & gMask ) |
-							 ( ( ( ( p[0] & bMask ) + ( p[1] & bMask ) ) >> 1 ) & bMask ) |
-							 ( ( ( ( p[0] & aMask ) + ( p[1] & aMask ) ) >> 1 ) & aMask );
 			}
 		}
 	}
@@ -902,196 +787,6 @@ static void R_Upload32( uint8_t **data, int layer,
 					}
 				}
 			}
-		}
-	}
-}
-
-/*
-* R_PixelFormatSize
-*/
-static int R_PixelFormatSize( int format, int type ) {
-	switch( type ) {
-		case GL_UNSIGNED_BYTE:
-			switch( format ) {
-				case GL_RGBA:
-				case GL_BGRA:
-					return 4;
-				case GL_RGB:
-				case GL_BGR:
-					return 3;
-				case GL_RG:
-					return 2;
-				case GL_RED:
-					return 1;
-			}
-			break;
-		case GL_UNSIGNED_SHORT_4_4_4_4:
-		case GL_UNSIGNED_SHORT_5_5_5_1:
-		case GL_UNSIGNED_SHORT_5_6_5:
-			return 2;
-	}
-	return 0;
-}
-
-/*
-* R_MipCount
-*/
-static int R_MipCount( int width, int height, int minmipsize ) {
-	int mips = 1;
-	while( ( width > minmipsize ) || ( height > minmipsize ) ) {
-		++mips;
-		width >>= 1;
-		height >>= 1;
-		if( !width ) {
-			width = 1;
-		}
-		if( !height ) {
-			height = 1;
-		}
-	}
-	return mips;
-}
-
-/*
-* R_UploadMipmapped
-*
-* Loads a 16/24/32-bit image or cubemap with mipmaps.
-* If the image is a cubemap, each face is data[mip * 6 + face].
-* Otherwise, it's data[mip].
-*/
-static void R_UploadMipmapped( uint8_t **data,
-							   int width, int height, int mipLevels, int flags, int minmipsize,
-							   int *upload_width, int *upload_height,
-							   int format, int type ) {
-	int i, j;
-	int pixelSize = R_PixelFormatSize( format, type );
-	int rMask = 0, gMask = 0, bMask = 0, aMask = 0;
-	int scaledWidth, scaledHeight;
-	int mip;
-	uint8_t *scaled[6] = { NULL };
-	int faces, faceSize = 0;
-	int target, comp;
-	int mips;
-	uint8_t *face;
-	int oldWidth = 0, oldHeight = 0;
-
-	switch( type ) {
-		case GL_UNSIGNED_SHORT_4_4_4_4:
-			rMask = 15 << 12;
-			gMask = 15 << 8;
-			bMask = 15 << 4;
-			aMask = 15;
-			break;
-		case GL_UNSIGNED_SHORT_5_5_5_1:
-			rMask = 31 << 11;
-			gMask = 31 << 6;
-			bMask = 31 << 1;
-			aMask = 1;
-			break;
-		case GL_UNSIGNED_SHORT_5_6_5:
-			rMask = 31 << 11;
-			gMask = 63 << 5;
-			bMask = 31;
-			break;
-	}
-
-	R_TextureTarget( flags, &target );
-
-	faces = ( flags & IT_CUBEMAP ) ? 6 : 1;
-
-	mip = R_ScaledImageSize( width, height, &scaledWidth, &scaledHeight, flags, mipLevels, minmipsize, false );
-
-	if( upload_width ) {
-		*upload_width = scaledWidth;
-	}
-	if( upload_height ) {
-		*upload_height = scaledHeight;
-	}
-
-	if( mip < 0 ) {
-		faceSize = ALIGN( scaledWidth * pixelSize, 4 ) * scaledHeight;
-
-		for( i = 0; i < faces; i++ )
-			scaled[i] = R_PrepareImageBuffer( TEXTURE_RESAMPLING_BUF0 + i, faceSize );
-
-		// find the mip with the size closest to the target
-		for( mip = 0; mip < ( mipLevels - 1 ); mip++ ) {
-			if( ( max( width >> 1, 1 ) < scaledWidth ) || ( max( height >> 1, 1 ) < scaledHeight ) ) {
-				break;
-			}
-			width >>= 1;
-			height >>= 1;
-			if( !width ) {
-				width = 1;
-			}
-			if( !height ) {
-				height = 1;
-			}
-		}
-
-		if( type == GL_UNSIGNED_BYTE ) {
-			for( i = 0; i < faces; i++ ) {
-				R_ResampleTexture( data[mip * faces + i], width, height,
-								   scaled[i], scaledWidth, scaledHeight, pixelSize, 4 );
-			}
-		} else {
-			for( i = 0; i < faces; i++ ) {
-				R_ResampleTexture16( ( unsigned short * )( data[mip * faces + i] ), width, height,
-									 ( unsigned short * )( scaled[i] ), scaledWidth, scaledHeight, rMask, gMask, bMask, aMask );
-			}
-		}
-		data = scaled;
-		mip = 0;
-		mipLevels = 1;
-	}
-
-	comp = R_TextureInternalFormat( pixelSize, flags, type );
-
-	R_SetupTexParameters( flags, scaledWidth, scaledHeight, minmipsize, 0 );
-
-	R_UnpackAlignment( 4 );
-
-	mips = ( flags & IT_NOMIPMAP ) ? 1 : R_MipCount( scaledWidth, scaledHeight, minmipsize );
-	for( i = 0; ( i < mips ) && ( mip < mipLevels ); i++, mip++ ) {
-		faceSize = ALIGN( scaledWidth * pixelSize, 4 ) * scaledHeight; // will be used for the first remaining mipmap
-		for( j = 0; j < faces; j++ )
-			glTexImage2D( target + j, i, comp, scaledWidth, scaledHeight, 0, format, type, data[mip * faces + j] );
-		oldWidth = scaledWidth;
-		oldHeight = scaledHeight;
-		scaledWidth >>= 1;
-		scaledHeight >>= 1;
-		if( !scaledWidth ) {
-			scaledWidth = 1;
-		}
-		if( !scaledHeight ) {
-			scaledHeight = 1;
-		}
-	}
-
-	for( ; i < mips; i++ ) {
-		for( j = 0; j < faces; j++ ) {
-			if( !( scaled[j] ) ) {
-				scaled[j] = R_PrepareImageBuffer( TEXTURE_RESAMPLING_BUF0 + j, faceSize );
-				memcpy( scaled[j], data[( mip - 1 ) * faces + j], faceSize );
-			}
-			face = scaled[j];
-			if( type == GL_UNSIGNED_BYTE ) {
-				R_MipMap( face, oldWidth, oldHeight, pixelSize, 4 );
-			} else {
-				R_MipMap16( ( unsigned short * )face, oldWidth, oldHeight, rMask, gMask, bMask, aMask );
-			}
-			glTexImage2D( target + j, i, comp, scaledWidth, scaledHeight, 0, format, type, face );
-		}
-
-		oldWidth = scaledWidth;
-		oldHeight = scaledHeight;
-		scaledWidth >>= 1;
-		scaledHeight >>= 1;
-		if( !scaledWidth ) {
-			scaledWidth = 1;
-		}
-		if( !scaledHeight ) {
-			scaledHeight = 1;
 		}
 	}
 }
@@ -2300,13 +1995,4 @@ void R_ShutdownImages( void ) {
 
 	r_imagePathBuf = r_imagePathBuf2 = NULL;
 	r_sizeof_imagePathBuf = r_sizeof_imagePathBuf2 = 0;
-}
-
-// ============================================================================
-
-/*
-* R_LoadAsyncImageFromDisk
-*/
-static bool R_LoadAsyncImageFromDisk( image_t *image ) {
-	return false;
 }

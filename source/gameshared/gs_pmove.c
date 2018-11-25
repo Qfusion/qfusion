@@ -510,29 +510,6 @@ static void PM_Accelerate( vec3_t wishdir, float wishspeed, float accel ) {
 	VectorMA( pml.velocity, accelspeed, wishdir, pml.velocity );
 }
 
-static void PM_AirAccelerate( vec3_t wishdir, float wishspeed ) {
-	vec3_t heading = { pml.velocity[0], pml.velocity[1], 0 };
-	float speed = VectorNormalize( heading );
-
-	// Speed is below player walk speed
-	if( speed <= pml.maxPlayerSpeed ) {
-		// Apply acceleration
-		VectorMA( pml.velocity, pml.maxPlayerSpeed * pml.frametime, wishdir, pml.velocity );
-		return;
-	}
-
-	// Calculate a dot product between heading and wishdir
-	// Looking straight results in better acceleration
-	float dot = 50 * ( DotProduct( heading, wishdir ) - 0.98 );
-	clamp( dot, 0, 1 );
-
-	// Calculate resulting acceleration
-	float accel = dot * pml.maxPlayerSpeed * pml.maxPlayerSpeed * pml.maxPlayerSpeed / ( speed * speed );
-
-	// Apply acceleration
-	VectorMA( pml.velocity, accel * pml.frametime, heading, pml.velocity );
-}
-
 // when using +strafe convert the inertia to forward speed.
 static void PM_Aircontrol( vec3_t wishdir, float wishspeed ) {
 	int i;
