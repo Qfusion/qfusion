@@ -310,9 +310,9 @@ void RF_TransformVectorToScreen( const refdef_t *rd, const vec3_t in, vec2_t out
 }
 
 bool RF_TransformVectorToScreenClamped( const refdef_t *rd, const vec3_t target, int border, vec2_t out ) {
-	float near = 0.0001f;
+	float near_plane = 0.0001f;
 	mat4_t p, v;
-	Matrix4_InfinitePerspectiveProjection( rd->fov_x, rd->fov_y, near, p, glConfig.depthEpsilon );
+	Matrix4_InfinitePerspectiveProjection( rd->fov_x, rd->fov_y, near_plane, p, glConfig.depthEpsilon );
 	Matrix4_QuakeModelview( rd->vieworg, rd->viewaxis, v );
 
 	vec4_t homo, view, clip;
@@ -320,7 +320,7 @@ bool RF_TransformVectorToScreenClamped( const refdef_t *rd, const vec3_t target,
 	Matrix4_Multiply_Vector( v, homo, view );
 	Matrix4_Multiply_Vector( p, view, clip );
 
-	if( fabsf( clip[2] ) < near ) {
+	if( fabsf( clip[2] ) < near_plane ) {
 		Vector2Set( out, rd->width * 0.5f, rd->height * 0.5f );
 		return false;
 	}
