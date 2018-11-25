@@ -63,8 +63,6 @@ const uint BOMB_EXPLOSION_EFFECT_RADIUS = 256;
 
 const uint BOMB_DEAD_CAMERA_DIST = 256;
 
-const uint IMPRESSIVE_KILLS = 3; // how many kills before they are deemed impressive
-
 const uint POINTS_DEFUSE = 0;
 
 const int INITIAL_ATTACKERS = TEAM_ALPHA;

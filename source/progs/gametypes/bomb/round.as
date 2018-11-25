@@ -70,7 +70,6 @@ void playerKilled( Entity @victim, Entity @attacker, Entity @inflictor )
 
 	// ch :
 	cPlayer @pVictim = @playerFromClient( @victim.client );
-	pVictim.oneVS = 0;
 	
 	if( match.getState() != MATCH_STATE_PLAYTIME )
 		return;
@@ -96,22 +95,14 @@ void playerKilled( Entity @victim, Entity @attacker, Entity @inflictor )
 		
 		player.killsThisRound++;
 
-		if ( player.killsThisRound >= IMPRESSIVE_KILLS )
+		int required_for_bongo = attacker.team == TEAM_ALPHA ? betaAliveAtStart : alphaAliveAtStart;
+		if ( player.killsThisRound == required_for_bongo )
 		{
-			int required_for_bongo = attacker.team == TEAM_ALPHA ? betaAliveAtStart : alphaAliveAtStart;
-			if ( player.killsThisRound == required_for_bongo )
-			{
-				player.client.addAward( S_COLOR_YELLOW + "King of Bongo!" );
+			player.client.addAward( S_COLOR_YELLOW + "King of Bongo!" );
 
-				G_AnnouncerSound( null, sndBongo, GS_MAX_TEAMS, true, null );
+			G_AnnouncerSound( null, sndBongo, GS_MAX_TEAMS, true, null );
 
-				G_CenterPrintFormatMsg( null, "%s is the King of Bongo!", player.client.name );
-			}
-			else
-			{
-				// XXX: handle kills = 1?
-				player.client.addAward( S_COLOR_YELLOW + "Impressive! " + player.killsThisRound + " frags!" );
-			}
+			G_CenterPrintFormatMsg( null, "%s is the King of Bongo!", player.client.name );
 		}
 	}
 	
@@ -195,10 +186,6 @@ void oneVsMsg( int teamNum, uint enemies )
 		{
 			G_PrintMsg( @team.ent( i ), "1v" + enemies + "! " + survivor.name + " is on their own!\n" );
 		}
-		
-		// ch :
-		cPlayer @pSurvivor = @playerFromClient( @survivor );
-		pSurvivor.oneVS = enemies;
 	}
 }
 
@@ -266,12 +253,6 @@ void roundWonBy( int winner )
 		if ( !ent.isGhosting() )
 		{
 			ent.client.addAward( S_COLOR_GREEN + "Victory!" );
-			
-			// ch :
-			cPlayer @player = @playerFromClient( @ent.client );
-			if( player.oneVS > 0 )
-				// ent.client.addMetaAward( "Clean The House!" );
-				ent.client.addAward( "Clean The House!" );
 			
 			// ch : add a round for alive players on this team
 			ent.client.stats.addRound();
@@ -402,10 +383,6 @@ void roundNewState( uint state )
 			roundStateEndTime = levelTime + 1500; // magic numbers are awesome
 
 			gametype.shootingDisabled = true;
-
-			// ch : nullify these up
-			@fastPlanter = null;
-			@lastCallPlanter = null;
 
 			break;
 

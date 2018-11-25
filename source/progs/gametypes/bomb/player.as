@@ -80,8 +80,6 @@ class cPlayer
 	bool dueToSpawn; // used for respawning during countdown
 
 	bool isCarrier;
-
-	uint oneVS;	// 1vs this many enemies on this round
 	
 	cPlayer( Client @player )
 	{
@@ -125,8 +123,6 @@ class cPlayer
 		this.dueToSpawn = false;
 
 		this.isCarrier = false;
-		
-		this.oneVS = 0;
 
 		@players[player.playerNum] = @this;
 	}
@@ -459,7 +455,6 @@ void resetKillCounters()
 		if ( @players[i] != null )
 		{
 			players[i].killsThisRound = 0;
-			players[i].oneVS = 0;
 		}
 	}
 }
