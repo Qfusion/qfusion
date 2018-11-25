@@ -553,6 +553,7 @@ static void R_TextureFormat( int flags, int samples, int *comp, int *format, int
 			*type = GL_UNSIGNED_BYTE;
 			*comp = samples == 4 ? GL_RGBA : GL_RGB;
 		}
+		*format = samples == 4 ? GL_RGBA : GL_RGB;
 	} else {
 		if( samples == 4 ) {
 			*format = GL_RGBA;
