@@ -403,83 +403,6 @@ void GT_ScoreEvent( Client @client, const String &score_event, const String &arg
 
 		GT_updateScore( @client );
 
-		// spawn protection
-
-		if ( match.getState() != MATCH_STATE_PLAYTIME || roundState != ROUNDSTATE_ROUND )
-		{
-			return;
-		}
-
-		int protectTime = cvarSpawnProtection.integer;
-
-		if ( protectTime <= 0 )
-		{
-			return;
-		}
-
-		int elapsedTime = int( ( levelTime - roundStartTime ) * 0.001f );
-
-		if ( elapsedTime > protectTime )
-		{
-			return;
-		}
-
-		Entity @attacker = @client.getEnt();
-		Entity @victim = @G_GetEntity( args.getToken( 0 ).toInt() );
-
-		if ( @victim == null || @victim == @attacker || victim.team != attacker.team
-		    || attacker.isGhosting() || attacker.health < 0 // becase every rg pellet counts as a dmg event...
-		)
-		{
-			return;
-		}
-
-		// WE'VE MADE IT THIS FAR
-
-		float damage = args.getToken( 1 ).toFloat();
-
-		assert( damage > 0, "main.as GT_ScoreEvent: damage < 0" );
-
-		int protectTimeO3 = protectTime / 3; // protectTime over 3
-
-		// TODO: smooth damage scaling?
-		if ( elapsedTime < protectTimeO3 )
-		{
-			damage *= 2.0f; // double damage in first third of spawn protection
-		}
-		else if ( elapsedTime > protectTimeO3 * 2 )
-		{
-			damage /= 2.0f; // half damage in last third of spawn protection
-		}
-
-		attacker.health -= damage;
-
-		int newArmor = int( client.armor - damage * 0.5 );
-
-		if ( newArmor < 0 )
-		{
-			newArmor = 0;
-		}
-
-		client.armor = float( newArmor );
-
-		G_CenterPrintMsg( @attacker, S_COLOR_RED + "DO NOT DAMAGE TEAMMATES!" );
-
-		// HUMILIATION
-		if ( attacker.health < 0 )
-		{
-			if ( @attacker == @bombCarrier )
-			{
-				bombDrop( BOMBDROP_KILLED );
-			}
-
-			G_PrintMsg( null, client.name + S_COLOR_RED + " was punished for teamdamage!\n" );
-
-			G_CenterPrintMsg( attacker, S_COLOR_RED + "TEAMDAMAGE PUNISHMENT!" );
-
-			attacker.explosionEffect( 128 ); // :)
-		}
-
 		return;
 	}
 
@@ -510,10 +433,10 @@ void GT_ScoreEvent( Client @client, const String &score_event, const String &arg
 		return;
 	}
 
-	if( score_event == "rebalance" || score_event == "shuffle" )
+	if ( score_event == "rebalance" || score_event == "shuffle" )
 	{
 		// end round when in match
-		if ( ( @client == null ) && ( match.getState() == MATCH_STATE_PLAYTIME ) )
+		if ( @client == null && match.getState() == MATCH_STATE_PLAYTIME )
 		{
 			roundNewState( ROUNDSTATE_FINISHED );
 		}	
