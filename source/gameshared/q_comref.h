@@ -116,7 +116,6 @@ typedef struct {
 
 	int pm_flags;               // ducked, jump_held, etc
 	int pm_time;                // each unit = 8 ms
-	int skim_time;
 	short stats[PM_STAT_SIZE];  // Kurim : timers for knockback, doublejump, walljump
 	int gravity;
 	short delta_angles[3];      // add to command angles to get view direction
