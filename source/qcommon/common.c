@@ -29,7 +29,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define MAX_NUM_ARGVS   50
 
-static bool dynvars_initialized = false;
 static bool commands_intialized = false;
 
 static int com_argc;
@@ -70,26 +69,6 @@ int64_t time_before_game;
 int64_t time_after_game;
 int64_t time_before_ref;
 int64_t time_after_ref;
-
-/*
-==============================================================
-
-DYNVARS
-
-==============================================================
-*/
-
-static dynvar_get_status_t Com_Sys_Uptime_f( void **val ) {
-	static char buf[32];
-	const uint64_t us = Sys_Microseconds();
-	const unsigned int h = us / 3600000000u;
-	const unsigned int min = ( us / 60000000 ) % 60;
-	const unsigned int sec = ( us / 1000000 ) % 60;
-	const unsigned int usec = us % 1000000;
-	sprintf( buf, "%02u:%02u:%02u.%06u", h, min, sec, usec );
-	*val = buf;
-	return DYNVAR_GET_OK;
-}
 
 /*
 ============================================================================
@@ -712,16 +691,13 @@ void Qcommon_Init( int argc, char **argv ) {
 
 	Cbuf_Init();
 
-	// initialize cmd/cvar/dynvar tries
+	// initialize cmd/cvar tries
 	Cmd_PreInit();
 	Cvar_PreInit();
-	Dynvar_PreInit();
 
 	// create basic commands and cvars
 	Cmd_Init();
 	Cvar_Init();
-	Dynvar_Init();
-	dynvars_initialized = true;
 
 	wswcurl_init();
 
@@ -733,11 +709,6 @@ void Qcommon_Init( int argc, char **argv ) {
 	// the settings of the config files
 	Cbuf_AddEarlyCommands( false );
 	Cbuf_Execute();
-
-	// wsw : aiwa : create dynvars (needs to be completed before .cfg scripts are executed)
-	Dynvar_Create( "sys_uptime", true, Com_Sys_Uptime_f, DYNVAR_READONLY );
-
-	Sys_InitDynvars();
 
 #ifdef TV_SERVER_ONLY
 	tv_server = Cvar_Get( "tv_server", "1", CVAR_NOSET );
@@ -963,8 +934,6 @@ void Qcommon_Shutdown( void ) {
 
 	wswcurl_cleanup();
 
-	Dynvar_Shutdown();
-	dynvars_initialized = false;
 	Cvar_Shutdown();
 	Cmd_Shutdown();
 	Cbuf_Shutdown();

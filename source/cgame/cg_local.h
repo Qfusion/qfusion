@@ -23,7 +23,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gameshared/q_math.h"
 #include "gameshared/q_shared.h"
 #include "gameshared/q_cvar.h"
-#include "gameshared/q_dynvar.h"
 #include "gameshared/q_comref.h"
 #include "gameshared/q_collision.h"
 

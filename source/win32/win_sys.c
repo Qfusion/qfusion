@@ -50,7 +50,6 @@ int64_t sys_msg_time;
 int argc;
 char *argv[MAX_NUM_ARGVS];
 
-void Sys_InitTimeDynvar( void );
 void Sys_InitTime( void );
 
 void Sys_InitThreads( void );
@@ -125,13 +124,6 @@ void Sys_Init( void ) {
 		// let QHOST hook in
 		InitConProc( argc, argv );
 	}
-}
-
-/*
-* Sys_InitDynvars
-*/
-void Sys_InitDynvars( void ) {
-	Sys_InitTimeDynvar();
 }
 
 /*

@@ -1206,9 +1206,6 @@ bool Cmd_CheckForCommand( char *text ) {
 	if( Trie_Find( cmd_alias_trie, cmd, TRIE_EXACT_MATCH, (void **)&a ) == TRIE_OK ) {
 		return true;
 	}
-	if( Dynvar_Lookup( cmd ) ) {
-		return true;
-	}
 
 	return false;
 }
@@ -1235,7 +1232,7 @@ void Cmd_ExecuteString( const char *text ) {
 
 	// FIXME: This routine defines the order in which identifiers are looked-up, but
 	// there are no checks for name-clashes. If a user sets a cvar with the name of
-	// an existing command, alias, or dynvar, that cvar becomes shadowed!
+	// an existing command or alias, that cvar becomes shadowed!
 	// We need a global namespace data-structure and a way to check for name-clashes
 	// that does not break seperation of concerns.
 	// Aiwa, 07-14-2006
@@ -1259,12 +1256,8 @@ void Cmd_ExecuteString( const char *text ) {
 		}
 		Cbuf_InsertText( "\n" );
 		Cbuf_InsertText( a->value );
-	} else if( Dynvar_Command() ) {
-		// check dynvars
-		;
 	} else if( Cvar_Command() ) {
 		// check cvars
-		;
 	} else {
 		Com_Printf( "Unknown command \"%s" S_COLOR_WHITE "\"\n", str );
 	}

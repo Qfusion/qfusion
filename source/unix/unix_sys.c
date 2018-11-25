@@ -130,12 +130,6 @@ void Sys_Init( void ) {
 }
 
 /*
-* Sys_InitDynvars
-*/
-void Sys_InitDynvars( void ) {
-}
-
-/*
 * Sys_Error
 */
 void Sys_Error( const char *format, ... ) {
