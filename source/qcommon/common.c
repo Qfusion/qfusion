@@ -44,7 +44,6 @@ cvar_t *developer;
 cvar_t *timescale;
 cvar_t *dedicated;
 cvar_t *versioncvar;
-cvar_t *tv_server;
 
 static cvar_t *fixedtime;
 static cvar_t *logconsole = NULL;
@@ -710,13 +709,6 @@ void Qcommon_Init( int argc, char **argv ) {
 	Cbuf_AddEarlyCommands( false );
 	Cbuf_Execute();
 
-#ifdef TV_SERVER_ONLY
-	tv_server = Cvar_Get( "tv_server", "1", CVAR_NOSET );
-	Cvar_ForceSet( "tv_server", "1" );
-#else
-	tv_server = Cvar_Get( "tv_server", "0", CVAR_NOSET );
-#endif
-
 #ifdef DEDICATED_ONLY
 	dedicated =     Cvar_Get( "dedicated", "1", CVAR_NOSET );
 	Cvar_ForceSet( "dedicated", "1" );
@@ -731,8 +723,6 @@ void Qcommon_Init( int argc, char **argv ) {
 	if( !dedicated->integer ) {
 		Cbuf_AddText( "exec config.cfg\n" );
 		Cbuf_AddText( "exec autoexec.cfg\n" );
-	} else if( tv_server->integer ) {
-		Cbuf_AddText( "exec tvserver_autoexec.cfg\n" );
 	} else {
 		Cbuf_AddText( "exec dedicated_autoexec.cfg\n" );
 	}
@@ -750,9 +740,7 @@ void Qcommon_Init( int argc, char **argv ) {
 	host_speeds =       Cvar_Get( "host_speeds", "0", 0 );
 	timescale =     Cvar_Get( "timescale", "1.0", CVAR_CHEAT );
 	fixedtime =     Cvar_Get( "fixedtime", "0", CVAR_CHEAT );
-	if( tv_server->integer ) {
-		logconsole =        Cvar_Get( "logconsole", "tvconsole.log", CVAR_ARCHIVE );
-	} else if( dedicated->integer ) {
+	if( dedicated->integer ) {
 		logconsole =        Cvar_Get( "logconsole", "wswconsole.log", CVAR_ARCHIVE );
 	} else {
 		logconsole =        Cvar_Get( "logconsole", "", CVAR_ARCHIVE );
@@ -788,8 +776,6 @@ void Qcommon_Init( int argc, char **argv ) {
 
 	if( !dedicated->integer ) {
 		Cbuf_AddText( "exec autoexec_postinit.cfg\n" );
-	} else if( tv_server->integer ) {
-		Cbuf_AddText( "exec tvserver_autoexec_postinit.cfg\n" );
 	} else {
 		Cbuf_AddText( "exec dedicated_autoexec_postinit.cfg\n" );
 	}

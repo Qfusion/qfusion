@@ -18,8 +18,4 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#ifdef TV_SERVER_ONLY
-# include "../tv_server/tv_module/tvm_public.h"
-#else
-# include "../cgame/cg_public.h"
-#endif
+#include "cgame/cg_public.h"

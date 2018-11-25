@@ -18,11 +18,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#ifdef TV_SERVER_ONLY
-# include "../tv_server/tv_relay.h"
-#else
-# include "../server/server.h"
-#endif
+#include "server/server.h"
 
 #undef EDICT_NUM
 #undef NUM_FOR_EDICT
