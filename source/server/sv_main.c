@@ -88,9 +88,6 @@ cvar_t *sv_MOTD;
 cvar_t *sv_MOTDFile;
 cvar_t *sv_MOTDString;
 
-cvar_t *sv_autoUpdate;
-cvar_t *sv_lastAutoUpdate;
-
 cvar_t *sv_demodir;
 
 //============================================================================
@@ -482,32 +479,6 @@ static void SV_CheckDefaultMap( void ) {
 */
 void SV_UpdateActivity( void ) {
 	svc.lastActivity = Sys_Milliseconds();
-	//Com_Printf( "Server activity\n" );
-}
-
-/*
-* SV_CheckAutoUpdate
-*/
-static void SV_CheckAutoUpdate( void ) {
-	int64_t days;
-	int64_t uptimeMinute;
-
-	if( !sv_pure->integer && sv_autoUpdate->integer ) {
-		Com_Printf( "WARNING: Autoupdate is not available for unpure servers.\n" );
-		Cvar_ForceSet( "sv_autoUpdate", "0" );
-	}
-
-	if( !sv_autoUpdate->integer || !dedicated->integer ) {
-		return;
-	}
-
-	days = (unsigned int)sv_lastAutoUpdate->integer;
-	uptimeMinute = ( Sys_Milliseconds() / 60000 ) % 60;
-
-	// daily check
-	if( ( days < Com_DaysSince1900() ) && ( uptimeMinute == svc.autoUpdateMinute ) ) {
-		SV_AutoUpdateFromWeb( false );
-	}
 }
 
 /*
@@ -598,8 +569,6 @@ void SV_Frame( unsigned realmsec, unsigned gamemsec ) {
 
 	// handle HTTP connections
 	SV_Web_GameFrame( ge->WebRequest );
-
-	SV_CheckAutoUpdate();
 
 	SV_CheckPostUpdateRestart();
 }
@@ -721,8 +690,6 @@ void SV_Init( void ) {
 	sv_uploads_demos =      Cvar_Get( "sv_uploads_demos", "1", CVAR_ARCHIVE );
 	sv_uploads_demos_baseurl =  Cvar_Get( "sv_uploads_demos_baseurl", "", CVAR_ARCHIVE );
 	if( dedicated->integer ) {
-		sv_autoUpdate = Cvar_Get( "sv_autoUpdate", "1", CVAR_ARCHIVE );
-
 		sv_pure =       Cvar_Get( "sv_pure", "1", CVAR_ARCHIVE | CVAR_LATCH | CVAR_SERVERINFO );
 
 #ifdef PUBLIC_BUILD
@@ -731,15 +698,12 @@ void SV_Init( void ) {
 		sv_public =     Cvar_Get( "sv_public", "0", CVAR_ARCHIVE | CVAR_LATCH );
 #endif
 	} else {
-		sv_autoUpdate = Cvar_Get( "sv_autoUpdate", "0", CVAR_READONLY );
-
 		sv_pure =       Cvar_Get( "sv_pure", "0", CVAR_ARCHIVE | CVAR_LATCH | CVAR_SERVERINFO );
 		sv_public =     Cvar_Get( "sv_public", "0", CVAR_ARCHIVE );
 	}
 
 	sv_iplimit = Cvar_Get( "sv_iplimit", "3", CVAR_ARCHIVE );
 
-	sv_lastAutoUpdate = Cvar_Get( "sv_lastAutoUpdate", "0", CVAR_READONLY | CVAR_ARCHIVE );
 	sv_pure_forcemodulepk3 =    Cvar_Get( "sv_pure_forcemodulepk3", "", CVAR_LATCH );
 
 	sv_defaultmap =         Cvar_Get( "sv_defaultmap", "dust", CVAR_ARCHIVE );
@@ -808,8 +772,6 @@ void SV_Init( void ) {
 		svc.gameFrameTime = svc.snapFrameTime;
 		Cvar_ForceSet( "sv_fps", sv_pps->dvalue );
 	}
-
-	svc.autoUpdateMinute = rand() % 60;
 
 	Com_Printf( "Game running at %i fps. Server transmit at %i pps\n", sv_fps->integer, sv_pps->integer );
 

@@ -25,28 +25,6 @@ static void CL_InitServerDownload( const char *filename, int size, unsigned chec
 								   const char *url, bool initial );
 void CL_StopServerDownload( void );
 
-//=============================================================================
-
-/*
-* CL_CanDownloadModules
-*
-* The user has to give permission for modules to be downloaded
-*/
-bool CL_CanDownloadModules( void ) {
-#if 0
-	if( !Q_stricmp( FS_GameDirectory(), FS_BaseGameDirectory() ) ) {
-		Com_Error( ERR_DROP, "Can not download modules to the base directory" );
-		return false;
-	}
-#endif
-	if( !cl_download_allow_modules->integer ) {
-		Com_Error( ERR_DROP, "Downloading of modules disabled." );
-		return false;
-	}
-
-	return true;
-}
-
 /*
 * CL_DownloadRequest
 *
@@ -73,9 +51,7 @@ bool CL_DownloadRequest( const char *filename, bool requestpak ) {
 		}
 
 		if( !Q_strnicmp( COM_FileBase( filename ), "modules", strlen( "modules" ) ) ) {
-			if( !CL_CanDownloadModules() ) {
-				return false;
-			}
+			return false;
 		}
 	} else {
 		if( FS_FOpenFile( filename, NULL, FS_READ ) != -1 ) {
@@ -270,7 +246,7 @@ static void CL_WebDownloadDoneCb( int status, const char *contentType, void *pri
 		cls.download.requestnext = false;
 	}
 
-	// check if user pressed escape to stop the downloa
+	// check if user pressed escape to stop the download
 	if( disconnect ) {
 		CL_Disconnect( NULL ); // this also calls CL_DownloadDone()
 		return;
@@ -330,7 +306,6 @@ static size_t CL_WebDownloadReadCb( const void *buf, size_t numb, float percenta
 static void CL_InitServerDownload( const char *filename, int size, unsigned checksum, bool allow_localhttpdownload,
 								   const char *url, bool initial ) {
 	int alloc_size;
-	bool modules_download = false;
 	bool explicit_pure_download = false;
 	bool force_web_official = initial && cls.download.requestpak;
 	bool official_web_download = false;
@@ -412,13 +387,10 @@ static void CL_InitServerDownload( const char *filename, int size, unsigned chec
 			return;
 		}
 
-		modules_download = !Q_strnicmp( COM_FileBase( filename ), "modules", strlen( "modules" ) );
-
+		bool modules_download = !Q_strnicmp( COM_FileBase( filename ), "modules", strlen( "modules" ) );
 		if( modules_download ) {
-			if( !CL_CanDownloadModules() ) {
-				CL_DownloadDone();
-				return;
-			}
+			CL_DownloadDone();
+			return;
 		}
 
 		if( FS_PakFileExists( filename ) ) {
@@ -450,7 +422,7 @@ static void CL_InitServerDownload( const char *filename, int size, unsigned chec
 		}
 	}
 
-	official_web_only = modules_download || explicit_pure_download;
+	official_web_only = explicit_pure_download;
 	official_web_download = force_web_official || official_web_only;
 
 	alloc_size = strlen( "downloads" ) + 1 /* '/' */ + strlen( filename ) + 1;
@@ -465,7 +437,7 @@ static void CL_InitServerDownload( const char *filename, int size, unsigned chec
 			CL_DownloadDone();
 			return;
 		}
-		Q_snprintfz( cls.download.name, alloc_size, "%s/%s", "downloads", filename );
+		Q_snprintfz( cls.download.name, alloc_size, "downloads/%s", filename );
 	}
 
 	alloc_size = strlen( cls.download.name ) + strlen( ".tmp" ) + 1;
@@ -504,14 +476,11 @@ static void CL_InitServerDownload( const char *filename, int size, unsigned chec
 
 	baseurl = cls.httpbaseurl;
 	if( official_web_download ) {
-		baseurl = APP_UPDATE_URL APP_SERVER_UPDATE_DIRECTORY;
-		allow_localhttpdownload = false;
+		CL_DownloadDone();
+		return;
 	}
 
-	if( official_web_download ) {
-		cls.download.web = true;
-		Com_Printf( "Web download: %s from %s/%s\n", cls.download.tempname, baseurl, filename );
-	} else if( cl_downloads_from_web->integer && allow_localhttpdownload && url && url[0] != 0 ) {
+	if( cl_downloads_from_web->integer && allow_localhttpdownload && url && url[0] != 0 ) {
 		cls.download.web = true;
 		Com_Printf( "Web download: %s from %s/%s\n", cls.download.tempname, baseurl, url );
 	} else if( cl_downloads_from_web->integer && url && url[0] != 0 ) {
@@ -543,11 +512,7 @@ static void CL_InitServerDownload( const char *filename, int size, unsigned chec
 		Q_snprintfz( referer, alloc_size, APP_URI_SCHEME "%s", NET_AddressToString( &cls.serveraddress ) );
 		Q_strlwr( referer );
 
-		if( official_web_download ) {
-			alloc_size = strlen( baseurl ) + 1 + strlen( filename ) + 1;
-			fullurl = alloca( alloc_size );
-			Q_snprintfz( fullurl, alloc_size, "%s/%s", baseurl, filename );
-		} else if( allow_localhttpdownload ) {
+		if( allow_localhttpdownload ) {
 			alloc_size = strlen( baseurl ) + 1 + strlen( url ) + 1;
 			fullurl = alloca( alloc_size );
 			Q_snprintfz( fullurl, alloc_size, "%s/%s", baseurl, url );

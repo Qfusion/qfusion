@@ -32,10 +32,6 @@ struct model_s;
 struct cmodel_s;
 struct qfontface_s;
 
-typedef size_t ( *cg_async_stream_read_cb_t )( const void *buf, size_t numb, float percentage,
-											 int status, const char *contentType, void *privatep );
-typedef void ( *cg_async_stream_done_cb_t )( int status, const char *contentType, void *privatep );
-
 typedef void ( *cg_fdrawchar_t )( int x, int y, int w, int h, float s1, float t1, float s2, float t2, const vec4_t color, const struct shader_s *shader );
 
 // cg_public.h -- client game dll information visible to engine
@@ -140,13 +136,6 @@ typedef struct {
 	void ( *NET_GetUserCmd )( int frame, usercmd_t *cmd );
 	int ( *NET_GetCurrentUserCmdNum )( void );
 	void ( *NET_GetCurrentState )( int64_t *incomingAcknowledged, int64_t *outgoingSequence, int64_t *outgoingSent );
-
-	// Asynchronous HTTP requests
-	void ( *AsyncStream_UrlEncode )( const char *src, char *dst, size_t size );
-	size_t ( *AsyncStream_UrlDecode )( const char *src, char *dst, size_t size );
-	int ( *AsyncStream_PerformRequest )( const char *url, const char *method, const char *data, int timeout,
-										 cg_async_stream_read_cb_t read_cb, cg_async_stream_done_cb_t done_cb, void *privatep );
-	size_t ( *GetBaseServerURL )( char *buffer, size_t buffer_size );
 
 	// refresh system
 	void ( *R_UpdateScreen )( void );

@@ -895,8 +895,6 @@ void CG_OverrideWeapondef( int index, const char *cstring );
 
 void CG_StartBackgroundTrack( void );
 
-int CG_AsyncGetRequest( const char *resource, void ( *done_cb )( int status, const char *resp ), void *privatep );
-
 const char *CG_TranslateString( const char *string );
 const char *CG_TranslateColoredString( const char *string, char *dst, size_t dst_size );
 

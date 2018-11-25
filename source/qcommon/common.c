@@ -771,8 +771,6 @@ void Qcommon_Init( int argc, char **argv ) {
 	NET_Init();
 	Netchan_Init();
 
-	Com_Autoupdate_Init();
-
 	CM_Init();
 
 #if APP_STEAMID
@@ -922,8 +920,6 @@ void Qcommon_Shutdown( void ) {
 	Key_Shutdown();
 
 	Steam_UnloadLibrary();
-
-	Com_Autoupdate_Shutdown();
 
 	Qcommon_ShutdownCommands();
 	Memory_ShutdownCommands();

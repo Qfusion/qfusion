@@ -99,13 +99,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define APP_VERSION_STR_MAJORMINOR      STR_TOSTR( APP_VERSION_MAJOR ) STR_TOSTR( APP_VERSION_MINOR )
 #endif
 
-#ifndef APP_UPDATE_URL
-#define APP_UPDATE_URL                  "http://update.e4m5.net/"
-#define APP_SERVER_UPDATE_DIRECTORY     "autoupdate/" STR_TOSTR ( APP_VERSION_MAJOR ) "." STR_TOSTR( APP_VERSION_MINOR ) "/"
-#define APP_SERVER_UPDATE_FILE          "filelist.txt"
-#define APP_CLIENT_UPDATE_FILE          "qfusion_last_version.txt"
-#endif
-
 #ifndef APP_MATCHMAKER_URL
 #ifdef PUBLIC_BUILD
 #define APP_MATCHMAKER_URL              "http://www.e4m5.net:1337"

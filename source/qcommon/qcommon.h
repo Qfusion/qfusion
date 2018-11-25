@@ -955,15 +955,3 @@ MULTITHREADING
 ==============================================================
 */
 #include "qthreads.h"
-
-/*
-==============================================================
-
-AUTOMATIC UPDATES
-
-==============================================================
-*/
-void Com_Autoupdate_Init( void );
-void Com_Autoupdate_Run( bool checkOnly, void ( *newfiles_cb )( void ) );
-void Com_Autoupdate_Cancel( void );
-void Com_Autoupdate_Shutdown( void );

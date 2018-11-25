@@ -19,7 +19,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "client.h"
-#include "../qcommon/asyncstream.h"
 
 static cgame_export_t *cge;
 
@@ -28,8 +27,6 @@ EXTERN_API_FUNC void *GetCGameAPI( void * );
 static mempool_t *cl_gamemodulepool;
 
 static void *module_handle;
-
-static async_stream_module_t *cg_async_stream;
 
 static int cg_load_seq = 1;
 
@@ -172,39 +169,6 @@ static void CL_GameModule_MemFree( void *data, const char *filename, int filelin
 */
 static void CL_GameModule_SoundUpdate( const vec3_t origin, const vec3_t velocity, const mat3_t axis, int64_t now ) {
 	CL_SoundModule_Update( origin, velocity, axis, now );
-}
-
-//==============================================
-
-/*
-* CL_GameModule_AsyncStream_Init
-*/
-static void CL_GameModule_AsyncStream_Init( void ) {
-	cg_async_stream = AsyncStream_InitModule( "CGame", CL_GameModule_MemAlloc, CL_GameModule_MemFree );
-}
-
-/*
-* CL_GameModule_AsyncStream_PerformRequest
-*/
-static int CL_GameModule_AsyncStream_PerformRequest( const char *url, const char *method,
-													 const char *data, int timeout,
-													 cg_async_stream_read_cb_t read_cb, cg_async_stream_done_cb_t done_cb, void *privatep ) {
-	const char *headers[] = { NULL, NULL, NULL, NULL, NULL };
-
-	assert( cg_async_stream );
-
-	CL_AddSessionHttpRequestHeaders( url, headers );
-
-	return AsyncStream_PerformRequestExt( cg_async_stream, url, method, data, headers, timeout,
-										  0, read_cb, done_cb, NULL, privatep );
-}
-
-/*
-* CL_GameModule_AsyncStream_Shutdown
-*/
-static void CL_GameModule_AsyncStream_Shutdown( void ) {
-	AsyncStream_ShutdownModule( cg_async_stream );
-	cg_async_stream = NULL;
 }
 
 //==============================================
@@ -388,11 +352,6 @@ void CL_GameModule_Init( void ) {
 	import.SCR_IsOverlayMenuShown = SCR_IsOverlayMenuShown;
 	import.SCR_DrawChat = Con_DrawChat;
 
-	import.AsyncStream_UrlEncode = AsyncStream_UrlEncode;
-	import.AsyncStream_UrlDecode = AsyncStream_UrlDecode;
-	import.AsyncStream_PerformRequest = CL_GameModule_AsyncStream_PerformRequest;
-	import.GetBaseServerURL = CL_GetBaseServerURL;
-
 	import.Mem_Alloc = CL_GameModule_MemAlloc;
 	import.Mem_Free = CL_GameModule_MemFree;
 
@@ -422,8 +381,6 @@ void CL_GameModule_Init( void ) {
 		cge = NULL;
 		Com_Error( ERR_DROP, "Client game is version %i, not %i", apiversion, CGAME_API_VERSION );
 	}
-
-	CL_GameModule_AsyncStream_Init();
 
 	SCR_EnableOverlayMenu( false, true );
 
@@ -465,8 +422,6 @@ void CL_GameModule_Shutdown( void ) {
 
 	cg_load_seq++;
 	cls.cgameActive = false;
-
-	CL_GameModule_AsyncStream_Shutdown();
 
 	cge->Shutdown();
 	Mem_FreePool( &cl_gamemodulepool );
