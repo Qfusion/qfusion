@@ -500,11 +500,6 @@ static inline const char *trap_L10n_TranslateString( const char *string ) {
 	return CGAME_IMPORT.L10n_TranslateString( string );
 }
 
-static inline unsigned int trap_IN_IME_GetCandidates( char * const *cands, size_t candSize, unsigned int maxCands,
-													  int *selected, int *firstKey ) {
-	return CGAME_IMPORT.IN_IME_GetCandidates( cands, candSize, maxCands, selected, firstKey );
-}
-
 static inline struct angelwrap_api_s *trap_asGetAngelExport( void ) {
 	return CGAME_IMPORT.asGetAngelExport();
 }

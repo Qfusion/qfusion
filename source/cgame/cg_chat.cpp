@@ -67,7 +67,6 @@ void CG_DrawChat( cg_gamechat_t *chat, int x, int y, char *fontName, struct qfon
 	bool background_drawn = false;
 	int corner_radius = 12 * cgs.vidHeight / 600;
 	int background_y;
-	int first_candidate;
 
 	font_height = trap_SCR_FontHeight( font );
 	message_mode = (int)trap_Cvar_Value( "con_messageMode" );
@@ -134,13 +133,6 @@ void CG_DrawChat( cg_gamechat_t *chat, int x, int y, char *fontName, struct qfon
 			trap_R_DrawStretchPic( x, background_y, width, height - corner_radius,
 								   0.0f, 0.0f, 1.0f, 0.5f, backColor, backShader );
 			background_y += height - corner_radius;
-
-			if( trap_IN_IME_GetCandidates( NULL, 0, 10, NULL, &first_candidate ) ) {
-				int candidates_height = ( first_candidate ? 3 : 5 ) * font_height;
-				trap_R_DrawStretchPic( x, background_y, width, candidates_height,
-									   0.0f, 0.5f, 1.0f, 0.5f, backColor, backShader );
-				background_y += candidates_height;
-			}
 
 			trap_R_DrawStretchPic( x, background_y, corner_radius, corner_radius,
 								   0.0f, 0.5f, 0.5f, 1.0f, backColor, backShader );

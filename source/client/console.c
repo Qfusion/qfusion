@@ -306,8 +306,6 @@ void Con_SetMessageMode( void ) {
 	} else {
 		Cvar_ForceSet( "con_messageMode", "0" );
 	}
-
-	IN_IME_Enable( message );
 }
 
 /*
@@ -763,21 +761,13 @@ void Con_DrawNotify( void ) {
 */
 void Con_DrawChat( int x, int y, int width, struct qfontface_s *font ) {
 	const char *say;
-	int i;
 	char *s;
-	int compx = 0;
-	int swidth, compwidth = 0, totalwidth, prewidth = 0;
+	int swidth, totalwidth, prewidth = 0;
 	int promptwidth, spacewidth;
 	int fontHeight;
-	int underlineThickness, underlinePosition;
-	char comp[MAX_STRING_CHARS];
-	size_t complen, imecursor, convstart, convlen;
+	int underlineThickness;
 	char oldchar;
 	int cursorcolor = ColorIndex( COLOR_WHITE );
-	vec4_t convcolor = { 1.0f, 1.0f, 1.0f, 0.3f };
-	int candwidth, numcands, selectedcand, firstcand, candspercol, candnumwidth;
-	int candx, candy, candsincol = 0, candprewidth;
-	char candbuf[MAX_STRING_CHARS * 10], *cands[10];
 
 	if( cls.state != CA_ACTIVE || cls.key_dest != key_message ) {
 		return;
@@ -805,36 +795,20 @@ void Con_DrawChat( int x, int y, int width, struct qfontface_s *font ) {
 	promptwidth = SCR_strWidth( say, font, 0, 0 ) + spacewidth;
 	x += promptwidth;
 	width -= promptwidth;
-	candwidth = width / 3 - spacewidth;
 
-	underlinePosition = SCR_FontUnderline( font, &underlineThickness );
+	SCR_FontUnderline( font, &underlineThickness );
 	width -= underlineThickness;
 
 	s = chat_buffer;
 	swidth = SCR_strWidth( s, font, 0, 0 );
 
-	complen = IN_IME_GetComposition( comp, sizeof( comp ), &imecursor, &convstart, &convlen );
-
-	if( complen ) {
-		compx = ( chat_linepos ? SCR_strWidth( s, font, chat_linepos, 0 ) : 0 );
-		compwidth = SCR_strWidth( comp, font, 0, TEXTDRAWFLAG_NO_COLORS );
-		totalwidth = compx + compwidth + SCR_strWidth( s + chat_linepos, font, 0, 0 );
-	} else {
-		totalwidth = swidth;
-	}
+	totalwidth = swidth;
 
 	if( chat_linepos ) {
 		if( chat_linepos == chat_bufferlen ) {
 			prewidth += swidth;
 		} else {
 			prewidth += SCR_strWidth( s, font, chat_linepos, 0 );
-		}
-	}
-	if( imecursor ) {
-		if( imecursor == complen ) {
-			prewidth += compwidth;
-		} else {
-			prewidth += SCR_strWidth( comp, font, imecursor, TEXTDRAWFLAG_NO_COLORS );
 		}
 	}
 
@@ -853,78 +827,17 @@ void Con_DrawChat( int x, int y, int width, struct qfontface_s *font ) {
 		chat_prestep = 0;
 	}
 
-	if( !complen || chat_linepos == chat_bufferlen ) {
+	if( chat_linepos == chat_bufferlen ) {
 		SCR_DrawClampString( x - chat_prestep, y, s, x, y,
 							 x + width, y + fontHeight, font, colorWhite, 0 );
 	}
 	oldchar = s[chat_linepos];
 	s[chat_linepos] = '\0';
-	if( complen && chat_linepos < chat_bufferlen ) {
-		SCR_DrawClampString( x - chat_prestep, y, s, x, y,
-							 x + width, y + fontHeight, font, colorWhite, 0 );
-	}
 	cursorcolor = Q_ColorStrLastColor( ColorIndex( COLOR_WHITE ), s, -1 );
 	s[chat_linepos] = oldchar;
-	if( complen && chat_linepos < chat_bufferlen ) {
-		SCR_DrawClampString( x - chat_prestep + compx + compwidth, y, s + chat_linepos, x, y,
-							 x + width, y + fontHeight, font, color_table[cursorcolor], 0 );
-	}
-
-	if( complen ) {
-		if( convlen ) {
-			SCR_DrawClampFillRect(
-				x - chat_prestep + compx + ( convstart ? SCR_strWidth( comp, font, convstart, TEXTDRAWFLAG_NO_COLORS ) : 0 ), y,
-				SCR_strWidth( comp + convstart, font, convlen, TEXTDRAWFLAG_NO_COLORS ), fontHeight,
-				x, y, x + width, y + fontHeight, convcolor );
-		}
-
-		SCR_DrawClampString( x - chat_prestep + compx, y, comp, x, y,
-							 x + width, y + fontHeight, font, color_table[cursorcolor], TEXTDRAWFLAG_NO_COLORS );
-
-		SCR_DrawClampFillRect(
-			x - chat_prestep + compx, y + underlinePosition,
-			compwidth, underlineThickness,
-			x, y + underlinePosition, x + width, y + underlinePosition + underlineThickness, colorWhite );
-	}
 
 	if( (int)( cls.realtime >> 8 ) & 1 ) {
 		SCR_DrawFillRect( x + prewidth - chat_prestep, y, underlineThickness, fontHeight, color_table[cursorcolor] );
-	}
-
-	// draw IME candidates
-	for( i = 0; i < 10; i++ )
-		cands[i] = candbuf + i * MAX_STRING_CHARS;
-	numcands = IN_IME_GetCandidates( cands, MAX_STRING_CHARS, 10, &selectedcand, &firstcand );
-	if( numcands ) {
-		candspercol = ( firstcand ? 3 : 5 ); // 2-column if starts from 0 (5|5), 3-column if starts from 1 (3|3|3)
-		candnumwidth = SCR_strWidth( "0 ", font, 0, 0 );
-		if( selectedcand >= 0 ) {
-			candx = x + ( candwidth + spacewidth ) * ( selectedcand / candspercol );
-			candy = y + fontHeight * ( selectedcand % candspercol + 1 );
-			SCR_DrawClampFillRect( candx, candy,
-								   candnumwidth + SCR_strWidth( cands[selectedcand], font, 0, TEXTDRAWFLAG_NO_COLORS ), fontHeight,
-								   candx, candy, candx + candwidth, candy + fontHeight, convcolor );
-		}
-
-		candx = x;
-		candy = y;
-		for( i = 0; i < numcands; i++ ) {
-			candy += fontHeight;
-
-			SCR_DrawRawChar( candx, candy, '0' + firstcand + i, font, colorWhite );
-			candprewidth = SCR_strWidth( cands[i], font, 0, TEXTDRAWFLAG_NO_COLORS ) - ( candwidth - candnumwidth );
-			clamp_low( candprewidth, 0 );
-			SCR_DrawClampString( candnumwidth + candx - candprewidth, candy, cands[i],
-								 candx + candnumwidth, candy, candx + candwidth, candy + fontHeight,
-								 font, colorWhite, TEXTDRAWFLAG_NO_COLORS );
-
-			candsincol++;
-			if( candsincol >= candspercol ) {
-				candx += candwidth + spacewidth;
-				candy = y;
-				candsincol = 0;
-			}
-		}
 	}
 
 	QMutex_Unlock( con.mutex );

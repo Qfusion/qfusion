@@ -482,35 +482,3 @@ void IN_Frame() {
 
 	IN_HandleEvents();
 }
-
-/**
- * Stubs for the IME until it's implemented through SDL and/or Cocoa.
- */
-void IN_IME_Enable( bool enable ) {
-}
-
-size_t IN_IME_GetComposition( char *str, size_t strSize, size_t *cursorPos, size_t *convStart, size_t *convLen ) {
-	if( str && strSize ) {
-		str[0] = '\0';
-	}
-	if( cursorPos ) {
-		*cursorPos = 0;
-	}
-	if( convStart ) {
-		*convStart = 0;
-	}
-	if( convLen ) {
-		*convLen = 0;
-	}
-	return 0;
-}
-
-unsigned int IN_IME_GetCandidates( char * const *cands, size_t candSize, unsigned int maxCands, int *selected, int *firstKey ) {
-	if( selected ) {
-		*selected = -1;
-	}
-	if( firstKey ) {
-		*firstKey = 1;
-	}
-	return 0;
-}

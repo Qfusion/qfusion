@@ -231,10 +231,6 @@ typedef struct {
 	void ( *L10n_LoadLangPOFile )( const char *filepath );
 	const char *( *L10n_TranslateString )( const char *string );
 
-	// input
-	unsigned int ( *IN_IME_GetCandidates )( char * const *cands, size_t candSize, unsigned int maxCands,
-											int *selected, int *firstKey );
-
 	// angelscript api
 	struct angelwrap_api_s *( *asGetAngelExport )( void );
 } cgame_import_t;

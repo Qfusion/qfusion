@@ -359,8 +359,6 @@ void CL_GameModule_Init( void ) {
 	import.L10n_TranslateString = &CL_GameModule_L10n_TranslateString;
 	import.L10n_ClearDomain = &CL_GameModule_L10n_ClearDomain;
 
-	import.IN_IME_GetCandidates = IN_IME_GetCandidates;
-
 	import.asGetAngelExport = Com_asGetAngelExport;
 
 	if( builtinAPIfunc ) {

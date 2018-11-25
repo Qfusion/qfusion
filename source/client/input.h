@@ -31,7 +31,3 @@ void IN_Restart( void );
 MouseMovement IN_GetMouseMovement();
 
 void IN_Frame( void );
-
-void IN_IME_Enable( bool enable );
-size_t IN_IME_GetComposition( char *str, size_t strSize, size_t *cursorPos, size_t *convStart, size_t *convLen );
-unsigned int IN_IME_GetCandidates( char * const *cands, size_t candSize, unsigned int maxCands, int *selected, int *firstKey );
