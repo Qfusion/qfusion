@@ -542,11 +542,6 @@ static int Shader_SetImageFlags( shader_t *shader ) {
 	if( r_shaderNoFiltering ) {
 		flags |= IT_NOFILTERING;
 	}
-	if( shader->type == SHADER_TYPE_2D || shader->type == SHADER_TYPE_2D_RAW ) {
-		flags |= IT_SYNC;
-	}
-	//if( r_shaderHasAutosprite )
-	//	flags |= IT_CLAMP;
 
 	return flags;
 }
@@ -2584,9 +2579,9 @@ create_default:
 				pass->alphagen.type = ALPHA_GEN_VERTEX;
 				pass->tcgen = TC_GEN_BASE;
 				if( type == SHADER_TYPE_2D_LINEAR ) {
-					pass->images[0] = Shader_FindImage( s, longname, IT_SPECIAL | IT_SYNC );
+					pass->images[0] = Shader_FindImage( s, longname, IT_SPECIAL );
 				} else if( type != SHADER_TYPE_2D_RAW ) {
-					pass->images[0] = Shader_FindImage( s, longname, IT_SPECIAL | IT_SYNC | IT_SRGB );
+					pass->images[0] = Shader_FindImage( s, longname, IT_SPECIAL | IT_SRGB );
 				}
 				break;
 			case SHADER_TYPE_OPAQUE_ENV:

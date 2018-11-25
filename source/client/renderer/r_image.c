@@ -660,27 +660,19 @@ static void R_TextureFormat( int flags, int samples, int *comp, int *format, int
 			*type = GL_UNSIGNED_INT;
 		}
 	} else if( flags & IT_FRAMEBUFFER ) {
-		if( samples == 4 ) {
-			*comp = *format = GL_RGBA;
-			*type = GL_UNSIGNED_BYTE;
-		} else {
-			*comp = *format = GL_RGB;
-			*type = GL_UNSIGNED_BYTE;
-		}
-
 		if( flags & IT_FLOAT ) {
 			*type = GL_FLOAT;
-			if( samples == 4 ) {
-				*comp = GL_RGBA16F;
-			} else if( samples == 3 ) {
-				*comp = GL_RGB16F;
-			}
+			*comp = samples == 4 ? GL_RGBA16F : GL_RGB16F;
+		}
+		else {
+			*type = GL_UNSIGNED_BYTE;
+			*comp = samples == 4 ? GL_RGBA : GL_RGB;
 		}
 	} else {
 		if( samples == 4 ) {
-			*format = ( flags & IT_BGRA ? GL_BGRA : GL_RGBA );
+			*format = GL_RGBA;
 		} else if( samples == 3 ) {
-			*format = ( flags & IT_BGRA ? GL_BGR : GL_RGB );
+			*format = GL_RGB;
 		} else if( samples == 2 ) {
 			*format = GL_RG;
 		} else {
@@ -848,7 +840,7 @@ static void R_Upload32( uint8_t **data, int layer,
 
 	R_UnpackAlignment( 1 );
 
-	if( ( scaledWidth == width ) && ( scaledHeight == height ) && ( flags & IT_NOMIPMAP ) ) {
+	if( scaledWidth == width && scaledHeight == height && ( flags & IT_NOMIPMAP ) ) {
 		if( flags & ( IT_ARRAY | IT_3D ) ) {
 			for( i = 0; i < numTextures; i++, target++ )
 				glTexSubImage3D( target, 0, 0, 0, layer, scaledWidth, scaledHeight, 1, format, type, data[i] );
@@ -864,8 +856,7 @@ static void R_Upload32( uint8_t **data, int layer,
 			uint8_t *mip;
 
 			if( !scaled ) {
-				scaled = R_PrepareImageBuffer( TEXTURE_RESAMPLING_BUF0,
-											   scaledWidth * scaledHeight * samples );
+				scaled = R_PrepareImageBuffer( TEXTURE_RESAMPLING_BUF0, scaledWidth * scaledHeight * samples );
 			}
 
 			// resample the texture
@@ -886,11 +877,9 @@ static void R_Upload32( uint8_t **data, int layer,
 
 			// mipmaps generation
 			if( !( flags & IT_NOMIPMAP ) && mip ) {
-				int w, h;
 				int miplevel = 0;
-
-				w = scaledWidth;
-				h = scaledHeight;
+				int w = scaledWidth;
+				int h = scaledHeight;
 				while( w > minmipsize || h > minmipsize ) {
 					R_MipMap( mip, w, h, samples, 1 );
 
@@ -1487,8 +1476,7 @@ void R_ReplaceImageLayer( image_t *image, int layer, uint8_t **pic ) {
 /*
 * R_FindImage
 *
-* Finds and loads the given image. IT_SYNC images are loaded synchronously.
-* For synchronous missing images, NULL is returned.
+* Finds and loads the given image. For synchronous missing images, NULL is returned.
 */
 image_t *R_FindImage( const char *name, const char *suffix, int flags, int minmipsize, int tags ) {
 	int i, lastDot, lastSlash, searchFlags;
