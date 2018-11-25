@@ -241,8 +241,6 @@ typedef struct {
 	cmodel_state_t *cms;                // passed to CM-functions
 
 	char *motd;
-
-	void *wakelock;
 } server_static_t;
 
 typedef struct {

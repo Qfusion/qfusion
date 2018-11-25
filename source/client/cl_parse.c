@@ -903,8 +903,6 @@ static void CL_ParseServerData( msg_t *msg ) {
 	cls.sv_pure = cls.pure_restart = false;
 #endif
 
-	cls.wakelock = Sys_AcquireWakeLock();
-
 	if( !cls.demo.playing && ( cls.serveraddress.type == NA_IP ) ) {
 		Steam_AdvertiseGame( cls.serveraddress.address.ipv4.ip, NET_GetAddressPort( &cls.serveraddress ) );
 	}

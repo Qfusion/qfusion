@@ -876,9 +876,6 @@ const char *Sys_GetPreferredLanguage( void );
 bool    Sys_IsBrowserAvailable( void );
 void    Sys_OpenURLInBrowser( const char *url );
 
-void    *Sys_AcquireWakeLock( void );
-void    Sys_ReleaseWakeLock( void *wl );
-
 int     Sys_GetCurrentProcessId( void );
 
 /*

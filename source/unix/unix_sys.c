@@ -212,21 +212,6 @@ const char *Sys_GetPreferredLanguage( void ) {
 
 #if defined( DEDICATED_ONLY )
 
-/*
-* Sys_AcquireWakeLock
-*/
-void *Sys_AcquireWakeLock( void ) {
-	return NULL;
-}
-
-/*
-* Sys_ReleaseWakeLock
-*/
-void Sys_ReleaseWakeLock( void *wl ) {
-}
-
-/*****************************************************************************/
-
 int main( int argc, char **argv ) {
 	unsigned int oldtime, newtime, time;
 

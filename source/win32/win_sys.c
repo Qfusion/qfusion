@@ -200,19 +200,6 @@ const char *Sys_GetPreferredLanguage( void ) {
 #if defined( DEDICATED_ONLY )
 
 /*
-* Sys_AcquireWakeLock
-*/
-void *Sys_AcquireWakeLock( void ) {
-	return NULL;
-}
-
-/*
-* Sys_ReleaseWakeLock
-*/
-void Sys_ReleaseWakeLock( void *wl ) {
-}
-
-/*
 * Sys_AppActivate
 */
 void Sys_AppActivate( void ) {

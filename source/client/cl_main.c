@@ -673,11 +673,6 @@ void CL_ClearState( void ) {
 	cls.gametime = 0;
 	cls.lastPacketSentTime = 0;
 	cls.lastPacketReceivedTime = 0;
-
-	if( cls.wakelock ) {
-		Sys_ReleaseWakeLock( cls.wakelock );
-		cls.wakelock = NULL;
-	}
 }
 
 

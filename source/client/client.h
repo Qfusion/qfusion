@@ -275,8 +275,6 @@ typedef struct {
 	clientRating_t *ratings;
 
 	char session[MAX_INFO_VALUE];
-
-	void *wakelock;
 } client_static_t;
 
 extern client_static_t cls;
