@@ -90,10 +90,10 @@ static void gl_debug_output_callback(
 ) {
         if(
             source == 33352 || // shader compliation errors
-            source == 131169 ||
-            source == 131185 ||
-            source == 131218 ||
-            source == 131204
+            id == 131169 ||
+            id == 131185 ||
+            id == 131218 ||
+            id == 131204
         ) {
                 return;
         }
@@ -102,6 +102,8 @@ static void gl_debug_output_callback(
                 return;
         }
 
+	Com_Printf( "%d\n", source );
+	Com_Printf( "%d\n", id );
 	Com_Printf( "GL [%s - %s]: %s", type_string( type ), severity_string( severity ), message );
 	size_t len = strlen( message );
 	if( len == 0 || message[ len - 1 ] != '\n' )
