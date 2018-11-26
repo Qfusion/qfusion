@@ -19,6 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #ifndef PUBLIC_BUILD
+
 #include "cg_local.h"
 
 // cg_test.c -- test crap
@@ -34,22 +35,9 @@ void CG_DrawTestBox( const vec3_t origin, const vec3_t mins, const vec3_t maxs, 
 	vec3_t start, end, vec;
 	float linewidth = 6;
 	mat3_t localAxis;
-#if 1
 	mat3_t ax;
 	AnglesToAxis( angles, ax );
 	Matrix3_Transpose( ax, localAxis );
-#else
-	Matrix3_Copy( axis_identity, localAxis );
-	if( angles[YAW] ) {
-		Matrix3_Rotate( localAxis, -angles[YAW], 0, 0, 1 );
-	}
-	if( angles[PITCH] ) {
-		Matrix3_Rotate( localAxis, -angles[PITCH], 0, 1, 0 );
-	}
-	if( angles[ROLL] ) {
-		Matrix3_Rotate( localAxis, -angles[ROLL], 1, 0, 0 );
-	}
-#endif
 
 	//horizontal projection
 	start[0] = mins[0];
@@ -357,15 +345,5 @@ void CG_AddTest( void ) {
 		CG_TestLights();
 	}
 }
-
-#else
-
-#ifdef _WIN32
-#ifndef __MINGW32__
-static void DisableLevel4Warning( void ) {
-	// wsw : aiwa : added to shut up VC8 level 4 warning
-}
-#endif
-#endif
 
 #endif // _DEBUG
