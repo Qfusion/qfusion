@@ -1654,8 +1654,6 @@ static void Shader_MakeCache( const char *filename ) {
 	assert( pathName );
 	Q_snprintfz( pathName, pathNameSize, "scripts/%s", filename );
 
-	Com_Printf( "...loading '%s'\n", pathName );
-
 	size = R_LoadFile( pathName, ( void ** )&temp );
 	if( !temp || size <= 0 ) {
 		goto done;

@@ -1044,12 +1044,18 @@ static void RB_EnableVertexAttribs( void ) {
 		RB_EnableVertexAttrib( VATTRIB_INSTANCE_QUAT, true );
 		glVertexAttribPointer( VATTRIB_INSTANCE_QUAT, 4, GL_FLOAT, GL_FALSE, 8 * sizeof( vec_t ),
 								   ( const GLvoid * )vbo->instancesOffset );
-		glVertexAttribDivisor( VATTRIB_INSTANCE_QUAT, 1 );
 
 		RB_EnableVertexAttrib( VATTRIB_INSTANCE_XYZS, true );
 		glVertexAttribPointer( VATTRIB_INSTANCE_XYZS, 4, GL_FLOAT, GL_FALSE, 8 * sizeof( vec_t ),
 								   ( const GLvoid * )( vbo->instancesOffset + sizeof( vec_t ) * 4 ) );
-		glVertexAttribDivisor( VATTRIB_INSTANCE_XYZS, 1 );
+		if( GLAD_GL_VERSION_3_3 ) {
+			glVertexAttribDivisor( VATTRIB_INSTANCE_QUAT, 1 );
+			glVertexAttribDivisor( VATTRIB_INSTANCE_XYZS, 1 );
+		}
+		else {
+			glVertexAttribDivisorARB( VATTRIB_INSTANCE_QUAT, 1 );
+			glVertexAttribDivisorARB( VATTRIB_INSTANCE_XYZS, 1 );
+		}
 	} else {
 		RB_EnableVertexAttrib( VATTRIB_INSTANCE_QUAT, false );
 		RB_EnableVertexAttrib( VATTRIB_INSTANCE_XYZS, false );
@@ -1077,8 +1083,14 @@ void RB_DrawElementsReal( rbDrawElements_t *de ) {
 
 	if( numInstances ) {
 		// the instance data is contained in vertex attributes
-		glDrawElementsInstanced( rb.primitive, numElems, GL_UNSIGNED_SHORT,
-									 (GLvoid *)( firstElem * sizeof( elem_t ) ), numInstances );
+		if( GLAD_GL_VERSION_3_1 ) {
+			glDrawElementsInstanced( rb.primitive, numElems, GL_UNSIGNED_SHORT,
+										 (GLvoid *)( firstElem * sizeof( elem_t ) ), numInstances );
+		}
+		else {
+			glDrawElementsInstancedARB( rb.primitive, numElems, GL_UNSIGNED_SHORT,
+										 (GLvoid *)( firstElem * sizeof( elem_t ) ), numInstances );
+		}
 
 		rb.stats.c_totalDraws++;
 	} else {

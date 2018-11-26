@@ -20,7 +20,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #pragma once
 
 #include "glad.h"
-#include "gl2to3.h"
 
 //====================================================================
 
@@ -140,7 +139,6 @@ typedef struct {
 	int maxTextureLayers;
 	int maxTextureFilterAnisotropic;
 	int maxRenderbufferSize;
-	int maxVaryingFloats;
 	int maxVertexUniformComponents;
 	int maxVertexAttribs;
 	int maxFragmentUniformComponents;
