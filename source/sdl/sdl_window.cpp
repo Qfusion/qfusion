@@ -19,11 +19,11 @@
  */
 
 #include "sdl/SDL.h"
+#include "sdl/SDL_syswm.h"
 
-#include "../qcommon/qcommon.h"
-#include "../client/renderer/glad.h"
-// #include "../client/renderer/r_local.h"
-#include "../client/xpm.h"
+#include "qcommon/qcommon.h"
+#include "client/renderer/glad.h"
+#include "client/xpm.h"
 const
 #include "../../icons/forksow.xpm"
 
