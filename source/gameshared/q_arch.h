@@ -147,9 +147,6 @@ typedef uintptr_t socket_handle_t;
 #define LIB_PREFIX "lib"
 #define LIB_SUFFIX ".so"
 
-// FIXME: move these to CMakeLists.txt
-#define LIBZ_LIBNAME "libz.so.1|libz.so"
-
 #if defined ( __FreeBSD__ )
 #define BUILDSTRING "FreeBSD"
 #define OSNAME "FreeBSD"
@@ -189,11 +186,6 @@ typedef int socket_handle_t;
 #define LIB_DIRECTORY "libs"
 #define LIB_PREFIX "lib"
 #define LIB_SUFFIX ".dylib"
-
-#define OPENAL_RUNTIME
-
-// FIXME: move these to CMakeLists.txt
-#define LIBZ_LIBNAME "libz.dylib"
 
 //Mac OSX has universal binaries, no need for cpu dependency
 #define BUILDSTRING "MacOSX"
@@ -289,19 +281,9 @@ typedef int socket_handle_t;
 
 // Generic helper definitions for shared library support
 #if defined _WIN32 || defined __CYGWIN__
-# define QF_DLL_IMPORT __declspec( dllimport )
-# define QF_DLL_EXPORT __declspec( dllexport )
-# define QF_DLL_LOCAL
+#define QF_DLL_EXPORT __declspec( dllexport )
 #else
-# if __GNUC__ >= 4
-#  define QF_DLL_IMPORT __attribute__ ( ( visibility( "default" ) ) )
-#  define QF_DLL_EXPORT __attribute__ ( ( visibility( "default" ) ) )
-#  define QF_DLL_LOCAL  __attribute__ ( ( visibility( "hidden" ) ) )
-# else
-#  define QF_DLL_IMPORT
-#  define QF_DLL_EXPORT
-#  define QF_DLL_LOCAL
-# endif
+#define QF_DLL_EXPORT __attribute__ ( ( visibility( "default" ) ) )
 #endif
 
 #ifdef __cplusplus
