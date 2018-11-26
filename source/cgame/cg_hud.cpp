@@ -1882,7 +1882,7 @@ static bool CG_LFuncDrawHelpMessage( struct cg_layoutnode_s *commandnode, struct
 						if( !cg.motd ) {
 							return true;
 						}
-						helpmessage = CG_TranslateString( "Message of the day:" );
+						helpmessage = "Message of the day:";
 						break;
 					case 2:
 						helpmessage = cg.motd;
@@ -1923,7 +1923,7 @@ static bool CG_LFuncDrawString( struct cg_layoutnode_s *commandnode, struct cg_l
 		return false;
 	}
 	trap_SCR_DrawString( layout_cursor_x, layout_cursor_y, layout_cursor_align,
-						 CG_TranslateString( string ), CG_GetLayoutCursorFont(), layout_cursor_color );
+						 string, CG_GetLayoutCursorFont(), layout_cursor_color );
 	return true;
 }
 
@@ -1939,7 +1939,6 @@ static bool CG_LFuncDrawStringRepeat_x( const char *string, int num_draws ) {
 		return false;
 	}
 
-	//string = CG_TranslateString( string );
 	string_len = strlen( string );
 
 	pos = 0;
@@ -1984,8 +1983,7 @@ static bool CG_LFuncDrawItemNameFromIndex( struct cg_layoutnode_s *commandnode, 
 	if( !item || !item->name ) {
 		return false;
 	}
-	trap_SCR_DrawString( layout_cursor_x, layout_cursor_y, layout_cursor_align,
-						 CG_TranslateString( item->name ), CG_GetLayoutCursorFont(), layout_cursor_color );
+	trap_SCR_DrawString( layout_cursor_x, layout_cursor_y, layout_cursor_align, item->name, CG_GetLayoutCursorFont(), layout_cursor_color );
 	return true;
 }
 

@@ -195,11 +195,11 @@ void CG_GetBoundKeysString( const char *cmd, char *keys, size_t keysSize ) {
 	}
 
 	if( !numKeys ) {
-		keyNames[0] = CG_TranslateString( "UNBOUND" );
+		keyNames[0] = "UNBOUND";
 	}
 
 	if( numKeys == 2 ) {
-		Q_snprintfz( keys, keysSize, CG_TranslateString( "%s or %s" ), keyNames[0], keyNames[1] );
+		Q_snprintfz( keys, keysSize, "%s or %s", keyNames[0], keyNames[1] );
 	} else {
 		Q_strncpyz( keys, keyNames[0], keysSize );
 	}

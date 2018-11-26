@@ -275,73 +275,6 @@ char *_CG_CopyString( const char *in, const char *filename, int fileline ) {
 }
 
 /*
-* CG_InitL10n
-*/
-static void CG_InitL10n( void ) {
-	char mapl10n[10 + MAX_CONFIGSTRING_CHARS];
-
-	trap_L10n_ClearDomain();
-	trap_L10n_LoadLangPOFile( "l10n/cgame" );
-
-	Q_strncpyz( mapl10n, "l10n/", sizeof( mapl10n ) );
-	Q_strncpyz( mapl10n + 5, cgs.configStrings[CS_WORLDMODEL], sizeof( mapl10n ) - 5 );
-	COM_StripExtension( mapl10n );
-
-	if( mapl10n[0] ) {
-		trap_L10n_LoadLangPOFile( mapl10n );
-	}
-}
-
-/*
-* CG_TranslateString
-*/
-const char *CG_TranslateString( const char *string ) {
-	const char *translation;
-
-	translation = trap_L10n_TranslateString( string );
-	if( !translation ) {
-		return string;
-	}
-	return translation;
-}
-
-/*
-* CG_TranslateColoredString
-*/
-const char *CG_TranslateColoredString( const char *string, char *dst, size_t dst_size ) {
-	char c;
-	int colorindex = -1;
-	const char *l10n, *tmp;
-
-	if( dst_size < 3 ) {
-		return string;
-	}
-
-	tmp = string;
-	if( Q_GrabCharFromColorString( &tmp, &c, &colorindex ) == GRABCHAR_COLOR ) {
-		// attempt to translate the remaining string
-		l10n = trap_L10n_TranslateString( tmp );
-	} else {
-		l10n = trap_L10n_TranslateString( string );
-	}
-
-	if( l10n ) {
-		int offset = 0;
-
-		if( colorindex >= 0 ) {
-			dst[0] = '^';
-			dst[1] = '0' + colorindex;
-			offset = 2;
-		}
-		Q_strncpyz( &dst[offset], l10n, dst_size - offset );
-		return dst;
-	}
-
-	Q_strncpyz( dst, string, dst_size );
-	return dst;
-}
-
-/*
 * CG_RegisterWeaponModels
 */
 static void CG_RegisterWeaponModels( void ) {
@@ -1002,9 +935,6 @@ void CG_Init( const char *serverName, unsigned int playerNum,
 	// register fonts here so loading screen works
 	CG_RegisterFonts();
 	cgs.shaderWhite = trap_R_RegisterPic( "$whiteimage" );
-
-	// l10n
-	CG_InitL10n();
 
 	CG_RegisterCGameCommands();
 	CG_RegisterLightStyles();

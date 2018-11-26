@@ -463,20 +463,4 @@ inline int AsyncStream_PerformRequest( const char *url, const char *method, cons
 inline size_t GetBaseServerURL( char *buffer, size_t buffer_size ) {
 	return UI_IMPORT.GetBaseServerURL( buffer, buffer_size );
 }
-
-inline const char *L10n_TranslateString( const char *string ) {
-	return UI_IMPORT.L10n_TranslateString( string );
-}
-
-inline void L10n_ClearDomain( void ) {
-	UI_IMPORT.L10n_ClearDomain();
-}
-
-inline void L10n_LoadLangPOFile( const char *filepath ) {
-	UI_IMPORT.L10n_LoadLangPOFile( filepath );
-}
-
-inline const char *L10n_GetUserLanguage( void ) {
-	return UI_IMPORT.L10n_GetUserLanguage();
-}
 }

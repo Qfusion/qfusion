@@ -30,7 +30,6 @@
 #include "input.h"
 #include "keys.h"
 #include "console.h"
-#include "l10n.h"
 
 typedef struct shader_s shader_t;
 typedef struct qfontface_s qfontface_t;

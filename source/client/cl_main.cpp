@@ -2442,9 +2442,6 @@ void CL_Init( void ) {
 
 	Con_Init();
 
-	// init localization subsystem
-	L10n_Init();
-
 	Steam_Init();
 
 	VID_Init();
@@ -2515,7 +2512,6 @@ void CL_Shutdown( void ) {
 	CL_GameModule_Shutdown();
 	CL_SoundModule_Shutdown();
 	CL_ShutdownInput();
-	L10n_Shutdown();
 	VID_Shutdown();
 
 	CL_ShutdownMedia();

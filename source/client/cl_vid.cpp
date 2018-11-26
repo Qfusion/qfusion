@@ -389,8 +389,6 @@ void VID_Init() {
 	FTLIB_LoadLibrary( false );
 	FTLIB_PrecacheFonts( true );
 
-	L10n_LoadLangPOFile( "common", "l10n" );
-
 	CL_InitMedia();
 
 	cls.disable_screen = 0;
@@ -424,8 +422,6 @@ void VID_Shutdown() {
 	CL_ShutdownMedia();
 
 	FTLIB_FreeFonts( false );
-
-	L10n_ClearDomains();
 
 	RF_Shutdown( false );
 	Mem_FreePool( &vid_ref_mempool );

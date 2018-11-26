@@ -17,7 +17,6 @@ void BindAPI( ASInterface *as ) {
 	PrebindEventListener( as );
 	PrebindElement( as );
 	PrebindWindow( as );
-	PrebindL10n( as );
 
 	PrebindOptionsForm( as );
 	PrebindServerbrowser( as );
@@ -32,7 +31,6 @@ void BindAPI( ASInterface *as ) {
 	BindEvent( as );
 	BindElement( as );
 	BindWindow( as );
-	BindL10n( as );
 
 	BindOptionsForm( as );
 	BindServerbrowser( as );

@@ -95,9 +95,8 @@ int scr_erase_center;
 */
 void CG_CenterPrint( const char *str ) {
 	char *s;
-	char l10n_buffer[sizeof( scr_centerstring )];
 
-	Q_strncpyz( scr_centerstring, CG_TranslateColoredString( str, l10n_buffer, sizeof( l10n_buffer ) ), sizeof( scr_centerstring ) );
+	Q_strncpyz( scr_centerstring, str, sizeof( scr_centerstring ) );
 	scr_centertime_off = cg_centerTime->value * 1000.0f;
 
 	// count the number of lines for centering

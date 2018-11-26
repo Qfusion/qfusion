@@ -333,7 +333,6 @@ void RocketModule::registerCustoms() {
 	registerElement( "img", GetImageWidgetInstancer() );
 	registerElement( "field", GetElementFieldInstancer() );
 	registerElement( "iframe", GetIFrameWidgetInstancer() );
-	registerElement( "l10n", GetElementL10nInstancer() );
 	registerElement( "blur", GetElementBlurInstancer() );
 
 	//

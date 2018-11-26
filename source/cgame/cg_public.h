@@ -226,11 +226,6 @@ typedef struct {
 	void *( *Mem_Alloc )( size_t size, const char *filename, int fileline );
 	void ( *Mem_Free )( void *data, const char *filename, int fileline );
 
-	// l10n
-	void ( *L10n_ClearDomain )( void );
-	void ( *L10n_LoadLangPOFile )( const char *filepath );
-	const char *( *L10n_TranslateString )( const char *string );
-
 	// angelscript api
 	struct angelwrap_api_s *( *asGetAngelExport )( void );
 } cgame_import_t;

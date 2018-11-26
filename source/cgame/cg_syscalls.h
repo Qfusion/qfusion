@@ -488,18 +488,6 @@ static inline void trap_MemFree( void *data, const char *filename, int fileline 
 	CGAME_IMPORT.Mem_Free( data, filename, fileline );
 }
 
-static inline void trap_L10n_ClearDomain( void ) {
-	CGAME_IMPORT.L10n_ClearDomain();
-}
-
-static inline void trap_L10n_LoadLangPOFile( const char *filepath ) {
-	CGAME_IMPORT.L10n_LoadLangPOFile( filepath );
-}
-
-static inline const char *trap_L10n_TranslateString( const char *string ) {
-	return CGAME_IMPORT.L10n_TranslateString( string );
-}
-
 static inline struct angelwrap_api_s *trap_asGetAngelExport( void ) {
 	return CGAME_IMPORT.asGetAngelExport();
 }

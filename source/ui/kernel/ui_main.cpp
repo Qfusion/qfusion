@@ -194,23 +194,8 @@ void UI_Main::preloadUI( void ) {
 		navigator->setDefaultPath( APP_UI_BASEPATH );
 	}
 
-	// load translation strings
-
-	trap::L10n_ClearDomain();
-
-	// load base UI strings: l10n/ui
-	trap::L10n_LoadLangPOFile( "l10n/ui" );
-
-	// load strings provided by the theme: e.g. ui/l10n/porkui
-
 	// initialize with default document
-
 	navigator = navigations[UI_CONTEXT_MAIN].front();
-
-	String l10nLocalPath( navigator->getDefaultPath().c_str() );
-	l10nLocalPath += "l10n";
-	l10nLocalPath.Erase( 0, 1 );
-	trap::L10n_LoadLangPOFile( l10nLocalPath.CString() );
 
 	// postpone displaying the document until the first valid refresh state
 	navigator->pushDocument( ui_index, false, false );

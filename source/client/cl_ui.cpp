@@ -116,29 +116,6 @@ static void CL_UIModule_AsyncStream_Shutdown( void ) {
 	ui_async_stream = NULL;
 }
 
-#define UI_L10N_DOMAIN  "ui"
-
-/*
-* CL_UIModule_L10n_LoadLangPOFile
-*/
-static void CL_UIModule_L10n_LoadLangPOFile( const char *filepath ) {
-	L10n_LoadLangPOFile( UI_L10N_DOMAIN, filepath );
-}
-
-/*
-* CL_UIModule_L10n_TranslateString
-*/
-static const char *CL_UIModule_L10n_TranslateString( const char *string ) {
-	return L10n_TranslateString( UI_L10N_DOMAIN, string );
-}
-
-/*
-* CL_UIModule_L10n_ClearDomain
-*/
-static void CL_UIModule_L10n_ClearDomain( void ) {
-	L10n_ClearDomain( UI_L10N_DOMAIN );
-}
-
 /*
 * CL_UIModule_PlayerNum
 */
@@ -295,11 +272,6 @@ void CL_UIModule_Init( void ) {
 
 	import.asGetAngelExport = Com_asGetAngelExport;
 
-	import.L10n_LoadLangPOFile = &CL_UIModule_L10n_LoadLangPOFile;
-	import.L10n_TranslateString = &CL_UIModule_L10n_TranslateString;
-	import.L10n_ClearDomain = &CL_UIModule_L10n_ClearDomain;
-	import.L10n_GetUserLanguage = &L10n_GetUserLanguage;
-
 #ifndef UI_HARD_LINKED
 	funcs[0].name = "GetUIAPI";
 	funcs[0].funcPointer = ( void ** ) &GetUIAPI;
@@ -347,8 +319,6 @@ void CL_UIModule_Shutdown( void ) {
 	Mem_FreePool( &ui_mempool );
 	Com_UnloadLibrary( &module_handle );
 	uie = NULL;
-
-	CL_UIModule_L10n_ClearDomain();
 }
 
 /*

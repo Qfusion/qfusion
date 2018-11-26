@@ -198,12 +198,6 @@ typedef struct {
 	int ( *AsyncStream_PerformRequest )( const char *url, const char *method, const char *data, int timeout,
 										 ui_async_stream_read_cb_t read_cb, ui_async_stream_done_cb_t done_cb, void *privatep );
 	size_t ( *GetBaseServerURL )( char *buffer, size_t buffer_size );
-
-	// l10n
-	void ( *L10n_ClearDomain )( void );
-	void ( *L10n_LoadLangPOFile )( const char *filepath );
-	const char *( *L10n_TranslateString )( const char *string );
-	const char *( *L10n_GetUserLanguage )( void );
 } ui_import_t;
 
 typedef struct {

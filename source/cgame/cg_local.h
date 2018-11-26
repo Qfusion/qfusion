@@ -893,9 +893,6 @@ void CG_OverrideWeapondef( int index, const char *cstring );
 
 void CG_StartBackgroundTrack( void );
 
-const char *CG_TranslateString( const char *string );
-const char *CG_TranslateColoredString( const char *string, char *dst, size_t dst_size );
-
 //
 // cg_svcmds.c
 //

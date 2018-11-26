@@ -70,23 +70,23 @@ static void CG_SC_CenterPrint( void ) {
 */
 static void CG_SC_CenterPrintFormat( void ) {
 	if( trap_Cmd_Argc() == 8 ) {
-		CG_CenterPrint( va( CG_TranslateString( trap_Cmd_Argv( 1 ) ), trap_Cmd_Argv( 2 ), trap_Cmd_Argv( 3 ),
+		CG_CenterPrint( va( trap_Cmd_Argv( 1 ), trap_Cmd_Argv( 2 ), trap_Cmd_Argv( 3 ),
 							trap_Cmd_Argv( 4 ), trap_Cmd_Argv( 5 ), trap_Cmd_Argv( 6 ), trap_Cmd_Argv( 7 ) ) );
 	} else if( trap_Cmd_Argc() == 7 ) {
-		CG_CenterPrint( va( CG_TranslateString( trap_Cmd_Argv( 1 ) ), trap_Cmd_Argv( 2 ), trap_Cmd_Argv( 3 ),
+		CG_CenterPrint( va( trap_Cmd_Argv( 1 ), trap_Cmd_Argv( 2 ), trap_Cmd_Argv( 3 ),
 							trap_Cmd_Argv( 4 ), trap_Cmd_Argv( 5 ), trap_Cmd_Argv( 6 ) ) );
 	} else if( trap_Cmd_Argc() == 6 ) {
-		CG_CenterPrint( va( CG_TranslateString( trap_Cmd_Argv( 1 ) ), trap_Cmd_Argv( 2 ), trap_Cmd_Argv( 3 ),
+		CG_CenterPrint( va( trap_Cmd_Argv( 1 ), trap_Cmd_Argv( 2 ), trap_Cmd_Argv( 3 ),
 							trap_Cmd_Argv( 4 ), trap_Cmd_Argv( 5 ) ) );
 	} else if( trap_Cmd_Argc() == 5 ) {
-		CG_CenterPrint( va( CG_TranslateString( trap_Cmd_Argv( 1 ) ), trap_Cmd_Argv( 2 ), trap_Cmd_Argv( 3 ),
+		CG_CenterPrint( va( trap_Cmd_Argv( 1 ), trap_Cmd_Argv( 2 ), trap_Cmd_Argv( 3 ),
 							trap_Cmd_Argv( 4 ) ) );
 	} else if( trap_Cmd_Argc() == 4 ) {
-		CG_CenterPrint( va( CG_TranslateString( trap_Cmd_Argv( 1 ) ), trap_Cmd_Argv( 2 ), trap_Cmd_Argv( 3 ) ) );
+		CG_CenterPrint( va( trap_Cmd_Argv( 1 ), trap_Cmd_Argv( 2 ), trap_Cmd_Argv( 3 ) ) );
 	} else if( trap_Cmd_Argc() == 3 ) {
-		CG_CenterPrint( va( CG_TranslateString( trap_Cmd_Argv( 1 ) ), trap_Cmd_Argv( 2 ) ) );
+		CG_CenterPrint( va( trap_Cmd_Argv( 1 ), trap_Cmd_Argv( 2 ) ) );
 	} else if( trap_Cmd_Argc() == 2 ) {
-		CG_CenterPrint( CG_TranslateString( trap_Cmd_Argv( 1 ) ) ); // theoretically, shouldn't happen
+		CG_CenterPrint( trap_Cmd_Argv( 1 ) ); // theoretically, shouldn't happen
 	}
 }
 
@@ -462,18 +462,8 @@ static const char *CG_MatchMessageString( matchmessage_t mm ) {
 * CG_SC_MatchMessage
 */
 static void CG_SC_MatchMessage( void ) {
-	matchmessage_t mm;
-	const char *matchmessage;
-
-	cg.matchmessage = NULL;
-
-	mm = (matchmessage_t)atoi( trap_Cmd_Argv( 1 ) );
-	matchmessage = CG_MatchMessageString( mm );
-	if( !matchmessage || !matchmessage[0] ) {
-		return;
-	}
-
-	cg.matchmessage = CG_TranslateString( matchmessage );
+	matchmessage_t mm = (matchmessage_t)atoi( trap_Cmd_Argv( 1 ) );
+	cg.matchmessage = CG_MatchMessageString( mm );
 }
 
 /*
@@ -481,8 +471,6 @@ static void CG_SC_MatchMessage( void ) {
 */
 static void CG_SC_HelpMessage( void ) {
 	unsigned index;
-	const char *id;
-	const char *helpmessage = NULL;
 	unsigned outlen = 0;
 	int c;
 
@@ -493,13 +481,9 @@ static void CG_SC_HelpMessage( void ) {
 		return;
 	}
 
-	id = cgs.configStrings[CS_HELPMESSAGES + index - 1];
-	if( !id[0] ) {
+	const char *helpmessage = cgs.configStrings[CS_HELPMESSAGES + index - 1];
+	if( !helpmessage[0] ) {
 		return;
-	}
-
-	if( !helpmessage ) {
-		helpmessage = CG_TranslateString( id );
 	}
 
 	while( ( c = helpmessage[0] ) && ( outlen < MAX_HELPMESSAGE_CHARS - 1 ) ) {
@@ -729,7 +713,7 @@ void CG_AddAward( const char *str ) {
 		return;
 	}
 
-	Q_strncpyz( cg.award_lines[cg.award_head % MAX_AWARD_LINES], CG_TranslateString( str ), MAX_CONFIGSTRING_CHARS );
+	Q_strncpyz( cg.award_lines[cg.award_head % MAX_AWARD_LINES], str, MAX_CONFIGSTRING_CHARS );
 	cg.award_times[cg.award_head % MAX_AWARD_LINES] = cg.time;
 	cg.award_head++;
 }

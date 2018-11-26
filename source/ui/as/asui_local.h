@@ -96,10 +96,6 @@ void UnbindWindow( void );
 // as_bind_url.cpp
 void PrebindURL( ASInterface *as );
 void BindURL( ASInterface *as );
-
-// as_bind_l10n.cpp
-void PrebindL10n( ASInterface *as );
-void BindL10n( ASInterface *as );
 }
 
 // type definitions required by ASBind
