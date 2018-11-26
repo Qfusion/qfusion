@@ -82,14 +82,6 @@ cmodel_state_t *CM_New( void *mempool );
 void CM_AddReference( cmodel_state_t *cms );
 void CM_ReleaseReference( cmodel_state_t *cms );
 
-/*
-* CM_ThreadLocalCopy
-*
-* Returns a shallow copy of the collision model instance, for performing
-* ray and box tracing in a thread-safe manner.
-*/
-cmodel_state_t *CM_ThreadLocalCopy( cmodel_state_t *cms, void *mempool );
-
 //
 void CM_Init( void );
 void CM_Shutdown( void );

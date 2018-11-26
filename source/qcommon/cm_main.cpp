@@ -946,22 +946,6 @@ void CM_ReleaseReference( cmodel_state_t *cms ) {
 }
 
 /*
-* CM_ThreadLocalCopy
-*/
-cmodel_state_t *CM_ThreadLocalCopy( cmodel_state_t *cms, void *mempool ) {
-	cmodel_state_t *copy;
-
-	if( cms->parent ) {
-		Com_Error( ERR_FATAL, "CM_ThreadLocalCopy: tried to copy a thread-local model" );
-		return NULL;
-	}
-
-	copy = CM_New_( cms, mempool );
-	CM_AllocateCheckCounts( copy );
-	return copy;
-}
-
-/*
 * CM_Init
 */
 void CM_Init( void ) {
