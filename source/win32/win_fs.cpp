@@ -112,7 +112,7 @@ const char *Sys_FS_FindFirst( const char *path, unsigned musthave, unsigned cant
 		Sys_Error( "Sys_FindFirst without close" );
 	}
 
-	findbase = Mem_TempMalloc( sizeof( char ) * ( strlen( path ) + 1 ) );
+	findbase = ( char * ) Mem_TempMalloc( sizeof( char ) * ( strlen( path ) + 1 ) );
 	Q_strncpyz( findbase, path, ( strlen( path ) + 1 ) );
 	COM_StripFilename( findbase );
 
@@ -135,7 +135,7 @@ const char *Sys_FS_FindFirst( const char *path, unsigned musthave, unsigned cant
 				Mem_TempFree( findpath );
 			}
 			findpath_size = size * 2; // extra space to reduce reallocs
-			findpath = Mem_TempMalloc( findpath_size );
+			findpath = ( char * ) Mem_TempMalloc( findpath_size );
 		}
 
 		Q_snprintfz( findpath, findpath_size, "%s/%s%s", findbase, finame,
@@ -173,7 +173,7 @@ const char *Sys_FS_FindNext( unsigned musthave, unsigned canthave ) {
 					Mem_TempFree( findpath );
 				}
 				findpath_size = size * 2; // extra space to reduce reallocs
-				findpath = Mem_TempMalloc( findpath_size );
+				findpath = ( char * ) Mem_TempMalloc( findpath_size );
 			}
 
 			Q_snprintfz( findpath, findpath_size, "%s/%s%s", findbase, finame,

@@ -139,7 +139,7 @@ bool Sys_Atomic_CAS( volatile int *value, int oldval, int newval, qmutex_t *mute
 */
 int Sys_CondVar_Create( qcondvar_t **pcond ) {
 	qcondvar_t *cond;
-	HANDLE *e = NULL;
+	HANDLE e = NULL;
 
 	if( !pcond ) {
 		return -1;
