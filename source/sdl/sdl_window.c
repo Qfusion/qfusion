@@ -19,6 +19,7 @@
  */
 
 #include "sdl/SDL.h"
+#include "sdl/SDL_syswm.h"
 
 #include "../qcommon/qcommon.h"
 #include "../client/renderer/glad.h"
