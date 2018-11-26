@@ -18,8 +18,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#include "qthreads.h"
-
 #define MAX_CM_LEAFS        ( MAX_MAP_LEAFS )
 
 #define CM_SUBDIV_LEVEL     ( 16 )
@@ -106,7 +104,6 @@ typedef struct {
 
 struct cmodel_state_s {
 	volatile int refcount;
-	qmutex_t *refcount_mutex;
 
 	int checkcount;
 	int floodvalid;

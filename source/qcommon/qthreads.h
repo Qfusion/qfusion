@@ -18,10 +18,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#ifndef Q_THREADS_H
-#define Q_THREADS_H
-
-//#define Q_THREADS_HAVE_CANCEL
+#pragma once
 
 struct qmutex_s;
 typedef struct qmutex_s qmutex_t;
@@ -60,7 +57,5 @@ int QBufPipe_ReadCmds( qbufPipe_t *queue, unsigned( **cmdHandlers )( const void 
 void QBufPipe_Wait( qbufPipe_t *queue, int ( *read )( qbufPipe_t *, unsigned( ** )( const void * ), bool ),
 					unsigned( **cmdHandlers )( const void * ), unsigned timeout_msec );
 
-int QAtomic_Add( volatile int *value, int add, qmutex_t *mutex );
-bool QAtomic_CAS( volatile int *value, int oldval, int newval, qmutex_t *mutex );
-
-#endif // Q_THREADS_H
+int QAtomic_Add( volatile int *value, int add );
+bool QAtomic_CAS( volatile int *value, int oldval, int newval );
