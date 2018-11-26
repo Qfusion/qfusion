@@ -31,12 +31,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "win_input.h"
 
-enum {
-	MWHEEL_UNKNOWN,
-	MWHEEL_DINPUT,
-	MWHEEL_WM
-} mwheel_type;
-
 extern HINSTANCE global_hInstance;
 
 extern HWND cl_hwnd, cl_parent_hwnd;
