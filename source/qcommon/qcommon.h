@@ -307,7 +307,6 @@ typedef struct { const char *name; void **funcPointer; } dllfunc_t;
 
 void Com_UnloadLibrary( void **lib );
 void *Com_LoadLibrary( const char *name, dllfunc_t *funcs ); // NULL-terminated array of functions
-void *Com_LoadSysLibrary( const char *name, dllfunc_t *funcs ); // NULL-terminated array of functions
 void *Com_LibraryProcAddress( void *lib, const char *name );
 
 void *Com_LoadGameLibrary( const char *basename, const char *apifuncname, void **handle, void *parms,

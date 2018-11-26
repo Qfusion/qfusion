@@ -59,10 +59,6 @@ typedef struct {
 	uint64_t ( *Sys_Microseconds )( void );
 	void ( *Sys_Sleep )( unsigned int milliseconds );
 
-	void *( *Com_LoadSysLibrary )( const char *name, dllfunc_t * funcs );
-	void ( *Com_UnloadLibrary )( void **lib );
-	void *( *Com_LibraryProcAddress )( void *lib, const char *name );
-
 	int ( *FS_FOpenFile )( const char *filename, int *filenum, int mode );
 	int ( *FS_FOpenAbsoluteFile )( const char *filename, int *filenum, int mode );
 	int ( *FS_Read )( void *buffer, size_t len, int file );
