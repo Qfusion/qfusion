@@ -658,7 +658,7 @@ int CG_HorizontalMovementForAlign( int align );
 
 void CG_DrawHUDModel( int x, int y, int align, int w, int h, struct model_s *model, struct shader_s *shader, float yawspeed );
 void CG_DrawHUDRect( int x, int y, int align, int w, int h, int val, int maxval, vec4_t color, struct shader_s *shader );
-void CG_DrawPicBar( int x, int y, int width, int height, int align, float percent, struct shader_s *shader, vec4_t backColor, vec4_t color );
+void CG_DrawPicBar( int x, int y, int width, int height, int align, float percent, struct shader_s *shader, const vec4_t backColor, const vec4_t color );
 
 //
 // cg_media.c
@@ -698,7 +698,7 @@ void CG_Predict_ChangeWeapon( int new_weapon );
 void CG_PredictMovement( void );
 void CG_CheckPredictionError( void );
 void CG_BuildSolidList( void );
-void CG_Trace( trace_t *t, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int ignore, int contentmask );
+void CG_Trace( trace_t *t, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int ignore, int contentmask );
 int CG_PointContents( const vec3_t point );
 void CG_Predict_TouchTriggers( pmove_t *pm, vec3_t previous_origin );
 
@@ -857,8 +857,6 @@ extern cvar_t *cg_teamPLAYERScolor;
 extern cvar_t *cg_teamPLAYERScolorForce;
 extern cvar_t *cg_teamALPHAcolor;
 extern cvar_t *cg_teamBETAcolor;
-
-extern cvar_t *cg_flashWindowCount;
 
 #define CG_Malloc( size ) trap_MemAlloc( size, __FILE__, __LINE__ )
 #define CG_Free( data ) trap_MemFree( data, __FILE__, __LINE__ )
@@ -1051,8 +1049,8 @@ void CG_HighVelImpactPuffParticles( const vec3_t org, const vec3_t dir, int coun
 // cg_test.c - debug only
 //
 #ifndef PUBLIC_BUILD
-void CG_DrawTestLine( vec3_t start, vec3_t end );
-void CG_DrawTestBox( vec3_t origin, vec3_t mins, vec3_t maxs, vec3_t angles );
+void CG_DrawTestLine( const vec3_t start, const vec3_t end );
+void CG_DrawTestBox( const vec3_t origin, const vec3_t mins, const vec3_t maxs, const vec3_t angles );
 void CG_AddTest( void );
 #endif
 

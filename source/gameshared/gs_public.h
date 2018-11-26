@@ -18,16 +18,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#ifndef __GS_PUBLIC_H
-#define __GS_PUBLIC_H
+#pragma once
 
 #include "gs_ref.h"
 
 // shared callbacks
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 typedef struct {
 #ifndef _MSC_VER
@@ -40,9 +35,9 @@ typedef struct {
 
 	void *( *Malloc )( size_t size );
 	void ( *Free )( void *data );
-	void ( *Trace )( trace_t *t, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int ignore, int contentmask, int timeDelta );
+	void ( *Trace )( trace_t *t, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int ignore, int contentmask, int timeDelta );
 	entity_state_t *( *GetEntityState )( int entNum, int deltaTime );
-	int ( *PointContents )( vec3_t point, int timeDelta );
+	int ( *PointContents )( const vec3_t point, int timeDelta );
 	void ( *PredictedEvent )( int entNum, int ev, int parm );
 	void ( *PMoveTouchTriggers )( pmove_t *pm, vec3_t previous_origin );
 	const char *( *GetConfigString )( int index );
@@ -454,31 +449,31 @@ typedef enum {
 // gsitem_t->type
 // define as bitflags values so they can be masked
 typedef enum {
-	IT_WEAPON = 1
-	, IT_AMMO = 2
-	, IT_ARMOR = 4
-	, IT_POWERUP = 8
-	, IT_HEALTH = 64
+	IT_WEAPON = 1,
+	IT_AMMO = 2,
+	IT_ARMOR = 4,
+	IT_POWERUP = 8,
+	IT_HEALTH = 64,
 } itemtype_t;
 
 typedef struct gitem_s {
 	//header
-	char *classname;        // spawning name
+	const char *classname;        // spawning name
 	int tag;
 	itemtype_t type;
 	int flags;              // actions the item does in the game
 
 	//media
-	char *world_model[MAX_ITEM_MODELS];
-	char *icon;
-	char *simpleitem;       // Kurim : we use different images for representing simpleitems
-	char *pickup_sound;
+	const char *world_model[MAX_ITEM_MODELS];
+	const char *icon;
+	const char *simpleitem;       // Kurim : we use different images for representing simpleitems
+	const char *pickup_sound;
 	int effects;
 
 
-	char *name;      // for printing on pickup
-	char *shortname;       // for printing on messages
-	char *color;            // for printing on messages
+	const char *name;      // for printing on pickup
+	const char *shortname; // for printing on messages
+	const char *color;     // for printing on messages
 
 	int quantity;           // how much it gives at picking
 	int inventory_max;      // how much quantity of this the inventory can carry
@@ -490,9 +485,9 @@ typedef struct gitem_s {
 	void *info;             // miscelanea info goes pointed in here
 
 	// space separated string of stuff to precache that's not mentioned above
-	char *precache_models;
-	char *precache_sounds;
-	char *precache_images;
+	const char *precache_models;
+	const char *precache_sounds;
+	const char *precache_images;
 } gsitem_t;
 
 extern gsitem_t itemdefs[];
@@ -1002,7 +997,7 @@ enum {
 //===============================================================
 // gs_weapons.c
 
-extern char *gs_weaponStateNames[];
+extern const char *gs_weaponStateNames[];
 
 enum {
 	WEAPON_STATE_READY,
@@ -1053,7 +1048,7 @@ typedef struct firedef_s {
 } firedef_t;
 
 typedef struct {
-	char *name;
+	const char *name;
 	int weapon_id;
 
 	firedef_t firedef;
@@ -1090,9 +1085,3 @@ bool G_GetLaserbeamPoint( gs_laserbeamtrail_t *trail, player_state_t *playerStat
 // gs_weapondefs.c
 
 extern firedef_t ammoFireDefs[];
-
-#ifdef __cplusplus
-};
-#endif
-
-#endif // __GS_PUBLIC_H

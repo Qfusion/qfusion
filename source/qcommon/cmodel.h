@@ -23,7 +23,9 @@ typedef struct cmodel_state_s cmodel_state_t;
 extern cvar_t *cm_noCurves;
 
 // debug/performance counter vars
-int c_pointcontents, c_traces, c_brush_traces;
+extern int c_traces;
+extern int c_brush_traces;
+extern int c_pointcontents;
 
 struct cmodel_s *CM_LoadMap( cmodel_state_t *cms, const char *name, bool clientload, unsigned *checksum );
 struct cmodel_s *CM_InlineModel( cmodel_state_t *cms, int num ); // 1, 2, etc
@@ -42,10 +44,10 @@ struct cmodel_s *CM_OctagonModelForBBox( cmodel_state_t *cms, vec3_t mins, vec3_
 void CM_InlineModelBounds( cmodel_state_t *cms, struct cmodel_s *cmodel, vec3_t mins, vec3_t maxs );
 
 // returns an ORed contents mask
-int CM_TransformedPointContents( cmodel_state_t *cms, vec3_t p, struct cmodel_s *cmodel, vec3_t origin, vec3_t angles );
+int CM_TransformedPointContents( cmodel_state_t *cms, const vec3_t p, struct cmodel_s *cmodel, const vec3_t origin, const vec3_t angles );
 
-void CM_TransformedBoxTrace( cmodel_state_t *cms, trace_t *tr, vec3_t start, vec3_t end, vec3_t mins, vec3_t maxs,
-							 struct cmodel_s *cmodel, int brushmask, vec3_t origin, vec3_t angles );
+void CM_TransformedBoxTrace( cmodel_state_t *cms, trace_t *tr, const vec3_t start, const vec3_t end, const vec3_t mins, const vec3_t maxs,
+							 struct cmodel_s *cmodel, int brushmask, const vec3_t origin, const vec3_t angles );
 
 int CM_ClusterRowSize( cmodel_state_t *cms );
 int CM_AreaRowSize( cmodel_state_t *cms );

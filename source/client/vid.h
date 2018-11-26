@@ -39,7 +39,7 @@ void VID_CheckChanges( void );
 void VID_Restart( bool verbose, bool soundRestart );
 // The sound module may require the handle when using directsound
 void *VID_GetWindowHandle( void );
-void VID_FlashWindow( int count );
+void VID_FlashWindow();
 bool VID_GetDefaultMode( int *width, int *height );
 unsigned int VID_GetSysModes( vidmode_t *modes );
 bool VID_GetModeInfo( int *width, int *height, unsigned int mode );

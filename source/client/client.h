@@ -57,14 +57,14 @@ typedef struct {
 	cl_timedemo_t timedemo;
 
 	int cmdNum;                     // current cmd
-	usercmd_t *cmds;                // [CMD_BACKUP] each mesage will send several old cmds
-	int *cmd_time;                  // [CMD_BACKUP] time sent, for calculating pings
+	usercmd_t cmds[CMD_BACKUP];     // each mesage will send several old cmds
+	int cmd_time[CMD_BACKUP];       // time sent, for calculating pings
 
 	int receivedSnapNum;
 	int pendingSnapNum;
 	int currentSnapNum;
 	int previousSnapNum;
-	snapshot_t *snapShots;          // [CMD_BACKUP]
+	snapshot_t snapShots[CMD_BACKUP];
 	uint8_t *frames_areabits;
 
 	cmodel_state_t *cms;
@@ -310,7 +310,7 @@ void CL_Init( void );
 void CL_Quit( void );
 
 void CL_UpdateClientCommandsToServer( msg_t *msg );
-void CL_AddReliableCommand( /*const*/ char *cmd );
+void CL_AddReliableCommand( const char *cmd );
 void CL_Netchan_Transmit( msg_t *msg );
 void CL_SendMessagesToServer( bool sendNow );
 void CL_RestartTimeDeltas( int newTimeDelta );
@@ -323,7 +323,7 @@ keydest_t CL_GetKeyDest( void );              // wsw : aiwa : we need this infor
 void CL_SetKeyDest( keydest_t key_dest );
 void CL_SetOldKeyDest( keydest_t key_dest );
 void CL_ResetServerCount( void );
-void CL_SetClientState( int state );
+void CL_SetClientState( connstate_t state );
 connstate_t CL_GetClientState( void );  // wsw : aiwa : we need this information for graphical plugins (e.g. IRC)
 void CL_ClearState( void );
 void CL_ReadPackets( void );
@@ -511,14 +511,14 @@ int SCR_FontUnderline( qfontface_t *font, int *thickness );
 size_t SCR_FontAdvance( qfontface_t *font );
 size_t SCR_FontXHeight( qfontface_t *font );
 fdrawchar_t SCR_SetDrawCharIntercept( fdrawchar_t intercept );
-int SCR_DrawString( int x, int y, int align, const char *str, qfontface_t *font, vec4_t color, int flags );
-size_t SCR_DrawStringWidth( int x, int y, int align, const char *str, size_t maxwidth, qfontface_t *font, vec4_t color, int flags );
-void SCR_DrawClampString( int x, int y, const char *str, int xmin, int ymin, int xmax, int ymax, qfontface_t *font, vec4_t color, int flags );
-int SCR_DrawMultilineString( int x, int y, const char *str, int halign, int maxwidth, int maxlines, qfontface_t *font, vec4_t color, int flags );
-void SCR_DrawRawChar( int x, int y, wchar_t num, qfontface_t *font, vec4_t color );
-void SCR_DrawClampChar( int x, int y, wchar_t num, int xmin, int ymin, int xmax, int ymax, qfontface_t *font, vec4_t color );
-void SCR_DrawFillRect( int x, int y, int w, int h, vec4_t color );
-void SCR_DrawClampFillRect( int x, int y, int w, int h, int xmin, int ymin, int xmax, int ymax, vec4_t color );
+int SCR_DrawString( int x, int y, int align, const char *str, qfontface_t *font, const vec4_t color, int flags );
+size_t SCR_DrawStringWidth( int x, int y, int align, const char *str, size_t maxwidth, qfontface_t *font, const vec4_t color, int flags );
+void SCR_DrawClampString( int x, int y, const char *str, int xmin, int ymin, int xmax, int ymax, qfontface_t *font, const vec4_t color, int flags );
+int SCR_DrawMultilineString( int x, int y, const char *str, int halign, int maxwidth, int maxlines, qfontface_t *font, const vec4_t color, int flags );
+void SCR_DrawRawChar( int x, int y, wchar_t num, qfontface_t *font, const vec4_t color );
+void SCR_DrawClampChar( int x, int y, wchar_t num, int xmin, int ymin, int xmax, int ymax, qfontface_t *font, const vec4_t color );
+void SCR_DrawFillRect( int x, int y, int w, int h, const vec4_t color );
+void SCR_DrawClampFillRect( int x, int y, int w, int h, int xmin, int ymin, int xmax, int ymax, const vec4_t color );
 void SCR_DrawChat( int x, int y, int width, struct qfontface_s *font );
 
 void CL_InitMedia( void );

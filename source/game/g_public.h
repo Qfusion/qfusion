@@ -103,8 +103,8 @@ typedef struct {
 
 	int ( *CM_NumInlineModels )( void );
 	struct cmodel_s *( *CM_InlineModel )( int num );
-	int ( *CM_TransformedPointContents )( vec3_t p, struct cmodel_s *cmodel, vec3_t origin, vec3_t angles );
-	void ( *CM_TransformedBoxTrace )( trace_t *tr, vec3_t start, vec3_t end, vec3_t mins, vec3_t maxs, struct cmodel_s *cmodel, int brushmask, vec3_t origin, vec3_t angles );
+	int ( *CM_TransformedPointContents )( const vec3_t p, struct cmodel_s *cmodel, const vec3_t origin, const vec3_t angles );
+	void ( *CM_TransformedBoxTrace )( trace_t *tr, const vec3_t start, const vec3_t end, const vec3_t mins, const vec3_t maxs, struct cmodel_s *cmodel, int brushmask, const vec3_t origin, const vec3_t angles );
 	void ( *CM_InlineModelBounds )( struct cmodel_s *cmodel, vec3_t mins, vec3_t maxs );
 	struct cmodel_s *( *CM_ModelForBBox )( vec3_t mins, vec3_t maxs );
 	struct cmodel_s *( *CM_OctagonModelForBBox )( vec3_t mins, vec3_t maxs );
@@ -167,7 +167,7 @@ typedef struct {
 
 	// a fake client connection, ClientConnect is called afterwords
 	// with fakeClient set to true
-	int ( *FakeClientConnect )( char *fakeUserinfo, char *fakeSocketType, const char *fakeIP );
+	int ( *FakeClientConnect )( const char *fakeUserinfo, const char *fakeSocketType, const char *fakeIP );
 	void ( *DropClient )( struct edict_s *ent, int type, const char *message );
 	int ( *GetClientState )( int numClient );
 	void ( *ExecuteClientThinks )( int clientNum );

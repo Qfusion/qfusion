@@ -122,9 +122,9 @@ typedef struct {
 
 	// fonts
 	struct qfontface_s *( *SCR_RegisterFont )( const char *name, int style, unsigned int size );
-	int ( *SCR_DrawString )( int x, int y, int align, const char *str, struct qfontface_s *font, vec4_t color, int flags );
-	size_t ( *SCR_DrawStringWidth )( int x, int y, int align, const char *str, size_t maxwidth, struct qfontface_s *font, vec4_t color, int flags );
-	void ( *SCR_DrawClampString )( int x, int y, const char *str, int xmin, int ymin, int xmax, int ymax, struct qfontface_s *font, vec4_t color, int flags );
+	int ( *SCR_DrawString )( int x, int y, int align, const char *str, struct qfontface_s *font, const vec4_t color, int flags );
+	size_t ( *SCR_DrawStringWidth )( int x, int y, int align, const char *str, size_t maxwidth, struct qfontface_s *font, const vec4_t color, int flags );
+	void ( *SCR_DrawClampString )( int x, int y, const char *str, int xmin, int ymin, int xmax, int ymax, struct qfontface_s *font, const vec4_t color, int flags );
 	size_t ( *SCR_FontSize )( struct qfontface_s *font );
 	size_t ( *SCR_FontHeight )( struct qfontface_s *font );
 	int ( *SCR_FontUnderline )( struct qfontface_s *font, int *thickness );
@@ -152,7 +152,7 @@ typedef struct {
 	bool ( *Key_IsDown )( int keynum );
 
 	bool ( *VID_GetModeInfo )( int *width, int *height, unsigned mode );
-	void ( *VID_FlashWindow )( int count );
+	void ( *VID_FlashWindow )();
 
 	void ( *GetConfigString )( int i, char *str, int size );
 	int64_t ( *Milliseconds )( void );
@@ -241,14 +241,6 @@ typedef struct {
 	void ( *AddToServerList )( const char *adr, const char *info );
 } ui_export_t;
 
-#ifdef UI_HARD_LINKED
-#ifdef __cplusplus
-extern "C" {
-#endif
-ui_export_t *GetUIAPI( ui_import_t *import );
-#ifdef __cplusplus
-}
-#endif
-#endif
+extern "C" QF_DLL_EXPORT ui_export_t *GetUIAPI( ui_import_t *import );
 
 #endif

@@ -202,8 +202,6 @@ private:
 
 	bool invalidateAjaxCache;
 
-	vec4_t colorWhite;
-
 	static const std::string ui_index;
 	static const std::string ui_connectscreen;
 

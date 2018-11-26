@@ -13,64 +13,38 @@ file(GLOB SERVER_HEADERS
 	)
 
 file(GLOB SERVER_SOURCES
-	"../qcommon/asyncstream.c"
-	"../qcommon/cm_main.c"
-	"../qcommon/cm_q3bsp.c"
-	"../qcommon/cm_trace.c"
-	"../qcommon/compression.c"	
-	"../qcommon/bsp.c"
-	"../qcommon/patch.c"
-	"../qcommon/common.c"
-	"../qcommon/files.c"
-	"../qcommon/cmd.c"
-	"../qcommon/mem.c"
-	"../qcommon/net.c"
-	"../qcommon/net_chan.c"
-	"../qcommon/msg.c"
-	"../qcommon/cvar.c"
-	"../qcommon/dynvar.c"
-	"../qcommon/library.c"
-	"../qcommon/mlist.c"
-	"../qcommon/svnrev.c"
-	"../qcommon/snap_demos.c"
-	"../qcommon/snap_write.c"
-	"../qcommon/ascript.c"
-	"../qcommon/anticheat.c"
-	"../qcommon/wswcurl.c"
-	"../qcommon/cjson.c"
-	"../qcommon/threads.c"
-	"../qcommon/steam.c"
-	"*.c"
-	"../null/cl_null.c"
-	"../gameshared/q_*.c"
-	"../qalgo/*.c"
+	"*.cpp"
+	"../qcommon/*.cpp"
+	"../null/cl_null.cpp"
+	"../gameshared/q_*.cpp"
+	"../qalgo/*.cpp"
 	)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 	file(GLOB SERVER_PLATFORM_SOURCES 
-		"../win32/win_fs.c"
-		"../win32/win_net.c"
-		"../win32/win_sys.c"
-		"../win32/win_console.c"
-		"../win32/win_time.c"
-		"../win32/win_lib.c"
-		"../win32/win_threads.c"
-		"../null/sys_vfs_null.c"
-		"../win32/conproc.c"
+		"../win32/win_fs.cpp"
+		"../win32/win_net.cpp"
+		"../win32/win_sys.cpp"
+		"../win32/win_console.cpp"
+		"../win32/win_time.cpp"
+		"../win32/win_lib.cpp"
+		"../win32/win_threads.cpp"
+		"../null/sys_vfs_null.cpp"
+		"../win32/conproc.cpp"
 		)
 
 	set(SERVER_PLATFORM_LIBRARIES "ws2_32.lib" "winmm.lib")
 	set(SERVER_BINARY_TYPE WIN32)
 else()
 	file(GLOB SERVER_PLATFORM_SOURCES 
-		"../unix/unix_fs.c"
-		"../unix/unix_net.c"
-		"../unix/unix_sys.c"
-		"../unix/unix_console.c"
-		"../unix/unix_time.c"
-		"../unix/unix_lib.c"
-		"../unix/unix_threads.c"
-		"../null/sys_vfs_null.c"
+		"../unix/unix_fs.cpp"
+		"../unix/unix_net.cpp"
+		"../unix/unix_sys.cpp"
+		"../unix/unix_console.cpp"
+		"../unix/unix_time.cpp"
+		"../unix/unix_lib.cpp"
+		"../unix/unix_threads.cpp"
+		"../null/sys_vfs_null.cpp"
 		)
 
 	set(SERVER_PLATFORM_LIBRARIES "pthread" "dl" "m")

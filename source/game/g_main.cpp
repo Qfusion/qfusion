@@ -155,7 +155,7 @@ static void G_GS_Free( void *data ) {
 /*
 * G_GS_Trace - Used only for gameshared linking
 */
-static void G_GS_Trace( trace_t *tr, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int ignore, int contentmask, int timeDelta ) {
+static void G_GS_Trace( trace_t *tr, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int ignore, int contentmask, int timeDelta ) {
 	edict_t *passent = NULL;
 	if( ignore >= 0 && ignore < MAX_EDICTS ) {
 		passent = &game.edicts[ignore];

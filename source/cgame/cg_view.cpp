@@ -163,7 +163,7 @@ static void CG_FlashGameWindow( void ) {
 	}
 
 	if( flash ) {
-		trap_VID_FlashWindow( cg_flashWindowCount->integer );
+		trap_VID_FlashWindow();
 	}
 }
 

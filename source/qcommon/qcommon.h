@@ -34,15 +34,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "version.h"
 #include "bsp.h"
 
-//#define	PARANOID			// speed sapping error checking
-
-#if __cplusplus
 template< typename T, size_t N >
 char ( &ArrayCountObj( const T ( & )[ N ] ) )[ N ];
 #define ARRAY_COUNT( arr ) ( sizeof( ArrayCountObj( arr ) ) )
-#else
-#define ARRAY_COUNT( arr ) ( sizeof( arr ) / sizeof( ( arr )[ 0 ] ) )
-#endif
 
 //============================================================================
 
@@ -295,12 +289,6 @@ Dynamic library loading
 
 ==============================================================
 */
-
-#ifdef __cplusplus
-#define EXTERN_API_FUNC    extern "C"
-#else
-#define EXTERN_API_FUNC    extern
-#endif
 
 // qcommon/library.c
 typedef struct { const char *name; void **funcPointer; } dllfunc_t;

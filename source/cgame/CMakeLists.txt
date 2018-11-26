@@ -9,7 +9,7 @@ file(GLOB CGAME_HEADES
 
 file(GLOB CGAME_SOURCES
 	"*.cpp"
-	"../gameshared/*.c"
+	"../gameshared/*.cpp"
 	"../gameshared/gs_ascript.cpp"
 )
 

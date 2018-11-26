@@ -300,8 +300,8 @@ public:
 		backgroundTrackPlaying = false;
 	}
 
-	void flash( unsigned int count ) {
-		trap::VID_FlashWindow( count );
+	void flash() {
+		trap::VID_FlashWindow();
 	}
 
 	int getConnectCount( void ) {

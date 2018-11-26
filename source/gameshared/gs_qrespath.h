@@ -24,11 +24,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 //
 
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 //
 //
 // SHADERS
@@ -504,7 +499,3 @@ extern "C" {
 #define LS_SLOW_STROBE              "aaaaaaaazzzzzzzz" // 9
 #define LS_FLUORESCENT_FLICKER      "mmamammmmammamamaaamammma" // 10
 #define LS_SLOW_PULSE_NOT_FADE      "abcdefghijklmnopqrrqponmlkjihgfedcba" // 11
-
-#ifdef __cplusplus
-};
-#endif

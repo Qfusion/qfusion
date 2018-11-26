@@ -18,20 +18,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#ifndef __GS_REF_H
-#define __GS_REF_H
+#pragma once
 
 #include "gs_qrespath.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #define MAX_CLANNAME_BYTES 16
 #define MAX_CLANNAME_CHARS 8
-
-#ifdef __cplusplus
-};
-#endif
-
-#endif // __GS_REF_H

@@ -18,16 +18,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#ifndef __GS_ASCRIPT_H
-#define __GS_ASCRIPT_H
+#pragma once
 
 #include "gs_public.h"
 #include "angelscript.h"
-#include "../gameshared/q_angeliface.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "gameshared/q_angeliface.h"
 
 typedef struct gs_asEnumVal_s {
 	const char * name;
@@ -112,9 +107,3 @@ void GS_asRegisterObjectClassNames( asIScriptEngine *asEngine, const gs_asClassD
 void GS_asRegisterObjectClasses( asIScriptEngine *asEngine, const gs_asClassDescriptor_t *const *asClassesDescriptors, const char *nameSpace );
 void GS_asRegisterGlobalFunctions( asIScriptEngine *asEngine, const gs_asglobfuncs_t *funcs, const char *nameSpace );
 void GS_asRegisterGlobalProperties( asIScriptEngine *asEngine, const gs_asglobproperties_t *props, const char *nameSpace );
-
-#ifdef __cplusplus
-};
-#endif
-
-#endif // __GS_ASCRIPT_H

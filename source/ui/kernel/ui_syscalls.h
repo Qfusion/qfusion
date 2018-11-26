@@ -310,8 +310,8 @@ inline bool VID_GetModeInfo( int *width, int *height, int mode ) {
 	return UI_IMPORT.VID_GetModeInfo( width, height, mode );
 }
 
-inline void VID_FlashWindow( int count ) {
-	UI_IMPORT.VID_FlashWindow( count );
+inline void VID_FlashWindow() {
+	UI_IMPORT.VID_FlashWindow();
 }
 
 inline void GetConfigString( int i, char *str, int size ) {

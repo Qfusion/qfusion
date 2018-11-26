@@ -746,7 +746,7 @@ void CG_ResetBombHUD() {
 /*
 * CG_DrawRSpeeds
 */
-void CG_DrawRSpeeds( int x, int y, int align, struct qfontface_s *font, vec4_t color ) {
+void CG_DrawRSpeeds( int x, int y, int align, struct qfontface_s *font, const vec4_t color ) {
 	char msg[1024];
 
 	trap_R_GetSpeedsMessage( msg, sizeof( msg ) );

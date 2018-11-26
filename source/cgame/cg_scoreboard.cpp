@@ -326,7 +326,7 @@ static bool SCR_NiceSpecConfig( int rows, int columns, int count ) {
 /*
 * SCR_DrawSpectators
 */
-static int SCR_DrawSpectators( const char **ptrptr, int x, int y, int panelWidth, struct qfontface_s *font, bool havePing, const char *title, vec4_t titleColor, int pass ) {
+static int SCR_DrawSpectators( const char **ptrptr, int x, int y, int panelWidth, struct qfontface_s *font, bool havePing, const char *title, const vec4_t titleColor, int pass ) {
 	const char *backup;
 	scr_spectator_t spec;
 	char string[MAX_STRING_CHARS];

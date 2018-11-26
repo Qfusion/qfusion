@@ -22,10 +22,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "q_arch.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 //
 // button bits
 //
@@ -335,7 +331,7 @@ typedef struct entity_state_s {
 
 //==============================================
 
-typedef enum {
+enum connstate_t {
 	CA_UNINITIALIZED,
 	CA_DISCONNECTED,                    // not talking to a server
 	CA_GETTING_TICKET,                  // getting a session ticket for matchmaking
@@ -344,7 +340,7 @@ typedef enum {
 	CA_CONNECTED,                       // connection established, game module not loaded
 	CA_LOADING,                         // loading game module
 	CA_ACTIVE,                          // game views should be displayed
-} connstate_t;
+};
 
 enum {
 	DROP_TYPE_GENERAL,
@@ -469,8 +465,3 @@ typedef struct {
 
 	bool ladder;
 } pmove_t;
-
-
-#ifdef __cplusplus
-};
-#endif

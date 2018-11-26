@@ -18,14 +18,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#ifndef GAME_QCVAR_H
-#define GAME_QCVAR_H
+#pragma once
 
 #include "q_arch.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 //==========================================================
 //
@@ -60,9 +55,3 @@ typedef struct cvar_s {
 	float value;
 	int integer;
 } cvar_t;
-
-#ifdef __cplusplus
-};
-#endif
-
-#endif // GAME_QCVAR_H

@@ -188,10 +188,4 @@ typedef struct {
 
 typedef ref_export_t *(*GetRefAPI_t)( const ref_import_t *imports );
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-ref_export_t *GetRefAPI( ref_import_t *import );
-#ifdef __cplusplus
-}
-#endif
+extern "C" QF_DLL_EXPORT ref_export_t *GetRefAPI( ref_import_t *import );

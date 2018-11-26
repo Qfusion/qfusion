@@ -20,10 +20,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 // global preprocessor defines
 #include "config.h"
 
@@ -48,20 +44,6 @@ extern "C" {
 #define __STDC_FORMAT_MACROS 1
 #endif
 #include <inttypes.h>
-
-
-#ifdef __cplusplus
-};
-#endif
-
-#ifdef __cplusplus
-#include <type_traits>
-#endif
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 
 //==============================================
 
@@ -284,8 +266,4 @@ typedef int socket_handle_t;
 #define QF_DLL_EXPORT __declspec( dllexport )
 #else
 #define QF_DLL_EXPORT __attribute__ ( ( visibility( "default" ) ) )
-#endif
-
-#ifdef __cplusplus
-};
 #endif

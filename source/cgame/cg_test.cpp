@@ -26,11 +26,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 cvar_t *cg_testEntities;
 cvar_t *cg_testLights;
 
-void CG_DrawTestLine( vec3_t start, vec3_t end ) {
+void CG_DrawTestLine( const vec3_t start, const vec3_t end ) {
 	CG_QuickPolyBeam( start, end, 6, CG_MediaShader( cgs.media.shaderLaser ) );
 }
 
-void CG_DrawTestBox( vec3_t origin, vec3_t mins, vec3_t maxs, vec3_t angles ) {
+void CG_DrawTestBox( const vec3_t origin, const vec3_t mins, const vec3_t maxs, const vec3_t angles ) {
 	vec3_t start, end, vec;
 	float linewidth = 6;
 	mat3_t localAxis;

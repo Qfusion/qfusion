@@ -58,7 +58,7 @@ typedef struct {
 	unsigned firstVert, numVerts;
 	unsigned firstElem, numElems;
 	int lightStyleNum;
-	void *lastDrawSurf;
+	drawSurfaceBSP_t *lastDrawSurf;
 	entity_t *entity;
 	struct shader_s *shader;
 	struct mfog_s *fog;

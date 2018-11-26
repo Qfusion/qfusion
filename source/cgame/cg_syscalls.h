@@ -340,8 +340,8 @@ static inline void trap_R_SkeletalGetBonePose( const struct model_s *mod, int bo
 	CGAME_IMPORT.R_SkeletalGetBonePose( mod, bone, frame, bonepose );
 }
 
-static inline void trap_VID_FlashWindow( int count ) {
-	CGAME_IMPORT.VID_FlashWindow( count );
+static inline void trap_VID_FlashWindow() {
+	CGAME_IMPORT.VID_FlashWindow();
 }
 
 static inline struct cmodel_s *trap_CM_InlineModel( int num ) {
@@ -360,11 +360,11 @@ static inline int trap_CM_NumInlineModels( void ) {
 	return CGAME_IMPORT.CM_NumInlineModels();
 }
 
-static inline void trap_CM_TransformedBoxTrace( trace_t *tr, vec3_t start, vec3_t end, vec3_t mins, vec3_t maxs, struct cmodel_s *cmodel, int brushmask, vec3_t origin, vec3_t angles ) {
+static inline void trap_CM_TransformedBoxTrace( trace_t *tr, const vec3_t start, const vec3_t end, const vec3_t mins, const vec3_t maxs, struct cmodel_s *cmodel, int brushmask, const vec3_t origin, const vec3_t angles ) {
 	CGAME_IMPORT.CM_TransformedBoxTrace( tr, start, end, mins, maxs, cmodel, brushmask, origin, angles );
 }
 
-static inline int trap_CM_TransformedPointContents( vec3_t p, struct cmodel_s *cmodel, vec3_t origin, vec3_t angles ) {
+static inline int trap_CM_TransformedPointContents( const vec3_t p, struct cmodel_s *cmodel, const vec3_t origin, const vec3_t angles ) {
 	return CGAME_IMPORT.CM_TransformedPointContents( p, cmodel, origin, angles );
 }
 
@@ -424,27 +424,27 @@ static inline struct qfontface_s *trap_SCR_RegisterSpecialFont( const char *fami
 	return CGAME_IMPORT.SCR_RegisterSpecialFont( family, style, size );
 }
 
-static inline int trap_SCR_DrawString( int x, int y, int align, const char *str, struct qfontface_s *font, vec4_t color ) {
+static inline int trap_SCR_DrawString( int x, int y, int align, const char *str, struct qfontface_s *font, const vec4_t color ) {
 	return CGAME_IMPORT.SCR_DrawString( x, y, align, str, font, color, 0 );
 }
 
-static inline size_t trap_SCR_DrawStringWidth( int x, int y, int align, const char *str, size_t maxwidth, struct qfontface_s *font, vec4_t color ) {
+static inline size_t trap_SCR_DrawStringWidth( int x, int y, int align, const char *str, size_t maxwidth, struct qfontface_s *font, const vec4_t color ) {
 	return CGAME_IMPORT.SCR_DrawStringWidth( x, y, align, str, maxwidth, font, color, 0 );
 }
 
-static inline void trap_SCR_DrawClampString( int x, int y, const char *str, int xmin, int ymin, int xmax, int ymax, struct qfontface_s *font, vec4_t color ) {
+static inline void trap_SCR_DrawClampString( int x, int y, const char *str, int xmin, int ymin, int xmax, int ymax, struct qfontface_s *font, const vec4_t color ) {
 	CGAME_IMPORT.SCR_DrawClampString( x, y, str, xmin, ymin, xmax, ymax, font, color, 0 );
 }
 
-static inline int trap_SCR_DrawMultilineString( int x, int y, const char *str, int halign, int maxwidth, int maxlines, struct qfontface_s *font, vec4_t color ) {
+static inline int trap_SCR_DrawMultilineString( int x, int y, const char *str, int halign, int maxwidth, int maxlines, struct qfontface_s *font, const vec4_t color ) {
 	return CGAME_IMPORT.SCR_DrawMultilineString( x, y, str, halign, maxwidth, maxlines, font, color, 0 );
 }
 
-static inline void trap_SCR_DrawRawChar( int x, int y, wchar_t num, struct qfontface_s *font, vec4_t color ) {
+static inline void trap_SCR_DrawRawChar( int x, int y, wchar_t num, struct qfontface_s *font, const vec4_t color ) {
 	CGAME_IMPORT.SCR_DrawRawChar( x, y, num, font, color );
 }
 
-static inline void trap_SCR_DrawClampChar( int x, int y, wchar_t num, int xmin, int ymin, int xmax, int ymax, struct qfontface_s *font, vec4_t color ) {
+static inline void trap_SCR_DrawClampChar( int x, int y, wchar_t num, int xmin, int ymin, int xmax, int ymax, struct qfontface_s *font, const vec4_t color ) {
 	CGAME_IMPORT.SCR_DrawClampChar( x, y, num, xmin, ymin, xmax, ymax, font, color );
 }
 

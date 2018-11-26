@@ -4,7 +4,7 @@ sub=.
 if [ "$#" -ge 1 ]; then
 	sub=$1
 fi
-find $sub \( -name "*.lua" -or -name "*.c" -or -name "*.cpp" -or -name "*.h" -or -name "*.glsl" -or -name "*.as" \) \
+find $sub \( -name "*.lua" -or -name "*.cpp" -or -name "*.h" -or -name "*.glsl" -or -name "*.as" \) \
 	! -name "stb_*" \
 	! -path "*/CMakeFiles/*" \
 	| xargs wc -l

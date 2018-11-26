@@ -114,8 +114,6 @@ cvar_t *cg_teamPLAYERScolorForce;
 cvar_t *cg_teamALPHAcolor;
 cvar_t *cg_teamBETAcolor;
 
-cvar_t *cg_flashWindowCount;
-
 /*
 * CG_API
 */
@@ -188,7 +186,7 @@ static void CG_GS_Free( void *data ) {
 /*
 * CG_GS_Trace
 */
-static void CG_GS_Trace( trace_t *t, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int ignore, int contentmask, int timeDelta ) {
+static void CG_GS_Trace( trace_t *t, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int ignore, int contentmask, int timeDelta ) {
 	assert( !timeDelta );
 	CG_Trace( t, start, mins, maxs, end, ignore, contentmask );
 }
@@ -196,7 +194,7 @@ static void CG_GS_Trace( trace_t *t, vec3_t start, vec3_t mins, vec3_t maxs, vec
 /*
 * CG_GS_PointContents
 */
-static int CG_GS_PointContents( vec3_t point, int timeDelta ) {
+static int CG_GS_PointContents( const vec3_t point, int timeDelta ) {
 	assert( !timeDelta );
 	return CG_PointContents( point );
 }
@@ -724,8 +722,6 @@ static void CG_RegisterVariables( void ) {
 	cg_teamBETAcolor->modified = true;
 
 	cg_strafeHUD = trap_Cvar_Get( "cg_strafeHUD", "0", CVAR_ARCHIVE );
-
-	cg_flashWindowCount = trap_Cvar_Get( "cg_flashWindowCount", "4", CVAR_ARCHIVE );
 
 	trap_Cvar_Get( "cg_loadout", "", CVAR_ARCHIVE | CVAR_USERINFO );
 }

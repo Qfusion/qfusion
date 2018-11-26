@@ -22,10 +22,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "q_arch.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 //==============================================
 
 #if !defined ( ENDIAN_LITTLE ) && !defined ( ENDIAN_BIG )
@@ -442,7 +438,3 @@ typedef enum {
 	TEXTDRAWFLAG_NO_COLORS  = 1 << 0,   // draw color codes instead of applying them
 	TEXTDRAWFLAG_KERNING    = 1 << 1
 } textdrawflag_t;
-
-#ifdef __cplusplus
-};
-#endif

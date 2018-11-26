@@ -59,7 +59,6 @@ UI_Main::UI_Main( int vidWidth, int vidHeight, float pixelRatio,
 	// instance
 	self = this;
 
-	Vector4Set( colorWhite, 1, 1, 1, 1 );
 	ui_cursor = trap::Cvar_Get( "ui_cursor", "cursors/default.rml", CVAR_DEVELOPER );
 	ui_developer = trap::Cvar_Get( "developer", "0", 0 );
 	ui_preload = trap::Cvar_Get( "ui_preload", "1", CVAR_ARCHIVE );

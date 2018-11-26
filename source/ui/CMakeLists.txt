@@ -21,8 +21,8 @@ file(GLOB UI_SOURCES
 	"widgets/*.cpp"
 	"decorators/*.cpp"
 	"parsers/*.cpp"
-	"../gameshared/q_*.c"
-	"../qalgo/*.c"
+	"../gameshared/q_*.cpp"
+	"../qalgo/*.cpp"
 	)
 
 file(GLOB ROCKET_ROOT_HEADERS "${LIBROCKET_INCLUDE_DIR}/Rocket/*.h")

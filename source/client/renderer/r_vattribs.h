@@ -17,10 +17,9 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
-#ifndef R_VATTRIBS_H
-#define R_VATTRIBS_H
+#pragma once
 
-typedef enum vattrib_e {
+enum {
 	VATTRIB_POSITION        = 0,
 
 	VATTRIB_NORMAL          = 1,
@@ -46,11 +45,11 @@ typedef enum vattrib_e {
 	VATTRIB_INSTANCE_XYZS   = 11,
 
 	NUM_VERTEX_ATTRIBS      = 12
-} vattrib_t;
+};
 
 #define VATTRIB_BIT( va )     ( 1 << ( va ) )
 
-typedef enum vattribbit_e {
+enum {
 	VATTRIB_POSITION_BIT    = VATTRIB_BIT( 0 ),
 
 	VATTRIB_NORMAL_BIT      = VATTRIB_BIT( 1 ),
@@ -88,7 +87,7 @@ typedef enum vattribbit_e {
 	VATTRIB_INSTANCES_BITS  = VATTRIB_INSTANCE_QUAT_BIT | VATTRIB_INSTANCE_XYZS_BIT,
 
 	VATTRIBS_MASK           = VATTRIB_BIT( 16 ) - 1
-} vattribbit_t;
+};
 
 typedef unsigned int vattribmask_t;
 
@@ -100,5 +99,3 @@ typedef unsigned int vattribmask_t;
 
 #define FLOAT_VATTRIB_SIZE( vattrib,halfFloatVattribs ) \
 	( (int)( halfFloatVattribs & vattrib ) == vattrib ? sizeof( GLhalfARB ) : sizeof( float ) )
-
-#endif // R_VATTRIBS_H

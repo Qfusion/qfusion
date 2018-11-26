@@ -18,15 +18,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#ifndef GAME_QCOLLISION_H
-#define GAME_QCOLLISION_H
+#pragma once
 
 #include "q_arch.h"
 #include "q_math.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 //==============================================================
 //
@@ -111,10 +106,3 @@ typedef struct {
 	int contents;               // contents on other side of surface hit
 	int ent;                    // not set by CM_*() functions
 } trace_t;
-
-
-#ifdef __cplusplus
-};
-#endif
-
-#endif // GAME_QCOLLISION_H

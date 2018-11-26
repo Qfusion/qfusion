@@ -20,14 +20,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 #pragma once
 
-#include "../../gameshared/q_arch.h"
-#include "../../gameshared/q_math.h"
-#include "../../gameshared/q_shared.h"
-#include "../../gameshared/q_cvar.h"
-#include "../../qcommon/qcommon.h"
-#include "../../qcommon/qfiles.h"
-#include "../../qcommon/bsp.h"
-#include "../../qcommon/patch.h"
+#include "gameshared/q_arch.h"
+#include "gameshared/q_math.h"
+#include "gameshared/q_shared.h"
+#include "gameshared/q_cvar.h"
+#include "qcommon/qcommon.h"
+#include "qcommon/qfiles.h"
+#include "qcommon/bsp.h"
+#include "qcommon/patch.h"
 
 typedef struct mempool_s mempool_t;
 typedef struct qthread_s qthread_t;
@@ -458,6 +458,10 @@ bool    R_AliasModelLerpTag( orientation_t *orient, const maliasmodel_t *aliasmo
 	float lerpfrac, const char *name );
 void        R_AliasModelFrameBounds( const model_t *mod, int frame, vec3_t mins, vec3_t maxs );
 
+void Mod_LoadAliasMD3Model( model_t *mod, const model_t *parent, void *buffer, bspFormatDesc_t *unused );
+void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, bspFormatDesc_t *unused );
+void Mod_LoadQ3BrushModel( model_t *mod, const model_t *parent, void *buffer, bspFormatDesc_t *format );
+
 //
 // r_cmds.c
 //
@@ -647,7 +651,6 @@ void R_ClearDrawList( drawList_t *list );
 unsigned R_PackOpaqueOrder( const mfog_t *fog, const shader_t *shader, int numLightmaps, bool dlight );
 void *R_AddSurfToDrawList( drawList_t *list, const entity_t *e, const shader_t *shader, const mfog_t *fog,
 	int superLightStyle, float dist, unsigned int order, const portalSurface_t *portalSurf, void *drawSurf );
-void R_UpdateDrawSurfDistKey( void *psds, int renderFx, const shader_t *shader, float dist, unsigned order );
 portalSurface_t *R_GetDrawListSurfPortal( void *psds );
 void R_ReserveDrawListWorldSurfaces( drawList_t *list );
 

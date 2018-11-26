@@ -70,11 +70,6 @@ typedef struct md5_state_s {
 	md5_byte_t buf[64]; /* accumulate block */
 } md5_state_t;
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
 /* Compute the MD5 digest of a buffer. */
 void md5_digest( const void *data, int nbytes, md5_byte_t digest[16] );
 
@@ -93,9 +88,5 @@ void md5_finish( md5_state_t *pms, md5_byte_t digest[16] );
 
 /* Reduce the 128-bit digest to a 32-bit value. */
 unsigned int md5_reduce( md5_byte_t digest[16] );
-
-#ifdef __cplusplus
-}  /* end extern "C" */
-#endif
 
 #endif /* md5_INCLUDED */

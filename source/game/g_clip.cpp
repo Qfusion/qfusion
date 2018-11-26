@@ -724,7 +724,7 @@ static struct cmodel_s *GClip_CollisionModelForEntity( entity_state_t *s, entity
 * returns the CONTENTS_* value from the world at the given point.
 * Quake 2 extends this to also check entities, to allow moving liquids
 */
-static int GClip_PointContents( vec3_t p, int timeDelta ) {
+static int GClip_PointContents( const vec3_t p, int timeDelta ) {
 	c4clipedict_t *clipEnt;
 	int touch[MAX_EDICTS];
 	int i, num;
@@ -750,11 +750,11 @@ static int GClip_PointContents( vec3_t p, int timeDelta ) {
 	return contents;
 }
 
-int G_PointContents( vec3_t p ) {
+int G_PointContents( const vec3_t p ) {
 	return GClip_PointContents( p, 0 );
 }
 
-int G_PointContents4D( vec3_t p, int timeDelta ) {
+int G_PointContents4D( const vec3_t p, int timeDelta ) {
 	return GClip_PointContents( p, timeDelta );
 }
 
@@ -762,9 +762,9 @@ int G_PointContents4D( vec3_t p, int timeDelta ) {
 
 typedef struct {
 	vec3_t boxmins, boxmaxs;    // enclose the test object along entire move
-	float *mins, *maxs;         // size of the moving object
+	const float *mins, *maxs;         // size of the moving object
 	vec3_t mins2, maxs2;        // size when clipping against mosnters
-	float *start, *end;
+	const float *start, *end;
 	trace_t *trace;
 	int passent;
 	int contentmask;
@@ -779,7 +779,7 @@ typedef struct {
 	int touchlist[MAX_EDICTS];
 	trace_t trace;
 	struct cmodel_s *cmodel;
-	float *angles;
+	const float *angles;
 
 	num = GClip_AreaEdicts( clip->boxmins, clip->boxmaxs, touchlist, MAX_EDICTS, AREA_SOLID, timeDelta );
 
@@ -848,8 +848,8 @@ typedef struct {
 /*
 * GClip_TraceBounds
 */
-static void GClip_TraceBounds( vec3_t start, vec3_t mins, vec3_t maxs,
-							   vec3_t end, vec3_t boxmins, vec3_t boxmaxs ) {
+static void GClip_TraceBounds( const vec3_t start, const vec3_t mins, const vec3_t maxs,
+							   const vec3_t end, vec3_t boxmins, vec3_t boxmaxs ) {
 	int i;
 
 	for( i = 0; i < 3; i++ ) {
@@ -880,8 +880,8 @@ static void GClip_TraceBounds( vec3_t start, vec3_t mins, vec3_t maxs,
 
 * passedict is explicitly excluded from clipping checks (normally NULL)
 */
-static void GClip_Trace( trace_t *tr, vec3_t start, vec3_t mins, vec3_t maxs,
-						 vec3_t end, edict_t *passedict, int contentmask, int timeDelta ) {
+static void GClip_Trace( trace_t *tr, const vec3_t start, const vec3_t mins, const vec3_t maxs,
+						 const vec3_t end, edict_t *passedict, int contentmask, int timeDelta ) {
 	moveclip_t clip;
 
 	if( !tr ) {
@@ -927,13 +927,13 @@ static void GClip_Trace( trace_t *tr, vec3_t start, vec3_t mins, vec3_t maxs,
 	GClip_ClipMoveToEntities( &clip, timeDelta );
 }
 
-void G_Trace( trace_t *tr, vec3_t start, vec3_t mins, vec3_t maxs,
-			  vec3_t end, edict_t *passedict, int contentmask ) {
+void G_Trace( trace_t *tr, const vec3_t start, const vec3_t mins, const vec3_t maxs,
+			  const vec3_t end, edict_t *passedict, int contentmask ) {
 	GClip_Trace( tr, start, mins, maxs, end, passedict, contentmask, 0 );
 }
 
-void G_Trace4D( trace_t *tr, vec3_t start, vec3_t mins, vec3_t maxs,
-				vec3_t end, edict_t *passedict, int contentmask, int timeDelta ) {
+void G_Trace4D( trace_t *tr, const vec3_t start, const vec3_t mins, const vec3_t maxs,
+				const vec3_t end, edict_t *passedict, int contentmask, int timeDelta ) {
 	GClip_Trace( tr, start, mins, maxs, end, passedict, contentmask, timeDelta );
 }
 
@@ -985,7 +985,7 @@ void GClip_SetBrushModel( edict_t *ent, const char *name ) {
 /*
 * GClip_EntityContact
 */
-bool GClip_EntityContact( vec3_t mins, vec3_t maxs, edict_t *ent ) {
+bool GClip_EntityContact( const vec3_t mins, const vec3_t maxs, edict_t *ent ) {
 	trace_t tr;
 	struct cmodel_s *model;
 

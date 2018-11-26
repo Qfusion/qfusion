@@ -176,15 +176,15 @@ typedef struct {
 	void ( *R_SkeletalGetBonePose )( const struct model_s *mod, int bone, int frame, struct bonepose_s *bonepose );
 	struct shader_s *( *R_GetShaderForOrigin )( const vec3_t origin );
 
-	void ( *VID_FlashWindow )( int count );
+	void ( *VID_FlashWindow )();
 
 	// collision detection
 	int ( *CM_NumInlineModels )( void );
 	struct cmodel_s *( *CM_InlineModel )( int num );
 	struct cmodel_s *( *CM_ModelForBBox )( vec3_t mins, vec3_t maxs );
 	struct cmodel_s *( *CM_OctagonModelForBBox )( vec3_t mins, vec3_t maxs );
-	void ( *CM_TransformedBoxTrace )( trace_t *tr, vec3_t start, vec3_t end, vec3_t mins, vec3_t maxs, struct cmodel_s *cmodel, int brushmask, vec3_t origin, vec3_t angles );
-	int ( *CM_TransformedPointContents )( vec3_t p, struct cmodel_s *cmodel, vec3_t origin, vec3_t angles );
+	void ( *CM_TransformedBoxTrace )( trace_t *tr, const vec3_t start, const vec3_t end, const vec3_t mins, const vec3_t maxs, struct cmodel_s *cmodel, int brushmask, const vec3_t origin, const vec3_t angles );
+	int ( *CM_TransformedPointContents )( const vec3_t p, struct cmodel_s *cmodel, const vec3_t origin, const vec3_t angles );
 	void ( *CM_InlineModelBounds )( struct cmodel_s *cmodel, vec3_t mins, vec3_t maxs );
 	bool ( *CM_InPVS )( const vec3_t p1, const vec3_t p2 );
 
@@ -203,12 +203,12 @@ typedef struct {
 	// fonts
 	struct qfontface_s *( *SCR_RegisterFont )( const char *family, int style, unsigned int size );
 	struct qfontface_s *( *SCR_RegisterSpecialFont )( const char *family, int style, unsigned int size );
-	int ( *SCR_DrawString )( int x, int y, int align, const char *str, struct qfontface_s *font, vec4_t color, int flags );
-	size_t ( *SCR_DrawStringWidth )( int x, int y, int align, const char *str, size_t maxwidth, struct qfontface_s *font, vec4_t color, int flags );
-	void ( *SCR_DrawClampString )( int x, int y, const char *str, int xmin, int ymin, int xmax, int ymax, struct qfontface_s *font, vec4_t color, int flags );
-	int ( *SCR_DrawMultilineString )( int x, int y, const char *str, int halign, int maxwidth, int maxlines, struct qfontface_s *font, vec4_t color, int flags );
-	void ( *SCR_DrawRawChar )( int x, int y, wchar_t num, struct qfontface_s *font, vec4_t color );
-	void ( *SCR_DrawClampChar )( int x, int y, wchar_t num, int xmin, int ymin, int xmax, int ymax, struct qfontface_s *font, vec4_t color );
+	int ( *SCR_DrawString )( int x, int y, int align, const char *str, struct qfontface_s *font, const vec4_t color, int flags );
+	size_t ( *SCR_DrawStringWidth )( int x, int y, int align, const char *str, size_t maxwidth, struct qfontface_s *font, const vec4_t color, int flags );
+	void ( *SCR_DrawClampString )( int x, int y, const char *str, int xmin, int ymin, int xmax, int ymax, struct qfontface_s *font, const vec4_t color, int flags );
+	int ( *SCR_DrawMultilineString )( int x, int y, const char *str, int halign, int maxwidth, int maxlines, struct qfontface_s *font, const vec4_t color, int flags );
+	void ( *SCR_DrawRawChar )( int x, int y, wchar_t num, struct qfontface_s *font, const vec4_t color );
+	void ( *SCR_DrawClampChar )( int x, int y, wchar_t num, int xmin, int ymin, int xmax, int ymax, struct qfontface_s *font, const vec4_t color );
 	size_t ( *SCR_FontSize )( struct qfontface_s *font );
 	size_t ( *SCR_FontHeight )( struct qfontface_s *font );
 	int ( *SCR_FontUnderline )( struct qfontface_s *font, int *thickness );
@@ -261,7 +261,7 @@ typedef struct {
 
 	void ( *GetEntitySpatilization )( int entNum, vec3_t origin, vec3_t velocity );
 
-	void ( *Trace )( trace_t *tr, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int passent, int contentmask );
+	void ( *Trace )( trace_t *tr, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int passent, int contentmask );
 
 	void ( *RenderView )( int frameTime, int realFrameTime, int64_t realTime, int64_t serverTime, unsigned extrapolationTime );
 

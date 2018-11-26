@@ -27,8 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 /*
 * CG_ViewWeapon_UpdateProjectionSource
 */
-static void CG_ViewWeapon_UpdateProjectionSource( vec3_t hand_origin, mat3_t hand_axis,
-												  vec3_t weap_origin, mat3_t weap_axis ) {
+static void CG_ViewWeapon_UpdateProjectionSource( const vec3_t hand_origin, const mat3_t hand_axis, const vec3_t weap_origin, const mat3_t weap_axis ) {
 	orientation_t *tag_result = &cg.weapon.projectionSource;
 	orientation_t tag_weapon;
 	weaponinfo_t *weaponInfo;

@@ -24,24 +24,17 @@ file(GLOB CLIENT_HEADERS
 	)
 
 file(GLOB CLIENT_COMMON_SOURCES
-	"../qcommon/*.c"
-	"../server/*.c"
-	"*.c"
-	"../gameshared/q_*.c"
-	"../qalgo/*.c"
+	"*.cpp"
+	"../qcommon/*.cpp"
+	"../server/*.cpp"
+	"../gameshared/q_*.cpp"
+	"../qalgo/*.cpp"
 
-	"renderer/*.c"
-	"ftlib/*.c"
-	"sound/*.c"
+	"renderer/*.cpp"
+	"ftlib/*.cpp"
+	"sound/*.cpp"
 
-	"../sdl/sdl_input.c"
-	"../sdl/sdl_input_joy.c"
-	"../sdl/sdl_window.c"
-	"../sdl/sdl_sys.c"
-	"../sdl/sdl_clipboard.c"
-	"../sdl/sdl_time.c"
-	"../sdl/sdl_lib.c"
-	"../sdl/sdl_client.c"
+	"../sdl/*.cpp"
 	)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
@@ -53,12 +46,12 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 		)
 
 	file(GLOB CLIENT_PLATFORM_SOURCES
-		"../win32/win_fs.c"
-		"../win32/win_net.c"
-		"../win32/win_sys.c"
-		"../win32/win_console.c"
-		"../win32/win_threads.c"
-		"../null/sys_vfs_null.c"
+		"../win32/win_fs.cpp"
+		"../win32/win_net.cpp"
+		"../win32/win_sys.cpp"
+		"../win32/win_console.cpp"
+		"../win32/win_threads.cpp"
+		"../null/sys_vfs_null.cpp"
 
 		"../win32/qfusion.rc"
 		)
@@ -74,12 +67,11 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 	set(CLIENT_PLATFORM_HEADERS "")
 
 	file(GLOB CLIENT_PLATFORM_SOURCES
-		"../unix/unix_fs.c"
-		"../unix/unix_net.c"
-		"../unix/unix_sys.c"
-		"../unix/unix_console.c"
-		"../unix/unix_threads.c"
-		"../null/sys_vfs_null.c"
+		"../unix/unix_fs.cpp"
+		"../unix/unix_net.cpp"
+		"../unix/unix_sys.cpp"
+		"../unix/unix_console.cpp"
+		"../null/sys_vfs_null.cpp"
 		)
 
 	set(CLIENT_PLATFORM_LIBRARIES "pthread" "m" "dl" "rt")

@@ -22,10 +22,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "q_arch.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 //==============================================================
 //
 //MATHLIB
@@ -78,26 +74,39 @@ typedef struct cplane_s {
 	short signbits;             // signx + (signy<<1) + (signz<<1)
 } cplane_t;
 
-extern vec3_t vec3_origin;
-extern mat3_t axis_identity;
-extern quat_t quat_identity;
+constexpr vec3_t vec3_origin = { 0, 0, 0 };
+constexpr mat3_t axis_identity = { 1, 0, 0, 0, 1, 0, 0, 0, 1 };
+constexpr quat_t quat_identity = { 0, 0, 0, 1 };
 
-extern vec4_t colorBlack;
-extern vec4_t colorRed;
-extern vec4_t colorGreen;
-extern vec4_t colorBlue;
-extern vec4_t colorYellow;
-extern vec4_t colorMagenta;
-extern vec4_t colorCyan;
-extern vec4_t colorWhite;
-extern vec4_t colorLtGrey;
-extern vec4_t colorMdGrey;
-extern vec4_t colorDkGrey;
-extern vec4_t colorOrange;
+constexpr vec4_t colorBlack  = { 0, 0, 0, 1 };
+constexpr vec4_t colorRed    = { 1, 0, 0, 1 };
+constexpr vec4_t colorGreen  = { 0, 1, 0, 1 };
+constexpr vec4_t colorBlue   = { 0, 0, 1, 1 };
+constexpr vec4_t colorYellow = { 1, 1, 0, 1 };
+constexpr vec4_t colorOrange = { 1, 0.5, 0, 1 };
+constexpr vec4_t colorMagenta = { 1, 0, 1, 1 };
+constexpr vec4_t colorCyan   = { 0, 1, 1, 1 };
+constexpr vec4_t colorWhite  = { 1, 1, 1, 1 };
+constexpr vec4_t colorLtGrey = { 0.75, 0.75, 0.75, 1 };
+constexpr vec4_t colorMdGrey = { 0.5, 0.5, 0.5, 1 };
+constexpr vec4_t colorDkGrey = { 0.25, 0.25, 0.25, 1 };
 
 #define MAX_S_COLORS 10
 
-extern vec4_t color_table[MAX_S_COLORS];
+constexpr vec4_t color_table[MAX_S_COLORS] =
+{
+	{ 0.0, 0.0, 0.0, 1.0 },
+	{ 1.0, 0.0, 0.0, 1.0 },
+	{ 0.0, 1.0, 0.0, 1.0 },
+	{ 1.0, 1.0, 0.0, 1.0 },
+	{ 0.0, 0.0, 1.0, 1.0 },
+	{ 0.0, 1.0, 1.0, 1.0 },
+	{ 1.0, 0.0, 1.0, 1.0 }, // magenta
+	{ 1.0, 1.0, 1.0, 1.0 },
+	{ 1.0, 0.5, 0.0, 1.0 }, // orange
+	{ 0.5, 0.5, 0.5, 1.0 }, // grey
+};
+
 
 #define nanmask ( 255 << 23 )
 
@@ -403,7 +412,3 @@ float Q_GetNoiseValueFromTable( float *noisetable, int *noiseperm,
 * NOT thread-safe!
 */
 float Q_GetNoiseValue( float x, float y, float z, float t );
-
-#ifdef __cplusplus
-};
-#endif

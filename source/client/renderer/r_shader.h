@@ -239,7 +239,7 @@ typedef struct {
 
 // Shader information
 typedef struct shader_s {
-	char                *name;
+	char *name;
 	unsigned int id;
 	int registrationSequence;
 	shaderType_e type;

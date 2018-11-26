@@ -28,16 +28,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 angelwrap_api_t *module_angelExport = NULL;
 void gs_asemptyfunc( void ) {}
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void GS_asInitializeExport( void );
-
-#ifdef __cplusplus
-};
-#endif
-
 //=======================================================================
 
 static const gs_asEnumVal_t asConfigstringEnumVals[] =

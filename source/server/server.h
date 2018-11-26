@@ -336,7 +336,7 @@ void SV_MasterHeartbeat( void );
 void SV_MasterSendQuit( void );
 
 void SVC_MasterInfoResponse( const socket_t *socket, const netadr_t *address );
-int SVC_FakeConnect( char *fakeUserinfo, char *fakeSocketType, const char *fakeIP );
+int SVC_FakeConnect( const char *fakeUserinfo, const char *fakeSocketType, const char *fakeIP );
 
 void SV_UpdateActivity( void );
 
