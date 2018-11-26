@@ -123,18 +123,9 @@ constexpr vec4_t color_table[MAX_S_COLORS] =
 #define RAD2DEG( a ) ( a * 180.0F ) / M_PI
 
 
-// returns b clamped to [a..c] range
-//#define bound(a,b,c) (max((a), min((b), (c))))
-
-#ifndef max
 #define max( a, b ) ( ( a ) > ( b ) ? ( a ) : ( b ) )
-#endif
-
-#ifndef min
 #define min( a, b ) ( ( a ) < ( b ) ? ( a ) : ( b ) )
-#endif
-
-#define bound( a, b, c ) ( ( a ) >= ( c ) ? ( a ) : ( b ) < ( a ) ? ( a ) : ( b ) > ( c ) ? ( c ) : ( b ) )
+#define bound( lo, x, hi ) ( ( lo ) >= ( hi ) ? ( lo ) : ( x ) < ( lo ) ? ( lo ) : ( x ) > ( hi ) ? ( hi ) : ( x ) )
 
 // clamps a (must be lvalue) to [b..c] range
 #define clamp( a, b, c ) ( ( b ) >= ( c ) ? ( a ) = ( b ) : ( a ) < ( b ) ? ( a ) = ( b ) : ( a ) > ( c ) ? ( a ) = ( c ) : ( a ) )
