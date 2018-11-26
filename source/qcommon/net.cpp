@@ -282,7 +282,7 @@ static socket_handle_t OpenSocket( socket_type_t type, bool ipv6 ) {
 #ifdef IPV6_V6ONLY
 	if( ipv6 ) {
 		int ipv6_only = 1;
-		setsockopt( handle, IPPROTO_IPV6, IPV6_V6ONLY, (const void*)&ipv6_only, sizeof( ipv6_only ) );
+		setsockopt( handle, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&ipv6_only, sizeof( ipv6_only ) );
 	}
 #endif
 
@@ -378,7 +378,7 @@ static bool NET_UDP_SendPacket( const socket_t *socket, const void *data, size_t
 	}
 
 	addrlen = ( addr.ss_family == AF_INET6 ? sizeof( struct sockaddr_in6 ) : sizeof( struct sockaddr_in ) );
-	if( sendto( socket->handle, data, length, 0, (struct sockaddr *)&addr, addrlen ) == SOCKET_ERROR ) {
+	if( sendto( socket->handle, ( const char * ) data, length, 0, (struct sockaddr *)&addr, addrlen ) == SOCKET_ERROR ) {
 		NET_SetErrorStringFromLastError( "sendto" );
 		return false;
 	}
@@ -490,7 +490,7 @@ static int NET_TCP_Get( const socket_t *socket, netadr_t *address, void *data, s
 	assert( data );
 	assert( length > 0 );
 
-	ret = recv( socket->handle, data, length, 0 );
+	ret = recv( socket->handle, ( char * ) data, length, 0 );
 	if( ret == SOCKET_ERROR ) {
 		NET_SetErrorStringFromLastError( "recv" );
 		if( Sys_NET_GetLastError() == NET_ERR_WOULDBLOCK ) { // would block
@@ -593,7 +593,7 @@ static int NET_TCP_Send( const socket_t *socket, const void *data, size_t length
 	setsockopt( socket->handle, SOL_SOCKET, SO_NOSIGPIPE, &opt_val, sizeof( opt_val ) );
 #endif
 
-	ret = send( socket->handle, data, length, MSG_NOSIGNAL );
+	ret = send( socket->handle, ( const char * ) data, length, MSG_NOSIGNAL );
 
 #ifdef USE_TCP_NOSIGPIPE
 	// Enable SIGPIPE
