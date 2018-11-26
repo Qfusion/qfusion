@@ -246,7 +246,7 @@ mesh_vbo_t *R_CreateMeshVBO( void *owner, int numVerts, int numElems, int numIns
 	// autosprites
 	// FIXME: autosprite2 requires waaaay too much data for such a trivial
 	// transformation..
-	if( ( vattribs & VATTRIB_AUTOSPRITE_BIT ) == VATTRIB_AUTOSPRITE_BIT ) {
+	if( vattribs & VATTRIB_AUTOSPRITE_BIT ) {
 		assert( !( vertexSize & 3 ) );
 		vbo->spritePointsOffset = vertexSize;
 		vertexSize += FLOAT_VATTRIB_SIZE( VATTRIB_AUTOSPRITE_BIT, halfFloatVattribs ) * 4;
@@ -255,8 +255,7 @@ mesh_vbo_t *R_CreateMeshVBO( void *owner, int numVerts, int numElems, int numIns
 	size = vertexSize * numVerts;
 
 	// instances data
-	if( ( ( vattribs & VATTRIB_INSTANCES_BITS ) == VATTRIB_INSTANCES_BITS ) &&
-		numInstances ) {
+	if( ( vattribs & VATTRIB_INSTANCES_BITS ) == VATTRIB_INSTANCES_BITS && numInstances ) {
 		assert( !( vertexSize & 3 ) );
 		vbo->instancesOffset = size;
 		size += numInstances * sizeof( GLfloat ) * 8;

@@ -50,7 +50,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 		"../win32/win_net.cpp"
 		"../win32/win_sys.cpp"
 		"../win32/win_console.cpp"
-		"../win32/win_threads.cpp"
 
 		"../win32/qfusion.rc"
 		)
