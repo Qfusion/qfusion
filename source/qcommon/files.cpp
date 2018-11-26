@@ -1775,7 +1775,7 @@ bool FS_IsPureFile( const char *filename ) {
 		return false;
 	}
 
-	return search->pack->pure;
+	return search->pack->pure != FS_PURE_NONE;
 }
 
 /*
