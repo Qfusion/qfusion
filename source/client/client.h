@@ -531,17 +531,3 @@ extern float scr_con_current;
 extern float scr_conlines;       // lines of console to display
 
 extern ref_export_t re;     // interface to refresh .dll
-
-//
-// sys import
-//
-
-/**
- * Initializes the parts of the platform module required to run the client.
- */
-void CL_Sys_Init( void );
-
-/**
- * Shuts down the client parts of the platform module.
- */
-void CL_Sys_Shutdown( void );

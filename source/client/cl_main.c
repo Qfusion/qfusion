@@ -2463,8 +2463,6 @@ void CL_Init( void ) {
 
 	Con_Init();
 
-	CL_Sys_Init();
-
 	// init localization subsystem
 	L10n_Init();
 
@@ -2550,8 +2548,6 @@ void CL_Shutdown( void ) {
 	SCR_ShutdownScreen();
 
 	Steam_Shutdown();
-
-	CL_Sys_Shutdown();
 
 	Con_Shutdown();
 
