@@ -2049,15 +2049,15 @@ static void asFunc_FireStrongBolt( asvec3_t *origin, asvec3_t *angles, int range
 }
 
 static edict_t *asFunc_FirePlasma( asvec3_t *origin, asvec3_t *angles, int speed, int radius, int damage, int knockback, edict_t *owner ) {
-	return W_Fire_Plasma( owner, origin->v, angles->v, damage, min( 1, knockback ), knockback, min( 1, damage ), radius, speed, 5000, MOD_PLASMA_S, 0 );
+	return W_Fire_Plasma( owner, origin->v, angles->v, damage, 1, knockback, min( 1, damage ), radius, speed, 5000, MOD_PLASMA_S, 0 );
 }
 
 static edict_t *asFunc_FireRocket( asvec3_t *origin, asvec3_t *angles, int speed, int radius, int damage, int knockback, edict_t *owner ) {
-	return W_Fire_Rocket( owner, origin->v, angles->v, speed, damage, min( 1, knockback ), knockback, min( 1, damage ), radius, 5000, MOD_ROCKET_S, 0 );
+	return W_Fire_Rocket( owner, origin->v, angles->v, speed, damage, 1, knockback, min( 1, damage ), radius, 5000, MOD_ROCKET_S, 0 );
 }
 
 static edict_t *asFunc_FireGrenade( asvec3_t *origin, asvec3_t *angles, int speed, int radius, int damage, int knockback, edict_t *owner ) {
-	return W_Fire_Grenade( owner, origin->v, angles->v, speed, damage, min( 1, knockback ), knockback, min( 1, damage ), radius, 5000, MOD_GRENADE_S, 0, false );
+	return W_Fire_Grenade( owner, origin->v, angles->v, speed, damage, 1, knockback, min( 1, damage ), radius, 5000, MOD_GRENADE_S, 0, false );
 }
 
 static void asFunc_FireRiotgun( asvec3_t *origin, asvec3_t *angles, int range, int spread, int count, int damage, int knockback, edict_t *owner ) {
@@ -2069,7 +2069,7 @@ static void asFunc_FireBullet( asvec3_t *origin, asvec3_t *angles, int range, in
 }
 
 static edict_t *asFunc_FireBlast( asvec3_t *origin, asvec3_t *angles, int speed, int radius, int damage, int knockback, edict_t *owner ) {
-	return W_Fire_GunbladeBlast( owner, origin->v, angles->v, damage, min( 1, knockback ), knockback, min( 1, damage ), radius, speed, 5000, MOD_SPLASH, 0 );
+	return W_Fire_GunbladeBlast( owner, origin->v, angles->v, damage, 1, knockback, min( 1, damage ), radius, speed, 5000, MOD_SPLASH, 0 );
 }
 
 static unsigned asFunc_G_RegisterHelpMessage( asstring_t *str ) {
