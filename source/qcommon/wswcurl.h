@@ -1,5 +1,4 @@
-#ifndef __WSWCURL_H
-#define __WSWCURL_H
+#pragma once
 
 #define WSWCURL_STATUS_NONE     0
 #define WSWCURL_STATUS_RUNNING  1
@@ -111,5 +110,3 @@ const char *wswcurl_errorstr( int status );
 const char *wswcurl_get_url( const wswcurl_req *req );
 const char *wswcurl_get_effective_url( wswcurl_req *req );
 int wswcurl_get_status( const wswcurl_req *req );
-
-#endif
