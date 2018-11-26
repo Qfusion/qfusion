@@ -1150,7 +1150,7 @@ static bool CL_ProcessPacket( netchan_t *netchan, msg_t *msg ) {
 void CL_ReadPackets( void ) {
 	static msg_t msg;
 	static uint8_t msgData[MAX_MSGLEN];
-	int socketind, ret;
+	int ret;
 	socket_t *socket;
 	netadr_t address;
 
@@ -1163,7 +1163,7 @@ void CL_ReadPackets( void ) {
 
 	MSG_Init( &msg, msgData, sizeof( msgData ) );
 
-	for( socketind = 0; socketind < ARRAY_COUNT( sockets ); socketind++ ) {
+	for( size_t socketind = 0; socketind < ARRAY_COUNT( sockets ); socketind++ ) {
 		socket = sockets[socketind];
 
 		while( socket->open && ( ret = NET_GetPacket( socket, &address, &msg ) ) != 0 ) {
