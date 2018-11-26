@@ -969,7 +969,7 @@ void CG_PlasmaExplosion( const vec3_t pos, const vec3_t dir, int team, int fire_
 void CG_GrenadeExplosionMode( const vec3_t pos, const vec3_t dir, int fire_mode, float radius );
 void CG_GenericExplosion( const vec3_t pos, const vec3_t dir, int fire_mode, float radius );
 void CG_RocketExplosionMode( const vec3_t pos, const vec3_t dir, int fire_mode, float radius );
-void CG_ElectroTrail2( const vec3_t start, const vec3_t end, int team );
+void CG_ElectroTrail( const vec3_t start, const vec3_t end, int team );
 void CG_ImpactSmokePuff( const vec3_t origin, const vec3_t dir, float radius, float alpha, int time, int speed );
 void CG_BoltExplosionMode( const vec3_t pos, const vec3_t dir, int fire_mode, int surfFlags );
 void CG_BladeImpact( const vec3_t pos, const vec3_t dir );

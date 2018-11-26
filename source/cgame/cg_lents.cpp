@@ -285,9 +285,9 @@ void CG_SpawnSprite( const vec3_t origin, const vec3_t velocity, const vec3_t ac
 }
 
 /*
-* CG_ElectroTrail2
+* CG_ElectroTrail
 */
-void CG_ElectroTrail2( const vec3_t start, const vec3_t end, int team ) {
+void CG_ElectroTrail( const vec3_t start, const vec3_t end, int team ) {
 	vec4_t color = { 1.0f, 1.0f, 1.0f, 1.0f };
 
 	if( team == TEAM_ALPHA || team == TEAM_BETA ) {

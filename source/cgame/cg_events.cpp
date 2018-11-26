@@ -54,7 +54,7 @@ void CG_WeaponBeamEffect( centity_t *cent ) {
 		VectorCopy( cent->laserOrigin, projection.origin );
 	}
 
-	CG_ElectroTrail2( projection.origin, cent->laserPoint, cent->current.team );
+	CG_ElectroTrail( projection.origin, cent->laserPoint, cent->current.team );
 
 	cent->localEffects[LOCALEFFECT_EV_WEAPONBEAM] = 0;
 }

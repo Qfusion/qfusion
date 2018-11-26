@@ -1148,20 +1148,8 @@ void CG_AddPModel( centity_t *cent ) {
 	}
 
 	// since origin is displaced in player models set lighting origin to the center of the bbox
-#if 1
 	for( i = 0; i < 3; i++ )
 		cent->ent.lightingOrigin[i] = cent->ent.origin[i] + ( 0.5f * ( playerbox_stand_mins[i] + playerbox_stand_maxs[i] ) );
-#else
-	if( 1 ) {
-
-		vec3_t mins, maxs;
-
-		GS_BBoxForEntityState( &cent->current, mins, maxs );
-
-		for( i = 0; i < 3; i++ )
-			cent->ent.lightingOrigin[i] = cent->ent.origin[i] + ( 0.5f * ( mins[i] + maxs[i] ) );
-	}
-#endif
 
 	animState = &pmodel->animState;
 
