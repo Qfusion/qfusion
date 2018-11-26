@@ -605,7 +605,6 @@ static void CL_EndRegistration( void ) {
 * CL_ClearState
 */
 void CL_ClearState( void ) {
-	printf( "clear state\n" );
 	if( cl.cms ) {
 		CM_ReleaseReference( cl.cms );
 	}
