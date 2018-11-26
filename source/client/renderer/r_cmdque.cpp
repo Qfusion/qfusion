@@ -610,7 +610,6 @@ enum {
 
 	REF_PIPE_CMD_SET_TEXTURE_FILTER,
 	REF_PIPE_CMD_SET_GAMMA,
-	REF_PIPE_CMD_FENCE,
 
 	NUM_REF_PIPE_CMDS
 };
@@ -657,11 +656,6 @@ typedef struct {
 	int id;
 	float gamma;
 } refReliableCmdSetGamma_t;
-
-// dummy cmd used for syncing with the frontend
-typedef struct {
-	int id;
-} refReliableCmdFence_t;
 
 static unsigned R_HandleInitReliableCmd( const void *pcmd ) {
 	RB_Init();
@@ -759,12 +753,6 @@ static unsigned R_HandleSetGammaReliableCmd( const void *pcmd ) {
 	return sizeof( *cmd );
 }
 
-static unsigned R_HandleFenceReliableCmd( const void *pcmd ) {
-	const refReliableCmdFence_t *cmd = ( const refReliableCmdFence_t * ) pcmd;
-
-	return sizeof( *cmd );
-}
-
 typedef unsigned (*refPipeCmdHandler_t)( const void * );
 static refPipeCmdHandler_t refPipeCmdHandlers[NUM_REF_PIPE_CMDS] =
 {
@@ -779,7 +767,6 @@ static refPipeCmdHandler_t refPipeCmdHandlers[NUM_REF_PIPE_CMDS] =
 	R_HandleSetWallFloorColorsReliableCmd,
 	R_HandleSetTextureFilterReliableCmd,
 	R_HandleSetGammaReliableCmd,
-	R_HandleFenceReliableCmd,
 };
 
 // ============================================================================
@@ -891,14 +878,6 @@ static void RF_IssueSetGammaReliableCmd( ref_cmdpipe_t *cmdpipe, float gamma ) {
 	RF_IssueAbstractReliableCmd( cmdpipe, &cmd, sizeof( cmd ) );
 }
 
-static void RF_IssueFenceReliableCmd( ref_cmdpipe_t *cmdpipe ) {
-	refReliableCmdFence_t cmd;
-
-	cmd.id = REF_PIPE_CMD_FENCE;
-
-	RF_IssueAbstractReliableCmd( cmdpipe, &cmd, sizeof( cmd ) );
-}
-
 // ============================================================================
 
 ref_cmdpipe_t *RF_CreateCmdPipe() {
@@ -916,7 +895,6 @@ ref_cmdpipe_t *RF_CreateCmdPipe() {
 	cmdpipe->SetWallFloorColors = &RF_IssueSetWallFloorColorsReliableCmd;
 	cmdpipe->SetTextureFilter = &RF_IssueSetTextureFilterReliableCmd;
 	cmdpipe->SetGamma = &RF_IssueSetGammaReliableCmd;
-	cmdpipe->Fence = &RF_IssueFenceReliableCmd;
 
 	return cmdpipe;
 }

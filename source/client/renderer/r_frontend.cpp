@@ -119,7 +119,6 @@ void RF_BeginFrame( bool uncappedFPS ) {
 
 void RF_EndFrame( void ) {
 	rrf.frame->EndFrame( rrf.frame );
-	rrf.adapter.cmdPipe->Fence( rrf.adapter.cmdPipe );
 }
 
 void RF_BeginRegistration( void ) {

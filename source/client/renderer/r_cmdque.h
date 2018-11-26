@@ -76,7 +76,6 @@ typedef struct ref_cmdpipe_s {
 	void ( *SetWallFloorColors )( struct ref_cmdpipe_s *cmdpipe, const vec3_t wallColor, const vec3_t floorColor );
 	void ( *SetTextureFilter )( struct ref_cmdpipe_s *cmdpipe, int filter );
 	void ( *SetGamma )( struct ref_cmdpipe_s *cmdpipe, float gamma );
-	void ( *Fence )( struct ref_cmdpipe_s *cmdpipe );
 
 	qbufPipe_t      *pipe;
 } ref_cmdpipe_t;
