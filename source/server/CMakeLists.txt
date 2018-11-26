@@ -29,7 +29,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 		"../win32/win_time.cpp"
 		"../win32/win_lib.cpp"
 		"../win32/win_threads.cpp"
-		"../null/sys_vfs_null.cpp"
 		"../win32/conproc.cpp"
 		)
 
@@ -44,7 +43,6 @@ else()
 		"../unix/unix_time.cpp"
 		"../unix/unix_lib.cpp"
 		"../unix/unix_threads.cpp"
-		"../null/sys_vfs_null.cpp"
 		)
 
 	set(SERVER_PLATFORM_LIBRARIES "pthread" "dl" "m")

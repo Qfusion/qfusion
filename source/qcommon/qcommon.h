@@ -637,15 +637,6 @@ void    FS_FreeBaseFile( void *buffer );
 #define FS_LoadBaseFile( path,buffer,stack,stacksize ) FS_LoadBaseFileExt( path,0,buffer,stack,stacksize,__FILE__,__LINE__ )
 #define FS_LoadCacheFile( path,buffer,stack,stacksize ) FS_LoadFileExt( path,FS_CACHE,buffer,stack,stacksize,__FILE__,__LINE__ )
 
-/**
-* Maps an existing file on disk for reading.
-* Does *not* work for compressed virtual files.
-*
-* @return mapped pointer to data on disk or NULL if mapping failed or passed size is 0.
-*/
-void    *FS_MMapBaseFile( int file, size_t size, size_t offset );
-void    FS_UnMMapBaseFile( int file, void *data );
-
 int     FS_GetNotifications( void );
 int     FS_RemoveNotifications( int bitmask );
 
