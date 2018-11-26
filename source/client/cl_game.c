@@ -198,7 +198,6 @@ void CL_GameModule_L10n_ClearDomain( void ) {
 
 //==============================================
 
-void VID_FlashWindow( int count ) { }
 float VID_GetPixelRatio() { return 1; }
 
 /*

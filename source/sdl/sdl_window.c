@@ -325,6 +325,15 @@ void VID_SetGammaRamp( size_t stride, unsigned short size, unsigned short *ramp 
 	}
 }
 
+void VID_FlashWindow() {
+#if _WIN32
+	SDL_SysWMinfo info;
+	SDL_VERSION( &info.version );
+	SDL_GetWindowWMInfo( window, &info );
+	FlashWindow( info.info.win.window, TRUE );
+#endif
+}
+
 void VID_Swap() {
 	SDL_GL_SwapWindow( sdl_window );
 }
