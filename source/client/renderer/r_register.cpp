@@ -109,8 +109,6 @@ cvar_t *r_floorcolor;
 
 cvar_t *r_usenotexture;
 
-cvar_t *r_maxglslbones;
-
 static bool r_verbose;
 
 static void R_FinalizeGLExtensions( void );
@@ -271,14 +269,6 @@ static void R_FinalizeGLExtensions( void ) {
 	glGetIntegerv( GL_MAX_VERTEX_UNIFORM_COMPONENTS, &glConfig.maxVertexUniformComponents );
 	glGetIntegerv( GL_MAX_FRAGMENT_UNIFORM_COMPONENTS, &glConfig.maxFragmentUniformComponents );
 
-	// keep the maximum number of bones we can do in GLSL sane
-	if( r_maxglslbones->integer > MAX_GLSL_UNIFORM_BONES ) {
-		ri.Cvar_ForceSet( r_maxglslbones->name, r_maxglslbones->dvalue );
-	}
-
-	// the maximum amount of bones we can handle in a vertex shader (2 vec4 uniforms per vertex)
-	glConfig.maxGLSLBones = bound( 0, glConfig.maxVertexUniformComponents / 8 - 19, r_maxglslbones->integer );
-
 	glConfig.depthEpsilon = 1.0 / ( 1 << 22 );
 
 	// require both texture_sRGB and texture_float for sRGB rendering as 8bit framebuffers
@@ -396,8 +386,6 @@ static void R_Register() {
 
 	// make sure we rebuild our 3D texture after vid_restart
 	r_wallcolor->modified = r_floorcolor->modified = true;
-
-	r_maxglslbones = ri.Cvar_Get( "r_maxglslbones", STR_TOSTR( MAX_GLSL_UNIFORM_BONES ), CVAR_LATCH_VIDEO );
 
 	ri.Cmd_AddCommand( "imagelist", R_ImageList_f );
 	ri.Cmd_AddCommand( "shaderlist", R_ShaderList_f );

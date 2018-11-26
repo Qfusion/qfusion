@@ -177,13 +177,7 @@ void RP_Init( void ) {
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_COLOR_CORRECTION, DEFAULT_GLSL_COLORCORRECTION_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_KAWASE_BLUR, DEFAULT_GLSL_KAWASE_BLUR_PROGRAM, NULL, NULL, 0, 0 );
 
-	// check whether compilation of the shader with GPU skinning succeeds, if not, disable GPU bone transforms
-	if( glConfig.maxGLSLBones ) {
-		program = RP_RegisterProgram( GLSL_PROGRAM_TYPE_MATERIAL, DEFAULT_GLSL_MATERIAL_PROGRAM, NULL, NULL, 0, GLSL_SHADER_COMMON_BONE_TRANSFORMS1 );
-		if( !program ) {
-			glConfig.maxGLSLBones = 0;
-		}
-	}
+	program = RP_RegisterProgram( GLSL_PROGRAM_TYPE_MATERIAL, DEFAULT_GLSL_MATERIAL_PROGRAM, NULL, NULL, 0, GLSL_SHADER_COMMON_BONE_TRANSFORMS1 );
 
 	r_glslprograms_initialized = true;
 }
@@ -1562,8 +1556,7 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 	else
 		shaderStrings[i++] = QF_BUILTIN_GLSL_MACROS_GLSL120;
 	shaderStrings[i++] = QF_BUILTIN_GLSL_CONSTANTS;
-	Q_snprintfz( maxBones, sizeof( maxBones ),
-				 "#define MAX_UNIFORM_BONES %i\n", glConfig.maxGLSLBones );
+	Q_snprintfz( maxBones, sizeof( maxBones ), "#define MAX_UNIFORM_BONES %i\n", MAX_GLSL_UNIFORM_BONES );
 	shaderStrings[i++] = maxBones;
 	shaderStrings[i++] = QF_BUILTIN_GLSL_UNIFORMS;
 	wavefuncsIdx = i;
@@ -2127,9 +2120,6 @@ void RP_UpdateTexGenUniforms( int elem, const mat4_t reflectionMatrix, const mat
 void RP_UpdateBonesUniforms( int elem, unsigned int numBones, dualquat_t *animDualQuat ) {
 	glsl_program_t *program = r_glslprograms + elem - 1;
 
-	if( numBones > glConfig.maxGLSLBones ) {
-		return;
-	}
 	if( program->loc.DualQuats < 0 ) {
 		return;
 	}

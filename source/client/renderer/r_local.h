@@ -432,8 +432,6 @@ extern cvar_t *r_drawflat;
 extern cvar_t *r_wallcolor;
 extern cvar_t *r_floorcolor;
 
-extern cvar_t *r_maxglslbones;
-
 //====================================================================
 
 void R_NormToLatLong( const vec_t *normal, uint8_t latlong[2] );
