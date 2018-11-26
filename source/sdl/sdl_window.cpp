@@ -345,7 +345,7 @@ void VID_FlashWindow() {
 #if _WIN32
 	SDL_SysWMinfo info;
 	SDL_VERSION( &info.version );
-	SDL_GetWindowWMInfo( window, &info );
+	SDL_GetWindowWMInfo( sdl_window, &info );
 	FlashWindow( info.info.win.window, TRUE );
 #endif
 }
