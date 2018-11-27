@@ -96,7 +96,7 @@ void playerKilled( Entity @victim, Entity @attacker, Entity @inflictor )
 		player.killsThisRound++;
 
 		int required_for_bongo = attacker.team == TEAM_ALPHA ? betaAliveAtStart : alphaAliveAtStart;
-		if ( player.killsThisRound == required_for_bongo )
+		if ( required_for_bongo >= 3 && player.killsThisRound == required_for_bongo )
 		{
 			player.client.addAward( S_COLOR_YELLOW + "King of Bongo!" );
 
