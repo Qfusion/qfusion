@@ -64,7 +64,7 @@ typedef enum {
 	FS_PURE_EXPLICIT    = 2
 } fs_pure_t;
 
-static const char *pak_extensions[] = { "pk3" };
+static const char *pak_extensions[] = { "pk3", NULL };
 
 static const char *forbidden_gamedirs[] = {
 	"docs",
@@ -925,11 +925,9 @@ int FS_FOpenAbsoluteFile( const char *filename, int *filenum, int mode ) {
 	file->gzstream = gzf;
 	file->gzlevel = Z_DEFAULT_COMPRESSION;
 
-#if ZLIB_VER_MAJOR >= 1 && ZLIB_VER_MINOR >= 2 && ZLIB_VER_REVISION >= 4
 	if( gzf ) {
 		gzbuffer( gzf, FZ_GZ_BUFSIZE );
 	}
-#endif
 
 	return end;
 }
@@ -1043,18 +1041,13 @@ static int _FS_FOpenFile( const char *filename, int *filenum, int mode, bool bas
 		return -1;
 	}
 
-	assert( !FS_IsUrl( filename ) ); // WTF was this shit
-
-	if( ( mode == FS_WRITE || mode == FS_APPEND ) || update || cache ) {
+	if( mode == FS_WRITE || mode == FS_APPEND || update || cache ) {
 		int end;
 		char modestr[4] = { 0, 0, 0, 0 };
 		FILE *f = NULL;
 		const char *dir;
 
-		dir = FS_WriteDirectory();
-		if( cache ) {
-			dir = FS_CacheDirectory();
-		}
+		dir = cache ? FS_CacheDirectory() : FS_WriteDirectory();
 
 		if( base ) {
 			Q_snprintfz( tempname, sizeof( tempname ), "%s/%s", dir, filename );
@@ -1086,11 +1079,9 @@ static int _FS_FOpenFile( const char *filename, int *filenum, int mode, bool bas
 		file->gzstream = gzf;
 		file->gzlevel = Z_DEFAULT_COMPRESSION;
 
-#if ZLIB_VER_MAJOR >= 1 && ZLIB_VER_MINOR >= 2 && ZLIB_VER_REVISION >= 4
 		if( gzf ) {
 			gzbuffer( gzf, FZ_GZ_BUFSIZE );
 		}
-#endif
 		return end;
 	}
 
@@ -3144,12 +3135,12 @@ int FS_GetGameDirectoryList( char *buf, size_t bufsize ) {
 * FS_GamePathPaks
 */
 static char **FS_GamePathPaks( searchpath_t *basepath, const char *gamedir, int *numpaks ) {
-	int i, e, numpakfiles;
+	int numpakfiles;
 	char **paknames = NULL;
 	char pattern[FS_MAX_PATH], basePattern[FS_MAX_PATH];
 
 	numpakfiles = 0;
-	for( e = 0; pak_extensions[e]; e++ ) {
+	for( int e = 0; pak_extensions[e]; e++ ) {
 		int numfiles = 0;
 		char **filenames;
 
@@ -3165,9 +3156,10 @@ static char **FS_GamePathPaks( searchpath_t *basepath, const char *gamedir, int 
 					paknames = ( char** )Mem_ZoneMalloc( sizeof( *paknames ) * ( numpakfiles + numfiles + 1 ) );
 				}
 
-				for( i = 0; i < numfiles; i++ )
+				for( int i = 0; i < numfiles; i++ ) {
 					paknames[numpakfiles + i] = filenames[i];
-				paknames[numpakfiles + i] = NULL;
+				}
+				paknames[numpakfiles + numfiles] = NULL;
 
 				numpakfiles += numfiles;
 
@@ -3184,12 +3176,10 @@ static char **FS_GamePathPaks( searchpath_t *basepath, const char *gamedir, int 
 	if( numpakfiles != 0 ) {
 		qsort( paknames, numpakfiles, sizeof( char * ), ( int ( * )( const void *, const void * ) )FS_SortStrings );
 
-		for( i = 0; i < numpakfiles; ) {
-			bool skip = false;
-			bool wrongpure;
-
+		for( int i = 0; i < numpakfiles; ) {
 			// ignore pure data and modules pk3 files from other versions
-			skip = skip || ( FS_IsExplicitPurePak( paknames[i], &wrongpure ) && wrongpure );
+			bool wrongpure;
+			bool skip = FS_IsExplicitPurePak( paknames[i], &wrongpure ) && wrongpure;
 
 			if( skip ) {
 				Mem_Free( paknames[i] );
@@ -3209,7 +3199,7 @@ static char **FS_GamePathPaks( searchpath_t *basepath, const char *gamedir, int 
 * FS_TouchGamePath
 */
 static int FS_TouchGamePath( searchpath_t *basepath, const char *gamedir, bool initial ) {
-	int i, totalpaks, newpaks;
+	int totalpaks, newpaks;
 	size_t path_size;
 	searchpath_t *search, *prev, *next;
 	pack_t *pak;
@@ -3233,7 +3223,7 @@ static int FS_TouchGamePath( searchpath_t *basepath, const char *gamedir, bool i
 	newpaks = 0;
 	totalpaks = 0;
 	if( ( paknames = FS_GamePathPaks( basepath, gamedir, &totalpaks ) ) != 0 ) {
-		for( i = 0; i < totalpaks; i++ ) {
+		for( int i = 0; i < totalpaks; i++ ) {
 			// ignore already loaded pk3 files if updating
 			searchpath_t *compare = fs_searchpaths;
 			while( compare ) {
@@ -3282,20 +3272,6 @@ freename:
 	QMutex_Unlock( fs_searchpaths_mutex );
 
 	return newpaks;
-}
-
-/*
-* FS_AddGamePath
-*/
-static int FS_AddGamePath( searchpath_t *basepath, const char *gamedir ) {
-	return FS_TouchGamePath( basepath, gamedir, true );
-}
-
-/*
-* FS_UpdateGamePath
-*/
-static int FS_UpdateGamePath( searchpath_t *basepath, const char *gamedir ) {
-	return FS_TouchGamePath( basepath, gamedir, false );
 }
 
 /*
@@ -3470,11 +3446,7 @@ static int FS_TouchGameDirectory( const char *gamedir, bool initial ) {
 		basepath = fs_basepaths;
 		while( basepath->next != prev )
 			basepath = basepath->next;
-		if( initial ) {
-			newpaks += FS_AddGamePath( basepath, gamedir );
-		} else {
-			newpaks += FS_UpdateGamePath( basepath, gamedir );
-		}
+		newpaks += FS_TouchGamePath( basepath, gamedir, initial );
 		prev = basepath;
 	}
 
@@ -3558,7 +3530,7 @@ bool FS_SetGameDirectory( const char *dir, bool force ) {
 	}
 	QMutex_Unlock( fs_searchpaths_mutex );
 
-	if( !strcmp( dir, fs_basegame->string ) || ( *dir == 0 ) ) {
+	if( !strcmp( dir, fs_basegame->string ) || *dir == 0 ) {
 		Cvar_ForceSet( "fs_game", fs_basegame->string );
 	} else {
 		Cvar_ForceSet( "fs_game", dir );
@@ -3774,7 +3746,7 @@ static void Cmd_FileMTime_f( void ) {
 	newtime = localtime( &mtime );
 
 	if( mtime < 0 || !newtime ) {
-		Com_Printf( "Uknown mtime for %s\n", filename );
+		Com_Printf( "Unknown mtime for %s\n", filename );
 		return;
 	}
 
@@ -3807,7 +3779,7 @@ void FS_Init( void ) {
 	Cmd_AddCommand( "fs_search", Cmd_FS_Search_f );
 	Cmd_AddCommand( "fs_checksum", Cmd_FileChecksum_f );
 	Cmd_AddCommand( "fs_mtime", Cmd_FileMTime_f );
-	Cmd_AddCommand( "fs_untoched", Cmd_FS_Untouched_f );
+	Cmd_AddCommand( "fs_untouched", Cmd_FS_Untouched_f );
 
 	fs_numsearchfiles = FS_MIN_SEARCHFILES;
 	fs_searchfiles = ( searchfile_t* )FS_Malloc( sizeof( searchfile_t ) * fs_numsearchfiles );
