@@ -64,8 +64,6 @@ typedef enum {
 	FS_PURE_EXPLICIT    = 2
 } fs_pure_t;
 
-static const char *pak_extensions[] = { "pk3", NULL };
-
 static const char *forbidden_gamedirs[] = {
 	"docs",
 	"libs",
@@ -575,14 +573,27 @@ bool FS_IsExplicitPurePak( const char *pakname, bool *wrongver ) {
 */
 int FS_GetExplicitPurePakList( char ***paknames ) {
 	searchpath_t *search;
-	int numpaks, i, e;
+	int numpaks, i;
 
 	// count them
 	numpaks = 0;
 
 	QMutex_Lock( fs_searchpaths_mutex );
 
-	for( e = 0; pak_extensions[e]; e++ ) {
+	for( search = fs_searchpaths; search; search = search->next ) {
+		if( !search->pack ) {
+			continue;
+		}
+		if( search->pack->pure != FS_PURE_EXPLICIT ) {
+			continue;
+		}
+		numpaks++;
+	}
+
+	if( numpaks ) {
+		*paknames = ( char** )Mem_ZoneMalloc( sizeof( char * ) * numpaks );
+
+		i = 0;
 		for( search = fs_searchpaths; search; search = search->next ) {
 			if( !search->pack ) {
 				continue;
@@ -590,27 +601,10 @@ int FS_GetExplicitPurePakList( char ***paknames ) {
 			if( search->pack->pure != FS_PURE_EXPLICIT ) {
 				continue;
 			}
-			numpaks++;
-		}
-	}
 
-	if( numpaks ) {
-		*paknames = ( char** )Mem_ZoneMalloc( sizeof( char * ) * numpaks );
-
-		i = 0;
-		for( e = 0; pak_extensions[e]; e++ ) {
-			for( search = fs_searchpaths; search; search = search->next ) {
-				if( !search->pack ) {
-					continue;
-				}
-				if( search->pack->pure != FS_PURE_EXPLICIT ) {
-					continue;
-				}
-
-				assert( i < numpaks );
-				( *paknames )[i] = ZoneCopyString( FS_PakNameForPath( search->pack ) );
-				i++;
-			}
+			assert( i < numpaks );
+			( *paknames )[i] = ZoneCopyString( FS_PakNameForPath( search->pack ) );
+			i++;
 		}
 		assert( i == numpaks );
 	}
@@ -2560,22 +2554,11 @@ bool FS_IsPakValid( const char *filename, unsigned *checksum ) {
 * FS_CheckPakExtension
 */
 bool FS_CheckPakExtension( const char *filename ) {
-	int i;
-	const char *ext;
-
-	ext = COM_FileExtension( filename );
-	if( !ext ) {
+	const char * ext = COM_FileExtension( filename );
+	if( ext == NULL )
 		return false;
-	}
-	ext++;
 
-	for( i = 0; pak_extensions[i]; i++ ) {
-		if( !Q_stricmp( ext, pak_extensions[i] )  ) {
-			return true;
-		}
-	}
-
-	return false;
+	return Q_stricmp( ext, ".pk3" ) == 0;
 }
 
 /*
@@ -3135,55 +3118,24 @@ int FS_GetGameDirectoryList( char *buf, size_t bufsize ) {
 * FS_GamePathPaks
 */
 static char **FS_GamePathPaks( searchpath_t *basepath, const char *gamedir, int *numpaks ) {
-	int numpakfiles;
-	char **paknames = NULL;
 	char pattern[FS_MAX_PATH], basePattern[FS_MAX_PATH];
+	Q_snprintfz( pattern, sizeof( pattern ), "%s/*.pk3", gamedir );
+	Q_snprintfz( basePattern, sizeof( basePattern ), "%s/%s", basepath->path, pattern );
 
-	numpakfiles = 0;
-	for( int e = 0; pak_extensions[e]; e++ ) {
-		int numfiles = 0;
-		char **filenames;
+	int numfiles;
+	char ** filenames = FS_ListFiles( basePattern, &numfiles, 0, SFF_SUBDIR | SFF_HIDDEN | SFF_SYSTEM );
 
-		Q_snprintfz( pattern, sizeof( pattern ), "%s/*.%s", gamedir, pak_extensions[e] );
-		Q_snprintfz( basePattern, sizeof( basePattern ), "%s/%s", basepath->path, pattern );
+	if( filenames != NULL ) {
+		qsort( filenames, numfiles, sizeof( char * ), ( int ( * )( const void *, const void * ) )FS_SortStrings );
 
-		filenames = FS_ListFiles( basePattern, &numfiles, 0, SFF_SUBDIR | SFF_HIDDEN | SFF_SYSTEM );
-		if( filenames ) {
-			if( numpakfiles ) {
-				if( paknames ) {
-					paknames = ( char** )Mem_Realloc( paknames, sizeof( *paknames ) * ( numpakfiles + numfiles + 1 ) );
-				} else {
-					paknames = ( char** )Mem_ZoneMalloc( sizeof( *paknames ) * ( numpakfiles + numfiles + 1 ) );
-				}
-
-				for( int i = 0; i < numfiles; i++ ) {
-					paknames[numpakfiles + i] = filenames[i];
-				}
-				paknames[numpakfiles + numfiles] = NULL;
-
-				numpakfiles += numfiles;
-
-				if( filenames ) {
-					Mem_Free( filenames );
-				}
-			} else {
-				paknames = filenames;
-				numpakfiles = numfiles;
-			}
-		}
-	}
-
-	if( numpakfiles != 0 ) {
-		qsort( paknames, numpakfiles, sizeof( char * ), ( int ( * )( const void *, const void * ) )FS_SortStrings );
-
-		for( int i = 0; i < numpakfiles; ) {
+		for( int i = 0; i < numfiles; ) {
 			// ignore pure data and modules pk3 files from other versions
 			bool wrongpure;
-			bool skip = FS_IsExplicitPurePak( paknames[i], &wrongpure ) && wrongpure;
+			bool skip = FS_IsExplicitPurePak( filenames[i], &wrongpure ) && wrongpure;
 
 			if( skip ) {
-				Mem_Free( paknames[i] );
-				memmove( &paknames[i], &paknames[i + 1], ( numpakfiles-- - i ) * sizeof( *paknames ) );
+				Mem_Free( filenames[i] );
+				memmove( &filenames[i], &filenames[i + 1], ( numfiles-- - i ) * sizeof( *filenames ) );
 				continue;
 			}
 
@@ -3191,8 +3143,8 @@ static char **FS_GamePathPaks( searchpath_t *basepath, const char *gamedir, int 
 		}
 	}
 
-	*numpaks = numpakfiles;
-	return paknames;
+	*numpaks = numfiles;
+	return filenames;
 }
 
 /*
