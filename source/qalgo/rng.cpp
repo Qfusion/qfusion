@@ -67,7 +67,7 @@ int random_uniform( PCG * pcg, int lo, int hi ) {
 }
 
 float random_float( PCG * pcg ) {
-        return float( random_u32( pcg ) ) / float( UINT32_MAX + 1 );
+        return float( random_u32( pcg ) ) / ( float( UINT32_MAX ) + 1 );
 }
 
 double random_double( PCG * pcg ) {
