@@ -153,8 +153,6 @@ typedef struct {
 	int ( *FS_GetFileList )( const char *dir, const char *extension, char *buf, size_t bufsize, int start, int end );
 	const char *( *FS_FirstExtension )( const char *filename, const char *extensions[], int num_extensions );
 	bool ( *FS_MoveFile )( const char *src, const char *dst );
-	bool ( *FS_IsUrl )( const char *url );
-	time_t ( *FS_FileMTime )( const char *filename );
 	bool ( *FS_RemoveDirectory )( const char *dirname );
 
 	bool ( *ML_Update )( void );

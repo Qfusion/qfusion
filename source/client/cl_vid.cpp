@@ -155,8 +155,6 @@ static bool VID_LoadRefresh() {
 	import.FS_GetGameDirectoryList = &FS_GetGameDirectoryList;
 	import.FS_FirstExtension = &FS_FirstExtension;
 	import.FS_MoveFile = &FS_MoveFile;
-	import.FS_IsUrl = &FS_IsUrl;
-	import.FS_FileMTime = &FS_FileMTime;
 	import.FS_RemoveDirectory = &FS_RemoveDirectory;
 	import.FS_GameDirectory = &FS_GameDirectory;
 	import.FS_WriteDirectory = &FS_WriteDirectory;

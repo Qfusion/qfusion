@@ -311,37 +311,6 @@ bool Sys_FS_RemoveDirectory( const char *path ) {
 }
 
 /*
-* Sys_FS_FileMTime
-*/
-time_t Sys_FS_FileMTime( const char *filename ) {
-	HANDLE hFile;
-	FILETIME ft;
-	time_t time = 0;
-
-	hFile = CreateFile( filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL );
-	if( hFile == INVALID_HANDLE_VALUE ) {
-		// the file doesn't exist
-		return 0;
-	}
-
-	// retrieve the last-write file time for the file
-	if( GetFileTime( hFile, NULL, NULL, &ft ) ) {
-		ULARGE_INTEGER ull;
-
-		// FILETIME is the number of 100-nanosecond intervals since January 1, 1601.
-		// time_t is the number of 1-second intervals since January 1, 1970.
-
-		ull.LowPart = ft.dwLowDateTime;
-		ull.HighPart = ft.dwHighDateTime;
-		time = ull.QuadPart / 10000000ULL - 11644473600ULL;
-	}
-
-	CloseHandle( hFile );
-
-	return time;
-}
-
-/*
 * Sys_FS_FileNo
 */
 int Sys_FS_FileNo( FILE *fp ) {

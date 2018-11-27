@@ -390,10 +390,6 @@ inline bool FS_IsUrl( const char *url ) {
 	return UI_IMPORT.FS_IsUrl( url );
 }
 
-inline time_t FS_FileMTime( const char *filename ) {
-	return UI_IMPORT.FS_FileMTime( filename );
-}
-
 inline cvar_t *Cvar_Get( const char *name, const char *value, int flags ) {
 	return UI_IMPORT.Cvar_Get( name, value, flags );
 }

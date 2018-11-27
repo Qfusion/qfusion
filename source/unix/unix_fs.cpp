@@ -305,20 +305,6 @@ bool Sys_FS_RemoveDirectory( const char *path ) {
 }
 
 /*
-* Sys_FS_FileMTime
-*/
-time_t Sys_FS_FileMTime( const char *filename ) {
-	struct stat buffer;
-	int status;
-
-	status = stat( filename, &buffer );
-	if( status ) {
-		return -1;
-	}
-	return buffer.st_mtime;
-}
-
-/*
 * Sys_FS_FileNo
 */
 int Sys_FS_FileNo( FILE *fp ) {

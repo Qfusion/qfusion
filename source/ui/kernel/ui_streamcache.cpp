@@ -198,27 +198,6 @@ void StreamCache::PerformRequest( const char *url, const char *method, const cha
 	cacheFilename = CacheFileForUrl( url, noCache );
 	tmpFilename = cacheFilename + WSW_UI_STREAMCACHE_EXT;
 
-	// check in cache first
-	if( cache_cb ) {
-		// redundant check
-		//if( trap::FS_FOpenFile( cacheFilename.c_str(), NULL, FS_READ|FS_CACHE ) >= 0 )
-		{
-			time_t mTime;
-
-			// examine last modified datetime for the cache file
-			// note, that mTime is -1 for non-existing files
-			// or 0 if mTime could not be obtained)
-			mTime = trap::FS_FileMTime( cacheFilename.c_str() );
-			if( mTime + cacheTTL * 60 > time( NULL ) ) {
-				cacheFilename = "cache://" + cacheFilename;
-				cache_cb( cacheFilename.c_str(), privatep );
-				return;
-			} else {
-				// Com_Printf( "Cached expired for %s: %i\n", url, mTime );
-			}
-		}
-	}
-
 	// allocate a new stream
 	AsyncStream *stream;
 	stream = __new__( AsyncStream );

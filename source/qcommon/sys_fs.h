@@ -36,6 +36,4 @@ void        Sys_FS_FindClose( void );
 void        *Sys_FS_LockFile( const char *path );
 void        Sys_FS_UnlockFile( void *handle );
 
-time_t      Sys_FS_FileMTime( const char *filename );
-
 int         Sys_FS_FileNo( FILE *fp );

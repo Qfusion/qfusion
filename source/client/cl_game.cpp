@@ -230,8 +230,6 @@ void CL_GameModule_Init( void ) {
 	import.FS_FirstExtension = FS_FirstExtension;
 	import.FS_IsPureFile = FS_IsPureFile;
 	import.FS_MoveFile = FS_MoveFile;
-	import.FS_IsUrl = FS_IsUrl;
-	import.FS_FileMTime = FS_BaseFileMTime;
 	import.FS_RemoveDirectory = FS_RemoveDirectory;
 
 	import.Key_GetBindingBuf = Key_GetBindingBuf;

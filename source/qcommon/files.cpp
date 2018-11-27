@@ -93,7 +93,6 @@ typedef struct packfile_s {
 	unsigned compressedSize;    // compressed size
 	unsigned uncompressedSize;  // uncompressed size
 	unsigned offset;            // relative offset of local header
-	time_t mtime;               // latest modified time, if available
 } packfile_t;
 
 //
@@ -1944,49 +1943,6 @@ bool FS_MoveCacheFile( const char *src, const char *dst ) {
 }
 
 /*
-* _FS_FileMTime
-*/
-static time_t _FS_FileMTime( const char *filename, bool base ) {
-	searchpath_t *search;
-	packfile_t *pakFile = NULL;
-	char tempname[FS_MAX_PATH];
-
-	if( base ) {
-		search = FS_SearchPathForBaseFile( filename, tempname, sizeof( tempname ) );
-	} else {
-		search = FS_SearchPathForFile( filename, &pakFile, tempname, sizeof( tempname ), FS_SEARCH_ALL );
-	}
-
-	if( !search ) {
-		return 0;
-	}
-
-	if( pakFile ) {
-		assert( !base );
-		return pakFile->mtime;
-	} else {
-		assert( tempname[0] != '\0' );
-		return Sys_FS_FileMTime( tempname );
-	}
-
-	return -1;
-}
-
-/*
-* FS_FileMTime
-*/
-time_t FS_FileMTime( const char *filename ) {
-	return _FS_FileMTime( filename, false );
-}
-
-/*
-* FS_BaseFileMTime
-*/
-time_t FS_BaseFileMTime( const char *filename ) {
-	return _FS_FileMTime( filename, true );
-}
-
-/*
 * FS_RemoveAbsoluteDirectory
 */
 bool FS_RemoveAbsoluteDirectory( const char *dirname ) {
@@ -2102,30 +2058,6 @@ static unsigned FS_PK3SearchCentralDir( FILE *fin ) {
 }
 
 /*
-* FS_DosTimeToUnixtime
-*
-* Converts DOS time to tm struct
-*/
-static time_t FS_DosTimeToUnixtime( unsigned dosDateTime ) {
-	unsigned dosDate;
-	struct tm ttm = { 0 };
-	time_t time;
-
-	dosDate = (unsigned)( dosDateTime >> 16 );
-
-	ttm.tm_hour = ( dosDateTime & 0xF800 ) / 0x800;
-	ttm.tm_min  = ( dosDateTime & 0x7E0 ) / 0x20;
-	ttm.tm_sec  =  2 * ( dosDateTime & 0x1f );
-
-	ttm.tm_mday = dosDate & 0x1f;
-	ttm.tm_mon  = ( ( ( dosDate ) & 0x1E0 ) / 0x20 ) - 1;
-	ttm.tm_year = ( ( dosDate & 0x0FE00 ) / 0x0200 ) + 1980 - 1900;
-
-	time = mktime( &ttm );
-	return time;
-}
-
-/*
 * FS_PK3GetFileInfo
 *
 * Get Info about the current file in the zipfile, with internal only info
@@ -2133,7 +2065,6 @@ static time_t FS_DosTimeToUnixtime( unsigned dosDateTime ) {
 static unsigned FS_PK3GetFileInfo( FILE *f, unsigned pos, unsigned byteBeforeTheZipFile,
 								   packfile_t *file, size_t *fileNameLen, int *crc ) {
 	size_t sizeRead;
-	unsigned dosDateTime;
 	unsigned compressed;
 	unsigned char infoHeader[46]; // we can't use a struct here because of packing
 
@@ -2154,7 +2085,7 @@ static unsigned FS_PK3GetFileInfo( FILE *f, unsigned pos, unsigned byteBeforeThe
 		return 0;
 	}
 
-	dosDateTime = LittleLongRaw( &infoHeader[12] );
+	LittleLongRaw( &infoHeader[12] ); // date
 
 	if( crc ) {
 		*crc = LittleLongRaw( &infoHeader[16] );
@@ -2166,7 +2097,6 @@ static unsigned FS_PK3GetFileInfo( FILE *f, unsigned pos, unsigned byteBeforeThe
 		file->compressedSize = LittleLongRaw( &infoHeader[20] );
 		file->uncompressedSize = LittleLongRaw( &infoHeader[24] );
 		file->offset = LittleLongRaw( &infoHeader[42] ) + byteBeforeTheZipFile;
-		file->mtime = FS_DosTimeToUnixtime( dosDateTime );
 	}
 
 	sizeRead = ( size_t )LittleShortRaw( &infoHeader[28] );
@@ -3673,44 +3603,6 @@ static void Cmd_FileChecksum_f( void ) {
 }
 
 /*
-* Cmd_FileMTime_f
-*/
-static void Cmd_FileMTime_f( void ) {
-	time_t mtime;
-	const char *filename;
-	struct tm *newtime;
-	bool base;
-
-	if( Cmd_Argc() < 2 ) {
-		Com_Printf( "Usage: %s <path> [base]\n", Cmd_Argv( 0 ) );
-		return;
-	}
-
-	filename = Cmd_Argv( 1 );
-	base = atoi( Cmd_Argv( 2 ) ) != 0 ? true : false;
-
-	if( !COM_ValidateRelativeFilename( filename ) ) {
-		Com_Printf( "Invalid filename\n" );
-		return;
-	}
-
-	mtime = _FS_FileMTime( filename, base );
-	newtime = localtime( &mtime );
-
-	if( mtime < 0 || !newtime ) {
-		Com_Printf( "Unknown mtime for %s\n", filename );
-		return;
-	}
-
-	Com_Printf(
-		"%s was last modified on: "
-		"%04d-%02d-%02d %02d:%02d:%02d\n",
-		filename,
-		newtime->tm_year + 1900, newtime->tm_mon + 1, newtime->tm_mday, newtime->tm_hour, newtime->tm_min, newtime->tm_sec
-		);
-}
-
-/*
 * FS_Init
 */
 void FS_Init( void ) {
@@ -3730,7 +3622,6 @@ void FS_Init( void ) {
 	Cmd_AddCommand( "fs_pakfile", Cmd_PakFile_f );
 	Cmd_AddCommand( "fs_search", Cmd_FS_Search_f );
 	Cmd_AddCommand( "fs_checksum", Cmd_FileChecksum_f );
-	Cmd_AddCommand( "fs_mtime", Cmd_FileMTime_f );
 	Cmd_AddCommand( "fs_untouched", Cmd_FS_Untouched_f );
 
 	fs_numsearchfiles = FS_MIN_SEARCHFILES;
@@ -3861,8 +3752,7 @@ void FS_Shutdown( void ) {
 	Cmd_RemoveCommand( "fs_pakfile" );
 	Cmd_RemoveCommand( "fs_search" );
 	Cmd_RemoveCommand( "fs_checksum" );
-	Cmd_RemoveCommand( "fs_mtime" );
-	Cmd_RemoveCommand( "fs_untoched" );
+	Cmd_RemoveCommand( "fs_untouched" );
 
 	FS_FreeSearchFiles();
 	FS_Free( fs_searchfiles );

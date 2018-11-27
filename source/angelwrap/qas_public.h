@@ -64,7 +64,6 @@ typedef struct {
 	const char *( *FS_FirstExtension )( const char *filename, const char *extensions[], int num_extensions );
 	bool ( *FS_MoveFile )( const char *src, const char *dst );
 	bool ( *FS_IsUrl )( const char *url );
-	time_t ( *FS_FileMTime )( const char *filename );
 	bool ( *FS_RemoveDirectory )( const char *dirname );
 
 	// managed memory allocation

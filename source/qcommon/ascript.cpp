@@ -195,7 +195,6 @@ void Com_ScriptModule_Init( void ) {
 	import.FS_FirstExtension = FS_FirstExtension;
 	import.FS_MoveFile = FS_MoveFile;
 	import.FS_IsUrl = FS_IsUrl;
-	import.FS_FileMTime = FS_BaseFileMTime;
 	import.FS_RemoveDirectory = FS_RemoveDirectory;
 
 	import.Mem_Alloc = Com_ScriptModule_MemAlloc;
