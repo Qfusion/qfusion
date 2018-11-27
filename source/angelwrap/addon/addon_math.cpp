@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "../qas_precompiled.h"
 #include "addon_math.h"
+#include "qalgo/rng.h"
 
 /*************************************
 * MATHS ADDON
@@ -81,19 +82,22 @@ static double asFunc_floor( double x ) {
 	return floor( x );
 }
 
-static double asFunc_random( void ) {
-	return random();
+static PCG pcg;
+
+static uint32_t asFunc_random_uint() {
+	return random_u32( &pcg );
 }
 
-static double asFunc_brandom( double min, double max ) {
-	return brandom( min, max );
+static int asFunc_random_uniform( int lo, int hi ) {
+	return random_uniform( &pcg, lo, hi );
 }
 
-static int asFunc_rand( void ) {
-	return rand();
+static float asFunc_random_float() {
+	return random_float( &pcg );
 }
 
 void PreRegisterMathAddon( asIScriptEngine *engine ) {
+	pcg = new_pcg();
 }
 
 void RegisterMathAddon( asIScriptEngine *engine ) {
@@ -118,9 +122,9 @@ void RegisterMathAddon( asIScriptEngine *engine ) {
 		{ "double sqrt( double x )", asFUNCTION( asFunc_sqrt ) },
 		{ "double ceil( double x )", asFUNCTION( asFunc_ceil ) },
 		{ "double floor( double x )", asFUNCTION( asFunc_floor ) },
-		{ "double random()", asFUNCTION( asFunc_random ) },
-		{ "double brandom( double min, double max )", asFUNCTION( asFunc_brandom ) },
-		{ "int rand()", asFUNCTION( asFunc_rand ) },
+		{ "uint random_uint()", asFUNCTION( asFunc_random_uint ) },
+		{ "int random_uniform( int lo, int hi )", asFUNCTION( asFunc_random_uniform ) },
+		{ "float random_float()", asFUNCTION( asFunc_random_float ) },
 
 		{ NULL, asFUNCTION( 0 ) }
 	}, *func;

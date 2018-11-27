@@ -230,13 +230,12 @@ void roundWonBy( int winner )
 {
 	int loser = winner == attackingTeam ? defendingTeam : attackingTeam;
 
-	// ololo
-	G_CenterPrintMsg( null, S_COLOR_CYAN + ( winner == attackingTeam ? "OFF" : "DEF" ) + "ENSE WINS!");
+	G_CenterPrintMsg( null, S_COLOR_CYAN + ( winner == attackingTeam ? "OFFENSE WINS!" : "DEFENSE WINS!" ) );
 
-	int soundIndex = G_SoundIndex( "sounds/announcer/bomb/score_team0" + (1 + (rand() & 1)) );
+	int soundIndex = G_SoundIndex( "sounds/announcer/bomb/score_team0" + random_uniform( 1, 3 ) );
 	G_AnnouncerSound( null, soundIndex, winner, true, null );
 
-	soundIndex = G_SoundIndex( "sounds/announcer/bomb/score_enemy0" + (1 + (rand() & 1)) );
+	soundIndex = G_SoundIndex( "sounds/announcer/bomb/score_enemy0" + random_uniform( 1, 3 ) );
 	G_AnnouncerSound( null, soundIndex, loser, true, null );
 
 	Team @teamWinner = @G_GetTeam( winner );
@@ -339,7 +338,6 @@ void roundNewState( uint state )
 			resetKillCounters();
 			respawnAllPlayers();
 			disableMovement();
-			showAllSiteIndicators();
 			setRoundType();
 
 			bombGiveToRandom();
@@ -417,7 +415,7 @@ void roundThink()
 
 			if ( roundCountDown == COUNTDOWN_MAX )
 			{
-				int soundIndex = G_SoundIndex( "sounds/announcer/countdown/ready0" + (1 + (rand() & 1)) );
+				int soundIndex = G_SoundIndex( "sounds/announcer/countdown/ready0" + random_uniform( 1, 3 ) );
 
 				G_AnnouncerSound( null, soundIndex, GS_MAX_TEAMS, false, null );
 			}
@@ -425,7 +423,7 @@ void roundThink()
 			{
 				if( roundCountDown < 4 )
 				{
-					int soundIndex = G_SoundIndex( "sounds/announcer/countdown/" + roundCountDown + "_0" + (1 + (rand() & 1)) );
+					int soundIndex = G_SoundIndex( "sounds/announcer/countdown/" + roundCountDown + "_0" + random_uniform( 1, 3 ) );
 
 					G_AnnouncerSound( null, soundIndex, GS_MAX_TEAMS, false, null );
 				}

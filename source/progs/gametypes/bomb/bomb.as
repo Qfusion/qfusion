@@ -620,25 +620,7 @@ void bombAltThink()
 			// fallthrough
 
 		case BOMBSTATE_EXPLODING:
-			// TODO: i guess this would fit better as a routine in cBombSite
-			if ( bombSite.useExplosionPoints )
-			{
-				while ( @bombSite.pendingExplosionHead != null && bombSite.pendingExplosionHead.explodeTime <= levelTime )
-				{
-					Entity @ent = @G_SpawnEntity( "func_explosive" );
-
-					ent.origin = bombSite.explosionPoints[bombSite.pendingExplosionHead.pointIndex];
-					ent.linkEntity();
-
-					ent.explosionEffect( BOMB_EXPLOSION_EFFECT_RADIUS );
-					ent.splashDamage( @ent, 3000, 9001, 9001, MOD_EXPLOSIVE );
-
-					ent.freeEntity();
-
-					@bombSite.pendingExplosionHead = @bombSite.pendingExplosionHead.next;
-				}
-			}
-
+			bombSite.stepExplosion();
 			break;
 
 		default:
@@ -720,60 +702,33 @@ bool bombCanPlant()
 	return true;
 }
 
-void bombGiveToRandom()
-{
+void bombGiveToRandom() {
 	Team @team = @G_GetTeam( attackingTeam );
 
-	if ( cvarEnableCarriers.boolean )
-	{
-		uint carrierCount = getCarrierCount( attackingTeam );
+	uint n = getCarrierCount( attackingTeam );
+	bool hasCarriers = cvarEnableCarriers.boolean && n > 0;
+	if( !hasCarriers )
+		n = team.numPlayers;
 
-		if ( carrierCount != 0 )
-		{
-			// -1 so it starts from 0
-			int playerNum = int( random() * ( carrierCount - 1 ) );
+	int carrierIdx = random_uniform( 0, n );
+	int seenCarriers = 0;
 
-			for ( int i = 0, carrier = 0; @team.ent( i ) != null; i++ )
-			{
-				Entity @ent = @team.ent( i );
-				Client @client = @ent.client;
+	for( int i = 0; @team.ent( i ) != null; i++ ) {
+		Entity @ent = @team.ent( i );
+		Client @client = @ent.client;
 
-				cPlayer @player = @playerFromClient( @client );
+		cPlayer @player = @playerFromClient( @client );
 
-				if ( player.isCarrier )
-				{
-					if ( carrier == playerNum )
-					{
-						bombSetCarrier( @ent );
+		if( !hasCarriers || player.isCarrier ) {
+			if( seenCarriers == carrierIdx ) {
+				bombSetCarrier( @ent );
 
-						G_CenterPrintFormatMsg( null, "%s has the bomb!", client.name );
+				G_CenterPrintFormatMsg( null, "%s has the bomb!", client.name );
 
-						break;
-					}
-
-					carrier++;
-				}
+				break;
 			}
 
-			return;
-		}
-
-		// if carrierCount == 0 then fallthrough as if they were disabled
-	}
-
-	int playerNum = int( random() * team.numPlayers );
-
-	for ( int i = 0; @team.ent( i ) != null; i++ )
-	{
-		if ( i == playerNum )
-		{
-			Entity @ent = @team.ent( i );
-
-			bombSetCarrier( @ent );
-
-			G_CenterPrintFormatMsg( null, "%s has the bomb!", ent.client.name );
-
-			break;
+			seenCarriers++;
 		}
 	}
 }

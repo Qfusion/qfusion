@@ -6,6 +6,7 @@ file(GLOB angelwrap_HEADERS
 	"*.h"
 	"addon/*.h"
 	"../gameshared/q_*.h"
+	"../qalgo/rng.h"
 	)
 
 file(GLOB angelwrap_SOURCES
@@ -13,6 +14,7 @@ file(GLOB angelwrap_SOURCES
 	"*.c"
 	"addon/*.cpp"
 	"../gameshared/q_*.cpp"
+	"../qalgo/rng.cpp"
 	)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")

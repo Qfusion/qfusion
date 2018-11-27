@@ -95,7 +95,7 @@ void GENERIC_SetUpCountdown( bool respawnItems = true )
 
 	// Countdowns should be made entirely client side, because we now can
 
-	int soundIndex = G_SoundIndex( "sounds/announcer/countdown/get_ready_to_fight0" + (1 + (rand() & 1)) );
+	int soundIndex = G_SoundIndex( "sounds/announcer/countdown/get_ready_to_fight0" + random_uniform( 1, 3 ) );
 	G_AnnouncerSound( null, soundIndex, GS_MAX_TEAMS, false, null );
 }
 
@@ -128,14 +128,14 @@ void GENERIC_SetUpMatch()
 	}
 
 	// set items to be spawned with a delay
-	G_Items_RespawnByType( IT_POWERUP, 0, brandom( 20, 40 ) );
+	G_Items_RespawnByType( IT_POWERUP, 0, random_uniform( 20, 40 ) );
 	G_Items_RespawnByType( IT_ARMOR, 0, 10 );
 	G_Items_RespawnByType( IT_HEALTH, HEALTH_MEGA, 15 );
 	G_Items_RespawnByType( IT_HEALTH, HEALTH_ULTRA, 15 );
 	G_RemoveDeadBodies();
 
 	// Countdowns should be made entirely client side, because we now can
-	int soundindex = G_SoundIndex( "sounds/announcer/countdown/fight0" + (1 + (rand() & 1)) );
+	int soundindex = G_SoundIndex( "sounds/announcer/countdown/fight0" + random_uniform( 1, 3 ) );
 	G_AnnouncerSound( null, soundindex, GS_MAX_TEAMS, false, null );
 	G_CenterPrintMsg( null, "FIGHT!" );
 
@@ -177,7 +177,7 @@ void GENERIC_SetUpEndMatch()
 			team2.name + S_COLOR_WHITE + " - " + match.getScore() + "\n" );
 	}
 
-	int soundIndex = G_SoundIndex( "sounds/announcer/postmatch/game_over0" + (1 + (rand() & 1)) );
+	int soundIndex = G_SoundIndex( "sounds/announcer/postmatch/game_over0" + random_uniform( 1, 3 ) );
 	G_AnnouncerSound( null, soundIndex, GS_MAX_TEAMS, true, null );
 }
 
@@ -339,59 +339,6 @@ bool GENERIC_LookAtEntity( Vec3 &in origin, Vec3 &in angles, Entity @lookTarget,
 	return visible;
 }
 
-/*
-   void GENERIC_DeathBodyCam( Client @client )
-   {
-   if ( @client == null )
-   return;
-
-   if ( client.state() != CS_SPAWNED )
-   return;
-
-   Entity @ent = @client.getEnt();
-
-   if ( ent.team == TEAM_SPECTATOR || !ent.isGhosting() || ent.health > 0 )
-   {
-   if( client.playerNum == 0 )
-   G_Print( "ent.team == TEAM_SPECTATOR || !ent.isGhosting() \n" );
-   return;
-   }
-
-// locate the dead body
-Entity @corpse;
-Entity @e;
-@corpse = null;
-for ( int i = maxClients; i < numEntities; i++ )
-{
-@e = @G_GetEntity( i );
-if ( !e.inuse || ( e.svflags & SVF_NOCLIENT ) != 0 )
-continue;
-
-if ( e.classname != "body" && e.classname != "bodyque" )
-break;
-
-if ( e.modelindex2 == ent.entNum ) // corpses store owner player index here
-{
-@corpse = @e;
-break;
-}
-}
-
-if ( @corpse == null )
-return;
-
-if ( @corpse.enemy == null )
-return;
-
-Vec3 lookOrigin, lookAngles;
-bool visible = GENERIC_LookAtEntity( Vec3(0.0), corpse.origin, corpse.enemy, ent.entNum, true, 72, 32, lookOrigin, lookAngles );
-
-ent.origin = lookOrigin;
-//ent.origin2 = lookOrigin;
-ent.angles = lookAngles;
-ent.linkEntity();
-}
-*/
 ///*****************************************************************
 /// BASIC SPAWNPOINT SELECTION
 ///*****************************************************************
@@ -517,7 +464,7 @@ Entity @GENERIC_SelectBestRandomTeamSpawnPoint( Entity @self, String &className,
 	numSpawns -= 3; // ignore the closest 3 points
 
 	if( !isDuel ) {
-		return spawns[int( brandom( 0, numSpawns ) )].ent;
+		return spawns[ random_uniform( 0, numSpawns ) ].ent;
 	}
 
 	// calculate denormalized range sum
@@ -527,7 +474,7 @@ Entity @GENERIC_SelectBestRandomTeamSpawnPoint( Entity @self, String &className,
 
 	// pick random denormalized range
 	int testRange = 0;
-	int weightedRange = int( brandom( 0.0, rangeSum ) );	
+	int weightedRange = random_uniform( 0, rangeSum );
 
 	// find spot for the weighted range. distant spawn points are more probable
 	for( int i = numSpawns - 1; i >= 0; i-- ) {

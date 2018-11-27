@@ -14,7 +14,6 @@ file(GLOB CLIENT_HEADERS
 	"../gameshared/config.h"
 	"../qcommon/*.h"
 	"../qalgo/*.h"
-	"../angelwrap/qas_public.h"
 	"../cgame/cg_public.h"
 	"../cgame/ref.h"
 	"../game/g_public.h"
@@ -78,7 +77,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 endif()
 
 add_executable(${QFUSION_CLIENT_NAME} ${CLIENT_BINARY_TYPE} ${CLIENT_HEADERS} ${CLIENT_PLATFORM_HEADERS} ${CLIENT_COMMON_SOURCES} ${CLIENT_PLATFORM_SOURCES} ${BUNDLE_RESOURCES})
-add_dependencies(${QFUSION_CLIENT_NAME} angelwrap cgame game steamlib ui)
+add_dependencies(${QFUSION_CLIENT_NAME} cgame game steamlib ui)
 
 target_link_libraries(${QFUSION_CLIENT_NAME} PRIVATE ${CURL_LIBRARY} ${SDL2_LIBRARY} ${ZLIB_LIBRARY} ${FREETYPE_LIBRARY} ${OPENAL_LIBRARY} ${CLIENT_PLATFORM_LIBRARIES})
 qf_set_output_dir(${QFUSION_CLIENT_NAME} "")

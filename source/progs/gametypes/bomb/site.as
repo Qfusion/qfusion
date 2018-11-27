@@ -20,18 +20,27 @@
 cBombSite @siteHead = null;
 uint siteCount = 0;
 
-class cPendingExplosion
-{
-	uint pointIndex;
-	int64 explodeTime;
+class PendingExplosion {
+	Vec3 pos;
+	int64 time;
 
-	cPendingExplosion @next;
-
-	cPendingExplosion( uint index, int64 time )
-	{
-		this.pointIndex = index;
-		this.explodeTime = time;
+	PendingExplosion( Vec3 p, int64 t ) {
+		this.pos = p;
+		this.time = t;
 	}
+}
+
+const float PI = 3.14159265f;
+
+float max( float a, float b ) {
+	return a > b ? a : b;
+}
+
+Vec3 random_point_on_hemisphere() {
+	float z = random_float();
+	float r = sqrt( max( 0.0f, 1.0f - z * z ) );
+	float phi = 2 * PI * random_float();
+	return Vec3( r * cos( phi ), r * sin( phi ), z );
 }
 
 class cBombSite
@@ -45,7 +54,9 @@ class cBombSite
 	bool useExplosionPoints;
 	Vec3[] explosionPoints;
 
-	cPendingExplosion @pendingExplosionHead;
+	PendingExplosion[] pendingExplosions;
+	int numPendingExplosions;
+	int numExploded;
 
 	cBombSite @next;
 
@@ -85,10 +96,8 @@ class cBombSite
 		}
 		else
 		{
-			G_Print( "Bomb site " + this.letter + " has no targets. Consider adding them for more control over the bomb's explosion.\n" );
-
 			this.useExplosionPoints = true;
-			this.computeExplosionPoints();
+			this.generateExplosionPoints();
 		}
 
 		@this.next = @siteHead;
@@ -105,95 +114,58 @@ class cBombSite
 		}
 	}
 
-	void explode()
-	{
-		if ( this.useExplosionPoints )
-		{
-			for ( int i = 0; i < SITE_EXPLOSION_POINTS; i++ )
-			{
-				if ( random() < SITE_EXPLOSION_PROBABILITY )
-				{
-					addPendingExplosion( i, levelTime + int( random() * SITE_EXPLOSION_MAX_DELAY ) );
-				}
-			}
-		}
-		else
-		{
+	void explode() {
+		if( !this.useExplosionPoints ) {
 			this.indicator.useTargets( bombModel );
-		}
-	}
-
-	void addPendingExplosion( uint index, int64 time )
-	{
-		cPendingExplosion @explosion = @cPendingExplosion( index, time );
-
-		// check if there's no head
-
-		if ( @pendingExplosionHead == null )
-		{
-			@pendingExplosionHead = @explosion;
-
 			return;
 		}
 
-		// unroll first interation as there is no last node
+		numPendingExplosions = random_uniform( SITE_EXPLOSION_POINTS / 2, SITE_EXPLOSION_POINTS );
+		numExploded = 0;
 
-		if ( time < pendingExplosionHead.explodeTime )
-		{
-			@explosion.next = @pendingExplosionHead;
-			@pendingExplosionHead = @explosion;
-
-			return;
+		for ( int i = 0; i < numPendingExplosions; i++ ) {
+			Vec3 point = explosionPoints[ random_uniform( 0, explosionPoints.length() ) ];
+			int64 time = levelTime + int64( ( float( i ) / float( numPendingExplosions - 1 ) ) * SITE_EXPLOSION_MAX_DELAY );
+			pendingExplosions[ i ] = PendingExplosion( point, time );
 		}
-
-		cPendingExplosion @last = @this.pendingExplosionHead; // at last...
-
-		for ( cPendingExplosion @node = @this.pendingExplosionHead.next; @node != null; @node = @node.next )
-		{
-			if ( time < node.explodeTime )
-			{
-				@explosion.next = @node;
-				@last.next = @explosion;
-
-				return;
-			}
-
-			@last = @node;
-		}
-
-		// explosion is later than all currently in linked list
-		// put this one on the end
-
-		@last.next = @explosion;
 	}
 
-	void computeExplosionPoints()
+	void stepExplosion() {
+		if( !this.useExplosionPoints )
+			return;
+
+		while( numExploded < numPendingExplosions && levelTime >= pendingExplosions[ numExploded ].time ) {
+			Entity @ent = @G_SpawnEntity( "func_explosive" );
+
+			ent.origin = pendingExplosions[ numExploded ].pos;
+			ent.linkEntity();
+
+			ent.explosionEffect( BOMB_EXPLOSION_EFFECT_RADIUS );
+			ent.splashDamage( @ent, 3000, 9001, 9001, MOD_EXPLOSIVE );
+
+			ent.freeEntity();
+
+			numExploded++;
+		}
+	}
+
+	void generateExplosionPoints()
 	{
 		this.explosionPoints.resize( SITE_EXPLOSION_POINTS );
+		this.pendingExplosions.resize( SITE_EXPLOSION_POINTS );
 
 		Vec3 origin = this.indicator.origin;
 		origin.z += 96;
 
-		for ( int i = 0; i < SITE_EXPLOSION_POINTS; i++ )
-		{
-			// generate vector pointing in a random direction but with z >= 0
-			Vec3 dir(
-				brandom( -1, 1 ),
-				brandom( -1, 1 ),
-				random() // 0..1
-			);
-
-			// i guess this is faster than normalizing then multiplying
-			float maxDist = SITE_EXPLOSION_MAX_DIST / dir.length();
-
-			// trace a ray in the direction of dir with the
-			// distance capped by SITE_EXPLOSION_MAX_DIST
+		for ( int i = 0; i < SITE_EXPLOSION_POINTS; i++ ) {
+			Vec3 dir = random_point_on_hemisphere();
+			Vec3 end = origin + dir * SITE_EXPLOSION_MAX_DIST;
 
 			Trace trace;
-			trace.doTrace( origin, vec3Origin, vec3Origin, origin + dir * maxDist, this.indicator.entNum, MASK_SOLID );
+			trace.doTrace( origin, vec3Origin, vec3Origin, end, this.indicator.entNum, MASK_SOLID );
 
 			// pick a random point along the line
-			this.explosionPoints[i] = origin + random() * ( trace.endPos - origin );
+			this.explosionPoints[i] = origin + random_float() * ( trace.endPos - origin );
 		}
 	}
 }
@@ -211,12 +183,6 @@ cBombSite @getSiteFromIndicator( Entity @ent )
 	assert( false, "site.as getSiteFromIndicator: couldn't find a site" );
 
 	return null; // shut up compiler
-}
-
-void showAllSiteIndicators() {
-	for ( cBombSite @site = @siteHead; @site != null; @site = @site.next ) {
-		site.hud.svflags &= ~SVF_NOCLIENT;
-	}
 }
 
 void hideSiteIndicators( cBombSite @except ) {
