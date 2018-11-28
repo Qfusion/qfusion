@@ -740,8 +740,6 @@ void CG_AddBombHudEntity( centity_t * cent ) {
 }
 
 void CG_DrawBombHUD() {
-	const int SCREEN_PADDING = 32;
-
 	int my_team = cg.predictedPlayerState.stats[STAT_REALTEAM];
 	bool show_labels = my_team != TEAM_SPECTATOR && GS_MatchState() == MATCH_STATE_PLAYTIME;
 
@@ -751,7 +749,7 @@ void CG_DrawBombHUD() {
 		for( size_t i = 0; i < num_bomb_sites; i++ ) {
 			const BombSite * site = &bomb_sites[ i ];
 			vec2_t coords;
-			bool clamped = trap_R_TransformVectorToScreenClamped( &cg.view.refdef, site->origin, SCREEN_PADDING, coords );
+			bool clamped = trap_R_TransformVectorToScreenClamped( &cg.view.refdef, site->origin, cgs.fontSystemMediumSize * 2, coords );
 
 			char buf[ 4 ];
 			Q_snprintfz( buf, sizeof( buf ), "%c", site->letter );
@@ -759,21 +757,21 @@ void CG_DrawBombHUD() {
 
 			if( show_labels && !clamped && bomb.state != BombState_Dropped ) {
 				const char * msg = my_team == site->team ? "DEFEND" : "ATTACK";
-				trap_SCR_DrawString( coords[0], coords[1] - 16, ALIGN_CENTER_MIDDLE, msg, cgs.fontSystemTiny, colorWhite );
+				trap_SCR_DrawString( coords[0], coords[1] - ( cgs.fontSystemMediumSize * 3 ) / 4, ALIGN_CENTER_MIDDLE, msg, cgs.fontSystemTiny, colorWhite );
 			}
 		}
 	}
 
 	if( bomb.state != BombState_None ) {
 		vec2_t coords;
-		bool clamped = trap_R_TransformVectorToScreenClamped( &cg.view.refdef, bomb.origin, SCREEN_PADDING, coords );
+		bool clamped = trap_R_TransformVectorToScreenClamped( &cg.view.refdef, bomb.origin, cgs.fontSystemMediumSize * 2, coords );
 
 		cgs_media_handle_t * icon = cgs.media.shaderBombIcon;
-		int icon_size = cgs.fontSystemBigSize;
+		int icon_size = cgs.fontSystemMediumSize;
 
 		if( !clamped ) {
 			icon = cgs.media.shaderTeamMateIndicator;
-			icon_size = cgs.fontSystemMediumSize;
+			icon_size = cgs.fontSystemMediumSize / 2;
 
 			if( show_labels ) {
 				const char * msg = "RETRIEVE";
@@ -781,7 +779,7 @@ void CG_DrawBombHUD() {
 					msg = "ARM";
 				else if( bomb.state == BombState_Armed )
 					msg = my_team == bomb.team ? "PROTECT" : "DEFUSE";
-				trap_SCR_DrawString( coords[0], coords[1] - 16, ALIGN_CENTER_MIDDLE, msg, cgs.fontSystemTiny, colorWhite );
+				trap_SCR_DrawString( coords[0], coords[1] - icon_size - cgs.fontSystemTinySize / 2, ALIGN_CENTER_MIDDLE, msg, cgs.fontSystemTiny, colorWhite );
 			}
 		}
 
