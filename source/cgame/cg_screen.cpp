@@ -700,15 +700,20 @@ struct BombSite {
 
 enum BombState {
 	BombState_None,
+	BombState_Dropped,
 	BombState_Placed,
 	BombState_Armed,
 };
 
+struct Bomb {
+	BombState state;
+	vec3_t origin;
+	int team;
+};
+
 static BombSite bomb_sites[ 2 ];
 static size_t num_bomb_sites;
-static BombState bomb_state;
-static int bomb_team;
-static vec3_t bomb_origin;
+static Bomb bomb;
 
 void CG_AddBombHudEntity( centity_t * cent ) {
 	if( cent->current.counterNum != 0 ) {
@@ -722,9 +727,15 @@ void CG_AddBombHudEntity( centity_t * cent ) {
 		num_bomb_sites++;
 	}
 	else {
-		bomb_state = ( cent->current.svflags & SVF_ONLYTEAM ) ? BombState_Placed : BombState_Armed;
-		bomb_team = cent->current.team;
-		VectorCopy( cent->current.origin, bomb_origin );
+		if( cent->current.svflags & SVF_ONLYTEAM ) {
+			bomb.state = cent->current.frame == BombDown_Dropped ? BombState_Dropped : BombState_Placed;
+		}
+		else {
+			bomb.state = BombState_Armed;
+		}
+
+		bomb.team = cent->current.team;
+		VectorCopy( cent->current.origin, bomb.origin );
 	}
 }
 
@@ -743,15 +754,15 @@ void CG_DrawBombHUD() {
 		Q_snprintfz( buf, sizeof( buf ), "%c", site->letter );
 		trap_SCR_DrawString( coords[0], coords[1], ALIGN_CENTER_MIDDLE, buf, cgs.fontSystemMedium, colorWhite );
 
-		if( show_labels && !clamped && bomb_state == BombState_None ) {
+		if( show_labels && !clamped && bomb.state == BombState_None ) {
 			const char * msg = my_team == site->team ? "DEFEND" : "ATTACK";
 			trap_SCR_DrawString( coords[0], coords[1] - 16, ALIGN_CENTER_MIDDLE, msg, cgs.fontSystemTiny, colorWhite );
 		}
 	}
 
-	if( bomb_state != BombState_None ) {
+	if( bomb.state != BombState_None ) {
 		vec2_t coords;
-		bool clamped = trap_R_TransformVectorToScreenClamped( &cg.view.refdef, bomb_origin, 32, coords );
+		bool clamped = trap_R_TransformVectorToScreenClamped( &cg.view.refdef, bomb.origin, 32, coords );
 
 		cgs_media_handle_t * icon = cgs.media.shaderBombIcon;
 		int icon_size = cgs.fontSystemBigSize;
@@ -761,13 +772,12 @@ void CG_DrawBombHUD() {
 			icon_size = cgs.fontSystemMediumSize;
 
 			if( show_labels ) {
-				if( bomb_state == BombState_Placed ) {
-					trap_SCR_DrawString( coords[0], coords[1] - 16, ALIGN_CENTER_MIDDLE, "PLANT", cgs.fontSystemTiny, colorWhite );
-				}
-				else {
-					const char * msg = my_team == bomb_team ? "PROTECT" : "DEFUSE";
-					trap_SCR_DrawString( coords[0], coords[1] - 16, ALIGN_CENTER_MIDDLE, msg, cgs.fontSystemTiny, colorWhite );
-				}
+				const char * msg = "RETRIEVE";
+				if( bomb.state == BombState_Placed )
+					msg = "PLANT";
+				else if( bomb.state == BombState_Armed )
+					msg = my_team == bomb.team ? "PROTECT" : "DEFUSE";
+				trap_SCR_DrawString( coords[0], coords[1] - 16, ALIGN_CENTER_MIDDLE, msg, cgs.fontSystemTiny, colorWhite );
 			}
 		}
 
@@ -778,7 +788,7 @@ void CG_DrawBombHUD() {
 
 void CG_ResetBombHUD() {
 	num_bomb_sites = 0;
-	bomb_state = BombState_None;
+	bomb.state = BombState_None;
 }
 
 //=============================================================================

@@ -270,8 +270,7 @@ class cPlayer {
 			if( this.isCarrier ) {
 				command += " \"Carrier opt-out\" \"carrier\"";
 			}
-			else
-			{
+			else {
 				command += " \"Carrier opt-in\" \"carrier\"";
 			}
 		}
@@ -341,8 +340,7 @@ class cPlayer {
 			else if( token == "GL" ) {
 				this.selectSecondaryWeapon( SECONDARY_GL );
 			}
-			else
-			{
+			else {
 				error += " " + token;
 
 				errorCount++;

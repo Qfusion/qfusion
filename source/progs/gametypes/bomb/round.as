@@ -106,8 +106,7 @@ void checkPlayersAlive( int team ) {
 				roundWonBy( defendingTeam );
 			}
 		}
-		else
-		{
+		else {
 			roundWonBy( attackingTeam );
 		}
 
@@ -151,8 +150,7 @@ void oneVsMsg( int teamNum, uint enemies ) {
 	if( enemies == 1 ) {
 		G_PrintMsg( null, "1v1! Good luck!" );
 	}
-	else
-	{
+	else {
 		Team @team = @G_GetTeam( teamNum );
 
 		for( int i = 0; @team.ent( i ) != null; i++ ) {
@@ -374,8 +372,7 @@ void roundThink() {
 
 				G_AnnouncerSound( null, soundIndex, GS_MAX_TEAMS, false, null );
 			}
-			else
-			{
+			else {
 				if( roundCountDown < 4 ) {
 					int soundIndex = G_SoundIndex( "sounds/announcer/countdown/" + roundCountDown + "_0" + random_uniform( 1, 3 ) );
 
@@ -404,8 +401,7 @@ void roundThink() {
 				return;
 			}
 		}
-		else
-		{
+		else {
 			//roundNewState( eRoundStates( roundState + 1 ) ); FIXME enum
 			roundNewState( roundState + 1 );
 
@@ -451,12 +447,11 @@ void roundThink() {
 
 		bombThink();
 	}
-	else
-	{
+	else {
 		match.setClockOverride( last_time );
 
 		if( roundState > ROUNDSTATE_ROUND ) {
-			bombAltThink();
+			bombPostRoundThink();
 		}
 	}
 }
@@ -470,7 +465,6 @@ uint playersAliveOnTeam( int teamNum ) {
 		Entity @ent = @team.ent( i );
 
 		// check health incase they died this frame
-
 		if( !ent.isGhosting() && ent.health > 0 ) {
 			alive++;
 		}

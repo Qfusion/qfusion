@@ -915,6 +915,11 @@ enum RoundType {
         RoundType_OvertimeMatchPoint,
 };
 
+enum BombDown {
+	BombDown_Dropped,
+	BombDown_Planting,
+};
+
 enum BombProgress {
         BombProgress_Nothing,
         BombProgress_Planting,

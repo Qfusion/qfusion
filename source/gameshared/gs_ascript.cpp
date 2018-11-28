@@ -492,6 +492,14 @@ static const gs_asEnumVal_t asBombProgressEnumVals[] =
 	ASLIB_ENUM_VAL_NULL
 };
 
+static const gs_asEnumVal_t asBombDownEnumVals[] =
+{
+	ASLIB_ENUM_VAL( BombDown_Dropped ),
+	ASLIB_ENUM_VAL( BombDown_Planting ),
+
+	ASLIB_ENUM_VAL_NULL
+};
+
 static const gs_asEnumVal_t asRoundTypeEnumVals[] =
 {
 	ASLIB_ENUM_VAL( RoundType_Normal ),
@@ -535,6 +543,7 @@ static const gs_asEnum_t asGameEnums[] =
 	{ "button_e", asButtonEnumVals },
 
 	{ "BombProgress", asBombProgressEnumVals },
+	{ "BombDown", asBombDownEnumVals },
 	{ "RoundType", asRoundTypeEnumVals },
 
 	ASLIB_ENUM_VAL_NULL

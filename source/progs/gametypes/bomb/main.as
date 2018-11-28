@@ -138,8 +138,7 @@ void BOMB_SetVoicecommOverlayMenu( Client @client ) {
 			'"Attack A!" "vsay_team attack_a" ' +
 			'"Attack B!" "vsay_team attack_b" ';
 	}
-	else
-	{
+	else {
 		menuStr +=
 			'"Defend A!" "vsay_team defend_a" ' +
 			'"Defend B!" "vsay_team defend_b" ';
@@ -184,22 +183,19 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
 
 				G_PrintMsg( @client.getEnt(), "You are now a bomb carrier!\n" );
 			}
-			else
-			{
+			else {
 				player.isCarrier = false;
 
 				G_PrintMsg( @client.getEnt(), "You are no longer a bomb carrier.\n" );
 			}
 		}
-		else
-		{
+		else {
 			player.isCarrier = !player.isCarrier;
 
 			if( player.isCarrier ) {
 				G_PrintMsg( @client.getEnt(), "You are now a bomb carrier!\n" );
 			}
-			else
-			{
+			else {
 				G_PrintMsg( @client.getEnt(), "You are no longer a bomb carrier.\n" );
 			}
 		}
@@ -295,16 +291,14 @@ String @GT_ScoreboardMessage( uint maxlen ) {
 				else if( player.isCarrier ) {
 					statusIcon = iconCarrier;
 				}
-				else
-				{
+				else {
 					statusIcon = 0;
 				}
 			}
 			else if( matchState == MATCH_STATE_WARMUP && client.isReady() ) {
 				statusIcon = iconReady;
 			}
-			else
-			{
+			else {
 				statusIcon = 0;
 			}
 
