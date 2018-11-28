@@ -388,15 +388,6 @@ typedef enum {
 } fs_mediatype_t;
 
 //==============================================================
-//
-//THREADS
-//
-//==============================================================
-
-// equals to INFINITE on Windows and SDL_MUTEX_MAXWAIT
-#define Q_THREADS_WAIT_INFINITE 0xFFFFFFFF
-
-//==============================================================
 
 // connection state of the client in the server
 typedef enum {

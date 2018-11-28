@@ -155,7 +155,7 @@ static unsigned R_HandleJobQuitCmd( void *pcmd ) {
 /*
 * R_JobCmdsWaiter
 */
-static int R_JobCmdsWaiter( qbufPipe_t *queue, queueCmdHandler_t *cmdHandlers, bool timeout ) {
+static int R_JobCmdsWaiter( qbufPipe_t *queue, queueCmdHandler_t *cmdHandlers ) {
 	return ri.BufPipe_ReadCmds( queue, cmdHandlers );
 }
 
@@ -171,7 +171,7 @@ static void *R_JobThreadProc( void *param ) {
 
 	};
 
-	ri.BufPipe_Wait( cmdQueue, &R_JobCmdsWaiter, cmdHandlers, Q_THREADS_WAIT_INFINITE );
+	ri.BufPipe_Wait( cmdQueue, &R_JobCmdsWaiter, cmdHandlers );
 
 	return NULL;
 }

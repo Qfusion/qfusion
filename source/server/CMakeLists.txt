@@ -32,7 +32,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 		"../win32/conproc.cpp"
 		)
 
-	set(SERVER_PLATFORM_LIBRARIES "ws2_32.lib" "winmm.lib")
+	set(SERVER_PLATFORM_LIBRARIES "kernel32.lib ws2_32.lib" "winmm.lib")
 	set(SERVER_BINARY_TYPE WIN32)
 else()
 	file(GLOB SERVER_PLATFORM_SOURCES 

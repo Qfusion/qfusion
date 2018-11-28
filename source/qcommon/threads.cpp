@@ -90,8 +90,8 @@ void QCondVar_Destroy( qcondvar_t **pcond ) {
 /*
 * QCondVar_Wait
 */
-bool QCondVar_Wait( qcondvar_t *cond, qmutex_t *mutex, unsigned int timeout_msec ) {
-	return Sys_CondVar_Wait( cond, mutex, timeout_msec );
+void QCondVar_Wait( qcondvar_t *cond, qmutex_t *mutex ) {
+	Sys_CondVar_Wait( cond, mutex );
 }
 
 /*
@@ -380,16 +380,13 @@ int QBufPipe_ReadCmds( qbufPipe_t *pipe, unsigned( **cmdHandlers )( const void *
 /*
 * QBufPipe_Wait
 */
-void QBufPipe_Wait( qbufPipe_t *pipe, int ( *read )( qbufPipe_t *, unsigned( ** )( const void * ), bool ),
-					unsigned( **cmdHandlers )( const void * ), unsigned timeout_msec ) {
+void QBufPipe_Wait( qbufPipe_t *pipe, int ( *read )( qbufPipe_t *, unsigned( ** )( const void * ) ),
+					unsigned( **cmdHandlers )( const void * ) ) {
 	while( !pipe->terminated ) {
-		int res;
-		bool timeout = false;
-
 		while( Sys_Atomic_CAS( &pipe->cmdbuf_len, 0, 0 ) == true ) {
 			QMutex_Lock( pipe->nonempty_mutex );
 
-			timeout = QCondVar_Wait( pipe->nonempty_condvar, pipe->nonempty_mutex, timeout_msec ) == false;
+			QCondVar_Wait( pipe->nonempty_condvar, pipe->nonempty_mutex );
 
 			// don't hold the mutex, changes to cmdbuf_len are atomic anyway
 			QMutex_Unlock( pipe->nonempty_mutex );
@@ -398,7 +395,7 @@ void QBufPipe_Wait( qbufPipe_t *pipe, int ( *read )( qbufPipe_t *, unsigned( ** 
 
 		// we're guaranteed at this point that either cmdbuf_len is > 0
 		// or that waiting on the condition variable has timed out
-		res = read( pipe, cmdHandlers, timeout );
+		int res = read( pipe, cmdHandlers );
 		if( res < 0 ) {
 			// done
 			return;

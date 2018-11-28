@@ -49,6 +49,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 		"../win32/win_net.cpp"
 		"../win32/win_sys.cpp"
 		"../win32/win_console.cpp"
+		"../win32/win_threads.cpp"
 
 		"../win32/qfusion.rc"
 		)
@@ -68,6 +69,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 		"../unix/unix_net.cpp"
 		"../unix/unix_sys.cpp"
 		"../unix/unix_console.cpp"
+		"../unix/unix_threads.cpp"
 		)
 
 	set(CLIENT_PLATFORM_LIBRARIES "pthread" "m" "dl" "rt")

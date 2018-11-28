@@ -92,8 +92,8 @@ typedef struct {
 	void ( *BufPipe_Finish )( struct qbufPipe_s *queue );
 	void ( *BufPipe_WriteCmd )( struct qbufPipe_s *queue, const void *cmd, unsigned cmd_size );
 	int ( *BufPipe_ReadCmds )( struct qbufPipe_s *queue, unsigned( **cmdHandlers )( const void * ) );
-	void ( *BufPipe_Wait )( struct qbufPipe_s *queue, int ( *read )( struct qbufPipe_s *, unsigned( ** )( const void * ), bool ),
-							unsigned( **cmdHandlers )( const void * ), unsigned timeout_msec );
+	void ( *BufPipe_Wait )( struct qbufPipe_s *queue, int ( *read )( struct qbufPipe_s *, unsigned( ** )( const void * ) ),
+		unsigned( **cmdHandlers )( const void * ) );
 } ref_import_t;
 
 typedef struct {

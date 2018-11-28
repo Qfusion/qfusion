@@ -33,5 +33,5 @@ bool Sys_Atomic_CAS( volatile int *value, int oldval, int newval );
 
 int Sys_CondVar_Create( qcondvar_t **pcond );
 void Sys_CondVar_Destroy( qcondvar_t *cond );
-bool Sys_CondVar_Wait( qcondvar_t *cond, qmutex_t *mutex, unsigned int timeout_msec );
+void Sys_CondVar_Wait( qcondvar_t *cond, qmutex_t *mutex );
 void Sys_CondVar_Wake( qcondvar_t *cond );

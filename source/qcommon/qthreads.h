@@ -39,7 +39,7 @@ void QMutex_Unlock( qmutex_t *mutex );
 
 qcondvar_t *QCondVar_Create( void );
 void QCondVar_Destroy( qcondvar_t **pcond );
-bool QCondVar_Wait( qcondvar_t *cond, qmutex_t *mutex, unsigned int timeout_msec );
+void QCondVar_Wait( qcondvar_t *cond, qmutex_t *mutex );
 void QCondVar_Wake( qcondvar_t *cond );
 
 qthread_t *QThread_Create( void *( *routine )( void* ), void *param );
@@ -54,8 +54,8 @@ void QBufPipe_Destroy( qbufPipe_t **pqueue );
 void QBufPipe_Finish( qbufPipe_t *queue );
 void QBufPipe_WriteCmd( qbufPipe_t *queue, const void *cmd, unsigned cmd_size );
 int QBufPipe_ReadCmds( qbufPipe_t *queue, unsigned( **cmdHandlers )( const void * ) );
-void QBufPipe_Wait( qbufPipe_t *queue, int ( *read )( qbufPipe_t *, unsigned( ** )( const void * ), bool ),
-					unsigned( **cmdHandlers )( const void * ), unsigned timeout_msec );
+void QBufPipe_Wait( qbufPipe_t *queue, int ( *read )( qbufPipe_t *, unsigned( ** )( const void * ) ),
+	unsigned( **cmdHandlers )( const void * ) );
 
 int QAtomic_FetchAdd( volatile int *value, int add );
 bool QAtomic_CAS( volatile int *value, int oldval, int newval );
