@@ -65,6 +65,7 @@ Entity @bombHud;
 
 void show( Entity @ent ) {
 	ent.svflags &= ~SVF_NOCLIENT;
+	ent.linkEntity();
 }
 
 void hide( Entity @ent ) {
@@ -86,7 +87,6 @@ void bombModelCreate() {
 	bombModel.modelindex = modelBombModel;
 	@bombModel.touch = dynamite_touch;
 	@bombModel.stop = dynamite_stop;
-	bombModel.linkEntity();
 }
 
 void bombInit() {
@@ -97,16 +97,13 @@ void bombInit() {
 	bombDecal.type = ET_DECAL;
 	bombDecal.origin2 = VEC_UP; // normal
 	bombDecal.solid = SOLID_NOT;
-	bombDecal.frame = BOMB_ARM_DEFUSE_RADIUS; // radius
 	bombDecal.modelindex = imgBombDecal;
 	bombDecal.svflags |= SVF_TRANSMITORIGIN2; // so the normal actually gets used
-	bombDecal.linkEntity();
 
 	@bombHud = @G_SpawnEntity( "hud_bomb" );
 	bombHud.type = ET_HUD;
 	bombHud.solid = SOLID_NOT;
 	bombHud.svflags |= SVF_BROADCAST;
-	bombHud.linkEntity();
 }
 
 void bombSetCarrier( Entity @ent ) {
