@@ -109,7 +109,7 @@ void Sys_Thread_Yield( void ) {
 * Sys_Atomic_Add
 */
 int Sys_Atomic_Add( volatile int *value, int add, qmutex_t *mutex ) {
-	return SDL_AtomicAdd( ( SDL_atomic_t * )value, add ) + add;
+	return SDL_AtomicAdd( ( SDL_atomic_t * )value, add );
 }
 
 /*
