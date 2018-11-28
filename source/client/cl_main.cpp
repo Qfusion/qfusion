@@ -1277,8 +1277,6 @@ static unsigned int CL_LoadMap( const char *name ) {
 		CM_LoadMap( cl.cms, name, true, &map_checksum );
 	}
 
-	CM_AddReference( cl.cms );
-
 	assert( cl.cms );
 
 	// allocate memory for areabits

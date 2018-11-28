@@ -386,7 +386,6 @@ void SV_InitGame( void ) {
 	// load the map
 	assert( !svs.cms );
 	svs.cms = CM_New( NULL );
-	CM_AddReference( svs.cms );
 }
 
 /*

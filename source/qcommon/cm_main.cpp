@@ -876,7 +876,7 @@ static cmodel_state_t *CM_New_( cmodel_state_t *parent, void *mempool ) {
 		CM_AddReference( parent );
 	}
 
-	cms->refcount = 0;
+	cms->refcount = 1;
 	cms->parent = parent;
 	cms->mempool = cms_mempool;
 
