@@ -246,8 +246,6 @@ void bombArm( array<Entity @> @nearby ) {
 
 	setTeamProgress( attackingTeam, 0, BombProgress_Nothing );
 
-	hideSiteIndicators( bombSite );
-
 	bombProgress = 0;
 	bombState = BombState_Armed;
 }

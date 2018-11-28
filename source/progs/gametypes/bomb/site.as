@@ -177,14 +177,6 @@ cBombSite @getSiteFromIndicator( Entity @ent ) {
 	return null; // shut up compiler
 }
 
-void hideSiteIndicators( cBombSite @except ) {
-	for( cBombSite @site = @siteHead; @site != null; @site = @site.next ) {
-		if( @site != @except ) {
-			site.hud.svflags |= SVF_NOCLIENT;
-		}
-	}
-}
-
 void resetBombSites() {
 	@siteHead = null;
 	siteCount = 0;

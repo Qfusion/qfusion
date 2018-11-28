@@ -747,18 +747,20 @@ void CG_DrawBombHUD() {
 
 	// TODO: draw arrows when clamped
 
-	for( size_t i = 0; i < num_bomb_sites; i++ ) {
-		const BombSite * site = &bomb_sites[ i ];
-		vec2_t coords;
-		bool clamped = trap_R_TransformVectorToScreenClamped( &cg.view.refdef, site->origin, SCREEN_PADDING, coords );
+	if( bomb.state == BombState_None || bomb.state == BombState_Dropped ) {
+		for( size_t i = 0; i < num_bomb_sites; i++ ) {
+			const BombSite * site = &bomb_sites[ i ];
+			vec2_t coords;
+			bool clamped = trap_R_TransformVectorToScreenClamped( &cg.view.refdef, site->origin, SCREEN_PADDING, coords );
 
-		char buf[ 4 ];
-		Q_snprintfz( buf, sizeof( buf ), "%c", site->letter );
-		trap_SCR_DrawString( coords[0], coords[1], ALIGN_CENTER_MIDDLE, buf, cgs.fontSystemMedium, colorWhite );
+			char buf[ 4 ];
+			Q_snprintfz( buf, sizeof( buf ), "%c", site->letter );
+			trap_SCR_DrawString( coords[0], coords[1], ALIGN_CENTER_MIDDLE, buf, cgs.fontSystemMedium, colorWhite );
 
-		if( show_labels && !clamped && bomb.state == BombState_None ) {
-			const char * msg = my_team == site->team ? "DEFEND" : "ATTACK";
-			trap_SCR_DrawString( coords[0], coords[1] - 16, ALIGN_CENTER_MIDDLE, msg, cgs.fontSystemTiny, colorWhite );
+			if( show_labels && !clamped && bomb.state != BombState_Dropped ) {
+				const char * msg = my_team == site->team ? "DEFEND" : "ATTACK";
+				trap_SCR_DrawString( coords[0], coords[1] - 16, ALIGN_CENTER_MIDDLE, msg, cgs.fontSystemTiny, colorWhite );
+			}
 		}
 	}
 
@@ -776,7 +778,7 @@ void CG_DrawBombHUD() {
 			if( show_labels ) {
 				const char * msg = "RETRIEVE";
 				if( bomb.state == BombState_Placed )
-					msg = "PLANT";
+					msg = "ARM";
 				else if( bomb.state == BombState_Armed )
 					msg = my_team == bomb.team ? "PROTECT" : "DEFUSE";
 				trap_SCR_DrawString( coords[0], coords[1] - 16, ALIGN_CENTER_MIDDLE, msg, cgs.fontSystemTiny, colorWhite );
