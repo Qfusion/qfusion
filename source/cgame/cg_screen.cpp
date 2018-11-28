@@ -740,6 +740,8 @@ void CG_AddBombHudEntity( centity_t * cent ) {
 }
 
 void CG_DrawBombHUD() {
+	const int SCREEN_PADDING = 32;
+
 	int my_team = cg.predictedPlayerState.stats[STAT_REALTEAM];
 	bool show_labels = my_team != TEAM_SPECTATOR && GS_MatchState() == MATCH_STATE_PLAYTIME;
 
@@ -748,7 +750,7 @@ void CG_DrawBombHUD() {
 	for( size_t i = 0; i < num_bomb_sites; i++ ) {
 		const BombSite * site = &bomb_sites[ i ];
 		vec2_t coords;
-		bool clamped = trap_R_TransformVectorToScreenClamped( &cg.view.refdef, site->origin, 32, coords );
+		bool clamped = trap_R_TransformVectorToScreenClamped( &cg.view.refdef, site->origin, SCREEN_PADDING, coords );
 
 		char buf[ 4 ];
 		Q_snprintfz( buf, sizeof( buf ), "%c", site->letter );
@@ -762,7 +764,7 @@ void CG_DrawBombHUD() {
 
 	if( bomb.state != BombState_None ) {
 		vec2_t coords;
-		bool clamped = trap_R_TransformVectorToScreenClamped( &cg.view.refdef, bomb.origin, 32, coords );
+		bool clamped = trap_R_TransformVectorToScreenClamped( &cg.view.refdef, bomb.origin, SCREEN_PADDING, coords );
 
 		cgs_media_handle_t * icon = cgs.media.shaderBombIcon;
 		int icon_size = cgs.fontSystemBigSize;

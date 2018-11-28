@@ -21,7 +21,6 @@ enum eBombState {
 	BOMBSTATE_IDLE,
 	BOMBSTATE_CARRIED,
 	BOMBSTATE_DROPPED,
-	BOMBSTATE_PLANTING, // bomb has just been planted and we're animating
 	BOMBSTATE_PLANTED,
 	BOMBSTATE_ARMED,
 	BOMBSTATE_EXPLODING, // bomb has just exploded and we're spamming explosions all over the place
@@ -184,16 +183,10 @@ void bombDrop( eBombDrop dropType ) {
 	Trace trace;
 	trace.doTrace( start, BOMB_MINS, BOMB_MAXS, end, bombCarrier.entNum, MASK_SOLID );
 
-	Vec3 origin = trace.endPos;
-
-	// gets set to none in bombSetCarrier
 	bombModel.moveType = MOVETYPE_TOSS;
-
 	@bombModel.owner = @bombCarrier;
-
-	bombModel.origin = origin;
+	bombModel.origin = trace.endPos;
 	bombModel.velocity = velocity;
-
 	show( @bombModel );
 
 	bombCarrier.effects &= ~EF_CARRIER;
@@ -243,7 +236,7 @@ void bombPlant( cBombSite @site ) {
 
 	bombProgress = 0;
 	bombActionTime = levelTime;
-	bombState = BOMBSTATE_PLANTING;
+	bombState = BOMBSTATE_PLANTED;
 }
 
 void bombArm( array<Entity @> @nearby ) {
@@ -251,7 +244,6 @@ void bombArm( array<Entity @> @nearby ) {
 
 	// add red dynamic light
 	bombModel.light = BOMB_LIGHT_ARMED;
-
 	bombModel.modelindex = modelBombModelActive;
 
 	// show to defs too
@@ -346,29 +338,17 @@ void resetBomb() {
 
 void bombThink() {
 	switch( bombState ) {
-		case BOMBSTATE_PLANTING: {
-			float frac = float( levelTime - bombActionTime ) / float( BOMB_SPRITE_RESIZE_TIME ) ;
-
-			if( frac >= 1.0f ) {
-				bombState = BOMBSTATE_PLANTED;
-
-				return;
-			}
-
-			bombDecal.frame = int( BOMB_ARM_DEFUSE_RADIUS * frac );
-		}
-
-		// fallthrough
-
 		case BOMBSTATE_PLANTED: {
+			float decal_radius = min( 1.0f, float( levelTime - bombActionTime ) / float( BOMB_SPRITE_RESIZE_TIME ) );
+			bombDecal.frame = int( BOMB_ARM_DEFUSE_RADIUS * decal_radius );
+
 			array<Entity @> @nearby = nearbyPlayers( bombModel.origin, attackingTeam );
 			bool progressing = nearby.size() > 0;
 
 			if( progressing ) {
 				bombProgress += frameTime;
 
-				if( bombProgress >= uint( cvarArmTime.value * 1000.0f ) ) // uint to avoid mismatch
-				{
+				if( bombProgress >= uint( cvarArmTime.value * 1000.0f ) ) {
 					bombArm( nearby );
 
 					break;

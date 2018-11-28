@@ -32,7 +32,6 @@ int modelBombBackpack;
 int modelIndicator;
 
 // SPRITES ETC
-int imgBombSprite;
 int imgBombDecal;
 
 // SOUNDS
@@ -110,7 +109,6 @@ void mediaInit() {
 	modelBombModelActive    = G_ModelIndex( "models/objects/misc/bomb_centered_active.md3", true );
 	modelBombBackpack = G_ModelIndex( "models/objects/misc/bomb.md3", true );
 
-	imgBombSprite  = G_ImageIndex( "gfx/indicators/radar" );
 	imgBombDecal   = G_ImageIndex( "gfx/indicators/radar_decal" );
 
 	//sndBeep      = G_SoundIndex( "sounds/bomb/bombtimer", true ); FIXME pure
