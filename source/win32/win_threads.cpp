@@ -36,7 +36,7 @@ struct qmutex_s {
 };
 
 int Sys_Mutex_Create( qmutex_t **mutex ) {
-	*mutex = ( qmutex_t * )Q_malloc( sizeof( *mutex ) );
+	*mutex = ( qmutex_t * )Q_malloc( sizeof( qmutex_t ) );
 	InitializeCriticalSection( &( *mutex )->h );
 	return 0;
 }
@@ -61,7 +61,7 @@ int Sys_Thread_Create( qthread_t **thread, void *( *routine )( void* ), void *pa
 		return GetLastError();
 	}
 
-	*thread = ( qthread_t * )Q_malloc( sizeof( *thread ) );
+	*thread = ( qthread_t * )Q_malloc( sizeof( qthread_t ) );
 	( *thread )->h = h;
 
 	return 0;
@@ -86,7 +86,7 @@ bool Sys_Atomic_CAS( volatile int *value, int oldval, int newval ) {
 }
 
 int Sys_CondVar_Create( qcondvar_t **cond ) {
-	*cond = ( qcondvar_t * )Q_malloc( sizeof( **cond ) );
+	*cond = ( qcondvar_t * )Q_malloc( sizeof( qcondvar_t ) );
 	InitializeConditionVariable( &( *cond )->c );
 	return 0;
 }
