@@ -3207,7 +3207,7 @@ static void *FS_LoadDeferredPaks_Job( void *parg ) {
 	deferred_pack_arg_t *arg = ( deferred_pack_arg_t * ) parg;
 
 	while( true ) {
-		i = QAtomic_Add( &arg->cnt, 1 );
+		i = QAtomic_FetchAdd( &arg->cnt, 1 );
 		if( i >= arg->maxcnt ) {
 			break;
 		}

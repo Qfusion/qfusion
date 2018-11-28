@@ -121,9 +121,9 @@ void Sys_Thread_Yield( void ) {
 }
 
 /*
-* Sys_Atomic_Add
+* Sys_Atomic_FetchAdd
 */
-int Sys_Atomic_Add( volatile int *value, int add ) {
+int Sys_Atomic_FetchAdd( volatile int *value, int add ) {
 	return InterlockedExchangeAdd( (volatile LONG*)value, add );
 }
 

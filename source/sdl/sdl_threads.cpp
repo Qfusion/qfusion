@@ -106,10 +106,10 @@ void Sys_Thread_Yield( void ) {
 }
 
 /*
-* Sys_Atomic_Add
+* Sys_Atomic_FetchAdd
 */
-int Sys_Atomic_Add( volatile int *value, int add ) {
-	return SDL_AtomicAdd( ( SDL_atomic_t * )value, add ) + add;
+int Sys_Atomic_FetchAdd( volatile int *value, int add ) {
+	return SDL_AtomicAdd( ( SDL_atomic_t * )value, add );
 }
 
 /*

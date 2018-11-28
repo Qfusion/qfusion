@@ -144,10 +144,10 @@ void QThreads_Shutdown( void ) {
 // ============================================================================
 
 /*
-* QAtomic_Add
+* QAtomic_FetchAdd
 */
-int QAtomic_Add( volatile int *value, int add ) {
-	return Sys_Atomic_Add( value, add );
+int QAtomic_FetchAdd( volatile int *value, int add ) {
+	return Sys_Atomic_FetchAdd( value, add );
 }
 
 /*
@@ -241,7 +241,7 @@ static void *QBufPipe_AllocCmd( qbufPipe_t *pipe, unsigned cmd_size ) {
 * QBufPipe_BufLenAdd
 */
 static void QBufPipe_BufLenAdd( qbufPipe_t *pipe, int val ) {
-	Sys_Atomic_Add( &pipe->cmdbuf_len, val );
+	Sys_Atomic_FetchAdd( &pipe->cmdbuf_len, val );
 }
 
 /*

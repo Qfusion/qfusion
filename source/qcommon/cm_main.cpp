@@ -920,7 +920,7 @@ void CM_AddReference( cmodel_state_t *cms ) {
 	if( !cms ) {
 		return;
 	}
-	QAtomic_Add( &cms->refcount, 1 );
+	QAtomic_FetchAdd( &cms->refcount, 1 );
 }
 
 /*
@@ -931,13 +931,13 @@ void CM_ReleaseReference( cmodel_state_t *cms ) {
 		return;
 	}
 
-	int rc = QAtomic_Add( &cms->refcount, -1 );
-	if( rc <= 0 ) {
+	int old_count = QAtomic_FetchAdd( &cms->refcount, -1 );
+	if( old_count <= 0 ) {
 		Com_Error( ERR_FATAL, "CM_ReleaseReference: refcount < 0" );
 		return;
 	}
 
-	if( rc == 0 ) {
+	if( old_count == 1 ) {
 		CM_Free( cms );
 	}
 }
