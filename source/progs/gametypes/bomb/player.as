@@ -57,18 +57,17 @@ const int AMMO_GL = 10;
 cPlayer@[] players( maxClients ); // array of handles
 bool playersInitialized = false;
 
-class cPlayer
-{
+class cPlayer {
 	Client @client;
 
 	//ePrimaries weapPrimary; FIXME enum
-	//eSecondaries weapSecondary; 
+	//eSecondaries weapSecondary;
 	uint weapPrimary;
 	uint weapSecondary;
 
 	// fix for scoreboard/gb charge bugs
 	//ePrimaries pendingPrimary; FIXME enum
-	//eSecondaries pendingSecondary; 
+	//eSecondaries pendingSecondary;
 	uint pendingPrimary;
 	uint pendingSecondary;
 
@@ -80,9 +79,8 @@ class cPlayer
 	bool dueToSpawn; // used for respawning during countdown
 
 	bool isCarrier;
-	
-	cPlayer( Client @player )
-	{
+
+	cPlayer( Client @player ) {
 		@this.client = @player;
 
 		String loadout = this.client.getUserInfoKey( "cg_loadout" );
@@ -127,18 +125,15 @@ class cPlayer
 		@players[player.playerNum] = @this;
 	}
 
-	void giveInventory()
-	{
+	void giveInventory() {
 		this.client.inventoryClear();
 
-		if ( this.pendingPrimary != PRIMARY_NONE )
-		{
+		if( this.pendingPrimary != PRIMARY_NONE ) {
 			this.weapPrimary = this.pendingPrimary;
 			this.pendingPrimary = PRIMARY_NONE;
 		}
 
-		if ( this.pendingSecondary != PRIMARY_NONE )
-		{
+		if( this.pendingSecondary != PRIMARY_NONE ) {
 			this.weapSecondary = this.pendingSecondary;
 			this.pendingSecondary = SECONDARY_NONE;
 		}
@@ -150,8 +145,7 @@ class cPlayer
 		//      primary weapon but i don't see the point
 
 		// it dies if you don't cast...
-		switch ( int( this.weapPrimary ) )
-		{
+		switch ( int( this.weapPrimary ) ) {
 			case PRIMARY_EBRL:
 				this.client.inventoryGiveItem( WEAP_ROCKETLAUNCHER );
 				this.client.inventoryGiveItem( WEAP_ELECTROBOLT );
@@ -194,8 +188,7 @@ class cPlayer
 				break;
 		}
 
-		switch ( int( this.weapSecondary ) )
-		{
+		switch ( int( this.weapSecondary ) ) {
 			case SECONDARY_PG:
 				this.client.inventoryGiveItem( WEAP_PLASMAGUN );
 
@@ -232,28 +225,26 @@ class cPlayer
 		this.client.selectWeapon( -1 );
 	}
 
-	String getInventoryLabel()
-	{
+	String getInventoryLabel() {
 		String label = "";
 
-		switch ( int( this.weapPrimary ) )
-		{
+		switch ( int( this.weapPrimary ) ) {
 			case PRIMARY_EBRL:
 				label += getWeaponIcon( WEAP_ELECTROBOLT )
 					+ " " + getWeaponIcon( WEAP_ROCKETLAUNCHER );
-				
+
 				break;
 
 			case PRIMARY_RLLG:
 				label += getWeaponIcon( WEAP_ROCKETLAUNCHER )
 					+ " " + getWeaponIcon( WEAP_LASERGUN );
-				
+
 				break;
 
 			case PRIMARY_EBLG:
 				label += getWeaponIcon( WEAP_ELECTROBOLT )
 					+ " " + getWeaponIcon( WEAP_LASERGUN );
-				
+
 				break;
 
 			default:
@@ -265,22 +256,18 @@ class cPlayer
 		return label + " " + getWeaponIcon( this.weapSecondary );
 	}
 
-	void showPrimarySelection()
-	{
-		if ( this.client.team == TEAM_SPECTATOR )
-		{
+	void showPrimarySelection() {
+		if( this.client.team == TEAM_SPECTATOR ) {
 			return;
 		}
-        
+
 		String command = "mecu \"Primary weapons\""
 			+ " \"EB + RL\" \"weapselect eb; gametypemenu2\""
 			+ " \"RL + LG\" \"weapselect rl; gametypemenu2\""
 			+ " \"EB + LG\" \"weapselect lg; gametypemenu2\"";
 
-		if ( cvarEnableCarriers.boolean )
-		{
-			if ( this.isCarrier )
-			{
+		if( cvarEnableCarriers.boolean ) {
+			if( this.isCarrier ) {
 				command += " \"Carrier opt-out\" \"carrier\"";
 			}
 			else
@@ -294,10 +281,8 @@ class cPlayer
 		this.client.execGameCommand( command );
 	}
 
-	void showSecondarySelection()
-	{
-		if ( this.client.team == TEAM_SPECTATOR )
-		{
+	void showSecondarySelection() {
+		if( this.client.team == TEAM_SPECTATOR ) {
 			return;
 		}
 
@@ -311,19 +296,16 @@ class cPlayer
 	}
 
 	//void selectPrimaryWeapon( ePrimaries weapon ) FIXME enum
-	void selectPrimaryWeapon( uint weapon )
-	{
+	void selectPrimaryWeapon( uint weapon ) {
 		this.pendingPrimary = weapon;
 	}
 
 	//void selectSecondaryWeapon( eSecondaries weapon ) FIXME enum
-	void selectSecondaryWeapon( uint weapon )
-	{
+	void selectSecondaryWeapon( uint weapon ) {
 		this.pendingSecondary = weapon;
 	}
 
-	void selectWeapon( String &weapon )
-	{
+	void selectWeapon( String &weapon ) {
 		String token;
 		int len;
 
@@ -331,10 +313,8 @@ class cPlayer
 		uint errorCount = 0; // number of unrecognised tokens
 
 		// :DD
-		for ( int i = 0; ( len = ( token = weapon.getToken( i ) ).len() ) > 0; i++ )
-		{
-			if ( len != 2 )
-			{
+		for( int i = 0; ( len = ( token = weapon.getToken( i ) ).len() ) > 0; i++ ) {
+			if( len != 2 ) {
 				continue;
 			}
 
@@ -343,28 +323,22 @@ class cPlayer
 			// gg Switch expressions must be integral numbers
 			// gg Case expressions must be constants
 
-			if ( token == "EB" )
-			{
+			if( token == "EB" ) {
 				this.selectPrimaryWeapon( PRIMARY_EBRL );
 			}
-			else if ( token == "RL" )
-			{
+			else if( token == "RL" ) {
 				this.selectPrimaryWeapon( PRIMARY_RLLG );
 			}
-			else if ( token == "LG" )
-			{
+			else if( token == "LG" ) {
 				this.selectPrimaryWeapon( PRIMARY_EBLG );
 			}
-			else if ( token == "PG" )
-			{
+			else if( token == "PG" ) {
 				this.selectSecondaryWeapon( SECONDARY_PG );
 			}
-			else if ( token == "RG" )
-			{
+			else if( token == "RG" ) {
 				this.selectSecondaryWeapon( SECONDARY_RG );
 			}
-			else if ( token == "GL" )
-			{
+			else if( token == "GL" ) {
 				this.selectSecondaryWeapon( SECONDARY_GL );
 			}
 			else
@@ -375,8 +349,7 @@ class cPlayer
 			}
 		}
 
-		if ( errorCount != 0 )
-		{
+		if( errorCount != 0 ) {
 			// no need to add a space before error because it's already there
 			G_PrintMsg( @this.client.getEnt(), "Unrecognised token" + ( errorCount == 1 ? "" : "s" ) + ":" + error );
 		}
@@ -408,17 +381,13 @@ class cPlayer
 // since i am using an array of handles this must
 // be done to avoid null references if there are players
 // already on the server
-void playersInit()
-{
+void playersInit() {
 	// do initial setup (that doesn't spawn any entities, but needs clients to be created) only once, not every round
-	if( !playersInitialized )
-	{
-		for ( int i = 0; i < maxClients; i++ )
-		{
+	if( !playersInitialized ) {
+		for( int i = 0; i < maxClients; i++ ) {
 			Client @client = @G_GetClient( i );
 
-			if ( client.state() >= CS_CONNECTING )
-			{
+			if( client.state() >= CS_CONNECTING ) {
 				cPlayer( @client );
 			}
 		}
@@ -428,19 +397,16 @@ void playersInit()
 }
 
 // using a global counter would be faster
-uint getCarrierCount( int teamNum )
-{
+uint getCarrierCount( int teamNum ) {
 	uint count = 0;
 
 	Team @team = @G_GetTeam( teamNum );
 
-	for ( int i = 0; @team.ent( i ) != null; i++ )
-	{
+	for( int i = 0; @team.ent( i ) != null; i++ ) {
 		Client @client = @team.ent( i ).client; // stupid AS...
 		cPlayer @player = @playerFromClient( @client );
 
-		if ( player.isCarrier )
-		{
+		if( player.isCarrier ) {
 			count++;
 		}
 	}
@@ -448,24 +414,19 @@ uint getCarrierCount( int teamNum )
 	return count;
 }
 
-void resetKillCounters()
-{
-	for ( int i = 0; i < maxClients; i++ )
-	{
-		if ( @players[i] != null )
-		{
+void resetKillCounters() {
+	for( int i = 0; i < maxClients; i++ ) {
+		if( @players[i] != null ) {
 			players[i].killsThisRound = 0;
 		}
 	}
 }
 
-cPlayer @playerFromClient( Client @client )
-{
+cPlayer @playerFromClient( Client @client ) {
 	cPlayer @player = @players[client.playerNum];
 
 	// XXX: as of 0.18 this check shouldn't be needed as playersInit works
-	if ( @player == null )
-	{
+	if( @player == null ) {
 		assert( false, "player.as playerFromClient: no player exists for client - state: " + client.state() );
 
 		return cPlayer( @client );
@@ -474,8 +435,7 @@ cPlayer @playerFromClient( Client @client )
 	return @player;
 }
 
-void team_CTF_genericSpawnpoint( Entity @ent, int team )
-{
+void team_CTF_genericSpawnpoint( Entity @ent, int team ) {
 	ent.team = team;
 
 	Trace trace;
@@ -490,8 +450,7 @@ void team_CTF_genericSpawnpoint( Entity @ent, int team )
 
 	trace.doTrace( start, mins, maxs, end, ent.entNum, MASK_SOLID );
 
-	if ( trace.startSolid )
-	{
+	if( trace.startSolid ) {
 		G_Print( ent.classname + " starts inside solid, removing...\n" );
 
 		ent.freeEntity();
@@ -499,30 +458,25 @@ void team_CTF_genericSpawnpoint( Entity @ent, int team )
 		return;
 	}
 
-	if ( ent.spawnFlags & 1 == 0 )
-	{
+	if( ent.spawnFlags & 1 == 0 ) {
 		// move it 1 unit away from the plane
 
 		ent.origin = trace.endPos + trace.planeNormal;
 	}
 }
 
-void team_CTF_alphaspawn( Entity @ent )
-{
+void team_CTF_alphaspawn( Entity @ent ) {
 	team_CTF_genericSpawnpoint( ent, defendingTeam );
 }
 
-void team_CTF_betaspawn( Entity @ent )
-{
+void team_CTF_betaspawn( Entity @ent ) {
 	team_CTF_genericSpawnpoint( ent, attackingTeam );
 }
 
-void team_CTF_alphaplayer( Entity @ent )
-{
+void team_CTF_alphaplayer( Entity @ent ) {
 	team_CTF_genericSpawnpoint( ent, defendingTeam );
 }
 
-void team_CTF_betaplayer( Entity @ent )
-{
+void team_CTF_betaplayer( Entity @ent ) {
 	team_CTF_genericSpawnpoint( ent, attackingTeam );
 }

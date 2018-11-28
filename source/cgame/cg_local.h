@@ -245,6 +245,7 @@ typedef struct {
 	cgs_media_handle_t *shaderBloodImpactPuff;
 	cgs_media_handle_t *shaderTeamMateIndicator;
 	cgs_media_handle_t *shaderTeamCarrierIndicator;
+	cgs_media_handle_t *shaderBombIcon;
 	cgs_media_handle_t *shaderTeleporterSmokePuff;
 	cgs_media_handle_t *shaderBladeMark;
 	cgs_media_handle_t *shaderBulletMark;
@@ -749,7 +750,7 @@ void CG_GameMenu_f( void );
 
 void CG_ClearPointedNum( void );
 
-void CG_AddBombSite( centity_t * cent );
+void CG_AddBombHudEntity( centity_t * cent );
 void CG_DrawBombHUD();
 void CG_ResetBombHUD();
 

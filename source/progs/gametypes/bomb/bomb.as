@@ -17,45 +17,25 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
    */
 
-// i trust bomb will never have more than 1 bomb
+enum eBombState {
+	BOMBSTATE_IDLE,
+	BOMBSTATE_CARRIED,
+	BOMBSTATE_DROPPING, // bomb was dropped but is still in the air
+	BOMBSTATE_DROPPED,
+	BOMBSTATE_PLANTING, // bomb has just been planted and we're animating
+	BOMBSTATE_PLANTED,
+	BOMBSTATE_ARMED,
+	BOMBSTATE_EXPLODING_ANIM, // bomb has just exploded and we're animating the sprite (falls through)
+	BOMBSTATE_EXPLODING, // bomb has just exploded and we're spamming explosions all over the place
+}
 
-/*enum eBombStates FIXME enum
-  {
-  BOMBSTATE_IDLE,
-  BOMBSTATE_CARRIED,
-  BOMBSTATE_DROPPING, // bomb was dropped but is still in the air
-  BOMBSTATE_DROPPED,
-  BOMBSTATE_PLANTING, // bomb has just been planted and we're animating
-  BOMBSTATE_PLANTED,
-  BOMBSTATE_ARMED,
-  BOMBSTATE_EXPLODING // bomb has just exploded and we're animating
-  }*/
+enum eBombDrop {
+	BOMBDROP_NORMAL, // dropped manually
+	BOMBDROP_KILLED, // died
+	BOMBDROP_TEAM, // changed teams
+}
 
-const uint BOMBSTATE_IDLE = 0;
-const uint BOMBSTATE_CARRIED = 1;
-const uint BOMBSTATE_DROPPING = 2; // bomb was dropped but is still in the air
-const uint BOMBSTATE_DROPPED = 3;
-const uint BOMBSTATE_PLANTING = 4; // bomb has just been planted and we're animating
-const uint BOMBSTATE_PLANTED = 5;
-const uint BOMBSTATE_ARMED = 6;
-const uint BOMBSTATE_EXPLODING_ANIM = 7; // bomb has just exploded and we're animating the sprite (falls through)
-const uint BOMBSTATE_EXPLODING = 8; // bomb has just exploded and we're spamming explosions all over the place
-
-enum ProgressType {
-	ProgressType_Nothing,
-	ProgressType_Planting,
-	ProgressType_Defusing,
-};
-
-// FIXME enum
-const uint BOMBDROP_NORMAL = 0; // dropped manually
-const uint BOMBDROP_KILLED = 1; // died
-const uint BOMBDROP_TEAM = 2; // changed teams
-
-//eBombStates bombState = BOMBSTATE_IDLE; FIXME enum
-uint bombState = BOMBSTATE_IDLE;
-// Bot state before resetBomb()
-uint oldBombState = BOMBSTATE_IDLE;
+eBombState bombState = BOMBSTATE_IDLE;
 
 cBombSite @bombSite;
 
@@ -82,29 +62,23 @@ Vec3 bombCarrierLastVel;
 Entity @bombModel;
 Entity @bombSprite;
 Entity @bombDecal;
+Entity @bombHud;
 
-void show( Entity @ent )
-{
+void show( Entity @ent ) {
 	ent.svflags &= ~SVF_NOCLIENT;
-
-	ent.linkEntity();
 }
 
-void hide( Entity @ent )
-{
+void hide( Entity @ent ) {
 	ent.svflags |= SVF_NOCLIENT;
 }
 
-Vec3 getMiddle( Entity @ent )
-{
+Vec3 getMiddle( Entity @ent ) {
 	Vec3 mins, maxs;
 	ent.getSize( mins, maxs );
-
-	return 0.5 * ( mins + maxs );
+	return 0.5f * ( mins + maxs );
 }
 
-void bombModelCreate()
-{
+void bombModelCreate() {
 	@bombModel = @G_SpawnEntity( "dynamite" );
 	bombModel.type = ET_GENERIC;
 	bombModel.setSize( BOMB_MINS, BOMB_MAXS );
@@ -113,22 +87,20 @@ void bombModelCreate()
 	bombModel.modelindex = modelBombModel;
 	@bombModel.touch = dynamite_touch;
 	@bombModel.stop = dynamite_stop;
+	bombModel.linkEntity();
 }
 
-// initializes bomb entities so they can be linked later
-void bombInit()
-{
-	// i'm not setting svflags &= ~SVF_NOCLIENT yet
-	// no need to link either 
-
+void bombInit() {
 	bombModelCreate();
 
+	// don't set ~SVF_NOCLIENT yet
 	@bombSprite = @G_SpawnEntity( "capture_indicator_sprite" );
 	bombSprite.type = ET_RADAR;
 	bombSprite.solid = SOLID_NOT;
 	bombSprite.frame = BOMB_ARM_DEFUSE_RADIUS; // radius
 	bombSprite.modelindex = imgBombSprite;
 	bombSprite.svflags |= SVF_BROADCAST;
+	bombSprite.linkEntity();
 
 	@bombDecal = @G_SpawnEntity( "flag_indicator_decal" );
 	bombDecal.type = ET_DECAL;
@@ -137,13 +109,17 @@ void bombInit()
 	bombDecal.frame = BOMB_ARM_DEFUSE_RADIUS; // radius
 	bombDecal.modelindex = imgBombDecal;
 	bombDecal.svflags |= SVF_TRANSMITORIGIN2; // so the normal actually gets used
+	bombDecal.linkEntity();
 
+	@bombHud = @G_SpawnEntity( "hud_bomb" );
+	bombHud.type = ET_HUD;
+	bombHud.solid = SOLID_NOT;
+	bombHud.svflags |= SVF_BROADCAST;
+	bombHud.linkEntity();
 }
 
-void bombSetCarrier( Entity @ent )
-{
-	if ( @bombCarrier != null )
-	{
+void bombSetCarrier( Entity @ent ) {
+	if( @bombCarrier != null ) {
 		bombCarrier.effects &= ~EF_CARRIER;
 		bombCarrier.modelindex2 = 0;
 	}
@@ -167,41 +143,37 @@ void bombSetCarrier( Entity @ent )
 	bombState = BOMBSTATE_CARRIED;
 }
 
-void bombDrop( uint dropType )
-{
+void bombDrop( eBombDrop dropType ) {
 	Vec3 start = bombCarrier.origin;
 	Vec3 end, velocity;
 
-	switch ( dropType )
-	{
+	switch( dropType ) {
 		case BOMBDROP_NORMAL:
-		case BOMBDROP_KILLED: // TODO XXX FIXME
-			{
-				bombPickTime = levelTime + BOMB_DROP_RETAKE_DELAY;
-				@bombDropper = @bombCarrier;
+		case BOMBDROP_KILLED: { // TODO XXX FIXME
+			bombPickTime = levelTime + BOMB_DROP_RETAKE_DELAY;
+			@bombDropper = @bombCarrier;
 
-				// throw from the player's eye
-				start.z += bombCarrier.viewHeight;
+			// throw from the player's eye
+			start.z += bombCarrier.viewHeight;
 
-				// aim it up by 10 degrees like nades
-				Vec3 angles = bombCarrier.angles;
+			// aim it up by 10 degrees like nades
+			Vec3 angles = bombCarrier.angles;
 
-				Vec3 forward, right, up;
-				angles.angleVectors( forward, right, up );
+			Vec3 forward, right, up;
+			angles.angleVectors( forward, right, up );
 
-				// put it a little infront of the player
-				Vec3 offset( 24.0, 0.0, -16.0 );
-				end.x = start.x + forward.x * offset.x;
-				end.y = start.y + forward.y * offset.x;
-				end.z = start.z + forward.z * offset.x + offset.z;
+			// put it a little infront of the player
+			Vec3 offset( 24.0, 0.0, -16.0 );
+			end.x = start.x + forward.x * offset.x;
+			end.y = start.y + forward.y * offset.x;
+			end.z = start.z + forward.z * offset.x + offset.z;
 
-				velocity = bombCarrier.velocity + forward * 200;
-				velocity.z = BOMB_THROW_SPEED;
-				if( dropType == BOMBDROP_KILLED ) {
-					velocity.z *= 0.5;
-				}
-				break;
+			velocity = bombCarrier.velocity + forward * 200;
+			velocity.z = BOMB_THROW_SPEED;
+			if( dropType == BOMBDROP_KILLED ) {
+				velocity.z *= 0.5;
 			}
+		} break;
 
 			/*case BOMBDROP_KILLED:
 			// to avoid issues with a player dropping it then
@@ -213,14 +185,13 @@ void bombDrop( uint dropType )
 
 			break;*/
 
-		case BOMBDROP_TEAM:
+		case BOMBDROP_TEAM: {
 			@bombDropper = null;
 
 			// current pos/velocity are outdated
 			start = end = bombCarrierLastPos;
 			velocity = bombCarrierLastVel;
-
-			break;
+		} break;
 	}
 
 	Trace trace;
@@ -249,8 +220,7 @@ void bombDrop( uint dropType )
 	bombState = BOMBSTATE_DROPPING;
 }
 
-void bombPlant( cBombSite @site )
-{
+void bombPlant( cBombSite @site ) {
 	@bombSite = @site;
 
 	Vec3 start = bombCarrier.origin;
@@ -271,6 +241,7 @@ void bombPlant( cBombSite @site )
 	bombModel.origin = origin;
 	bombSprite.origin = origin;
 	bombDecal.origin = origin;
+	bombHud.origin = origin + Vec3( 0, 0, 32 );
 
 	// only show sprite etc to team
 	// XXX: should it show a white decal for defenders?
@@ -278,6 +249,7 @@ void bombPlant( cBombSite @site )
 	//      for them to stand on the bomb, which there isn't when it's not armed
 	bombSprite.svflags |= SVF_ONLYTEAM;
 	bombDecal.svflags |= SVF_ONLYTEAM;
+	bombHud.svflags |= SVF_ONLYTEAM;
 
 	bombSprite.frame = bombDecal.frame = 0; // so they can expand
 
@@ -285,6 +257,7 @@ void bombPlant( cBombSite @site )
 	show( @bombModel );
 	show( @bombSprite );
 	show( @bombDecal );
+	show( @bombHud );
 
 	// make carrier look normal
 	bombCarrier.effects &= ~EF_CARRIER;
@@ -300,8 +273,7 @@ void bombPlant( cBombSite @site )
 	bombState = BOMBSTATE_PLANTING;
 }
 
-void bombArm(array<Entity @> @nearby)
-{
+void bombArm( array<Entity @> @nearby ) {
 	bombActionTime = levelTime + int( cvarExplodeTime.value * 1000.0f );
 
 	// add red dynamic light
@@ -312,12 +284,13 @@ void bombArm(array<Entity @> @nearby)
 	// show to defs too
 	bombSprite.svflags &= ~SVF_ONLYTEAM;
 	bombDecal.svflags &= ~SVF_ONLYTEAM;
+	bombHud.svflags &= ~SVF_ONLYTEAM;
 
 	announce( ANNOUNCEMENT_ARMED );
 
 	G_CenterPrintFormatMsg( null, "Bomb planted at %s!", bombSite.letter );
 
-	setTeamProgress( attackingTeam, 0, ProgressType_Nothing );
+	setTeamProgress( attackingTeam, 0, BombProgress_Nothing );
 
 	hideSiteIndicators( bombSite );
 
@@ -325,8 +298,7 @@ void bombArm(array<Entity @> @nearby)
 	bombState = BOMBSTATE_ARMED;
 }
 
-void bombDefuse(array<Entity @> @nearby)
-{
+void bombDefuse( array<Entity @> @nearby ) {
 	bombModel.light = BOMB_LIGHT_INACTIVE;
 	bombModel.modelindex = modelBombModel;
 
@@ -355,8 +327,7 @@ void bombDefuse(array<Entity @> @nearby)
 
 	client.addAward( awardMsg );
 
-	for( uint i = 1; i < nearby.size(); i++ )
-	{
+	for( uint i = 1; i < nearby.size(); i++ ) {
 		@client = nearby[i].client;
 		@player = playerFromClient( @client );
 
@@ -374,8 +345,7 @@ void bombDefuse(array<Entity @> @nearby)
 	roundWonBy( defendingTeam );
 }
 
-void bombExplode()
-{
+void bombExplode() {
 	// do this first else the attackers can score 2 points when the explosion kills everyone
 	roundWonBy( attackingTeam );
 
@@ -390,9 +360,7 @@ void bombExplode()
 	bombState = BOMBSTATE_EXPLODING_ANIM;
 }
 
-// 2lazy
-void resetBomb()
-{
+void resetBomb() {
 	hide( @bombModel );
 	hide( @bombSprite );
 	hide( @bombDecal );
@@ -401,178 +369,146 @@ void resetBomb()
 	bombModel.light = BOMB_LIGHT_INACTIVE;
 	bombModel.modelindex = modelBombModel;
 
-	bombSprite.team = bombDecal.team = attackingTeam;
+	bombSprite.team = bombDecal.team = bombHud.team = attackingTeam;
 
-	oldBombState = bombState;
 	bombState = BOMBSTATE_IDLE;
 }
 
-void bombThink()
-{
-	switch ( bombState )
-	{
+void bombThink() {
+	switch( bombState ) {
 		case BOMBSTATE_IDLE:
 		case BOMBSTATE_CARRIED:
-			// do nothing
-
 			break;
 
-		case BOMBSTATE_DROPPING:
-			{
-				Vec3 origin = bombModel.origin;
+		case BOMBSTATE_DROPPING: {
+			Vec3 origin = bombModel.origin;
 
-				bombSprite.origin = origin;
+			bombSprite.origin = origin;
 
-				bombSprite.linkEntity();
+			bombSprite.linkEntity();
 
-				break;
-			}
+		} break;
 
 		case BOMBSTATE_DROPPED:
 			bombModel.effects = EF_ROTATE_AND_BOB;
 			break;
 
-		case BOMBSTATE_PLANTING:
-			{
-				float frac = float( levelTime - bombActionTime ) / float( BOMB_SPRITE_RESIZE_TIME ) ;
+		case BOMBSTATE_PLANTING: {
+			float frac = float( levelTime - bombActionTime ) / float( BOMB_SPRITE_RESIZE_TIME ) ;
 
-				if ( frac >= 1.0f )
-				{
-					bombState = BOMBSTATE_PLANTED;
+			if( frac >= 1.0f ) {
+				bombState = BOMBSTATE_PLANTED;
 
-					return;
-				}
-
-				bombSprite.frame = bombDecal.frame = int( BOMB_ARM_DEFUSE_RADIUS * frac );
+				return;
 			}
 
-			// fallthrough
+			bombSprite.frame = bombDecal.frame = int( BOMB_ARM_DEFUSE_RADIUS * frac );
+		}
 
-		case BOMBSTATE_PLANTED:
-			{
-				array<Entity @> @nearby = nearbyPlayers( bombModel.origin, attackingTeam );
-				bool progressing = nearby.size() > 0;
+		// fallthrough
 
-				if ( progressing )
+		case BOMBSTATE_PLANTED: {
+			array<Entity @> @nearby = nearbyPlayers( bombModel.origin, attackingTeam );
+			bool progressing = nearby.size() > 0;
+
+			if( progressing ) {
+				bombProgress += frameTime;
+
+				if( bombProgress >= uint( cvarArmTime.value * 1000.0f ) ) // uint to avoid mismatch
 				{
-					bombProgress += frameTime;
+					bombArm( nearby );
 
-					if ( bombProgress >= uint( cvarArmTime.value * 1000.0f ) ) // uint to avoid mismatch
-					{
-						bombArm( nearby );
-
-						break;
-					}
-				}
-				else
-				{
-					bombProgress -= min( bombProgress, frameTime );
-				}
-
-				// this needs to be done every frame...
-				bombSprite.effects |= EF_TEAMCOLOR_TRANSITION;
-				bombDecal.effects |= EF_TEAMCOLOR_TRANSITION;
-
-				if ( bombProgress != 0 )
-				{
-					float frac = bombProgress / ( cvarArmTime.value * 1000.0f );
-
-					int progress = int( frac * 100.0f );
-
-					if ( !progressing )
-					{
-						progress = -progress;
-					}
-
-					setTeamProgress( attackingTeam, progress, ProgressType_Planting );
-
-					bombSprite.counterNum = bombDecal.counterNum = int( frac * 255.0f );
-				}
-				else
-				{
-					bombSprite.counterNum = bombDecal.counterNum = 0;
-				}
-
-				break;
-			}
-
-		case BOMBSTATE_ARMED:
-			{
-				array<Entity @> @nearby = nearbyPlayers( bombModel.origin, defendingTeam );
-				bool progressing = nearby.size() > 0;
-
-				if ( progressing )
-				{
-					bombProgress += frameTime;
-
-					if ( bombProgress >= uint( cvarDefuseTime.value * 1000.0f ) ) // cast to avoid mismatch
-					{
-						bombDefuse( nearby );
-
-						setTeamProgress( defendingTeam, 100, ProgressType_Defusing );
-
-						break;
-					}
-				}
-				else
-				{
-					bombProgress -= min( bombProgress, frameTime );
-				}
-
-				if ( levelTime >= bombActionTime )
-				{
-					bombExplode();
 					break;
 				}
+			}
+			else
+			{
+				bombProgress -= min( bombProgress, frameTime );
+			}
 
-				if ( bombProgress != 0 )
-				{
-					int progress = int( ( bombProgress * 100.0f ) / ( cvarDefuseTime.value * 1000.0f ) );
+			// this needs to be done every frame...
+			bombSprite.effects |= EF_TEAMCOLOR_TRANSITION;
+			bombDecal.effects |= EF_TEAMCOLOR_TRANSITION;
 
-					if ( !progressing )
-					{
-						progress = -progress;
-					}
+			if( bombProgress != 0 ) {
+				float frac = bombProgress / ( cvarArmTime.value * 1000.0f );
 
-					setTeamProgress( defendingTeam, progress, ProgressType_Defusing );
+				int progress = int( frac * 100.0f );
+
+				if( !progressing ) {
+					progress = -progress;
 				}
 
-				if ( levelTime > bombNextBeep )
+				setTeamProgress( attackingTeam, progress, BombProgress_Planting );
+
+				bombSprite.counterNum = bombDecal.counterNum = int( frac * 255.0f );
+			}
+			else
+			{
+				bombSprite.counterNum = bombDecal.counterNum = 0;
+			}
+		} break;
+
+		case BOMBSTATE_ARMED: {
+			array<Entity @> @nearby = nearbyPlayers( bombModel.origin, defendingTeam );
+			bool progressing = nearby.size() > 0;
+
+			if( progressing ) {
+				bombProgress += frameTime;
+
+				if( bombProgress >= uint( cvarDefuseTime.value * 1000.0f ) ) // cast to avoid mismatch
 				{
-					G_PositionedSound( bombModel.origin, CHAN_AUTO, sndBeep, ATTN_DISTANT );
+					bombDefuse( nearby );
 
-					uint remainingTime = bombActionTime - levelTime;
+					setTeamProgress( defendingTeam, 100, BombProgress_Defusing );
 
-					uint nextBeepDelta = uint( BOMB_BEEP_FRACTION * remainingTime );
-
-					if ( nextBeepDelta > BOMB_BEEP_MAX )
-					{
-						nextBeepDelta = BOMB_BEEP_MAX;
-					}
-					else if ( nextBeepDelta < BOMB_BEEP_MIN )
-					{
-						nextBeepDelta = BOMB_BEEP_MIN;
-					}
-
-					bombNextBeep = levelTime + nextBeepDelta;
+					break;
 				}
+			}
+			else
+			{
+				bombProgress -= min( bombProgress, frameTime );
+			}
 
+			if( levelTime >= bombActionTime ) {
+				bombExplode();
 				break;
 			}
 
-		default:
-			assert( false, "bomb.as bombThink: invalid bombState" );
+			if( bombProgress != 0 ) {
+				int progress = int( ( bombProgress * 100.0f ) / ( cvarDefuseTime.value * 1000.0f ) );
 
-			break;
+				if( !progressing ) {
+					progress = -progress;
+				}
+
+				setTeamProgress( defendingTeam, progress, BombProgress_Defusing );
+			}
+
+			if( levelTime > bombNextBeep ) {
+				G_PositionedSound( bombModel.origin, CHAN_AUTO, sndBeep, ATTN_DISTANT );
+
+				uint remainingTime = bombActionTime - levelTime;
+
+				uint nextBeepDelta = uint( BOMB_BEEP_FRACTION * remainingTime );
+
+				if( nextBeepDelta > BOMB_BEEP_MAX ) {
+					nextBeepDelta = BOMB_BEEP_MAX;
+				}
+				else if( nextBeepDelta < BOMB_BEEP_MIN ) {
+					nextBeepDelta = BOMB_BEEP_MIN;
+				}
+
+				bombNextBeep = levelTime + nextBeepDelta;
+			}
+		} break;
 	}
 }
 
 // fixes sprite/decal changing colour at the end of a round
 // and the exploding animation from stopping
-void bombAltThink()
-{
-	switch( bombState )
-	{
+void bombAltThink() {
+	switch( bombState ) {
 		case BOMBSTATE_DROPPING:
 			{
 				Vec3 origin = bombModel.origin;
@@ -588,8 +524,7 @@ void bombAltThink()
 			bombSprite.effects |= EF_TEAMCOLOR_TRANSITION;
 			bombDecal.effects |= EF_TEAMCOLOR_TRANSITION;
 
-			if ( bombProgress != 0 )
-			{
+			if( bombProgress != 0 ) {
 				float frac = bombProgress / ( cvarArmTime.value * 1000.0f );
 
 				bombSprite.counterNum = bombDecal.counterNum = int( frac * 255.0f );
@@ -605,8 +540,7 @@ void bombAltThink()
 			{
 				float frac = float( levelTime - bombActionTime ) / float( BOMB_SPRITE_RESIZE_TIME ) ;
 
-				if ( frac >= 1.0f )
-				{
+				if( frac >= 1.0f ) {
 					hide( @bombSprite );
 
 					bombState = BOMBSTATE_EXPLODING;
@@ -632,8 +566,7 @@ void bombAltThink()
 // returns first player after target upto stop who is within
 // BOMB_ARM_DEFUSE_RADIUS units of origin and is on team
 // returns null if nobody is found
-array<Entity @> @nearbyPlayers( Vec3 origin, int team )
-{
+array<Entity @> @nearbyPlayers( Vec3 origin, int team ) {
 	array<Entity @> @inradius = G_FindInRadius( origin, BOMB_ARM_DEFUSE_RADIUS );
 	array<Entity @> filtered( 0 );
 
@@ -655,15 +588,13 @@ array<Entity @> @nearbyPlayers( Vec3 origin, int team )
 	return filtered;
 }
 
-bool bombCanPlant()
-{
+bool bombCanPlant() {
 	// check carrier is moving slowly enough
 	// comparing squared length because it's faster
 
 	Vec3 velocity = bombCarrier.velocity;
 
-	if ( velocity * velocity > BOMB_MAX_PLANT_SPEED * BOMB_MAX_PLANT_SPEED )
-	{
+	if( velocity * velocity > BOMB_MAX_PLANT_SPEED * BOMB_MAX_PLANT_SPEED ) {
 		return false;
 	}
 
@@ -681,8 +612,7 @@ bool bombCanPlant()
 
 	trace.doTrace( start, mins, maxs, end, bombCarrier.entNum, MASK_SOLID );
 
-	if ( trace.startSolid )
-	{
+	if( trace.startSolid ) {
 		return false;
 	}
 
@@ -694,8 +624,7 @@ bool bombCanPlant()
 	//      others easier (shepas A rail, reactors B upper)
 
 	// fast dot product with ( 0, 0, 1 )
-	if ( trace.planeNormal.z < BOMB_MIN_DOT_GROUND )
-	{
+	if( trace.planeNormal.z < BOMB_MIN_DOT_GROUND ) {
 		return false;
 	}
 
@@ -733,8 +662,7 @@ void bombGiveToRandom() {
 	}
 }
 
-bool entCanSee( Entity @ent, Vec3 point )
-{
+bool entCanSee( Entity @ent, Vec3 point ) {
 	Vec3 center = ent.origin + getMiddle( @ent );
 
 	Trace trace;
@@ -742,13 +670,12 @@ bool entCanSee( Entity @ent, Vec3 point )
 }
 
 // move the camera around the site?
-void bombLookAt( Entity @ent )
-{
+void bombLookAt( Entity @ent ) {
 	Entity @target = @bombSite.indicator;
 
 	array<Entity @> @targets = bombSite.indicator.findTargets();
 	for( uint i = 0; i < targets.size(); i++ ) {
-		if ( targets[i].classname == "func_explosive" ) {
+		if( targets[i].classname == "func_explosive" ) {
 			@target = targets[i];
 			break;
 		}
@@ -761,8 +688,7 @@ void bombLookAt( Entity @ent )
 
 	float diff = center.z - bombOrigin.z;
 
-	if ( diff > 8 )
-	{
+	if( diff > 8 ) {
 		bombOrigin.z += diff / 2;
 	}
 
@@ -779,8 +705,7 @@ void bombLookAt( Entity @ent )
 
 	Vec3 origin = trace.endPos;
 
-	if ( trace.fraction != 1 )
-	{
+	if( trace.fraction != 1 ) {
 		origin += 8 * trace.planeNormal;
 	}
 
@@ -796,47 +721,38 @@ void bombLookAt( Entity @ent )
 
 // ent stuff
 
-void dynamite_touch( Entity @ent, Entity @other, const Vec3 planeNormal, int surfFlags )
-{
-	if ( match.getState() != MATCH_STATE_PLAYTIME )
-	{
+void dynamite_touch( Entity @ent, Entity @other, const Vec3 planeNormal, int surfFlags ) {
+	if( match.getState() != MATCH_STATE_PLAYTIME ) {
 		return;
 	}
 
-	if ( bombState != BOMBSTATE_DROPPED && bombState != BOMBSTATE_DROPPING )
-	{
+	if( bombState != BOMBSTATE_DROPPED && bombState != BOMBSTATE_DROPPING ) {
 		return;
 	}
 
-	if ( @other.client == null )
-	{
+	if( @other.client == null ) {
 		return;
 	}
 
-	if ( other.team != attackingTeam )
-	{
+	if( other.team != attackingTeam ) {
 		return;
 	}
 
 	// dead players can't carry
-	if ( other.isGhosting() || other.health < 0 )
-	{
+	if( other.isGhosting() || other.health < 0 ) {
 		return;
 	}
 
 	// did this guy drop it recently?
-	if ( levelTime < bombPickTime && @other == @bombDropper )
-	{
+	if( levelTime < bombPickTime && @other == @bombDropper ) {
 		return;
 	}
 
 	bombSetCarrier( @other );
 }
 
-void dynamite_stop( Entity @ent )
-{
-	if ( bombState == BOMBSTATE_DROPPING )
-	{
+void dynamite_stop( Entity @ent ) {
+	if( bombState == BOMBSTATE_DROPPING ) {
 		bombState = BOMBSTATE_DROPPED;
 
 		Vec3 origin = bombModel.origin;

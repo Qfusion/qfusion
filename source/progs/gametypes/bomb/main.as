@@ -96,10 +96,8 @@ const int COUNTDOWN_MAX = 6; // was 4, but this gives people more time to change
 
 // this should really kill the program
 // but i'm mostly using it as an indicator that it's about to die anyway
-void assert( const bool test, const String msg )
-{
-	if ( !test )
-	{
+void assert( const bool test, const String msg ) {
+	if( !test ) {
 		G_Print( S_COLOR_RED + "assert failed: " + msg + "\n" );
 	}
 }
@@ -108,27 +106,23 @@ uint min( uint a, uint b ) {
 	return a < b ? a : b;
 }
 
-void setTeamProgress( int teamNum, int progress, ProgressType type )
-{
-	for ( int t = TEAM_ALPHA; t < GS_MAX_TEAMS; t++ )
-	{
+void setTeamProgress( int teamNum, int progress, BombProgress type ) {
+	for( int t = TEAM_ALPHA; t < GS_MAX_TEAMS; t++ ) {
 		Team @team = @G_GetTeam( t );
 
-		for ( int i = 0; @team.ent( i ) != null; i++ )
-		{
+		for( int i = 0; @team.ent( i ) != null; i++ ) {
 			Entity @ent = @team.ent( i );
 
-			if ( ent.isGhosting() )
-			{
+			if( ent.team != teamNum )
 				continue;
-			}
-
-			if ( ent.team != teamNum )
-			{
-				continue;
-			}
 
 			Client @client = @ent.client;
+
+			if( ent.isGhosting() ) {
+				client.setHUDStat( STAT_PROGRESS_SELF, 0 );
+				client.setHUDStat( STAT_MESSAGE_SELF, 0 );
+				continue;
+			}
 
 			client.setHUDStat( STAT_PROGRESS_SELF, progress );
 			client.setHUDStat( STAT_MESSAGE_SELF, type );
@@ -136,51 +130,45 @@ void setTeamProgress( int teamNum, int progress, ProgressType type )
 	}
 }
 
-void BOMB_SetVoicecommOverlayMenu( Client @client )
-{
+void BOMB_SetVoicecommOverlayMenu( Client @client ) {
 	String menuStr = '';
 
-	if ( client.getEnt().team == attackingTeam )
-	{	
-		menuStr += 
-			'"Attack A!" "vsay_team attack_a" ' + 
+	if( client.getEnt().team == attackingTeam ) {
+		menuStr +=
+			'"Attack A!" "vsay_team attack_a" ' +
 			'"Attack B!" "vsay_team attack_b" ';
 	}
 	else
 	{
-		menuStr += 
-			'"Defend A!" "vsay_team defend_a" ' + 
-			'"Defend B!" "vsay_team defend_b" ';	
+		menuStr +=
+			'"Defend A!" "vsay_team defend_a" ' +
+			'"Defend B!" "vsay_team defend_b" ';
 	}
 
-	menuStr += 
-		'"Need backup" "vsay_team needbackup" ' + 
-		'"Need offense" "vsay_team needoffense" ' + 
-		'"Need defense" "vsay_team needdefense" ' + 
-		'"On offense" "vsay_team onoffense" ' + 
-		'"On defense" "vsay_team ondefense" ' + 
-		'"Area secured" "vsay_team areasecured" ' + 
-		'"Affirmative" "vsay_team affirmative" ' + 
+	menuStr +=
+		'"Need backup" "vsay_team needbackup" ' +
+		'"Need offense" "vsay_team needoffense" ' +
+		'"Need defense" "vsay_team needdefense" ' +
+		'"On offense" "vsay_team onoffense" ' +
+		'"On defense" "vsay_team ondefense" ' +
+		'"Area secured" "vsay_team areasecured" ' +
+		'"Affirmative" "vsay_team affirmative" ' +
 		'"Negative" "vsay_team negative" ';
 
 	GENERIC_SetOverlayMenu( @client, menuStr );
 }
 
-bool GT_Command( Client @client, const String &cmdString, const String &argsString, int argc )
-{
-	if ( cmdString == "drop" )
-	{
-		if ( @client.getEnt() == @bombCarrier ) {
+bool GT_Command( Client @client, const String &cmdString, const String &argsString, int argc ) {
+	if( cmdString == "drop" ) {
+		if( @client.getEnt() == @bombCarrier ) {
 			bombDrop( BOMBDROP_NORMAL );
 		}
 
 		return true;
 	}
 
-	if ( cmdString == "carrier" )
-	{
-		if ( !cvarEnableCarriers.boolean )
-		{
+	if( cmdString == "carrier" ) {
+		if( !cvarEnableCarriers.boolean ) {
 			G_PrintMsg( @client.getEnt(), "Bomb carriers are disabled.\n" );
 
 			return true;
@@ -190,10 +178,8 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
 
 		String token = argsString.getToken( 0 );
 
-		if ( token.len() != 0 )
-		{
-			if ( token.toInt() == 1 )
-			{
+		if( token.len() != 0 ) {
+			if( token.toInt() == 1 ) {
 				player.isCarrier = true;
 
 				G_PrintMsg( @client.getEnt(), "You are now a bomb carrier!\n" );
@@ -209,8 +195,7 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
 		{
 			player.isCarrier = !player.isCarrier;
 
-			if ( player.isCarrier )
-			{
+			if( player.isCarrier ) {
 				G_PrintMsg( @client.getEnt(), "You are now a bomb carrier!\n" );
 			}
 			else
@@ -222,45 +207,39 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
 		return true;
 	}
 
-	if ( cmdString == "gametypemenu" )
-	{
+	if( cmdString == "gametypemenu" ) {
 		playerFromClient( @client ).showPrimarySelection();
 
 		return true;
 	}
 
-	if ( cmdString == "gametypemenu2" )
-	{
+	if( cmdString == "gametypemenu2" ) {
 		playerFromClient( @client ).showSecondarySelection();
 
 		return true;
 	}
 
-	if ( cmdString == "weapselect" )
-	{
+	if( cmdString == "weapselect" ) {
 		cPlayer @player = @playerFromClient( @client );
 
 		player.selectWeapon( argsString );
 
 		// TODO: block them from shooting for 0.5s or something instead
 
-		if ( /*match.getState() == MATCH_STATE_WARMUP ||*/ roundState == ROUNDSTATE_PRE )
-		{
+		if( /*match.getState() == MATCH_STATE_WARMUP ||*/ roundState == ROUNDSTATE_PRE ) {
 			player.giveInventory();
 		}
 
 		return true;
 	}
 
-	if ( cmdString == "cvarinfo" )
-	{
+	if( cmdString == "cvarinfo" ) {
 		GENERIC_CheatVarResponse( @client, cmdString, argsString, argc );
 
 		return true;
 	}
 
-	if ( cmdString == "callvotevalidate" )
-	{
+	if( cmdString == "callvotevalidate" ) {
 		String votename = argsString.getToken( 0 );
 
 		client.printMessage( "Unknown callvote " + votename + "\n" );
@@ -269,8 +248,7 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
 
 	}
 
-	if ( cmdString == "callvotepassed" )
-	{
+	if( cmdString == "callvotepassed" ) {
 		String votename = argsString.getToken( 0 );
 
 		return true;
@@ -279,34 +257,28 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
 	return false;
 }
 
-Entity @GT_SelectSpawnPoint( Entity @self )
-{
-	if ( self.team == attackingTeam )
-	{
+Entity @GT_SelectSpawnPoint( Entity @self ) {
+	if( self.team == attackingTeam ) {
 		return GENERIC_SelectBestRandomSpawnPoint( @self, "team_CTF_betaspawn" );
 	}
 
 	return GENERIC_SelectBestRandomSpawnPoint( @self, "team_CTF_alphaspawn" );
 }
 
-String @GT_ScoreboardMessage( uint maxlen )
-{
+String @GT_ScoreboardMessage( uint maxlen ) {
 	String scoreboardMessage = "";
 	int matchState = match.getState();
 
-	for ( int t = TEAM_ALPHA; t < GS_MAX_TEAMS; t++ )
-	{
+	for( int t = TEAM_ALPHA; t < GS_MAX_TEAMS; t++ ) {
 		Team @team = @G_GetTeam( t );
 
 		String entry = "&t " + t + " " + team.stats.score + " ";
 
-		if ( scoreboardMessage.len() + entry.len() < maxlen )
-		{
+		if( scoreboardMessage.len() + entry.len() < maxlen ) {
 			scoreboardMessage += entry;
 		}
 
-		for ( int i = 0; @team.ent( i ) != null; i++ )
-		{
+		for( int i = 0; @team.ent( i ) != null; i++ ) {
 			Entity @ent = @team.ent( i );
 			Client @client = @ent.client;
 
@@ -314,16 +286,13 @@ String @GT_ScoreboardMessage( uint maxlen )
 
 			int statusIcon;
 
-			if ( matchState == MATCH_STATE_PLAYTIME )
-			{
+			if( matchState == MATCH_STATE_PLAYTIME ) {
 				// carrying takes priority over carrier
 				// don't rearrange for cheaper checks :D
-				if ( bombState == BOMBSTATE_CARRIED && @ent == @bombCarrier )
-				{
+				if( bombState == BOMBSTATE_CARRIED && @ent == @bombCarrier ) {
 					statusIcon = iconCarrying;
 				}
-				else if ( player.isCarrier )
-				{
+				else if( player.isCarrier ) {
 					statusIcon = iconCarrier;
 				}
 				else
@@ -331,8 +300,7 @@ String @GT_ScoreboardMessage( uint maxlen )
 					statusIcon = 0;
 				}
 			}
-			else if ( matchState == MATCH_STATE_WARMUP && client.isReady() )
-			{
+			else if( matchState == MATCH_STATE_WARMUP && client.isReady() ) {
 				statusIcon = iconReady;
 			}
 			else
@@ -352,8 +320,7 @@ String @GT_ScoreboardMessage( uint maxlen )
 				+ " " + statusIcon
 				+ " "; // don't delete me!
 
-			if ( scoreboardMessage.len() + entry.len() < maxlen )
-			{
+			if( scoreboardMessage.len() + entry.len() < maxlen ) {
 				scoreboardMessage += entry;
 			}
 		}
@@ -362,8 +329,7 @@ String @GT_ScoreboardMessage( uint maxlen )
 	return scoreboardMessage;
 }
 
-void GT_updateScore( Client @client )
-{
+void GT_updateScore( Client @client ) {
 	cPlayer @player = @playerFromClient( @client );
 	Stats @stats = @client.stats;
 
@@ -377,25 +343,21 @@ void GT_updateScore( Client @client )
 
 // Some game actions trigger score events. These are events not related to killing
 // oponents, like capturing a flag
-void GT_ScoreEvent( Client @client, const String &score_event, const String &args )
-{
+void GT_ScoreEvent( Client @client, const String &score_event, const String &args ) {
 	// XXX: i think this can be called but if the client then
 	//      doesn't connect (ie hits escape/crashes) then the
 	//      disconnect score event doesn't fire, which leaves
 	//      us with a teeny tiny bit of wasted memory
-	if ( score_event == "connect" )
-	{
+	if( score_event == "connect" ) {
 		// why not
 		cPlayer( @client );
 
 		return;
 	}
 
-	if ( score_event == "dmg" )
-	{
+	if( score_event == "dmg" ) {
 		// this does happen when you shoot corpses or something
-		if ( @client == null )
-		{
+		if( @client == null ) {
 			return;
 		}
 
@@ -404,12 +366,10 @@ void GT_ScoreEvent( Client @client, const String &score_event, const String &arg
 		return;
 	}
 
-	if ( score_event == "kill" )
-	{
+	if( score_event == "kill" ) {
 		Entity @attacker = null;
 
-		if ( @client != null )
-		{
+		if( @client != null ) {
 			@attacker = @client.getEnt();
 
 			GT_updateScore( @client );
@@ -423,28 +383,24 @@ void GT_ScoreEvent( Client @client, const String &score_event, const String &arg
 		return;
 	}
 
-	if ( score_event == "disconnect" )
-	{
+	if( score_event == "disconnect" ) {
 		// clean up
 		@players[client.playerNum] = null;
 
 		return;
 	}
 
-	if ( score_event == "rebalance" || score_event == "shuffle" )
-	{
+	if( score_event == "rebalance" || score_event == "shuffle" ) {
 		// end round when in match
-		if ( @client == null && match.getState() == MATCH_STATE_PLAYTIME )
-		{
+		if( @client == null && match.getState() == MATCH_STATE_PLAYTIME ) {
 			roundNewState( ROUNDSTATE_FINISHED );
-		}	
-	}	
+		}
+	}
 }
 
 // a player is being respawned. This can happen from several ways, as dying, changing team,
 // being moved to ghost state, be placed in respawn queue, being spawned from spawn queue, etc
-void GT_PlayerRespawn( Entity @ent, int old_team, int new_team )
-{
+void GT_PlayerRespawn( Entity @ent, int old_team, int new_team ) {
 	Client @client = @ent.client;
 	cPlayer @player = @playerFromClient( @client );
 
@@ -452,29 +408,22 @@ void GT_PlayerRespawn( Entity @ent, int old_team, int new_team )
 
 	int matchState = match.getState();
 
-	if ( new_team != old_team )
-	{
-		if ( bombState == BOMBSTATE_CARRIED && @ent == @bombCarrier )
-		{
+	if( new_team != old_team ) {
+		if( bombState == BOMBSTATE_CARRIED && @ent == @bombCarrier ) {
 			bombDrop( BOMBDROP_TEAM );
 		}
 
-		if ( old_team != TEAM_SPECTATOR && new_team != TEAM_SPECTATOR )
-		{
+		if( old_team != TEAM_SPECTATOR && new_team != TEAM_SPECTATOR ) {
 			player.showPrimarySelection();
 		}
 
-		if ( matchState == MATCH_STATE_PLAYTIME )
-		{
-			if ( roundState == ROUNDSTATE_ROUND )
-			{
-				if ( old_team != TEAM_SPECTATOR )
-				{
+		if( matchState == MATCH_STATE_PLAYTIME ) {
+			if( roundState == ROUNDSTATE_ROUND ) {
+				if( old_team != TEAM_SPECTATOR ) {
 					checkPlayersAlive( old_team );
 				}
 			}
-			else if ( roundState == ROUNDSTATE_PRE && new_team != TEAM_SPECTATOR )
-			{
+			else if( roundState == ROUNDSTATE_PRE && new_team != TEAM_SPECTATOR ) {
 				// respawn during countdown
 				// mark for respawning next frame because
 				// respawning this frame doesn't work
@@ -483,13 +432,11 @@ void GT_PlayerRespawn( Entity @ent, int old_team, int new_team )
 			}
 		}
 	}
-	else if ( roundState == ROUNDSTATE_PRE )
-	{
+	else if( roundState == ROUNDSTATE_PRE ) {
 		disableMovementFor( @client );
 	}
 
-	if ( ent.isGhosting() )
-	{
+	if( ent.isGhosting() ) {
 		ent.svflags &= ~SVF_FORCETEAM;
 		GENERIC_ClearOverlayMenu( @client );
 		return;
@@ -504,27 +451,22 @@ void GT_PlayerRespawn( Entity @ent, int old_team, int new_team )
 }
 
 // Thinking function. Called each frame
-void GT_ThinkRules()
-{
+void GT_ThinkRules() {
 	// XXX: old bomb would let the current round finish before doing this
-	if ( match.timeLimitHit() || match.suddenDeathFinished() )
-	{
+	if( match.timeLimitHit() || match.suddenDeathFinished() ) {
 		match.launchState( match.getState() + 1 );
 	}
 
-	for ( int t = 0; t < GS_MAX_TEAMS; t++ )
-	{
+	for( int t = 0; t < GS_MAX_TEAMS; t++ ) {
 		Team @team = @G_GetTeam( t );
 
-		for ( int i = 0; @team.ent( i ) != null; i++ )
-		{
+		for( int i = 0; @team.ent( i ) != null; i++ ) {
 			Client @client = @team.ent( i ).client;
 			cPlayer @player = @playerFromClient( @client );
 
 			// this should only happen when match state is playtime
 			// but i put this up here since i'm calling playerFromClient
-			if ( player.dueToSpawn )
-			{
+			if( player.dueToSpawn ) {
 				client.respawn( false );
 
 				player.dueToSpawn = false;
@@ -534,8 +476,7 @@ void GT_ThinkRules()
 		}
 	}
 
-	if ( match.getState() < MATCH_STATE_PLAYTIME )
-	{
+	if( match.getState() < MATCH_STATE_PLAYTIME ) {
 		return;
 	}
 
@@ -549,12 +490,10 @@ void GT_ThinkRules()
 	G_ConfigString( MSG_ALIVE_BETA,  "" + aliveBeta );
 	G_ConfigString( MSG_TOTAL_BETA,  "" + betaAliveAtStart );
 
-	for ( int i = 0; i < maxClients; i++ )
-	{
+	for( int i = 0; i < maxClients; i++ ) {
 		Client @client = @G_GetClient( i );
 
-		if ( client.state() != CS_SPAWNED )
-		{
+		if( client.state() != CS_SPAWNED ) {
 			continue; // don't bother if they're not ingame
 		}
 
@@ -567,23 +506,19 @@ void GT_ThinkRules()
 	}
 
 	// i guess you could speed this up...
-	if ( bombState == BOMBSTATE_ARMED )
-	{
+	if( bombState == BOMBSTATE_ARMED ) {
 		uint aliveOff = TEAM_ALPHA == attackingTeam ? aliveAlpha : aliveBeta;
 
-		if ( aliveOff == 0 )
-		{
+		if( aliveOff == 0 ) {
 			Team @team = @G_GetTeam( attackingTeam );
 
-			for ( int i = 0; @team.ent( i ) != null; i++ )
-			{
+			for( int i = 0; @team.ent( i ) != null; i++ ) {
 				bombLookAt( @team.ent( i ) );
 			}
 		}
 	}
 
-	if ( bombState == BOMBSTATE_CARRIED )
-	{
+	if( bombState == BOMBSTATE_CARRIED ) {
 		bombCarrier.client.setHUDStat( STAT_IMAGE_SELF, iconCarrying );
 		bombCarrier.client.setHUDStat( STAT_IMAGE_DROP_ITEM, iconDrop );
 
@@ -598,15 +533,12 @@ void GT_ThinkRules()
 // doesn't advance it before calling this function.
 // This function must give permission to move into the next
 // state by returning true.
-bool GT_MatchStateFinished( int incomingMatchState )
-{
-	if ( match.getState() <= MATCH_STATE_WARMUP && incomingMatchState > MATCH_STATE_WARMUP && incomingMatchState < MATCH_STATE_POSTMATCH )
-	{
+bool GT_MatchStateFinished( int incomingMatchState ) {
+	if( match.getState() <= MATCH_STATE_WARMUP && incomingMatchState > MATCH_STATE_WARMUP && incomingMatchState < MATCH_STATE_POSTMATCH ) {
 		match.startAutorecord();
 	}
 
-	if ( match.getState() == MATCH_STATE_POSTMATCH )
-	{
+	if( match.getState() == MATCH_STATE_POSTMATCH ) {
 		match.stopAutorecord();
 	}
 
@@ -614,24 +546,21 @@ bool GT_MatchStateFinished( int incomingMatchState )
 }
 
 // the match state has just moved into a new state. Here is the
-void GT_MatchStateStarted()
-{
-	switch ( match.getState() )
-	{
+void GT_MatchStateStarted() {
+	switch ( match.getState() ) {
 		case MATCH_STATE_WARMUP:
 			GENERIC_SetUpWarmup();
 
 			attackingTeam = INITIAL_ATTACKERS;
 			defendingTeam = INITIAL_DEFENDERS;
 
-			for ( int t = TEAM_PLAYERS; t < GS_MAX_TEAMS; t++ )
-			{
+			for( int t = TEAM_PLAYERS; t < GS_MAX_TEAMS; t++ ) {
 				gametype.setTeamSpawnsystem( t, SPAWNSYSTEM_INSTANT, 0, 0, false );
 			}
 
 			break;
 
-		case MATCH_STATE_COUNTDOWN:		
+		case MATCH_STATE_COUNTDOWN:
 			// XXX: old bomb had its own function to do pretty much
 			//      exactly the same thing
 			//      the only difference i can see is that bomb's
@@ -659,14 +588,12 @@ void GT_MatchStateStarted()
 }
 
 // the gametype is shutting down cause of a match restart or map change
-void GT_Shutdown()
-{
+void GT_Shutdown() {
 }
 
 // The map entities have just been spawned. The level is initialized for
 // playing, but nothing has yet started.
-void GT_SpawnGametype()
-{
+void GT_SpawnGametype() {
 	bombInit();
 
 	playersInit();
@@ -676,8 +603,7 @@ void GT_SpawnGametype()
 // spawning entities from it is forbidden. ifyou want to make any entity
 // spawning at initialization do it in GT_SpawnGametype, which is called
 // right after the map entities spawning.
-void GT_InitGametype()
-{
+void GT_InitGametype() {
 	gametype.spawnableItemsMask = 0;
 	gametype.respawnableItemsMask = 0;
 	gametype.dropableItemsMask = 0; // XXX: old bomb lets you drop ammo
@@ -712,8 +638,7 @@ void GT_InitGametype()
 	gametype.spawnpointRadius = 256;
 
 	// set spawnsystem type to instant while players join
-	for ( int t = TEAM_PLAYERS; t < GS_MAX_TEAMS; t++ )
-	{
+	for( int t = TEAM_PLAYERS; t < GS_MAX_TEAMS; t++ ) {
 		gametype.setTeamSpawnsystem( t, SPAWNSYSTEM_INSTANT, 0, 0, false );
 	}
 

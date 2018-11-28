@@ -908,6 +908,19 @@ typedef enum {
 	PSEV_MAX_EVENTS = 0xFF
 } playerstate_event_t;
 
+enum RoundType {
+        RoundType_Normal,
+        RoundType_MatchPoint,
+        RoundType_Overtime,
+        RoundType_OvertimeMatchPoint,
+};
+
+enum BombProgress {
+        BombProgress_Nothing,
+        BombProgress_Planting,
+        BombProgress_Defusing,
+};
+
 //===============================================================
 
 // entity_state_t->type values

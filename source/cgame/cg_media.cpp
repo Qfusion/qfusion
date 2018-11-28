@@ -294,6 +294,7 @@ void CG_RegisterMediaShaders( void ) {
 	cgs.media.shaderBloodImpactPuff = CG_RegisterMediaShader( "gfx/misc/bloodimpact_puff" );
 	cgs.media.shaderTeamMateIndicator = CG_RegisterMediaShader( "gfx/indicators/teammate_indicator" );
 	cgs.media.shaderTeamCarrierIndicator = CG_RegisterMediaShader( "gfx/indicators/teamcarrier_indicator" );
+	cgs.media.shaderBombIcon = CG_RegisterMediaShader( "gfx/bomb/carriericon" );
 	cgs.media.shaderTeleportShellGfx = CG_RegisterMediaShader( "gfx/misc/teleportshell" );
 
 	cgs.media.shaderAdditiveParticleShine = CG_RegisterMediaShader( "additiveParticleShine" );

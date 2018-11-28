@@ -483,6 +483,25 @@ static const gs_asEnumVal_t asButtonEnumVals[] =
 	ASLIB_ENUM_VAL_NULL
 };
 
+static const gs_asEnumVal_t asBombProgressEnumVals[] =
+{
+	ASLIB_ENUM_VAL( BombProgress_Nothing ),
+	ASLIB_ENUM_VAL( BombProgress_Planting ),
+	ASLIB_ENUM_VAL( BombProgress_Defusing ),
+
+	ASLIB_ENUM_VAL_NULL
+};
+
+static const gs_asEnumVal_t asRoundTypeEnumVals[] =
+{
+	ASLIB_ENUM_VAL( RoundType_Normal ),
+	ASLIB_ENUM_VAL( RoundType_MatchPoint ),
+	ASLIB_ENUM_VAL( RoundType_Overtime ),
+	ASLIB_ENUM_VAL( RoundType_OvertimeMatchPoint ),
+
+	ASLIB_ENUM_VAL_NULL
+};
+
 //=======================================================================
 
 static const gs_asEnum_t asGameEnums[] =
@@ -514,6 +533,9 @@ static const gs_asEnum_t asGameEnums[] =
 
 	{ "axis_e", asAxisEnumVals },
 	{ "button_e", asButtonEnumVals },
+
+	{ "BombProgress", asBombProgressEnumVals },
+	{ "RoundType", asRoundTypeEnumVals },
 
 	ASLIB_ENUM_VAL_NULL
 };

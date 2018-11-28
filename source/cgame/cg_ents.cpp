@@ -1892,7 +1892,7 @@ void CG_AddEntities( void ) {
 				break;
 
 			case ET_HUD:
-				CG_AddBombSite( cent );
+				CG_AddBombHudEntity( cent );
 				break;
 
 			default:

@@ -60,10 +60,8 @@ class cBombSite
 
 	cBombSite @next;
 
-	cBombSite( Entity @ent, bool hasTargets )
-	{
-		if ( siteCount >= SITE_LETTERS.length() )
-		{
+	cBombSite( Entity @ent, bool hasTargets, int team ) {
+		if( siteCount >= SITE_LETTERS.length() ) {
 			G_Print( "Too many bombsites... ignoring\n" );
 
 			return;
@@ -86,12 +84,12 @@ class cBombSite
 		this.hud.type = ET_HUD;
 		this.hud.solid = SOLID_NOT;
 		this.hud.origin = origin;
-		this.hud.svflags = ( this.hud.svflags & ~SVF_NOCLIENT ) | SVF_BROADCAST;
+		this.hud.team = team;
+		this.hud.svflags = SVF_BROADCAST;
 		this.hud.counterNum = letter[0];
 		this.hud.linkEntity();
 
-		if ( hasTargets )
-		{
+		if( hasTargets ) {
 			this.useExplosionPoints = false;
 		}
 		else
@@ -106,10 +104,8 @@ class cBombSite
 		siteCount++;
 	}
 
-	void carrierTouched()
-	{
-		if ( bombCanPlant() )
-		{
+	void carrierTouched() {
+		if( bombCanPlant() ) {
 			bombPlant( this );
 		}
 	}
@@ -123,7 +119,7 @@ class cBombSite
 		numPendingExplosions = random_uniform( SITE_EXPLOSION_POINTS / 2, SITE_EXPLOSION_POINTS );
 		numExploded = 0;
 
-		for ( int i = 0; i < numPendingExplosions; i++ ) {
+		for( int i = 0; i < numPendingExplosions; i++ ) {
 			Vec3 point = explosionPoints[ random_uniform( 0, explosionPoints.length() ) ];
 			int64 time = levelTime + int64( ( float( i ) / float( numPendingExplosions - 1 ) ) * SITE_EXPLOSION_MAX_DELAY );
 			pendingExplosions[ i ] = PendingExplosion( point, time );
@@ -149,15 +145,14 @@ class cBombSite
 		}
 	}
 
-	void generateExplosionPoints()
-	{
+	void generateExplosionPoints() {
 		this.explosionPoints.resize( SITE_EXPLOSION_POINTS );
 		this.pendingExplosions.resize( SITE_EXPLOSION_POINTS );
 
 		Vec3 origin = this.indicator.origin;
 		origin.z += 96;
 
-		for ( int i = 0; i < SITE_EXPLOSION_POINTS; i++ ) {
+		for( int i = 0; i < SITE_EXPLOSION_POINTS; i++ ) {
 			Vec3 dir = random_point_on_hemisphere();
 			Vec3 end = origin + dir * SITE_EXPLOSION_MAX_DIST;
 
@@ -170,12 +165,9 @@ class cBombSite
 	}
 }
 
-cBombSite @getSiteFromIndicator( Entity @ent )
-{
-	for ( cBombSite @site = @siteHead; @site != null; @site = @site.next )
-	{
-		if ( @site.indicator == @ent )
-		{
+cBombSite @getSiteFromIndicator( Entity @ent ) {
+	for( cBombSite @site = @siteHead; @site != null; @site = @site.next ) {
+		if( @site.indicator == @ent ) {
 			return @site;
 		}
 	}
@@ -186,26 +178,23 @@ cBombSite @getSiteFromIndicator( Entity @ent )
 }
 
 void hideSiteIndicators( cBombSite @except ) {
-	for ( cBombSite @site = @siteHead; @site != null; @site = @site.next ) {
+	for( cBombSite @site = @siteHead; @site != null; @site = @site.next ) {
 		if( @site != @except ) {
 			site.hud.svflags |= SVF_NOCLIENT;
 		}
 	}
 }
 
-void resetBombSites()
-{
+void resetBombSites() {
 	@siteHead = null;
 	siteCount = 0;
 }
 
-void misc_capture_area_indicator( Entity @ent )
-{
+void misc_capture_area_indicator( Entity @ent ) {
 	@ent.think = misc_capture_area_indicator_think;
 
 	// drop to floor?
-	if ( ent.spawnFlags & 1 == 0 )
-	{
+	if( ent.spawnFlags & 1 == 0 ) {
 		Vec3 start, end, mins( -16, -16, -24 ), maxs( 16, 16, 32 );
 
 		start = end = ent.origin;
@@ -216,8 +205,7 @@ void misc_capture_area_indicator( Entity @ent )
 		Trace trace;
 		trace.doTrace( start, mins, maxs, end, ent.entNum, MASK_SOLID );
 
-		if ( trace.startSolid )
-		{
+		if( trace.startSolid ) {
 			G_Print( ent.classname + " at " + vec3ToString(ent.origin) + " is in a solid, removing...\n" );
 
 			ent.freeEntity();
@@ -228,44 +216,38 @@ void misc_capture_area_indicator( Entity @ent )
 		ent.origin = trace.endPos;
 	}
 
-	cBombSite( @ent, ent.target != "" );
+	cBombSite( @ent, ent.target != "", defendingTeam );
 }
 
-void misc_capture_area_indicator_think( Entity @ent )
-{
+void misc_capture_area_indicator_think( Entity @ent ) {
 	// if AS had static this could be approx 1 bajillion times
 	// faster on subsequent calls
 
 	array<Entity @> @triggers = @ent.findTargeting();
 
 	// we are being targeted, never think again
-	if ( !triggers.empty() )
-	{
+	if( !triggers.empty() ) {
 		return;
 	}
 
 	ent.nextThink = levelTime + 1;
 
-	if ( roundState != ROUNDSTATE_ROUND )
-	{
+	if( roundState != ROUNDSTATE_ROUND ) {
 		return;
 	}
 
-	if ( bombState != BOMBSTATE_CARRIED )
-	{
+	if( bombState != BOMBSTATE_CARRIED ) {
 		return;
 	}
 
-	if ( !bombCanPlant() )
-	{
+	if( !bombCanPlant() ) {
 		return;
 	}
 
 	Vec3 origin = ent.origin;
 	Vec3 carrierOrigin = bombCarrier.origin;
 
-	if ( origin.distance( carrierOrigin ) > BOMB_AUTODROP_DISTANCE )
-	{
+	if( origin.distance( carrierOrigin ) > BOMB_AUTODROP_DISTANCE ) {
 		return;
 	}
 
@@ -274,8 +256,7 @@ void misc_capture_area_indicator_think( Entity @ent )
 	Vec3 center = carrierOrigin + getMiddle( @bombCarrier );
 
 	Trace trace;
-	if ( !trace.doTrace( origin, vec3Origin, vec3Origin, center, bombCarrier.entNum, MASK_SOLID ) )
-	{
+	if( !trace.doTrace( origin, vec3Origin, vec3Origin, center, bombCarrier.entNum, MASK_SOLID ) ) {
 		// let's plant it
 
 		cBombSite @site = @getSiteFromIndicator( @ent );
@@ -287,8 +268,7 @@ void misc_capture_area_indicator_think( Entity @ent )
 	}
 }
 
-void trigger_capture_area( Entity @ent )
-{
+void trigger_capture_area( Entity @ent ) {
 	@ent.think = trigger_capture_area_think;
 	@ent.touch = trigger_capture_area_touch;
 	ent.setupModel( ent.model ); // set up the brush model
@@ -300,44 +280,37 @@ void trigger_capture_area( Entity @ent )
 	ent.nextThink = levelTime + 1;
 }
 
-void trigger_capture_area_think( Entity @ent )
-{
+void trigger_capture_area_think( Entity @ent ) {
 	array<Entity @> @targets = ent.findTargets();
-	if ( targets.empty() )
-	{
+	if( targets.empty() ) {
 		G_Print( "trigger_capture_area at " + vec3ToString(ent.origin) + " has no target, removing...\n" );
 		ent.freeEntity();
 	}
 }
 
 // honey you're touching something, you're touchin' me
-void trigger_capture_area_touch( Entity @ent, Entity @other, const Vec3 planeNormal, int surfFlags )
-{
+void trigger_capture_area_touch( Entity @ent, Entity @other, const Vec3 planeNormal, int surfFlags ) {
 	// i'm under your thumb, under your spell, can't you see?
 
-	if ( @other.client == null )
-	{
+	if( @other.client == null ) {
 		return;
 	}
 
 	// IF I COULD ONLY REACH YOU
 
-	if ( roundState != ROUNDSTATE_ROUND )
-	{
+	if( roundState != ROUNDSTATE_ROUND ) {
 		return;
 	}
 
 	// IF I COULD MAKE YOU SMILE
 
-	if ( bombState != BOMBSTATE_CARRIED || @other != @bombCarrier )
-	{
+	if( bombState != BOMBSTATE_CARRIED || @other != @bombCarrier ) {
 		return;
 	}
 
 	// IF I COULD ONLY REACH YOU
 
-	if ( match.getState() != MATCH_STATE_PLAYTIME )
-	{
+	if( match.getState() != MATCH_STATE_PLAYTIME ) {
 		return;
 	}
 

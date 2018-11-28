@@ -76,38 +76,31 @@ const uint MSG_TOTAL_BETA = CS_GENERAL + 3;
 
 // weapon is WEAP_* from globals.h
 // i cba to write a switch statement
-int getWeaponIcon( int weapon )
-{
+int getWeaponIcon( int weapon ) {
 	return iconWeapons[weapon - 1];
 }
 
 //void announce( eAnnouncements announcement ) FIXME enum
-void announce( uint announcement )
-{
+void announce( uint announcement ) {
 	announceOff( announcement );
 	announceDef( announcement );
 }
 
 //void announceOff( eAnnouncements announcement ) FIXME enum
-void announceOff( uint announcement )
-{
-	if ( sndAnnouncementsOff[announcement] != 0 )
-	{
+void announceOff( uint announcement ) {
+	if( sndAnnouncementsOff[announcement] != 0 ) {
 		G_AnnouncerSound( null, sndAnnouncementsOff[announcement], attackingTeam, true, null );
 	}
 }
 
 //void announceDef( eAnnouncements announcement ) FIXME enum
-void announceDef( uint announcement )
-{
-	if ( sndAnnouncementsDef[announcement] != 0 )
-	{
+void announceDef( uint announcement ) {
+	if( sndAnnouncementsDef[announcement] != 0 ) {
 		G_AnnouncerSound( null, sndAnnouncementsDef[announcement], defendingTeam, true, null );
 	}
 }
 
-void mediaInit()
-{
+void mediaInit() {
 	iconCarrying = G_ImageIndex( "gfx/bomb/carriericon" );
 	iconCarrier  = G_ImageIndex( "gfx/hud/icons/vsay/onoffense" ); // TODO: less crappy icon
 	iconReady    = G_ImageIndex( "gfx/hud/icons/vsay/yes" );

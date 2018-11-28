@@ -104,6 +104,15 @@ static const constant_numeric_t cg_numeric_constants[] = {
 	{ "TEAM_ALPHA_NAME", CS_TEAM_ALPHA_NAME },
 	{ "TEAM_BETA_NAME", CS_TEAM_BETA_NAME },
 
+	{ "BombProgress_Nothing", BombProgress_Nothing },
+	{ "BombProgress_Planting", BombProgress_Planting },
+	{ "BombProgress_Defusing", BombProgress_Defusing },
+
+	{ "RoundType_Normal", RoundType_Normal },
+	{ "RoundType_MatchPoint", RoundType_MatchPoint },
+	{ "RoundType_Overtime", RoundType_Overtime },
+	{ "RoundType_OvertimeMatchPoint", RoundType_OvertimeMatchPoint },
+
 	{ NULL, 0 }
 };
 

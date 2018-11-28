@@ -33,13 +33,6 @@ const uint ROUNDSTATE_ROUND = 2;
 const uint ROUNDSTATE_FINISHED = 3;
 const uint ROUNDSTATE_POST = 4;
 
-enum RoundType {
-	RoundType_Normal,
-	RoundType_MatchPoint,
-	RoundType_Overtime,
-	RoundType_OvertimeMatchPoint,
-};
-
 //eRoundStates roundState = ROUNDSTATE_NONE; FIXME enum
 uint roundState = ROUNDSTATE_NONE;
 
@@ -60,44 +53,38 @@ uint betaAliveAtStart;
 bool attackersHurried;
 bool defendersHurried;
 
-void playerKilled( Entity @victim, Entity @attacker, Entity @inflictor )
-{
+void playerKilled( Entity @victim, Entity @attacker, Entity @inflictor ) {
 	// this happens if you kill a corpse or something...
-	if ( @victim == null || @victim.client == null )
-	{
+	if( @victim == null || @victim.client == null ) {
 		return;
 	}
 
 	// ch :
 	cPlayer @pVictim = @playerFromClient( @victim.client );
-	
+
 	if( match.getState() != MATCH_STATE_PLAYTIME )
 		return;
 
 	if( roundState >= ROUNDSTATE_FINISHED )
 		return;
 
-	if ( bombState == BOMBSTATE_CARRIED && @victim == @bombCarrier )
-	{
+	if( bombState == BOMBSTATE_CARRIED && @victim == @bombCarrier ) {
 		bombDrop( BOMBDROP_KILLED );
 
 		G_CenterPrintMsg( null, S_COLOR_ORANGE + "The bomb carrier has been fragged!" );
 
-		if ( @attacker != null && @attacker.client != null && attacker.team != victim.team )
-		{
+		if( @attacker != null && @attacker.client != null && attacker.team != victim.team ) {
 			attacker.client.addAward( S_COLOR_ORANGE + "Bomb Carrier Frag!" );
 		}
 	}
 
-	if ( @attacker != null && @attacker.client != null && attacker.team != victim.team )
-	{
+	if( @attacker != null && @attacker.client != null && attacker.team != victim.team ) {
 		cPlayer @player = @playerFromClient( @attacker.client );
-		
+
 		player.killsThisRound++;
 
 		int required_for_bongo = attacker.team == TEAM_ALPHA ? betaAliveAtStart : alphaAliveAtStart;
-		if ( required_for_bongo >= 3 && player.killsThisRound == required_for_bongo )
-		{
+		if( required_for_bongo >= 3 && player.killsThisRound == required_for_bongo ) {
 			player.client.addAward( S_COLOR_YELLOW + "King of Bongo!" );
 
 			G_AnnouncerSound( null, sndBongo, GS_MAX_TEAMS, true, null );
@@ -105,21 +92,17 @@ void playerKilled( Entity @victim, Entity @attacker, Entity @inflictor )
 			G_CenterPrintFormatMsg( null, "%s is the King of Bongo!", player.client.name );
 		}
 	}
-	
+
 	// check if the player's team is now dead
 	checkPlayersAlive( victim.team );
 }
 
-void checkPlayersAlive( int team )
-{
+void checkPlayersAlive( int team ) {
 	uint alive = playersAliveOnTeam( team );
 
-	if ( alive == 0 )
-	{
-		if ( team == attackingTeam )
-		{
-			if ( bombState != BOMBSTATE_ARMED )
-			{
+	if( alive == 0 ) {
+		if( team == attackingTeam ) {
+			if( bombState != BOMBSTATE_ARMED ) {
 				roundWonBy( defendingTeam );
 			}
 		}
@@ -134,36 +117,30 @@ void checkPlayersAlive( int team )
 	int teamOther   = otherTeam( team );
 	uint aliveOther = playersAliveOnTeam( teamOther );
 
-	if ( alive == 1 )
-	{
-		if ( aliveOther == 1 )
-		{
+	if( alive == 1 ) {
+		if( aliveOther == 1 ) {
 			G_PrintMsg( null, "1v1! Good luck!\n" );
 
 			firstAliveOnTeam( attackingTeam ).addAward( "1v1! Good luck!" );
 			firstAliveOnTeam( defendingTeam ).addAward( "1v1! Good luck!" );
 		}
-		else if ( aliveOther != 0 )
-		{
+		else if( aliveOther != 0 ) {
 			oneVsMsg( team, aliveOther );
 		}
 
 		return;
 	}
 
-	if ( aliveOther == 1 )
-	{
+	if( aliveOther == 1 ) {
 		// we know alive != 0 && alive != 1
 		oneVsMsg( teamOther, alive );
 	}
 }
 
-void oneVsMsg( int teamNum, uint enemies )
-{
+void oneVsMsg( int teamNum, uint enemies ) {
 	Client @survivor = @firstAliveOnTeam( teamNum );
 
-	if ( @survivor == null )
-	{
+	if( @survivor == null ) {
 		assert( false, "round.as oneVsMsg: @survivor == null" );
 
 		return;
@@ -171,23 +148,20 @@ void oneVsMsg( int teamNum, uint enemies )
 
 	survivor.addAward( "1v" + enemies + "! You're on your own!" );
 
-	if ( enemies == 1 )
-	{
+	if( enemies == 1 ) {
 		G_PrintMsg( null, "1v1! Good luck!" );
 	}
 	else
 	{
 		Team @team = @G_GetTeam( teamNum );
 
-		for ( int i = 0; @team.ent( i ) != null; i++ )
-		{
+		for( int i = 0; @team.ent( i ) != null; i++ ) {
 			G_PrintMsg( @team.ent( i ), "1v" + enemies + "! " + survivor.name + " is on their own!\n" );
 		}
 	}
 }
 
-void setTeams()
-{
+void setTeams() {
 	uint limit = cvarScoreLimit.integer;
 
 	bool even = roundCount % 2 == 0;
@@ -203,21 +177,18 @@ void setTeams()
 	defendingTeam = first_half ? INITIAL_DEFENDERS : INITIAL_ATTACKERS;
 }
 
-void newGame()
-{
+void newGame() {
 	roundCount = 0;
 	setTeams();
 
-	for ( int t = TEAM_PLAYERS; t < GS_MAX_TEAMS; t++ )
-	{
+	for( int t = TEAM_PLAYERS; t < GS_MAX_TEAMS; t++ ) {
 		gametype.setTeamSpawnsystem( t, SPAWNSYSTEM_HOLD, 0, 0, true );
 
 		Team @team = @G_GetTeam( t );
 
 		team.stats.clear();
 
-		for ( int i = 0; @team.ent( i ) != null; i++ )
-		{
+		for( int i = 0; @team.ent( i ) != null; i++ ) {
 			team.ent( i ).client.stats.clear();
 		}
 	}
@@ -226,8 +197,7 @@ void newGame()
 }
 
 // this function doesn't care how the round was won
-void roundWonBy( int winner )
-{
+void roundWonBy( int winner ) {
 	int loser = winner == attackingTeam ? defendingTeam : attackingTeam;
 
 	G_CenterPrintMsg( null, S_COLOR_CYAN + ( winner == attackingTeam ? "OFFENSE WINS!" : "DEFENSE WINS!" ) );
@@ -242,33 +212,28 @@ void roundWonBy( int winner )
 
 	teamWinner.stats.addScore( 1 );
 
-	for ( int i = 0; @teamWinner.ent( i ) != null; i++ )
-	{
+	for( int i = 0; @teamWinner.ent( i ) != null; i++ ) {
 		Entity @ent = @teamWinner.ent( i );
 
-		if ( !ent.isGhosting() )
-		{
+		if( !ent.isGhosting() ) {
 			ent.client.addAward( S_COLOR_GREEN + "Victory!" );
 		}
 	}
-	
+
 	roundNewState( ROUNDSTATE_FINISHED );
 }
 
-void newRound()
-{	
+void newRound() {
 	roundNewState( ROUNDSTATE_PRE );
 }
 
-void endGame()
-{
+void endGame() {
 	roundNewState( ROUNDSTATE_NONE );
 
 	GENERIC_SetUpEndMatch();
 }
 
-bool scoreLimitHit()
-{
+bool scoreLimitHit() {
 	return match.scoreLimitHit() && abs( G_GetTeam( TEAM_ALPHA ).stats.score - G_GetTeam( TEAM_BETA ).stats.score ) > 1;
 }
 
@@ -290,10 +255,10 @@ void setRoundType() {
 		type = RoundType_MatchPoint;
 	}
 
-	for ( int t = TEAM_ALPHA; t < GS_MAX_TEAMS; t++ ) {
+	for( int t = TEAM_ALPHA; t < GS_MAX_TEAMS; t++ ) {
 		Team @team = @G_GetTeam( t );
 
-		for ( int i = 0; @team.ent( i ) != null; i++ ) {
+		for( int i = 0; @team.ent( i ) != null; i++ ) {
 			Client @client = @team.ent( i ).client;
 			client.setHUDStat( STAT_MESSAGE_OTHER, int( type ) );
 		}
@@ -301,17 +266,14 @@ void setRoundType() {
 }
 
 //void roundNewState( eRoundStates state ) FIXME enum
-void roundNewState( uint state )
-{
-	if ( state > ROUNDSTATE_POST )
-	{
+void roundNewState( uint state ) {
+	if( state > ROUNDSTATE_POST ) {
 		state = ROUNDSTATE_PRE;
 	}
 
 	roundState = state;
 
-	switch ( int( state ) )
-	{
+	switch ( int( state ) ) {
 		case ROUNDSTATE_NONE:
 			break;
 
@@ -370,8 +332,7 @@ void roundNewState( uint state )
 			break;
 
 		case ROUNDSTATE_POST:
-			if ( scoreLimitHit() && !match.checkExtendPlayTime() )
-			{
+			if( scoreLimitHit() && !match.checkExtendPlayTime() ) {
 				match.launchState( match.getState() + 1 );
 
 				return;
@@ -393,36 +354,29 @@ void roundNewState( uint state )
 
 int last_time = 0;
 
-void roundThink()
-{
-	if ( roundState == ROUNDSTATE_NONE )
-	{
+void roundThink() {
+	if( roundState == ROUNDSTATE_NONE ) {
 		return;
 	}
 
-	if ( roundState == ROUNDSTATE_PRE )
-	{
+	if( roundState == ROUNDSTATE_PRE ) {
 		int remainingSeconds = int( ( roundStateEndTime - levelTime ) * 0.001f ) + 1;
 
-		if ( remainingSeconds < 0 )
-		{
+		if( remainingSeconds < 0 ) {
 			remainingSeconds = 0;
 		}
 
-		if ( remainingSeconds < roundCountDown )
-		{
+		if( remainingSeconds < roundCountDown ) {
 			roundCountDown = remainingSeconds;
 
-			if ( roundCountDown == COUNTDOWN_MAX )
-			{
+			if( roundCountDown == COUNTDOWN_MAX ) {
 				int soundIndex = G_SoundIndex( "sounds/announcer/countdown/ready0" + random_uniform( 1, 3 ) );
 
 				G_AnnouncerSound( null, soundIndex, GS_MAX_TEAMS, false, null );
 			}
 			else
 			{
-				if( roundCountDown < 4 )
-				{
+				if( roundCountDown < 4 ) {
 					int soundIndex = G_SoundIndex( "sounds/announcer/countdown/" + roundCountDown + "_0" + random_uniform( 1, 3 ) );
 
 					G_AnnouncerSound( null, soundIndex, GS_MAX_TEAMS, false, null );
@@ -438,12 +392,9 @@ void roundThink()
 	}
 
 	// i suppose the following blocks could be merged to save an if or 2
-	if ( roundCheckEndTime && levelTime > roundStateEndTime )
-	{
-		if ( roundState == ROUNDSTATE_ROUND )
-		{
-			if ( bombState != BOMBSTATE_ARMED )
-			{
+	if( roundCheckEndTime && levelTime > roundStateEndTime ) {
+		if( roundState == ROUNDSTATE_ROUND ) {
+			if( bombState != BOMBSTATE_ARMED ) {
 				roundWonBy( defendingTeam );
 				last_time = 1; // kinda hacky, this shows at 0:00
 
@@ -462,10 +413,9 @@ void roundThink()
 		}
 	}
 
-	if ( roundState == ROUNDSTATE_ROUND )
-	{
+	if( roundState == ROUNDSTATE_ROUND ) {
 		// monitor the bomb's health
-		if ( @bombModel == null || bombModel.classname != "dynamite" ) {
+		if( @bombModel == null || bombModel.classname != "dynamite" ) {
 			bombModelCreate();
 
 			roundWonBy( defendingTeam );
@@ -478,12 +428,10 @@ void roundThink()
 
 		// warn defs if bomb will explode soon
 		// warn offs if the round ends soon and they haven't planted
-		if ( bombState == BOMBSTATE_ARMED )
-		{
+		if( bombState == BOMBSTATE_ARMED ) {
 			last_time = -1;
 
-			if ( !defendersHurried && levelTime + BOMB_HURRYUP_TIME >= bombActionTime )
-			{
+			if( !defendersHurried && levelTime + BOMB_HURRYUP_TIME >= bombActionTime ) {
 				announceDef( ANNOUNCEMENT_HURRY );
 
 				defendersHurried = true;
@@ -492,8 +440,7 @@ void roundThink()
 		else {
 			last_time = roundStateEndTime - levelTime;
 
-			if ( !attackersHurried && levelTime + BOMB_HURRYUP_TIME >= roundStateEndTime )
-			{
+			if( !attackersHurried && levelTime + BOMB_HURRYUP_TIME >= roundStateEndTime ) {
 				announceOff( ANNOUNCEMENT_HURRY );
 
 				attackersHurried = true;
@@ -508,27 +455,23 @@ void roundThink()
 	{
 		match.setClockOverride( last_time );
 
-		if ( roundState > ROUNDSTATE_ROUND )
-		{
+		if( roundState > ROUNDSTATE_ROUND ) {
 			bombAltThink();
 		}
 	}
 }
 
-uint playersAliveOnTeam( int teamNum )
-{
+uint playersAliveOnTeam( int teamNum ) {
 	uint alive = 0;
 
 	Team @team = @G_GetTeam( teamNum );
 
-	for ( int i = 0; @team.ent( i ) != null; i++ )
-	{
+	for( int i = 0; @team.ent( i ) != null; i++ ) {
 		Entity @ent = @team.ent( i );
 
 		// check health incase they died this frame
 
-		if ( !ent.isGhosting() && ent.health > 0 )
-		{
+		if( !ent.isGhosting() && ent.health > 0 ) {
 			alive++;
 		}
 	}
@@ -539,18 +482,15 @@ uint playersAliveOnTeam( int teamNum )
 // loops through players on teamNum and returns Entity of first alive player
 // this is only used when playersAliveOnTeam returns 1
 // hence the assert
-Client @firstAliveOnTeam( int teamNum )
-{
+Client @firstAliveOnTeam( int teamNum ) {
 	Team @team = @G_GetTeam( teamNum );
 
-	for ( int i = 0; @team.ent( i ) != null; i++ )
-	{
+	for( int i = 0; @team.ent( i ) != null; i++ ) {
 		Entity @ent = @team.ent( i );
 
 		// check health incase they died this frame
 
-		if ( !ent.isGhosting() && ent.health > 0 )
-		{
+		if( !ent.isGhosting() && ent.health > 0 ) {
 			return @ent.client;
 		}
 	}
@@ -560,32 +500,25 @@ Client @firstAliveOnTeam( int teamNum )
 	return null; // shut up compiler
 }
 
-void respawnAllPlayers()
-{
-	for ( int t = TEAM_PLAYERS; t < GS_MAX_TEAMS; t++ )
-	{
+void respawnAllPlayers() {
+	for( int t = TEAM_PLAYERS; t < GS_MAX_TEAMS; t++ ) {
 		Team @team = @G_GetTeam( t );
 
-		for ( int i = 0; @team.ent( i ) != null; i++ )
-		{
+		for( int i = 0; @team.ent( i ) != null; i++ ) {
 			team.ent( i ).client.respawn( false );
 		}
 	}
 }
 
-int otherTeam( int team )
-{
+int otherTeam( int team ) {
 	return team == attackingTeam ? defendingTeam : attackingTeam;
 }
 
-void enableMovement()
-{
-	for ( int t = TEAM_PLAYERS; t < GS_MAX_TEAMS; t++ )
-	{
+void enableMovement() {
+	for( int t = TEAM_PLAYERS; t < GS_MAX_TEAMS; t++ ) {
 		Team @team = @G_GetTeam( t );
 
-		for ( int i = 0; @team.ent( i ) != null; i++ )
-		{
+		for( int i = 0; @team.ent( i ) != null; i++ ) {
 			Client @client = @team.ent( i ).client;
 
 			client.pmoveMaxSpeed = -1;
@@ -595,21 +528,17 @@ void enableMovement()
 	}
 }
 
-void disableMovementFor( Client @client )
-{
+void disableMovementFor( Client @client ) {
 	client.pmoveMaxSpeed = 100;
 	client.pmoveDashSpeed = 0;
 	client.pmoveFeatures = client.pmoveFeatures & ~( PMFEAT_JUMP | PMFEAT_DASH | PMFEAT_WALLJUMP );
 }
 
-void disableMovement()
-{
-	for ( int t = TEAM_PLAYERS; t < GS_MAX_TEAMS; t++ )
-	{
+void disableMovement() {
+	for( int t = TEAM_PLAYERS; t < GS_MAX_TEAMS; t++ ) {
 		Team @team = @G_GetTeam( t );
 
-		for ( int i = 0; @team.ent( i ) != null; i++ )
-		{
+		for( int i = 0; @team.ent( i ) != null; i++ ) {
 			Client @client = @team.ent( i ).client;
 
 			disableMovementFor( @client );
