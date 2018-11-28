@@ -17,15 +17,6 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
    */
 
-// XXX: should all timers be instant in ibomb?
-
-// XXX: i've marked various things to fix in the future
-//      with "FIXME type" where type is one of
-//          enum:  should be changed when enums work with 64bit AS
-//
-//          pure:  should be changed when pk3s are packaged correctly so the
-//                 unpure pk3 doesn't get marked as pure and break custom xhairs etc
-
 // TODO: organise this crap
 //       maybe move to constants.as
 
@@ -164,7 +155,7 @@ void BOMB_SetVoicecommOverlayMenu( Client @client ) {
 bool GT_Command( Client @client, const String &cmdString, const String &argsString, int argc ) {
 	if( cmdString == "drop" ) {
 		if( @client.getEnt() == @bombCarrier ) {
-			bombDrop( BOMBDROP_NORMAL );
+			bombDrop( BombDrop_Normal );
 		}
 
 		return true;
@@ -226,7 +217,7 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
 
 		// TODO: block them from shooting for 0.5s or something instead
 
-		if( /*match.getState() == MATCH_STATE_WARMUP ||*/ roundState == ROUNDSTATE_PRE ) {
+		if( /*match.getState() == MATCH_STATE_WARMUP ||*/ roundState == RoundState_Pre ) {
 			player.giveInventory();
 		}
 
@@ -289,7 +280,7 @@ String @GT_ScoreboardMessage( uint maxlen ) {
 			if( matchState == MATCH_STATE_PLAYTIME ) {
 				// carrying takes priority over carrier
 				// don't rearrange for cheaper checks :D
-				if( bombState == BOMBSTATE_CARRIED && @ent == @bombCarrier ) {
+				if( bombState == BombState_Carried && @ent == @bombCarrier ) {
 					statusIcon = iconCarrying;
 				}
 				else if( player.isCarrier ) {
@@ -391,7 +382,7 @@ void GT_ScoreEvent( Client @client, const String &score_event, const String &arg
 	if( score_event == "rebalance" || score_event == "shuffle" ) {
 		// end round when in match
 		if( @client == null && match.getState() == MATCH_STATE_PLAYTIME ) {
-			roundNewState( ROUNDSTATE_FINISHED );
+			roundNewState( RoundState_Finished );
 		}
 	}
 }
@@ -407,8 +398,8 @@ void GT_PlayerRespawn( Entity @ent, int old_team, int new_team ) {
 	int matchState = match.getState();
 
 	if( new_team != old_team ) {
-		if( bombState == BOMBSTATE_CARRIED && @ent == @bombCarrier ) {
-			bombDrop( BOMBDROP_TEAM );
+		if( bombState == BombState_Carried && @ent == @bombCarrier ) {
+			bombDrop( BombDrop_Team );
 		}
 
 		if( old_team != TEAM_SPECTATOR && new_team != TEAM_SPECTATOR ) {
@@ -416,12 +407,12 @@ void GT_PlayerRespawn( Entity @ent, int old_team, int new_team ) {
 		}
 
 		if( matchState == MATCH_STATE_PLAYTIME ) {
-			if( roundState == ROUNDSTATE_ROUND ) {
+			if( roundState == RoundState_Round ) {
 				if( old_team != TEAM_SPECTATOR ) {
 					checkPlayersAlive( old_team );
 				}
 			}
-			else if( roundState == ROUNDSTATE_PRE && new_team != TEAM_SPECTATOR ) {
+			else if( roundState == RoundState_Pre && new_team != TEAM_SPECTATOR ) {
 				// respawn during countdown
 				// mark for respawning next frame because
 				// respawning this frame doesn't work
@@ -430,7 +421,7 @@ void GT_PlayerRespawn( Entity @ent, int old_team, int new_team ) {
 			}
 		}
 	}
-	else if( roundState == ROUNDSTATE_PRE ) {
+	else if( roundState == RoundState_Pre ) {
 		disableMovementFor( @client );
 	}
 
@@ -504,7 +495,7 @@ void GT_ThinkRules() {
 	}
 
 	// i guess you could speed this up...
-	if( bombState == BOMBSTATE_ARMED ) {
+	if( bombState == BombState_Armed ) {
 		uint aliveOff = TEAM_ALPHA == attackingTeam ? aliveAlpha : aliveBeta;
 
 		if( aliveOff == 0 ) {
@@ -516,7 +507,7 @@ void GT_ThinkRules() {
 		}
 	}
 
-	if( bombState == BOMBSTATE_CARRIED ) {
+	if( bombState == BombState_Carried ) {
 		bombCarrier.client.setHUDStat( STAT_IMAGE_SELF, iconCarrying );
 		bombCarrier.client.setHUDStat( STAT_IMAGE_DROP_ITEM, iconDrop );
 
@@ -545,7 +536,7 @@ bool GT_MatchStateFinished( int incomingMatchState ) {
 
 // the match state has just moved into a new state. Here is the
 void GT_MatchStateStarted() {
-	switch ( match.getState() ) {
+	switch( match.getState() ) {
 		case MATCH_STATE_WARMUP:
 			GENERIC_SetUpWarmup();
 

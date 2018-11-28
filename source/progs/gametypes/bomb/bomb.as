@@ -17,24 +17,24 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
    */
 
-enum eBombState {
-	BOMBSTATE_IDLE,
-	BOMBSTATE_CARRIED,
-	BOMBSTATE_DROPPED,
-	BOMBSTATE_PLANTED,
-	BOMBSTATE_ARMED,
-	BOMBSTATE_EXPLODING, // bomb has just exploded and we're spamming explosions all over the place
+enum BombState {
+	BombState_Idle,
+	BombState_Carried,
+	BombState_Dropped,
+	BombState_Planted,
+	BombState_Armed,
+	BombState_Exploding, // bomb has just exploded and we're spamming explosions all over the place
 }
 
-enum eBombDrop {
-	BOMBDROP_NORMAL, // dropped manually
-	BOMBDROP_KILLED, // died
-	BOMBDROP_TEAM, // changed teams
+enum BombDrop {
+	BombDrop_Normal, // dropped manually
+	BombDrop_Killed, // died
+	BombDrop_Team, // changed teams
 }
 
 const int BOMB_HUD_OFFSET = 32;
 
-eBombState bombState = BOMBSTATE_IDLE;
+BombState bombState = BombState_Idle;
 
 cBombSite @bombSite;
 
@@ -126,16 +126,16 @@ void bombSetCarrier( Entity @ent ) {
 	client.addAward( S_COLOR_GREEN + "You've got the bomb!" );
 	G_AnnouncerSound( @client, sndBombTaken, attackingTeam, true, null );
 
-	bombState = BOMBSTATE_CARRIED;
+	bombState = BombState_Carried;
 }
 
-void bombDrop( eBombDrop dropType ) {
+void bombDrop( BombDrop drop_reason ) {
 	Vec3 start = bombCarrier.origin;
 	Vec3 end, velocity;
 
-	switch( dropType ) {
-		case BOMBDROP_NORMAL:
-		case BOMBDROP_KILLED: { // TODO XXX FIXME
+	switch( drop_reason ) {
+		case BombDrop_Normal:
+		case BombDrop_Killed: {
 			bombPickTime = levelTime + BOMB_DROP_RETAKE_DELAY;
 			@bombDropper = @bombCarrier;
 
@@ -156,22 +156,12 @@ void bombDrop( eBombDrop dropType ) {
 
 			velocity = bombCarrier.velocity + forward * 200;
 			velocity.z = BOMB_THROW_SPEED;
-			if( dropType == BOMBDROP_KILLED ) {
+			if( drop_reason == BombDrop_Killed ) {
 				velocity.z *= 0.5;
 			}
 		} break;
 
-			/*case BOMBDROP_KILLED:
-			// to avoid issues with a player dropping it then
-			// someone else picking it up and immediately dying
-			@bombDropper = null;
-
-			end = start;
-			velocity = bombCarrier.velocity;
-
-			break;*/
-
-		case BOMBDROP_TEAM: {
+		case BombDrop_Team: {
 			@bombDropper = null;
 
 			// current pos/velocity are outdated
@@ -194,7 +184,7 @@ void bombDrop( eBombDrop dropType ) {
 
 	@bombCarrier = null;
 
-	bombState = BOMBSTATE_DROPPED;
+	bombState = BombState_Dropped;
 }
 
 void bombPlant( cBombSite @site ) {
@@ -232,11 +222,11 @@ void bombPlant( cBombSite @site ) {
 
 	@bombCarrier = null;
 
-	announce( ANNOUNCEMENT_INPLACE );
+	announce( Announcement_InPlace );
 
 	bombProgress = 0;
 	bombActionTime = levelTime;
-	bombState = BOMBSTATE_PLANTED;
+	bombState = BombState_Planted;
 }
 
 void bombArm( array<Entity @> @nearby ) {
@@ -250,7 +240,7 @@ void bombArm( array<Entity @> @nearby ) {
 	bombDecal.svflags &= ~SVF_ONLYTEAM;
 	bombHud.svflags &= ~SVF_ONLYTEAM;
 
-	announce( ANNOUNCEMENT_ARMED );
+	announce( Announcement_Armed );
 
 	G_CenterPrintFormatMsg( null, "Bomb planted at %s!", bombSite.letter );
 
@@ -259,7 +249,7 @@ void bombArm( array<Entity @> @nearby ) {
 	hideSiteIndicators( bombSite );
 
 	bombProgress = 0;
-	bombState = BOMBSTATE_ARMED;
+	bombState = BombState_Armed;
 }
 
 void bombDefuse( array<Entity @> @nearby ) {
@@ -268,9 +258,9 @@ void bombDefuse( array<Entity @> @nearby ) {
 
 	hide( @bombDecal );
 
-	announce( ANNOUNCEMENT_DEFUSED );
+	announce( Announcement_Defused );
 
-	bombState = BOMBSTATE_IDLE;
+	bombState = BombState_Idle;
 
 	// print defusing players, add score/awards
 
@@ -321,7 +311,7 @@ void bombExplode() {
 	hide( @bombModel );
 	hide( @bombDecal );
 
-	bombState = BOMBSTATE_EXPLODING;
+	bombState = BombState_Exploding;
 }
 
 void resetBomb() {
@@ -333,12 +323,12 @@ void resetBomb() {
 
 	bombDecal.team = bombHud.team = attackingTeam;
 
-	bombState = BOMBSTATE_IDLE;
+	bombState = BombState_Idle;
 }
 
 void bombThink() {
 	switch( bombState ) {
-		case BOMBSTATE_PLANTED: {
+		case BombState_Planted: {
 			float decal_radius = min( 1.0f, float( levelTime - bombActionTime ) / float( BOMB_SPRITE_RESIZE_TIME ) );
 			bombDecal.frame = int( BOMB_ARM_DEFUSE_RADIUS * decal_radius );
 
@@ -379,7 +369,7 @@ void bombThink() {
 			}
 		} break;
 
-		case BOMBSTATE_ARMED: {
+		case BombState_Armed: {
 			array<Entity @> @nearby = nearbyPlayers( bombModel.origin, defendingTeam );
 			bool progressing = nearby.size() > 0;
 
@@ -438,14 +428,14 @@ void bombThink() {
 // and the exploding animation from stopping
 void bombPostRoundThink() {
 	switch( bombState ) {
-		case BOMBSTATE_PLANTED: {
+		case BombState_Planted: {
 			bombDecal.effects |= EF_TEAMCOLOR_TRANSITION;
 
 			float frac = bombProgress / ( cvarArmTime.value * 1000.0f );
 			bombDecal.counterNum = int( frac * 255.0f );
 		} break;
 
-		case BOMBSTATE_EXPLODING:
+		case BombState_Exploding:
 			bombSite.stepExplosion();
 			break;
 	}
@@ -614,7 +604,7 @@ void dynamite_touch( Entity @ent, Entity @other, const Vec3 planeNormal, int sur
 		return;
 	}
 
-	if( bombState != BOMBSTATE_DROPPED ) {
+	if( bombState != BombState_Dropped ) {
 		return;
 	}
 
@@ -640,7 +630,7 @@ void dynamite_touch( Entity @ent, Entity @other, const Vec3 planeNormal, int sur
 }
 
 void dynamite_stop( Entity @ent ) {
-	if( bombState == BOMBSTATE_DROPPED ) {
+	if( bombState == BombState_Dropped ) {
 		bombModel.effects = EF_ROTATE_AND_BOB;
 
 		bombHud.origin = bombModel.origin + Vec3( 0, 0, BOMB_HUD_OFFSET );

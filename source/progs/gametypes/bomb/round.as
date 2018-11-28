@@ -17,24 +17,22 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-/*enum eRoundStates FIXME enum
-{
-	ROUNDSTATE_NONE,
-	ROUNDSTATE_PRE,
-	ROUNDSTATE_ROUND,
-	ROUNDSTATE_FINISHED,
-	ROUNDSTATE_POST
+enum RoundState {
+	RoundState_None,
+	RoundState_Pre,
+	RoundState_Round,
+	RoundState_Finished,
+	RoundState_Post
 }
-*/
 
-const uint ROUNDSTATE_NONE = 0;
-const uint ROUNDSTATE_PRE = 1;
-const uint ROUNDSTATE_ROUND = 2;
-const uint ROUNDSTATE_FINISHED = 3;
-const uint ROUNDSTATE_POST = 4;
+const uint RoundState_None = 0;
+const uint RoundState_Pre = 1;
+const uint RoundState_Round = 2;
+const uint RoundState_Finished = 3;
+const uint RoundState_Post = 4;
 
-//eRoundStates roundState = ROUNDSTATE_NONE; FIXME enum
-uint roundState = ROUNDSTATE_NONE;
+//eRoundStates roundState = RoundState_None; FIXME enum
+uint roundState = RoundState_None;
 
 bool roundCheckEndTime; // you can check if roundStateEndTime == 0 but roundStateEndTime can overflow
 int64 roundStartTime;    // roundStartTime because only spawn protection uses it
@@ -65,11 +63,11 @@ void playerKilled( Entity @victim, Entity @attacker, Entity @inflictor ) {
 	if( match.getState() != MATCH_STATE_PLAYTIME )
 		return;
 
-	if( roundState >= ROUNDSTATE_FINISHED )
+	if( roundState >= RoundState_Finished )
 		return;
 
-	if( bombState == BOMBSTATE_CARRIED && @victim == @bombCarrier ) {
-		bombDrop( BOMBDROP_KILLED );
+	if( bombState == BombState_Carried && @victim == @bombCarrier ) {
+		bombDrop( BombDrop_Killed );
 
 		G_CenterPrintMsg( null, S_COLOR_ORANGE + "The bomb carrier has been fragged!" );
 
@@ -102,7 +100,7 @@ void checkPlayersAlive( int team ) {
 
 	if( alive == 0 ) {
 		if( team == attackingTeam ) {
-			if( bombState != BOMBSTATE_ARMED ) {
+			if( bombState != BombState_Armed ) {
 				roundWonBy( defendingTeam );
 			}
 		}
@@ -218,15 +216,15 @@ void roundWonBy( int winner ) {
 		}
 	}
 
-	roundNewState( ROUNDSTATE_FINISHED );
+	roundNewState( RoundState_Finished );
 }
 
 void newRound() {
-	roundNewState( ROUNDSTATE_PRE );
+	roundNewState( RoundState_Pre );
 }
 
 void endGame() {
-	roundNewState( ROUNDSTATE_NONE );
+	roundNewState( RoundState_None );
 
 	GENERIC_SetUpEndMatch();
 }
@@ -265,18 +263,17 @@ void setRoundType() {
 
 //void roundNewState( eRoundStates state ) FIXME enum
 void roundNewState( uint state ) {
-	if( state > ROUNDSTATE_POST ) {
-		state = ROUNDSTATE_PRE;
+	if( state > RoundState_Post ) {
+		state = RoundState_Pre;
 	}
 
 	roundState = state;
 
-	switch ( int( state ) ) {
-		case ROUNDSTATE_NONE:
+	switch( roundState ) {
+		case RoundState_None:
 			break;
 
-		case ROUNDSTATE_PRE:
-		{
+		case RoundState_Pre:
 			roundCountDown = COUNTDOWN_MAX;
 
 			setTeams();
@@ -303,10 +300,8 @@ void roundNewState( uint state ) {
 			bombGiveToRandom();
 
 			break;
-		}
 
-		case ROUNDSTATE_ROUND:
-		{
+		case RoundState_Round:
 			roundCheckEndTime = true;
 			roundStartTime = levelTime;
 			roundStateEndTime = levelTime + int( cvarRoundTime.value * 1000.0f );
@@ -316,12 +311,11 @@ void roundNewState( uint state ) {
 
 			enableMovement();
 
-			announce( ANNOUNCEMENT_STARTED );
+			announce( Announcement_Started );
 
 			break;
-		}
 
-		case ROUNDSTATE_FINISHED:
+		case RoundState_Finished:
 			roundCheckEndTime = true;
 			roundStateEndTime = levelTime + 1500; // magic numbers are awesome
 
@@ -329,7 +323,7 @@ void roundNewState( uint state ) {
 
 			break;
 
-		case ROUNDSTATE_POST:
+		case RoundState_Post:
 			if( scoreLimitHit() && !match.checkExtendPlayTime() ) {
 				match.launchState( match.getState() + 1 );
 
@@ -342,22 +336,17 @@ void roundNewState( uint state ) {
 			roundCount++;
 
 			break;
-
-		default:
-			assert( false, "round.as roundNewState: bad state" );
-
-			break;
 	}
 }
 
 int last_time = 0;
 
 void roundThink() {
-	if( roundState == ROUNDSTATE_NONE ) {
+	if( roundState == RoundState_None ) {
 		return;
 	}
 
-	if( roundState == ROUNDSTATE_PRE ) {
+	if( roundState == RoundState_Pre ) {
 		int remainingSeconds = int( ( roundStateEndTime - levelTime ) * 0.001f ) + 1;
 
 		if( remainingSeconds < 0 ) {
@@ -390,8 +379,8 @@ void roundThink() {
 
 	// i suppose the following blocks could be merged to save an if or 2
 	if( roundCheckEndTime && levelTime > roundStateEndTime ) {
-		if( roundState == ROUNDSTATE_ROUND ) {
-			if( bombState != BOMBSTATE_ARMED ) {
+		if( roundState == RoundState_Round ) {
+			if( bombState != BombState_Armed ) {
 				roundWonBy( defendingTeam );
 				last_time = 1; // kinda hacky, this shows at 0:00
 
@@ -409,7 +398,7 @@ void roundThink() {
 		}
 	}
 
-	if( roundState == ROUNDSTATE_ROUND ) {
+	if( roundState == RoundState_Round ) {
 		// monitor the bomb's health
 		if( @bombModel == null || bombModel.classname != "dynamite" ) {
 			bombModelCreate();
@@ -424,11 +413,11 @@ void roundThink() {
 
 		// warn defs if bomb will explode soon
 		// warn offs if the round ends soon and they haven't planted
-		if( bombState == BOMBSTATE_ARMED ) {
+		if( bombState == BombState_Armed ) {
 			last_time = -1;
 
 			if( !defendersHurried && levelTime + BOMB_HURRYUP_TIME >= bombActionTime ) {
-				announceDef( ANNOUNCEMENT_HURRY );
+				announceDef( Announcement_Hurry );
 
 				defendersHurried = true;
 			}
@@ -437,7 +426,7 @@ void roundThink() {
 			last_time = roundStateEndTime - levelTime;
 
 			if( !attackersHurried && levelTime + BOMB_HURRYUP_TIME >= roundStateEndTime ) {
-				announceOff( ANNOUNCEMENT_HURRY );
+				announceOff( Announcement_Hurry );
 
 				attackersHurried = true;
 			}
@@ -450,7 +439,7 @@ void roundThink() {
 	else {
 		match.setClockOverride( last_time );
 
-		if( roundState > ROUNDSTATE_ROUND ) {
+		if( roundState > RoundState_Round ) {
 			bombPostRoundThink();
 		}
 	}

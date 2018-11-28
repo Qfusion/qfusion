@@ -232,11 +232,11 @@ void misc_capture_area_indicator_think( Entity @ent ) {
 
 	ent.nextThink = levelTime + 1;
 
-	if( roundState != ROUNDSTATE_ROUND ) {
+	if( roundState != RoundState_Round ) {
 		return;
 	}
 
-	if( bombState != BOMBSTATE_CARRIED ) {
+	if( bombState != BombState_Carried ) {
 		return;
 	}
 
@@ -288,45 +288,26 @@ void trigger_capture_area_think( Entity @ent ) {
 	}
 }
 
-// honey you're touching something, you're touchin' me
 void trigger_capture_area_touch( Entity @ent, Entity @other, const Vec3 planeNormal, int surfFlags ) {
-	// i'm under your thumb, under your spell, can't you see?
-
 	if( @other.client == null ) {
 		return;
 	}
 
-	// IF I COULD ONLY REACH YOU
-
-	if( roundState != ROUNDSTATE_ROUND ) {
+	if( roundState != RoundState_Round ) {
 		return;
 	}
 
-	// IF I COULD MAKE YOU SMILE
-
-	if( bombState != BOMBSTATE_CARRIED || @other != @bombCarrier ) {
+	if( bombState != BombState_Carried || @other != @bombCarrier ) {
 		return;
 	}
-
-	// IF I COULD ONLY REACH YOU
 
 	if( match.getState() != MATCH_STATE_PLAYTIME ) {
 		return;
 	}
 
-	// THAT WOULD REALLY BE A
-
-	// we know target isn't null because we checked earlier
-
 	cBombSite @site = null;
 
 	array<Entity @> @targets = ent.findTargets();
 	@site = getSiteFromIndicator( targets[0] );
-
-	// we know point isn't null either but for debugging purposes...
-	assert( @site != null, "site.as trigger_capture_area_touch: @site == null" );
-
-	// BREAKTHROUGH
-
 	site.carrierTouched();
 }

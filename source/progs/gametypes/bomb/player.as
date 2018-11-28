@@ -17,35 +17,19 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-/*enum ePrimaries FIXME enum
-{
-	PRIMARY_NONE, // used for pending test
-	PRIMARY_MIN,
-	PRIMARY_EBRL = PRIMARY_MIN,
-	PRIMARY_RLLG,
-	PRIMARY_EBLG
+enum PrimaryWeapon {
+	PrimaryWeapon_EBRL,
+	PrimaryWeapon_RLLG,
+	PrimaryWeapon_EBLG,
+	PrimaryWeapon_Pending, // used for pending test
 }
 
-enum eSecondaries
-{
-	SECONDARY_NONE, // used for pending test
-	SECONDARY_MIN = WEAP_PLASMAGUN,
-	SECONDARY_PG = WEAP_PLASMAGUN,
-	SECONDARY_RG = WEAP_RIOTGUN,
-	SECONDARY_GL = WEAP_GRENADELAUNCHER,
-}*/
-
-const uint PRIMARY_NONE = 0; // used for pending test
-const uint PRIMARY_MIN = 1;
-const uint PRIMARY_EBRL = PRIMARY_MIN;
-const uint PRIMARY_RLLG = 2;
-const uint PRIMARY_EBLG = 3;
-
-const uint SECONDARY_NONE = 0; // used for pending test
-const uint SECONDARY_MIN = WEAP_PLASMAGUN;
-const uint SECONDARY_PG = WEAP_PLASMAGUN;
-const uint SECONDARY_RG = WEAP_RIOTGUN;
-const uint SECONDARY_GL = WEAP_GRENADELAUNCHER;
+enum SecondaryWeapon {
+	SecondaryWeapon_PG = WEAP_PLASMAGUN,
+	SecondaryWeapon_RG = WEAP_RIOTGUN,
+	SecondaryWeapon_GL = WEAP_GRENADELAUNCHER,
+	SecondaryWeapon_Pending,
+}
 
 const int AMMO_EB = 15;
 const int AMMO_RL = 15;
@@ -60,20 +44,15 @@ bool playersInitialized = false;
 class cPlayer {
 	Client @client;
 
-	//ePrimaries weapPrimary; FIXME enum
-	//eSecondaries weapSecondary;
-	uint weapPrimary;
-	uint weapSecondary;
+	PrimaryWeapon weapPrimary;
+	SecondaryWeapon weapSecondary;
 
-	// fix for scoreboard/gb charge bugs
-	//ePrimaries pendingPrimary; FIXME enum
-	//eSecondaries pendingSecondary;
-	uint pendingPrimary;
-	uint pendingSecondary;
+	PrimaryWeapon pendingPrimary;
+	SecondaryWeapon pendingSecondary;
 
-	int killsThisRound; // int to avoid mismatch and honestly, could anyone but me get 2 trillion kills
+	int killsThisRound;
 
-	uint arms; // hopefully 2...
+	uint arms;
 	uint defuses;
 
 	bool dueToSpawn; // used for respawning during countdown
@@ -90,30 +69,30 @@ class cPlayer {
 		bool secondaryOk = true;
 
 		if( primary == "ebrl" )
-			this.weapPrimary = PRIMARY_EBRL;
+			this.weapPrimary = PrimaryWeapon_EBRL;
 		else if( primary == "rllg" )
-			this.weapPrimary = PRIMARY_RLLG;
+			this.weapPrimary = PrimaryWeapon_RLLG;
 		else if( primary == "eblg" )
-			this.weapPrimary = PRIMARY_EBLG;
+			this.weapPrimary = PrimaryWeapon_EBLG;
 		else
 			primaryOk = false;
 
 		if( secondary == "pg" )
-			this.weapSecondary = SECONDARY_PG;
+			this.weapSecondary = SecondaryWeapon_PG;
 		else if( secondary == "rg" )
-			this.weapSecondary = SECONDARY_RG;
+			this.weapSecondary = SecondaryWeapon_RG;
 		else if( secondary == "gl" )
-			this.weapSecondary = SECONDARY_GL;
+			this.weapSecondary = SecondaryWeapon_GL;
 		else
 			secondaryOk = false;
 
 		if( !primaryOk || !secondaryOk ) {
-			this.weapPrimary = PRIMARY_MIN;
-			this.weapSecondary = SECONDARY_MIN;
+			this.weapPrimary = PrimaryWeapon_EBRL;
+			this.weapSecondary = SecondaryWeapon_PG;
 		}
 
-		this.pendingPrimary = PRIMARY_NONE;
-		this.pendingSecondary = SECONDARY_NONE;
+		this.pendingPrimary = PrimaryWeapon_Pending;
+		this.pendingSecondary = SecondaryWeapon_Pending;
 
 		this.arms = 0;
 		this.defuses = 0;
@@ -128,97 +107,65 @@ class cPlayer {
 	void giveInventory() {
 		this.client.inventoryClear();
 
-		if( this.pendingPrimary != PRIMARY_NONE ) {
+		if( this.pendingPrimary != PrimaryWeapon_Pending ) {
 			this.weapPrimary = this.pendingPrimary;
-			this.pendingPrimary = PRIMARY_NONE;
+			this.pendingPrimary = PrimaryWeapon_Pending;
 		}
 
-		if( this.pendingSecondary != PRIMARY_NONE ) {
+		if( this.pendingSecondary != SecondaryWeapon_Pending ) {
 			this.weapSecondary = this.pendingSecondary;
-			this.pendingSecondary = SECONDARY_NONE;
+			this.pendingSecondary = SecondaryWeapon_Pending;
 		}
 
 		this.client.inventorySetCount( WEAP_GUNBLADE, 1 );
 		this.client.getEnt().health = 200;
 
-		// XXX: old bomb would set the player's model depending on their
-		//      primary weapon but i don't see the point
-
-		// it dies if you don't cast...
-		switch ( int( this.weapPrimary ) ) {
-			case PRIMARY_EBRL:
+		switch( this.weapPrimary ) {
+			case PrimaryWeapon_EBRL:
 				this.client.inventoryGiveItem( WEAP_ROCKETLAUNCHER );
-				this.client.inventoryGiveItem( WEAP_ELECTROBOLT );
-
 				this.client.inventorySetCount( AMMO_ROCKETS, AMMO_RL );
-				this.client.inventorySetCount( AMMO_BOLTS, AMMO_EB );
-
 				this.client.inventorySetCount( AMMO_WEAK_ROCKETS, 0 );
+				this.client.inventoryGiveItem( WEAP_ELECTROBOLT );
+				this.client.inventorySetCount( AMMO_BOLTS, AMMO_EB );
 				this.client.inventorySetCount( AMMO_WEAK_BOLTS, 0 );
-
 				break;
 
-			case PRIMARY_RLLG:
+			case PrimaryWeapon_RLLG:
 				this.client.inventoryGiveItem( WEAP_ROCKETLAUNCHER );
-				this.client.inventoryGiveItem( WEAP_LASERGUN );
-
 				this.client.inventorySetCount( AMMO_ROCKETS, AMMO_RL );
-				this.client.inventorySetCount( AMMO_LASERS, AMMO_LG );
-
 				this.client.inventorySetCount( AMMO_WEAK_ROCKETS, 0 );
-				this.client.inventorySetCount( AMMO_WEAK_LASERS, 0 );
-
-				break;
-
-			case PRIMARY_EBLG:
-				this.client.inventoryGiveItem( WEAP_ELECTROBOLT );
 				this.client.inventoryGiveItem( WEAP_LASERGUN );
-
-				this.client.inventorySetCount( AMMO_BOLTS, AMMO_EB );
 				this.client.inventorySetCount( AMMO_LASERS, AMMO_LG );
-
-				this.client.inventorySetCount( AMMO_WEAK_BOLTS, 0 );
 				this.client.inventorySetCount( AMMO_WEAK_LASERS, 0 );
-
 				break;
 
-			default:
-				assert( false, "player.as giveInventory: bad primary weapon" );
-
+			case PrimaryWeapon_EBLG:
+				this.client.inventoryGiveItem( WEAP_ELECTROBOLT );
+				this.client.inventorySetCount( AMMO_BOLTS, AMMO_EB );
+				this.client.inventorySetCount( AMMO_WEAK_BOLTS, 0 );
+				this.client.inventoryGiveItem( WEAP_LASERGUN );
+				this.client.inventorySetCount( AMMO_LASERS, AMMO_LG );
+				this.client.inventorySetCount( AMMO_WEAK_LASERS, 0 );
 				break;
 		}
 
-		switch ( int( this.weapSecondary ) ) {
-			case SECONDARY_PG:
+		switch( this.weapSecondary ) {
+			case SecondaryWeapon_PG:
 				this.client.inventoryGiveItem( WEAP_PLASMAGUN );
-
 				this.client.inventorySetCount( AMMO_PLASMA, AMMO_PG );
-
 				this.client.inventorySetCount( AMMO_WEAK_PLASMA, 0 );
-
 				break;
 
-			case SECONDARY_RG:
+			case SecondaryWeapon_RG:
 				this.client.inventoryGiveItem( WEAP_RIOTGUN );
-
 				this.client.inventorySetCount( AMMO_SHELLS, AMMO_RG );
-
 				this.client.inventorySetCount( AMMO_WEAK_SHELLS, 0 );
-
 				break;
 
-			case SECONDARY_GL:
+			case SecondaryWeapon_GL:
 				this.client.inventoryGiveItem( WEAP_GRENADELAUNCHER );
-
 				this.client.inventorySetCount( AMMO_GRENADES, AMMO_GL );
-
 				this.client.inventorySetCount( AMMO_WEAK_GRENADES, 0 );
-
-				break;
-
-			default:
-				assert( false, "player.as giveInventory: bad secondary weapon" );
-
 				break;
 		}
 
@@ -228,28 +175,17 @@ class cPlayer {
 	String getInventoryLabel() {
 		String label = "";
 
-		switch ( int( this.weapPrimary ) ) {
-			case PRIMARY_EBRL:
-				label += getWeaponIcon( WEAP_ELECTROBOLT )
-					+ " " + getWeaponIcon( WEAP_ROCKETLAUNCHER );
-
+		switch( this.weapPrimary ) {
+			case PrimaryWeapon_EBRL:
+				label += getWeaponIcon( WEAP_ELECTROBOLT ) + " " + getWeaponIcon( WEAP_ROCKETLAUNCHER );
 				break;
 
-			case PRIMARY_RLLG:
-				label += getWeaponIcon( WEAP_ROCKETLAUNCHER )
-					+ " " + getWeaponIcon( WEAP_LASERGUN );
-
+			case PrimaryWeapon_RLLG:
+				label += getWeaponIcon( WEAP_ROCKETLAUNCHER ) + " " + getWeaponIcon( WEAP_LASERGUN );
 				break;
 
-			case PRIMARY_EBLG:
-				label += getWeaponIcon( WEAP_ELECTROBOLT )
-					+ " " + getWeaponIcon( WEAP_LASERGUN );
-
-				break;
-
-			default:
-				assert( false, "player.as getInventoryLabel: switch hit default case" );
-
+			case PrimaryWeapon_EBLG:
+				label += getWeaponIcon( WEAP_ELECTROBOLT ) + " " + getWeaponIcon( WEAP_LASERGUN );
 				break;
 		}
 
@@ -275,8 +211,6 @@ class cPlayer {
 			}
 		}
 
-		// TODO: add brackets around current selection?
-
 		this.client.execGameCommand( command );
 	}
 
@@ -285,8 +219,6 @@ class cPlayer {
 			return;
 		}
 
-		// TODO: add brackets around current selection?
-
 		this.client.execGameCommand( "mecu \"Secondary weapons\""
 			+ " \"Plasmagun\" \"weapselect pg\""
 			+ " \"Riotgun\" \"weapselect rg\""
@@ -294,13 +226,11 @@ class cPlayer {
 		);
 	}
 
-	//void selectPrimaryWeapon( ePrimaries weapon ) FIXME enum
-	void selectPrimaryWeapon( uint weapon ) {
+	void selectPrimaryWeapon( PrimaryWeapon weapon ) {
 		this.pendingPrimary = weapon;
 	}
 
-	//void selectSecondaryWeapon( eSecondaries weapon ) FIXME enum
-	void selectSecondaryWeapon( uint weapon ) {
+	void selectSecondaryWeapon( SecondaryWeapon weapon ) {
 		this.pendingSecondary = weapon;
 	}
 
@@ -323,22 +253,22 @@ class cPlayer {
 			// gg Case expressions must be constants
 
 			if( token == "EB" ) {
-				this.selectPrimaryWeapon( PRIMARY_EBRL );
+				this.selectPrimaryWeapon( PrimaryWeapon_EBRL );
 			}
 			else if( token == "RL" ) {
-				this.selectPrimaryWeapon( PRIMARY_RLLG );
+				this.selectPrimaryWeapon( PrimaryWeapon_RLLG );
 			}
 			else if( token == "LG" ) {
-				this.selectPrimaryWeapon( PRIMARY_EBLG );
+				this.selectPrimaryWeapon( PrimaryWeapon_EBLG );
 			}
 			else if( token == "PG" ) {
-				this.selectSecondaryWeapon( SECONDARY_PG );
+				this.selectSecondaryWeapon( SecondaryWeapon_PG );
 			}
 			else if( token == "RG" ) {
-				this.selectSecondaryWeapon( SECONDARY_RG );
+				this.selectSecondaryWeapon( SecondaryWeapon_RG );
 			}
 			else if( token == "GL" ) {
-				this.selectSecondaryWeapon( SECONDARY_GL );
+				this.selectSecondaryWeapon( SecondaryWeapon_GL );
 			}
 			else {
 				error += " " + token;
@@ -354,20 +284,20 @@ class cPlayer {
 
 		// set cg_loadout
 		String loadout = "";
-		if( this.pendingPrimary == PRIMARY_EBRL )
+		if( this.pendingPrimary == PrimaryWeapon_EBRL )
 			loadout = "ebrl";
-		else if( this.pendingPrimary == PRIMARY_RLLG )
+		else if( this.pendingPrimary == PrimaryWeapon_RLLG )
 			loadout = "rllg";
-		else if( this.pendingPrimary == PRIMARY_EBLG )
+		else if( this.pendingPrimary == PrimaryWeapon_EBLG )
 			loadout = "eblg";
 		else
 			return;
 
-		if( this.pendingSecondary == SECONDARY_PG )
+		if( this.pendingSecondary == SecondaryWeapon_PG )
 			loadout += " pg";
-		else if( this.pendingSecondary == SECONDARY_RG )
+		else if( this.pendingSecondary == SecondaryWeapon_RG )
 			loadout += " rg";
-		else if( this.pendingSecondary == SECONDARY_GL )
+		else if( this.pendingSecondary == SecondaryWeapon_GL )
 			loadout += " gl";
 		else
 			return;
