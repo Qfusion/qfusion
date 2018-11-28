@@ -122,9 +122,8 @@ void bombSetCarrier( Entity @ent ) {
 	hide( @bombModel );
 	hide( @bombHud );
 
-	// it's invisible but maybe still moving
-	// save some physics calculations
 	bombModel.moveType = MOVETYPE_NONE;
+	bombModel.effects &= ~EF_ROTATE_AND_BOB;
 
 	Client @client = @bombCarrier.client;
 
