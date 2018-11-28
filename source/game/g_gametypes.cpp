@@ -1707,7 +1707,7 @@ void G_Gametype_Init( void ) {
 	g_match_extendedtime = trap_Cvar_Get( "g_match_extendedtime", "2", CVAR_ARCHIVE );
 
 	// game settings
-	g_timelimit = trap_Cvar_Get( "g_timelimit", "0", CVAR_ARCHIVE );
+	g_timelimit = trap_Cvar_Get( "g_timelimit", "0", CVAR_ARCHIVE | CVAR_READONLY );
 	g_scorelimit = trap_Cvar_Get( "g_scorelimit", "10", CVAR_ARCHIVE );
 	g_allow_falldamage = trap_Cvar_Get( "g_allow_falldamage", "0", CVAR_ARCHIVE );
 	g_allow_selfdamage = trap_Cvar_Get( "g_allow_selfdamage", "1", CVAR_ARCHIVE );
