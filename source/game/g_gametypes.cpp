@@ -1709,9 +1709,9 @@ void G_Gametype_Init( void ) {
 	// game settings
 	g_timelimit = trap_Cvar_Get( "g_timelimit", "0", CVAR_ARCHIVE | CVAR_READONLY );
 	g_scorelimit = trap_Cvar_Get( "g_scorelimit", "10", CVAR_ARCHIVE );
-	g_allow_falldamage = trap_Cvar_Get( "g_allow_falldamage", "0", CVAR_ARCHIVE );
-	g_allow_selfdamage = trap_Cvar_Get( "g_allow_selfdamage", "1", CVAR_ARCHIVE );
-	g_allow_teamdamage = trap_Cvar_Get( "g_allow_teamdamage", "0", CVAR_ARCHIVE );
+	g_allow_falldamage = trap_Cvar_Get( "g_allow_falldamage", "0", CVAR_ARCHIVE | CVAR_READONLY );
+	g_allow_selfdamage = trap_Cvar_Get( "g_allow_selfdamage", "1", CVAR_ARCHIVE | CVAR_READONLY );
+	g_allow_teamdamage = trap_Cvar_Get( "g_allow_teamdamage", "0", CVAR_ARCHIVE | CVAR_READONLY );
 
 	G_Printf( "-------------------------------------\n" );
 	G_Printf( "Initalizing '%s' gametype\n", g_gametype->string );
