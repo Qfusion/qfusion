@@ -358,12 +358,6 @@ enum {
 #define DROP_FLAG_AUTORECONNECT 1       // it's okay try reconnectting automatically
 
 typedef enum {
-	MM_LOGIN_STATE_LOGGED_OUT,
-	MM_LOGIN_STATE_IN_PROGRESS,
-	MM_LOGIN_STATE_LOGGED_IN
-} mmstate_t;
-
-typedef enum {
 	DOWNLOADTYPE_NONE,
 	DOWNLOADTYPE_SERVER,
 	DOWNLOADTYPE_WEB
