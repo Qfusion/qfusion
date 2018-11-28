@@ -872,19 +872,10 @@ static int SCR_DrawPlayerTab( const char **ptrptr, int team, int x, int y, int p
 /*
 * CG_ScoreboardFont
 */
-struct qfontface_s *CG_ScoreboardFont( cvar_t *familyCvar, cvar_t *sizeCvar ) {
-	struct qfontface_s *font;
-
-	font = trap_SCR_RegisterFont( familyCvar->string, QFONT_STYLE_NONE, ceilf( sizeCvar->integer * ( (float)cgs.vidHeight / 600.0f ) ) );
+struct qfontface_s *CG_ScoreboardFont( const char * family, int size ) {
+	struct qfontface_s *font = trap_SCR_RegisterFont( family, QFONT_STYLE_NONE, ceilf( size * ( (float)cgs.vidHeight / 600.0f ) ) );
 	if( !font ) {
-		CG_Printf( "%sWarning: Invalid font in '%s'. Reseting to default\n", familyCvar->name, S_COLOR_YELLOW );
-		trap_Cvar_Set( familyCvar->name, familyCvar->dvalue );
-		trap_Cvar_Set( sizeCvar->name, sizeCvar->dvalue );
-		font = trap_SCR_RegisterFont( familyCvar->string, QFONT_STYLE_NONE, sizeCvar->integer );
-
-		if( !font ) {
-			font = sizeCvar->integer > DEFAULT_SCOREBOARD_FONT_SIZE ? cgs.fontSystemBig : cgs.fontSystemSmall;
-		}
+		font = size > SCOREBOARD_FONT_SIZE ? cgs.fontSystemBig : cgs.fontSystemSmall;
 	}
 
 	return font;
@@ -915,9 +906,9 @@ void CG_DrawScoreboard( void ) {
 		return;
 	}
 
-	font = CG_ScoreboardFont( cg_scoreboardFontFamily, cg_scoreboardFontSize );
-	monofont = CG_ScoreboardFont( cg_scoreboardMonoFontFamily, cg_scoreboardFontSize );
-	titlefont = CG_ScoreboardFont( cg_scoreboardTitleFontFamily, cg_scoreboardTitleFontSize );
+	font = CG_ScoreboardFont( SYSTEM_FONT_FAMILY, SCOREBOARD_FONT_SIZE );
+	monofont = CG_ScoreboardFont( SYSTEM_FONT_FAMILY_MONO, SCOREBOARD_FONT_SIZE );
+	titlefont = CG_ScoreboardFont( SYSTEM_FONT_FAMILY, SCOREBOARD_TITLE_FONT_SIZE );
 
 	xpos = (int)( cgs.vidWidth * 0.5 );
 	ypos = (int)( cgs.vidHeight * 0.3 );

@@ -425,12 +425,12 @@ typedef struct {
 	} asCamera;
 
 	// fonts
-	char fontSystemFamily[MAX_QPATH];
-	char fontSystemMonoFamily[MAX_QPATH];
+	int fontSystemTinySize;
 	int fontSystemSmallSize;
 	int fontSystemMediumSize;
 	int fontSystemBigSize;
 
+	struct qfontface_s *fontSystemTiny;
 	struct qfontface_s *fontSystemSmall;
 	struct qfontface_s *fontSystemMedium;
 	struct qfontface_s *fontSystemBig;
@@ -705,19 +705,14 @@ void CG_Predict_TouchTriggers( pmove_t *pm, vec3_t previous_origin );
 //
 // cg_screen.c
 //
-typedef enum {
+enum e_ingamestate_t {
 	OVERLAY_MENU_LEFT = -1,
 	OVERLAY_MENU_HIDDEN = 0,
 	OVERLAY_MENU_RIGHT = 1,
-} e_ingamestate_t;
+};
 
 extern vrect_t scr_vrect;
 
-extern cvar_t *cg_scoreboardFontFamily;
-extern cvar_t *cg_scoreboardMonoFontFamily;
-extern cvar_t *cg_scoreboardTitleFontFamily;
-extern cvar_t *cg_scoreboardFontSize;
-extern cvar_t *cg_scoreboardTitleFontSize;
 extern cvar_t *cg_scoreboardStats;
 extern cvar_t *cg_scoreboardWidthScale;
 extern cvar_t *cg_showFPS;

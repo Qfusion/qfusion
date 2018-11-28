@@ -752,19 +752,7 @@ typedef enum {
 //
 // events, event parms
 //
-#ifdef THIS_IS_DISABLED
-enum {
-	FOOTSTEP_NORMAL,
-	FOOTSTEP_BOOT,
-	FOOTSTEP_FLESH,
-	FOOTSTEP_MECH,
-	FOOTSTEP_ENERGY,
-	FOOTSTEP_METAL,
-	FOOTSTEP_SPLASH,
 
-	FOOTSTEP_TOTAL
-};
-#endif
 enum {
 	PAIN_20,
 	PAIN_30,

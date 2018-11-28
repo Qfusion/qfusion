@@ -73,20 +73,18 @@ extern float ( *LittleFloat )( float l );
 // fonts
 //=============================================
 
-#define DEFAULT_SYSTEM_FONT_FAMILY          "Montserrat"
-#define DEFAULT_SYSTEM_FONT_FAMILY_FALLBACK "Droid Sans Fallback"
-#define DEFAULT_SYSTEM_FONT_FAMILY_MONO     "Droid Sans Mono"
-#define DEFAULT_SYSTEM_FONT_SMALL_SIZE      14
-#define DEFAULT_SYSTEM_FONT_MEDIUM_SIZE     16
-#define DEFAULT_SYSTEM_FONT_BIG_SIZE        24
-#define DEFAULT_SYSTEM_FONT_STYLE           0
+#define SYSTEM_FONT_FAMILY          "Montserrat"
+#define SYSTEM_FONT_FAMILY_FALLBACK "Droid Sans Fallback"
+#define SYSTEM_FONT_FAMILY_MONO     "Droid Sans Mono"
+#define SYSTEM_FONT_TINY_SIZE       8
+#define SYSTEM_FONT_SMALL_SIZE      14
+#define SYSTEM_FONT_MEDIUM_SIZE     16
+#define SYSTEM_FONT_BIG_SIZE        24
+#define SYSTEM_FONT_STYLE           0
 
-#define DEFAULT_SCOREBOARD_FONT_FAMILY      "Montserrat"
-#define DEFAULT_SCOREBOARD_MONO_FONT_FAMILY "Droid Sans Mono"
-#define DEFAULT_SCOREBOARD_TITLE_FONT_FAMILY "Montserrat"
-#define DEFAULT_SCOREBOARD_FONT_SIZE        12
-#define DEFAULT_SCOREBOARD_TITLE_FONT_SIZE  24
-#define DEFAULT_SCOREBOARD_FONT_STYLE       0
+#define SCOREBOARD_FONT_SIZE         12
+#define SCOREBOARD_TITLE_FONT_SIZE   24
+#define SCOREBOARD_FONT_STYLE        0
 
 #define ALIGN_LEFT_TOP              0
 #define ALIGN_CENTER_TOP            1

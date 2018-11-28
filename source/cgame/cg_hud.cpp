@@ -1767,9 +1767,9 @@ static bool CG_LFuncFontFamily( struct cg_layoutnode_s *commandnode, struct cg_l
 	const char *fontname = CG_GetStringArg( &argumentnode );
 
 	if( !Q_stricmp( fontname, "con_fontSystem" ) ) {
-		Q_strncpyz( layout_cursor_font_name, cgs.fontSystemFamily, sizeof( layout_cursor_font_name ) );
+		Q_strncpyz( layout_cursor_font_name, SYSTEM_FONT_FAMILY, sizeof( layout_cursor_font_name ) );
 	} else if( !Q_stricmp( fontname, "con_fontSystemMono" ) ) {
-		Q_strncpyz( layout_cursor_font_name, cgs.fontSystemMonoFamily, sizeof( layout_cursor_font_name ) );
+		Q_strncpyz( layout_cursor_font_name, SYSTEM_FONT_FAMILY_MONO, sizeof( layout_cursor_font_name ) );
 	} else {
 		Q_strncpyz( layout_cursor_font_name, fontname, sizeof( layout_cursor_font_name ) );
 	}
@@ -1793,7 +1793,9 @@ static bool CG_LFuncFontSize( struct cg_layoutnode_s *commandnode, struct cg_lay
 	struct cg_layoutnode_s *charnode = argumentnode;
 	const char *fontsize = CG_GetStringArg( &charnode );
 
-	if( !Q_stricmp( fontsize, "con_fontsystemsmall" ) ) {
+	if( !Q_stricmp( fontsize, "con_fontsystemtiny" ) ) {
+		layout_cursor_font_size = cgs.fontSystemTinySize;
+	} else if( !Q_stricmp( fontsize, "con_fontsystemsmall" ) ) {
 		layout_cursor_font_size = cgs.fontSystemSmallSize;
 	} else if( !Q_stricmp( fontsize, "con_fontsystemmedium" ) ) {
 		layout_cursor_font_size = cgs.fontSystemMediumSize;
@@ -3634,9 +3636,9 @@ static void CG_LoadStatusBarFile( char *path ) {
 	CG_Free( opt );
 
 	// set up layout font as default system font
-	Q_strncpyz( layout_cursor_font_name, DEFAULT_SYSTEM_FONT_FAMILY, sizeof( layout_cursor_font_name ) );
+	Q_strncpyz( layout_cursor_font_name, SYSTEM_FONT_FAMILY, sizeof( layout_cursor_font_name ) );
 	layout_cursor_font_style = QFONT_STYLE_NONE;
-	layout_cursor_font_size = DEFAULT_SYSTEM_FONT_SMALL_SIZE;
+	layout_cursor_font_size = SYSTEM_FONT_SMALL_SIZE;
 	layout_cursor_font_dirty = true;
 	layout_cursor_font_regfunc = trap_SCR_RegisterFont;
 }
