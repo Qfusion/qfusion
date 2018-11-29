@@ -27,7 +27,7 @@ static bool cvar_preinitialized = false;
 
 static trie_t *cvar_trie = NULL;
 static qmutex_t *cvar_mutex = NULL;
-static const trie_casing_t CVAR_TRIE_CASING = CON_CASE_SENSITIVE ? TRIE_CASE_SENSITIVE : TRIE_CASE_INSENSITIVE;;
+static const trie_casing_t CVAR_TRIE_CASING = CON_CASE_SENSITIVE ? TRIE_CASE_SENSITIVE : TRIE_CASE_INSENSITIVE;
 
 static int Cvar_HasFlags( void *cvar, void *flags ) {
 	assert( cvar );
