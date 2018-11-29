@@ -167,8 +167,8 @@ void SV_Status_f( void ) {
 	}
 	Com_Printf( "map              : %s\n", sv.mapname );
 
-	Com_Printf( "num score ping name            lastmsg address               port  \n" );
-	Com_Printf( "--- ----- ---- --------------- ------- --------------------- ------\n" );
+	Com_Printf( "num score ping name                            lastmsg address               port  \n" );
+	Com_Printf( "--- ----- ---- ------------------------------- ------- --------------------- ------\n" );
 	for( i = 0, cl = svs.clients; i < sv_maxclients->integer; i++, cl++ ) {
 		if( !cl->state ) {
 			continue;
@@ -189,7 +189,7 @@ void SV_Status_f( void ) {
 
 		s = COM_RemoveColorTokens( cl->name );
 		Com_Printf( "%s", s );
-		l = 16 - (int)strlen( s );
+		l = MAX_NAME_CHARS - (int)strlen( s );
 		for( j = 0; j < l; j++ )
 			Com_Printf( " " );
 
