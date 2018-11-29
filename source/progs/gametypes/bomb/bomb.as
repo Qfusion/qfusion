@@ -105,7 +105,7 @@ void bombInit() {
 	bombHud.svflags |= SVF_BROADCAST;
 }
 
-void bombSetCarrier( Entity @ent ) {
+void bombSetCarrier( Entity @ent, bool no_sound ) {
 	if( @bombCarrier != null ) {
 		bombCarrier.effects &= ~EF_CARRIER;
 		bombCarrier.modelindex2 = 0;
@@ -124,7 +124,9 @@ void bombSetCarrier( Entity @ent ) {
 	Client @client = @bombCarrier.client;
 
 	client.addAward( S_COLOR_GREEN + "You've got the bomb!" );
-	G_AnnouncerSound( @client, sndBombTaken, attackingTeam, true, null );
+	if( !no_sound ) {
+		G_AnnouncerSound( @client, sndBombTaken, attackingTeam, true, null );
+	}
 
 	bombState = BombState_Carried;
 }
@@ -526,7 +528,7 @@ void bombGiveToRandom() {
 
 		if( !hasCarriers || player.isCarrier ) {
 			if( seenCarriers == carrierIdx ) {
-				bombSetCarrier( @ent );
+				bombSetCarrier( @ent, true );
 
 				G_CenterPrintFormatMsg( null, "%s has the bomb!", client.name );
 
@@ -624,7 +626,7 @@ void dynamite_touch( Entity @ent, Entity @other, const Vec3 planeNormal, int sur
 		return;
 	}
 
-	bombSetCarrier( @other );
+	bombSetCarrier( @other, false );
 }
 
 void dynamite_stop( Entity @ent ) {
