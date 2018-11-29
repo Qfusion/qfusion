@@ -21,7 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 int iconCarrying;
 int iconCarrier;
 int iconReady;
-int iconDrop;
 
 int[] iconWeapons( WEAP_TOTAL );
 
@@ -82,7 +81,6 @@ void mediaInit() {
 	iconCarrying = G_ImageIndex( "gfx/bomb/carriericon" );
 	iconCarrier  = G_ImageIndex( "gfx/hud/icons/vsay/onoffense" ); // TODO: less crappy icon
 	iconReady    = G_ImageIndex( "gfx/hud/icons/vsay/yes" );
-	iconDrop     = G_ImageIndex( "gfx/hud/icons/drop/bomb" );
 
 	modelBombModel    = G_ModelIndex( "models/objects/misc/bomb_centered.md3", true );
 	modelBombModelActive    = G_ModelIndex( "models/objects/misc/bomb_centered_active.md3", true );

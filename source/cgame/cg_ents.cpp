@@ -801,7 +801,7 @@ static void CG_AddGenericEnt( centity_t *cent ) {
 	cent->ent.renderfx = cent->renderfx;
 
 	if( cent->item ) {
-		gsitem_t *item = cent->item;
+		const gsitem_t *item = cent->item;
 
 		if( item->type & ( IT_HEALTH | IT_POWERUP ) ) {
 			cent->ent.renderfx |= RF_NOSHADOW;

@@ -256,7 +256,7 @@ void setRoundType() {
 
 		for( int i = 0; @team.ent( i ) != null; i++ ) {
 			Client @client = @team.ent( i ).client;
-			client.setHUDStat( STAT_MESSAGE_OTHER, int( type ) );
+			client.setHUDStat( STAT_ROUND_TYPE, int( type ) );
 		}
 	}
 }

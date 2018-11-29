@@ -114,13 +114,13 @@ void setTeamProgress( int teamNum, int progress, BombProgress type ) {
 			Client @client = @ent.client;
 
 			if( ent.isGhosting() ) {
-				client.setHUDStat( STAT_PROGRESS_SELF, 0 );
-				client.setHUDStat( STAT_MESSAGE_SELF, 0 );
+				client.setHUDStat( STAT_PROGRESS, 0 );
+				client.setHUDStat( STAT_PROGRESS_TYPE, BombProgress_Nothing );
 				continue;
 			}
 
-			client.setHUDStat( STAT_PROGRESS_SELF, progress );
-			client.setHUDStat( STAT_MESSAGE_SELF, type );
+			client.setHUDStat( STAT_PROGRESS, progress );
+			client.setHUDStat( STAT_PROGRESS_TYPE, type );
 		}
 	}
 }
@@ -486,12 +486,11 @@ void GT_ThinkRules() {
 			continue; // don't bother if they're not ingame
 		}
 
-		client.setHUDStat( STAT_IMAGE_SELF, 0 );
-		client.setHUDStat( STAT_IMAGE_DROP_ITEM, 0 );
-		client.setHUDStat( STAT_MESSAGE_ALPHA, MSG_ALIVE_ALPHA );
-		client.setHUDStat( STAT_MESSAGE2_ALPHA, MSG_TOTAL_ALPHA );
-		client.setHUDStat( STAT_MESSAGE_BETA, MSG_ALIVE_BETA );
-		client.setHUDStat( STAT_MESSAGE2_BETA, MSG_TOTAL_BETA );
+		client.setHUDStat( STAT_CARRYING_BOMB, 0 );
+		client.setHUDStat( STAT_ALPHA_PLAYERS_ALIVE, MSG_ALIVE_ALPHA );
+		client.setHUDStat( STAT_ALPHA_PLAYERS_TOTAL, MSG_TOTAL_ALPHA );
+		client.setHUDStat( STAT_BETA_PLAYERS_ALIVE, MSG_ALIVE_BETA );
+		client.setHUDStat( STAT_BETA_PLAYERS_TOTAL, MSG_TOTAL_BETA );
 	}
 
 	// i guess you could speed this up...
@@ -508,8 +507,7 @@ void GT_ThinkRules() {
 	}
 
 	if( bombState == BombState_Carried ) {
-		bombCarrier.client.setHUDStat( STAT_IMAGE_SELF, iconCarrying );
-		bombCarrier.client.setHUDStat( STAT_IMAGE_DROP_ITEM, iconDrop );
+		bombCarrier.client.setHUDStat( STAT_CARRYING_BOMB, 1 );
 
 		bombCarrierLastPos = bombCarrier.origin;
 		bombCarrierLastVel = bombCarrier.velocity;

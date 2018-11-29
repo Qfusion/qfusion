@@ -90,7 +90,7 @@ typedef struct {
 	//vec3_t prevExtrapolatedOrigin;
 	//vec3_t extrapolatedOrigin;
 
-	gsitem_t    *item;
+	const gsitem_t *item;
 
 	//effects
 	vec3_t trailOrigin;         // for particle trails

@@ -129,10 +129,6 @@ static int CG_GetStatValue( const void *parameter ) {
 	return cg.predictedPlayerState.stats[(intptr_t)parameter];
 }
 
-static int CG_GetRaceStatValue( const void *parameter ) {
-	return CG_GetStatValue( parameter );
-}
-
 static int CG_GetLayoutStatFlag( const void *parameter ) {
 	return ( cg.predictedPlayerState.stats[STAT_LAYOUTS] & (intptr_t)parameter ) ? 1 : 0;
 }
@@ -489,32 +485,18 @@ static const reference_numeric_t cg_numeric_references[] =
 	{ "TEAM_ALPHA_SCORE", CG_GetStatValue, (void *)STAT_TEAM_ALPHA_SCORE },
 	{ "TEAM_BETA_SCORE", CG_GetStatValue, (void *)STAT_TEAM_BETA_SCORE },
 
-	{ "PROGRESS_SELF", CG_GetStatValue, (void *)STAT_PROGRESS_SELF },
-	{ "PROGRESS_OTHER", CG_GetStatValue, (void *)STAT_PROGRESS_OTHER },
-	{ "PROGRESS_ALPHA", CG_GetStatValue, (void *)STAT_PROGRESS_ALPHA },
-	{ "PROGRESS_BETA", CG_GetStatValue, (void *)STAT_PROGRESS_BETA },
+	{ "PROGRESS", CG_GetStatValue, (void *)STAT_PROGRESS },
+	{ "PROGRESS_TYPE", CG_GetStatValue, (void *)STAT_PROGRESS_TYPE },
 
-	{ "IMAGE_SELF", CG_GetStatValue, (void *)STAT_IMAGE_SELF },
-	{ "IMAGE_OTHER", CG_GetStatValue, (void *)STAT_IMAGE_OTHER },
-	{ "IMAGE_ALPHA", CG_GetStatValue, (void *)STAT_IMAGE_ALPHA },
-	{ "IMAGE_BETA", CG_GetStatValue, (void *)STAT_IMAGE_BETA },
+	{ "ROUND_TYPE", CG_GetStatValue, (void *)STAT_ROUND_TYPE },
 
-	{ "TIME_SELF", CG_GetRaceStatValue, (void *)STAT_TIME_SELF },
-	{ "TIME_BEST", CG_GetRaceStatValue, (void *)STAT_TIME_BEST },
-	{ "TIME_RECORD", CG_GetRaceStatValue, (void *)STAT_TIME_RECORD },
-	{ "TIME_ALPHA", CG_GetRaceStatValue, (void *)STAT_TIME_ALPHA },
-	{ "TIME_BETA", CG_GetRaceStatValue, (void *)STAT_TIME_BETA },
+	{ "CARRYING_BOMB", CG_GetStatValue, (void *)STAT_CARRYING_BOMB },
+	{ "CAN_CHANGE_LOADOUT", CG_GetStatValue, (void *)STAT_CAN_CHANGE_LOADOUT },
 
-	{ "MESSAGE_SELF", CG_GetStatValue, (void *)STAT_MESSAGE_SELF },
-	{ "MESSAGE_OTHER", CG_GetStatValue, (void *)STAT_MESSAGE_OTHER },
-	{ "MESSAGE_ALPHA", CG_GetStatValue, (void *)STAT_MESSAGE_ALPHA },
-	{ "MESSAGE_BETA", CG_GetStatValue, (void *)STAT_MESSAGE_BETA },
-	{ "MESSAGE2_ALPHA", CG_GetStatValue, (void *)STAT_MESSAGE2_ALPHA },
-	{ "MESSAGE2_BETA", CG_GetStatValue, (void *)STAT_MESSAGE2_BETA },
-
-	{ "IMAGE_CLASSACTION1", CG_GetStatValue, (void *)STAT_IMAGE_CLASSACTION1 },
-	{ "IMAGE_CLASSACTION2", CG_GetStatValue, (void *)STAT_IMAGE_CLASSACTION2 },
-	{ "IMAGE_DROP_ITEM", CG_GetStatValue, (void *)STAT_IMAGE_DROP_ITEM },
+	{ "ALPHA_PLAYERS_ALIVE", CG_GetStatValue, (void *)STAT_ALPHA_PLAYERS_ALIVE },
+	{ "ALPHA_PLAYERS_TOTAL", CG_GetStatValue, (void *)STAT_ALPHA_PLAYERS_TOTAL },
+	{ "BETA_PLAYERS_ALIVE", CG_GetStatValue, (void *)STAT_BETA_PLAYERS_ALIVE },
+	{ "BETA_PLAYERS_TOTAL", CG_GetStatValue, (void *)STAT_BETA_PLAYERS_TOTAL },
 
 	// inventory grabs
 	{ "AMMO_ITEM", CG_GetCurrentWeaponInventoryData, (void *)0 },
