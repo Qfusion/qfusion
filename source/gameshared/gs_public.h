@@ -853,6 +853,8 @@ typedef enum {
 	EV_TRAIN_STOP,
 	EV_TRAIN_START,
 
+	EV_DAMAGE,
+
 	MAX_EVENTS = 128
 } entity_event_t;
 

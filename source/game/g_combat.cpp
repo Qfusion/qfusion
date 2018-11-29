@@ -376,6 +376,13 @@ void G_Damage( edict_t *targ, edict_t *inflictor, edict_t *attacker, const vec3_
 	if( statDmg && attacker->r.client && !targ->deadflag && targ->movetype != MOVETYPE_PUSH && targ->s.type != ET_CORPSE ) {
 		attacker->r.client->level.stats.total_damage_given += take;
 		teamlist[attacker->s.team].stats.total_damage_given += take;
+
+		// TODO: merge rg damage into one event
+		edict_t * damage = G_SpawnEvent( EV_DAMAGE, 0, targ->s.origin );
+		damage->r.svflags |= SVF_ONLYOWNER;
+		damage->s.ownerNum = ENTNUM( attacker );
+		damage->s.damage = HEALTH_TO_INT( take );
+
 		if( GS_IsTeamDamage( &targ->s, &attacker->s ) ) {
 			attacker->r.client->level.stats.total_teamdamage_given += take;
 			teamlist[attacker->s.team].stats.total_teamdamage_given += take;

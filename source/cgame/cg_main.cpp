@@ -928,6 +928,8 @@ void CG_Init( const char *serverName, unsigned int playerNum,
 
 	CG_ClearLocalEntities();
 
+	CG_InitDamageNumbers();
+
 	// get configstrings
 	CG_RegisterConfigStrings();
 

@@ -34,6 +34,7 @@ end of unit intermissions
 
 #include "cg_local.h"
 #include "qcommon/qcommon.h"
+#include "qalgo/rng.h"
 
 vrect_t scr_vrect;
 
@@ -675,6 +676,76 @@ void CG_DrawTeamMates( void ) {
 		}
 
 		trap_R_DrawStretchPic( coords[0], coords[1], pic_size, pic_size, 0, 0, 1, 1, color, CG_MediaShader( media ) );
+	}
+}
+
+//=============================================================================
+
+struct DamageNumber {
+	vec3_t origin;
+	float drift;
+	int64_t t;
+	int damage;
+};
+
+static DamageNumber damage_numbers[ 16 ];
+size_t damage_numbers_head;
+static PCG damage_numbers_rng;
+
+void CG_InitDamageNumbers() {
+	damage_numbers_head = 0;
+	for( DamageNumber & dn : damage_numbers ) {
+		dn.damage = 0;
+	}
+	damage_numbers_rng = new_pcg();
+}
+
+void CG_AddDamageNumber( entity_state_t * ent ) {
+	DamageNumber * dn = &damage_numbers[ damage_numbers_head ];
+	VectorCopy( ent->origin, dn->origin );
+	dn->t = cg.time;
+	dn->damage = ent->damage;
+
+	float distance_jitter = 4;
+	dn->origin[ 0 ] += random_float( &damage_numbers_rng ) * distance_jitter * 2 - distance_jitter;
+	dn->origin[ 1 ] += random_float( &damage_numbers_rng ) * distance_jitter * 2 - distance_jitter;
+	dn->origin[ 2 ] += 48;
+	dn->drift = random_float( &damage_numbers_rng ) * 2 - 1;
+
+	damage_numbers_head = ( damage_numbers_head + 1 ) % ARRAY_COUNT( damage_numbers );
+}
+
+void CG_DrawDamageNumbers() {
+	for( const DamageNumber & dn : damage_numbers ) {
+		if( dn.damage == 0 )
+			continue;
+
+		float lifetime = 500.0f + 5 * dn.damage;
+		float frac = ( cg.time - dn.t ) / lifetime;
+		if( frac > 1 )
+			continue;
+
+		vec3_t o;
+		VectorCopy( dn.origin, o );
+		o[ 2 ] += frac * 32;
+
+		vec2_t coords;
+		trap_R_TransformVectorToScreen( &cg.view.refdef, o, coords );
+		if( ( coords[ 0 ] < 0 || coords[ 0 ] > cgs.vidWidth ) || ( coords[ 1 ] < 0 || coords[ 1 ] > cgs.vidHeight ) ) {
+			continue;
+		}
+
+		coords[ 0 ] += dn.drift * frac * 8;
+
+		vec4_t color;
+		Vector4Copy( colorWhite, color );
+
+		float alpha = 1 - max( 0, frac - 0.75f ) / 0.25f;
+		color[ 3 ] *= alpha;
+
+		char buf[ 16 ];
+		Q_snprintfz( buf, sizeof( buf ), "%g", dn.damage / 2.0f );
+		trap_SCR_DrawString( coords[0], coords[1], ALIGN_CENTER_MIDDLE, buf, cgs.fontSystemTiny, color );
 	}
 }
 

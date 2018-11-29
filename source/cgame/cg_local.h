@@ -745,6 +745,10 @@ void CG_GameMenu_f( void );
 
 void CG_ClearPointedNum( void );
 
+void CG_InitDamageNumbers();
+void CG_AddDamageNumber( entity_state_t * ent );
+void CG_DrawDamageNumbers();
+
 void CG_AddBombHudEntity( centity_t * cent );
 void CG_DrawBombHUD();
 void CG_ResetBombHUD();
