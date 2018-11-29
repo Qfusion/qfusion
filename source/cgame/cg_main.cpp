@@ -665,7 +665,7 @@ static void CG_RegisterVariables( void ) {
 * Compares name and tag against the itemlist to make sure cgame and game lists match
 */
 void CG_ValidateItemDef( int tag, char *name ) {
-	gsitem_t *item;
+	const gsitem_t *item;
 
 	item = GS_FindItemByName( name );
 	if( !item ) {

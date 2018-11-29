@@ -302,15 +302,12 @@ extern cvar_t *g_maxtimeouts;
 
 extern cvar_t *g_self_knockback;
 extern cvar_t *g_knockback_scale;
-extern cvar_t *g_armor_degradation;
-extern cvar_t *g_armor_protection;
 extern cvar_t *g_allow_falldamage;
 extern cvar_t *g_allow_selfdamage;
 extern cvar_t *g_allow_teamdamage;
 extern cvar_t *g_ammo_respawn;
 extern cvar_t *g_weapon_respawn;
 extern cvar_t *g_health_respawn;
-extern cvar_t *g_armor_respawn;
 extern cvar_t *g_respawn_delay_min;
 extern cvar_t *g_respawn_delay_max;
 extern cvar_t *g_deadbody_followkiller;
@@ -523,7 +520,6 @@ void G_Items_RespawnByType( unsigned int typeMask, int item_tag, float delay );
 void G_FireWeapon( edict_t *ent, int parm );
 void SpawnItem( edict_t *ent, const gsitem_t *item );
 void G_Items_FinishSpawningItems( void );
-int PowerArmorType( edict_t *ent );
 const gsitem_t *GetItemByTag( int tag );
 bool Add_Ammo( gclient_t *client, const gsitem_t *item, int count, bool add_it );
 void Touch_ItemSound( edict_t *other, const gsitem_t *item );
@@ -531,7 +527,6 @@ void Touch_Item( edict_t *ent, edict_t *other, cplane_t *plane, int surfFlags );
 bool G_PickupItem( edict_t *other, const gsitem_t *it, int flags, int count, const int *invpack );
 void G_UseItem( struct edict_s *ent, const gsitem_t *item );
 edict_t *G_DropItem( struct edict_s *ent, const gsitem_t *item );
-bool Add_Armor( edict_t *ent, edict_t *other, bool pick_it );
 
 //
 // g_utils.c
@@ -716,9 +711,8 @@ void G_RadiusDamage( edict_t *inflictor, edict_t *attacker, cplane_t *plane, edi
 
 // damage flags
 #define DAMAGE_RADIUS 0x00000001  // damage was indirect
-#define DAMAGE_NO_ARMOR 0x00000002  // armour does not protect from this damage
-#define DAMAGE_NO_PROTECTION 0x00000004
-#define DAMAGE_NO_KNOCKBACK 0x00000008
+#define DAMAGE_NO_PROTECTION 0x00000002
+#define DAMAGE_NO_KNOCKBACK 0x00000004
 #define DAMAGE_KNOCKBACK_SOFT 0x00000040
 
 #define GIB_HEALTH      -40
@@ -1014,8 +1008,6 @@ typedef struct {
 
 	gs_laserbeamtrail_t trail;
 
-	float armor;
-
 	int64_t next_drown_time;
 	int drowningDamage;
 	int old_waterlevel;
@@ -1144,7 +1136,7 @@ typedef struct snap_edict_s {
 
 	// ents can accumulate damage along the frame, so they spawn less events
 	float damage_taken;
-	float damage_saved;         // saved by the armor.
+	float damage_saved;
 	vec3_t damage_dir;
 	vec3_t damage_at;
 	float damage_given;             // for hitsounds

@@ -303,7 +303,6 @@ static const gs_asProperty_t gametypedescr_Properties[] =
 	{ ASLIB_PROPERTY_DECL( bool, hasChallengersRoulette ), ASLIB_FOFFSET( gametype_descriptor_t, hasChallengersRoulette ) },
 	{ ASLIB_PROPERTY_DECL( int, maxPlayersPerTeam ), ASLIB_FOFFSET( gametype_descriptor_t, maxPlayersPerTeam ) },
 	{ ASLIB_PROPERTY_DECL( int, ammoRespawn ), ASLIB_FOFFSET( gametype_descriptor_t, ammo_respawn ) },
-	{ ASLIB_PROPERTY_DECL( int, armorRespawn ), ASLIB_FOFFSET( gametype_descriptor_t, armor_respawn ) },
 	{ ASLIB_PROPERTY_DECL( int, weaponRespawn ), ASLIB_FOFFSET( gametype_descriptor_t, weapon_respawn ) },
 	{ ASLIB_PROPERTY_DECL( int, healthRespawn ), ASLIB_FOFFSET( gametype_descriptor_t, health_respawn ) },
 	{ ASLIB_PROPERTY_DECL( int, powerupRespawn ), ASLIB_FOFFSET( gametype_descriptor_t, powerup_respawn ) },
@@ -551,7 +550,6 @@ static const gs_asProperty_t scorestats_Properties[] =
 	{ ASLIB_PROPERTY_DECL( const int, totalTeamDamageGiven ), ASLIB_FOFFSET( score_stats_t, total_teamdamage_given ) },
 	{ ASLIB_PROPERTY_DECL( const int, totalTeamDamageReceived ), ASLIB_FOFFSET( score_stats_t, total_teamdamage_received ) },
 	{ ASLIB_PROPERTY_DECL( const int, healthTaken ), ASLIB_FOFFSET( score_stats_t, health_taken ) },
-	{ ASLIB_PROPERTY_DECL( const int, armorTaken ), ASLIB_FOFFSET( score_stats_t, armor_taken ) },
 
 	ASLIB_PROPERTY_NULL
 };
@@ -666,7 +664,7 @@ static int objectGameClient_InventoryCount( int index, gclient_t *self ) {
 }
 
 static void objectGameClient_InventorySetCount( int index, int newcount, gclient_t *self ) {
-	gsitem_t *it;
+	const gsitem_t *it;
 
 	if( index < 0 || index >= MAX_ITEMS ) {
 		return;
@@ -994,7 +992,6 @@ static const gs_asProperty_t gameclient_Properties[] =
 	{ ASLIB_PROPERTY_DECL( const bool, isOperator ), ASLIB_FOFFSET( gclient_t, isoperator ) },
 	{ ASLIB_PROPERTY_DECL( const int64, queueTimeStamp ), ASLIB_FOFFSET( gclient_t, queueTimeStamp ) },
 	{ ASLIB_PROPERTY_DECL( const int, muted ), ASLIB_FOFFSET( gclient_t, muted ) },
-	{ ASLIB_PROPERTY_DECL( float, armor ), ASLIB_FOFFSET( gclient_t, resp.armor ) },
 	{ ASLIB_PROPERTY_DECL( const bool, chaseActive ), ASLIB_FOFFSET( gclient_t, resp.chase.active ) },
 	{ ASLIB_PROPERTY_DECL( int, chaseTarget ), ASLIB_FOFFSET( gclient_t, resp.chase.target ) },
 	{ ASLIB_PROPERTY_DECL( bool, chaseTeamonly ), ASLIB_FOFFSET( gclient_t, resp.chase.teamonly ) },
@@ -1251,7 +1248,7 @@ static void objectGameEntity_UseTargets( edict_t *activator, edict_t *self ) {
 }
 
 static edict_t *objectGameEntity_DropItemByTag( int tag, edict_t *self ) {
-	gsitem_t *item = GS_FindItemByTag( tag );
+	const gsitem_t *item = GS_FindItemByTag( tag );
 
 	if( !item ) {
 		return NULL;
@@ -1576,11 +1573,11 @@ static gsitem_t *asFunc_GS_FindItemByTag( int tag ) {
 	return GS_FindItemByTag( tag );
 }
 
-static gsitem_t *asFunc_GS_FindItemByName( asstring_t *name ) {
+static const gsitem_t *asFunc_GS_FindItemByName( asstring_t *name ) {
 	return ( !name || !name->len ) ? NULL : GS_FindItemByName( name->buffer );
 }
 
-static gsitem_t *asFunc_GS_FindItemByClassname( asstring_t *name ) {
+static const gsitem_t *asFunc_GS_FindItemByClassname( asstring_t *name ) {
 	return ( !name || !name->len ) ? NULL : GS_FindItemByClassname( name->buffer );
 }
 
@@ -2092,8 +2089,8 @@ static const gs_asglobfuncs_t asGameGlobFuncs[] =
 	{ "Client @G_GetClient( int clientNum )", asFUNCTION( asFunc_GetClient ), NULL },
 	{ "Team @G_GetTeam( int team )", asFUNCTION( asFunc_GetTeamlist ), NULL },
 	{ "Item @G_GetItem( int tag )", asFUNCTION( asFunc_GS_FindItemByTag ), NULL },
-	{ "Item @G_GetItemByName( const String &in name )", asFUNCTION( asFunc_GS_FindItemByName ), NULL },
-	{ "Item @G_GetItemByClassname( const String &in name )", asFUNCTION( asFunc_GS_FindItemByClassname ), NULL },
+	{ "const Item @G_GetItemByName( const String &in name )", asFUNCTION( asFunc_GS_FindItemByName ), NULL },
+	{ "const Item @G_GetItemByClassname( const String &in name )", asFUNCTION( asFunc_GS_FindItemByClassname ), NULL },
 	{ "array<Entity @> @G_FindInRadius( const Vec3 &in, float radius )", asFUNCTION( asFunc_G_FindInRadius ), NULL },
 	{ "array<Entity @> @G_FindByClassname( const String &in )", asFUNCTION( asFunc_G_FindByClassname ), NULL },
 

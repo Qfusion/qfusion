@@ -141,10 +141,6 @@ static int CG_GetPOVnum( const void *parameter ) {
 	return ( cg.predictedPlayerState.POVnum != cgs.playerNum + 1 ) ? cg.predictedPlayerState.POVnum : STAT_NOTSET;
 }
 
-static int CG_GetArmorItem( const void *parameter ) {
-	return GS_Armor_TagForCount( cg.predictedPlayerState.stats[STAT_ARMOR] );
-}
-
 static float _getspeed( void ) {
 	vec3_t hvel;
 
@@ -476,7 +472,6 @@ static const reference_numeric_t cg_numeric_references[] =
 {
 	// stats
 	{ "HEALTH", CG_GetStatValue, (void *)STAT_HEALTH },
-	{ "ARMOR", CG_GetStatValue, (void *)STAT_ARMOR },
 	{ "WEAPON_ITEM", CG_GetStatValue, (void *)STAT_WEAPON },
 	{ "PENDING_WEAPON", CG_GetStatValue, (void *)STAT_PENDING_WEAPON },
 
@@ -530,7 +525,6 @@ static const reference_numeric_t cg_numeric_references[] =
 
 	// other
 	{ "CHASING", CG_GetPOVnum, NULL },
-	{ "ARMOR_ITEM", CG_GetArmorItem, NULL },
 	{ "SPEED", CG_GetSpeed, NULL },
 	{ "SPEED_VERTICAL", CG_GetSpeedVertical, NULL },
 	{ "FPS", CG_GetFPS, NULL },
@@ -2625,7 +2619,7 @@ void Cmd_CG_PrintHudHelp_f( void ) {
 	const cg_layoutcommand_t *cmd;
 	cg_layoutoperators_t *op;
 	int i;
-	gsitem_t    *item;
+	const gsitem_t *item;
 	char *name, *p;
 
 	CG_Printf( "- %sHUD scripts commands\n-------------------------------------%s\n", S_COLOR_YELLOW, S_COLOR_WHITE );
@@ -2772,7 +2766,7 @@ static cg_layoutnode_t *CG_LayoutParseArgumentNode( const char *token ) {
 	char tokcopy[MAX_TOKEN_CHARS], *p;
 	const char *valuetok;
 	static char tmpstring[8];
-	gsitem_t *item;
+	const gsitem_t *item;
 
 	// find what's it
 	if( !token ) {

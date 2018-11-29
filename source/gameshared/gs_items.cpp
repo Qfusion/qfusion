@@ -27,21 +27,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "q_collision.h"
 #include "gs_public.h"
 
-//============================================================================
-
-// item box
-vec3_t item_box_mins = { -16.0f, -16.0f, -16.0f };
-vec3_t item_box_maxs = { 16.0f, 16.0f, 40.0f };
-
-#define ARMOR_SHARD_PICKUP 5
-#define ARMOR_SHARD_MAX 200
-#define ARMOR_GA_PICKUP 50
-#define ARMOR_GA_MAX 100
-#define ARMOR_YA_PICKUP 75
-#define ARMOR_YA_MAX 125
-#define ARMOR_RA_PICKUP 100
-#define ARMOR_RA_MAX 150
-
 #define SHELL_TIME  30
 #define QUAD_TIME   30
 #define REGEN_TIME  30
@@ -620,97 +605,6 @@ gsitem_t itemdefs[] =
 	},
 
 	//------------------------
-	// ARMOR
-	//------------------------
-	//QUAKED item_armor_ga (.3 .3 1) (-16 -16 -16) (16 16 16)
-	{
-		"item_armor_ga",
-		ARMOR_GA,
-		IT_ARMOR,
-		ITFLAG_PICKABLE,
-
-		{ PATH_GA_MODEL, 0 },
-		PATH_GA_ICON,
-		PATH_GA_SIMPLEITEM,
-		S_PICKUP_ARMOR_GA,
-		EF_ROTATE_AND_BOB | EF_OUTLINE,
-
-		"Green Armor", "GA", S_COLOR_GREEN,
-		ARMOR_GA_PICKUP,
-		ARMOR_GA_MAX,
-		AMMO_NONE,
-		AMMO_NONE,
-		NULL,
-		NULL, NULL, NULL
-	},
-
-	//QUAKED item_armor_ya (.3 .3 1) (-16 -16 -16) (16 16 16)
-	{
-		"item_armor_ya",
-		ARMOR_YA,
-		IT_ARMOR,
-		ITFLAG_PICKABLE,
-
-		{ PATH_YA_MODEL, 0 },
-		PATH_YA_ICON,
-		PATH_YA_SIMPLEITEM,
-		S_PICKUP_ARMOR_YA,
-		EF_ROTATE_AND_BOB | EF_OUTLINE,
-
-		"Yellow Armor", "YA", S_COLOR_YELLOW,
-		ARMOR_YA_PICKUP,
-		ARMOR_YA_MAX,
-		AMMO_NONE,
-		AMMO_NONE,
-		NULL,
-		NULL, NULL, NULL
-	},
-
-	//QUAKED item_armor_ra (.3 .3 1) (-16 -16 -16) (16 16 16)
-	{
-		"item_armor_ra",
-		ARMOR_RA,
-		IT_ARMOR,
-		ITFLAG_PICKABLE,
-
-		{ PATH_RA_MODEL, 0 },
-		PATH_RA_ICON,
-		PATH_RA_SIMPLEITEM,
-		S_PICKUP_ARMOR_RA,
-		EF_ROTATE_AND_BOB | EF_OUTLINE,
-
-		"Red Armor", "RA", S_COLOR_RED,
-		ARMOR_RA_PICKUP,
-		ARMOR_RA_MAX,
-		AMMO_NONE,
-		AMMO_NONE,
-		NULL,
-		NULL, NULL, NULL
-	},
-
-	//QUAKED item_armor_shard (.3 .3 1) (-16 -16 -16) (16 16 16)
-	{
-		"item_armor_shard",
-		ARMOR_SHARD,
-		IT_ARMOR,
-		ITFLAG_PICKABLE,
-
-		{ PATH_SHARD_MODEL, 0 },
-		PATH_SHARD_ICON,
-		PATH_SHARD_SIMPLEITEM,
-		S_PICKUP_ARMOR_SHARD,
-		EF_ROTATE_AND_BOB | EF_OUTLINE,
-
-		"Armor Shard", "shard", S_COLOR_GREEN,
-		ARMOR_SHARD_PICKUP,
-		ARMOR_SHARD_MAX,
-		AMMO_NONE,
-		AMMO_NONE,
-		NULL,
-		NULL, NULL, NULL
-	},
-
-	//------------------------
 	// HEALTH ITEMS
 	//------------------------
 
@@ -972,13 +866,8 @@ gsitem_t itemdefs[] =
 	{ NULL }
 };
 
-typedef struct {
-	char dummy[sizeof( itemdefs ) / sizeof( itemdefs[0] ) - GS_MAX_ITEM_TAGS];
-} static_assert_itemdefs_gt_GS_MAX_ITEM_TAGS;
-
-typedef struct {
-	char dummy[GS_MAX_ITEM_TAGS + 2 - sizeof( itemdefs ) / sizeof( itemdefs[0] )];
-} static_assert_GS_MAX_ITEM_TAGS_gt_itemdefs_plus1;
+STATIC_ASSERT( ARRAY_COUNT( itemdefs ) >= GS_MAX_ITEM_TAGS );
+STATIC_ASSERT( ARRAY_COUNT( itemdefs ) <= GS_MAX_ITEM_TAGS + 2 );
 
 //====================================================================
 
@@ -1014,8 +903,8 @@ gsitem_t *GS_FindItemByTag( const int tag ) {
 /*
 * GS_FindItemByClassname
 */
-gsitem_t *GS_FindItemByClassname( const char *classname ) {
-	gsitem_t    *it;
+const gsitem_t *GS_FindItemByClassname( const char *classname ) {
+	const gsitem_t *it;
 
 	if( !classname ) {
 		return NULL;
@@ -1033,8 +922,8 @@ gsitem_t *GS_FindItemByClassname( const char *classname ) {
 /*
 * GS_FindItemByName
 */
-gsitem_t *GS_FindItemByName( const char *name ) {
-	gsitem_t    *it;
+const gsitem_t *GS_FindItemByName( const char *name ) {
+	const gsitem_t *it;
 
 	if( !name ) {
 		return NULL;
@@ -1052,8 +941,8 @@ gsitem_t *GS_FindItemByName( const char *name ) {
 /*
 * GS_Cmd_UseItem
 */
-gsitem_t *GS_Cmd_UseItem( player_state_t *playerState, const char *string, int typeMask ) {
-	gsitem_t *item = NULL;
+const gsitem_t *GS_Cmd_UseItem( player_state_t *playerState, const char *string, int typeMask ) {
+	const gsitem_t *item = NULL;
 
 	assert( playerState );
 
@@ -1142,8 +1031,8 @@ gsitem_t *GS_Cmd_UseItem( player_state_t *playerState, const char *string, int t
 /*
 * GS_Cmd_UseWeaponStep_f
 */
-static gsitem_t *GS_Cmd_UseWeaponStep_f( player_state_t *playerState, int step, int predictedWeaponSwitch ) {
-	gsitem_t *item;
+static const gsitem_t *GS_Cmd_UseWeaponStep_f( player_state_t *playerState, int step, int predictedWeaponSwitch ) {
+	const gsitem_t *item;
 	int curSlot, newSlot;
 
 	assert( playerState );
@@ -1188,49 +1077,13 @@ static gsitem_t *GS_Cmd_UseWeaponStep_f( player_state_t *playerState, int step, 
 /*
 * GS_Cmd_NextWeapon_f
 */
-gsitem_t *GS_Cmd_NextWeapon_f( player_state_t *playerState, int predictedWeaponSwitch ) {
+const gsitem_t *GS_Cmd_NextWeapon_f( player_state_t *playerState, int predictedWeaponSwitch ) {
 	return GS_Cmd_UseWeaponStep_f( playerState, 1, predictedWeaponSwitch );
 }
 
 /*
 * GS_Cmd_PrevWeapon_f
 */
-gsitem_t *GS_Cmd_PrevWeapon_f( player_state_t *playerState, int predictedWeaponSwitch ) {
+const gsitem_t *GS_Cmd_PrevWeapon_f( player_state_t *playerState, int predictedWeaponSwitch ) {
 	return GS_Cmd_UseWeaponStep_f( playerState, -1, predictedWeaponSwitch );
-}
-
-//=====================================
-//		ARMOR TYPES
-//=====================================
-
-int GS_Armor_TagForCount( float armorcount ) {
-	int count = ARMOR_TO_INT( armorcount );
-
-	if( count > GS_FindItemByTag( ARMOR_YA )->inventory_max ) {
-		return ARMOR_RA;
-	}
-	if( count > GS_FindItemByTag( ARMOR_GA )->inventory_max ) {
-		return ARMOR_YA;
-	}
-	if( count ) {
-		return ARMOR_GA;
-	}
-
-	return ARMOR_NONE;
-}
-
-int GS_Armor_MaxCountForTag( int tag ) {
-	gsitem_t *item = GS_FindItemByTag( tag );
-	if( item ) {
-		return item->inventory_max;
-	}
-	return 255;
-}
-
-int GS_Armor_PickupCountForTag( int tag ) {
-	gsitem_t *item = GS_FindItemByTag( tag );
-	if( item ) {
-		return item->quantity;
-	}
-	return 0;
 }

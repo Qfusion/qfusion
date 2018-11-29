@@ -182,7 +182,7 @@ void G_ScoreboardMessage_AddSpectators( void ) {
 * generic one to add the stats of the current player into the scoreboard message at cgame
 */
 static const char *G_PlayerStatsMessage( edict_t *ent ) {
-	gsitem_t *it;
+	const gsitem_t *it;
 	int i;
 	int weakhit, weakshot;
 	int hit, shot;
@@ -348,11 +348,6 @@ void G_SetClientStats( edict_t *ent ) {
 	client->r.frags = client->ps.stats[STAT_SCORE];
 
 	//
-	// armor
-	//
-	client->ps.stats[STAT_ARMOR] = ARMOR_TO_INT( client->resp.armor );
-
-	//
 	// pickup message
 	//
 	if( level.time > client->resp.pickup_msg_time ) {
@@ -396,35 +391,7 @@ void G_SetClientStats( edict_t *ent ) {
 	if( client->ps.stats[STAT_POINTED_PLAYER] && GS_TeamBasedGametype() ) {
 		edict_t *e = &game.edicts[client->ps.stats[STAT_POINTED_PLAYER]];
 		if( e->s.team == ent->s.team ) {
-			int pointedhealth = HEALTH_TO_INT( e->health );
-			int pointedarmor = 0;
-			int available_bits = 0;
-			bool mega = false;
-
-			if( pointedhealth < 0 ) {
-				pointedhealth = 0;
-			}
-			if( pointedhealth > 100 ) {
-				pointedhealth -= 100;
-				mega = true;
-				if( pointedhealth > 100 ) {
-					pointedhealth = 100;
-				}
-			}
-			pointedhealth /= 3.2;
-
-			if( GS_Armor_TagForCount( e->r.client->resp.armor ) ) {
-				pointedarmor = ARMOR_TO_INT( e->r.client->resp.armor );
-			}
-			if( pointedarmor > 150 ) {
-				pointedarmor = 150;
-			}
-			pointedarmor /= 5;
-
-			client->ps.stats[STAT_POINTED_TEAMPLAYER] = ( ( pointedhealth & 0x1F ) | ( pointedarmor & 0x3F ) << 6 | ( available_bits & 0xF ) << 12 );
-			if( mega ) {
-				client->ps.stats[STAT_POINTED_TEAMPLAYER] |= 0x20;
-			}
+			client->ps.stats[STAT_POINTED_TEAMPLAYER] = HEALTH_TO_INT( e->health );
 		}
 	}
 

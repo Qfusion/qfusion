@@ -129,7 +129,6 @@ void GENERIC_SetUpMatch()
 
 	// set items to be spawned with a delay
 	G_Items_RespawnByType( IT_POWERUP, 0, random_uniform( 20, 40 ) );
-	G_Items_RespawnByType( IT_ARMOR, 0, 10 );
 	G_Items_RespawnByType( IT_HEALTH, HEALTH_MEGA, 15 );
 	G_Items_RespawnByType( IT_HEALTH, HEALTH_ULTRA, 15 );
 	G_RemoveDeadBodies();

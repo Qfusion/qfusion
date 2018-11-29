@@ -195,7 +195,7 @@ bool Add_Ammo( gclient_t *client, const gsitem_t *item, int count, bool add_it )
 }
 
 static bool Pickup_AmmoPack( edict_t *other, const int *invpack ) {
-	gsitem_t *item;
+	const gsitem_t *item;
 	int i;
 
 	if( !other->r.client ) {
@@ -308,61 +308,6 @@ static bool Pickup_Health( edict_t *other, const gsitem_t *item, int flags ) {
 
 //======================================================================
 
-bool Add_Armor( edict_t *other, const gsitem_t *item, bool pick_it ) {
-	gclient_t *client = other->r.client;
-	float maxarmorcount = 0.0f, newarmorcount;
-	float pickupitem_maxcount;
-
-	if( !client ) {
-		return false;
-	}
-
-	if( !( item->type & IT_ARMOR ) ) {
-		return false;
-	}
-
-	pickupitem_maxcount = GS_Armor_MaxCountForTag( item->tag );
-
-	// can't pick if surpassed the max armor count of that type
-	if( pickupitem_maxcount && ( client->resp.armor >= pickupitem_maxcount ) ) {
-		return false;
-	}
-
-	if( GS_Armor_TagForCount( client->resp.armor ) == ARMOR_NONE ) {
-		maxarmorcount = pickupitem_maxcount;
-	} else {
-		maxarmorcount = max( GS_Armor_MaxCountForTag( GS_Armor_TagForCount( client->resp.armor ) ), pickupitem_maxcount );
-	}
-
-	if( !pickupitem_maxcount ) {
-		newarmorcount = client->resp.armor + GS_Armor_PickupCountForTag( item->tag );
-	} else {
-		newarmorcount = min( client->resp.armor + GS_Armor_PickupCountForTag( item->tag ), maxarmorcount );
-	}
-
-	// it can't be picked up if it doesn't add any armor
-	if( newarmorcount <= client->resp.armor ) {
-		return false;
-	}
-
-	if( pick_it ) {
-		client->resp.armor = newarmorcount;
-		client->ps.stats[STAT_ARMOR] = ARMOR_TO_INT( client->resp.armor );
-		client->level.stats.armor_taken += item->quantity;
-		teamlist[other->s.team].stats.armor_taken += item->quantity;
-	}
-
-	return true;
-}
-
-static bool Pickup_Armor( edict_t *other, const gsitem_t *item ) {
-	return Add_Armor( other, item, true );
-}
-
-//======================================================================
-
-//======================================================================
-
 void Touch_ItemSound( edict_t *other, const gsitem_t *item ) {
 	if( item->pickup_sound ) {
 		if( item->type & IT_POWERUP ) {
@@ -454,10 +399,6 @@ static void drop_make_touchable( edict_t *ent ) {
 	}
 }
 
-static void AI_AddDroppedItem( edict_t *ent ) {
-	AI_AddNavEntity( ent, (ai_nav_entity_flags)( AI_NAV_REACH_AT_TOUCH | AI_NAV_DROPPED ) );
-}
-
 edict_t *Drop_Item( edict_t *ent, const gsitem_t *item ) {
 	edict_t *dropped;
 	vec3_t forward, right;
@@ -476,7 +417,6 @@ edict_t *Drop_Item( edict_t *ent, const gsitem_t *item ) {
 	dropped->r.solid = SOLID_TRIGGER;
 	dropped->movetype = MOVETYPE_TOSS;
 	dropped->touch = drop_temp_touch;
-	dropped->stop = AI_AddDroppedItem;
 	dropped->r.owner = ent;
 	dropped->r.svflags &= ~SVF_NOCLIENT;
 	dropped->s.team = ent->s.team;
@@ -552,14 +492,14 @@ edict_t *Drop_Item( edict_t *ent, const gsitem_t *item ) {
 
 			for( w = WEAP_GUNBLADE + 1; w < WEAP_TOTAL; w++ ) {
 				if( item->tag == AMMO_PACK_WEAK || item->tag == AMMO_PACK ) {
-					gsitem_t *ammo = GS_FindItemByTag( GS_FindItemByTag( w )->weakammo_tag );
+					const gsitem_t *ammo = GS_FindItemByTag( GS_FindItemByTag( w )->weakammo_tag );
 					if( ammo ) {
 						dropped->invpak[ammo->tag] = ammo->quantity;
 					}
 				}
 
 				if( item->tag == AMMO_PACK_STRONG || item->tag == AMMO_PACK ) {
-					gsitem_t *ammo = GS_FindItemByTag( GS_FindItemByTag( w )->ammo_tag );
+					const gsitem_t *ammo = GS_FindItemByTag( GS_FindItemByTag( w )->ammo_tag );
 					if( ammo ) {
 						dropped->invpak[ammo->tag] = ammo->quantity;
 					}
@@ -604,8 +544,6 @@ bool G_PickupItem( edict_t *other, const gsitem_t *it, int flags, int count, con
 		taken = Pickup_Weapon( other, it, flags, count );
 	} else if( it->type & IT_AMMO ) {
 		taken = Pickup_Ammo( other, it, count, invpack );
-	} else if( it->type & IT_ARMOR ) {
-		taken = Pickup_Armor( other, it );
 	} else if( it->type & IT_HEALTH ) {
 		taken = Pickup_Health( other, it, flags );
 	} else if( it->type & IT_POWERUP ) {
@@ -664,149 +602,6 @@ void G_UseItem( edict_t *ent, const gsitem_t *it ) {
 }
 
 //======================================================================
-
-static edict_t *G_ClosestFlagBase( edict_t *ent ) {
-	int i;
-	edict_t *t, *best;
-	float dist, best_dist;
-	static bool firstTime = true;
-	static unsigned int lastLevelSpawnCount;
-	static edict_t *flagBases[GS_MAX_TEAMS];
-
-	// store pointers to flag bases if called for the first time in this level spawn
-	if( firstTime || lastLevelSpawnCount != game.levelSpawnCount ) {
-		for( t = game.edicts + 1 + gs.maxclients; ENTNUM( t ) < game.numentities; t++ ) {
-			if( t->s.type != ET_FLAG_BASE ) {
-				continue;
-			}
-			flagBases[t->s.team] = t;
-		}
-
-		// ok, remember last time we were called
-		firstTime = false;
-		lastLevelSpawnCount = game.levelSpawnCount;
-	}
-
-	best = NULL;
-	best_dist = 9999999;
-
-	// find the closest flag base starting from TEAM_ALPHA
-	for( i = TEAM_ALPHA; i < GS_MAX_TEAMS; i++ ) {
-		t = flagBases[i];
-		if( !t ) {
-			continue;
-		}
-
-		// if equally distant from two bases, consider this item neutral
-		dist = Distance( ent->s.origin, t->s.origin );
-		if( best && fabs( dist - best_dist ) < 10 ) {
-			best = NULL;
-			break;
-		}
-
-		if( dist < best_dist ) {
-			best_dist = dist;
-			best = t;
-		}
-	}
-
-	return best;
-}
-
-static bool G_ItemTimerNeeded( const gsitem_t *it ) {
-	assert( it );
-
-	if( it->type == IT_POWERUP ) {
-		return true;
-	}
-	if( it->type == IT_ARMOR ) {
-		return ( it->tag == ARMOR_YA || it->tag == ARMOR_RA ) ? true : false;
-	}
-	if( it->type == IT_HEALTH ) {
-		return ( it->tag == HEALTH_MEGA || it->tag == HEALTH_ULTRA ) ? true : false;
-	}
-
-	return false;
-}
-
-static bool G_ItemTimerUnimportant( const gsitem_t *it ) {
-	assert( it );
-
-	if( it->type == IT_ARMOR ) {
-		return ( it->tag == ARMOR_GA ) ? true : false;
-	}
-	return false;
-}
-
-/*
-* item_timer_think
-*/
-static void item_timer_think( edict_t *ent ) {
-	edict_t *owner;
-
-	owner = ent->r.owner;
-	if( !owner || !owner->r.inuse || owner->s.type != ET_ITEM ) {
-		G_FreeEdict( ent );
-		return;
-	}
-
-	if( owner->think != DoRespawn ) {
-		// megahealth is special
-		if( ( owner->spawnflags & ITEM_TIMED ) && owner->r.owner ) {
-			/*			if( owner->r.owner->r.inuse && owner->r.owner->s.team != TEAM_SPECTATOR &&
-			HEALTH_TO_INT( owner->r.owner->health ) > owner->r.owner->max_health )
-			ent->s.frame = HEALTH_TO_INT( owner->r.owner->health ) - owner->r.owner->max_health;
-			else*/
-			ent->s.frame = 0;
-			ent->s.frame += G_Gametype_RespawnTimeForItem( owner->item ) / 1000;
-		} else {
-			ent->s.frame = 0;
-		}
-	} else {
-		ent->s.frame = owner->nextThink - level.time;
-		if( ent->s.frame < 0 ) {
-			ent->s.frame = 0;
-		} else {
-			ent->s.frame = (int)( (float)ent->s.frame / 1000.0 + 0.5 );
-		}
-	}
-	ent->nextThink = level.time + 1000;
-}
-
-/*
-* Spawn_ItemTimer
-*/
-static edict_t *Spawn_ItemTimer( edict_t *ent ) {
-	edict_t *timer;
-
-	// item timer is a special entity type, carrying information about its parent item entity
-	// which is only visible to spectators
-	timer = G_Spawn();
-	timer->s.type = ET_ITEM_TIMER;
-	timer->s.itemNum = ent->s.itemNum;
-	timer->s.team = TEAM_SPECTATOR;
-	timer->r.svflags = SVF_ONLYTEAM | SVF_BROADCAST;
-	timer->r.owner = ent;
-	timer->s.modelindex = 0;
-	timer->nextThink = level.time + 250;
-	timer->think = item_timer_think;
-	VectorCopy( ent->s.origin, timer->s.origin ); // for z-sorting
-
-	if( /*( ( item->type != IT_POWERUP ) && */ GS_TeamBasedGametype() ) {
-		edict_t *base;
-
-		// what follows is basically a hack that allows timers to be assigned
-		// to different teams in CTF. Powerups remain unassigned though
-		base = G_ClosestFlagBase( ent );
-		if( base ) {
-			timer->s.modelindex = base->s.team;
-		}
-	}
-
-	timer->s.modelindex++; // add + 1 so we're guaranteed to have modelindex > 0
-
-	return timer;
-}
 
 /*
 * Finish_SpawningItem
@@ -896,22 +691,13 @@ static void Finish_SpawningItem( edict_t *ent ) {
 	}
 
 	GClip_LinkEntity( ent );
-
-	AI_AddNavEntity( ent, AI_NAV_REACH_AT_TOUCH );
 }
-
-#define MAX_IMPORTANT_ITEMS_THRESHOLD   5
 
 /*
 * Items may be spawned above other entities and they need them spawned before
 */
 void G_Items_FinishSpawningItems( void ) {
-	int num_timers, num_opts;
-	edict_t *ent;
-	edict_t *ops[MAX_EDICTS];
-
-	num_timers = num_opts = 0;
-	for( ent = game.edicts + 1 + gs.maxclients; ENTNUM( ent ) < game.numentities; ent++ ) {
+	for( edict_t *ent = game.edicts + 1 + gs.maxclients; ENTNUM( ent ) < game.numentities; ent++ ) {
 		if( !ent->r.inuse || !ent->item || ent->s.type != ET_ITEM ) {
 			continue;
 		}
@@ -922,23 +708,6 @@ void G_Items_FinishSpawningItems( void ) {
 		if( !ent->r.inuse ) {
 			continue;
 		}
-
-		if( G_ItemTimerNeeded( ent->item ) ) {
-			if( Spawn_ItemTimer( ent ) ) {
-				num_timers++;
-			}
-		} else if( G_ItemTimerUnimportant( ent->item ) ) {
-			ops[num_opts++] = ent;
-		}
-	}
-
-	ops[num_opts] = NULL;
-
-	// if there are less timers than MAX_IMPORTANT_ITEMS_THRESHOLD, spawn
-	// timers for less important items
-	if( num_timers < MAX_IMPORTANT_ITEMS_THRESHOLD ) {
-		for( ; num_opts > 0; num_opts-- )
-			Spawn_ItemTimer( ops[num_opts - 1] );
 	}
 }
 
@@ -958,7 +727,6 @@ void SpawnItem( edict_t *ent, const gsitem_t *item ) {
 	ent->s.effects = 0; // default effects are applied client side
 }
 
-
 /*
 * PrecacheItem
 *
@@ -971,7 +739,7 @@ void PrecacheItem( const gsitem_t *it ) {
 	const char *s, *start;
 	char data[MAX_QPATH];
 	int len;
-	gsitem_t    *ammo;
+	const gsitem_t *ammo;
 
 	if( !it ) {
 		return;
@@ -1048,7 +816,7 @@ void PrecacheItem( const gsitem_t *it ) {
 */
 void G_PrecacheItems( void ) {
 	int i;
-	gsitem_t *item;
+	const gsitem_t *item;
 
 	// precache item names and weapondefs
 	for( i = 1; i < GS_MAX_ITEM_TAGS; i++ ) {

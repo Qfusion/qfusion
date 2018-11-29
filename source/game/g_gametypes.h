@@ -67,7 +67,6 @@ typedef struct {
 	int total_teamdamage_given;
 	int total_teamdamage_received;
 	int health_taken;
-	int armor_taken;
 
 	int asFactored;
 	int asRefCount;
@@ -108,7 +107,6 @@ typedef struct {
 
 	// default item respawn time
 	int ammo_respawn;
-	int armor_respawn;
 	int weapon_respawn;
 	int health_respawn;
 	int powerup_respawn;

@@ -201,7 +201,6 @@ static const gs_asEnumVal_t asItemTypeEnumVals[] =
 {
 	ASLIB_ENUM_VAL( IT_WEAPON ),
 	ASLIB_ENUM_VAL( IT_AMMO ),
-	ASLIB_ENUM_VAL( IT_ARMOR ),
 	ASLIB_ENUM_VAL( IT_POWERUP ),
 	ASLIB_ENUM_VAL( IT_HEALTH ),
 
@@ -246,17 +245,6 @@ static const gs_asEnumVal_t asAmmoTagEnumVals[] =
 	ASLIB_ENUM_VAL( AMMO_WEAK_BOLTS ),
 
 	ASLIB_ENUM_VAL( AMMO_TOTAL ),
-
-	ASLIB_ENUM_VAL_NULL
-};
-
-static const gs_asEnumVal_t asArmorTagEnumVals[] =
-{
-	ASLIB_ENUM_VAL( ARMOR_NONE ),
-	ASLIB_ENUM_VAL( ARMOR_GA ),
-	ASLIB_ENUM_VAL( ARMOR_YA ),
-	ASLIB_ENUM_VAL( ARMOR_RA ),
-	ASLIB_ENUM_VAL( ARMOR_SHARD ),
 
 	ASLIB_ENUM_VAL_NULL
 };
@@ -526,7 +514,6 @@ static const gs_asEnum_t asGameEnums[] =
 
 	{ "weapon_tag_e", asWeaponTagEnumVals },
 	{ "ammo_tag_e", asAmmoTagEnumVals },
-	{ "armor_tag_e", asArmorTagEnumVals },
 	{ "health_tag_e", asHealthTagEnumVals },
 	{ "powerup_tag_e", asPowerupTagEnumVals },
 	{ "otheritems_tag_e", asMiscItemTagEnumVals },

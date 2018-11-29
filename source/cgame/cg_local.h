@@ -571,7 +571,6 @@ typedef struct {
 	int pointedNum;
 	int64_t pointRemoveTime;
 	int pointedHealth;
-	int pointedArmor;
 
 	//
 	// all cyclic walking effects

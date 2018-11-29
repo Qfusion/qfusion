@@ -423,7 +423,6 @@ void CG_ClearPointedNum( void ) {
 	cg.pointedNum = 0;
 	cg.pointRemoveTime = 0;
 	cg.pointedHealth = 0;
-	cg.pointedArmor = 0;
 }
 
 /*
@@ -437,20 +436,9 @@ static void CG_UpdatePointedNum( void ) {
 	}
 
 	if( cg.predictedPlayerState.stats[STAT_POINTED_PLAYER] ) {
-		bool mega = false;
-
 		cg.pointedNum = cg.predictedPlayerState.stats[STAT_POINTED_PLAYER];
 		cg.pointRemoveTime = cg.time + 150;
-
-		cg.pointedHealth = 3.2 * ( cg.predictedPlayerState.stats[STAT_POINTED_TEAMPLAYER] & 0x1F );
-		mega = cg.predictedPlayerState.stats[STAT_POINTED_TEAMPLAYER] & 0x20 ? true : false;
-		cg.pointedArmor = 5 * ( cg.predictedPlayerState.stats[STAT_POINTED_TEAMPLAYER] >> 6 & 0x3F );
-		if( mega ) {
-			cg.pointedHealth += 100;
-			if( cg.pointedHealth > 200 ) {
-				cg.pointedHealth = 200;
-			}
-		}
+		cg.pointedHealth = cg.predictedPlayerState.stats[STAT_POINTED_TEAMPLAYER];
 	}
 
 	if( cg.pointRemoveTime <= cg.time ) {

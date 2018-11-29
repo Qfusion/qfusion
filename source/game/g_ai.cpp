@@ -98,12 +98,6 @@ void AI_RemoveBot( const char * name ) {
 	G_Printf( "BOT: %s not found\n", name );
 }
 
-void AI_AddNavEntity( edict_t * ent, ai_nav_entity_flags flags ) {
-}
-
-void AI_RemoveNavEntity( edict_t * ent ) {
-}
-
 void AI_RegisterEvent( edict_t * ent, int event, int parm ) {
 }
 

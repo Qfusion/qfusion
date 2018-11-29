@@ -34,10 +34,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "version.h"
 #include "bsp.h"
 
-template< typename T, size_t N >
-char ( &ArrayCountObj( const T ( & )[ N ] ) )[ N ];
-#define ARRAY_COUNT( arr ) ( sizeof( ArrayCountObj( arr ) ) )
-
 //============================================================================
 
 struct mempool_s;

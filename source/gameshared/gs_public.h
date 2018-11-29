@@ -62,8 +62,8 @@ extern vec3_t playerbox_gib_maxs;
 extern int playerbox_gib_viewheight;
 
 // item box
-extern vec3_t item_box_mins;
-extern vec3_t item_box_maxs;
+constexpr vec3_t item_box_mins = { -16.0f, -16.0f, -16.0f };
+constexpr vec3_t item_box_maxs = { 16.0f, 16.0f, 40.0f };
 
 #define BASEGRAVITY 800
 #define GRAVITY 850
@@ -345,11 +345,6 @@ enum {
 //===============================================================
 
 #define HEALTH_TO_INT( x )    ( ( x ) < 1.0f ? (int)ceil( ( x ) ) : (int)floor( ( x ) + 0.5f ) )
-#define ARMOR_TO_INT( x )     ( ( x ) < 1.0f ? (int)floor( ( x ) + 0.5f ) : (int)floor( ( x ) + 0.5f ) )
-
-#define ARMOR_DEGRADATION 0.66 // how much armor is lost per damage point taken
-#define ARMOR_PROTECTION 0.66 // how much damage is removed per damage point taken
-#define ARMOR_DECAY_MAX_ARMOR 0 // decay to this value ( 0 disabled )
 
 // gs_items - shared items definitions
 
@@ -392,30 +387,17 @@ typedef enum {
 	AMMO_WEAK_BOLTS,
 
 	AMMO_TOTAL
-
 } ammo_tag_t;
 
 typedef enum {
-	ARMOR_NONE = 0,
-	ARMOR_GA = AMMO_TOTAL,
-	ARMOR_YA,
-	ARMOR_RA,
-	ARMOR_SHARD,
-
-	ARMOR_TOTAL
-
-} armor_tag_t;
-
-typedef enum {
 	HEALTH_NONE = 0,
-	HEALTH_SMALL = ARMOR_TOTAL,
+	HEALTH_SMALL = AMMO_TOTAL,
 	HEALTH_MEDIUM,
 	HEALTH_LARGE,
 	HEALTH_MEGA,
 	HEALTH_ULTRA,
 
 	HEALTH_TOTAL
-
 } health_tag_t;
 
 typedef enum {
@@ -425,7 +407,6 @@ typedef enum {
 	POWERUP_REGEN,
 
 	POWERUP_TOTAL
-
 } powerup_tag_t;
 
 typedef enum {
@@ -451,8 +432,7 @@ typedef enum {
 typedef enum {
 	IT_WEAPON = 1,
 	IT_AMMO = 2,
-	IT_ARMOR = 4,
-	IT_POWERUP = 8,
+	IT_POWERUP = 4,
 	IT_HEALTH = 64,
 } itemtype_t;
 
@@ -493,14 +473,11 @@ typedef struct gitem_s {
 extern gsitem_t itemdefs[];
 
 gsitem_t *GS_FindItemByTag( const int tag );
-gsitem_t *GS_FindItemByClassname( const char *classname );
-gsitem_t *GS_FindItemByName( const char *name );
-gsitem_t *GS_Cmd_UseItem( player_state_t *playerState, const char *string, int typeMask );
-gsitem_t *GS_Cmd_NextWeapon_f( player_state_t *playerState, int predictedWeaponSwitch );
-gsitem_t *GS_Cmd_PrevWeapon_f( player_state_t *playerState, int predictedWeaponSwitch );
-int GS_Armor_TagForCount( float armorcount );
-int GS_Armor_MaxCountForTag( int tag );
-int GS_Armor_PickupCountForTag( int tag );
+const gsitem_t *GS_FindItemByClassname( const char *classname );
+const gsitem_t *GS_FindItemByName( const char *name );
+const gsitem_t *GS_Cmd_UseItem( player_state_t *playerState, const char *string, int typeMask );
+const gsitem_t *GS_Cmd_NextWeapon_f( player_state_t *playerState, int predictedWeaponSwitch );
+const gsitem_t *GS_Cmd_PrevWeapon_f( player_state_t *playerState, int predictedWeaponSwitch );
 
 //===============================================================
 
@@ -609,7 +586,6 @@ float GS_FrameForTime( int *frame, int64_t curTime, int64_t startTimeStamp, floa
 enum {
 	STAT_LAYOUTS = 0,
 	STAT_HEALTH,
-	STAT_ARMOR,
 	STAT_WEAPON,
 	STAT_WEAPON_TIME,
 	STAT_PENDING_WEAPON,
@@ -661,17 +637,12 @@ enum {
 
 	GS_GAMETYPE_STATS_END = PS_MAX_STATS,
 
-	MAX_STATS = PS_MAX_STATS //64
+	MAX_STATS = PS_MAX_STATS, // 64
 };
 
 #define ISGAMETYPESTAT( x ) ( ( x >= GS_GAMETYPE_STATS_START ) && ( x < GS_GAMETYPE_STATS_END ) )
 
-#ifdef __GNUC__
-static const char *gs_keyicon_names[] __attribute__( ( unused ) ) =
-{
-#else
-static const char *gs_keyicon_names[] = {
-#endif
+static constexpr const char *gs_keyicon_names[] = {
 	"forward",
 	"backward",
 	"left",

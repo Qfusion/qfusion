@@ -24,6 +24,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 //==============================================
 
+template< typename T, size_t N >
+char ( &ArrayCountObj( const T ( & )[ N ] ) )[ N ];
+#define ARRAY_COUNT( arr ) ( sizeof( ArrayCountObj( arr ) ) )
+
+#define STATIC_ASSERT( p ) static_assert( p, #p )
+
 #if !defined ( ENDIAN_LITTLE ) && !defined ( ENDIAN_BIG )
 #if defined ( __i386__ ) || defined ( __ia64__ ) || defined ( WIN32 ) || ( defined ( __alpha__ ) || defined ( __alpha ) ) || defined ( __arm__ ) || ( defined ( __mips__ ) && defined ( __MIPSEL__ ) ) || defined ( __LITTLE_ENDIAN__ ) || defined ( __x86_64__ )
 #define ENDIAN_LITTLE

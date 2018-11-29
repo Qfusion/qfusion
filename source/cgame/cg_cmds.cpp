@@ -163,7 +163,7 @@ static void CG_SC_Scoreboard( void ) {
 static void CG_SC_PrintPlayerStats( const char *s, void ( *print )( const char *format, ... ), void ( *printDmg )( const char *format, ... ) ) {
 	int playerNum;
 	int i, shot_strong, hit_total, shot_total;
-	int total_damage_given, total_damage_received, health_taken, armor_taken;
+	int total_damage_given, total_damage_received;
 	gsitem_t *item;
 
 	playerNum = CG_ParseValue( &s );
@@ -218,11 +218,7 @@ static void CG_SC_PrintPlayerStats( const char *s, void ( *print )( const char *
 			  ( total_damage_given > total_damage_received ? S_COLOR_GREEN : S_COLOR_RED ),
 			  STATS_PERCENT( total_damage_given, total_damage_given + total_damage_received ) );
 
-	health_taken = CG_ParseValue( &s );
-	armor_taken = CG_ParseValue( &s );
-
-	printDmg( S_COLOR_YELLOW "Health/Armor taken: " S_COLOR_CYAN "%i" S_COLOR_WHITE "/" S_COLOR_CYAN "%i\r\n",
-			  health_taken, armor_taken );
+	CG_ParseValue( &s ); // health taken
 
 #undef STATS_PERCENT
 }
@@ -789,7 +785,7 @@ CGAME COMMANDS
 * CG_UseItem
 */
 void CG_UseItem( const char *name ) {
-	gsitem_t *item;
+	const gsitem_t *item;
 
 	if( !cg.frame.valid || cgs.demoPlaying ) {
 		return;
@@ -826,7 +822,7 @@ static void CG_Cmd_UseItem_f( void ) {
 * CG_Cmd_NextWeapon_f
 */
 static void CG_Cmd_NextWeapon_f( void ) {
-	gsitem_t *item;
+	const gsitem_t *item;
 
 	if( !cg.frame.valid ) {
 		return;
@@ -849,7 +845,7 @@ static void CG_Cmd_NextWeapon_f( void ) {
 * CG_Cmd_PrevWeapon_f
 */
 static void CG_Cmd_PrevWeapon_f( void ) {
-	gsitem_t *item;
+	const gsitem_t *item;
 
 	if( !cg.frame.valid ) {
 		return;
@@ -872,7 +868,7 @@ static void CG_Cmd_PrevWeapon_f( void ) {
 * CG_Cmd_PrevWeapon_f
 */
 static void CG_Cmd_LastWeapon_f( void ) {
-	gsitem_t *item;
+	const gsitem_t *item;
 
 	if( !cg.frame.valid || cgs.demoPlaying ) {
 		return;

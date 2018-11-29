@@ -595,7 +595,7 @@ void GT_SpawnGametype() {
 void GT_InitGametype() {
 	gametype.spawnableItemsMask = 0;
 	gametype.respawnableItemsMask = 0;
-	gametype.dropableItemsMask = 0; // XXX: old bomb lets you drop ammo
+	gametype.dropableItemsMask = 0;
 	gametype.pickableItemsMask = 0;
 
 	gametype.isTeamBased = true;
@@ -604,7 +604,6 @@ void GT_InitGametype() {
 	gametype.maxPlayersPerTeam = 0;
 
 	gametype.ammoRespawn = 20;
-	gametype.armorRespawn = 25;
 	gametype.weaponRespawn = 15;
 	gametype.healthRespawn = 25;
 	gametype.powerupRespawn = 90;

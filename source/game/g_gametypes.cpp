@@ -105,8 +105,6 @@ void G_Gametype_GENERIC_SetUpMatch( void ) {
 	}
 
 	// set items to be spawned with a delay
-	G_Items_RespawnByType( IT_ARMOR, ARMOR_RA, 15 );
-	G_Items_RespawnByType( IT_ARMOR, ARMOR_RA, 15 );
 	G_Items_RespawnByType( IT_HEALTH, HEALTH_MEGA, 15 );
 	G_Items_RespawnByType( IT_HEALTH, HEALTH_ULTRA, 15 );
 	G_Items_RespawnByType( IT_POWERUP, 0, brandom( 20, 40 ) );
@@ -247,8 +245,6 @@ void G_Gametype_GENERIC_ClientRespawn( edict_t *self, int old_team, int new_team
 					client->ps.inventory[weapondef->firedef.ammo_id] = weapondef->firedef.ammo_max;
 				}
 			}
-
-			client->resp.armor = GS_Armor_MaxCountForTag( ARMOR_YA );
 		} else {
 			weapondef = GS_GetWeaponDef( WEAP_GUNBLADE );
 			client->ps.inventory[WEAP_GUNBLADE] = 1;
@@ -292,7 +288,7 @@ void G_Gametype_GENERIC_PlayerKilled( edict_t *targ, edict_t *attacker, edict_t 
 	if( targ->r.client && !( G_PointContents( targ->s.origin ) & CONTENTS_NODROP ) ) {
 		// drop the weapon
 		if( targ->r.client->ps.stats[STAT_WEAPON] > WEAP_GUNBLADE ) {
-			gsitem_t *weaponItem = GS_FindItemByTag( targ->r.client->ps.stats[STAT_WEAPON] );
+			const gsitem_t *weaponItem = GS_FindItemByTag( targ->r.client->ps.stats[STAT_WEAPON] );
 			if( weaponItem ) {
 				edict_t *drop = Drop_Item( targ, weaponItem );
 				if( drop ) {
@@ -348,9 +344,9 @@ void G_Gametype_GENERIC_ScoreEvent( gclient_t *client, const char *score_event, 
 }
 
 static void G_Gametype_GENERIC_Init( void ) {
-	level.gametype.spawnableItemsMask = ( IT_WEAPON | IT_AMMO | IT_ARMOR | IT_POWERUP | IT_HEALTH );
-	level.gametype.respawnableItemsMask = ( IT_WEAPON | IT_AMMO | IT_ARMOR | IT_POWERUP | IT_HEALTH );
-	level.gametype.dropableItemsMask = ( IT_WEAPON | IT_AMMO | IT_ARMOR | IT_POWERUP | IT_HEALTH );
+	level.gametype.spawnableItemsMask = ( IT_WEAPON | IT_AMMO | IT_POWERUP | IT_HEALTH );
+	level.gametype.respawnableItemsMask = ( IT_WEAPON | IT_AMMO | IT_POWERUP | IT_HEALTH );
+	level.gametype.dropableItemsMask = ( IT_WEAPON | IT_AMMO | IT_POWERUP | IT_HEALTH );
 	level.gametype.pickableItemsMask = ( level.gametype.spawnableItemsMask | level.gametype.dropableItemsMask );
 
 	level.gametype.isTeamBased = false;
@@ -362,7 +358,6 @@ static void G_Gametype_GENERIC_Init( void ) {
 	level.gametype.maxPlayersPerTeam = 0;
 
 	level.gametype.ammo_respawn = 20;
-	level.gametype.armor_respawn = 25;
 	level.gametype.weapon_respawn = 5;
 	level.gametype.health_respawn = 25;
 	level.gametype.powerup_respawn = 90;
@@ -1401,14 +1396,6 @@ int G_Gametype_RespawnTimeForItem( const gsitem_t *item ) {
 		return level.gametype.health_respawn * 1000;
 	}
 
-	if( item->type & IT_ARMOR ) {
-		if( g_armor_respawn->value > 0 ) {
-			return g_armor_respawn->value * 1000;
-		}
-
-		return level.gametype.armor_respawn * 1000;
-	}
-
 	if( item->type & IT_POWERUP ) {
 		return level.gametype.powerup_respawn * 1000;
 	}
@@ -1492,7 +1479,7 @@ static void G_CheckNumBots( void ) {
 */
 static void G_TickOutPowerUps( void ) {
 	edict_t *ent;
-	gsitem_t *item;
+	const gsitem_t *item;
 	int i;
 
 	for( ent = game.edicts + 1; PLAYERNUM( ent ) < gs.maxclients; ent++ ) {
@@ -1642,7 +1629,7 @@ void G_RunGametype( void ) {
 * G_Gametype_SetDefaults
 */
 void G_Gametype_SetDefaults( void ) {
-	level.gametype.spawnableItemsMask = ( IT_WEAPON | IT_AMMO | IT_ARMOR | IT_POWERUP | IT_HEALTH );
+	level.gametype.spawnableItemsMask = ( IT_WEAPON | IT_AMMO | IT_POWERUP | IT_HEALTH );
 	level.gametype.respawnableItemsMask = level.gametype.spawnableItemsMask;
 	level.gametype.dropableItemsMask = level.gametype.spawnableItemsMask;
 	level.gametype.pickableItemsMask = level.gametype.spawnableItemsMask;
@@ -1656,7 +1643,6 @@ void G_Gametype_SetDefaults( void ) {
 	level.gametype.maxPlayersPerTeam = 0;
 
 	level.gametype.ammo_respawn = 20;
-	level.gametype.armor_respawn = 25;
 	level.gametype.weapon_respawn = 5;
 	level.gametype.health_respawn = 15;
 	level.gametype.powerup_respawn = 90;

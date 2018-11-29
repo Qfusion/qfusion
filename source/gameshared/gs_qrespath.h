@@ -35,12 +35,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // icons
 
-// armor
-#define PATH_GA_ICON            "gfx/hud/icons/armor/ga"
-#define PATH_YA_ICON            "gfx/hud/icons/armor/ya"
-#define PATH_RA_ICON            "gfx/hud/icons/armor/ra"
-#define PATH_SHARD_ICON         "gfx/hud/icons/armor/shard"
-
 // weapon
 #define PATH_GUNBLADE_ICON      "gfx/hud/icons/weapon/gunblade"
 #define PATH_GUNBLADE_BLAST_ICON        "gfx/hud/icons/weapon/gunblade_blast"
@@ -101,10 +95,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define PATH_LASERGUN_SIMPLEITEM        "gfx/simpleitems/weapon/laser"
 #define PATH_ELECTROBOLT_SIMPLEITEM     "gfx/simpleitems/weapon/electro"
 #define PATH_AMMOPACK_SIMPLEITEM        "gfx/simpleitems/ammo/pack"
-#define PATH_GA_SIMPLEITEM          "gfx/simpleitems/armor/ga"
-#define PATH_YA_SIMPLEITEM          "gfx/simpleitems/armor/ya"
-#define PATH_RA_SIMPLEITEM          "gfx/simpleitems/armor/ra"
-#define PATH_SHARD_SIMPLEITEM           "gfx/simpleitems/armor/shard"
 #define PATH_HEALTH_5_SIMPLEITEM        "gfx/simpleitems/health/5"
 #define PATH_HEALTH_25_SIMPLEITEM       "gfx/simpleitems/health/25"
 #define PATH_HEALTH_50_SIMPLEITEM       "gfx/simpleitems/health/50"
@@ -133,12 +123,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // MODELS
 //
 //
-
-// armors
-#define PATH_GA_MODEL           "models/items/armor/ga/ga.md3"
-#define PATH_YA_MODEL           "models/items/armor/ya/ya.md3"
-#define PATH_RA_MODEL           "models/items/armor/ra/ra.md3"
-#define PATH_SHARD_MODEL        "models/items/armor/shard/shard.md3"
 
 // weapons
 #define PATH_GUNBLADE_MODEL     "models/weapons/gunblade/gunblade.iqm"
@@ -217,11 +201,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define S_PICKUP_HEALTH_MEDIUM  "sounds/items/health_25"         // pickup health +25
 #define S_PICKUP_HEALTH_LARGE   "sounds/items/health_50"         // pickup health +50
 #define S_PICKUP_HEALTH_MEGA    "sounds/items/megahealth"        // pickup megahealth
-
-#define S_PICKUP_ARMOR_GA   "sounds/items/armor_green"       // pickup green armor
-#define S_PICKUP_ARMOR_YA   "sounds/items/armor_yellow"      // pickup yellow armor
-#define S_PICKUP_ARMOR_RA   "sounds/items/armor_red"     // pickup red armor
-#define S_PICKUP_ARMOR_SHARD    "sounds/items/armor_shard"       // pickup shard
 
 #define S_PICKUP_QUAD       "sounds/items/quad_pickup"       // pickup Quad damage
 #define S_PICKUP_SHELL      "sounds/items/shell_pickup"      // pickup WarShell

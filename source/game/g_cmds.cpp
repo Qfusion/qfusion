@@ -76,7 +76,7 @@ static bool G_Teleport( edict_t *ent, vec3_t origin, vec3_t angles ) {
 */
 static void Cmd_Give_f( edict_t *ent ) {
 	char *name;
-	gsitem_t    *it;
+	const gsitem_t *it;
 	int i;
 	bool give_all;
 
@@ -148,13 +148,6 @@ static void Cmd_Give_f( edict_t *ent ) {
 		}
 	}
 
-	if( give_all || !Q_stricmp( name, "armor" ) ) {
-		ent->r.client->resp.armor = GS_Armor_MaxCountForTag( ARMOR_RA );
-		if( !give_all ) {
-			return;
-		}
-	}
-
 	if( give_all ) {
 		for( i = 0; i < GS_MAX_ITEM_TAGS; i++ ) {
 			it = GS_FindItemByTag( i );
@@ -166,7 +159,7 @@ static void Cmd_Give_f( edict_t *ent ) {
 				continue;
 			}
 
-			if( it->type & ( IT_ARMOR | IT_WEAPON | IT_AMMO ) ) {
+			if( it->type & ( IT_WEAPON | IT_AMMO ) ) {
 				continue;
 			}
 
@@ -285,7 +278,7 @@ static void Cmd_GameOperator_f( edict_t *ent ) {
 * Use an inventory item
 */
 static void Cmd_Use_f( edict_t *ent ) {
-	gsitem_t    *it;
+	const gsitem_t *it;
 
 	assert( ent && ent->r.client );
 
@@ -942,7 +935,7 @@ static void Cmd_Timein_f( edict_t *ent ) {
 */
 char *G_StatsMessage( edict_t *ent ) {
 	gclient_t *client;
-	gsitem_t *item;
+	const gsitem_t *item;
 	int i, shot_weak, hit_weak, shot_strong, hit_strong, shot_total, hit_total;
 	static char entry[MAX_TOKEN_CHARS];
 
@@ -986,7 +979,7 @@ char *G_StatsMessage( edict_t *ent ) {
 	}
 
 	Q_strncatz( entry, va( " %d %d", client->level.stats.total_damage_given, client->level.stats.total_damage_received ), sizeof( entry ) );
-	Q_strncatz( entry, va( " %d %d", client->level.stats.health_taken, client->level.stats.armor_taken ), sizeof( entry ) );
+	Q_strncatz( entry, va( " %d", client->level.stats.health_taken ), sizeof( entry ) );
 
 	// add enclosing quote
 	Q_strncatz( entry, "\"", sizeof( entry ) );

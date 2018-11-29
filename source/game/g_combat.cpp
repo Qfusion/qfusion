@@ -197,39 +197,6 @@ void G_Killed( edict_t *targ, edict_t *inflictor, edict_t *attacker, int damage,
 }
 
 /*
-* G_CheckArmor
-*/
-static float G_CheckArmor( edict_t *ent, float damage, int dflags ) {
-	gclient_t *client = ent->r.client;
-	float maxsave, save, armordamage;
-
-	if( !client ) {
-		return 0.0f;
-	}
-
-	if( dflags & DAMAGE_NO_ARMOR || dflags & DAMAGE_NO_PROTECTION ) {
-		return 0.0f;
-	}
-
-	maxsave = min( damage, client->resp.armor / g_armor_degradation->value );
-
-	if( maxsave <= 0.0f ) {
-		return 0.0f;
-	}
-
-	armordamage = maxsave * g_armor_degradation->value;
-	save = maxsave * g_armor_protection->value;
-
-	client->resp.armor -= armordamage;
-	if( ARMOR_TO_INT( client->resp.armor ) <= 0 ) {
-		client->resp.armor = 0.0f;
-	}
-	client->ps.stats[STAT_ARMOR] = ARMOR_TO_INT( client->resp.armor );
-
-	return save;
-}
-
-/*
 * G_BlendFrameDamage
 */
 static void G_BlendFrameDamage( edict_t *ent, float damage, float *old_damage, const vec3_t point, const vec3_t basedir, vec3_t old_point, vec3_t old_dir ) {
@@ -326,7 +293,6 @@ void G_Damage( edict_t *targ, edict_t *inflictor, edict_t *attacker, const vec3_
 	gclient_t *client;
 	float take;
 	float save;
-	float asave;
 	bool statDmg;
 
 	if( !targ || !targ->takedamage ) {
@@ -401,18 +367,6 @@ void G_Damage( edict_t *targ, edict_t *inflictor, edict_t *attacker, const vec3_
 		}
 	}
 
-	asave = G_CheckArmor( targ, take, dflags );
-	take -= asave;
-
-	//treat cheat/powerup savings the same as armor
-	asave += save;
-
-	// APPLY THE DAMAGES
-
-	if( !take && !asave ) {
-		return;
-	}
-
 	// do the damage
 	if( take <= 0 ) {
 		return;
@@ -420,22 +374,22 @@ void G_Damage( edict_t *targ, edict_t *inflictor, edict_t *attacker, const vec3_
 
 	// adding damage given/received to stats
 	if( statDmg && attacker->r.client && !targ->deadflag && targ->movetype != MOVETYPE_PUSH && targ->s.type != ET_CORPSE ) {
-		attacker->r.client->level.stats.total_damage_given += take + asave;
-		teamlist[attacker->s.team].stats.total_damage_given += take + asave;
+		attacker->r.client->level.stats.total_damage_given += take;
+		teamlist[attacker->s.team].stats.total_damage_given += take;
 		if( GS_IsTeamDamage( &targ->s, &attacker->s ) ) {
-			attacker->r.client->level.stats.total_teamdamage_given += take + asave;
-			teamlist[attacker->s.team].stats.total_teamdamage_given += take + asave;
+			attacker->r.client->level.stats.total_teamdamage_given += take;
+			teamlist[attacker->s.team].stats.total_teamdamage_given += take;
 		}
 	}
 
 	G_Gametype_ScoreEvent( attacker->r.client, "dmg", va( "%i %f %i", targ->s.number, damage, attacker->s.number ) );
 
 	if( statDmg && client ) {
-		client->level.stats.total_damage_received += take + asave;
-		teamlist[targ->s.team].stats.total_damage_received += take + asave;
+		client->level.stats.total_damage_received += take;
+		teamlist[targ->s.team].stats.total_damage_received += take;
 		if( GS_IsTeamDamage( &targ->s, &attacker->s ) ) {
-			client->level.stats.total_teamdamage_received += take + asave;
-			teamlist[targ->s.team].stats.total_teamdamage_received += take + asave;
+			client->level.stats.total_teamdamage_received += take;
+			teamlist[targ->s.team].stats.total_teamdamage_received += take;
 		}
 	}
 
@@ -485,12 +439,12 @@ void G_Damage( edict_t *targ, edict_t *inflictor, edict_t *attacker, const vec3_
 	}
 
 	// accumulate given damage for hit sounds
-	if( ( take || asave ) && targ != attacker && client && !targ->deadflag ) {
+	if( targ != attacker && client && !targ->deadflag ) {
 		if( attacker ) {
 			if( GS_IsTeamDamage( &targ->s, &attacker->s ) ) {
-				attacker->snap.damageteam_given += take + asave; // we want to know how good our hit was, so saved also matters
+				attacker->snap.damageteam_given += take;
 			} else {
-				attacker->snap.damage_given += take + asave;
+				attacker->snap.damage_given += take;
 			}
 		}
 	}

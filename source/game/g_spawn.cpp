@@ -172,8 +172,8 @@ spawn_t spawns[] = {
 	{ NULL, NULL }
 };
 
-static gsitem_t *G_ItemForEntity( edict_t *ent ) {
-	gsitem_t *item;
+static const gsitem_t *G_ItemForEntity( edict_t *ent ) {
+	const gsitem_t *item;
 
 	// check item spawn functions
 	if( ( item = GS_FindItemByClassname( ent->classname ) ) != NULL ) {
@@ -211,7 +211,7 @@ static bool G_GametypeFilterMatch( const char *filter ) {
 * G_CanSpawnEntity
 */
 static bool G_CanSpawnEntity( edict_t *ent ) {
-	gsitem_t *item;
+	const gsitem_t *item;
 
 	if( ent == world ) {
 		return true;
@@ -260,7 +260,7 @@ static bool G_CanSpawnEntity( edict_t *ent ) {
 */
 bool G_CallSpawn( edict_t *ent ) {
 	spawn_t *s;
-	gsitem_t *item;
+	const gsitem_t *item;
 
 	if( !ent->classname ) {
 		if( developer->integer ) {

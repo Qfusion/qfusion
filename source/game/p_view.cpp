@@ -301,7 +301,7 @@ static void G_PlayerWorldEffects( edict_t *ent ) {
 				}
 				ent->pain_debounce_time = level.time;
 
-				G_Damage( ent, world, world, vec3_origin, vec3_origin, ent->s.origin, ent->r.client->resp.drowningDamage, 0, DAMAGE_NO_ARMOR, MOD_WATER );
+				G_Damage( ent, world, world, vec3_origin, vec3_origin, ent->s.origin, ent->r.client->resp.drowningDamage, 0, 0, MOD_WATER );
 			}
 		}
 	} else {
