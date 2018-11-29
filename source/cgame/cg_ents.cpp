@@ -580,9 +580,6 @@ static void CG_AddLinkedModel( centity_t *cent ) {
 	CG_AddColoredOutLineEffect( &ent, cent->effects,
 		cent->outlineColor[0], cent->outlineColor[1], cent->outlineColor[2], cent->outlineColor[3] );
 
-	if( cent->item->type & IT_WEAPON )
-		ent.scale *= 10;
-
 	barrel = false;
 	if( cent->item && ( cent->item->type & IT_WEAPON ) ) {
 		if( CG_GrabTag( &tag, &cent->ent, "tag_barrel" ) ) {
