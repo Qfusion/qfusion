@@ -561,13 +561,11 @@ void Key_Event( int key, bool down, int64_t time ) {
 		key_repeats[key] = 0;
 	}
 
-#if !defined( WIN32 )
 	// switch between fullscreen/windowed when ALT+ENTER is pressed
 	if( key == K_ENTER && down && ( keydown[K_LALT] || keydown[K_RALT] ) ) {
 		Cbuf_ExecuteText( EXEC_APPEND, "toggle vid_fullscreen\n" );
 		return;
 	}
-#endif
 
 #if defined ( __MACOSX__ )
 	// quit the game when Control + q is pressed
