@@ -705,6 +705,8 @@ void CG_AddDamageNumber( entity_state_t * ent ) {
 	VectorCopy( ent->origin, dn->origin );
 	dn->t = cg.time;
 	dn->damage = ent->damage;
+	if( dn->damage > 10 )
+		dn->damage -= dn->damage % 2;
 
 	float distance_jitter = 4;
 	dn->origin[ 0 ] += random_float( &damage_numbers_rng ) * distance_jitter * 2 - distance_jitter;
