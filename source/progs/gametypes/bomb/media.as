@@ -18,11 +18,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 // ICONS
-int iconCarrying;
 int iconCarrier;
 int iconReady;
 
-int[] iconWeapons( WEAP_TOTAL );
+int[] weaponIcons( WEAP_TOTAL );
 
 // MODELS
 int modelBombModel;
@@ -48,17 +47,13 @@ enum Announcement {
 	Announcement_Defused,
 	Announcement_Hurry,
 
-	Announcement_Count = Announcement_Hurry,
+	Announcement_Count,
 }
 
 const uint MSG_ALIVE_ALPHA = CS_GENERAL;
 const uint MSG_ALIVE_BETA = CS_GENERAL + 1;
 const uint MSG_TOTAL_ALPHA = CS_GENERAL + 2;
 const uint MSG_TOTAL_BETA = CS_GENERAL + 3;
-
-int getWeaponIcon( int weapon ) {
-	return iconWeapons[weapon - 1];
-}
 
 void announce( Announcement announcement ) {
 	announceOff( announcement );
@@ -78,7 +73,6 @@ void announceDef( Announcement announcement ) {
 }
 
 void mediaInit() {
-	iconCarrying = G_ImageIndex( "gfx/bomb/carriericon" );
 	iconCarrier  = G_ImageIndex( "gfx/hud/icons/vsay/onoffense" ); // TODO: less crappy icon
 	iconReady    = G_ImageIndex( "gfx/hud/icons/vsay/yes" );
 
@@ -92,39 +86,23 @@ void mediaInit() {
 	sndBombTaken = G_SoundIndex( "sounds/announcer/bomb/offense/taken", false );
 	sndBongo     = G_SoundIndex( "sounds/announcer/bomb/bongo", false );
 
-	int[] ggASIsBad =
-	{
-		G_ImageIndex( "gfx/hud/icons/weapon/gunblade_blast" ),
-		G_ImageIndex( "gfx/hud/icons/weapon/machinegun" ),
-		G_ImageIndex( "gfx/hud/icons/weapon/riot" ),
-		G_ImageIndex( "gfx/hud/icons/weapon/grenade" ),
-		G_ImageIndex( "gfx/hud/icons/weapon/rocket" ),
-		G_ImageIndex( "gfx/hud/icons/weapon/plasma" ),
-		G_ImageIndex( "gfx/hud/icons/weapon/laser" ),
-		G_ImageIndex( "gfx/hud/icons/weapon/electro" )
-	};
+	weaponIcons[ WEAP_GUNBLADE ] = G_ImageIndex( "gfx/hud/icons/weapon/gunblade_blast" );
+	weaponIcons[ WEAP_MACHINEGUN ] = G_ImageIndex( "gfx/hud/icons/weapon/machinegun" );
+	weaponIcons[ WEAP_RIOTGUN ] = G_ImageIndex( "gfx/hud/icons/weapon/riot" );
+	weaponIcons[ WEAP_GRENADELAUNCHER ] = G_ImageIndex( "gfx/hud/icons/weapon/grenade" );
+	weaponIcons[ WEAP_ROCKETLAUNCHER ] = G_ImageIndex( "gfx/hud/icons/weapon/rocket" );
+	weaponIcons[ WEAP_PLASMAGUN ] = G_ImageIndex( "gfx/hud/icons/weapon/plasma" );
+	weaponIcons[ WEAP_LASERGUN ] = G_ImageIndex( "gfx/hud/icons/weapon/laser" );
+	weaponIcons[ WEAP_ELECTROBOLT ] = G_ImageIndex( "gfx/hud/icons/weapon/electro" );
 
-	iconWeapons = ggASIsBad;
+	sndAnnouncementsOff[ Announcement_Started ] = G_SoundIndex( "sounds/announcer/bomb/offense/start", false );
+	sndAnnouncementsOff[ Announcement_InPlace ] = G_SoundIndex( "sounds/announcer/bomb/offense/inplace", false );
+	sndAnnouncementsOff[ Announcement_Armed ] = G_SoundIndex( "sounds/announcer/bomb/offense/planted", false );
+	sndAnnouncementsOff[ Announcement_Defused ] = G_SoundIndex( "sounds/announcer/bomb/offense/defused", false );
+	sndAnnouncementsOff[ Announcement_Hurry ] = G_SoundIndex( "sounds/misc/timer_bip_bip", false );
 
-	int[] ggASIsBad2 =
-	{
-		G_SoundIndex( "sounds/announcer/bomb/offense/start", false ),
-		G_SoundIndex( "sounds/announcer/bomb/offense/inplace", false ),
-		G_SoundIndex( "sounds/announcer/bomb/offense/planted", false ),
-		G_SoundIndex( "sounds/announcer/bomb/offense/defused", false ),
-		G_SoundIndex( "sounds/misc/timer_bip_bip", false )
-	};
-
-	sndAnnouncementsOff = ggASIsBad2;
-
-	int[] ggASIsBad3 =
-	{
-		G_SoundIndex( "sounds/announcer/bomb/defense/start", false ),
-		0,
-		G_SoundIndex( "sounds/announcer/bomb/defense/planted", false ),
-		G_SoundIndex( "sounds/announcer/bomb/defense/defused", false ),
-		G_SoundIndex( "sounds/misc/timer_bip_bip", false )
-	};
-
-	sndAnnouncementsDef = ggASIsBad3;
+	sndAnnouncementsDef[ Announcement_Started ] = G_SoundIndex( "sounds/announcer/bomb/defense/start", false );
+	sndAnnouncementsDef[ Announcement_Armed ] = G_SoundIndex( "sounds/announcer/bomb/defense/planted", false );
+	sndAnnouncementsDef[ Announcement_Defused ] = G_SoundIndex( "sounds/announcer/bomb/defense/defused", false );
+	sndAnnouncementsDef[ Announcement_Hurry ] = G_SoundIndex( "sounds/misc/timer_bip_bip", false );
 }

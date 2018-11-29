@@ -275,26 +275,13 @@ String @GT_ScoreboardMessage( uint maxlen ) {
 
 			cPlayer @player = @playerFromClient( @client );
 
-			int statusIcon;
+			int statusIcon = 0;
 
 			if( matchState == MATCH_STATE_PLAYTIME ) {
-				// carrying takes priority over carrier
-				// don't rearrange for cheaper checks :D
-				if( bombState == BombState_Carried && @ent == @bombCarrier ) {
-					statusIcon = iconCarrying;
-				}
-				else if( player.isCarrier ) {
-					statusIcon = iconCarrier;
-				}
-				else {
-					statusIcon = 0;
-				}
+				statusIcon = player.isCarrier ? iconCarrier : 0;
 			}
 			else if( matchState == MATCH_STATE_WARMUP && client.isReady() ) {
 				statusIcon = iconReady;
-			}
-			else {
-				statusIcon = 0;
 			}
 
 			int playerId = ent.isGhosting() && matchState == MATCH_STATE_PLAYTIME ? -( ent.playerNum + 1 ) : ent.playerNum;

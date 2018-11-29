@@ -177,19 +177,19 @@ class cPlayer {
 
 		switch( this.weapPrimary ) {
 			case PrimaryWeapon_EBRL:
-				label += getWeaponIcon( WEAP_ELECTROBOLT ) + " " + getWeaponIcon( WEAP_ROCKETLAUNCHER );
+				label += weaponIcons[ WEAP_ELECTROBOLT ] + " " + weaponIcons[ WEAP_ROCKETLAUNCHER ];
 				break;
 
 			case PrimaryWeapon_RLLG:
-				label += getWeaponIcon( WEAP_ROCKETLAUNCHER ) + " " + getWeaponIcon( WEAP_LASERGUN );
+				label += weaponIcons[ WEAP_ROCKETLAUNCHER ] + " " + weaponIcons[ WEAP_LASERGUN ];
 				break;
 
 			case PrimaryWeapon_EBLG:
-				label += getWeaponIcon( WEAP_ELECTROBOLT ) + " " + getWeaponIcon( WEAP_LASERGUN );
+				label += weaponIcons[ WEAP_ELECTROBOLT ] + " " + weaponIcons[ WEAP_LASERGUN ];
 				break;
 		}
 
-		return label + " " + getWeaponIcon( this.weapSecondary );
+		return label + " " + weaponIcons[ this.weapSecondary ];
 	}
 
 	void showPrimarySelection() {
