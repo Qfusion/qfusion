@@ -282,7 +282,7 @@ void G_Init( unsigned int seed, unsigned int framemsec, int protocol, const char
 	g_floodprotection_team->modified = true;
 	g_floodprotection_seconds = trap_Cvar_Get( "g_floodprotection_seconds", "4", 0 );
 	g_floodprotection_seconds->modified = true;
-	g_floodprotection_penalty = trap_Cvar_Get( "g_floodprotection_delay", "10", 0 );
+	g_floodprotection_penalty = trap_Cvar_Get( "g_floodprotection_delay", "2", 0 );
 	g_floodprotection_penalty->modified = true;
 
 	g_inactivity_maxtime = trap_Cvar_Get( "g_inactivity_maxtime", "90.0", 0 );
