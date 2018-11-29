@@ -74,7 +74,6 @@ void CG_RegisterMediaSounds( void ) {
 	cgs.media.sfxWeaponUpNoAmmo = CG_RegisterMediaSfx( S_WEAPON_NOAMMO );
 
 	cgs.media.sfxItemRespawn = CG_RegisterMediaSfx( S_ITEM_RESPAWN );
-	cgs.media.sfxPlayerRespawn = CG_RegisterMediaSfx( S_PLAYER_RESPAWN );
 	cgs.media.sfxTeleportIn = CG_RegisterMediaSfx( S_TELEPORT );
 	cgs.media.sfxTeleportOut = CG_RegisterMediaSfx( S_TELEPORT );
 
