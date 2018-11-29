@@ -19,7 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // sys_win.h
 
-#include "../qcommon/qcommon.h"
+#include "qcommon/qcommon.h"
 #include "winquake.h"
 #include "resource.h"
 #include <errno.h>
@@ -29,8 +29,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <io.h>
 #include <conio.h>
 #include <limits.h>
+#include <shellapi.h>
 
-#include "../win32/conproc.h"
+#include "conproc.h"
 
 #if !defined( DEDICATED_ONLY )
 QF_DLL_EXPORT DWORD NvOptimusEnablement = 0x00000001;
@@ -77,8 +78,6 @@ void Sys_Error( const char *format, ... ) {
 }
 
 void Sys_Quit( void ) {
-	timeEndPeriod( 1 );
-
 	SV_Shutdown( "Server quit\n" );
 	CL_Shutdown();
 
@@ -106,8 +105,6 @@ void Sys_Sleep( unsigned int millis ) {
 * Sys_Init
 */
 void Sys_Init( void ) {
-	timeBeginPeriod( 1 );
-
 	Sys_InitTime();
 
 	if( dedicated->integer ) {
