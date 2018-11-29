@@ -924,7 +924,6 @@ enum {
 
 	ET_MINIMAP_ICON,
 	ET_DECAL,
-	ET_ITEM_TIMER,  // for specs only
 	ET_PARTICLES,
 
 	ET_VIDEO_SPEAKER,

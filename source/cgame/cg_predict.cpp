@@ -134,7 +134,7 @@ void CG_BuildSolidList( void ) {
 				case ET_LASERBEAM:
 				case ET_CURVELASERBEAM:
 				case ET_DECAL:
-				case ET_ITEM_TIMER:
+				case ET_HUD:
 				case ET_PARTICLES:
 					break;
 

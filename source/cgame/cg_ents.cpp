@@ -1329,110 +1329,6 @@ static void CG_AddItemEnt( centity_t *cent ) {
 }
 
 //==========================================================================
-//		ET_ITEM_TIMER
-//==========================================================================
-
-#define MAX_ITEM_TIMERS 8
-
-static int cg_num_item_timers = 0;
-static centity_t *cg_item_timers[MAX_ITEM_TIMERS];
-
-/*
-* CG_ResetItemTimers
-*/
-void CG_ResetItemTimers( void ) {
-	cg_num_item_timers = 0;
-}
-
-/*
-* CG_UpdateItemTimerEnt
-*/
-static void CG_UpdateItemTimerEnt( centity_t *cent ) {
-	if( GS_MatchState() >= MATCH_STATE_POSTMATCH ) {
-		return;
-	}
-
-	cent->item = GS_FindItemByTag( cent->current.itemNum );
-	if( !cent->item ) {
-		return;
-	}
-
-	if( cg_num_item_timers == MAX_ITEM_TIMERS ) {
-		return;
-	}
-
-	cent->ent.frame = cent->current.frame;
-	cg_item_timers[cg_num_item_timers++] = cent;
-}
-
-/*
-* CG_CompareItemTimers
-*/
-static int CG_CompareItemTimers( const centity_t **first, const centity_t **second ) {
-	const centity_t *e1 = *first, *e2 = *second;
-	const entity_state_t *s1 = &( e1->current ), *s2 = &( e2->current );
-	const gsitem_t *i1 = e1->item, *i2 = e2->item;
-	int t1 = s1->modelindex - 1, t2 = s2->modelindex - 1;
-
-	// special hack to order teams like this: alpha -> neutral -> beta
-	if( ( !t1 || !t2 ) && ( GS_MAX_TEAMS - TEAM_ALPHA ) == 2 ) {
-		if( t2 == TEAM_ALPHA || t1 == TEAM_BETA ) {
-			return 1;
-		}
-		if( t2 == TEAM_BETA || t1 == TEAM_ALPHA ) {
-			return -1;
-		}
-	}
-
-	if( t2 > t1 ) {
-		return -11;
-	}
-	if( t2 < t1 ) {
-		return 1;
-	}
-
-	if( s2->origin[2] > s1->origin[2] ) {
-		return 1;
-	}
-	if( s2->origin[2] < s1->origin[2] ) {
-		return -1;
-	}
-
-	if( i2->type > i1->type ) {
-		return 1;
-	}
-	if( i2->type < i1->type ) {
-		return -1;
-	}
-
-	if( s2->number > s1->number ) {
-		return 1;
-	}
-	if( s2->number < s1->number ) {
-		return -1;
-	}
-
-	return 0;
-}
-
-/*
-* CG_SortItemTimers
-*/
-static void CG_SortItemTimers( void ) {
-	qsort( cg_item_timers, cg_num_item_timers, sizeof( cg_item_timers[0] ), ( int ( * )( const void *, const void * ) )CG_CompareItemTimers );
-}
-
-/*
-* CG_GetItemTimerEnt
-*/
-centity_t *CG_GetItemTimerEnt( int num ) {
-	if( num < 0 || num >= cg_num_item_timers ) {
-		return NULL;
-	}
-	return cg_item_timers[num];
-}
-
-//==========================================================================
 //		ET_BEAM
 //==========================================================================
 
@@ -1880,9 +1776,6 @@ void CG_AddEntities( void ) {
 			case ET_SOUNDEVENT:
 				break;
 
-			case ET_ITEM_TIMER:
-				break;
-
 			case ET_PARTICLES:
 				CG_AddParticlesEnt( cent );
 				CG_EntityLoopSound( state, ATTN_STATIC );
@@ -1976,9 +1869,6 @@ void CG_LerpEntities( void ) {
 			case ET_SOUNDEVENT:
 				break;
 
-			case ET_ITEM_TIMER:
-				break;
-
 			case ET_PARTICLES:
 				break;
 
@@ -2009,8 +1899,6 @@ void CG_UpdateEntities( void ) {
 	entity_state_t *state;
 	int pnum;
 	centity_t *cent;
-
-	CG_ResetItemTimers();
 
 	for( pnum = 0; pnum < cg.frame.numEntities; pnum++ ) {
 		state = &cg.frame.parsedEntities[pnum & ( MAX_PARSE_ENTITIES - 1 )];
@@ -2084,10 +1972,6 @@ void CG_UpdateEntities( void ) {
 			case ET_SOUNDEVENT:
 				break;
 
-			case ET_ITEM_TIMER:
-				CG_UpdateItemTimerEnt( cent );
-				break;
-
 			case ET_PARTICLES:
 				CG_UpdateParticlesEnt( cent );
 				break;
@@ -2100,8 +1984,6 @@ void CG_UpdateEntities( void ) {
 				break;
 		}
 	}
-
-	CG_SortItemTimers();
 }
 
 //=============================================================

@@ -835,7 +835,6 @@ void CG_Reset( void ) {
 	CG_ResetKickAngles();
 	CG_ResetColorBlend();
 	CG_ResetDamageIndicator();
-	CG_ResetItemTimers();
 
 	CG_SC_ResetObituaries();
 

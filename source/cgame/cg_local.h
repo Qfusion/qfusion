@@ -646,9 +646,6 @@ void CG_AddCentityOutLineEffect( centity_t *cent );
 
 void CG_AddFlagModelOnTag( centity_t *cent, byte_vec4_t teamcolor, const char *tagname );
 
-void CG_ResetItemTimers( void );
-centity_t *CG_GetItemTimerEnt( int num );
-
 //
 // cg_draw.c
 //
