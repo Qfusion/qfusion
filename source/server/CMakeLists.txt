@@ -32,7 +32,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 		"../win32/conproc.cpp"
 		)
 
-	set(SERVER_PLATFORM_LIBRARIES "kernel32.lib" "ws2_32.lib" "winmm.lib")
+	set(SERVER_PLATFORM_LIBRARIES "kernel32.lib" "ws2_32.lib" "crypt32.lib" "winmm.lib")
 	set(SERVER_BINARY_TYPE WIN32)
 else()
 	file(GLOB SERVER_PLATFORM_SOURCES 
@@ -51,7 +51,7 @@ endif()
 
 add_executable(${QFUSION_SERVER_NAME} ${SERVER_BINARY_TYPE} ${SERVER_HEADERS} ${SERVER_SOURCES} ${SERVER_PLATFORM_SOURCES})
 add_dependencies(${QFUSION_SERVER_NAME} angelwrap game)
-target_link_libraries(${QFUSION_SERVER_NAME} PRIVATE ${CURL_LIBRARY} ${ZLIB_LIBRARY} ${SERVER_PLATFORM_LIBRARIES})
+target_link_libraries(${QFUSION_SERVER_NAME} PRIVATE ${CURL_LIBRARIES} ${ZLIB_LIBRARY} ${SERVER_PLATFORM_LIBRARIES})
 qf_set_output_dir(${QFUSION_SERVER_NAME} "")
 
 set_target_properties(${QFUSION_SERVER_NAME} PROPERTIES COMPILE_DEFINITIONS "DEDICATED_ONLY")
