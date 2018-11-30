@@ -393,7 +393,7 @@ static void G_SnapEntities( void ) {
 									G_AddEvent( ent, EV_PAIN, PAIN_20, true );
 								} else if( ent->health <= 35 ) {
 									G_AddEvent( ent, EV_PAIN, PAIN_30, true );
-								} else if( ent->health <= 60 ) {
+								} else if( ent->health <= 80 ) {
 									G_AddEvent( ent, EV_PAIN, PAIN_60, true );
 								} else {
 									G_AddEvent( ent, EV_PAIN, PAIN_100, true );
