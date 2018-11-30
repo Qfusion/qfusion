@@ -500,7 +500,6 @@ void G_SplashFrac( const vec3_t origin, const vec3_t mins, const vec3_t maxs, co
 	VectorCopy( point, hitpoint );
 
 	innerradius = ( maxs[0] + maxs[1] - mins[0] - mins[1] ) * 0.25;
-	printf( "ir = %f\n", innerradius );
 
 	// Find the distance to the closest point in the capsule contained in the player bbox
 	// modify the origin so the inner sphere acts as a capsule
@@ -525,40 +524,20 @@ void G_SplashFrac( const vec3_t origin, const vec3_t mins, const vec3_t maxs, co
 	}
 
 	refdistance = innerradius;
-	if( refdistance >= maxradius ) {
-		printf( "WTF\n" );
-		if( kickFrac ) {
-			*kickFrac = 0;
-		}
-		if( dmgFrac ) {
-			*dmgFrac = 0;
-		}
-		if( pushdir ) {
-			VectorClear( pushdir );
-		}
-		return;
-	}
 
 	maxradius -= refdistance;
-	distance -= refdistance;
-	if( distance < 0 ) {
-		distance = 0;
-	}
+	distance = max( distance - refdistance, 0 );
 
-	distance = maxradius - distance;
-	clamp( distance, 0, maxradius );
+	float distance_frac = ( maxradius - distance ) / maxradius;
 
 	if( dmgFrac ) {
 		// soft sin curve
-		*dmgFrac = sin( DEG2RAD( ( distance / maxradius ) * 80 ) );
+		*dmgFrac = sin( DEG2RAD( distance_frac * 80 ) );
 		clamp( *dmgFrac, 0.0f, 1.0f );
 	}
 
 	if( kickFrac ) {
-		float kick = ( distance / maxradius );
-		kick *= kick;
-		clamp( kick, 0, 1 );
-		*kickFrac = kick;
+		*kickFrac = distance_frac * distance_frac;
 	}
 
 	// find push direction
@@ -576,18 +555,6 @@ void G_SplashFrac( const vec3_t origin, const vec3_t mins, const vec3_t maxs, co
 		VectorSubtract( boxcenter, hitpoint, pushdir );
 		VectorNormalize( pushdir );
 	}
-
-	printf( "\n\n" );
-	printf( "player mins = (%.2f %.2f %.2f)\n", origin[ 0 ] + mins[ 0 ], origin[ 1 ] + mins[ 1 ], origin[ 2 ] + mins[ 2 ] );
-	printf( "player maxs = (%.2f %.2f %.2f)\n", origin[ 0 ] + maxs[ 0 ], origin[ 1 ] + maxs[ 1 ], origin[ 2 ] + maxs[ 2 ] );
-	printf( "impact point = (%.2f %.2f %.2f)\n", point[ 0 ], point[ 1 ], point[ 2 ] );
-
-	printf( "\n" );
-
-	printf( "distance to capsule = %.2f\n", maxradius - distance );
-	printf( "push dir = (%.2f %.2f %.2f)\n", pushdir[ 0 ], pushdir[ 1 ], pushdir[ 2 ] );
-
-	printf( "\n\n" );
 }
 
 /*
