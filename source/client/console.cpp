@@ -146,9 +146,9 @@ void Con_Close( void ) {
 }
 
 /*
-* Con_ToggleConsole_f
+* Con_ToggleConsole
 */
-void Con_ToggleConsole_f( void ) {
+void Con_ToggleConsole( void ) {
 	SCR_EndLoadingPlaque(); // get rid of loading plaque
 
 	if( cls.state == CA_GETTING_TICKET || cls.state == CA_CONNECTING || cls.state == CA_CONNECTED ) {
@@ -408,7 +408,6 @@ void Con_Init( void ) {
 	con_printText  = Cvar_Get( "con_printText", "1", CVAR_ARCHIVE );
 	con_chatmode = Cvar_Get( "con_chatmode", "3", CVAR_ARCHIVE );
 
-	Cmd_AddCommand( "toggleconsole", Con_ToggleConsole_f );
 	Cmd_AddCommand( "messagemode", Con_MessageMode_f );
 	Cmd_AddCommand( "messagemode2", Con_MessageMode2_f );
 	Cmd_AddCommand( "clear", Con_Clear_f );
@@ -426,7 +425,6 @@ void Con_Shutdown( void ) {
 
 	Con_Clear_f();  // free scrollback text
 
-	Cmd_RemoveCommand( "toggleconsole" );
 	Cmd_RemoveCommand( "messagemode" );
 	Cmd_RemoveCommand( "messagemode2" );
 	Cmd_RemoveCommand( "clear" );

@@ -19,18 +19,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 #include "client.h"
 
-/*
-
-key up events are sent even if in console mode
-
-*/
-
 #define SEMICOLON_BINDNAME  "SEMICOLON"
 
 int anykeydown;
 
 static char *keybindings[256];
-static bool consolekeys[256];   // if true, can't be rebound while in console
 static bool menubound[256];     // if true, can't be rebound while in menu
 static int key_repeats[256];   // if > 1, it is autorepeating
 static bool keydown[256];
@@ -39,12 +32,12 @@ static bool key_initialized = false;
 
 static cvar_t *in_debug;
 
-typedef struct {
+struct keyname_t {
 	const char *name;
 	int keynum;
-} keyname_t;
+};
 
-const keyname_t keynames[] =
+static const keyname_t keynames[] =
 {
 	{ "TAB", K_TAB },
 	{ "ENTER", K_ENTER },
@@ -142,8 +135,6 @@ const keyname_t keynames[] =
 static void Key_DelegateCallKeyDel( int key );
 static void Key_DelegateCallCharDel( wchar_t key );
 
-static int consolebinded = 0;
-
 /*
 * Key_StringToKeynum
 *
@@ -197,7 +188,6 @@ const char *Key_KeynumToString( int keynum ) {
 	return "<UNKNOWN KEYNUM>";
 }
 
-
 /*
 * Key_SetBinding
 */
@@ -208,10 +198,6 @@ void Key_SetBinding( int keynum, const char *binding ) {
 
 	// free old bindings
 	if( keybindings[keynum] ) {
-		if( !Q_stricmp( keybindings[keynum], "toggleconsole" ) ) {
-			consolebinded--;
-		}
-
 		Mem_ZoneFree( keybindings[keynum] );
 		keybindings[keynum] = NULL;
 	}
@@ -222,10 +208,6 @@ void Key_SetBinding( int keynum, const char *binding ) {
 
 	// allocate memory for new binding
 	keybindings[keynum] = ZoneCopyString( binding );
-
-	if( !Q_stricmp( keybindings[keynum], "toggleconsole" ) ) {
-		consolebinded++;
-	}
 }
 
 /*
@@ -257,7 +239,6 @@ static void Key_Unbindall( void ) {
 		}
 	}
 }
-
 
 /*
 * Key_Bind_f
@@ -315,7 +296,6 @@ void Key_WriteBindings( int file ) {
 		}
 }
 
-
 /*
 * Key_Bindlist_f
 */
@@ -329,107 +309,10 @@ static void Key_Bindlist_f( void ) {
 }
 
 /*
-* Key_IsToggleConsole
-*
-* If nothing is bound to toggleconsole, we use default key for it
-* Also toggleconsole is specially handled, so it's never outputed to the console or so
-*/
-static bool Key_IsToggleConsole( int key ) {
-	if( key == -1 ) {
-		return false;
-	}
-
-	assert( key >= 0 && key <= 255 );
-
-	if( consolebinded > 0 ) {
-		if( keybindings[key] && !Q_stricmp( keybindings[key], "toggleconsole" ) ) {
-			return true;
-		}
-		return false;
-	} else {
-		if( key == '`' || key == '~' ) {
-			return true;
-		}
-		return false;
-	}
-}
-
-/*
-* Key_IsNonPrintable
-*
-* Called by sys code to avoid garbage if the toggleconsole
-* key happens to be a dead key (like in the German layout)
-*/
-bool Key_IsNonPrintable( int key ) {
-	// This may be called before client is initialized. Shouldn't be a problem
-	// for Key_IsToggleConsole, but double check just in case
-	if( !key_initialized ) {
-		return false;
-	}
-
-	return Key_IsToggleConsole( key );
-}
-
-/*
 * Key_Init
 */
 void Key_Init( void ) {
-	int i;
-
 	assert( !key_initialized );
-
-	//
-	// init ascii characters in console mode
-	//
-	for( i = 32; i < 128; i++ )
-		consolekeys[i] = true;
-	consolekeys[K_ENTER] = true;
-	consolekeys[KP_ENTER] = true;
-	consolekeys[K_TAB] = true;
-	consolekeys[K_LEFTARROW] = true;
-	consolekeys[KP_LEFTARROW] = true;
-	consolekeys[K_RIGHTARROW] = true;
-	consolekeys[KP_RIGHTARROW] = true;
-	consolekeys[K_UPARROW] = true;
-	consolekeys[KP_UPARROW] = true;
-	consolekeys[K_DOWNARROW] = true;
-	consolekeys[KP_DOWNARROW] = true;
-	consolekeys[K_BACKSPACE] = true;
-	consolekeys[K_HOME] = true;
-	consolekeys[KP_HOME] = true;
-	consolekeys[K_END] = true;
-	consolekeys[KP_END] = true;
-	consolekeys[K_PGUP] = true;
-	consolekeys[KP_PGUP] = true;
-	consolekeys[K_PGDN] = true;
-	consolekeys[KP_PGDN] = true;
-	consolekeys[K_LSHIFT] = true;
-	consolekeys[K_RSHIFT] = true;
-	consolekeys[K_INS] = true;
-	consolekeys[K_DEL] = true;
-	consolekeys[KP_INS] = true;
-	consolekeys[KP_DEL] = true;
-	consolekeys[KP_SLASH] = true;
-	consolekeys[KP_PLUS] = true;
-	consolekeys[KP_MINUS] = true;
-	consolekeys[KP_5] = true;
-
-	consolekeys[K_WIN] = true;
-	//	consolekeys[K_LWIN] = true;
-	//	consolekeys[K_RWIN] = true;
-	consolekeys[K_MENU] = true;
-
-	consolekeys[K_LCTRL] = true; // wsw : pb : ctrl in console for ctrl-v
-	consolekeys[K_RCTRL] = true;
-	consolekeys[K_LALT] = true;
-	consolekeys[K_RALT] = true;
-
-	consolekeys['`'] = false;
-	consolekeys['~'] = false;
-
-	// wsw : pb : support mwheel in console
-	consolekeys[K_MWHEELDOWN] = true;
-	consolekeys[K_MWHEELUP] = true;
 
 	menubound[K_ESCAPE] = true;
 	// Vic: allow to bind F1-F12 from the menu
@@ -469,10 +352,6 @@ void Key_Shutdown( void ) {
 * Should NOT be called during an interrupt!
 */
 void Key_CharEvent( int key, wchar_t charkey ) {
-	if( Key_IsToggleConsole( key ) ) {
-		return;
-	}
-
 	switch( cls.key_dest ) {
 		case key_message:
 			Con_MessageCharEvent( charkey );
@@ -575,14 +454,6 @@ void Key_Event( int key, bool down, int64_t time ) {
 	}
 #endif
 
-	if( Key_IsToggleConsole( key ) ) {
-		if( !down ) {
-			return;
-		}
-		Con_ToggleConsole_f();
-		return;
-	}
-
 	// menu key is hardcoded, so the user can never unbind it
 	if( key == K_ESCAPE ) {
 		if( !down ) {
@@ -611,7 +482,7 @@ void Key_Event( int key, bool down, int64_t time ) {
 				CL_GameModule_EscapeKey();
 				break;
 			case key_console:
-				Con_ToggleConsole_f();
+				Con_ToggleConsole();
 				break;
 			case key_delegate:
 				Key_DelegateCallKeyDel( key );
@@ -626,8 +497,7 @@ void Key_Event( int key, bool down, int64_t time ) {
 	// if not a consolekey, send to the interpreter no matter what mode is
 	//
 	if( ( cls.key_dest == key_menu && menubound[key] )
-		|| ( cls.key_dest == key_console && !consolekeys[key] )
-		|| ( cls.key_dest == key_game && ( cls.state == CA_ACTIVE || !consolekeys[key] ) )
+		|| ( cls.key_dest == key_game && cls.state == CA_ACTIVE )
 		|| ( cls.key_dest == key_message && ( key >= K_F1 && key <= K_F15 ) ) ) {
 		const char *kb = keybindings[key];
 		bool suppress = false;
@@ -746,7 +616,7 @@ typedef struct {
 } key_delegates_t;
 
 static key_delegates_t key_delegate_stack[32];
-static int key_delegate_stack_index = 0;
+static size_t key_delegate_stack_index = 0;
 
 /*
 * Key_DelegatePush

@@ -141,7 +141,6 @@ static wchar_t TranslateSDLScancode( SDL_Scancode scancode ) {
 		case SDL_SCANCODE_PAGEDOWN:     charkey = K_PGDN;       break;
 		case SDL_SCANCODE_HOME:         charkey = K_HOME;       break;
 		case SDL_SCANCODE_END:          charkey = K_END;        break;
-		case SDL_SCANCODE_GRAVE:        charkey = '~';          break;
 		case SDL_SCANCODE_NONUSBACKSLASH: charkey = '<';          break;
 		case SDL_SCANCODE_LGUI:
 		case SDL_SCANCODE_RGUI:         charkey = K_COMMAND;    break;
@@ -224,7 +223,18 @@ static wchar_t TranslateSDLScancode( SDL_Scancode scancode ) {
  * @param event the SDL event object containing the keysym et all
  * @param state either true if it is a keydown event or false otherwise
  */
-static void key_event( const SDL_KeyboardEvent *event, const bool state ) {
+static void key_event( const SDL_KeyboardEvent *event, bool state ) {
+	if( event->keysym.scancode == SDL_SCANCODE_GRAVE ) {
+		if( state ) {
+			Con_ToggleConsole();
+			SDL_StopTextInput();
+		}
+		else {
+			SDL_StartTextInput();
+		}
+		return;
+	}
+
 	wchar_t charkey = TranslateSDLScancode( event->keysym.scancode );
 
 	if( charkey >= 0 && charkey <= 255 ) {

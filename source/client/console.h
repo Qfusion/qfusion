@@ -42,7 +42,7 @@ void Con_Clear_f( void );
 void Con_DrawNotify( void );
 void Con_DrawChat( int x, int y, int width, struct qfontface_s *font );
 void Con_ClearNotify( void );
-void Con_ToggleConsole_f( void );
+void Con_ToggleConsole( void );
 void Con_Paste( void );
 void Con_Close( void );
 void Con_SetMessageMode( void );

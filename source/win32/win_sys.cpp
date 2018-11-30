@@ -120,28 +120,6 @@ void Sys_Init( void ) {
 }
 
 /*
-* myTranslateMessage
-* A wrapper around TranslateMessage to avoid garbage if the toggleconsole
-* key happens to be a dead key (like in the German layout)
-*/
-#ifdef DEDICATED_ONLY
-#define myTranslateMessage( msg ) TranslateMessage( msg )
-#else
-int IN_MapKey( int key );
-bool Key_IsNonPrintable( int key );
-static BOOL myTranslateMessage( MSG *msg ) {
-	if( msg->message == WM_KEYDOWN ) {
-		if( Key_IsNonPrintable( IN_MapKey( msg->lParam ) ) ) {
-			return TRUE;
-		} else {
-			return TranslateMessage( msg );
-		}
-	}
-	return TranslateMessage( msg );
-}
-#endif
-
-/*
 * Sys_SendKeyEvents
 *
 * Send Key_Event calls
