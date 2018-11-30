@@ -132,7 +132,7 @@ void Sys_SendKeyEvents( void ) {
 			Sys_Quit();
 		}
 		sys_msg_time = msg.time;
-		myTranslateMessage( &msg );
+		TranslateMessage( &msg );
 		DispatchMessageW( &msg );
 	}
 }
@@ -245,7 +245,7 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 				Com_Quit();
 			}
 			sys_msg_time = msg.time;
-			myTranslateMessage( &msg );
+			TranslateMessage( &msg );
 			DispatchMessageW( &msg );
 		}
 
