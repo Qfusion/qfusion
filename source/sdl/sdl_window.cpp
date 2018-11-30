@@ -102,8 +102,6 @@ static void gl_debug_output_callback(
                 return;
         }
 
-	Com_Printf( "%d\n", source );
-	Com_Printf( "%d\n", id );
 	Com_Printf( "GL [%s - %s]: %s", type_string( type ), severity_string( severity ), message );
 	size_t len = strlen( message );
 	if( len == 0 || message[ len - 1 ] != '\n' )
