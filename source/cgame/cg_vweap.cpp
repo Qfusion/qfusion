@@ -108,39 +108,13 @@ static void CG_ViewWeapon_AddAngleEffects( vec3_t angles ) {
 * CG_ViewWeapon_baseanimFromWeaponState
 */
 static int CG_ViewWeapon_baseanimFromWeaponState( int weaponState ) {
-	int anim;
+	if( weaponState == WEAPON_STATE_ACTIVATING )
+		return WEAPANIM_WEAPONUP;
 
-	switch( weaponState ) {
-		case WEAPON_STATE_ACTIVATING:
-			anim = WEAPANIM_WEAPONUP;
-			break;
+	if( weaponState == WEAPON_STATE_DROPPING )
+		return WEAPANIM_WEAPDOWN;
 
-		case WEAPON_STATE_DROPPING:
-			anim = WEAPANIM_WEAPDOWN;
-			break;
-
-		case WEAPON_STATE_FIRING:
-		case WEAPON_STATE_REFIRE:
-		case WEAPON_STATE_REFIRESTRONG:
-
-		/* fall through. Activated by event */
-		case WEAPON_STATE_POWERING:
-		case WEAPON_STATE_COOLDOWN:
-		case WEAPON_STATE_RELOADING:
-		case WEAPON_STATE_NOAMMOCLICK:
-
-		/* fall through. Not used */
-		default:
-		case WEAPON_STATE_READY:
-			if( cg_gunbob->integer ) {
-				anim = WEAPANIM_STANDBY;
-			} else {
-				anim = WEAPANIM_NOANIM;
-			}
-			break;
-	}
-
-	return anim;
+	return cg_gunbob->integer ? WEAPANIM_STANDBY : WEAPANIM_NOANIM;
 }
 
 /*

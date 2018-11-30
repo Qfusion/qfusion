@@ -1522,7 +1522,7 @@ static void CG_FireEntityEvents( bool early ) {
 * This events are only received by this client, and only affect it.
 */
 static void CG_FirePlayerStateEvents( void ) {
-	unsigned int event, parm, i, count;
+	unsigned int event, parm, count;
 	vec3_t dir;
 
 	if( cg.view.POVent != (int)cg.frame.playerState.POVnum ) {

@@ -419,15 +419,6 @@ int GS_ThinkPlayerWeapon( player_state_t *playerState, int buttons, int msecs, i
 		playerState->weaponState = WEAPON_STATE_READY;
 	}
 
-	// nothing can be done during reload time
-	if( playerState->weaponState == WEAPON_STATE_RELOADING ) {
-		if( playerState->stats[STAT_WEAPON_TIME] > 0 ) {
-			goto done;
-		}
-
-		playerState->weaponState = WEAPON_STATE_READY;
-	}
-
 	if( playerState->weaponState == WEAPON_STATE_NOAMMOCLICK ) {
 		if( playerState->stats[STAT_WEAPON_TIME] > 0 ) {
 			goto done;
@@ -477,7 +468,7 @@ int GS_ThinkPlayerWeapon( player_state_t *playerState, int buttons, int msecs, i
 		playerState->weaponState = WEAPON_STATE_READY;
 	}
 
-	if( ( playerState->weaponState == WEAPON_STATE_READY ) || ( playerState->weaponState == WEAPON_STATE_NOAMMOCLICK ) ) {
+	if( playerState->weaponState == WEAPON_STATE_READY || playerState->weaponState == WEAPON_STATE_NOAMMOCLICK ) {
 		if( playerState->stats[STAT_WEAPON_TIME] > 0 ) {
 			goto done;
 		}
@@ -486,20 +477,13 @@ int GS_ThinkPlayerWeapon( player_state_t *playerState, int buttons, int msecs, i
 			if( buttons & BUTTON_ATTACK ) {
 				if( GS_CheckAmmoInWeapon( playerState, playerState->stats[STAT_WEAPON] ) ) {
 					playerState->weaponState = WEAPON_STATE_FIRING;
-				} else {
+				}
+				else if( playerState->weaponState != WEAPON_STATE_NOAMMOCLICK ) {
 					// player has no ammo nor clips
-					if( playerState->weaponState == WEAPON_STATE_NOAMMOCLICK ) {
-						playerState->weaponState = WEAPON_STATE_RELOADING;
-						playerState->stats[STAT_WEAPON_TIME] += NOAMMOCLICK_AUTOSWITCH;
-						if( playerState->stats[STAT_PENDING_WEAPON] == playerState->stats[STAT_WEAPON] ) {
-							playerState->stats[STAT_PENDING_WEAPON] = GS_SelectBestWeapon( playerState );
-						}
-					} else {
-						playerState->weaponState = WEAPON_STATE_NOAMMOCLICK;
-						playerState->stats[STAT_WEAPON_TIME] += NOAMMOCLICK_PENALTY;
-						gs.api.PredictedEvent( playerState->POVnum, EV_NOAMMOCLICK, 0 );
-						goto done;
-					}
+					playerState->weaponState = WEAPON_STATE_NOAMMOCLICK;
+					playerState->stats[STAT_WEAPON_TIME] += NOAMMOCLICK_PENALTY;
+					gs.api.PredictedEvent( playerState->POVnum, EV_NOAMMOCLICK, 0 );
+					goto done;
 				}
 			}
 			// gunblade auto attack is special

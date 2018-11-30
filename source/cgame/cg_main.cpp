@@ -608,8 +608,6 @@ static void CG_RegisterVariables( void ) {
 	cg_damage_indicator =   trap_Cvar_Get( "cg_damage_indicator", "1", CVAR_ARCHIVE );
 	cg_damage_indicator_time =  trap_Cvar_Get( "cg_damage_indicator_time", "25", CVAR_ARCHIVE );
 
-	cg_weaponAutoSwitch =   trap_Cvar_Get( "cg_weaponAutoSwitch", "2", CVAR_ARCHIVE );
-
 	cg_voiceChats =     trap_Cvar_Get( "cg_voiceChats", "1", CVAR_ARCHIVE );
 
 	cg_laserBeamSubdivisions = trap_Cvar_Get( "cg_laserBeamSubdivisions", STR_TOSTR( CURVELASERBEAM_SUBDIVISIONS ), CVAR_ARCHIVE );
