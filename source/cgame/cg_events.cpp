@@ -1542,55 +1542,11 @@ static void CG_FirePlayerStateEvents( void ) {
 				if( parm < 4 ) { // hit of some caliber
 					trap_S_StartLocalSound( CG_MediaSfx( cgs.media.sfxWeaponHit[parm] ), CHAN_AUTO, cg_volume_hitsound->value );
 					CG_ScreenCrosshairDamageUpdate();
-				} else if( parm == 4 ) {  // killed an enemy
+				} else if( parm == 4 ) { // killed an enemy
 					trap_S_StartLocalSound( CG_MediaSfx( cgs.media.sfxWeaponKill ), CHAN_AUTO, cg_volume_hitsound->value );
 					CG_ScreenCrosshairDamageUpdate();
-				} else {  // hit a teammate
+				} else { // hit a teammate
 					trap_S_StartLocalSound( CG_MediaSfx( cgs.media.sfxWeaponHitTeam ), CHAN_AUTO, cg_volume_hitsound->value );
-				}
-				break;
-
-			case PSEV_PICKUP:
-				// auto-switch
-				if( cg_weaponAutoSwitch->integer && ( parm > WEAP_NONE && parm < WEAP_TOTAL ) ) {
-					if( !cgs.demoPlaying && cg.predictedPlayerState.pmove.pm_type == PM_NORMAL
-						&& cg.predictedPlayerState.POVnum == cgs.playerNum + 1 ) {
-						// auto-switch only works when the user didn't have the just-picked weapon
-						if( !cg.oldFrame.playerState.inventory[parm] ) {
-							// switch when player's only weapon is gunblade
-							if( cg_weaponAutoSwitch->integer == 2 ) {
-								for( i = WEAP_GUNBLADE + 1; i < WEAP_TOTAL; i++ ) {
-									if( i == parm ) {
-										continue;
-									}
-									if( cg.predictedPlayerState.inventory[i] ) {
-										break;
-									}
-								}
-
-								if( i == WEAP_TOTAL ) { // didn't have any weapon
-									CG_UseItem( va( "%i", parm ) );
-								}
-
-							}
-							// switch when the new weapon improves player's selected weapon
-							else if( cg_weaponAutoSwitch->integer == 1 ) {
-								unsigned int best = WEAP_GUNBLADE;
-								for( i = WEAP_GUNBLADE + 1; i < WEAP_TOTAL; i++ ) {
-									if( i == parm ) {
-										continue;
-									}
-									if( cg.predictedPlayerState.inventory[i] ) {
-										best = i;
-									}
-								}
-
-								if( best < parm ) {
-									CG_UseItem( va( "%i", parm ) );
-								}
-							}
-						}
-					}
 				}
 				break;
 

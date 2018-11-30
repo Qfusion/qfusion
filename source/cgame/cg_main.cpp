@@ -35,8 +35,6 @@ cvar_t *cg_handicap;
 
 cvar_t *cg_addDecals;
 
-//cvar_t *cg_footSteps;
-
 cvar_t *cg_gun;
 
 cvar_t *cg_thirdPerson;
@@ -98,8 +96,6 @@ cvar_t *cg_showClamp;
 
 cvar_t *cg_damage_indicator;
 cvar_t *cg_damage_indicator_time;
-
-cvar_t *cg_weaponAutoSwitch;
 
 // force models
 cvar_t *cg_teamPLAYERSmodel;
@@ -562,8 +558,6 @@ static void CG_RegisterVariables( void ) {
 	cg_zoomfov =    trap_Cvar_Get( "zoomfov", "75", CVAR_ARCHIVE );
 
 	cg_addDecals =      trap_Cvar_Get( "cg_decals", "1", CVAR_ARCHIVE );
-
-	//cg_footSteps =	    trap_Cvar_Get( "cg_footSteps", "1", 0 );
 
 	cg_thirdPerson =    trap_Cvar_Get( "cg_thirdPerson", "0", CVAR_CHEAT );
 	cg_thirdPersonAngle =   trap_Cvar_Get( "cg_thirdPersonAngle", "0", 0 );

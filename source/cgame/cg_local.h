@@ -1057,10 +1057,8 @@ void CG_ViewWeapon_RefreshAnimation( cg_viewweapon_t *viewweapon );
 //
 // cg_events.c
 //
-//extern cvar_t *cg_footSteps;
 extern cvar_t *cg_damage_indicator;
 extern cvar_t *cg_damage_indicator_time;
-extern cvar_t *cg_weaponAutoSwitch;
 
 void CG_FireEvents( bool early );
 void CG_EntityEvent( entity_state_t *ent, int ev, int parm, bool predicted );
