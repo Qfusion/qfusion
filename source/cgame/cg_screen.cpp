@@ -733,6 +733,11 @@ void CG_DrawDamageNumbers() {
 		VectorCopy( dn.origin, o );
 		o[ 2 ] += frac * 32;
 
+		vec3_t to_target;
+		VectorSubtract( o, cg.view.origin, to_target );
+		if( DotProduct( &cg.view.axis[ AXIS_FORWARD ], to_target ) <= 0 )
+			continue;
+
 		vec2_t coords;
 		trap_R_TransformVectorToScreen( &cg.view.refdef, o, coords );
 		if( ( coords[ 0 ] < 0 || coords[ 0 ] > cgs.vidWidth ) || ( coords[ 1 ] < 0 || coords[ 1 ] > cgs.vidHeight ) ) {
