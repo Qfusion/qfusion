@@ -350,8 +350,14 @@ void G_Damage( edict_t *targ, edict_t *inflictor, edict_t *attacker, const vec3_
 			take = save = 0;
 		}
 		// ca has self splash damage disabled
-		else if( ( dflags & DAMAGE_RADIUS ) && attacker == targ && !GS_SelfDamage() ) {
-			take = save = 0;
+		else if( attacker == targ ) {
+			if( GS_SelfDamage() ) {
+				take = damage * 0.5f;
+				save = damage - take;
+			}
+			else {
+				take = save = 0;
+			}
 		}
 		// don't get damage from players in race
 		else if( ( GS_RaceGametype() ) && attacker->r.client && targ->r.client &&
@@ -364,7 +370,7 @@ void G_Damage( edict_t *targ, edict_t *inflictor, edict_t *attacker, const vec3_
 		}
 		// apply warShell powerup protection
 		else if( targ->r.client && targ->r.client->ps.inventory[POWERUP_SHELL] > 0 ) {
-			take = ( damage * 0.25f );
+			take = damage * 0.25f;
 			save = damage - take;
 		}
 	}
