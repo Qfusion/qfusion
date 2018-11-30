@@ -265,6 +265,7 @@ static void G_KnockBackPush( edict_t *targ, edict_t *attacker, const vec3_t base
 	}
 
 	VectorNormalize2( basedir, dir );
+	dir[ 2 ] *= 1.25f;
 
 	if( targ->r.client && targ != attacker && !( dflags & DAMAGE_KNOCKBACK_SOFT ) ) {
 		targ->r.client->ps.pmove.stats[PM_STAT_KNOCKBACK] = 3 * knockback;
@@ -642,15 +643,13 @@ void G_RadiusDamage( edict_t *inflictor, edict_t *attacker, cplane_t *plane, edi
 	vec3_t pushDir;
 	int timeDelta;
 
-	float maxdamage, mindamage, maxknockback, minknockback, radius;
-
 	assert( inflictor );
 
-	maxdamage = inflictor->projectileInfo.maxDamage;
-	mindamage = inflictor->projectileInfo.minDamage;
-	maxknockback = inflictor->projectileInfo.maxKnockback;
-	minknockback = inflictor->projectileInfo.minKnockback;
-	radius = inflictor->projectileInfo.radius;
+	float maxdamage = inflictor->projectileInfo.maxDamage;
+	float mindamage = inflictor->projectileInfo.minDamage;
+	float maxknockback = inflictor->projectileInfo.maxKnockback;
+	float minknockback = inflictor->projectileInfo.minKnockback;
+	float radius = inflictor->projectileInfo.radius;
 
 	if( radius <= 1.0f || ( maxdamage <= 0.0f && maxknockback <= 0.0f ) ) {
 		return;
