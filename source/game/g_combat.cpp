@@ -462,12 +462,15 @@ void G_Damage( edict_t *targ, edict_t *inflictor, edict_t *attacker, const vec3_
 		if( client ) {
 			targ->flags |= FL_NO_KNOCKBACK;
 		}
-		G_Killed( targ, inflictor, attacker, HEALTH_TO_INT( take ), point, mod );
 
-		edict_t * killed = G_SpawnEvent( EV_DAMAGE, 0, targ->s.origin );
-		killed->r.svflags |= SVF_ONLYOWNER;
-		killed->s.ownerNum = ENTNUM( attacker );
-		killed->s.damage = 255;
+		if( targ->s.type != ET_CORPSE ) {
+			edict_t * killed = G_SpawnEvent( EV_DAMAGE, 0, targ->s.origin );
+			killed->r.svflags |= SVF_ONLYOWNER;
+			killed->s.ownerNum = ENTNUM( attacker );
+			killed->s.damage = 255;
+		}
+
+		G_Killed( targ, inflictor, attacker, HEALTH_TO_INT( take ), point, mod );
 	} else {
 		G_CallPain( targ, attacker, knockback, take );
 	}
