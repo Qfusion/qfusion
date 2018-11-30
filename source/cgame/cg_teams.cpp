@@ -26,13 +26,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 static int CG_ForceTeam( int entNum, int team ) {
 	int myteam = cg.predictedPlayerState.stats[STAT_TEAM];
+
+	if( team == TEAM_ALLY )
+		return TEAM_ALPHA;
+	if( team == TEAM_ENEMY )
+		return TEAM_BETA;
+
 	if( myteam == TEAM_BETA ) {
-		if( team == TEAM_ALPHA ) {
+		if( team == TEAM_ALPHA )
 			return TEAM_BETA;
-		}
-		if( team == TEAM_BETA ) {
+		if( team == TEAM_BETA )
 			return TEAM_ALPHA;
-		}
 	}
 	return team;
 }
@@ -243,10 +247,9 @@ void CG_RegisterTeamColor( int team ) {
 */
 vec_t *CG_TeamColor( int team, vec4_t color ) {
 	cvar_t *teamForceColor = NULL, *teamForceColorToggle = NULL;
-	int forcedteam;
 
-	forcedteam = CG_ForceTeam( cg.view.POVent, team ); // check all teams against the client
-	if( forcedteam < TEAM_PLAYERS || forcedteam >= GS_MAX_TEAMS ) { // limit out of range and spectators team
+	int forcedteam = CG_ForceTeam( cg.view.POVent, team );
+	if( forcedteam < TEAM_PLAYERS ) {
 		forcedteam = TEAM_PLAYERS;
 	}
 
@@ -257,7 +260,6 @@ vec_t *CG_TeamColor( int team, vec4_t color ) {
 		case TEAM_BETA:
 			teamForceColor = cg_teamBETAcolor;
 			break;
-		case TEAM_PLAYERS:
 		default:
 			teamForceColor = cg_teamPLAYERScolor;
 			teamForceColorToggle = cg_teamPLAYERScolorForce;

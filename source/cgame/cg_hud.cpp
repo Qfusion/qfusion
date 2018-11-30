@@ -1002,7 +1002,7 @@ static void CG_DrawObituaries( int x, int y, int align, struct qfontface_s *font
 
 		int obituary_y = y + yoffset + ( line_height - trap_SCR_FontHeight( font ) ) / 2;
 		if( obr->type != OBITUARY_ACCIDENT ) {
-			if( ( obr->attacker_team == TEAM_ALPHA ) || ( obr->attacker_team == TEAM_BETA ) ) {
+			if( obr->attacker_team == TEAM_ALPHA || obr->attacker_team == TEAM_BETA ) {
 				CG_TeamColor( obr->attacker_team, teamcolor );
 			} else {
 				Vector4Set( teamcolor, 255, 255, 255, 255 );
@@ -1013,7 +1013,7 @@ static void CG_DrawObituaries( int x, int y, int align, struct qfontface_s *font
 			xoffset += min( trap_SCR_strWidth( obr->attacker, font, 0 ), ( width - icon_size ) / 2 );
 		}
 
-		if( ( obr->victim_team == TEAM_ALPHA ) || ( obr->victim_team == TEAM_BETA ) ) {
+		if( obr->victim_team == TEAM_ALPHA || obr->victim_team == TEAM_BETA ) {
 			CG_TeamColor( obr->victim_team, teamcolor );
 		} else {
 			Vector4Set( teamcolor, 255, 255, 255, 255 );

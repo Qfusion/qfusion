@@ -491,7 +491,10 @@ enum {
 	TEAM_ALPHA,
 	TEAM_BETA,
 
-	GS_MAX_TEAMS
+	GS_MAX_TEAMS,
+
+	TEAM_ALLY,
+	TEAM_ENEMY,
 };
 
 // teams

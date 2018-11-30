@@ -750,7 +750,7 @@ void CG_DrawDamageNumbers() {
 		vec4_t color;
 		if( dn.damage == 255 ) {
 			Q_snprintfz( buf, sizeof( buf ), dn.obituary );
-			CG_TeamColor( TEAM_BETA, color );
+			CG_TeamColor( TEAM_ENEMY, color );
 		}
 		else {
 			float damage = dn.damage;
