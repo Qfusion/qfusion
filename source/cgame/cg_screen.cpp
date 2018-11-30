@@ -681,10 +681,13 @@ void CG_DrawTeamMates( void ) {
 
 //=============================================================================
 
+static const char * mini_obituaries[] = { "GG", "RIP", "BYE", "CYA", "L8R", "CHRS" };
+
 struct DamageNumber {
 	vec3_t origin;
 	float drift;
 	int64_t t;
+	const char * obituary;
 	int damage;
 };
 
@@ -711,6 +714,7 @@ void CG_AddDamageNumber( entity_state_t * ent ) {
 	dn->origin[ 1 ] += random_float( &damage_numbers_rng ) * distance_jitter * 2 - distance_jitter;
 	dn->origin[ 2 ] += 48;
 	dn->drift = random_float( &damage_numbers_rng ) * 2 - 1;
+	dn->obituary = random_select( &damage_numbers_rng, mini_obituaries );
 
 	damage_numbers_head = ( damage_numbers_head + 1 ) % ARRAY_COUNT( damage_numbers );
 }
@@ -737,22 +741,23 @@ void CG_DrawDamageNumbers() {
 
 		coords[ 0 ] += dn.drift * frac * 8;
 
-		vec4_t color;
-		Vector4Copy( colorWhite, color );
-
-		float alpha = 1 - max( 0, frac - 0.75f ) / 0.25f;
-		color[ 3 ] *= alpha;
-
 		char buf[ 16 ];
+		vec4_t color;
 		if( dn.damage == 255 ) {
-			Q_snprintfz( buf, sizeof( buf ), "GG" );
+			Q_snprintfz( buf, sizeof( buf ), dn.obituary );
+			CG_TeamColor( TEAM_BETA, color );
 		}
 		else {
 			float damage = dn.damage;
 			if( dn.damage > 10 )
 				damage -= dn.damage % 2;
 			Q_snprintfz( buf, sizeof( buf ), "%g", damage / 2.0f );
+			Vector4Copy( colorWhite, color );
 		}
+
+		float alpha = 1 - max( 0, frac - 0.75f ) / 0.25f;
+		color[ 3 ] *= alpha;
+
 		trap_SCR_DrawString( coords[0], coords[1], ALIGN_CENTER_MIDDLE, buf, cgs.fontSystemTiny, color );
 	}
 }

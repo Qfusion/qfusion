@@ -23,6 +23,7 @@
 
 #pragma once
 
+#include <stddef.h>
 #include <stdint.h>
 
 struct PCG {
@@ -52,3 +53,8 @@ double random_double( PCG * pcg );
 
 // returns true with probability p
 bool random_p( PCG * pcg, float p );
+
+template< typename T, size_t N >
+T * random_select( PCG * pcg, T * ( &arr )[ N ] ) {
+	return arr[ random_uniform( pcg, 0, N ) ];
+}
