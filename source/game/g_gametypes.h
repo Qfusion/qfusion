@@ -58,8 +58,6 @@ typedef struct {
 
 	int accuracy_shots[AMMO_TOTAL - AMMO_GUNBLADE];
 	int accuracy_hits[AMMO_TOTAL - AMMO_GUNBLADE];
-	int accuracy_hits_direct[AMMO_TOTAL - AMMO_GUNBLADE];
-	int accuracy_hits_air[AMMO_TOTAL - AMMO_GUNBLADE];
 	int accuracy_damage[AMMO_TOTAL - AMMO_GUNBLADE];
 	int accuracy_frags[AMMO_TOTAL - AMMO_GUNBLADE];
 	int total_damage_given;

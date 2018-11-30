@@ -482,22 +482,6 @@ static int objectScoreStats_AccHits( int ammo, score_stats_t *obj ) {
 	return obj->accuracy_hits[ ammo - AMMO_GUNBLADE ];
 }
 
-static int objectScoreStats_AccHitsDirect( int ammo, score_stats_t *obj ) {
-	if( ammo < AMMO_GUNBLADE || ammo >= AMMO_TOTAL ) {
-		return 0;
-	}
-
-	return obj->accuracy_hits_direct[ ammo - AMMO_GUNBLADE ];
-}
-
-static int objectScoreStats_AccHitsAir( int ammo, score_stats_t *obj ) {
-	if( ammo < AMMO_GUNBLADE || ammo >= AMMO_TOTAL ) {
-		return 0;
-	}
-
-	return obj->accuracy_hits_air[ ammo - AMMO_GUNBLADE ];
-}
-
 static int objectScoreStats_AccDamage( int ammo, score_stats_t *obj ) {
 	if( ammo < AMMO_GUNBLADE || ammo >= AMMO_TOTAL ) {
 		return 0;
@@ -531,8 +515,6 @@ static const gs_asMethod_t scorestats_Methods[] =
 	{ ASLIB_FUNCTION_DECL( void, clear, ( ) ), asFUNCTION( objectScoreStats_Clear ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( int, accuracyShots, ( int ammo ) const ), asFUNCTION( objectScoreStats_AccShots ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( int, accuracyHits, ( int ammo ) const ), asFUNCTION( objectScoreStats_AccHits ), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL( int, accuracyHitsDirect, ( int ammo ) const ), asFUNCTION( objectScoreStats_AccHitsDirect ), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL( int, accuracyHitsAir, ( int ammo ) const ), asFUNCTION( objectScoreStats_AccHitsAir ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( int, accuracyDamage, ( int ammo ) const ), asFUNCTION( objectScoreStats_AccDamage ), asCALL_CDECL_OBJLAST },
 
 	ASLIB_METHOD_NULL

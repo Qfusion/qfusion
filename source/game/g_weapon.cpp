@@ -19,31 +19,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 #include "g_local.h"
 
-
 enum {
-	PROJECTILE_TOUCH_NOT = 0,
+	PROJECTILE_TOUCH_NOT,
 	PROJECTILE_TOUCH_DIRECTHIT,
 	PROJECTILE_TOUCH_DIRECTAIRHIT,
-	PROJECTILE_TOUCH_DIRECTSPLASH, // treat direct hits as pseudo-splash impacts
 };
 
-/*
-*
-* - We will consider direct impacts as splash when the player is on the ground and the hit very close to the ground
-*/
 int G_Projectile_HitStyle( edict_t *projectile, edict_t *target ) {
-	trace_t trace;
-	vec3_t end;
-	bool atGround = false;
-	edict_t *attacker;
-#define AIRHIT_MINHEIGHT 64
-
-	// don't hurt owner for the first second
+	// can't hit yourself
 	if( target == projectile->r.owner && target != world ) {
-		if( !g_projectile_touch_owner->integer ||
-			( g_projectile_touch_owner->integer && projectile->timeStamp + 1000 > level.time ) ) {
-			return PROJECTILE_TOUCH_NOT;
-		}
+		return PROJECTILE_TOUCH_NOT;
 	}
 
 	if( !target->takedamage || ISBRUSHMODEL( target->s.modelindex ) ) {
@@ -51,99 +36,28 @@ int G_Projectile_HitStyle( edict_t *projectile, edict_t *target ) {
 	}
 
 	if( target->waterlevel > 1 ) {
-		return PROJECTILE_TOUCH_DIRECTHIT; // water hits are direct but don't count for awards
-
-	}
-	attacker = ( projectile->r.owner && projectile->r.owner->r.client ) ? projectile->r.owner : NULL;
-
-	// see if the target is at ground or a less than a step of height
-	if( target->groundentity ) {
-		atGround = true;
-	} else {
-		VectorCopy( target->s.origin, end );
-		end[2] -= STEPSIZE;
-
-		G_Trace4D( &trace, target->s.origin, target->r.mins, target->r.maxs, end, target, MASK_DEADSOLID, 0 );
-		if( ( trace.ent != -1 || trace.startsolid ) && ISWALKABLEPLANE( &trace.plane ) ) {
-			atGround = true;
-		}
+		return PROJECTILE_TOUCH_DIRECTHIT;
 	}
 
-	if( atGround ) {
-		// when the player is at ground we will consider a direct hit only when
-		// the hit is 16 units above the feet
-		if( projectile->s.origin[2] <= 16 + target->s.origin[2] + target->r.mins[2] ) {
-			return PROJECTILE_TOUCH_DIRECTSPLASH;
-		}
-	} else {
-		// it's direct hit, but let's see if it's airhit
+	if( !target->groundentity ) {
+		const float AIRHIT_MINHEIGHT = 64.0f;
+
+		vec3_t end;
 		VectorCopy( target->s.origin, end );
 		end[2] -= AIRHIT_MINHEIGHT;
 
+		trace_t trace;
 		G_Trace4D( &trace, target->s.origin, target->r.mins, target->r.maxs, end, target, MASK_DEADSOLID, 0 );
 		if( ( trace.ent != -1 || trace.startsolid ) && ISWALKABLEPLANE( &trace.plane ) ) {
-			// add directhit and airhit to awards counter
-			if( attacker && !GS_IsTeamDamage( &attacker->s, &target->s ) && G_ModToAmmo( projectile->style ) != AMMO_NONE ) {
-				projectile->r.owner->r.client->level.stats.accuracy_hits_direct[G_ModToAmmo( projectile->style ) - AMMO_GUNBLADE]++;
-				teamlist[projectile->r.owner->s.team].stats.accuracy_hits_direct[G_ModToAmmo( projectile->style ) - AMMO_GUNBLADE]++;
-
-				projectile->r.owner->r.client->level.stats.accuracy_hits_air[G_ModToAmmo( projectile->style ) - AMMO_GUNBLADE]++;
-				teamlist[projectile->r.owner->s.team].stats.accuracy_hits_air[G_ModToAmmo( projectile->style ) - AMMO_GUNBLADE]++;
-			}
-
 			return PROJECTILE_TOUCH_DIRECTAIRHIT;
 		}
 	}
 
-	// add directhit to awards counter
-	if( attacker && !GS_IsTeamDamage( &attacker->s, &target->s ) && G_ModToAmmo( projectile->style ) != AMMO_NONE ) {
-		projectile->r.owner->r.client->level.stats.accuracy_hits_direct[G_ModToAmmo( projectile->style ) - AMMO_GUNBLADE]++;
-		teamlist[projectile->r.owner->s.team].stats.accuracy_hits_direct[G_ModToAmmo( projectile->style ) - AMMO_GUNBLADE]++;
-	}
-
 	return PROJECTILE_TOUCH_DIRECTHIT;
-
-#undef AIRHIT_MINHEIGHT
 }
 
-/*
-* W_Touch_Projectile - Generic projectile touch func. Only for replacement in tests
-*/
-static void W_Touch_Projectile( edict_t *ent, edict_t *other, cplane_t *plane, int surfFlags ) {
-	vec3_t dir, normal;
-	int hitType;
-
-	if( surfFlags & SURF_NOIMPACT ) {
-		G_FreeEdict( ent );
-		return;
-	}
-
-	hitType = G_Projectile_HitStyle( ent, other );
-	if( hitType == PROJECTILE_TOUCH_NOT ) {
-		return;
-	}
-
-	if( other->takedamage ) {
-		VectorNormalize2( ent->velocity, dir );
-
-		if( hitType == PROJECTILE_TOUCH_DIRECTSPLASH ) { // use hybrid direction from splash and projectile
-			G_SplashFrac4D( ENTNUM( other ), ent->s.origin, ent->projectileInfo.radius, dir, NULL, NULL, ent->timeDelta );
-		} else {
-			VectorNormalize2( ent->velocity, dir );
-		}
-
-		G_Damage( other, ent, ent->r.owner, dir, ent->velocity, ent->s.origin, ent->projectileInfo.maxDamage, ent->projectileInfo.maxKnockback, 0, ent->style );
-	}
-
-	G_RadiusDamage( ent, ent->r.owner, plane, other, MOD_EXPLOSIVE );
-
-	if( !plane ) {
-		VectorSet( normal, 0, 0, 1 );
-	} else {
-		VectorCopy( plane->normal, normal );
-	}
-
-	G_Gametype_ScoreEvent( NULL, "projectilehit", va( "%i %i %f %f %f", ent->s.number, surfFlags, normal[0], normal[1], normal[2] ) );
+static void ForgotToSetProjectileTouch( edict_t *ent, edict_t *other, cplane_t *plane, int surfFlags ) {
+	assert( false );
 }
 
 /*
@@ -175,7 +89,7 @@ static edict_t *W_Fire_LinearProjectile( edict_t *self, vec3_t start, vec3_t ang
 	projectile->s.modelindex = 0;
 	projectile->r.owner = self;
 	projectile->s.ownerNum = ENTNUM( self );
-	projectile->touch = W_Touch_Projectile; //generic one. Should be replaced after calling this func
+	projectile->touch = ForgotToSetProjectileTouch;
 	projectile->nextThink = level.time + timeout;
 	projectile->think = G_FreeEdict;
 	projectile->classname = NULL; // should be replaced after calling this func.
@@ -235,7 +149,7 @@ static edict_t *W_Fire_TossProjectile( edict_t *self, vec3_t start, vec3_t angle
 	//projectile->s.modelindex = trap_ModelIndex ("models/objects/projectile/plasmagun/proj_plasmagun2.md3");
 	projectile->s.modelindex = 0;
 	projectile->r.owner = self;
-	projectile->touch = W_Touch_Projectile; //generic one. Should be replaced after calling this func
+	projectile->touch = ForgotToSetProjectileTouch;
 	projectile->nextThink = level.time + timeout;
 	projectile->think = G_FreeEdict;
 	projectile->classname = NULL; // should be replaced after calling this func.
@@ -302,43 +216,31 @@ void W_Fire_Blade( edict_t *self, int range, vec3_t start, vec3_t angles, float 
 * W_Touch_GunbladeBlast
 */
 static void W_Touch_GunbladeBlast( edict_t *ent, edict_t *other, cplane_t *plane, int surfFlags ) {
-	vec3_t dir;
-	int hitType;
-
 	if( surfFlags & SURF_NOIMPACT ) {
 		G_FreeEdict( ent );
 		return;
 	}
 
-	hitType = G_Projectile_HitStyle( ent, other );
+	int hitType = G_Projectile_HitStyle( ent, other );
 	if( hitType == PROJECTILE_TOUCH_NOT ) {
 		return;
 	}
 
 	if( other->takedamage ) {
-		VectorNormalize2( ent->velocity, dir );
-
-		if( hitType == PROJECTILE_TOUCH_DIRECTSPLASH ) { // use hybrid direction from splash and projectile
-			G_SplashFrac4D( ENTNUM( other ), ent->s.origin, ent->projectileInfo.radius, dir, NULL, NULL, ent->timeDelta );
-		} else {
-			VectorNormalize2( ent->velocity, dir );
-		}
-
-		G_Damage( other, ent, ent->r.owner, dir, ent->velocity, ent->s.origin, ent->projectileInfo.maxDamage, ent->projectileInfo.maxKnockback, 0, ent->style );
+		vec3_t push_dir;
+		G_SplashFrac4D( ENTNUM( other ), ent->s.origin, ent->projectileInfo.radius, push_dir, NULL, NULL, ent->timeDelta );
+		G_Damage( other, ent, ent->r.owner, push_dir, ent->velocity, ent->s.origin, ent->projectileInfo.maxDamage, ent->projectileInfo.maxKnockback, 0, ent->style );
 	}
 
 	G_RadiusDamage( ent, ent->r.owner, plane, other, MOD_GUNBLADE_S );
 
 	// add explosion event
-	if( ( !other->takedamage || ISBRUSHMODEL( other->s.modelindex ) ) ) {
-		edict_t *event;
-
-		event = G_SpawnEvent( EV_GUNBLADEBLAST_IMPACT, DirToByte( plane ? plane->normal : NULL ), ent->s.origin );
-		event->s.weapon = ( ( ent->projectileInfo.radius * 1 / 8 ) > 127 ) ? 127 : ( ent->projectileInfo.radius * 1 / 8 );
-		event->s.skinnum = ( ( ent->projectileInfo.maxKnockback * 1 / 8 ) > 255 ) ? 255 : ( ent->projectileInfo.maxKnockback * 1 / 8 );
+	if( !other->takedamage || ISBRUSHMODEL( other->s.modelindex ) ) {
+		edict_t * event = G_SpawnEvent( EV_GUNBLADEBLAST_IMPACT, DirToByte( plane ? plane->normal : NULL ), ent->s.origin );
+		event->s.weapon = min( ent->projectileInfo.radius / 8, 127 );
+		event->s.skinnum = min( ent->projectileInfo.maxKnockback / 8, 255 );
 	}
 
-	// free at next frame
 	G_FreeEdict( ent );
 }
 
@@ -488,15 +390,12 @@ static void W_Grenade_Explode( edict_t *ent ) {
 * W_Touch_Grenade
 */
 static void W_Touch_Grenade( edict_t *ent, edict_t *other, cplane_t *plane, int surfFlags ) {
-	int hitType;
-	vec3_t dir;
-
 	if( surfFlags & SURF_NOIMPACT ) {
 		G_FreeEdict( ent );
 		return;
 	}
 
-	hitType = G_Projectile_HitStyle( ent, other );
+	int hitType = G_Projectile_HitStyle( ent, other );
 	if( hitType == PROJECTILE_TOUCH_NOT ) {
 		return;
 	}
@@ -508,15 +407,9 @@ static void W_Touch_Grenade( edict_t *ent, edict_t *other, cplane_t *plane, int 
 	}
 
 	if( other->takedamage ) {
-		VectorNormalize2( ent->velocity, dir );
-
-		if( hitType == PROJECTILE_TOUCH_DIRECTSPLASH ) { // use hybrid direction from splash and projectile
-			G_SplashFrac4D( ENTNUM( other ), ent->s.origin, ent->projectileInfo.radius, dir, NULL, NULL, ent->timeDelta );
-		} else {
-			VectorNormalize2( ent->velocity, dir );
-		}
-
-		G_Damage( other, ent, ent->r.owner, dir, ent->velocity, ent->s.origin, ent->projectileInfo.maxDamage, ent->projectileInfo.maxKnockback, 0, ent->style );
+		vec3_t push_dir;
+		G_SplashFrac4D( ENTNUM( other ), ent->s.origin, ent->projectileInfo.radius, push_dir, NULL, NULL, ent->timeDelta );
+		G_Damage( other, ent, ent->r.owner, push_dir, ent->velocity, ent->s.origin, ent->projectileInfo.maxDamage, ent->projectileInfo.maxKnockback, 0, ent->style );
 	}
 
 	ent->enemy = other;
@@ -564,33 +457,23 @@ edict_t *W_Fire_Grenade( edict_t *self, vec3_t start, vec3_t angles, int speed, 
 * W_Touch_Rocket
 */
 static void W_Touch_Rocket( edict_t *ent, edict_t *other, cplane_t *plane, int surfFlags ) {
-	int mod_splash;
-	vec3_t dir;
-	int hitType;
-
 	if( surfFlags & SURF_NOIMPACT ) {
 		G_FreeEdict( ent );
 		return;
 	}
 
-	hitType = G_Projectile_HitStyle( ent, other );
+	int hitType = G_Projectile_HitStyle( ent, other );
 	if( hitType == PROJECTILE_TOUCH_NOT ) {
 		return;
 	}
 
 	if( other->takedamage ) {
-		VectorNormalize2( ent->velocity, dir );
-
-		if( hitType == PROJECTILE_TOUCH_DIRECTSPLASH ) { // use hybrid direction from splash and projectile
-
-			G_SplashFrac4D( ENTNUM( other ), ent->s.origin, ent->projectileInfo.radius, dir, NULL, NULL, ent->timeDelta );
-		} else {
-			VectorNormalize2( ent->velocity, dir );
-		}
-
-		G_Damage( other, ent, ent->r.owner, dir, ent->velocity, ent->s.origin, ent->projectileInfo.maxDamage, ent->projectileInfo.maxKnockback, 0, ent->style );
+		vec3_t push_dir;
+		G_SplashFrac4D( ENTNUM( other ), ent->s.origin, ent->projectileInfo.radius, push_dir, NULL, NULL, ent->timeDelta );
+		G_Damage( other, ent, ent->r.owner, push_dir, ent->velocity, ent->s.origin, ent->projectileInfo.maxDamage, ent->projectileInfo.maxKnockback, 0, ent->style );
 	}
 
+	int mod_splash;
 	if( ent->s.effects & EF_STRONG_WEAPON ) {
 		mod_splash = MOD_ROCKET_SPLASH_S;
 	} else {
@@ -600,17 +483,13 @@ static void W_Touch_Rocket( edict_t *ent, edict_t *other, cplane_t *plane, int s
 	G_RadiusDamage( ent, ent->r.owner, plane, other, mod_splash );
 
 	// spawn the explosion
-	if( !( surfFlags & SURF_NOIMPACT ) ) {
-		edict_t *event;
-		vec3_t explosion_origin;
+	vec3_t explosion_origin;
+	VectorMA( ent->s.origin, -0.02, ent->velocity, explosion_origin );
 
-		VectorMA( ent->s.origin, -0.02, ent->velocity, explosion_origin );
-		event = G_SpawnEvent( EV_ROCKET_EXPLOSION, DirToByte( plane ? plane->normal : NULL ), explosion_origin );
-		event->s.firemode = ( ent->s.effects & EF_STRONG_WEAPON ) ? FIRE_MODE_STRONG : FIRE_MODE_WEAK;
-		event->s.weapon = ( ( ent->projectileInfo.radius * 1 / 8 ) > 255 ) ? 255 : ( ent->projectileInfo.radius * 1 / 8 );
-	}
+	edict_t *event = G_SpawnEvent( EV_ROCKET_EXPLOSION, DirToByte( plane ? plane->normal : NULL ), explosion_origin );
+	event->s.firemode = ( ent->s.effects & EF_STRONG_WEAPON ) ? FIRE_MODE_STRONG : FIRE_MODE_WEAK;
+	event->s.weapon = min( ent->projectileInfo.radius / 8, 255 );
 
-	// free the rocket at next frame
 	G_FreeEdict( ent );
 }
 
@@ -641,50 +520,34 @@ edict_t *W_Fire_Rocket( edict_t *self, vec3_t start, vec3_t angles, int speed, f
 	return rocket;
 }
 
-static void W_Plasma_Explosion( edict_t *ent, edict_t *ignore, cplane_t *plane, int surfFlags ) {
-	edict_t *event;
-	int radius = ( ( ent->projectileInfo.radius * 1 / 8 ) > 127 ) ? 127 : ( ent->projectileInfo.radius * 1 / 8 );
-
-	event = G_SpawnEvent( EV_PLASMA_EXPLOSION, DirToByte( plane ? plane->normal : NULL ), ent->s.origin );
-	event->s.firemode = ( ent->s.effects & EF_STRONG_WEAPON ) ? FIRE_MODE_STRONG : FIRE_MODE_WEAK;
-	event->s.weapon = radius & 127;
-	event->s.team = ent->s.team;;
-
-	G_RadiusDamage( ent, ent->r.owner, plane, ignore, ent->style );
-
-	G_FreeEdict( ent );
-}
-
 /*
 * W_Touch_Plasma
 */
 static void W_Touch_Plasma( edict_t *ent, edict_t *other, cplane_t *plane, int surfFlags ) {
-	int hitType;
-	vec3_t dir;
-
 	if( surfFlags & SURF_NOIMPACT ) {
 		G_FreeEdict( ent );
 		return;
 	}
 
-	hitType = G_Projectile_HitStyle( ent, other );
+	int hitType = G_Projectile_HitStyle( ent, other );
 	if( hitType == PROJECTILE_TOUCH_NOT ) {
 		return;
 	}
 
 	if( other->takedamage ) {
-		VectorNormalize2( ent->velocity, dir );
-
-		if( hitType == PROJECTILE_TOUCH_DIRECTSPLASH ) { // use hybrid direction from splash and projectile
-			G_SplashFrac4D( ENTNUM( other ), ent->s.origin, ent->projectileInfo.radius, dir, NULL, NULL, ent->timeDelta );
-		} else {
-			VectorNormalize2( ent->velocity, dir );
-		}
-
-		G_Damage( other, ent, ent->r.owner, dir, ent->velocity, ent->s.origin, ent->projectileInfo.maxDamage, ent->projectileInfo.maxKnockback, DAMAGE_KNOCKBACK_SOFT, ent->style );
+		vec3_t push_dir;
+		G_SplashFrac4D( ENTNUM( other ), ent->s.origin, ent->projectileInfo.radius, push_dir, NULL, NULL, ent->timeDelta );
+		G_Damage( other, ent, ent->r.owner, push_dir, ent->velocity, ent->s.origin, ent->projectileInfo.maxDamage, ent->projectileInfo.maxKnockback, DAMAGE_KNOCKBACK_SOFT, ent->style );
 	}
 
-	W_Plasma_Explosion( ent, other, plane, surfFlags );
+	G_RadiusDamage( ent, ent->r.owner, plane, other, ent->style );
+
+	edict_t *event = G_SpawnEvent( EV_PLASMA_EXPLOSION, DirToByte( plane ? plane->normal : NULL ), ent->s.origin );
+	event->s.firemode = ( ent->s.effects & EF_STRONG_WEAPON ) ? FIRE_MODE_STRONG : FIRE_MODE_WEAK;
+	event->s.weapon = min( ent->projectileInfo.radius / 8, 127 );
+	event->s.team = ent->s.team;
+
+	G_FreeEdict( ent );
 }
 
 /*

@@ -265,7 +265,8 @@ static void G_KnockBackPush( edict_t *targ, edict_t *attacker, const vec3_t base
 	}
 
 	VectorNormalize2( basedir, dir );
-	dir[ 2 ] *= 1.25f;
+	const float VERTICAL_KNOCKBACK_SCALE = 1.25f;
+	dir[ 2 ] *= VERTICAL_KNOCKBACK_SCALE;
 
 	if( targ->r.client && targ != attacker && !( dflags & DAMAGE_KNOCKBACK_SOFT ) ) {
 		targ->r.client->ps.pmove.stats[PM_STAT_KNOCKBACK] = 3 * knockback;
@@ -476,10 +477,6 @@ void G_Damage( edict_t *targ, edict_t *inflictor, edict_t *attacker, const vec3_
 * G_SplashFrac
 */
 void G_SplashFrac( const vec3_t origin, const vec3_t mins, const vec3_t maxs, const vec3_t point, float maxradius, vec3_t pushdir, float *kickFrac, float *dmgFrac ) {
-#define VERTICALBIAS 0.65f // 0...1
-#define CAPSULEDISTANCE
-
-//#define SPLASH_HDIST_CLAMP 0
 	vec3_t boxcenter = { 0, 0, 0 };
 	vec3_t hitpoint;
 	float distance;
@@ -503,20 +500,13 @@ void G_SplashFrac( const vec3_t origin, const vec3_t mins, const vec3_t maxs, co
 	VectorCopy( point, hitpoint );
 
 	innerradius = ( maxs[0] + maxs[1] - mins[0] - mins[1] ) * 0.25;
-
-#ifdef CAPSULEDISTANCE
+	printf( "ir = %f\n", innerradius );
 
 	// Find the distance to the closest point in the capsule contained in the player bbox
 	// modify the origin so the inner sphere acts as a capsule
 	VectorCopy( origin, boxcenter );
 	boxcenter[2] = hitpoint[2];
 	clamp( boxcenter[2], ( origin[2] + mins[2] ) + innerradius, ( origin[2] + maxs[2] ) - innerradius );
-#else
-
-	// find center of the box
-	for( i = 0; i < 3; i++ )
-		boxcenter[i] = origin[i] + ( 0.5f * ( maxs[i] + mins[i] ) );
-#endif
 
 	// find push intensity
 	distance = Distance( boxcenter, hitpoint );
@@ -536,6 +526,7 @@ void G_SplashFrac( const vec3_t origin, const vec3_t mins, const vec3_t maxs, co
 
 	refdistance = innerradius;
 	if( refdistance >= maxradius ) {
+		printf( "WTF\n" );
 		if( kickFrac ) {
 			*kickFrac = 0;
 		}
@@ -564,72 +555,39 @@ void G_SplashFrac( const vec3_t origin, const vec3_t mins, const vec3_t maxs, co
 	}
 
 	if( kickFrac ) {
-		// linear kick fraction
 		float kick = ( distance / maxradius );
-
 		kick *= kick;
-
-		//kick = maxradius / distance;
 		clamp( kick, 0, 1 );
-
-		// half linear half exponential
-		//*kickFrac =  ( kick + ( kick * kick ) ) * 0.5f;
-
-		// linear
 		*kickFrac = kick;
-
-		clamp( *kickFrac, 0.0f, 1.0f );
 	}
 
-	//if( dmgFrac && kickFrac )
-	//	G_Printf( "SPLASH: dmgFrac %.2f kickFrac %.2f\n", *dmgFrac, *kickFrac );
-
 	// find push direction
-
 	if( pushdir ) {
-#ifdef CAPSULEDISTANCE
-
 		// find real center of the box again
 		for( i = 0; i < 3; i++ )
 			boxcenter[i] = origin[i] + ( 0.5f * ( maxs[i] + mins[i] ) );
-#endif
 
-#ifdef VERTICALBIAS
-
+		const float VERTICAL_BIAS = 0.65f;
 		// move the center up for the push direction
 		if( origin[2] + maxs[2] > boxcenter[2] ) {
-			boxcenter[2] += VERTICALBIAS * ( ( origin[2] + maxs[2] ) - boxcenter[2] );
+			boxcenter[2] += VERTICAL_BIAS * ( ( origin[2] + maxs[2] ) - boxcenter[2] );
 		}
-#endif // VERTICALBIAS
-
-#ifdef SPLASH_HDIST_CLAMP
-
-		// if pushed from below, hack the hitpoint to limit the side push direction
-		if( hitpoint[2] < boxcenter[2] && SPLASH_HDIST_CLAMP >= 0 ) {
-			// do not allow the hitpoint to be further away
-			// than SPLASH_HDIST_CLAMP in the horizontal axis
-			vec3_t vec;
-
-			vec[0] = hitpoint[0];
-			vec[1] = hitpoint[1];
-			vec[2] = boxcenter[2];
-
-			if( Distance( boxcenter, vec ) > SPLASH_HDIST_CLAMP ) {
-				VectorSubtract( vec, boxcenter, pushdir );
-				VectorNormalize( pushdir );
-				VectorMA( boxcenter, SPLASH_HDIST_CLAMP, pushdir, hitpoint );
-				hitpoint[2] = point[2]; // restore the original hitpoint height
-			}
-		}
-#endif // SPLASH_HDIST_CLAMP
 
 		VectorSubtract( boxcenter, hitpoint, pushdir );
 		VectorNormalize( pushdir );
 	}
 
-#undef VERTICALBIAS
-#undef CAPSULEDISTANCE
-#undef SPLASH_HDIST_CLAMP
+	printf( "\n\n" );
+	printf( "player mins = (%.2f %.2f %.2f)\n", origin[ 0 ] + mins[ 0 ], origin[ 1 ] + mins[ 1 ], origin[ 2 ] + mins[ 2 ] );
+	printf( "player maxs = (%.2f %.2f %.2f)\n", origin[ 0 ] + maxs[ 0 ], origin[ 1 ] + maxs[ 1 ], origin[ 2 ] + maxs[ 2 ] );
+	printf( "impact point = (%.2f %.2f %.2f)\n", point[ 0 ], point[ 1 ], point[ 2 ] );
+
+	printf( "\n" );
+
+	printf( "distance to capsule = %.2f\n", maxradius - distance );
+	printf( "push dir = (%.2f %.2f %.2f)\n", pushdir[ 0 ], pushdir[ 1 ], pushdir[ 2 ] );
+
+	printf( "\n\n" );
 }
 
 /*

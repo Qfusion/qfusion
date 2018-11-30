@@ -295,7 +295,6 @@ extern cvar_t *g_map_pool;
 extern cvar_t *g_scorelimit;
 extern cvar_t *g_timelimit;
 
-extern cvar_t *g_projectile_touch_owner;
 extern cvar_t *g_projectile_prestep;
 extern cvar_t *g_numbots;
 extern cvar_t *g_maxtimeouts;
