@@ -705,8 +705,6 @@ void CG_AddDamageNumber( entity_state_t * ent ) {
 	VectorCopy( ent->origin, dn->origin );
 	dn->t = cg.time;
 	dn->damage = ent->damage;
-	if( dn->damage > 10 )
-		dn->damage -= dn->damage % 2;
 
 	float distance_jitter = 4;
 	dn->origin[ 0 ] += random_float( &damage_numbers_rng ) * distance_jitter * 2 - distance_jitter;
@@ -746,7 +744,15 @@ void CG_DrawDamageNumbers() {
 		color[ 3 ] *= alpha;
 
 		char buf[ 16 ];
-		Q_snprintfz( buf, sizeof( buf ), "%g", dn.damage / 2.0f );
+		if( dn.damage == 255 ) {
+			Q_snprintfz( buf, sizeof( buf ), "GG" );
+		}
+		else {
+			float damage = dn.damage;
+			if( dn.damage > 10 )
+				damage -= dn.damage % 2;
+			Q_snprintfz( buf, sizeof( buf ), "%g", damage / 2.0f );
+		}
 		trap_SCR_DrawString( coords[0], coords[1], ALIGN_CENTER_MIDDLE, buf, cgs.fontSystemTiny, color );
 	}
 }
