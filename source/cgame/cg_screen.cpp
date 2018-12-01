@@ -748,9 +748,11 @@ void CG_DrawDamageNumbers() {
 
 		char buf[ 16 ];
 		vec4_t color;
+		qfontface_s * font;
 		if( dn.damage == 255 ) {
 			Q_snprintfz( buf, sizeof( buf ), dn.obituary );
 			CG_TeamColor( TEAM_ENEMY, color );
+			font = cgs.fontSystemSmall;
 		}
 		else {
 			float damage = dn.damage;
@@ -758,12 +760,13 @@ void CG_DrawDamageNumbers() {
 				damage -= dn.damage % 2;
 			Q_snprintfz( buf, sizeof( buf ), "%g", damage / 2.0f );
 			Vector4Copy( colorWhite, color );
+			font = cgs.fontSystemTiny;
 		}
 
 		float alpha = 1 - max( 0, frac - 0.75f ) / 0.25f;
 		color[ 3 ] *= alpha;
 
-		trap_SCR_DrawString( coords[0], coords[1], ALIGN_CENTER_MIDDLE, buf, cgs.fontSystemTiny, color );
+		trap_SCR_DrawString( coords[0], coords[1], ALIGN_CENTER_MIDDLE, buf, font, color );
 	}
 }
 
