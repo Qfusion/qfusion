@@ -335,8 +335,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define S_ANNOUNCER_POSTMATCH_GAMEOVER_1_to_2       "sounds/announcer/postmatch/game_over%02i"
 
 // timeout
-//#define S_ANNOUNCER_TIMEOUT_MATCH_PAUSED_1_to_2		"sounds/announcer/timeout/matchpaused%02i"
-#define S_ANNOUNCER_TIMEOUT_MATCH_RESUMED_1_to_2    "sounds/announcer/timeout/matchresumed%02i"
 #define S_ANNOUNCER_TIMEOUT_TIMEOUT_1_to_2      "sounds/announcer/timeout/timeout%02i"
 #define S_ANNOUNCER_TIMEOUT_TIMEIN_1_to_2       "sounds/announcer/timeout/timein%02i"
 

@@ -65,9 +65,6 @@ static void G_Timeout_Update( unsigned int msec ) {
 		timeout_printtime = 0;
 		timeout_last_endtime = -1;
 
-		G_AnnouncerSound( NULL, trap_SoundIndex( va( S_ANNOUNCER_TIMEOUT_MATCH_RESUMED_1_to_2, ( rand() & 1 ) + 1 ) ),
-						  GS_MAX_TEAMS, true, NULL );
-		G_CenterPrintMsg( NULL, "Match resumed" );
 		G_PrintMsg( NULL, "Match resumed\n" );
 	} else if( timeout_printtime == 0 || level.timeout.time - timeout_printtime >= 1000 ) {
 		if( level.timeout.endtime ) {
