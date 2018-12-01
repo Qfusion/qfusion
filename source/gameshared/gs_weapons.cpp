@@ -76,69 +76,19 @@ trace_t *GS_TraceBullet( trace_t *trace, vec3_t start, vec3_t dir, vec3_t right,
 	return NULL;
 }
 
-#define MAX_BEAM_HIT_ENTITIES 16
-
 void GS_TraceLaserBeam( trace_t *trace, vec3_t origin, vec3_t angles, float range, int ignore, int timeDelta, void ( *impact )( trace_t *tr, vec3_t dir ) ) {
-	vec3_t from, dir, end;
-	int mask = MASK_SHOT;
-	int passthrough = ignore;
-	entity_state_t *hit;
+	vec3_t dir, end;
 	vec3_t mins = { -0.5, -0.5, -0.5 };
 	vec3_t maxs = { 0.5, 0.5, 0.5 };
-	int hits[MAX_BEAM_HIT_ENTITIES];
-	int j, numhits;
-
-	assert( trace );
 
 	AngleVectors( angles, dir, NULL, NULL );
-	VectorCopy( origin, from );
 	VectorMA( origin, range, dir, end );
 
 	trace->ent = 0;
 
-	numhits = 0;
-	while( trace->ent != -1 ) {
-		gs.api.Trace( trace, from, mins, maxs, end, passthrough, mask, timeDelta );
-		if( trace->ent != -1 ) {
-			// prevent endless loops by checking whether we have already impacted this entity
-			for( j = 0; j < numhits; j++ ) {
-				if( trace->ent == hits[j] ) {
-					break;
-				}
-			}
-			if( j < numhits ) {
-				break;
-			}
-
-			// callback impact
-			if( impact ) {
-				impact( trace, dir );
-			}
-
-			// check for pass-through
-			hit = gs.api.GetEntityState( trace->ent, timeDelta );
-			if( trace->ent == 0 || !hit || hit->solid == SOLID_BMODEL ) { // can't pass through brush models
-				break;
-			}
-
-			// if trapped inside solid, just forget about it
-			if( trace->fraction == 0 || trace->allsolid || trace->startsolid ) {
-				break;
-			}
-
-			// put a limit on number of hit entities
-			if( numhits < MAX_BEAM_HIT_ENTITIES ) {
-				hits[numhits++] = trace->ent;
-			} else {
-				break;
-			}
-
-			passthrough = trace->ent;
-			VectorCopy( trace->endpos, from );
-		}
-	}
-
-	if( trace->ent != -1 ) { // was interrupted by a brush model impact
+	gs.api.Trace( trace, origin, mins, maxs, end, ignore, MASK_SHOT, timeDelta );
+	if( trace->ent != -1 && impact != NULL ) {
+		impact( trace, dir );
 	}
 }
 
