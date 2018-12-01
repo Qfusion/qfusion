@@ -308,10 +308,6 @@ public:
 		return UI_Main::Get()->getConnectCount();
 	}
 
-	bool isBrowserAvailable( void ) {
-		return trap::CL_IsBrowserAvailable();
-	}
-
 	asstring_t *getOSName( void ) const {
 		return ASSTR( OSNAME );
 	}
@@ -456,8 +452,6 @@ void BindWindow( ASInterface *as ) {
 	.method( &ASWindow::flash, "flash" )
 
 	.method( &ASWindow::getConnectCount, "get_connectCount" )
-
-	.method( &ASWindow::isBrowserAvailable, "get_browserAvailable" )
 
 	.method( &ASWindow::getOSName, "get_osName" )
 	;

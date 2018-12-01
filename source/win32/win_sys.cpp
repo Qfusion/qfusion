@@ -140,13 +140,6 @@ void Sys_SendKeyEvents( void ) {
 #endif // defined(DEDICATED_ONLY)
 
 /*
-* Sys_IsBrowserAvailable
-*/
-bool Sys_IsBrowserAvailable( void ) {
-	return true;
-}
-
-/*
 * Sys_OpenURLInBrowser
 */
 void Sys_OpenURLInBrowser( const char *url ) {
@@ -158,14 +151,6 @@ void Sys_OpenURLInBrowser( const char *url ) {
 */
 int Sys_GetCurrentProcessId( void ) {
 	return GetCurrentProcessId();
-}
-
-/*
-* Sys_GetPreferredLanguage
-* Get the preferred language through the MUI API. Works on Vista and newer.
-*/
-const char *Sys_GetPreferredLanguage( void ) {
-	return APP_DEFAULT_LANGUAGE;
 }
 
 #if defined( DEDICATED_ONLY )

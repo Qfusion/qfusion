@@ -1022,22 +1022,12 @@ void SV_ParseClientMessage( client_t *client, msg_t *msg ) {
 				}
 				break;
 
-			case clc_extension:
-				if( 1 ) {
-					int ext, len;
-
-					ext = MSG_ReadUint8( msg );  // extension id
-					MSG_ReadUint8( msg );        // version number
-					len = MSG_ReadInt16( msg ); // command length
-
-					switch( ext ) {
-						default:
-							// unsupported
-							MSG_SkipData( msg, len );
-							break;
-					}
-				}
-				break;
+			case clc_extension: {
+				MSG_ReadUint8( msg ); // extension id
+				MSG_ReadUint8( msg ); // version number
+				int len = MSG_ReadInt16( msg ); // command length
+				MSG_SkipData( msg, len );
+			} break;
 		}
 	}
 

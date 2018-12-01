@@ -783,7 +783,7 @@ static void CL_ParseServerData( msg_t *msg ) {
 	// parse protocol version number
 	i = MSG_ReadInt32( msg );
 
-	if( i != APP_PROTOCOL_VERSION && !( cls.demo.playing && i == APP_DEMO_PROTOCOL_VERSION ) ) {
+	if( i != APP_PROTOCOL_VERSION ) {
 		Com_Error( ERR_DROP, "Server returned version %i, not %i", i, APP_PROTOCOL_VERSION );
 	}
 

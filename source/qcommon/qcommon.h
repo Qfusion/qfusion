@@ -839,9 +839,7 @@ __declspec( noreturn ) void Sys_Quit( void );
 char    *Sys_GetClipboardData( void );
 bool Sys_SetClipboardData( const char *data );
 void    Sys_FreeClipboardData( char *data );
-const char *Sys_GetPreferredLanguage( void );
 
-bool    Sys_IsBrowserAvailable( void );
 void    Sys_OpenURLInBrowser( const char *url );
 
 int     Sys_GetCurrentProcessId( void );

@@ -180,10 +180,6 @@ void Sys_SendKeyEvents( void ) {
 * in mac_sys.m.
 */
 
-bool Sys_IsBrowserAvailable( void ) {
-	return true;
-}
-
 void Sys_OpenURLInBrowser( const char *url ) {
 	int r;
 
@@ -201,13 +197,6 @@ void Sys_OpenURLInBrowser( const char *url ) {
 */
 int Sys_GetCurrentProcessId( void ) {
 	return getpid();
-}
-
-/*
-* Sys_GetPreferredLanguage
-*/
-const char *Sys_GetPreferredLanguage( void ) {
-	return APP_DEFAULT_LANGUAGE;
 }
 
 #if defined( DEDICATED_ONLY )
