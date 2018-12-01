@@ -564,7 +564,7 @@ void G_PrecacheMedia( void ) {
 	trap_ModelIndex( "#glauncher/glauncher.md3" );    // WEAP_GRENADELAUNCHER
 	trap_ModelIndex( "#rl.md3" );    // WEAP_ROCKETLAUNCHER
 	trap_ModelIndex( "#plasmagun/plasmagun.md3" );    // WEAP_PLASMAGUN
-	trap_ModelIndex( "#lasergun/lasergun.md3" );      // WEAP_LASERGUN
+	trap_ModelIndex( "#lg.md3" );      // WEAP_LASERGUN
 	trap_ModelIndex( "#electrobolt/electrobolt.md3" ); // WEAP_ELECTROBOLT
 
 	//-------------------

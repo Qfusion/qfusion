@@ -135,7 +135,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define PATH_PLASMAGUN_MODEL        "models/weapons/plasmagun/plasmagun.iqm"
 #define PATH_PLASMAGUN_BARREL_MODEL   "models/weapons/plasmagun/plasmagun_barrel.iqm"
 #define PATH_ELECTROBOLT_MODEL      "models/weapons/electrobolt/electrobolt.iqm"
-#define PATH_LASERGUN_MODEL     "models/weapons/lasergun/lasergun.iqm"
+#define PATH_LASERGUN_MODEL     "models/weapons/lg.md3"
 
 // ammoboxes
 #define PATH_AMMO_BOX_MODEL     "models/items/ammo/ammobox/ammobox.iqm"
