@@ -752,6 +752,7 @@ static const char * obituaries[] = {
 	"WHACKED",
 	"WHIPPED",
 	"WIPED OUT",
+	"WITNESSED",
 	"WRECKED",
 };
 
