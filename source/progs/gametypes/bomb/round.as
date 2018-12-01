@@ -68,12 +68,6 @@ void playerKilled( Entity @victim, Entity @attacker, Entity @inflictor ) {
 
 	if( bombState == BombState_Carried && @victim == @bombCarrier ) {
 		bombDrop( BombDrop_Killed );
-
-		G_CenterPrintMsg( null, S_COLOR_ORANGE + "The bomb carrier has been fragged!" );
-
-		if( @attacker != null && @attacker.client != null && attacker.team != victim.team ) {
-			attacker.client.addAward( S_COLOR_ORANGE + "Bomb Carrier Frag!" );
-		}
 	}
 
 	if( @attacker != null && @attacker.client != null && attacker.team != victim.team ) {
