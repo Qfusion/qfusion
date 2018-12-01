@@ -172,26 +172,6 @@ class cPlayer {
 		this.client.selectWeapon( -1 );
 	}
 
-	String getInventoryLabel() {
-		String label = "";
-
-		switch( this.weapPrimary ) {
-			case PrimaryWeapon_EBRL:
-				label += weaponIcons[ WEAP_ELECTROBOLT ] + " " + weaponIcons[ WEAP_ROCKETLAUNCHER ];
-				break;
-
-			case PrimaryWeapon_RLLG:
-				label += weaponIcons[ WEAP_ROCKETLAUNCHER ] + " " + weaponIcons[ WEAP_LASERGUN ];
-				break;
-
-			case PrimaryWeapon_EBLG:
-				label += weaponIcons[ WEAP_ELECTROBOLT ] + " " + weaponIcons[ WEAP_LASERGUN ];
-				break;
-		}
-
-		return label + " " + weaponIcons[ this.weapSecondary ];
-	}
-
 	void showPrimarySelection() {
 		if( this.client.team == TEAM_SPECTATOR ) {
 			return;

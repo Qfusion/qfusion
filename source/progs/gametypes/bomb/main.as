@@ -291,7 +291,6 @@ String @GT_ScoreboardMessage( uint maxlen ) {
 				+ " " + client.clanName
 				+ " " + client.stats.score
 				+ " " + client.stats.frags
-				+ " " + player.getInventoryLabel() // W1 W2 W3
 				+ " " + client.ping
 				+ " " + statusIcon
 				+ " "; // don't delete me!
@@ -616,8 +615,8 @@ void GT_InitGametype() {
 	}
 
 	// define the scoreboard layout
-	G_ConfigString( CS_SCB_PLAYERTAB_LAYOUT, "%n 112 %s 52 %i 42 %i 42 %p l1 %p l1 %p l1 %l 36 %p l1" );
-	G_ConfigString( CS_SCB_PLAYERTAB_TITLES, "Name Clan Score Frags " + S_COLOR_WHITE + " " + S_COLOR_WHITE + " " + S_COLOR_WHITE + " Ping S" );
+	G_ConfigString( CS_SCB_PLAYERTAB_LAYOUT, "%n 112 %s 52 %i 42 %i 42 %l 36 %p l1" );
+	G_ConfigString( CS_SCB_PLAYERTAB_TITLES, "Name Clan Score Frags Ping " + S_COLOR_WHITE );
 
 	// add commands
 	G_RegisterCommand( "drop" );
