@@ -1359,7 +1359,6 @@ static void CG_UpdateLaserbeamEnt( centity_t *cent ) {
 	}
 
 	owner->localEffects[LOCALEFFECT_LASERBEAM] = cg.time + 10;
-	owner->laserCurved = ( cent->current.type == ET_CURVELASERBEAM ) ? true : false;
 
 	// laser->s.origin is beam start
 	// laser->s.origin2 is beam end
@@ -1382,7 +1381,6 @@ static void CG_LerpLaserbeamEnt( centity_t *cent ) {
 	}
 
 	owner->localEffects[LOCALEFFECT_LASERBEAM] = cg.time + 1;
-	owner->laserCurved = ( cent->current.type == ET_CURVELASERBEAM ) ? true : false;
 }
 
 //==========================================================================
@@ -1679,14 +1677,6 @@ void CG_AddEntities( void ) {
 				CG_EntityLoopSound( state, ATTN_STATIC );
 				break;
 
-			case ET_ELECTRO_WEAK:
-				cent->current.frame = cent->prev.frame = 0;
-				cent->ent.frame =  cent->ent.oldframe = 0;
-
-				CG_AddGenericEnt( cent );
-				CG_EntityLoopSound( state, ATTN_STATIC );
-				CG_ElectroWeakTrail( cent->trailOrigin, cent->ent.origin, NULL );
-				break;
 			case ET_ROCKET:
 				CG_AddGenericEnt( cent );
 				CG_ProjectileTrail( cent );
@@ -1746,7 +1736,6 @@ void CG_AddEntities( void ) {
 				break;
 
 			case ET_LASERBEAM:
-			case ET_CURVELASERBEAM:
 				break;
 
 			case ET_PORTALSURFACE:
@@ -1825,7 +1814,6 @@ void CG_LerpEntities( void ) {
 			case ET_GENERIC:
 			case ET_GIB:
 			case ET_BLASTER:
-			case ET_ELECTRO_WEAK:
 			case ET_ROCKET:
 			case ET_PLASMA:
 			case ET_GRENADE:
@@ -1854,7 +1842,6 @@ void CG_LerpEntities( void ) {
 				break;
 
 			case ET_LASERBEAM:
-			case ET_CURVELASERBEAM:
 				CG_LerpLaserbeamEnt( cent );
 				break;
 
@@ -1922,7 +1909,6 @@ void CG_UpdateEntities( void ) {
 
 			// projectiles with linear trajectories
 			case ET_BLASTER:
-			case ET_ELECTRO_WEAK:
 			case ET_ROCKET:
 			case ET_PLASMA:
 			case ET_GRENADE:
@@ -1949,7 +1935,6 @@ void CG_UpdateEntities( void ) {
 				break;
 
 			case ET_LASERBEAM:
-			case ET_CURVELASERBEAM:
 				CG_UpdateLaserbeamEnt( cent );
 				break;
 

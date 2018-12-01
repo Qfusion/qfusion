@@ -117,35 +117,29 @@ class cPlayer {
 			this.pendingSecondary = SecondaryWeapon_Pending;
 		}
 
-		this.client.inventorySetCount( WEAP_GUNBLADE, 1 );
+		this.client.inventoryGiveItem( WEAP_GUNBLADE );
 		this.client.getEnt().health = 200;
 
 		switch( this.weapPrimary ) {
 			case PrimaryWeapon_EBRL:
 				this.client.inventoryGiveItem( WEAP_ROCKETLAUNCHER );
 				this.client.inventorySetCount( AMMO_ROCKETS, AMMO_RL );
-				this.client.inventorySetCount( AMMO_WEAK_ROCKETS, 0 );
 				this.client.inventoryGiveItem( WEAP_ELECTROBOLT );
 				this.client.inventorySetCount( AMMO_BOLTS, AMMO_EB );
-				this.client.inventorySetCount( AMMO_WEAK_BOLTS, 0 );
 				break;
 
 			case PrimaryWeapon_RLLG:
 				this.client.inventoryGiveItem( WEAP_ROCKETLAUNCHER );
 				this.client.inventorySetCount( AMMO_ROCKETS, AMMO_RL );
-				this.client.inventorySetCount( AMMO_WEAK_ROCKETS, 0 );
 				this.client.inventoryGiveItem( WEAP_LASERGUN );
 				this.client.inventorySetCount( AMMO_LASERS, AMMO_LG );
-				this.client.inventorySetCount( AMMO_WEAK_LASERS, 0 );
 				break;
 
 			case PrimaryWeapon_EBLG:
 				this.client.inventoryGiveItem( WEAP_ELECTROBOLT );
 				this.client.inventorySetCount( AMMO_BOLTS, AMMO_EB );
-				this.client.inventorySetCount( AMMO_WEAK_BOLTS, 0 );
 				this.client.inventoryGiveItem( WEAP_LASERGUN );
 				this.client.inventorySetCount( AMMO_LASERS, AMMO_LG );
-				this.client.inventorySetCount( AMMO_WEAK_LASERS, 0 );
 				break;
 		}
 
@@ -153,19 +147,16 @@ class cPlayer {
 			case SecondaryWeapon_PG:
 				this.client.inventoryGiveItem( WEAP_PLASMAGUN );
 				this.client.inventorySetCount( AMMO_PLASMA, AMMO_PG );
-				this.client.inventorySetCount( AMMO_WEAK_PLASMA, 0 );
 				break;
 
 			case SecondaryWeapon_RG:
 				this.client.inventoryGiveItem( WEAP_RIOTGUN );
 				this.client.inventorySetCount( AMMO_SHELLS, AMMO_RG );
-				this.client.inventorySetCount( AMMO_WEAK_SHELLS, 0 );
 				break;
 
 			case SecondaryWeapon_GL:
 				this.client.inventoryGiveItem( WEAP_GRENADELAUNCHER );
 				this.client.inventorySetCount( AMMO_GRENADES, AMMO_GL );
-				this.client.inventorySetCount( AMMO_WEAK_GRENADES, 0 );
 				break;
 		}
 

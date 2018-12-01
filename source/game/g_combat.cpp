@@ -26,37 +26,21 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 *
 */
 int G_ModToAmmo( int mod ) {
-	if( mod == MOD_GUNBLADE_W ) {
-		return AMMO_WEAK_GUNBLADE;
-	} else if( mod == MOD_GUNBLADE_S ) {
+	if( mod == MOD_GUNBLADE_W || mod == MOD_GUNBLADE_S ) {
 		return AMMO_GUNBLADE;
-	} else if( mod == MOD_MACHINEGUN_W ) {
-		return AMMO_WEAK_BULLETS;
-	} else if( mod == MOD_MACHINEGUN_S ) {
+	} else if( mod == MOD_MACHINEGUN ) {
 		return AMMO_BULLETS;
-	} else if( mod == MOD_RIOTGUN_W ) {
-		return AMMO_WEAK_SHELLS;
-	} else if( mod == MOD_RIOTGUN_S ) {
+	} else if( mod == MOD_RIOTGUN ) {
 		return AMMO_SHELLS;
-	} else if( mod == MOD_GRENADE_W || mod == MOD_GRENADE_SPLASH_W ) {
-		return AMMO_WEAK_GRENADES;
-	} else if( mod == MOD_GRENADE_S || mod == MOD_GRENADE_SPLASH_S ) {
+	} else if( mod == MOD_GRENADE || mod == MOD_GRENADE_SPLASH ) {
 		return AMMO_GRENADES;
-	} else if( mod == MOD_ROCKET_W || mod == MOD_ROCKET_SPLASH_W ) {
-		return AMMO_WEAK_ROCKETS;
-	} else if( mod == MOD_ROCKET_S || mod == MOD_ROCKET_SPLASH_S ) {
+	} else if( mod == MOD_ROCKET || mod == MOD_ROCKET_SPLASH ) {
 		return AMMO_ROCKETS;
-	} else if( mod == MOD_PLASMA_W || mod == MOD_PLASMA_SPLASH_W ) {
-		return AMMO_WEAK_PLASMA;
-	} else if( mod == MOD_PLASMA_S || mod == MOD_PLASMA_SPLASH_S ) {
+	} else if( mod == MOD_PLASMA || mod == MOD_PLASMA_SPLASH ) {
 		return AMMO_PLASMA;
-	} else if( mod == MOD_ELECTROBOLT_W ) {
-		return AMMO_WEAK_BOLTS;
-	} else if( mod == MOD_ELECTROBOLT_S ) {
+	} else if( mod == MOD_ELECTROBOLT ) {
 		return AMMO_BOLTS;
-	} else if( mod == MOD_LASERGUN_W ) {
-		return AMMO_WEAK_LASERS;
-	} else if( mod == MOD_LASERGUN_S ) {
+	} else if( mod == MOD_LASERGUN ) {
 		return AMMO_LASERS;
 	} else {
 		return AMMO_NONE;
@@ -349,15 +333,8 @@ void G_Damage( edict_t *targ, edict_t *inflictor, edict_t *attacker, const vec3_
 		else if( GS_MatchPaused() ) {
 			take = save = 0;
 		}
-		// ca has self splash damage disabled
-		else if( attacker == targ ) {
-			if( GS_SelfDamage() ) {
-				take = damage * 0.5f;
-				save = damage - take;
-			}
-			else {
-				take = save = 0;
-			}
+		else if( attacker == targ && !GS_SelfDamage() ) {
+			take = save = 0;
 		}
 		// don't get damage from players in race
 		else if( ( GS_RaceGametype() ) && attacker->r.client && targ->r.client &&

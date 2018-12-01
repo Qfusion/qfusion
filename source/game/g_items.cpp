@@ -194,63 +194,6 @@ bool Add_Ammo( gclient_t *client, const gsitem_t *item, int count, bool add_it )
 	return true;
 }
 
-static bool Pickup_AmmoPack( edict_t *other, const int *invpack ) {
-	const gsitem_t *item;
-	int i;
-
-	if( !other->r.client ) {
-		return false;
-	}
-	if( !invpack ) {
-		return false;
-	}
-
-	for( i = AMMO_GUNBLADE + 1; i < AMMO_TOTAL; i++ ) {
-		item = GS_FindItemByTag( i );
-		if( item ) {
-			Add_Ammo( other->r.client, item, invpack[i], true );
-		}
-	}
-
-	return true;
-}
-
-static bool Pickup_Ammo( edict_t *other, const gsitem_t *item, int count, const int *invpack ) {
-	// ammo packs are special
-	if( item->tag == AMMO_PACK || item->tag == AMMO_PACK_WEAK || item->tag == AMMO_PACK_STRONG ) {
-		return Pickup_AmmoPack( other, invpack );
-	}
-
-	if( !count ) {
-		count = item->quantity;
-	}
-
-	if( !Add_Ammo( other->r.client, item, count, true ) ) {
-		return false;
-	}
-
-	return true;
-}
-
-static edict_t *Drop_Ammo( edict_t *ent, const gsitem_t *item ) {
-	edict_t *dropped;
-	int index;
-
-	index = item->tag;
-	dropped = Drop_Item( ent, item );
-	if( dropped ) {
-		if( ent->r.client->ps.inventory[index] >= item->quantity ) {
-			dropped->count = item->quantity;
-		} else {
-			dropped->count = ent->r.client->ps.inventory[index];
-		}
-
-		ent->r.client->ps.inventory[index] -= dropped->count;
-	}
-	return dropped;
-}
-
-
 //======================================================================
 
 static void MegaHealth_think( edict_t *self ) {
@@ -439,37 +382,6 @@ edict_t *Drop_Item( edict_t *ent, const gsitem_t *item ) {
 
 		dropped->spawnflags |= DROPPED_PLAYER_ITEM;
 
-		// ugly hack for dropping backpacks
-		if( item->tag == AMMO_PACK_WEAK || item->tag == AMMO_PACK_STRONG || item->tag == AMMO_PACK ) {
-			int w;
-			bool anything = false;
-
-			for( w = WEAP_GUNBLADE + 1; w < WEAP_TOTAL; w++ ) {
-				if( item->tag == AMMO_PACK_WEAK || item->tag == AMMO_PACK ) {
-					int weakTag = GS_FindItemByTag( w )->weakammo_tag;
-					if( ent->r.client->ps.inventory[weakTag] > 0 ) {
-						dropped->invpak[weakTag] = ent->r.client->ps.inventory[weakTag];
-						ent->r.client->ps.inventory[weakTag] = 0;
-						anything = true;
-					}
-				}
-
-				if( item->tag == AMMO_PACK_STRONG || item->tag == AMMO_PACK ) {
-					int strongTag = GS_FindItemByTag( w )->ammo_tag;
-					if( ent->r.client->ps.inventory[strongTag] ) {
-						dropped->invpak[strongTag] = ent->r.client->ps.inventory[strongTag];
-						ent->r.client->ps.inventory[strongTag] = 0;
-						anything = true;
-					}
-				}
-			}
-
-			if( !anything ) { // if nothing was added to the pack, don't bother spawning it
-				G_FreeEdict( dropped );
-				return NULL;
-			}
-		}
-
 		// power-ups are special
 		if( ( item->type & IT_POWERUP ) && item->quantity ) {
 			if( ent->r.client->ps.inventory[item->tag] ) {
@@ -485,27 +397,6 @@ edict_t *Drop_Item( edict_t *ent, const gsitem_t *item ) {
 	} else {
 		AngleVectors( ent->s.angles, forward, right, NULL );
 		VectorCopy( ent->s.origin, dropped->s.origin );
-
-		// ugly hack for dropping backpacks
-		if( item->tag == AMMO_PACK_WEAK || item->tag == AMMO_PACK_STRONG || item->tag == AMMO_PACK ) {
-			int w;
-
-			for( w = WEAP_GUNBLADE + 1; w < WEAP_TOTAL; w++ ) {
-				if( item->tag == AMMO_PACK_WEAK || item->tag == AMMO_PACK ) {
-					const gsitem_t *ammo = GS_FindItemByTag( GS_FindItemByTag( w )->weakammo_tag );
-					if( ammo ) {
-						dropped->invpak[ammo->tag] = ammo->quantity;
-					}
-				}
-
-				if( item->tag == AMMO_PACK_STRONG || item->tag == AMMO_PACK ) {
-					const gsitem_t *ammo = GS_FindItemByTag( GS_FindItemByTag( w )->ammo_tag );
-					if( ammo ) {
-						dropped->invpak[ammo->tag] = ammo->quantity;
-					}
-				}
-			}
-		}
 
 		// power-ups are special
 		if( ( item->type & IT_POWERUP ) && item->quantity ) {
@@ -542,8 +433,6 @@ bool G_PickupItem( edict_t *other, const gsitem_t *it, int flags, int count, con
 
 	if( it->type & IT_WEAPON ) {
 		taken = Pickup_Weapon( other, it, flags, count );
-	} else if( it->type & IT_AMMO ) {
-		taken = Pickup_Ammo( other, it, count, invpack );
 	} else if( it->type & IT_HEALTH ) {
 		taken = Pickup_Health( other, it, flags );
 	} else if( it->type & IT_POWERUP ) {
@@ -581,8 +470,6 @@ edict_t *G_DropItem( edict_t *ent, const gsitem_t *it ) {
 
 	if( it->type & IT_WEAPON ) {
 		return Drop_Weapon( ent, it );
-	} else if( it->type & IT_AMMO ) {
-		return Drop_Ammo( ent, it );
 	} else {
 		return Drop_General( ent, it );
 	}

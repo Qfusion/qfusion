@@ -224,54 +224,44 @@ void GS_Obituary( void *victim, int gender, void *attacker, int mod, char *messa
 			strcpy( message, "could not hide from" );
 			strcpy( message2, "'s almighty gunblade" );
 			break;
-		case MOD_MACHINEGUN_W:
-		case MOD_MACHINEGUN_S:
+		case MOD_MACHINEGUN:
 			strcpy( message, "was penetrated by" );
 			strcpy( message2, "'s machinegun" );
 			break;
-		case MOD_RIOTGUN_W:
-		case MOD_RIOTGUN_S:
-			strcpy( message, "was shred by" );
+		case MOD_RIOTGUN:
+			strcpy( message, "was shredded by" );
 			strcpy( message2, "'s riotgun" );
 			break;
-		case MOD_GRENADE_W:
-		case MOD_GRENADE_S:
+		case MOD_GRENADE:
 			strcpy( message, "was popped by" );
 			strcpy( message2, "'s grenade" );
 			break;
-		case MOD_ROCKET_W:
-		case MOD_ROCKET_S:
+		case MOD_ROCKET:
 			strcpy( message, "ate" );
 			strcpy( message2, "'s rocket" );
 			break;
-		case MOD_PLASMA_W:
-		case MOD_PLASMA_S:
+		case MOD_PLASMA:
 			strcpy( message, "was melted by" );
 			strcpy( message2, "'s plasmagun" );
 			break;
-		case MOD_ELECTROBOLT_W:
-		case MOD_ELECTROBOLT_S:
+		case MOD_ELECTROBOLT:
 			strcpy( message, "was bolted by" );
 			strcpy( message2, "'s electrobolt" );
 			break;
-		case MOD_LASERGUN_W:
-		case MOD_LASERGUN_S:
+		case MOD_LASERGUN:
 			strcpy( message, "was cut by" );
 			strcpy( message2, "'s lasergun" );
 			break;
-		case MOD_GRENADE_SPLASH_W:
-		case MOD_GRENADE_SPLASH_S:
+		case MOD_GRENADE_SPLASH:
 			strcpy( message, "didn't see" );
 			strcpy( message2, "'s grenade" );
 			break;
-		case MOD_ROCKET_SPLASH_W:
-		case MOD_ROCKET_SPLASH_S:
+		case MOD_ROCKET_SPLASH:
 			strcpy( message, "almost dodged" );
 			strcpy( message2, "'s rocket" );
 			break;
 
-		case MOD_PLASMA_SPLASH_W:
-		case MOD_PLASMA_SPLASH_S:
+		case MOD_PLASMA_SPLASH:
 			strcpy( message, "was melted by" );
 			strcpy( message2, "'s plasmagun" );
 			break;

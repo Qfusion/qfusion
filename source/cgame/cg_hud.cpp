@@ -263,10 +263,7 @@ static int CG_GetCurrentWeaponInventoryData( const void *parameter ) {
 		case 1: // STRONG AMMO COUNT
 			result = cg.predictedPlayerState.inventory[weapondef->firedef.ammo_id];
 			break;
-		case 2: // WEAK AMMO COUNT
-			result = cg.predictedPlayerState.inventory[weapondef->firedef_weak.ammo_id];
-			break;
-		case 3: // LOW AMMO THRESHOLD
+		case 2: // LOW AMMO THRESHOLD
 			result = weapondef->firedef.ammo_low;
 			break;
 	}
@@ -282,9 +279,8 @@ static int CG_GetCurrentWeaponInventoryData( const void *parameter ) {
  * @return whether to display the weapon
  */
 static bool CG_IsWeaponInList( int weapon ) {
-	bool hasWeapon = ( cg.predictedPlayerState.inventory[weapon] != 0 );
-	bool hasAmmo = ( cg.predictedPlayerState.inventory[weapon - WEAP_GUNBLADE + AMMO_GUNBLADE] ||
-					 cg.predictedPlayerState.inventory[weapon - WEAP_GUNBLADE + AMMO_WEAK_GUNBLADE] );
+	bool hasWeapon = cg.predictedPlayerState.inventory[weapon] != 0;
+	bool hasAmmo = cg.predictedPlayerState.inventory[weapon - WEAP_GUNBLADE + AMMO_GUNBLADE];
 
 	if( weapon == WEAP_GUNBLADE ) { // gunblade always has 1 ammo when it's strong, but the player doesn't necessarily have it
 		return hasWeapon;
@@ -501,8 +497,7 @@ static const reference_numeric_t cg_numeric_references[] =
 	// inventory grabs
 	{ "AMMO_ITEM", CG_GetCurrentWeaponInventoryData, (void *)0 },
 	{ "AMMO", CG_GetCurrentWeaponInventoryData, (void *)1 },
-	{ "WEAK_AMMO", CG_GetCurrentWeaponInventoryData, (void *)2 },
-	{ "LOW_AMMO", CG_GetCurrentWeaponInventoryData, (void *)3 },
+	{ "LOW_AMMO", CG_GetCurrentWeaponInventoryData, (void *)2 },
 	{ "WEAPON_COUNT", CG_GetWeaponCount, NULL },
 
 	// other
@@ -943,38 +938,28 @@ static void CG_DrawObituaries( int x, int y, int align, struct qfontface_s *font
 			case MOD_GUNBLADE_S:
 				pic = CG_MediaShader( cgs.media.shaderGunbladeBlastIcon );
 				break;
-			case MOD_MACHINEGUN_W:
-			case MOD_MACHINEGUN_S:
+			case MOD_MACHINEGUN:
 				pic = CG_MediaShader( cgs.media.shaderWeaponIcon[WEAP_MACHINEGUN - 1] );
 				break;
-			case MOD_RIOTGUN_W:
-			case MOD_RIOTGUN_S:
+			case MOD_RIOTGUN:
 				pic = CG_MediaShader( cgs.media.shaderWeaponIcon[WEAP_RIOTGUN - 1] );
 				break;
-			case MOD_GRENADE_W:
-			case MOD_GRENADE_S:
-			case MOD_GRENADE_SPLASH_W:
-			case MOD_GRENADE_SPLASH_S:
+			case MOD_GRENADE:
+			case MOD_GRENADE_SPLASH:
 				pic = CG_MediaShader( cgs.media.shaderWeaponIcon[WEAP_GRENADELAUNCHER - 1] );
 				break;
-			case MOD_ROCKET_W:
-			case MOD_ROCKET_S:
-			case MOD_ROCKET_SPLASH_W:
-			case MOD_ROCKET_SPLASH_S:
+			case MOD_ROCKET:
+			case MOD_ROCKET_SPLASH:
 				pic = CG_MediaShader( cgs.media.shaderWeaponIcon[WEAP_ROCKETLAUNCHER - 1] );
 				break;
-			case MOD_PLASMA_W:
-			case MOD_PLASMA_S:
-			case MOD_PLASMA_SPLASH_W:
-			case MOD_PLASMA_SPLASH_S:
+			case MOD_PLASMA:
+			case MOD_PLASMA_SPLASH:
 				pic = CG_MediaShader( cgs.media.shaderWeaponIcon[WEAP_PLASMAGUN - 1] );
 				break;
-			case MOD_ELECTROBOLT_W:
-			case MOD_ELECTROBOLT_S:
+			case MOD_ELECTROBOLT:
 				pic = CG_MediaShader( cgs.media.shaderWeaponIcon[WEAP_ELECTROBOLT - 1] );
 				break;
-			case MOD_LASERGUN_W:
-			case MOD_LASERGUN_S:
+			case MOD_LASERGUN:
 				pic = CG_MediaShader( cgs.media.shaderWeaponIcon[WEAP_LASERGUN - 1] );
 				break;
 			default:

@@ -901,9 +901,7 @@ void CG_AddWeaponOnTag( entity_t *ent, orientation_t *tag, int weaponid, int eff
 	}
 
 	// expansion
-	if( effects & EF_STRONG_WEAPON ) {
-		CG_AddWeaponExpansionOnTag( &weapon, weaponInfo, WEAPMODEL_EXPANSION, "tag_expansion", effects );
-	}
+	CG_AddWeaponExpansionOnTag( &weapon, weaponInfo, WEAPMODEL_EXPANSION, "tag_expansion", effects );
 
 	// barrels
 	CG_AddWeaponBarrelOnTag( &weapon, weaponInfo, WEAPMODEL_BARREL, "tag_barrel", "tag_recoil", effects, barrel_time );

@@ -69,10 +69,10 @@ gsitem_t itemdefs[] =
 		S_COLOR_WHITE,              // message color  // TODO: add color
 		1,                          // count of items given at pickup
 		1,
-		AMMO_GUNBLADE,                 // strong ammo tag
-		AMMO_WEAK_GUNBLADE,         // weak ammo tag
+		AMMO_GUNBLADE,              // strong ammo tag
+		AMMO_NONE,                  // weak ammo tag
 		NULL,                       // miscelanea info pointer
-		PATH_GUNBLADEBLAST_STRONG_MODEL, NULL, NULL
+		PATH_GUNBLADEBLAST_MODEL, NULL, NULL
 	},
 
 	//QUAKED weapon_machinegun
@@ -93,7 +93,7 @@ gsitem_t itemdefs[] =
 		1,
 		1,
 		AMMO_BULLETS,
-		AMMO_WEAK_BULLETS,
+		AMMO_NONE,
 		NULL,
 		NULL, NULL, NULL
 	},
@@ -115,7 +115,7 @@ gsitem_t itemdefs[] =
 		1,
 		1,
 		AMMO_SHELLS,
-		AMMO_WEAK_SHELLS,
+		AMMO_NONE,
 		NULL,
 		NULL, NULL, NULL
 	},
@@ -137,9 +137,9 @@ gsitem_t itemdefs[] =
 		1,
 		1,
 		AMMO_GRENADES,
-		AMMO_WEAK_GRENADES,
+		AMMO_NONE,
 		NULL,
-		PATH_GRENADE_WEAK_MODEL " " PATH_GRENADE_STRONG_MODEL,
+		PATH_GRENADE_MODEL,
 		NULL, NULL
 	},
 
@@ -160,10 +160,10 @@ gsitem_t itemdefs[] =
 		1,
 		1,
 		AMMO_ROCKETS,
-		AMMO_WEAK_ROCKETS,
+		AMMO_NONE,
 		NULL,
-		PATH_ROCKET_WEAK_MODEL " " PATH_ROCKET_STRONG_MODEL,
-		S_WEAPON_ROCKET_W_FLY " " S_WEAPON_ROCKET_S_FLY,
+		PATH_ROCKET_MODEL,
+		S_WEAPON_ROCKET_FLY,
 		NULL
 	},
 
@@ -184,10 +184,10 @@ gsitem_t itemdefs[] =
 		1,
 		1,
 		AMMO_PLASMA,
-		AMMO_WEAK_PLASMA,
+		AMMO_NONE,
 		NULL,
-		PATH_PLASMA_WEAK_MODEL " " PATH_PLASMA_STRONG_MODEL,
-		S_WEAPON_PLASMAGUN_W_FLY " " S_WEAPON_PLASMAGUN_S_FLY,
+		PATH_PLASMA_MODEL,
+		S_WEAPON_PLASMAGUN_FLY,
 		NULL
 	},
 
@@ -208,12 +208,12 @@ gsitem_t itemdefs[] =
 		1,
 		1,
 		AMMO_LASERS,
-		AMMO_WEAK_LASERS,
+		AMMO_NONE,
 		NULL,
 		NULL,
-		S_WEAPON_LASERGUN_S_HUM " " S_WEAPON_LASERGUN_W_HUM " "
-		S_WEAPON_LASERGUN_S_QUAD_HUM " " S_WEAPON_LASERGUN_W_QUAD_HUM " "
-		S_WEAPON_LASERGUN_S_STOP " " S_WEAPON_LASERGUN_W_STOP " "
+		S_WEAPON_LASERGUN_HUM " "
+		S_WEAPON_LASERGUN_QUAD_HUM " "
+		S_WEAPON_LASERGUN_STOP " "
 		S_WEAPON_LASERGUN_HIT_0 " " S_WEAPON_LASERGUN_HIT_1 " " S_WEAPON_LASERGUN_HIT_2,
 		NULL
 	},
@@ -235,374 +235,25 @@ gsitem_t itemdefs[] =
 		1,
 		1,
 		AMMO_BOLTS,
-		AMMO_WEAK_BOLTS,
+		AMMO_NONE,
 		NULL,
-		/*PATH_ELECTROBOLT_WEAK_MODEL*/ NULL,
+		NULL,
 		S_WEAPON_ELECTROBOLT_HIT,
 		NULL
 	},
 
-	//-----------------------------------------------------------
+	//------------------------
 	// AMMO ITEMS
-	//-----------------------------------------------------------
-
-	// AMMO_CELLS = WEAP_TOTAL
-
-	//QUAKED ammo_gunblade (.3 .3 1) (-16 -16 -16) (16 16 16)
-	{
-		"ammo_gunblade",
-		AMMO_GUNBLADE,
-		IT_AMMO,
-		ITFLAG_PICKABLE,
-
-		{ PATH_AMMO_BOX_MODEL, PATH_AMMO_BOX_MODEL2 },
-		PATH_GUNBLADE_AMMO_ICON,
-		PATH_GUNBLADE_AMMO_ICON,
-		S_PICKUP_AMMO,
-		EF_ROTATE_AND_BOB | EF_OUTLINE | EF_AMMOBOX,
-
-		"Cells", "cells", S_COLOR_YELLOW,
-		0, // actual value comes from weapondefs instead
-		0, // actual value comes from weapondefs instead
-		AMMO_NONE,
-		AMMO_NONE,
-		NULL,
-		NULL, NULL, NULL
-	},
-
-	//QUAKED ammo_machinegun (.3 .3 1) (-16 -16 -16) (16 16 16)
-	{
-		"ammo_machinegun",
-		AMMO_BULLETS,
-		IT_AMMO,
-		ITFLAG_PICKABLE,
-
-		{ PATH_AMMO_BOX_MODEL, PATH_AMMO_BOX_MODEL2 },
-		PATH_MACHINEGUN_AMMO_ICON,
-		PATH_MACHINEGUN_AMMO_ICON,
-		S_PICKUP_AMMO,
-		EF_ROTATE_AND_BOB | EF_OUTLINE | EF_AMMOBOX,
-
-		"Bullets", "bullets", S_COLOR_GREY,
-		0, // actual value comes from weapondefs instead
-		0, // actual value comes from weapondefs instead
-		AMMO_NONE,
-		AMMO_NONE,
-		NULL,
-		NULL, NULL, NULL
-	},
-
-	//QUAKED ammo_riotgun (.3 .3 1) (-16 -16 -16) (16 16 16)
-	{
-		"ammo_riotgun",
-		AMMO_SHELLS,
-		IT_AMMO,
-		ITFLAG_PICKABLE | ITFLAG_DROPABLE,
-
-		{ PATH_AMMO_BOX_MODEL, PATH_AMMO_BOX_MODEL2 },
-		PATH_RIOTGUN_AMMO_ICON,
-		PATH_RIOTGUN_AMMO_ICON,
-		S_PICKUP_AMMO,
-		EF_ROTATE_AND_BOB | EF_OUTLINE | EF_AMMOBOX,
-
-		"Shells", "shells", S_COLOR_ORANGE,
-		0, // actual value comes from weapondefs instead
-		0, // actual value comes from weapondefs instead
-		AMMO_NONE,
-		AMMO_NONE,
-		NULL,
-		NULL, NULL, NULL
-	},
-
-	//QUAKED ammo_grenadelauncher (.3 .3 1) (-16 -16 -16) (16 16 16)
-	{
-		"ammo_grenadelauncher",
-		AMMO_GRENADES,
-		IT_AMMO,
-		ITFLAG_PICKABLE | ITFLAG_DROPABLE,
-
-		{ PATH_AMMO_BOX_MODEL, PATH_AMMO_BOX_MODEL2 },
-		PATH_GRENADELAUNCHER_AMMO_ICON,
-		PATH_GRENADELAUNCHER_AMMO_ICON,
-		S_PICKUP_AMMO,
-		EF_ROTATE_AND_BOB | EF_OUTLINE | EF_AMMOBOX,
-
-		"Grenades", "grens", S_COLOR_BLUE,
-		0, // actual value comes from weapondefs instead
-		0, // actual value comes from weapondefs instead
-		AMMO_NONE,
-		AMMO_NONE,
-		NULL,
-		NULL, NULL, NULL
-	},
-
-	//QUAKED ammo_rocketlauncher (.3 .3 1) (-16 -16 -16) (16 16 16)
-	{
-		"ammo_rocketlauncher",
-		AMMO_ROCKETS,
-		IT_AMMO,
-		ITFLAG_PICKABLE | ITFLAG_DROPABLE,
-
-		{ PATH_AMMO_BOX_MODEL, PATH_AMMO_BOX_MODEL2 },
-		PATH_ROCKETLAUNCHER_AMMO_ICON,
-		PATH_ROCKETLAUNCHER_AMMO_ICON,
-		S_PICKUP_AMMO,
-		EF_ROTATE_AND_BOB | EF_OUTLINE | EF_AMMOBOX,
-
-		"Rockets", "rockets", S_COLOR_RED,
-		0, // actual value comes from weapondefs instead
-		0, // actual value comes from weapondefs instead
-		AMMO_NONE,
-		AMMO_NONE,
-		NULL,
-		NULL, NULL, NULL
-	},
-
-	//QUAKED ammo_plasmagun (.3 .3 1) (-16 -16 -16) (16 16 16)
-	{
-		"ammo_plasmagun",
-		AMMO_PLASMA,
-		IT_AMMO,
-		ITFLAG_PICKABLE | ITFLAG_DROPABLE,
-
-		{ PATH_AMMO_BOX_MODEL, PATH_AMMO_BOX_MODEL2 },
-		PATH_PLASMAGUN_AMMO_ICON,
-		PATH_PLASMAGUN_AMMO_ICON,
-		S_PICKUP_AMMO,
-		EF_ROTATE_AND_BOB | EF_OUTLINE | EF_AMMOBOX,
-
-		"Plasma", "plasma", S_COLOR_GREEN,
-		0, // actual value comes from weapondefs instead
-		0, // actual value comes from weapondefs instead
-		AMMO_NONE,
-		AMMO_NONE,
-		NULL,
-		NULL, NULL, NULL
-	},
-
-	//QUAKED ammo_lasergun (.3 .3 1) (-16 -16 -16) (16 16 16)
-	{
-		"ammo_lasergun",
-		AMMO_LASERS,
-		IT_AMMO,
-		ITFLAG_PICKABLE | ITFLAG_DROPABLE,
-
-		{ PATH_AMMO_BOX_MODEL, PATH_AMMO_BOX_MODEL2 },
-		PATH_LASERGUN_AMMO_ICON,
-		PATH_LASERGUN_AMMO_ICON,
-		S_PICKUP_AMMO,
-		EF_ROTATE_AND_BOB | EF_OUTLINE | EF_AMMOBOX,
-
-		"Lasers", "lasers", S_COLOR_YELLOW,
-		0, // actual value comes from weapondefs instead
-		0, // actual value comes from weapondefs instead
-		AMMO_NONE,
-		AMMO_NONE,
-		NULL,
-		NULL, NULL, NULL
-	},
-
-	//QUAKED ammo_electrobolt (.3 .3 1) (-16 -16 -16) (16 16 16)
-	{
-		"ammo_electrobolt",
-		AMMO_BOLTS,
-		IT_AMMO,
-		ITFLAG_PICKABLE | ITFLAG_DROPABLE,
-
-		{ PATH_AMMO_BOX_MODEL, PATH_AMMO_BOX_MODEL2 },
-		PATH_ELECTROBOLT_AMMO_ICON,
-		PATH_ELECTROBOLT_AMMO_ICON,
-		S_PICKUP_AMMO,
-		EF_ROTATE_AND_BOB | EF_OUTLINE | EF_AMMOBOX,
-
-		"Bolts", "bolts", S_COLOR_CYAN,
-		0, // actual value comes from weapondefs instead
-		0, // actual value comes from weapondefs instead
-		AMMO_NONE,
-		AMMO_NONE,
-		NULL,
-		NULL, NULL, NULL
-	},
-
 	//------------------------
-	// WEAK AMMOS
-	// most are not pickable, so not spawnable, and given at picking up the weapon
-	//------------------------
-	//QUAKED ammo_gunblade_weak (.3 .3 1) (-16 -16 -16) (16 16 16)
-	{
-		"ammo_gunblade_weak",
-		AMMO_WEAK_GUNBLADE,
-		IT_AMMO,
-		0,
-
-		{ 0, 0 },
-		NULL,
-		NULL,
-		NULL,
-		0,
-
-		"Blades", "weak blades", NULL,
-		0, // actual value comes from weapondefs instead
-		0, // actual value comes from weapondefs instead
-		AMMO_NONE,
-		AMMO_NONE,
-		NULL,
-		NULL, NULL, NULL
-	},
-
-	//QUAKED ammo_machinegun_weak (.3 .3 1) (-16 -16 -16) (16 16 16)
-	{
-		"ammo_machinegun_weak",
-		AMMO_WEAK_BULLETS,
-		IT_AMMO,
-		0,              // NOT SPAWNABLE
-
-		{ PATH_AMMO_BOX_MODEL, PATH_AMMO_BOX_MODEL2 },
-		PATH_MACHINEGUN_AMMO_ICON,
-		PATH_MACHINEGUN_AMMO_ICON,
-		S_PICKUP_AMMO,
-		EF_ROTATE_AND_BOB | EF_OUTLINE | EF_AMMOBOX,
-
-		"Weak bullets", "11mm", S_COLOR_GREY,
-		0, // actual value comes from weapondefs instead
-		0, // actual value comes from weapondefs instead
-		AMMO_NONE,
-		AMMO_NONE,
-		NULL,
-		NULL, NULL, NULL
-	},
-
-	//QUAKED ammo_riotgun_weak (.3 .3 1) (-16 -16 -16) (16 16 16)
-	{
-		"ammo_riotgun_weak",
-		AMMO_WEAK_SHELLS,
-		IT_AMMO,
-		0,
-
-		{ 0, 0 },
-		NULL,
-		NULL,
-		NULL,
-		0,
-
-		"Weak Shells", "weak shells", NULL,
-		0, // actual value comes from weapondefs instead
-		0, // actual value comes from weapondefs instead
-		AMMO_NONE,
-		AMMO_NONE,
-		NULL,
-		NULL, NULL, NULL
-	},
-
-	//QUAKED ammo_grenadelauncher_weak (.3 .3 1) (-16 -16 -16) (16 16 16)
-	{
-		"ammo_grenadelauncher_weak",
-		AMMO_WEAK_GRENADES,
-		IT_AMMO,
-		0,
-
-		{ 0, 0 },
-		NULL,
-		NULL,
-		NULL,
-		0,
-
-		"Weak Grenades", "weak grens", NULL,
-		0, // actual value comes from weapondefs instead
-		0, // actual value comes from weapondefs instead
-		AMMO_NONE,
-		AMMO_NONE,
-		NULL,
-		NULL, NULL, NULL
-	},
-
-	//QUAKED ammo_rocketlauncher_weak (.3 .3 1) (-16 -16 -16) (16 16 16)
-	{
-		"ammo_rocketlauncher_weak",
-		AMMO_WEAK_ROCKETS,
-		IT_AMMO,
-		0,
-
-		{ 0, 0 },
-		NULL,
-		NULL,
-		NULL,
-		0,
-
-		"Weak Rockets", "weak rox", NULL,
-		0, // actual value comes from weapondefs instead
-		0, // actual value comes from weapondefs instead
-		AMMO_NONE,
-		AMMO_NONE,
-		NULL,
-		NULL, NULL, NULL
-	},
-
-	//QUAKED ammo_plasmagun_weak (.3 .3 1) (-16 -16 -16) (16 16 16)
-	{
-		"ammo_plasmagun_weak",
-		AMMO_WEAK_PLASMA,
-		IT_AMMO,
-		0,
-
-		{ 0, 0 },
-		NULL,
-		NULL,
-		NULL,
-		0,
-
-		"Weak Plasma", "weak plasma", NULL,
-		0, // actual value comes from weapondefs instead
-		0, // actual value comes from weapondefs instead
-		AMMO_NONE,
-		AMMO_NONE,
-		NULL,
-		NULL, NULL, NULL
-	},
-
-	//QUAKED ammo_lasergun_weak (.3 .3 1) (-16 -16 -16) (16 16 16)
-	{
-		"ammo_lasergun_weak",
-		AMMO_WEAK_LASERS,
-		IT_AMMO,
-		0,
-
-		{ 0, 0 },
-		NULL,
-		NULL,
-		NULL,
-		0,
-
-		"Weak Lasers", "weak lasers", NULL,
-		0, // actual value comes from weapondefs instead
-		0, // actual value comes from weapondefs instead
-		AMMO_NONE,
-		AMMO_NONE,
-		NULL,
-		NULL, NULL, NULL
-	},
-
-	//QUAKED ammo_electrobolt_weak (.3 .3 1) (-16 -16 -16) (16 16 16)
-	{
-		"ammo_electrobolt_weak",
-		AMMO_WEAK_BOLTS,
-		IT_AMMO,
-		0,
-
-		{ 0, 0 },
-		NULL,
-		NULL,
-		NULL,
-		0,
-
-		"Weak Bolts", "weak bolts", NULL,
-		0, // actual value comes from weapondefs instead
-		0, // actual value comes from weapondefs instead
-		AMMO_NONE,
-		AMMO_NONE,
-		NULL,
-		NULL, NULL, NULL
-	},
+	
+	{ "", AMMO_GUNBLADE },
+	{ "", AMMO_BULLETS },
+	{ "", AMMO_SHELLS },
+	{ "", AMMO_GRENADES },
+	{ "", AMMO_ROCKETS },
+	{ "", AMMO_PLASMA },
+	{ "", AMMO_LASERS },
+	{ "", AMMO_BOLTS },
 
 	//------------------------
 	// HEALTH ITEMS
@@ -796,78 +447,12 @@ gsitem_t itemdefs[] =
 		NULL
 	},
 
-	//QUAKED item_ammopack_weak (.3 .3 1) (-16 -16 -16) (16 16 16)
-	{
-		"item_ammopack_weak",
-		AMMO_PACK_WEAK,
-		IT_AMMO,
-		ITFLAG_PICKABLE,
-
-		{ PATH_AMMO_PACK_MODEL, 0 },
-		PATH_AMMOPACK_ICON,
-		PATH_AMMOPACK_SIMPLEITEM,
-		S_PICKUP_AMMO,
-		EF_ROTATE_AND_BOB | EF_OUTLINE,
-
-		"Ammo Pack Weak", "weakpack", NULL,
-		1,
-		0,
-		AMMO_NONE,
-		AMMO_NONE,
-		NULL,
-		NULL, NULL, NULL
-	},
-
-	//QUAKED item_ammopack_strong (.3 .3 1) (-16 -16 -16) (16 16 16)
-	{
-		"item_ammopack_strong",
-		AMMO_PACK_STRONG,
-		IT_AMMO,
-		ITFLAG_PICKABLE,
-
-		{ PATH_AMMO_PACK_MODEL, 0 },
-		PATH_AMMOPACK_ICON,
-		PATH_AMMOPACK_SIMPLEITEM,
-		S_PICKUP_AMMO,
-		EF_ROTATE_AND_BOB | EF_OUTLINE,
-
-		"Ammo Pack Strong", "strongpack", NULL,
-		1,
-		0,
-		AMMO_NONE,
-		AMMO_NONE,
-		NULL,
-		NULL, NULL, NULL
-	},
-
-	//QUAKED item_ammopack (.3 .3 1) (-16 -16 -16) (16 16 16)
-	{
-		"item_ammopack",
-		AMMO_PACK,
-		IT_AMMO,
-		ITFLAG_PICKABLE,
-
-		{ PATH_AMMO_PACK_MODEL, 0 },
-		PATH_AMMOPACK_ICON,
-		PATH_AMMOPACK_SIMPLEITEM,
-		S_PICKUP_AMMO,
-		EF_ROTATE_AND_BOB | EF_OUTLINE,
-
-		"Ammo Pack", "pack", NULL,
-		1,
-		0,
-		AMMO_NONE,
-		AMMO_NONE,
-		NULL,
-		NULL, NULL, NULL
-	},
-
 	// end of list marker
-	{ NULL }
+	{ },
 };
 
-STATIC_ASSERT( ARRAY_COUNT( itemdefs ) >= GS_MAX_ITEM_TAGS );
-STATIC_ASSERT( ARRAY_COUNT( itemdefs ) <= GS_MAX_ITEM_TAGS + 2 );
+// +1 for the { } at the end
+STATIC_ASSERT( ARRAY_COUNT( itemdefs ) == GS_MAX_ITEM_TAGS + 1 );
 
 //====================================================================
 
@@ -930,9 +515,10 @@ const gsitem_t *GS_FindItemByName( const char *name ) {
 	}
 
 	for( it = &itemdefs[1]; it->classname; it++ ) {
-		if( !Q_stricmp( name, it->name ) || !Q_stricmp( name, it->shortname ) ) {
+		if( it->name != NULL && !Q_stricmp( name, it->name ) )
 			return it;
-		}
+		if( it->shortname != NULL && !Q_stricmp( name, it->shortname ) )
+			return it;
 	}
 
 	return NULL;

@@ -163,14 +163,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // misc
 
 // weapon projectiles
-#define PATH_GUNBLADEBLAST_STRONG_MODEL     "models/objects/projectile/gunblade/proj_gunbladeblast.md3"
-#define PATH_PLASMA_WEAK_MODEL          "models/objects/projectile/plasmagun/proj_plasmagun.md3"
-#define PATH_PLASMA_STRONG_MODEL        "models/objects/projectile/plasmagun/proj_plasmagun.md3"
-#define PATH_GRENADE_WEAK_MODEL         "models/objects/projectile/glauncher/grenadestrong.md3"
-#define PATH_GRENADE_STRONG_MODEL       "models/objects/projectile/glauncher/grenadestrong.md3"
-#define PATH_ROCKET_WEAK_MODEL          "models/objects/projectile/rlauncher/rocket_strong.md3"
-#define PATH_ROCKET_STRONG_MODEL        "models/objects/projectile/rlauncher/rocket_strong.md3"
-#define PATH_ELECTROBOLT_WEAK_MODEL     "models/objects/projectile/electrobolt/proj_electrobolt.md3"
+#define PATH_GUNBLADEBLAST_MODEL "models/objects/projectile/gunblade/proj_gunbladeblast.md3"
+#define PATH_PLASMA_MODEL        "models/objects/projectile/plasmagun/proj_plasmagun.md3"
+#define PATH_GRENADE_MODEL       "models/objects/projectile/glauncher/grenadestrong.md3"
+#define PATH_ROCKET_MODEL        "models/objects/projectile/rlauncher/rocket_strong.md3"
 
 #define PATH_BULLET_EXPLOSION_MODEL     "models/weapon_hits/bullet/hit_bullet.md3"
 #define PATH_GRENADE_EXPLOSION_MODEL        "models/weapon_hits/glauncher/hit_glauncher.md3"
@@ -297,38 +293,26 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define S_WEAPON_NOAMMO             "sounds/weapons/weapon_noammo"
 
 // weapon sounds
-//#define S_WEAPON_BULLET_HIT_1_to_2				"sounds/weapons/gunblade_weak_hit%i"
 #define S_WEAPON_GUNBLADE_W_SHOT_1_to_3     "sounds/weapons/blade_strike%i"
 #define S_WEAPON_GUNBLADE_W_HIT_FLESH_1_to_3    "sounds/weapons/blade_hitflsh%i"
 #define S_WEAPON_GUNBLADE_W_HIT_WALL_1_to_2 "sounds/weapons/blade_hitwall%i"
 #define S_WEAPON_GUNBLADE_S_SHOT        "sounds/weapons/bladegun_strong_fire"
 #define S_WEAPON_GUNBLADE_S_HIT_1_to_2      "sounds/weapons/bladegun_strong_hit_%i"
 
+#define S_WEAPON_RIOTGUN_HIT            "sounds/weapons/riotgun_strong_hit"
 
-#define S_WEAPON_RIOTGUN_W_HIT          "sounds/weapons/riotgun_strong_hit"
-#define S_WEAPON_RIOTGUN_S_HIT          "sounds/weapons/riotgun_strong_hit"
+#define S_WEAPON_GRENADE_BOUNCE_1_to_2  "sounds/weapons/gren_strong_bounce%i"
+#define S_WEAPON_GRENADE_HIT            "sounds/weapons/gren_strong_explosion1"
 
-#define S_WEAPON_GRENADE_W_BOUNCE_1_to_2    "sounds/weapons/gren_strong_bounce%i"
-#define S_WEAPON_GRENADE_S_BOUNCE_1_to_2    "sounds/weapons/gren_strong_bounce%i"
-#define S_WEAPON_GRENADE_W_HIT          "sounds/weapons/gren_strong_explosion"
-#define S_WEAPON_GRENADE_S_HIT          "sounds/weapons/gren_strong_explosion1"
+#define S_WEAPON_ROCKET_FLY             "sounds/weapons/rocket_fly_strong"
+#define S_WEAPON_ROCKET_HIT             "sounds/weapons/rocket_strong_explosion"
 
-#define S_WEAPON_ROCKET_W_FLY           "sounds/weapons/rocket_fly_strong"
-#define S_WEAPON_ROCKET_S_FLY           "sounds/weapons/rocket_fly_strong"
-#define S_WEAPON_ROCKET_W_HIT           "sounds/weapons/rocket_strong_explosion"
-#define S_WEAPON_ROCKET_S_HIT           "sounds/weapons/rocket_strong_explosion"
+#define S_WEAPON_PLASMAGUN_FLY          "sounds/weapons/plasmagun_strong_fly"
+#define S_WEAPON_PLASMAGUN_HIT          "sounds/weapons/plasmagun_strong_explosion"
 
-#define S_WEAPON_PLASMAGUN_W_FLY        "sounds/weapons/plasmagun_strong_fly"
-#define S_WEAPON_PLASMAGUN_S_FLY        "sounds/weapons/plasmagun_strong_fly"
-#define S_WEAPON_PLASMAGUN_W_HIT        "sounds/weapons/plasmagun_strong_explosion"
-#define S_WEAPON_PLASMAGUN_S_HIT        "sounds/weapons/plasmagun_strong_explosion"
-
-#define S_WEAPON_LASERGUN_S_HUM         "sounds/weapons/laser_strong_hum"
-#define S_WEAPON_LASERGUN_W_HUM         "sounds/weapons/laser_strong_hum"
-#define S_WEAPON_LASERGUN_S_QUAD_HUM        "sounds/weapons/laser_strong_quad_hum"
-#define S_WEAPON_LASERGUN_W_QUAD_HUM        "sounds/weapons/laser_strong_quad_hum"
-#define S_WEAPON_LASERGUN_S_STOP        "sounds/weapons/laser_strong_stop"
-#define S_WEAPON_LASERGUN_W_STOP        "sounds/weapons/laser_strong_stop"
+#define S_WEAPON_LASERGUN_HUM           "sounds/weapons/laser_strong_hum"
+#define S_WEAPON_LASERGUN_QUAD_HUM      "sounds/weapons/laser_strong_quad_hum"
+#define S_WEAPON_LASERGUN_STOP          "sounds/weapons/laser_strong_stop"
 #define S_WEAPON_LASERGUN_HIT_0         "sounds/weapons/laser_hit0"
 #define S_WEAPON_LASERGUN_HIT_1         "sounds/weapons/laser_hit1"
 #define S_WEAPON_LASERGUN_HIT_2         "sounds/weapons/laser_hit2"

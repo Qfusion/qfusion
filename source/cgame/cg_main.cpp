@@ -255,8 +255,6 @@ static void CG_InitGameShared( void ) {
 	api.GetAngelExport = NULL;
 
 	GS_InitModule( GS_MODULE_CGAME, maxclients, &api );
-
-	GS_InitWeapons();
 }
 
 /*

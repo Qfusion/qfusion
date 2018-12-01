@@ -88,30 +88,23 @@ void CG_RegisterMediaSounds( void ) {
 	for( i = 0; i < 3; i++ ) cgs.media.sfxGunbladeStrongHit[i] = CG_RegisterMediaSfx( va( S_WEAPON_GUNBLADE_S_HIT_1_to_2, i + 1 ) );
 
 	// Riotgun sounds :
-	cgs.media.sfxRiotgunWeakHit = CG_RegisterMediaSfx( S_WEAPON_RIOTGUN_W_HIT );
-	cgs.media.sfxRiotgunStrongHit = CG_RegisterMediaSfx( S_WEAPON_RIOTGUN_S_HIT );
+	cgs.media.sfxRiotgunHit = CG_RegisterMediaSfx( S_WEAPON_RIOTGUN_HIT );
 
 	// Grenade launcher sounds :
-	for( i = 0; i < 2; i++ ) cgs.media.sfxGrenadeWeakBounce[i] = CG_RegisterMediaSfx( va( S_WEAPON_GRENADE_W_BOUNCE_1_to_2, i + 1 ) );
-	for( i = 0; i < 2; i++ ) cgs.media.sfxGrenadeStrongBounce[i] = CG_RegisterMediaSfx( va( S_WEAPON_GRENADE_S_BOUNCE_1_to_2, i + 1 ) );
-	cgs.media.sfxGrenadeWeakExplosion = CG_RegisterMediaSfx( S_WEAPON_GRENADE_W_HIT );
-	cgs.media.sfxGrenadeStrongExplosion = CG_RegisterMediaSfx( S_WEAPON_GRENADE_S_HIT );
+	for( i = 0; i < 2; i++ )
+		cgs.media.sfxGrenadeBounce[i] = CG_RegisterMediaSfx( va( S_WEAPON_GRENADE_BOUNCE_1_to_2, i + 1 ) );
+	cgs.media.sfxGrenadeExplosion = CG_RegisterMediaSfx( S_WEAPON_GRENADE_HIT );
 
 	// Rocket launcher sounds :
-	cgs.media.sfxRocketLauncherWeakHit = CG_RegisterMediaSfx( S_WEAPON_ROCKET_W_HIT );
-	cgs.media.sfxRocketLauncherStrongHit = CG_RegisterMediaSfx( S_WEAPON_ROCKET_S_HIT );
+	cgs.media.sfxRocketLauncherHit = CG_RegisterMediaSfx( S_WEAPON_ROCKET_HIT );
 
 	// Plasmagun sounds :
-	cgs.media.sfxPlasmaWeakHit = CG_RegisterMediaSfx( S_WEAPON_PLASMAGUN_W_HIT );
-	cgs.media.sfxPlasmaStrongHit = CG_RegisterMediaSfx( S_WEAPON_PLASMAGUN_S_HIT );
+	cgs.media.sfxPlasmaHit = CG_RegisterMediaSfx( S_WEAPON_PLASMAGUN_HIT );
 
 	// Lasergun sounds
-	cgs.media.sfxLasergunWeakHum = CG_RegisterMediaSfx( S_WEAPON_LASERGUN_W_HUM );
-	cgs.media.sfxLasergunWeakQuadHum = CG_RegisterMediaSfx( S_WEAPON_LASERGUN_W_QUAD_HUM );
-	cgs.media.sfxLasergunWeakStop = CG_RegisterMediaSfx( S_WEAPON_LASERGUN_W_STOP );
-	cgs.media.sfxLasergunStrongHum = CG_RegisterMediaSfx( S_WEAPON_LASERGUN_S_HUM );
-	cgs.media.sfxLasergunStrongQuadHum = CG_RegisterMediaSfx( S_WEAPON_LASERGUN_S_QUAD_HUM );
-	cgs.media.sfxLasergunStrongStop = CG_RegisterMediaSfx( S_WEAPON_LASERGUN_S_STOP );
+	cgs.media.sfxLasergunHum = CG_RegisterMediaSfx( S_WEAPON_LASERGUN_HUM );
+	cgs.media.sfxLasergunQuadHum = CG_RegisterMediaSfx( S_WEAPON_LASERGUN_QUAD_HUM );
+	cgs.media.sfxLasergunStop = CG_RegisterMediaSfx( S_WEAPON_LASERGUN_STOP );
 	cgs.media.sfxLasergunHit[0] = CG_RegisterMediaSfx( S_WEAPON_LASERGUN_HIT_0 );
 	cgs.media.sfxLasergunHit[1] = CG_RegisterMediaSfx( S_WEAPON_LASERGUN_HIT_1 );
 	cgs.media.sfxLasergunHit[2] = CG_RegisterMediaSfx( S_WEAPON_LASERGUN_HIT_2 );
@@ -283,8 +276,7 @@ void CG_RegisterMediaShaders( void ) {
 	cgs.media.shaderSmokePuff2 = CG_RegisterMediaShader( "gfx/misc/smokepuff2" );
 	cgs.media.shaderSmokePuff3 = CG_RegisterMediaShader( "gfx/misc/smokepuff3" );
 
-	cgs.media.shaderStrongRocketFireTrailPuff = CG_RegisterMediaShader( "gfx/misc/strong_rocket_fire" );
-	cgs.media.shaderWeakRocketFireTrailPuff = CG_RegisterMediaShader( "gfx/misc/strong_rocket_fire" );
+	cgs.media.shaderRocketFireTrailPuff = CG_RegisterMediaShader( "gfx/misc/strong_rocket_fire" );
 	cgs.media.shaderTeleporterSmokePuff = CG_RegisterMediaShader( "TeleporterSmokePuff" );
 	cgs.media.shaderGrenadeTrailSmokePuff = CG_RegisterMediaShader( "gfx/grenadetrail_smoke_puf" );
 	cgs.media.shaderRocketTrailSmokePuff = CG_RegisterMediaShader( "gfx/misc/rocketsmokepuff" );

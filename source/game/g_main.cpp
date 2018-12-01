@@ -317,9 +317,6 @@ void G_Init( unsigned int seed, unsigned int framemsec, int protocol, const char
 
 	G_LoadFiredefsFromDisk();
 
-	// weapon items
-	GS_InitWeapons();
-
 	// init AS engine
 	G_asInitGameModuleEngine();
 }

@@ -127,12 +127,10 @@ void CG_BuildSolidList( void ) {
 				case ET_BEAM:
 				case ET_PORTALSURFACE:
 				case ET_BLASTER:
-				case ET_ELECTRO_WEAK:
 				case ET_ROCKET:
 				case ET_GRENADE:
 				case ET_PLASMA:
 				case ET_LASERBEAM:
-				case ET_CURVELASERBEAM:
 				case ET_DECAL:
 				case ET_HUD:
 				case ET_PARTICLES:
@@ -463,10 +461,6 @@ void CG_PredictMovement( void ) {
 		predictedSteps[frame] = pm.step;
 
 		if( ucmdReady ) { // hmm fixme: the wip command may not be run enough time to get proper key presses
-			if( ucmdExecuted >= ucmdHead - 1 ) {
-				GS_AddLaserbeamPoint( &cg.weaklaserTrail, &cg.predictedPlayerState, pm.cmd.serverTimeStamp );
-			}
-
 			cg_entities[cg.predictedPlayerState.POVnum].current.weapon = GS_ThinkPlayerWeapon( &cg.predictedPlayerState, pm.cmd.buttons, pm.cmd.msec, 0 );
 		}
 

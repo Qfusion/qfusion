@@ -249,7 +249,6 @@ void G_Gametype_GENERIC_ClientRespawn( edict_t *self, int old_team, int new_team
 			weapondef = GS_GetWeaponDef( WEAP_GUNBLADE );
 			client->ps.inventory[WEAP_GUNBLADE] = 1;
 			client->ps.inventory[AMMO_GUNBLADE] = 1;
-			client->ps.inventory[AMMO_WEAK_GUNBLADE] = 0;
 		}
 	}
 
@@ -297,9 +296,6 @@ void G_Gametype_GENERIC_PlayerKilled( edict_t *targ, edict_t *attacker, edict_t 
 				}
 			}
 		}
-
-		// drop ammo pack (won't drop anything if player doesn't have any strong ammo)
-		Drop_Item( targ, GS_FindItemByTag( AMMO_PACK ) );
 	}
 }
 

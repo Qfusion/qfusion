@@ -268,71 +268,71 @@ enum {
 // ANIMATIONS
 
 enum {
-	ANIM_NONE = 0
-	, BOTH_DEATH1       //Death animation
-	, BOTH_DEAD1        //corpse on the ground
-	, BOTH_DEATH2
-	, BOTH_DEAD2
-	, BOTH_DEATH3
-	, BOTH_DEAD3
+	ANIM_NONE = 0,
+	BOTH_DEATH1,      //Death animation
+	BOTH_DEAD1,       //corpse on the ground
+	BOTH_DEATH2,
+	BOTH_DEAD2,
+	BOTH_DEATH3,
+	BOTH_DEAD3,
 
-	, LEGS_STAND_IDLE
-	, LEGS_WALK_FORWARD
-	, LEGS_WALK_BACK
-	, LEGS_WALK_LEFT
-	, LEGS_WALK_RIGHT
+	LEGS_STAND_IDLE,
+	LEGS_WALK_FORWARD,
+	LEGS_WALK_BACK,
+	LEGS_WALK_LEFT,
+	LEGS_WALK_RIGHT,
 
-	, LEGS_RUN_FORWARD
-	, LEGS_RUN_BACK
-	, LEGS_RUN_LEFT
-	, LEGS_RUN_RIGHT
+	LEGS_RUN_FORWARD,
+	LEGS_RUN_BACK,
+	LEGS_RUN_LEFT,
+	LEGS_RUN_RIGHT,
 
-	, LEGS_JUMP_LEG1
-	, LEGS_JUMP_LEG2
-	, LEGS_JUMP_NEUTRAL
-	, LEGS_LAND
+	LEGS_JUMP_LEG1,
+	LEGS_JUMP_LEG2,
+	LEGS_JUMP_NEUTRAL,
+	LEGS_LAND,
 
-	, LEGS_CROUCH_IDLE
-	, LEGS_CROUCH_WALK
+	LEGS_CROUCH_IDLE,
+	LEGS_CROUCH_WALK,
 
-	, LEGS_SWIM_FORWARD
-	, LEGS_SWIM_NEUTRAL
+	LEGS_SWIM_FORWARD,
+	LEGS_SWIM_NEUTRAL,
 
-	, LEGS_WALLJUMP
-	, LEGS_WALLJUMP_LEFT
-	, LEGS_WALLJUMP_RIGHT
-	, LEGS_WALLJUMP_BACK
+	LEGS_WALLJUMP,
+	LEGS_WALLJUMP_LEFT,
+	LEGS_WALLJUMP_RIGHT,
+	LEGS_WALLJUMP_BACK,
 
-	, LEGS_DASH
-	, LEGS_DASH_LEFT
-	, LEGS_DASH_RIGHT
-	, LEGS_DASH_BACK
+	LEGS_DASH,
+	LEGS_DASH_LEFT,
+	LEGS_DASH_RIGHT,
+	LEGS_DASH_BACK,
 
-	, TORSO_HOLD_BLADE
-	, TORSO_HOLD_PISTOL
-	, TORSO_HOLD_LIGHTWEAPON
-	, TORSO_HOLD_HEAVYWEAPON
-	, TORSO_HOLD_AIMWEAPON
+	TORSO_HOLD_BLADE,
+	TORSO_HOLD_PISTOL,
+	TORSO_HOLD_LIGHTWEAPON,
+	TORSO_HOLD_HEAVYWEAPON,
+	TORSO_HOLD_AIMWEAPON,
 
-	, TORSO_SHOOT_BLADE
-	, TORSO_SHOOT_PISTOL
-	, TORSO_SHOOT_LIGHTWEAPON
-	, TORSO_SHOOT_HEAVYWEAPON
-	, TORSO_SHOOT_AIMWEAPON
+	TORSO_SHOOT_BLADE,
+	TORSO_SHOOT_PISTOL,
+	TORSO_SHOOT_LIGHTWEAPON,
+	TORSO_SHOOT_HEAVYWEAPON,
+	TORSO_SHOOT_AIMWEAPON,
 
-	, TORSO_WEAPON_SWITCHOUT
-	, TORSO_WEAPON_SWITCHIN
+	TORSO_WEAPON_SWITCHOUT,
+	TORSO_WEAPON_SWITCHIN,
 
-	, TORSO_DROPHOLD
-	, TORSO_DROP
+	TORSO_DROPHOLD,
+	TORSO_DROP,
 
-	, TORSO_SWIM
+	TORSO_SWIM,
 
-	, TORSO_PAIN1
-	, TORSO_PAIN2
-	, TORSO_PAIN3
+	TORSO_PAIN1,
+	TORSO_PAIN2,
+	TORSO_PAIN3,
 
-	, PMODEL_TOTAL_ANIMATIONS
+	PMODEL_TOTAL_ANIMATIONS,
 };
 
 // gender stuff
@@ -377,15 +377,6 @@ typedef enum {
 	AMMO_LASERS,
 	AMMO_BOLTS,
 
-	AMMO_WEAK_GUNBLADE, //this is the blade
-	AMMO_WEAK_BULLETS,
-	AMMO_WEAK_SHELLS,
-	AMMO_WEAK_GRENADES,
-	AMMO_WEAK_ROCKETS,
-	AMMO_WEAK_PLASMA,
-	AMMO_WEAK_LASERS,
-	AMMO_WEAK_BOLTS,
-
 	AMMO_TOTAL
 } ammo_tag_t;
 
@@ -406,16 +397,9 @@ typedef enum {
 	POWERUP_SHELL,
 	POWERUP_REGEN,
 
-	POWERUP_TOTAL
+	POWERUP_TOTAL,
+	ITEMS_TOTAL = POWERUP_TOTAL,
 } powerup_tag_t;
-
-typedef enum {
-	AMMO_PACK_WEAK = POWERUP_TOTAL,
-	AMMO_PACK_STRONG,
-	AMMO_PACK,
-
-	ITEMS_TOTAL
-} otheritems_tag_t;
 
 #define GS_MAX_ITEM_TAGS ITEMS_TOTAL
 
@@ -662,37 +646,22 @@ static constexpr const char *gs_keyicon_names[] = {
 //===============================================================
 
 // means of death
-#define MOD_UNKNOWN     0
+#define MOD_UNKNOWN 0
 
 typedef enum {
-
-	//MOD_UNKNOWN,
-
-	// Weapon damage :
 	MOD_GUNBLADE_W = 36,
 	MOD_GUNBLADE_S,
-	MOD_MACHINEGUN_W,
-	MOD_MACHINEGUN_S,
-	MOD_RIOTGUN_W,
-	MOD_RIOTGUN_S,
-	MOD_GRENADE_W,
-	MOD_GRENADE_S,
-	MOD_ROCKET_W,
-	MOD_ROCKET_S,
-	MOD_PLASMA_W,
-	MOD_PLASMA_S,
-	MOD_ELECTROBOLT_W,
-	MOD_ELECTROBOLT_S,
-	MOD_LASERGUN_W,
-	MOD_LASERGUN_S,
-	MOD_GRENADE_SPLASH_W,
-	MOD_GRENADE_SPLASH_S,
-	MOD_ROCKET_SPLASH_W,
-	MOD_ROCKET_SPLASH_S,
-	MOD_PLASMA_SPLASH_W,
-	MOD_PLASMA_SPLASH_S,
+	MOD_MACHINEGUN,
+	MOD_RIOTGUN,
+	MOD_GRENADE,
+	MOD_ROCKET,
+	MOD_PLASMA,
+	MOD_ELECTROBOLT,
+	MOD_LASERGUN,
+	MOD_GRENADE_SPLASH,
+	MOD_ROCKET_SPLASH,
+	MOD_PLASMA_SPLASH,
 
-	// World damage
 	MOD_WATER,
 	MOD_SLIME,
 	MOD_LAVA,
@@ -710,7 +679,6 @@ typedef enum {
 	MOD_TARGET_LASER,
 	MOD_TRIGGER_HURT,
 	MOD_HIT,
-
 } mod_damage_t;
 
 //===============================================================
@@ -907,7 +875,6 @@ enum {
 
 	ET_GIB,         // leave a trail
 	ET_BLASTER,     // redlight + trail
-	ET_ELECTRO_WEAK,
 	ET_ROCKET,      // redlight + trail
 	ET_GRENADE,
 	ET_PLASMA,
@@ -916,7 +883,6 @@ enum {
 
 	ET_ITEM,        // for simple items
 	ET_LASERBEAM,   // for continuous beams
-	ET_CURVELASERBEAM, // for curved beams
 	ET_FLAG_BASE,
 
 	ET_MINIMAP_ICON,
@@ -941,31 +907,30 @@ enum {
 // that happen constantly on the given entity.
 // An entity that has effects will be sent to the client
 // even if it has a zero index model.
-#define EF_ROTATE_AND_BOB           1           // rotate and bob (bonus items)
-#define EF_SHELL                    2
-#define EF_STRONG_WEAPON            4
-#define EF_QUAD                     8
-#define EF_CARRIER                  16
-#define EF_BUSYICON                 32
-#define EF_FLAG_TRAIL               64          // player is carrying the enemy flag
-#define EF_TAKEDAMAGE               128
-#define EF_TEAMCOLOR_TRANSITION     256
-#define EF_EXPIRING_QUAD            512
-#define EF_EXPIRING_SHELL           1024
-#define EF_GODMODE                  2048
-#define EF_REGEN                    4096
-#define EF_EXPIRING_REGEN           8192
-#define EF_GHOST                    16384
+#define EF_ROTATE_AND_BOB           ( 1 << 0 )
+#define EF_SHELL                    ( 1 << 1 )
+#define EF_QUAD                     ( 1 << 2 )
+#define EF_CARRIER                  ( 1 << 3 )
+#define EF_BUSYICON                 ( 1 << 4 )
+#define EF_FLAG_TRAIL               ( 1 << 5 )
+#define EF_TAKEDAMAGE               ( 1 << 6 )
+#define EF_TEAMCOLOR_TRANSITION     ( 1 << 7 )
+#define EF_EXPIRING_QUAD            ( 1 << 8 )
+#define EF_EXPIRING_SHELL           ( 1 << 9 )
+#define EF_GODMODE                  ( 1 << 10 )
+#define EF_REGEN                    ( 1 << 11 )
+#define EF_EXPIRING_REGEN           ( 1 << 12 )
+#define EF_GHOST                    ( 1 << 13 )
 
 // oh, this is so nasty... (reuse effect bits for different entity types)
 #define EF_NOPORTALENTS             EF_CARRIER
 #define EF_PLAYER_HIDENAME          EF_TEAMCOLOR_TRANSITION
 
 // these ones can be only set from client side
-#define EF_AMMOBOX                  ( 1 << 16 )
-#define EF_RACEGHOST                ( 1 << 17 )
-#define EF_OUTLINE                  ( 1 << 18 )
-#define EF_GHOSTITEM                ( 1 << 19 )
+#define EF_AMMOBOX                  ( 1 << 14 )
+#define EF_RACEGHOST                ( 1 << 15 )
+#define EF_OUTLINE                  ( 1 << 16 )
+#define EF_GHOSTITEM                ( 1 << 17 )
 
 //===============================================================
 // gs_weapons.c
@@ -1029,29 +994,14 @@ typedef struct {
 
 void GS_InitModule( int module, int maxClients, gs_module_api_t *api );
 gs_weapon_definition_t *GS_GetWeaponDef( int weapon );
-void GS_InitWeapons( void );
 int GS_SelectBestWeapon( player_state_t *playerState );
 bool GS_CheckAmmoInWeapon( player_state_t *playerState, int checkweapon );
 firedef_t *GS_FiredefForPlayerState( player_state_t *playerState, int checkweapon );
 int GS_ThinkPlayerWeapon( player_state_t *playerState, int buttons, int msecs, int timeDelta );
 trace_t *GS_TraceBullet( trace_t *trace, vec3_t start, vec3_t dir, vec3_t right, vec3_t up, float r, float u, int range, int ignore, int timeDelta );
 void GS_TraceLaserBeam( trace_t *trace, vec3_t origin, vec3_t angles, float range, int ignore, int timeDelta, void ( *impact )( trace_t *tr, vec3_t dir ) );
-void GS_TraceCurveLaserBeam( trace_t *trace, vec3_t origin, vec3_t angles, vec3_t blendPoint, int ignore, int timeDelta, void ( *impact )( trace_t *tr, vec3_t dir ) );
 
 #define CURVELASERBEAM_SUBDIVISIONS 40
-#define CURVELASERBEAM_BACKTIME     60
-#define LASERGUN_WEAK_TRAIL_BACKUP  32 // 0.5 second backup at 62 fps, which is the ucmd fps ratio
-#define LASERGUN_WEAK_TRAIL_MASK    ( LASERGUN_WEAK_TRAIL_BACKUP - 1 )
-
-typedef struct {
-	vec3_t origins[LASERGUN_WEAK_TRAIL_BACKUP];
-	int64_t timeStamps[LASERGUN_WEAK_TRAIL_BACKUP];
-	bool teleported[LASERGUN_WEAK_TRAIL_BACKUP];
-	int head;
-}gs_laserbeamtrail_t;
-
-void GS_AddLaserbeamPoint( gs_laserbeamtrail_t *trail, player_state_t *playerState, int64_t timeStamp );
-bool G_GetLaserbeamPoint( gs_laserbeamtrail_t *trail, player_state_t *playerState, int64_t timeStamp, vec3_t out );
 
 //===============================================================
 // gs_weapondefs.c

@@ -430,7 +430,7 @@ void CG_BubbleTrail( const vec3_t start, const vec3_t end, int dist ) {
 /*
 * CG_PlasmaExplosion
 */
-void CG_PlasmaExplosion( const vec3_t pos, const vec3_t dir, int team, int fire_mode, float radius ) {
+void CG_PlasmaExplosion( const vec3_t pos, const vec3_t dir, int team, float radius ) {
 	lentity_t *le;
 	vec3_t angles;
 	vec3_t origin;
@@ -447,21 +447,12 @@ void CG_PlasmaExplosion( const vec3_t pos, const vec3_t dir, int team, int fire_
 		Vector4Set( color, 1, 1, 1, 1 );
 	}
 
-	if( fire_mode == FIRE_MODE_STRONG ) {
-		le = CG_AllocModel( LE_ALPHA_FADE, origin, angles, 4,
-							color[0], color[1], color[2], color[3],
-							150, 0, 0.75, 0,
-							CG_MediaModel( cgs.media.modPlasmaExplosion ),
-							NULL );
-		le->ent.scale = radius / model_radius;
-	} else {
-		le = CG_AllocModel( LE_ALPHA_FADE, origin, angles, 4,
-							color[0], color[1], color[2], color[3],
-							80, 0, 0.75, 0,
-							CG_MediaModel( cgs.media.modPlasmaExplosion ),
-							NULL );
-		le->ent.scale = radius / model_radius;
-	}
+	le = CG_AllocModel( LE_ALPHA_FADE, origin, angles, 4,
+						color[0], color[1], color[2], color[3],
+						150, 0, 0.75, 0,
+						CG_MediaModel( cgs.media.modPlasmaExplosion ),
+						NULL );
+	le->ent.scale = radius / model_radius;
 
 	CG_ImpactPuffParticles( origin, dir, 15, 0.75f, color[0], color[1], color[2], color[3], NULL );
 
@@ -476,7 +467,7 @@ void CG_PlasmaExplosion( const vec3_t pos, const vec3_t dir, int team, int fire_
 /*
 * CG_BoltExplosionMode
 */
-void CG_BoltExplosionMode( const vec3_t pos, const vec3_t dir, int fire_mode, int surfFlags ) {
+void CG_BoltExplosionMode( const vec3_t pos, const vec3_t dir, int surfFlags ) {
 	lentity_t *le;
 	vec3_t angles;
 	vec3_t origin;
@@ -497,7 +488,7 @@ void CG_BoltExplosionMode( const vec3_t pos, const vec3_t dir, int fire_mode, in
 						CG_MediaModel( cgs.media.modElectroBoltWallHit ), NULL );
 
 	le->ent.rotation = rand() % 360;
-	le->ent.scale = ( fire_mode == FIRE_MODE_STRONG ) ? 1.5f : 1.0f;
+	le->ent.scale = 1.5f;
 
 	// add white energy particles on the impact
 	CG_ImpactPuffParticles( origin, dir, 15, 0.75f, 1, 1, 1, 1, NULL );
@@ -509,21 +500,14 @@ void CG_BoltExplosionMode( const vec3_t pos, const vec3_t dir, int fire_mode, in
 /*
 * CG_RocketExplosionMode
 */
-void CG_RocketExplosionMode( const vec3_t pos, const vec3_t dir, int fire_mode, float radius ) {
+void CG_RocketExplosionMode( const vec3_t pos, const vec3_t dir, float radius ) {
 	lentity_t *le;
 	vec3_t angles, vec;
 	float expvelocity = 8.0f;
 
 	VecToAngles( dir, angles );
 
-	if( fire_mode == FIRE_MODE_STRONG ) {
-		//trap_S_StartSound ( pos, 0, 0, CG_MediaSfx (cgs.media.sfxRocketLauncherStrongHit), cg_volume_effects->value, ATTN_NORM, 0 );
-		CG_SpawnDecal( pos, dir, random() * 360, radius * 0.5, 1, 1, 1, 1, 10, 1, false, CG_MediaShader( cgs.media.shaderExplosionMark ) );
-
-	} else {
-		//trap_S_StartSound ( pos, 0, 0, CG_MediaSfx (cgs.media.sfxRocketLauncherWeakHit), cg_volume_effects->value, ATTN_NORM, 0 );
-		CG_SpawnDecal( pos, dir, random() * 360, radius * 0.25, 1, 1, 1, 1, 10, 1, false, CG_MediaShader( cgs.media.shaderExplosionMark ) );
-	}
+	CG_SpawnDecal( pos, dir, random() * 360, radius * 0.5, 1, 1, 1, 1, 10, 1, false, CG_MediaShader( cgs.media.shaderExplosionMark ) );
 
 	// animmap shader of the explosion
 	le = CG_AllocSprite( LE_ALPHA_FADE, pos, radius * 0.75f, 8,
@@ -556,13 +540,7 @@ void CG_RocketExplosionMode( const vec3_t pos, const vec3_t dir, int fire_mode, 
 	// Explosion particles
 	CG_ParticleExplosionEffect( pos, dir, 1, 0.5, 0, 32 );
 
-	if( fire_mode == FIRE_MODE_STRONG ) {
-		trap_S_StartFixedSound( CG_MediaSfx( cgs.media.sfxRocketLauncherStrongHit ), pos, CHAN_AUTO, cg_volume_effects->value, ATTN_DISTANT );
-	} else {
-		trap_S_StartFixedSound( CG_MediaSfx( cgs.media.sfxRocketLauncherWeakHit ), pos, CHAN_AUTO, cg_volume_effects->value, ATTN_DISTANT );
-	}
-
-	//jalfixme: add sound at water?
+	trap_S_StartFixedSound( CG_MediaSfx( cgs.media.sfxRocketLauncherHit ), pos, CHAN_AUTO, cg_volume_effects->value, ATTN_DISTANT );
 }
 
 /*
@@ -700,11 +678,7 @@ static void CG_ProjectileFireTrail( centity_t *cent ) {
 		return;
 	}
 
-	if( cent->effects & EF_STRONG_WEAPON ) {
-		shader = CG_MediaShader( cgs.media.shaderStrongRocketFireTrailPuff );
-	} else {
-		shader = CG_MediaShader( cgs.media.shaderWeakRocketFireTrailPuff );
-	}
+	shader = CG_MediaShader( cgs.media.shaderRocketFireTrailPuff );
 
 	// density is found by quantity per second
 	trailTime = (int)( 1000.0f / cg_projectileFireTrail->value );
@@ -953,7 +927,7 @@ void CG_PModel_SpawnTeleportEffect( centity_t *cent ) {
 /*
 * CG_GrenadeExplosionMode
 */
-void CG_GrenadeExplosionMode( const vec3_t pos, const vec3_t dir, int fire_mode, float radius ) {
+void CG_GrenadeExplosionMode( const vec3_t pos, const vec3_t dir, float radius ) {
 	lentity_t *le;
 	vec3_t angles;
 	vec3_t decaldir;
@@ -966,11 +940,7 @@ void CG_GrenadeExplosionMode( const vec3_t pos, const vec3_t dir, int fire_mode,
 	//if( CG_PointContents( pos ) & MASK_WATER )
 	//jalfixme: (shouldn't we do the water sound variation?)
 
-	if( fire_mode == FIRE_MODE_STRONG ) {
-		CG_SpawnDecal( pos, decaldir, random() * 360, radius * 0.5, 1, 1, 1, 1, 10, 1, false, CG_MediaShader( cgs.media.shaderExplosionMark ) );
-	} else {
-		CG_SpawnDecal( pos, decaldir, random() * 360, radius * 0.25, 1, 1, 1, 1, 10, 1, false, CG_MediaShader( cgs.media.shaderExplosionMark ) );
-	}
+	CG_SpawnDecal( pos, decaldir, random() * 360, radius * 0.5, 1, 1, 1, 1, 10, 1, false, CG_MediaShader( cgs.media.shaderExplosionMark ) );
 
 	// animmap shader of the explosion
 	VectorMA( pos, radius * 0.15f, dir, origin );
@@ -1003,17 +973,13 @@ void CG_GrenadeExplosionMode( const vec3_t pos, const vec3_t dir, int fire_mode,
 	// Explosion particles
 	CG_ParticleExplosionEffect( pos, dir, 1, 0.5, 0, 32 );
 
-	if( fire_mode == FIRE_MODE_STRONG ) {
-		trap_S_StartFixedSound( CG_MediaSfx( cgs.media.sfxGrenadeStrongExplosion ), pos, CHAN_AUTO, cg_volume_effects->value, ATTN_DISTANT );
-	} else {
-		trap_S_StartFixedSound( CG_MediaSfx( cgs.media.sfxGrenadeWeakExplosion ), pos, CHAN_AUTO, cg_volume_effects->value, ATTN_DISTANT );
-	}
+	trap_S_StartFixedSound( CG_MediaSfx( cgs.media.sfxGrenadeExplosion ), pos, CHAN_AUTO, cg_volume_effects->value, ATTN_DISTANT );
 }
 
 /*
 * CG_GenericExplosion
 */
-void CG_GenericExplosion( const vec3_t pos, const vec3_t dir, int fire_mode, float radius ) {
+void CG_GenericExplosion( const vec3_t pos, const vec3_t dir, float radius ) {
 	lentity_t *le;
 	vec3_t angles;
 	vec3_t decaldir;
@@ -1026,11 +992,7 @@ void CG_GenericExplosion( const vec3_t pos, const vec3_t dir, int fire_mode, flo
 	//if( CG_PointContents( pos ) & MASK_WATER )
 	//jalfixme: (shouldn't we do the water sound variation?)
 
-	if( fire_mode == FIRE_MODE_STRONG ) {
-		CG_SpawnDecal( pos, decaldir, random() * 360, radius * 0.5, 1, 1, 1, 1, 10, 1, false, CG_MediaShader( cgs.media.shaderExplosionMark ) );
-	} else {
-		CG_SpawnDecal( pos, decaldir, random() * 360, radius * 0.25, 1, 1, 1, 1, 10, 1, false, CG_MediaShader( cgs.media.shaderExplosionMark ) );
-	}
+	CG_SpawnDecal( pos, decaldir, random() * 360, radius * 0.5, 1, 1, 1, 1, 10, 1, false, CG_MediaShader( cgs.media.shaderExplosionMark ) );
 
 	// animmap shader of the explosion
 	VectorMA( pos, radius * 0.15f, dir, origin );
@@ -1045,11 +1007,7 @@ void CG_GenericExplosion( const vec3_t pos, const vec3_t dir, int fire_mode, flo
 	le->ent.rotation = rand() % 360;
 
 	// use the rocket explosion sounds
-	if( fire_mode == FIRE_MODE_STRONG ) {
-		trap_S_StartFixedSound( CG_MediaSfx( cgs.media.sfxRocketLauncherStrongHit ), pos, CHAN_AUTO, cg_volume_effects->value, ATTN_DISTANT );
-	} else {
-		trap_S_StartFixedSound( CG_MediaSfx( cgs.media.sfxRocketLauncherWeakHit ), pos, CHAN_AUTO, cg_volume_effects->value, ATTN_DISTANT );
-	}
+	trap_S_StartFixedSound( CG_MediaSfx( cgs.media.sfxRocketLauncherHit ), pos, CHAN_AUTO, cg_volume_effects->value, ATTN_DISTANT );
 }
 
 /*
@@ -1082,14 +1040,14 @@ void CG_FlagTrail( const vec3_t origin, const vec3_t start, const vec3_t end, fl
 * CG_Explosion1
 */
 void CG_Explosion1( const vec3_t pos ) {
-	CG_RocketExplosionMode( pos, vec3_origin, FIRE_MODE_STRONG, 150 );
+	CG_RocketExplosionMode( pos, vec3_origin, 150 );
 }
 
 /*
 * CG_Explosion2
 */
 void CG_Explosion2( const vec3_t pos ) {
-	CG_GrenadeExplosionMode( pos, vec3_origin, FIRE_MODE_STRONG, 150 );
+	CG_GrenadeExplosionMode( pos, vec3_origin, 150 );
 }
 
 /*

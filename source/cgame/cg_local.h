@@ -103,7 +103,6 @@ typedef struct {
 	vec3_t laserPoint;
 	vec3_t laserOriginOld;
 	vec3_t laserPointOld;
-	bool laserCurved;
 
 	bool linearProjectileCanDraw;
 	vec3_t linearProjectileViewerSource;
@@ -165,30 +164,22 @@ typedef struct {
 	cgs_media_handle_t *sfxGunbladeStrongHit[3];
 
 	// Riotgun sounds :
-	cgs_media_handle_t *sfxRiotgunWeakHit;
-	cgs_media_handle_t *sfxRiotgunStrongHit;
+	cgs_media_handle_t *sfxRiotgunHit;
 
 	// Grenade launcher sounds :
-	cgs_media_handle_t *sfxGrenadeWeakBounce[2];
-	cgs_media_handle_t *sfxGrenadeStrongBounce[2];
-	cgs_media_handle_t *sfxGrenadeWeakExplosion;
-	cgs_media_handle_t *sfxGrenadeStrongExplosion;
+	cgs_media_handle_t *sfxGrenadeBounce[2];
+	cgs_media_handle_t *sfxGrenadeExplosion;
 
 	// Rocket launcher sounds :
-	cgs_media_handle_t *sfxRocketLauncherWeakHit;
-	cgs_media_handle_t *sfxRocketLauncherStrongHit;
+	cgs_media_handle_t *sfxRocketLauncherHit;
 
 	// Plasmagun sounds
-	cgs_media_handle_t *sfxPlasmaWeakHit;
-	cgs_media_handle_t *sfxPlasmaStrongHit;
+	cgs_media_handle_t *sfxPlasmaHit;
 
 	// Lasergun sounds
-	cgs_media_handle_t *sfxLasergunWeakHum;
-	cgs_media_handle_t *sfxLasergunWeakQuadHum;
-	cgs_media_handle_t *sfxLasergunWeakStop;
-	cgs_media_handle_t *sfxLasergunStrongHum;
-	cgs_media_handle_t *sfxLasergunStrongQuadHum;
-	cgs_media_handle_t *sfxLasergunStrongStop;
+	cgs_media_handle_t *sfxLasergunHum;
+	cgs_media_handle_t *sfxLasergunQuadHum;
+	cgs_media_handle_t *sfxLasergunStop;
 	cgs_media_handle_t *sfxLasergunHit[3];
 
 	cgs_media_handle_t *sfxElectroboltHit;
@@ -235,8 +226,7 @@ typedef struct {
 	cgs_media_handle_t *shaderSmokePuff2;
 	cgs_media_handle_t *shaderSmokePuff3;
 
-	cgs_media_handle_t *shaderStrongRocketFireTrailPuff;
-	cgs_media_handle_t *shaderWeakRocketFireTrailPuff;
+	cgs_media_handle_t *shaderRocketFireTrailPuff;
 	cgs_media_handle_t *shaderGrenadeTrailSmokePuff;
 	cgs_media_handle_t *shaderRocketTrailSmokePuff;
 	cgs_media_handle_t *shaderBloodTrailPuff;
@@ -541,7 +531,6 @@ typedef struct {
 	player_state_t predictedPlayerState;     // current in use, predicted or interpolated
 	int predictedWeaponSwitch;              // inhibit shooting prediction while a weapon change is expected
 	int predictedGroundEntity;
-	gs_laserbeamtrail_t weaklaserTrail;
 
 	// prediction optimization (don't run all ucmds in not needed)
 	int64_t predictFrom;
@@ -960,13 +949,13 @@ void CG_BloodDamageEffect( const vec3_t origin, const vec3_t dir, int damage, in
 void CG_FlagTrail( const vec3_t origin, const vec3_t start, const vec3_t end, float r, float g, float b );
 void CG_GreenLaser( const vec3_t start, const vec3_t end );
 void CG_SmallPileOfGibs( const vec3_t origin, int damage, const vec3_t initialVelocity, int team );
-void CG_PlasmaExplosion( const vec3_t pos, const vec3_t dir, int team, int fire_mode, float radius );
-void CG_GrenadeExplosionMode( const vec3_t pos, const vec3_t dir, int fire_mode, float radius );
-void CG_GenericExplosion( const vec3_t pos, const vec3_t dir, int fire_mode, float radius );
-void CG_RocketExplosionMode( const vec3_t pos, const vec3_t dir, int fire_mode, float radius );
+void CG_PlasmaExplosion( const vec3_t pos, const vec3_t dir, int team, float radius );
+void CG_GrenadeExplosionMode( const vec3_t pos, const vec3_t dir, float radius );
+void CG_GenericExplosion( const vec3_t pos, const vec3_t dir, float radius );
+void CG_RocketExplosionMode( const vec3_t pos, const vec3_t dir, float radius );
 void CG_ElectroTrail( const vec3_t start, const vec3_t end, int team );
 void CG_ImpactSmokePuff( const vec3_t origin, const vec3_t dir, float radius, float alpha, int time, int speed );
-void CG_BoltExplosionMode( const vec3_t pos, const vec3_t dir, int fire_mode, int surfFlags );
+void CG_BoltExplosionMode( const vec3_t pos, const vec3_t dir, int surfFlags );
 void CG_BladeImpact( const vec3_t pos, const vec3_t dir );
 void CG_GunBladeBlastImpact( const vec3_t pos, const vec3_t dir, float radius );
 void CG_PModel_SpawnTeleportEffect( centity_t *cent );
@@ -1033,7 +1022,6 @@ void CG_ParticleExplosionEffect( const vec3_t org, const vec3_t dir, float r, fl
 void CG_BlasterTrail( const vec3_t start, const vec3_t end );
 void CG_FlyEffect( centity_t *ent, const vec3_t origin );
 void CG_ElectroIonsTrail( const vec3_t start, const vec3_t end, const vec4_t color );
-void CG_ElectroWeakTrail( const vec3_t start, const vec3_t end, const vec4_t color );
 void CG_ImpactPuffParticles( const vec3_t org, const vec3_t dir, int count, float scale, float r, float g, float b, float a, struct shader_s *shader );
 void CG_HighVelImpactPuffParticles( const vec3_t org, const vec3_t dir, int count, float scale, float r, float g, float b, float a, struct shader_s *shader );
 

@@ -239,7 +239,7 @@ static edict_t *CopyToBodyQue( edict_t *ent, edict_t *attacker, int damage ) {
 	body->think = body_think; // body self destruction countdown
 
 	if( ent->health < GIB_HEALTH
-		|| meansOfDeath == MOD_ELECTROBOLT_S /* electrobolt always gibs */ ) {
+		|| meansOfDeath == MOD_ELECTROBOLT /* electrobolt always gibs */ ) {
 		ThrowSmallPileOfGibs( body, damage );
 
 		// reset gib impulse
@@ -1441,8 +1441,6 @@ void ClientThink( edict_t *ent, usercmd_t *ucmd, int timeDelta ) {
 	}
 
 	GClip_LinkEntity( ent );
-
-	GS_AddLaserbeamPoint( &ent->r.client->resp.trail, &ent->r.client->ps, ucmd->serverTimeStamp );
 
 	// Regeneration
 	if( ent->r.client->ps.inventory[POWERUP_REGEN] > 0 && ent->health < 200 ) {

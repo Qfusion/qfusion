@@ -304,7 +304,7 @@ typedef struct entity_state_s {
 	int damage;                     // EV_BLOOD
 	int targetNum;                  // ET_EVENT specific
 	int colorRGBA;                  // ET_BEAM, ET_EVENT specific
-	int range;                      // ET_LASERBEAM, ET_CURVELASERBEAM specific
+	int range;                      // ET_LASERBEAM specific
 
 	bool linearMovement;
 	vec3_t linearMovementVelocity;      // this is transmitted instead of origin when linearProjectile is true
