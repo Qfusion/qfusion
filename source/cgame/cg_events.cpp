@@ -54,7 +54,7 @@ void CG_WeaponBeamEffect( centity_t *cent ) {
 		VectorCopy( cent->laserOrigin, projection.origin );
 	}
 
-	CG_ElectroTrail( projection.origin, cent->laserPoint, cent->current.team );
+	CG_EBBeam( projection.origin, cent->laserPoint, cent->current.team );
 
 	cent->localEffects[LOCALEFFECT_EV_WEAPONBEAM] = 0;
 }
@@ -169,9 +169,8 @@ void CG_LaserBeamEffect( centity_t *cent ) {
 
 	CG_KillPolyBeamsByTag( cent->current.number );
 
-	CG_LaserGunPolyBeam( laserOrigin, trace.endpos, color, cent->current.number );
-
-	CG_ElectroPolyboardBeam( laserOrigin, trace.endpos, cg_laserBeamSubdivisions->integer, 
+	CG_LGSolidPolyBeam( laserOrigin, trace.endpos, color, cent->current.number );
+	CG_LGWeirdPolyBeam( laserOrigin, trace.endpos, cg_laserBeamSubdivisions->integer, 
 		range, color, cent->current.number, firstPerson );
 
 	// enable continuous flash on the weapon owner

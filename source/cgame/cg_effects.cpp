@@ -782,10 +782,7 @@ void CG_HighVelImpactPuffParticles( const vec3_t org, const vec3_t dir, int coun
 	}
 }
 
-/*
-* CG_ElectroIonsTrail
-*/
-void CG_ElectroIonsTrail( const vec3_t start, const vec3_t end, const vec4_t color ) {
+void CG_EBIonsTrail( const vec3_t start, const vec3_t end, const vec4_t color ) {
 #define MAX_BOLT_IONS 48
 	int i, count;
 	vec3_t move, vec;

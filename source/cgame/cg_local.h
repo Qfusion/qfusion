@@ -254,11 +254,9 @@ typedef struct {
 
 	//wsw weapon sfx
 	cgs_media_handle_t *shaderPlasmaMark;
-	cgs_media_handle_t *shaderElectroBeam;
-	cgs_media_handle_t *shaderElectroBeamAlpha;
-	cgs_media_handle_t *shaderElectroBeamBeta;
-	cgs_media_handle_t *shaderLaserGunBeamSolid;
-	cgs_media_handle_t *shaderLaserGunBeamGlow;
+	cgs_media_handle_t *shaderEBBeam;
+	cgs_media_handle_t *shaderLGBeamSolid;
+	cgs_media_handle_t *shaderLGBeamGlow;
 	cgs_media_handle_t *shaderElectroboltMark;
 
 	//wsw
@@ -946,7 +944,7 @@ void CG_PlasmaExplosion( const vec3_t pos, const vec3_t dir, int team, float rad
 void CG_GrenadeExplosionMode( const vec3_t pos, const vec3_t dir, float radius );
 void CG_GenericExplosion( const vec3_t pos, const vec3_t dir, float radius );
 void CG_RocketExplosionMode( const vec3_t pos, const vec3_t dir, float radius );
-void CG_ElectroTrail( const vec3_t start, const vec3_t end, int team );
+void CG_EBBeam( const vec3_t start, const vec3_t end, int team );
 void CG_ImpactSmokePuff( const vec3_t origin, const vec3_t dir, float radius, float alpha, int time, int speed );
 void CG_BoltExplosionMode( const vec3_t pos, const vec3_t dir, int surfFlags );
 void CG_BladeImpact( const vec3_t pos, const vec3_t dir );
@@ -984,10 +982,9 @@ void CG_ClearPolys( void );
 void CG_AddPolys( void );
 void CG_KillPolyBeamsByTag( int key );
 void CG_QuickPolyBeam( const vec3_t start, const vec3_t end, int width, struct shader_s *shader );
-void CG_LaserGunPolyBeam( const vec3_t start, const vec3_t end, const vec4_t color, int tag );
-void CG_ElectroPolyboardBeam( const vec3_t start, const vec3_t end, int subdivisions,
-	float range, const vec4_t color, int key, bool firstPerson );
-void CG_ElectroPolyBeam( const vec3_t start, const vec3_t end, int team );
+void CG_LGSolidPolyBeam( const vec3_t start, const vec3_t end, const vec4_t color, int tag );
+void CG_LGWeirdPolyBeam( const vec3_t start, const vec3_t end, int subdivisions, float range, const vec4_t color, int key, bool firstPerson );
+void CG_EBPolyBeam( const vec3_t start, const vec3_t end, const vec4_t color );
 void CG_PLink( const vec3_t start, const vec3_t end, const vec4_t color, int flags );
 
 //
@@ -1014,7 +1011,7 @@ void CG_ParticleEffect2( const vec3_t org, const vec3_t dir, float r, float g, f
 void CG_ParticleExplosionEffect( const vec3_t org, const vec3_t dir, float r, float g, float b, int count );
 void CG_BlasterTrail( const vec3_t start, const vec3_t end );
 void CG_FlyEffect( centity_t *ent, const vec3_t origin );
-void CG_ElectroIonsTrail( const vec3_t start, const vec3_t end, const vec4_t color );
+void CG_EBIonsTrail( const vec3_t start, const vec3_t end, const vec4_t color );
 void CG_ImpactPuffParticles( const vec3_t org, const vec3_t dir, int count, float scale, float r, float g, float b, float a, struct shader_s *shader );
 void CG_HighVelImpactPuffParticles( const vec3_t org, const vec3_t dir, int count, float scale, float r, float g, float b, float a, struct shader_s *shader );
 

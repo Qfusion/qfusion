@@ -266,23 +266,18 @@ void CG_QuickPolyBeam( const vec3_t start, const vec3_t end, int width, struct s
 	CG_SpawnPolyBeam( start, end, NULL, width, 1, 0, shader, 64, 0 );
 }
 
-/*
-* CG_LaserGunPolyBeam
-*/
-void CG_LaserGunPolyBeam( const vec3_t start, const vec3_t end, const vec4_t color, int tag ) {
-	CG_SpawnPolyBeam( start, end, color, 12, 1, 0, CG_MediaShader( cgs.media.shaderLaserGunBeamSolid ), 64, tag );
+void CG_LGSolidPolyBeam( const vec3_t start, const vec3_t end, const vec4_t color, int tag ) {
+	CG_SpawnPolyBeam( start, end, color, 12, 1, 0, CG_MediaShader( cgs.media.shaderLGBeamSolid ), 64, tag );
 }
 
 /*
-* CG_ElectroPolyboardBeam
-*
 * Spawns a segmented lightning beam, pseudo-randomly disturbing each segment's
 * placement along the given line.
 *
 * For more information please refer to
 * Mathematics for 3D Game Programming and Computer Graphics, section "Polyboards"
 */
-void CG_ElectroPolyboardBeam( const vec3_t start, const vec3_t end, int subdivisions,
+void CG_LGWeirdPolyBeam( const vec3_t start, const vec3_t end, int subdivisions,
 	float range, const vec4_t color, int key, bool firstPerson ) {
 	vec3_t from, to;
 	vec3_t dir;
@@ -292,7 +287,7 @@ void CG_ElectroPolyboardBeam( const vec3_t start, const vec3_t end, int subdivis
 
 	float frequency = 0.1244;
 
-	struct shader_s *shader = CG_MediaShader( cgs.media.shaderLaserGunBeamGlow );
+	struct shader_s *shader = CG_MediaShader( cgs.media.shaderLGBeamGlow );
 
 	VectorSubtract( end, start, dir );
 	dist = VectorNormalize2( dir, dir );
@@ -360,22 +355,11 @@ void CG_ElectroPolyboardBeam( const vec3_t start, const vec3_t end, int subdivis
 }
 
 /*
-* CG_ElectroPolyBeam
+* CG_EBPolyBeam
 */
-void CG_ElectroPolyBeam( const vec3_t start, const vec3_t end, int team ) {
-	struct shader_s *shader;
-
-	if( team == TEAM_ALPHA ) {
-		shader = CG_MediaShader( cgs.media.shaderElectroBeamAlpha );
-	}
-	else if( team == TEAM_BETA ) {
-		shader = CG_MediaShader( cgs.media.shaderElectroBeamBeta );
-	}
-	else {
-		shader = CG_MediaShader( cgs.media.shaderElectroBeam );
-	}
-
-	CG_SpawnPolyBeam( start, end, NULL, EBBEAM_WIDTH, EBBEAM_TIME, EBBEAM_TIME * 0.4f, shader, 128, 0 );
+void CG_EBPolyBeam( const vec3_t start, const vec3_t end, const vec4_t color ) {
+	struct shader_s * shader = CG_MediaShader( cgs.media.shaderEBBeam );
+	CG_SpawnPolyBeam( start, end, color, EBBEAM_WIDTH, EBBEAM_TIME, EBBEAM_TIME * 0.4f, shader, 128, 0 );
 }
 
 /*

@@ -296,11 +296,9 @@ void CG_RegisterMediaShaders( void ) {
 	cgs.media.shaderPlasmaMark = CG_RegisterMediaShader( "gfx/decals/d_plasma_hit" );
 	cgs.media.shaderElectroboltMark = CG_RegisterMediaShader( "gfx/decals/d_electrobolt_hit" );
 
-	cgs.media.shaderElectroBeam = CG_RegisterMediaShader( "gfx/misc/electro" );
-	cgs.media.shaderElectroBeamAlpha = CG_RegisterMediaShader( "gfx/misc/electro_alpha" );
-	cgs.media.shaderElectroBeamBeta = CG_RegisterMediaShader( "gfx/misc/electro_beta" );
-	cgs.media.shaderLaserGunBeamSolid = CG_RegisterMediaShader( "gfx/misc/lgbeam_solid" );
-	cgs.media.shaderLaserGunBeamGlow = CG_RegisterMediaShader( "gfx/misc/lgbeam_glow" );
+	cgs.media.shaderEBBeam = CG_RegisterMediaShader( "gfx/misc/ebbeam" );
+	cgs.media.shaderLGBeamSolid = CG_RegisterMediaShader( "gfx/misc/lgbeam_solid" );
+	cgs.media.shaderLGBeamGlow = CG_RegisterMediaShader( "gfx/misc/lgbeam_glow" );
 	cgs.media.shaderRocketExplosion = CG_RegisterMediaShader( PATH_ROCKET_EXPLOSION_SPRITE );
 	cgs.media.shaderRocketExplosionRing = CG_RegisterMediaShader( PATH_ROCKET_EXPLOSION_RING_SPRITE );
 	cgs.media.shaderGrenadeExplosion = CG_RegisterMediaShader( PATH_ROCKET_EXPLOSION_SPRITE );

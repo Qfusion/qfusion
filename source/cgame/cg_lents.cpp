@@ -284,18 +284,11 @@ void CG_SpawnSprite( const vec3_t origin, const vec3_t velocity, const vec3_t ac
 	le->ent.rotation = rand() % 360;
 }
 
-/*
-* CG_ElectroTrail
-*/
-void CG_ElectroTrail( const vec3_t start, const vec3_t end, int team ) {
+void CG_EBBeam( const vec3_t start, const vec3_t end, int team ) {
 	vec4_t color = { 1.0f, 1.0f, 1.0f, 1.0f };
-
-	if( team == TEAM_ALPHA || team == TEAM_BETA ) {
-		CG_TeamColor( team, color );
-	}
-
-	CG_ElectroPolyBeam( start, end, team );
-	CG_ElectroIonsTrail( start, end, color );
+	CG_TeamColor( team, color );
+	CG_EBPolyBeam( start, end, color );
+	CG_EBIonsTrail( start, end, color );
 }
 
 /*
