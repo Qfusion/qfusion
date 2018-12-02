@@ -242,7 +242,6 @@ void G_Init( unsigned int seed, unsigned int framemsec, int protocol, const char
 	g_ammo_respawn = trap_Cvar_Get( "g_ammo_respawn", "0", CVAR_ARCHIVE );
 	g_weapon_respawn = trap_Cvar_Get( "g_weapon_respawn", "0", CVAR_ARCHIVE );
 	g_health_respawn = trap_Cvar_Get( "g_health_respawn", "0", CVAR_ARCHIVE );
-	g_select_empty = trap_Cvar_Get( "g_select_empty", "0", CVAR_DEVELOPER );
 	g_projectile_prestep = trap_Cvar_Get( "g_projectile_prestep", va( "%i", PROJECTILE_PRESTEP ), CVAR_DEVELOPER );
 	g_self_knockback = trap_Cvar_Get( "g_self_knockback", "1.18", CVAR_DEVELOPER );
 	g_knockback_scale = trap_Cvar_Get( "g_knockback_scale", "1.0", CVAR_ARCHIVE );

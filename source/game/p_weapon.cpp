@@ -36,10 +36,7 @@ void W_Plasma_Backtrace( edict_t *ent, const vec3_t start );
 * Use_Weapon
 */
 void Use_Weapon( edict_t *ent, const gsitem_t *item ) {
-	int ammocount, weakammocount;
-	gs_weapon_definition_t *weapondef;
-
-	//invalid weapon item
+	// invalid weapon item
 	if( item->tag < WEAP_NONE || item->tag >= WEAP_TOTAL ) {
 		return;
 	}
@@ -47,35 +44,6 @@ void Use_Weapon( edict_t *ent, const gsitem_t *item ) {
 	// see if we're already changing to it
 	if( ent->r.client->ps.stats[STAT_PENDING_WEAPON] == item->tag ) {
 		return;
-	}
-
-	weapondef = GS_GetWeaponDef( item->tag );
-
-	if( !g_select_empty->integer && !( item->type & IT_AMMO ) ) {
-		if( weapondef->firedef.usage_count ) {
-			if( weapondef->firedef.ammo_id ) {
-				ammocount = ent->r.client->ps.inventory[weapondef->firedef.ammo_id];
-			} else {
-				ammocount = weapondef->firedef.usage_count;
-			}
-		} else {
-			ammocount = 1; // can change weapon
-
-		}
-		if( weapondef->firedef_weak.usage_count ) {
-			if( weapondef->firedef_weak.ammo_id ) {
-				weakammocount = ent->r.client->ps.inventory[weapondef->firedef_weak.ammo_id];
-			} else {
-				weakammocount = weapondef->firedef_weak.usage_count;
-			}
-		} else {
-			weakammocount = 1; // can change weapon
-
-		}
-		if( ammocount < weapondef->firedef.usage_count &&
-			weakammocount < weapondef->firedef_weak.usage_count ) {
-			return;
-		}
 	}
 
 	// change to this weapon when down
