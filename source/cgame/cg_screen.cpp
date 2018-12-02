@@ -682,6 +682,7 @@ void CG_DrawTeamMates( void ) {
 //=============================================================================
 
 static const char * mini_obituaries[] = { "GG", "RIP", "BYE", "CYA", "L8R", "CHRS" };
+constexpr int MINI_OBITUARY_DAMAGE = 255;
 
 struct DamageNumber {
 	vec3_t origin;
@@ -704,6 +705,9 @@ void CG_InitDamageNumbers() {
 }
 
 void CG_AddDamageNumber( entity_state_t * ent ) {
+	if( !cg_damageNumbers->integer && ent->damage != MINI_OBITUARY_DAMAGE )
+		return;
+
 	DamageNumber * dn = &damage_numbers[ damage_numbers_head ];
 	VectorCopy( ent->origin, dn->origin );
 	dn->t = cg.time;
@@ -749,7 +753,7 @@ void CG_DrawDamageNumbers() {
 		char buf[ 16 ];
 		vec4_t color;
 		qfontface_s * font;
-		if( dn.damage == 255 ) {
+		if( dn.damage == MINI_OBITUARY_DAMAGE ) {
 			Q_snprintfz( buf, sizeof( buf ), dn.obituary );
 			CG_TeamColor( TEAM_ENEMY, color );
 			font = cgs.fontSystemSmall;
