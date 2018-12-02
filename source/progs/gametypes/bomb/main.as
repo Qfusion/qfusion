@@ -383,6 +383,10 @@ void GT_PlayerRespawn( Entity @ent, int old_team, int new_team ) {
 
 	int matchState = match.getState();
 
+	if( matchState <= MATCH_STATE_WARMUP ) {
+		client.setHUDStat( STAT_CAN_CHANGE_LOADOUT, new_team >= TEAM_ALPHA ? 1 : 0 );
+	}
+
 	if( new_team != old_team ) {
 		if( bombState == BombState_Carried && @ent == @bombCarrier ) {
 			bombDrop( BombDrop_Team );
@@ -472,7 +476,10 @@ void GT_ThinkRules() {
 			continue; // don't bother if they're not ingame
 		}
 
+		bool can_change_loadout = !client.getEnt().isGhosting() && roundState == RoundState_Pre;
+
 		client.setHUDStat( STAT_CARRYING_BOMB, 0 );
+		client.setHUDStat( STAT_CAN_CHANGE_LOADOUT, can_change_loadout ? 1 : 0 );
 		client.setHUDStat( STAT_ALPHA_PLAYERS_ALIVE, MSG_ALIVE_ALPHA );
 		client.setHUDStat( STAT_ALPHA_PLAYERS_TOTAL, MSG_TOTAL_ALPHA );
 		client.setHUDStat( STAT_BETA_PLAYERS_ALIVE, MSG_ALIVE_BETA );
