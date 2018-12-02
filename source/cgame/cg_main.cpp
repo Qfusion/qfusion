@@ -28,7 +28,6 @@ cvar_t *cg_predict;
 cvar_t *cg_predict_optimize;
 cvar_t *cg_showMiss;
 
-cvar_t *cg_model;
 cvar_t *cg_hand;
 cvar_t *cg_clan;
 cvar_t *cg_handicap;
@@ -97,18 +96,13 @@ cvar_t *cg_showClamp;
 cvar_t *cg_damage_indicator;
 cvar_t *cg_damage_indicator_time;
 
-// force models
-cvar_t *cg_teamPLAYERSmodel;
-cvar_t *cg_teamPLAYERSmodelForce;
-cvar_t *cg_teamALPHAmodel;
-cvar_t *cg_teamALPHAmodelForce;
-cvar_t *cg_teamBETAmodel;
-cvar_t *cg_teamBETAmodelForce;
+cvar_t *cg_allyColor;
+cvar_t *cg_allyModel;
+cvar_t *cg_allyForceModel;
 
-cvar_t *cg_teamPLAYERScolor;
-cvar_t *cg_teamPLAYERScolorForce;
-cvar_t *cg_teamALPHAcolor;
-cvar_t *cg_teamBETAcolor;
+cvar_t *cg_enemyColor;
+cvar_t *cg_enemyModel;
+cvar_t *cg_enemyForceModel;
 
 /*
 * CG_API
@@ -548,7 +542,6 @@ static void CG_RegisterVariables( void ) {
 	cg_debugPlayerModels =  trap_Cvar_Get( "cg_debugPlayerModels", "0", CVAR_CHEAT | CVAR_ARCHIVE );
 	cg_debugWeaponModels =  trap_Cvar_Get( "cg_debugWeaponModels", "0", CVAR_CHEAT | CVAR_ARCHIVE );
 
-	cg_model =          trap_Cvar_Get( "model", DEFAULT_PLAYERMODEL, CVAR_USERINFO | CVAR_ARCHIVE );
 	cg_hand =           trap_Cvar_Get( "hand", "0", CVAR_USERINFO | CVAR_ARCHIVE );
 	cg_handicap =       trap_Cvar_Get( "handicap", "0", CVAR_USERINFO | CVAR_ARCHIVE );
 	cg_clan =           trap_Cvar_Get( "clan", "", CVAR_USERINFO | CVAR_ARCHIVE );
@@ -617,32 +610,16 @@ static void CG_RegisterVariables( void ) {
 	cg_chatFilter =     trap_Cvar_Get( "cg_chatFilter", "0", CVAR_ARCHIVE );
 
 	// developer cvars
-	developer =     trap_Cvar_Get( "developer", "0", CVAR_CHEAT );
-	cg_showClamp =      trap_Cvar_Get( "cg_showClamp", "0", CVAR_DEVELOPER );
+	developer = trap_Cvar_Get( "developer", "0", CVAR_CHEAT );
+	cg_showClamp = trap_Cvar_Get( "cg_showClamp", "0", CVAR_DEVELOPER );
 
-	//team models
-	cg_teamPLAYERSmodel = trap_Cvar_Get( "cg_teamPLAYERSmodel", DEFAULT_PLAYERMODEL, CVAR_ARCHIVE );
-	cg_teamPLAYERSmodelForce = trap_Cvar_Get( "cg_teamPLAYERSmodelForce", "0", CVAR_ARCHIVE );
-	cg_teamPLAYERScolor = trap_Cvar_Get( "cg_teamPLAYERScolor", "255 20 60", CVAR_ARCHIVE );
-	cg_teamPLAYERScolorForce = trap_Cvar_Get( "cg_teamPLAYERScolorForce", "1", CVAR_ARCHIVE );
-	cg_teamPLAYERSmodel->modified = true;
-	cg_teamPLAYERSmodelForce->modified = true;
-	cg_teamPLAYERScolor->modified = true;
-	cg_teamPLAYERScolorForce->modified = true;
+	cg_allyColor = trap_Cvar_Get( "cg_allyColor", "0 160 255", CVAR_ARCHIVE );
+	cg_allyModel = trap_Cvar_Get( "cg_allyModel", "bigvic", CVAR_ARCHIVE );
+	cg_allyForceModel = trap_Cvar_Get( "cg_allyForceModel", "1", CVAR_ARCHIVE | CVAR_READONLY );
 
-	cg_teamALPHAmodel = trap_Cvar_Get( "cg_teamALPHAmodel", "bigvic", CVAR_ARCHIVE );
-	cg_teamALPHAmodelForce = trap_Cvar_Get( "cg_teamALPHAmodelForce", "0", CVAR_ARCHIVE );
-	cg_teamALPHAcolor = trap_Cvar_Get( "cg_teamALPHAcolor", "0 160 255", CVAR_ARCHIVE );
-	cg_teamALPHAmodel->modified = true;
-	cg_teamALPHAmodelForce->modified = true;
-	cg_teamALPHAcolor->modified = true;
-
-	cg_teamBETAmodel = trap_Cvar_Get( "cg_teamBETAmodel", "padpork", CVAR_ARCHIVE );
-	cg_teamBETAmodelForce = trap_Cvar_Get( "cg_teamBETAmodelForce", "0", CVAR_ARCHIVE );
-	cg_teamBETAcolor = trap_Cvar_Get( "cg_teamBETAcolor", "255 20 60", CVAR_ARCHIVE );
-	cg_teamBETAmodel->modified = true;
-	cg_teamBETAmodelForce->modified = true;
-	cg_teamBETAcolor->modified = true;
+	cg_enemyColor = trap_Cvar_Get( "cg_enemyColor", "255 20 60", CVAR_ARCHIVE );
+	cg_enemyModel = trap_Cvar_Get( "cg_enemyModel", "padpork", CVAR_ARCHIVE );
+	cg_enemyForceModel = trap_Cvar_Get( "cg_enemyForceModel", "1", CVAR_ARCHIVE | CVAR_READONLY );
 
 	cg_strafeHUD = trap_Cvar_Get( "cg_strafeHUD", "0", CVAR_ARCHIVE );
 

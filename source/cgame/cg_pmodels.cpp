@@ -977,7 +977,7 @@ void CG_UpdatePlayerModelEnt( centity_t *cent ) {
 	pmodel = &cg_entPModels[cent->current.number];
 	CG_PModelForCentity( cent, &pmodel->pmodelinfo, &pmodel->skin );
 
-	CG_PlayerColorForEntity( cent->current.number, cent->ent.shaderRGBA );
+	CG_TeamColorForEntity( cent->current.number, cent->ent.shaderRGBA );
 
 	// outline color
 	CG_SetOutlineColor( cent->outlineColor, cent->ent.shaderRGBA );

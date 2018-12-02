@@ -464,9 +464,9 @@ typedef struct {
 	struct skinfile_s *baseSkin;
 
 	// force models
-	struct pmodelinfo_s *teamModelInfo[GS_MAX_TEAMS];
-	struct skinfile_s *teamCustomSkin[GS_MAX_TEAMS]; // user defined
-	int teamColor[GS_MAX_TEAMS];
+	struct pmodelinfo_s *teamModelInfo[2];
+	struct skinfile_s *teamCustomSkin[2]; // user defined
+	int teamColor[2];
 
 	struct sfx_s *soundPrecache[MAX_SOUNDS];
 	struct shader_s *imagePrecache[MAX_IMAGES];
@@ -662,7 +662,6 @@ struct shader_s *CG_MediaShader( cgs_media_handle_t *mediashader );
 //
 // cg_players.c
 //
-extern cvar_t *cg_model;
 extern cvar_t *cg_hand;
 
 void CG_ResetClientInfos( void );
@@ -829,18 +828,13 @@ extern cvar_t *cg_raceGhosts;
 extern cvar_t *cg_raceGhostsAlpha;
 extern cvar_t *cg_chatFilter;
 
-//force models
-extern cvar_t *cg_teamPLAYERSmodel;
-extern cvar_t *cg_teamPLAYERSmodelForce;
-extern cvar_t *cg_teamALPHAmodel;
-extern cvar_t *cg_teamALPHAmodelForce;
-extern cvar_t *cg_teamBETAmodel;
-extern cvar_t *cg_teamBETAmodelForce;
+extern cvar_t *cg_allyColor;
+extern cvar_t *cg_allyModel;
+extern cvar_t *cg_allyForceModel;
 
-extern cvar_t *cg_teamPLAYERScolor;
-extern cvar_t *cg_teamPLAYERScolorForce;
-extern cvar_t *cg_teamALPHAcolor;
-extern cvar_t *cg_teamBETAcolor;
+extern cvar_t *cg_enemyColor;
+extern cvar_t *cg_enemyModel;
+extern cvar_t *cg_enemyForceModel;
 
 #define CG_Malloc( size ) trap_MemAlloc( size, __FILE__, __LINE__ )
 #define CG_Free( data ) trap_MemFree( data, __FILE__, __LINE__ )
@@ -890,10 +884,9 @@ void CG_SC_AutoRecordAction( const char *action );
 void CG_RegisterTeamColor( int team );
 void CG_RegisterForceModels( void );
 void CG_SetSceneTeamColors( void );
-bool CG_PModelForCentity( centity_t *cent, pmodelinfo_t **pmodelinfo, struct skinfile_s **skin );
-vec_t *CG_TeamColor( int team, vec4_t color );
-uint8_t *CG_TeamColorForEntity( int entNum, byte_vec4_t color );
-uint8_t *CG_PlayerColorForEntity( int entNum, byte_vec4_t color );
+void CG_PModelForCentity( centity_t *cent, pmodelinfo_t **pmodelinfo, struct skinfile_s **skin );
+void CG_TeamColor( int team, vec4_t color );
+void CG_TeamColorForEntity( int entNum, byte_vec4_t color );
 
 //
 // cg_view.c

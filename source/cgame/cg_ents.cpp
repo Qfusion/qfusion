@@ -518,26 +518,22 @@ static void CG_EntAddBobEffect( centity_t *cent ) {
 * CG_EntAddTeamColorTransitionEffect
 */
 static void CG_EntAddTeamColorTransitionEffect( centity_t *cent ) {
-	float f;
-	uint8_t *currentcolor;
+	byte_vec4_t currentcolor;
 	vec4_t scaledcolor, newcolor;
 	const vec4_t neutralcolor = { 1.0f, 1.0f, 1.0f, 1.0f };
 
-	f = (float)cent->current.counterNum / 255.0f;
+	float f = (float)cent->current.counterNum / 255.0f;
 	clamp( f, 0.0f, 1.0f );
 
-	if( cent->current.type == ET_PLAYER || cent->current.type == ET_CORPSE ) {
-		currentcolor = CG_PlayerColorForEntity( cent->current.number, cent->ent.shaderRGBA );
-	} else {
-		currentcolor = CG_TeamColorForEntity( cent->current.number, cent->ent.shaderRGBA );
-	}
+	CG_TeamColorForEntity( cent->current.number, currentcolor );
 
 	Vector4Scale( currentcolor, 1.0 / 255.0, scaledcolor );
 	VectorLerp( neutralcolor, f, scaledcolor, newcolor );
 
-	cent->ent.shaderRGBA[0] = (uint8_t)( newcolor[0] * 255 );
-	cent->ent.shaderRGBA[1] = (uint8_t)( newcolor[1] * 255 );
-	cent->ent.shaderRGBA[2] = (uint8_t)( newcolor[2] * 255 );
+	cent->ent.shaderRGBA[0] = uint8_t( newcolor[0] * 255 );
+	cent->ent.shaderRGBA[1] = uint8_t( newcolor[1] * 255 );
+	cent->ent.shaderRGBA[2] = uint8_t( newcolor[2] * 255 );
+	cent->ent.shaderRGBA[3] = 255;
 }
 
 /*
@@ -1042,8 +1038,8 @@ static void CG_AddFlagBaseEnt( centity_t *cent ) {
 	// see if we have to add a flag
 	if( cent->effects & EF_FLAG_TRAIL ) {
 		byte_vec4_t teamcolor;
-
-		CG_AddFlagModelOnTag( cent, CG_TeamColorForEntity( cent->current.number, teamcolor ), "tag_flag1" );
+		CG_TeamColorForEntity( cent->current.number, teamcolor );
+		CG_AddFlagModelOnTag( cent, teamcolor, "tag_flag1" );
 	}
 }
 
