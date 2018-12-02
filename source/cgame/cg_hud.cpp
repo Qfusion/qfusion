@@ -291,8 +291,8 @@ static bool CG_IsWeaponInList( int weapon ) {
 
 static int CG_GetWeaponCount( const void *parameter ) {
 	int i, n = 0;
-	for( i = 0; i < WEAP_TOTAL - 1; i++ ) {
-		if( CG_IsWeaponInList( WEAP_GUNBLADE + i ) ) {
+	for( i = WEAP_GUNBLADE; i < WEAP_TOTAL; i++ ) {
+		if( CG_IsWeaponInList( i ) ) {
 			n++;
 		}
 	}
@@ -1308,8 +1308,8 @@ constexpr float SELECTED_WEAPON_Y_OFFSET = 0.0125;
 
 static void CG_DrawWeaponIcons( int x, int y, int offx, int offy, int iw, int ih, int align ) {
 	int num_weapons = 0;
-	for( int i = 0; i < WEAP_TOTAL - 1; i++ ) {
-		if( CG_IsWeaponInList( WEAP_GUNBLADE + i ) ) {
+	for( int i = WEAP_GUNBLADE; i < WEAP_TOTAL; i++ ) {
+		if( CG_IsWeaponInList( i ) ) {
 			num_weapons++;
 		}
 	}
@@ -1320,17 +1320,17 @@ static void CG_DrawWeaponIcons( int x, int y, int offx, int offy, int iw, int ih
 	int total_height = max( 0, num_weapons * offy - pady );
 
 	int drawn_weapons = 0;
-	for( int i = 0; i < WEAP_TOTAL - 1; i++ ) {
-		if( !CG_IsWeaponInList( WEAP_GUNBLADE + i ) )
+	for( int i = WEAP_GUNBLADE; i < WEAP_TOTAL; i++ ) {
+		if( !CG_IsWeaponInList( i ) )
 			continue;
 
 		int curx = CG_HorizontalAlignForWidth( x + offx * drawn_weapons, align, total_width );
 		int cury = CG_VerticalAlignForHeight( y + offy * drawn_weapons, align, total_height );
 
-		if( CG_IsWeaponSelected( WEAP_GUNBLADE + i ) )
+		if( CG_IsWeaponSelected( i ) )
 			cury -= SELECTED_WEAPON_Y_OFFSET * cgs.vidHeight;
 
-		trap_R_DrawStretchPic( curx, cury, iw, ih, 0, 0, 1, 1, colorWhite, CG_GetWeaponIcon( WEAP_GUNBLADE + i ) );
+		trap_R_DrawStretchPic( curx, cury, iw, ih, 0, 0, 1, 1, colorWhite, CG_GetWeaponIcon( i ) );
 
 		drawn_weapons++;
 	}
@@ -1339,11 +1339,11 @@ static void CG_DrawWeaponIcons( int x, int y, int offx, int offy, int iw, int ih
 static void CG_DrawWeaponAmmos( int x, int y, int offx, int offy, int fontsize, int align ) {
 	/*
 	 * we don't draw ammo text for GB
-	 * so all the loops in this function skip it by starting at 1
+	 * so all the loops in this function skip it
 	 */
 	int num_weapons = 0;
-	for( int i = 1; i < WEAP_TOTAL - 1; i++ ) {
-		if( CG_IsWeaponInList( WEAP_GUNBLADE + i ) ) {
+	for( int i = WEAP_GUNBLADE + 1; i < WEAP_TOTAL; i++ ) {
+		if( CG_IsWeaponInList( i ) ) {
 			num_weapons++;
 		}
 	}
@@ -1351,17 +1351,17 @@ static void CG_DrawWeaponAmmos( int x, int y, int offx, int offy, int fontsize, 
 	int total_width = max( 0, num_weapons * offx );
 
 	int drawn_weapons = 1;
-	for( int i = 1; i < WEAP_TOTAL - 1; i++ ) {
-		if( !CG_IsWeaponInList( WEAP_GUNBLADE + i ) )
+	for( int i = WEAP_GUNBLADE + 1; i < WEAP_TOTAL; i++ ) {
+		if( !CG_IsWeaponInList( i ) )
 			continue;
 
 		int curx = CG_HorizontalAlignForWidth( x + offx * drawn_weapons, align, total_width );
 		int cury = y + offy * drawn_weapons;
 
-		if( CG_IsWeaponSelected( WEAP_GUNBLADE + i ) )
+		if( CG_IsWeaponSelected( i ) )
 			cury -= SELECTED_WEAPON_Y_OFFSET * cgs.vidHeight;
 
-		int ammo = cg.predictedPlayerState.inventory[AMMO_GUNBLADE + i];
+		int ammo = cg.predictedPlayerState.inventory[ AMMO_GUNBLADE + i - WEAP_GUNBLADE ];
 
 		trap_SCR_DrawString( curx, cury, ALIGN_RIGHT_BOTTOM, va( "%i", ammo ), CG_GetLayoutCursorFont(), layout_cursor_color );
 
