@@ -50,6 +50,8 @@ class cPlayer {
 	PrimaryWeapon pendingPrimary;
 	SecondaryWeapon pendingSecondary;
 
+	int64 lastLoadoutChangeTime; // so people can't spam change weapons during warmup
+
 	int killsThisRound;
 
 	uint arms;
@@ -93,6 +95,8 @@ class cPlayer {
 
 		this.pendingPrimary = PrimaryWeapon_Pending;
 		this.pendingSecondary = SecondaryWeapon_Pending;
+
+		this.lastLoadoutChangeTime = -1;
 
 		this.arms = 0;
 		this.defuses = 0;
@@ -203,33 +207,34 @@ class cPlayer {
 
 	void selectSecondaryWeapon( SecondaryWeapon weapon ) {
 		this.pendingSecondary = weapon;
+
+		if( match.getState() == MATCH_STATE_WARMUP ) {
+			if( lastLoadoutChangeTime == -1 || levelTime - lastLoadoutChangeTime >= 1000 ) {
+				giveInventory();
+				lastLoadoutChangeTime = levelTime;
+			}
+			else {
+				G_PrintMsg( @this.client.getEnt(), "Wait a second\n" );
+			}
+		}
 	}
 
 	void selectWeapon( String &weapon ) {
 		String token;
 		int len;
 
-		String error;       // string containing unrecognised tokens
-		uint errorCount = 0; // number of unrecognised tokens
+		String invalid_tokens;
+		bool has_invalid = false;
 
 		// :DD
 		for( int i = 0; ( len = ( token = weapon.getToken( i ) ).len() ) > 0; i++ ) {
-			if( len != 2 ) {
-				continue;
-			}
-
-			token = token.toupper();
-
-			// gg Switch expressions must be integral numbers
-			// gg Case expressions must be constants
-
-			if( token == "EB" ) {
+			if( token == "EB" || token == "EBRL" ) {
 				this.selectPrimaryWeapon( PrimaryWeapon_EBRL );
 			}
-			else if( token == "RL" ) {
+			else if( token == "RL" || token == "RLLG" ) {
 				this.selectPrimaryWeapon( PrimaryWeapon_RLLG );
 			}
-			else if( token == "LG" ) {
+			else if( token == "LG" || token == "EBLG" ) {
 				this.selectPrimaryWeapon( PrimaryWeapon_EBLG );
 			}
 			else if( token == "PG" ) {
@@ -242,15 +247,13 @@ class cPlayer {
 				this.selectSecondaryWeapon( SecondaryWeapon_GL );
 			}
 			else {
-				error += " " + token;
-
-				errorCount++;
+				invalid_tokens += " " + token;
+				has_invalid = true;
 			}
 		}
 
-		if( errorCount != 0 ) {
-			// no need to add a space before error because it's already there
-			G_PrintMsg( @this.client.getEnt(), "Unrecognised token" + ( errorCount == 1 ? "" : "s" ) + ":" + error );
+		if( has_invalid ) {
+			G_PrintMsg( @this.client.getEnt(), "Unrecognised tokens:" + invalid_tokens + "\n" );
 		}
 
 		// set cg_loadout
