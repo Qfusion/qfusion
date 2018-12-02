@@ -181,7 +181,7 @@ void CG_GetBoundKeysString( const char *cmd, char *keys, size_t keysSize ) {
 			continue;
 		}
 
-		if( ( key >= 'a' ) && ( key <= 'z' ) ) {
+		if( key >= 'a' && key <= 'z' ) {
 			charKeys[numKeys][0] = key - ( 'a' - 'A' );
 			keyNames[numKeys] = charKeys[numKeys];
 		} else {

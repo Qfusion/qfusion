@@ -1953,6 +1953,20 @@ static bool CG_LFuncDrawStringRepeatConfigString( struct cg_layoutnode_s *comman
 	return CG_LFuncDrawStringRepeat_x( string, num_draws );
 }
 
+static bool CG_LFuncDrawBindString( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
+	const char * fmt = CG_GetStringArg( &argumentnode );
+	const char * command = CG_GetStringArg( &argumentnode );
+
+	char keys[ 128 ];
+	CG_GetBoundKeysString( command, keys, sizeof( keys ) );
+	char buf[ 1024 ];
+	Q_snprintfz( buf, sizeof( buf ), fmt, keys );
+
+	trap_SCR_DrawString( layout_cursor_x, layout_cursor_y, layout_cursor_align, buf, CG_GetLayoutCursorFont(), layout_cursor_color );
+
+	return true;
+}
+
 static bool CG_LFuncDrawItemNameFromIndex( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	gsitem_t    *item;
 	int itemindex = CG_GetNumericArg( &argumentnode );
@@ -2409,6 +2423,14 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 		CG_LFuncDrawStringRepeatConfigString,
 		2,
 		"Draws argument string multiple times",
+		false
+	},
+
+	{
+		"drawBindString",
+		CG_LFuncDrawBindString,
+		2,
+		"Draws a string with %s replaced by a key name",
 		false
 	},
 
@@ -3432,170 +3454,6 @@ static char *CG_LoadHUDFile( char *path ) {
 	}
 	return retbuf;
 }
-
-/*
-   //================
-   //CG_OptimizeStatusBarFile
-   //================
-
-   static char *CG_OptimizeStatusBarFile( char *path, bool skip_include )
-   {
-    int length, f;
-    char *temp_buffer;
-    char *opt_buffer;
-    char *parse, *token, *toinclude;
-    int optimized_length, included_length;
-    int fi, fi_length;
-    size_t fipath_size;
-    char *fipath;
-
-    // load the file
-    length = trap_FS_FOpenFile( path, &f, FS_READ );
-    if( length == -1 )
-    return NULL;
-    if( !length ) {
-    trap_FS_FCloseFile( f );
-    return NULL;
-    }
-
-    // alloc a temp buffer according to size
-    temp_buffer = CG_Malloc( length + 1 );
-
-    // load layout file in memory
-    trap_FS_Read( temp_buffer, length, f );
-    trap_FS_FCloseFile( f );
-
-    // first pass: scan buffer line by line and check for include lines
-    // if found compute needed length for included files
-    // else count token length as Com_Parse as skipped comments and stuff like that
-    parse=temp_buffer;
-    optimized_length=0;
-    included_length=0;
-    while ( parse )
-    {
-    token=COM_ParseExt2( &parse, true, false );
-
-    if( (!Q_stricmp( token, "include" )) && skip_include == false)
-    {
-        toinclude=COM_ParseExt2( &parse, true, false );
-        //if( cg_debugHUD && cg_debugHUD->integer )
-        //CG_Printf( "included: %s \n", toinclude );
-
-        fipath_size = strlen("huds/inc/") + strlen(toinclude) + strlen(".hud") + 1;
-        fipath = CG_Malloc( fipath_size );
-        Q_snprintfz( fipath, fipath_size, "huds/inc/%s", toinclude );
-        COM_DefaultExtension( fipath, ".hud", fipath_size );
-        fi_length = trap_FS_FOpenFile( fipath, &fi, FS_READ );
-
-        if( fi_length == -1 )
-        {
-        // failed to include file
-        CG_Printf( "HUD: Failed to include hud subfile: %s \n", fipath );
-        }
-
-        if( fi_length > 0)
-        {
-        // not an empty file
-        // we have the size we can close it
-        included_length+=fi_length;
-        }
-        trap_FS_FCloseFile( fi );
-
-        CG_Free( fipath );
-        fipath = NULL;
-        fipath_size = 0;
-    } else {
-        // not an include line
-        // simply count token size for optimized hud layout
-        optimized_length+=strlen( token ) + 1; // for spaces
-    }
-    }
-
-    // second pass: we now have the needed size
-    // alloc optimized buffer
-    opt_buffer = CG_Malloc( optimized_length + included_length + 1 );
-
-    // reparse all file and copy it
-    parse=temp_buffer;
-    while ( parse )
-    {
-    token=COM_ParseExt2( &parse, true, false );
-
-    if( (!Q_stricmp( token, "include" )) && skip_include == false)
-    {
-        toinclude=COM_ParseExt2( &parse, true, false );
-
-        fipath_size = strlen("huds/inc/") + strlen(toinclude) + strlen(".hud") + 1;
-        fipath = CG_Malloc( fipath_size );
-        Q_snprintfz( fipath, fipath_size, "huds/inc/%s", toinclude );
-        COM_ReplaceExtension( fipath, ".hud", fipath_size );
-        fi_length = trap_FS_FOpenFile( fipath, &fi, FS_READ );
-
-        if( fi_length == -1 )
-        {
-        // failed to include file
-        CG_Printf( "HUD: Failed to include hud subfile: %s \n", path );
-        }
-
-        if( fi_length > 0)
-        {
-        char *fi_parse;
-        char *include_buffer;
-
-        // not an empty file
-        if( cg_debugHUD && cg_debugHUD->integer )
-            CG_Printf( "HUD: Including sub hud file: %s \n", toinclude );
-
-        // reparse all lines from included file to skip include commands
-
-        // alloc a temp buffer according to size
-        include_buffer = CG_Malloc( fi_length + 1 );
-
-        // load included layout file in memory
-        trap_FS_Read( include_buffer, fi_length, fi );
-
-        fi_parse=include_buffer;
-        while ( fi_parse )
-        {
-            token=COM_ParseExt2( &fi_parse, true, false );
-
-            if( !Q_stricmp( token, "include" ) )
-            {
-            // skip recursive include
-            toinclude=COM_ParseExt2( &fi_parse, true, false );
-            CG_Printf( "HUD: No recursive include allowed: huds/inc/%s \n", toinclude );
-            }
-            else
-            {
-            // normal token
-            strcat( opt_buffer, token );
-            strcat( opt_buffer, " ");
-            }
-        }
-
-        // release memory
-        CG_Free( include_buffer );
-        }
-
-        // close included file
-        trap_FS_FCloseFile( fi );
-
-        CG_Free( fipath );
-        fipath = NULL;
-        fipath_size = 0;
-    } else {
-        // normal token
-        strcat( opt_buffer, token );
-        strcat( opt_buffer, " ");
-    }
-    }
-
-    // free temp buffer
-    CG_Free( temp_buffer );
-
-    return opt_buffer;
-   }
- */
 
 /*
 * CG_LoadStatusBarFile
