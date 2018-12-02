@@ -869,6 +869,7 @@ void CG_SC_Obituary( void ) {
 
 static void CG_DrawObituaries( int x, int y, int align, struct qfontface_s *font, vec4_t color, int width, int height,
 							   int internal_align, unsigned int icon_size ) {
+	const int icon_padding = 4;
 	int i, num, skip, next, w, num_max;
 	unsigned line_height;
 	int xoffset, yoffset;
@@ -972,7 +973,9 @@ static void CG_DrawObituaries( int x, int y, int align, struct qfontface_s *font
 		if( obr->type != OBITUARY_ACCIDENT ) {
 			w += min( trap_SCR_strWidth( obr->attacker, font, 0 ), ( width - icon_size ) / 2 );
 		}
+		w += icon_padding;
 		w += icon_size;
+		w += icon_padding;
 		w += min( trap_SCR_strWidth( obr->victim, font, 0 ), ( width - icon_size ) / 2 );
 
 		if( internal_align == 1 ) {
@@ -1004,10 +1007,10 @@ static void CG_DrawObituaries( int x, int y, int align, struct qfontface_s *font
 		} else {
 			Vector4Set( teamcolor, 255, 255, 255, 255 );
 		}
-		trap_SCR_DrawStringWidth( x + xoffset + icon_size, obituary_y,
+		trap_SCR_DrawStringWidth( x + xoffset + icon_size + 2 * icon_padding, obituary_y,
 			ALIGN_LEFT_TOP, COM_RemoveColorTokensExt( obr->victim, true ), ( width - icon_size ) / 2, font, teamcolor );
 
-		trap_R_DrawStretchPic( x + xoffset, y + yoffset + ( line_height - icon_size ) / 2, icon_size,
+		trap_R_DrawStretchPic( x + xoffset + icon_padding, y + yoffset + ( line_height - icon_size ) / 2, icon_size,
 							   icon_size, 0, 0, 1, 1, colorWhite, pic );
 
 		yoffset += line_height;
