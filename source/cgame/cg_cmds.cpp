@@ -887,6 +887,21 @@ static void CG_Cmd_LastWeapon_f( void ) {
 	}
 }
 
+static void CG_Cmd_Weapon_f() {
+	int w = atoi( trap_Cmd_Argv( 1 ) );
+	int seen = 0;
+	for( int i = WEAP_GUNBLADE; i < WEAP_TOTAL; i++ ) {
+		if( cg.predictedPlayerState.inventory[ i ] == 0 )
+			continue;
+		seen++;
+
+		if( seen == w ) {
+			const gsitem_t * item = &itemdefs[ i ];
+			CG_UseItem( item->name );
+		}
+	}
+}
+
 /*
 * CG_Viewpos_f
 */
@@ -1009,6 +1024,7 @@ static const cgcmd_t cgcmds[] =
 	{ "weapnext", CG_Cmd_NextWeapon_f, true },
 	{ "weapprev", CG_Cmd_PrevWeapon_f, true },
 	{ "weaplast", CG_Cmd_LastWeapon_f, true },
+	{ "weapon", CG_Cmd_Weapon_f, false },
 	{ "viewpos", CG_Viewpos_f, true },
 	{ "centerview", CG_CenterViewCmd_f, false },
 	{ "players", NULL, false },
