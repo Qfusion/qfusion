@@ -198,16 +198,14 @@ found:
 * GS_FiredefForPlayerState
 */
 firedef_t *GS_FiredefForPlayerState( player_state_t *playerState, int checkweapon ) {
-	gs_weapon_definition_t *weapondef;
-
-	weapondef = GS_GetWeaponDef( checkweapon );
+	gs_weapon_definition_t *weapondef = GS_GetWeaponDef( checkweapon );
 
 	//find out our current fire mode
-	if( playerState->inventory[weapondef->firedef.ammo_id] >= weapondef->firedef.usage_count ) {
-		return &weapondef->firedef;
+	if( checkweapon == WEAP_GUNBLADE ) {
+		return &weapondef->firedef_weak;
 	}
 
-	return &weapondef->firedef_weak;
+	return &weapondef->firedef;
 }
 
 /*
@@ -224,7 +222,7 @@ bool GS_CheckAmmoInWeapon( player_state_t *playerState, int checkweapon ) {
 		return true;
 	}
 
-	return ( playerState->inventory[firedef->ammo_id] >= firedef->usage_count ) ? true : false;
+	return playerState->inventory[firedef->ammo_id] >= firedef->usage_count;
 }
 
 /*
