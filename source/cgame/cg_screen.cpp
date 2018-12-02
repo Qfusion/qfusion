@@ -681,7 +681,7 @@ void CG_DrawTeamMates( void ) {
 
 //=============================================================================
 
-static const char * mini_obituaries[] = { "GG", "RIP", "BYE", "CYA", "L8R", "CHRS" };
+static const char * mini_obituaries[] = { "GG", "RIP", "BYE", "CYA", "L8R", "CHRS", "PLZ" };
 constexpr int MINI_OBITUARY_DAMAGE = 255;
 
 struct DamageNumber {
