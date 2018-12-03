@@ -27,7 +27,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 static int CG_IsAlly( int team ) {
 	if( team == TEAM_ALLY || team == TEAM_ENEMY )
 		return team == TEAM_ALLY;
-	return team == cg.predictedPlayerState.stats[STAT_TEAM];
+
+	int myteam = cg.predictedPlayerState.stats[STAT_TEAM];
+	if( myteam == TEAM_SPECTATOR )
+		return team == TEAM_ALPHA;
+	return team == myteam;
 }
 
 /*
