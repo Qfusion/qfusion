@@ -80,8 +80,7 @@ Cvar cvarSpawnProtection( "g_bomb_spawnprotection", "3", CVAR_ARCHIVE );
 // read from this later
 Cvar cvarScoreLimit( "g_scorelimit", "10", CVAR_ARCHIVE );
 
-// why doesn't AS have char arithmetic...
-const String[] SITE_LETTERS = { 'C', 'D' };
+const String[] SITE_LETTERS = { 'A', 'B' };
 
 const int COUNTDOWN_MAX = 6; // was 4, but this gives people more time to change weapons
 
