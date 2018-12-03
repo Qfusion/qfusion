@@ -979,19 +979,16 @@ void SV_ParseClientMessage( client_t *client, msg_t *msg ) {
 			case clc_nop:
 				break;
 
-			case clc_move:
-			{
+			case clc_move: {
 				if( move_issued ) {
 					return; // someone is trying to cheat...
 
 				}
 				move_issued = true;
 				SV_ParseMoveCommand( client, msg );
-			}
-			break;
+			} break;
 
-			case clc_svcack:
-			{
+			case clc_svcack: {
 				if( client->reliable ) {
 					Com_Printf( "SV_ParseClientMessage: svack from reliable client\n" );
 					SV_DropClient( client, DROP_TYPE_GENERAL, "%s", "Error: svack from reliable client" );
@@ -1003,10 +1000,9 @@ void SV_ParseClientMessage( client_t *client, msg_t *msg ) {
 					return;
 				}
 				client->reliableAcknowledge = cmdNum;
-			}
-			break;
+			} break;
 
-			case clc_clientcommand:
+			case clc_clientcommand: {
 				if( !client->reliable ) {
 					cmdNum = MSG_ReadIntBase128( msg );
 					if( cmdNum <= client->clientCommandExecuted ) {
@@ -1020,13 +1016,6 @@ void SV_ParseClientMessage( client_t *client, msg_t *msg ) {
 				if( client->state == CS_ZOMBIE ) {
 					return; // disconnect command
 				}
-				break;
-
-			case clc_extension: {
-				MSG_ReadUint8( msg ); // extension id
-				MSG_ReadUint8( msg ); // version number
-				int len = MSG_ReadInt16( msg ); // command length
-				MSG_SkipData( msg, len );
 			} break;
 		}
 	}
