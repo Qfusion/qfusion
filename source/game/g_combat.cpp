@@ -522,12 +522,6 @@ void G_SplashFrac( const vec3_t origin, const vec3_t mins, const vec3_t maxs, co
 		for( i = 0; i < 3; i++ )
 			boxcenter[i] = origin[i] + ( 0.5f * ( maxs[i] + mins[i] ) );
 
-		const float VERTICAL_BIAS = 0.65f;
-		// move the center up for the push direction
-		if( origin[2] + maxs[2] > boxcenter[2] ) {
-			boxcenter[2] += VERTICAL_BIAS * ( ( origin[2] + maxs[2] ) - boxcenter[2] );
-		}
-
 		VectorSubtract( boxcenter, hitpoint, pushdir );
 		VectorNormalize( pushdir );
 	}
