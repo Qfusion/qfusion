@@ -104,7 +104,10 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
 
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -D_POSIX_C_SOURCE=200112L -D_XOPEN_SOURCE=500")
-	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -no-pie")
+	# idk the exact version -no-pie got added but MSC is running 4.9.2
+	if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 4.9.2)
+		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -no-pie")
+	endif()
 
 	# -Wl,--as-needed
 	add_common_link_flags("-Wl,--as-needed")
