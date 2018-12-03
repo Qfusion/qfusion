@@ -1,4 +1,4 @@
-project (angelwrap)
+project(angelwrap)
 
 include_directories(${ANGELSCRIPT_INCLUDE_DIR})
 
