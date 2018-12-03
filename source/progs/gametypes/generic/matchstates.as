@@ -35,7 +35,6 @@ void GENERIC_SetUpWarmup()
 		for ( t = TEAM_ALPHA; t < GS_MAX_TEAMS; t++ )
 		{
 			@team = @G_GetTeam( t );
-			team.clearInvites();
 
 			for ( j = 0; @team.ent( j ) != null; j++ )
 				GENERIC_ClearOverlayMenu( @team.ent( j ).client );
@@ -50,7 +49,6 @@ void GENERIC_SetUpWarmup()
 	else
 	{
 		@team = @G_GetTeam( TEAM_PLAYERS );
-		team.clearInvites();
 
 		for ( j = 0; @team.ent( j ) != null; j++ )
 			GENERIC_ClearOverlayMenu( @team.ent( j ).client );

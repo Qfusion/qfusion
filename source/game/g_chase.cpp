@@ -43,7 +43,7 @@ static bool G_Chase_IsValidTarget( edict_t *ent, edict_t *target, bool teamonly 
 		return false;
 	}
 
-	if( teamonly && !ent->r.client->teamstate.is_coach && G_ISGHOSTING( target ) ) {
+	if( teamonly && G_ISGHOSTING( target ) ) {
 		return false;
 	}
 
@@ -53,8 +53,8 @@ static bool G_Chase_IsValidTarget( edict_t *ent, edict_t *target, bool teamonly 
 
 	if( G_ISGHOSTING( target ) && !target->deadflag && target->s.team != TEAM_SPECTATOR ) {
 		return false; // ghosts that are neither dead, nor speccing (probably originating from gt-specific rules)
-
 	}
+
 	return true;
 }
 
@@ -363,18 +363,13 @@ void G_ChasePlayer( edict_t *ent, const char *name, bool teamonly, int followmod
 	gclient_t *client;
 	int targetNum = -1;
 	int oldTarget;
-	bool can_follow = true;
 	char colorlessname[MAX_NAME_BYTES];
 
 	client = ent->r.client;
 
 	oldTarget = client->resp.chase.target;
 
-	if( teamonly && !client->teamstate.is_coach ) {
-		can_follow = false;
-	}
-
-	if( !can_follow && followmode ) {
+	if( teamonly && followmode ) {
 		G_PrintMsg( ent, "Chasecam follow mode unavailable\n" );
 		followmode = false;
 	}
@@ -547,10 +542,7 @@ void G_ChaseStep( edict_t *ent, int step ) {
 * Cmd_ChaseCam_f
 */
 void Cmd_ChaseCam_f( edict_t *ent ) {
-	bool team_only;
-	const char *arg1;
-
-	if( ent->s.team != TEAM_SPECTATOR && !ent->r.client->teamstate.is_coach ) {
+	if( ent->s.team != TEAM_SPECTATOR ) {
 		G_Teams_JoinTeam( ent, TEAM_SPECTATOR );
 		if( !CheckFlood( ent, false ) ) { // prevent 'joined spectators' spam
 			G_PrintMsg( NULL, "%s%s joined the %s%s team.\n", ent->r.client->netname,
@@ -563,34 +555,28 @@ void Cmd_ChaseCam_f( edict_t *ent ) {
 	// & 4 = objectives
 	// & 8 = fragger
 
-	if( ent->r.client->teamstate.is_coach && GS_TeamBasedGametype() ) {
-		team_only = true;
-	} else {
-		team_only = false;
-	}
-
-	arg1 = trap_Cmd_Argv( 1 );
+	const char * arg1 = trap_Cmd_Argv( 1 );
 
 	if( trap_Cmd_Argc() < 2 ) {
-		G_ChasePlayer( ent, NULL, team_only, 0 );
+		G_ChasePlayer( ent, NULL, false, 0 );
 	} else if( !Q_stricmp( arg1, "auto" ) ) {
 		G_PrintMsg( ent, "Chasecam mode is 'auto'. It will follow the score leader when no powerup nor flag is carried.\n" );
-		G_ChasePlayer( ent, NULL, team_only, 7 );
+		G_ChasePlayer( ent, NULL, false, 7 );
 	} else if( !Q_stricmp( arg1, "carriers" ) ) {
 		G_PrintMsg( ent, "Chasecam mode is 'carriers'. It will switch to flag or powerup carriers when any of these items is picked up.\n" );
-		G_ChasePlayer( ent, NULL, team_only, 6 );
+		G_ChasePlayer( ent, NULL, false, 6 );
 	} else if( !Q_stricmp( arg1, "powerups" ) ) {
 		G_PrintMsg( ent, "Chasecam mode is 'powerups'. It will switch to powerup carriers when any of these items is picked up.\n" );
-		G_ChasePlayer( ent, NULL, team_only, 2 );
+		G_ChasePlayer( ent, NULL, false, 2 );
 	} else if( !Q_stricmp( arg1, "objectives" ) ) {
 		G_PrintMsg( ent, "Chasecam mode is 'objectives'. It will switch to objectives carriers when any of these items is picked up.\n" );
-		G_ChasePlayer( ent, NULL, team_only, 4 );
+		G_ChasePlayer( ent, NULL, false, 4 );
 	} else if( !Q_stricmp( arg1, "score" ) ) {
 		G_PrintMsg( ent, "Chasecam mode is 'score'. It will always follow the player with the best score.\n" );
-		G_ChasePlayer( ent, NULL, team_only, 1 );
+		G_ChasePlayer( ent, NULL, false, 1 );
 	} else if( !Q_stricmp( arg1, "fragger" ) ) {
 		G_PrintMsg( ent, "Chasecam mode is 'fragger'. The last fragging player will be followed.\n" );
-		G_ChasePlayer( ent, NULL, team_only, 8 );
+		G_ChasePlayer( ent, NULL, false, 8 );
 	} else if( !Q_stricmp( arg1, "help" ) ) {
 		G_PrintMsg( ent, "Chasecam modes:\n" );
 		G_PrintMsg( ent, "- 'auto': Chase the score leader unless there's an objective carrier or a powerup carrier.\n" );
@@ -601,7 +587,7 @@ void Cmd_ChaseCam_f( edict_t *ent ) {
 		G_PrintMsg( ent, "- 'none': Disable chasecam.\n" );
 		return;
 	} else {
-		G_ChasePlayer( ent, arg1, team_only, 0 );
+		G_ChasePlayer( ent, arg1, false, 0 );
 	}
 
 	G_Teams_LeaveChallengersQueue( ent );

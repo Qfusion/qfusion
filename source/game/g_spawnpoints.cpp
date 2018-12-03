@@ -511,7 +511,6 @@ void G_SpawnQueue_ReleaseTeamQueue( int team ) {
 	g_teamspawnqueue_t *queue;
 	edict_t *ent;
 	int count;
-	bool ghost;
 
 	if( team < TEAM_SPECTATOR || team >= GS_MAX_TEAMS ) {
 		return;
@@ -523,6 +522,8 @@ void G_SpawnQueue_ReleaseTeamQueue( int team ) {
 		return;
 	}
 
+	bool ghost = team == TEAM_SPECTATOR;
+
 	// try to spawn them
 	for( count = 0; ( queue->start < queue->head ) && ( count < gs.maxclients ); queue->start++, count++ ) {
 		if( queue->list[queue->start % MAX_CLIENTS] <= 0 || queue->list[queue->start % MAX_CLIENTS] > gs.maxclients ) {
@@ -530,12 +531,6 @@ void G_SpawnQueue_ReleaseTeamQueue( int team ) {
 		}
 
 		ent = &game.edicts[queue->list[queue->start % MAX_CLIENTS]];
-
-		ghost = false;
-
-		if( team == TEAM_SPECTATOR || ent->r.client->teamstate.is_coach ) {
-			ghost = true;
-		}
 
 		G_ClientRespawn( ent, ghost );
 
@@ -589,7 +584,6 @@ void G_SpawnQueue_Think( void ) {
 	int team, maxCount, count, spawnSystem;
 	g_teamspawnqueue_t *queue;
 	edict_t *ent;
-	bool ghost;
 
 	for( team = TEAM_SPECTATOR; team < GS_MAX_TEAMS; team++ ) {
 		queue = &g_spawnQueues[team];
@@ -627,6 +621,8 @@ void G_SpawnQueue_Think( void ) {
 			continue;
 		}
 
+		bool ghost = team == TEAM_SPECTATOR;
+
 		// try to spawn them
 		for( count = 0; ( queue->start < queue->head ) && ( count < maxCount ); queue->start++, count++ ) {
 			if( queue->list[queue->start % MAX_CLIENTS] <= 0 || queue->list[queue->start % MAX_CLIENTS] > gs.maxclients ) {
@@ -634,12 +630,6 @@ void G_SpawnQueue_Think( void ) {
 			}
 
 			ent = &game.edicts[queue->list[queue->start % MAX_CLIENTS]];
-
-			ghost = false;
-
-			if( team == TEAM_SPECTATOR || ent->r.client->teamstate.is_coach ) {
-				ghost = true;
-			}
 
 			G_ClientRespawn( ent, ghost );
 

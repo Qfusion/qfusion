@@ -142,8 +142,6 @@ typedef struct {
 	score_stats_t stats;
 	int ping;
 	bool locked;
-	int invited[MAX_CLIENTS];
-	bool has_coach;
 
 	int asRefCount;
 	int asFactored;
@@ -180,12 +178,5 @@ bool G_Match_ScorelimitHit( void );
 bool G_Match_SuddenDeathFinished( void );
 bool G_Match_TimelimitHit( void );
 
-//coach
-void G_Teams_Coach( edict_t *ent );
-void G_Teams_CoachLockTeam( edict_t *ent );
-void G_Teams_CoachUnLockTeam( edict_t *ent );
-void G_Teams_CoachRemovePlayer( edict_t *ent );
-
-bool G_Gametype_Exists( const char *name );
 void G_Gametype_GENERIC_ScoreboardMessage( void );
 void G_Gametype_GENERIC_ClientRespawn( edict_t *self, int old_team, int new_team );

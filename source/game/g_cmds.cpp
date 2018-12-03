@@ -1156,12 +1156,6 @@ void G_InitGameCommands( void ) {
 	G_AddCommand( "toggleready", G_Match_ToggleReady );
 	G_AddCommand( "join", Cmd_Join_f );
 
-	// coach commands
-	G_AddCommand( "coach", G_Teams_Coach );
-	G_AddCommand( "lockteam", G_Teams_CoachLockTeam );
-	G_AddCommand( "unlockteam", G_Teams_CoachUnLockTeam );
-	G_AddCommand( "invite", G_Teams_Invite_f );
-
 	G_AddCommand( "vsay", G_vsay_Cmd );
 	G_AddCommand( "vsay_team", G_Teams_vsay_Cmd );
 

@@ -48,7 +48,6 @@ void G_Gametype_GENERIC_SetUpWarmup( void ) {
 			G_PrintMsg( NULL, "Teams unlocked.\n" );
 		}
 	}
-	G_Teams_RemoveInvites();
 }
 
 void G_Gametype_GENERIC_SetUpCountdown( void ) {

@@ -397,10 +397,6 @@ static bool objectTeamlist_Unlock( g_teamlist_t *obj ) {
 	return ( obj ? G_Teams_UnLockTeam( obj - teamlist ) : false );
 }
 
-static void objectTeamlist_ClearInvites( g_teamlist_t *obj ) {
-	obj->invited[0] = 0;
-}
-
 static int objectTeamlist_getTeamIndex( g_teamlist_t *obj ) {
 	int index = ( obj - teamlist );
 
@@ -430,7 +426,6 @@ static const gs_asMethod_t teamlist_Methods[] =
 	{ ASLIB_FUNCTION_DECL( bool, isLocked, ( ) const ), asFUNCTION( objectTeamlist_IsLocked ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( bool, lock, ( ) const ), asFUNCTION( objectTeamlist_Lock ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( bool, unlock, ( ) const ), asFUNCTION( objectTeamlist_Unlock ), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL( void, clearInvites, ( ) ), asFUNCTION( objectTeamlist_ClearInvites ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( int, team, ( ) const ), asFUNCTION( objectTeamlist_getTeamIndex ), asCALL_CDECL_OBJLAST },
 
 	ASLIB_METHOD_NULL
@@ -441,7 +436,6 @@ static const gs_asProperty_t teamlist_Properties[] =
 	{ ASLIB_PROPERTY_DECL( Stats, stats ), ASLIB_FOFFSET( g_teamlist_t, stats ) },
 	{ ASLIB_PROPERTY_DECL( const int, numPlayers ), ASLIB_FOFFSET( g_teamlist_t, numplayers ) },
 	{ ASLIB_PROPERTY_DECL( const int, ping ), ASLIB_FOFFSET( g_teamlist_t, ping ) },
-	{ ASLIB_PROPERTY_DECL( const bool, hasCoach ), ASLIB_FOFFSET( g_teamlist_t, has_coach ) },
 
 	ASLIB_PROPERTY_NULL
 };
@@ -978,7 +972,6 @@ static const gs_asProperty_t gameclient_Properties[] =
 	{ ASLIB_PROPERTY_DECL( int, chaseTarget ), ASLIB_FOFFSET( gclient_t, resp.chase.target ) },
 	{ ASLIB_PROPERTY_DECL( bool, chaseTeamonly ), ASLIB_FOFFSET( gclient_t, resp.chase.teamonly ) },
 	{ ASLIB_PROPERTY_DECL( int, chaseFollowMode ), ASLIB_FOFFSET( gclient_t, resp.chase.followmode ) },
-	{ ASLIB_PROPERTY_DECL( const bool, coach ), ASLIB_FOFFSET( gclient_t, teamstate.is_coach ) },
 	{ ASLIB_PROPERTY_DECL( const int, ping ), ASLIB_FOFFSET( gclient_t, r.ping ) },
 	{ ASLIB_PROPERTY_DECL( const int16, weapon ), ASLIB_FOFFSET( gclient_t, ps.stats[STAT_WEAPON] ) },
 	{ ASLIB_PROPERTY_DECL( const int16, pendingWeapon ), ASLIB_FOFFSET( gclient_t, ps.stats[STAT_PENDING_WEAPON] ) },

@@ -492,9 +492,6 @@ void G_ClientRespawn( edict_t *self, bool ghost ) {
 	}
 
 	old_team = self->s.team;
-	if( self->r.client->teamstate.is_coach ) {
-		ghost = true;
-	}
 
 	GClip_UnlinkEntity( self );
 
@@ -803,7 +800,7 @@ static int G_SanitizeUserString( char *string, size_t size ) {
 * G_SetName
 */
 static void G_SetName( edict_t *ent, const char *original_name ) {
-	const char *invalid_prefixes[] = { "console", "[team]", "[spec]", "[bot]", "[coach]", NULL };
+	const char *invalid_prefixes[] = { "console", "[team]", "[spec]", "[bot]", NULL };
 	edict_t *other;
 	char name[MAX_NAME_BYTES];
 	char colorless[MAX_NAME_BYTES];
@@ -886,7 +883,7 @@ static void G_SetName( edict_t *ent, const char *original_name ) {
 * G_SetClan
 */
 static void G_SetClan( edict_t *ent, const char *original_clan ) {
-	const char *invalid_values[] = { "console", "spec", "bot", "coach", NULL };
+	const char *invalid_values[] = { "console", "spec", "bot", NULL };
 	char clan[MAX_CLANNAME_BYTES];
 	char colorless[MAX_CLANNAME_BYTES];
 	int i;
@@ -1185,14 +1182,9 @@ bool ClientConnect( edict_t *ent, char *userinfo, bool fakeClient ) {
 * Will not be called between levels.
 */
 void ClientDisconnect( edict_t *ent, const char *reason ) {
-	int team;
-
 	if( !ent->r.client || !ent->r.inuse ) {
 		return;
 	}
-
-	for( team = TEAM_PLAYERS; team < GS_MAX_TEAMS; team++ )
-		G_Teams_UnInvitePlayer( team, ent );
 
 	if( !level.gametype.disableObituaries || !( ent->r.svflags & SVF_FAKECLIENT ) ) {
 		if( !reason ) {

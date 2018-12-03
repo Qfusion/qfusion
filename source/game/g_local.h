@@ -325,12 +325,9 @@ extern cvar_t *g_asGC_interval;
 edict_t **G_Teams_ChallengersQueue( void );
 void G_Teams_Join_Cmd( edict_t *ent );
 bool G_Teams_JoinTeam( edict_t *ent, int team );
-void G_Teams_UnInvitePlayer( int team, edict_t *ent );
-void G_Teams_RemoveInvites( void );
 bool G_Teams_TeamIsLocked( int team );
 bool G_Teams_LockTeam( int team );
 bool G_Teams_UnLockTeam( int team );
-void G_Teams_Invite_f( edict_t *ent );
 void G_Teams_UpdateMembersList( void );
 bool G_Teams_JoinAnyTeam( edict_t *ent, bool silent );
 void G_Teams_SetTeam( edict_t *ent, int team );
@@ -1039,8 +1036,6 @@ typedef struct {
 
 typedef struct {
 	int64_t timeStamp; // last time it was reset
-
-	bool is_coach;
 
 	int64_t readyUpWarningNext; // (timer) warn people to ready up
 	int readyUpWarningCount;

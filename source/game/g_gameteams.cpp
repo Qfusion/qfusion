@@ -88,7 +88,6 @@ void G_Teams_UpdateMembersList( void ) {
 	for( team = TEAM_SPECTATOR; team < GS_MAX_TEAMS; team++ ) {
 		teamlist[team].numplayers = 0;
 		teamlist[team].ping = 0;
-		teamlist[team].has_coach = false;
 
 		//create a temp list with the clients inside this team
 		for( i = 0, ent = game.edicts + 1; i < gs.maxclients; i++, ent++ ) {
@@ -98,10 +97,6 @@ void G_Teams_UpdateMembersList( void ) {
 
 			if( ent->s.team == team ) {
 				teamlist[team].playerIndices[teamlist[team].numplayers++] = ENTNUM( ent );
-
-				if( ent->r.client->teamstate.is_coach ) {
-					teamlist[team].has_coach = true;
-				}
 			}
 		}
 
@@ -159,153 +154,6 @@ bool G_Teams_UnLockTeam( int team ) {
 }
 
 /*
-* G_Teams_PlayerIsInvited
-*/
-static bool G_Teams_PlayerIsInvited( int team, edict_t *ent ) {
-	int i;
-
-	if( team < TEAM_PLAYERS || team >= GS_MAX_TEAMS ) {
-		return false;
-	}
-
-	if( !ent->r.inuse || !ent->r.client ) {
-		return false;
-	}
-
-	for( i = 0; i < MAX_CLIENTS && teamlist[team].invited[i]; i++ ) {
-		if( teamlist[team].invited[i] == ENTNUM( ent ) ) {
-			return true;
-		}
-	}
-
-	return false;
-}
-
-/*
-* G_Teams_InvitePlayer
-*/
-static void G_Teams_InvitePlayer( int team, edict_t *ent ) {
-	int i;
-
-	if( team < TEAM_PLAYERS || team >= GS_MAX_TEAMS ) {
-		return;
-	}
-
-	if( !ent->r.inuse || !ent->r.client ) {
-		return;
-	}
-
-	for( i = 0; i < MAX_CLIENTS && teamlist[team].invited[i]; i++ ) {
-		if( teamlist[team].invited[i] == ENTNUM( ent ) ) {
-			return;
-		}
-	}
-	
-	if( i == MAX_CLIENTS ) {
-		return;
-	}
-
-	teamlist[team].invited[i] = ENTNUM( ent );
-}
-
-/*
-* G_Teams_UnInvitePlayer
-*/
-void G_Teams_UnInvitePlayer( int team, edict_t *ent ) {
-	int i;
-
-	if( team < TEAM_PLAYERS || team >= GS_MAX_TEAMS ) {
-		return;
-	}
-
-	if( !ent->r.inuse || !ent->r.client ) {
-		return;
-	}
-
-	for( i = 0; i < MAX_CLIENTS && teamlist[team].invited[i]; i++ ) {
-		if( teamlist[team].invited[i] == ENTNUM( ent ) ) {
-			break;
-		}
-	}
-	while( i + 1 < MAX_CLIENTS && teamlist[team].invited[i] ) {
-		teamlist[team].invited[i] = teamlist[team].invited[i + 1];
-		i++;
-	}
-	teamlist[team].invited[MAX_CLIENTS - 1] = 0;
-}
-
-/*
-* G_Teams_RemoveInvites
-* Removes all invites from all teams
-*/
-void G_Teams_RemoveInvites( void ) {
-	int team;
-
-	for( team = TEAM_PLAYERS; team < GS_MAX_TEAMS; team++ )
-		teamlist[team].invited[0] = 0;
-}
-
-/*
-* G_Teams_Invite_f
-*/
-void G_Teams_Invite_f( edict_t *ent ) {
-	char *text;
-	edict_t *toinvite;
-	int team;
-
-	if( ( !ent->r.inuse || !ent->r.client ) ) {
-		return;
-	}
-
-	text = trap_Cmd_Argv( 1 );
-
-	if( !text || !strlen( text ) ) {
-		int i;
-		edict_t *e;
-		char msg[1024];
-
-		msg[0] = 0;
-		Q_strncatz( msg, "Usage: invite <player>\n", sizeof( msg ) );
-		Q_strncatz( msg, "- List of current players:\n", sizeof( msg ) );
-
-		for( i = 0, e = game.edicts + 1; i < gs.maxclients; i++, e++ ) {
-			if( !e->r.inuse ) {
-				continue;
-			}
-
-			Q_strncatz( msg, va( "%3i: %s\n", PLAYERNUM( e ), e->r.client->netname ), sizeof( msg ) );
-		}
-
-		G_PrintMsg( ent, "%s", msg );
-		return;
-	}
-
-	team = ent->s.team;
-
-	if( !G_Teams_TeamIsLocked( team ) ) {
-		G_PrintMsg( ent, "Your team is not locked.\n" );
-		return;
-	}
-
-	toinvite = G_PlayerForText( text );
-
-	if( !toinvite ) {
-		G_PrintMsg( ent, "No such player.\n" );
-		return;
-	}
-
-	if( G_Teams_PlayerIsInvited( team, toinvite ) ) {
-		G_PrintMsg( ent, "%s%s is already invited to your team.\n", toinvite->r.client->netname, S_COLOR_WHITE );
-		return;
-	}
-
-	G_Teams_InvitePlayer( team, toinvite );
-
-	G_PrintMsg( NULL, "%s%s invited %s%s to team %s%s.\n", ent->r.client->netname, S_COLOR_WHITE,
-				toinvite->r.client->netname, S_COLOR_WHITE, GS_TeamName( team ), S_COLOR_WHITE );
-}
-
-/*
 * G_Teams_SetTeam - sets clients team without any checking
 */
 void G_Teams_SetTeam( edict_t *ent, int team ) {
@@ -325,7 +173,6 @@ void G_Teams_SetTeam( edict_t *ent, int team ) {
 	}
 
 	ent->r.client->team = team;
-	G_Teams_UnInvitePlayer( team, ent );
 
 	G_ClientRespawn( ent, true ); // make ghost using G_ClientRespawn so team is updated at ghosting
 	G_SpawnQueue_AddClient( ent );
@@ -413,8 +260,8 @@ static int G_GameTypes_DenyJoinTeam( edict_t *ent, int team ) {
 		}
 	}
 
-	//see if team is locked
-	if( G_Teams_TeamIsLocked( team ) && !G_Teams_PlayerIsInvited( team, ent ) ) {
+	// see if team is locked
+	if( G_Teams_TeamIsLocked( team ) ) {
 		return ER_TEAM_LOCKED;
 	}
 
@@ -930,62 +777,4 @@ void G_Say_Team( edict_t *who, const char *inmsg, bool checkflood ) {
 	*p = 0;
 
 	G_ChatMsg( NULL, who, true, "%s", outmsg );
-}
-
-// coach
-
-void G_Teams_Coach( edict_t *ent ) {
-	if( GS_TeamBasedGametype() && !GS_InvidualGameType() && ent->s.team != TEAM_SPECTATOR ) {
-		if( !teamlist[ent->s.team].has_coach ) {
-			if( GS_MatchState() > MATCH_STATE_WARMUP && !GS_MatchPaused() ) {
-				G_PrintMsg( ent, "Can't set coach mode with the match in progress\n" );
-			} else {
-				// move to coach mode
-				ent->r.client->teamstate.is_coach = true;
-				G_GhostClient( ent );
-				ent->health = ent->max_health;
-				ent->deadflag = DEAD_NO;
-
-				G_ChasePlayer( ent, NULL, true, 0 );
-
-				//clear up his scores
-				G_Match_Ready( ent ); // set ready and check readys
-				memset( &ent->r.client->level.stats, 0, sizeof( ent->r.client->level.stats ) );
-
-				teamlist[ent->s.team].has_coach = true;
-				G_PrintMsg( NULL, "%s%s is now team %s coach \n", ent->r.client->netname,
-							S_COLOR_WHITE, GS_TeamName( ent->s.team ) );
-			}
-		} else if( ent->r.client->teamstate.is_coach ) {   // if you are this team coach, resign
-			ent->r.client->teamstate.is_coach = false;
-			G_PrintMsg( NULL, "%s%s is no longer team %s coach \n", ent->r.client->netname,
-						S_COLOR_WHITE, GS_TeamName( ent->s.team ) );
-
-			G_Teams_SetTeam( ent, ent->s.team );
-		} else {
-			G_PrintMsg( ent, "Your team already has a coach.\n" );
-		}
-	} else {
-		G_PrintMsg( ent, "Coaching only valid while on a team in Team based Gametypes.\n" );
-	}
-}
-
-void G_Teams_CoachLockTeam( edict_t *ent ) {
-	if( ent->r.client->teamstate.is_coach ) {
-		if( !G_Teams_TeamIsLocked( ent->s.team ) ) {
-			G_Teams_LockTeam( ent->s.team );
-			G_PrintMsg( NULL, "%s%s locked the %s team.\n", ent->r.client->netname,
-						S_COLOR_WHITE, GS_TeamName( ent->s.team ) );
-		}
-	}
-}
-
-void G_Teams_CoachUnLockTeam( edict_t *ent ) {
-	if( ent->r.client->teamstate.is_coach ) {
-		if( G_Teams_TeamIsLocked( ent->s.team ) ) {
-			G_Teams_UnLockTeam( ent->s.team );
-			G_PrintMsg( NULL, "%s%s unlocked the %s team.\n", ent->r.client->netname,
-						S_COLOR_WHITE, GS_TeamName( ent->s.team ) );
-		}
-	}
 }
