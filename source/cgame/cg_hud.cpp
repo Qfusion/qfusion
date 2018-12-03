@@ -737,7 +737,7 @@ static const char * obituaries[] = {
 	"TARNISHED",
 	"TERMINATED",
 	"TOILET STORED",
-	"TOOK CARE OFF",
+	"TOOK CARE OF",
 	"TOPPLED",
 	"TOSSED",
 	"TRASHED",
