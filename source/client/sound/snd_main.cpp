@@ -5,7 +5,8 @@
 #include "openal/alc.h"
 #include "openal/alext.h"
 
-#include "stb_vorbis.h"
+#define STB_VORBIS_HEADER_ONLY
+#include "stb/stb_vorbis.h"
 
 static cvar_t * s_volume;
 static cvar_t * s_musicvolume;
