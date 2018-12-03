@@ -462,7 +462,7 @@ void G_Damage( edict_t *targ, edict_t *inflictor, edict_t *attacker, const vec3_
 /*
 * G_SplashFrac
 */
-void G_SplashFrac( const vec3_t origin, const vec3_t mins, const vec3_t maxs, const vec3_t point, float maxradius, vec3_t pushdir, float *kickFrac, float *dmgFrac ) {
+void G_SplashFrac( const vec3_t origin, const vec3_t mins, const vec3_t maxs, const vec3_t point, float maxradius, vec3_t pushdir, float *frac ) {
 	vec3_t boxcenter = { 0, 0, 0 };
 	vec3_t hitpoint;
 	float distance;
@@ -471,11 +471,8 @@ void G_SplashFrac( const vec3_t origin, const vec3_t mins, const vec3_t maxs, co
 	float refdistance;
 
 	if( maxradius <= 0 ) {
-		if( kickFrac ) {
-			*kickFrac = 0;
-		}
-		if( dmgFrac ) {
-			*dmgFrac = 0;
+		if( frac ) {
+			*frac = 0;
 		}
 		if( pushdir ) {
 			VectorClear( pushdir );
@@ -497,11 +494,8 @@ void G_SplashFrac( const vec3_t origin, const vec3_t mins, const vec3_t maxs, co
 	distance = Distance( boxcenter, hitpoint );
 
 	if( distance >= maxradius ) {
-		if( kickFrac ) {
-			*kickFrac = 0;
-		}
-		if( dmgFrac ) {
-			*dmgFrac = 0;
+		if( frac ) {
+			*frac = 0;
 		}
 		if( pushdir ) {
 			VectorClear( pushdir );
@@ -516,14 +510,10 @@ void G_SplashFrac( const vec3_t origin, const vec3_t mins, const vec3_t maxs, co
 
 	float distance_frac = ( maxradius - distance ) / maxradius;
 
-	if( dmgFrac ) {
+	if( frac ) {
 		// soft sin curve
-		*dmgFrac = sin( DEG2RAD( distance_frac * 80 ) );
-		clamp( *dmgFrac, 0.0f, 1.0f );
-	}
-
-	if( kickFrac ) {
-		*kickFrac = distance_frac * distance_frac;
+		*frac = sin( DEG2RAD( distance_frac * 80 ) );
+		clamp( *frac, 0.0f, 1.0f );
 	}
 
 	// find push direction
@@ -550,7 +540,7 @@ void G_RadiusDamage( edict_t *inflictor, edict_t *attacker, cplane_t *plane, edi
 	int i, numtouch;
 	int touch[MAX_EDICTS];
 	edict_t *ent = NULL;
-	float dmgFrac, kickFrac, damage, knockback;
+	float frac, damage, knockback;
 	vec3_t pushDir;
 	int timeDelta;
 
@@ -582,34 +572,10 @@ void G_RadiusDamage( edict_t *inflictor, edict_t *attacker, cplane_t *plane, edi
 			timeDelta = inflictor->timeDelta;
 		}
 
-		G_SplashFrac4D( ENTNUM( ent ), inflictor->s.origin, radius, pushDir, &kickFrac, &dmgFrac, timeDelta );
+		G_SplashFrac4D( ENTNUM( ent ), inflictor->s.origin, radius, pushDir, &frac, timeDelta );
 
-		damage = max( 0, mindamage + ( ( maxdamage - mindamage ) * dmgFrac ) );
-		knockback = max( 0, minknockback + ( ( maxknockback - minknockback ) * kickFrac ) );
-
-		// weapon jumps hack : when knockback on self, use strong weapon definition
-		if( ent == attacker && ent->r.client ) {
-			gs_weapon_definition_t *weapondef = NULL;
-			if( inflictor->s.type == ET_ROCKET ) {
-				weapondef = GS_GetWeaponDef( WEAP_ROCKETLAUNCHER );
-			} else if( inflictor->s.type == ET_GRENADE ) {
-				weapondef = GS_GetWeaponDef( WEAP_GRENADELAUNCHER );
-			} else if( inflictor->s.type == ET_PLASMA ) {
-				weapondef = GS_GetWeaponDef( WEAP_PLASMAGUN );
-			} else if( inflictor->s.type == ET_BLASTER ) {
-				weapondef = GS_GetWeaponDef( WEAP_GUNBLADE );
-			}
-
-			if( weapondef ) {
-				G_SplashFrac4D( ENTNUM( ent ), inflictor->s.origin, radius, pushDir, &kickFrac, NULL, 0 );
-
-				minknockback = weapondef->firedef.minknockback;
-				maxknockback = weapondef->firedef.knockback;
-				clamp_high( minknockback, maxknockback );
-				knockback = ( minknockback + ( (float)( maxknockback - minknockback ) * kickFrac ) ) * g_self_knockback->value;
-				damage *= weapondef->firedef.selfdamage;
-			}
-		}
+		damage = max( 0, mindamage + ( ( maxdamage - mindamage ) * frac ) );
+		knockback = max( 0, minknockback + ( ( maxknockback - minknockback ) * frac ) );
 
 		if( knockback < 1.0f ) {
 			knockback = 0.0f;
