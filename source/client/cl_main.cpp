@@ -2321,6 +2321,8 @@ void CL_Frame( int realMsec, int gameMsec ) {
 	// advance local effects for next frame
 	SCR_RunConsole( allRealMsec );
 
+	CL_Profiler_Flip();
+
 	allRealMsec = 0;
 	allGameMsec = 0;
 
@@ -2431,6 +2433,8 @@ void CL_Init( void ) {
 
 	// all archived variables will now be loaded
 
+	CL_Profiler_Init();
+
 	Con_Init();
 
 	Steam_Init();
@@ -2516,6 +2520,8 @@ void CL_Shutdown( void ) {
 	Steam_Shutdown();
 
 	Con_Shutdown();
+
+	CL_Profiler_Shutdown();
 
 	cls.state = CA_UNINITIALIZED;
 	cl_initialized = false;

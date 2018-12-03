@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // r_register.c
 #include "r_local.h"
-#include "../../qalgo/hash.h"
+#include "qalgo/hash.h"
 
 glconfig_t glConfig;
 
@@ -625,6 +625,10 @@ static void R_DestroyVolatileAssets( void ) {
 
 	glBindVertexArray( 0 );
 	glDeleteVertexArrays( 1, &vao );
+}
+
+void R_BindGlobalVAO() {
+	glBindVertexArray( vao );
 }
 
 /*

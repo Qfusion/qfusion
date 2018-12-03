@@ -31,11 +31,6 @@ const
 
 SDL_Window * sdl_window = NULL;
 
-#define RESET "\x1b[0m"
-#define RED "\x1b[1;31m"
-#define YELLOW "\x1b[1;32m"
-#define GREEN "\x1b[1;33m"
-
 static const char * type_string( GLenum type ) {
         switch( type ) {
                 case GL_DEBUG_TYPE_ERROR:
@@ -70,13 +65,13 @@ static const char * severity_string( GLenum severity ) {
         switch( severity ) {
                 case GL_DEBUG_SEVERITY_LOW:
                 // case GL_DEBUG_SEVERITY_LOW_AMD:
-                        return GREEN "low" RESET;
+                        return S_COLOR_GREEN "low" S_COLOR_WHITE;
                 case GL_DEBUG_SEVERITY_MEDIUM:
                 // case GL_DEBUG_SEVERITY_MEDIUM_AMD:
-                        return YELLOW "medium" RESET;
+                        return S_COLOR_YELLOW "medium" S_COLOR_WHITE;
                 case GL_DEBUG_SEVERITY_HIGH:
                 // case GL_DEBUG_SEVERITY_HIGH_AMD:
-                        return RED "high" RESET;
+                        return S_COLOR_RED "high" S_COLOR_WHITE;
                 case GL_DEBUG_SEVERITY_NOTIFICATION:
                         return "notice";
                 default:

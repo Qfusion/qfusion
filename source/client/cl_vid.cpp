@@ -369,6 +369,8 @@ void VID_Init() {
 		mode = def;
 	}
 
+	CL_Profiler_InitGL();
+
 	Retarded_SetWindowSize( mode.width, mode.height ); // TODO: this should get the window size
 
 	if( !VID_LoadRefresh() ) {
@@ -429,4 +431,8 @@ void VID_Shutdown() {
 	Cmd_RemoveCommand( "vid_modelist" );
 
 	Mem_ZoneFree( vid_modes );
+
+	VID_WindowShutdown();
+
+	CL_Profiler_ShutdownGL();
 }

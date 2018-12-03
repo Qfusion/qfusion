@@ -21,7 +21,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // r_main.c
 
+#include "microprofile/microprofile.h"
+#include "microprofile/microprofiledraw.h"
+#include "microprofile/microprofileui.h"
+
 #include "r_local.h"
+#include "r_backend_local.h"
 
 r_globals_t rf;
 
@@ -1690,6 +1695,18 @@ void R_BeginFrame() {
 	R_Begin2D( true );
 }
 
+static void R_DrawProfiler() {
+#if MICROPROFILE_ENABLED
+	MICROPROFILE_SCOPEGPUI( "MicroProfileDraw", 0x88dd44 );
+
+	MicroProfileRender( rf.frameBufferWidth, rf.frameBufferHeight, 1 );
+
+	R_BindGlobalVAO();
+	RB_SetState( 0 );
+	RB_BindProgram( 0 );
+#endif
+}
+
 /*
 * R_EndFrame
 */
@@ -1721,6 +1738,8 @@ void R_EndFrame( void ) {
 	R_End2D();
 
 	RB_EndFrame();
+
+	R_DrawProfiler();
 
 	VID_Swap(); // TODO: this doesn't belong here
 

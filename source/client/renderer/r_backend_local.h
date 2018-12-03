@@ -17,8 +17,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
-#ifndef R_BACKEND_LOCAL_H
-#define R_BACKEND_LOCAL_H
+#pragma once
 
 #define MAX_STREAM_VBO_VERTS        8192
 #define MAX_STREAM_VBO_ELEMENTS     MAX_STREAM_VBO_VERTS * 6
@@ -208,5 +207,3 @@ void RB_BindArrayBuffer( int buffer );
 void RB_BindElementArrayBuffer( int buffer );
 void RB_SetInstanceData( int numInstances, instancePoint_t *instances );
 bool RB_ScissorForBounds( vec3_t bbox[8], int *x, int *y, int *w, int *h );
-
-#endif // R_BACKEND_LOCAL_H

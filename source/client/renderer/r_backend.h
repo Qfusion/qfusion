@@ -17,8 +17,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
-#ifndef R_BACKEND_H
-#define R_BACKEND_H
+#pragma once
 
 enum {
 	RB_VBO_STREAM_COMPACT       = -2, // bind RB_VBO_STREAM instead
@@ -114,5 +113,3 @@ bool RB_EnableTriangleOutlines( bool enable );
 vattribmask_t RB_GetVertexAttribs( void );
 
 void RB_StatsMessage( char *msg, size_t size );
-
-#endif // R_BACKEND_H

@@ -529,3 +529,15 @@ extern float scr_con_current;
 extern float scr_conlines;       // lines of console to display
 
 extern ref_export_t re;     // interface to refresh .dll
+
+//
+// cl_microprofile
+//
+
+void CL_Profiler_Init();
+void CL_Profiler_Shutdown();
+
+void CL_Profiler_InitGL();
+void CL_Profiler_ShutdownGL();
+
+void CL_Profiler_Flip();
