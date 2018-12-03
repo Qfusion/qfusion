@@ -18,7 +18,9 @@ void CL_Profiler_Init() {
         MicroProfileSetEnableAllGroups( true );
         MicroProfileSetForceMetaCounters( true );
 
+#if MICROPROFILE_ENABLED
 	MicroProfileInitUI();
+#endif
 
 #if !PUBLIC_BUILD
 	Cmd_AddCommand( "toggleprofiler", MicroProfileToggleDisplayMode );
@@ -34,12 +36,16 @@ void CL_Profiler_Shutdown() {
 }
 
 void CL_Profiler_InitGL() {
+#if MICROPROFILE_ENABLED
 	MicroProfileGpuInitGL();
 	MicroProfileDrawInitGL();
+#endif
 }
 
 void CL_Profiler_ShutdownGL() {
+#if MICROPROFILE_ENABLED
 	MicroProfileGpuShutdownGL();
+#endif
 }
 
 void CL_Profiler_Flip() {
