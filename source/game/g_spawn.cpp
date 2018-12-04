@@ -634,15 +634,6 @@ void G_PrecacheMedia( void ) {
 	trap_SoundIndex( va( S_ANNOUNCER_TIMEOUT_TIMEIN_1_to_2, 1 ) );
 	trap_SoundIndex( va( S_ANNOUNCER_TIMEOUT_TIMEIN_1_to_2, 2 ) );
 
-	// callvote
-	trap_SoundIndex( va( S_ANNOUNCER_CALLVOTE_CALLED_1_to_2, 1 ) );
-	trap_SoundIndex( va( S_ANNOUNCER_CALLVOTE_CALLED_1_to_2, 2 ) );
-	trap_SoundIndex( va( S_ANNOUNCER_CALLVOTE_FAILED_1_to_2, 1 ) );
-	trap_SoundIndex( va( S_ANNOUNCER_CALLVOTE_FAILED_1_to_2, 2 ) );
-	trap_SoundIndex( va( S_ANNOUNCER_CALLVOTE_PASSED_1_to_2, 1 ) );
-	trap_SoundIndex( va( S_ANNOUNCER_CALLVOTE_PASSED_1_to_2, 2 ) );
-	trap_SoundIndex( S_ANNOUNCER_CALLVOTE_VOTE_NOW );
-
 	// overtime
 	trap_SoundIndex( S_ANNOUNCER_OVERTIME_GOING_TO_OVERTIME );
 	trap_SoundIndex( S_ANNOUNCER_OVERTIME_OVERTIME );

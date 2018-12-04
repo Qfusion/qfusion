@@ -338,12 +338,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define S_ANNOUNCER_TIMEOUT_TIMEOUT_1_to_2      "sounds/announcer/timeout/timeout%02i"
 #define S_ANNOUNCER_TIMEOUT_TIMEIN_1_to_2       "sounds/announcer/timeout/timein%02i"
 
-// callvote
-#define S_ANNOUNCER_CALLVOTE_CALLED_1_to_2      "sounds/announcer/callvote/vote_called%02i"
-#define S_ANNOUNCER_CALLVOTE_FAILED_1_to_2      "sounds/announcer/callvote/vote_failed%02i"
-#define S_ANNOUNCER_CALLVOTE_PASSED_1_to_2      "sounds/announcer/callvote/vote_passed%02i"
-#define S_ANNOUNCER_CALLVOTE_VOTE_NOW           "sounds/announcer/callvote/vote_now"
-
 // overtime
 #define S_ANNOUNCER_OVERTIME_GOING_TO_OVERTIME      "sounds/announcer/overtime/going_to_overtime"
 #define S_ANNOUNCER_OVERTIME_OVERTIME           "sounds/announcer/overtime/overtime"
