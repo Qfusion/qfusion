@@ -3644,11 +3644,10 @@ void FS_Init( void ) {
 	fs_cdpath = Cvar_Get( "fs_cdpath", "", CVAR_NOSET );
 	fs_basepath = Cvar_Get( "fs_basepath", ".", CVAR_NOSET );
 	homedir = Sys_FS_GetHomeDirectory();
-	if( homedir != NULL )
-#ifdef PUBLIC_BUILD
-	{ fs_usehomedir = Cvar_Get( "fs_usehomedir", "1", CVAR_NOSET );}
+#if PUBLIC_BUILD && !DEDICATED
+	fs_usehomedir = Cvar_Get( "fs_usehomedir", homedir == NULL ? "0" : "1", CVAR_NOSET );
 #else
-	{ fs_usehomedir = Cvar_Get( "fs_usehomedir", "0", CVAR_NOSET );}
+	fs_usehomedir = Cvar_Get( "fs_usehomedir", "0", CVAR_NOSET );
 #endif
 	fs_usedownloadsdir = Cvar_Get( "fs_usedownloadsdir", "1", CVAR_NOSET );
 
