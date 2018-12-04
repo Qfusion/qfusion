@@ -728,7 +728,7 @@ void CG_DrawDamageNumbers() {
 		if( dn.damage == 0 )
 			continue;
 
-		float lifetime = 500.0f + 5 * dn.damage;
+		float lifetime = 750.0f + 5 * dn.damage;
 		float frac = ( cg.time - dn.t ) / lifetime;
 		if( frac > 1 )
 			continue;
