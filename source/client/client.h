@@ -24,7 +24,6 @@
 #include "cgame/cg_public.h"
 #include "ftlib/ftlib_public.h"
 #include "sound/snd_public.h"
-#include "qcommon/steam.h"
 
 #include "vid.h"
 #include "input.h"

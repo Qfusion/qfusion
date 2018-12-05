@@ -18,7 +18,6 @@ file(GLOB CLIENT_HEADERS
 	"../cgame/ref.h"
 	"../game/g_public.h"
 	"../ui/ui_public.h"
-	"../steamlib/steamlib_public.h"
 	"../server/*.h"
 	)
 
@@ -83,7 +82,7 @@ if (CMAKE_BUILD_TYPE STREQUAL "Release")
 endif()
 
 add_executable(${QFUSION_CLIENT_NAME} ${CLIENT_BINARY_TYPE} ${CLIENT_HEADERS} ${CLIENT_PLATFORM_HEADERS} ${CLIENT_COMMON_SOURCES} ${CLIENT_PLATFORM_SOURCES} ${BUNDLE_RESOURCES})
-add_dependencies(${QFUSION_CLIENT_NAME} cgame game steamlib ui)
+add_dependencies(${QFUSION_CLIENT_NAME} cgame game ui)
 
 target_link_libraries(${QFUSION_CLIENT_NAME} PRIVATE ${CURL_LIBRARIES} ${SDL2_LIBRARY} ${ZLIB_LIBRARY} ${FREETYPE_LIBRARY} ${OPENAL_LIBRARY} ${CLIENT_PLATFORM_LIBRARIES})
 qf_set_output_dir(${QFUSION_CLIENT_NAME} "")

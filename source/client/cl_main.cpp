@@ -1577,10 +1577,6 @@ void CL_SetClientState( connstate_t state ) {
 	cls.state = state;
 	Com_SetClientState( state );
 
-	if( state <= CA_DISCONNECTED ) {
-		Steam_AdvertiseGame( NULL, 0 );
-	}
-
 	switch( state ) {
 		case CA_DISCONNECTED:
 			Con_Close();
@@ -1785,24 +1781,7 @@ static void CL_InitLocal( void ) {
 
 	name = Cvar_Get( "name", "", CVAR_USERINFO | CVAR_ARCHIVE );
 	if( !name->string[0] ) {
-		char steamname[MAX_NAME_BYTES * 4], *steamnameIn = steamname, *steamnameOut = steamname, c;
-		steamname[0] = '\0';
-		Steam_GetPersonaName( steamname, sizeof( steamname ) );
-		while( ( c = *steamnameIn ) != '\0' ) {
-			steamnameIn++;
-			if( ( c < 32 ) || ( c >= 127 ) || ( c == '\\' ) || ( c == ';' ) || ( c == '"' ) ) {
-				continue;
-			}
-
-			*( steamnameOut++ ) = c;
-		}
-		*steamnameOut = '\0';
-
-		if( !( COM_RemoveColorTokens( steamname )[0] ) ) {
-			Q_strncpyz( steamname, "Player", sizeof( steamname ) );
-		}
-
-		Cvar_Set( name->name, steamname );
+		Cvar_Set( name->name, "Player" );
 	}
 
 	Cvar_Get( "clan", "", CVAR_USERINFO | CVAR_ARCHIVE );
@@ -2437,8 +2416,6 @@ void CL_Init( void ) {
 
 	Con_Init();
 
-	Steam_Init();
-
 	VID_Init();
 
 	CL_ClearState();
@@ -2516,8 +2493,6 @@ void CL_Shutdown( void ) {
 	CL_ShutdownLocal();
 
 	SCR_ShutdownScreen();
-
-	Steam_Shutdown();
 
 	Con_Shutdown();
 

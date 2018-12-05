@@ -162,6 +162,5 @@ add_subdirectory(server)
 
 if (NOT SERVER_ONLY)
 	add_subdirectory(ui)
-	add_subdirectory(steamlib)
 	add_subdirectory(client)
 endif()
