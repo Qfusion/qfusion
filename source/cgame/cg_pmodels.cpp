@@ -622,17 +622,6 @@ void CG_AddShellEffects( entity_t *ent, int effects ) {
 }
 
 /*
-* CG_SetOutlineColor
-*/
-void CG_SetOutlineColor( byte_vec4_t outlineColor, byte_vec4_t color ) {
-	float darken = 0.25f;
-	outlineColor[0] = ( uint8_t )( color[0] * darken );
-	outlineColor[1] = ( uint8_t )( color[1] * darken );
-	outlineColor[2] = ( uint8_t )( color[2] * darken );
-	outlineColor[3] = ( uint8_t )( 255 );
-}
-
-/*
 * CG_OutlineScaleForDist
 */
 static float CG_OutlineScaleForDist( entity_t *e, float maxdist, float scale ) {
@@ -770,26 +759,6 @@ void CG_AddColoredOutLineEffect( entity_t *ent, int effects, uint8_t r, uint8_t 
 	} else {
 		Vector4Set( RGBA, ( uint8_t )r, ( uint8_t )g, ( uint8_t )b, ( uint8_t )a );
 	}
-}
-
-/*
-* CG_PModel_AddFlag
-*/
-static void CG_PModel_AddFlag( centity_t *cent ) {
-	int flag_team  = ( cent->current.team == TEAM_ALPHA ) ? TEAM_BETA : TEAM_ALPHA;
-	vec4_t teamcolor;
-	byte_vec4_t col;
-
-	// color for team
-	if( cent->current.team != TEAM_BETA && cent->current.team != TEAM_ALPHA ) {
-		Vector4Set( teamcolor, 1, 1, 1, 1 );
-	} else {
-		CG_TeamColor( flag_team, teamcolor );
-	}
-
-	Vector4Scale( teamcolor, 255, col );
-
-	CG_AddFlagModelOnTag( cent, col, "tag_flag1" );
 }
 
 /*
@@ -1232,8 +1201,6 @@ void CG_AddPModel( centity_t *cent ) {
 	if( !cent->ent.model ) {
 		return;
 	}
-
-	CG_PModel_AddFlag( cent );
 
 	CG_AddShellEffects( &cent->ent, cent->effects );
 

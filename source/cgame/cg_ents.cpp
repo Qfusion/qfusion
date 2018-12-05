@@ -776,7 +776,7 @@ static void CG_AddGenericEnt( centity_t *cent ) {
 	}
 
 	// if set to invisible, skip
-	if( !cent->current.modelindex && !( cent->effects & EF_FLAG_TRAIL ) ) {
+	if( !cent->current.modelindex ) {
 		return;
 	}
 
@@ -855,11 +855,6 @@ static void CG_AddGenericEnt( centity_t *cent ) {
 		CG_TransformBoneposes( cent->skel, cent->ent.boneposes, cent->ent.boneposes );
 	}
 
-	// flags are special
-	if( cent->effects & EF_FLAG_TRAIL ) {
-		CG_AddFlagModelOnTag( cent, cent->ent.shaderRGBA, "tag_linked" );
-	}
-
 	if( !cent->current.modelindex ) {
 		return;
 	}
@@ -868,178 +863,6 @@ static void CG_AddGenericEnt( centity_t *cent ) {
 
 	if( cent->current.modelindex2 ) {
 		CG_AddLinkedModel( cent );
-	}
-}
-
-//==========================================================================
-//		ET_FLAG_BASE
-//==========================================================================
-
-/*
-* CG_AddFlagModelOnTag
-*/
-void CG_AddFlagModelOnTag( centity_t *cent, byte_vec4_t teamcolor, const char *tagname ) {
-	static entity_t flag;
-	orientation_t tag;
-
-	if( !( cent->effects & EF_FLAG_TRAIL ) ) {
-		return;
-	}
-
-	memset( &flag, 0, sizeof( entity_t ) );
-	flag.model = trap_R_RegisterModel( PATH_FLAG_MODEL );
-	if( !flag.model ) {
-		return;
-	}
-
-	flag.rtype = RT_MODEL;
-	flag.scale = 1.0f;
-	flag.renderfx = cent->ent.renderfx;
-	flag.customShader = NULL;
-	flag.customSkin = NULL;
-	flag.shaderRGBA[0] = ( uint8_t )teamcolor[0];
-	flag.shaderRGBA[1] = ( uint8_t )teamcolor[1];
-	flag.shaderRGBA[2] = ( uint8_t )teamcolor[2];
-	flag.shaderRGBA[3] = ( uint8_t )teamcolor[3];
-
-	VectorCopy( cent->ent.origin, flag.origin );
-	VectorCopy( cent->ent.origin, flag.origin2 );
-	VectorCopy( cent->ent.lightingOrigin, flag.lightingOrigin );
-
-	// place the flag on the tag if available
-	if( tagname && CG_GrabTag( &tag, &cent->ent, tagname ) ) {
-		Matrix3_Copy( cent->ent.axis, flag.axis );
-		CG_PlaceModelOnTag( &flag, &cent->ent, &tag );
-	} else {   // Flag dropped
-		vec3_t angles;
-
-		// quick & dirty client-side rotation animation, rotate once every 2 seconds
-		if( !cent->fly_stoptime ) {
-			cent->fly_stoptime = cg.time;
-		}
-
-		angles[0] = LerpAngle( cent->prev.angles[0], cent->current.angles[0], cg.lerpfrac ) - 75; // Let it stand up 75 degrees
-		angles[1] = ( 360.0 * ( ( cent->fly_stoptime - cg.time ) % 2000 ) ) / 2000.0;
-		angles[2] = LerpAngle( cent->prev.angles[2], cent->current.angles[2], cg.lerpfrac );
-
-		AnglesToAxis( angles, flag.axis );
-		VectorMA( flag.origin, 16, &flag.axis[AXIS_FORWARD], flag.origin ); // Move the flag up a bit
-	}
-
-	CG_AddColoredOutLineEffect( &flag, EF_OUTLINE,
-								(uint8_t)( teamcolor[0] * 0.3 ),
-								(uint8_t)( teamcolor[1] * 0.3 ),
-								(uint8_t)( teamcolor[2] * 0.3 ),
-								255 );
-
-	CG_AddEntityToScene( &flag );
-
-	// add the light & energy effects
-	if( CG_GrabTag( &tag, &flag, "tag_color" ) ) {
-		CG_PlaceModelOnTag( &flag, &flag, &tag );
-	}
-
-	// FIXME: convert this to an autosprite mesh in the flag model
-	if( !( cent->ent.renderfx & RF_VIEWERMODEL ) ) {
-		flag.rtype = RT_SPRITE;
-		flag.model = NULL;
-		flag.renderfx = RF_NOSHADOW | RF_FULLBRIGHT;
-		flag.frame = flag.oldframe = 0;
-		flag.radius = 32.0f;
-		flag.customShader = CG_MediaShader( cgs.media.shaderFlagFlare );
-		flag.outlineHeight = 0;
-
-		CG_AddEntityToScene( &flag );
-	}
-
-	// if on a player, flag drops colored particles and lights up
-	if( cent->current.type == ET_PLAYER ) {
-		CG_AddLightToScene( flag.origin, 350, teamcolor[0] / 255, teamcolor[1] / 255, teamcolor[2] / 255 );
-
-		if( cent->localEffects[LOCALEFFECT_FLAGTRAIL_LAST_DROP] + FLAG_TRAIL_DROP_DELAY < cg.time ) {
-			cent->localEffects[LOCALEFFECT_FLAGTRAIL_LAST_DROP] = cg.time;
-			CG_FlagTrail( flag.origin, cent->trailOrigin, cent->ent.origin, teamcolor[0] / 255, teamcolor[1] / 255, teamcolor[2] / 255 );
-		}
-	}
-}
-
-/*
-* CG_UpdateFlagBaseEnt
-*/
-static void CG_UpdateFlagBaseEnt( centity_t *cent ) {
-	int modelindex;
-
-	// set entity color based on team
-	CG_TeamColorForEntity( cent->current.number, cent->ent.shaderRGBA );
-	if( cent->effects & EF_OUTLINE ) {
-		CG_SetOutlineColor( cent->outlineColor, cent->ent.shaderRGBA );
-	}
-
-	cent->ent.scale = 1.0f;
-
-	cent->item = GS_FindItemByTag( cent->current.itemNum );
-	if( cent->item ) {
-		cent->effects |= cent->item->effects;
-	}
-
-	cent->ent.rtype = RT_MODEL;
-	cent->ent.frame = cent->current.frame;
-	cent->ent.oldframe = cent->prev.frame;
-
-	// set up the model
-	modelindex = cent->current.modelindex;
-	if( modelindex > 0 && modelindex < MAX_MODELS ) {
-		cent->ent.model = cgs.modelDraw[modelindex];
-	}
-	cent->skel = CG_SkeletonForModel( cent->ent.model );
-}
-
-/*
-* CG_AddFlagBaseEnt
-*/
-static void CG_AddFlagBaseEnt( centity_t *cent ) {
-	if( !cent->ent.scale ) {
-		return;
-	}
-
-	// if set to invisible, skip
-	if( !cent->current.modelindex ) {
-		return;
-	}
-
-	// bobbing & auto-rotation
-	if( cent->current.type != ET_PLAYER && cent->effects & EF_ROTATE_AND_BOB ) {
-		CG_EntAddBobEffect( cent );
-		Matrix3_Copy( cg.autorotateAxis, cent->ent.axis );
-	}
-
-	// render effects
-	cent->ent.renderfx = cent->renderfx | RF_NOSHADOW;
-
-	// let's see: We add first the modelindex 1 (the base)
-
-	if( cent->skel ) {
-		// get space in cache, interpolate, transform, link
-		cent->ent.boneposes = cent->ent.oldboneposes = CG_RegisterTemporaryExternalBoneposes( cent->skel );
-		CG_LerpSkeletonPoses( cent->skel, cent->ent.frame, cent->ent.oldframe, cent->ent.boneposes, 1.0 - cent->ent.backlerp );
-		CG_TransformBoneposes( cent->skel, cent->ent.boneposes, cent->ent.boneposes );
-	}
-
-	// add to refresh list
-	CG_AddCentityOutLineEffect( cent );
-
-	CG_AddEntityToScene( &cent->ent );
-
-	//CG_DrawTestBox( cent->ent.origin, item_box_mins, item_box_maxs, vec3_origin );
-
-	cent->ent.customSkin = NULL;
-	cent->ent.customShader = NULL;  // never use a custom skin on others
-
-	// see if we have to add a flag
-	if( cent->effects & EF_FLAG_TRAIL ) {
-		byte_vec4_t teamcolor;
-		CG_TeamColorForEntity( cent->current.number, teamcolor );
-		CG_AddFlagModelOnTag( cent, teamcolor, "tag_flag1" );
 	}
 }
 
@@ -1296,12 +1119,6 @@ static void CG_AddItemEnt( centity_t *cent ) {
 			if( cent->item->tag == HEALTH_SMALL ) {
 				cent->ent.scale *= 0.85f;
 			}
-		}
-
-		// flags are special
-		if( cent->effects & EF_FLAG_TRAIL ) {
-			CG_AddFlagModelOnTag( cent, cent->ent.shaderRGBA, NULL );
-			return;
 		}
 
 		CG_AddGenericEnt( cent );
@@ -1739,12 +1556,6 @@ void CG_AddEntities( void ) {
 				CG_EntityLoopSound( state, ATTN_STATIC );
 				break;
 
-			case ET_FLAG_BASE:
-				CG_AddFlagBaseEnt( cent );
-				CG_EntityLoopSound( state, ATTN_STATIC );
-				canLight = true;
-				break;
-
 			case ET_DECAL:
 				CG_AddDecalEnt( cent );
 				CG_EntityLoopSound( state, ATTN_STATIC );
@@ -1816,7 +1627,6 @@ void CG_LerpEntities( void ) {
 			case ET_ITEM:
 			case ET_PLAYER:
 			case ET_CORPSE:
-			case ET_FLAG_BASE:
 				if( state->linearMovement ) {
 					CG_ExtrapolateLinearProjectile( cent );
 				} else {
@@ -1932,10 +1742,6 @@ void CG_UpdateEntities( void ) {
 
 			case ET_LASERBEAM:
 				CG_UpdateLaserbeamEnt( cent );
-				break;
-
-			case ET_FLAG_BASE:
-				CG_UpdateFlagBaseEnt( cent );
 				break;
 
 			case ET_DECAL:

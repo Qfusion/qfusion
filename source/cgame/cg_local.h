@@ -626,11 +626,8 @@ void CG_GetEntitySpatilization( int entNum, vec3_t origin, vec3_t velocity );
 void CG_LerpEntities( void );
 void CG_LerpGenericEnt( centity_t *cent );
 
-void CG_SetOutlineColor( byte_vec4_t outlineColor, byte_vec4_t color );
 void CG_AddColoredOutLineEffect( entity_t *ent, int effects, uint8_t r, uint8_t g, uint8_t b, uint8_t a );
 void CG_AddCentityOutLineEffect( centity_t *cent );
-
-void CG_AddFlagModelOnTag( centity_t *cent, byte_vec4_t teamcolor, const char *tagname );
 
 //
 // cg_draw.c

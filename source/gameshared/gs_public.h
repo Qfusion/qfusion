@@ -883,7 +883,6 @@ enum {
 
 	ET_ITEM,        // for simple items
 	ET_LASERBEAM,   // for continuous beams
-	ET_FLAG_BASE,
 
 	ET_MINIMAP_ICON,
 	ET_DECAL,
@@ -912,15 +911,14 @@ enum {
 #define EF_QUAD                     ( 1 << 2 )
 #define EF_CARRIER                  ( 1 << 3 )
 #define EF_BUSYICON                 ( 1 << 4 )
-#define EF_FLAG_TRAIL               ( 1 << 5 )
-#define EF_TAKEDAMAGE               ( 1 << 6 )
-#define EF_TEAMCOLOR_TRANSITION     ( 1 << 7 )
-#define EF_EXPIRING_QUAD            ( 1 << 8 )
-#define EF_EXPIRING_SHELL           ( 1 << 9 )
-#define EF_GODMODE                  ( 1 << 10 )
-#define EF_REGEN                    ( 1 << 11 )
-#define EF_EXPIRING_REGEN           ( 1 << 12 )
-#define EF_GHOST                    ( 1 << 13 )
+#define EF_TAKEDAMAGE               ( 1 << 5 )
+#define EF_TEAMCOLOR_TRANSITION     ( 1 << 6 )
+#define EF_EXPIRING_QUAD            ( 1 << 7 )
+#define EF_EXPIRING_SHELL           ( 1 << 8 )
+#define EF_GODMODE                  ( 1 << 9 )
+#define EF_REGEN                    ( 1 << 10 )
+#define EF_EXPIRING_REGEN           ( 1 << 11 )
+#define EF_GHOST                    ( 1 << 12 )
 
 // oh, this is so nasty... (reuse effect bits for different entity types)
 #define EF_NOPORTALENTS             EF_CARRIER
