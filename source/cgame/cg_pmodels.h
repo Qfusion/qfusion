@@ -73,7 +73,6 @@ typedef struct weaponinfo_s {
 	unsigned int frametime[VWEAP_MAXANIMS];
 
 	orientation_t tag_projectionsource;
-	byte_vec4_t outlineColor;
 
 	// handOffset
 	vec3_t handpositionOrigin;
