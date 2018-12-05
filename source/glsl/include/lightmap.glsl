@@ -1,12 +1,16 @@
 #ifdef LIGHTMAP_BICUBIC
 
-vec4 cubic( float v ) {
-	vec4 n = vec4( 1.0, 2.0, 3.0, 4.0 ) - v;
-	vec4 s = n * n * n;
+vec4 cubic_weights( float v ) {
+	vec2 n = vec2( 1.0, 2.0 ) - v;
+	vec2 s = n * n * n;
+	// we normalise these later on so drop the 1/6 terms
 	float x = s.x;
 	float y = s.y - 4.0 * s.x;
-	float z = s.z - 4.0 * s.y + 6.0 * s.x;
-	float w = 6.0 - x - y - z;
+	// float z = s.z - 4.0 * s.y + 6.0 * s.x;
+	float w = v * v * v;
+	// x + y + z + w = 1, z is most expensive to compute so don't compute it
+	// needs to be `6.0 -` because we dropped the 1/6 terms
+	float z = 6.0 - x - y - w;
 	return vec4( x, y, z, w );
 }
 
@@ -19,8 +23,8 @@ vec4 texture_bicubic( sampler2D tex, vec2 uv ) {
 	vec2 fuv = fract( uv );
 	uv -= fuv;
 
-	vec4 xcubic = cubic( fuv.x );
-	vec4 ycubic = cubic( fuv.y );
+	vec4 xcubic = cubic_weights( fuv.x );
+	vec4 ycubic = cubic_weights( fuv.y );
 
 	vec4 c = vec4( uv.x - 0.5, uv.x + 1.5, uv.y - 0.5, uv.y + 1.5 );
 	vec4 s = vec4( xcubic.x + xcubic.y, xcubic.z + xcubic.w, ycubic.x + ycubic.y, ycubic.z + ycubic.w );
@@ -46,8 +50,8 @@ vec4 texturearray_bicubic( sampler2DArray tex, vec2 uv, float l ) {
 	vec2 fuv = fract( uv );
 	uv -= fuv;
 
-	vec4 xcubic = cubic( fuv.x );
-	vec4 ycubic = cubic( fuv.y );
+	vec4 xcubic = cubic_weights( fuv.x );
+	vec4 ycubic = cubic_weights( fuv.y );
 
 	vec4 c = vec4( uv.x - 0.5, uv.x + 1.5, uv.y - 0.5, uv.y + 1.5 );
 	vec4 s = vec4( xcubic.x + xcubic.y, xcubic.z + xcubic.w, ycubic.x + ycubic.y, ycubic.z + ycubic.w );
