@@ -979,8 +979,7 @@ void CG_UpdatePlayerModelEnt( centity_t *cent ) {
 
 	CG_TeamColorForEntity( cent->current.number, cent->ent.shaderRGBA );
 
-	// outline color
-	CG_SetOutlineColor( cent->outlineColor, cent->ent.shaderRGBA );
+	Vector4Set( cent->outlineColor, 0, 0, 0, 255 );
 
 	if( cg_raceGhosts->integer && !ISVIEWERENTITY( cent->current.number ) && GS_RaceGametype() ) {
 		cent->effects &= ~EF_OUTLINE;
