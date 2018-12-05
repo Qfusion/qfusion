@@ -13,6 +13,8 @@ vec4 cubic( float v ) {
 vec4 texture_bicubic( sampler2D tex, vec2 uv ) {
 	vec2 size = textureSize( tex, 0 );
 	uv *= size;
+	// bicubic takes samples at (-1, 0, 1, 2), so offset by -0.5 to keep it centred
+	uv -= 0.5;
 
 	vec2 fuv = fract( uv );
 	uv -= fuv;
@@ -38,6 +40,8 @@ vec4 texture_bicubic( sampler2D tex, vec2 uv ) {
 vec4 texturearray_bicubic( sampler2DArray tex, vec2 uv, float l ) {
 	vec2 size = textureSize( tex, 0 ).xy;
 	uv *= size;
+	// bicubic takes samples at (-1, 0, 1, 2), so offset by -0.5 to keep it centred
+	uv -= 0.5;
 
 	vec2 fuv = fract( uv );
 	uv -= fuv;
