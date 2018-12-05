@@ -848,10 +848,6 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 	"#define myhalf2 vec2\n" \
 	"#define myhalf3 vec3\n" \
 	"#define myhalf4 vec4\n" \
-	"#define qf_lowp_float float\n" \
-	"#define qf_lowp_vec2 vec2\n" \
-	"#define qf_lowp_vec3 vec3\n" \
-	"#define qf_lowp_vec4 vec4\n" \
 	"\n"
 
 #define QF_BUILTIN_GLSL_MACROS_GLSL120 "" \
@@ -867,11 +863,8 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 	"# define qf_BrightColor gl_FragData[1]\n" \
 	"#endif\n" \
 	"#define qf_texture texture2D\n" \
-        "#define qf_textureLod texture2DLod\n" \
         "#define qf_textureCube textureCube\n" \
         "#define qf_textureArray texture2DArray\n" \
-        "#define qf_texture3D texture3D\n" \
-        "#define qf_textureOffset(a,b,c,d) texture2DOffset(a,b,ivec2(c,d))\n" \
 	"\n"
 
 #define QF_BUILTIN_GLSL_MACROS_GLSL130 "" \
@@ -891,10 +884,7 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
         "#endif\n" \
         "#define qf_texture texture\n" \
         "#define qf_textureCube texture\n" \
-        "#define qf_textureLod textureLod\n" \
         "#define qf_textureArray texture\n" \
-        "#define qf_texture3D texture\n" \
-        "#define qf_textureOffset(a,b,c,d) textureOffset(a,b,ivec2(c,d))\n" \
         "\n"
 
 #define QF_GLSL_PI "" \
