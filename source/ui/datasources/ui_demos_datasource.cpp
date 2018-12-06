@@ -199,10 +199,6 @@ void DemosDataSource::GetRow( StringList& row, const String& table, int row_inde
 }
 
 int DemosDataSource::GetNumRows( const String& table ) {
-	// table name represents a relative demo path with a trailing "/":
-	// "/" represents the root path inside the demo directory
-	// "tutorials/" represents tutorials subdirectory, etc
-
 	// if we haven't yet traversed the queried path, do it now
 	if( demoPaths.find( table ) == demoPaths.end() ) {
 		std::string pathStr( table.CString() );

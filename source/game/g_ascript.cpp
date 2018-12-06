@@ -297,8 +297,6 @@ static const gs_asProperty_t gametypedescr_Properties[] =
 	{ ASLIB_PROPERTY_DECL( uint, pickableItemsMask ), ASLIB_FOFFSET( gametype_descriptor_t, pickableItemsMask ) },
 	{ ASLIB_PROPERTY_DECL( bool, isTeamBased ), ASLIB_FOFFSET( gametype_descriptor_t, isTeamBased ) },
 	{ ASLIB_PROPERTY_DECL( bool, isRace ), ASLIB_FOFFSET( gametype_descriptor_t, isRace ) },
-	{ ASLIB_PROPERTY_DECL( bool, isTutorial ), ASLIB_FOFFSET( gametype_descriptor_t, isTutorial ) },
-	{ ASLIB_PROPERTY_DECL( bool, inverseScore ), ASLIB_FOFFSET( gametype_descriptor_t, inverseScore ) },
 	{ ASLIB_PROPERTY_DECL( bool, hasChallengersQueue ), ASLIB_FOFFSET( gametype_descriptor_t, hasChallengersQueue ) },
 	{ ASLIB_PROPERTY_DECL( bool, hasChallengersRoulette ), ASLIB_FOFFSET( gametype_descriptor_t, hasChallengersRoulette ) },
 	{ ASLIB_PROPERTY_DECL( int, maxPlayersPerTeam ), ASLIB_FOFFSET( gametype_descriptor_t, maxPlayersPerTeam ) },

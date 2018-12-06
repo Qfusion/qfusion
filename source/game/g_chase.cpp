@@ -97,10 +97,7 @@ static int G_Chase_FindFollowPOV( edict_t *ent ) {
 	}
 
 	// find what players have what
-	score_best = -999999999;
-	if( level.gametype.inverseScore ) {
-		score_best *= -1;
-	}
+	score_best = INT_MIN;
 	quad = warshell = regen = scorelead = -1;
 	memset( flags, -1, sizeof( flags ) );
 	newctfpov = newpoweruppov = -1;
@@ -144,8 +141,7 @@ static int G_Chase_FindFollowPOV( edict_t *ent ) {
 		}
 
 		// find the scoring leader
-		if( ( !level.gametype.inverseScore && target->r.client->ps.stats[STAT_SCORE] > score_best )
-			|| ( level.gametype.inverseScore && target->r.client->ps.stats[STAT_SCORE] < score_best ) ) {
+		if( target->r.client->ps.stats[STAT_SCORE] > score_best ) {
 			score_best = target->r.client->ps.stats[STAT_SCORE];
 			scorelead = ENTNUM( target );
 		}

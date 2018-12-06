@@ -97,8 +97,6 @@ typedef struct {
 
 	bool isTeamBased;
 	bool isRace;
-	bool isTutorial;
-	bool inverseScore;
 	bool hasChallengersQueue;
 	bool hasChallengersRoulette;
 	int maxPlayersPerTeam;

@@ -431,7 +431,6 @@ typedef struct {
 	float pixelRatio;
 
 	bool demoPlaying;
-	bool demoTutorial;
 	bool pure;
 	int gameProtocol;
 	char demoExtension[MAX_QPATH];

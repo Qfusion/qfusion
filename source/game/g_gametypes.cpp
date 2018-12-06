@@ -346,8 +346,6 @@ static void G_Gametype_GENERIC_Init( void ) {
 
 	level.gametype.isTeamBased = false;
 	level.gametype.isRace = false;
-	level.gametype.isTutorial = false;
-	level.gametype.inverseScore = false;
 	level.gametype.hasChallengersQueue = false;
 	level.gametype.hasChallengersRoulette = false;
 	level.gametype.maxPlayersPerTeam = 0;
@@ -1631,8 +1629,6 @@ void G_Gametype_SetDefaults( void ) {
 
 	level.gametype.isTeamBased = false;
 	level.gametype.isRace = false;
-	level.gametype.isTutorial = false;
-	level.gametype.inverseScore = false;
 	level.gametype.hasChallengersQueue = false;
 	level.gametype.hasChallengersRoulette = false;
 	level.gametype.maxPlayersPerTeam = 0;

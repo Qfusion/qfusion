@@ -930,8 +930,6 @@ void CG_Init( const char *serverName, unsigned int playerNum,
 	// start up announcer events queue from clean
 	CG_ClearAnnouncerEvents();
 
-	cgs.demoTutorial = cgs.demoPlaying && ( strstr( cgs.demoName, "tutorials/" ) != NULL );
-
 	cg.firstFrame = true; // think of the next frame in CG_NewFrameSnap as of the first one
 
 	// now that we're done with precaching, let the autorecord actions do something

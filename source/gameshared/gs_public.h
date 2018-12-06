@@ -125,8 +125,7 @@ enum {
 #define GAMESTAT_FLAG_CANSHOWMINIMAP ( 1 << 13LL )
 #define GAMESTAT_FLAG_TEAMONLYMINIMAP ( 1 << 14LL )
 #define GAMESTAT_FLAG_MMCOMPATIBLE ( 1 << 15LL )
-#define GAMESTAT_FLAG_ISTUTORIAL ( 1 << 16LL )
-#define GAMESTAT_FLAG_CANDROPWEAPON ( 1 << 17LL )
+#define GAMESTAT_FLAG_CANDROPWEAPON ( 1 << 16LL )
 
 typedef struct {
 	int module;
@@ -154,7 +153,6 @@ extern gs_state_t gs;
 #define GS_CanShowMinimap() ( ( gs.gameState.stats[GAMESTAT_FLAGS] & GAMESTAT_FLAG_CANSHOWMINIMAP ) ? true : false )
 #define GS_TeamOnlyMinimap() ( ( gs.gameState.stats[GAMESTAT_FLAGS] & GAMESTAT_FLAG_TEAMONLYMINIMAP ) ? true : false )
 #define GS_MMCompatible() ( ( gs.gameState.stats[GAMESTAT_FLAGS] & GAMESTAT_FLAG_MMCOMPATIBLE ) ? true : false )
-#define GS_TutorialGametype() ( gs.gameState.stats[GAMESTAT_FLAGS] & GAMESTAT_FLAG_ISTUTORIAL ? true : false )
 #define GS_CanDropWeapon() ( gs.gameState.stats[GAMESTAT_FLAGS] & GAMESTAT_FLAG_CANDROPWEAPON ? true : false )
 
 #define GS_MatchState() ( gs.gameState.stats[GAMESTAT_MATCHSTATE] )

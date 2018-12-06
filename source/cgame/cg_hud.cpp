@@ -187,9 +187,6 @@ static int CG_GetPowerupTime( const void *parameter ) {
 }
 
 static int CG_GetMatchState( const void *parameter ) {
-	if( cgs.demoTutorial ) {
-		return MATCH_STATE_NONE;
-	}
 	return GS_MatchState();
 }
 
@@ -211,10 +208,6 @@ static int CG_InvidualGameType( const void *parameter ) {
 
 static int CG_RaceGameType( const void *parameter ) {
 	return GS_RaceGametype();
-}
-
-static int CG_TutorialGameType( const void *parameter ) {
-	return GS_TutorialGametype();
 }
 
 static int CG_Paused( const void *parameter ) {
@@ -512,7 +505,6 @@ static const reference_numeric_t cg_numeric_references[] =
 	{ "TEAMBASED", CG_GetTeamBased, NULL },
 	{ "INDIVIDUAL", CG_InvidualGameType, NULL },
 	{ "RACE", CG_RaceGameType, NULL },
-	{ "TUTORIAL", CG_TutorialGameType, NULL },
 	{ "PAUSED", CG_Paused, NULL },
 	{ "ZOOM", CG_GetZoom, NULL },
 	{ "VIDWIDTH", CG_GetVidWidth, NULL },
@@ -1835,7 +1827,7 @@ static bool CG_LFuncDrawHelpMessage( struct cg_layoutnode_s *commandnode, struct
 			int font_height = trap_SCR_FontHeight( CG_GetLayoutCursorFont() );
 			const char *helpmessage = "";
 			vec4_t color;
-			bool showhelp = cg_showhelp->integer || GS_TutorialGametype();
+			bool showhelp = cg_showhelp->integer;
 
 			// scale alpha to text appears more faint if the player's moving
 			Vector4Copy( layout_cursor_color, color );
@@ -2009,10 +2001,6 @@ static bool CG_LFuncDrawCleanConfigstring( struct cg_layoutnode_s *commandnode, 
 static bool CG_LFuncDrawPlayerName( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	int index = (int)CG_GetNumericArg( &argumentnode ) - 1;
 
-	if( cgs.demoTutorial ) {
-		return true;
-	}
-
 	if( ( index >= 0 && index < gs.maxclients ) && cgs.clientInfo[index].name[0] ) {
 		vec4_t color;
 		VectorCopy( colorWhite, color );
@@ -2026,10 +2014,6 @@ static bool CG_LFuncDrawPlayerName( struct cg_layoutnode_s *commandnode, struct 
 
 static bool CG_LFuncDrawCleanPlayerName( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	int index = (int)CG_GetNumericArg( &argumentnode ) - 1;
-
-	if( cgs.demoTutorial ) {
-		return true;
-	}
 
 	if( ( index >= 0 && index < gs.maxclients ) && cgs.clientInfo[index].name[0] ) {
 		trap_SCR_DrawString( layout_cursor_x, layout_cursor_y, layout_cursor_align,
