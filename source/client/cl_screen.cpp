@@ -635,21 +635,12 @@ void SCR_ShutDownConsoleMedia( void ) {
 /*
 * SCR_RenderView
 */
-static void SCR_RenderView( bool timedemo ) {
-	if( timedemo ) {
-		if( !cl.timedemo.startTime ) {
-			cl.timedemo.startTime = Sys_Milliseconds();
-		}
-		cl.timedemo.frames++;
-	}
-
+static void SCR_RenderView() {
 	// frame is not valid until we load the CM data
 	if( cl.cms != NULL ) {
 		CL_GameModule_RenderView();
 	}
 }
-
-//============================================================================
 
 /*
 * SCR_UpdateScreen
@@ -658,7 +649,6 @@ static void SCR_RenderView( bool timedemo ) {
 * text to the screen.
 */
 void SCR_UpdateScreen( void ) {
-	bool timedemo;
 
 	// if the screen is disabled (loading plaque is up, or vid mode changing)
 	// do nothing at all
@@ -679,9 +669,8 @@ void SCR_UpdateScreen( void ) {
 	SCR_CheckSystemFontsModified();
 
 	CL_ForceVsync( cls.state == CA_DISCONNECTED );
-	timedemo = cl_timedemo->integer != 0 && cls.demo.playing;
 
-	re.BeginFrame( timedemo );
+	re.BeginFrame();
 
 	if( scr_draw_loading == 2 ) {
 		// loading plaque over APP_STARTUP_COLOR screen
@@ -695,12 +684,12 @@ void SCR_UpdateScreen( void ) {
 	} else if( cls.state == CA_CONNECTED ) {
 		if( cls.cgameActive ) {
 			CL_UIModule_UpdateConnectScreen( false );
-			SCR_RenderView( timedemo );
+			SCR_RenderView();
 		} else {
 			CL_UIModule_UpdateConnectScreen( true );
 		}
 	} else if( cls.state == CA_ACTIVE ) {
-		SCR_RenderView( timedemo );
+		SCR_RenderView();
 
 		CL_UIModule_Refresh( false, true );
 

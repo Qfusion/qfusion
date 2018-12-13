@@ -160,7 +160,7 @@ typedef struct {
 	void ( *TransformVectorToScreen )( const refdef_t *rd, const vec3_t in, vec2_t out );
 	bool ( *TransformVectorToScreenClamped )( const refdef_t *rd, const vec3_t target, int border, vec2_t out );
 
-	void ( *BeginFrame )( bool uncappedFPS );
+	void ( *BeginFrame )( void );
 	void ( *EndFrame )( void );
 	const char *( *GetSpeedsMessage )( char *out, size_t size );
 	int ( *GetAverageFrametime )( void );

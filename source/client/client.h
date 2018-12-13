@@ -38,21 +38,12 @@ typedef struct qfontface_s qfontface_t;
 #define MAX_TIMEDELTAS_BACKUP 8
 #define MASK_TIMEDELTAS_BACKUP ( MAX_TIMEDELTAS_BACKUP - 1 )
 
-typedef struct {
-	int frames;
-	int64_t startTime;
-	int64_t lastTime;
-	int counts[100];
-} cl_timedemo_t;
-
 //
 // the client_state_t structure is wiped completely at every
 // server map change
 //
 typedef struct {
 	int timeoutcount;
-
-	cl_timedemo_t timedemo;
 
 	int cmdNum;                     // current cmd
 	usercmd_t cmds[CMD_BACKUP];     // each mesage will send several old cmds
@@ -281,7 +272,6 @@ extern cvar_t *cl_shownet;
 extern cvar_t *cl_extrapolationTime;
 extern cvar_t *cl_extrapolate;
 
-extern cvar_t *cl_timedemo;
 extern cvar_t *cl_demoavi_video;
 extern cvar_t *cl_demoavi_audio;
 extern cvar_t *cl_demoavi_fps;

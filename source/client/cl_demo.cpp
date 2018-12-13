@@ -429,9 +429,6 @@ static void CL_StartDemo( const char *demoname, bool pause_on_stop ) {
 
 	CL_PauseDemo( false );
 
-	// set up for timedemo settings
-	memset( &cl.timedemo, 0, sizeof( cl.timedemo ) );
-
 	Mem_TempFree( name );
 	Mem_TempFree( servername );
 }

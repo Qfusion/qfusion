@@ -52,7 +52,7 @@ typedef struct {
 rserr_t RF_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullScreen, bool borderless );
 void RF_AppActivate( bool active, bool minimize );
 void RF_Shutdown( bool verbose );
-void RF_BeginFrame( bool uncappedFPS );
+void RF_BeginFrame( void );
 void RF_EndFrame( void );
 void RF_BeginRegistration( void );
 void RF_EndRegistration( void );

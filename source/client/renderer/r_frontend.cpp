@@ -110,7 +110,7 @@ static void RF_CheckCvars( void ) {
 	}
 }
 
-void RF_BeginFrame( bool uncappedFPS ) {
+void RF_BeginFrame() {
 	RF_CheckCvars();
 
 	rrf.frame->Clear( rrf.frame );

@@ -37,7 +37,6 @@ cvar_t *cl_shownet;
 cvar_t *cl_extrapolationTime;
 cvar_t *cl_extrapolate;
 
-cvar_t *cl_timedemo;
 cvar_t *cl_demoavi_video;
 cvar_t *cl_demoavi_audio;
 cvar_t *cl_demoavi_fps;
@@ -705,31 +704,6 @@ void CL_Disconnect( const char *message ) {
 	}
 
 	SV_ShutdownGame( "Owner left the listen server", false );
-
-	if( cl_timedemo && cl_timedemo->integer ) {
-		int i;
-		int64_t sumcounts = 0;
-
-		Com_Printf( "\n" );
-		for( i = 1; i < 100; i++ ) {
-			if( cl.timedemo.counts[i] > 0 ) {
-				float fps, perc;
-				
-				fps = 1000.0 / i;
-				perc = cl.timedemo.counts[i] * 100.0 / cl.timedemo.frames;
-				sumcounts += i * cl.timedemo.counts[i];
-
-				Com_Printf( "%2ims - %7.2ffps: %6.2f%%\n", i, fps, perc );
-			}
-		}
-
-		Com_Printf( "\n" );
-		if( time > 0 ) {
-			float mean = 1000.0 / (double)sumcounts * cl.timedemo.frames;
-			int64_t duration = Sys_Milliseconds() - cl.timedemo.startTime;
-			Com_Printf( "%3.1f seconds: %3.1f mean fps\n", duration / 1000.0, mean );
-		}
-	}
 
 	cls.connect_time = 0;
 	cls.connect_count = 0;
@@ -1755,7 +1729,6 @@ static void CL_InitLocal( void ) {
 
 	cl_shownet =        Cvar_Get( "cl_shownet", "0", 0 );
 	cl_timeout =        Cvar_Get( "cl_timeout", "120", 0 );
-	cl_timedemo =       Cvar_Get( "timedemo", "0", CVAR_CHEAT );
 	cl_demoavi_video =  Cvar_Get( "cl_demoavi_video", "1", CVAR_ARCHIVE );
 	cl_demoavi_audio =  Cvar_Get( "cl_demoavi_audio", "0", CVAR_ARCHIVE );
 	cl_demoavi_fps =    Cvar_Get( "cl_demoavi_fps", "30.3", CVAR_ARCHIVE );
@@ -1858,31 +1831,6 @@ static void CL_ShutdownLocal( void ) {
 }
 
 //============================================================================
-
-/*
-* CL_TimedemoStats
-*/
-static void CL_TimedemoStats( void ) {
-	if( cl_timedemo->integer && cls.demo.playing ) {
-		int64_t lastTime = cl.timedemo.lastTime;
-		if( lastTime != 0 ) {
-			int msec;
-			int64_t curTime;
-
-			msec = re.GetAverageFrametime();
-
-			curTime = Sys_Milliseconds();
-			if( msec  >= 100 ) {
-				cl.timedemo.counts[99]++;
-			} else {
-				cl.timedemo.counts[msec]++;
-			}
-			cl.timedemo.lastTime = curTime;
-			return;
-		}
-		cl.timedemo.lastTime = Sys_Milliseconds();
-	}
-}
 
 /*
 * CL_AdjustServerTime - adjust delta to new frame snap timestamp
@@ -2007,11 +1955,6 @@ void CL_UpdateSnapshot( void ) {
 			// if we don't have current snap (or delay is too big) don't wait to fire the pending one
 			if( ( !cls.demo.play_jump && cl.currentSnapNum <= 0 ) ||
 				( !cls.demo.playing && abs( cl.newServerTimeDelta - cl.serverTimeDelta ) > 200 ) ) {
-				cl.serverTimeDelta = cl.newServerTimeDelta;
-			}
-
-			// don't either wait if in a timedemo
-			if( cls.demo.playing && cl_timedemo->integer ) {
 				cl.serverTimeDelta = cl.newServerTimeDelta;
 			}
 		}
@@ -2230,8 +2173,7 @@ void CL_Frame( int realMsec, int gameMsec ) {
 		maxFps = 60;
 		minMsec = 1000.0f / maxFps;
 		roundingMsec += 1000.0f / maxFps - minMsec;
-	} else if( cl_maxfps->integer > 0 && !(cl_timedemo->integer && cls.demo.playing)
-			   && !( cls.demo.avi_video && cls.state == CA_ACTIVE ) ) {
+	} else if( cl_maxfps->integer > 0 && cls.demo.playing && !( cls.demo.avi_video && cls.state == CA_ACTIVE ) ) {
 		const int absMinFps = 24;
 
 		// do not allow setting cl_maxfps to very low values to prevent cheating
@@ -2271,8 +2213,6 @@ void CL_Frame( int realMsec, int gameMsec ) {
 		extraMsec = allRealMsec - minMsec;
 		clamp( extraMsec, 0, 100 );
 	}
-
-	CL_TimedemoStats();
 
 	VID_CheckChanges();
 
