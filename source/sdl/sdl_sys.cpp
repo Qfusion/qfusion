@@ -92,7 +92,6 @@ int main( int argc, char **argv ) {
 			if( time > 0 ) {
 				break;
 			}
-			// Sys_Sleep( 0 );
 		} while( 1 );
 		oldtime = newtime;
 
