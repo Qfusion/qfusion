@@ -595,6 +595,7 @@ static const char * obituaries[] = {
 	"ABOLISHED",
 	"ABUSED",
 	"AIRED OUT",
+	"ANNIHILATED",
 	"AXED",
 	"BAKED",
 	"BATTERED",
