@@ -297,8 +297,7 @@ void CG_RegisterMediaShaders( void ) {
 	cgs.media.shaderElectroboltMark = CG_RegisterMediaShader( "gfx/decals/d_electrobolt_hit" );
 
 	cgs.media.shaderEBBeam = CG_RegisterMediaShader( "gfx/misc/ebbeam" );
-	cgs.media.shaderLGBeamSolid = CG_RegisterMediaShader( "gfx/misc/lgbeam_solid" );
-	cgs.media.shaderLGBeamGlow = CG_RegisterMediaShader( "gfx/misc/lgbeam_glow" );
+	cgs.media.shaderLGBeam = CG_RegisterMediaShader( "gfx/misc/lgbeam" );
 	cgs.media.shaderRocketExplosion = CG_RegisterMediaShader( PATH_ROCKET_EXPLOSION_SPRITE );
 	cgs.media.shaderRocketExplosionRing = CG_RegisterMediaShader( PATH_ROCKET_EXPLOSION_RING_SPRITE );
 	cgs.media.shaderGrenadeExplosion = CG_RegisterMediaShader( PATH_ROCKET_EXPLOSION_SPRITE );

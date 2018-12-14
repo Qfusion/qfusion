@@ -169,9 +169,7 @@ void CG_LaserBeamEffect( centity_t *cent ) {
 
 	CG_KillPolyBeamsByTag( cent->current.number );
 
-	CG_LGSolidPolyBeam( laserOrigin, trace.endpos, color, cent->current.number );
-	CG_LGWeirdPolyBeam( laserOrigin, trace.endpos, cg_laserBeamSubdivisions->integer, 
-		range, color, cent->current.number, firstPerson );
+	CG_LGPolyBeam( laserOrigin, trace.endpos, color, cent->current.number );
 
 	// enable continuous flash on the weapon owner
 	if( cg_weaponFlashes->integer ) {

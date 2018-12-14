@@ -255,8 +255,7 @@ typedef struct {
 	//wsw weapon sfx
 	cgs_media_handle_t *shaderPlasmaMark;
 	cgs_media_handle_t *shaderEBBeam;
-	cgs_media_handle_t *shaderLGBeamSolid;
-	cgs_media_handle_t *shaderLGBeamGlow;
+	cgs_media_handle_t *shaderLGBeam;
 	cgs_media_handle_t *shaderElectroboltMark;
 
 	//wsw
@@ -979,8 +978,7 @@ void CG_ClearPolys( void );
 void CG_AddPolys( void );
 void CG_KillPolyBeamsByTag( int key );
 void CG_QuickPolyBeam( const vec3_t start, const vec3_t end, int width, struct shader_s *shader );
-void CG_LGSolidPolyBeam( const vec3_t start, const vec3_t end, const vec4_t color, int tag );
-void CG_LGWeirdPolyBeam( const vec3_t start, const vec3_t end, int subdivisions, float range, const vec4_t color, int key, bool firstPerson );
+void CG_LGPolyBeam( const vec3_t start, const vec3_t end, const vec4_t color, int tag );
 void CG_EBPolyBeam( const vec3_t start, const vec3_t end, const vec4_t color );
 void CG_PLink( const vec3_t start, const vec3_t end, const vec4_t color, int flags );
 
