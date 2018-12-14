@@ -49,6 +49,8 @@ static const constant_numeric_t cg_numeric_constants[] = {
 	{ "TEAM_PLAYERS", TEAM_PLAYERS },
 	{ "TEAM_ALPHA", TEAM_ALPHA },
 	{ "TEAM_BETA", TEAM_BETA },
+	{ "TEAM_ALLY", TEAM_ALLY },
+	{ "TEAM_ENEMY", TEAM_ENEMY },
 
 	// align
 	{ "LEFT", 1 },
@@ -114,11 +116,6 @@ static const constant_numeric_t cg_numeric_constants[] = {
 };
 
 //=============================================================================
-
-static int CG_GetStatEnemyTeam( const void *parameter ) {
-	return ( ( cg.predictedPlayerState.stats[STAT_TEAM] == TEAM_ALPHA ) ? TEAM_BETA :
-			 ( ( cg.predictedPlayerState.stats[STAT_TEAM] == TEAM_BETA ) ? TEAM_ALPHA : TEAM_SPECTATOR ) );
-}
 
 static int CG_GetStatValue( const void *parameter ) {
 	assert( (intptr_t)parameter >= 0 && (intptr_t)parameter < MAX_STATS );
@@ -460,9 +457,6 @@ static const reference_numeric_t cg_numeric_references[] =
 	{ "PICKUP_ITEM", CG_GetStatValue, (void *)STAT_PICKUP_ITEM },
 
 	{ "SCORE", CG_GetStatValue, (void *)STAT_SCORE },
-	{ "TEAM", CG_GetStatValue, (void *)STAT_TEAM },
-	{ "REALTEAM", CG_GetStatValue, (void *)STAT_REALTEAM },
-	{ "TEAM_ENEMY", CG_GetStatEnemyTeam, NULL },
 	{ "RESPAWN_TIME", CG_GetStatValue, (void *)STAT_NEXT_RESPAWN },
 
 	{ "POINTED_PLAYER", CG_GetStatValue, (void *)STAT_POINTED_PLAYER },
