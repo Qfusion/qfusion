@@ -294,7 +294,7 @@ void CG_RegisterMediaShaders( void ) {
 	cgs.media.shaderBulletMark = CG_RegisterMediaShader( "gfx/decals/d_bullet_hit" );
 	cgs.media.shaderExplosionMark = CG_RegisterMediaShader( "gfx/decals/d_explode_hit" );
 	cgs.media.shaderPlasmaMark = CG_RegisterMediaShader( "gfx/decals/d_plasma_hit" );
-	cgs.media.shaderElectroboltMark = CG_RegisterMediaShader( "gfx/decals/d_electrobolt_hit" );
+	cgs.media.shaderEBImpact = CG_RegisterMediaShader( "gfx/decals/ebimpact" );
 
 	cgs.media.shaderEBBeam = CG_RegisterMediaShader( "gfx/misc/ebbeam" );
 	cgs.media.shaderLGBeam = CG_RegisterMediaShader( "gfx/misc/lgbeam" );

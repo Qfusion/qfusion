@@ -457,19 +457,21 @@ void CG_PlasmaExplosion( const vec3_t pos, const vec3_t dir, int team, float rad
 				   CG_MediaShader( cgs.media.shaderPlasmaMark ) );
 }
 
-/*
-* CG_BoltExplosionMode
-*/
-void CG_BoltExplosionMode( const vec3_t pos, const vec3_t dir, int surfFlags ) {
+void CG_EBImpact( const vec3_t pos, const vec3_t dir, int surfFlags, int team ) {
+	if( surfFlags & ( SURF_SKY | SURF_NOMARKS | SURF_NOIMPACT ) ) {
+		return;
+	}
+
 	lentity_t *le;
 	vec3_t angles;
 	vec3_t origin;
 
-	if( !CG_SpawnDecal( pos, dir, random() * 360, 12,
-						1, 1, 1, 1, 10, 1, true, CG_MediaShader( cgs.media.shaderElectroboltMark ) ) ) {
-		if( surfFlags & ( SURF_SKY | SURF_NOMARKS | SURF_NOIMPACT ) ) {
-			return;
-		}
+	vec4_t color;
+	CG_TeamColor( team, color );
+
+	if( team != TEAM_SPECTATOR ) {
+		CG_SpawnDecal( pos, dir, 0, 3, color[0], color[1], color[2], color[3],
+			10, 1, true, CG_MediaShader( cgs.media.shaderEBImpact ) );
 	}
 
 	VecToAngles( dir, angles );
@@ -484,10 +486,9 @@ void CG_BoltExplosionMode( const vec3_t pos, const vec3_t dir, int surfFlags ) {
 	le->ent.scale = 1.5f;
 
 	// add white energy particles on the impact
-	CG_ImpactPuffParticles( origin, dir, 15, 0.75f, 1, 1, 1, 1, NULL );
+	CG_ImpactPuffParticles( origin, dir, 15, 0.75f, color[0], color[1], color[2], color[3], NULL );
 
-	trap_S_StartFixedSound( CG_MediaSfx( cgs.media.sfxElectroboltHit ), origin, CHAN_AUTO,
-							cg_volume_effects->value, ATTN_STATIC );
+	trap_S_StartFixedSound( CG_MediaSfx( cgs.media.sfxElectroboltHit ), origin, CHAN_AUTO, cg_volume_effects->value, ATTN_STATIC );
 }
 
 /*

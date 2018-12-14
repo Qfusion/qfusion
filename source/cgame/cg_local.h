@@ -256,7 +256,7 @@ typedef struct {
 	cgs_media_handle_t *shaderPlasmaMark;
 	cgs_media_handle_t *shaderEBBeam;
 	cgs_media_handle_t *shaderLGBeam;
-	cgs_media_handle_t *shaderElectroboltMark;
+	cgs_media_handle_t *shaderEBImpact;
 
 	//wsw
 	cgs_media_handle_t *shaderPlayerShadow;
@@ -941,8 +941,8 @@ void CG_GrenadeExplosionMode( const vec3_t pos, const vec3_t dir, float radius )
 void CG_GenericExplosion( const vec3_t pos, const vec3_t dir, float radius );
 void CG_RocketExplosionMode( const vec3_t pos, const vec3_t dir, float radius );
 void CG_EBBeam( const vec3_t start, const vec3_t end, int team );
+void CG_EBImpact( const vec3_t pos, const vec3_t dir, int surfFlags, int team );
 void CG_ImpactSmokePuff( const vec3_t origin, const vec3_t dir, float radius, float alpha, int time, int speed );
-void CG_BoltExplosionMode( const vec3_t pos, const vec3_t dir, int surfFlags );
 void CG_BladeImpact( const vec3_t pos, const vec3_t dir );
 void CG_GunBladeBlastImpact( const vec3_t pos, const vec3_t dir, float radius );
 void CG_PModel_SpawnTeleportEffect( centity_t *cent );

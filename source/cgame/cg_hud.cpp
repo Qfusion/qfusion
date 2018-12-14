@@ -25,9 +25,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "cg_local.h"
 
-#define TEAM_OWN    ( GS_MAX_TEAMS + 1 )
-#define TEAM_ENEMY  ( GS_MAX_TEAMS + 2 )
-
 extern cvar_t *cg_debugHUD;
 extern cvar_t *cg_clientHUD;
 extern cvar_t *cg_specHUD;

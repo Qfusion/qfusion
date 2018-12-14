@@ -24,22 +24,22 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 static void CG_Event_WeaponBeam( vec3_t origin, vec3_t dir, int ownerNum, int weapon ) {
 	vec3_t end;
-	trace_t trace;
-
 	VectorNormalizeFast( dir );
-
 	VectorMA( origin, ELECTROBOLT_RANGE, dir, end );
 
+	centity_t * owner = &cg_entities[ ownerNum ];
+
 	// retrace to spawn wall impact
+	trace_t trace;
 	CG_Trace( &trace, origin, vec3_origin, vec3_origin, end, cg.view.POVent, MASK_SOLID );
 	if( trace.ent != -1 ) {
-		CG_BoltExplosionMode( trace.endpos, trace.plane.normal, trace.surfFlags );
+		CG_EBImpact( trace.endpos, trace.plane.normal, trace.surfFlags, owner->current.team );
 	}
 
 	// when it's predicted we have to delay the drawing until the view weapon is calculated
-	cg_entities[ownerNum].localEffects[LOCALEFFECT_EV_WEAPONBEAM] = weapon;
-	VectorCopy( origin, cg_entities[ownerNum].laserOrigin );
-	VectorCopy( trace.endpos, cg_entities[ownerNum].laserPoint );
+	owner->localEffects[LOCALEFFECT_EV_WEAPONBEAM] = weapon;
+	VectorCopy( origin, owner->laserOrigin );
+	VectorCopy( trace.endpos, owner->laserPoint );
 }
 
 void CG_WeaponBeamEffect( centity_t *cent ) {
@@ -1048,7 +1048,7 @@ void CG_EntityEvent( entity_state_t *ent, int ev, int parm, bool predicted ) {
 
 		case EV_ELECTROTRAIL:
 			// check the owner for predicted case
-			if( ISVIEWERENTITY( parm ) && ( ev < PREDICTABLE_EVENTS_MAX ) && ( predicted != cg.view.playerPrediction ) ) {
+			if( ISVIEWERENTITY( parm ) && ev < PREDICTABLE_EVENTS_MAX && predicted != cg.view.playerPrediction ) {
 				return;
 			}
 			CG_Event_WeaponBeam( ent->origin, ent->origin2, parm, WEAP_ELECTROBOLT );
@@ -1056,7 +1056,7 @@ void CG_EntityEvent( entity_state_t *ent, int ev, int parm, bool predicted ) {
 
 		case EV_FIRE_RIOTGUN:
 			// check the owner for predicted case
-			if( ISVIEWERENTITY( ent->ownerNum ) && ( ev < PREDICTABLE_EVENTS_MAX ) && ( predicted != cg.view.playerPrediction ) ) {
+			if( ISVIEWERENTITY( ent->ownerNum ) && ev < PREDICTABLE_EVENTS_MAX && predicted != cg.view.playerPrediction ) {
 				return;
 			}
 			CG_Event_FireRiotgun( ent->origin, ent->origin2, ent->weapon, ent->ownerNum );
@@ -1249,7 +1249,7 @@ void CG_EntityEvent( entity_state_t *ent, int ev, int parm, bool predicted ) {
 
 		case EV_BOLT_EXPLOSION:
 			ByteToDir( parm, dir );
-			CG_BoltExplosionMode( ent->origin, dir, 0 );
+			CG_EBImpact( ent->origin, dir, 0, TEAM_SPECTATOR );
 			break;
 
 		case EV_GRENADE_EXPLOSION:
