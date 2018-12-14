@@ -71,7 +71,7 @@ int random_uniform( PCG * pcg, int lo, int hi ) {
 				t %= range;
 		}
 		while( l < t ) {
-			x = rng();
+			x = random_u32( pcg );
 			m = uint64_t( x ) * uint64_t( range );
 			l = uint32_t( m );
 		}
