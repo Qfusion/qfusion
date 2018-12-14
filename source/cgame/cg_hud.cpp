@@ -457,6 +457,7 @@ static const reference_numeric_t cg_numeric_references[] =
 	{ "PICKUP_ITEM", CG_GetStatValue, (void *)STAT_PICKUP_ITEM },
 
 	{ "SCORE", CG_GetStatValue, (void *)STAT_SCORE },
+	{ "TEAM", CG_GetStatValue, (void *)STAT_TEAM },
 	{ "RESPAWN_TIME", CG_GetStatValue, (void *)STAT_NEXT_RESPAWN },
 
 	{ "POINTED_PLAYER", CG_GetStatValue, (void *)STAT_POINTED_PLAYER },
