@@ -55,15 +55,28 @@ uint64_t random_u64( PCG * pcg ) {
 	return hi | random_u32( pcg );
 }
 
+// http://www.pcg-random.org/posts/bounded-rands.html
 int random_uniform( PCG * pcg, int lo, int hi ) {
 	assert( lo <= hi );
 	uint32_t range = uint32_t( hi ) - uint32_t( lo );
-	uint32_t m = UINT32_MAX - UINT32_MAX % range;
-	uint32_t r;
-	do {
-		r = random_u32( pcg );
-	} while( r >= m );
-	return lo + ( r % range );
+	uint32_t x = random_u32( pcg );
+
+	uint64_t m = uint64_t( x ) * uint64_t( range );
+	uint32_t l = uint32_t( m );
+	if( l < range ) {
+		uint32_t t = -range;
+		if( t >= range ) {
+			t -= range;
+			if( t >= range )
+				t %= range;
+		}
+		while( l < t ) {
+			x = rng();
+			m = uint64_t( x ) * uint64_t( range );
+			l = uint32_t( m );
+		}
+	}
+	return lo + ( m >> 32 );
 }
 
 float random_float( PCG * pcg ) {
