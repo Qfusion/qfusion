@@ -971,9 +971,6 @@ void CG_AddDecals( void );
 //
 // cg_polys.c	-	wsw	: jal
 //
-constexpr int EBBEAM_WIDTH = 128;
-constexpr int EBBEAM_TIME = 250;
-
 void CG_ClearPolys( void );
 void CG_AddPolys( void );
 void CG_KillPolyBeamsByTag( int key );

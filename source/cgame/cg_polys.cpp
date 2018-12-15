@@ -274,8 +274,8 @@ void CG_LGPolyBeam( const vec3_t start, const vec3_t end, const vec4_t color, in
 * CG_EBPolyBeam
 */
 void CG_EBPolyBeam( const vec3_t start, const vec3_t end, const vec4_t color ) {
-	struct shader_s * shader = CG_MediaShader( cgs.media.shaderEBBeam );
-	CG_SpawnPolyBeam( start, end, color, EBBEAM_WIDTH, EBBEAM_TIME, EBBEAM_TIME * 0.4f, shader, 128, 0 );
+	constexpr int time = 250;
+	CG_SpawnPolyBeam( start, end, color, 16, time, time * 0.4f, CG_MediaShader( cgs.media.shaderEBBeam ), 64, 0 );
 }
 
 /*
