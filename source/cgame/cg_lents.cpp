@@ -458,10 +458,6 @@ void CG_PlasmaExplosion( const vec3_t pos, const vec3_t dir, int team, float rad
 }
 
 void CG_EBImpact( const vec3_t pos, const vec3_t dir, int surfFlags, int team ) {
-	if( surfFlags & ( SURF_SKY | SURF_NOMARKS | SURF_NOIMPACT ) ) {
-		return;
-	}
-
 	lentity_t *le;
 	vec3_t angles;
 	vec3_t origin;
@@ -470,8 +466,11 @@ void CG_EBImpact( const vec3_t pos, const vec3_t dir, int surfFlags, int team ) 
 	CG_TeamColor( team, color );
 
 	if( team != TEAM_SPECTATOR ) {
-		CG_SpawnDecal( pos, dir, 0, 3, color[0], color[1], color[2], color[3],
+		bool decal = CG_SpawnDecal( pos, dir, 0, 3, color[0], color[1], color[2], color[3],
 			10, 1, true, CG_MediaShader( cgs.media.shaderEBImpact ) );
+		if( !decal && ( surfFlags & ( SURF_SKY | SURF_NOMARKS | SURF_NOIMPACT ) ) ) {
+			return;
+		}
 	}
 
 	VecToAngles( dir, angles );
