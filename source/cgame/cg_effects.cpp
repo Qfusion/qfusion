@@ -507,7 +507,7 @@ typedef struct particle_s
 
 #define PARTICLE_GRAVITY    500
 
-#define MAX_PARTICLES       2048
+#define MAX_PARTICLES       4096
 
 static vec3_t avelocities[NUMVERTEXNORMALS];
 
@@ -783,11 +783,11 @@ void CG_HighVelImpactPuffParticles( const vec3_t org, const vec3_t dir, int coun
 }
 
 void CG_EBIonsTrail( const vec3_t start, const vec3_t end, const vec4_t color ) {
-#define MAX_BOLT_IONS 48
+#define MAX_BOLT_IONS 256
 	int i, count;
 	vec3_t move, vec;
 	float len;
-	float dec2 = 24.0f;
+	float dec2 = 4.0f;
 	cparticle_t *p;
 
 	if( !cg_particles->integer ) {
