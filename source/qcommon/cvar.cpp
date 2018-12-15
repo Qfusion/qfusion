@@ -41,9 +41,13 @@ static int Cvar_IsLatched( void *cvar, void *flags ) {
 }
 
 static bool Cvar_CheatsAllowed() {
+#if PUBLIC_BUILD
 	return ( Com_ClientState() < CA_CONNECTED ) ||          // not connected
 		   Com_DemoPlaying() ||                          // playing demo
 		   ( Com_ServerState() && Cvar_Value( "sv_cheats" ) ); // local server, sv_cheats
+#else
+	return true;
+#endif
 }
 
 static int Cvar_PatternMatches( void *cvar, void *pattern ) {
