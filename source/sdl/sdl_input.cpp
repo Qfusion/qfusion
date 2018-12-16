@@ -337,9 +337,11 @@ static void IN_HandleEvents( void ) {
 					case SDL_WINDOWEVENT_CLOSE:
 						break;
 					case SDL_WINDOWEVENT_FOCUS_GAINED:
+						AppActivate( SDL_GetWindowFromID( event.window.windowID ), true );
 						input_focus = true;
 						break;
 					case SDL_WINDOWEVENT_FOCUS_LOST:
+						AppActivate( SDL_GetWindowFromID( event.window.windowID ), false );
 						input_focus = false;
 						break;
 				}

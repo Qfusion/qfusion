@@ -2176,7 +2176,7 @@ void CL_Frame( int realMsec, int gameMsec ) {
 		if( cl_maxfps->integer < absMinFps ) {
 			Cvar_ForceSet( "cl_maxfps", STR_TOSTR( absMinFps ) );
 		}
-		maxFps = VID_AppIsMinimized() ? absMinFps : cl_maxfps->value;
+		maxFps = VID_AppIsActive() ? cl_maxfps->value : absMinFps;
 		minMsec = max( ( 1000.0f / maxFps ), 1 );
 		roundingMsec += max( ( 1000.0f / maxFps ), 1.0f ) - minMsec;
 	} else {
