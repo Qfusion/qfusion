@@ -258,20 +258,22 @@ class cPlayer {
 
 		// set cg_loadout
 		String loadout = "";
-		if( this.pendingPrimary == PrimaryWeapon_EBRL )
+		PrimaryWeapon primary = this.pendingPrimary == PrimaryWeapon_Pending ? this.weapPrimary : this.pendingPrimary;
+		if( primary == PrimaryWeapon_EBRL )
 			loadout = "ebrl";
-		else if( this.pendingPrimary == PrimaryWeapon_RLLG )
+		else if( primary == PrimaryWeapon_RLLG )
 			loadout = "rllg";
-		else if( this.pendingPrimary == PrimaryWeapon_EBLG )
+		else if( primary == PrimaryWeapon_EBLG )
 			loadout = "eblg";
 		else
 			return;
 
-		if( this.pendingSecondary == SecondaryWeapon_PG )
+		SecondaryWeapon secondary = this.pendingSecondary == SecondaryWeapon_Pending ? this.weapSecondary : this.pendingSecondary;
+		if( secondary == SecondaryWeapon_PG )
 			loadout += " pg";
-		else if( this.pendingSecondary == SecondaryWeapon_RG )
+		else if( secondary == SecondaryWeapon_RG )
 			loadout += " rg";
-		else if( this.pendingSecondary == SecondaryWeapon_GL )
+		else if( secondary == SecondaryWeapon_GL )
 			loadout += " gl";
 		else
 			return;
