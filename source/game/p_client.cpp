@@ -1422,16 +1422,6 @@ void ClientThink( edict_t *ent, usercmd_t *ucmd, int timeDelta ) {
 
 	GClip_LinkEntity( ent );
 
-	// Regeneration
-	if( ent->r.client->ps.inventory[POWERUP_REGEN] > 0 && ent->health < 200 ) {
-		ent->health += ( game.frametime * 0.001f ) * 10.0f;
-
-		// Regen expires if health reaches 200
-		if( ent->health >= 199.0f ) {
-			ent->r.client->ps.inventory[POWERUP_REGEN]--;
-		}
-	}
-
 	// fire touch functions
 	if( ent->movetype != MOVETYPE_NOCLIP ) {
 		edict_t *other;

@@ -63,16 +63,15 @@ static bool G_Chase_IsValidTarget( edict_t *ent, edict_t *target, bool teamonly 
 */
 static int G_Chase_FindFollowPOV( edict_t *ent ) {
 	int i, j;
-	int quad, warshell, regen, scorelead;
+	int quad, scorelead;
 	int maxteam;
 	int flags[GS_MAX_TEAMS];
-	int newctfpov, newpoweruppov;
+	int newctfpov;
 	int score_best;
 	int newpov = -1;
 	edict_t *target;
 	static int ctfpov = -1, poweruppov = -1;
 	static int64_t flagswitchTime = 0;
-	static int64_t pwupswitchTime = 0;
 #define CARRIERSWITCHDELAY 8000
 
 	if( !ent->r.client || !ent->r.client->resp.chase.active || !ent->r.client->resp.chase.followmode ) {
@@ -98,9 +97,9 @@ static int G_Chase_FindFollowPOV( edict_t *ent ) {
 
 	// find what players have what
 	score_best = INT_MIN;
-	quad = warshell = regen = scorelead = -1;
+	quad = scorelead = -1;
 	memset( flags, -1, sizeof( flags ) );
-	newctfpov = newpoweruppov = -1;
+	newctfpov = -1;
 	maxteam = 0;
 
 	for( i = 1; PLAYERNUM( ( game.edicts + i ) ) < gs.maxclients; i++ ) {
@@ -125,12 +124,6 @@ static int G_Chase_FindFollowPOV( edict_t *ent ) {
 
 		if( target->s.effects & EF_QUAD ) {
 			quad = ENTNUM( target );
-		}
-		if( target->s.effects & EF_SHELL ) {
-			warshell = ENTNUM( target );
-		}
-		if( target->s.effects & EF_REGEN ) {
-			regen = ENTNUM( target );
 		}
 
 		if( target->s.team && ( target->s.effects & EF_CARRIER ) ) {
@@ -194,36 +187,8 @@ static int G_Chase_FindFollowPOV( edict_t *ent ) {
 		flagswitchTime = 0;
 	}
 
-	if( quad != -1 && warshell != -1 && quad != warshell ) {
-		// default to old powerup
-		if( poweruppov >= 0 ) {
-			newpoweruppov = poweruppov;
-		}
-		if( poweruppov < 0 || level.time > pwupswitchTime ) {
-			if( poweruppov == quad ) {
-				newpoweruppov = warshell;
-			} else if( poweruppov == warshell ) {
-				newpoweruppov = quad;
-			} else {
-				newpoweruppov = ( rand() & 1 ) ? quad : warshell;
-			}
-		}
-
-		if( poweruppov != newpoweruppov ) {
-			poweruppov = newpoweruppov;
-			pwupswitchTime = level.time + CARRIERSWITCHDELAY;
-		}
-	} else {
-		if( quad != -1 ) {
-			newpoweruppov = quad;
-		} else if( warshell != -1 ) {
-			newpoweruppov = warshell;
-		} else if( regen != -1 ) {
-			newpoweruppov = regen;
-		}
-
-		poweruppov = newpoweruppov;
-		pwupswitchTime = 0;
+	if( quad != -1 ) {
+		poweruppov = quad;
 	}
 
 	// so, we got all, select what we prefer to show

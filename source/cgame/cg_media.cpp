@@ -78,7 +78,6 @@ void CG_RegisterMediaSounds( void ) {
 	cgs.media.sfxTeleportOut = CG_RegisterMediaSfx( S_TELEPORT );
 
 	//	cgs.media.sfxJumpPad = CG_RegisterMediaSfx ( S_JUMPPAD );
-	cgs.media.sfxShellHit = CG_RegisterMediaSfx( S_SHELL_HIT );
 
 	// Gunblade sounds (weak is blade):
 	for( i = 0; i < 3; i++ ) cgs.media.sfxGunbladeWeakShot[i] = CG_RegisterMediaSfx( va( S_WEAPON_GUNBLADE_W_SHOT_1_to_3, i + 1 ) );

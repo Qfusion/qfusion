@@ -783,18 +783,7 @@ void CG_Event_Fall( entity_state_t *state, int parm ) {
 * CG_Event_Pain
 */
 void CG_Event_Pain( entity_state_t *state, int parm ) {
-	if( parm == PAIN_WARSHELL ) {
-		if( ISVIEWERENTITY( state->number ) ) {
-			trap_S_StartGlobalSound( CG_MediaSfx( cgs.media.sfxShellHit ), CHAN_PAIN,
-									 cg_volume_players->value );
-		} else {
-			trap_S_StartEntitySound( CG_MediaSfx( cgs.media.sfxShellHit ), state->number, CHAN_PAIN,
-									   cg_volume_players->value, state->attenuation );
-		}
-	} else {
-		CG_SexedSound( state->number, CHAN_PAIN, va( S_PLAYER_PAINS, 25 * ( parm + 1 ) ),
-					   cg_volume_players->value, state->attenuation );
-	}
+	CG_SexedSound( state->number, CHAN_PAIN, va( S_PLAYER_PAINS, 25 * ( parm + 1 ) ), cg_volume_players->value, state->attenuation );
 
 	switch( (int)brandom( 0, 3 ) ) {
 		case 0:

@@ -19,10 +19,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 #include "g_local.h"
 
-#define SHELL_TIMEOUT   30000
-#define QUAD_TIMEOUT    30000
-#define REGEN_TIMEOUT   30000
-
 static void MegaHealth_think( edict_t *self );
 
 //======================================================================
@@ -59,12 +55,6 @@ void DoRespawn( edict_t *ent ) {
 	if( ent->item && ( ent->item->type & IT_POWERUP ) ) {
 		if( ent->item->tag == POWERUP_QUAD ) {
 			G_GlobalSound( CHAN_AUTO, trap_SoundIndex( S_ITEM_QUAD_RESPAWN ) );
-		}
-		if( ent->item->tag == POWERUP_SHELL ) {
-			G_GlobalSound( CHAN_AUTO, trap_SoundIndex( S_ITEM_WARSHELL_RESPAWN ) );
-		}
-		if( ent->item->tag == POWERUP_REGEN ) {
-			G_GlobalSound( CHAN_AUTO, trap_SoundIndex( S_ITEM_REGEN_RESPAWN ) );
 		}
 	}
 }

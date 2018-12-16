@@ -27,9 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "q_collision.h"
 #include "gs_public.h"
 
-#define SHELL_TIME  30
 #define QUAD_TIME   30
-#define REGEN_TIME  30
 
 /*
 *
@@ -395,55 +393,6 @@ gsitem_t itemdefs[] =
 		NULL,
 		S_QUAD_FIRE " " S_ITEM_QUAD_RESPAWN,
 		// S_QUAD_USE " " S_QUAD_FIRE,
-		NULL
-	},
-
-	//QUAKED item_warshell (.3 .3 1) (-16 -16 -16) (16 16 16)
-	{
-		"item_warshell",
-		POWERUP_SHELL,
-		IT_POWERUP,
-		ITFLAG_PICKABLE | ITFLAG_DROPABLE,
-
-		{ PATH_WARSHELL_BELT_MODEL, PATH_WARSHELL_SPHERE_MODEL },
-		PATH_SHELL_ICON,
-		PATH_SHELL_SIMPLEITEM,
-		S_PICKUP_SHELL,
-		EF_OUTLINE | EF_ROTATE_AND_BOB,
-
-		"WarShell", "Shell", NULL,
-		SHELL_TIME,
-		0,
-		AMMO_NONE,
-		AMMO_NONE,
-		NULL,
-		NULL,
-		S_ITEM_WARSHELL_RESPAWN,
-		//S_SHELL_USE,
-		NULL
-	},
-
-	//QUAKED item_regen (.3 .3 1) (-16 -16 -16) (16 16 16)
-	{
-		"item_regen",
-		POWERUP_REGEN,
-		IT_POWERUP,
-		ITFLAG_PICKABLE | ITFLAG_DROPABLE,
-
-		{ PATH_REGEN_MODEL },
-		PATH_REGEN_ICON,
-		PATH_REGEN_SIMPLEITEM,
-		S_PICKUP_REGEN,
-		EF_OUTLINE | EF_ROTATE_AND_BOB,
-
-		"Regeneration", "Regen", NULL,
-		REGEN_TIME,
-		0,
-		AMMO_NONE,
-		AMMO_NONE,
-		NULL,
-		NULL,
-		S_ITEM_REGEN_RESPAWN,
 		NULL
 	},
 

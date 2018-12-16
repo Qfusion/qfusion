@@ -392,8 +392,6 @@ typedef enum {
 typedef enum {
 	POWERUP_NONE = 0,
 	POWERUP_QUAD = HEALTH_TOTAL,
-	POWERUP_SHELL,
-	POWERUP_REGEN,
 
 	POWERUP_TOTAL,
 	ITEMS_TOTAL = POWERUP_TOTAL,
@@ -690,7 +688,6 @@ enum {
 	PAIN_30,
 	PAIN_60,
 	PAIN_100,
-	PAIN_WARSHELL,
 
 	PAIN_TOTAL
 };
@@ -905,28 +902,24 @@ enum {
 // An entity that has effects will be sent to the client
 // even if it has a zero index model.
 #define EF_ROTATE_AND_BOB           ( 1 << 0 )
-#define EF_SHELL                    ( 1 << 1 )
-#define EF_QUAD                     ( 1 << 2 )
+#define EF_QUAD                     ( 1 << 1 )
+#define EF_EXPIRING_QUAD            ( 1 << 2 )
 #define EF_CARRIER                  ( 1 << 3 )
 #define EF_BUSYICON                 ( 1 << 4 )
 #define EF_TAKEDAMAGE               ( 1 << 5 )
 #define EF_TEAMCOLOR_TRANSITION     ( 1 << 6 )
-#define EF_EXPIRING_QUAD            ( 1 << 7 )
-#define EF_EXPIRING_SHELL           ( 1 << 8 )
-#define EF_GODMODE                  ( 1 << 9 )
-#define EF_REGEN                    ( 1 << 10 )
-#define EF_EXPIRING_REGEN           ( 1 << 11 )
-#define EF_GHOST                    ( 1 << 12 )
+#define EF_GODMODE                  ( 1 << 7 )
+#define EF_GHOST                    ( 1 << 8 )
 
 // oh, this is so nasty... (reuse effect bits for different entity types)
 #define EF_NOPORTALENTS             EF_CARRIER
 #define EF_PLAYER_HIDENAME          EF_TEAMCOLOR_TRANSITION
 
 // these ones can be only set from client side
-#define EF_AMMOBOX                  ( 1 << 14 )
-#define EF_RACEGHOST                ( 1 << 15 )
-#define EF_OUTLINE                  ( 1 << 16 )
-#define EF_GHOSTITEM                ( 1 << 17 )
+#define EF_AMMOBOX                  ( 1 << 9 )
+#define EF_RACEGHOST                ( 1 << 10 )
+#define EF_OUTLINE                  ( 1 << 11 )
+#define EF_GHOSTITEM                ( 1 << 12 )
 
 //===============================================================
 // gs_weapons.c

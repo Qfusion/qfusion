@@ -679,19 +679,7 @@ void CG_AddColoredOutLineEffect( entity_t *ent, int effects, uint8_t r, uint8_t 
 		}
 	}
 
-	if( effects & EF_SHELL ) {
-		if( ( effects & EF_EXPIRING_SHELL ) && ( ( ( cg.time + 500 ) / 100 ) & 4 ) ) {
-			effects &= ~EF_SHELL;
-		}
-	}
-
-	if( effects & EF_REGEN ) {
-		if( ( effects & EF_EXPIRING_REGEN ) && ( ( cg.time / 100 ) & 4 ) ) {
-			effects &= ~EF_REGEN;
-		}
-	}
-
-	if( effects & ( EF_QUAD | EF_SHELL | EF_REGEN | EF_GODMODE ) ) {
+	if( effects & ( EF_QUAD | EF_GODMODE ) ) {
 		float pulse;
 		scale = CG_OutlineScaleForDist( ent, 4096, 3.5f );
 		pulse = fabs( sin( cg.time * 0.005f ) );
@@ -710,52 +698,10 @@ void CG_AddColoredOutLineEffect( entity_t *ent, int effects, uint8_t r, uint8_t 
 	ent->outlineHeight = scale;
 	RGBA = ent->outlineRGBA;
 
-	// All powerups
-	if( ( effects & ( EF_QUAD | EF_SHELL | EF_REGEN ) ) == ( EF_QUAD | EF_SHELL | EF_REGEN ) ) {
-		if( (int64_t)( cg.time * 0.005 ) & 1 ) {
-			effects &= ~EF_SHELL;
-		} else if( (int64_t)( cg.time * 0.01 ) & 1 ) {
-			effects &= ~EF_REGEN;
-		} else {
-			effects &= ~EF_QUAD;
-		}
-	}
-
-	// Quad + regen
-	if( ( effects & ( EF_QUAD | EF_REGEN ) ) == ( EF_QUAD | EF_REGEN ) ) {
-		if( (int64_t)( cg.time * 0.005 ) & 1 ) {
-			effects &= ~EF_REGEN;
-		} else {
-			effects &= ~EF_QUAD;
-		}
-	}
-
-	// Shell + regen
-	if( ( effects & ( EF_SHELL | EF_REGEN ) ) == ( EF_SHELL | EF_REGEN ) ) {
-		if( (int64_t)( cg.time * 0.005 ) & 1 ) {
-			effects &= ~EF_REGEN;
-		} else {
-			effects &= ~EF_SHELL;
-		}
-	}
-
-	// Shell + quad
-	if( ( effects & ( EF_SHELL | EF_QUAD ) ) == ( EF_SHELL | EF_QUAD ) ) {
-		if( (int64_t)( cg.time * 0.005 ) & 1 ) {
-			effects &= ~EF_REGEN;
-		} else {
-			effects &= ~EF_QUAD;
-		}
-	}
-
 	if( effects & EF_GODMODE ) {
 		Vector4Set( RGBA, 255, 255, 255, a );
 	} else if( effects & EF_QUAD ) {
 		Vector4Set( RGBA, 255, 255, 0, a );
-	} else if( effects & EF_SHELL ) {
-		Vector4Set( RGBA, 125, 200, 255, a );
-	} else if( effects & EF_REGEN ) {
-		Vector4Set( RGBA, 255, 0, 0, a );
 	} else {
 		Vector4Set( RGBA, ( uint8_t )r, ( uint8_t )g, ( uint8_t )b, ( uint8_t )a );
 	}

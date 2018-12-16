@@ -197,10 +197,6 @@ void G_Gametype_GENERIC_ScoreboardMessage( void ) {
 			carrierIcon = trap_ImageIndex( ( e->s.team == TEAM_BETA ) ? PATH_ALPHAFLAG_ICON : PATH_BETAFLAG_ICON );
 		} else if( e->s.effects & EF_QUAD ) {
 			carrierIcon = trap_ImageIndex( PATH_QUAD_ICON );
-		} else if( e->s.effects & EF_SHELL ) {
-			carrierIcon = trap_ImageIndex( PATH_SHELL_ICON );
-		} else if( e->s.effects & EF_REGEN ) {
-			carrierIcon = trap_ImageIndex( PATH_REGEN_ICON );
 		} else {
 			carrierIcon = 0;
 		}

@@ -383,9 +383,7 @@ static void G_SnapEntities( void ) {
 							if( ent->snap.damage_fall ) {
 								ent->pain_debounce_time = level.time + 200;
 							} else if( !G_IsDead( ent ) ) {
-								if( ent->r.client->ps.inventory[POWERUP_SHELL] > 0 ) {
-									G_AddEvent( ent, EV_PAIN, PAIN_WARSHELL, true );
-								} else if( ent->health <= 20 ) {
+								if( ent->health <= 20 ) {
 									G_AddEvent( ent, EV_PAIN, PAIN_20, true );
 								} else if( ent->health <= 35 ) {
 									G_AddEvent( ent, EV_PAIN, PAIN_30, true );

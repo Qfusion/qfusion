@@ -351,11 +351,6 @@ void G_Damage( edict_t *targ, edict_t *inflictor, edict_t *attacker, const vec3_
 		else if( teamdamage ) {
 			take = save = 0;
 		}
-		// apply warShell powerup protection
-		else if( targ->r.client && targ->r.client->ps.inventory[POWERUP_SHELL] > 0 ) {
-			take = damage * 0.25f;
-			save = damage - take;
-		}
 	}
 
 	// do the damage

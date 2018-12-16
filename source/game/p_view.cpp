@@ -348,20 +348,6 @@ static void G_SetClientEffects( edict_t *ent ) {
 		}
 	}
 
-	if( client->ps.inventory[POWERUP_SHELL] > 0 ) {
-		ent->s.effects |= EF_SHELL;
-		if( client->ps.inventory[POWERUP_SHELL] < 6 ) {
-			ent->s.effects |= EF_EXPIRING_SHELL;
-		}
-	}
-
-	if( client->ps.inventory[POWERUP_REGEN] > 0 ) {
-		ent->s.effects |= EF_REGEN;
-		if( client->ps.inventory[POWERUP_REGEN] < 6 ) {
-			ent->s.effects |= EF_EXPIRING_REGEN;
-		}
-	}
-
 	// show cheaters!!!
 	if( ent->flags & FL_GODMODE ) {
 		ent->s.effects |= EF_GODMODE;

@@ -67,8 +67,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // powerups
 #define PATH_QUAD_ICON          "gfx/hud/icons/powerup/quad"
-#define PATH_SHELL_ICON         "gfx/hud/icons/powerup/warshell"
-#define PATH_REGEN_ICON         "gfx/hud/icons/powerup/regen"
 
 // flags
 #define PATH_ALPHAFLAG_ICON     "gfx/hud/icons/flags/iconflag_alpha"
@@ -101,8 +99,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define PATH_HEALTH_100_SIMPLEITEM      "gfx/simpleitems/health/100"
 #define PATH_HEALTH_ULTRA_SIMPLEITEM        "gfx/simpleitems/health/100ultra"
 #define PATH_QUAD_SIMPLEITEM            "gfx/simpleitems/powerup/quad"
-#define PATH_SHELL_SIMPLEITEM           "gfx/simpleitems/powerup/warshell"
-#define PATH_REGEN_SIMPLEITEM           "gfx/simpleitems/powerup/regen"
 
 #define PATH_KEYICON_FORWARD            "gfx/hud/keys/key_forward"
 #define PATH_KEYICON_BACKWARD           "gfx/hud/keys/key_back"
@@ -156,9 +152,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // powerups
 #define PATH_QUAD_MODEL         "models/powerups/instant/quad.md3"
 #define PATH_QUAD_LIGHT_MODEL       "models/powerups/instant/quad_light.md3"
-#define PATH_WARSHELL_BELT_MODEL    "models/powerups/instant/warshell_belt.md3"
-#define PATH_WARSHELL_SPHERE_MODEL  "models/powerups/instant/warshell_sphere.md3"
-#define PATH_REGEN_MODEL            "models/powerups/instant/regen.md3"
 
 // misc
 
@@ -199,13 +192,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define S_PICKUP_HEALTH_MEGA    "sounds/items/megahealth"        // pickup megahealth
 
 #define S_PICKUP_QUAD       "sounds/items/quad_pickup"       // pickup Quad damage
-#define S_PICKUP_SHELL      "sounds/items/shell_pickup"      // pickup WarShell
-#define S_PICKUP_REGEN      "sounds/items/regen_pickup"      // pickup Regeneration
 
 #define S_ITEM_RESPAWN      "sounds/items/item_spawn"        // item respawn
 #define S_ITEM_QUAD_RESPAWN "sounds/items/quad_spawn"        // Quad respawn
-#define S_ITEM_WARSHELL_RESPAWN "sounds/items/shell_spawn"       // WarShell respawn
-#define S_ITEM_REGEN_RESPAWN    "sounds/items/regen_spawn"        // Regen respawn
 
 // misc sounds
 #define S_TIMER_BIP_BIP     "sounds/misc/timer_bip_bip"
@@ -248,9 +237,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 //#define S_QUAD_USE				"sounds/items/quad_use"
 #define S_QUAD_FIRE     "sounds/items/quad_fire"
-
-//#define S_SHELL_USE				"sounds/items/shell_use"
-#define S_SHELL_HIT     "sounds/items/shell_hit"
 
 // world sounds
 #define S_WORLD_WATER_IN            "sounds/world/water_in"

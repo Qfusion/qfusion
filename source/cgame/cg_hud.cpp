@@ -508,8 +508,6 @@ static const reference_numeric_t cg_numeric_references[] =
 	{ "QUICKMENU", CG_GetOverlayMenuState, NULL },
 
 	{ "POWERUP_QUAD_TIME", CG_GetPowerupTime, (void *)POWERUP_QUAD },
-	{ "POWERUP_WARSHELL_TIME", CG_GetPowerupTime, (void *)POWERUP_SHELL },
-	{ "POWERUP_REGEN_TIME", CG_GetPowerupTime, (void *)POWERUP_REGEN },
 
 	{ "DAMAGE_INDICATOR_TOP", CG_GetDamageIndicatorDirValue, (void *)0 },
 	{ "DAMAGE_INDICATOR_RIGHT", CG_GetDamageIndicatorDirValue, (void *)1 },
