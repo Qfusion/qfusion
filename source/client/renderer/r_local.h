@@ -669,7 +669,6 @@ void R_BlurScreen( void );
 #define MAX_SURF_QUERIES        0x1E0
 
 void    R_DrawWorldNode( void );
-void	R_DrawWorldShadowNode( void );
 bool    R_SurfNoDraw( const msurface_t *surf );
 bool    R_SurfNoDlight( const msurface_t *surf );
 void	R_CacheBrushModelEntity( const entity_t *e );

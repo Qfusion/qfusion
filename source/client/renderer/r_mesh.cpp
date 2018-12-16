@@ -23,8 +23,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_local.h"
 
 drawList_t r_worldlist;
-drawList_t r_shadowlist;
-drawList_t r_shadowportallist;
 drawList_t r_portalmasklist;
 drawList_t r_portallist, r_skyportallist;
 
@@ -43,8 +41,6 @@ void R_InitDrawLists( void ) {
 	R_InitDrawList( &r_portalmasklist );
 	R_InitDrawList( &r_portallist );
 	R_InitDrawList( &r_skyportallist );
-	R_InitDrawList( &r_shadowlist );
-	R_InitDrawList( &r_shadowportallist );
 }
 
 /*
