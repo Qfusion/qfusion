@@ -1000,11 +1000,8 @@ static void R_CullEntities( void ) {
 	}
 
 	for( i = rsc.numLocalEntities; i < rsc.numEntities; i++ ) {
-		bool culled;
-
 		entNum = i;
 		e = R_NUM2ENT( entNum );
-		culled = true;
 
 		if( e->flags & RF_WEAPONMODEL ) {
 			if( rn.renderFlags & RF_NONVIEWERREF ) {
@@ -1024,13 +1021,8 @@ static void R_CullEntities( void ) {
 			goto add;
 		}
 
-		if( e->rtype == RT_MODEL ) {
-			culled = R_CullModelEntity( e, false );
-		}
-
-		if( culled ) {
+		if( e->rtype == RT_MODEL && R_CullModelEntity( e, false ) )
 			continue;
-		}
 
 add:
 		rn.entpvs[entNum>>3] |= (1<<(entNum&7));
