@@ -594,19 +594,8 @@ static void G_RunEntities( void ) {
 * G_RunClients
 */
 static void G_RunClients( void ) {
-	int i, step;
-	edict_t *ent;
-
-	if( level.framenum & 1 ) {
-		i = gs.maxclients - 1;
-		step = -1;
-	} else {
-		i = 0;
-		step = 1;
-	}
-
-	for( ; i < gs.maxclients && i >= 0; i += step ) {
-		ent = game.edicts + 1 + i;
+	for( int i = 0; i < gs.maxclients; i++ ) {
+		edict_t *ent = game.edicts + 1 + i;
 		if( !ent->r.inuse ) {
 			continue;
 		}
