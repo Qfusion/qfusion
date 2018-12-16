@@ -55,6 +55,7 @@ Entity @bombDropper;
 int64 bombActionTime;
 
 Entity @bombCarrier = null;
+int64 bombCarrierCanPlantTime = -1;
 Vec3 bombCarrierLastPos; // so it drops in the right place when they change teams
 Vec3 bombCarrierLastVel;
 

@@ -472,6 +472,7 @@ static const reference_numeric_t cg_numeric_references[] =
 	{ "ROUND_TYPE", CG_GetStatValue, (void *)STAT_ROUND_TYPE },
 
 	{ "CARRYING_BOMB", CG_GetStatValue, (void *)STAT_CARRYING_BOMB },
+	{ "CAN_PLANT_BOMB", CG_GetStatValue, (void *)STAT_CAN_PLANT_BOMB },
 	{ "CAN_CHANGE_LOADOUT", CG_GetStatValue, (void *)STAT_CAN_CHANGE_LOADOUT },
 
 	{ "ALPHA_PLAYERS_ALIVE", CG_GetStatValue, (void *)STAT_ALPHA_PLAYERS_ALIVE },

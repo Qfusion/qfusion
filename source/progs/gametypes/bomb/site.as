@@ -106,7 +106,14 @@ class cBombSite
 
 	void carrierTouched() {
 		if( bombCanPlant() ) {
-			bombPlant( this );
+			bombCarrierCanPlantTime = levelTime;
+			bombCarrier.client.setHUDStat( STAT_CAN_PLANT_BOMB, 1 );
+
+			Vec3 mins, maxs;
+			bombCarrier.getSize( mins, maxs );
+			if( maxs.z < 40 ) {
+				bombPlant( this );
+			}
 		}
 	}
 

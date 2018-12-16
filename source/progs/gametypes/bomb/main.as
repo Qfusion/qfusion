@@ -478,6 +478,7 @@ void GT_ThinkRules() {
 		bool can_change_loadout = !client.getEnt().isGhosting() && roundState == RoundState_Pre;
 
 		client.setHUDStat( STAT_CARRYING_BOMB, 0 );
+		client.setHUDStat( STAT_CAN_PLANT_BOMB, 0 );
 		client.setHUDStat( STAT_CAN_CHANGE_LOADOUT, can_change_loadout ? 1 : 0 );
 		client.setHUDStat( STAT_ALPHA_PLAYERS_ALIVE, MSG_ALIVE_ALPHA );
 		client.setHUDStat( STAT_ALPHA_PLAYERS_TOTAL, MSG_TOTAL_ALPHA );
@@ -500,6 +501,10 @@ void GT_ThinkRules() {
 
 	if( bombState == BombState_Carried ) {
 		bombCarrier.client.setHUDStat( STAT_CARRYING_BOMB, 1 );
+
+		// seems like physics only gets run on alternating frames
+		int can_plant = bombCarrierCanPlantTime >= levelTime - frameTime ? 1 : 0;
+		bombCarrier.client.setHUDStat( STAT_CAN_PLANT_BOMB, can_plant );
 
 		bombCarrierLastPos = bombCarrier.origin;
 		bombCarrierLastVel = bombCarrier.velocity;
