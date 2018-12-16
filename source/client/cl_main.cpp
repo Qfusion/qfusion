@@ -2169,11 +2169,7 @@ void CL_Frame( int realMsec, int gameMsec ) {
 	CL_UserInputFrame( realMsec );
 	CL_NetFrame( realMsec, gameMsec );
 
-	if( cls.state == CA_DISCONNECTED ) {
-		maxFps = 60;
-		minMsec = 1000.0f / maxFps;
-		roundingMsec += 1000.0f / maxFps - minMsec;
-	} else if( cl_maxfps->integer > 0 && cls.demo.playing && !( cls.demo.avi_video && cls.state == CA_ACTIVE ) ) {
+	if( cl_maxfps->integer > 0 && !cls.demo.playing && !( cls.demo.avi_video && cls.state == CA_ACTIVE ) ) {
 		const int absMinFps = 24;
 
 		// do not allow setting cl_maxfps to very low values to prevent cheating
