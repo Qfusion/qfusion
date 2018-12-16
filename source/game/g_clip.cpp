@@ -1016,13 +1016,10 @@ bool GClip_EntityContact( const vec3_t mins, const vec3_t maxs, edict_t *ent ) {
 * GClip_TouchTriggers
 */
 void GClip_TouchTriggers( edict_t *ent ) {
-	int i, num;
-	edict_t *hit;
 	int touch[MAX_EDICTS];
 	vec3_t mins, maxs;
 
-	// dead things don't activate triggers!
-	if( ent->r.client && G_IsDead( ent ) ) {
+	if( !ent->r.inuse || ( ent->r.client && G_IsDead( ent ) ) ) {
 		return;
 	}
 
@@ -1030,16 +1027,12 @@ void GClip_TouchTriggers( edict_t *ent ) {
 	VectorAdd( ent->s.origin, ent->r.maxs, maxs );
 
 	// FIXME: should be s.origin + mins and s.origin + maxs because of absmin and absmax padding?
-	num = GClip_AreaEdicts( ent->r.absmin, ent->r.absmax, touch, MAX_EDICTS, AREA_TRIGGERS, 0 );
+	int num = GClip_AreaEdicts( ent->r.absmin, ent->r.absmax, touch, MAX_EDICTS, AREA_TRIGGERS, 0 );
 
 	// be careful, it is possible to have an entity in this
 	// list removed before we get to it (killtriggered)
-	for( i = 0; i < num; i++ ) {
-		if( !ent->r.inuse ) {
-			break;
-		}
-
-		hit = &game.edicts[touch[i]];
+	for( int i = 0; i < num; i++ ) {
+		edict_t *hit = &game.edicts[touch[i]];
 		if( !hit->r.inuse ) {
 			continue;
 		}
@@ -1057,8 +1050,6 @@ void GClip_TouchTriggers( edict_t *ent ) {
 }
 
 void G_PMoveTouchTriggers( pmove_t *pm, vec3_t previous_origin ) {
-	int i, num;
-	edict_t *hit;
 	int touch[MAX_EDICTS];
 	vec3_t mins, maxs;
 	edict_t *ent;
@@ -1068,7 +1059,7 @@ void G_PMoveTouchTriggers( pmove_t *pm, vec3_t previous_origin ) {
 	}
 
 	ent = game.edicts + pm->playerState->POVnum;
-	if( !ent->r.client || G_IsDead( ent ) ) { // dead things don't activate triggers!
+	if( !ent->r.inuse || !ent->r.client || G_IsDead( ent ) ) { // dead things don't activate triggers!
 		return;
 	}
 
@@ -1092,7 +1083,7 @@ void G_PMoveTouchTriggers( pmove_t *pm, vec3_t previous_origin ) {
 	GClip_LinkEntity( ent );
 
 	// expand the search bounds to include the space between the previous and current origin
-	for( i = 0; i < 3; i++ ) {
+	for( int i = 0; i < 3; i++ ) {
 		if( previous_origin[i] < pm->playerState->pmove.origin[i] ) {
 			mins[i] = previous_origin[i] + pm->maxs[i];
 			if( mins[i] > pm->playerState->pmove.origin[i] + pm->mins[i] ) {
@@ -1108,16 +1099,12 @@ void G_PMoveTouchTriggers( pmove_t *pm, vec3_t previous_origin ) {
 		}
 	}
 
-	num = GClip_AreaEdicts( mins, maxs, touch, MAX_EDICTS, AREA_TRIGGERS, 0 );
+	int num = GClip_AreaEdicts( mins, maxs, touch, MAX_EDICTS, AREA_TRIGGERS, 0 );
 
 	// be careful, it is possible to have an entity in this
 	// list removed before we get to it (killtriggered)
-	for( i = 0; i < num; i++ ) {
-		if( !ent->r.inuse ) {
-			break;
-		}
-
-		hit = &game.edicts[touch[i]];
+	for( int i = 0; i < num; i++ ) {
+		edict_t *hit = &game.edicts[touch[i]];
 		if( !hit->r.inuse ) {
 			continue;
 		}
