@@ -195,8 +195,6 @@ typedef struct {
 	edict_t *spawning_entity;   // entity being spawned from G_InitLevel
 	int body_que;               // dead bodies
 
-	edict_t *think_client_entity;// cycles between connected clients each frame
-
 	int numCheckpoints;
 	int numLocations;
 

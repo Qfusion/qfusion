@@ -112,8 +112,7 @@ static void AI_SpecThink( edict_t * self ) {
 
 	if( self->r.client->team == TEAM_SPECTATOR ) {
 		// try to join a team
-		// note that G_Teams_JoinAnyTeam is quite slow so only call it per frame
-		if( !self->r.client->queueTimeStamp && self == level.think_client_entity ) {
+		if( !self->r.client->queueTimeStamp ) {
 			G_Teams_JoinAnyTeam( self, false );
 		}
 
@@ -126,19 +125,19 @@ static void AI_SpecThink( edict_t * self ) {
 	}
 
 	usercmd_t ucmd;
-        memset( &ucmd, 0, sizeof( usercmd_t ) );
+	memset( &ucmd, 0, sizeof( usercmd_t ) );
 
-        // set approximate ping and show values
-        ucmd.serverTimeStamp = game.serverTime;
-        ucmd.msec = (uint8_t)game.frametime;
+	// set approximate ping and show values
+	ucmd.serverTimeStamp = game.serverTime;
+	ucmd.msec = (uint8_t)game.frametime;
 
-        ClientThink( self, &ucmd, 0 );
+	ClientThink( self, &ucmd, 0 );
 }
 
 static void AI_GameThink( edict_t * self ) {
 	if( GS_MatchState() <= MATCH_STATE_WARMUP ) {
-                G_Match_Ready( self );
-        }
+		G_Match_Ready( self );
+	}
 
 	usercmd_t ucmd;
 	memset( &ucmd, 0, sizeof( usercmd_t ) );

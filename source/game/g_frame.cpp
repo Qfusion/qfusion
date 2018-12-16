@@ -611,33 +611,6 @@ static void G_RunClients( void ) {
 }
 
 /*
-* G_GetNextThinkClient
-* Cycles between connected clients
-*/
-static edict_t *G_GetNextThinkClient( edict_t *current ) {
-	edict_t *check, *start;
-	edict_t *first, *last;
-
-	first = game.edicts + 1;
-	last = game.edicts + gs.maxclients + 1;
-	start = current ? current + 1 : first;
-
-	for( check = start; ; check++ ) {
-		if( check > last ) {
-			// wrap
-			check = first;
-		}
-		if( check->r.inuse ) {
-			return check;
-		}
-		if( check == start ) {
-			break;
-		}
-	}
-	return NULL;
-}
-
-/*
 * G_RunFrame
 * Advances the world
 */
@@ -679,7 +652,6 @@ void G_RunFrame( unsigned int msec, int64_t serverTime ) {
 
 	level.framenum++;
 	level.time += msec;
-	level.think_client_entity = G_GetNextThinkClient( level.think_client_entity );
 
 	G_SpawnQueue_Think();
 
