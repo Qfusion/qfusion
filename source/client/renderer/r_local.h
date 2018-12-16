@@ -427,8 +427,6 @@ void Mod_LoadQ3BrushModel( model_t *mod, const model_t *parent, void *buffer, bs
 //
 void        R_TakeScreenShot( const char *path, const char *name, const char *fmtString, int x, int y, int w, int h, bool silent );
 void        R_ScreenShot_f( void );
-void        R_TakeEnvShot( const char *path, const char *name, unsigned maxPixels );
-void        R_EnvShot_f( void );
 void        R_ImageList_f( void );
 void        R_ShaderList_f( void );
 void        R_ShaderDump_f( void );

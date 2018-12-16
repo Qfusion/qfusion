@@ -221,10 +221,6 @@ void RF_ScreenShot( const char *path, const char *name, const char *fmtstring, b
 	rrf.adapter.cmdPipe->ScreenShot( rrf.adapter.cmdPipe, path, name, fmtstring, silent );
 }
 
-void RF_EnvShot( const char *path, const char *name, unsigned pixels ) {
-	rrf.adapter.cmdPipe->EnvShot( rrf.adapter.cmdPipe, path, name, pixels );
-}
-
 const char *RF_GetSpeedsMessage( char *out, size_t size ) {
 	ri.Mutex_Lock( rf.speedsMsgLock );
 	Q_strncpyz( out, rf.speedsMsg, size );

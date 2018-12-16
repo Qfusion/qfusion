@@ -600,7 +600,6 @@ enum {
 	REF_PIPE_CMD_SHUTDOWN,
 	REF_PIPE_CMD_RESIZE_FRAMEBUFFERS,
 	REF_PIPE_CMD_SCREEN_SHOT,
-	REF_PIPE_CMD_ENV_SHOT,
 
 	REF_PIPE_CMD_BEGIN_REGISTRATION,
 	REF_PIPE_CMD_END_REGISTRATION,
@@ -695,14 +694,6 @@ static unsigned R_HandleScreenShotReliableCmd( const void *pcmd ) {
 	return sizeof( *cmd );
 }
 
-static unsigned R_HandleEnvShotReliableCmd( const void *pcmd ) {
-	const refReliableCmdScreenShot_t *cmd = ( const refReliableCmdScreenShot_t * ) pcmd;
-
-	R_TakeEnvShot( cmd->path, cmd->name, cmd->pixels );
-
-	return sizeof( *cmd );
-}
-
 static unsigned R_HandleBeginRegistrationReliableCmd( const void *pcmd ) {
 	const refReliableCmdBeginEndRegistration_t *cmd = ( const refReliableCmdBeginEndRegistration_t * ) pcmd;
 
@@ -760,7 +751,6 @@ static refPipeCmdHandler_t refPipeCmdHandlers[NUM_REF_PIPE_CMDS] =
 	R_HandleShutdownReliableCmd,
 	R_HandleResizeFramebuffersCmd,
 	R_HandleScreenShotReliableCmd,
-	R_HandleEnvShotReliableCmd,
 	R_HandleBeginRegistrationReliableCmd,
 	R_HandleEndRegistrationReliableCmd,
 	R_HandleSetCustomColorReliableCmd,
@@ -812,10 +802,6 @@ static void RF_IssueEnvScreenShotReliableCmd( ref_cmdpipe_t *cmdpipe, int id, co
 
 static void RF_IssueScreenShotReliableCmd( ref_cmdpipe_t *cmdpipe, const char *path, const char *name, const char *fmtstring, bool silent ) {
 	RF_IssueEnvScreenShotReliableCmd( cmdpipe, REF_PIPE_CMD_SCREEN_SHOT, path, name, fmtstring, 0, 0, glConfig.width, glConfig.height, 0, silent );
-}
-
-static void RF_IssueEnvShotReliableCmd( ref_cmdpipe_t *cmdpipe, const char *path, const char *name, unsigned pixels ) {
-	RF_IssueEnvScreenShotReliableCmd( cmdpipe, REF_PIPE_CMD_ENV_SHOT, path, name, "", 0, 0, glConfig.width, glConfig.height, pixels, false );
 }
 
 static void RF_IssueAviShotReliableCmd( ref_cmdpipe_t *cmdpipe, const char *path, const char *name, int x, int y, int w, int h ) {
@@ -887,7 +873,6 @@ ref_cmdpipe_t *RF_CreateCmdPipe() {
 	cmdpipe->Shutdown = &RF_IssueShutdownReliableCmd;
 	cmdpipe->ResizeFramebuffers = &RF_IssueResizeFramebuffersCmd;
 	cmdpipe->ScreenShot = &RF_IssueScreenShotReliableCmd;
-	cmdpipe->EnvShot = &RF_IssueEnvShotReliableCmd;
 	cmdpipe->AviShot = &RF_IssueAviShotReliableCmd;
 	cmdpipe->BeginRegistration = &RF_IssueBeginRegistrationReliableCmd;
 	cmdpipe->EndRegistration = &RF_IssueEndRegistrationReliableCmd;
