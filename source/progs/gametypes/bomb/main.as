@@ -36,7 +36,7 @@ const float BOMB_MIN_DOT_GROUND = 0.90f;
 
 const Vec3 VEC_UP( 0, 0, 1 ); // this must have length 1! don't change this unless +z is no longer up...
 
-const float BOMB_ARM_DEFUSE_RADIUS = 100.0f; // it makes no sense for the two to be different
+const float BOMB_ARM_DEFUSE_RADIUS = 32.0f;
 
 const uint BOMB_SPRITE_RESIZE_TIME = 300; // time taken to expand/shrink sprite/decal
 
@@ -73,7 +73,7 @@ Vec3 BOMB_MAXS(  16,  16, 48 ); // same size as player i guess
 Cvar cvarRoundTime( "g_bomb_roundtime", "60", CVAR_ARCHIVE );
 Cvar cvarExplodeTime( "g_bomb_bombtimer", "30", CVAR_ARCHIVE );
 Cvar cvarArmTime( "g_bomb_armtime", "4", CVAR_ARCHIVE );
-Cvar cvarDefuseTime( "g_bomb_defusetime", "7", CVAR_ARCHIVE );
+Cvar cvarDefuseTime( "g_bomb_defusetime", "5", CVAR_ARCHIVE );
 Cvar cvarEnableCarriers( "g_bomb_carriers", "1", CVAR_ARCHIVE );
 Cvar cvarSpawnProtection( "g_bomb_spawnprotection", "3", CVAR_ARCHIVE );
 
@@ -100,7 +100,7 @@ float min( float a, float b ) {
 	return a < b ? a : b;
 }
 
-void setTeamProgress( int teamNum, int progress, BombProgress type ) {
+void setTeamProgress( int teamNum, int percent, BombProgress type ) {
 	for( int t = TEAM_ALPHA; t < GS_MAX_TEAMS; t++ ) {
 		Team @team = @G_GetTeam( t );
 
@@ -118,7 +118,7 @@ void setTeamProgress( int teamNum, int progress, BombProgress type ) {
 				continue;
 			}
 
-			client.setHUDStat( STAT_PROGRESS, progress );
+			client.setHUDStat( STAT_PROGRESS, percent );
 			client.setHUDStat( STAT_PROGRESS_TYPE, type );
 		}
 	}
@@ -153,7 +153,7 @@ void BOMB_SetVoicecommOverlayMenu( Client @client ) {
 
 bool GT_Command( Client @client, const String &cmdString, const String &argsString, int argc ) {
 	if( cmdString == "drop" ) {
-		if( @client.getEnt() == @bombCarrier ) {
+		if( @client.getEnt() == @bombCarrier && bombState == BombState_Carried ) {
 			bombDrop( BombDrop_Normal );
 		}
 
@@ -387,7 +387,7 @@ void GT_PlayerRespawn( Entity @ent, int old_team, int new_team ) {
 	}
 
 	if( new_team != old_team ) {
-		if( bombState == BombState_Carried && @ent == @bombCarrier ) {
+		if( @ent == @bombCarrier ) {
 			bombDrop( BombDrop_Team );
 		}
 
@@ -486,8 +486,7 @@ void GT_ThinkRules() {
 		client.setHUDStat( STAT_BETA_PLAYERS_TOTAL, MSG_TOTAL_BETA );
 	}
 
-	// i guess you could speed this up...
-	if( bombState == BombState_Armed ) {
+	if( bombState == BombState_Planted ) {
 		uint aliveOff = TEAM_ALPHA == attackingTeam ? aliveAlpha : aliveBeta;
 
 		if( aliveOff == 0 ) {
@@ -503,7 +502,7 @@ void GT_ThinkRules() {
 		bombCarrier.client.setHUDStat( STAT_CARRYING_BOMB, 1 );
 
 		// seems like physics only gets run on alternating frames
-		int can_plant = bombCarrierCanPlantTime >= levelTime - frameTime ? 1 : 0;
+		int can_plant = bombCarrierCanPlantTime >= levelTime - 50 ? 1 : 0;
 		bombCarrier.client.setHUDStat( STAT_CAN_PLANT_BOMB, can_plant );
 
 		bombCarrierLastPos = bombCarrier.origin;

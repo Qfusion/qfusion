@@ -66,7 +66,7 @@ void playerKilled( Entity @victim, Entity @attacker, Entity @inflictor ) {
 	if( roundState >= RoundState_Finished )
 		return;
 
-	if( bombState == BombState_Carried && @victim == @bombCarrier ) {
+	if( @victim == @bombCarrier ) {
 		bombDrop( BombDrop_Killed );
 	}
 
@@ -94,7 +94,7 @@ void checkPlayersAlive( int team ) {
 
 	if( alive == 0 ) {
 		if( team == attackingTeam ) {
-			if( bombState != BombState_Armed ) {
+			if( bombState != BombState_Planted ) {
 				roundWonBy( defendingTeam );
 			}
 		}
@@ -374,7 +374,7 @@ void roundThink() {
 	// i suppose the following blocks could be merged to save an if or 2
 	if( roundCheckEndTime && levelTime > roundStateEndTime ) {
 		if( roundState == RoundState_Round ) {
-			if( bombState != BombState_Armed ) {
+			if( bombState != BombState_Planted ) {
 				roundWonBy( defendingTeam );
 				last_time = 1; // kinda hacky, this shows at 0:00
 
@@ -407,7 +407,7 @@ void roundThink() {
 
 		// warn defs if bomb will explode soon
 		// warn offs if the round ends soon and they haven't planted
-		if( bombState == BombState_Armed ) {
+		if( bombState == BombState_Planted ) {
 			last_time = -1;
 
 			if( !defendersHurried && levelTime + BOMB_HURRYUP_TIME >= bombActionTime ) {

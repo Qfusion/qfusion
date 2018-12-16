@@ -860,7 +860,7 @@ void CG_DrawBombHUD() {
 			if( show_labels ) {
 				const char * msg = "RETRIEVE";
 				if( bomb.state == BombState_Placed )
-					msg = "ARM";
+					msg = "PLANTING";
 				else if( bomb.state == BombState_Armed )
 					msg = my_team == bomb.team ? "PROTECT" : "DEFUSE";
 				trap_SCR_DrawString( coords[0], coords[1] - icon_size - cgs.fontSystemTinySize / 2, ALIGN_CENTER_MIDDLE, msg, cgs.fontSystemTiny, colorWhite );

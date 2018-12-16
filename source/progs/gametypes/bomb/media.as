@@ -42,7 +42,6 @@ int[] sndAnnouncementsDef( Announcement_Count );
 
 enum Announcement {
 	Announcement_Started,
-	Announcement_InPlace,
 	Announcement_Armed,
 	Announcement_Defused,
 	Announcement_Hurry,
@@ -96,7 +95,6 @@ void mediaInit() {
 	weaponIcons[ WEAP_ELECTROBOLT ] = G_ImageIndex( "gfx/hud/icons/weapon/electro" );
 
 	sndAnnouncementsOff[ Announcement_Started ] = G_SoundIndex( "sounds/announcer/bomb/offense/start", false );
-	sndAnnouncementsOff[ Announcement_InPlace ] = G_SoundIndex( "sounds/announcer/bomb/offense/inplace", false );
 	sndAnnouncementsOff[ Announcement_Armed ] = G_SoundIndex( "sounds/announcer/bomb/offense/planted", false );
 	sndAnnouncementsOff[ Announcement_Defused ] = G_SoundIndex( "sounds/announcer/bomb/offense/defused", false );
 	sndAnnouncementsOff[ Announcement_Hurry ] = G_SoundIndex( "sounds/misc/timer_bip_bip", false );

@@ -38,7 +38,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifdef PUBLIC_BUILD
 #define APP_PROTOCOL_VERSION            1
 #else
-#define APP_PROTOCOL_VERSION            1001    // we're using revision number as protocol version for internal builds
+#define APP_PROTOCOL_VERSION            1001
 #endif
 
 #define APP_URL                         "http://www.e4m5.net/"
