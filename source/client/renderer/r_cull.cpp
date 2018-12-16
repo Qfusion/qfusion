@@ -632,7 +632,7 @@ bool R_VisCullSphere( const vec3_t origin, float radius ) {
 /*
 * R_CullModelEntity
 */
-int R_CullModelEntity( const entity_t *e, bool pvsCull ) {
+bool R_CullModelEntity( const entity_t *e, bool pvsCull ) {
 	const entSceneCache_t *cache = R_ENTCACHE( e );
 	const vec_t *mins = cache->absmins;
 	const vec_t *maxs = cache->absmaxs;
@@ -650,39 +650,27 @@ int R_CullModelEntity( const entity_t *e, bool pvsCull ) {
 
 	if( sphereCull ) {
 		if( R_CullSphere( e->origin, radius, rn.clipFlags ) ) {
-			return 1;
+			return true;
 		}
 	} else {
 		if( R_CullBox( mins, maxs, rn.clipFlags ) ) {
-			return 1;
+			return true;
 		}
 	}
 
 	if( pvsCull ) {
 		if( sphereCull ) {
 			if( R_VisCullSphere( e->origin, radius ) ) {
-				return 2;
+				return true;
 			}
 		} else {
 			if( R_VisCullBox( mins, maxs ) ) {
-				return 2;
+				return true;
 			}
 		}
 	}
 
-	return 0;
-}
-
-/*
-* R_CullSpriteEntity
-*/
-int R_CullSpriteEntity( const entity_t *e ) {
-	if( rn.renderFlags & RF_LIGHTVIEW ) {
-		if( !R_ShaderNoDlight( e->customShader ) ) {
-			return 1;
-		}
-	}
-	return 0;
+	return false;
 }
 
 /*

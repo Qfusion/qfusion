@@ -1315,12 +1315,6 @@ bool R_AddSkeletalModelToDrawList( const entity_t *e, int lod ) {
 			continue;
 		}
 
-		if( rn.renderFlags & RF_LIGHTVIEW ) {
-			if( R_ShaderNoDlight( shader ) ) {
-				continue;
-			}
-		}
-
 		drawOrder = R_PackOpaqueOrder( fog, shader, 0, false );
 		R_AddSurfToDrawList( rn.meshlist, e, shader, fog, -1, 
 			SKMSURF_DISTANCE( shader, distance ), drawOrder, NULL, skmodel->drawSurfs + i );

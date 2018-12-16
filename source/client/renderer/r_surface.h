@@ -17,10 +17,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
-#ifndef R_SURFACE_H
-#define R_SURFACE_H
+#pragma once
 
-#define MAX_DRAWSURF_RTLIGHTS	32 //
 #define MAX_DRAWSURF_SURFS		128 // limit the number of surfaces to a sane 8-bit integer
 
 typedef enum {
@@ -31,9 +29,7 @@ typedef enum {
 	ST_SKELETAL,
 	ST_SPRITE,
 	ST_POLY,
-	ST_CORONA,
 	ST_NULLMODEL,
-	ST_COMPILED_LIGHT,
 
 	ST_MAX_TYPES,
 
@@ -58,8 +54,6 @@ typedef struct {
 
 	unsigned int numLightmaps;
 
-	unsigned int numRtLights;
-
 	unsigned int surfFlags;
 
 	int vbo;
@@ -73,8 +67,6 @@ typedef struct {
 	struct mfog_s *fog;
 
 	void *listSurf;                 // only valid if visFrame == rf.frameCount
-
-	struct rtlight_s *rtLights[MAX_DRAWSURF_RTLIGHTS];
 } drawSurfaceBSP_t;
 
 typedef struct {
@@ -116,17 +108,3 @@ typedef struct {
 	elem_t *elems;
 	struct shader_s *shader;
 } drawSurfacePoly_t;
-
-typedef struct {
-	drawSurfaceType_t type;
-
-	int vbo;
-
-	int firstVert, numVerts;
-	int firstElem, numElems;
-
-	int numInstances;
-	instancePoint_t *instances;
-} drawSurfaceCompiledLight_t;
-
-#endif // R_SURFACE_H

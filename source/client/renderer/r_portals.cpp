@@ -435,7 +435,7 @@ static void R_DrawPortalsDepthMask( void ) {
 void R_DrawPortals( void ) {
 	unsigned int i;
 
-	if( rn.renderFlags & ( RF_MIRRORVIEW | RF_LIGHTVIEW | RF_PORTALVIEW ) ) {
+	if( rn.renderFlags & ( RF_MIRRORVIEW | RF_PORTALVIEW ) ) {
 		return;
 	}
 	if( rn.viewcluster == -1 ) {
@@ -510,7 +510,6 @@ static void R_DrawSkyportal( const entity_t *e, skyportal_t *skyportal ) {
 	rn.clipFlags = 15;
 	rn.meshlist = &r_skyportallist;
 	rn.portalmasklist = NULL;
-	rn.rtLight = NULL;
 	//Vector4Set( rn.scissor, rn.refdef.x + x, rn.refdef.y + y, w, h );
 
 	if( skyportal->noEnts ) {

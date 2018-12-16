@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 #pragma once
 
-#include "../../qcommon/qcommon.h"
+#include "qcommon/qcommon.h"
 #include "r_mesh.h"
 #include "r_shader.h"
 #include "r_surface.h"
@@ -173,12 +173,6 @@ typedef struct mbrushmodel_s {
 	unsigned int numfogs;
 	mfog_t          *fogs;
 	mfog_t          *globalfog;
-
-	unsigned int numRtLights;
-	struct rtlight_s *rtLights;
-
-	unsigned int numRtSkyLights;
-	struct rtlight_s *rtSkyLights;
 
 	/*unsigned*/ int numareas;
 
@@ -416,7 +410,6 @@ void        R_ModelBounds( const model_t *model, vec3_t mins, vec3_t maxs );
 void        R_ModelFrameBounds( const struct model_s *model, int frame, vec3_t mins, vec3_t maxs );
 void        R_RegisterWorldModel( const char *model );
 struct model_s *R_RegisterModel( const char *name );
-bool		R_UpdateWorldRtSkyLights( model_t *model );
 
 void		R_GetTransformBufferForMesh( mesh_t *mesh, bool positions, bool normals, bool sVectors );
 

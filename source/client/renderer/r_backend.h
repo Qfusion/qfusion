@@ -32,7 +32,6 @@ enum {
 	RB_MODE_BLACK_GT,	// write black color, depth func is set to GT
 	RB_MODE_LIGHTMAP,	// only render the lightmap, diffuse lighting pass or fullbright, depth func EQ
 	RB_MODE_DIFFUSE,	// diffuse lighting pass or fullbright, depth func EQ
-	RB_MODE_LIGHT,		// same as RB_MODE_LIGHTMAP but for single realtime light, additive pass
 	RB_MODE_POST_LIGHT, // render decals on materials, depth func EQ
 	RB_MODE_DECALS,	    // render additive stuff which isn't a material (translucent windows, etc)
 	RB_MODE_TRIANGLE_OUTLINES,
@@ -105,7 +104,6 @@ void RB_SetMode( int mode );
 void RB_SetSurfFlags( int flags );
 void RB_SetRenderFlags( int flags );
 void RB_SetLightParams( float minLight, bool noWorldLight, float hdrExposure );
-void RB_SetRtLightParams( unsigned numRtLights, rtlight_t **rtlights, unsigned numSurfs, unsigned *surfRtLightBits );
 void RB_SetShaderStateMask( int ANDmask, int ORmask );
 void RB_SetCamera( const vec3_t cameraOrigin, const mat3_t cameraAxis );
 bool RB_EnableTriangleOutlines( bool enable );

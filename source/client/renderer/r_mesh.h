@@ -17,8 +17,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
-#ifndef R_MESH_H
-#define R_MESH_H
+#pragma once
 
 #include "r_surface.h"
 
@@ -89,5 +88,3 @@ typedef void (*batchDrawSurf_cb)( const entity_t *, const struct shader_s *, con
 
 typedef void (*walkDrawSurf_cb_cb)( void *, const entity_t *, const struct shader_s *, int, void *, void *p );
 typedef void (*walkDrawSurf_cb)( const entity_t *, const struct shader_s *, int, void *, walkDrawSurf_cb_cb, void * );
-
-#endif // R_MESH_H

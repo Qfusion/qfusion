@@ -26,8 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 static vec3_t modelOrg;                         // relative to view point
 
-#define R_SurfFlagsNoDlight(surfFlags) ( (surfFlags) & ( SURF_NODLIGHT | SURF_SKY | SURF_NODRAW ) )
-#define R_DrawSurfLightsKey(ds) ((ds)->numRtLights ? (ds)->numRtLights >> 2 : (ds)->numLightmaps)
+#define R_DrawSurfLightsKey(ds) ((ds)->numLightmaps)
 
 //==================================================================================
 
@@ -59,105 +58,6 @@ bool R_SurfNoDlight( const msurface_t *surf ) {
 }
 
 /*
-* R_AddLightsToSurfaces
-*/
-static void R_AddLightsToSurfaces( void ) {
-	unsigned i, j, k;
-	mmodel_t *bmodel = &rsh.worldBrushModel->submodels[0];
-	unsigned **lsi, *lc, *lrm, *lcm;
-	void *cachemark = NULL;
-
-	if( rn.renderFlags & RF_LIGHTVIEW ) {
-		return;
-	}
-	if( !rn.numRealtimeLights ) {
-		return;
-	}
-
-	cachemark = R_FrameCache_SetMark();
-
-	lsi = ( unsigned int ** ) R_FrameCache_Alloc( sizeof( *lsi ) * rn.numRealtimeLights );
-	lc = ( unsigned int * ) R_FrameCache_Alloc( sizeof( *lc ) * rn.numRealtimeLights );
-	lrm = ( unsigned int * ) R_FrameCache_Alloc( sizeof( *lrm ) * rn.numRealtimeLights );
-	lcm = ( unsigned int * ) R_FrameCache_Alloc( sizeof( *lcm ) * rn.numRealtimeLights );
-
-	memset( lsi, 0, sizeof( *lsi ) * rn.numRealtimeLights );
-	memset( lc, 0, sizeof( *lc ) * rn.numRealtimeLights );
-	memset( lrm, 0, sizeof( *lrm ) * rn.numRealtimeLights );
-	memset( lcm, 0, sizeof( *lcm ) * rn.numRealtimeLights );
-
-	for( j = 0; j < rn.numRealtimeLights; j++ ) {
-		lsi[j] = rn.rtlights[j]->surfaceInfo;
-		lrm[j] = rn.rtlights[j]->receiverMask;
-		lcm[j] = rn.rtlights[j]->casterMask;
-
-		if( !lsi[j] ) {
-			lc[j] = 0;
-			continue;
-		}
-
-		lc[j] = lsi[j][0];
-		lsi[j]++;
-	}
-
-	for( i = 0; i < bmodel->numModelDrawSurfaces; i++ ) {
-		unsigned ds = bmodel->firstModelDrawSurface + i;
-		drawSurfaceBSP_t *drawSurf = rsh.worldBrushModel->drawSurfaces + ds;
-
-		if( drawSurf->visFrame != rf.frameCount ) {
-			continue;
-		}
-
-		for( j = 0; j < rn.numRealtimeLights; j++ ) {
-			if( lrm[j] == 0x3F && lcm[j] == 0x3F ) {
-				continue;
-			}
-
-			// advance to the next drawsurface in the list
-			while( lc[j] > 0 && lsi[j][0] < ds ) {
-				lc[j]--;
-				lsi[j] = lsi[j] + 2 + lsi[j][1] * 3;
-				continue;
-			}
-
-			// end of list
-			if( lc[j] == 0 ) {
-				continue;
-			}
-
-			if( lsi[j][0] == ds ) {
-				// matching draw surface
-				// iterate the list of world surfaces
-				unsigned *p = lsi[j];
-				p++;
-				unsigned ns = *p++;
-
-				for( k = 0; k < ns; k++, p += 3 ) {
-					unsigned s = p[0], rmask = p[1], cmask = p[2];
-					if( !rn.meshlist->worldSurfVis[s] ) {
-						continue;
-					}
-
-					lrm[j] |= rmask;
-					lcm[j] |= cmask;
-					if( lrm[j] == 0x3F && lcm[j] == 0x3F ) {
-						break;
-					}
-				}
-			}
-		}
-	}
-
-	for( j = 0; j < rn.numRealtimeLights; j++ ) {
-		rtlight_t *l = rn.rtlights[j];
-		l->receiverMask = lrm[j];
-		l->casterMask = lcm[j];
-	}
-
-	R_FrameCache_FreeToMark( cachemark );
-}
-
-/*
 * R_FlushBSPSurfBatch
 */
 void R_FlushBSPSurfBatch( void ) {
@@ -180,9 +80,6 @@ void R_FlushBSPSurfBatch( void ) {
 
 	if( lightStyleNum >= 0 ) {
 		ls = rls = rsh.worldBrushModel->superLightStyles + lightStyleNum;
-		if( r_lighting_realtime_world->integer && r_lighting_realtime_world_lightmaps->value < 0.01 ) {
-			ls = NULL;
-		}
 	}
 
 	RB_BindShader( e, shader, batch->fog );
@@ -292,13 +189,6 @@ static bool R_AddWorldDrawSurfaceToDrawList( const entity_t *e, unsigned ds ) {
 
 	sky = ( shader->flags & SHADER_SKY ) != 0;
 	portal = ( shader->flags & SHADER_PORTAL ) != 0;
-	if( rn.renderFlags & RF_LIGHTVIEW ) {
-		fog = NULL;
-		lightStyleNum = -1;
-		if( sky || portal ) {
-			return false;
-		}
-	}
 
 	if( sky ) {
 		bool writeDepth = mapConfig.writeSkyDepth;
@@ -756,146 +646,6 @@ static void R_PostCullVisLeaves( void ) {
 }
 
 /*
-* R_DrawWorldShadowNode
-*/
-void R_DrawWorldShadowNode( void ) {
-	unsigned i, j;
-	int clipFlags = r_nocull->integer ? 0 : rn.clipFlags;
-	int64_t msec = 0;
-	bool speeds = r_speeds->integer != 0;
-	mbrushmodel_t *bm = rsh.worldBrushModel;
-	rtlight_t *l = rn.rtLight;
-	const uint8_t *areabits = rn.areabits;
-	unsigned *p;
-	unsigned numDrawSurfaces;
-	int maskindex = -1;
-	drawList_t *parentDrawList = NULL;
-	uint8_t *tempSurfVis;
-	void *cachemark;
-
-	R_ReserveDrawListWorldSurfaces( rn.meshlist );
-
-	if( !r_drawworld->integer || !bm ) {
-		return;
-	}
-	if( rn.refdef.rdflags & RDF_NOWORLDMODEL ) {
-		return;
-	}
-	if( !l ) {
-		return;
-	}
-	if( !( rn.renderFlags & RF_LIGHTVIEW ) ) {
-		return;
-	}
-
-	p = rn.rtLightSurfaceInfo;
-	if( !p ) {
-		return;
-	}
-
-	if( rn.renderFlags & RF_LIGHTVIEW ) {
-		parentDrawList = rn.parent->meshlist;
-		if( !parentDrawList ) {
-			return;
-		}
-	}
-
-	VectorCopy( rn.refdef.vieworg, modelOrg );
-
-	// BEGIN t_world_node
-	if( speeds ) {
-		msec = ri.Sys_Milliseconds();
-	}
-
-	if( rn.renderFlags & RF_LIGHTVIEW ) {
-		maskindex = 1;
-	} else {
-		maskindex = 2;
-	}
-
-	cachemark = R_FrameCache_SetMark();
-
-	tempSurfVis = ( uint8_t * ) R_FrameCache_Alloc( sizeof( *tempSurfVis ) * rsh.worldBrushModel->numsurfaces );
-	memset( (void *)tempSurfVis, 0, sizeof( *tempSurfVis ) * rsh.worldBrushModel->numsurfaces );
-
-	for( i = 0; i < rn.numRtLightVisLeafs; i++ ) {
-		int leafNum = rn.rtLightVisLeafs[i];
-		const mleaf_t *leaf = bm->leafs + leafNum;
-
-		// check for door connected areas
-		if( areabits ) {
-			if( leaf->area < 0 || !( areabits[leaf->area >> 3] & ( 1 << ( leaf->area & 7 ) ) ) ) {
-				continue; // not visible
-			}
-		}
-
-		if( rn.renderFlags & RF_LIGHTVIEW ) {
-			if( !parentDrawList->worldLeafVis[leafNum] ) {
-				continue;
-			}
-		} else {
-			if( R_CullBox( leaf->mins, leaf->maxs, rn.clipFlags ) ) {
-				continue;
-			}
-		}
-
-		rn.meshlist->worldLeafVis[leafNum] = 1;
-
-		for( j = 0; j < leaf->numVisSurfaces; j++ ) {
-			assert( leaf->visSurfaces[j] < rn.meshlist->numWorldSurfVis );
-			tempSurfVis[leaf->visSurfaces[j]] = 1;
-		}
-	}
-
-	numDrawSurfaces = *p++;
-
-	for( i = 0; i < numDrawSurfaces; i++ ) {
-		bool culled = true;
-		unsigned ds = *p++;
-		unsigned numSurfaces = *p++;
-
-		for( j = 0; j < numSurfaces; j++, p += 3 ) {
-			unsigned s = p[0];
-			unsigned mask = p[maskindex];
-			const msurface_t *surf = bm->surfaces + s;
-
-			if( mask && tempSurfVis[s] ) {
-				if( rn.renderFlags & RF_LIGHTVIEW ) {
-					if( !parentDrawList->worldSurfVis[s] ) {
-						continue;
-					}
-				} else {
-					if( R_CullBox( surf->mins, surf->maxs, clipFlags ) ) {
-						continue;
-					}
-					if( l->sky && (surf->flags & SURF_SKY) ) {
-						if( !BoundsInsideBounds( surf->mins, surf->maxs, l->skymins, l->skymaxs ) ) {
-							continue;
-						}
-					}
-				}
-
-				culled = false;
-				rn.meshlist->worldSurfVis[s] = 1;
-				rf.stats.c_brush_polys++;
-			}
-		}
-
-		if( !culled ) {
-			rn.meshlist->worldDrawSurfVis[ds] = 1;
-			R_AddWorldDrawSurfaceToDrawList( rsc.worldent, ds );
-		}
-	}
-
-	R_FrameCache_FreeToMark( cachemark );
-
-	// END t_world_node
-	if( speeds ) {
-		rf.stats.t_light_node += ri.Sys_Milliseconds() - msec;
-	}
-}
-
-/*
 * R_DrawWorldNode
 */
 void R_DrawWorldNode( void ) {
@@ -972,28 +722,6 @@ void R_DrawWorldNode( void ) {
 	}
 
 	//
-	// cull rtlights
-	//
-	if( speeds ) {
-		msec2 = ri.Sys_Milliseconds();
-	}
-
-	if( r_lighting_realtime_world->integer != 0 ) {
-		R_CullRtLights( bm->numRtLights, bm->rtLights, clipFlags );
-		R_CullRtLights( bm->numRtSkyLights, bm->rtSkyLights, clipFlags );
-	}
-
-	if( r_lighting_realtime_dlight->integer != 0 ) {
-		if( !( rn.renderFlags & RF_ENVVIEW ) && r_dynamiclight->integer == 1 ) {
-			R_CullRtLights( rsc.numDlights, rsc.dlights, clipFlags );
-		}
-	}
-
-	if( speeds ) {
-		rf.stats.t_cull_rtlights += ri.Sys_Milliseconds() - msec;
-	}
-
-	//
 	// add visible surfaces to draw list
 	//
 	if( speeds ) {
@@ -1003,8 +731,6 @@ void R_DrawWorldNode( void ) {
 	R_AddVisSurfaces();
 
 	R_AddWorldDrawSurfaces( 0, bm->numModelDrawSurfaces );
-
-	R_AddLightsToSurfaces();
 
 	// END t_world_node
 	if( speeds ) {

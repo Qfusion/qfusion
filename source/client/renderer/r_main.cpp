@@ -487,8 +487,6 @@ void R_SetupGL2D( void ) {
 
 	RB_SetShaderStateMask( ~0, GLSTATE_NO_DEPTH_TEST );
 
-	RB_SetRtLightParams( 0, NULL, 0, NULL );
-
 	RB_SetRenderFlags( 0 );
 }
 
@@ -888,9 +886,6 @@ static void R_Clear( int bitMask ) {
 	if( depthPortal ) {
 		return;
 	}
-	if( rn.renderFlags & RF_LIGHTVIEW ) {
-		return;
-	}
 
 	fbo = RB_BoundFrameBufferObject();
 
@@ -955,12 +950,6 @@ static void R_SetupGL( void ) {
 
 	RB_PolygonOffset( rn.polygonFactor, rn.polygonUnits );
 
-	if( rn.renderFlags & RF_LIGHTVIEW ) {
-		RB_SetRtLightParams( 1, &rn.rtLight, 0, NULL );
-	} else {
-		RB_SetRtLightParams( 0, NULL, 0, NULL );
-	}
-
 	RB_SetShaderStateMask( ~0, 0 );
 }
 
@@ -1000,22 +989,7 @@ static void R_CullEntities( void ) {
 			entNum = rsc.bmodelEntities[i];
 			e = R_NUM2ENT( entNum );
 
-			if( R_CullModelEntity( e, false ) != 0 ) {
-				continue;
-			}
-
-			rn.entpvs[entNum>>3] |= (1<<(entNum&7));
-			rn.entities[rn.numEntities++] = entNum;
-		}
-		return;
-	}
-
-	if( rn.renderFlags & RF_LIGHTVIEW ) {
-		for( i = 0; i < rn.numRtLightEntities; i++ ) {
-			entNum = rn.rtLightEntities[i];
-
-			if( !(rn.parent->entpvs[entNum>>3] & (1<<(entNum&7))) ) {
-				// not visible in parent view
+			if( R_CullModelEntity( e, false ) ) {
 				continue;
 			}
 
@@ -1050,15 +1024,8 @@ static void R_CullEntities( void ) {
 			goto add;
 		}
 
-		switch( e->rtype ) {
-		case RT_MODEL:
-			culled = R_CullModelEntity( e, false ) != 0;
-			break;
-		case RT_SPRITE:
-			culled = R_CullSpriteEntity( e ) != 0;
-			break;
-		default:
-			break;
+		if( e->rtype == RT_MODEL ) {
+			culled = R_CullModelEntity( e, false );
 		}
 
 		if( culled ) {
@@ -1136,7 +1103,6 @@ static void R_BindRefInstFBO( void ) {
 */
 void R_RenderView( const refdef_t *fd ) {
 	int msec = 0;
-	bool light = rn.renderFlags & RF_LIGHTVIEW;
 
 	rf.frameCount++;
 
@@ -1145,7 +1111,6 @@ void R_RenderView( const refdef_t *fd ) {
 	rn.fog_eye = NULL;
 	rn.hdrExposure = 1;
 
-	rn.numRealtimeLights = 0;
 	rn.numPortalSurfaces = 0;
 	rn.numDepthPortalSurfaces = 0;
 	rn.skyportalSurface = NULL;
@@ -1177,27 +1142,19 @@ void R_RenderView( const refdef_t *fd ) {
 	// we know the initial farclip at this point after determining visible world leafs
 	// R_DrawEntities can make adjustments as well
 
-	if( rn.renderFlags & RF_LIGHTVIEW ) {
-		R_DrawWorldShadowNode();
-	} else {
-		R_DrawWorldNode();
+	R_DrawWorldNode();
+
+	if( !( rn.refdef.rdflags & RDF_NOWORLDMODEL ) ) {
+		rn.fog_eye = R_FogForSphere( rn.viewOrigin, 0.5 );
+		rn.hdrExposure = r_hdr_exposure->value;
 	}
 
-	if( !light ) {
-		if( !( rn.refdef.rdflags & RDF_NOWORLDMODEL ) ) {
-			rn.fog_eye = R_FogForSphere( rn.viewOrigin, 0.5 );
-			rn.hdrExposure = R_LightExposureForOrigin( rn.viewOrigin );
-		}
-
-		R_DrawCoronas();
-
-		if( r_speeds->integer ) {
-			msec = ri.Sys_Milliseconds();
-		}
-		R_DrawPolys();
-		if( r_speeds->integer ) {
-			rf.stats.t_add_polys += ( ri.Sys_Milliseconds() - msec );
-		}
+	if( r_speeds->integer ) {
+		msec = ri.Sys_Milliseconds();
+	}
+	R_DrawPolys();
+	if( r_speeds->integer ) {
+		rf.stats.t_add_polys += ( ri.Sys_Milliseconds() - msec );
 	}
 
 	if( r_speeds->integer ) {
@@ -1538,7 +1495,7 @@ const char *R_WriteSpeedsMessage( char *out, size_t size ) {
 				Q_snprintfz( out, size,
 							 "%u fps\n"
 							 "%4u wpoly %4u leafs %4u surfs\n"
-							 "cull nodes\\surfs\\lights: %5u\\%5u\\%5u\n"
+							 "cull nodes\\surfs: %5u\\%5u\n"
 							 "node world\\light: %5u\\%5u\n"
 							 "polys\\ents: %5u\\%5u  draw: %5u\n"
 							 "world\\dynamic: lights %3u\\%3u\n"
@@ -1547,7 +1504,7 @@ const char *R_WriteSpeedsMessage( char *out, size_t size ) {
 							 "%s",
 							 (int)(1000.0 / rf.frameTime.average),
 							 rf.stats.c_brush_polys, rf.stats.c_world_leafs, rf.stats.c_world_draw_surfs,
-							 rf.stats.t_cull_world_nodes, rf.stats.t_cull_world_surfs, rf.stats.t_cull_rtlights,
+							 rf.stats.t_cull_world_nodes, rf.stats.t_cull_world_surfs,
 							 rf.stats.t_world_node, rf.stats.t_light_node,
 							 rf.stats.t_add_polys, rf.stats.t_add_entities, rf.stats.t_draw_meshes,
 							 rf.stats.c_world_lights, rf.stats.c_dynamic_lights,

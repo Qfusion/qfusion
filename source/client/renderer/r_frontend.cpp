@@ -377,10 +377,6 @@ bool RF_LerpTag( orientation_t *orient, const model_t *mod, int oldframe, int fr
 	return false;
 }
 
-void RF_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t diffuse, float radius ) {
-	R_LightForOrigin( origin, dir, ambient, diffuse, radius, false, false );
-}
-
 /*
 * RF_GetShaderForOrigin
 *

@@ -179,9 +179,6 @@ typedef struct r_backend_s {
 	float hdrExposure;
 	bool noWorldLight;
 	refScreenTexSet_t st;
-
-	unsigned numRealtimeLights;
-	rtlight_t *rtlights[MAX_DRAWSURF_RTLIGHTS];
 } rbackend_t;
 
 extern rbackend_t rb;

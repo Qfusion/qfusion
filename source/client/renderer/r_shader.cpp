@@ -560,9 +560,6 @@ static image_t *Shader_FindImage( shader_t *shader, const char *name, int flags 
 	if( !Q_stricmp( name, "$particleimage" ) || !Q_stricmp( name, "*particle" ) ) {
 		return rsh.particleTexture;
 	}
-	if( !Q_stricmp( name, "$coronaimage" ) || !Q_stricmp( name, "*corona" ) ) {
-		return rsh.coronaTexture;
-	}
 
 	if( !Q_strnicmp( name, "*lm", 3 ) ) {
 		ri.Com_DPrintf( S_COLOR_YELLOW "WARNING: shader %s has a stage with explicit lightmap image\n", shader->name );
@@ -2484,23 +2481,6 @@ create_default:
 				pass->images[1] = materialImages[0]; // normalmap
 				pass->images[2] = materialImages[1]; // glossmap
 				pass->images[3] = materialImages[2]; // decalmap
-				break;
-			case SHADER_TYPE_CORONA:
-				data = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) * 1 );
-				s->vattribs = VATTRIB_POSITION_BIT | VATTRIB_TEXCOORDS_BIT | VATTRIB_COLOR0_BIT;
-				s->sort = SHADER_SORT_ADDITIVE;
-				s->numpasses = 1;
-				s->passes = ( shaderpass_t * )data;
-				s->name = ( char * )( s->passes + 1 );
-				s->flags = SHADER_SOFT_PARTICLE;
-				strcpy( s->name, shortname );
-
-				pass = &s->passes[0];
-				pass->flags = GLSTATE_SRCBLEND_ONE | GLSTATE_DSTBLEND_ONE;
-				pass->rgbgen.type = RGB_GEN_VERTEX;
-				pass->alphagen.type = ALPHA_GEN_IDENTITY;
-				pass->tcgen = TC_GEN_BASE;
-				pass->images[0] = Shader_FindImage( s, "*corona", IT_SPECIAL );
 				break;
 			case SHADER_TYPE_DIFFUSE:
 				// load material images

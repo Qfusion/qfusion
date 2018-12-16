@@ -50,7 +50,6 @@ void R_ClearScene( void ) {
 	R_ClearDebugBounds();
 
 	rsc.numLocalEntities = 0;
-	rsc.numDlights = 0;
 	rsc.numPolys = 0;
 
 	rsc.worldent = R_NUM2ENT( rsc.numLocalEntities );
@@ -187,24 +186,7 @@ void R_AddEntityToScene( const entity_t *ent ) {
 * R_AddLightToScene
 */
 void R_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b ) {
-	rtlight_t *dl;
-	vec3_t color;
-
-	if( rsc.numDlights >= MAX_DLIGHTS ) {
-		return;
-	}
-	if( !intensity || ( r == 0 && g == 0 && b == 0 ) ) {
-		return;
-	}
-
-	VectorSet( color, r, g, b );
-	VectorScale( color, 1.0 / DLIGHT_SCALE, color );
-
-	dl = &rsc.dlights[rsc.numDlights];
-	R_InitRtLight( dl, org, axis_identity, intensity * DLIGHT_SCALE, color );
-	dl->worldModel = rsh.worldModel;
-
-	rsc.numDlights++;
+	// TODO
 }
 
 /*
@@ -349,8 +331,6 @@ void R_RenderScene( const refdef_t *fd ) {
 	rn.meshlist = &r_worldlist;
 	rn.portalmasklist = &r_portalmasklist;
 	rn.numEntities = 0;
-	rn.numRealtimeLights = 0;
-	rn.rtLight = NULL;
 
 	rn.st = &rsh.st;
 	rn.renderTarget = 0;
@@ -437,8 +417,6 @@ void R_RenderScene( const refdef_t *fd ) {
 
 	if( !(fd->rdflags & RDF_NOWORLDMODEL) ) {
 		R_RenderDebugSurface( fd );
-
-		R_RenderDebugLightVolumes();
 
 		R_RenderDebugBounds();
 	}
@@ -661,8 +639,6 @@ static void R_RenderDebugBounds( void ) {
 	RB_SetShaderStateMask( ~0, GLSTATE_NO_DEPTH_TEST );
 
 	RB_SetLightstyle( NULL, NULL );
-
-	RB_SetRtLightParams( 0, NULL, 0, NULL );
 
 	for( i = 0; i < 24; i++ ) {
 		elems[i] = r_boxedges[i];

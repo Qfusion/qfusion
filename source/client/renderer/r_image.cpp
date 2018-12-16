@@ -1467,33 +1467,6 @@ static void R_InitBlankBumpTexture( int *w, int *h, int *flags, int *samples ) {
 }
 
 /*
-* R_InitCoronaTexture
-*/
-static void R_InitCoronaTexture( int *w, int *h, int *flags, int *samples ) {
-	int x, y, a;
-	float dx, dy;
-	uint8_t *data;
-
-	//
-	// light corona texture
-	//
-	*w = *h = 32;
-	*flags = IT_SPECIAL | IT_SRGB;
-	*samples = 4;
-
-	data = R_PrepareImageBuffer( TEXTURE_LOADING_BUF0, 32 * 32 * 4 );
-	for( y = 0; y < 32; y++ ) {
-		dy = ( y - 15.5f ) * ( 1.0f / 16.0f );
-		for( x = 0; x < 32; x++ ) {
-			dx = ( x - 15.5f ) * ( 1.0f / 16.0f );
-			a = (int)( ( ( 1.0f / ( dx * dx + dy * dy + 0.2f ) ) - ( 1.0f / ( 1.0f + 0.2 ) ) ) * 32.0f / ( 1.0f / ( 1.0f + 0.2 ) ) );
-			clamp( a, 0, 255 );
-			data[( y * 32 + x ) * 4 + 0] = data[( y * 32 + x ) * 4 + 1] = data[( y * 32 + x ) * 4 + 2] = a;
-		}
-	}
-}
-
-/*
  * R_InitBlueNoiseTexture
  */
 static void R_InitBlueNoiseTexture( int * w, int * h, int * flags, int * samples ) {
@@ -1820,7 +1793,6 @@ static void R_InitBuiltinImages( void ) {
 		{ "***r_greytexture***", &rsh.greyTexture, &R_InitGreyTexture },
 		{ "***r_blankbumptexture***", &rsh.blankBumpTexture, &R_InitBlankBumpTexture },
 		{ "***r_particletexture***", &rsh.particleTexture, &R_InitParticleTexture },
-		{ "***r_coronatexture***", &rsh.coronaTexture, &R_InitCoronaTexture },
 		{ "***r_bluenoisetexture***", &rsh.blueNoiseTexture, &R_InitBlueNoiseTexture },
 		{ NULL, NULL, NULL }
 	};
@@ -1847,7 +1819,6 @@ static void R_ReleaseBuiltinImages( void ) {
 	rsh.whiteCubemapTexture = NULL;
 	rsh.blankBumpTexture = NULL;
 	rsh.particleTexture = NULL;
-	rsh.coronaTexture = NULL;
 	rsh.blueNoiseTexture = NULL;
 }
 

@@ -42,8 +42,7 @@ static void Mod_AliasBuildStaticVBOForMesh( maliasmesh_t *mesh ) {
 		}
 	}
 
-	mesh->vbo = R_CreateMeshVBO( ( void * )mesh,
-								 mesh->numverts, mesh->numtris * 3, 0, vattribs, VBO_TAG_MODEL, vattribs );
+	mesh->vbo = R_CreateMeshVBO( ( void * )mesh, mesh->numverts, mesh->numtris * 3, 0, vattribs, VBO_TAG_MODEL, vattribs );
 
 	if( !mesh->vbo ) {
 		return;
@@ -712,14 +711,6 @@ bool R_AddAliasModelToDrawList( const entity_t *e, int lod ) {
 	}
 
 	fog = cache->fog;
-#if 0
-	if( !( e->flags & RF_WEAPONMODEL ) && fog ) {
-		R_AliasModelLerpBBox( e, mod );
-		if( R_FogCull( fog, e->origin, cache->radius ) ) {
-			return false;
-		}
-	}
-#endif
 
 	fakeskin.name[0] = 0;
 	fakeskin.shader = NULL;
@@ -745,12 +736,6 @@ bool R_AddAliasModelToDrawList( const entity_t *e, int lod ) {
 		
 			if( !shader ) {
 				continue;
-			}
-
-			if( rn.renderFlags & RF_LIGHTVIEW ) {
-				if( R_ShaderNoDlight( shader ) ) {
-					continue;
-				}
 			}
 
 			drawOrder = R_PackOpaqueOrder( fog, shader, 0, false );

@@ -143,10 +143,8 @@ typedef struct {
 	void ( *ResetScissor )( void );
 
 	void ( *SetCustomColor )( int num, int r, int g, int b );
-	void ( *LightForOrigin )( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t diffuse, float radius );
 
-	bool ( *LerpTag )( orientation_t *orient, const struct model_s *mod, int oldframe, int frame, float lerpfrac,
-					   const char *name );
+	bool ( *LerpTag )( orientation_t *orient, const struct model_s *mod, int oldframe, int frame, float lerpfrac, const char *name );
 
 	int ( *SkeletalGetNumBones )( const struct model_s *mod, int *numFrames );
 	int ( *SkeletalGetBoneInfo )( const struct model_s *mod, int bone, char *name, size_t name_size, int *flags );

@@ -37,13 +37,12 @@ typedef enum {
 	SHADER_TYPE_DIFFUSE         = 2,
 	SHADER_TYPE_2D              = 3,
 	SHADER_TYPE_2D_RAW          = 4,
-	SHADER_TYPE_CORONA          = 5,
-	SHADER_TYPE_OPAQUE_ENV      = 6,
-	SHADER_TYPE_VIDEO           = 7,
-	SHADER_TYPE_SKYBOX          = 8,
-	SHADER_TYPE_FOG             = 9,
-	SHADER_TYPE_2D_LINEAR       = 10,
-	SHADER_TYPE_DEPTHONLY       = 11,
+	SHADER_TYPE_OPAQUE_ENV      = 5,
+	SHADER_TYPE_VIDEO           = 6,
+	SHADER_TYPE_SKYBOX          = 7,
+	SHADER_TYPE_FOG             = 8,
+	SHADER_TYPE_2D_LINEAR       = 9,
+	SHADER_TYPE_DEPTHONLY       = 10,
 } shaderType_e;
 
 #define NUM_SHADER_TYPES_BSP ( SHADER_TYPE_BSP_MAX - SHADER_TYPE_BSP_MIN + 1 )

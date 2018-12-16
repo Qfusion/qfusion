@@ -524,27 +524,6 @@ static r_glslfeat_t RB_BonesTransformsToProgramFeatures( void ) {
 }
 
 /*
-* RB_RtLightsToProgramFeatures
-*/
-static r_glslfeat_t RB_RtlightbitsToProgramFeatures( void ) {
-	r_glslfeat_t bits = 0;
-
-	if( !rb.numRealtimeLights ) {
-		return bits;
-	}
-
-	if( rb.rtlights[0]->cubemapFilter ) {
-		if( !rb.rtlights[0]->cubemapFilter->missing )
-			bits |= GLSL_SHADER_COMMON_DLIGHT_CUBEFILTER;
-	}
-
-	if( rb.rtlights[0]->directional )
-		bits |= GLSL_SHADER_COMMON_DLIGHT_DIRECTIONAL;
-
-	return bits|GLSL_SHADER_COMMON_DLIGHTS;
-}
-
-/*
 * RB_AutospriteProgramFeatures
 */
 static r_glslfeat_t RB_AutospriteProgramFeatures( void ) {
@@ -783,7 +762,7 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 	glossExponent = rb.currentShader->glossExponent ? rb.currentShader->glossExponent : r_lighting_glossexponent->value;
 
 	applyDecal = decalmap != NULL;
-	if( rb.mode == RB_MODE_LIGHT || rb.mode == RB_MODE_LIGHTMAP || rb.mode == RB_MODE_DIFFUSE ) {
+	if( rb.mode == RB_MODE_LIGHTMAP || rb.mode == RB_MODE_DIFFUSE ) {
 		applyDecal = false;
 	}
 
@@ -892,12 +871,6 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 		programFeatures |= GLSL_SHADER_MATERIAL_DIRECTIONAL_LIGHT;
 		Vector4Set( ambient, 1, 1, 1, 1 );
 		Vector4Set( diffuse, 1, 1, 1, 1 );
-	} else if( rb.mode == RB_MODE_LIGHT ) {
-		programFeatures |= RB_RtlightbitsToProgramFeatures();
-
-		if( programFeatures & GLSL_SHADER_COMMON_DLIGHT_CUBEFILTER ) {
-			RB_BindImage( 5, rb.rtlights[0]->cubemapFilter );
-		}
 	} else {
 		bool minLight = ( e->flags & RF_MINLIGHT ) != 0;
 
@@ -988,12 +961,6 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 		}
 
 		RP_UpdateLightstyleUniforms( program, lightStyle );
-
-		// dynamic lights
-		if( rb.numRealtimeLights > 0 ) {
-			RP_UpdateRealtimeLightsUniforms( program, rb.lightDir, rb.objectToLightMatrix,
-				rb.numRealtimeLights, rb.rtlights, 0, NULL );
-		}
 
 		// r_drawflat
 		if( programFeatures & GLSL_SHADER_COMMON_DRAWFLAT ) {
@@ -1268,7 +1235,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 		applyLighting = ( isLightmapped || isWorldVertexLight );
 	}
 
-	if( !applyLighting && ( rb.mode == RB_MODE_LIGHT || rb.mode == RB_MODE_LIGHTMAP || rb.mode == RB_MODE_DIFFUSE ) ) {
+	if( !applyLighting && ( rb.mode == RB_MODE_LIGHTMAP || rb.mode == RB_MODE_DIFFUSE ) ) {
 		return;
 	}
 	if( applyLighting && ( rb.mode == RB_MODE_POST_LIGHT ) ) {
@@ -1323,29 +1290,21 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 	if( applyLighting ) {
 		programFeatures |= GLSL_SHADER_COMMON_LIGHTING;
 
-		if( rb.mode == RB_MODE_LIGHT ) {
-			programFeatures |= RB_RtlightbitsToProgramFeatures();
+		if( isWorldVertexLight ) {
+			programFeatures |= GLSL_SHADER_COMMON_VERTEX_LIGHTING;
+		}
 
-			if( programFeatures & GLSL_SHADER_COMMON_DLIGHT_CUBEFILTER ) {
-				RB_BindImage( 5, rb.rtlights[0]->cubemapFilter );
-			}
-		} else {
-			if( isWorldVertexLight ) {
-				programFeatures |= GLSL_SHADER_COMMON_VERTEX_LIGHTING;
-			}
+		if( isLightmapped && lightStyle && lightStyle->lightmapStyles[0] != 255 ) {
+			if( glConfig.ext.glsl130 && r_lighting_bicubic->integer )
+				programFeatures |= GLSL_SHADER_Q3_LIGHTMAP_BICUBIC;
 
-			if( isLightmapped && lightStyle && lightStyle->lightmapStyles[0] != 255 ) {
-				if( glConfig.ext.glsl130 && r_lighting_bicubic->integer )
-					programFeatures |= GLSL_SHADER_Q3_LIGHTMAP_BICUBIC;
-
-				// bind lightmap textures and set program's features for lightstyles
-				int i;
-				for( i = 0; i < MAX_LIGHTMAPS && lightStyle->lightmapStyles[i] != 255; i++ )
-					RB_BindImage( i + 4, rsh.worldBrushModel->lightmapImages[lightStyle->lightmapNum[i]] ); // lightmap
-				programFeatures |= ( i * GLSL_SHADER_Q3_LIGHTSTYLE0 );
-				if( mapConfig.lightmapArrays ) {
-					programFeatures |= GLSL_SHADER_Q3_LIGHTMAP_ARRAYS;
-				}
+			// bind lightmap textures and set program's features for lightstyles
+			int i;
+			for( i = 0; i < MAX_LIGHTMAPS && lightStyle->lightmapStyles[i] != 255; i++ )
+				RB_BindImage( i + 4, rsh.worldBrushModel->lightmapImages[lightStyle->lightmapNum[i]] ); // lightmap
+			programFeatures |= ( i * GLSL_SHADER_Q3_LIGHTSTYLE0 );
+			if( mapConfig.lightmapArrays ) {
+				programFeatures |= GLSL_SHADER_Q3_LIGHTMAP_ARRAYS;
 			}
 		}
 	}
@@ -1374,12 +1333,6 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 		}
 
 		RP_UpdateLightstyleUniforms( program, lightStyle );
-
-		// dynamic lights
-		if( applyLighting ) {
-			RP_UpdateRealtimeLightsUniforms( program, rb.lightDir, rb.objectToLightMatrix,
-				rb.numRealtimeLights, rb.rtlights, 0, NULL );
-		}
 
 		// r_drawflat
 		if( programFeatures & GLSL_SHADER_COMMON_DRAWFLAT ) {
@@ -1656,9 +1609,6 @@ static void RB_UpdateVertexAttribs( void ) {
 	if( DRAWFLAT() ) {
 		vattribs |= VATTRIB_NORMAL_BIT;
 	}
-	if( rb.numRealtimeLights ) {
-		vattribs |= VATTRIB_NORMAL_BIT;
-	}
 
 	rb.currentVAttribs = vattribs;
 }
@@ -1698,18 +1648,6 @@ void RB_BindShader( const entity_t *e, const shader_t *shader, const mfog_t *fog
 
 	rb.surfFlags = SURF_NODLIGHT;
 
-	if( rb.numRealtimeLights )
-	{
-		vec3_t tvec;
-		rtlight_t *rl = rb.rtlights[0];
-		if( rl->directional ) {
-			VectorNegate( &rl->axis[AXIS_FORWARD], tvec );
-		} else {
-			VectorSubtract( rl->origin, rb.currentEntity->origin, tvec );
-		}
-		Matrix3_TransformVector( rb.currentEntity->axis, tvec, rb.lightDir );
-	}
-
 	if( !e ) {
 		rb.currentShaderTime = rb.nullEnt.shaderTime * 0.001;
 		rb.alphaHack = false;
@@ -1736,7 +1674,7 @@ void RB_BindShader( const entity_t *e, const shader_t *shader, const mfog_t *fog
 	if( rb.mode == RB_MODE_DEPTH ) {
 		rb.noColorWrite = true;
 	}
-	if( rb.mode == RB_MODE_LIGHT || rb.mode == RB_MODE_LIGHTMAP || rb.mode == RB_MODE_DIFFUSE ) {
+	if( rb.mode == RB_MODE_LIGHTMAP || rb.mode == RB_MODE_DIFFUSE ) {
 		rb.depthEqual = true;
 	}
 
@@ -1868,38 +1806,6 @@ void RB_SetLightParams( float minLight, bool noWorldLight, float hdrExposure ) {
 }
 
 /*
-* RB_SetRtLightParams
-*/
-void RB_SetRtLightParams( unsigned numRtLights, rtlight_t **rtlights, unsigned numSurfs, unsigned *surfRtLightBits ) {
-	if( r_lighting_maxglsldlights->integer >= 0 && numRtLights > (unsigned)r_lighting_maxglsldlights->integer ) {
-		numRtLights = r_lighting_maxglsldlights->integer;
-	}
-	if( numRtLights > MAX_DRAWSURF_RTLIGHTS ) {
-		numRtLights = MAX_DRAWSURF_RTLIGHTS;
-	}
-	if( numSurfs > MAX_DRAWSURF_SURFS ) {
-		numSurfs = MAX_DRAWSURF_SURFS;
-	}
-
-	if( rb.triangleOutlines ) {
-		numSurfs = 0;
-		numRtLights = 0;
-	}
-
-	if( rb.numRealtimeLights == 0 && numRtLights == 0 ) {
-		return;
-	}
-
-	rb.numRealtimeLights = numRtLights;
-	if( rtlights )
-		memcpy( rb.rtlights, rtlights, numRtLights * sizeof( *rtlights ) );
-
-	rb.dirtyUniformState = true;
-
-	RB_UpdateVertexAttribs();
-}
-
-/*
 * RB_SetScreenImageSet
 */
 void RB_SetScreenImageSet( const refScreenTexSet_t *st ) {
@@ -2016,7 +1922,7 @@ static void RB_SetShaderState( void ) {
 static int RB_GetShaderpassState( int state ) {
 	state |= rb.currentShaderState;
 
-	if( rb.mode == RB_MODE_LIGHT || rb.mode == RB_MODE_LIGHTMAP || rb.mode == RB_MODE_DIFFUSE ) {
+	if( rb.mode == RB_MODE_LIGHTMAP || rb.mode == RB_MODE_DIFFUSE ) {
 		state &= ~(GLSTATE_DEPTHWRITE|GLSTATE_DSTBLEND_MASK);
 		if( !(state & GLSTATE_OFFSET_FILL) ) {
 			state |= GLSTATE_DEPTHFUNC_EQ;
@@ -2161,7 +2067,7 @@ void RB_DrawShadedElements( void ) {
 		RB_RenderPass( pass );
 	}
 
-	if( rb.mode == RB_MODE_DEPTH || rb.mode == RB_MODE_TRIANGLE_OUTLINES || rb.mode == RB_MODE_LIGHT || rb.mode == RB_MODE_LIGHTMAP || rb.mode == RB_MODE_DIFFUSE ) {
+	if( rb.mode == RB_MODE_DEPTH || rb.mode == RB_MODE_TRIANGLE_OUTLINES || rb.mode == RB_MODE_LIGHTMAP || rb.mode == RB_MODE_DIFFUSE ) {
 		goto end;
 	}
 

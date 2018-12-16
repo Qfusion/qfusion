@@ -40,7 +40,6 @@ cvar_t *r_brightness;
 cvar_t *r_sRGB;
 
 cvar_t *r_dynamiclight;
-cvar_t *r_coronascale;
 cvar_t *r_detailtextures;
 cvar_t *r_subdivisions;
 cvar_t *r_showtris;
@@ -58,20 +57,10 @@ cvar_t *r_lighting_glossintensity;
 cvar_t *r_lighting_glossexponent;
 cvar_t *r_lighting_ambientscale;
 cvar_t *r_lighting_directedscale;
-cvar_t *r_lighting_packlightmaps;
 cvar_t *r_lighting_maxlmblocksize;
 cvar_t *r_lighting_vertexlight;
 cvar_t *r_lighting_maxglsldlights;
 cvar_t *r_lighting_intensity;
-cvar_t *r_lighting_realtime_world;
-cvar_t *r_lighting_realtime_world_lightmaps;
-cvar_t *r_lighting_realtime_world_importfrommap;
-cvar_t *r_lighting_realtime_dlight;
-cvar_t *r_lighting_realtime_sky;
-cvar_t *r_lighting_realtime_sky_direction;
-cvar_t *r_lighting_realtime_sky_color;
-cvar_t *r_lighting_showlightvolumes;
-cvar_t *r_lighting_debuglight;
 cvar_t *r_lighting_bicubic;
 
 cvar_t *r_offsetmapping;
@@ -100,8 +89,6 @@ cvar_t *r_texturefilter;
 cvar_t *r_nobind;
 cvar_t *r_polyblend;
 cvar_t *r_screenshot_fmtstr;
-
-cvar_t *r_temp1;
 
 cvar_t *r_drawflat;
 cvar_t *r_wallcolor;
@@ -321,7 +308,6 @@ static void R_Register() {
 	r_detailtextures = ri.Cvar_Get( "r_detailtextures", "0", CVAR_ARCHIVE | CVAR_READONLY );
 
 	r_dynamiclight = ri.Cvar_Get( "r_dynamiclight", "1", CVAR_ARCHIVE );
-	r_coronascale = ri.Cvar_Get( "r_coronascale", "0.4", 0 );
 	r_subdivisions = ri.Cvar_Get( "r_subdivisions", STR_TOSTR( SUBDIVISIONS_DEFAULT ), CVAR_ARCHIVE | CVAR_LATCH_VIDEO | CVAR_READONLY );
 
 	r_fastsky = ri.Cvar_Get( "r_fastsky", "0", CVAR_ARCHIVE );
@@ -336,20 +322,10 @@ static void R_Register() {
 	r_lighting_ambientscale = ri.Cvar_Get( "r_lighting_ambientscale", "1", 0 );
 	r_lighting_directedscale = ri.Cvar_Get( "r_lighting_directedscale", "1", 0 );
 
-	r_lighting_packlightmaps = ri.Cvar_Get( "r_lighting_packlightmaps", "1", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
 	r_lighting_maxlmblocksize = ri.Cvar_Get( "r_lighting_maxlmblocksize", "2048", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
 	r_lighting_vertexlight = ri.Cvar_Get( "r_lighting_vertexlight", "0", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
 	r_lighting_maxglsldlights = ri.Cvar_Get( "r_lighting_maxglsldlights", "32", CVAR_ARCHIVE );
 	r_lighting_intensity = ri.Cvar_Get( "r_lighting_intensity", "1.75", CVAR_ARCHIVE );
-	r_lighting_realtime_world = ri.Cvar_Get( "r_lighting_realtime_world", "0", CVAR_ARCHIVE );
-	r_lighting_realtime_world_lightmaps = ri.Cvar_Get( "r_lighting_realtime_world_lightmaps", "0", CVAR_ARCHIVE );
-	r_lighting_realtime_world_importfrommap = ri.Cvar_Get( "r_lighting_realtime_world_importfrommap", "1", CVAR_ARCHIVE );
-	r_lighting_realtime_dlight = ri.Cvar_Get( "r_lighting_realtime_dlight", "0", CVAR_ARCHIVE );
-	r_lighting_realtime_sky = ri.Cvar_Get( "r_lighting_realtime_sky", "0", CVAR_ARCHIVE );
-	r_lighting_realtime_sky_direction = ri.Cvar_Get( "r_lighting_realtime_sky_direction", "", CVAR_ARCHIVE );
-	r_lighting_realtime_sky_color = ri.Cvar_Get( "r_lighting_realtime_sky_color", "", CVAR_ARCHIVE );
-	r_lighting_showlightvolumes = ri.Cvar_Get( "r_lighting_showlightvolumes", "0", 0 );
-	r_lighting_debuglight = ri.Cvar_Get( "r_lighting_debuglight", "-1", 0 );
 	r_lighting_bicubic = ri.Cvar_Get( "r_lighting_bicubic", "1", CVAR_ARCHIVE );
 
 	r_offsetmapping = ri.Cvar_Get( "r_offsetmapping", "2", CVAR_ARCHIVE );
@@ -377,8 +353,6 @@ static void R_Register() {
 	r_stencilbits = ri.Cvar_Get( "r_stencilbits", "0", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
 
 	r_screenshot_fmtstr = ri.Cvar_Get( "r_screenshot_fmtstr", va_r( tmp, sizeof( tmp ), "%s%%y%%m%%d_%%H%%M%%S", APP_SCREENSHOTS_PREFIX ), CVAR_ARCHIVE );
-
-	r_temp1 = ri.Cvar_Get( "r_temp1", "0", 0 );
 
 	r_drawflat = ri.Cvar_Get( "r_drawflat", "1", CVAR_ARCHIVE | CVAR_READONLY );
 	r_wallcolor = ri.Cvar_Get( "r_wallcolor", "128 128 128", CVAR_ARCHIVE );
@@ -593,7 +567,6 @@ static void R_InitVolatileAssets( void ) {
         glBindVertexArray( vao );
 
 	// init volatile data
-	R_InitCoronas();
 	R_InitCustomColors();
 
 	rsh.envShader = R_LoadShader( "$environment", SHADER_TYPE_OPAQUE_ENV, true, NULL );
@@ -621,7 +594,6 @@ static void R_InitVolatileAssets( void ) {
 static void R_DestroyVolatileAssets( void ) {
 	// kill volatile data
 	R_ShutdownCustomColors();
-	R_ShutdownCoronas();
 
 	glBindVertexArray( 0 );
 	glDeleteVertexArrays( 1, &vao );

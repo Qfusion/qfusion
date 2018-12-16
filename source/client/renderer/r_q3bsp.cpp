@@ -1536,12 +1536,10 @@ static void Mod_ApplySuperStylesToFace( const rdface_t *in, msurface_t *out ) {
 			lightmaps[j] = lmRects[j]->texNum;
 
 			// scale/shift lightmap coords
-			if( mapConfig.lightmapsPacking ) {
-				lmArray = mesh->lmstArray[j][0];
-				for( k = 0; k < mesh->numVerts; k++, lmArray += 2 ) {
-					lmArray[0] = (double)( lmArray[0] ) * lmRects[j]->texMatrix[0][0] + lmRects[j]->texMatrix[0][1];
-					lmArray[1] = (double)( lmArray[1] ) * lmRects[j]->texMatrix[1][0] + lmRects[j]->texMatrix[1][1];
-				}
+			lmArray = mesh->lmstArray[j][0];
+			for( k = 0; k < mesh->numVerts; k++, lmArray += 2 ) {
+				lmArray[0] = (double)( lmArray[0] ) * lmRects[j]->texMatrix[0][0] + lmRects[j]->texMatrix[0][1];
+				lmArray[1] = (double)( lmArray[1] ) * lmRects[j]->texMatrix[1][0] + lmRects[j]->texMatrix[1][1];
 			}
 			if( mapConfig.lightmapArrays ) {
 				lmlayersArray = &mesh->lmlayersArray[j >> 2][0][j & 3];

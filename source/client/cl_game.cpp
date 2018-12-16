@@ -264,7 +264,6 @@ void CL_GameModule_Init( void ) {
 	import.R_RegisterSkinFile = re.RegisterSkinFile;
 	import.R_RegisterLinearPic = re.RegisterLinearPic;
 	import.R_LerpTag = re.LerpTag;
-	import.R_LightForOrigin = re.LightForOrigin;
 	import.R_SetCustomColor = re.SetCustomColor;
 	import.R_DrawStretchPic = re.DrawStretchPic;
 	import.R_DrawStretchPoly = re.DrawStretchPoly;

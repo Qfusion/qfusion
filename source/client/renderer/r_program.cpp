@@ -2032,57 +2032,6 @@ void RP_UpdateLightstyleUniforms( int elem, const superLightStyle_t *superLightS
 }
 
 /*
-* RP_UpdateRealtimeLightsUniforms
-*/
-void RP_UpdateRealtimeLightsUniforms( int elem, const vec3_t lightVec, const mat4_t objectToLightMatrix,
-	unsigned int numRtLights, rtlight_t **rtlights, unsigned numSurfs, unsigned *surfRtLightBits ) {
-	unsigned i;
-	glsl_program_t *program = r_glslprograms + elem - 1;
-
-	if( numRtLights ) {	
-		vec4_t shaderColor = { 0 };
-
-		for( i = 0; i < numRtLights; i++ ) {
-			const rtlight_t *rl = rtlights[i];
-
-			if( program->loc.DynamicLightsDiffuseAndInvRadius < 0 ) {
-				break;
-			}
-
-			if( program->loc.DynamicLightsMatrix >= 0 ) {
-				glUniformMatrix4fv( program->loc.DynamicLightsMatrix, 1, GL_FALSE, objectToLightMatrix );
-			}
-
-			if( glConfig.sSRGB ) {
-				shaderColor[0] = rl->linearColor[0];
-				shaderColor[1] = rl->linearColor[1];
-				shaderColor[2] = rl->linearColor[2];
-				shaderColor[3] = rl->linearColor[3];
-			} else {
-				shaderColor[0] = rl->color[0];
-				shaderColor[1] = rl->color[1];
-				shaderColor[2] = rl->color[2];
-				shaderColor[3] = rl->color[3];
-			}
-
-			if( rl->style >= 0 && rl->style < MAX_LIGHTSTYLES ) {
-				float *rgb = rsc.lightStyles[rl->style].rgb;
-				shaderColor[0] *= rgb[0];
-				shaderColor[1] *= rgb[1];
-				shaderColor[2] *= rgb[2];
-			}
-
-			// DynamicLightsDiffuseAndInvRadius is transposed for SIMD, but it's still 4x4
-			glUniform4fv( program->loc.DynamicLightsDiffuseAndInvRadius, 1, shaderColor );
-
-			if( program->loc.DynamicLightVector >= 0 ) {
-				glUniform3fv( program->loc.DynamicLightVector, 1, lightVec );
-			}
-		}
-	}
-}
-
-/*
 * RP_UpdateTexGenUniforms
 */
 void RP_UpdateTexGenUniforms( int elem, const mat4_t reflectionMatrix, const mat4_t vectorMatrix ) {

@@ -276,20 +276,6 @@ void RB_LoadObjectMatrix( const mat4_t m ) {
 	Matrix4_Multiply( rb.cameraMatrix, m, rb.modelviewMatrix );
 	Matrix4_Multiply( rb.projectionMatrix, rb.modelviewMatrix, rb.modelviewProjectionMatrix );
 
-	if( rb.numRealtimeLights > 0 ) {
-		vec3_t tvec;
-		rtlight_t *rl = rb.rtlights[0];
-
-		Matrix4_Multiply( rb.rtlights[0]->worldToLightMatrix, m, rb.objectToLightMatrix );
-
-		if( rl->directional ) {
-			VectorNegate( &rl->axis[AXIS_FORWARD], tvec );
-		} else {
-			VectorSubtract( rl->origin, rb.currentEntity->origin, tvec );
-		}
-		Matrix3_TransformVector( rb.currentEntity->axis, tvec, rb.lightDir );
-	}
-
 	rb.dirtyUniformState = true;
 }
 

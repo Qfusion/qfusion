@@ -58,7 +58,6 @@ extern "C" QF_DLL_EXPORT ref_export_t *GetRefAPI( ref_import_t *import ) {
 
 	globals.GetShaderForOrigin = RF_GetShaderForOrigin;
 
-	globals.LightForOrigin = RF_LightForOrigin;
 	globals.LerpTag = RF_LerpTag;
 	globals.TransformVectorToScreen = RF_TransformVectorToScreen;
 	globals.TransformVectorToScreenClamped = RF_TransformVectorToScreenClamped;

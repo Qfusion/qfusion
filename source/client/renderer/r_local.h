@@ -78,16 +78,12 @@ typedef vec_t instancePoint_t[8]; // quaternion for rotation + xyz pos + uniform
 #define RF_LIGHTMAP             RF_BIT( 7 )
 #define RF_SOFT_PARTICLES       RF_BIT( 8 )
 #define RF_PORTAL_CAPTURE       RF_BIT( 9 )
-#define RF_LIGHTVIEW            RF_BIT( 10 )
-#define RF_NOENTS               RF_BIT( 11 )
+#define RF_NOENTS               RF_BIT( 10 )
 
 #define RF_CUBEMAPVIEW          ( RF_ENVVIEW )
-#define RF_NONVIEWERREF         ( RF_PORTALVIEW | RF_MIRRORVIEW | RF_ENVVIEW | RF_LIGHTVIEW )
+#define RF_NONVIEWERREF         ( RF_PORTALVIEW | RF_MIRRORVIEW | RF_ENVVIEW )
 
 #define MAX_REF_ENTITIES        ( MAX_ENTITIES + 48 ) // must not exceed 2048 because of sort key packing
-
-#define MAX_ENT_RTLIGHTS		8
-#define MAX_SCENE_RTLIGHTS		1024
 
 #define BLUENOISE_TEXTURE_SIZE 128
 
@@ -182,9 +178,6 @@ typedef struct refinst_s {
 	portalSurface_t portalSurfaces[MAX_PORTAL_SURFACES];
 	portalSurface_t *skyportalSurface;
 
-	rtlight_t *rtlights[MAX_SCENE_RTLIGHTS];
-	unsigned numRealtimeLights;
-
 	refdef_t refdef;
 
 	unsigned int numEntities;
@@ -192,17 +185,6 @@ typedef struct refinst_s {
 	uint8_t *entpvs;
 
 	struct refinst_s *parent;
-
-	int				rtLightSide;
-	rtlight_t		*rtLight;
-
-	unsigned		numRtLightEntities;
-	int				*rtLightEntities;
-
-	unsigned		*rtLightSurfaceInfo;
-
-	unsigned		numRtLightVisLeafs;
-	unsigned		*rtLightVisLeafs;
 
 	refScreenTexSet_t *st;                  // points to either either a 8bit or a 16bit float set
 
@@ -246,7 +228,6 @@ typedef struct {
 	image_t         *greyTexture;
 	image_t         *blankBumpTexture;
 	image_t         *particleTexture;           // little dot for particles
-	image_t         *coronaTexture;
 	image_t         *blueNoiseTexture;
 	image_t         *portalTextures[MAX_PORTAL_TEXTURES + 1];
 
@@ -277,9 +258,6 @@ typedef struct {
 	entity_t        *polyviewerent;
 	entity_t        *skyent;
 
-	unsigned int numDlights;
-	rtlight_t dlights[MAX_DLIGHTS];
-
 	unsigned int numPolys;
 	drawSurfacePoly_t polys[MAX_POLYS];
 
@@ -287,8 +265,6 @@ typedef struct {
 
 	unsigned int numBmodelEntities;
 	int bmodelEntities[MAX_REF_ENTITIES];
-
-	float farClipMin, farClipBias;
 
 	refdef_t refdef;
 } r_scene_t;
@@ -318,7 +294,6 @@ typedef struct {
 		unsigned int c_world_lights, c_dynamic_lights;
 		unsigned int c_ents_total, c_ents_bmodels;
 		unsigned int t_cull_world_nodes, t_cull_world_surfs;
-		unsigned int t_cull_rtlights;
 		unsigned int t_world_node, t_light_node;
 		unsigned int t_add_world_surfs;
 		unsigned int t_add_polys, t_add_entities;
@@ -366,7 +341,6 @@ extern cvar_t *r_brightness;
 extern cvar_t *r_sRGB;
 
 extern cvar_t *r_dynamiclight;
-extern cvar_t *r_coronascale;
 extern cvar_t *r_detailtextures;
 extern cvar_t *r_subdivisions;
 extern cvar_t *r_showtris;
@@ -384,20 +358,10 @@ extern cvar_t *r_lighting_glossintensity;
 extern cvar_t *r_lighting_glossexponent;
 extern cvar_t *r_lighting_ambientscale;
 extern cvar_t *r_lighting_directedscale;
-extern cvar_t *r_lighting_packlightmaps;
 extern cvar_t *r_lighting_maxlmblocksize;
 extern cvar_t *r_lighting_vertexlight;
 extern cvar_t *r_lighting_maxglsldlights;
 extern cvar_t *r_lighting_intensity;
-extern cvar_t *r_lighting_realtime_world;
-extern cvar_t *r_lighting_realtime_world_lightmaps;
-extern cvar_t *r_lighting_realtime_world_importfrommap;
-extern cvar_t *r_lighting_realtime_dlight;
-extern cvar_t *r_lighting_realtime_sky;
-extern cvar_t *r_lighting_realtime_sky_direction;
-extern cvar_t *r_lighting_realtime_sky_color;
-extern cvar_t *r_lighting_showlightvolumes;
-extern cvar_t *r_lighting_debuglight;
 extern cvar_t *r_lighting_bicubic;
 
 extern cvar_t *r_offsetmapping;
@@ -425,8 +389,6 @@ extern cvar_t *r_texturefilter;
 extern cvar_t *r_mode;
 extern cvar_t *r_polyblend;
 extern cvar_t *r_screenshot_fmtstr;
-
-extern cvar_t *r_temp1;
 
 extern cvar_t *r_drawflat;
 extern cvar_t *r_wallcolor;
@@ -484,8 +446,7 @@ bool    R_CullBox( const vec3_t mins, const vec3_t maxs, const unsigned int clip
 bool    R_CullSphere( const vec3_t centre, const float radius, const unsigned int clipflags );
 bool    R_VisCullBox( const vec3_t mins, const vec3_t maxs );
 bool    R_VisCullSphere( const vec3_t origin, float radius );
-int     R_CullModelEntity( const entity_t *e, bool pvsCull );
-int		R_CullSpriteEntity( const entity_t *e );
+bool    R_CullModelEntity( const entity_t *e, bool pvsCull );
 bool	R_FogCull( const mfog_t *fog, vec3_t origin, float radius );
 void	R_OrthoFrustumPlanesFromCorners( vec3_t corners[8], cplane_t *frustum );
 float	R_ProjectFarFrustumCornersOnBounds( vec3_t corners[8], const vec3_t mins, const vec3_t maxs );
@@ -846,7 +807,6 @@ typedef struct {
 	byte_vec4_t environmentColor;
 	float averageLightingIntensity;
 
-	bool lightmapsPacking;
 	bool lightmapArrays;                    // true if using array textures for lightmaps
 	int maxLightmapSize;                    // biggest dimension of the largest lightmap
 	bool deluxeMaps;                        // true if there are valid deluxemaps in the .bsp

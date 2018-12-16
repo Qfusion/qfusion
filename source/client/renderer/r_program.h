@@ -17,8 +17,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
-#ifndef R_PROGRAM_H
-#define R_PROGRAM_H
+#pragma once
 
 typedef uint64_t r_glslfeat_t;
 
@@ -209,9 +208,6 @@ void RP_UpdateDiffuseLightUniforms( int elem,
 
 void RP_UpdateLightstyleUniforms( int elem, const superLightStyle_t *superLightStyle );
 
-void RP_UpdateRealtimeLightsUniforms( int elem, const vec3_t lightVec, const mat4_t objectToLightMatrix,
-	unsigned int numRtLights, rtlight_t **rtlights, unsigned numSurfs, unsigned *surfRtLightBits );
-
 void RP_UpdateFogUniforms( int elem, byte_vec4_t color, float clearDist, float opaqueDist,
 						   cplane_t *fogPlane, cplane_t *eyePlane, float eyeFogDist );
 
@@ -226,5 +222,3 @@ void RP_UpdateDrawFlatUniforms( int elem, const vec3_t wallColor, const vec3_t f
 void RP_UpdateColorCorrectionUniforms( int elem, float hdrGamme, float hdrExposure );
 
 void RP_UpdateKawaseUniforms( int elem, int TexWidth, int TexHeight, int iteration );
-
-#endif // R_PROGRAM_H
