@@ -156,17 +156,6 @@ static void body_think( edict_t *self ) {
 }
 
 /*
-* body_ready
-*/
-static void body_ready( edict_t *body ) {
-	body->takedamage = DAMAGE_YES;
-	body->r.solid = SOLID_YES;
-	body->think = body_think; // body self destruction countdown
-	body->nextThink = level.time + 3000;
-	GClip_LinkEntity( body );
-}
-
-/*
 * CopyToBodyQue
 */
 static edict_t *CopyToBodyQue( edict_t *ent, edict_t *attacker, int damage ) {
@@ -238,8 +227,7 @@ static edict_t *CopyToBodyQue( edict_t *ent, edict_t *attacker, int damage ) {
 	body->die = body_die;
 	body->think = body_think; // body self destruction countdown
 
-	if( ent->health < GIB_HEALTH
-		|| meansOfDeath == MOD_ELECTROBOLT /* electrobolt always gibs */ ) {
+	if( ent->health < GIB_HEALTH || meansOfDeath == MOD_ELECTROBOLT ) {
 		ThrowSmallPileOfGibs( body, damage );
 
 		// reset gib impulse
@@ -276,10 +264,10 @@ static edict_t *CopyToBodyQue( edict_t *ent, edict_t *attacker, int damage ) {
 			}
 		}
 
-		body->think = body_ready;
+		body->think = body_think;
 		body->takedamage = DAMAGE_NO;
 		body->r.solid = SOLID_NOT;
-		body->nextThink = level.time + 500; // make damageable in 0.5 seconds
+		body->nextThink = level.time + 3500;
 	} else {   // wasn't a player, just copy it's model
 		VectorClear( body->velocity );
 		body->s.modelindex = ent->s.modelindex;
