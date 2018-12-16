@@ -363,13 +363,6 @@ void GT_ScoreEvent( Client @client, const String &score_event, const String &arg
 
 		return;
 	}
-
-	if( score_event == "rebalance" || score_event == "shuffle" ) {
-		// end round when in match
-		if( @client == null && match.getState() == MATCH_STATE_PLAYTIME ) {
-			roundNewState( RoundState_Finished );
-		}
-	}
 }
 
 // a player is being respawned. This can happen from several ways, as dying, changing team,

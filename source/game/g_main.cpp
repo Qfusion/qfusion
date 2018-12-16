@@ -612,11 +612,6 @@ void G_ExitLevel( void ) {
 	}
 }
 
-void G_RestartLevel( void ) {
-	Q_strncpyz( level.forcemap, level.mapname, sizeof( level.mapname ) );
-	G_EndMatch();
-}
-
 //======================================================================
 
 #ifndef GAME_HARD_LINKED

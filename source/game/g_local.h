@@ -881,7 +881,6 @@ void G_Printf( _Printf_format_string_ const char *format, ... );
 void    G_Init( unsigned int seed, unsigned int framemsec, int protocol, const char *demoExtension );
 void    G_Shutdown( void );
 void    G_ExitLevel( void );
-void G_RestartLevel( void );
 game_state_t *G_GetGameState( void );
 void    G_Timeout_Reset( void );
 

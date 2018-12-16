@@ -146,21 +146,6 @@ static http_response_code_t G_PlayerlistWebRequest( http_query_method_t method, 
 }
 
 /*
-* shuffle/rebalance
-*/
-typedef struct
-{
-	int ent;
-	int weight;
-} weighted_player_t;
-
-static int G_VoteCompareWeightedPlayers( const void *a, const void *b ) {
-	const weighted_player_t *pa = ( const weighted_player_t * )a;
-	const weighted_player_t *pb = ( const weighted_player_t * )b;
-	return pb->weight - pa->weight;
-}
-
-/*
 * map
 */
 
@@ -350,14 +335,6 @@ static http_response_code_t G_VoteMapWebRequest( http_query_method_t method, con
 	*content = msg;
 	*content_length = msg_len;
 	return HTTP_RESP_OK;
-}
-
-/*
-* restart
-*/
-
-static void G_VoteRestartPassed( callvotedata_t *vote ) {
-	G_RestartLevel();
 }
 
 /*
@@ -1170,141 +1147,6 @@ static const char *G_VoteAllowUnevenCurrent( void ) {
 	}
 }
 
-/*
-* Shuffle
-*/
-static void G_VoteShufflePassed( callvotedata_t *vote ) {
-	int i;
-	int p1, p2, inc;
-	int team;
-	int numplayers;
-	weighted_player_t players[MAX_CLIENTS];
-
-	numplayers = 0;
-	for( team = TEAM_ALPHA; team < GS_MAX_TEAMS; team++ ) {
-		if( !teamlist[team].numplayers ) {
-			continue;
-		}
-		for( i = 0; i < teamlist[team].numplayers; i++ ) {
-			players[numplayers].ent = teamlist[team].playerIndices[i];
-			players[numplayers].weight = rand();
-			numplayers++;
-		}
-	}
-
-	if( !numplayers ) {
-		return;
-	}
-
-	qsort( players, numplayers, sizeof( weighted_player_t ), ( int ( * )( const void *, const void * ) )G_VoteCompareWeightedPlayers );
-
-	if( rand() & 1 ) {
-		p1 = 0;
-		p2 = numplayers - 1;
-		inc = 1;
-	} else {
-		p1 = numplayers - 1;
-		p2 = 0;
-		inc = -1;
-	}
-
-	// put players into teams
-	team = rand() % numplayers;
-	for( i = p1; ; i += inc ) {
-		edict_t *e = game.edicts + players[i].ent;
-		int newteam = TEAM_ALPHA + team++ % ( GS_MAX_TEAMS - TEAM_ALPHA );
-
-		if( e->s.team != newteam ) {
-			G_Teams_SetTeam( e, newteam );
-		}
-
-		if( i == p2 ) {
-			break;
-		}
-	}
-
-	G_Gametype_ScoreEvent( NULL, "shuffle", "" );
-}
-
-static bool G_VoteShuffleValidate( callvotedata_t *vote, bool first ) {
-	if( !GS_TeamBasedGametype() || level.gametype.maxPlayersPerTeam == 1 ) {
-		if( first ) {
-			G_PrintMsg( vote->caller, S_COLOR_RED "Shuffle only works in team-based game modes\n" );
-		}
-		return false;
-	}
-
-	return true;
-}
-
-/*
-* Rebalance
-*/
-static void G_VoteRebalancePassed( callvotedata_t *vote ) {
-	int i;
-	int team;
-	int lowest_team, lowest_score;
-	int numplayers;
-	weighted_player_t players[MAX_CLIENTS];
-
-	numplayers = 0;
-	lowest_team = GS_MAX_TEAMS;
-	lowest_score = 999999;
-	for( team = TEAM_ALPHA; team < GS_MAX_TEAMS; team++ ) {
-		if( !teamlist[team].numplayers ) {
-			continue;
-		}
-
-		if( teamlist[team].stats.score < lowest_score ) {
-			lowest_team = team;
-			lowest_score = teamlist[team].stats.score;
-		}
-
-		for( i = 0; i < teamlist[team].numplayers; i++ ) {
-			int ent = teamlist[team].playerIndices[i];
-			players[numplayers].ent = ent;
-			players[numplayers].weight = game.edicts[ent].r.client->level.stats.score;
-			numplayers++;
-		}
-	}
-
-	if( !numplayers || lowest_team == GS_MAX_TEAMS ) {
-		return;
-	}
-
-	qsort( players, numplayers, sizeof( weighted_player_t ), ( int ( * )( const void *, const void * ) )G_VoteCompareWeightedPlayers );
-
-	// put players into teams
-	// start with the lowest scoring team
-	team = lowest_team - TEAM_ALPHA;
-	for( i = 0; i < numplayers; i++ ) {
-		edict_t *e = game.edicts + players[i].ent;
-		int newteam = TEAM_ALPHA + team % ( GS_MAX_TEAMS - TEAM_ALPHA );
-
-		if( e->s.team != newteam ) {
-			G_Teams_SetTeam( e, newteam );
-		}
-		memset( &e->r.client->level.stats, 0, sizeof( e->r.client->level.stats ) ); // clear scores
-
-		if( i % 2 == 0 ) {
-			team++;
-		}
-	}
-
-	G_Gametype_ScoreEvent( NULL, "rebalance", "" );
-}
-
-static bool G_VoteRebalanceValidate( callvotedata_t *vote, bool first ) {
-	if( !GS_TeamBasedGametype() || level.gametype.maxPlayersPerTeam == 1 ) {
-		if( first ) {
-			G_PrintMsg( vote->caller, S_COLOR_RED "Rebalance only works in team-based game modes\n" );
-		}
-		return false;
-	}
-
-	return true;
-}
-
 //================================================
 //
 //================================================
@@ -1978,16 +1820,6 @@ void G_CallVotes_Init( void ) {
 	callvote->webRequest = G_VoteMapWebRequest;
 	callvote->help = G_LevelCopyString( "Changes map" );
 
-	callvote = G_RegisterCallvote( "restart" );
-	callvote->expectedargs = 0;
-	callvote->validate = NULL;
-	callvote->execute = G_VoteRestartPassed;
-	callvote->current = NULL;
-	callvote->extraHelp = NULL;
-	callvote->argument_format = NULL;
-	callvote->argument_type = NULL;
-	callvote->help = G_LevelCopyString( "Restarts current map" );
-
 	callvote = G_RegisterCallvote( "nextmap" );
 	callvote->expectedargs = 0;
 	callvote->validate = NULL;
@@ -2173,26 +2005,6 @@ void G_CallVotes_Init( void ) {
 	callvote->extraHelp = NULL;
 	callvote->argument_format = G_LevelCopyString( "<1 or 0>" );
 	callvote->argument_type = G_LevelCopyString( "bool" );
-
-	callvote = G_RegisterCallvote( "shuffle" );
-	callvote->expectedargs = 0;
-	callvote->validate = G_VoteShuffleValidate;
-	callvote->execute = G_VoteShufflePassed;
-	callvote->current = NULL;
-	callvote->extraHelp = NULL;
-	callvote->argument_format = NULL;
-	callvote->argument_type = NULL;
-	callvote->help = G_LevelCopyString( "Shuffles teams" );
-
-	callvote = G_RegisterCallvote( "rebalance" );
-	callvote->expectedargs = 0;
-	callvote->validate = G_VoteRebalanceValidate;
-	callvote->execute = G_VoteRebalancePassed;
-	callvote->current = NULL;
-	callvote->extraHelp = NULL;
-	callvote->argument_format = NULL;
-	callvote->argument_type = NULL;
-	callvote->help = G_LevelCopyString( "Rebalances teams" );
 
 	// wsw : pb : server admin can now disable a specific callvote command (g_disable_vote_<callvote name>)
 	for( callvote = callvotesHeadNode; callvote != NULL; callvote = callvote->next ) {
