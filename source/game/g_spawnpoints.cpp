@@ -182,7 +182,7 @@ edict_t *SelectDeathmatchSpawnPoint( edict_t *ent ) {
 /*
 * G_OffsetSpawnPoint - use a grid of player boxes to offset the spawn point
 */
-bool G_OffsetSpawnPoint( vec3_t origin, vec3_t box_mins, vec3_t box_maxs, float radius, bool checkground ) {
+bool G_OffsetSpawnPoint( vec3_t origin, const vec3_t box_mins, const vec3_t box_maxs, float radius, bool checkground ) {
 	trace_t trace;
 	vec3_t virtualorigin;
 	vec3_t absmins, absmaxs;
@@ -355,8 +355,7 @@ void SelectSpawnPoint( edict_t *ent, edict_t **spawnpoint, vec3_t origin, vec3_t
 
 	// SPAWN TELEFRAGGING PROTECTION.
 	if( ent->r.solid == SOLID_YES && ( level.gametype.spawnpointRadius > ( playerbox_stand_maxs[0] - playerbox_stand_mins[0] ) ) ) {
-		G_OffsetSpawnPoint( origin, playerbox_stand_mins, playerbox_stand_maxs, level.gametype.spawnpointRadius,
-							!( spot->spawnflags & 1 ) ? true : false );
+		G_OffsetSpawnPoint( origin, playerbox_stand_mins, playerbox_stand_maxs, level.gametype.spawnpointRadius, ( spot->spawnflags & 1 ) == 0 );
 	}
 }
 

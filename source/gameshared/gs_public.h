@@ -49,17 +49,17 @@ extern gs_module_api_t gs_api;
 //===============================================================
 //		WARSOW player AAboxes sizes
 
-extern vec3_t playerbox_stand_mins;
-extern vec3_t playerbox_stand_maxs;
-extern int playerbox_stand_viewheight;
+constexpr vec3_t playerbox_stand_mins = { -16, -16, -24 };
+constexpr vec3_t playerbox_stand_maxs = { 16, 16, 40 };
+constexpr int playerbox_stand_viewheight = 30;
 
-extern vec3_t playerbox_crouch_mins;
-extern vec3_t playerbox_crouch_maxs;
-extern int playerbox_crouch_viewheight;
+constexpr vec3_t playerbox_crouch_mins = { -16, -16, -24 };
+constexpr vec3_t playerbox_crouch_maxs = { 16, 16, 16 };
+constexpr int playerbox_crouch_viewheight = 12;
 
-extern vec3_t playerbox_gib_mins;
-extern vec3_t playerbox_gib_maxs;
-extern int playerbox_gib_viewheight;
+constexpr vec3_t playerbox_gib_mins = { -16, -16, 0 };
+constexpr vec3_t playerbox_gib_maxs = { 16, 16, 16 };
+constexpr int playerbox_gib_viewheight = 8;
 
 // item box
 constexpr vec3_t item_box_mins = { -16.0f, -16.0f, -16.0f };

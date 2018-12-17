@@ -28,18 +28,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //===============================================================
 //		WARSOW player AAboxes sizes
 
-vec3_t playerbox_stand_mins = { -16, -16, -24 };
-vec3_t playerbox_stand_maxs = { 16, 16, 40 };
-int playerbox_stand_viewheight = 30;
-
-vec3_t playerbox_crouch_mins = { -16, -16, -24 };
-vec3_t playerbox_crouch_maxs = { 16, 16, 16 };
-int playerbox_crouch_viewheight = 12;
-
-vec3_t playerbox_gib_mins = { -16, -16, 0 };
-vec3_t playerbox_gib_maxs = { 16, 16, 16 };
-int playerbox_gib_viewheight = 8;
-
 #define SPEEDKEY    500.0f
 
 #define PM_DASHJUMP_TIMEDELAY 1000 // delay in milliseconds
