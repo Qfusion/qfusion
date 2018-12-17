@@ -38,10 +38,10 @@ void CG_StackChatString( cg_gamechat_t *chat, const char *str ) {
 	chat->nextMsg = ( chat->nextMsg + 1 ) % GAMECHAT_STACK_SIZE;
 }
 
-#define GAMECHAT_NOTIFY_TIME        3000
+#define GAMECHAT_NOTIFY_TIME        5000
 #define GAMECHAT_WAIT_IN_TIME       0
 #define GAMECHAT_FADE_IN_TIME       100
-#define GAMECHAT_WAIT_OUT_TIME      2000
+#define GAMECHAT_WAIT_OUT_TIME      4000
 #define GAMECHAT_FADE_OUT_TIME      ( GAMECHAT_NOTIFY_TIME - GAMECHAT_WAIT_OUT_TIME )
 
 /*
