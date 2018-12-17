@@ -52,84 +52,84 @@ typedef struct glsl_program_s {
 	int binaryCachePos;
 
 	struct loc_s {
-		int ModelViewMatrix,
-			ModelViewProjectionMatrix,
+		int ModelViewMatrix;
+		int ModelViewProjectionMatrix;
 
-			ZRange,
+		int ZRange;
 
-			ViewOrigin,
-			ViewAxis,
+		int ViewOrigin;
+		int ViewAxis;
 
-			MirrorSide,
+		int MirrorSide;
 
-			Viewport,
+		int Viewport;
 
-			LightDir,
-			LightAmbient,
-			LightDiffuse,
-			LightingIntensity,
+		int LightDir;
+		int LightAmbient;
+		int LightDiffuse;
+		int LightingIntensity;
 
-			TextureMatrix,
+		int TextureMatrix;
 
-			GlossFactors,
+		int GlossFactors;
 
-			OffsetMappingScale,
-			OutlineHeight,
-			OutlineCutOff,
+		int OffsetMappingScale;
+		int OutlineHeight;
+		int OutlineCutOff;
 
-			FrontPlane,
-			TextureParams,
+		int FrontPlane;
+		int TextureParams;
 
-			EntityDist,
-			EntityOrigin,
-			EntityColor,
-			ConstColor,
-			RGBGenFuncArgs,
-			AlphaGenFuncArgs;
+		int EntityDist;
+		int EntityOrigin;
+		int EntityColor;
+		int ConstColor;
+		int RGBGenFuncArgs;
+		int AlphaGenFuncArgs;
 
 		struct {
-			int Plane,
-				Color,
-				ScaleAndEyeDist,
-				EyePlane;
+			int Plane;
+			int Color;
+			int ScaleAndEyeDist;
+			int EyePlane;
 		} Fog;
 
-		int ShaderTime,
+		int ShaderTime;
 
-			ReflectionTexMatrix,
-			VectorTexMatrix,
+		int ReflectionTexMatrix;
+		int VectorTexMatrix;
 
-			DeluxemapOffset,
-			LightstyleColor[MAX_LIGHTMAPS],
+		int DeluxemapOffset;
+		int LightstyleColor[MAX_LIGHTMAPS];
 
-			DynamicLightsMatrix,
-			DynamicLightsDiffuseAndInvRadius,
-			DynamicLightVector,
+		int DynamicLightsMatrix;
+		int DynamicLightsDiffuseAndInvRadius;
+		int DynamicLightVector;
 
-			AttrBonesIndices,
-			AttrBonesWeights,
-			DualQuats,
+		int AttrBonesIndices;
+		int AttrBonesWeights;
+		int DualQuats;
 
-			InstancePoints,
+		int InstancePoints;
 
-			WallColor,
-			FloorColor,
+		int WallColor;
+		int FloorColor;
 
-			BlendMix,
-			ColorMod,
+		int BlendMix;
+		int ColorMod;
 
-			SoftParticlesScale;
+		int SoftParticlesScale;
 
-		int hdrGamma,
-			hdrExposure;
+		int hdrGamma;
+		int hdrExposure;
 
 		// builtin uniforms
 		struct {
-			int ShaderTime,
-				ViewOrigin,
-				ViewAxis,
-				MirrorSide,
-				EntityOrigin;
+			int ShaderTime;
+			int ViewOrigin;
+			int ViewAxis;
+			int MirrorSide;
+			int EntityOrigin;
 		} builtin;
 	} loc;
 } glsl_program_t;
