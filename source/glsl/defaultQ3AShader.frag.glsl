@@ -1,7 +1,6 @@
 #include "include/common.glsl"
 #include "include/lightmap.glsl"
 #include "include/uniforms.glsl"
-#include_if(NUM_DLIGHTS) "include/dlights.glsl"
 #include_if(APPLY_FOG) "include/fog.glsl"
 #include_if(APPLY_GREYSCALE) "include/greyscale.glsl"
 
@@ -61,10 +60,6 @@ void main(void)
 
 #if defined(APPLY_FOG) && !defined(APPLY_FOG_COLOR)
 	myhalf fogDensity = FogDensity(v_FogCoord);
-#endif
-
-#if defined(NUM_DLIGHTS)
-	color.rgb += DynamicLightsColor(v_Position);
 #endif
 
 	myhalf4 diffuse;

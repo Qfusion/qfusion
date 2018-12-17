@@ -9,7 +9,7 @@ qf_flat_varying vec4 v_LightmapLayer0123;
 #endif
 #endif
 
-#if defined(NUM_DLIGHTS) || defined(APPLY_SPECULAR)
+#if defined(APPLY_SPECULAR)
 qf_varying vec3 v_Position;
 #endif
 

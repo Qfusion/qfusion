@@ -569,10 +569,6 @@ static const glsl_feature_t glsl_features_material[] =
 	{ GLSL_SHADER_COMMON_FOG, "#define APPLY_FOG\n#define APPLY_FOG_IN 1\n", "_fog" },
 	{ GLSL_SHADER_COMMON_FOG_RGB, "#define APPLY_FOG_COLOR\n", "_rgb" },
 
-	{ GLSL_SHADER_COMMON_DLIGHTS, "#define NUM_DLIGHTS 1\n", "_dl" },
-	{ GLSL_SHADER_COMMON_DLIGHT_CUBEFILTER, "#define APPLY_DLIGHT_CUBEFILTER\n", "_dlcf" },
-	{ GLSL_SHADER_COMMON_DLIGHT_DIRECTIONAL, "#define APPLY_DLIGHT_DIRECTIONAL\n", "_dir" },
-
 	{ GLSL_SHADER_COMMON_DRAWFLAT, "#define APPLY_DRAWFLAT\n", "_flat" },
 
 	{ GLSL_SHADER_COMMON_AUTOSPRITE, "#define APPLY_AUTOSPRITE\n", "" },
@@ -686,10 +682,6 @@ static const glsl_feature_t glsl_features_q3a[] =
 
 	{ GLSL_SHADER_COMMON_FOG, "#define APPLY_FOG\n#define APPLY_FOG_IN 1\n", "_fog" },
 	{ GLSL_SHADER_COMMON_FOG_RGB, "#define APPLY_FOG_COLOR\n", "_rgb" },
-
-	{ GLSL_SHADER_COMMON_DLIGHTS, "#define NUM_DLIGHTS 1\n", "_dl" },
-	{ GLSL_SHADER_COMMON_DLIGHT_CUBEFILTER, "#define APPLY_DLIGHT_CUBEFILTER\n", "_dlcf" },
-	{ GLSL_SHADER_COMMON_DLIGHT_DIRECTIONAL, "#define APPLY_DLIGHT_DIRECTIONAL\n", "_ortho" },
 
 	{ GLSL_SHADER_COMMON_DRAWFLAT, "#define APPLY_DRAWFLAT\n", "_flat" },
 
@@ -1270,8 +1262,6 @@ static bool RF_LoadShaderFromFile_r( glslParser_t *parser, const char *fileName,
 			ignore_include = true;
 
 			if( ( !Q_stricmp( token, "APPLY_FOG)" ) && ( features & GLSL_SHADER_COMMON_FOG ) ) ||
-
-				( !Q_stricmp( token, "NUM_DLIGHTS)" ) && ( features & GLSL_SHADER_COMMON_DLIGHTS ) ) ||
 
 				( !Q_stricmp( token, "APPLY_GREYSCALE)" ) && ( features & GLSL_SHADER_COMMON_GREYSCALE ) ) ||
 

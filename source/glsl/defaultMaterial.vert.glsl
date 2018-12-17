@@ -50,7 +50,7 @@ void main()
 	v_EyeVector = EyeVectorWorld * v_StrMatrix;
 #endif
 
-#if defined(NUM_DLIGHTS) || defined(APPLY_SPECULAR)
+#if defined(APPLY_SPECULAR)
 	v_Position = Position.xyz;
 #endif
 

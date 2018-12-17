@@ -3,7 +3,6 @@
 #include "include/uniforms.glsl"
 #include "include/varying_material.glsl"
 
-#include_if(NUM_DLIGHTS) "include/dlights.glsl"
 #include_if(APPLY_FOG) "include/fog.glsl"
 #include_if(APPLY_GREYSCALE) "include/greyscale.glsl"
 #include_if(APPLY_OFFSETMAPPING) "include/material_offsetmapping.frag.glsl"
@@ -68,10 +67,6 @@ void main()
 
 #ifdef NUM_LIGHTMAPS
 	lightColor += LightmapColor(surfaceNormalModelspace, weightedDiffuseNormalModelspace);
-#endif
-
-#if defined(NUM_DLIGHTS)
-	lightColor += DynamicLightsSurfaceColor(v_Position, surfaceNormalModelspace);
 #endif
 
 #ifdef APPLY_SPECULAR
