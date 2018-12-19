@@ -25,7 +25,6 @@ typedef uint64_t r_glslfeat_t;
 #define GLSL_BITS_VERSION                       22
 
 #define DEFAULT_GLSL_MATERIAL_PROGRAM           "defaultMaterial"
-#define DEFAULT_GLSL_DISTORTION_PROGRAM         "defaultDistortion"
 #define DEFAULT_GLSL_OUTLINE_PROGRAM            "defaultOutline"
 #define DEFAULT_GLSL_DYNAMIC_LIGHTS_PROGRAM     "defaultDynamicLights"
 #define DEFAULT_GLSL_Q3A_SHADER_PROGRAM         "defaultQ3AShader"
@@ -36,7 +35,6 @@ typedef uint64_t r_glslfeat_t;
 enum {
 	GLSL_PROGRAM_TYPE_NONE,
 	GLSL_PROGRAM_TYPE_MATERIAL,
-	GLSL_PROGRAM_TYPE_DISTORTION,
 	GLSL_PROGRAM_TYPE_OUTLINE,
 	GLSL_PROGRAM_TYPE_Q3A_SHADER,
 	GLSL_PROGRAM_TYPE_COLOR_CORRECTION,
@@ -127,13 +125,6 @@ enum {
 #define GLSL_SHADER_Q3_ALPHA_MASK               GLSL_BIT( 40 )
 #define GLSL_SHADER_Q3_LIGHTMAP_BICUBIC         GLSL_BIT( 41 )
 
-// distortions
-#define GLSL_SHADER_DISTORTION_DUDV             GLSL_BIT( 32 )
-#define GLSL_SHADER_DISTORTION_EYEDOT           GLSL_BIT( 33 )
-#define GLSL_SHADER_DISTORTION_DISTORTION_ALPHA GLSL_BIT( 34 )
-#define GLSL_SHADER_DISTORTION_REFLECTION       GLSL_BIT( 35 )
-#define GLSL_SHADER_DISTORTION_REFRACTION       GLSL_BIT( 36 )
-
 // outlines
 #define GLSL_SHADER_OUTLINE_OUTLINES_CUTOFF     GLSL_BIT( 32 )
 
@@ -171,8 +162,6 @@ void RP_UpdateSoftParticlesUniforms( int elem, float scale );
 
 void RP_UpdateMaterialUniforms( int elem,
 								float offsetmappingScale, float glossIntensity, float glossExponent );
-
-void RP_UpdateDistortionUniforms( int elem, bool frontPlane );
 
 void RP_UpdateTextureUniforms( int elem, int TexWidth, int TexHeight );
 

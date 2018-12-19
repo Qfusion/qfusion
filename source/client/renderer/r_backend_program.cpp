@@ -53,7 +53,6 @@ static shaderpass_t r_GLSLpasses[MAX_BUILTIN_GLSLPASSES];
 static int RB_GetShaderpassState( int state );
 
 static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t programFeatures );
-static void RB_RenderMeshGLSL_Distortion( const shaderpass_t *pass, r_glslfeat_t programFeatures );
 static void RB_RenderMeshGLSL_Outline( const shaderpass_t *pass, r_glslfeat_t programFeatures );
 static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t programFeatures );
 
@@ -197,10 +196,8 @@ void RB_ApplyTCMods( const shaderpass_t *pass, mat4_t result ) {
 			case TC_MOD_SCROLL:
 				t1 = tcmod->args[0] * rb.currentShaderTime;
 				t2 = tcmod->args[1] * rb.currentShaderTime;
-				if( pass->program_type != GLSL_PROGRAM_TYPE_DISTORTION ) { // HACK HACK HACK
-					t1 = t1 - floor( t1 );
-					t2 = t2 - floor( t2 );
-				}
+				t1 = t1 - floor( t1 );
+				t2 = t2 - floor( t2 );
 				Matrix4_Translate2D( result, t1, t2 );
 				break;
 			case TC_MOD_TRANSFORM:
@@ -829,87 +826,6 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 }
 
 /*
-* RB_RenderMeshGLSL_Distortion
-*/
-static void RB_RenderMeshGLSL_Distortion( const shaderpass_t *pass, r_glslfeat_t programFeatures ) {
-	int i;
-	int width = 1, height = 1;
-	int program;
-	image_t *portaltexture[2];
-	bool frontPlane;
-	mat4_t texMatrix;
-	const image_t *dudvmap, *normalmap;
-
-	if( !rb.currentPortalSurface ) {
-		return;
-	}
-
-	for( i = 0; i < 2; i++ ) {
-		portaltexture[i] = rb.currentPortalSurface->texures[i];
-		if( !portaltexture[i] ) {
-			portaltexture[i] = rsh.blackTexture;
-		} else {
-			width = portaltexture[i]->upload_width;
-			height = portaltexture[i]->upload_height;
-		}
-	}
-
-	dudvmap = pass->images[0] && !pass->images[0]->missing ? pass->images[0] : rsh.blankBumpTexture;
-	normalmap = pass->images[1] && !pass->images[1]->missing ? pass->images[1] : rsh.blankBumpTexture;
-
-	if( dudvmap != rsh.blankBumpTexture ) {
-		programFeatures |= GLSL_SHADER_DISTORTION_DUDV;
-	}
-	if( portaltexture[0] != rsh.blackTexture ) {
-		programFeatures |= GLSL_SHADER_DISTORTION_REFLECTION;
-	}
-	if( portaltexture[1] != rsh.blackTexture ) {
-		programFeatures |= GLSL_SHADER_DISTORTION_REFRACTION;
-	}
-
-	frontPlane = ( PlaneDiff( rb.cameraOrigin, &rb.currentPortalSurface->untransformed_plane ) > 0 ? true : false );
-
-	if( frontPlane ) {
-		if( pass->alphagen.type != ALPHA_GEN_IDENTITY ) {
-			programFeatures |= GLSL_SHADER_DISTORTION_DISTORTION_ALPHA;
-		}
-	}
-
-	Matrix4_Identity( texMatrix );
-
-	RB_BindImage( 0, dudvmap );
-
-	// convert rgbgen and alphagen to GLSL feature defines
-	programFeatures |= RB_RGBAlphaGenToProgramFeatures( &pass->rgbgen, &pass->alphagen );
-
-	// set shaderpass state (blending, depthwrite, etc)
-	RB_SetState( RB_GetShaderpassState( pass->flags ) );
-
-	if( normalmap != rsh.blankBumpTexture ) {
-		// eyeDot
-		programFeatures |= GLSL_SHADER_DISTORTION_EYEDOT;
-
-		RB_BindImage( 1, normalmap );
-	}
-
-	RB_BindImage( 2, portaltexture[0] );           // reflection
-	RB_BindImage( 3, portaltexture[1] );           // refraction
-
-	// update uniforms
-	program = RB_RegisterProgram( GLSL_PROGRAM_TYPE_DISTORTION, NULL,
-								  rb.currentShader->deformsKey, rb.currentShader->deforms, rb.currentShader->numdeforms, programFeatures );
-	if( RB_BindProgram( program ) ) {
-		RB_UpdateCommonUniforms( program, pass, texMatrix );
-
-		RP_UpdateDistortionUniforms( program, frontPlane );
-
-		RP_UpdateTextureUniforms( program, width, height );
-
-		RB_DrawElementsReal( &rb.drawElements );
-	}
-}
-
-/*
 * RB_RenderMeshGLSL_Outline
 */
 static void RB_RenderMeshGLSL_Outline( const shaderpass_t *pass, r_glslfeat_t programFeatures ) {
@@ -1272,9 +1188,6 @@ void RB_RenderMeshGLSLProgrammed( const shaderpass_t *pass, int programType ) {
 	switch( programType ) {
 		case GLSL_PROGRAM_TYPE_MATERIAL:
 			RB_RenderMeshGLSL_Material( pass, features );
-			break;
-		case GLSL_PROGRAM_TYPE_DISTORTION:
-			RB_RenderMeshGLSL_Distortion( pass, features );
 			break;
 		case GLSL_PROGRAM_TYPE_OUTLINE:
 			RB_RenderMeshGLSL_Outline( pass, features );

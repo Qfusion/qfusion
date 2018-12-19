@@ -1150,46 +1150,6 @@ static void Shaderpass_Material( shader_t *shader, shaderpass_t *pass, const cha
 							 pass->images[0]->name, flags, shader->imagetags );
 }
 
-static void Shaderpass_Distortion( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
-	int flags;
-
-	if( !r_portalmaps->integer ) {
-		ri.Com_DPrintf( S_COLOR_YELLOW "WARNING: shader %s has a distortion stage, while GLSL is not supported\n", shader->name );
-		Shader_SkipLine( ptr );
-		return;
-	}
-
-	flags = Shader_SetImageFlags( shader );
-	pass->flags &= ~( SHADERPASS_LIGHTMAP | SHADERPASS_PORTALMAP );
-	pass->images[0] = pass->images[1] = NULL;
-
-	while( 1 ) {
-		const char *token = Shader_ParseString( ptr );
-		if( !*token ) {
-			break;
-		}
-
-		if( Q_isdigit( token ) ) {
-			continue;
-		} else if( !pass->images[0] ) {
-			pass->images[0] = Shader_FindImage( shader, token, flags );
-			pass->program_type = GLSL_PROGRAM_TYPE_DISTORTION;
-		} else {
-			pass->images[1] = Shader_FindImage( shader, token, flags );
-		}
-	}
-
-	if( pass->rgbgen.type == RGB_GEN_UNKNOWN ) {
-		pass->rgbgen.type = RGB_GEN_CONST;
-		VectorClear( pass->rgbgen.args );
-	}
-
-	if( shader->sort == SHADER_SORT_PORTAL ) {
-		shader->sort = 0; // reset sorting so we can figure it out later. FIXME?
-	}
-	shader->flags |= SHADER_PORTAL | SHADER_PORTAL_CAPTURE | SHADER_PORTAL_CAPTURE2;
-}
-
 static void Shaderpass_RGBGen( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
 	bool wave = false;
 
@@ -1487,7 +1447,6 @@ static const shaderkey_t shaderpasskeys[] =
 	{ "animclampmap", Shaderpass_AnimClampMap },
 	{ "alphamaskclampmap", Shaderpass_AlphaMaskClampMap },
 	{ "material", Shaderpass_Material },
-	{ "distortion", Shaderpass_Distortion },
 	{ "tcgen", Shaderpass_TcGen },
 	{ "alphagen", Shaderpass_AlphaGen },
 	{ "detail", Shaderpass_Detail },
@@ -2007,8 +1966,6 @@ static void Shader_SetVertexAttribs( shader_t *s ) {
 	for( i = 0, pass = s->passes; i < s->numpasses; i++, pass++ ) {
 		if( pass->program_type == GLSL_PROGRAM_TYPE_MATERIAL ) {
 			s->vattribs |= VATTRIB_NORMAL_BIT | VATTRIB_SVECTOR_BIT | VATTRIB_LMCOORDS0_BIT;
-		} else if( pass->program_type == GLSL_PROGRAM_TYPE_DISTORTION ) {
-			s->vattribs |= VATTRIB_NORMAL_BIT | VATTRIB_SVECTOR_BIT;
 		}
 
 		switch( pass->rgbgen.type ) {

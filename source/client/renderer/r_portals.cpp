@@ -164,48 +164,24 @@ static void R_DrawPortalSurface( portalSurface_t *portalSurface ) {
 	const shader_t *shader = portalSurface->shader;
 	vec_t *portal_centre = portalSurface->centre;
 	bool mirror, refraction = false;
-	image_t *captureTexture;
+	image_t *captureTexture = NULL;
 	int captureTextureId = -1;
 	int prevRenderFlags = 0;
-	bool doReflection, doRefraction;
 	image_t *portalTexures[2] = { NULL, NULL };
-
-	doReflection = doRefraction = true;
-	if( shader->flags & SHADER_PORTAL_CAPTURE ) {
-		shaderpass_t *pass;
-
-		captureTexture = NULL;
-		captureTextureId = 0;
-
-		for( i = 0, pass = shader->passes; i < shader->numpasses; i++, pass++ ) {
-			if( pass->program_type == GLSL_PROGRAM_TYPE_DISTORTION ) {
-				if( ( pass->alphagen.type == ALPHA_GEN_CONST && pass->alphagen.args[0] == 1 ) ) {
-					doRefraction = false;
-				} else if( ( pass->alphagen.type == ALPHA_GEN_CONST && pass->alphagen.args[0] == 0 ) ) {
-					doReflection = false;
-				}
-				break;
-			}
-		}
-	} else {
-		captureTexture = NULL;
-		captureTextureId = -1;
-	}
 
 	x = y = 0;
 	w = rn.refdef.width;
 	h = rn.refdef.height;
 
 	dist = PlaneDiff( rn.viewOrigin, portal_plane );
-	if( dist <= BACKFACE_EPSILON || !doReflection ) {
-		if( !( shader->flags & SHADER_PORTAL_CAPTURE2 ) || !doRefraction ) {
+	if( dist <= BACKFACE_EPSILON ) {
+		if( !( shader->flags & SHADER_PORTAL_CAPTURE2 ) ) {
 			return;
 		}
 
 		// even if we're behind the portal, we still need to capture
 		// the second portal image for refraction
 		refraction = true;
-		captureTexture = NULL;
 		captureTextureId = 1;
 		if( dist < 0 ) {
 			VectorInverse( portal_plane->normal );
@@ -385,7 +361,7 @@ setup_and_render:
 
 	R_RenderView( &rn.refdef );
 
-	if( doRefraction && !refraction && ( shader->flags & SHADER_PORTAL_CAPTURE2 ) ) {
+	if( !refraction && ( shader->flags & SHADER_PORTAL_CAPTURE2 ) ) {
 		rn.renderFlags = prevRenderFlags;
 		refraction = true;
 		captureTexture = NULL;
