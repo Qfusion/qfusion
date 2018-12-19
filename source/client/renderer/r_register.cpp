@@ -128,7 +128,6 @@ static const struct {
 	{ "EXT_texture_array", &GLAD_GL_EXT_texture_array, &glConfig.ext.EXT_texture_array },
 	{ "ARB_texture_rg", &GLAD_GL_ARB_texture_rg, &glConfig.ext.ARB_texture_rg },
 	{ "ARB_vertex_array_object", &GLAD_GL_ARB_vertex_array_object, &glConfig.ext.ARB_vertex_array_object },
-	{ "ARB_explicit_attrib_location", &GLAD_GL_ARB_explicit_attrib_location, &glConfig.ext.ARB_explicit_attrib_location },
 
 	{ "ARB_get_program_binary", &GLAD_GL_ARB_get_program_binary, &glConfig.ext.get_program_binary },
 	{ "NVX_gpu_memory_info", &GLAD_GL_NVX_gpu_memory_info, &glConfig.ext.nvidia_meminfo },

@@ -1518,7 +1518,6 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 	i = 0;
 	if( glConfig.ext.glsl130 ) {
 		shaderStrings[i++] = "#version 130\n";
-		shaderStrings[i++] = "#extension GL_ARB_explicit_attrib_location : enable\n";
 		shaderStrings[i++] = "#define QF_GLSL_VERSION 130\n";
 	}
 	else {

@@ -9,7 +9,6 @@
     Extensions:
         GL_AMD_debug_output,
         GL_ARB_draw_instanced,
-        GL_ARB_explicit_attrib_location,
         GL_ARB_framebuffer_object,
         GL_ARB_get_program_binary,
         GL_ARB_half_float_pixel,
@@ -33,9 +32,9 @@
     Reproducible: True
 
     Commandline:
-        --profile="core" --api="gl=3.3" --generator="c" --spec="gl" --omit-khrplatform --extensions="GL_AMD_debug_output,GL_ARB_draw_instanced,GL_ARB_explicit_attrib_location,GL_ARB_framebuffer_object,GL_ARB_get_program_binary,GL_ARB_half_float_pixel,GL_ARB_half_float_vertex,GL_ARB_instanced_arrays,GL_ARB_texture_float,GL_ARB_texture_rg,GL_ARB_texture_swizzle,GL_ARB_vertex_array_object,GL_ATI_meminfo,GL_EXT_texture_array,GL_EXT_texture_compression_s3tc,GL_EXT_texture_filter_anisotropic,GL_EXT_texture_sRGB,GL_EXT_texture_sRGB_decode,GL_KHR_debug,GL_NVX_gpu_memory_info"
+        --profile="core" --api="gl=3.3" --generator="c" --spec="gl" --omit-khrplatform --extensions="GL_AMD_debug_output,GL_ARB_draw_instanced,GL_ARB_framebuffer_object,GL_ARB_get_program_binary,GL_ARB_half_float_pixel,GL_ARB_half_float_vertex,GL_ARB_instanced_arrays,GL_ARB_texture_float,GL_ARB_texture_rg,GL_ARB_texture_swizzle,GL_ARB_vertex_array_object,GL_ATI_meminfo,GL_EXT_texture_array,GL_EXT_texture_compression_s3tc,GL_EXT_texture_filter_anisotropic,GL_EXT_texture_sRGB,GL_EXT_texture_sRGB_decode,GL_KHR_debug,GL_NVX_gpu_memory_info"
     Online:
-        https://glad.dav1d.de/#profile=core&language=c&specification=gl&loader=on&api=gl%3D3.3&extensions=GL_AMD_debug_output&extensions=GL_ARB_draw_instanced&extensions=GL_ARB_explicit_attrib_location&extensions=GL_ARB_framebuffer_object&extensions=GL_ARB_get_program_binary&extensions=GL_ARB_half_float_pixel&extensions=GL_ARB_half_float_vertex&extensions=GL_ARB_instanced_arrays&extensions=GL_ARB_texture_float&extensions=GL_ARB_texture_rg&extensions=GL_ARB_texture_swizzle&extensions=GL_ARB_vertex_array_object&extensions=GL_ATI_meminfo&extensions=GL_EXT_texture_array&extensions=GL_EXT_texture_compression_s3tc&extensions=GL_EXT_texture_filter_anisotropic&extensions=GL_EXT_texture_sRGB&extensions=GL_EXT_texture_sRGB_decode&extensions=GL_KHR_debug&extensions=GL_NVX_gpu_memory_info
+        https://glad.dav1d.de/#profile=core&language=c&specification=gl&loader=on&api=gl%3D3.3&extensions=GL_AMD_debug_output&extensions=GL_ARB_draw_instanced&extensions=GL_ARB_framebuffer_object&extensions=GL_ARB_get_program_binary&extensions=GL_ARB_half_float_pixel&extensions=GL_ARB_half_float_vertex&extensions=GL_ARB_instanced_arrays&extensions=GL_ARB_texture_float&extensions=GL_ARB_texture_rg&extensions=GL_ARB_texture_swizzle&extensions=GL_ARB_vertex_array_object&extensions=GL_ATI_meminfo&extensions=GL_EXT_texture_array&extensions=GL_EXT_texture_compression_s3tc&extensions=GL_EXT_texture_filter_anisotropic&extensions=GL_EXT_texture_sRGB&extensions=GL_EXT_texture_sRGB_decode&extensions=GL_KHR_debug&extensions=GL_NVX_gpu_memory_info
 */
 
 #include <stdio.h>
@@ -663,7 +662,6 @@ PFNGLVIEWPORTPROC glad_glViewport = NULL;
 PFNGLWAITSYNCPROC glad_glWaitSync = NULL;
 int GLAD_GL_AMD_debug_output = 0;
 int GLAD_GL_ARB_draw_instanced = 0;
-int GLAD_GL_ARB_explicit_attrib_location = 0;
 int GLAD_GL_ARB_framebuffer_object = 0;
 int GLAD_GL_ARB_get_program_binary = 0;
 int GLAD_GL_ARB_half_float_pixel = 0;
@@ -1212,7 +1210,6 @@ static int find_extensionsGL(void) {
 	if (!get_exts()) return 0;
 	GLAD_GL_AMD_debug_output = has_ext("GL_AMD_debug_output");
 	GLAD_GL_ARB_draw_instanced = has_ext("GL_ARB_draw_instanced");
-	GLAD_GL_ARB_explicit_attrib_location = has_ext("GL_ARB_explicit_attrib_location");
 	GLAD_GL_ARB_framebuffer_object = has_ext("GL_ARB_framebuffer_object");
 	GLAD_GL_ARB_get_program_binary = has_ext("GL_ARB_get_program_binary");
 	GLAD_GL_ARB_half_float_pixel = has_ext("GL_ARB_half_float_pixel");
