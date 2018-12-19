@@ -595,9 +595,6 @@ static void Shader_NoMipMaps( shader_t *shader, shaderpass_t *pass, const char *
 	r_shaderMinMipSize = 1;
 }
 
-static void Shader_NoPicMip( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
-}
-
 static void Shader_NoFiltering( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
 	r_shaderNoFiltering = true;
 	shader->flags |= SHADER_NO_TEX_FILTERING;
@@ -946,7 +943,6 @@ static const shaderkey_t shaderkeys[] =
 	{ "skylightparams", Shader_SkyLightParms },
 	{ "fogparms", Shader_FogParms },
 	{ "nomipmaps", Shader_NoMipMaps },
-	{ "nopicmip", Shader_NoPicMip },
 	{ "nofiltering", Shader_NoFiltering },
 	{ "smallestmipmapsize", Shader_SmallestMipMapSize },
 	{ "polygonoffset", Shader_PolygonOffset },
