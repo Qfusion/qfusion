@@ -82,7 +82,7 @@ void R_FlushBSPSurfBatch( void ) {
 		ls = rls = rsh.worldBrushModel->superLightStyles + lightStyleNum;
 	}
 
-	RB_BindShader( e, shader, batch->fog );
+	RB_BindShader( e, shader );
 
 	RB_SetPortalSurface( batch->portalSurface );
 
@@ -98,7 +98,7 @@ void R_FlushBSPSurfBatch( void ) {
 /*
 * R_BatchBSPSurf
 */
-void R_BatchBSPSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, 
+void R_BatchBSPSurf( const entity_t *e, const shader_t *shader,
 	int lightStyleNum, const portalSurface_t *portalSurface, drawSurfaceBSP_t *drawSurf, bool mergable ) {
 	unsigned i;
 	drawListBatch_t *batch = &rn.meshlist->bspBatch;
@@ -132,7 +132,6 @@ void R_BatchBSPSurf( const entity_t *e, const shader_t *shader, const mfog_t *fo
 					batch->shader = ( shader_t * )shader;
 					batch->portalSurface = ( portalSurface_t *)portalSurface;
 					batch->entity = ( entity_t * )e;
-					batch->fog = ( mfog_t * )fog;
 					batch->lightStyleNum = lightStyleNum;
 					batch->lastDrawSurf = drawSurf;
 					batch->firstVert = surfFirstVert;
@@ -173,7 +172,6 @@ void R_WalkBSPSurf( const entity_t *e, const shader_t *shader, int lightStyleNum
 */
 static bool R_AddWorldDrawSurfaceToDrawList( const entity_t *e, unsigned ds ) {
 	drawSurfaceBSP_t *drawSurf = rsh.worldBrushModel->drawSurfaces + ds;
-	const mfog_t *fog = drawSurf->fog;
 	const shader_t *shader = drawSurf->shader;
 	int lightStyleNum = drawSurf->superLightStyle;
 	portalSurface_t *portalSurface = NULL;
@@ -207,11 +205,11 @@ static bool R_AddWorldDrawSurfaceToDrawList( const entity_t *e, unsigned ds ) {
 		if( writeDepth ) {
 			if( !portalSurface ) {
 				// add the sky surface to depth mask
-				R_AddSurfToDrawList( rn.portalmasklist, e, rsh.depthOnlyShader, NULL, -1, 0, 0, NULL, drawSurf );
+				R_AddSurfToDrawList( rn.portalmasklist, e, rsh.depthOnlyShader, -1, 0, 0, NULL, drawSurf );
 			}
 
 			drawSurf->listSurf = R_AddSurfToDrawList( rn.meshlist, e, rsh.depthOnlyShader, 
-				fog, lightStyleNum, 0, drawOrder, portalSurface, drawSurf );
+				lightStyleNum, 0, drawOrder, portalSurface, drawSurf );
 		}
 
 		// the actual skydome surface
@@ -225,10 +223,10 @@ static bool R_AddWorldDrawSurfaceToDrawList( const entity_t *e, unsigned ds ) {
 		portalSurface = R_AddPortalSurface( e, shader, drawSurf );
 	}
 
-	drawOrder = R_PackOpaqueOrder( fog, shader, R_DrawSurfLightsKey( drawSurf ), false );
+	drawOrder = R_PackOpaqueOrder( shader, R_DrawSurfLightsKey( drawSurf ), false );
 
 	drawSurf->visFrame = rf.frameCount;
-	drawSurf->listSurf = R_AddSurfToDrawList( rn.meshlist, e, shader, fog, lightStyleNum, 
+	drawSurf->listSurf = R_AddSurfToDrawList( rn.meshlist, e, shader, lightStyleNum, 
 		WORLDSURF_DIST, drawOrder, portalSurface, drawSurf );
 
 	if( !drawSurf->listSurf ) {
@@ -236,7 +234,7 @@ static bool R_AddWorldDrawSurfaceToDrawList( const entity_t *e, unsigned ds ) {
 	}
 
 	if( portalSurface && !( shader->flags & ( SHADER_PORTAL_CAPTURE | SHADER_PORTAL_CAPTURE2 ) ) ) {
-		R_AddSurfToDrawList( rn.portalmasklist, e, rsh.depthOnlyShader, NULL, -1, 0, 0, NULL, drawSurf );
+		R_AddSurfToDrawList( rn.portalmasklist, e, rsh.depthOnlyShader, -1, 0, 0, NULL, drawSurf );
 	}
 
 	rf.stats.c_world_draw_surfs++;
@@ -351,7 +349,6 @@ void R_CacheBrushModelEntity( const entity_t *e ) {
 	}
 
 	cache->radius = R_BrushModelBBox( e, cache->mins, cache->maxs, &cache->rotated );
-	cache->fog = R_FogForBounds( cache->mins, cache->maxs );
 	VectorCopy( cache->mins, cache->absmins );
 	VectorCopy( cache->maxs, cache->absmaxs );
 }
@@ -632,13 +629,6 @@ static void R_PostCullVisLeaves( void ) {
 
 	// now set  the real far clip value and reload view matrices
 	farclip = R_GetVisFarClip();
-
-	if( rsh.worldBrushModel->globalfog ) {
-		float fogdist = rsh.worldBrushModel->globalfog->shader->fog_dist;
-		if( farclip > fogdist ) {
-			farclip = fogdist;
-		}
-	}
 
 	rn.farClip = max( Z_NEAR, farclip ) + Z_BIAS;
 

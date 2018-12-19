@@ -1,4 +1,4 @@
-qf_varying vec4 v_TexCoord_FogCoord;
+qf_varying vec2 v_TexCoord;
 #ifdef NUM_LIGHTMAPS
 qf_varying qf_lmvec01 v_LightmapTexCoord01;
 #if NUM_LIGHTMAPS > 2 

@@ -2,7 +2,6 @@
 #include "include/uniforms.glsl"
 #include "include/attributes.glsl"
 #include "include/rgbgen.glsl"
-#include_if(APPLY_FOG) "include/fog.glsl"
 
 #include "include/varying_material.glsl"
 
@@ -19,17 +18,9 @@ void main()
 
 	myhalf4 outColor = VertexRGBGen(Position, Normal, inColor);
 
-#ifdef APPLY_FOG
-#if defined(APPLY_FOG_COLOR)
-	FogGenColor(Position, outColor, u_BlendMix);
-#else
-	FogGenCoord(Position, v_TexCoord_FogCoord.pq);
-#endif
-#endif // APPLY_FOG
-
 	qf_FrontColor = vec4(outColor);
 
-	v_TexCoord_FogCoord.st = TextureMatrix2x3Mul(u_TextureMatrix, TexCoord);
+	v_TexCoord = TextureMatrix2x3Mul(u_TextureMatrix, TexCoord);
 
 #ifdef NUM_LIGHTMAPS
 	v_LightmapTexCoord01 = a_LightmapCoord01;

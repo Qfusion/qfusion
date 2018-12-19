@@ -250,7 +250,6 @@ static void CG_AddBlobShadow( vec3_t origin, vec3_t normal, float radius, float 
 		poly.stcoords = &shadeBox->stcoords[nverts];
 		poly.colors = &shadeBox->colors[nverts];
 		poly.numverts = fr->numverts;
-		poly.fognum = fr->fognum;
 		nverts += fr->numverts;
 
 		for( int j = 0; j < fr->numverts; j++ ) {
@@ -458,7 +457,6 @@ void CG_AddFragmentedDecal( vec3_t origin, vec3_t dir, float orient, float radiu
 		poly.stcoords = &t_stcoords[cg_numDecalVerts];
 		poly.colors = &t_colors[cg_numDecalVerts];
 		poly.numverts = fr->numverts;
-		poly.fognum = fr->fognum;
 		cg_numDecalVerts += (unsigned)fr->numverts;
 
 		for( j = 0; j < fr->numverts; j++ ) {
@@ -495,7 +493,6 @@ typedef struct particle_s
 	float alpha;
 	float alphavel;
 	float scale;
-	bool fog;
 
 	poly_t poly;
 	vec4_t pVerts[4];
@@ -540,8 +537,7 @@ static void CG_ClearParticles( void ) {
 		( p )->color[0] = ( r ), \
 		( p )->color[1] = ( g ), \
 		( p )->color[2] = ( b ), \
-		( p )->shader = ( h ), \
-		( p )->fog = true \
+		( p )->shader = ( h ) \
 	)
 
 /*
@@ -977,7 +973,6 @@ void CG_AddParticles( void ) {
 		p->poly.verts = p->pVerts;
 		p->poly.stcoords = p->pStcoords;
 		p->poly.colors = p->pColor;
-		p->poly.fognum = p->fog ? 0 : -1;
 		p->poly.shader = ( p->shader == NULL ) ? CG_MediaShader( cgs.media.shaderParticle ) : p->shader;
 
 		trap_R_AddPolyToScene( &p->poly );

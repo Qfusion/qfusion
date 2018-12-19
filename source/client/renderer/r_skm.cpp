@@ -1053,8 +1053,7 @@ static void R_CacheBoneTransformsJob( unsigned first, unsigned items, const joba
 /*
 * R_DrawSkeletalSurf
 */
-void R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, 
-	int lightStyleNum, const portalSurface_t *portalSurface, drawSurfaceSkeletal_t *drawSurf ) {
+void R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, int lightStyleNum, const portalSurface_t *portalSurface, drawSurfaceSkeletal_t *drawSurf ) {
 	const model_t *mod = drawSurf->model;
 	const mskmodel_t *skmodel = ( const mskmodel_t * )mod->extradata;
 	const mskmesh_t *skmesh = drawSurf->mesh;
@@ -1257,7 +1256,6 @@ void R_CacheSkeletalModelEntity( const entity_t *e ) {
 
 	cache->rotated = true;
 	cache->radius = R_SkeletalModelLerpBBox( e, mod, cache->mins, cache->maxs );
-	cache->fog = R_FogForSphere( e->origin, cache->radius );
 	BoundsFromRadius( e->origin, cache->radius, cache->absmins, cache->absmaxs );
 }
 
@@ -1265,8 +1263,6 @@ void R_CacheSkeletalModelEntity( const entity_t *e ) {
 * R_AddSkeletalModelToDrawList
 */
 bool R_AddSkeletalModelToDrawList( const entity_t *e, int lod ) {
-	int i;
-	const mfog_t *fog;
 	const model_t *mod = lod < e->model->numlods ? e->model->lods[lod] : e->model;
 	const mskmesh_t *mesh;
 	const mskmodel_t *skmodel;
@@ -1286,19 +1282,10 @@ bool R_AddSkeletalModelToDrawList( const entity_t *e, int lod ) {
 		distance = Distance( e->origin, rn.viewOrigin ) + 1;
 	}
 
-	fog = cache->fog;
-#if 0
-	if( !( e->flags & RF_WEAPONMODEL ) && fog ) {
-		R_SkeletalModelLerpBBox( e, mod );
-		if( R_FogCull( fog, e->origin, skm_radius ) ) {
-			return false;
-		}
-	}
-#endif
-
 	// run quaternions lerping job in the background
 	R_AddSkeletalModelCacheJob( e, mod );
 
+	int i;
 	for( i = 0, mesh = skmodel->meshes; i < (int)skmodel->nummeshes; i++, mesh++ ) {
 		int drawOrder;
 		const shader_t *shader = NULL;
@@ -1315,9 +1302,8 @@ bool R_AddSkeletalModelToDrawList( const entity_t *e, int lod ) {
 			continue;
 		}
 
-		drawOrder = R_PackOpaqueOrder( fog, shader, 0, false );
-		R_AddSurfToDrawList( rn.meshlist, e, shader, fog, -1, 
-			SKMSURF_DISTANCE( shader, distance ), drawOrder, NULL, skmodel->drawSurfs + i );
+		drawOrder = R_PackOpaqueOrder( shader, 0, false );
+		R_AddSurfToDrawList( rn.meshlist, e, shader, -1, SKMSURF_DISTANCE( shader, distance ), drawOrder, NULL, skmodel->drawSurfs + i );
 	}
 
 	return true;

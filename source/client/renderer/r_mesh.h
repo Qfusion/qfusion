@@ -22,7 +22,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_surface.h"
 
 struct shader_s;
-struct mfog_s;
 struct portalSurface_s;
 
 #define MIN_RENDER_MESHES           2048
@@ -60,7 +59,6 @@ typedef struct {
 	drawSurfaceBSP_t *lastDrawSurf;
 	entity_t *entity;
 	struct shader_s *shader;
-	struct mfog_s *fog;
 	struct portalSurface_s *portalSurface;
 } drawListBatch_t;
 
@@ -81,10 +79,10 @@ typedef struct {
 	volatile unsigned char *worldDrawSurfVis;
 } drawList_t;
 
-typedef void *(*drawSurf_cb)( const entity_t *, const struct shader_s *, const struct mfog_s *, int, const struct portalSurface_s *, void * );
+typedef void *(*drawSurf_cb)( const entity_t *, const struct shader_s *, int, const struct portalSurface_s *, void * );
 
 typedef void (*flushBatchDrawSurf_cb)( void );
-typedef void (*batchDrawSurf_cb)( const entity_t *, const struct shader_s *, const struct mfog_s *, int, const struct portalSurface_s *, void *, bool );
+typedef void (*batchDrawSurf_cb)( const entity_t *, const struct shader_s *, int, const struct portalSurface_s *, void *, bool );
 
 typedef void (*walkDrawSurf_cb_cb)( void *, const entity_t *, const struct shader_s *, int, void *, void *p );
 typedef void (*walkDrawSurf_cb)( const entity_t *, const struct shader_s *, int, void *, walkDrawSurf_cb_cb, void * );

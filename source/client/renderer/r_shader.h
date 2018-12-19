@@ -30,19 +30,18 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // shader types (by superlightstyle)
 typedef enum {
-	SHADER_TYPE_DELUXEMAP       = 0,
-	SHADER_TYPE_VERTEX          = 1,
-	SHADER_TYPE_BSP_MIN         = SHADER_TYPE_DELUXEMAP,
-	SHADER_TYPE_BSP_MAX         = SHADER_TYPE_VERTEX,
-	SHADER_TYPE_DIFFUSE         = 2,
-	SHADER_TYPE_2D              = 3,
-	SHADER_TYPE_2D_RAW          = 4,
-	SHADER_TYPE_OPAQUE_ENV      = 5,
-	SHADER_TYPE_VIDEO           = 6,
-	SHADER_TYPE_SKYBOX          = 7,
-	SHADER_TYPE_FOG             = 8,
-	SHADER_TYPE_2D_LINEAR       = 9,
-	SHADER_TYPE_DEPTHONLY       = 10,
+	SHADER_TYPE_DELUXEMAP,
+	SHADER_TYPE_VERTEX,
+	SHADER_TYPE_BSP_MIN = SHADER_TYPE_DELUXEMAP,
+	SHADER_TYPE_BSP_MAX = SHADER_TYPE_VERTEX,
+	SHADER_TYPE_DIFFUSE,
+	SHADER_TYPE_2D,
+	SHADER_TYPE_2D_RAW,
+	SHADER_TYPE_OPAQUE_ENV,
+	SHADER_TYPE_VIDEO,
+	SHADER_TYPE_SKYBOX,
+	SHADER_TYPE_2D_LINEAR,
+	SHADER_TYPE_DEPTHONLY,
 } shaderType_e;
 
 #define NUM_SHADER_TYPES_BSP ( SHADER_TYPE_BSP_MAX - SHADER_TYPE_BSP_MIN + 1 )
@@ -70,20 +69,20 @@ enum {
 
 // sorting
 enum {
-	SHADER_SORT_NONE                = 0,
-	SHADER_SORT_PORTAL              = 1,
-	SHADER_SORT_OPAQUE              = 2,
-	SHADER_SORT_SKY                 = 3,
-	SHADER_SORT_DECAL               = 4,
-	SHADER_SORT_ALPHATEST           = 5,
-	SHADER_SORT_BANNER              = 6,
-	SHADER_SORT_FOG                 = 7,
-	SHADER_SORT_UNDERWATER          = 8,
-	SHADER_SORT_ADDITIVE            = 9,
-	SHADER_SORT_NEAREST             = 14,
-	SHADER_SORT_WEAPON              = 15, // optional phase: depth write but no color write
-	SHADER_SORT_WEAPON2             = 16,
-	SHADER_SORT_MAX                 = SHADER_SORT_WEAPON2
+	SHADER_SORT_NONE,
+	SHADER_SORT_PORTAL,
+	SHADER_SORT_OPAQUE,
+	SHADER_SORT_SKY,
+	SHADER_SORT_DECAL,
+	SHADER_SORT_ALPHATEST,
+	SHADER_SORT_BANNER,
+	SHADER_SORT_UNDERWATER,
+	SHADER_SORT_ADDITIVE,
+	SHADER_SORT_NEAREST,
+	SHADER_SORT_WEAPON, // optional phase: depth write but no color write
+	SHADER_SORT_WEAPON2,
+
+	SHADER_SORT_MAX = SHADER_SORT_WEAPON2
 };
 
 // shaderpass flags
@@ -130,7 +129,6 @@ enum {
 	RGB_GEN_ONE_MINUS_VERTEX,
 	RGB_GEN_LIGHTING_DIFFUSE,
 	RGB_GEN_EXACT_VERTEX,
-	RGB_GEN_FOG,
 	RGB_GEN_CUSTOMWAVE,
 	RGB_GEN_OUTLINE,
 	RGB_GEN_ENVIRONMENT
@@ -156,7 +154,6 @@ enum {
 	TC_GEN_ENVIRONMENT,
 	TC_GEN_VECTOR,
 	TC_GEN_REFLECTION,
-	TC_GEN_FOG,
 	TC_GEN_REFLECTION_CELSHADE,
 	TC_GEN_SVECTORS,
 	TC_GEN_PROJECTION,
@@ -258,9 +255,6 @@ typedef struct shader_s {
 	deformv_t           *deforms;
 	char                *deformsKey;
 
-	uint8_t fog_color[4];
-	float fog_dist, fog_clearDist;
-
 	float glossIntensity;
 	float glossExponent;
 	float offsetmappingScale;
@@ -271,9 +265,6 @@ typedef struct shader_s {
 
 	struct shader_s     *prev, *next;
 } shader_t;
-
-#define     Shader_UseTextureFog( s ) ( ( ( s )->sort <= SHADER_SORT_FOG && \
-										  ( ( s )->flags & SHADER_DEPTHWRITE ) ) || ( s )->fog_dist || ( s )->type == SHADER_TYPE_FOG )
 
 #define     Shader_DepthRead( s ) ( ( ( s )->flags & SHADER_SOFT_PARTICLE ) != 0 )
 #define     Shader_DepthWrite( s ) ( ( ( s )->flags & SHADER_DEPTHWRITE ) != 0 )

@@ -54,7 +54,6 @@ typedef struct {
 typedef struct {
 	const entity_t *entity;
 	const shader_t *shader;
-	const mfog_t *fog;
 	const portalSurface_t *portalSurface;
 	vattribmask_t vattribs; // based on the fields above - cached to avoid rebinding
 	int streamId;
@@ -165,8 +164,6 @@ typedef struct r_backend_s {
 	uint8_t entityColor[4];
 	uint8_t entityOutlineColor[4];
 	entity_t nullEnt;
-
-	const mfog_t *fog, *texFog, *colorFog;
 
 	bool greyscale;
 	bool alphaHack;

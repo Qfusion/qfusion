@@ -570,7 +570,6 @@ static void R_InitVolatileAssets( void ) {
 	rsh.envShader = R_LoadShader( "$environment", SHADER_TYPE_OPAQUE_ENV, true, NULL );
 	rsh.skyShader = R_LoadShader( "$skybox", SHADER_TYPE_SKYBOX, true, NULL );
 	rsh.whiteShader = R_LoadShader( "$whiteimage", SHADER_TYPE_2D, true, NULL );
-	rsh.emptyFogShader = R_LoadShader( "$emptyfog", SHADER_TYPE_FOG, true, NULL );
 	rsh.depthOnlyShader = R_LoadShader( "$depthonly", SHADER_TYPE_DEPTHONLY, true, NULL );
 
 	if( !rsh.nullVBO ) {

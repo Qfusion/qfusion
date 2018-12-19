@@ -105,58 +105,6 @@ void R_TransformForEntity( const entity_t *e ) {
 }
 
 /*
-* R_FogForBounds
-*/
-mfog_t *R_FogForBounds( const vec3_t mins, const vec3_t maxs ) {
-	unsigned int i, j;
-	mfog_t *fog;
-
-	if( !rsh.worldModel || ( rn.refdef.rdflags & RDF_NOWORLDMODEL ) || !rsh.worldBrushModel->numfogs ) {
-		return NULL;
-	}
-	if( rsh.worldBrushModel->globalfog ) {
-		return rsh.worldBrushModel->globalfog;
-	}
-
-	fog = rsh.worldBrushModel->fogs;
-	for( i = 0; i < rsh.worldBrushModel->numfogs; i++, fog++ ) {
-		if( !fog->shader ) {
-			continue;
-		}
-
-		for( j = 0; j < 3; j++ ) {
-			if( mins[j] >= fog->maxs[j] ) {
-				break;
-			}
-			if( maxs[j] <= fog->mins[j] ) {
-				break;
-			}
-		}
-
-		if( j == 3 ) {
-			return fog;
-		}
-	}
-
-	return NULL;
-}
-
-/*
-* R_FogForSphere
-*/
-mfog_t *R_FogForSphere( const vec3_t centre, const float radius ) {
-	int i;
-	vec3_t mins, maxs;
-
-	for( i = 0; i < 3; i++ ) {
-		mins[i] = centre[i] - radius;
-		maxs[i] = centre[i] + radius;
-	}
-
-	return R_FogForBounds( mins, maxs );
-}
-
-/*
 * R_ComputeLOD
 */
 int R_ComputeLOD( float dist, float lodDistance, float lodScale, int lodBias ) {
@@ -232,7 +180,7 @@ static drawSurfaceType_t spriteDrawSurf = ST_SPRITE;
 /*
 * R_BatchSpriteSurf
 */
-void R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, int lightStyleNum,
+void R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, int lightStyleNum,
 	const portalSurface_t *portalSurface, drawSurfaceType_t *drawSurf, bool mergable ) {
 	int i;
 	vec3_t point;
@@ -283,7 +231,7 @@ void R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, const mfog_t 
 	mesh.colorsArray[1] = NULL;
 	mesh.sVectorsArray = NULL;
 
-	RB_AddDynamicMesh( e, shader, fog, portalSurface, &mesh, GL_TRIANGLES, 0.0f, 0.0f );
+	RB_AddDynamicMesh( e, shader, portalSurface, &mesh, GL_TRIANGLES, 0.0f, 0.0f );
 }
 
 /*
@@ -296,7 +244,6 @@ void R_CacheSpriteEntity( const entity_t *e ) {
 
 	cache->rotated = true;
 	cache->radius = e->radius;
-	cache->fog = R_FogForSphere( e->origin, e->radius );
 
 	corner = e->radius * 1.74;
 	for( i = 0; i < 3; i++ ) {
@@ -321,8 +268,7 @@ static bool R_AddSpriteToDrawList( const entity_t *e ) {
 		return false; // cull it because we don't want to sort unneeded things
 	}
 
-	if( !R_AddSurfToDrawList( rn.meshlist, e, shader,
-		R_FogForSphere( e->origin, e->radius ), -1, dist, 0, NULL, &spriteDrawSurf ) ) {
+	if( !R_AddSurfToDrawList( rn.meshlist, e, shader, -1, dist, 0, NULL, &spriteDrawSurf ) ) {
 		return false;
 	}
 
@@ -385,7 +331,7 @@ mesh_vbo_t *R_InitNullModelVBO( void ) {
 /*
 * R_DrawNullSurf
 */
-void R_DrawNullSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, int lightStyleNum,
+void R_DrawNullSurf( const entity_t *e, const shader_t *shader, int lightStyleNum,
 	const portalSurface_t *portalSurface, drawSurfaceType_t *drawSurf ) {
 	assert( rsh.nullVBO != NULL );
 	if( !rsh.nullVBO ) {
@@ -401,8 +347,7 @@ void R_DrawNullSurf( const entity_t *e, const shader_t *shader, const mfog_t *fo
 * R_AddNullSurfToDrawList
 */
 static bool R_AddNullSurfToDrawList( const entity_t *e ) {
-	if( !R_AddSurfToDrawList( rn.meshlist, e, rsh.whiteShader,
-		R_FogForSphere( e->origin, 0.1f ), -1, 0, 0, NULL, &nullDrawSurf ) ) {
+	if( !R_AddSurfToDrawList( rn.meshlist, e, rsh.whiteShader, -1, 0, 0, NULL, &nullDrawSurf ) ) {
 		return false;
 	}
 
@@ -564,7 +509,7 @@ void R_DrawRotatedStretchPic( int x, int y, int w, int h, float s1, float t1, fl
 		}
 	}
 
-	RB_AddDynamicMesh( NULL, shader, NULL, NULL, &pic_mesh, GL_TRIANGLES, 0.0f, 0.0f );
+	RB_AddDynamicMesh( NULL, shader, NULL, &pic_mesh, GL_TRIANGLES, 0.0f, 0.0f );
 }
 
 /*
@@ -714,16 +659,7 @@ mesh_vbo_t *R_InitPostProcessingVBO( void ) {
 * R_DefaultFarClip
 */
 float R_DefaultFarClip( void ) {
-	float farclip_dist;
-
-	if( rn.refdef.rdflags & RDF_NOWORLDMODEL ) {
-		farclip_dist = 1024;
-	} else if( rsh.worldModel && rsh.worldBrushModel->globalfog ) {
-		farclip_dist = rsh.worldBrushModel->globalfog->shader->fog_dist;
-	} else {
-		farclip_dist = Z_NEAR;
-	}
-
+	float farclip_dist = ( rn.refdef.rdflags & RDF_NOWORLDMODEL ) == 0 ? Z_NEAR : 1024;
 	return max( Z_NEAR, farclip_dist ) + Z_BIAS;
 }
 
@@ -895,11 +831,7 @@ static void R_Clear( int bitMask ) {
 	} else {
 		clearColor = (rn.portalmasklist && !rn.portalmasklist->numDrawSurfs) || R_FASTSKY();
 
-		if( rsh.worldBrushModel && rsh.worldBrushModel->globalfog && rsh.worldBrushModel->globalfog->shader ) {
-			Vector4Scale( rsh.worldBrushModel->globalfog->shader->fog_color, 1.0 / 255.0, envColor );
-		} else {
-			Vector4Scale( mapConfig.environmentColor, 1.0 / 255.0, envColor );
-		}
+		Vector4Scale( mapConfig.environmentColor, 1.0 / 255.0, envColor );
 	}
 
 	bits = 0;
@@ -1100,7 +1032,6 @@ void R_RenderView( const refdef_t *fd ) {
 
 	rn.refdef = *fd;
 
-	rn.fog_eye = NULL;
 	rn.hdrExposure = 1;
 
 	rn.numPortalSurfaces = 0;
@@ -1137,7 +1068,6 @@ void R_RenderView( const refdef_t *fd ) {
 	R_DrawWorldNode();
 
 	if( !( rn.refdef.rdflags & RDF_NOWORLDMODEL ) ) {
-		rn.fog_eye = R_FogForSphere( rn.viewOrigin, 0.5 );
 		rn.hdrExposure = r_hdr_exposure->value;
 	}
 
@@ -1455,7 +1385,7 @@ void R_BlitTextureToScrFbo( const refdef_t *fd, image_t *image, int dstFbo,
 	Matrix4_Translate2D( m, x, y );
 	RB_LoadObjectMatrix( m );
 
-	RB_BindShader( NULL, &s, NULL );
+	RB_BindShader( NULL, &s );
 	RB_BindVBO( rsh.postProcessingVBO->index, GL_TRIANGLES );
 	RB_DrawElements( 0, 4, 0, 6 );
 
@@ -1530,12 +1460,6 @@ const char *R_WriteSpeedsMessage( char *out, size_t size ) {
 						Q_snprintfz( out + strlen( out ), size - strlen( out ),
 									 "verts: %5i tris: %5i", numVerts, numTris );
 					}
-
-					if( debugSurface->fog && debugSurface->fog->shader
-						&& debugSurface->fog->shader != debugSurface->shader ) {
-						Q_strncatz( out, "\n", size );
-						Q_strncatz( out, debugSurface->fog->shader->name, size );
-					}
 				}
 				break;
 			case 6:
@@ -1594,7 +1518,7 @@ void R_RenderDebugSurface( const refdef_t *fd ) {
 
 			R_ClearDrawList( rn.portalmasklist );
 
-			if( R_AddSurfToDrawList( rn.meshlist, R_NUM2ENT( tr.ent ), surf->shader, NULL, -1, 0, 0, NULL, drawSurf ) ) {
+			if( R_AddSurfToDrawList( rn.meshlist, R_NUM2ENT( tr.ent ), surf->shader, -1, 0, 0, NULL, drawSurf ) ) {
 				if( r_speeds->integer == 5 ) {
 					unsigned i;
 

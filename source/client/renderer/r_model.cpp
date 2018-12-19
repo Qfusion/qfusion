@@ -380,13 +380,6 @@ static int R_SurfaceCmp( const msurface_t *s1, const msurface_t *s2 ) {
 		return -1;
 	}
 
-	if( s1->fog > s2->fog ) {
-		return 1;
-	}
-	if( s1->fog < s2->fog ) {
-		return -1;
-	}
-
 	if( s1->superLightStyle > s2->superLightStyle ) {
 		return 1;
 	}
@@ -497,7 +490,6 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, size_t *vbo_total_size
 			drawSurf->superLightStyle = surf->superLightStyle;
 			drawSurf->instances = surf->instances;
 			drawSurf->numInstances = surf->numInstances;
-			drawSurf->fog = surf->fog;
 			drawSurf->shader = surf->shader;
 			drawSurf->numLightmaps = 0;
 			drawSurf->surfFlags = surf->flags;
@@ -738,12 +730,6 @@ static void Mod_TouchBrushModel( model_t *model ) {
 		drawSurfaceBSP_t *drawSurf = &loadbmodel->drawSurfaces[i];
 		R_TouchShader( drawSurf->shader );
 		R_TouchMeshVBO( R_GetVBOByIndex( drawSurf->vbo ) );
-	}
-
-	for( i = 0; i < loadbmodel->numfogs; i++ ) {
-		if( loadbmodel->fogs[i].shader ) {
-			R_TouchShader( loadbmodel->fogs[i].shader );
-		}
 	}
 
 	if( loadbmodel->skydome ) {

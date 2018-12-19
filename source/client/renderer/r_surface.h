@@ -64,8 +64,6 @@ typedef struct {
 
 	struct shader_s *shader;
 
-	struct mfog_s *fog;
-
 	void *listSurf;                 // only valid if visFrame == rf.frameCount
 } drawSurfaceBSP_t;
 
@@ -95,7 +93,6 @@ typedef struct {
 typedef struct {
 	drawSurfaceType_t type;
 
-	int fogNum;
 	int renderfx;
 
 	int numElems;

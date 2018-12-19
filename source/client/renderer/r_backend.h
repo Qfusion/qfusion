@@ -40,7 +40,6 @@ enum {
 //===================================================================
 
 struct shader_s;
-struct mfog_s;
 struct superLightStyle_s;
 struct portalSurface_s;
 struct refScreenTexSet_s;
@@ -83,7 +82,7 @@ void RB_BlitFrameBufferObject( int src, int dest, int bitMask, int mode, int fil
 void RB_BindVBO( int id, int primitive );
 
 void RB_AddDynamicMesh( const entity_t *entity, const shader_t *shader,
-						const struct mfog_s *fog, const struct portalSurface_s *portalSurface,
+						const struct portalSurface_s *portalSurface,
 						const struct mesh_s *mesh, int primitive, float x_offset, float y_offset );
 void RB_FlushDynamicMeshes( void );
 
@@ -94,7 +93,7 @@ void RB_DrawElementsInstanced( int firstVert, int numVerts, int firstElem, int n
 void RB_FlushTextureCache( void );
 
 // shader
-void RB_BindShader( const entity_t *e, const struct shader_s *shader, const struct mfog_s *fog );
+void RB_BindShader( const entity_t *e, const struct shader_s *shader );
 void RB_SetLightstyle( const struct superLightStyle_s *lightStyle, const struct superLightStyle_s *realLightStyle );
 void RB_SetBonesData( int numBones, dualquat_t *dualQuats, int maxWeights );
 void RB_SetPortalSurface( const struct portalSurface_s *portalSurface );

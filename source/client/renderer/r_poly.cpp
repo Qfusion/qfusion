@@ -25,8 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 /*
 * R_BatchPolySurf
 */
-void R_BatchPolySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, 
-	int lightStyleNum, const portalSurface_t *portalSurface, drawSurfacePoly_t *poly, bool mergable ) {
+void R_BatchPolySurf( const entity_t *e, const shader_t *shader, int lightStyleNum, const portalSurface_t *portalSurface, drawSurfacePoly_t *poly, bool mergable ) {
 	mesh_t mesh;
 
 	mesh.elems = poly->elems;
@@ -41,7 +40,7 @@ void R_BatchPolySurf( const entity_t *e, const shader_t *shader, const mfog_t *f
 	mesh.colorsArray[1] = NULL;
 	mesh.sVectorsArray = NULL;
 
-	RB_AddDynamicMesh( e, shader, fog, portalSurface, &mesh, GL_TRIANGLES, 0.0f, 0.0f );
+	RB_AddDynamicMesh( e, shader, portalSurface, &mesh, GL_TRIANGLES, 0.0f, 0.0f );
 }
 
 /*
@@ -51,7 +50,6 @@ void R_DrawPolys( void ) {
 	unsigned int i;
 	drawSurfacePoly_t *p;
 	entity_t *e;
-	mfog_t *fog;
 
 	if( rn.renderFlags & RF_ENVVIEW ) {
 		return;
@@ -62,12 +60,6 @@ void R_DrawPolys( void ) {
 
 		p = rsc.polys + i;
 		renderfx = p->renderfx;
-
-		if( p->fogNum <= 0 || (unsigned)p->fogNum > rsh.worldBrushModel->numfogs ) {
-			fog = NULL;
-		} else {
-			fog = rsh.worldBrushModel->fogs + p->fogNum - 1;
-		}
 
 		if( renderfx & RF_WEAPONMODEL ) {
 			if( rn.renderFlags & RF_NONVIEWERREF ) {
@@ -90,7 +82,7 @@ void R_DrawPolys( void ) {
 		}
 		e->renderfx = p->renderfx;
 
-		if( !R_AddSurfToDrawList( rn.meshlist, e, p->shader, fog, -1, 0, i, NULL, p ) ) {
+		if( !R_AddSurfToDrawList( rn.meshlist, e, p->shader, -1, 0, i, NULL, p ) ) {
 			continue;
 		}
 	}
@@ -136,7 +128,7 @@ void R_DrawStretchPoly( const poly_t *poly, float x_offset, float y_offset ) {
 		mesh.xyzArray = translated;
 	}
 
-	RB_AddDynamicMesh( NULL, poly->shader, NULL, NULL, &mesh, GL_TRIANGLES, x_offset, y_offset );
+	RB_AddDynamicMesh( NULL, poly->shader, NULL, &mesh, GL_TRIANGLES, x_offset, y_offset );
 }
 
 //==================================================================================
@@ -260,7 +252,6 @@ static bool R_WindingClipFragment( const vec3_t *wVerts, int numVerts, const msu
 	fr = &clippedFragments[numClippedFragments++];
 	fr->numverts = numv;
 	fr->firstvert = numFragmentVerts;
-	fr->fognum = surf->fog ? surf->fog - rsh.worldBrushModel->fogs + 1 : -1;
 	VectorCopy( snorm, fr->normal );
 	for( i = 0, v = verts[0], nextv = fragmentVerts[numFragmentVerts]; i < numv; i++, v += 3, nextv += 4 ) {
 		VectorCopy( v, nextv );

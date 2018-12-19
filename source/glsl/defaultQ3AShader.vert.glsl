@@ -2,7 +2,6 @@
 #include "include/uniforms.glsl"
 #include "include/attributes.glsl"
 #include "include/rgbgen.glsl"
-#include_if(APPLY_FOG) "include/fog.glsl"
 
 #include "include/varying_q3a.glsl"
 
@@ -22,14 +21,6 @@ void main(void)
 	QF_TransformVerts(Position, Normal, TexCoord);
 
 	myhalf4 outColor = VertexRGBGen(Position, Normal, inColor);
-
-#ifdef APPLY_FOG
-#if defined(APPLY_FOG_COLOR)
-	FogGenColor(Position, outColor, u_BlendMix);
-#else
-	FogGenCoord(Position, v_FogCoord);
-#endif
-#endif // APPLY_FOG
 
 	qf_FrontColor = vec4(outColor);
 

@@ -1,14 +1,9 @@
 #include "include/common.glsl"
 #include "include/uniforms.glsl"
-#include_if(APPLY_FOG) "include/fog.glsl"
 #include_if(APPLY_GREYSCALE) "include/greyscale.glsl"
 
 qf_varying vec2 v_TexCoord;
 qf_varying vec3 v_TexCoordCube;
-
-#if defined(APPLY_FOG) && !defined(APPLY_FOG_COLOR)
-qf_varying vec2 v_FogCoord;
-#endif
 
 uniform sampler2D u_BaseTexture;
 uniform samplerCube u_CelShadeTexture;
@@ -89,11 +84,6 @@ void main(void)
 
 #ifdef APPLY_GREYSCALE
 	outColor.rgb = Greyscale(outColor.rgb);
-#endif
-
-#if defined(APPLY_FOG) && !defined(APPLY_FOG_COLOR)
-	myhalf fogDensity = FogDensity(v_FogCoord);
-	outColor.rgb = mix(outColor.rgb, LinearColor(u_FogColor), fogDensity);
 #endif
 
 	qf_FragColor = vec4(sRGBColor(outColor));

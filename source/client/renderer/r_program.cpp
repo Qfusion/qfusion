@@ -87,13 +87,6 @@ typedef struct glsl_program_s {
 		int RGBGenFuncArgs;
 		int AlphaGenFuncArgs;
 
-		struct {
-			int Plane;
-			int Color;
-			int ScaleAndEyeDist;
-			int EyePlane;
-		} Fog;
-
 		int ShaderTime;
 
 		int ReflectionTexMatrix;
@@ -171,7 +164,6 @@ void RP_Init( void ) {
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_OUTLINE, DEFAULT_GLSL_OUTLINE_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_Q3A_SHADER, DEFAULT_GLSL_Q3A_SHADER_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_CELSHADE, DEFAULT_GLSL_CELSHADE_PROGRAM, NULL, NULL, 0, 0 );
-	RP_RegisterProgram( GLSL_PROGRAM_TYPE_FOG, DEFAULT_GLSL_FOG_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_COLOR_CORRECTION, DEFAULT_GLSL_COLORCORRECTION_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_KAWASE_BLUR, DEFAULT_GLSL_KAWASE_BLUR_PROGRAM, NULL, NULL, 0, 0 );
 
@@ -566,9 +558,6 @@ static const glsl_feature_t glsl_features_material[] =
 	{ GLSL_SHADER_COMMON_ALPHA_GEN_ONE_MINUS_VERTEX, "#define APPLY_ALPHA_ONE_MINUS_VERTEX\n", "_a1-v" },
 	{ GLSL_SHADER_COMMON_ALPHA_GEN_VERTEX, "#define APPLY_ALPHA_VERTEX\n", "_av" },
 
-	{ GLSL_SHADER_COMMON_FOG, "#define APPLY_FOG\n#define APPLY_FOG_IN 1\n", "_fog" },
-	{ GLSL_SHADER_COMMON_FOG_RGB, "#define APPLY_FOG_COLOR\n", "_rgb" },
-
 	{ GLSL_SHADER_COMMON_DRAWFLAT, "#define APPLY_DRAWFLAT\n", "_flat" },
 
 	{ GLSL_SHADER_COMMON_AUTOSPRITE, "#define APPLY_AUTOSPRITE\n", "" },
@@ -633,9 +622,6 @@ static const glsl_feature_t glsl_features_distortion[] =
 	{ GLSL_SHADER_COMMON_INSTANCED_ATTRIB_TRANSFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n"
 	  "#define APPLY_INSTANCED_ATTRIB_TRANSFORMS\n", "_instanced_va" },
 
-	{ GLSL_SHADER_COMMON_FOG, "#define APPLY_FOG\n#define APPLY_FOG_IN 1\n", "_fog" },
-	{ GLSL_SHADER_COMMON_FOG_RGB, "#define APPLY_FOG_COLOR\n", "_rgb" },
-
 	{ GLSL_SHADER_DISTORTION_DUDV, "#define APPLY_DUDV\n", "_dudv" },
 	{ GLSL_SHADER_DISTORTION_EYEDOT, "#define APPLY_EYEDOT\n", "_eyedot" },
 	{ GLSL_SHADER_DISTORTION_DISTORTION_ALPHA, "#define APPLY_DISTORTION_ALPHA\n", "_alpha" },
@@ -651,9 +637,6 @@ static const glsl_feature_t glsl_features_outline[] =
 	{ GLSL_SHADER_COMMON_BONE_TRANSFORMS3, "#define QF_NUM_BONE_INFLUENCES 3\n", "_bones3" },
 	{ GLSL_SHADER_COMMON_BONE_TRANSFORMS2, "#define QF_NUM_BONE_INFLUENCES 2\n", "_bones2" },
 	{ GLSL_SHADER_COMMON_BONE_TRANSFORMS1, "#define QF_NUM_BONE_INFLUENCES 1\n", "_bones1" },
-
-	{ GLSL_SHADER_COMMON_FOG, "#define APPLY_FOG\n#define APPLY_FOG_IN 1\n", "_fog" },
-	{ GLSL_SHADER_COMMON_FOG_RGB, "#define APPLY_FOG_COLOR\n", "_rgb" },
 
 	{ GLSL_SHADER_COMMON_INSTANCED_TRANSFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n", "_instanced" },
 	{ GLSL_SHADER_COMMON_INSTANCED_ATTRIB_TRANSFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n#define APPLY_INSTANCED_ATTRIB_TRANSFORMS\n", "_instanced_va" },
@@ -679,9 +662,6 @@ static const glsl_feature_t glsl_features_q3a[] =
 	{ GLSL_SHADER_COMMON_ALPHA_DISTANCERAMP, "#define APPLY_ALPHA_DISTANCERAMP\n", "_alpha_dr" },
 	{ GLSL_SHADER_COMMON_ALPHA_GEN_ONE_MINUS_VERTEX, "#define APPLY_ALPHA_ONE_MINUS_VERTEX\n", "_a1-v" },
 	{ GLSL_SHADER_COMMON_ALPHA_GEN_VERTEX, "#define APPLY_ALPHA_VERTEX\n", "_av" },
-
-	{ GLSL_SHADER_COMMON_FOG, "#define APPLY_FOG\n#define APPLY_FOG_IN 1\n", "_fog" },
-	{ GLSL_SHADER_COMMON_FOG_RGB, "#define APPLY_FOG_COLOR\n", "_rgb" },
 
 	{ GLSL_SHADER_COMMON_DRAWFLAT, "#define APPLY_DRAWFLAT\n", "_flat" },
 
@@ -747,9 +727,6 @@ static const glsl_feature_t glsl_features_celshade[] =
 	{ GLSL_SHADER_COMMON_ALPHA_GEN_ONE_MINUS_VERTEX, "#define APPLY_ALPHA_ONE_MINUS_VERTEX\n", "_a1-v" },
 	{ GLSL_SHADER_COMMON_ALPHA_GEN_VERTEX, "#define APPLY_ALPHA_VERTEX\n", "_av" },
 
-	{ GLSL_SHADER_COMMON_FOG, "#define APPLY_FOG\n#define APPLY_FOG_IN 1\n", "_fog" },
-	{ GLSL_SHADER_COMMON_FOG_RGB, "#define APPLY_FOG_COLOR\n", "_rgb" },
-
 	{ GLSL_SHADER_COMMON_INSTANCED_TRANSFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n", "_instanced" },
 	{ GLSL_SHADER_COMMON_INSTANCED_ATTRIB_TRANSFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n#define APPLY_INSTANCED_ATTRIB_TRANSFORMS\n", "_instanced_va" },
 
@@ -766,28 +743,6 @@ static const glsl_feature_t glsl_features_celshade[] =
 	{ GLSL_SHADER_CELSHADE_STRIPES_ADD, "#define APPLY_STRIPES_ADD\n", "_stripes_add" },
 	{ GLSL_SHADER_CELSHADE_CEL_LIGHT, "#define APPLY_CEL_LIGHT\n", "_light" },
 	{ GLSL_SHADER_CELSHADE_CEL_LIGHT_ADD, "#define APPLY_CEL_LIGHT_ADD\n", "_add" },
-
-	{ 0, NULL, NULL }
-};
-
-static const glsl_feature_t glsl_features_fog[] =
-{
-	{ GLSL_SHADER_COMMON_BONE_TRANSFORMS4, "#define QF_NUM_BONE_INFLUENCES 4\n", "_bones4" },
-	{ GLSL_SHADER_COMMON_BONE_TRANSFORMS3, "#define QF_NUM_BONE_INFLUENCES 3\n", "_bones3" },
-	{ GLSL_SHADER_COMMON_BONE_TRANSFORMS2, "#define QF_NUM_BONE_INFLUENCES 2\n", "_bones2" },
-	{ GLSL_SHADER_COMMON_BONE_TRANSFORMS1, "#define QF_NUM_BONE_INFLUENCES 1\n", "_bones1" },
-
-	{ GLSL_SHADER_COMMON_SRGB2LINEAR, "#define APPLY_SRGB2LINEAR\n", "_srgb" },
-	{ GLSL_SHADER_COMMON_LINEAR2SRB, "#define APPLY_LINEAR2SRGB\n", "_linear" },
-
-	{ GLSL_SHADER_COMMON_FOG, "#define APPLY_FOG\n", "_fog" },
-	{ GLSL_SHADER_COMMON_FOG_RGB, "#define APPLY_FOG_COLOR\n", "_rgb" },
-
-	{ GLSL_SHADER_COMMON_AUTOSPRITE, "#define APPLY_AUTOSPRITE\n", "" },
-	{ GLSL_SHADER_COMMON_AUTOSPRITE2, "#define APPLY_AUTOSPRITE2\n", "" },
-
-	{ GLSL_SHADER_COMMON_INSTANCED_TRANSFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n", "_instanced" },
-	{ GLSL_SHADER_COMMON_INSTANCED_ATTRIB_TRANSFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n#define APPLY_INSTANCED_ATTRIB_TRANSFORMS\n", "_instanced_va" },
 
 	{ 0, NULL, NULL }
 };
@@ -820,8 +775,6 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 	glsl_features_q3a,
 	// GLSL_PROGRAM_TYPE_CELSHADE
 	glsl_features_celshade,
-	// GLSL_PROGRAM_TYPE_FOG
-	glsl_features_fog,
 	// GLSL_PROGRAM_TYPE_COLOR_CORRECTION
 	glsl_features_colcorrection,
 	// GLSL_PROGRAM_TYPE_KAWASE_BLUR
@@ -1261,8 +1214,7 @@ static bool RF_LoadShaderFromFile_r( glslParser_t *parser, const char *fileName,
 
 			ignore_include = true;
 
-			if( ( !Q_stricmp( token, "APPLY_FOG)" ) && ( features & GLSL_SHADER_COMMON_FOG ) ) ||
-
+			if(
 				( !Q_stricmp( token, "APPLY_GREYSCALE)" ) && ( features & GLSL_SHADER_COMMON_GREYSCALE ) ) ||
 
 				( ( programType == GLSL_PROGRAM_TYPE_Q3A_SHADER ) && !Q_stricmp( token, "NUM_LIGHTMAPS)" )
@@ -1279,8 +1231,7 @@ static bool RF_LoadShaderFromFile_r( glslParser_t *parser, const char *fileName,
 
 				( ( programType == GLSL_PROGRAM_TYPE_MATERIAL ) && !Q_stricmp( token, "APPLY_DIRECTIONAL_LIGHT)" )
 				  && ( features & GLSL_SHADER_MATERIAL_DIRECTIONAL_LIGHT ) )
-
-				) {
+			) {
 				ignore_include = false;
 			}
 		}
@@ -1963,29 +1914,6 @@ void RP_UpdateOutlineUniforms( int elem, float projDistance ) {
 }
 
 /*
-* RP_UpdateFogUniforms
-*/
-void RP_UpdateFogUniforms( int elem, byte_vec4_t color, float clearDist, float opaqueDist, cplane_t *fogPlane, cplane_t *eyePlane, float eyeDist ) {
-	GLfloat fog_color[3] = { 0, 0, 0 };
-	glsl_program_t *program = r_glslprograms + elem - 1;
-
-	VectorScale( color, ( 1.0 / 255.0 ), fog_color );
-
-	if( program->loc.Fog.Color >= 0 ) {
-		glUniform3fv( program->loc.Fog.Color, 1, fog_color );
-	}
-	if( program->loc.Fog.ScaleAndEyeDist >= 0 ) {
-		glUniform2f( program->loc.Fog.ScaleAndEyeDist, 1.0 / ( opaqueDist - clearDist ), eyeDist );
-	}
-	if( program->loc.Fog.Plane >= 0 ) {
-		glUniform4f( program->loc.Fog.Plane, fogPlane->normal[0], fogPlane->normal[1], fogPlane->normal[2], fogPlane->dist );
-	}
-	if( program->loc.Fog.EyePlane >= 0 ) {
-		glUniform4f( program->loc.Fog.EyePlane, eyePlane->normal[0], eyePlane->normal[1], eyePlane->normal[2], eyePlane->dist );
-	}
-}
-
-/*
 * RP_UpdateLightstyleUniforms
 */
 void RP_UpdateLightstyleUniforms( int elem, const superLightStyle_t *superLightStyle ) {
@@ -2191,11 +2119,6 @@ static void RP_GetUniformLocations( glsl_program_t *program ) {
 	program->loc.ConstColor = glGetUniformLocation( program->object, "u_ConstColor" );
 	program->loc.RGBGenFuncArgs = glGetUniformLocation( program->object, "u_RGBGenFuncArgs" );
 	program->loc.AlphaGenFuncArgs = glGetUniformLocation( program->object, "u_AlphaGenFuncArgs" );
-
-	program->loc.Fog.Plane = glGetUniformLocation( program->object, "u_FogPlane" );
-	program->loc.Fog.Color = glGetUniformLocation( program->object, "u_FogColor" );
-	program->loc.Fog.ScaleAndEyeDist = glGetUniformLocation( program->object, "u_FogScaleAndEyeDist" );
-	program->loc.Fog.EyePlane = glGetUniformLocation( program->object, "u_FogEyePlane" );
 
 	program->loc.ShaderTime = glGetUniformLocation( program->object, "u_ShaderTime" );
 

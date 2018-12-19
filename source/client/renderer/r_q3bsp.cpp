@@ -194,7 +194,6 @@ static void Mod_FaceToRavenFace( const dface_t *in, rdface_t *rdf ) {
 	}
 
 	rdf->shadernum = in->shadernum;
-	rdf->fognum = in->fognum;
 	rdf->numverts = in->numverts;
 	rdf->firstvert = in->firstvert;
 	rdf->patch_cp[0] = in->patch_cp[0];
@@ -291,7 +290,6 @@ static void Mod_LoadFaces( const lump_t *l ) {
 
 	for( i = 0; i < count; i++, in++, out++ ) {
 		int j;
-		int fogNum;
 		mshaderref_t *shaderRef;
 		shaderType_e shaderType;
 		lightmapRect_t *lmRects[MAX_LIGHTMAPS];
@@ -332,14 +330,6 @@ static void Mod_LoadFaces( const lump_t *l ) {
 
 		// add this super style
 		out->superLightStyle = R_AddSuperLightStyle( loadmodel, lightmaps, lightmapStyles, vertexStyles, lmRects );
-
-		fogNum = LittleLong( in->fognum );
-		if( fogNum >= 0 && ( (unsigned)fogNum < loadbmodel->numfogs ) ) {
-			mfog_t *fog = loadbmodel->fogs + fogNum;
-			if( fog->shader && fog->shader->fog_dist ) {
-				out->fog = fog;
-			}
-		}
 	}
 }
 
@@ -1034,104 +1024,6 @@ static void Mod_LoadNodes( const lump_t *l ) {
 }
 
 /*
-* Mod_LoadFogs
-*/
-static void Mod_LoadFogs( const lump_t *l, const lump_t *brLump, const lump_t *brSidesLump ) {
-	int i, j, count, p;
-	dfog_t *in;
-	mfog_t *out;
-	dbrush_t *inbrushes, *brush;
-	int brushplanes[6];
-	dbrushside_t *inbrushsides = NULL, *brushside = NULL;
-	rdbrushside_t *inrbrushsides = NULL, *rbrushside = NULL;
-
-	inbrushes = ( dbrush_t * )( mod_base + brLump->fileofs );
-	if( brLump->filelen % sizeof( *inbrushes ) ) {
-		ri.Com_Error( ERR_DROP, "Mod_LoadBrushes: funny lump size in %s", loadmodel->name );
-	}
-
-	if( mod_bspFormat->flags & BSP_RAVEN ) {
-		inrbrushsides = ( rdbrushside_t * )( mod_base + brSidesLump->fileofs );
-		if( brSidesLump->filelen % sizeof( *inrbrushsides ) ) {
-			ri.Com_Error( ERR_DROP, "Mod_LoadBrushsides: funny lump size in %s", loadmodel->name );
-		}
-	} else {
-		inbrushsides = ( dbrushside_t * )( mod_base + brSidesLump->fileofs );
-		if( brSidesLump->filelen % sizeof( *inbrushsides ) ) {
-			ri.Com_Error( ERR_DROP, "Mod_LoadBrushsides: funny lump size in %s", loadmodel->name );
-		}
-	}
-
-	in = ( dfog_t * )( mod_base + l->fileofs );
-	if( l->filelen % sizeof( *in ) ) {
-		ri.Com_Error( ERR_DROP, "Mod_LoadFogs: funny lump size in %s", loadmodel->name );
-	}
-	count = l->filelen / sizeof( *in );
-	out = ( mfog_t * ) Mod_Malloc( loadmodel, count * sizeof( *out ) );
-
-	loadbmodel->fogs = out;
-	loadbmodel->numfogs = count;
-
-	for( i = 0; i < count; i++, in++, out++ ) {
-		out->shader = R_RegisterShader( in->shader, SHADER_TYPE_2D );
-		p = LittleLong( in->brushnum );
-		if( p == -1 ) {
-			continue;
-		}
-
-		brush = inbrushes + p;
-
-		p = LittleLong( brush->numsides );
-		if( p < 6 ) {
-			out->shader = NULL;
-			ri.Com_DPrintf( S_COLOR_YELLOW "WARNING: missing fog brush sides\n" );
-			continue;
-		}
-
-		p = LittleLong( brush->firstside );
-		if( p == -1 ) {
-			out->shader = NULL;
-			ri.Com_DPrintf( S_COLOR_YELLOW "WARNING: bad fog brush side\n" );
-			continue;
-		}
-
-		if( mod_bspFormat->flags & BSP_RAVEN ) {
-			rbrushside = inrbrushsides + p;
-		} else {
-			brushside = inbrushsides + p;
-		}
-
-		p = LittleLong( in->visibleside );
-		if( mod_bspFormat->flags & BSP_RAVEN ) {
-			if( p != -1 ) {
-				out->visibleplane = loadbmodel->planes + LittleLong( rbrushside[p].planenum );
-			}
-			for( j = 0; j < 6; j++ )
-				brushplanes[j] = LittleLong( rbrushside[j].planenum );
-		} else {
-			if( p != -1 ) {
-				out->visibleplane = loadbmodel->planes + LittleLong( brushside[p].planenum );
-			}
-			for( j = 0; j < 6; j++ )
-				brushplanes[j] = LittleLong( brushside[j].planenum );
-		}
-
-		// brushes are always sorted with the axial sides first
-
-		VectorSet( out->mins,
-				   -loadbmodel->planes[brushplanes[0]].dist,
-				   -loadbmodel->planes[brushplanes[2]].dist,
-				   -loadbmodel->planes[brushplanes[4]].dist
-				   );
-		VectorSet( out->maxs,
-				   loadbmodel->planes[brushplanes[1]].dist,
-				   loadbmodel->planes[brushplanes[3]].dist,
-				   loadbmodel->planes[brushplanes[5]].dist
-				   );
-	}
-}
-
-/*
 * Mod_LoadLeafs
 */
 static void Mod_LoadLeafs( const lump_t *l, const lump_t *msLump ) {
@@ -1559,8 +1451,6 @@ static void Mod_ApplySuperStylesToFace( const rdface_t *in, msurface_t *out ) {
 static void Mod_Finish( const lump_t *faces, const lump_t *light, vec3_t gridSize, vec3_t ambient, vec3_t outline ) {
 	unsigned int i, j;
 	msurface_t *surf;
-	mfog_t *testFog;
-	bool globalFog;
 	rdface_t *in;
 
 	// remembe the BSP format just in case
@@ -1606,29 +1496,6 @@ static void Mod_Finish( const lump_t *faces, const lump_t *light, vec3_t gridSiz
 		mapConfig.outlineColor[i] = (uint8_t)( bound( 0, outline[i] * 255.0f, 255 ) );
 	mapConfig.outlineColor[3] = 255;
 
-	for( i = 0, testFog = loadbmodel->fogs; i < loadbmodel->numfogs; testFog++, i++ ) {
-		if( !testFog->shader ) {
-			continue;
-		}
-		if( testFog->visibleplane ) {
-			continue;
-		}
-
-		testFog->visibleplane = ( cplane_t * ) Mod_Malloc( loadmodel, sizeof( cplane_t ) );
-		VectorSet( testFog->visibleplane->normal, 0, 0, 1 );
-		testFog->visibleplane->type = PLANE_Z;
-		testFog->visibleplane->dist = loadbmodel->submodels[0].maxs[0] + 1;
-	}
-
-	// make sure that the only fog in the map has valid shader
-	globalFog = ( loadbmodel->numfogs == 1 ) ? true : false;
-	if( globalFog ) {
-		testFog = &loadbmodel->fogs[0];
-		if( !testFog->shader ) {
-			globalFog = false;
-		}
-	}
-
 	R_SortSuperLightStyles( loadmodel );
 
 	in = loadmodel_dsurfaces;
@@ -1647,17 +1514,6 @@ static void Mod_Finish( const lump_t *faces, const lump_t *light, vec3_t gridSiz
 			&& shader && ( shader->flags & SHADER_FORCE_OUTLINE_WORLD )  ) {
 			mapConfig.forceWorldOutlines = true;
 		}
-
-		if( globalFog && surf->mesh.numVerts != 0 && surf->fog != testFog ) {
-			if( shader && !( shader->flags & SHADER_SKY ) && !shader->fog_dist ) {
-				globalFog = false;
-			}
-		}
-	}
-
-	if( globalFog ) {
-		loadbmodel->globalfog = testFog;
-		ri.Com_DPrintf( "Global fog detected: %s\n", testFog->shader->name );
 	}
 
 	if( !( mod_bspFormat->flags & BSP_RAVEN ) ) {
@@ -1722,7 +1578,6 @@ void Mod_LoadQ3BrushModel( model_t *mod, const model_t *parent, void *buffer, bs
 	Mod_LoadShaderrefs( &header->lumps[LUMP_SHADERREFS] );
 	Mod_PreloadFaces( &header->lumps[LUMP_FACES] );
 	Mod_LoadPlanes( &header->lumps[LUMP_PLANES] );
-	Mod_LoadFogs( &header->lumps[LUMP_FOGS], &header->lumps[LUMP_BRUSHES], &header->lumps[LUMP_BRUSHSIDES] );
 	Mod_LoadFaces( &header->lumps[LUMP_FACES] );
 	if( mod_bspFormat->flags & BSP_RAVEN ) {
 		Mod_LoadVertexes_RBSP( &header->lumps[LUMP_VERTEXES] );

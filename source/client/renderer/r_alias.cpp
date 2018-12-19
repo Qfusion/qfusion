@@ -511,8 +511,7 @@ bool R_AliasModelLerpTag( orientation_t *orient, const maliasmodel_t *aliasmodel
 *
 * Interpolates between two frames and origins
 */
-void R_DrawAliasSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, int lightStyleNum, 
-	const portalSurface_t *portalSurface, drawSurfaceAlias_t *drawSurf ) {
+void R_DrawAliasSurf( const entity_t *e, const shader_t *shader, int lightStyleNum, const portalSurface_t *portalSurface, drawSurfaceAlias_t *drawSurf ) {
 	int i;
 	int framenum = e->frame, oldframenum = e->oldframe;
 	float backv[3], frontv[3];
@@ -628,7 +627,7 @@ void R_DrawAliasSurf( const entity_t *e, const shader_t *shader, const mfog_t *f
 			dynamicMesh.sVectorsArray = aliasmesh->sVectorsArray;
 		}
 
-		RB_AddDynamicMesh( e, shader, fog, portalSurface, &dynamicMesh, GL_TRIANGLES, 0.0f, 0.0f );
+		RB_AddDynamicMesh( e, shader, portalSurface, &dynamicMesh, GL_TRIANGLES, 0.0f, 0.0f );
 
 		RB_FlushDynamicMeshes();
 	}
@@ -678,7 +677,6 @@ void R_CacheAliasModelEntity( const entity_t *e ) {
 
 	cache->rotated = true;
 	cache->radius = R_AliasModelLerpBBox( e, mod, cache->mins, cache->maxs );
-	cache->fog = R_FogForSphere( e->origin, cache->radius );
 	BoundsFromRadius( e->origin, cache->radius, cache->absmins, cache->absmaxs );
 }
 
@@ -691,7 +689,6 @@ bool R_AddAliasModelToDrawList( const entity_t *e, int lod ) {
 	int i, j;
 	const model_t *mod = lod < e->model->numlods ? e->model->lods[lod] : e->model;
 	const maliasmodel_t *aliasmodel;
-	const mfog_t *fog;
 	const maliasmesh_t *mesh;
 	float distance;
 	const entSceneCache_t *cache = R_ENTCACHE( e );
@@ -709,8 +706,6 @@ bool R_AddAliasModelToDrawList( const entity_t *e, int lod ) {
 	if( !( e->renderfx & RF_WEAPONMODEL ) ) {
 		distance = Distance( e->origin, rn.viewOrigin ) + 1;
 	}
-
-	fog = cache->fog;
 
 	fakeskin.name[0] = 0;
 	fakeskin.shader = NULL;
@@ -738,9 +733,8 @@ bool R_AddAliasModelToDrawList( const entity_t *e, int lod ) {
 				continue;
 			}
 
-			drawOrder = R_PackOpaqueOrder( fog, shader, 0, false );
-			R_AddSurfToDrawList( rn.meshlist, e, shader, fog, -1,
-				MD3SURF_DISTANCE( shader, distance ), drawOrder, NULL, aliasmodel->drawSurfs + i );
+			drawOrder = R_PackOpaqueOrder( shader, 0, false );
+			R_AddSurfToDrawList( rn.meshlist, e, shader, -1, MD3SURF_DISTANCE( shader, distance ), drawOrder, NULL, aliasmodel->drawSurfs + i );
 		}
 	}
 

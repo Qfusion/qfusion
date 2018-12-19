@@ -212,24 +212,7 @@ void R_AddPolyToScene( const poly_t *poly ) {
 		dp->colorsArray = poly->colors;
 		dp->numElems = poly->numelems;
 		dp->elems = ( elem_t * )poly->elems;
-		dp->fogNum = poly->fognum;
 		dp->renderfx = poly->renderfx;
-
-		// if fogNum is unset, we need to find the volume for polygon bounds
-		if( !dp->fogNum ) {
-			int i;
-			mfog_t *fog;
-			vec3_t dpmins, dpmaxs;
-
-			ClearBounds( dpmins, dpmaxs );
-
-			for( i = 0; i < dp->numVerts; i++ ) {
-				AddPointToBounds( dp->xyzArray[i], dpmins, dpmaxs );
-			}
-
-			fog = R_FogForBounds( dpmins, dpmaxs );
-			dp->fogNum = ( fog ? fog - rsh.worldBrushModel->fogs + 1 : -1 );
-		}
 
 		rsc.numPolys++;
 	}
@@ -325,9 +308,6 @@ void R_RenderScene( const refdef_t *fd ) {
 	rn.polygonFactor = POLYOFFSET_FACTOR;
 	rn.polygonUnits = POLYOFFSET_UNITS;
 	rn.clipFlags = 15;
-	if( rsh.worldModel && !( fd->rdflags & RDF_NOWORLDMODEL ) && rsh.worldBrushModel->globalfog ) {
-		rn.clipFlags |= 32; // farlip
-	}
 	rn.meshlist = &r_worldlist;
 	rn.portalmasklist = &r_portalmasklist;
 	rn.numEntities = 0;
@@ -648,7 +628,7 @@ static void R_RenderDebugBounds( void ) {
 		mesh.xyzArray = r_debug_bounds[i].corners;
 		mesh.colorsArray[0] = r_debug_bounds[i].colors;
 
-		RB_AddDynamicMesh( rsc.worldent, rsh.whiteShader, NULL, NULL, &mesh, GL_LINES, 0.0f, 0.0f );
+		RB_AddDynamicMesh( rsc.worldent, rsh.whiteShader, NULL, &mesh, GL_LINES, 0.0f, 0.0f );
 	}
 
 	RB_FlushDynamicMeshes();

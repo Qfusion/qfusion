@@ -482,7 +482,7 @@ portalSurface_t *R_AddSkyportalSurface( const entity_t *ent, const shader_t *sha
 		rn.numDepthPortalSurfaces++;
 	}
 
-	R_AddSurfToDrawList( rn.portalmasklist, ent, rsh.depthOnlyShader, NULL, -1, 0, 0, NULL, drawSurf );
+	R_AddSurfToDrawList( rn.portalmasklist, ent, rsh.depthOnlyShader, -1, 0, 0, NULL, drawSurf );
 
 	portalSurface->entity = ent;
 	portalSurface->shader = shader;

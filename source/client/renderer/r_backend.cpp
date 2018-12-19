@@ -707,8 +707,7 @@ void RB_BindVBO( int id, int primitive ) {
 /*
 * RB_AddDynamicMesh
 */
-void RB_AddDynamicMesh( const entity_t *entity, const shader_t *shader,
-						const struct mfog_s *fog, const struct portalSurface_s *portalSurface,
+void RB_AddDynamicMesh( const entity_t *entity, const shader_t *shader, const struct portalSurface_s *portalSurface,
 						const struct mesh_s *mesh, int primitive, float x_offset, float y_offset ) {
 	int numVerts = mesh->numVerts, numElems = mesh->numElems;
 	bool trifan = false;
@@ -747,12 +746,11 @@ void RB_AddDynamicMesh( const entity_t *entity, const shader_t *shader,
 		if( entity ) {
 			renderFX = entity->renderfx;
 		}
-		if( ( ( shader->flags & SHADER_ENTITY_MERGABLE ) || ( prev->entity == entity ) ) && ( prevRenderFX == renderFX ) &&
-			( prev->shader == shader ) && ( prev->fog == fog ) && ( prev->portalSurface == portalSurface ) ) {
+		if( ( ( shader->flags & SHADER_ENTITY_MERGABLE ) || prev->entity == entity ) && prevRenderFX == renderFX &&
+			prev->shader == shader && prev->portalSurface == portalSurface ) {
 			// don't rebind the shader to get the VBO in this case
 			streamId = prev->streamId;
-			if( ( prev->primitive == primitive ) &&
-				( prev->offset[0] == x_offset ) && ( prev->offset[1] == y_offset ) &&
+			if( prev->primitive == primitive && prev->offset[0] == x_offset && prev->offset[1] == y_offset &&
 				!memcmp( prev->scissor, scissor, sizeof( scissor ) ) ) {
 				merge = true;
 			}
@@ -760,7 +758,7 @@ void RB_AddDynamicMesh( const entity_t *entity, const shader_t *shader,
 	}
 
 	if( streamId == RB_VBO_NONE ) {
-		RB_BindShader( entity, shader, fog );
+		RB_BindShader( entity, shader );
 		vattribs = rb.currentVAttribs;
 		streamId = ( ( vattribs & ~COMPACT_STREAM_VATTRIBS ) ? RB_VBO_STREAM : RB_VBO_STREAM_COMPACT );
 	} else {
@@ -792,7 +790,6 @@ void RB_AddDynamicMesh( const entity_t *entity, const shader_t *shader,
 		draw = &rb.dynamicDraws[rb.numDynamicDraws++];
 		draw->entity = entity;
 		draw->shader = shader;
-		draw->fog = fog;
 		draw->portalSurface = portalSurface;
 		draw->vattribs = vattribs;
 		draw->streamId = streamId;
@@ -872,7 +869,7 @@ void RB_FlushDynamicMeshes( void ) {
 	Matrix4_Copy( rb.objectMatrix, om );
 
 	for( i = 0, draw = rb.dynamicDraws; i < numDraws; i++, draw++ ) {
-		RB_BindShader( draw->entity, draw->shader, draw->fog );
+		RB_BindShader( draw->entity, draw->shader );
 		RB_BindVBO( draw->streamId, draw->primitive );
 		RB_SetPortalSurface( draw->portalSurface );
 		RB_Scissor( draw->scissor[0], draw->scissor[1], draw->scissor[2], draw->scissor[3] );

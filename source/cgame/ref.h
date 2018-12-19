@@ -69,9 +69,6 @@ typedef struct bonepose_s {
 typedef struct fragment_s {
 	int firstvert;
 	int numverts;                       // can't exceed MAX_POLY_VERTS
-	int fognum;                         // -1 - no fog
-	                                    //  0 - determine fog in R_AddPolyToScene
-	                                    // >0 - valid fog volume number returned by R_GetClippedFragments
 	vec3_t normal;
 } fragment_t;
 
@@ -84,7 +81,6 @@ typedef struct poly_s {
 	int numelems;
 	unsigned short *elems;
 	struct shader_s *shader;
-	int fognum;
 	int renderfx;
 } poly_t;
 

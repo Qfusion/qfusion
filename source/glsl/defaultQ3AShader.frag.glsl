@@ -1,7 +1,6 @@
 #include "include/common.glsl"
 #include "include/lightmap.glsl"
 #include "include/uniforms.glsl"
-#include_if(APPLY_FOG) "include/fog.glsl"
 #include_if(APPLY_GREYSCALE) "include/greyscale.glsl"
 
 #include "include/varying_q3a.glsl"
@@ -58,10 +57,6 @@ void main(void)
 	color = myhalf4(qf_FrontColor);
 #endif // NUM_LIGHTMAPS
 
-#if defined(APPLY_FOG) && !defined(APPLY_FOG_COLOR)
-	myhalf fogDensity = FogDensity(v_FogCoord);
-#endif
-
 	myhalf4 diffuse;
 
 #if defined(APPLY_CUBEMAP)
@@ -92,10 +87,6 @@ void main(void)
 
 #ifdef APPLY_GREYSCALE
 	color.rgb = Greyscale(color.rgb);
-#endif
-
-#if defined(APPLY_FOG) && !defined(APPLY_FOG_COLOR)
-	color.rgb = mix(color.rgb, LinearColor(u_FogColor), fogDensity);
 #endif
 
 #if defined(APPLY_SOFT_PARTICLE)

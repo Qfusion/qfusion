@@ -168,7 +168,6 @@ static cpoly_t *CG_SpawnPolyQuad( const vec3_t v1, const vec3_t v2, const vec3_t
 	poly = cgpoly->poly;
 	poly->shader = cgpoly->shader;
 	poly->numverts = 0;
-	poly->fognum = 0;
 
 	// A
 	VectorCopy( v1, poly->verts[0] );

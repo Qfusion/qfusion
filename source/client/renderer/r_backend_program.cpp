@@ -29,7 +29,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define DRAWFLAT() ( ( rb.currentModelType == mod_brush ) && ( rb.renderFlags & RF_DRAWFLAT ) && !( rb.currentShader->flags & SHADER_NODRAWFLAT ) )
 
 enum {
-	BUILTIN_GLSLPASS_FOG,
 	BUILTIN_GLSLPASS_OUTLINE,
 	BUILTIN_GLSLPASS_SKYBOX,
 	MAX_BUILTIN_GLSLPASSES
@@ -58,7 +57,6 @@ static void RB_RenderMeshGLSL_Distortion( const shaderpass_t *pass, r_glslfeat_t
 static void RB_RenderMeshGLSL_Outline( const shaderpass_t *pass, r_glslfeat_t programFeatures );
 static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t programFeatures );
 static void RB_RenderMeshGLSL_Celshade( const shaderpass_t *pass, r_glslfeat_t programFeatures );
-static void RB_RenderMeshGLSL_Fog( const shaderpass_t *pass, r_glslfeat_t programFeatures );
 
 /*
 * RB_InitBuiltinPasses
@@ -68,15 +66,6 @@ static void RB_InitBuiltinPasses( void ) {
 
 	// init optional GLSL program passes
 	memset( r_GLSLpasses, 0, sizeof( r_GLSLpasses ) );
-
-	// init fog pass
-	pass = &r_GLSLpasses[BUILTIN_GLSLPASS_FOG];
-	pass->program_type = GLSL_PROGRAM_TYPE_Q3A_SHADER;
-	pass->tcgen = TC_GEN_FOG;
-	pass->rgbgen.type = RGB_GEN_FOG;
-	pass->alphagen.type = ALPHA_GEN_IDENTITY;
-	pass->flags = GLSTATE_SRCBLEND_SRC_ALPHA | GLSTATE_DSTBLEND_ONE_MINUS_SRC_ALPHA;
-	pass->program_type = GLSL_PROGRAM_TYPE_FOG;
 
 	// outlines
 	pass = &r_GLSLpasses[BUILTIN_GLSLPASS_OUTLINE];
@@ -165,60 +154,6 @@ static float *RB_TableForFunc( unsigned int func ) {
 */
 static float RB_BackendGetNoiseValue( float x, float y, float z, float t ) {
 	return Q_GetNoiseValueFromTable( rb_noisetable, rb_noiseperm, x, y, z, t );
-}
-
-/*
-* RB_TransformFogPlanes
-*/
-static float RB_TransformFogPlanes( const mfog_t *fog, vec3_t fogNormal,
-									vec_t *fogDist, vec3_t vpnNormal, vec_t *vpnDist ) {
-	cplane_t *fogPlane;
-	shader_t *fogShader;
-	vec3_t viewtofog;
-	float dist, scale;
-	const entity_t *e = rb.currentEntity;
-
-	assert( fog );
-	assert( fogNormal && fogDist );
-	assert( vpnNormal && vpnDist );
-
-	fogPlane = fog->visibleplane;
-	fogShader = fog->shader;
-
-	// distance to fog
-	dist = PlaneDiff( rb.cameraOrigin, fog->visibleplane );
-	scale = e->scale;
-
-	if( rb.currentShader->flags & SHADER_SKY ) {
-		if( dist > 0 ) {
-			VectorMA( rb.cameraOrigin, -dist, fogPlane->normal, viewtofog );
-		} else {
-			VectorCopy( rb.cameraOrigin, viewtofog );
-		}
-	} else if( e->rtype == RT_MODEL ) {
-		VectorCopy( e->origin, viewtofog );
-	} else {
-		VectorClear( viewtofog );
-	}
-
-	// some math tricks to take entity's rotation matrix into account
-	// for fog texture coordinates calculations:
-	// M is rotation matrix, v is vertex, t is transform vector
-	// n is plane's normal, d is plane's dist, r is view origin
-	// (M*v + t)*n - d = (M*n)*v - ((d - t*n))
-	// (M*v + t - r)*n = (M*n)*v - ((r - t)*n)
-	Matrix3_TransformVector( e->axis, fogPlane->normal, fogNormal );
-	VectorScale( fogNormal, scale, fogNormal );
-	*fogDist = ( fogPlane->dist - DotProduct( viewtofog, fogPlane->normal ) );
-
-	Matrix3_TransformVector( e->axis, rb.cameraAxis, vpnNormal );
-	VectorScale( vpnNormal, scale, vpnNormal );
-	*vpnDist = ( ( rb.cameraOrigin[0] - viewtofog[0] ) * rb.cameraAxis[AXIS_FORWARD + 0] +
-				 ( rb.cameraOrigin[1] - viewtofog[1] ) * rb.cameraAxis[AXIS_FORWARD + 1] +
-				 ( rb.cameraOrigin[2] - viewtofog[2] ) * rb.cameraAxis[AXIS_FORWARD + 2] ) +
-			   fogShader->fog_clearDist;
-
-	return dist;
 }
 
 /*
@@ -375,11 +310,6 @@ void RB_GetShaderpassColor( const shaderpass_t *pass, byte_vec4_t rgba_, float *
 			rgba[0] = 255 - rb.entityColor[0];
 			rgba[1] = 255 - rb.entityColor[1];
 			rgba[2] = 255 - rb.entityColor[2];
-			break;
-		case RGB_GEN_FOG:
-			rgba[0] = rb.texFog->shader->fog_color[0];
-			rgba[1] = rb.texFog->shader->fog_color[1];
-			rgba[2] = rb.texFog->shader->fog_color[2];
 			break;
 		case RGB_GEN_ENVIRONMENT:
 			rgba[0] = mapConfig.environmentColor[0];
@@ -550,20 +480,6 @@ static r_glslfeat_t RB_InstancedArraysProgramFeatures( void ) {
 }
 
 /*
-* RB_FogProgramFeatures
-*/
-static r_glslfeat_t RB_FogProgramFeatures( const shaderpass_t *pass, const mfog_t *fog ) {
-	r_glslfeat_t programFeatures = 0;
-	if( fog ) {
-		programFeatures |= GLSL_SHADER_COMMON_FOG;
-		if( fog == rb.colorFog ) {
-			programFeatures |= GLSL_SHADER_COMMON_FOG_RGB;
-		}
-	}
-	return programFeatures;
-}
-
-/*
 * RB_AlphatestProgramFeatures
 */
 static r_glslfeat_t RB_AlphatestProgramFeatures( const shaderpass_t *pass ) {
@@ -667,24 +583,6 @@ static void RB_UpdateCommonUniforms( int program, const shaderpass_t *pass, mat4
 }
 
 /*
-* RB_UpdateFogUniforms
-*/
-static void RB_UpdateFogUniforms( int program, const mfog_t *fog ) {
-	float dist;
-	cplane_t fogPlane, vpnPlane;
-
-	assert( fog != NULL );
-	if( !fog ) {
-		return;
-	}
-
-	dist = RB_TransformFogPlanes( fog, fogPlane.normal, &fogPlane.dist, vpnPlane.normal, &vpnPlane.dist );
-
-	RP_UpdateFogUniforms( program, fog->shader->fog_color, fog->shader->fog_clearDist,
-						  fog->shader->fog_dist, &fogPlane, &vpnPlane, dist );
-}
-
-/*
 * RB_RenderMeshGLSL_Material
 */
 static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t programFeatures ) {
@@ -696,7 +594,6 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 	vec4_t ambient = { 0.0f, 0.0f, 0.0f, 0.0f }, diffuse = { 0.0f, 0.0f, 0.0f, 0.0f };
 	float offsetmappingScale, glossIntensity, glossExponent;
 	const superLightStyle_t *lightStyle = NULL;
-	const mfog_t *fog = rb.fog;
 	bool applyDecal;
 	mat4_t texMatrix;
 	const entity_t *e = rb.currentEntity;
@@ -765,16 +662,6 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 	if( rb.mode == RB_MODE_LIGHTMAP || rb.mode == RB_MODE_DIFFUSE ) {
 		applyDecal = false;
 	}
-
-	// possibly apply the "texture" fog inline
-	if( fog == rb.texFog ) {
-		if( rb.currentShader->numpasses == 1 ) {
-			rb.texFog = NULL;
-		} else {
-			fog = NULL;
-		}
-	}
-	programFeatures |= RB_FogProgramFeatures( pass, fog );
 
 	if( rb.currentModelType == mod_brush ) {
 		if( rb.mode == RB_MODE_DIFFUSE ) {
@@ -951,10 +838,6 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 
 		RP_UpdateDiffuseLightUniforms( program, lightDir, ambient, diffuse );
 
-		if( programFeatures & GLSL_SHADER_COMMON_FOG ) {
-			RB_UpdateFogUniforms( program, fog );
-		}
-
 		// submit animation data
 		if( programFeatures & GLSL_SHADER_COMMON_BONE_TRANSFORMS ) {
 			RP_UpdateBonesUniforms( program, rb.bonesData.numBones, rb.bonesData.dualQuats );
@@ -1025,8 +908,6 @@ static void RB_RenderMeshGLSL_Distortion( const shaderpass_t *pass, r_glslfeat_t
 	// convert rgbgen and alphagen to GLSL feature defines
 	programFeatures |= RB_RGBAlphaGenToProgramFeatures( &pass->rgbgen, &pass->alphagen );
 
-	programFeatures |= RB_FogProgramFeatures( pass, rb.fog );
-
 	// set shaderpass state (blending, depthwrite, etc)
 	RB_SetState( RB_GetShaderpassState( pass->flags ) );
 
@@ -1068,8 +949,6 @@ static void RB_RenderMeshGLSL_Outline( const shaderpass_t *pass, r_glslfeat_t pr
 
 	programFeatures |= RB_RGBAlphaGenToProgramFeatures( &pass->rgbgen, &pass->alphagen );
 
-	programFeatures |= RB_FogProgramFeatures( pass, rb.fog );
-
 	// update uniforcms
 	program = RB_RegisterProgram( GLSL_PROGRAM_TYPE_OUTLINE, NULL,
 								  rb.currentShader->deformsKey, rb.currentShader->deforms, rb.currentShader->numdeforms, programFeatures );
@@ -1088,10 +967,6 @@ static void RB_RenderMeshGLSL_Outline( const shaderpass_t *pass, r_glslfeat_t pr
 	RB_UpdateCommonUniforms( program, pass, texMatrix );
 
 	RP_UpdateOutlineUniforms( program, rb.currentEntity->outlineHeight * r_outlines_scale->value );
-
-	if( programFeatures & GLSL_SHADER_COMMON_FOG ) {
-		RB_UpdateFogUniforms( program, rb.fog );
-	}
 
 	// submit animation data
 	if( programFeatures & GLSL_SHADER_COMMON_BONE_TRANSFORMS ) {
@@ -1149,7 +1024,6 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 	int program;
 	int rgbgen = pass->rgbgen.type;
 	const image_t *image;
-	const mfog_t *fog = rb.fog;
 	bool isWorldSurface = rb.currentModelType == mod_brush ? true : false;
 	const superLightStyle_t *lightStyle = rb.superLightStyle;
 	const superLightStyle_t *realLightStyle = rb.realSuperLightStyle;
@@ -1167,7 +1041,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 
 		if( rgbgen == RGB_GEN_VERTEX || rgbgen == RGB_GEN_EXACT_VERTEX ) {
 			// vertex-lit world surface
-			isWorldVertexLight = ( realLightStyle && realLightStyle->vertexStyles[0] != 255 ) || ( noDlight == false );
+			isWorldVertexLight = ( realLightStyle && realLightStyle->vertexStyles[0] != 255 ) || !noDlight;
 		} else if( ( rgbgen == RGB_GEN_IDENTITY
 		  || rgbgen == RGB_GEN_CONST
 		  || rgbgen == RGB_GEN_WAVE
@@ -1179,19 +1053,9 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 		( pass->flags & GLSTATE_BLEND_ADD ) != GLSTATE_BLEND_ADD &&
 		( pass->flags & ( GLSTATE_SRCBLEND_SRC_ALPHA ) ) != GLSTATE_SRCBLEND_SRC_ALPHA ) {
 			// lightmapped surface pass
-			isLightmapped = ( realLightStyle && realLightStyle->lightmapStyles[0] != 255 ) || ( noDlight == false );
+			isLightmapped = ( realLightStyle && realLightStyle->lightmapStyles[0] != 255 ) || !noDlight;
 		}
 	}
-
-	// possibly apply the fog inline
-	if( fog == rb.texFog ) {
-		if( rb.currentShader->numpasses == 1 || ( isLightmapped && rb.currentShader->numpasses == 2 ) ) {
-			rb.texFog = NULL;
-		} else {
-			fog = NULL;
-		}
-	}
-	programFeatures |= RB_FogProgramFeatures( pass, fog );
 
 	// diffuse lighting for entities
 	if( !isWorldSurface && rgbgen == RGB_GEN_LIGHTING_DIFFUSE ) {
@@ -1323,10 +1187,6 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 			RP_UpdateDiffuseLightUniforms( program, lightDir, lightAmbient, lightDiffuse );
 		}
 
-		if( programFeatures & GLSL_SHADER_COMMON_FOG ) {
-			RB_UpdateFogUniforms( program, fog );
-		}
-
 		// submit animation data
 		if( programFeatures & GLSL_SHADER_COMMON_BONE_TRANSFORMS ) {
 			RP_UpdateBonesUniforms( program, rb.bonesData.numBones, rb.bonesData.dualQuats );
@@ -1354,7 +1214,6 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 static void RB_RenderMeshGLSL_Celshade( const shaderpass_t *pass, r_glslfeat_t programFeatures ) {
 	int program;
 	image_t *base, *shade, *diffuse, *decal, *entdecal, *stripes, *light;
-	const mfog_t *fog = rb.fog;
 	mat4_t reflectionMatrix;
 	mat4_t texMatrix;
 
@@ -1371,16 +1230,6 @@ static void RB_RenderMeshGLSL_Celshade( const shaderpass_t *pass, r_glslfeat_t p
 	RB_BindImage( 0, base->loaded ? base : rsh.blackTexture );
 
 	RB_VertexTCCelshadeMatrix( reflectionMatrix );
-
-	// possibly apply the "texture" fog inline
-	if( fog == rb.texFog ) {
-		if( rb.currentShader->numpasses == 1 ) {
-			rb.texFog = NULL;
-		} else {
-			fog = NULL;
-		}
-	}
-	programFeatures |= RB_FogProgramFeatures( pass, fog );
 
 	// convert rgbgen and alphagen to GLSL feature defines
 	programFeatures |= RB_RGBAlphaGenToProgramFeatures( &pass->rgbgen, &pass->alphagen );
@@ -1420,40 +1269,6 @@ static void RB_RenderMeshGLSL_Celshade( const shaderpass_t *pass, r_glslfeat_t p
 		RB_UpdateCommonUniforms( program, pass, texMatrix );
 
 		RP_UpdateTexGenUniforms( program, reflectionMatrix, texMatrix );
-
-		if( programFeatures & GLSL_SHADER_COMMON_FOG ) {
-			RB_UpdateFogUniforms( program, fog );
-		}
-
-		// submit animation data
-		if( programFeatures & GLSL_SHADER_COMMON_BONE_TRANSFORMS ) {
-			RP_UpdateBonesUniforms( program, rb.bonesData.numBones, rb.bonesData.dualQuats );
-		}
-
-		RB_DrawElementsReal( &rb.drawElements );
-	}
-}
-
-/*
-* RB_RenderMeshGLSL_Fog
-*/
-static void RB_RenderMeshGLSL_Fog( const shaderpass_t *pass, r_glslfeat_t programFeatures ) {
-	int program;
-	const mfog_t *fog = rb.fog;
-	mat4_t texMatrix = { 0 };
-
-	programFeatures |= GLSL_SHADER_COMMON_FOG;
-
-	// set shaderpass state (blending, depthwrite, etc)
-	RB_SetState( RB_GetShaderpassState( pass->flags ) );
-
-	// update uniforms
-	program = RB_RegisterProgram( GLSL_PROGRAM_TYPE_FOG, NULL,
-								  rb.currentShader->deformsKey, rb.currentShader->deforms, rb.currentShader->numdeforms, programFeatures );
-	if( RB_BindProgram( program ) ) {
-		RB_UpdateCommonUniforms( program, pass, texMatrix );
-
-		RB_UpdateFogUniforms( program, fog );
 
 		// submit animation data
 		if( programFeatures & GLSL_SHADER_COMMON_BONE_TRANSFORMS ) {
@@ -1571,9 +1386,6 @@ void RB_RenderMeshGLSLProgrammed( const shaderpass_t *pass, int programType ) {
 		case GLSL_PROGRAM_TYPE_CELSHADE:
 			RB_RenderMeshGLSL_Celshade( pass, features );
 			break;
-		case GLSL_PROGRAM_TYPE_FOG:
-			RB_RenderMeshGLSL_Fog( pass, features );
-			break;
 		case GLSL_PROGRAM_TYPE_COLOR_CORRECTION:
 			RB_RenderMeshGLSL_ColorCorrection( pass, features );
 			break;
@@ -1616,20 +1428,18 @@ static void RB_UpdateVertexAttribs( void ) {
 /*
 * RB_BindShader
 */
-void RB_BindShader( const entity_t *e, const shader_t *shader, const mfog_t *fog ) {
+void RB_BindShader( const entity_t *e, const shader_t *shader ) {
 	if( rb.mode == RB_MODE_BLACK_GT ) {
 		shader = rsh.whiteShader;
 	}
 
 	if( !rb.dirtyUniformState ) {
-		if( rb.currentEntity == e && rb.currentShader == shader && rb.fog == fog ) {
+		if( rb.currentEntity == e && rb.currentShader == shader ) {
 			return;
 		}
 	}
 
 	rb.currentShader = shader;
-	rb.fog = fog;
-	rb.texFog = rb.colorFog = NULL;
 
 	rb.doneDepthPass = false;
 	rb.dirtyUniformState = true;
@@ -1676,16 +1486,6 @@ void RB_BindShader( const entity_t *e, const shader_t *shader, const mfog_t *fog
 	}
 	if( rb.mode == RB_MODE_LIGHTMAP || rb.mode == RB_MODE_DIFFUSE ) {
 		rb.depthEqual = true;
-	}
-
-	if( fog && fog->shader && !rb.noColorWrite ) {
-		// should we fog the geometry with alpha texture or scale colors?
-		if( !rb.alphaHack && Shader_UseTextureFog( shader ) ) {
-			rb.texFog = fog;
-		} else {
-			// use scaling of colors
-			rb.colorFog = fog;
-		}
 	}
 
 	RB_UpdateVertexAttribs();
@@ -1997,15 +1797,9 @@ void RB_DrawOutlinedElements( void ) {
 
 	Vector4Copy( RB_TriangleLinesColor(), r_triLinesColor );
 
-	if( !rb.currentShader->numpasses ) {
-		// happens on fog volumes
-		pass = &r_GLSLpasses[BUILTIN_GLSLPASS_FOG];
-	} else {
-		pass = &rb.currentShader->passes[0];
-	}
+	pass = &rb.currentShader->passes[0];
 
 	// set some flags
-	rb.colorFog = rb.texFog = NULL;
 	rb.superLightStyle = NULL;
 
 	// copy and override
@@ -2074,19 +1868,6 @@ void RB_DrawShadedElements( void ) {
 	// outlines
 	if( addGLSLOutline ) {
 		RB_RenderPass( &r_GLSLpasses[BUILTIN_GLSLPASS_OUTLINE] );
-	}
-
-	// fog
-	if( rb.texFog && rb.texFog->shader ) {
-		shaderpass_t *fogPass = &r_GLSLpasses[BUILTIN_GLSLPASS_FOG];
-
-		fogPass->images[0] = rsh.whiteTexture;
-		if( !rb.currentShader->numpasses || rb.currentShader->fog_dist || ( rb.currentShader->flags & SHADER_SKY ) ) {
-			fogPass->flags &= ~GLSTATE_DEPTHFUNC_EQ;
-		} else {
-			fogPass->flags |= GLSTATE_DEPTHFUNC_EQ;
-		}
-		RB_RenderPass( fogPass );
 	}
 
 end:

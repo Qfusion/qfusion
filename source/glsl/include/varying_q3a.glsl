@@ -30,10 +30,6 @@ qf_flat_varying vec4 v_LightmapLayer0123;
 #endif
 #endif
 
-#if defined(APPLY_FOG) && !defined(APPLY_FOG_COLOR)
-qf_varying vec2 v_FogCoord;
-#endif
-
 #if defined(APPLY_SOFT_PARTICLE)
 qf_varying float v_Depth;
 #endif

@@ -707,30 +707,6 @@ static void Shader_SkyLightParms( shader_t *shader, shaderpass_t *pass, const ch
 	VectorNormalize2( dir, shader->skyParms.lightDir );
 }
 
-static void Shader_FogParms( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
-	vec3_t color, fcolor;
-
-	Shader_ParseVector( ptr, color, 3 );
-	ColorNormalize( color, fcolor );
-
-	shader->fog_color[0] = ( int )( fcolor[0] * 255.0f );
-	shader->fog_color[1] = ( int )( fcolor[1] * 255.0f );
-	shader->fog_color[2] = ( int )( fcolor[2] * 255.0f );
-	shader->fog_color[3] = 255;
-	shader->fog_dist = Shader_ParseFloat( ptr );
-	if( shader->fog_dist <= 0.1f ) {
-		shader->fog_dist = 128.0f;
-	}
-
-	shader->fog_clearDist = Shader_ParseFloat( ptr );
-	if( shader->fog_clearDist > shader->fog_dist - 128 ) {
-		shader->fog_clearDist = shader->fog_dist - 128;
-	}
-	if( shader->fog_clearDist <= 0.0f ) {
-		shader->fog_clearDist = 0;
-	}
-}
-
 static void Shader_Sort( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
 	const char *token = Shader_ParseString( ptr );
 	if( !strcmp( token, "portal" ) ) {
@@ -941,7 +917,6 @@ static const shaderkey_t shaderkeys[] =
 	{ "skyparms2", Shader_SkyParms2 },
 	{ "skyparmssides", Shader_SkyParmsSides },
 	{ "skylightparams", Shader_SkyLightParms },
-	{ "fogparms", Shader_FogParms },
 	{ "nomipmaps", Shader_NoMipMaps },
 	{ "nofiltering", Shader_NoFiltering },
 	{ "smallestmipmapsize", Shader_SmallestMipMapSize },
@@ -2566,16 +2541,6 @@ create_default:
 				pass->flags = SHADERPASS_SKYBOXSIDE;
 				// the actual image will be picked at rendering time based on skyside number
 				pass->images[0] = rsh.whiteTexture;
-				break;
-			case SHADER_TYPE_FOG:
-				data = R_Malloc( shortname_length + 1 );
-
-				s->vattribs = VATTRIB_POSITION_BIT | VATTRIB_TEXCOORDS_BIT;
-				s->sort = SHADER_SORT_FOG;
-				s->flags = SHADER_CULL_FRONT;
-				s->numpasses = 0;
-				s->name = ( char * )data;
-				strcpy( s->name, shortname );
 				break;
 			case SHADER_TYPE_DEPTHONLY:
 				data = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) );

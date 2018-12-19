@@ -141,7 +141,6 @@ typedef struct {
 #define MAX_MAP_SHADERS     0x400
 
 #define MAX_MAP_AREAS       0x100
-#define MAX_MAP_FOGS        0x100
 #define MAX_MAP_PLANES      0x20000
 #define MAX_MAP_NODES       0x20000
 #define MAX_MAP_BRUSHSIDES  0x30000
@@ -247,7 +246,6 @@ typedef struct {
 #define CONTENTS_LAVA       8
 #define CONTENTS_SLIME      16
 #define CONTENTS_WATER      32
-#define CONTENTS_FOG        64
 
 #define CONTENTS_AREAPORTAL 0x8000
 
@@ -393,12 +391,6 @@ typedef struct {
 	int numsides;
 	int shadernum;
 } dbrush_t;
-
-typedef struct {
-	char shader[MAX_QPATH];
-	int brushnum;
-	int visibleside;
-} dfog_t;
 
 typedef struct {
 	int numclusters;

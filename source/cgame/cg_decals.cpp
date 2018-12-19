@@ -223,7 +223,6 @@ int CG_SpawnDecal( const vec3_t origin, const vec3_t dir, float orient, float ra
 		poly = dl->poly;
 		poly->shader = shader;
 		poly->numverts = fr->numverts;
-		poly->fognum = fr->fognum;
 
 		for( j = 0; j < fr->numverts; j++ ) {
 			Vector4Copy( verts[fr->firstvert + j], poly->verts[j] );

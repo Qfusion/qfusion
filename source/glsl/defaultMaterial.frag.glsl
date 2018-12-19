@@ -3,7 +3,6 @@
 #include "include/uniforms.glsl"
 #include "include/varying_material.glsl"
 
-#include_if(APPLY_FOG) "include/fog.glsl"
 #include_if(APPLY_GREYSCALE) "include/greyscale.glsl"
 #include_if(APPLY_OFFSETMAPPING) "include/material_offsetmapping.frag.glsl"
 #include_if(NUM_LIGHTMAPS) "include/material_lightmaps.frag.glsl"
@@ -35,14 +34,6 @@ uniform myhalf2 u_GlossFactors; // gloss scaling and exponent factors
 
 void main()
 {
-#if defined(APPLY_OFFSETMAPPING) || defined(APPLY_RELIEFMAPPING)
-	// apply offsetmapping
-	vec2 TexCoordOffset = OffsetMapping(u_NormalmapTexture, v_TexCoord_FogCoord.st, v_EyeVector, u_OffsetMappingScale);
-#define v_TexCoord TexCoordOffset
-#else
-#define v_TexCoord v_TexCoord_FogCoord.st
-#endif
-
 	myhalf3 surfaceNormal;
 	myhalf3 surfaceNormalModelspace;
 	myhalf3 weightedDiffuseNormalModelspace;
@@ -139,11 +130,6 @@ void main()
 
 #ifdef APPLY_GREYSCALE
 	color.rgb = Greyscale(color.rgb);
-#endif
-
-#if defined(APPLY_FOG) && !defined(APPLY_FOG_COLOR)
-	myhalf fogDensity = FogDensity(v_TexCoord_FogCoord.pq);
-	color.rgb = mix(color.rgb, LinearColor(u_FogColor), fogDensity);
 #endif
 
 	color.rgb += dither();

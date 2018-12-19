@@ -58,12 +58,6 @@ typedef struct {
 	vec3_t mins, maxs;
 } mmodel_t;
 
-typedef struct mfog_s {
-	shader_t        *shader;
-	cplane_t        *visibleplane;
-	vec3_t mins, maxs;
-} mfog_t;
-
 typedef struct mshaderref_s {
 	char name[MAX_QPATH];
 	int flags;
@@ -98,7 +92,6 @@ typedef struct msurface_s {
 	instancePoint_t *instances;
 
 	shader_t *shader;
-	mfog_t *fog;
 
 	int superLightStyle;
 } msurface_t;
@@ -169,10 +162,6 @@ typedef struct mbrushmodel_s {
 
 	unsigned int numlightarrayelems;
 	int             *lightarray;
-
-	unsigned int numfogs;
-	mfog_t          *fogs;
-	mfog_t          *globalfog;
 
 	/*unsigned*/ int numareas;
 

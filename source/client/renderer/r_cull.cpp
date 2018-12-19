@@ -391,22 +391,6 @@ vec_t R_ComputeVolumeSphereForFrustumSplit( const refinst_t *rnp, const vec_t n,
 }
 
 /*
-* R_FogCull
-*/
-bool R_FogCull( const mfog_t *fog, vec3_t origin, float radius ) {
-	// note that fog->distanceToEye < 0 is always true if
-	// globalfog is not NULL and we're inside the world boundaries
-	if( fog && fog->shader && fog == rn.fog_eye ) {
-		float vpnDist = ( ( rn.viewOrigin[0] - origin[0] ) * rn.viewAxis[AXIS_FORWARD + 0] +
-			( rn.viewOrigin[1] - origin[1] ) * rn.viewAxis[AXIS_FORWARD + 1] +
-			( rn.viewOrigin[2] - origin[2] ) * rn.viewAxis[AXIS_FORWARD + 2] );
-		return ( ( vpnDist + radius ) / fog->shader->fog_dist ) < -1;
-	}
-
-	return false;
-}
-
-/*
 * R_CullBoxCustomPlanes
 *
 * Returns true if the box is completely outside the frustum
