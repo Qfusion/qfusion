@@ -271,10 +271,6 @@ static bool Shader_ParseConditions( const char **ptr, shader_t *shader ) {
 				conditions[numConditions].operand = ( int )glConfig.maxTextureCubemapSize;
 			} else if( !Q_stricmp( tok, "maxTextureUnits" ) ) {
 				conditions[numConditions].operand = ( int )glConfig.maxTextureUnits;
-			} else if( !Q_stricmp( tok, "textureCubeMap" ) ) {
-				conditions[numConditions].operand = 1;
-			} else if( !Q_stricmp( tok, "GLSL" ) ) {
-				conditions[numConditions].operand = 1;
 			} else if( !Q_stricmp( tok, "deluxeMaps" ) || !Q_stricmp( tok, "deluxe" ) ) {
 				conditions[numConditions].operand = ( int )mapConfig.deluxeMappingEnabled;
 			} else if( !Q_stricmp( tok, "portalMaps" ) ) {
