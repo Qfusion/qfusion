@@ -24,12 +24,11 @@ typedef uint64_t r_glslfeat_t;
 #define GLSL_BIT( x )                           ( 1ULL << ( x ) )
 #define GLSL_BITS_VERSION                       22
 
-#define DEFAULT_GLSL_MATERIAL_PROGRAM           "defaultMaterial"
-#define DEFAULT_GLSL_OUTLINE_PROGRAM            "defaultOutline"
-#define DEFAULT_GLSL_DYNAMIC_LIGHTS_PROGRAM     "defaultDynamicLights"
-#define DEFAULT_GLSL_Q3A_SHADER_PROGRAM         "defaultQ3AShader"
-#define DEFAULT_GLSL_COLORCORRECTION_PROGRAM    "defaultColorCorrection"
-#define DEFAULT_GLSL_KAWASE_BLUR_PROGRAM        "defaultKawaseBlur"
+#define DEFAULT_GLSL_MATERIAL_PROGRAM           "material"
+#define DEFAULT_GLSL_OUTLINE_PROGRAM            "outline"
+#define DEFAULT_GLSL_Q3A_SHADER_PROGRAM         "q3AShader"
+#define DEFAULT_GLSL_COLORCORRECTION_PROGRAM    "colorCorrection"
+#define DEFAULT_GLSL_KAWASE_BLUR_PROGRAM        "kawaseBlur"
 
 // program types
 enum {
