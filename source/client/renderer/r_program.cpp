@@ -869,8 +869,8 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
         "#endif\n" \
         "#ifdef FRAGMENT_SHADER\n" \
         "  in myhalf4 qf_FrontColor;\n" \
-        "  layout( location = 0 ) out myhalf4 qf_FragColor;\n" \
-        "  layout( location = 1 ) out myhalf4 qf_BrightColor;\n" \
+        "  out myhalf4 qf_FragColor;\n" \
+        "  out myhalf4 qf_BrightColor;\n" \
         "# define qf_varying in\n" \
         "# define qf_flat_varying flat in\n" \
         "#endif\n" \
@@ -2323,8 +2323,10 @@ static void RP_BindAttrbibutesLocations( glsl_program_t *program ) {
 	glBindAttribLocation( program->object, VATTRIB_INSTANCE_QUAT, "a_InstanceQuat" );
 	glBindAttribLocation( program->object, VATTRIB_INSTANCE_XYZS, "a_InstancePosAndScale" );
 
-	/* glBindFragDataLocation( program->object, 0, "qf_FragColor" ); */
-	/* glBindFragDataLocation( program->object, 1, "qf_BrightColor" ); */
+	if( GLAD_GL_VERSION_3_0 ) {
+		glBindFragDataLocation( program->object, 0, "qf_FragColor" );
+		glBindFragDataLocation( program->object, 1, "qf_BrightColor" );
+	}
 }
 
 /*
