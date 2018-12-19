@@ -1,5 +1,3 @@
-#include_if(APPLY_CELSHADING) "material_celshading.frag.glsl"
-
 myhalf3 DirectionalLightColor(in myhalf3 surfaceNormalModelspace, out myhalf3 weightedDiffuseNormalModelspace)
 {
 	myhalf3 diffuseNormalModelspace;
@@ -13,16 +11,9 @@ myhalf3 DirectionalLightColor(in myhalf3 surfaceNormalModelspace, out myhalf3 we
 
 	weightedDiffuseNormalModelspace = diffuseNormalModelspace;
 
-#if defined(APPLY_CELSHADING)
-
-	color.rgb += CelShading(surfaceNormalModelspace, diffuseNormalModelspace);
-	
-#elif defined(APPLY_DIRECTIONAL_LIGHT_MIX)
-
+#if defined(APPLY_DIRECTIONAL_LIGHT_MIX)
 	color.rgb += qf_FrontColor.rgb;
-	
 #else
-
 	myhalf diffuseProduct = myhalf(dot(surfaceNormalModelspace, diffuseNormalModelspace));
 
 #ifdef APPLY_HALFLAMBERT
@@ -34,7 +25,7 @@ myhalf3 DirectionalLightColor(in myhalf3 surfaceNormalModelspace, out myhalf3 we
 	diffuse *= u_LightingIntensity;
 	color.rgb += diffuse;
 
-#endif // APPLY_CELSHADING
+#endif // APPLY_DIRECTIONAL_LIGHT_MIX
 
 	return color;
 }

@@ -1,5 +1,4 @@
 // renderer config
-//#define CELSHADEDMATERIAL
 #define HALFLAMBERTLIGHTING
 
 // collision config

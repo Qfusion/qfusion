@@ -1058,10 +1058,6 @@ static void Shaderpass_CubeMap( shader_t *shader, shaderpass_t *pass, const char
 	Shaderpass_CubeMapExt( shader, pass, IT_CLAMP, TC_GEN_REFLECTION, ptr );
 }
 
-static void Shaderpass_ShadeCubeMap( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
-	Shaderpass_CubeMapExt( shader, pass, IT_CLAMP, TC_GEN_REFLECTION_CELSHADE, ptr );
-}
-
 static void Shaderpass_SurroundMap( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
 	Shaderpass_CubeMapExt( shader, pass, IT_CLAMP, TC_GEN_SURROUND, ptr );
 }
@@ -1192,43 +1188,6 @@ static void Shaderpass_Distortion( shader_t *shader, shaderpass_t *pass, const c
 		shader->sort = 0; // reset sorting so we can figure it out later. FIXME?
 	}
 	shader->flags |= SHADER_PORTAL | SHADER_PORTAL_CAPTURE | SHADER_PORTAL_CAPTURE2;
-}
-
-// <base> <celshade> [diffuse] [decal] [entitydecal] [stripes] [celllight]
-static void Shaderpass_Celshade( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
-	int i;
-	int flags;
-
-	flags = Shader_SetImageFlags( shader ) | IT_SRGB;
-	pass->tcgen = TC_GEN_BASE;
-	pass->flags &= ~( SHADERPASS_LIGHTMAP | SHADERPASS_PORTALMAP );
-	if( pass->rgbgen.type == RGB_GEN_UNKNOWN ) {
-		pass->rgbgen.type = RGB_GEN_IDENTITY;
-	}
-
-	pass->anim_fps = 0;
-	memset( pass->images, 0, sizeof( pass->images ) );
-
-	// at least two valid images are required: 'base' and 'celshade'
-	for( i = 0; i < 2; i++ ) {
-		const char *token = Shader_ParseString( ptr );
-		if( *token && strcmp( token, "-" ) ) {
-			pass->images[i] = Shader_FindImage( shader, token, flags | ( i ? IT_CLAMP | IT_CUBEMAP : 0 ) );
-		}
-	}
-
-	pass->program_type = GLSL_PROGRAM_TYPE_CELSHADE;
-
-	// parse optional images: [diffuse] [decal] [entitydecal] [stripes] [celllight]
-	for( i = 0; i < 5; i++ ) {
-		const char *token = Shader_ParseString( ptr );
-		if( !*token ) {
-			break;
-		}
-		if( strcmp( token, "-" ) ) {
-			pass->images[i + 2] = Shader_FindImage( shader, token, flags | ( i == 4 ? IT_CLAMP | IT_CUBEMAP : 0 ) );
-		}
-	}
 }
 
 static void Shaderpass_RGBGen( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
@@ -1495,8 +1454,6 @@ static void Shaderpass_TcGen( shader_t *shader, shaderpass_t *pass, const char *
 		Shader_ParseVector( ptr, &pass->tcgenVec[4], 4 );
 	} else if( !strcmp( token, "reflection" ) ) {
 		pass->tcgen = TC_GEN_REFLECTION;
-	} else if( !strcmp( token, "celshade" ) ) {
-		pass->tcgen = TC_GEN_REFLECTION_CELSHADE;
 	} else if( !strcmp( token, "surround" ) ) {
 		pass->tcgen = TC_GEN_SURROUND;
 	}
@@ -1525,14 +1482,12 @@ static const shaderkey_t shaderpasskeys[] =
 	{ "map", Shaderpass_Map },
 	{ "animmap", Shaderpass_AnimMap },
 	{ "cubemap", Shaderpass_CubeMap },
-	{ "shadecubemap", Shaderpass_ShadeCubeMap },
 	{ "surroundmap", Shaderpass_SurroundMap },
 	{ "clampmap", Shaderpass_ClampMap },
 	{ "animclampmap", Shaderpass_AnimClampMap },
 	{ "alphamaskclampmap", Shaderpass_AlphaMaskClampMap },
 	{ "material", Shaderpass_Material },
 	{ "distortion", Shaderpass_Distortion },
-	{ "celshade", Shaderpass_Celshade },
 	{ "tcgen", Shaderpass_TcGen },
 	{ "alphagen", Shaderpass_AlphaGen },
 	{ "detail", Shaderpass_Detail },
@@ -2054,8 +2009,6 @@ static void Shader_SetVertexAttribs( shader_t *s ) {
 			s->vattribs |= VATTRIB_NORMAL_BIT | VATTRIB_SVECTOR_BIT | VATTRIB_LMCOORDS0_BIT;
 		} else if( pass->program_type == GLSL_PROGRAM_TYPE_DISTORTION ) {
 			s->vattribs |= VATTRIB_NORMAL_BIT | VATTRIB_SVECTOR_BIT;
-		} else if( pass->program_type == GLSL_PROGRAM_TYPE_CELSHADE ) {
-			s->vattribs |= VATTRIB_TEXCOORDS_BIT | VATTRIB_NORMAL_BIT;
 		}
 
 		switch( pass->rgbgen.type ) {
@@ -2097,7 +2050,6 @@ static void Shader_SetVertexAttribs( shader_t *s ) {
 				s->vattribs |= VATTRIB_NORMAL_BIT;
 				break;
 			case TC_GEN_REFLECTION:
-			case TC_GEN_REFLECTION_CELSHADE:
 				s->vattribs |= VATTRIB_NORMAL_BIT;
 				break;
 			default:

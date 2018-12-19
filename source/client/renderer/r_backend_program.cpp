@@ -56,7 +56,6 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 static void RB_RenderMeshGLSL_Distortion( const shaderpass_t *pass, r_glslfeat_t programFeatures );
 static void RB_RenderMeshGLSL_Outline( const shaderpass_t *pass, r_glslfeat_t programFeatures );
 static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t programFeatures );
-static void RB_RenderMeshGLSL_Celshade( const shaderpass_t *pass, r_glslfeat_t programFeatures );
 
 /*
 * RB_InitBuiltinPasses
@@ -154,28 +153,6 @@ static float *RB_TableForFunc( unsigned int func ) {
 */
 static float RB_BackendGetNoiseValue( float x, float y, float z, float t ) {
 	return Q_GetNoiseValueFromTable( rb_noisetable, rb_noiseperm, x, y, z, t );
-}
-
-/*
-* RB_VertexTCCelshadeMatrix
-*/
-void RB_VertexTCCelshadeMatrix( mat4_t matrix ) {
-	vec3_t dir;
-	mat4_t m;
-	const entity_t *e = rb.currentEntity;
-
-	if( e->model != NULL ) {
-		R_LightForOrigin( e->lightingOrigin, dir, NULL, NULL, e->model->radius * e->scale, rb.noWorldLight, false );
-
-		Matrix4_Identity( m );
-
-		// rotate direction
-		Matrix3_TransformVector( e->axis, dir, &m[0] );
-		VectorNormalize( &m[0] );
-
-		OrthonormalBasis( &m[0], &m[4], &m[8] );
-		Matrix4_Transpose( m, matrix );
-	}
 }
 
 /*
@@ -690,9 +667,6 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 		if( !( r_offsetmapping->integer & 4 ) ) {
 			offsetmappingScale = 0;
 		}
-	#ifdef CELSHADEDMATERIAL
-		programFeatures |= GLSL_SHADER_MATERIAL_CELSHADING;
-	#endif
 	#ifdef HALFLAMBERTLIGHTING
 		programFeatures |= GLSL_SHADER_MATERIAL_HALFLAMBERT;
 	#endif
@@ -999,10 +973,6 @@ r_glslfeat_t RB_TcGenToProgramFeatures( int tcgen, vec_t *tcgenVec, mat4_t texMa
 		case TC_GEN_PROJECTION:
 			programFeatures |= GLSL_SHADER_Q3_TC_GEN_PROJECTION;
 			break;
-		case TC_GEN_REFLECTION_CELSHADE:
-			RB_VertexTCCelshadeMatrix( texMatrix );
-			programFeatures |= GLSL_SHADER_Q3_TC_GEN_CELSHADE;
-			break;
 		case TC_GEN_REFLECTION:
 			programFeatures |= GLSL_SHADER_Q3_TC_GEN_REFLECTION;
 			break;
@@ -1209,77 +1179,6 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 }
 
 /*
-* RB_RenderMeshGLSL_Celshade
-*/
-static void RB_RenderMeshGLSL_Celshade( const shaderpass_t *pass, r_glslfeat_t programFeatures ) {
-	int program;
-	image_t *base, *shade, *diffuse, *decal, *entdecal, *stripes, *light;
-	mat4_t reflectionMatrix;
-	mat4_t texMatrix;
-
-	base = pass->images[0];
-	shade = pass->images[1];
-	diffuse = pass->images[2];
-	decal = pass->images[3];
-	entdecal = pass->images[4];
-	stripes = pass->images[5];
-	light = pass->images[6];
-
-	Matrix4_Identity( texMatrix );
-
-	RB_BindImage( 0, base->loaded ? base : rsh.blackTexture );
-
-	RB_VertexTCCelshadeMatrix( reflectionMatrix );
-
-	// convert rgbgen and alphagen to GLSL feature defines
-	programFeatures |= RB_RGBAlphaGenToProgramFeatures( &pass->rgbgen, &pass->alphagen );
-
-	// set shaderpass state (blending, depthwrite, etc)
-	RB_SetState( RB_GetShaderpassState( pass->flags ) );
-
-	// replacement images are there to ensure that the entity is still
-	// properly colored despite real images still being loaded in a separate thread
-#define CELSHADE_BIND( tmu,tex,feature,canAdd,replacement ) \
-	if( tex && !tex->missing ) { \
-		image_t *btex = tex; \
-		btex = tex->loaded ? tex : replacement; \
-		if( btex ) { \
-			programFeatures |= feature; \
-			if( canAdd && ( btex->samples & 1 ) ) { \
-				programFeatures |= ( ( feature ) << 1 );} \
-		} \
-		if( btex ) { \
-			RB_BindImage( tmu, btex ); \
-		} \
-	}
-
-	CELSHADE_BIND( 1, shade, 0, false, rsh.whiteCubemapTexture );
-	CELSHADE_BIND( 2, diffuse, GLSL_SHADER_CELSHADE_DIFFUSE, false, NULL );
-	CELSHADE_BIND( 3, decal, GLSL_SHADER_CELSHADE_DECAL, true, NULL );
-	CELSHADE_BIND( 4, entdecal, GLSL_SHADER_CELSHADE_ENTITY_DECAL, true, rsh.whiteTexture );
-	CELSHADE_BIND( 5, stripes, GLSL_SHADER_CELSHADE_STRIPES, true, NULL );
-	CELSHADE_BIND( 6, light, GLSL_SHADER_CELSHADE_CEL_LIGHT, true, NULL );
-
-#undef CELSHADE_BIND
-
-	// update uniforms
-	program = RB_RegisterProgram( GLSL_PROGRAM_TYPE_CELSHADE, NULL,
-								  rb.currentShader->deformsKey, rb.currentShader->deforms, rb.currentShader->numdeforms, programFeatures );
-	if( RB_BindProgram( program ) ) {
-		RB_UpdateCommonUniforms( program, pass, texMatrix );
-
-		RP_UpdateTexGenUniforms( program, reflectionMatrix, texMatrix );
-
-		// submit animation data
-		if( programFeatures & GLSL_SHADER_COMMON_BONE_TRANSFORMS ) {
-			RP_UpdateBonesUniforms( program, rb.bonesData.numBones, rb.bonesData.dualQuats );
-		}
-
-		RB_DrawElementsReal( &rb.drawElements );
-	}
-}
-
-/*
 * RB_RenderMeshGLSL_ColorCorrection
 */
 static void RB_RenderMeshGLSL_ColorCorrection( const shaderpass_t *pass, r_glslfeat_t programFeatures ) {
@@ -1382,9 +1281,6 @@ void RB_RenderMeshGLSLProgrammed( const shaderpass_t *pass, int programType ) {
 			break;
 		case GLSL_PROGRAM_TYPE_Q3A_SHADER:
 			RB_RenderMeshGLSL_Q3AShader( pass, features );
-			break;
-		case GLSL_PROGRAM_TYPE_CELSHADE:
-			RB_RenderMeshGLSL_Celshade( pass, features );
 			break;
 		case GLSL_PROGRAM_TYPE_COLOR_CORRECTION:
 			RB_RenderMeshGLSL_ColorCorrection( pass, features );

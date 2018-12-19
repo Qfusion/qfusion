@@ -876,9 +876,7 @@ static void CG_AddGenericEnt( centity_t *cent ) {
 static void CG_AddPlayerEnt( centity_t *cent ) {
 	// render effects
 	cent->ent.renderfx = cent->renderfx;
-#ifndef CELSHADEDMATERIAL
 	cent->ent.renderfx |= RF_MINLIGHT;
-#endif
 
 	if( ISVIEWERENTITY( cent->current.number ) ) {
 		cg.effects = cent->effects;

@@ -5,9 +5,7 @@
 
 #include "include/varying_q3a.glsl"
 
-#if defined(APPLY_TC_GEN_CELSHADE)
-uniform mat3 u_ReflectionTexMatrix;
-#elif defined(APPLY_TC_GEN_VECTOR)
+#if defined(APPLY_TC_GEN_VECTOR)
 uniform mat4 u_VectorTexMatrix;
 #endif
 
@@ -25,10 +23,6 @@ void main(void)
 	qf_FrontColor = vec4(outColor);
 
 #if defined(APPLY_CUBEMAP_VERTEX)
-
-#if defined(APPLY_TC_GEN_CELSHADE)
-	v_TexCoord = u_ReflectionTexMatrix * reflect(normalize(Position.xyz - u_EntityDist), Normal.xyz);
-#endif // defined(APPLY_TC_GEN_CELSHADE)
 
 #elif !defined(APPLY_CUBEMAP) && !defined(APPLY_SURROUNDMAP)
 

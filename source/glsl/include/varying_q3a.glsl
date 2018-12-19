@@ -1,7 +1,5 @@
 #if defined(APPLY_TC_GEN_REFLECTION)
 #define APPLY_CUBEMAP
-#elif defined(APPLY_TC_GEN_CELSHADE)
-#define APPLY_CUBEMAP_VERTEX
 #elif defined(APPLY_TC_GEN_SURROUND)
 #define APPLY_SURROUNDMAP
 #endif
