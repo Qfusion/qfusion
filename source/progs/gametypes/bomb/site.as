@@ -118,6 +118,8 @@ class cBombSite
 	}
 
 	void explode() {
+		G_Sound( @this.indicator, 0, sndGoodGame, ATTN_DISTANT );
+
 		if( !this.useExplosionPoints ) {
 			this.indicator.useTargets( bombModel );
 			return;
@@ -128,7 +130,7 @@ class cBombSite
 
 		for( int i = 0; i < numPendingExplosions; i++ ) {
 			Vec3 point = explosionPoints[ random_uniform( 0, explosionPoints.length() ) ];
-			int64 time = levelTime + int64( ( float( i ) / float( numPendingExplosions - 1 ) ) * SITE_EXPLOSION_MAX_DELAY );
+			int64 time = levelTime + 1000 + int64( ( float( i ) / float( numPendingExplosions - 1 ) ) * SITE_EXPLOSION_MAX_DELAY );
 			pendingExplosions[ i ] = PendingExplosion( point, time );
 		}
 	}

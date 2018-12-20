@@ -277,9 +277,6 @@ void bombExplode() {
 	// do this first else the attackers can score 2 points when the explosion kills everyone
 	roundWonBy( attackingTeam );
 
-	bombModel.explosionEffect( BOMB_EXPLOSION_EFFECT_RADIUS );
-	bombModel.splashDamage( @bombModel, 3000, 9001, 9001, MOD_EXPLOSIVE );
-
 	bombSite.explode();
 
 	hide( @bombModel );

@@ -35,6 +35,7 @@ int imgBombDecal;
 // SOUNDS
 int sndBeep;
 int sndPlantStart;
+int sndGoodGame;
 int sndBombTaken;
 int sndBongo;
 
@@ -84,6 +85,7 @@ void mediaInit() {
 
 	sndBeep = G_SoundIndex( "sounds/bomb/bombtimer", false );
 	sndPlantStart = G_SoundIndex( "sounds/misc/timer_bip_bip", false );
+	sndGoodGame = G_SoundIndex( "sounds/vsay/goodgame", false );
 	sndBombTaken = G_SoundIndex( "sounds/announcer/bomb/offense/taken", false );
 	sndBongo = G_SoundIndex( "sounds/announcer/bomb/bongo", false );
 
