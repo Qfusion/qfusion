@@ -426,11 +426,9 @@ void CG_BubbleTrail( const vec3_t start, const vec3_t end, int dist ) {
 void CG_PlasmaExplosion( const vec3_t pos, const vec3_t dir, int team, float radius ) {
 	lentity_t *le;
 	vec3_t angles;
-	vec3_t origin;
 	float model_radius = PLASMA_EXPLOSION_MODEL_RADIUS;
 
 	VecToAngles( dir, angles );
-	VectorMA( pos, IMPACT_POINT_OFFSET, dir, origin );
 
 	vec4_t color;
 	if( team == TEAM_ALPHA || team == TEAM_BETA ) {
@@ -440,14 +438,14 @@ void CG_PlasmaExplosion( const vec3_t pos, const vec3_t dir, int team, float rad
 		Vector4Set( color, 1, 1, 1, 1 );
 	}
 
-	le = CG_AllocModel( LE_ALPHA_FADE, origin, angles, 4,
+	le = CG_AllocModel( LE_ALPHA_FADE, pos, angles, 4,
 						color[0], color[1], color[2], color[3],
 						150, 0, 0.75, 0,
 						CG_MediaModel( cgs.media.modPlasmaExplosion ),
 						NULL );
 	le->ent.scale = radius / model_radius;
 
-	CG_ImpactPuffParticles( origin, dir, 15, 0.75f, color[0], color[1], color[2], color[3], NULL );
+	CG_ImpactPuffParticles( pos, dir, 15, 0.75f, color[0], color[1], color[2], color[3], NULL );
 
 	le->ent.rotation = rand() % 360;
 
@@ -460,7 +458,6 @@ void CG_PlasmaExplosion( const vec3_t pos, const vec3_t dir, int team, float rad
 void CG_EBImpact( const vec3_t pos, const vec3_t dir, int surfFlags, int team ) {
 	lentity_t *le;
 	vec3_t angles;
-	vec3_t origin;
 
 	vec4_t color;
 	CG_TeamColor( team, color );
@@ -474,7 +471,6 @@ void CG_EBImpact( const vec3_t pos, const vec3_t dir, int surfFlags, int team ) 
 	}
 
 	VecToAngles( dir, angles );
-	VectorMA( pos, IMPACT_POINT_OFFSET, dir, origin );
 
 	le = CG_AllocModel( LE_INVERSESCALE_ALPHA_FADE, pos, angles, 6, // 6 is time
 						1, 1, 1, 1, //full white no inducted alpha
@@ -485,9 +481,9 @@ void CG_EBImpact( const vec3_t pos, const vec3_t dir, int surfFlags, int team ) 
 	le->ent.scale = 1.5f;
 
 	// add white energy particles on the impact
-	CG_ImpactPuffParticles( origin, dir, 15, 0.75f, color[0], color[1], color[2], color[3], NULL );
+	CG_ImpactPuffParticles( pos, dir, 15, 0.75f, color[0], color[1], color[2], color[3], NULL );
 
-	trap_S_StartFixedSound( CG_MediaSfx( cgs.media.sfxElectroboltHit ), origin, CHAN_AUTO, cg_volume_effects->value, ATTN_STATIC );
+	trap_S_StartFixedSound( CG_MediaSfx( cgs.media.sfxElectroboltHit ), pos, CHAN_AUTO, cg_volume_effects->value, ATTN_STATIC );
 }
 
 /*
@@ -542,7 +538,6 @@ void CG_RocketExplosionMode( const vec3_t pos, const vec3_t dir, float radius ) 
 void CG_BladeImpact( const vec3_t pos, const vec3_t dir ) {
 	lentity_t *le;
 	vec3_t angles;
-	vec3_t origin;
 	vec3_t end;
 	vec3_t local_pos, local_dir;
 	trace_t trace;
@@ -557,29 +552,28 @@ void CG_BladeImpact( const vec3_t pos, const vec3_t dir ) {
 	}
 
 	VecToAngles( local_dir, angles );
-	VectorMA( pos, IMPACT_POINT_OFFSET, dir, origin );
 
 	if( trace.surfFlags & SURF_FLESH ||
 		( trace.ent > 0 && cg_entities[trace.ent].current.type == ET_PLAYER )
 		|| ( trace.ent > 0 && cg_entities[trace.ent].current.type == ET_CORPSE ) ) {
-		le = CG_AllocModel( LE_ALPHA_FADE, origin, angles, 3, //3 frames for weak
+		le = CG_AllocModel( LE_ALPHA_FADE, pos, angles, 3, //3 frames for weak
 							1, 1, 1, 1, //full white no inducted alpha
 							0, 0, 0, 0, //dlight
 							CG_MediaModel( cgs.media.modBladeWallHit ), NULL );
 		le->ent.rotation = rand() % 360;
 		le->ent.scale = 1.0f;
 
-		trap_S_StartFixedSound( CG_MediaSfx( cgs.media.sfxBladeFleshHit[(int)( random() * 3 )] ), origin, CHAN_AUTO,
+		trap_S_StartFixedSound( CG_MediaSfx( cgs.media.sfxBladeFleshHit[(int)( random() * 3 )] ), pos, CHAN_AUTO,
 								cg_volume_effects->value, ATTN_NORM );
 	} else if( trace.surfFlags & SURF_DUST ) {
 		// throw particles on dust
 		CG_ParticleEffect( trace.endpos, trace.plane.normal, 0.30f, 0.30f, 0.25f, 30 );
 
 		//fixme? would need a dust sound
-		trap_S_StartFixedSound( CG_MediaSfx( cgs.media.sfxBladeWallHit[(int)( random() * 2 )] ), origin, CHAN_AUTO,
+		trap_S_StartFixedSound( CG_MediaSfx( cgs.media.sfxBladeWallHit[(int)( random() * 2 )] ), pos, CHAN_AUTO,
 								cg_volume_effects->value, ATTN_NORM );
 	} else {
-		le = CG_AllocModel( LE_ALPHA_FADE, origin, angles, 3, //3 frames for weak
+		le = CG_AllocModel( LE_ALPHA_FADE, pos, angles, 3, //3 frames for weak
 							1, 1, 1, 1, //full white no inducted alpha
 							0, 0, 0, 0, //dlight
 							CG_MediaModel( cgs.media.modBladeWallHit ), NULL );
@@ -588,7 +582,7 @@ void CG_BladeImpact( const vec3_t pos, const vec3_t dir ) {
 
 		CG_ParticleEffect( trace.endpos, trace.plane.normal, 0.30f, 0.30f, 0.25f, 15 );
 
-		trap_S_StartFixedSound( CG_MediaSfx( cgs.media.sfxBladeWallHit[(int)( random() * 2 )] ), origin, CHAN_AUTO,
+		trap_S_StartFixedSound( CG_MediaSfx( cgs.media.sfxBladeWallHit[(int)( random() * 2 )] ), pos, CHAN_AUTO,
 								cg_volume_effects->value, ATTN_NORM );
 		if( !( trace.surfFlags & SURF_NOMARKS ) ) {
 			CG_SpawnDecal( pos, dir, random() * 10, 8, 1, 1, 1, 1, 10, 1, false, CG_MediaShader( cgs.media.shaderBladeMark ) );
@@ -624,11 +618,9 @@ void CG_GunBladeBlastImpact( const vec3_t pos, const vec3_t dir, float radius ) 
 	lentity_t *le;
 	lentity_t *le_explo;
 	vec3_t angles;
-	vec3_t origin;
 	float model_radius = GUNBLADEBLAST_EXPLOSION_MODEL_RADIUS;
 
 	VecToAngles( dir, angles );
-	VectorMA( pos, IMPACT_POINT_OFFSET, dir, origin );
 
 	le = CG_AllocModel( LE_ALPHA_FADE, pos, angles, 2, //3 frames
 						1, 1, 1, 1, //full white no inducted alpha
@@ -641,7 +633,7 @@ void CG_GunBladeBlastImpact( const vec3_t pos, const vec3_t dir, float radius ) 
 	le->ent.scale = 1.0f; // this is the small bullet impact
 
 
-	le_explo = CG_AllocModel( LE_ALPHA_FADE, origin, angles, 2 + ( radius / 16.1f ),
+	le_explo = CG_AllocModel( LE_ALPHA_FADE, pos, angles, 2 + ( radius / 16.1f ),
 							  1, 1, 1, 1, //full white no inducted alpha
 							  0, 0, 0, 0, //dlight
 							  CG_MediaModel( cgs.media.modBladeWallExplo ),
