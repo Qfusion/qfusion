@@ -28,6 +28,7 @@ enum SecondaryWeapon {
 	SecondaryWeapon_PG = WEAP_PLASMAGUN,
 	SecondaryWeapon_RG = WEAP_RIOTGUN,
 	SecondaryWeapon_GL = WEAP_GRENADELAUNCHER,
+	SecondaryWeapon_MG = WEAP_MACHINEGUN,
 	SecondaryWeapon_Pending,
 }
 
@@ -37,6 +38,7 @@ const int AMMO_LG = 180;
 const int AMMO_PG = 140;
 const int AMMO_RG = 15;
 const int AMMO_GL = 10;
+const int AMMO_MG = 150;
 
 cPlayer@[] players( maxClients ); // array of handles
 bool playersInitialized = false;
@@ -85,6 +87,8 @@ class cPlayer {
 			this.weapSecondary = SecondaryWeapon_RG;
 		else if( secondary == "gl" )
 			this.weapSecondary = SecondaryWeapon_GL;
+		else if( secondary == "mg" )
+			this.weapSecondary = SecondaryWeapon_MG;
 		else
 			secondaryOk = false;
 
@@ -161,6 +165,11 @@ class cPlayer {
 			case SecondaryWeapon_GL:
 				this.client.inventoryGiveItem( WEAP_GRENADELAUNCHER );
 				this.client.inventorySetCount( AMMO_GRENADES, AMMO_GL );
+				break;
+
+			case SecondaryWeapon_MG:
+				this.client.inventoryGiveItem( WEAP_MACHINEGUN );
+				this.client.inventorySetCount( AMMO_BULLETS, AMMO_MG );
 				break;
 		}
 
@@ -246,6 +255,9 @@ class cPlayer {
 			else if( token == "GL" ) {
 				this.selectSecondaryWeapon( SecondaryWeapon_GL );
 			}
+			else if( token == "MG" ) {
+				this.selectSecondaryWeapon( SecondaryWeapon_MG );
+			}
 			else {
 				invalid_tokens += " " + token;
 				has_invalid = true;
@@ -275,6 +287,8 @@ class cPlayer {
 			loadout += " rg";
 		else if( secondary == SecondaryWeapon_GL )
 			loadout += " gl";
+		else if( secondary == SecondaryWeapon_MG )
+			loadout += " mg";
 		else
 			return;
 
