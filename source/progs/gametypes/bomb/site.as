@@ -31,6 +31,7 @@ class PendingExplosion {
 }
 
 const float PI = 3.14159265f;
+const int64 EXPLOSION_COMEDIC_DELAY = 1000;
 
 float max( float a, float b ) {
 	return a > b ? a : b;
@@ -53,6 +54,7 @@ class cBombSite
 
 	bool useExplosionPoints;
 	Vec3[] explosionPoints;
+	bool targetsUsed;
 
 	PendingExplosion[] pendingExplosions;
 	int numPendingExplosions;
@@ -91,9 +93,9 @@ class cBombSite
 
 		if( hasTargets ) {
 			this.useExplosionPoints = false;
+			this.targetsUsed = false;
 		}
-		else
-		{
+		else {
 			this.useExplosionPoints = true;
 			this.generateExplosionPoints();
 		}
@@ -118,28 +120,36 @@ class cBombSite
 	}
 
 	void explode() {
-		G_Sound( @this.indicator, 0, sndGoodGame, ATTN_DISTANT );
-
-		if( !this.useExplosionPoints ) {
-			this.indicator.useTargets( bombModel );
+		if( !this.useExplosionPoints )
 			return;
-		}
 
 		numPendingExplosions = random_uniform( SITE_EXPLOSION_POINTS / 2, SITE_EXPLOSION_POINTS );
 		numExploded = 0;
 
 		for( int i = 0; i < numPendingExplosions; i++ ) {
 			Vec3 point = explosionPoints[ random_uniform( 0, explosionPoints.length() ) ];
-			int64 time = levelTime + 1000 + int64( ( float( i ) / float( numPendingExplosions - 1 ) ) * SITE_EXPLOSION_MAX_DELAY );
+			int64 time = EXPLOSION_COMEDIC_DELAY + int64( ( float( i ) / float( numPendingExplosions - 1 ) ) * SITE_EXPLOSION_MAX_DELAY );
 			pendingExplosions[ i ] = PendingExplosion( point, time );
 		}
 	}
 
 	void stepExplosion() {
-		if( !this.useExplosionPoints )
-			return;
+		int64 t = levelTime - bombActionTime;
 
-		while( numExploded < numPendingExplosions && levelTime >= pendingExplosions[ numExploded ].time ) {
+		if( t >= EXPLOSION_COMEDIC_DELAY ) {
+			hide( @bombModel );
+			hide( @bombDecal );
+		}
+
+		if( !this.useExplosionPoints ) {
+			if( !targetsUsed && t >= EXPLOSION_COMEDIC_DELAY ) {
+				this.indicator.useTargets( bombModel );
+				targetsUsed = true;
+			}
+			return;
+		}
+
+		while( numExploded < numPendingExplosions && t >= pendingExplosions[ numExploded ].time ) {
 			Entity @ent = @G_SpawnEntity( "func_explosive" );
 
 			ent.origin = pendingExplosions[ numExploded ].pos;

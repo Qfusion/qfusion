@@ -281,11 +281,11 @@ void bombExplode() {
 
 	bombSite.explode();
 
-	hide( @bombModel );
-	hide( @bombDecal );
-
 	bombState = BombState_Exploding;
 	@defuser = null;
+
+	G_Sound( @bombModel, 0, sndGoodGame, ATTN_DISTANT );
+
 }
 
 void resetBomb() {
