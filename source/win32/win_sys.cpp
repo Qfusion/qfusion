@@ -33,11 +33,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "conproc.h"
 
-#if !defined( DEDICATED_ONLY )
-QF_DLL_EXPORT DWORD NvOptimusEnablement = 0x00000001;
-QF_DLL_EXPORT int AmdPowerXpressRequestHighPerformance = 1;
-#endif
-
 #if defined( DEDICATED_ONLY )
 
 int starttime;

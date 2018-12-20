@@ -17,16 +17,6 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-/* we need __APPLE__ here because __MACOSX__ is defined in ../game/q_shared.h from ../qcommon/qcommon.h
-which defines HAVE_STRCASECMP if SDL.h isn't called first, causing a bunch of warnings
-FIXME:  This will be remidied once a native Mac port is complete
-*/
-#if defined ( __APPLE__ ) && !defined ( DEDICATED_ONLY )
-#include <SDL.h>
-#include <CoreFoundation/CoreFoundation.h>
-#include <sys/param.h>
-#endif
-
 #include <signal.h>
 #include <stdlib.h>
 #include <limits.h>
@@ -206,14 +196,6 @@ int main( int argc, char **argv ) {
 
 	InitSig();
 
-#if defined ( __MACOSX__ ) && !defined ( DEDICATED_ONLY )
-	char resourcesPath[MAXPATHLEN];
-	CFURLGetFileSystemRepresentation( CFBundleCopyResourcesDirectoryURL( CFBundleGetMainBundle() ), 1, (UInt8 *)resourcesPath, MAXPATHLEN );
-	chdir( resourcesPath );
-
-	SDL_Init( SDL_INIT_VIDEO );
-#endif
-
 	Qcommon_Init( argc, argv );
 
 	fcntl( 0, F_SETFL, fcntl( 0, F_GETFL, 0 ) | O_NONBLOCK );
@@ -235,9 +217,6 @@ int main( int argc, char **argv ) {
 
 		Qcommon_Frame( time );
 	}
-#if defined ( __MACOSX__ ) && !defined ( DEDICATED_ONLY )
-	SDL_Quit();
-#endif
 }
 
 #endif // defined(DEDICATED_ONLY)
