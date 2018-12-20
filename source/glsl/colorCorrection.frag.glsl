@@ -1,4 +1,5 @@
 #include "include/common.glsl"
+#include "include/dither.glsl"
 #include "include/uniforms.glsl"
 
 qf_varying vec2 v_TexCoord;
@@ -56,29 +57,31 @@ vec3 ColorMap(vec3 c)
 void main(void)
 {
 	vec4 texel = qf_texture(u_BaseTexture, v_TexCoord);
-	vec3 coords = texel.rgb;
+	vec3 color = texel.rgb;
 
 #ifdef APPLY_HDR
-	coords = ToneMap(coords * u_HDRExposure);
+	color = ToneMap(color * u_HDRExposure);
 #endif
 
 #ifdef APPLY_SRGB2LINEAR
 
 #ifdef APPLY_HDR
-	coords = pow(coords, vec3(1.0 / u_HDRGamma));
+	color = pow(color, vec3(1.0 / u_HDRGamma));
 #else
-	coords = pow(coords, vec3(1.0 / 2.2));
+	color = pow(color, vec3(1.0 / 2.2));
 #endif
 
 #endif
 
 #if defined(APPLY_LUT) && defined(APPLY_SRGB2LINEAR)
-	coords = clamp(coords, 0.0, 1.0);
+	color = clamp(color, 0.0, 1.0);
 #endif
 
 #ifdef APPLY_LUT
-	coords = ColorMap(coords);
+	color = ColorMap(color);
 #endif // APPLY_LUT
 
-	qf_FragColor = vec4(coords, texel.a);
+	color += dither();
+
+	qf_FragColor = vec4(color, texel.a);
 }

@@ -30,8 +30,6 @@ uniform myhalf3 u_FloorColor;
 
 uniform myhalf2 u_GlossFactors; // gloss scaling and exponent factors
 
-#include "include/dither.glsl"
-
 void main()
 {
 	myhalf3 surfaceNormal;
@@ -131,8 +129,6 @@ void main()
 #ifdef APPLY_GREYSCALE
 	color.rgb = Greyscale(color.rgb);
 #endif
-
-	color.rgb += dither();
 
 	qf_FragColor = vec4(sRGBColor(color));
 }
