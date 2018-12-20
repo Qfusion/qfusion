@@ -797,7 +797,7 @@ static void CG_SetupViewDef( cg_viewdef_t *view, int type ) {
 		// check for chase cams
 		if( !( cg.frame.playerState.pmove.pm_flags & PMF_NO_PREDICTION ) ) {
 			if( (unsigned)view->POVent == cgs.playerNum + 1 ) {
-				if( cg_predict->integer && !cgs.demoPlaying ) {
+				if( !cgs.demoPlaying ) {
 					view->playerPrediction = true;
 				}
 			}
@@ -813,7 +813,6 @@ static void CG_SetupViewDef( cg_viewdef_t *view, int type ) {
 	//
 
 	if( view->type == VIEWDEF_PLAYERVIEW ) {
-		int i;
 		vec3_t viewoffset;
 
 		if( view->playerPrediction ) {
@@ -822,7 +821,7 @@ static void CG_SetupViewDef( cg_viewdef_t *view, int type ) {
 			// fixme: crouching is predicted now, but it looks very ugly
 			VectorSet( viewoffset, 0.0f, 0.0f, cg.predictedPlayerState.viewheight );
 
-			for( i = 0; i < 3; i++ ) {
+			for( int i = 0; i < 3; i++ ) {
 				view->origin[i] = cg.predictedPlayerState.pmove.origin[i] + viewoffset[i] - ( 1.0f - cg.lerpfrac ) * cg.predictionError[i];
 				view->angles[i] = cg.predictedPlayerState.viewangles[i];
 			}

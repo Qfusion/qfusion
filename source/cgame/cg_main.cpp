@@ -24,8 +24,6 @@ cg_state_t cg;
 
 centity_t cg_entities[MAX_EDICTS];
 
-cvar_t *cg_predict;
-cvar_t *cg_predict_optimize;
 cvar_t *cg_showMiss;
 
 cvar_t *cg_hand;
@@ -536,8 +534,6 @@ static void CG_RegisterLightStyles( void ) {
 * CG_RegisterVariables
 */
 static void CG_RegisterVariables( void ) {
-	cg_predict =        trap_Cvar_Get( "cg_predict", "1", 0 );
-	cg_predict_optimize = trap_Cvar_Get( "cg_predict_optimize", "1", 0 );
 	cg_showMiss =       trap_Cvar_Get( "cg_showMiss", "0", 0 );
 
 	cg_debugPlayerModels =  trap_Cvar_Get( "cg_debugPlayerModels", "0", CVAR_CHEAT | CVAR_ARCHIVE );
