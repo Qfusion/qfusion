@@ -12,7 +12,6 @@ file(GLOB GAME_HEADERS
 file(GLOB GAME_SOURCES
 	"*.cpp"
 	"../gameshared/*.cpp"
-	"../gameshared/gs_ascript.cpp"
 	"../qalgo/base64.cpp"
 	"../qalgo/md5.cpp"
 )

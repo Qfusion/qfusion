@@ -10,7 +10,6 @@ file(GLOB CGAME_HEADES
 file(GLOB CGAME_SOURCES
 	"*.cpp"
 	"../gameshared/*.cpp"
-	"../gameshared/gs_ascript.cpp"
 	"../qalgo/rng.cpp"
 )
 

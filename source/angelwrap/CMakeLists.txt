@@ -11,7 +11,6 @@ file(GLOB angelwrap_HEADERS
 
 file(GLOB angelwrap_SOURCES
 	"*.cpp"
-	"*.c"
 	"addon/*.cpp"
 	"../gameshared/q_*.cpp"
 	"../qalgo/rng.cpp"
