@@ -44,9 +44,7 @@ void main(void)
 
 #endif // !defined(APPLY_CUBEMAP) && !defined(APPLY_SURROUNDMAP)
 
-#if defined(APPLY_CUBEMAP) || defined(APPLY_SURROUNDMAP)
 	v_Position = Position.xyz;
-#endif
 
 #if defined(APPLY_CUBEMAP) || defined(APPLY_DRAWFLAT)
 	v_Normal = Normal;

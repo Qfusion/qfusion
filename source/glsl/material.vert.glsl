@@ -41,9 +41,7 @@ void main()
 	v_EyeVector = EyeVectorWorld * v_StrMatrix;
 #endif
 
-#if defined(APPLY_SPECULAR)
 	v_Position = Position.xyz;
-#endif
 
 	gl_Position = u_ModelViewProjectionMatrix * Position;
 }

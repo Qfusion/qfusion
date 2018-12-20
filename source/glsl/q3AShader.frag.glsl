@@ -1,4 +1,5 @@
 #include "include/common.glsl"
+#include "include/fog.glsl"
 #include "include/lightmap.glsl"
 #include "include/uniforms.glsl"
 #include_if(APPLY_GREYSCALE) "include/greyscale.glsl"
@@ -38,7 +39,7 @@ void main(void)
 {
 	myhalf4 color;
 
-#ifdef NUM_LIGHTMAPS
+#ifdef NUM_LIGHTMAPS420
 	color = myhalf4(0.0, 0.0, 0.0, qf_FrontColor.a);
 	color.rgb += myhalf3(Lightmap(u_LightmapTexture0, v_LightmapTexCoord01.st, v_LightmapLayer0123.x)) * LinearColor(u_LightstyleColor[0]);
 #if NUM_LIGHTMAPS >= 2
@@ -78,7 +79,7 @@ void main(void)
 	color *= diffuse;
 #endif
 
-#ifdef NUM_LIGHTMAPS
+#ifdef NUM_LIGHTMAPS420
 	// so that team-colored shaders work
 	color *= myhalf4(qf_FrontColor);
 #endif
@@ -95,6 +96,8 @@ void main(void)
 #ifdef QF_ALPHATEST
 	QF_ALPHATEST(color.a);
 #endif
+
+	color.rgb = apply_fog( color.rgb, length( v_Position - u_ViewOrigin ) );
 
 	qf_FragColor = vec4(sRGBColor(color));
 }

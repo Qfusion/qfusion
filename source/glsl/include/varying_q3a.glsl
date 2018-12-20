@@ -4,9 +4,7 @@
 #define APPLY_SURROUNDMAP
 #endif
 
-#if defined(APPLY_CUBEMAP) || defined(APPLY_SURROUNDMAP)
 qf_varying vec3 v_Position;
-#endif
 
 #if defined(APPLY_CUBEMAP) || defined(APPLY_DRAWFLAT)
 qf_varying myhalf3 v_Normal;

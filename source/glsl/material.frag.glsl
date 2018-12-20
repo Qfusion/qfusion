@@ -1,4 +1,5 @@
 #include "include/common.glsl"
+#include "include/fog.glsl"
 #include "include/lightmap.glsl"
 #include "include/uniforms.glsl"
 #include "include/varying_material.glsl"
@@ -36,7 +37,7 @@ void main()
 	myhalf3 surfaceNormalModelspace;
 	myhalf3 weightedDiffuseNormalModelspace;
 
-#if !defined(APPLY_DIRECTIONAL_LIGHT) && !defined(NUM_LIGHTMAPS)
+#if !defined(APPLY_DIRECTIONAL_LIGHT) && !defined(NUM_LIGHTMAPS) && 0
 	myhalf4 color = myhalf4 (1.0, 1.0, 1.0, 1.0);
 #else
 	myhalf4 color = myhalf4 (0.0, 0.0, 0.0, 1.0);
@@ -54,7 +55,7 @@ void main()
 	lightColor += DirectionalLightColor(surfaceNormalModelspace, weightedDiffuseNormalModelspace);
 #endif
 
-#ifdef NUM_LIGHTMAPS
+#ifdef NUM_LIGHTMAPS420
 	lightColor += LightmapColor(surfaceNormalModelspace, weightedDiffuseNormalModelspace);
 #endif
 
@@ -129,6 +130,8 @@ void main()
 #ifdef APPLY_GREYSCALE
 	color.rgb = Greyscale(color.rgb);
 #endif
+
+	color.rgb = apply_fog( color.rgb, length( v_Position - u_ViewOrigin ) );
 
 	qf_FragColor = vec4(sRGBColor(color));
 }
