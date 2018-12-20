@@ -259,59 +259,54 @@ edict_t *W_Fire_GunbladeBlast( edict_t *self, vec3_t start, vec3_t angles, float
 
 	return blast;
 }
+/*
+* W_Bullet_Touch
+*/
+static void W_Bullet_Touch( edict_t *ent, edict_t *other, cplane_t *plane, int surfFlags ) {
+	int hitType = G_Projectile_HitStyle( ent, other );
+	if( hitType == PROJECTILE_TOUCH_NOT ) {
+		return;
+	}
+
+	if( other->takedamage ) {
+		G_Damage( other, ent, ent->r.owner, ent->velocity, ent->velocity, ent->s.origin, ent->projectileInfo.maxDamage, ent->projectileInfo.maxKnockback, 0, MOD_GRENADE );
+	}
+
+	G_FreeEdict( ent );
+}
 
 /*
 * W_Fire_Bullet
 */
 void W_Fire_Bullet( edict_t *self, vec3_t start, vec3_t angles, int seed, int range, int hspread, int vspread,
 					float damage, int knockback, int timeDelta ) {
-	vec3_t dir;
-	edict_t *event;
-	float r, u;
-	double alpha, s;
-	trace_t trace;
-	int dmgflags = DAMAGE_KNOCKBACK_SOFT;
+	edict_t *bullet = W_Fire_TossProjectile( self, start, angles, 3000, 12, 0, 0, 0, 0, 9000, timeDelta );
 
-	AngleVectors( angles, dir, NULL, NULL );
+	bullet->s.type = ET_PLASMA;
+	bullet->movetype = MOVETYPE_TOSS;
+	bullet->touch = W_Bullet_Touch;
+	bullet->use = NULL;
+	bullet->think = NULL;
+	bullet->classname = "bullet";
+	bullet->enemy = NULL;
 
-	// send the event
-	event = G_SpawnEvent( EV_FIRE_BULLET, seed, start );
-	event->s.ownerNum = ENTNUM( self );
-	VectorScale( dir, 4096, event->s.origin2 ); // DirToByte is too inaccurate
-	event->s.weapon = WEAP_MACHINEGUN;
+	bullet->s.modelindex = trap_ModelIndex( PATH_PLASMA_MODEL );
 
-	// circle shape
-	alpha = M_PI * Q_crandom( &seed ); // [-PI ..+PI]
-	s = fabs( Q_crandom( &seed ) ); // [0..1]
-	r = s * cos( alpha ) * hspread;
-	u = s * sin( alpha ) * vspread;
-
-	vec3_t right, up;
-	ViewVectors( dir, right, up );
-
-	GS_TraceBullet( &trace, start, dir, right, up, r, u, range, ENTNUM( self ), timeDelta );
-	if( trace.ent != -1 && game.edicts[trace.ent].takedamage ) {
-		G_Damage( &game.edicts[trace.ent], self, self, dir, dir, trace.endpos, damage, knockback, dmgflags, MOD_MACHINEGUN );
-	}
+	GClip_LinkEntity( bullet );
 }
 
 // Sunflower spiral with Fibonacci numbers
 static void G_Fire_SunflowerPattern( edict_t *self, vec3_t start, vec3_t dir, int count,
 									 int hspread, int vspread, int range, float damage, int kick, int dflags, int timeDelta ) {
-	int i;
-	float r;
-	float u;
-	float fi;
-	trace_t trace;
-
 	vec3_t right, up;
 	ViewVectors( dir, right, up );
 
-	for( i = 0; i < count; i++ ) {
-		fi = i * 2.4f; //magic value creating Fibonacci numbers
-		r = cosf( fi ) * hspread * sqrt( fi );
-		u = sinf( fi ) * vspread * sqrt( fi );
+	for( int i = 0; i < count; i++ ) {
+		float fi = i * 2.4f; //magic value creating Fibonacci numbers
+		float r = cosf( fi ) * hspread * sqrtf( fi );
+		float u = sinf( fi ) * vspread * sqrtf( fi );
 
+		trace_t trace;
 		GS_TraceBullet( &trace, start, dir, right, up, r, u, range, ENTNUM( self ), timeDelta );
 		if( trace.ent != -1 && game.edicts[trace.ent].takedamage ) {
 			G_Damage( &game.edicts[trace.ent], self, self, dir, dir, trace.endpos, damage, kick, dflags, MOD_RIOTGUN );
