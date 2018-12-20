@@ -61,12 +61,8 @@ void CG_WeaponBeamEffect( centity_t *cent ) {
 
 static centity_t *laserOwner = NULL;
 
-static vec_t *_LaserColor( vec4_t color ) {
-	Vector4Set( color, 1, 1, 1, 1 );
-	if( laserOwner != NULL && ( laserOwner->current.team == TEAM_ALPHA || laserOwner->current.team == TEAM_BETA ) ) {
-		CG_TeamColor( laserOwner->current.team, color );
-	}
-	return color;
+static void _LaserColor( vec4_t color ) {
+	CG_TeamColor( laserOwner->current.team, color );
 }
 
 static void _LaserImpact( trace_t *trace, vec3_t dir ) {
@@ -74,13 +70,16 @@ static void _LaserImpact( trace_t *trace, vec3_t dir ) {
 		return;
 	}
 
+	vec4_t color;
+	_LaserColor( color );
+
 	if( laserOwner ) {
 #define TRAILTIME ( (int)( 1000.0f / 20.0f ) ) // density as quantity per second
 
 		if( laserOwner->localEffects[LOCALEFFECT_LASERBEAM_SMOKE_TRAIL] + TRAILTIME < cg.time ) {
 			laserOwner->localEffects[LOCALEFFECT_LASERBEAM_SMOKE_TRAIL] = cg.time;
 
-			CG_HighVelImpactPuffParticles( trace->endpos, trace->plane.normal, 8, 0.5f, 1.0f, 0.8f, 0.2f, 1.0f, NULL );
+			CG_HighVelImpactPuffParticles( trace->endpos, trace->plane.normal, 8, 0.5f, color[ 0 ], color[ 1 ], color[ 2 ], color[ 3 ], NULL );
 
 			trap_S_StartFixedSound( CG_MediaSfx( cgs.media.sfxLasergunHit[rand() % 3] ), trace->endpos, CHAN_AUTO,
 									cg_volume_effects->value, ATTN_STATIC );
@@ -90,14 +89,13 @@ static void _LaserImpact( trace_t *trace, vec3_t dir ) {
 
 	// it's a brush model
 	if( trace->ent == 0 || !( cg_entities[trace->ent].current.effects & EF_TAKEDAMAGE ) ) {
-		vec4_t color;
 		vec3_t origin;
 
 		VectorMA( trace->endpos, IMPACT_POINT_OFFSET, trace->plane.normal, origin );
 
-		CG_LaserGunImpact( origin, 15.0f, dir, _LaserColor( color ) );
+		CG_LaserGunImpact( origin, 15.0f, dir, color );
 
-		CG_AddLightToScene( origin, 100, 0.75f, 0.75f, 0.375f );
+		CG_AddLightToScene( origin, 100, color[ 0 ], color[ 1 ], color[ 2 ] );
 		return;
 	}
 

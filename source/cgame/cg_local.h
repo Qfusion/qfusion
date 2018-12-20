@@ -920,7 +920,7 @@ bool CG_SwitchChaseCamMode( void );
 // cg_lents.c
 //
 
-#define IMPACT_POINT_OFFSET 2.0f
+#define IMPACT_POINT_OFFSET 0.1f
 
 void CG_ClearLocalEntities( void );
 void CG_AddLocalEntities( void );
