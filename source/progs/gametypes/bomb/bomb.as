@@ -99,6 +99,8 @@ void bombInit() {
 	bombHud.type = ET_HUD;
 	bombHud.solid = SOLID_NOT;
 	bombHud.svflags |= SVF_BROADCAST;
+
+	bombActionTime = -1;
 }
 
 void bombPickUp() {

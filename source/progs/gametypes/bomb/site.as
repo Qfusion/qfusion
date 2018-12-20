@@ -111,7 +111,7 @@ class cBombSite
 
 			Vec3 mins, maxs;
 			bombCarrier.getSize( mins, maxs );
-			if( maxs.z < 40 ) {
+			if( maxs.z < 40 && levelTime - bombActionTime >= 1000 ) {
 				bombStartPlanting( this );
 			}
 		}
