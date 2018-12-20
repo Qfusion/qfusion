@@ -225,6 +225,8 @@ void bombStartPlanting( cBombSite @site ) {
 
 	bombActionTime = levelTime;
 	bombState = BombState_Planting;
+
+	G_Sound( @bombModel, 0, sndPlantStart, ATTN_NORM );
 }
 
 void bombPlanted() {

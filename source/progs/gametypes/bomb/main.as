@@ -71,8 +71,8 @@ Vec3 BOMB_MAXS(  16,  16, 48 ); // same size as player i guess
 
 // cvars
 Cvar cvarRoundTime( "g_bomb_roundtime", "60", CVAR_ARCHIVE );
-Cvar cvarExplodeTime( "g_bomb_bombtimer", "30", CVAR_ARCHIVE );
-Cvar cvarArmTime( "g_bomb_armtime", "5", CVAR_ARCHIVE );
+Cvar cvarExplodeTime( "g_bomb_bombtimer", "45", CVAR_ARCHIVE );
+Cvar cvarArmTime( "g_bomb_armtime", "1", CVAR_ARCHIVE );
 Cvar cvarDefuseTime( "g_bomb_defusetime", "5", CVAR_ARCHIVE );
 Cvar cvarEnableCarriers( "g_bomb_carriers", "1", CVAR_ARCHIVE );
 Cvar cvarSpawnProtection( "g_bomb_spawnprotection", "3", CVAR_ARCHIVE );

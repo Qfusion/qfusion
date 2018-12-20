@@ -34,6 +34,7 @@ int imgBombDecal;
 
 // SOUNDS
 int sndBeep;
+int sndPlantStart;
 int sndBombTaken;
 int sndBongo;
 
@@ -81,9 +82,10 @@ void mediaInit() {
 
 	imgBombDecal   = G_ImageIndex( "gfx/indicators/radar_decal" );
 
-	sndBeep      = G_SoundIndex( "sounds/bomb/bombtimer", false );
+	sndBeep = G_SoundIndex( "sounds/bomb/bombtimer", false );
+	sndPlantStart = G_SoundIndex( "sounds/misc/timer_bip_bip", false );
 	sndBombTaken = G_SoundIndex( "sounds/announcer/bomb/offense/taken", false );
-	sndBongo     = G_SoundIndex( "sounds/announcer/bomb/bongo", false );
+	sndBongo = G_SoundIndex( "sounds/announcer/bomb/bongo", false );
 
 	weaponIcons[ WEAP_GUNBLADE ] = G_ImageIndex( "gfx/hud/icons/weapon/gunblade_blast" );
 	weaponIcons[ WEAP_MACHINEGUN ] = G_ImageIndex( "gfx/hud/icons/weapon/machinegun" );
