@@ -1,5 +1,5 @@
 #include "sdl/SDL.h"
-#include "../client/client.h"
+#include "client/client.h"
 
 /*
 * Sys_Milliseconds

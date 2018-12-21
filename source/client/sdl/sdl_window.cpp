@@ -25,7 +25,7 @@
 #include "client/renderer/glad.h"
 #include "client/xpm.h"
 const
-#include "../../icons/forksow.xpm"
+#include "../../../icons/forksow.xpm"
 
 #include "sdl_window.h"
 

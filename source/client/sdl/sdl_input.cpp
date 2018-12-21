@@ -1,5 +1,5 @@
 #include "sdl/SDL.h"
-#include "../client/client.h"
+#include "client/client.h"
 
 cvar_t *in_disablemacosxmouseaccel;
 

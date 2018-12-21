@@ -28,11 +28,10 @@ file(GLOB CLIENT_COMMON_SOURCES
 	"../gameshared/q_*.cpp"
 	"../qalgo/*.cpp"
 
-	"renderer/*.cpp"
 	"ftlib/*.cpp"
+	"renderer/*.cpp"
+	"sdl/*.cpp"
 	"sound/*.cpp"
-
-	"../sdl/*.cpp"
 	)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")

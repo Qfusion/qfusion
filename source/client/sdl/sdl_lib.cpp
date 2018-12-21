@@ -1,7 +1,7 @@
 #include "sdl/SDL.h"
 
-#include "../qcommon/qcommon.h"
-#include "../qcommon/sys_library.h"
+#include "qcommon/qcommon.h"
+#include "qcommon/sys_library.h"
 
 /*
 * Sys_Library_Close
