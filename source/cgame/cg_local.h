@@ -814,7 +814,6 @@ extern cvar_t *cg_zoomfov;
 extern cvar_t *cg_particles;
 extern cvar_t *cg_showhelp;
 extern cvar_t *cg_voiceChats;
-extern cvar_t *cg_laserBeamSubdivisions;
 extern cvar_t *cg_projectileAntilagOffset;
 extern cvar_t *cg_raceGhosts;
 extern cvar_t *cg_raceGhostsAlpha;
