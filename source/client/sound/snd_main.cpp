@@ -248,9 +248,6 @@ void S_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis, in
 			num_playing_sounds--;
 			swap( ps, &playing_sounds[ num_playing_sounds ] );
 
-			if( ps->type == SoundType_AttachedImmediate )
-				entities[ ps->ent_num ].ps = ps;
-
 			i--;
 			continue;
 		}
@@ -347,7 +344,7 @@ static bool S_StartSound( SoundAsset * sfx, const vec3_t origin, int ent_num, in
 			entities[ ent_num ].ps = ps;
 			alSourcefv( ps->source, AL_POSITION, entities[ ent_num ].origin );
 			alSourcefv( ps->source, AL_VELOCITY, entities[ ent_num ].velocity );
-			alSourcei( ps->source, AL_LOOPING, AL_FALSE );
+			alSourcei( ps->source, AL_LOOPING, AL_TRUE );
 			alSourcei( ps->source, AL_SOURCE_RELATIVE, AL_FALSE );
 			break;
 	}
