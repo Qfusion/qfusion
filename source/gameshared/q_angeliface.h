@@ -18,10 +18,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#ifndef __Q_ANGELIFACE_H__
-#define __Q_ANGELIFACE_H__
+#pragma once
 
-#include "angelscript.h"
+#include "angelscript/angelscript.h"
 
 // public interfaces
 
@@ -151,5 +150,3 @@ typedef struct angelwrap_api_s {
 	// projects
 	asIScriptModule *( *asLoadScriptProject )( asIScriptEngine *engine, const char *moduleName, const char *rootDir, const char *dir, const char *filename, const char *ext );
 } angelwrap_api_t;
-
-#endif

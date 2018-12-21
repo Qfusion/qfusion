@@ -21,8 +21,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #pragma once
 
 #include "gs_public.h"
-#include "angelscript.h"
 #include "gameshared/q_angeliface.h"
+
+#include "angelscript/angelscript.h"
 
 typedef struct gs_asEnumVal_s {
 	const char * name;

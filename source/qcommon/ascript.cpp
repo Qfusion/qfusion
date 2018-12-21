@@ -19,7 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "qcommon.h"
-#include "../angelwrap/qas_public.h"
+#include "angelwrap/qas_public.h"
 
 static angelwrap_export_t *ae;
 static mempool_t *com_scriptmodulepool;

@@ -23,5 +23,5 @@ else ()
 endif()
 
 add_library(angelwrap SHARED ${angelwrap_SOURCES} ${angelwrap_HEADERS})
-target_link_libraries(angelwrap PRIVATE angelscript ${ANGELWRAP_PLATFORM_LIBRARIES})
+target_link_libraries(angelwrap PRIVATE ${ANGELWRAP_PLATFORM_LIBRARIES} ${ANGELSCRIPT_LIBRARY})
 qf_set_output_dir(angelwrap libs)

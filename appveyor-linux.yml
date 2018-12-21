@@ -3,7 +3,6 @@ clone_depth: 1
 image: Ubuntu
 
 build_script:
-- sh: git submodule update --init --recursive
 - sh: cd source
 - sh: cmake -DCMAKE_BUILD_TYPE=Release .
 - sh: make -j$(nproc --all)
