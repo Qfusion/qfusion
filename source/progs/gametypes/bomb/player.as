@@ -25,10 +25,10 @@ enum PrimaryWeapon {
 }
 
 enum SecondaryWeapon {
-	SecondaryWeapon_PG = WEAP_PLASMAGUN,
-	SecondaryWeapon_RG = WEAP_RIOTGUN,
-	SecondaryWeapon_GL = WEAP_GRENADELAUNCHER,
-	SecondaryWeapon_MG = WEAP_MACHINEGUN,
+	SecondaryWeapon_PG,
+	SecondaryWeapon_RG,
+	SecondaryWeapon_GL,
+	SecondaryWeapon_MG,
 	SecondaryWeapon_Pending,
 }
 
