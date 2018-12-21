@@ -126,7 +126,6 @@ class cPlayer {
 		}
 
 		this.client.inventoryGiveItem( WEAP_GUNBLADE );
-		this.client.getEnt().health = 200;
 
 		switch( this.weapPrimary ) {
 			case PrimaryWeapon_EBRL:
