@@ -169,12 +169,10 @@ void CG_LaserBeamEffect( centity_t *cent ) {
 		cg_entPModels[cent->current.number].flash_time = cg.time + CG_GetWeaponInfo( WEAP_LASERGUN )->flashTime;
 	}
 
-	if( sound ) {
-		if( ISVIEWERENTITY( cent->current.number ) ) {
-			trap_S_ImmediateSound( sound, cent->current.number, cg_volume_effects->value, ATTN_NONE, cg.time );
-		} else {
-			trap_S_ImmediateSound( sound, cent->current.number, cg_volume_effects->value, ATTN_STATIC, cg.time );
-		}
+	if( ISVIEWERENTITY( cent->current.number ) ) {
+		trap_S_ImmediateSound( sound, cent->current.number, cg_volume_effects->value, ATTN_NONE, cg.time );
+	} else {
+		trap_S_ImmediateSound( sound, cent->current.number, cg_volume_effects->value, ATTN_STATIC, cg.time );
 	}
 
 	laserOwner = NULL;
