@@ -354,8 +354,8 @@ static void R_Register() {
 	r_screenshot_fmtstr = ri.Cvar_Get( "r_screenshot_fmtstr", va_r( tmp, sizeof( tmp ), "%s%%y%%m%%d_%%H%%M%%S", APP_SCREENSHOTS_PREFIX ), CVAR_ARCHIVE );
 
 	r_drawflat = ri.Cvar_Get( "r_drawflat", "1", CVAR_ARCHIVE | CVAR_READONLY );
-	r_wallcolor = ri.Cvar_Get( "r_wallcolor", "128 128 128", CVAR_ARCHIVE );
-	r_floorcolor = ri.Cvar_Get( "r_floorcolor", "192 192 192", CVAR_ARCHIVE );
+	r_wallcolor = ri.Cvar_Get( "r_wallcolor", "0 0 0", CVAR_CHEAT );
+	r_floorcolor = ri.Cvar_Get( "r_floorcolor", "32 32 32", CVAR_CHEAT );
 
 	// make sure we rebuild our 3D texture after vid_restart
 	r_wallcolor->modified = r_floorcolor->modified = true;
