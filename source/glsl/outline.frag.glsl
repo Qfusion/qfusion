@@ -10,7 +10,7 @@ void main(void)
 		discard;
 #endif
 
-	vec4 color = vec4( 1.0 ); //qf_FrontColor;
+	vec4 color = qf_FrontColor;
 
 	qf_FragColor = sRGBColor(color);
 }
