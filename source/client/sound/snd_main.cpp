@@ -43,11 +43,11 @@ typedef struct {
 } EntitySound;
 
 static SoundAsset sound_assets[ 4096 ];
-static int num_sound_assets;
+static size_t num_sound_assets;
 static SoundAsset * menu_music_asset;
 
 static PlayingSound playing_sounds[ 128 ];
-static int num_playing_sounds;
+static size_t num_playing_sounds;
 
 static ALuint music_source;
 static bool music_playing;
@@ -81,7 +81,7 @@ static void S_ALAssert() {
 }
 
 static void S_SoundList_f( void ) {
-	for( int i = 0; i < num_sound_assets; i++ ) {
+	for( size_t i = 0; i < num_sound_assets; i++ ) {
 		Com_Printf( "%s\n", sound_assets[ i ].filename );
 	}
 }
@@ -108,7 +108,7 @@ static bool S_InitAL() {
 
 	alDistanceModel( AL_INVERSE_DISTANCE_CLAMPED );
 
-	for( int i = 0; i < ARRAY_COUNT( playing_sounds ); i++ ) {
+	for( size_t i = 0; i < ARRAY_COUNT( playing_sounds ); i++ ) {
 		alGenSources( 1, &playing_sounds[ i ].source );
 	}
 	alGenSources( 1, &music_source );
@@ -193,12 +193,12 @@ bool S_Init( bool verbose ) {
 void S_Shutdown() {
 	S_StopAllSounds( true );
 
-	for( int i = 0; i < ARRAY_COUNT( playing_sounds ); i++ ) {
+	for( size_t i = 0; i < ARRAY_COUNT( playing_sounds ); i++ ) {
 		alDeleteSources( 1, &playing_sounds[ i ].source );
 	}
 	alDeleteSources( 1, &music_source );
 
-	for( int i = 0; i < num_sound_assets; i++ ) {
+	for( size_t i = 0; i < num_sound_assets; i++ ) {
 		alDeleteBuffers( 1, &sound_assets[ i ].buffer );
 	}
 
@@ -233,7 +233,7 @@ void S_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis, in
 	alListenerfv( AL_VELOCITY, velocity );
 	alListenerfv( AL_ORIENTATION, orientation );
 
-	for( int i = 0; i < num_playing_sounds; i++ ) {
+	for( size_t i = 0; i < num_playing_sounds; i++ ) {
 		PlayingSound * ps = &playing_sounds[ i ];
 
 		ALint state;
@@ -283,7 +283,7 @@ void S_SetWindowFocus( bool focused ) {
 }
 
 static PlayingSound * S_FindEmptyPlayingSound( int ent_num, int channel ) {
-	for( int i = 0; i < num_playing_sounds; i++ ) {
+	for( size_t i = 0; i < num_playing_sounds; i++ ) {
 		PlayingSound * ps = &playing_sounds[ i ];
 		if( channel && ps->ent_num == ent_num && ps->channel == channel ) {
 			ALint state;
@@ -386,7 +386,7 @@ void S_ImmediateSound( SoundAsset * sfx, int ent_num, float volume, float attenu
 }
 
 void S_StopAllSounds( bool stop_music ) {
-	for( int i = 0; i < num_playing_sounds; i++ ) {
+	for( size_t i = 0; i < num_playing_sounds; i++ ) {
 		alSourceStop( playing_sounds[ i ].source );
 	}
 	num_playing_sounds = 0;
