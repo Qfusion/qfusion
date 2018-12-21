@@ -1,5 +1,4 @@
 #include "include/common.glsl"
-#include "include/dither.glsl"
 #include "include/uniforms.glsl"
 
 qf_varying vec2 v_TexCoord;
@@ -80,8 +79,6 @@ void main(void)
 #ifdef APPLY_LUT
 	color = ColorMap(color);
 #endif // APPLY_LUT
-
-	color += dither();
 
 	qf_FragColor = vec4(color, texel.a);
 }

@@ -1,4 +1,5 @@
 #include "include/common.glsl"
+#include "include/dither.glsl"
 #include "include/fog.glsl"
 #include "include/lightmap.glsl"
 #include "include/uniforms.glsl"
@@ -131,7 +132,10 @@ void main()
 	color.rgb = Greyscale(color.rgb);
 #endif
 
+#ifdef APPLY_DRAWFLAT
 	color.rgb = apply_fog( color.rgb, length( v_Position - u_ViewOrigin ) );
+	color.rgb += dither();
+#endif
 
 	qf_FragColor = vec4(sRGBColor(color));
 }
