@@ -290,7 +290,7 @@ void W_Fire_Bullet( edict_t *self, vec3_t start, vec3_t angles, int seed, int ra
 	bullet->classname = "bullet";
 	bullet->enemy = NULL;
 
-	bullet->s.modelindex = trap_ModelIndex( PATH_PLASMA_MODEL );
+	bullet->s.modelindex = trap_ModelIndex( PATH_BULLET_MODEL );
 
 	GClip_LinkEntity( bullet );
 }
