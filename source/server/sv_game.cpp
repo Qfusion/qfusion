@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // sv_game.c -- interface to the game dll
 
 #include "server.h"
+#include "gameshared/angelwrap/qas_public.h"
 
 game_export_t *ge;
 
@@ -528,7 +529,7 @@ void SV_InitGameProgs( void ) {
 
 	import.LocateEntities = SV_LocateEntities;
 
-	import.asGetAngelExport = Com_asGetAngelExport;
+	import.asGetAngelExport = QAS_GetAngelExport;
 
 	// clear module manifest string
 	assert( sizeof( manifest ) >= MAX_INFO_STRING );

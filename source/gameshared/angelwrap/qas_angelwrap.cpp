@@ -18,7 +18,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#include "qas_precompiled.h"
+#include "qas_local.h"
 #include "addon/addon_math.h"
 #include "addon/addon_scriptarray.h"
 #include "addon/addon_string.h"
@@ -33,11 +33,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <list>
 
 static void *qasAlloc( size_t size ) {
-	return QAS_Malloc( size );
+	return Mem_Alloc( angelwrappool, size );
 }
 
 static void qasFree( void *mem ) {
-	QAS_Free( mem );
+	Mem_Free( mem );
 }
 
 // ============================================================================
@@ -99,7 +99,7 @@ asIScriptEngine *qasCreateEngine( bool *asMaxPortability ) {
 	}
 
 	if( strstr( asGetLibraryOptions(), "AS_MAX_PORTABILITY" ) ) {
-		QAS_Printf( "* angelscript library with AS_MAX_PORTABILITY detected\n" );
+		Com_Printf( "* angelscript library with AS_MAX_PORTABILITY detected\n" );
 		engine->Release();
 		return NULL;
 	}
@@ -162,7 +162,7 @@ void qasWriteEngineDocsToFile( asIScriptEngine *engine, const char *path, bool s
 		global_file += "globals.h";
 	}
 
-	if( trap_FS_FOpenFile( global_file.c_str(), &filenum, FS_WRITE ) == -1 ) {
+	if( FS_FOpenFile( global_file.c_str(), &filenum, FS_WRITE ) == -1 ) {
 		Com_Printf( "ASModule::dumpAPI: Couldn't write %s.\n", global_file.c_str() );
 		return;
 	}
@@ -174,7 +174,7 @@ void qasWriteEngineDocsToFile( asIScriptEngine *engine, const char *path, bool s
 	} else {
 		str = "/**\r\n * Enums\r\n */\r\n";
 	}
-	trap_FS_Write( str, strlen( str ), filenum );
+	FS_Write( str, strlen( str ), filenum );
 
 	int enumCount = engine->GetEnumCount();
 	for( i = 0; i < enumCount; i++ ) {
@@ -182,23 +182,23 @@ void qasWriteEngineDocsToFile( asIScriptEngine *engine, const char *path, bool s
 		const char *enumName = engine->GetEnumByIndex( i, &enumTypeId, NULL, NULL, NULL );
 
 		str = "typedef enum\r\n{\r\n";
-		trap_FS_Write( str, strlen( str ), filenum );
+		FS_Write( str, strlen( str ), filenum );
 
 		int enumValueCount = engine->GetEnumValueCount( enumTypeId );
 		for( j = 0; j < enumValueCount; j++ ) {
 			int outValue;
 			const char *valueName = engine->GetEnumValueByIndex( enumTypeId, j, &outValue );
 			str = va( "\t%s = 0x%x,\r\n", valueName, outValue );
-			trap_FS_Write( str, strlen( str ), filenum );
+			FS_Write( str, strlen( str ), filenum );
 		}
 
 		str = va( "} %s;\r\n\r\n", enumName );
-		trap_FS_Write( str, strlen( str ), filenum );
+		FS_Write( str, strlen( str ), filenum );
 	}
 
 	if( markdown ) {
 		str = "```\r\n";
-		trap_FS_Write( str, strlen( str ), filenum );
+		FS_Write( str, strlen( str ), filenum );
 	}
 
 	//
@@ -208,7 +208,7 @@ void qasWriteEngineDocsToFile( asIScriptEngine *engine, const char *path, bool s
 	} else {
 		str = "\r\n/**\r\n * Global properties\r\n */\r\n";
 	}
-	trap_FS_Write( str, strlen( str ), filenum );
+	FS_Write( str, strlen( str ), filenum );
 
 	int propertyCount = engine->GetGlobalPropertyCount();
 	for( i = 0; i < propertyCount; i++ ) {
@@ -237,13 +237,13 @@ void qasWriteEngineDocsToFile( asIScriptEngine *engine, const char *path, bool s
 					engine->GetTypeDeclaration( propertyTypeId ), propertyName );
 			}
 
-			trap_FS_Write( decl, strlen( decl ), filenum );
+			FS_Write( decl, strlen( decl ), filenum );
 		}
 	}
 
 	if( markdown ) {
 		str = "```\r\n";
-		trap_FS_Write( str, strlen( str ), filenum );
+		FS_Write( str, strlen( str ), filenum );
 	}
 
 	//
@@ -253,7 +253,7 @@ void qasWriteEngineDocsToFile( asIScriptEngine *engine, const char *path, bool s
 	} else {
 		str = "\r\n/**\r\n * Global functions\r\n */\r\n";
 	}
-	trap_FS_Write( str, strlen( str ), filenum );
+	FS_Write( str, strlen( str ), filenum );
 
 	int functionCount = engine->GetGlobalFunctionCount();
 	for( i = 0; i < functionCount; i++ ) {
@@ -269,16 +269,16 @@ void qasWriteEngineDocsToFile( asIScriptEngine *engine, const char *path, bool s
 			}
 
 			const char *decl = va( "%s;\r\n", func->GetDeclaration( false, false, true ) );
-			trap_FS_Write( decl, strlen( decl ), filenum );
+			FS_Write( decl, strlen( decl ), filenum );
 		}
 	}
 
 	if( markdown ) {
 		str = "```\r\n";
-		trap_FS_Write( str, strlen( str ), filenum );
+		FS_Write( str, strlen( str ), filenum );
 	}
 
-	trap_FS_FCloseFile( filenum );
+	FS_FCloseFile( filenum );
 	Com_Printf( "Wrote %s\n", global_file.c_str() );
 
 	// classes
@@ -310,7 +310,7 @@ void qasWriteEngineDocsToFile( asIScriptEngine *engine, const char *path, bool s
 				class_file += ".h";
 			}
 
-			if( trap_FS_FOpenFile( class_file.c_str(), &filenum, mode ) == -1 ) {
+			if( FS_FOpenFile( class_file.c_str(), &filenum, mode ) == -1 ) {
 				Com_Printf( "ASModule::dumpAPI: Couldn't write %s.\n", class_file.c_str() );
 				continue;
 			}
@@ -322,7 +322,7 @@ void qasWriteEngineDocsToFile( asIScriptEngine *engine, const char *path, bool s
 				} else {
 					str = "\r\n/**\r\n * Classes\r\n */\r\n\r\n";
 				}
-				trap_FS_Write( str, strlen( str ), filenum );
+				FS_Write( str, strlen( str ), filenum );
 
 				wroteClassesHeader = true;
 			}
@@ -332,18 +332,18 @@ void qasWriteEngineDocsToFile( asIScriptEngine *engine, const char *path, bool s
 			} else {
 				str = va( "/**\r\n * %s\r\n */\r\n", objectType->GetName() );
 			}
-			trap_FS_Write( str, strlen( str ), filenum );
+			FS_Write( str, strlen( str ), filenum );
 			str = va( "class %s\r\n{\r\npublic:", objectType->GetName() );
-			trap_FS_Write( str, strlen( str ), filenum );
+			FS_Write( str, strlen( str ), filenum );
 
 			// properties
 			str = "\r\n\t/* object properties */\r\n";
-			trap_FS_Write( str, strlen( str ), filenum );
+			FS_Write( str, strlen( str ), filenum );
 
 			int memberCount = objectType->GetPropertyCount();
 			for( j = 0; j < memberCount; j++ ) {
 				const char *decl = va( "\t%s;\r\n\r\n", objectType->GetPropertyDeclaration( j ) );
-				trap_FS_Write( decl, strlen( decl ), filenum );
+				FS_Write( decl, strlen( decl ), filenum );
 			}
 
 			// properties with accessors
@@ -364,13 +364,13 @@ void qasWriteEngineDocsToFile( asIScriptEngine *engine, const char *path, bool s
 
 					const char *typeDecl = engine->GetTypeDeclaration( method->GetReturnTypeId() );
 					const char *decl = va( "\t%s%s %s;\r\n\r\n", readOnly ? "const " : "", typeDecl, methodName + 4 );
-					trap_FS_Write( decl, strlen( decl ), filenum );
+					FS_Write( decl, strlen( decl ), filenum );
 				}
 			}
 
 			// behaviours
 			str = "\r\n\t/* object behaviors */\r\n";
-			trap_FS_Write( str, strlen( str ), filenum );
+			FS_Write( str, strlen( str ), filenum );
 
 			int behaviourCount = objectType->GetBehaviourCount();
 			for( j = 0; j < behaviourCount; j++ ) {
@@ -383,12 +383,12 @@ void qasWriteEngineDocsToFile( asIScriptEngine *engine, const char *path, bool s
 
 				const char *decl = va( "\t%s;%s\r\n\r\n", function->GetDeclaration( false, false, true ),
 					( behaviourType == asBEHAVE_FACTORY ? " /* factory */ " : "" ) );
-				trap_FS_Write( decl, strlen( decl ), filenum );
+				FS_Write( decl, strlen( decl ), filenum );
 			}
 
 			// methods
 			str = "\r\n\t/* object methods */\r\n";
-			trap_FS_Write( str, strlen( str ), filenum );
+			FS_Write( str, strlen( str ), filenum );
 
 			int methodCount = objectType->GetMethodCount();
 			for( j = 0; j < methodCount; j++ ) {
@@ -404,18 +404,18 @@ void qasWriteEngineDocsToFile( asIScriptEngine *engine, const char *path, bool s
 				}
 
 				const char *decl = va( "\t%s;\r\n\r\n", method->GetDeclaration( false, false, true ) );
-				trap_FS_Write( decl, strlen( decl ), filenum );
+				FS_Write( decl, strlen( decl ), filenum );
 			}
 
 			str = "};\r\n\r\n";
-			trap_FS_Write( str, strlen( str ), filenum );
+			FS_Write( str, strlen( str ), filenum );
 
 			if( markdown ) {
 				str = "```\r\n\r\n";
-				trap_FS_Write( str, strlen( str ), filenum );
+				FS_Write( str, strlen( str ), filenum );
 			}
 
-			trap_FS_FCloseFile( filenum );
+			FS_FCloseFile( filenum );
 
 			Com_Printf( "Wrote %s\n", class_file.c_str() );
 		}
@@ -539,19 +539,19 @@ static char *qasLoadScriptSection( const char *rootDir, const char *dir, const c
 	}
 	Q_strlwr( filename );
 
-	length = trap_FS_FOpenFile( filename, &filenum, FS_READ );
+	length = FS_FOpenFile( filename, &filenum, FS_READ );
 
 	if( length == -1 ) {
-		QAS_Printf( "Couldn't find script section: '%s'\n", filename );
+		Com_Printf( "Couldn't find script section: '%s'\n", filename );
 		return NULL;
 	}
 
 	//load the script data into memory
 	data = ( uint8_t * )qasAlloc( length + 1 );
-	trap_FS_Read( data, length, filenum );
-	trap_FS_FCloseFile( filenum );
+	FS_Read( data, length, filenum );
+	FS_FCloseFile( filenum );
 
-	QAS_Printf( "* Loaded script section '%s'\n", filename );
+	Com_Printf( "* Loaded script section '%s'\n", filename );
 	return (char *)data;
 }
 
@@ -565,17 +565,17 @@ static asIScriptModule *qasBuildScriptProject( asIScriptEngine *asEngine, const 
 	asIScriptModule *asModule;
 
 	if( asEngine == NULL ) {
-		QAS_Printf( S_COLOR_RED "qasBuildGameScript: Angelscript API unavailable\n" );
+		Com_Printf( S_COLOR_RED "qasBuildGameScript: Angelscript API unavailable\n" );
 		return NULL;
 	}
 
-	QAS_Printf( "* Initializing script '%s'\n", scriptName );
+	Com_Printf( "* Initializing script '%s'\n", scriptName );
 
 	// count referenced script sections
 	for( numSections = 0; ( section = COM_ListNameForPosition( script, numSections, QAS_SECTIONS_SEPARATOR ) ) != NULL; numSections++ ) ;
 
 	if( !numSections ) {
-		QAS_Printf( S_COLOR_RED "* Error: script '%s' has no sections\n", scriptName );
+		Com_Printf( S_COLOR_RED "* Error: script '%s' has no sections\n", scriptName );
 		return NULL;
 	}
 
@@ -583,7 +583,7 @@ static asIScriptModule *qasBuildScriptProject( asIScriptEngine *asEngine, const 
 
 	asModule = asEngine->GetModule( moduleName, asGM_CREATE_IF_NOT_EXISTS );
 	if( asModule == NULL ) {
-		QAS_Printf( S_COLOR_RED "qasBuildGameScript: GetModule '%s' failed\n", moduleName );
+		Com_Printf( S_COLOR_RED "qasBuildGameScript: GetModule '%s' failed\n", moduleName );
 		return NULL;
 	}
 
@@ -594,21 +594,21 @@ static asIScriptModule *qasBuildScriptProject( asIScriptEngine *asEngine, const 
 		qasFree( section );
 
 		if( error ) {
-			QAS_Printf( S_COLOR_RED "* Failed to add the script section %s with error %i\n", sectionName, error );
+			Com_Printf( S_COLOR_RED "* Failed to add the script section %s with error %i\n", sectionName, error );
 			asEngine->DiscardModule( moduleName );
 			return NULL;
 		}
 	}
 
 	if( sectionNum != numSections ) {
-		QAS_Printf( S_COLOR_RED "* Error: couldn't load all script sections.\n" );
+		Com_Printf( S_COLOR_RED "* Error: couldn't load all script sections.\n" );
 		asEngine->DiscardModule( moduleName );
 		return NULL;
 	}
 
 	error = asModule->Build();
 	if( error ) {
-		QAS_Printf( S_COLOR_RED "* Failed to build script '%s'\n", scriptName );
+		Com_Printf( S_COLOR_RED "* Failed to build script '%s'\n", scriptName );
 		asEngine->DiscardModule( moduleName );
 		return NULL;
 	}
@@ -628,23 +628,23 @@ asIScriptModule *qasLoadScriptProject( asIScriptEngine *engine, const char *modu
 	Q_snprintfz( filepath, sizeof( filepath ), "%s/%s/%s", rootDir, dir, filename );
 	COM_DefaultExtension( filepath, ext, sizeof( filepath ) );
 
-	length = trap_FS_FOpenFile( filepath, &filenum, FS_READ );
+	length = FS_FOpenFile( filepath, &filenum, FS_READ );
 
 	if( length == -1 ) {
-		QAS_Printf( "qasLoadScriptProject: Couldn't find '%s'.\n", filepath );
+		Com_Printf( "qasLoadScriptProject: Couldn't find '%s'.\n", filepath );
 		return NULL;
 	}
 
 	if( !length ) {
-		QAS_Printf( "qasLoadScriptProject: '%s' is empty.\n", filepath );
-		trap_FS_FCloseFile( filenum );
+		Com_Printf( "qasLoadScriptProject: '%s' is empty.\n", filepath );
+		FS_FCloseFile( filenum );
 		return NULL;
 	}
 
 	//load the script data into memory
 	data = ( char * )qasAlloc( length + 1 );
-	trap_FS_Read( data, length, filenum );
-	trap_FS_FCloseFile( filenum );
+	FS_Read( data, length, filenum );
+	FS_FCloseFile( filenum );
 
 	// Initialize the script
 	asModule = qasBuildScriptProject( engine, moduleName, rootDir, dir, filepath, data );

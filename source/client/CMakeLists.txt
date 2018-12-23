@@ -9,6 +9,8 @@ file(GLOB CLIENT_HEADERS
 	"renderer/*.h"
 	"ftlib/*.h"
 	"sound/*.h"
+	"../gameshared/angelwrap/*.h"
+	"../gameshared/angelwrap/addon/*.h"
 	"../gameshared/q_*.h"
 	"../gameshared/anorms.h"
 	"../gameshared/config.h"
@@ -26,6 +28,8 @@ file(GLOB CLIENT_COMMON_SOURCES
 	"../qcommon/*.cpp"
 	"../server/*.cpp"
 	"../gameshared/q_*.cpp"
+	"../gameshared/angelwrap/*.cpp"
+	"../gameshared/angelwrap/addon/*.cpp"
 	"../qalgo/*.cpp"
 
 	"ftlib/*.cpp"
@@ -79,5 +83,5 @@ endif()
 add_executable(${QFUSION_CLIENT_NAME} ${CLIENT_BINARY_TYPE} ${CLIENT_HEADERS} ${CLIENT_PLATFORM_HEADERS} ${CLIENT_COMMON_SOURCES} ${CLIENT_PLATFORM_SOURCES})
 add_dependencies(${QFUSION_CLIENT_NAME} cgame game ui)
 
-target_link_libraries(${QFUSION_CLIENT_NAME} PRIVATE ${CURL_LIBRARIES} ${SDL2_LIBRARY} ${ZLIB_LIBRARY} ${FREETYPE_LIBRARY} ${OPENAL_LIBRARY} ${CLIENT_PLATFORM_LIBRARIES})
+target_link_libraries(${QFUSION_CLIENT_NAME} PRIVATE ${CURL_LIBRARIES} ${SDL2_LIBRARY} ${ZLIB_LIBRARY} ${FREETYPE_LIBRARY} ${OPENAL_LIBRARY} ${ANGELSCRIPT_LIBRARY} ${CLIENT_PLATFORM_LIBRARIES})
 qf_set_output_dir(${QFUSION_CLIENT_NAME} "")

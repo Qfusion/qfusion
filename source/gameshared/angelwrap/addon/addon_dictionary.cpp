@@ -1,4 +1,4 @@
-#include "../qas_precompiled.h"
+#include "../qas_local.h"
 #include "addon_dictionary.h"
 #include "addon_scriptarray.h"
 #include "addon_string.h"

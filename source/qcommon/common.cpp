@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "wswcurl.h"
 #include "qalgo/glob.h"
 #include "qalgo/md5.h"
+#include "gameshared/angelwrap/qas_public.h"
 
 #define MAX_NUM_ARGVS   50
 
@@ -754,7 +755,7 @@ void Qcommon_Init( int argc, char **argv ) {
 
 	CM_Init();
 
-	Com_ScriptModule_Init();
+	QAS_Init();
 
 	SV_Init();
 	CL_Init();
@@ -882,7 +883,7 @@ void Qcommon_Shutdown( void ) {
 	}
 	isdown = true;
 
-	Com_ScriptModule_Shutdown();
+	QAS_Shutdown();
 	CM_Shutdown();
 	Netchan_Shutdown();
 	NET_Shutdown();

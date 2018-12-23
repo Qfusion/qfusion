@@ -18,18 +18,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#ifndef __QAS_LOCAL_H__
-#define __QAS_LOCAL_H__
+#pragma once
 
 #define AS_USE_STLNAMES 1
 
-#include "../gameshared/q_arch.h"
-#include "../gameshared/q_math.h"
-#include "../gameshared/q_shared.h"
-#include "../gameshared/q_cvar.h"
-#include "../gameshared/q_angeliface.h"
+#include "qcommon/qcommon.h"
+#include "gameshared/q_angeliface.h"
 #include "qas_public.h"
-#include "qas_syscalls.h"
 
 // few fixes regarding Quake and std compatibility
 #ifdef min
@@ -51,33 +46,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 extern struct mempool_s *angelwrappool;
 
-#define QAS_MemAlloc( pool, size ) trap_MemAlloc( pool, size, __FILE__, __LINE__ )
-#define QAS_MemFree( mem ) trap_MemFree( mem, __FILE__, __LINE__ )
-#define QAS_MemAllocPool( name ) trap_MemAllocPool( name, __FILE__, __LINE__ )
-#define QAS_MemFreePool( pool ) trap_MemFreePool( pool, __FILE__, __LINE__ )
-#define QAS_MemEmptyPool( pool ) trap_MemEmptyPool( pool, __FILE__, __LINE__ )
+#define QAS_NEW( x )        new( Mem_Alloc( angelwrappool, sizeof( x ) ) )( x )
+#define QAS_DELETE( ptr,x ) {void *tmp = ptr; ( ptr )->~x(); Mem_Free( tmp );}
 
-#define QAS_Malloc( size ) QAS_MemAlloc( angelwrappool, size )
-#define QAS_Free( data ) QAS_MemFree( data )
-
-#define QAS_NEW( x )        new( QAS_Malloc( sizeof( x ) ) )( x )
-#define QAS_DELETE( ptr,x ) {void *tmp = ptr; ( ptr )->~x(); QAS_Free( tmp );}
-
-#define QAS_NEWARRAY( x,cnt )  (x*)QAS_Malloc( sizeof( x ) * cnt )
-#define QAS_DELETEARRAY( ptr ) QAS_Free( ptr )
-
-int QAS_API( void );
-int QAS_Init( void );
-void QAS_ShutDown( void );
-struct angelwrap_api_s *QAS_GetAngelExport( void );
-
-#ifndef _MSC_VER
-void QAS_Printf( const char *format, ... ) __attribute__( ( format( printf, 1, 2 ) ) );
-void QAS_Error( const char *format, ... ) __attribute__( ( format( printf, 1, 2 ) ) ) __attribute__( ( noreturn ) );
-#else
-void QAS_Printf( _Printf_format_string_ const char *format, ... );
-__declspec( noreturn ) void QAS_Error( _Printf_format_string_ const char *format, ... );
-#endif
+#define QAS_NEWARRAY( x,cnt )  (x*)Mem_Alloc( angelwrappool, sizeof( x ) * cnt )
+#define QAS_DELETEARRAY( ptr ) Mem_Free( ptr )
 
 /******* C++ objects *******/
 asIScriptEngine *qasCreateEngine( bool *asMaxPortability );
@@ -106,5 +79,3 @@ void qasReleaseAnyCpp( CScriptAnyInterface *any );
 
 // projects / bundles
 asIScriptModule *qasLoadScriptProject( asIScriptEngine *engine, const char *moduleName, const char *rootDir, const char *dir, const char *filename, const char *ext );
-
-#endif // __QAS_LOCAL_H__

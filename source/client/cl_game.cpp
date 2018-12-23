@@ -19,6 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "client.h"
+#include "gameshared/angelwrap/qas_public.h"
 
 static cgame_export_t *cge;
 
@@ -323,7 +324,7 @@ void CL_GameModule_Init( void ) {
 	import.Mem_Alloc = CL_GameModule_MemAlloc;
 	import.Mem_Free = CL_GameModule_MemFree;
 
-	import.asGetAngelExport = Com_asGetAngelExport;
+	import.asGetAngelExport = QAS_GetAngelExport;
 
 	if( builtinAPIfunc ) {
 		cge = builtinAPIfunc( &import );

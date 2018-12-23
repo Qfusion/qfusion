@@ -19,8 +19,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "client.h"
-#include "../ui/ui_public.h"
-#include "../qcommon/asyncstream.h"
+#include "ui/ui_public.h"
+#include "qcommon/asyncstream.h"
+#include "gameshared/angelwrap/qas_public.h"
 
 // Structure containing functions exported from user interface DLL
 static ui_export_t *uie;
@@ -268,7 +269,7 @@ void CL_UIModule_Init( void ) {
 
 	import.ML_GetMapByNum = ML_GetMapByNum;
 
-	import.asGetAngelExport = Com_asGetAngelExport;
+	import.asGetAngelExport = QAS_GetAngelExport;
 
 #ifndef UI_HARD_LINKED
 	funcs[0].name = "GetUIAPI";

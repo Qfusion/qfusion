@@ -1,4 +1,4 @@
-#include "../qas_precompiled.h"
+#include "../qas_local.h"
 #include "addon_any.h"
 
 BEGIN_AS_NAMESPACE

@@ -18,17 +18,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#include "qas_precompiled.h"
+#include "qas_local.h"
 
 struct mempool_s *angelwrappool;
 
 static angelwrap_api_t angelExport;
 
-struct angelwrap_api_s *QAS_GetAngelExport( void ) {
+struct angelwrap_api_s *QAS_GetAngelExport() {
 	return &angelExport;
 }
 
-void QAS_InitAngelExport( void ) {
+static void QAS_InitAngelExport() {
 	memset( &angelExport, 0, sizeof( angelExport ) );
 
 	angelExport.angelwrap_api_version = ANGELWRAP_API_VERSION;
@@ -57,68 +57,13 @@ void QAS_InitAngelExport( void ) {
 	angelExport.asLoadScriptProject = qasLoadScriptProject;
 }
 
-int QAS_API( void ) {
-	return ANGELWRAP_API_VERSION;
-}
-
-int QAS_Init( void ) {
-	angelwrappool = QAS_MemAllocPool( "Angelwrap script module" );
-	QAS_Printf( "Initializing Angel Script\n" );
-
-	srand( time( NULL ) );
+void QAS_Init() {
+	angelwrappool = Mem_AllocPool( NULL, "Angelwrap script module" );
+	Com_Printf( "Initializing Angel Script\n" );
 
 	QAS_InitAngelExport();
-	return 1;
 }
 
-void QAS_ShutDown( void ) {
-	QAS_MemFreePool( &angelwrappool );
+void QAS_Shutdown() {
+	Mem_FreePool( &angelwrappool );
 }
-
-void QAS_Error( const char *format, ... ) {
-	va_list argptr;
-	char msg[1024];
-
-	va_start( argptr, format );
-	Q_vsnprintfz( msg, sizeof( msg ), format, argptr );
-	va_end( argptr );
-
-	trap_Error( msg );
-}
-
-void QAS_Printf( const char *format, ... ) {
-	va_list argptr;
-	char msg[1024];
-
-	va_start( argptr, format );
-	Q_vsnprintfz( msg, sizeof( msg ), format, argptr );
-	va_end( argptr );
-
-	trap_Print( msg );
-}
-
-#ifndef ANGELWRAP_HARD_LINKED
-
-// this is only here so the functions in q_shared.c and q_math.c can link
-void Sys_Error( const char *format, ... ) {
-	va_list argptr;
-	char msg[3072];
-
-	va_start( argptr, format );
-	Q_vsnprintfz( msg, sizeof( msg ), format, argptr );
-	va_end( argptr );
-
-	trap_Error( msg );
-}
-
-void Com_Printf( const char *format, ... ) {
-	va_list argptr;
-	char msg[3072];
-
-	va_start( argptr, format );
-	Q_vsnprintfz( msg, sizeof( msg ), format, argptr );
-	va_end( argptr );
-
-	trap_Print( msg );
-}
-#endif

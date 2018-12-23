@@ -2,12 +2,13 @@ project(${QFUSION_SERVER_NAME})
 
 file(GLOB SERVER_HEADERS
 	"*.h"
+	"../gameshared/angelwrap/*.h"
+	"../gameshared/angelwrap/addon/*.h"
 	"../gameshared/q_*.h"
 	"../gameshared/anorms.h"
 	"../gameshared/config.h"	
 	"../qcommon/*.h"
 	"../qalgo/*.h"
-	"../angelwrap/qas_public.h"
 	"../game/g_public.h"
 	"../server/*.h"
 	)
@@ -16,6 +17,8 @@ file(GLOB SERVER_SOURCES
 	"*.cpp"
 	"../qcommon/*.cpp"
 	"../null/cl_null.cpp"
+	"../gameshared/angelwrap/*.cpp"
+	"../gameshared/angelwrap/addon/*.cpp"
 	"../gameshared/q_*.cpp"
 	"../qalgo/*.cpp"
 	)
@@ -50,8 +53,8 @@ else()
 endif()
 
 add_executable(${QFUSION_SERVER_NAME} ${SERVER_BINARY_TYPE} ${SERVER_HEADERS} ${SERVER_SOURCES} ${SERVER_PLATFORM_SOURCES})
-add_dependencies(${QFUSION_SERVER_NAME} angelwrap game)
-target_link_libraries(${QFUSION_SERVER_NAME} PRIVATE ${CURL_LIBRARIES} ${ZLIB_LIBRARY} ${SERVER_PLATFORM_LIBRARIES})
+add_dependencies(${QFUSION_SERVER_NAME} game)
+target_link_libraries(${QFUSION_SERVER_NAME} PRIVATE ${CURL_LIBRARIES} ${ZLIB_LIBRARY} ${ANGELSCRIPT_LIBRARY} ${SERVER_PLATFORM_LIBRARIES})
 qf_set_output_dir(${QFUSION_SERVER_NAME} "")
 
 set_target_properties(${QFUSION_SERVER_NAME} PROPERTIES COMPILE_DEFINITIONS "DEDICATED_ONLY")
