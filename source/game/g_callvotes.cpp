@@ -1802,7 +1802,7 @@ void G_CallVotes_Init( void ) {
 	callvotetype_t *callvote;
 
 	g_callvote_electpercentage =    trap_Cvar_Get( "g_vote_percent", "55", CVAR_ARCHIVE );
-	g_callvote_electtime =      trap_Cvar_Get( "g_vote_electtime", "40", CVAR_ARCHIVE );
+	g_callvote_electtime =      trap_Cvar_Get( "g_vote_electtime", "20", CVAR_ARCHIVE );
 	g_callvote_enabled =        trap_Cvar_Get( "g_vote_allowed", "1", CVAR_ARCHIVE );
 	g_callvote_maxchanges =     trap_Cvar_Get( "g_vote_maxchanges", "3", CVAR_ARCHIVE );
 	g_callvote_cooldowntime =   trap_Cvar_Get( "g_vote_cooldowntime", "5", CVAR_ARCHIVE );
