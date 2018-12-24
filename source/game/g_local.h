@@ -93,7 +93,6 @@ typedef enum {
 	MOVETYPE_LINEARPROJECTILE, // extra size to monsters
 	MOVETYPE_BOUNCE,
 	MOVETYPE_BOUNCEGRENADE,
-	MOVETYPE_TOSSSLIDE
 } movetype_t;
 
 //

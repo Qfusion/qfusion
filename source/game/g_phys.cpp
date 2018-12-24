@@ -24,114 +24,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 //================================================================================
 
-/*
-* SV_AddGravity
-*
-*/
-static void SV_AddGravity( edict_t *ent ) {
-	ent->velocity[2] -= ent->gravity * level.gravity * FRAMETIME;
-}
-
-void G_AddGroundFriction( edict_t *ent, float friction ) {
-	vec3_t v, frictionVec;
-	float speed, fspeed;
-
-	VectorSet( v, ent->velocity[0], ent->velocity[1], 0 );
-	speed = VectorNormalize2( v, frictionVec );
-	if( speed ) {
-		fspeed = friction * FRAMETIME;
-		if( fspeed > speed ) {
-			fspeed = speed;
-		}
-
-		VectorMA( ent->velocity, -fspeed, frictionVec, ent->velocity );
-	}
-}
-
-/*
-* G_BoxSlideMove
-* calls GS_SlideMove for edict_t and triggers touch functions of touched objects
-*/
-int G_BoxSlideMove( edict_t *ent, int contentmask, float slideBounce, float friction ) {
-	int i;
-	move_t entMove;
-	int blockedmask = 0;
-	float oldVelocity;
-	memset( &entMove, 0, sizeof( move_t ) );
-
-	oldVelocity = VectorLength( ent->velocity );
-	if( !ent->groundentity ) {
-		SV_AddGravity( ent );
-	} else { // horizontal friction
-		G_AddGroundFriction( ent, friction );
-	}
-
-	entMove.numClipPlanes = 0;
-	entMove.numtouch = 0;
-
-	if( oldVelocity > 0 ) {
-		VectorCopy( ent->s.origin, entMove.origin );
-		VectorCopy( ent->velocity, entMove.velocity );
-		VectorCopy( ent->r.mins, entMove.mins );
-		VectorCopy( ent->r.maxs, entMove.maxs );
-
-		entMove.remainingTime = FRAMETIME;
-
-		VectorSet( entMove.gravityDir, 0, 0, -1 );
-		entMove.slideBounce = slideBounce;
-		entMove.groundEntity = ( ent->groundentity == NULL ) ? -1 : ENTNUM( ent->groundentity );
-
-		entMove.passent = ENTNUM( ent );
-		entMove.contentmask = contentmask;
-
-		blockedmask = GS_SlideMove( &entMove );
-
-		// update with the new values
-		VectorCopy( entMove.origin, ent->s.origin );
-		VectorCopy( entMove.velocity, ent->velocity );
-		ent->groundentity = ( entMove.groundEntity == -1 ) ? NULL : &game.edicts[entMove.groundEntity];
-
-		GClip_LinkEntity( ent );
-	}
-
-	// call touches
-	if( contentmask != 0 ) {
-		edict_t *other;
-		GClip_TouchTriggers( ent );
-
-		// touch other objects
-		for( i = 0; i < entMove.numtouch; i++ ) {
-			other = &game.edicts[entMove.touchents[i]];
-			if( other->r.svflags & SVF_PROJECTILE ) {
-				continue;
-			}
-
-			G_CallTouch( other, ent, NULL, 0 );
-
-			// if self touch function, fire up touch and if freed stop
-			G_CallTouch( ent, other, NULL, 0 );
-			if( !ent->r.inuse ) { // it may have been freed by the touch function
-				break;
-			}
-		}
-	}
-
-	if( ent->r.inuse ) {
-		G_CheckGround( ent );
-		if( ent->groundentity && VectorLength( ent->velocity ) <= 1 && oldVelocity > 1 ) {
-			VectorClear( ent->velocity );
-			VectorClear( ent->avelocity );
-			G_CallStop( ent );
-		}
-	}
-
-	return blockedmask;
-}
-
-
-
-//================================================================================
-
 //pushmove objects do not obey gravity, and do not interact with each other or trigger fields, but block normal movement and push normal objects when they move.
 //
 //onground is set for toss objects when they come to a complete rest.  it is set for steping or walking objects
@@ -592,7 +484,7 @@ static void SV_Physics_Toss( edict_t *ent ) {
 
 	// add gravity
 	if( ent->movetype != MOVETYPE_FLY && !ent->groundentity ) {
-		SV_AddGravity( ent );
+		ent->velocity[2] -= ent->gravity * level.gravity * FRAMETIME;
 	}
 
 	// move angles
@@ -776,9 +668,6 @@ void G_RunEntity( edict_t *ent ) {
 			break;
 		case MOVETYPE_LINEARPROJECTILE:
 			SV_Physics_LinearProjectile( ent );
-			break;
-		case MOVETYPE_TOSSSLIDE:
-			G_BoxSlideMove( ent, ent->r.clipmask ? ent->r.clipmask : MASK_PLAYERSOLID, 1.01f, 10 );
 			break;
 		default:
 			G_Error( "SV_Physics: bad movetype %i", (int)ent->movetype );
