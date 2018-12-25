@@ -20,8 +20,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // cmd.c -- Quake script command processing module
 
 #include "qcommon.h"
-#include "../qalgo/q_trie.h"
-#include "../client/console.h"
+#include "qalgo/q_trie.h"
+#include "client/console.h"
 
 #define MAX_ALIAS_NAME      64
 #define ALIAS_LOOP_COUNT    16
@@ -434,7 +434,7 @@ static void Cmd_Exec_f( void ) {
 		return;
 	}
 
-	name_size = sizeof( char ) * ( strlen( arg ) + strlen( ".cfg" ) + 1 );
+	name_size = sizeof( char ) * ( strlen( arg ) + strlen( ".txt" ) + 1 );
 	name = ( char * ) Mem_TempMalloc( name_size );
 
 	Q_strncpyz( name, arg, name_size );
@@ -448,7 +448,7 @@ static void Cmd_Exec_f( void ) {
 		return;
 	}
 
-	COM_DefaultExtension( name, ".cfg", name_size );
+	COM_DefaultExtension( name, ".txt", name_size );
 
 	basename = FS_BaseNameForFile( name );
 	if( basename ) {
@@ -482,7 +482,7 @@ static void Cmd_Exec_f( void ) {
 * CL_CompleteExecBuildList
 */
 static char **CL_CompleteExecBuildList( const char *partial ) {
-	return Cmd_CompleteFileList( partial, "", ".cfg", true );
+	return Cmd_CompleteFileList( partial, "", ".txt", true );
 }
 
 /*
