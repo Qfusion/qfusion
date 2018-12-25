@@ -3396,7 +3396,7 @@ bool FS_SetGameDirectory( const char *dir, bool force ) {
 	}
 
 	if( fs_initialized && ( !dedicated || !dedicated->integer ) ) {
-		Cmd_ExecuteString( "writeconfig config.cfg" );
+		Cmd_ExecuteString( "writeconfig config.txt" );
 	}
 
 	// free up any current game dir info

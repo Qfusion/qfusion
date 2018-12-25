@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // r_cmds.c
 #include "r_local.h"
 #include "r_frontend.h"
-#include "../../qalgo/glob.h"
+#include "qalgo/glob.h"
 
 /*
  * R_Localtime

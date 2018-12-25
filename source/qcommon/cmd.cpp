@@ -315,7 +315,6 @@ void Cbuf_Execute( void ) {
 	Cbuf_FreeSpace();
 }
 
-
 /*
 * Cbuf_AddEarlyCommands
 *
@@ -327,7 +326,7 @@ void Cbuf_Execute( void ) {
 * Set and exec commands are added early, so they are guaranteed to be set before
 * the client and server initialize for the first time.
 *
-* This command is first run before autoexec.cfg and config.cfg to allow changing
+* This command is first run before autoexec.txt and config.txt to allow changing
 * fs_basepath etc. The second run is after those files has been execed in order
 * to allow overwriting values set in them.
 *
