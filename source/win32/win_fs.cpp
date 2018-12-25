@@ -259,24 +259,6 @@ const char *Sys_FS_GetCacheDirectory( void ) {
 }
 
 /*
-* Sys_FS_GetRuntimeDirectory
-*/
-const char *Sys_FS_GetRuntimeDirectory( void ) {
-	static char temp[MAX_PATH] = { '\0' };
-
-	if( temp[0] == 0 ) {
-		DWORD res = GetTempPath( MAX_PATH, temp );
-		if( res == 0 || res >= MAX_PATH ) {
-			temp[0] = '\0';
-			return NULL;
-		}
-		Q_strncpyz( temp, va( "%s/%s %d.%d", COM_SanitizeFilePath( temp ), APPLICATION, APP_VERSION_MAJOR, APP_VERSION_MINOR ), sizeof( temp ) );
-	}
-
-	return temp[0] == '\0' ? NULL : temp;
-}
-
-/*
 * Sys_FS_LockFile
 */
 void *Sys_FS_LockFile( const char *path ) {
