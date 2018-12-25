@@ -74,7 +74,6 @@ typedef struct {
 	const char *( *FS_FirstExtension )( const char *filename, const char *extensions[], int num_extensions );
 	bool ( *FS_MoveFile )( const char *src, const char *dst );
 	bool ( *FS_RemoveDirectory )( const char *dirname );
-	const char * ( *FS_GameDirectory )( void );
 	const char * ( *FS_WriteDirectory )( void );
 
 	// multithreading

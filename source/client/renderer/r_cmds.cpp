@@ -126,9 +126,9 @@ void R_ScreenShot_f( void ) {
 
 	name = ri.Cmd_Argv( 1 );
 
-	path_size = strlen( ri.FS_WriteDirectory() ) + 1 /* '/' */ + strlen( ri.FS_GameDirectory() ) + strlen( "/screenshots/" ) + 1;
+	path_size = strlen( ri.FS_WriteDirectory() ) + strlen( "/screenshots/" ) + 1;
 	path = ( char * ) alloca( path_size );
-	Q_snprintfz( path, path_size, "%s/%s/screenshots/", ri.FS_WriteDirectory(), ri.FS_GameDirectory() );
+	Q_snprintfz( path, path_size, "%s/screenshots/", ri.FS_WriteDirectory() );
 
 	// validate timestamp string
 	for( i = 0; i < 2; i++ ) {
