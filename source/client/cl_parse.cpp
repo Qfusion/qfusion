@@ -808,9 +808,6 @@ static void CL_ParseServerData( msg_t *msg ) {
 				   FS_BaseGameDirectory() );
 	}
 
-	// game directory
-	str = MSG_ReadString( msg );
-
 	// parse player entity number
 	cl.playernum = MSG_ReadInt16( msg );
 
