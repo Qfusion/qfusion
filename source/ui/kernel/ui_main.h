@@ -32,7 +32,6 @@ public:
 
 class ServerBrowserDataSource;
 class MapsDataSource;
-class ProfilesDataSource;
 class VideoDataSource;
 class DemosDataSource;
 class ModsDataSource;
@@ -166,7 +165,6 @@ private:
 
 	ServerBrowserDataSource *serverBrowser;
 	MapsDataSource *maps;
-	ProfilesDataSource *vidProfiles;
 	VideoDataSource *videoModes;
 	DemosDataSource *demos;
 	ModsDataSource *mods;

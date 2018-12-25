@@ -21,7 +21,6 @@
 #include "datasources/ui_video_datasource.h"
 #include "datasources/ui_maps_datasource.h"
 #include "datasources/ui_models_datasource.h"
-#include "datasources/ui_profiles_datasource.h"
 #include "datasources/ui_serverbrowser_datasource.h"
 #include "datasources/ui_gameajax_datasource.h"
 
@@ -47,7 +46,7 @@ UI_Main::UI_Main( int vidWidth, int vidHeight, float pixelRatio,
 	: asmodule( nullptr ), rocketModule( nullptr ),
 	levelshot_fmt( 0 ), datetime_fmt( 0 ), duration_fmt( 0 ), filetype_fmt( 0 ), colorcode_fmt( 0 ),
 	empty_fmt( 0 ), serverflags_fmt( 0 ),
-	serverBrowser( 0 ), maps( 0 ), vidProfiles( 0 ), videoModes( 0 ),
+	serverBrowser( 0 ), maps( 0 ), videoModes( 0 ),
 	demos( 0 ), playerModels( 0 ), gameajax( 0 ),
 
 	// other members
@@ -352,7 +351,6 @@ void UI_Main::createDataSources( void ) {
 	demos = __new__( DemosDataSource )( demoExtension );
 	gameajax = __new__( GameAjaxDataSource )();
 	playerModels = __new__( ModelsDataSource )();
-	vidProfiles = __new__( ProfilesDataSource )();
 }
 
 void UI_Main::destroyDataSources( void ) {
@@ -362,7 +360,6 @@ void UI_Main::destroyDataSources( void ) {
 	__SAFE_DELETE_NULLIFY( demos );
 	__SAFE_DELETE_NULLIFY( gameajax );
 	__SAFE_DELETE_NULLIFY( playerModels );
-	__SAFE_DELETE_NULLIFY( vidProfiles );
 }
 
 void UI_Main::createFormatters( void ) {
