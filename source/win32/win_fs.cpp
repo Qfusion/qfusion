@@ -243,9 +243,9 @@ const char *Sys_FS_GetHomeDirectory( void ) {
 	}
 
 #ifdef USE_MY_DOCUMENTS
-	Q_strncpyz( home, va( "%s/My Games/%s %d.%d", COM_SanitizeFilePath( home ), APPLICATION, APP_VERSION_MAJOR, APP_VERSION_MINOR ), sizeof( home ) );
+	Q_strncpyz( home, va( "%s/My Games/%s", COM_SanitizeFilePath( home ), APPLICATION ), sizeof( home ) );
 #else
-	Q_strncpyz( home, va( "%s/%s %d.%d", COM_SanitizeFilePath( home ), APPLICATION, APP_VERSION_MAJOR, APP_VERSION_MINOR ), sizeof( home ) );
+	Q_strncpyz( home, va( "%s/%s", COM_SanitizeFilePath( home ), APPLICATION ), sizeof( home ) );
 #endif
 
 	return home;
