@@ -234,7 +234,7 @@ const char *Sys_FS_GetHomeDirectory( void ) {
 #endif
 
 		if( base ) {
-			Q_snprintfz( home, sizeof( home ), "%s/%s%s", base, local );
+			Q_snprintfz( home, sizeof( home ), "%s/%s", base, local );
 		}
 	}
 
