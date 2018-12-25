@@ -1612,7 +1612,7 @@ static unsigned int Shader_GetCache( const char *name, shadercache_t **cache ) {
 
 	*cache = NULL;
 
-	key = fnv1a32( name, strlen( name ) ) % SHADERCACHE_HASH_SIZE;
+	key = Hash32( name, strlen( name ) ) % SHADERCACHE_HASH_SIZE;
 	for( c = shadercache_hash[key]; c; c = c->hash_next ) {
 		if( !Q_stricmp( c->name, name ) ) {
 			*cache = c;
@@ -2556,7 +2556,7 @@ void R_TouchShadersByName( const char *name ) {
 		return;
 	}
 
-	key = fnv1a32( shortName, nameLength ) % SHADERS_HASH_SIZE;
+	key = Hash32( shortName, nameLength ) % SHADERS_HASH_SIZE;
 	hnode = &r_shaders_hash_headnode[key];
 	for( s = hnode->next; s != hnode; s = s->next ) {
 		if( !strcmp( s->name, shortName ) ) {
@@ -2597,7 +2597,7 @@ shader_t *R_LoadShader( const char *name, shaderType_e type, bool forceDefault, 
 	}
 
 	// test if already loaded
-	key = fnv1a32( shortname, nameLength ) % SHADERS_HASH_SIZE;
+	key = Hash32( shortname, nameLength ) % SHADERS_HASH_SIZE;
 	hnode = &r_shaders_hash_headnode[key];
 
 	// scan all instances of the same shader for exact match of the type

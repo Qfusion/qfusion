@@ -1,6 +1,6 @@
 #include "hash.h"
 
-uint32_t fnv1a32( const void * data, size_t n ) {
+uint32_t Hash32( const void * data, size_t n ) {
 	const uint32_t basis = UINT32_C( 2166136261 );
 	const uint32_t prime = UINT32_C( 16777619 );
 
@@ -12,7 +12,7 @@ uint32_t fnv1a32( const void * data, size_t n ) {
 	return hash;
 }
 
-uint64_t fnv1a64( const void * data, size_t n ) {
+uint64_t Hash64( const void * data, size_t n ) {
 	const uint64_t basis = UINT64_C( 14695981039346656037 );
 	const uint64_t prime = UINT64_C( 1099511628211 );
 

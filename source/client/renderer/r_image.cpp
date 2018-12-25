@@ -978,7 +978,7 @@ static image_t *R_CreateImage( const char *name, int width, int height, int laye
 	image_t *image;
 	int name_len = strlen( name );
 
-	unsigned hash = fnv1a32( name, name_len );
+	unsigned hash = Hash32( name, name_len );
 
 	image = R_LinkPic( hash );
 	if( !image ) {
@@ -1230,7 +1230,7 @@ image_t *R_FindImage( const char *name, const char *suffix, int flags, int minmi
 	searchFlags = flags & ~IT_LOADFLAGS;
 
 	// look for it
-	key = fnv1a32( pathname, len ) % IMAGES_HASH_SIZE;
+	key = Hash32( pathname, len ) % IMAGES_HASH_SIZE;
 	hnode = &r_images_hash_headnode[key];
 	for( image_t *image = hnode->prev; image != hnode; image = image->prev ) {
 		if( ( ( image->flags & ~IT_LOADFLAGS ) == searchFlags ) &&

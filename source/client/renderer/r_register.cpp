@@ -434,7 +434,7 @@ static unsigned R_GLVersionHash( const char *vendorString, const char *rendererS
 	memcpy( tmp + pos, ARCH, csize );
 	pos += csize;
 
-	hash = fnv1a32( tmp, tmp_size );
+	hash = Hash32( tmp, tmp_size );
 
 	R_Free( tmp );
 
