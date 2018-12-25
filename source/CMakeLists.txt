@@ -144,7 +144,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 	add_dependencies(tar_gz ${QFUSION_CLIENT_NAME} game ${QFUSION_SERVER_NAME})
 endif()
 
-add_subdirectory(cgame)
 add_subdirectory(client)
 add_subdirectory(game)
 add_subdirectory(server)
