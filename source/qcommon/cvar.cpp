@@ -424,10 +424,7 @@ void Cvar_FixCheatVars( void ) {
 	QMutex_Unlock( cvar_mutex );
 	for( i = 0; i < dump->size; ++i ) {
 		cvar_t * var = ( cvar_t * ) dump->key_value_vector[i].value;
-		Mem_ZoneFree( var->string );
-		var->string = ZoneCopyString( var->dvalue );
-		var->value = atof( var->string );
-		var->integer = Q_rint( var->value );
+		Cvar_ForceSet( var->name, var->dvalue );
 	}
 	Trie_FreeDump( dump );
 }
