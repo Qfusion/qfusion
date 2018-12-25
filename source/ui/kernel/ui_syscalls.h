@@ -366,10 +366,6 @@ inline int FS_GetFileList( const char *dir, const char *extension, char *buf, si
 	return UI_IMPORT.FS_GetFileList( dir, extension, buf, bufsize, start, end );
 }
 
-inline int FS_GetGameDirectoryList( char *buf, size_t bufsize ) {
-	return UI_IMPORT.FS_GetGameDirectoryList( buf, bufsize );
-}
-
 inline const char *FS_FirstExtension( const char *filename, const char **extensions, int num_extensions ) {
 	return UI_IMPORT.FS_FirstExtension( filename, extensions, num_extensions );
 }

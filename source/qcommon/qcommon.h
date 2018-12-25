@@ -582,8 +582,6 @@ void        FS_Shutdown( void );
 
 const char *FS_GameDirectory( void );
 const char *FS_BaseGameDirectory( void );
-bool        FS_SetGameDirectory( const char *dir, bool force );
-int         FS_GetGameDirectoryList( char *buf, size_t bufsize );
 int         FS_GetExplicitPurePakList( char ***paknames );
 bool        FS_IsExplicitPurePak( const char *pakname, bool *wrongver );
 

@@ -38,11 +38,10 @@ typedef int cvar_flag_t;
 // but can be set from the command line
 #define CVAR_LATCH          16      // save changes until map restart
 #define CVAR_LATCH_VIDEO    32      // save changes until video restart
-#define CVAR_LATCH_SOUND    64      // save changes until video restart
-#define CVAR_CHEAT          128     // will be reset to default unless cheats are enabled
-#define CVAR_READONLY       256     // don't allow changing by user, ever
-#define CVAR_DEVELOPER      512     // allow changing in dev builds, hide in release builds
-#define CVAR_FROMCONFIG    1024     // set by the user's config, don't trim it
+#define CVAR_CHEAT          64     // will be reset to default unless cheats are enabled
+#define CVAR_READONLY       128     // don't allow changing by user, ever
+#define CVAR_DEVELOPER      256     // allow changing in dev builds, hide in release builds
+#define CVAR_FROMCONFIG     512     // set by the user's config, don't trim it
 
 // nothing outside the Cvar_*() functions should access these fields!!!
 typedef struct cvar_s {

@@ -177,7 +177,6 @@ void CL_UIModule_Init( void ) {
 	import.FS_FCloseFile = FS_FCloseFile;
 	import.FS_RemoveFile = FS_RemoveFile;
 	import.FS_GetFileList = FS_GetFileList;
-	import.FS_GetGameDirectoryList = FS_GetGameDirectoryList;
 	import.FS_FirstExtension = FS_FirstExtension;
 	import.FS_MoveFile = FS_MoveFile;
 	import.FS_MoveCacheFile = FS_MoveCacheFile;

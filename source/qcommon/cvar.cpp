@@ -247,8 +247,7 @@ static cvar_t *Cvar_Set2( const char *var_name, const char *value, bool force ) 
 			}
 		}
 
-		if( Cvar_FlagIsSet( var->flags, CVAR_LATCH ) || Cvar_FlagIsSet( var->flags, CVAR_LATCH_VIDEO ) ||
-			Cvar_FlagIsSet( var->flags, CVAR_LATCH_SOUND ) ) {
+		if( Cvar_FlagIsSet( var->flags, CVAR_LATCH ) || Cvar_FlagIsSet( var->flags, CVAR_LATCH_VIDEO ) ) {
 			if( var->latched_string ) {
 				if( !strcmp( value, var->latched_string ) ) {
 					return var;
@@ -267,16 +266,7 @@ static cvar_t *Cvar_Set2( const char *var_name, const char *value, bool force ) 
 				if( Cvar_FlagIsSet( var->flags, CVAR_LATCH_VIDEO ) ) {
 					Com_Printf( "%s will be changed upon restarting video.\n", var->name );
 					var->latched_string = ZoneCopyString( (char *) value );
-				} else if( Cvar_FlagIsSet( var->flags, CVAR_LATCH_SOUND ) ) {
-					Com_Printf( "%s will be changed upon restarting sound.\n", var->name );
-					var->latched_string = ZoneCopyString( (char *) value );
 				} else {
-					if( !strcmp( var->name, "fs_game" ) ) {
-						char *new_dir = ZoneCopyString( value );
-						FS_SetGameDirectory( new_dir, false );
-						Mem_ZoneFree( new_dir );
-						return var;
-					}
 					Mem_ZoneFree( var->string ); // free the old value string
 					var->string = ZoneCopyString( value );
 					var->value = atof( var->string );
@@ -371,12 +361,10 @@ void Cvar_GetLatchedVars( cvar_flag_t flags ) {
 	unsigned int i;
 	struct trie_dump_s *dump = NULL;
 	cvar_flag_t latchFlags;
-	cvar_t *changedGameDir = NULL;
 
 	Cvar_FlagsClear( &latchFlags );
 	Cvar_FlagSet( &latchFlags, CVAR_LATCH );
 	Cvar_FlagSet( &latchFlags, CVAR_LATCH_VIDEO );
-	Cvar_FlagSet( &latchFlags, CVAR_LATCH_SOUND );
 	Cvar_FlagUnset( &flags, ~latchFlags );
 	if( !flags ) {
 		return;
@@ -388,9 +376,6 @@ void Cvar_GetLatchedVars( cvar_flag_t flags ) {
 	QMutex_Unlock( cvar_mutex );
 	for( i = 0; i < dump->size; ++i ) {
 		cvar_t * var = ( cvar_t * ) dump->key_value_vector[i].value;
-		if( !strcmp( var->name, "fs_game" ) ) {
-			changedGameDir = var;
-		}
 		Mem_ZoneFree( var->string );
 		var->string = var->latched_string;
 		var->latched_string = NULL;
@@ -398,10 +383,6 @@ void Cvar_GetLatchedVars( cvar_flag_t flags ) {
 		var->integer = Q_rint( var->value );
 	}
 	Trie_FreeDump( dump );
-
-	if( changedGameDir ) {
-		FS_SetGameDirectory( changedGameDir->string, false );
-	}
 }
 
 /*
@@ -574,8 +555,7 @@ void Cvar_WriteVariables( int file ) {
 			cmd = "seta";
 		}
 
-		if( Cvar_FlagIsSet( var->flags, CVAR_LATCH ) || Cvar_FlagIsSet( var->flags, CVAR_LATCH_VIDEO ) ||
-			Cvar_FlagIsSet( var->flags, CVAR_LATCH_SOUND ) ) {
+		if( Cvar_FlagIsSet( var->flags, CVAR_LATCH ) || Cvar_FlagIsSet( var->flags, CVAR_LATCH_VIDEO ) ) {
 			if( var->latched_string ) {
 				Q_snprintfz( buffer, sizeof( buffer ), "%s %s \"%s\"\r\n", cmd, var->name, var->latched_string );
 			} else {
@@ -633,8 +613,7 @@ static void Cvar_List_f( void ) {
 		}
 		if( Cvar_FlagIsSet( var->flags, CVAR_NOSET ) || Cvar_FlagIsSet( var->flags, CVAR_READONLY ) ) {
 			Com_Printf( "-" );
-		} else if( Cvar_FlagIsSet( var->flags, CVAR_LATCH ) || Cvar_FlagIsSet( var->flags, CVAR_LATCH_VIDEO ) ||
-				   Cvar_FlagIsSet( var->flags, CVAR_LATCH_SOUND ) ) {
+		} else if( Cvar_FlagIsSet( var->flags, CVAR_LATCH ) || Cvar_FlagIsSet( var->flags, CVAR_LATCH_VIDEO ) ) {
 			Com_Printf( "L" );
 		} else {
 			Com_Printf( " " );

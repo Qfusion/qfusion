@@ -768,7 +768,7 @@ SERVER CONNECTING MESSAGES
 * CL_ParseServerData
 */
 static void CL_ParseServerData( msg_t *msg ) {
-	const char *str, *gamedir;
+	const char *str;
 	int i, sv_bitflags, numpure;
 	int http_portnum;
 	bool old_sv_pure;
@@ -810,24 +810,6 @@ static void CL_ParseServerData( msg_t *msg ) {
 
 	// game directory
 	str = MSG_ReadString( msg );
-	if( !str || !str[0] ) {
-		Com_Error( ERR_DROP, "Server sent an empty game directory" );
-	}
-	if( !COM_ValidateRelativeFilename( str ) || strchr( str, '/' ) ) {
-		Com_Error( ERR_DROP, "Server sent an invalid game directory: %s", str );
-	}
-	gamedir = FS_GameDirectory();
-	if( strcmp( str, gamedir ) ) {
-		// shutdown the cgame module first in case it is running for whatever reason
-		// (happens on wswtv in lobby), otherwise precaches that are going to follow
-		// will probably fuck up (like models trying to load before the world model)
-		CL_GameModule_Shutdown();
-
-		if( !FS_SetGameDirectory( str, true ) ) {
-			Com_Error( ERR_DROP, "Failed to load game directory set by server: %s", str );
-		}
-		ML_Restart( true );
-	}
 
 	// parse player entity number
 	cl.playernum = MSG_ReadInt16( msg );

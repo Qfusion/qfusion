@@ -64,15 +64,6 @@ typedef enum {
 	FS_PURE_EXPLICIT    = 2
 } fs_pure_t;
 
-static const char *forbidden_gamedirs[] = {
-	"docs",
-	"libs",
-	"browser",
-	APPLICATION ".app",
-	"downloads",
-	NULL
-};
-
 typedef struct {
 	unsigned char readBuffer[FS_ZIP_BUFSIZE]; // internal buffer for compressed data
 	z_stream zstream;                       // zLib stream structure for inflate
@@ -150,7 +141,6 @@ static cvar_t *fs_cdpath;
 static cvar_t *fs_usehomedir;
 static cvar_t *fs_usedownloadsdir;
 static cvar_t *fs_basegame;
-static cvar_t *fs_game;
 
 static searchpath_t *fs_basepaths = NULL;       // directories without gamedirs
 static searchpath_t *fs_searchpaths = NULL;     // game search directories, plus paks
@@ -2829,8 +2819,7 @@ int FS_GetFileList( const char *dir, const char *extension, char *buf, size_t bu
 * Returns the current game directory, without the path
 */
 const char *FS_GameDirectory( void ) {
-	assert( fs_game && fs_game->string && fs_game->string[0] );
-	return fs_game->string;
+	return fs_basegame->string;
 }
 
 /*
@@ -2974,74 +2963,6 @@ const char *FS_BaseNameForFile( const char *filename ) {
 		return va( "%s/%s", search->path, filename );
 	}
 	return va( "%s/%s", p + 1, filename );
-}
-
-/*
-* FS_GetGameDirectoryList
-*/
-int FS_GetGameDirectoryList( char *buf, size_t bufsize ) {
-	char **modnames;
-	int i, j, length, nummods, nummods_total;
-	size_t len, alllen;
-	const char *basename, *s;
-	searchpath_t *basepath;
-	char temp[FS_MAX_PATH + 2];
-
-	if( !buf ) {
-		return 0;
-	}
-
-	nummods_total = 0;
-	alllen = 0;
-	buf[0] = '\0';
-
-	basepath = fs_basepaths;
-	while( basepath ) {
-		if( ( modnames = FS_ListFiles( va_r( temp, sizeof( temp ), "%s/*", basepath->path ), &nummods, SFF_SUBDIR, SFF_HIDDEN | SFF_SYSTEM ) ) ) {
-			for( i = 0; i < nummods; i++ ) {
-				basename = COM_FileBase( modnames[i] );
-
-				// forbidden directory?
-				for( j = 0; forbidden_gamedirs[j]; j++ ) {
-					if( !Q_stricmp( forbidden_gamedirs[j], basename ) ) {
-						break;
-					}
-				}
-				if( forbidden_gamedirs[j] ) {
-					continue;
-				}
-
-				// already added?
-				s = buf;
-				for( j = 0; j < nummods_total; j++, s += length + 1 ) {
-					length = strlen( s );
-					if( !Q_stricmp( s, basename ) ) {
-						break;
-					}
-				}
-				if( j != nummods_total ) {
-					continue;
-				}
-
-				// too little space?
-				len = strlen( basename );
-				if( bufsize <= len + alllen ) {
-					break;
-				}
-
-				// ok, add it
-				strcpy( buf + alllen, basename );
-				alllen += len + 1;
-				buf[alllen] = '\0';
-				Mem_ZoneFree( modnames[i] );
-				nummods_total++;
-			}
-			Mem_ZoneFree( modnames );
-		}
-		basepath = basepath->next;
-	}
-
-	return nummods_total;
 }
 
 /*
@@ -3363,83 +3284,6 @@ static int FS_UpdateGameDirectory( const char *gamedir ) {
 }
 
 /*
-* FS_SetGameDirectory
-*
-* Sets the gamedir and path to a different directory.
-*/
-bool FS_SetGameDirectory( const char *dir, bool force ) {
-	int i;
-	searchpath_t *next;
-
-	if( !force && Com_ClientState() >= CA_CONNECTED && !Com_DemoPlaying() ) {
-		Com_Printf( "Can't change game directory while connected\n" );
-		return false;
-	}
-
-	Com_Printf( "Changing game directory to: %s\n", dir );
-
-	if( !COM_ValidateRelativeFilename( dir ) ) {
-		Com_Printf( "Invalid name.\n" );
-		return false;
-	}
-
-	if( strchr( dir, '/' ) ) {
-		Com_Printf( "Game directory must be a single filename, not a path\n" );
-		return false;
-	}
-
-	for( i = 0; forbidden_gamedirs[i]; i++ ) {
-		if( !Q_stricmp( forbidden_gamedirs[i], dir ) ) {
-			Com_Printf( "Forbidden game directory\n" );
-			return false;
-		}
-	}
-
-	if( fs_initialized && ( !dedicated || !dedicated->integer ) ) {
-		Cmd_ExecuteString( "writeconfig config.txt" );
-	}
-
-	// free up any current game dir info
-	QMutex_Lock( fs_searchpaths_mutex );
-	while( fs_searchpaths != fs_base_searchpaths ) {
-		if( fs_searchpaths->pack ) {
-			FS_FreePakFile( fs_searchpaths->pack );
-		}
-		FS_Free( fs_searchpaths->path );
-		next = fs_searchpaths->next;
-		FS_Free( fs_searchpaths );
-		fs_searchpaths = next;
-	}
-	QMutex_Unlock( fs_searchpaths_mutex );
-
-	if( !strcmp( dir, fs_basegame->string ) || *dir == 0 ) {
-		Cvar_ForceSet( "fs_game", fs_basegame->string );
-	} else {
-		Cvar_ForceSet( "fs_game", dir );
-		FS_AddGameDirectory( dir );
-	}
-
-	// if game directory is present but we haven't initialized filesystem yet,
-	// that means fs_game was set via early commands and autoexec.cfg (and confi.cfg in the
-	// case of client) will be executed in Qcommon_Init, so prevent double execution
-	if( fs_initialized ) {
-		if( !dedicated || !dedicated->integer ) {
-			Cbuf_AddText( "exec config.cfg\n" );
-			Cbuf_AddText( "exec autoexec.cfg\n" );
-
-			// flush all data, so it will be forced to reload
-			Cbuf_AddText( "s_restart 1\nin_restart\n" );
-		} else {
-			Cbuf_AddText( "exec dedicated_autoexec.cfg\n" );
-		}
-	}
-
-	Cbuf_Execute();
-
-	return true;
-}
-
-/*
 * FS_AddBasePath
 */
 static void FS_AddBasePath( const char *path ) {
@@ -3684,22 +3528,14 @@ void FS_Init( void ) {
 	//
 	// set game directories
 	//
-	fs_basegame = Cvar_Get( "fs_basegame", DEFAULT_BASEGAME, CVAR_NOSET );
+	fs_basegame = Cvar_Get( "fs_basegame", DEFAULT_BASEGAME, CVAR_READONLY );
 	if( !fs_basegame->string[0] ) {
 		Cvar_ForceSet( "fs_basegame", DEFAULT_BASEGAME );
-	}
-	fs_game = Cvar_Get( "fs_game", fs_basegame->string, CVAR_LATCH | CVAR_SERVERINFO );
-	if( !fs_game->string[0] ) {
-		Cvar_ForceSet( "fs_game", fs_basegame->string );
 	}
 
 	FS_AddGameDirectory( fs_basegame->string );
 
 	fs_base_searchpaths = fs_searchpaths;
-
-	if( strcmp( fs_game->string, fs_basegame->string ) ) {
-		FS_SetGameDirectory( fs_game->string, false );
-	}
 
 	// no notifications after startup
 	FS_RemoveNotifications( ~0 );
@@ -3719,9 +3555,6 @@ int FS_Rescan( void ) {
 	int newpaks = 0;
 
 	newpaks += FS_UpdateGameDirectory( fs_basegame->string );
-	if( strcmp( fs_game->string, fs_basegame->string ) ) {
-		newpaks += FS_UpdateGameDirectory( fs_game->string );
-	}
 
 	if( newpaks ) {
 		FS_AddNotifications( FS_NOTIFY_NEWPAKS );
