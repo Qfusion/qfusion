@@ -17,9 +17,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "../qcommon/qcommon.h"
-
-#include "../qcommon/sys_fs.h"
+#include "qcommon/qcommon.h"
+#include "qcommon/sys_fs.h"
 
 #include "winquake.h"
 #include <direct.h>
@@ -32,8 +31,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef CSIDL_PERSONAL
 # define CSIDL_PERSONAL                 0x0005        // My Documents
 #endif
-
-#define USE_MY_DOCUMENTS
 
 static char *findbase = NULL;
 static char *findpath = NULL;
@@ -210,11 +207,7 @@ void Sys_FS_FindClose( void ) {
 * Sys_FS_GetHomeDirectory
 */
 const char *Sys_FS_GetHomeDirectory( void ) {
-#ifdef USE_MY_DOCUMENTS
 	int csidl = CSIDL_PERSONAL;
-#else
-	int csidl = CSIDL_APPDATA;
-#endif
 
 	static char home[MAX_PATH] = { '\0' };
 	if( home[0] != '\0' ) {
@@ -242,11 +235,7 @@ const char *Sys_FS_GetHomeDirectory( void ) {
 		return NULL;
 	}
 
-#ifdef USE_MY_DOCUMENTS
 	Q_strncpyz( home, va( "%s/My Games/%s", COM_SanitizeFilePath( home ), APPLICATION ), sizeof( home ) );
-#else
-	Q_strncpyz( home, va( "%s/%s", COM_SanitizeFilePath( home ), APPLICATION ), sizeof( home ) );
-#endif
 
 	return home;
 }
