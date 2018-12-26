@@ -380,7 +380,7 @@ void VID_Init() {
 		Sys_Error( "VID_Init() failed with code %i", err );
 	}
 
-	CL_SoundModule_Init( false );
+	CL_SoundModule_Init();
 
 	RF_BeginRegistration();
 

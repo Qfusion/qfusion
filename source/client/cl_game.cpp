@@ -287,8 +287,6 @@ void CL_GameModule_Init( void ) {
 	import.S_StartLocalSound = CL_SoundModule_StartLocalSound;
 	import.S_Update = CL_GameModule_SoundUpdate;
 	import.S_ImmediateSound = CL_SoundModule_ImmediateSound;
-	import.S_StartBackgroundTrack = CL_SoundModule_StartBackgroundTrack;
-	import.S_StopBackgroundTrack = CL_SoundModule_StopBackgroundTrack;
 	import.S_UpdateEntity = CL_SoundModule_UpdateEntity;
 
 	import.SCR_RegisterFont = SCR_RegisterFont;

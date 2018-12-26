@@ -884,7 +884,6 @@ enum {
 	ET_DECAL,
 	ET_PARTICLES,
 
-	ET_VIDEO_SPEAKER,
 	ET_RADAR,       // same as ET_SPRITE but sets NO_DEPTH_TEST bit
 
 	ET_HUD,

@@ -1824,9 +1824,9 @@ static void asFunc_RegisterCallvote( asstring_t *asname, asstring_t *asusage, as
 	}
 
 	G_RegisterGametypeScriptCallvote( asname->buffer,
-									  asusage ? asusage->buffer : NULL,
-									  astype ? astype->buffer : NULL,
-									  ashelp ? ashelp->buffer : NULL );
+		asusage ? asusage->buffer : NULL,
+		astype ? astype->buffer : NULL,
+		ashelp ? ashelp->buffer : NULL );
 }
 
 static asstring_t *asFunc_GetConfigString( int index ) {

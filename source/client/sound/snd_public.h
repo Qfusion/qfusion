@@ -1,6 +1,6 @@
 #pragma once
 
-bool S_Init( bool verbose );
+bool S_Init();
 void S_Shutdown();
 
 struct sfx_s * S_RegisterSound( const char * filename );
@@ -18,7 +18,6 @@ void S_StartLocalSound( struct sfx_s * sfx, int channel, float volume );
 void S_ImmediateSound( struct sfx_s * sfx, int ent_num, float volume, float attenuation, int64_t now );
 void S_StopAllSounds( bool stopMusic );
 
-void S_StartBackgroundTrack( struct sfx_s * sfx );
 void S_StartMenuMusic();
 void S_StopBackgroundTrack();
 

@@ -19,8 +19,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 #include "client.h"
 
-void CL_SoundModule_Init( bool verbose ) {
-	if( !S_Init( verbose ) ) {
+void CL_SoundModule_Init() {
+	if( !S_Init() ) {
 		abort();
 	}
 
@@ -71,10 +71,6 @@ void CL_SoundModule_StartLocalSound( struct sfx_s *sfx, int channel, float volum
 
 void CL_SoundModule_ImmediateSound( struct sfx_s *sfx, int entnum, float volume, float attenuation, int64_t now ) {
 	S_ImmediateSound( sfx, entnum, volume, attenuation, now );
-}
-
-void CL_SoundModule_StartBackgroundTrack( struct sfx_s *sfx ) {
-	S_StartBackgroundTrack( sfx );
 }
 
 void CL_SoundModule_StartMenuMusic() {

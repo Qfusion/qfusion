@@ -968,33 +968,3 @@ void SP_misc_particles( edict_t *ent ) {
 
 	GClip_LinkEntity( ent );
 }
-
-static void locateTargetSpeaker( edict_t *ent ) {
-	edict_t *target;
-
-	target = G_PickTarget( ent->target );
-	if( !target ) {
-		G_Printf( "Couldn't find target for %s\n", ent->classname );
-		G_FreeEdict( ent );
-		return;
-	}
-
-	ent->s.sound = 1;
-	ent->attenuation = target->attenuation;
-	ent->s.attenuation = ent->attenuation;
-	VectorCopy( ent->s.origin, ent->s.origin2 );
-	VectorCopy( target->s.origin, ent->s.origin );
-}
-
-//QUAKED misc_video_speaker
-//-------- KEYS --------
-//target : point this to a target_speaker entity
-void SP_misc_video_speaker( edict_t *ent ) {
-	ent->r.svflags &= ~SVF_NOCLIENT;
-	ent->r.svflags |= SVF_SOUNDCULL;
-	ent->r.solid = SOLID_NOT;
-	ent->s.type = ET_VIDEO_SPEAKER;
-
-	ent->think = locateTargetSpeaker;
-	ent->nextThink = level.time + 100;
-}

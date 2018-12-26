@@ -823,8 +823,6 @@ void G_AddEvent( edict_t *ent, int event, int parm, bool highPriority ) {
 	ent->s.events[eventNum] = event;
 	ent->s.eventParms[eventNum] = parm & 0xFF;
 	ent->eventPriority[eventNum] = highPriority;
-
-	AI_RegisterEvent( ent, event, parm );
 }
 
 /*
@@ -1694,7 +1692,6 @@ void G_DropSpawnpointToFloor( edict_t *ent ) {
 * is not a staircase.
 *
 */
-int c_yes, c_no;
 bool G_CheckBottom( edict_t *ent ) {
 	vec3_t mins, maxs, start, stop;
 	trace_t trace;
@@ -1708,7 +1705,7 @@ bool G_CheckBottom( edict_t *ent ) {
 	// with the tougher checks
 	// the corners must be within 16 of the midpoint
 	start[2] = mins[2] - 1;
-	for( x = 0; x <= 1; x++ )
+	for( x = 0; x <= 1; x++ ) {
 		for( y = 0; y <= 1; y++ ) {
 			start[0] = x ? maxs[0] : mins[0];
 			start[1] = y ? maxs[1] : mins[1];
@@ -1716,12 +1713,11 @@ bool G_CheckBottom( edict_t *ent ) {
 				goto realcheck;
 			}
 		}
+	}
 
-	c_yes++;
 	return true;       // we got out easy
 
 realcheck:
-	c_no++;
 
 	//
 	// check it for real...
@@ -1756,7 +1752,6 @@ realcheck:
 		}
 	}
 
-	c_yes++;
 	return true;
 }
 

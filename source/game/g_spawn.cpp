@@ -128,8 +128,6 @@ spawn_t spawns[] = {
 	{ "trigger_elevator", SP_trigger_elevator },
 	{ "trigger_gravity", SP_trigger_gravity },
 
-	{ "target_temp_entity", SP_target_temp_entity },
-	{ "target_speaker", SP_target_speaker },
 	{ "target_explosion", SP_target_explosion },
 	{ "target_crosslevel_trigger", SP_target_crosslevel_trigger },
 	{ "target_crosslevel_target", SP_target_crosslevel_target },
@@ -167,7 +165,6 @@ spawn_t spawns[] = {
 	{ "misc_skyportal", SP_skyportal },
 	{ "props_skyportal", SP_skyportal },
 	{ "misc_particles", SP_misc_particles },
-	{ "misc_video_speaker", SP_misc_video_speaker },
 
 	{ NULL, NULL }
 };

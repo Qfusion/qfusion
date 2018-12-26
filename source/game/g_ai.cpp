@@ -98,9 +98,6 @@ void AI_RemoveBot( const char * name ) {
 	G_Printf( "BOT: %s not found\n", name );
 }
 
-void AI_RegisterEvent( edict_t * ent, int event, int parm ) {
-}
-
 void AI_TouchedEntity( edict_t * self, edict_t * ent ) {
 }
 

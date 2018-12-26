@@ -367,7 +367,7 @@ bool CL_GameModule_KeyEvent( int key, bool down );
 //
 // cl_sound.c
 //
-void CL_SoundModule_Init( bool verbose );
+void CL_SoundModule_Init();
 void CL_SoundModule_Shutdown();
 void CL_SoundModule_StopAllSounds( bool stopMusic );
 void CL_SoundModule_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis, int64_t now );
@@ -379,7 +379,6 @@ void CL_SoundModule_StartEntitySound( struct sfx_s *sfx, int entnum, int channel
 void CL_SoundModule_StartGlobalSound( struct sfx_s *sfx, int channel, float volume );
 void CL_SoundModule_StartLocalSound( struct sfx_s *sfx, int channel, float volume );
 void CL_SoundModule_ImmediateSound( struct sfx_s *sfx, int entnum, float volume, float attenuation, int64_t now );
-void CL_SoundModule_StartBackgroundTrack( struct sfx_s *sfx );
 void CL_SoundModule_StartMenuMusic();
 void CL_SoundModule_StopBackgroundTrack();
 void CL_SoundModule_BeginAviDemo();

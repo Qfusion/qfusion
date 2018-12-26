@@ -20,31 +20,31 @@ typedef struct sfx_s {
 	ALuint buffer;
 } SoundAsset;
 
-typedef enum {
+enum SoundType {
 	SoundType_Global, // plays at max volume everywhere
 	SoundType_Fixed, // plays from some point in the world
 	SoundType_Attached, // moves with an entity
 	SoundType_AttachedImmediate, // moves with an entity and loops so long as is gets touched every frame
-} SoundType;
+};
 
-typedef struct {
+struct PlayingSound {
 	ALuint source;
 
 	SoundType type;
 	int64_t last_touch;
 	int ent_num;
 	int channel;
-} PlayingSound;
+};
 
-typedef struct {
+struct EntitySound {
 	vec3_t origin;
 	vec3_t velocity;
 	PlayingSound * ps;
-} EntitySound;
+};
 
-static SoundAsset sound_assets[ 4096 ];
+static sfx_s sound_assets[ 4096 ];
 static size_t num_sound_assets;
-static SoundAsset * menu_music_asset;
+static sfx_s * menu_music_asset;
 
 static PlayingSound playing_sounds[ 128 ];
 static size_t num_playing_sounds;
@@ -170,7 +170,7 @@ static SoundAsset * S_Register( const char * filename, bool allow_stereo ) {
 	return sfx;
 }
 
-bool S_Init( bool verbose ) {
+bool S_Init() {
 	num_sound_assets = 0;
 	num_playing_sounds = 0;
 	music_playing = false;
@@ -393,8 +393,8 @@ void S_StopAllSounds( bool stop_music ) {
 
 }
 
-void S_StartBackgroundTrack( SoundAsset * sfx ) {
-	if( sfx == NULL )
+void S_StartMenuMusic() {
+	if( menu_music_asset == NULL )
 		return;
 
 	alSourcefv( music_source, AL_POSITION, vec3_origin );
@@ -402,13 +402,10 @@ void S_StartBackgroundTrack( SoundAsset * sfx ) {
 	alSourcef( music_source, AL_GAIN, s_musicvolume->value );
 	alSourcei( music_source, AL_SOURCE_RELATIVE, AL_FALSE );
 	alSourcei( music_source, AL_LOOPING, AL_TRUE );
-	alSourcei( music_source, AL_BUFFER, sfx->buffer );
+	alSourcei( music_source, AL_BUFFER, menu_music_asset->buffer );
 
 	alSourcePlay( music_source );
-}
 
-void S_StartMenuMusic() {
-	S_StartBackgroundTrack( menu_music_asset );
 	music_playing = true;
 }
 

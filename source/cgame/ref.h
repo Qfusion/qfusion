@@ -17,8 +17,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
-#ifndef __REF_H
-#define __REF_H
+#pragma once
 
 // FIXME: move these to r_local.h?
 #define MAX_DLIGHTS             32
@@ -170,5 +169,3 @@ typedef struct refdef_s {
 	float minLight;                     // minimum value of ambient lighting applied to RF_MINLIGHT entities
 	struct shader_s *colorCorrection;   // post processing color correction lookup table to apply
 } refdef_t;
-
-#endif // __REF_H

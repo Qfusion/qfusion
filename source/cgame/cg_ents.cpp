@@ -1663,9 +1663,6 @@ void CG_LerpEntities( void ) {
 			case ET_PARTICLES:
 				break;
 
-			case ET_VIDEO_SPEAKER:
-				break;
-
 			case ET_HUD:
 				break;
 

@@ -18,8 +18,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#ifndef __UI_PUBLIC_H__
-#define __UI_PUBLIC_H__
+#pragma once
 
 #define UI_API_VERSION      67
 
@@ -233,5 +232,3 @@ typedef struct {
 } ui_export_t;
 
 extern "C" QF_DLL_EXPORT ui_export_t *GetUIAPI( ui_import_t *import );
-
-#endif
