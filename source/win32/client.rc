@@ -1,0 +1,39 @@
+#include "resource.h"
+#include "../qcommon/version.h"
+
+1000 ICON DISCARDABLE APP_ICO_ICON
+1001 ICON DISCARDABLE APP_DEMO_ICO_ICON
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION APP_VERSION_MAJOR,APP_VERSION_MINOR,APP_VERSION_UPDATE,0
+ PRODUCTVERSION APP_VERSION_MAJOR,APP_VERSION_MINOR,APP_VERSION_UPDATE,0
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+
+BEGIN
+	BLOCK "StringFileInfo"
+	BEGIN
+		BLOCK "040904b0"
+		BEGIN
+			VALUE "Comments", "For more information about " APPLICATION " visit: " APP_URL "  Made using the Qfusion engine: https://qfusion.net/\0"
+			VALUE "CompanyName", APP_COPYRIGHT_OWNER "\0"
+			VALUE "FileDescription", APPLICATION "\0"
+			VALUE "FileVersion", APP_FILEVERSION_RC_STR "\0"
+			VALUE "LegalCopyright", "Copyright © 2018\0"
+			VALUE "LegalTrademarks", APP_COPYRIGHT_OWNER "\0"
+			VALUE "ProductName", APPLICATION "\0"
+			VALUE "ProductVersion", APP_VERSION_RC_STR "\0"
+		END
+	END
+	BLOCK "VarFileInfo"
+	BEGIN
+		VALUE "Translation", 0x409, 1200
+	END
+END
