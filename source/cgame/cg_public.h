@@ -18,8 +18,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#ifndef __CG_PUBLIC_H__
-#define __CG_PUBLIC_H__
+#pragma once
 
 struct orientation_s;
 struct bonepose_s;
@@ -309,5 +308,3 @@ typedef struct {
 	*/
 	bool ( *KeyEvent )( int key, bool down );
 } cgame_export_t;
-
-#endif

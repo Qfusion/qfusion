@@ -153,12 +153,7 @@ int Sys_GetCurrentProcessId( void ) {
 /*
 * Sys_AppActivate
 */
-void Sys_AppActivate( void ) {
-#ifndef DEDICATED_ONLY
-	ShowWindow( cl_hwnd, SW_RESTORE );
-	SetForegroundWindow( cl_hwnd );
-#endif
-}
+void Sys_AppActivate( void ) { }
 
 //========================================================================
 
@@ -195,7 +190,6 @@ static void ParseCommandLine( LPSTR lpCmdLine ) {
 /*
 * WinMain
 */
-HINSTANCE global_hInstance;
 int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow ) {
 	MSG msg;
 	int64_t oldtime, newtime, time;
@@ -204,8 +198,6 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	if( hPrevInstance ) {
 		return 0;
 	}
-
-	global_hInstance = hInstance;
 
 	ParseCommandLine( lpCmdLine );
 
@@ -231,22 +223,17 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 
 		do {
 			newtime = Sys_Milliseconds();
-			time = newtime - oldtime; // no warp problem as unsigned
+			time = newtime - oldtime;
 			if( time > 0 ) {
 				break;
 			}
 			Sys_Sleep( 0 );
 		} while( 1 );
-		//Com_Printf ("time:%5.2u - %5.2u = %5.2u\n", newtime, oldtime, time);
 		oldtime = newtime;
 
-		// do as q3 (use the default floating point precision)
-		//	_controlfp( ~( _EM_ZERODIVIDE /*| _EM_INVALID*/ ), _MCW_EM );
-		//_controlfp( _PC_24, _MCW_PC );
 		Qcommon_Frame( time );
 	}
 
-	// never gets here
 	return TRUE;
 }
 

@@ -51,7 +51,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 		"../win32/win_console.cpp"
 		"../win32/win_threads.cpp"
 
-		"../win32/qfusion.rc"
+		"../win32/client.rc"
 		)
 
 	set(CLIENT_PLATFORM_LIBRARIES ${SDL2MAIN_LIBRARY} ${FREETYPE_LIBRARY} "kernel32.lib" "ws2_32.lib" "crypt32.lib" "winmm.lib" "version.lib" "imm32.lib")
