@@ -26,8 +26,6 @@ extern cvar_t *g_postmatch_timelimit;
 extern cvar_t *g_countdown_time;
 extern cvar_t *g_match_extendedtime;
 extern cvar_t *g_gametype; // only for use in function that deal with changing gametype, use GS_Gametype()
-extern cvar_t *g_gametype_generic;
-
 
 #define G_CHALLENGERS_MIN_JOINTEAM_MAPTIME  9000 // must wait 10 seconds before joining
 #define GAMETYPE_PROJECT_EXTENSION          ".gt"
@@ -175,6 +173,3 @@ void G_Match_Autorecord_Cancel( void );
 bool G_Match_ScorelimitHit( void );
 bool G_Match_SuddenDeathFinished( void );
 bool G_Match_TimelimitHit( void );
-
-void G_Gametype_GENERIC_ScoreboardMessage( void );
-void G_Gametype_GENERIC_ClientRespawn( edict_t *self, int old_team, int new_team );

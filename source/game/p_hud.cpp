@@ -49,8 +49,6 @@ void G_UpdateScoreBoardMessages( void ) {
 
 	if( game.asEngine != NULL ) {
 		GT_asCallScoreboardMessage( maxlen );
-	} else {
-		G_Gametype_GENERIC_ScoreboardMessage();
 	}
 
 	G_ScoreboardMessage_AddSpectators();

@@ -22,318 +22,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 g_teamlist_t teamlist[GS_MAX_TEAMS];
 
-// Generic functions used for all gametypes when don't require any special setting
-
-void G_Gametype_GENERIC_SetUpWarmup( void ) {
-	level.gametype.readyAnnouncementEnabled = true;
-	level.gametype.scoreAnnouncementEnabled = false;
-	level.gametype.countdownEnabled = false;
-	level.gametype.pickableItemsMask = ( level.gametype.spawnableItemsMask | level.gametype.dropableItemsMask );
-
-	if( GS_TeamBasedGametype() ) {
-		bool any = false;
-		int team;
-		for( team = TEAM_ALPHA; team < GS_MAX_TEAMS; team++ ) {
-			if( G_Teams_TeamIsLocked( team ) ) {
-				G_Teams_UnLockTeam( team );
-				any = true;
-			}
-		}
-		if( any ) {
-			G_PrintMsg( NULL, "Teams unlocked.\n" );
-		}
-	} else {
-		if( G_Teams_TeamIsLocked( TEAM_PLAYERS ) ) {
-			G_Teams_UnLockTeam( TEAM_PLAYERS );
-			G_PrintMsg( NULL, "Teams unlocked.\n" );
-		}
-	}
-}
-
-void G_Gametype_GENERIC_SetUpCountdown( void ) {
-	bool any = false;
-	int team;
-
-	G_Match_RemoveProjectiles( NULL );
-	G_Items_RespawnByType( 0, 0, 0 ); // respawn all items
-
-	level.gametype.readyAnnouncementEnabled = false;
-	level.gametype.scoreAnnouncementEnabled = false;
-	level.gametype.countdownEnabled = true;
-	level.gametype.pickableItemsMask = 0; // disallow item pickup
-
-	if( GS_TeamBasedGametype() ) {
-		for( team = TEAM_ALPHA; team < GS_MAX_TEAMS; team++ )
-			if( G_Teams_LockTeam( team ) ) {
-				any = true;
-			}
-	} else {
-		if( G_Teams_LockTeam( TEAM_PLAYERS ) ) {
-			any = true;
-		}
-	}
-
-	if( any ) {
-		G_PrintMsg( NULL, "Teams locked.\n" );
-	}
-
-	G_AnnouncerSound( NULL, trap_SoundIndex( va( S_ANNOUNCER_COUNTDOWN_GET_READY_TO_FIGHT_1_to_2, ( rand() & 1 ) + 1 ) ),
-					  GS_MAX_TEAMS, true, NULL );
-}
-
-void G_Gametype_GENERIC_SetUpMatch( void ) {
-	int i;
-
-	level.gametype.readyAnnouncementEnabled = false;
-	level.gametype.scoreAnnouncementEnabled = true;
-	level.gametype.countdownEnabled = true;
-	level.gametype.pickableItemsMask = ( level.gametype.spawnableItemsMask | level.gametype.dropableItemsMask );
-
-	// clear player stats and scores, team scores and respawn clients in team lists
-	for( i = TEAM_PLAYERS; i < GS_MAX_TEAMS; i++ ) {
-		int j;
-		g_teamlist_t *team = &teamlist[i];
-		memset( &team->stats, 0, sizeof( team->stats ) );
-
-		// respawn all clients inside the playing teams
-		for( j = 0; j < team->numplayers; j++ ) {
-			edict_t *ent = &game.edicts[ team->playerIndices[j] ];
-			G_ClientClearStats( ent );
-			G_ClientRespawn( ent, false );
-		}
-	}
-
-	// set items to be spawned with a delay
-	G_Items_RespawnByType( IT_HEALTH, HEALTH_MEGA, 15 );
-	G_Items_RespawnByType( IT_HEALTH, HEALTH_ULTRA, 15 );
-	G_Items_RespawnByType( IT_POWERUP, 0, brandom( 20, 40 ) );
-	G_Match_FreeBodyQueue();
-
-	G_AnnouncerSound( NULL, trap_SoundIndex( va( S_ANNOUNCER_COUNTDOWN_FIGHT_1_to_2, ( rand() & 1 ) + 1 ) ), GS_MAX_TEAMS, false, NULL );
-	G_CenterPrintMsg( NULL, "FIGHT!" );
-}
-
-void G_Gametype_GENERIC_SetUpEndMatch( void ) {
-	edict_t *ent;
-
-	level.gametype.readyAnnouncementEnabled = false;
-	level.gametype.scoreAnnouncementEnabled = false;
-	level.gametype.pickableItemsMask = 0; // disallow item pickup
-	level.gametype.countdownEnabled = false;
-
-	for( ent = game.edicts + 1; PLAYERNUM( ent ) < gs.maxclients; ent++ ) {
-		if( ent->r.inuse && trap_GetClientState( PLAYERNUM( ent ) ) >= CS_SPAWNED ) {
-			G_ClientRespawn( ent, true );
-		}
-	}
-
-	G_AnnouncerSound( NULL, trap_SoundIndex( va( S_ANNOUNCER_POSTMATCH_GAMEOVER_1_to_2, ( rand() & 1 ) + 1 ) ), GS_MAX_TEAMS, true, NULL );
-}
-
-static bool G_Gametype_GENERIC_MatchStateFinished( int incomingMatchState ) {
-	if( GS_MatchState() <= MATCH_STATE_WARMUP && incomingMatchState > MATCH_STATE_WARMUP
-		&& incomingMatchState < MATCH_STATE_POSTMATCH ) {
-		G_Match_Autorecord_Start();
-	}
-
-	if( GS_MatchState() == MATCH_STATE_POSTMATCH ) {
-		G_Match_Autorecord_Stop();
-	}
-
-	return true;
-}
-
-static void G_Gametype_GENERIC_MatchStateStarted( void ) {
-	switch( GS_MatchState() ) {
-//	case MATCH_STATE_WAITING:
-		case MATCH_STATE_WARMUP:
-			G_Gametype_GENERIC_SetUpWarmup();
-			break;
-		case MATCH_STATE_COUNTDOWN:
-			G_Gametype_GENERIC_SetUpCountdown();
-			break;
-		case MATCH_STATE_PLAYTIME:
-			G_Gametype_GENERIC_SetUpMatch();
-			break;
-		case MATCH_STATE_POSTMATCH:
-			G_Gametype_GENERIC_SetUpEndMatch();
-			break;
-		default:
-			break;
-	}
-}
-
-static void G_Gametype_GENERIC_ThinkRules( void ) {
-	if( G_Match_ScorelimitHit() || G_Match_TimelimitHit() || G_Match_SuddenDeathFinished() ) {
-		G_Match_LaunchState( GS_MatchState() + 1 );
-	}
-
-	if( GS_MatchState() >= MATCH_STATE_POSTMATCH ) {
-		return;
-	}
-}
-
-void G_Gametype_GENERIC_ScoreboardMessage( void ) {
-	char entry[MAX_TOKEN_CHARS];
-	size_t len;
-	int i;
-	edict_t *e;
-	int carrierIcon;
-
-	*scoreboardString = 0;
-	len = 0;
-
-	Q_snprintfz( entry, sizeof( entry ), "&t %i 0 0 ", TEAM_PLAYERS );
-	if( SCOREBOARD_MSG_MAXSIZE - len > strlen( entry ) ) {
-		Q_strncatz( scoreboardString, entry, sizeof( scoreboardString ) );
-		len = strlen( scoreboardString );
-	}
-
-	// players
-	for( i = 0; i < teamlist[TEAM_PLAYERS].numplayers; i++ ) {
-		e = game.edicts + teamlist[TEAM_PLAYERS].playerIndices[i];
-
-		if( e->s.effects & EF_CARRIER ) {
-			carrierIcon = trap_ImageIndex( ( e->s.team == TEAM_BETA ) ? PATH_ALPHAFLAG_ICON : PATH_BETAFLAG_ICON );
-		} else if( e->s.effects & EF_QUAD ) {
-			carrierIcon = trap_ImageIndex( PATH_QUAD_ICON );
-		} else {
-			carrierIcon = 0;
-		}
-
-		Q_snprintfz( entry, sizeof( entry ), "&p %i %i %i %i %i ",
-					 PLAYERNUM( e ),
-					 e->r.client->level.stats.score,
-					 e->r.client->r.ping > 999 ? 999 : e->r.client->r.ping,
-					 carrierIcon,
-					 ( level.ready[PLAYERNUM( e )] || GS_MatchState() >= MATCH_STATE_PLAYTIME ) ? trap_ImageIndex( PATH_VSAY_YES_ICON ) : 0
-					 );
-
-		if( SCOREBOARD_MSG_MAXSIZE - len > strlen( entry ) ) {
-			Q_strncatz( scoreboardString, entry, sizeof( scoreboardString ) );
-			len = strlen( scoreboardString );
-		}
-	}
-
-	// The result is stored in the global scoreboardString variable.
-}
-
-void G_Gametype_GENERIC_ClientRespawn( edict_t *self, int old_team, int new_team ) {
-	int i;
-	gclient_t *client = self->r.client;
-	gs_weapon_definition_t *weapondef;
-
-	if( G_ISGHOSTING( self ) ) {
-		return;
-	}
-
-	// give default items
-	if( self->s.team != TEAM_SPECTATOR ) {
-		if( GS_MatchState() <= MATCH_STATE_WARMUP ) {
-			for( i = WEAP_GUNBLADE; i < WEAP_TOTAL; i++ ) {
-				weapondef = GS_GetWeaponDef( i );
-				client->ps.inventory[i] = 1;
-				if( weapondef->firedef_weak.ammo_id ) {
-					client->ps.inventory[weapondef->firedef_weak.ammo_id] = weapondef->firedef_weak.ammo_max;
-				}
-				if( weapondef->firedef.ammo_id ) {
-					client->ps.inventory[weapondef->firedef.ammo_id] = weapondef->firedef.ammo_max;
-				}
-			}
-		} else {
-			weapondef = GS_GetWeaponDef( WEAP_GUNBLADE );
-			client->ps.inventory[WEAP_GUNBLADE] = 1;
-			client->ps.inventory[AMMO_GUNBLADE] = 1;
-		}
-	}
-
-	// select rocket launcher if available
-	if( GS_CheckAmmoInWeapon( &client->ps, WEAP_ROCKETLAUNCHER ) ) {
-		client->ps.stats[STAT_PENDING_WEAPON] = WEAP_ROCKETLAUNCHER;
-	} else {
-		client->ps.stats[STAT_PENDING_WEAPON] = GS_SelectBestWeapon( &client->ps );
-	}
-
-	// add a teleportation effect
-	if( self->r.solid != SOLID_NOT ) {
-		G_RespawnEffect( self );
-	}
-}
-
-void G_Gametype_GENERIC_PlayerKilled( edict_t *targ, edict_t *attacker, edict_t *inflictor ) {
-	if( !attacker || GS_MatchState() != MATCH_STATE_PLAYTIME || ( targ->r.svflags & SVF_CORPSE ) ) {
-		return;
-	}
-
-	if( !attacker->r.client || attacker == targ || attacker == world ) {
-		teamlist[targ->s.team].stats.score--;
-	} else {
-		if( GS_InvidualGameType() ) {
-			teamlist[attacker->s.team].stats.score = attacker->r.client->level.stats.score;
-		}
-		if( GS_IsTeamDamage( &targ->s, &attacker->s ) ) {
-			teamlist[attacker->s.team].stats.score--;
-		} else {
-			teamlist[attacker->s.team].stats.score++;
-		}
-	}
-
-	// drop items
-	if( targ->r.client && !( G_PointContents( targ->s.origin ) & CONTENTS_NODROP ) ) {
-		// drop the weapon
-		if( targ->r.client->ps.stats[STAT_WEAPON] > WEAP_GUNBLADE ) {
-			const gsitem_t *weaponItem = GS_FindItemByTag( targ->r.client->ps.stats[STAT_WEAPON] );
-			if( weaponItem ) {
-				edict_t *drop = Drop_Item( targ, weaponItem );
-				if( drop ) {
-					drop->count = targ->r.client->ps.inventory[ weaponItem->weakammo_tag ];
-					targ->r.client->ps.inventory[ weaponItem->weakammo_tag ] = 0;
-				}
-			}
-		}
-	}
-}
-
-static void G_Gametype_GENERIC_PlayerDamaged( edict_t *targ, edict_t *attacker, int damage ) {
-}
-
-void G_Gametype_GENERIC_ScoreEvent( gclient_t *client, const char *score_event, const char *args ) {
-	edict_t *attacker = NULL;
-	int arg1, arg2;
-
-	if( !score_event || !score_event[0] ) {
-		return;
-	}
-
-	if( !client ) {
-		return;
-	}
-
-	if( !Q_stricmp( score_event, "dmg" ) ) {
-		if( args ) {
-			if( client ) {
-				attacker = &game.edicts[ client - game.clients + 1 ];
-			}
-
-			arg1 = atoi( COM_Parse( &args ) );
-			arg2 = atoi( COM_Parse( &args ) );
-
-			G_Gametype_GENERIC_PlayerDamaged( &game.edicts[arg1], attacker, arg2 );
-		}
-	} else if( !Q_stricmp( score_event, "kill" ) ) {
-		if( args ) {
-			if( client ) {
-				attacker = &game.edicts[ client - game.clients + 1 ];
-			}
-
-			arg1 = atoi( COM_Parse( &args ) );
-			arg2 = atoi( COM_Parse( &args ) );
-
-			G_Gametype_GENERIC_PlayerKilled( &game.edicts[arg1], attacker, arg2 != -1 ? &game.edicts[arg2] : NULL );
-		}
-	}
-}
-
 static void G_Gametype_GENERIC_Init( void ) {
 	level.gametype.spawnableItemsMask = ( IT_WEAPON | IT_AMMO | IT_POWERUP | IT_HEALTH );
 	level.gametype.respawnableItemsMask = ( IT_WEAPON | IT_AMMO | IT_POWERUP | IT_HEALTH );
@@ -386,7 +74,6 @@ cvar_t *g_countdown_time;
 cvar_t *g_scorelimit;
 cvar_t *g_timelimit;
 cvar_t *g_gametype;
-cvar_t *g_gametype_generic;
 
 //==========================================================
 //					Matches
@@ -669,11 +356,6 @@ void G_Match_LaunchState( int matchState ) {
 		if( !GT_asCallMatchStateFinished( matchState ) ) {
 			return;
 		}
-	} else {
-		// There isn't any script, run generic fuction
-		if( !G_Gametype_GENERIC_MatchStateFinished( matchState ) ) {
-			return;
-		}
 	}
 
 	GS_GamestatSetFlag( GAMESTAT_FLAG_MATCHEXTENDED, false );
@@ -755,8 +437,6 @@ void G_Match_LaunchState( int matchState ) {
 
 	if( game.asEngine != NULL ) {
 		GT_asCallMatchStateStarted();
-	} else {
-		G_Gametype_GENERIC_MatchStateStarted();
 	}
 
 	G_UpdatePlayersMatchMsgs();
@@ -1573,8 +1253,6 @@ void G_Gametype_ScoreEvent( gclient_t *client, const char *score_event, const ch
 
 	if( game.asEngine != NULL ) {
 		GT_asCallScoreEvent( client, score_event, args );
-	} else {
-		G_Gametype_GENERIC_ScoreEvent( client, score_event, args );
 	}
 }
 
@@ -1591,8 +1269,6 @@ void G_RunGametype( void ) {
 	//check gametype specific rules
 	if( game.asEngine != NULL ) {
 		GT_asCallThinkRules();
-	} else {
-		G_Gametype_GENERIC_ThinkRules();
 	}
 
 	if( G_EachNewSecond() ) {
@@ -1671,7 +1347,6 @@ void G_Gametype_Init( void ) {
 	}
 
 	g_gametype = trap_Cvar_Get( "g_gametype", "bomb", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_LATCH | CVAR_READONLY );
-	g_gametype_generic = trap_Cvar_Get( "g_gametype_generic", "1", CVAR_ARCHIVE );
 
 	// get the match cvars too
 	g_warmup_timelimit = trap_Cvar_Get( "g_warmup_timelimit", "5", CVAR_ARCHIVE );
@@ -1714,10 +1389,7 @@ void G_Gametype_Init( void ) {
 
 	// Init the current gametype
 	if( !GT_asLoadScript( g_gametype->string ) ) {
-		if( g_gametype_generic->integer )
-			G_Gametype_GENERIC_Init();
-		else
-			G_Error( "Failed to load %s", g_gametype->string );
+		G_Gametype_GENERIC_Init();
 	}
 
 	trap_ConfigString( CS_GAMETYPENAME, g_gametype->string );

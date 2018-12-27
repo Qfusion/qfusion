@@ -607,8 +607,6 @@ void G_ClientRespawn( edict_t *self, bool ghost ) {
 	// let the gametypes perform their changes
 	if( game.asEngine != NULL ) {
 		GT_asCallPlayerRespawn( self, old_team, self->s.team );
-	} else {
-		G_Gametype_GENERIC_ClientRespawn( self, old_team, self->s.team );
 	}
 
 	if( self->r.svflags & SVF_FAKECLIENT ) {
