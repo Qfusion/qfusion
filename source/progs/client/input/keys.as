@@ -58,6 +58,7 @@ Kbutton in_forward, in_back, in_moveleft, in_moveright;
 Kbutton in_use, in_attack;
 Kbutton in_up, in_down;
 Kbutton in_special;
+Kbutton in_speed;
 Kbutton in_zoom;
 
 Cvar cl_anglespeedkey( "cl_anglespeedkey", "1.5", 0 );
@@ -70,10 +71,6 @@ void Init() {
 	CGame::Cmd::AddCommand( "-moveup", UpUp );
 	CGame::Cmd::AddCommand( "+movedown", DownDown );
 	CGame::Cmd::AddCommand( "-movedown", DownUp );
-	CGame::Cmd::AddCommand( "+left", LeftDown );
-	CGame::Cmd::AddCommand( "-left", LeftUp );
-	CGame::Cmd::AddCommand( "+right", RightDown );
-	CGame::Cmd::AddCommand( "-right", RightUp );
 	CGame::Cmd::AddCommand( "+forward", ForwardDown );
 	CGame::Cmd::AddCommand( "-forward", ForwardUp );
 	CGame::Cmd::AddCommand( "+back", BackDown );
@@ -183,10 +180,6 @@ void UpDown( void ) { KeyDown( in_up ); }
 void UpUp( void ) { KeyUp( in_up ); }
 void DownDown( void ) { KeyDown( in_down ); }
 void DownUp( void ) { KeyUp( in_down ); }
-void LeftDown( void ) { KeyDown( in_left ); }
-void LeftUp( void ) { KeyUp( in_left ); }
-void RightDown( void ) { KeyDown( in_right ); }
-void RightUp( void ) { KeyUp( in_right ); }
 void ForwardDown( void ) { KeyDown( in_forward ); }
 void ForwardUp( void ) { KeyUp( in_forward ); }
 void BackDown( void ) { KeyDown( in_back ); }
@@ -264,6 +257,9 @@ Vec3 GetMovement() {
 	movement[0] += KeyState( in_moveright );
 	movement[0] -= KeyState( in_moveleft );
 
+	movement[1] += KeyState( in_forward );
+	movement[1] -= KeyState( in_back );
+
 	movement[2] += KeyState( in_up );
 	down = KeyState( in_down );
 	if( down > movement[2] ) {
@@ -296,7 +292,7 @@ uint GetButtonBits() {
 	}
 	in_use.state &= ~2;
 
-	if( ( ( in_speed.state & 1 ) ^ ) != 0 ) {
+	if( ( in_speed.state & 1 ) != 0 ) {
 		buttons |= BUTTON_WALK;
 	}
 
