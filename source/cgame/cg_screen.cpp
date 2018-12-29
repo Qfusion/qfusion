@@ -41,7 +41,6 @@ vrect_t scr_vrect;
 cvar_t *cg_centerTime;
 cvar_t *cg_showFPS;
 cvar_t *cg_showPointedPlayer;
-cvar_t *cg_showHUD;
 cvar_t *cg_draw2D;
 
 cvar_t *cg_crosshair_color;
@@ -52,8 +51,6 @@ cvar_t *cg_clientHUD;
 cvar_t *cg_specHUD;
 cvar_t *cg_debugHUD;
 cvar_t *cg_showSpeed;
-cvar_t *cg_showPickup;
-cvar_t *cg_showTimer;
 cvar_t *cg_showAwards;
 
 cvar_t *cg_showPlayerNames;
@@ -168,7 +165,6 @@ void CG_CalcVrect( void ) {
 */
 void CG_ScreenInit( void ) {
 	cg_showFPS =        trap_Cvar_Get( "cg_showFPS", "0", CVAR_ARCHIVE );
-	cg_showHUD =        trap_Cvar_Get( "cg_showHUD", "1", CVAR_ARCHIVE );
 	cg_draw2D =     trap_Cvar_Get( "cg_draw2D", "1", 0 );
 	cg_centerTime =     trap_Cvar_Get( "cg_centerTime", "2.5", 0 );
 
@@ -180,9 +176,7 @@ void CG_ScreenInit( void ) {
 
 	cg_clientHUD =      trap_Cvar_Get( "cg_clientHUD", "", CVAR_ARCHIVE );
 	cg_specHUD =        trap_Cvar_Get( "cg_specHUD", "", CVAR_ARCHIVE );
-	cg_showTimer =      trap_Cvar_Get( "cg_showTimer", "1", CVAR_ARCHIVE );
 	cg_showSpeed =      trap_Cvar_Get( "cg_showSpeed", "0", CVAR_ARCHIVE );
-	cg_showPickup =     trap_Cvar_Get( "cg_showPickup", "1", CVAR_ARCHIVE );
 	cg_showPointedPlayer =  trap_Cvar_Get( "cg_showPointedPlayer", "1", CVAR_ARCHIVE );
 	cg_showViewBlends = trap_Cvar_Get( "cg_showViewBlends", "1", CVAR_ARCHIVE );
 	cg_showAwards =     trap_Cvar_Get( "cg_showAwards", "1", CVAR_ARCHIVE );
@@ -359,10 +353,6 @@ void CG_DrawClock( int x, int y, int align, struct qfontface_s *font, vec4_t col
 	int minutes;
 	char string[12];
 
-	if( !cg_showTimer->integer ) {
-		return;
-	}
-
 	if( GS_MatchState() > MATCH_STATE_PLAYTIME ) {
 		return;
 	}
@@ -383,7 +373,7 @@ void CG_DrawClock( int x, int y, int align, struct qfontface_s *font, vec4_t col
 		startTime = GS_MatchStartTime();
 
 		// count downwards when having a duration
-		if( duration && ( cg_showTimer->integer != 3 ) ) {
+		if( duration ) {
 			if( duration + startTime < curtime ) {
 				duration = curtime - startTime; // avoid negative results
 
@@ -1133,10 +1123,6 @@ static void CG_SCRDrawViewBlend( void ) {
 * CG_DrawHUD
 */
 void CG_DrawHUD() {
-	if( !cg_showHUD->integer ) {
-		return;
-	}
-
 	// if changed from or to spec, reload the HUD
 	if( cg.specStateChanged ) {
 		cg_specHUD->modified = cg_clientHUD->modified = true;

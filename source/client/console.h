@@ -46,8 +46,6 @@ void Con_ToggleConsole( void );
 void Con_Paste( void );
 void Con_Close( void );
 void Con_SetMessageMode( void );
-void Con_ResetFontSize( void );
-void Con_ChangeFontSize( int ch );
 
 /**
  * Returns pixel ratio that is suitable for use in the console.

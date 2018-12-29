@@ -6,7 +6,6 @@
 #include "include/varying_material.glsl"
 
 #include_if(APPLY_GREYSCALE) "include/greyscale.glsl"
-#include_if(APPLY_OFFSETMAPPING) "include/material_offsetmapping.frag.glsl"
 #include_if(NUM_LIGHTMAPS) "include/material_lightmaps.frag.glsl"
 #include_if(APPLY_DIRECTIONAL_LIGHT) "include/material_dirlight.frag.glsl"
 
@@ -19,10 +18,6 @@ uniform sampler2D u_DecalTexture;
 
 #ifdef APPLY_ENTITY_DECAL
 uniform sampler2D u_EntityDecalTexture;
-#endif
-
-#if defined(APPLY_OFFSETMAPPING) || defined(APPLY_RELIEFMAPPING)
-uniform float u_OffsetMappingScale;
 #endif
 
 #ifdef APPLY_DRAWFLAT

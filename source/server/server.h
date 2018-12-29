@@ -282,14 +282,10 @@ extern cvar_t *sv_http_upstream_realip_header;
 extern cvar_t *sv_skilllevel;
 extern cvar_t *sv_maxclients;
 
-extern cvar_t *sv_enforcetime;
 extern cvar_t *sv_showRcon;
 extern cvar_t *sv_showChallenge;
 extern cvar_t *sv_showInfoQueries;
-extern cvar_t *sv_highchars;
 
-//wsw : jal
-extern cvar_t *sv_compresspackets;
 extern cvar_t *sv_public;         // should heartbeats be sent
 
 // wsw : debug netcode

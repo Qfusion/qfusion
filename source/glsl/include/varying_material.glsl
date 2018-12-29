@@ -11,7 +11,7 @@ qf_flat_varying vec4 v_LightmapLayer0123;
 
 qf_varying vec3 v_Position;
 
-#if defined(APPLY_SPECULAR) || defined(APPLY_OFFSETMAPPING) || defined(APPLY_RELIEFMAPPING)
+#if defined(APPLY_SPECULAR)
 qf_varying vec3 v_EyeVector;
 #endif
 

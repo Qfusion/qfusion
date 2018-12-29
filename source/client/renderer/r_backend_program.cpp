@@ -566,7 +566,7 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 	const image_t *base, *normalmap, *glossmap, *decalmap, *entdecalmap;
 	vec3_t lightDir = { 0.0f, 0.0f, 0.0f };
 	vec4_t ambient = { 0.0f, 0.0f, 0.0f, 0.0f }, diffuse = { 0.0f, 0.0f, 0.0f, 0.0f };
-	float offsetmappingScale, glossIntensity, glossExponent;
+	float glossIntensity, glossExponent;
 	const superLightStyle_t *lightStyle = NULL;
 	bool applyDecal;
 	mat4_t texMatrix;
@@ -612,12 +612,6 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 		return;
 	}
 
-	if( normalmap->samples == 4 ) {
-		offsetmappingScale = r_offsetmapping_scale->value * rb.currentShader->offsetmappingScale;
-	} else { // no alpha in normalmap, don't bother with offset mapping
-		offsetmappingScale = 0;
-	}
-
 	state = RB_GetShaderpassState( pass->flags );
 	if( rb.mode == RB_MODE_POST_LIGHT ) {
 		state = ( state & ~GLSTATE_DEPTHWRITE ) | GLSTATE_SRCBLEND_SRC_ALPHA | GLSTATE_DSTBLEND_ONE;
@@ -645,9 +639,6 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 		lightStyle = rb.superLightStyle;
 
 		// brush models
-		if( !( r_offsetmapping->integer & 1 ) ) {
-			offsetmappingScale = 0;
-		}
 		if( rb.renderFlags & RF_LIGHTMAP ) {
 			programFeatures |= GLSL_SHADER_MATERIAL_BASETEX_ALPHA_ONLY;
 		}
@@ -656,14 +647,8 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 		}
 	} else if( rb.currentModelType == mod_bad ) {
 		// polys
-		if( !( r_offsetmapping->integer & 2 ) ) {
-			offsetmappingScale = 0;
-		}
 	} else {
 		// regular models
-		if( !( r_offsetmapping->integer & 4 ) ) {
-			offsetmappingScale = 0;
-		}
 	#ifdef HALFLAMBERTLIGHTING
 		programFeatures |= GLSL_SHADER_MATERIAL_HALFLAMBERT;
 	#endif
@@ -713,11 +698,6 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 		}
 
 		RB_BindImage( 4, entdecalmap ); // decal
-	}
-
-	if( offsetmappingScale > 0 ) {
-		programFeatures |= r_offsetmapping_reliefmapping->integer ?
-						   GLSL_SHADER_MATERIAL_RELIEFMAPPING : GLSL_SHADER_MATERIAL_OFFSETMAPPING;
 	}
 
 	programFeatures |= GLSL_SHADER_COMMON_LIGHTING;
@@ -805,7 +785,7 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 
 		RB_UpdateCommonUniforms( program, pass, texMatrix );
 
-		RP_UpdateMaterialUniforms( program, offsetmappingScale, glossIntensity, glossExponent );
+		RP_UpdateMaterialUniforms( program, glossIntensity, glossExponent );
 
 		RP_UpdateDiffuseLightUniforms( program, lightDir, ambient, diffuse );
 
@@ -1659,7 +1639,7 @@ void RB_DrawShadedElements( void ) {
 			}
 		}
 
-		if( ( pass->flags & SHADERPASS_DETAIL ) && !r_detailtextures->integer ) {
+		if( pass->flags & SHADERPASS_DETAIL ) {
 			continue;
 		}
 

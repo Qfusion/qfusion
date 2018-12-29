@@ -96,17 +96,15 @@ enum {
 #define GLSL_SHADER_MATERIAL_SPECULAR           GLSL_BIT( 35 )
 #define GLSL_SHADER_MATERIAL_DIRECTIONAL_LIGHT  GLSL_BIT( 36 )
 #define GLSL_SHADER_MATERIAL_FB_LIGHTMAP        GLSL_BIT( 37 )
-#define GLSL_SHADER_MATERIAL_OFFSETMAPPING      GLSL_BIT( 38 )
-#define GLSL_SHADER_MATERIAL_RELIEFMAPPING      GLSL_BIT( 39 )
-#define GLSL_SHADER_MATERIAL_AMBIENT_COMPENSATION GLSL_BIT( 40 )
-#define GLSL_SHADER_MATERIAL_DECAL              GLSL_BIT( 41 )
-#define GLSL_SHADER_MATERIAL_DECAL_ADD          GLSL_BIT( 42 )
-#define GLSL_SHADER_MATERIAL_BASETEX_ALPHA_ONLY GLSL_BIT( 43 )
-#define GLSL_SHADER_MATERIAL_HALFLAMBERT        GLSL_BIT( 44 )
-#define GLSL_SHADER_MATERIAL_ENTITY_DECAL       GLSL_BIT( 45 )
-#define GLSL_SHADER_MATERIAL_ENTITY_DECAL_ADD   GLSL_BIT( 46 )
-#define GLSL_SHADER_MATERIAL_LIGHTMAP_ARRAYS    GLSL_BIT( 47 )
-#define GLSL_SHADER_MATERIAL_LIGHTMAP_BICUBIC   GLSL_BIT( 48 )
+#define GLSL_SHADER_MATERIAL_AMBIENT_COMPENSATION GLSL_BIT( 38 )
+#define GLSL_SHADER_MATERIAL_DECAL              GLSL_BIT( 39 )
+#define GLSL_SHADER_MATERIAL_DECAL_ADD          GLSL_BIT( 40 )
+#define GLSL_SHADER_MATERIAL_BASETEX_ALPHA_ONLY GLSL_BIT( 41 )
+#define GLSL_SHADER_MATERIAL_HALFLAMBERT        GLSL_BIT( 42 )
+#define GLSL_SHADER_MATERIAL_ENTITY_DECAL       GLSL_BIT( 43 )
+#define GLSL_SHADER_MATERIAL_ENTITY_DECAL_ADD   GLSL_BIT( 44 )
+#define GLSL_SHADER_MATERIAL_LIGHTMAP_ARRAYS    GLSL_BIT( 45 )
+#define GLSL_SHADER_MATERIAL_LIGHTMAP_BICUBIC   GLSL_BIT( 46 )
 
 // q3a shader features
 #define GLSL_SHADER_Q3_TC_GEN_ENV               GLSL_BIT( 32 )
@@ -159,8 +157,7 @@ void RP_UpdateBlendMixUniform( int elem, vec2_t blendMask );
 
 void RP_UpdateSoftParticlesUniforms( int elem, float scale );
 
-void RP_UpdateMaterialUniforms( int elem,
-								float offsetmappingScale, float glossIntensity, float glossExponent );
+void RP_UpdateMaterialUniforms( int elem, float glossIntensity, float glossExponent );
 
 void RP_UpdateTextureUniforms( int elem, int TexWidth, int TexHeight );
 

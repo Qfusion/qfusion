@@ -30,8 +30,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define GAMMARAMP_STRIDE                4096
 
-extern cvar_t *r_stencilbits;
-
 //====================================================================
 
 enum {

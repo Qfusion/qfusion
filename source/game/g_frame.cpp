@@ -208,38 +208,9 @@ void G_CheckCvars( void ) {
 		g_warmup_timelimit->modified = false;
 	}
 
-	if( g_timelimit->modified ) {
-		// if we are inside timelimit period, update the endtime
-		if( GS_MatchState() == MATCH_STATE_PLAYTIME &&
-			!GS_MatchExtended() ) {
-			if( g_timelimit->value ) {
-				gs.gameState.stats[GAMESTAT_MATCHDURATION] = (int64_t)fabs( 60.0f * 1000 * g_timelimit->value );
-			} else {
-				gs.gameState.stats[GAMESTAT_MATCHDURATION] = 0;
-			}
-		}
-		g_timelimit->modified = false;
-	}
-
-	if( g_match_extendedtime->modified ) {
-		// if we are inside extended_time period, update the endtime
-		if( GS_MatchExtended() ) {
-			if( g_match_extendedtime->integer ) {
-				gs.gameState.stats[GAMESTAT_MATCHDURATION] = (int64_t)fabs( 60 * 1000 * g_match_extendedtime->value );
-			}
-		}
-		g_match_extendedtime->modified = false;
-	}
-
-	if( g_allow_falldamage->modified ) {
-		g_allow_falldamage->modified = false;
-	}
-
 	// update gameshared server settings
 
 	// FIXME: This should be restructured so gameshared settings are the master settings
-	GS_GamestatSetFlag( GAMESTAT_FLAG_FALLDAMAGE, ( g_allow_falldamage->integer != 0 ) );
-	GS_GamestatSetFlag( GAMESTAT_FLAG_SELFDAMAGE, ( g_allow_selfdamage->integer != 0 ) );
 	GS_GamestatSetFlag( GAMESTAT_FLAG_HASCHALLENGERS, level.gametype.hasChallengersQueue );
 
 	GS_GamestatSetFlag( GAMESTAT_FLAG_ISTEAMBASED, level.gametype.isTeamBased );
@@ -249,8 +220,6 @@ void G_CheckCvars( void ) {
 	GS_GamestatSetFlag( GAMESTAT_FLAG_INHIBITSHOOTING, level.gametype.shootingDisabled );
 	GS_GamestatSetFlag( GAMESTAT_FLAG_INFINITEAMMO, level.gametype.infiniteAmmo );
 	GS_GamestatSetFlag( GAMESTAT_FLAG_CANFORCEMODELS, level.gametype.canForceModels );
-	GS_GamestatSetFlag( GAMESTAT_FLAG_CANSHOWMINIMAP, level.gametype.canShowMinimap );
-	GS_GamestatSetFlag( GAMESTAT_FLAG_TEAMONLYMINIMAP, level.gametype.teamOnlyMinimap );
 
 	GS_GamestatSetFlag( GAMESTAT_FLAG_MMCOMPATIBLE, level.gametype.mmCompatible );
 

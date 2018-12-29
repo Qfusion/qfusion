@@ -36,7 +36,7 @@ void main()
 	v_StrMatrix[2] = Normal;
 	v_StrMatrix[1] = TangentDir * cross(Normal, Tangent);
 
-#if defined(APPLY_SPECULAR) || defined(APPLY_OFFSETMAPPING) || defined(APPLY_RELIEFMAPPING)
+#if defined(APPLY_SPECULAR)
 	vec3 EyeVectorWorld = u_ViewOrigin - Position.xyz;
 	v_EyeVector = EyeVectorWorld * v_StrMatrix;
 #endif

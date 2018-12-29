@@ -32,8 +32,6 @@ cvar_t *sv_port;
 cvar_t *sv_ip6;
 cvar_t *sv_port6;
 
-cvar_t *sv_enforcetime;
-
 cvar_t *sv_timeout;            // seconds without any message
 cvar_t *sv_zombietime;         // seconds to sink messages after disconnect
 
@@ -63,7 +61,6 @@ cvar_t *sv_showclamp;
 cvar_t *sv_showRcon;
 cvar_t *sv_showChallenge;
 cvar_t *sv_showInfoQueries;
-cvar_t *sv_highchars;
 
 cvar_t *sv_hostname;
 cvar_t *sv_public;         // should heartbeats be sent
@@ -73,10 +70,6 @@ cvar_t *sv_iplimit;
 
 cvar_t *sv_reconnectlimit; // minimum seconds between connect messages
 
-// wsw : jal
-
-cvar_t *sv_maxrate;
-cvar_t *sv_compresspackets;
 cvar_t *sv_masterservers;
 cvar_t *sv_masterservers_steam;
 cvar_t *sv_skilllevel;
@@ -634,12 +627,10 @@ void SV_Init( void ) {
 	sv_hostname =           Cvar_Get( "sv_hostname", APPLICATION " server", CVAR_SERVERINFO | CVAR_ARCHIVE );
 	sv_timeout =            Cvar_Get( "sv_timeout", "125", 0 );
 	sv_zombietime =         Cvar_Get( "sv_zombietime", "2", 0 );
-	sv_enforcetime =        Cvar_Get( "sv_enforcetime", "1", 0 );
 	sv_showclamp =          Cvar_Get( "sv_showclamp", "0", 0 );
 	sv_showRcon =           Cvar_Get( "sv_showRcon", "1", 0 );
 	sv_showChallenge =      Cvar_Get( "sv_showChallenge", "0", 0 );
 	sv_showInfoQueries =    Cvar_Get( "sv_showInfoQueries", "0", 0 );
-	sv_highchars =          Cvar_Get( "sv_highchars", "1", 0 );
 
 	sv_uploads_http =       Cvar_Get( "sv_uploads_http", "1", CVAR_READONLY );
 	sv_uploads_baseurl =    Cvar_Get( "sv_uploads_baseurl", "", CVAR_ARCHIVE );
@@ -683,8 +674,6 @@ void SV_Init( void ) {
 	}
 
 	// wsw : jal : cap client's exceding server rules
-	sv_maxrate =            Cvar_Get( "sv_maxrate", "0", CVAR_DEVELOPER );
-	sv_compresspackets =        Cvar_Get( "sv_compresspackets", "1", CVAR_DEVELOPER );
 	sv_skilllevel =         Cvar_Get( "sv_skilllevel", "2", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_LATCH );
 
 	if( sv_skilllevel->integer > 2 ) {

@@ -43,7 +43,6 @@ cvar_t *timescale;
 cvar_t *dedicated;
 cvar_t *versioncvar;
 
-static cvar_t *fixedtime;
 static cvar_t *logconsole = NULL;
 static cvar_t *logconsole_append;
 static cvar_t *logconsole_flush;
@@ -733,7 +732,6 @@ void Qcommon_Init( int argc, char **argv ) {
 
 	host_speeds =       Cvar_Get( "host_speeds", "0", 0 );
 	timescale =     Cvar_Get( "timescale", "1.0", CVAR_CHEAT );
-	fixedtime =     Cvar_Get( "fixedtime", "0", CVAR_CHEAT );
 	if( dedicated->integer ) {
 		logconsole =        Cvar_Get( "logconsole", "wswconsole.log", CVAR_ARCHIVE );
 	} else {
@@ -804,9 +802,7 @@ void Qcommon_Frame( unsigned int realMsec ) {
 		Com_ReopenConsoleLog();
 	}
 
-	if( fixedtime->integer > 0 ) {
-		gameMsec = fixedtime->integer;
-	} else if( timescale->value >= 0 ) {
+	if( timescale->value >= 0 ) {
 		static float extratime = 0.0f;
 		gameMsec = extratime + (float)realMsec * timescale->value;
 		extratime = ( extratime + (float)realMsec * timescale->value ) - (float)gameMsec;

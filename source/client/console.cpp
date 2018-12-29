@@ -44,7 +44,6 @@ volatile bool con_initialized;
 static cvar_t *con_notifytime;
 static cvar_t *con_drawNotify;
 static cvar_t *con_chatmode;
-cvar_t *con_printText;
 
 // keep these around from previous Con_DrawChat call
 static int con_chatX, con_chatY;
@@ -353,20 +352,6 @@ void Con_CheckResize( void ) {
 }
 
 /*
-* Con_ResetFontSize
-*/
-void Con_ResetFontSize() {
-	SCR_ResetSystemFontConsoleSize();
-}
-
-/*
-* Con_ChangeFontSize
-*/
-void Con_ChangeFontSize( int ch ) {
-	SCR_ChangeSystemFontConsoleSize( ch );
-}
-
-/*
 * Con_GetPixelRatio
 */
 float Con_GetPixelRatio( void ) {
@@ -405,7 +390,6 @@ void Con_Init( void ) {
 	//
 	con_notifytime = Cvar_Get( "con_notifytime", "3", CVAR_ARCHIVE );
 	con_drawNotify = Cvar_Get( "con_drawNotify", "0", CVAR_ARCHIVE );
-	con_printText  = Cvar_Get( "con_printText", "1", CVAR_ARCHIVE );
 	con_chatmode = Cvar_Get( "con_chatmode", "3", CVAR_ARCHIVE );
 
 	Cmd_AddCommand( "toggleconsole", Con_ToggleConsole );
@@ -492,10 +476,6 @@ static void Con_Print2( const char *txt, bool notify ) {
 	char colorchar[] = { Q_COLOR_ESCAPE, COLOR_WHITE, 0 };
 
 	if( !con_initialized ) {
-		return;
-	}
-
-	if( con_printText && con_printText->integer == 0 ) {
 		return;
 	}
 
@@ -1621,10 +1601,6 @@ void Con_KeyDown( int key ) {
 	}
 
 	if( key == K_PGUP || key == KP_PGUP || key == K_MWHEELUP ) { // wsw : pb : support mwheel in console
-		if( key == K_MWHEELUP && ctrl_is_down ) {
-			Con_ChangeFontSize( 1 );
-			return;
-		}
 		con.display += 2;
 		clamp_high( con.display, con.numlines - 1 );
 		clamp_low( con.display, 0 );    // in case con.numlines is 0
@@ -1632,10 +1608,6 @@ void Con_KeyDown( int key ) {
 	}
 
 	if( key == K_PGDN || key == KP_PGDN || key == K_MWHEELDOWN ) { // wsw : pb : support mwheel in console
-		if( ( key == K_MWHEELDOWN ) && ctrl_is_down ) {
-			Con_ChangeFontSize( -1 );
-			return;
-		}
 		con.display -= 2;
 		clamp_low( con.display, 0 );
 		return;
@@ -1661,13 +1633,6 @@ void Con_KeyDown( int key ) {
 			key_linepos = (unsigned int)strlen( key_lines[edit_line] );
 		}
 		return;
-	}
-
-	if( key == '0' ) {
-		if( ctrl_is_down ) {
-			Con_ResetFontSize();
-			return;
-		}
 	}
 
 	// key is a normal printable key normal which wil be HANDLE later in response to WM_CHAR event

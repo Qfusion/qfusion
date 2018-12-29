@@ -73,7 +73,6 @@ typedef struct glsl_program_s {
 
 		int GlossFactors;
 
-		int OffsetMappingScale;
 		int OutlineHeight;
 		int OutlineCutOff;
 
@@ -583,8 +582,6 @@ static const glsl_feature_t glsl_features_material[] =
 	{ GLSL_SHADER_MATERIAL_DIRECTIONAL_LIGHT, "#define APPLY_DIRECTIONAL_LIGHT\n", "_dirlight" },
 
 	{ GLSL_SHADER_MATERIAL_SPECULAR, "#define APPLY_SPECULAR\n", "_gloss" },
-	{ GLSL_SHADER_MATERIAL_OFFSETMAPPING, "#define APPLY_OFFSETMAPPING\n", "_offmap" },
-	{ GLSL_SHADER_MATERIAL_RELIEFMAPPING, "#define APPLY_RELIEFMAPPING\n", "_relmap" },
 	{ GLSL_SHADER_MATERIAL_AMBIENT_COMPENSATION, "#define APPLY_AMBIENT_COMPENSATION\n", "_amb" },
 	{ GLSL_SHADER_MATERIAL_DECAL, "#define APPLY_DECAL\n", "_decal" },
 	{ GLSL_SHADER_MATERIAL_DECAL_ADD, "#define APPLY_DECAL_ADD\n", "_add" },
@@ -1138,9 +1135,6 @@ static bool RF_LoadShaderFromFile_r( glslParser_t *parser, const char *fileName,
 
 				( ( programType == GLSL_PROGRAM_TYPE_MATERIAL ) && !Q_stricmp( token, "NUM_LIGHTMAPS)" )
 				  && ( features & GLSL_SHADER_MATERIAL_LIGHTSTYLE ) ) ||
-
-				( ( programType == GLSL_PROGRAM_TYPE_MATERIAL ) && !Q_stricmp( token, "APPLY_OFFSETMAPPING)" )
-				  && ( features & ( GLSL_SHADER_MATERIAL_OFFSETMAPPING | GLSL_SHADER_MATERIAL_RELIEFMAPPING ) ) ) ||
 
 				( ( programType == GLSL_PROGRAM_TYPE_MATERIAL ) && !Q_stricmp( token, "APPLY_DIRECTIONAL_LIGHT)" )
 				  && ( features & GLSL_SHADER_MATERIAL_DIRECTIONAL_LIGHT ) )
@@ -1777,15 +1771,11 @@ void RP_UpdateDiffuseLightUniforms( int elem,
 /*
 * RP_UpdateMaterialUniforms
 */
-void RP_UpdateMaterialUniforms( int elem,
-								float offsetmappingScale, float glossIntensity, float glossExponent ) {
+void RP_UpdateMaterialUniforms( int elem, float glossIntensity, float glossExponent ) {
 	glsl_program_t *program = r_glslprograms + elem - 1;
 
 	if( program->loc.GlossFactors >= 0 ) {
 		glUniform2f( program->loc.GlossFactors, glossIntensity, glossExponent );
-	}
-	if( program->loc.OffsetMappingScale >= 0 ) {
-		glUniform1f( program->loc.OffsetMappingScale, offsetmappingScale );
 	}
 }
 
@@ -2000,8 +1990,6 @@ static void RP_GetUniformLocations( glsl_program_t *program ) {
 	}
 
 	program->loc.GlossFactors = glGetUniformLocation( program->object, "u_GlossFactors" );
-
-	program->loc.OffsetMappingScale = glGetUniformLocation( program->object, "u_OffsetMappingScale" );
 
 	program->loc.OutlineHeight = glGetUniformLocation( program->object, "u_OutlineHeight" );
 	program->loc.OutlineCutOff = glGetUniformLocation( program->object, "u_OutlineCutOff" );

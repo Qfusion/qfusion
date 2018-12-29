@@ -43,9 +43,6 @@ cvar_t *g_gravity;
 cvar_t *sv_cheats;
 cvar_t *sv_mm_enable;
 
-cvar_t *cm_mapHeader;
-cvar_t *cm_mapVersion;
-
 cvar_t *g_maplist;
 cvar_t *g_maprotation;
 
@@ -70,16 +67,11 @@ cvar_t *g_autorecord_maxdemos;
 
 cvar_t *g_self_knockback;
 cvar_t *g_knockback_scale;
-cvar_t *g_allow_falldamage;
-cvar_t *g_allow_selfdamage;
 cvar_t *g_allow_teamdamage;
 
 cvar_t *g_respawn_delay_min;
 cvar_t *g_respawn_delay_max;
 cvar_t *g_deadbody_followkiller;
-cvar_t *g_ammo_respawn;
-cvar_t *g_weapon_respawn;
-cvar_t *g_health_respawn;
 
 cvar_t *g_allow_spectator_voting;
 
@@ -236,12 +228,6 @@ void G_Init( unsigned int seed, unsigned int framemsec, int protocol, const char
 	g_operator_password = trap_Cvar_Get( "g_operator_password", "", CVAR_ARCHIVE );
 	filterban = trap_Cvar_Get( "filterban", "1", 0 );
 
-	cm_mapHeader = trap_Cvar_Get( "cm_mapHeader", "", 0 );
-	cm_mapVersion = trap_Cvar_Get( "cm_mapVersion", "", 0 );
-
-	g_ammo_respawn = trap_Cvar_Get( "g_ammo_respawn", "0", CVAR_ARCHIVE );
-	g_weapon_respawn = trap_Cvar_Get( "g_weapon_respawn", "0", CVAR_ARCHIVE );
-	g_health_respawn = trap_Cvar_Get( "g_health_respawn", "0", CVAR_ARCHIVE );
 	g_projectile_prestep = trap_Cvar_Get( "g_projectile_prestep", va( "%i", PROJECTILE_PRESTEP ), CVAR_DEVELOPER );
 	g_self_knockback = trap_Cvar_Get( "g_self_knockback", "1.18", CVAR_DEVELOPER );
 	g_knockback_scale = trap_Cvar_Get( "g_knockback_scale", "1.0", CVAR_ARCHIVE );
@@ -250,7 +236,6 @@ void G_Init( unsigned int seed, unsigned int framemsec, int protocol, const char
 	g_numbots = trap_Cvar_Get( "g_numbots", "0", CVAR_ARCHIVE );
 	g_deadbody_followkiller = trap_Cvar_Get( "g_deadbody_followkiller", "1", CVAR_DEVELOPER );
 	g_maxtimeouts = trap_Cvar_Get( "g_maxtimeouts", "2", CVAR_ARCHIVE );
-	g_antilag = trap_Cvar_Get( "g_antilag", "1", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_LATCH );
 	g_antilag_maxtimedelta = trap_Cvar_Get( "g_antilag_maxtimedelta", "200", CVAR_ARCHIVE );
 	g_antilag_maxtimedelta->modified = true;
 	g_antilag_timenudge = trap_Cvar_Get( "g_antilag_timenudge", "0", CVAR_ARCHIVE );
@@ -569,13 +554,10 @@ void G_ExitLevel( void ) {
 	char command[256];
 	const char *nextmapname;
 	bool loadmap = true;
-	int64_t timeLimit;
 
 	level.exitNow = false;
 
 	nextmapname = G_SelectNextMapName();
-	timeLimit = g_timelimit->integer > 0 ? max( g_timelimit->integer, 60 ) : 60;
-	timeLimit *= 60 * 1000;
 
 	// if it's the same map see if we can restart without loading
 	if( !level.hardReset && !Q_stricmp( nextmapname, level.mapname ) && G_RespawnLevel() ) {

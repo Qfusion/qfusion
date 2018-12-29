@@ -23,8 +23,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //g_gametypes.c
 extern cvar_t *g_warmup_timelimit;
 extern cvar_t *g_postmatch_timelimit;
-extern cvar_t *g_countdown_time;
-extern cvar_t *g_match_extendedtime;
 extern cvar_t *g_gametype; // only for use in function that deal with changing gametype, use GS_Gametype()
 
 #define G_CHALLENGERS_MIN_JOINTEAM_MAPTIME  9000 // must wait 10 seconds before joining
@@ -115,8 +113,6 @@ typedef struct {
 	bool shootingDisabled;
 	bool infiniteAmmo;
 	bool canForceModels;
-	bool canShowMinimap;
-	bool teamOnlyMinimap;
 	bool customDeadBodyCam;
 	bool removeInactivePlayers;
 	bool disableObituaries;

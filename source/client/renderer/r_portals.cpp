@@ -292,7 +292,6 @@ setup_and_render:
 		// view origin, because the view point moves around and
 		// might fly into (or behind) a wall
 		VectorCopy( best->origin2, rn.pvsOrigin );
-		VectorCopy( best->origin2, rn.lodOrigin );
 
 		rn.renderFlags |= RF_PORTALVIEW;
 

@@ -286,18 +286,14 @@ bool SV_SendClientsFragments( void ) {
 * SV_Netchan_Transmit
 */
 bool SV_Netchan_Transmit( netchan_t *netchan, msg_t *msg ) {
-	int zerror;
-
 	// if we got here with unsent fragments, fire them all now
 	if( !Netchan_PushAllFragments( netchan ) ) {
 		return false;
 	}
 
-	if( sv_compresspackets->integer ) {
-		zerror = Netchan_CompressMessage( msg );
-		if( zerror < 0 ) { // it's compression error, just send uncompressed
-			Com_DPrintf( "SV_Netchan_Transmit (ignoring compression): Compression error %i\n", zerror );
-		}
+	int zerror = Netchan_CompressMessage( msg );
+	if( zerror < 0 ) { // it's compression error, just send uncompressed
+		Com_DPrintf( "SV_Netchan_Transmit (ignoring compression): Compression error %i\n", zerror );
 	}
 
 	return Netchan_Transmit( netchan, msg );

@@ -178,20 +178,10 @@ static void PF_dprint( const char *msg ) {
 	}
 
 	// don't allow control chars except for \n
-	if( sv_highchars && sv_highchars->integer ) {
-		for( ; *in && out < end - 1; in++ )
-			if( ( unsigned char )*in >= ' ' || *in == '\n' ) {
-				*out++ = *in;
-			}
-	} else {   // also convert highchars to ascii by stripping high bit
-		for( ; *in && out < end - 1; in++ )
-			if( ( signed char )*in >= ' ' || *in == '\n' ) {
-				*out++ = *in;
-			} else if( ( unsigned char )*in > 128 ) { // 128 is not allowed
-				*out++ = *in & 127;
-			} else if( ( unsigned char )*in == 128 ) {
-				*out++ = '?';
-			}
+	for( ; *in && out < end - 1; in++ ) {
+		if( ( unsigned char )*in >= ' ' || *in == '\n' ) {
+			*out++ = *in;
+		}
 	}
 	*out = '\0';
 

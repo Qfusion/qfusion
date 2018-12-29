@@ -58,9 +58,6 @@ typedef struct
 
 static areagrid_t g_areagrid;
 
-extern cvar_t *g_antilag;
-extern cvar_t *g_antilag_maxtimedelta;
-
 #define CFRAME_UPDATE_BACKUP    64  // copies of entity_state_t to keep buffered (1 second of backup at 62 fps).
 #define CFRAME_UPDATE_MASK  ( CFRAME_UPDATE_BACKUP - 1 )
 
@@ -85,10 +82,6 @@ void GClip_BackUpCollisionFrame( void ) {
 	c4frame_t *cframe;
 	edict_t *svedict;
 	int i;
-
-	if( !g_antilag->integer ) {
-		return;
-	}
 
 	// fixme: should check for any validation here?
 
@@ -130,7 +123,7 @@ static c4clipedict_t *GClip_GetClipEdictForDeltaTime( int entNum, int deltaTime 
 	clipent = &clipEnts[index];
 	index = ( index + 1 ) & 7;
 
-	if( !entNum || deltaTime >= 0 || !g_antilag->integer ) { // current time entity
+	if( !entNum || deltaTime >= 0 ) { // current time entity
 		clipent->r = ent->r;
 		clipent->s = ent->s;
 		return clipent;

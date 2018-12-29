@@ -54,18 +54,13 @@ class Kbutton
 	int state;
 };
 
-Kbutton in_klook;
-Kbutton in_left, in_right, in_forward, in_back;
-Kbutton in_lookup, in_lookdown, in_moveleft, in_moveright;
-Kbutton in_strafe, in_speed, in_use, in_attack;
+Kbutton in_forward, in_back, in_moveleft, in_moveright;
+Kbutton in_use, in_attack;
 Kbutton in_up, in_down;
 Kbutton in_special;
 Kbutton in_zoom;
 
-Cvar cl_yawspeed( "cl_yawspeed", "140", 0 );
-Cvar cl_pitchspeed( "cl_pitchspeed", "150", 0 );
 Cvar cl_anglespeedkey( "cl_anglespeedkey", "1.5", 0 );
-Cvar cl_run( "cl_run", "1", CVAR_ARCHIVE );
 
 /*
 * Init
@@ -83,12 +78,6 @@ void Init() {
 	CGame::Cmd::AddCommand( "-forward", ForwardUp );
 	CGame::Cmd::AddCommand( "+back", BackDown );
 	CGame::Cmd::AddCommand( "-back", BackUp );
-	CGame::Cmd::AddCommand( "+lookup", LookupDown );
-	CGame::Cmd::AddCommand( "-lookup", LookupUp );
-	CGame::Cmd::AddCommand( "+lookdown", LookdownDown );
-	CGame::Cmd::AddCommand( "-lookdown", LookdownUp );
-	CGame::Cmd::AddCommand( "+strafe", StrafeDown );
-	CGame::Cmd::AddCommand( "-strafe", StrafeUp );
 	CGame::Cmd::AddCommand( "+moveleft", MoveleftDown );
 	CGame::Cmd::AddCommand( "-moveleft", MoveleftUp );
 	CGame::Cmd::AddCommand( "+moveright", MoverightDown );
@@ -99,8 +88,6 @@ void Init() {
 	CGame::Cmd::AddCommand( "-attack", AttackUp );
 	CGame::Cmd::AddCommand( "+use", UseDown );
 	CGame::Cmd::AddCommand( "-use", UseUp );
-	CGame::Cmd::AddCommand( "+klook", KLookDown );
-	CGame::Cmd::AddCommand( "-klook", KLookUp );
 	CGame::Cmd::AddCommand( "+special", SpecialDown );
 	CGame::Cmd::AddCommand( "-special", SpecialUp );
 	CGame::Cmd::AddCommand( "+zoom", ZoomDown );
@@ -192,8 +179,6 @@ void KeyUp( Kbutton @b ) {
 }
 
 
-void KLookDown( void ) { KeyDown( in_klook ); }
-void KLookUp( void ) { KeyUp( in_klook ); }
 void UpDown( void ) { KeyDown( in_up ); }
 void UpUp( void ) { KeyUp( in_up ); }
 void DownDown( void ) { KeyDown( in_down ); }
@@ -206,18 +191,12 @@ void ForwardDown( void ) { KeyDown( in_forward ); }
 void ForwardUp( void ) { KeyUp( in_forward ); }
 void BackDown( void ) { KeyDown( in_back ); }
 void BackUp( void ) { KeyUp( in_back ); }
-void LookupDown( void ) { KeyDown( in_lookup ); }
-void LookupUp( void ) { KeyUp( in_lookup ); }
-void LookdownDown( void ) { KeyDown( in_lookdown ); }
-void LookdownUp( void ) { KeyUp( in_lookdown ); }
 void MoveleftDown( void ) { KeyDown( in_moveleft ); }
 void MoveleftUp( void ) { KeyUp( in_moveleft ); }
 void MoverightDown( void ) { KeyDown( in_moveright ); }
 void MoverightUp( void ) { KeyUp( in_moveright ); }
 void SpeedDown( void ) { KeyDown( in_speed ); }
 void SpeedUp( void ) { KeyUp( in_speed ); }
-void StrafeDown( void ) { KeyDown( in_strafe ); }
-void StrafeUp( void ) { KeyUp( in_strafe ); }
 void AttackDown( void ) { KeyDown( in_attack ); }
 void AttackUp( void ) { KeyUp( in_attack ); }
 void UseDown( void ) { KeyDown( in_use ); }
@@ -271,18 +250,6 @@ Vec3 GetAngularMovement( void ) {
 	} else {
 		speed = float(frameTime) * 0.001;
 	}
-
-	if( ( in_strafe.state & 1 ) == 0 ) {
-		viewAngles[YAW] -= speed * cl_yawspeed.value * KeyState( in_right );
-		viewAngles[YAW] += speed * cl_yawspeed.value * KeyState( in_left );
-	}
-	if( ( in_klook.state & 1 ) != 0 ) {
-		viewAngles[PITCH] -= speed * cl_pitchspeed.value * KeyState( in_forward );
-		viewAngles[PITCH] += speed * cl_pitchspeed.value * KeyState( in_back );
-	}
-
-	viewAngles[PITCH] -= speed * cl_pitchspeed.value * KeyState( in_lookup );
-	viewAngles[PITCH] += speed * cl_pitchspeed.value * KeyState( in_lookdown );
 	
 	return viewAngles;
 }
@@ -294,18 +261,8 @@ Vec3 GetMovement() {
 	float down;
 	Vec3 movement;
 
-	if( ( in_strafe.state & 1 ) != 0 ) {
-		movement[0] += KeyState( in_right );
-		movement[0] -= KeyState( in_left );
-	}
-
 	movement[0] += KeyState( in_moveright );
 	movement[0] -= KeyState( in_moveleft );
-
-	if( ( in_klook.state & 1 ) == 0 ) {
-		movement[1] += KeyState( in_forward );
-		movement[1] -= KeyState( in_back );
-	}
 
 	movement[2] += KeyState( in_up );
 	down = KeyState( in_down );
@@ -339,7 +296,7 @@ uint GetButtonBits() {
 	}
 	in_use.state &= ~2;
 
-	if( ( ( in_speed.state & 1 ) ^ ( cl_run.integer ^ 1 ) ) != 0 ) {
+	if( ( ( in_speed.state & 1 ) ^ ) != 0 ) {
 		buttons |= BUTTON_WALK;
 	}
 

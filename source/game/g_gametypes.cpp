@@ -44,12 +44,7 @@ static void G_Gametype_GENERIC_Init( void ) {
 	level.gametype.countdownEnabled = false;
 	level.gametype.matchAbortDisabled = false;
 	level.gametype.canForceModels = true;
-	level.gametype.canShowMinimap = false;
-	level.gametype.teamOnlyMinimap = true;
 	level.gametype.spawnpointRadius = 256;
-
-	level.gametype.canShowMinimap = false;
-	level.gametype.teamOnlyMinimap = true;
 
 	level.gametype.numBots = 0;
 	level.gametype.dummyBots = false;
@@ -70,9 +65,7 @@ static void G_Gametype_GENERIC_Init( void ) {
 cvar_t *g_warmup_timelimit;
 cvar_t *g_postmatch_timelimit;
 cvar_t *g_match_extendedtime;
-cvar_t *g_countdown_time;
 cvar_t *g_scorelimit;
-cvar_t *g_timelimit;
 cvar_t *g_gametype;
 
 //==========================================================
@@ -136,22 +129,10 @@ bool G_Match_CheckExtendPlayTime( void ) {
 			gs.gameState.stats[GAMESTAT_MATCHSTATE] = MATCH_STATE_PLAYTIME;
 			gs.gameState.stats[GAMESTAT_MATCHSTART] = game.serverTime;
 
-			if( g_match_extendedtime->value ) {
-				if( !GS_MatchExtended() ) { // first one
-					G_AnnouncerSound( NULL, trap_SoundIndex( S_ANNOUNCER_OVERTIME_GOING_TO_OVERTIME ), GS_MAX_TEAMS, true, NULL );
-				} else {
-					G_AnnouncerSound( NULL, trap_SoundIndex( S_ANNOUNCER_OVERTIME_OVERTIME ), GS_MAX_TEAMS, true, NULL );
-				}
-
-				G_PrintMsg( NULL, "Match tied. Timelimit extended by %i minutes!\n", g_match_extendedtime->integer );
-				G_CenterPrintFormatMsg( NULL, 1, "%s MINUTE OVERTIME\n", va( "%i", g_match_extendedtime->integer ) );
-				gs.gameState.stats[GAMESTAT_MATCHDURATION] = (int64_t)( ( fabs( g_match_extendedtime->value ) * 60 ) * 1000 );
-			} else {
-				G_AnnouncerSound( NULL, trap_SoundIndex( va( S_ANNOUNCER_OVERTIME_SUDDENDEATH_1_to_2, ( rand() & 1 ) + 1 ) ), GS_MAX_TEAMS, true, NULL );
-				G_PrintMsg( NULL, "Match tied. Sudden death!\n" );
-				G_CenterPrintMsg( NULL, "SUDDEN DEATH" );
-				gs.gameState.stats[GAMESTAT_MATCHDURATION] = 0;
-			}
+			G_AnnouncerSound( NULL, trap_SoundIndex( va( S_ANNOUNCER_OVERTIME_SUDDENDEATH_1_to_2, ( rand() & 1 ) + 1 ) ), GS_MAX_TEAMS, true, NULL );
+			G_PrintMsg( NULL, "Match tied. Sudden death!\n" );
+			G_CenterPrintMsg( NULL, "SUDDEN DEATH" );
+			gs.gameState.stats[GAMESTAT_MATCHDURATION] = 0;
 
 			return true;
 		}
@@ -384,7 +365,7 @@ void G_Match_LaunchState( int matchState ) {
 			advance_queue = true;
 
 			gs.gameState.stats[GAMESTAT_MATCHSTATE] = MATCH_STATE_COUNTDOWN;
-			gs.gameState.stats[GAMESTAT_MATCHDURATION] = (int64_t)( fabs( g_countdown_time->value ) * 1000 );
+			gs.gameState.stats[GAMESTAT_MATCHDURATION] = 5000;
 			gs.gameState.stats[GAMESTAT_MATCHSTART] = game.serverTime;
 
 			break;
@@ -398,7 +379,7 @@ void G_Match_LaunchState( int matchState ) {
 			level.forceStart = false;
 
 			gs.gameState.stats[GAMESTAT_MATCHSTATE] = MATCH_STATE_PLAYTIME;
-			gs.gameState.stats[GAMESTAT_MATCHDURATION] = (int64_t)( fabs( 60 * g_timelimit->value ) * 1000 );
+			gs.gameState.stats[GAMESTAT_MATCHDURATION] = 0;
 			gs.gameState.stats[GAMESTAT_MATCHSTART] = game.serverTime;
 		}
 		break;
@@ -1034,18 +1015,10 @@ int G_Gametype_RespawnTimeForItem( const gsitem_t *item ) {
 
 	}
 	if( item->type & IT_AMMO ) {
-		if( g_ammo_respawn->value > 0.0f ) {
-			return g_ammo_respawn->value * 1000;
-		}
-
 		return level.gametype.ammo_respawn * 1000;
 	}
 
 	if( item->type & IT_WEAPON ) {
-		if( g_weapon_respawn->value > 0.0f ) {
-			return g_weapon_respawn->value * 1000;
-		}
-
 		return level.gametype.weapon_respawn * 1000;
 	}
 
@@ -1058,10 +1031,6 @@ int G_Gametype_RespawnTimeForItem( const gsitem_t *item ) {
 	}
 
 	if( item->type & IT_HEALTH ) {
-		if( g_health_respawn->value > 0 ) {
-			return g_health_respawn->value * 1000;
-		}
-
 		return level.gametype.health_respawn * 1000;
 	}
 
@@ -1319,8 +1288,6 @@ void G_Gametype_SetDefaults( void ) {
 	level.gametype.shootingDisabled = false;
 	level.gametype.infiniteAmmo = false;
 	level.gametype.canForceModels = true;
-	level.gametype.canShowMinimap = false;
-	level.gametype.teamOnlyMinimap = true;
 	level.gametype.customDeadBodyCam = false;
 	level.gametype.removeInactivePlayers = true;
 	level.gametype.disableObituaries = false;
@@ -1351,14 +1318,10 @@ void G_Gametype_Init( void ) {
 	// get the match cvars too
 	g_warmup_timelimit = trap_Cvar_Get( "g_warmup_timelimit", "5", CVAR_ARCHIVE );
 	g_postmatch_timelimit = trap_Cvar_Get( "g_postmatch_timelimit", "4", CVAR_ARCHIVE );
-	g_countdown_time = trap_Cvar_Get( "g_countdown_time", "5", CVAR_ARCHIVE );
 	g_match_extendedtime = trap_Cvar_Get( "g_match_extendedtime", "2", CVAR_ARCHIVE );
 
 	// game settings
-	g_timelimit = trap_Cvar_Get( "g_timelimit", "0", CVAR_ARCHIVE | CVAR_READONLY );
 	g_scorelimit = trap_Cvar_Get( "g_scorelimit", "10", CVAR_ARCHIVE );
-	g_allow_falldamage = trap_Cvar_Get( "g_allow_falldamage", "0", CVAR_ARCHIVE | CVAR_READONLY );
-	g_allow_selfdamage = trap_Cvar_Get( "g_allow_selfdamage", "1", CVAR_ARCHIVE | CVAR_READONLY );
 	g_allow_teamdamage = trap_Cvar_Get( "g_allow_teamdamage", "0", CVAR_ARCHIVE | CVAR_READONLY );
 
 	G_Printf( "-------------------------------------\n" );
@@ -1380,7 +1343,7 @@ void G_Gametype_Init( void ) {
 		trap_Cbuf_Execute();
 	}
 
-	G_CheckCvars(); // update GS_FallDamage, etc
+	G_CheckCvars();
 
 	G_Gametype_SetDefaults();
 

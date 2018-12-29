@@ -254,10 +254,6 @@ static void objectGametypeDescriptor_SetTeamSpawnsystem( int team, int spawnsyst
 	G_SpawnQueue_SetTeamSpawnsystem( team, spawnsystem, wave_time, wave_maxcount, spectate_team );
 }
 
-static bool objectGametypeDescriptor_hasFallDamage( gametype_descriptor_t *self ) {
-	return GS_FallDamage();
-}
-
 static bool objectGametypeDescriptor_hasSelfDamage( gametype_descriptor_t *self ) {
 	return GS_SelfDamage();
 }
@@ -281,7 +277,6 @@ static const gs_asMethod_t gametypedescr_Methods[] =
 	{ ASLIB_FUNCTION_DECL( const String @, get_name, ( ) const ), asFUNCTION( objectGametypeDescriptor_getName ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( const String @, get_manifest, ( ) const ), asFUNCTION( objectGametypeDescriptor_getManifest ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, setTeamSpawnsystem, ( int team, int spawnsystem, int wave_time, int wave_maxcount, bool deadcam ) ), asFUNCTION( objectGametypeDescriptor_SetTeamSpawnsystem ), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL( bool, get_hasFallDamage, ( ) const ), asFUNCTION( objectGametypeDescriptor_hasFallDamage ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( bool, get_hasSelfDamage, ( ) const ), asFUNCTION( objectGametypeDescriptor_hasSelfDamage ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( bool, get_isInvidualGameType, ( ) const ), asFUNCTION( objectGametypeDescriptor_isInvidualGameType ), asCALL_CDECL_OBJLAST },
 
@@ -313,8 +308,6 @@ static const gs_asProperty_t gametypedescr_Properties[] =
 	{ ASLIB_PROPERTY_DECL( bool, shootingDisabled ), ASLIB_FOFFSET( gametype_descriptor_t, shootingDisabled ) },
 	{ ASLIB_PROPERTY_DECL( bool, infiniteAmmo ), ASLIB_FOFFSET( gametype_descriptor_t, infiniteAmmo ) },
 	{ ASLIB_PROPERTY_DECL( bool, canForceModels ), ASLIB_FOFFSET( gametype_descriptor_t, canForceModels ) },
-	{ ASLIB_PROPERTY_DECL( bool, canShowMinimap ), ASLIB_FOFFSET( gametype_descriptor_t, canShowMinimap ) },
-	{ ASLIB_PROPERTY_DECL( bool, teamOnlyMinimap ), ASLIB_FOFFSET( gametype_descriptor_t, teamOnlyMinimap ) },
 	{ ASLIB_PROPERTY_DECL( int, spawnpointRadius ), ASLIB_FOFFSET( gametype_descriptor_t, spawnpointRadius ) },
 	{ ASLIB_PROPERTY_DECL( bool, customDeadBodyCam ), ASLIB_FOFFSET( gametype_descriptor_t, customDeadBodyCam ) },
 	{ ASLIB_PROPERTY_DECL( bool, removeInactivePlayers ), ASLIB_FOFFSET( gametype_descriptor_t, removeInactivePlayers ) },

@@ -239,24 +239,11 @@ void RF_ReplaceRawSubPic( shader_t *shader, int x, int y, int width, int height,
 void RF_BeginAviDemo( void ) {
 }
 
-void RF_WriteAviFrame( int frame, bool scissor ) {
-	int x, y, w, h;
+void RF_WriteAviFrame( int frame ) {
 	const char *writedir;
 	size_t path_size;
 	char *path;
 	char name[32];
-
-	if( scissor ) {
-		x = rsc.refdef.x;
-		y = glConfig.height - rsc.refdef.height - rsc.refdef.y;
-		w = rsc.refdef.width;
-		h = rsc.refdef.height;
-	} else {
-		x = 0;
-		y = 0;
-		w = glConfig.width;
-		h = glConfig.height;
-	}
 
 	writedir = ri.FS_WriteDirectory();
 	path_size = strlen( writedir ) + strlen( "/avi/" ) + 1;
@@ -264,7 +251,7 @@ void RF_WriteAviFrame( int frame, bool scissor ) {
 	Q_snprintfz( path, path_size, "%s/avi/", writedir );
 	Q_snprintfz( name, sizeof( name ), "%06i", frame );
 
-	rrf.adapter.cmdPipe->AviShot( rrf.adapter.cmdPipe, path, name, x, y, w, h );
+	rrf.adapter.cmdPipe->AviShot( rrf.adapter.cmdPipe, path, name, 0, 0, glConfig.width, glConfig.height );
 }
 
 void RF_StopAviDemo( void ) {

@@ -172,10 +172,6 @@ void R_AddEntityToScene( const entity_t *ent ) {
 			}
 		}
 
-		if( !r_lerpmodels->integer ) {
-			de->backlerp = 0;
-		}
-
 		R_CacheSceneEntity( de );
 
 		rsc.numEntities++;
@@ -380,10 +376,6 @@ void R_RenderScene( const refdef_t *fd ) {
 	VectorCopy( fd->vieworg, rn.pvsOrigin );
 	VectorCopy( fd->vieworg, rn.viewOrigin );
 	Matrix3_Copy( fd->viewaxis, rn.viewAxis );
-
-	VectorCopy( fd->vieworg, rn.lodOrigin );
-	rn.lodBias = r_lodbias->integer;
-	rn.lodScale = r_lodscale->value;
 
 	R_BindFrameBufferObject( 0 );
 

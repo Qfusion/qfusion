@@ -30,7 +30,6 @@ cvar_t *rcon_address;
 
 cvar_t *cl_timeout;
 cvar_t *cl_maxfps;
-cvar_t *cl_sleep;
 cvar_t *cl_pps;
 cvar_t *cl_shownet;
 
@@ -40,7 +39,6 @@ cvar_t *cl_extrapolate;
 cvar_t *cl_demoavi_video;
 cvar_t *cl_demoavi_audio;
 cvar_t *cl_demoavi_fps;
-cvar_t *cl_demoavi_scissor;
 
 //
 // userinfo
@@ -56,7 +54,6 @@ cvar_t *cl_debug_timeDelta;
 cvar_t *cl_downloads;
 cvar_t *cl_downloads_from_web;
 cvar_t *cl_downloads_from_web_timeout;
-cvar_t *cl_download_allow_modules;
 
 
 static char cl_nextString[MAX_STRING_CHARS];
@@ -1713,7 +1710,6 @@ static void CL_InitLocal( void ) {
 	// register our variables
 	//
 	cl_maxfps =     Cvar_Get( "cl_maxfps", "250", CVAR_ARCHIVE );
-	cl_sleep =      Cvar_Get( "cl_sleep", "0", CVAR_ARCHIVE );
 	cl_pps =        Cvar_Get( "cl_pps", "40", CVAR_ARCHIVE );
 
 	cl_extrapolationTime =  Cvar_Get( "cl_extrapolationTime", "0", CVAR_DEVELOPER );
@@ -1727,7 +1723,6 @@ static void CL_InitLocal( void ) {
 	cl_demoavi_audio =  Cvar_Get( "cl_demoavi_audio", "0", CVAR_ARCHIVE );
 	cl_demoavi_fps =    Cvar_Get( "cl_demoavi_fps", "30.3", CVAR_ARCHIVE );
 	cl_demoavi_fps->modified = true;
-	cl_demoavi_scissor =    Cvar_Get( "cl_demoavi_scissor", "0", CVAR_ARCHIVE );
 
 	rcon_client_password =  Cvar_Get( "rcon_password", "", 0 );
 	rcon_address =      Cvar_Get( "rcon_address", "", 0 );
@@ -1739,7 +1734,6 @@ static void CL_InitLocal( void ) {
 	cl_downloads =      Cvar_Get( "cl_downloads", "1", CVAR_ARCHIVE );
 	cl_downloads_from_web = Cvar_Get( "cl_downloads_from_web", "1", CVAR_ARCHIVE | CVAR_READONLY );
 	cl_downloads_from_web_timeout = Cvar_Get( "cl_downloads_from_web_timeout", "600", CVAR_ARCHIVE );
-	cl_download_allow_modules = Cvar_Get( "cl_download_allow_modules", "1", CVAR_ARCHIVE );
 
 	//
 	// userinfo
@@ -2185,8 +2179,8 @@ void CL_Frame( int realMsec, int gameMsec ) {
 	}
 
 	if( allRealMsec + extraMsec < minMsec ) {
-		// let CPU sleep while minimized or when cl_sleep is enabled
-		bool sleep = cl_sleep->integer != 0 || cls.state == CA_DISCONNECTED || !VID_AppIsActive() || VID_AppIsMinimized(); // FIXME: not sure about listen server here..
+		// let CPU sleep while minimized
+		bool sleep = cls.state == CA_DISCONNECTED || !VID_AppIsActive() || VID_AppIsMinimized(); // FIXME: not sure about listen server here..
 
 		if( sleep && minMsec - extraMsec > 1 ) {
 			Sys_Sleep( minMsec - extraMsec - 1 );
@@ -2218,7 +2212,7 @@ void CL_Frame( int realMsec, int gameMsec ) {
 	if( CL_WriteAvi() ) {
 		int frame = ++cls.demo.avi_frame;
 		if( cls.demo.avi_video ) {
-			re.WriteAviFrame( frame, cl_demoavi_scissor->integer );
+			re.WriteAviFrame( frame );
 		}
 	}
 
@@ -2329,8 +2323,6 @@ void CL_AsyncStreamRequest( const char *url, const char **headers, int timeout, 
 */
 void CL_Init( void ) {
 	netadr_t address;
-	cvar_t *cl_port;
-	cvar_t *cl_port6;
 
 	assert( !cl_initialized );
 
@@ -2352,16 +2344,12 @@ void CL_Init( void ) {
 
 	// IPv4
 	NET_InitAddress( &address, NA_IP );
-	cl_port = Cvar_Get( "cl_port", "0", CVAR_NOSET );
-	NET_SetAddressPort( &address, cl_port->integer );
 	if( !NET_OpenSocket( &cls.socket_udp, SOCKET_UDP, &address, false ) ) {
 		Com_Error( ERR_FATAL, "Couldn't open UDP socket: %s", NET_ErrorString() );
 	}
 
 	// IPv6
 	NET_InitAddress( &address, NA_IP6 );
-	cl_port6 = Cvar_Get( "cl_port6", "0", CVAR_NOSET );
-	NET_SetAddressPort( &address, cl_port6->integer );
 	if( !NET_OpenSocket( &cls.socket_udp6, SOCKET_UDP, &address, false ) ) {
 		Com_Printf( "Error: Couldn't open UDP6 socket: %s", NET_ErrorString() );
 	}

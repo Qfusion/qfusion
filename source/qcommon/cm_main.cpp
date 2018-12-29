@@ -250,10 +250,6 @@ cmodel_t *CM_LoadMap( cmodel_state_t *cms, const char *name, bool clientload, un
 	memcpy( header, buf, descr->headerLen );
 	header[descr->headerLen] = '\0';
 
-	// store map format description in cvars
-	Cvar_ForceSet( "cm_mapHeader", header );
-	Cvar_ForceSet( "cm_mapVersion", va( "%i", LittleLong( *( (int *)( (uint8_t *)buf + descr->headerLen ) ) ) ) );
-
 	Mem_TempFree( header );
 
 	descr->loader( cms, NULL, buf, bspFormat );

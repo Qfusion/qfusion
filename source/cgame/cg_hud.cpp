@@ -527,11 +527,9 @@ static const reference_numeric_t cg_numeric_references[] =
 	// cvars
 	{ "SHOW_FPS", CG_GetCvar, "cg_showFPS" },
 	{ "SHOW_OBITUARIES", CG_GetCvar, "cg_showObituaries" },
-	{ "SHOW_PICKUP", CG_GetCvar, "cg_showPickup" },
 	{ "SHOW_POINTED_PLAYER", CG_GetCvar, "cg_showPointedPlayer" },
 	{ "SHOW_PRESSED_KEYS", CG_GetCvar, "cg_showPressedKeys" },
 	{ "SHOW_SPEED", CG_GetCvar, "cg_showSpeed" },
-	{ "SHOW_TIMER", CG_GetCvar, "cg_showTimer" },
 	{ "SHOW_AWARDS", CG_GetCvar, "cg_showAwards" },
 	{ "SHOW_R_SPEEDS", CG_GetCvar, "r_speeds" },
 	{ "SHOW_STRAFE", CG_GetCvar, "cg_strafeHUD" },

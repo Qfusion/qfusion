@@ -272,9 +272,6 @@ extern cvar_t *g_maxvelocity;
 
 extern cvar_t *sv_cheats;
 
-extern cvar_t *cm_mapHeader;
-extern cvar_t *cm_mapVersion;
-
 extern cvar_t *g_floodprotection_messages;
 extern cvar_t *g_floodprotection_team;
 extern cvar_t *g_floodprotection_seconds;
@@ -289,7 +286,6 @@ extern cvar_t *g_enforce_map_pool;
 extern cvar_t *g_map_pool;
 
 extern cvar_t *g_scorelimit;
-extern cvar_t *g_timelimit;
 
 extern cvar_t *g_projectile_prestep;
 extern cvar_t *g_numbots;
@@ -297,12 +293,7 @@ extern cvar_t *g_maxtimeouts;
 
 extern cvar_t *g_self_knockback;
 extern cvar_t *g_knockback_scale;
-extern cvar_t *g_allow_falldamage;
-extern cvar_t *g_allow_selfdamage;
 extern cvar_t *g_allow_teamdamage;
-extern cvar_t *g_ammo_respawn;
-extern cvar_t *g_weapon_respawn;
-extern cvar_t *g_health_respawn;
 extern cvar_t *g_respawn_delay_min;
 extern cvar_t *g_respawn_delay_max;
 extern cvar_t *g_deadbody_followkiller;

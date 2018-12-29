@@ -74,11 +74,10 @@ typedef vec_t instancePoint_t[8]; // quaternion for rotation + xyz pos + uniform
 #define RF_FLIPFRONTFACE        RF_BIT( 3 )
 #define RF_DRAWFLAT             RF_BIT( 4 )
 #define RF_CLIPPLANE            RF_BIT( 5 )
-#define RF_NOVIS                RF_BIT( 6 )
-#define RF_LIGHTMAP             RF_BIT( 7 )
-#define RF_SOFT_PARTICLES       RF_BIT( 8 )
-#define RF_PORTAL_CAPTURE       RF_BIT( 9 )
-#define RF_NOENTS               RF_BIT( 10 )
+#define RF_LIGHTMAP             RF_BIT( 6 )
+#define RF_SOFT_PARTICLES       RF_BIT( 7 )
+#define RF_PORTAL_CAPTURE       RF_BIT( 8 )
+#define RF_NOENTS               RF_BIT( 9 )
 
 #define RF_CUBEMAPVIEW          ( RF_ENVVIEW )
 #define RF_NONVIEWERREF         ( RF_PORTALVIEW | RF_MIRRORVIEW | RF_ENVVIEW )
@@ -153,7 +152,6 @@ typedef struct refinst_s {
 
 	int viewcluster, viewarea;
 
-	vec3_t lodOrigin;
 	vec3_t pvsOrigin;
 	cplane_t clipPlane;
 
@@ -167,9 +165,6 @@ typedef struct refinst_s {
 	mat4_t modelviewProjectionMatrix;               // modelviewMatrix * projectionMatrix
 
 	drawSurfaceSky_t skyDrawSurface;
-
-	int lodBias;
-	float lodScale;
 
 	unsigned int numPortalSurfaces;
 	unsigned int numDepthPortalSurfaces;
@@ -327,16 +322,9 @@ extern r_globals_t rf;
 extern cvar_t *r_drawentities;
 extern cvar_t *r_drawworld;
 extern cvar_t *r_speeds;
-extern cvar_t *r_drawelements;
 extern cvar_t *r_lightmap;
-extern cvar_t *r_novis;
-extern cvar_t *r_nocull;
-extern cvar_t *r_lerpmodels;
-extern cvar_t *r_brightness;
 extern cvar_t *r_sRGB;
 
-extern cvar_t *r_dynamiclight;
-extern cvar_t *r_detailtextures;
 extern cvar_t *r_subdivisions;
 extern cvar_t *r_showtris;
 extern cvar_t *r_showtris2D;
@@ -355,13 +343,8 @@ extern cvar_t *r_lighting_ambientscale;
 extern cvar_t *r_lighting_directedscale;
 extern cvar_t *r_lighting_maxlmblocksize;
 extern cvar_t *r_lighting_vertexlight;
-extern cvar_t *r_lighting_maxglsldlights;
 extern cvar_t *r_lighting_intensity;
 extern cvar_t *r_lighting_bicubic;
-
-extern cvar_t *r_offsetmapping;
-extern cvar_t *r_offsetmapping_scale;
-extern cvar_t *r_offsetmapping_reliefmapping;
 
 extern cvar_t *r_outlines_world;
 extern cvar_t *r_outlines_scale;
@@ -375,9 +358,6 @@ extern cvar_t *r_hdr_gamma;
 extern cvar_t *r_hdr_exposure;
 
 extern cvar_t *r_samples;
-
-extern cvar_t *r_lodbias;
-extern cvar_t *r_lodscale;
 
 extern cvar_t *r_gamma;
 extern cvar_t *r_texturefilter;
@@ -532,7 +512,6 @@ void R_BlitTextureToScrFbo( const refdef_t *fd, image_t *image, int dstFbo,
  */
 void R_DeferDataSync( void );
 
-int R_ComputeLOD( float dist, float lodDistance, float lodScale, int lodBias );
 float R_DefaultFarClip( void );
 
 void R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, int lightStyleNum, 

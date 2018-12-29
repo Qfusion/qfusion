@@ -5,8 +5,6 @@
 #include "../qcommon/qcommon.h"
 
 bool stdin_active = true;
-cvar_t *nostdout = NULL;
-bool nostdout_backup_val = false;
 
 char *Sys_ConsoleInput( void ) {
 	static char text[256];
@@ -100,20 +98,5 @@ static void Sys_AnsiColorPrint( const char *msg ) {
 }
 
 void Sys_ConsoleOutput( char *string ) {
-	if( Cvar_Initialized() ) {
-		if( !nostdout ) {
-			nostdout = Cvar_Get( "nostdout", "0", 0 );
-		}
-		nostdout_backup_val = nostdout && nostdout->integer;
-	}
-
-	if( nostdout_backup_val ) {
-		return;
-	}
-
-#if 0
-	fputs( string, stdout );
-#else
 	Sys_AnsiColorPrint( string );
-#endif
 }

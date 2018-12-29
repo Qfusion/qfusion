@@ -105,28 +105,6 @@ void R_TransformForEntity( const entity_t *e ) {
 }
 
 /*
-* R_ComputeLOD
-*/
-int R_ComputeLOD( float dist, float lodDistance, float lodScale, int lodBias ) {
-	int lodi;
-	float lod;
-
-	if( lodDistance < 1.0f )
-		lodDistance = 1.0f;
-
-	//dist *= tan( DEG2RAD( rn.refdef.fov_x ) * 0.5f );
-
-	if( dist <= lodDistance ) {
-		lod = 0;
-	} else {
-		lod = sqrt( dist / lodDistance ) * lodScale;
-	}
-
-	lodi = (int)( lod + 0.5f ) + lodBias;
-	return clamp_low( lodi, 0 );
-}
-
-/*
 =============================================================
 
 CUSTOM COLORS
@@ -605,26 +583,6 @@ static void R_PolyBlend( void ) {
 }
 
 /*
-* R_ApplyBrightness
-*/
-static void R_ApplyBrightness( void ) {
-	float c;
-	vec4_t color;
-
-	c = r_brightness->value;
-	if( c < 0.005 ) {
-		return;
-	} else if( c > 1.0 ) {
-		c = 1.0;
-	}
-
-	color[0] = color[1] = color[2] = c, color[3] = 1;
-
-	R_DrawStretchQuick( 0, 0, rf.frameBufferWidth, rf.frameBufferHeight, 0, 0, 1, 1,
-						color, GLSL_PROGRAM_TYPE_NONE, rsh.whiteTexture, GLSTATE_SRCBLEND_ONE | GLSTATE_DSTBLEND_ONE );
-}
-
-/*
 * R_InitPostProcessingVBO
 */
 mesh_vbo_t *R_InitPostProcessingVBO( void ) {
@@ -705,7 +663,7 @@ void R_SetupPVSFromCluster( int cluster, int area ) {
 void R_SetupPVS( const refdef_t *fd ) {
 	const mleaf_t *leaf;
 
-	if( ( fd->rdflags & RDF_NOWORLDMODEL ) || !rsh.worldBrushModel || r_novis->integer ) {
+	if( ( fd->rdflags & RDF_NOWORLDMODEL ) || !rsh.worldBrushModel ) {
 		R_SetupPVSFromCluster( -1, -1 );
 		return;
 	}
@@ -967,7 +925,6 @@ add:
 */
 static void R_DrawEntities( void ) {
 	unsigned int i;
-	int lod;
 	entity_t *e;
 	entSceneCache_t *cache;
 
@@ -975,20 +932,14 @@ static void R_DrawEntities( void ) {
 		e = R_NUM2ENT( rn.entities[i] );
 		cache = R_ENTCACHE( e );
 
-		lod = 0;
-		if( !(e->flags & RF_FORCENOLOD ) ) {
-			float dist = BoundsNearestDistance( rn.lodOrigin, cache->absmins, cache->absmaxs );
-			lod = R_ComputeLOD( dist, cache->radius, rn.lodScale, rn.lodBias );
-		}
-
 		switch( e->rtype ) {
 		case RT_MODEL:
 			switch( cache->mod_type ) {
 			case mod_alias:
-				R_AddAliasModelToDrawList( e, lod );
+				R_AddAliasModelToDrawList( e, 0 );
 				break;
 			case mod_skeletal:
-				R_AddSkeletalModelToDrawList( e, lod );
+				R_AddSkeletalModelToDrawList( e, 0 );
 				break;
 			case mod_brush:
 				R_AddBrushModelToDrawList( e );
@@ -1605,8 +1556,6 @@ void R_EndFrame( void ) {
 	}
 
 	R_PolyBlend();
-
-	R_ApplyBrightness();
 
 	R_End2D();
 

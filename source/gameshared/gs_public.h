@@ -113,19 +113,16 @@ enum {
 #define GAMESTAT_FLAG_PAUSED ( 1 << 0LL )
 #define GAMESTAT_FLAG_WAITING ( 1 << 1LL )
 #define GAMESTAT_FLAG_MATCHEXTENDED ( 1 << 3LL )
-#define GAMESTAT_FLAG_FALLDAMAGE ( 1 << 4LL )
-#define GAMESTAT_FLAG_HASCHALLENGERS ( 1 << 5LL )
-#define GAMESTAT_FLAG_INHIBITSHOOTING ( 1 << 6LL )
-#define GAMESTAT_FLAG_ISTEAMBASED ( 1 << 7LL )
-#define GAMESTAT_FLAG_ISRACE ( 1 << 8LL )
-#define GAMESTAT_FLAG_COUNTDOWN ( 1 << 9LL )
-#define GAMESTAT_FLAG_SELFDAMAGE ( 1 << 10LL )
-#define GAMESTAT_FLAG_INFINITEAMMO ( 1 << 11LL )
-#define GAMESTAT_FLAG_CANFORCEMODELS ( 1 << 12LL )
-#define GAMESTAT_FLAG_CANSHOWMINIMAP ( 1 << 13LL )
-#define GAMESTAT_FLAG_TEAMONLYMINIMAP ( 1 << 14LL )
-#define GAMESTAT_FLAG_MMCOMPATIBLE ( 1 << 15LL )
-#define GAMESTAT_FLAG_CANDROPWEAPON ( 1 << 16LL )
+#define GAMESTAT_FLAG_HASCHALLENGERS ( 1 << 4LL )
+#define GAMESTAT_FLAG_INHIBITSHOOTING ( 1 << 5LL )
+#define GAMESTAT_FLAG_ISTEAMBASED ( 1 << 6LL )
+#define GAMESTAT_FLAG_ISRACE ( 1 << 7LL )
+#define GAMESTAT_FLAG_COUNTDOWN ( 1 << 8LL )
+#define GAMESTAT_FLAG_SELFDAMAGE ( 1 << 9LL )
+#define GAMESTAT_FLAG_INFINITEAMMO ( 1 << 10LL )
+#define GAMESTAT_FLAG_CANFORCEMODELS ( 1 << 11LL )
+#define GAMESTAT_FLAG_MMCOMPATIBLE ( 1 << 12LL )
+#define GAMESTAT_FLAG_CANDROPWEAPON ( 1 << 13LL )
 
 typedef struct {
 	int module;
@@ -138,7 +135,6 @@ typedef struct {
 extern gs_state_t gs;
 
 #define GS_GamestatSetFlag( flag, b ) ( b ? ( gs.gameState.stats[GAMESTAT_FLAGS] |= flag ) : ( gs.gameState.stats[GAMESTAT_FLAGS] &= ~flag ) )
-#define GS_FallDamage() ( ( gs.gameState.stats[GAMESTAT_FLAGS] & GAMESTAT_FLAG_FALLDAMAGE ) ? true : false )
 #define GS_ShootingDisabled() ( ( gs.gameState.stats[GAMESTAT_FLAGS] & GAMESTAT_FLAG_INHIBITSHOOTING ) ? true : false )
 #define GS_HasChallengers() ( ( gs.gameState.stats[GAMESTAT_FLAGS] & GAMESTAT_FLAG_HASCHALLENGERS ) ? true : false )
 #define GS_TeamBasedGametype() ( ( gs.gameState.stats[GAMESTAT_FLAGS] & GAMESTAT_FLAG_ISTEAMBASED ) ? true : false )
@@ -150,8 +146,6 @@ extern gs_state_t gs;
 #define GS_Countdown() ( ( gs.gameState.stats[GAMESTAT_FLAGS] & GAMESTAT_FLAG_COUNTDOWN ) ? true : false )
 #define GS_InfiniteAmmo() ( ( gs.gameState.stats[GAMESTAT_FLAGS] & GAMESTAT_FLAG_INFINITEAMMO ) ? true : false )
 #define GS_CanForceModels() ( ( gs.gameState.stats[GAMESTAT_FLAGS] & GAMESTAT_FLAG_CANFORCEMODELS ) ? true : false )
-#define GS_CanShowMinimap() ( ( gs.gameState.stats[GAMESTAT_FLAGS] & GAMESTAT_FLAG_CANSHOWMINIMAP ) ? true : false )
-#define GS_TeamOnlyMinimap() ( ( gs.gameState.stats[GAMESTAT_FLAGS] & GAMESTAT_FLAG_TEAMONLYMINIMAP ) ? true : false )
 #define GS_MMCompatible() ( ( gs.gameState.stats[GAMESTAT_FLAGS] & GAMESTAT_FLAG_MMCOMPATIBLE ) ? true : false )
 #define GS_CanDropWeapon() ( gs.gameState.stats[GAMESTAT_FLAGS] & GAMESTAT_FLAG_CANDROPWEAPON ? true : false )
 
@@ -880,7 +874,6 @@ enum {
 	ET_ITEM,        // for simple items
 	ET_LASERBEAM,   // for continuous beams
 
-	ET_MINIMAP_ICON,
 	ET_DECAL,
 	ET_PARTICLES,
 

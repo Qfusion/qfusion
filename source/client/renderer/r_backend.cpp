@@ -1049,20 +1049,13 @@ static void RB_EnableVertexAttribs( void ) {
 * RB_DrawElementsReal
 */
 void RB_DrawElementsReal( rbDrawElements_t *de ) {
-	int firstVert, numVerts, firstElem, numElems;
-	int numInstances;
-
-	if( !( r_drawelements->integer || rb.currentEntity == &rb.nullEnt ) || !de ) {
-		return;
-	}
-
 	RB_ApplyScissor();
 
-	numVerts = de->numVerts;
-	numElems = de->numElems;
-	firstVert = de->firstVert;
-	firstElem = de->firstElem;
-	numInstances = de->numInstances;
+	int numVerts = de->numVerts;
+	int numElems = de->numElems;
+	int firstVert = de->firstVert;
+	int firstElem = de->firstElem;
+	int numInstances = de->numInstances;
 
 	if( numInstances ) {
 		// the instance data is contained in vertex attributes

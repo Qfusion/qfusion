@@ -494,7 +494,6 @@ static void SV_NextDownload_f( client_t *client ) {
 	SV_AddReliableCommandsToMessage( client, &tmpMessage );
 
 	blocksize = client->download.size - offset;
-	// jalfixme: adapt download to user rate setting and sv_maxrate setting.
 	if( blocksize > sizeof( data ) ) {
 		blocksize = sizeof( data );
 	}

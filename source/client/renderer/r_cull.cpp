@@ -466,9 +466,6 @@ bool R_CullBoxCustomPlanes( const cplane_t *p, unsigned nump, const vec3_t mins,
 * Returns true if the bounding box is completely outside the frustum
 */
 bool R_CullBox( const vec3_t mins, const vec3_t maxs, const unsigned int clipFlags ) {
-	if( r_nocull->integer ) {
-		return false;
-	}
 	return R_CullBoxCustomPlanes( rn.frustum, sizeof( rn.frustum ) / sizeof( rn.frustum[0] ), mins, maxs, clipFlags );
 }
 
@@ -504,9 +501,6 @@ bool R_CullSphereCustomPlanes( const cplane_t *p, unsigned nump, const vec3_t ce
 * Returns true if the sphere is completely outside the frustum
 */
 bool R_CullSphere( const vec3_t centre, const float radius, const unsigned int clipFlags ) {
-	if( r_nocull->integer ) {
-		return false;
-	}
 	return R_CullSphereCustomPlanes( rn.frustum, sizeof( rn.frustum ) / sizeof( rn.frustum[0] ), centre, radius, clipFlags );
 }
 

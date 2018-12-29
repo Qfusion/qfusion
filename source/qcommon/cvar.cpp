@@ -19,8 +19,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "qcommon.h"
-#include "../qalgo/q_trie.h"
-#include "../client/console.h"
+#include "qalgo/q_trie.h"
+#include "client/console.h"
 
 static bool cvar_initialized = false;
 static bool cvar_preinitialized = false;
@@ -859,9 +859,6 @@ void Cvar_Shutdown( void ) {
 		unsigned int i;
 		struct trie_dump_s *dump;
 		extern cvar_t *developer, *developer_memory;
-#ifndef DEDICATED_ONLY
-		extern cvar_t *con_printText;
-#endif
 
 		assert( cvar_trie );
 
@@ -871,9 +868,6 @@ void Cvar_Shutdown( void ) {
 		developer = NULL;
 		developer_memory = NULL;
 		dedicated = NULL;
-#ifndef DEDICATED_ONLY
-		con_printText = NULL;
-#endif
 
 		Cmd_RemoveCommand( "set" );
 		Cmd_RemoveCommand( "seta" );

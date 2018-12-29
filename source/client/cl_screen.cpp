@@ -51,11 +51,6 @@ static cvar_t *scr_graphheight;
 static cvar_t *scr_graphscale;
 static cvar_t *scr_graphshift;
 
-static cvar_t *con_fontSystemFamily;
-static cvar_t *con_fontSystemFallbackFamily;
-static cvar_t *con_fontSystemMonoFamily;
-static cvar_t *con_fontSystemConsoleSize;
-
 //
 //	Variable width (proportional) fonts
 //
@@ -68,7 +63,7 @@ static cvar_t *con_fontSystemConsoleSize;
 * SCR_RegisterFont
 */
 qfontface_t *SCR_RegisterFont( const char *family, int style, unsigned int size ) {
-	return FTLIB_RegisterFont( family, con_fontSystemFallbackFamily->string, style, size );
+	return FTLIB_RegisterFont( family, SYSTEM_FONT_FAMILY_FALLBACK, style, size );
 }
 
 /*
@@ -82,34 +77,13 @@ qfontface_t *SCR_RegisterSpecialFont( const char *family, int style, unsigned in
 * SCR_RegisterConsoleFont
 */
 static void SCR_RegisterConsoleFont( void ) {
-	const char *con_fontSystemFamilyName;
 	const int con_fontSystemStyle = SYSTEM_FONT_STYLE;
-	int size;
 	float pixelRatio = Con_GetPixelRatio();
 
-	// register system fonts
-	con_fontSystemFamilyName = con_fontSystemMonoFamily->string;
-	if( !con_fontSystemConsoleSize->integer ) {
-		Cvar_SetValue( con_fontSystemConsoleSize->name, SYSTEM_FONT_SMALL_SIZE );
-	} else if( con_fontSystemConsoleSize->integer > SYSTEM_FONT_SMALL_SIZE * 2 ) {
-		Cvar_SetValue( con_fontSystemConsoleSize->name, SYSTEM_FONT_SMALL_SIZE * 2 );
-	} else if( con_fontSystemConsoleSize->integer < SYSTEM_FONT_SMALL_SIZE / 2 ) {
-		Cvar_SetValue( con_fontSystemConsoleSize->name, SYSTEM_FONT_SMALL_SIZE / 2 );
-	}
-
-	size = ceil( con_fontSystemConsoleSize->integer * pixelRatio );
-	cls.consoleFont = SCR_RegisterFont( con_fontSystemFamilyName, con_fontSystemStyle, size );
+	int size = ceil( SYSTEM_FONT_SMALL_SIZE * pixelRatio );
+	cls.consoleFont = SCR_RegisterFont( SYSTEM_FONT_FAMILY_MONO, con_fontSystemStyle, size );
 	if( !cls.consoleFont ) {
-		Cvar_ForceSet( con_fontSystemMonoFamily->name, con_fontSystemMonoFamily->dvalue );
-		con_fontSystemFamilyName = con_fontSystemMonoFamily->dvalue;
-
-		size = SYSTEM_FONT_SMALL_SIZE;
-		cls.consoleFont = SCR_RegisterFont( con_fontSystemFamilyName, con_fontSystemStyle, size );
-		if( !cls.consoleFont ) {
-			Com_Error( ERR_FATAL, "Couldn't load default font \"%s\"", con_fontSystemMonoFamily->dvalue );
-		}
-
-		Con_CheckResize();
+		Com_Error( ERR_FATAL, "Couldn't load default font \"" SYSTEM_FONT_FAMILY_MONO "\"" );
 	}
 }
 
@@ -118,11 +92,6 @@ static void SCR_RegisterConsoleFont( void ) {
 * SCR_InitFonts
 */
 static void SCR_InitFonts( void ) {
-	con_fontSystemFamily = Cvar_Get( "con_fontSystemFamily", SYSTEM_FONT_FAMILY, CVAR_ARCHIVE );
-	con_fontSystemMonoFamily = Cvar_Get( "con_fontSystemMonoFamily", SYSTEM_FONT_FAMILY_MONO, CVAR_ARCHIVE );
-	con_fontSystemFallbackFamily = Cvar_Get( "con_fontSystemFallbackFamily", SYSTEM_FONT_FAMILY_FALLBACK, CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
-	con_fontSystemConsoleSize = Cvar_Get( "con_fontSystemConsoleSize", STR_TOSTR( SYSTEM_FONT_SMALL_SIZE ), CVAR_ARCHIVE );
-
 	SCR_RegisterConsoleFont();
 }
 
@@ -131,52 +100,7 @@ static void SCR_InitFonts( void ) {
 */
 static void SCR_ShutdownFonts( void ) {
 	cls.consoleFont = NULL;
-
-	con_fontSystemFamily = NULL;
-	con_fontSystemConsoleSize = NULL;
 }
-
-/*
-* SCR_CheckSystemFontsModified
-*
-* Reloads system fonts on demand
-*/
-static void SCR_CheckSystemFontsModified( void ) {
-	if( !con_fontSystemMonoFamily ) {
-		return;
-	}
-
-	if( con_fontSystemMonoFamily->modified
-		|| con_fontSystemConsoleSize->modified
-		) {
-		SCR_RegisterConsoleFont();
-		con_fontSystemMonoFamily->modified = false;
-		con_fontSystemConsoleSize->modified = false;
-	}
-}
-
-/*
-* SCR_ResetSystemFontConsoleSize
-*/
-void SCR_ResetSystemFontConsoleSize( void ) {
-	if( !con_fontSystemConsoleSize ) {
-		return;
-	}
-	Cvar_ForceSet( con_fontSystemConsoleSize->name, con_fontSystemConsoleSize->dvalue );
-	SCR_CheckSystemFontsModified();
-}
-
-/*
-* SCR_ChangeSystemFontConsoleSize
-*/
-void SCR_ChangeSystemFontConsoleSize( int ch ) {
-	if( !con_fontSystemConsoleSize ) {
-		return;
-	}
-	Cvar_ForceSet( con_fontSystemConsoleSize->name, va( "%i", con_fontSystemConsoleSize->integer + ch ) );
-	SCR_CheckSystemFontsModified();
-}
-
 
 //===============================================================================
 //STRINGS HELPERS
@@ -665,8 +589,6 @@ void SCR_UpdateScreen( void ) {
 
 	}
 	Con_CheckResize();
-
-	SCR_CheckSystemFontsModified();
 
 	CL_ForceVsync( cls.state == CA_DISCONNECTED );
 

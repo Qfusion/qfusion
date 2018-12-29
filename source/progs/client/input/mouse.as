@@ -34,13 +34,12 @@ MOUSE
 */
 
 Cvar sensitivity( "sensitivity", "3", CVAR_ARCHIVE );
+Cvar horizontalSensScale( "horizontalsensscale", "1", CVAR_ARCHIVE );
 Cvar zoomsens( "zoomsens", "0", CVAR_ARCHIVE );
 Cvar m_accel( "m_accel", "0", CVAR_ARCHIVE );
 Cvar m_accelStyle( "m_accelStyle", "0", CVAR_ARCHIVE );
 Cvar m_accelOffset( "m_accelOffset", "0", CVAR_ARCHIVE );
 Cvar m_accelPow( "m_accelPow", "2", CVAR_ARCHIVE );
-Cvar m_pitch( "m_pitch", "0.022", CVAR_ARCHIVE );
-Cvar m_yaw( "m_yaw", "0.022", CVAR_ARCHIVE );
 Cvar m_sensCap( "m_sensCap", "0", CVAR_ARCHIVE );
 
 float mouse_x = 0, mouse_y = 0;
@@ -118,8 +117,8 @@ Vec3 GetAngularMovement() {
 
 	if( mouse_x != 0.0 || mouse_y != 0.0 ) {
 		// add mouse X/Y movement to cmd
-		move[YAW] -= m_yaw.value * mouse_x;
-		move[PITCH] += m_pitch.value * mouse_y;
+		move[YAW] -= 0.022 * horizontalSensScale.value * mouse_x;
+		move[PITCH] += 0.022 * mouse_y;
 	}
 	
 	return move;

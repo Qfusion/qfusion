@@ -82,7 +82,7 @@ const char *RF_GetSpeedsMessage( char *out, size_t size );
 int RF_GetAverageFrametime( void );
 void RF_ReplaceRawSubPic( shader_t *shader, int x, int y, int width, int height, uint8_t *data );
 void RF_BeginAviDemo( void );
-void RF_WriteAviFrame( int frame, bool scissor );
+void RF_WriteAviFrame( int frame );
 void RF_StopAviDemo( void );
 void RF_TransformVectorToScreen( const refdef_t *rd, const vec3_t in, vec2_t out );
 bool RF_TransformVectorToScreenClamped( const refdef_t *rd, const vec3_t target, int border, vec2_t out );

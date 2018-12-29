@@ -56,7 +56,6 @@ static bool r_shaderNoFiltering;
 static int r_shaderMinMipSize;
 static bool r_shaderHasLightmapPass;
 static bool r_shaderHasAutosprite;
-static int r_shaderAllDetail;
 static char r_shaderDeformvKey[1024];
 
 static image_t  *r_defaultImage;
@@ -755,13 +754,6 @@ static void Shader_If( shader_t *shader, shaderpass_t *pass, const char **ptr ) 
 static void Shader_Endif( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
 }
 
-static void Shader_OffsetMappingScale( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
-	shader->offsetmappingScale = Shader_ParseFloat( ptr );
-	if( shader->offsetmappingScale <= 0 ) {
-		shader->offsetmappingScale = 0;
-	}
-}
-
 static void Shader_GlossIntensity( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
 	shader->glossIntensity = Shader_ParseFloat( ptr );
 	if( shader->glossIntensity <= 0 ) {
@@ -924,7 +916,6 @@ static const shaderkey_t shaderkeys[] =
 	{ "entitymergable", Shader_EntityMergable },
 	{ "if", Shader_If },
 	{ "endif", Shader_Endif },
-	{ "offsetmappingscale", Shader_OffsetMappingScale },
 	{ "glossexponent", Shader_GlossExponent },
 	{ "glossintensity", Shader_GlossIntensity },
 	{ "template", Shader_Template },
@@ -1422,7 +1413,6 @@ static void Shaderpass_TcGen( shader_t *shader, shaderpass_t *pass, const char *
 static void Shaderpass_Detail( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
 	pass->flags |= SHADERPASS_DETAIL;
 }
-
 static void Shaderpass_Greyscale( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
 	pass->flags |= SHADERPASS_GREYSCALE;
 }
@@ -1888,9 +1878,6 @@ static void Shader_Readpass( shader_t *shader, const char **ptr ) {
 		return;
 	}
 
-	// keep track of detail passes. if all passes are detail, the whole shader is also detail
-	r_shaderAllDetail &= ( pass->flags & SHADERPASS_DETAIL );
-
 	if( pass->rgbgen.type == RGB_GEN_UNKNOWN ) {
 		pass->rgbgen.type = RGB_GEN_IDENTITY;
 	}
@@ -2146,9 +2133,6 @@ static void Shader_Finish( shader_t *s ) {
 	if( s->flags & SHADER_AUTOSPRITE ) {
 		s->flags &= ~( SHADER_CULL_FRONT | SHADER_CULL_BACK );
 	}
-	if( s->numpasses && r_shaderAllDetail ) {
-		s->flags |= SHADER_ALLDETAIL;
-	}
 
 	for( i = 0, pass = s->passes; i < s->numpasses; i++, pass++ ) {
 		blendmask = pass->flags & GLSTATE_BLEND_MASK;
@@ -2273,14 +2257,12 @@ static void R_LoadShaderReal( shader_t *s, const char *shortname,
 	s->vattribs = 0;
 	s->glossIntensity = 0;
 	s->glossExponent = 0;
-	s->offsetmappingScale = 1;
 
 	r_shaderNoMipMaps = false;
 	r_shaderNoFiltering = false;
 	r_shaderMinMipSize = 1;
 	r_shaderHasLightmapPass = false;
 	r_shaderHasAutosprite = false;
-	r_shaderAllDetail = SHADERPASS_DETAIL;
 	r_shaderDeformvKey[0] = '\0';
 	if( !r_defaultImage ) {
 		r_defaultImage = rsh.noTexture;

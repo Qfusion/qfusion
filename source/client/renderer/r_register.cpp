@@ -31,16 +31,9 @@ mempool_t *r_mempool;
 cvar_t *r_drawentities;
 cvar_t *r_drawworld;
 cvar_t *r_speeds;
-cvar_t *r_drawelements;
 cvar_t *r_lightmap;
-cvar_t *r_novis;
-cvar_t *r_nocull;
-cvar_t *r_lerpmodels;
-cvar_t *r_brightness;
 cvar_t *r_sRGB;
 
-cvar_t *r_dynamiclight;
-cvar_t *r_detailtextures;
 cvar_t *r_subdivisions;
 cvar_t *r_showtris;
 cvar_t *r_showtris2D;
@@ -59,13 +52,8 @@ cvar_t *r_lighting_ambientscale;
 cvar_t *r_lighting_directedscale;
 cvar_t *r_lighting_maxlmblocksize;
 cvar_t *r_lighting_vertexlight;
-cvar_t *r_lighting_maxglsldlights;
 cvar_t *r_lighting_intensity;
 cvar_t *r_lighting_bicubic;
-
-cvar_t *r_offsetmapping;
-cvar_t *r_offsetmapping_scale;
-cvar_t *r_offsetmapping_reliefmapping;
 
 cvar_t *r_outlines_world;
 cvar_t *r_outlines_scale;
@@ -80,10 +68,6 @@ cvar_t *r_hdr_exposure;
 
 cvar_t *r_samples;
 
-cvar_t *r_lodbias;
-cvar_t *r_lodscale;
-
-cvar_t *r_stencilbits;
 cvar_t *r_gamma;
 cvar_t *r_texturefilter;
 cvar_t *r_nobind;
@@ -291,22 +275,14 @@ static void R_Register() {
 	r_lightmap = ri.Cvar_Get( "r_lightmap", "0", 0 );
 	r_drawentities = ri.Cvar_Get( "r_drawentities", "1", CVAR_CHEAT );
 	r_drawworld = ri.Cvar_Get( "r_drawworld", "1", CVAR_CHEAT );
-	r_novis = ri.Cvar_Get( "r_novis", "0", 0 );
-	r_nocull = ri.Cvar_Get( "r_nocull", "0", 0 );
-	r_lerpmodels = ri.Cvar_Get( "r_lerpmodels", "1", 0 );
 	r_speeds = ri.Cvar_Get( "r_speeds", "0", 0 );
-	r_drawelements = ri.Cvar_Get( "r_drawelements", "1", 0 );
 	r_showtris = ri.Cvar_Get( "r_showtris", "0", CVAR_CHEAT );
 	r_showtris2D = ri.Cvar_Get( "r_showtris2D", "0", CVAR_CHEAT );
 	r_leafvis = ri.Cvar_Get( "r_leafvis", "0", CVAR_CHEAT );
 	r_polyblend = ri.Cvar_Get( "r_polyblend", "1", 0 );
 
-	r_brightness = ri.Cvar_Get( "r_brightness", "0", CVAR_ARCHIVE );
 	r_sRGB = ri.Cvar_Get( "r_sRGB", "1", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
 
-	r_detailtextures = ri.Cvar_Get( "r_detailtextures", "0", CVAR_ARCHIVE | CVAR_READONLY );
-
-	r_dynamiclight = ri.Cvar_Get( "r_dynamiclight", "1", CVAR_ARCHIVE );
 	r_subdivisions = ri.Cvar_Get( "r_subdivisions", STR_TOSTR( SUBDIVISIONS_DEFAULT ), CVAR_ARCHIVE | CVAR_LATCH_VIDEO | CVAR_READONLY );
 
 	r_fastsky = ri.Cvar_Get( "r_fastsky", "0", CVAR_ARCHIVE );
@@ -323,13 +299,8 @@ static void R_Register() {
 
 	r_lighting_maxlmblocksize = ri.Cvar_Get( "r_lighting_maxlmblocksize", "2048", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
 	r_lighting_vertexlight = ri.Cvar_Get( "r_lighting_vertexlight", "0", CVAR_CHEAT | CVAR_LATCH_VIDEO );
-	r_lighting_maxglsldlights = ri.Cvar_Get( "r_lighting_maxglsldlights", "32", CVAR_ARCHIVE );
 	r_lighting_intensity = ri.Cvar_Get( "r_lighting_intensity", "1.75", CVAR_ARCHIVE );
 	r_lighting_bicubic = ri.Cvar_Get( "r_lighting_bicubic", "1", CVAR_ARCHIVE );
-
-	r_offsetmapping = ri.Cvar_Get( "r_offsetmapping", "2", CVAR_ARCHIVE );
-	r_offsetmapping_scale = ri.Cvar_Get( "r_offsetmapping_scale", "0.02", CVAR_ARCHIVE );
-	r_offsetmapping_reliefmapping = ri.Cvar_Get( "r_offsetmapping_reliefmapping", "0", CVAR_ARCHIVE );
 
 	r_outlines_world = ri.Cvar_Get( "r_outlines_world", "1.8", CVAR_ARCHIVE );
 	r_outlines_scale = ri.Cvar_Get( "r_outlines_scale", "1", CVAR_ARCHIVE );
@@ -338,18 +309,14 @@ static void R_Register() {
 	r_soft_particles = ri.Cvar_Get( "r_soft_particles", "1", CVAR_ARCHIVE );
 	r_soft_particles_scale = ri.Cvar_Get( "r_soft_particles_scale", "0.02", CVAR_ARCHIVE );
 
-	r_hdr = ri.Cvar_Get( "r_hdr", "1", CVAR_ARCHIVE );
-	r_hdr_gamma = ri.Cvar_Get( "r_hdr_gamma", "2.2", CVAR_ARCHIVE );
-	r_hdr_exposure = ri.Cvar_Get( "r_hdr_exposure", "1.0", CVAR_ARCHIVE );
+	r_hdr = ri.Cvar_Get( "r_hdr", "1", CVAR_ARCHIVE | CVAR_CHEAT );
+	r_hdr_gamma = ri.Cvar_Get( "r_hdr_gamma", "2.2", CVAR_ARCHIVE | CVAR_CHEAT );
+	r_hdr_exposure = ri.Cvar_Get( "r_hdr_exposure", "1.0", CVAR_ARCHIVE | CVAR_CHEAT );
 
 	r_samples = ri.Cvar_Get( "r_samples", "0", CVAR_ARCHIVE );
 
-	r_lodbias = ri.Cvar_Get( "r_lodbias", "0", CVAR_ARCHIVE );
-	r_lodscale = ri.Cvar_Get( "r_lodscale", "5.0", CVAR_ARCHIVE );
-
 	r_gamma = ri.Cvar_Get( "r_gamma", "1.0", CVAR_ARCHIVE );
 	r_texturefilter = ri.Cvar_Get( "r_texturefilter", "4", CVAR_ARCHIVE );
-	r_stencilbits = ri.Cvar_Get( "r_stencilbits", "0", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
 
 	r_screenshot_fmtstr = ri.Cvar_Get( "r_screenshot_fmtstr", va_r( tmp, sizeof( tmp ), "%s%%y%%m%%d_%%H%%M%%S", APP_SCREENSHOTS_PREFIX ), CVAR_ARCHIVE );
 

@@ -379,38 +379,6 @@ static const char *G_VoteScorelimitCurrent( void ) {
 }
 
 /*
-* timelimit
-*/
-
-static bool G_VoteTimelimitValidate( callvotedata_t *vote, bool first ) {
-	int timelimit = atoi( vote->argv[0] );
-
-	if( timelimit < 0 ) {
-		if( first ) {
-			G_PrintMsg( vote->caller, "%sCan't set negative timelimit\n", S_COLOR_RED );
-		}
-		return false;
-	}
-
-	if( timelimit == g_timelimit->integer ) {
-		if( first ) {
-			G_PrintMsg( vote->caller, "%sTimelimit is already set to %i\n", S_COLOR_RED, timelimit );
-		}
-		return false;
-	}
-
-	return true;
-}
-
-static void G_VoteTimelimitPassed( callvotedata_t *vote ) {
-	trap_Cvar_Set( "g_timelimit", va( "%i", atoi( vote->argv[0] ) ) );
-}
-
-static const char *G_VoteTimelimitCurrent( void ) {
-	return va( "%i", g_timelimit->integer );
-}
-
-/*
 * warmup_timelimit
 */
 
@@ -1839,16 +1807,6 @@ void G_CallVotes_Init( void ) {
 	callvote->argument_format = G_LevelCopyString( "<number>" );
 	callvote->argument_type = G_LevelCopyString( "integer" );
 	callvote->help = G_LevelCopyString( "Sets the number of frags or caps needed to win the match\nSpecify 0 to disable" );
-
-	callvote = G_RegisterCallvote( "timelimit" );
-	callvote->expectedargs = 1;
-	callvote->validate = G_VoteTimelimitValidate;
-	callvote->execute = G_VoteTimelimitPassed;
-	callvote->current = G_VoteTimelimitCurrent;
-	callvote->extraHelp = NULL;
-	callvote->argument_format = G_LevelCopyString( "<minutes>" );
-	callvote->argument_type = G_LevelCopyString( "integer" );
-	callvote->help = G_LevelCopyString( "Sets number of minutes after which the match ends\nSpecify 0 to disable" );
 
 	callvote = G_RegisterCallvote( "warmup_timelimit" );
 	callvote->expectedargs = 1;

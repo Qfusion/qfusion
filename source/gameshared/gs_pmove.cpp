@@ -1477,7 +1477,7 @@ static void PM_EndMove( void ) {
 * Can be called by either the server or the client
 */
 void Pmove( pmove_t *pmove ) {
-	float fallvelocity, falldelta, damage;
+	float fallvelocity, falldelta;
 	int oldGroundEntity;
 
 	if( !pmove->playerState ) {
@@ -1778,14 +1778,7 @@ void Pmove( pmove_t *pmove ) {
 		}
 
 		if( falldelta > FALL_STEP_MIN_DELTA ) {
-			if( !GS_FallDamage() || ( pml.groundsurfFlags & SURF_NODAMAGE ) || ( pm->playerState->pmove.pm_flags & PMF_JUMPPAD_TIME ) ) {
-				damage = 0;
-			} else {
-				damage = ( ( falldelta - FALL_DAMAGE_MIN_DELTA ) / 10 ) * FALL_DAMAGE_SCALE;
-				clamp( damage, 0.0f, MAX_FALLING_DAMAGE );
-			}
-
-			gs.api.PredictedEvent( pm->playerState->POVnum, EV_FALL, damage );
+			gs.api.PredictedEvent( pm->playerState->POVnum, EV_FALL, 0 );
 		}
 
 		pm->playerState->pmove.pm_flags &= ~PMF_JUMPPAD_TIME;

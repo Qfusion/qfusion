@@ -639,7 +639,6 @@ static void R_PostCullVisLeaves( void ) {
 * R_DrawWorldNode
 */
 void R_DrawWorldNode( void ) {
-	int clipFlags = r_nocull->integer ? 0 : rn.clipFlags;
 	int64_t msec = 0, msec2 = 0;
 	bool worldOutlines;
 	bool speeds = r_speeds->integer != 0;
@@ -684,7 +683,7 @@ void R_DrawWorldNode( void ) {
 	}
 
 	if( bm->numleafs <= bm->numsurfaces ) {
-		R_CullVisLeaves( 0, bm->numleafs, clipFlags );
+		R_CullVisLeaves( 0, bm->numleafs, rn.clipFlags );
 	} else {
 		memset( (void *)rn.meshlist->worldSurfVis, 1, bm->numsurfaces * sizeof( *rn.meshlist->worldSurfVis ) );
 		memset( (void *)rn.meshlist->worldSurfFullVis, 0, bm->numsurfaces * sizeof( *rn.meshlist->worldSurfFullVis ) );
@@ -703,7 +702,7 @@ void R_DrawWorldNode( void ) {
 		msec2 = ri.Sys_Milliseconds();
 	}
 
-	R_CullVisSurfaces( 0, bm->numModelSurfaces, clipFlags );
+	R_CullVisSurfaces( 0, bm->numModelSurfaces, rn.clipFlags );
 
 	R_PostCullVisLeaves();
 

@@ -162,7 +162,7 @@ typedef struct {
 	int ( *GetAverageFrametime )( void );
 
 	void ( *BeginAviDemo )( void );
-	void ( *WriteAviFrame )( int frame, bool scissor );
+	void ( *WriteAviFrame )( int frame );
 	void ( *StopAviDemo )( void );
 
 	void ( *AppActivate )( bool active, bool minimize );
