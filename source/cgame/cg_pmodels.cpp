@@ -358,7 +358,7 @@ static bool CG_ParseAnimationScript( pmodelinfo_t *pmodelinfo, char *filename ) 
 		pmodelinfo->animSet.firstframe[i] = anim_data[0][i];
 		pmodelinfo->animSet.lastframe[i] = anim_data[1][i];
 		pmodelinfo->animSet.loopingframes[i] = anim_data[2][i];
-		pmodelinfo->animSet.frametime[i] = 1000.0f / (float)( anim_data[3][i] > 10 ? anim_data[3][i] : 10 );
+		pmodelinfo->animSet.frametime[i] = 1000.0f / (float) max( anim_data[3][i], 10 );
 	}
 
 	// validate frames inside skeleton range

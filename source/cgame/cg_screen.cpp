@@ -49,7 +49,6 @@ cvar_t *cg_crosshair_size;
 
 cvar_t *cg_clientHUD;
 cvar_t *cg_specHUD;
-cvar_t *cg_debugHUD;
 cvar_t *cg_showSpeed;
 cvar_t *cg_showAwards;
 
@@ -190,9 +189,6 @@ void CG_ScreenInit( void ) {
 
 	cg_scoreboardWidthScale = trap_Cvar_Get( "cg_scoreboardWidthScale", "1.0", CVAR_ARCHIVE );
 	cg_scoreboardStats =    trap_Cvar_Get( "cg_scoreboardStats", "1", CVAR_ARCHIVE );
-
-	// wsw : hud debug prints
-	cg_debugHUD =           trap_Cvar_Get( "cg_debugHUD", "0", 0 );
 
 	//
 	// register our commands

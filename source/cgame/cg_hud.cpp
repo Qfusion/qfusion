@@ -25,7 +25,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "cg_local.h"
 
-extern cvar_t *cg_debugHUD;
 extern cvar_t *cg_clientHUD;
 extern cvar_t *cg_specHUD;
 
@@ -3481,18 +3480,12 @@ void CG_LoadStatusBar( void ) {
 	filename = ( char * )alloca( filename_size );
 
 	// always load default first. Custom second if needed
-	if( cg_debugHUD && cg_debugHUD->integer ) {
-		CG_Printf( "HUD: Loading default clientHUD huds/%s\n", default_hud );
-	}
 	Q_snprintfz( filename, filename_size, "huds/%s", default_hud );
 	COM_DefaultExtension( filename, ".hud", filename_size );
 	CG_LoadStatusBarFile( filename );
 
 	if( hud->string[0] ) {
 		if( Q_stricmp( hud->string, default_hud ) ) {
-			if( cg_debugHUD && cg_debugHUD->integer ) {
-				CG_Printf( "HUD: Loading custom clientHUD huds/%s\n", hud->string );
-			}
 			Q_snprintfz( filename, filename_size, "huds/%s", hud->string );
 			COM_DefaultExtension( filename, ".hud", filename_size );
 			CG_LoadStatusBarFile( filename );
