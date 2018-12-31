@@ -1438,7 +1438,7 @@ void CG_EntityLoopSound( entity_state_t *state, float attenuation ) {
 		return;
 	}
 
-	trap_S_ImmediateSound( cgs.soundPrecache[state->sound], state->number, cg_volume_effects->value, ISVIEWERENTITY( state->number ) ? ATTN_NONE : ATTN_IDLE, cg.time );
+	trap_S_ImmediateSound( cgs.soundPrecache[state->sound], state->number, cg_volume_effects->value, ISVIEWERENTITY( state->number ) ? ATTN_NONE : ATTN_IDLE );
 }
 
 /*

@@ -194,7 +194,7 @@ static int VID_CompareModes( const vidmode_t *first, const vidmode_t *second ) {
 
 static void VID_InitModes() {
 	int n = VID_GetNumVideoModes();
-	if( n == 0 ) {
+	if( n <= 0 ) {
 		Sys_Error( "Failed to get video modes" );
 	}
 

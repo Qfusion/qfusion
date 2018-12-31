@@ -161,13 +161,6 @@ static void CL_GameModule_MemFree( void *data, const char *filename, int filelin
 	_Mem_Free( data, MEMPOOL_CLIENTGAME, 0, filename, fileline );
 }
 
-/*
-* CL_GameModule_SoundUpdate
-*/
-static void CL_GameModule_SoundUpdate( const vec3_t origin, const vec3_t velocity, const mat3_t axis, int64_t now ) {
-	CL_SoundModule_Update( origin, velocity, axis, now );
-}
-
 //==============================================
 
 float VID_GetPixelRatio() { return 1; }
@@ -285,7 +278,7 @@ void CL_GameModule_Init( void ) {
 	import.S_StartEntitySound = CL_SoundModule_StartEntitySound;
 	import.S_StartGlobalSound = CL_SoundModule_StartGlobalSound;
 	import.S_StartLocalSound = CL_SoundModule_StartLocalSound;
-	import.S_Update = CL_GameModule_SoundUpdate;
+	import.S_Update = CL_SoundModule_Update;
 	import.S_ImmediateSound = CL_SoundModule_ImmediateSound;
 	import.S_UpdateEntity = CL_SoundModule_UpdateEntity;
 

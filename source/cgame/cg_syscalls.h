@@ -364,8 +364,8 @@ static inline struct sfx_s *trap_S_RegisterSound( const char *name ) {
 	return CGAME_IMPORT.S_RegisterSound( name );
 }
 
-static inline void trap_S_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis, int64_t now ) {
-	CGAME_IMPORT.S_Update( origin, velocity, axis, now );
+static inline void trap_S_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis ) {
+	CGAME_IMPORT.S_Update( origin, velocity, axis );
 }
 
 static inline void trap_S_UpdateEntity( int entNum, vec3_t origin, vec3_t velocity ) {
@@ -388,8 +388,8 @@ static inline void trap_S_StartLocalSound( struct sfx_s *sfx, int channel, float
 	CGAME_IMPORT.S_StartLocalSound( sfx, channel, volume );
 }
 
-static inline void trap_S_ImmediateSound( struct sfx_s *sfx, int entnum, float volume, float attenuation, int64_t now ) {
-	CGAME_IMPORT.S_ImmediateSound( sfx, entnum, volume, attenuation, now );
+static inline void trap_S_ImmediateSound( struct sfx_s *sfx, int entnum, float volume, float attenuation ) {
+	CGAME_IMPORT.S_ImmediateSound( sfx, entnum, volume, attenuation );
 }
 
 static inline void trap_S_StartBackgroundTrack( struct sfx_s *sfx ) {

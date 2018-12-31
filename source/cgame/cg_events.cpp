@@ -170,9 +170,9 @@ void CG_LaserBeamEffect( centity_t *cent ) {
 	}
 
 	if( ISVIEWERENTITY( cent->current.number ) ) {
-		trap_S_ImmediateSound( sound, cent->current.number, cg_volume_effects->value, ATTN_NONE, cg.time );
+		trap_S_ImmediateSound( sound, cent->current.number, cg_volume_effects->value, ATTN_NONE );
 	} else {
-		trap_S_ImmediateSound( sound, cent->current.number, cg_volume_effects->value, ATTN_STATIC, cg.time );
+		trap_S_ImmediateSound( sound, cent->current.number, cg_volume_effects->value, ATTN_STATIC );
 	}
 
 	laserOwner = NULL;

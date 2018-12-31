@@ -939,7 +939,7 @@ void CG_RenderView( int frameTime, int realFrameTime, int64_t realTime, int64_t 
 
 		trap_R_DrawStretchPic( 0, 0, cgs.vidWidth, cgs.vidHeight, 0, 0, 1, 1, colorBlack, cgs.shaderWhite );
 
-		trap_S_Update( vec3_origin, vec3_origin, axis_identity, cg.time );
+		trap_S_Update( vec3_origin, vec3_origin, axis_identity );
 
 		return;
 	}
@@ -1016,7 +1016,7 @@ void CG_RenderView( int frameTime, int realFrameTime, int64_t realTime, int64_t 
 
 	cg.oldAreabits = true;
 
-	trap_S_Update( cg.view.origin, cg.view.velocity, cg.view.axis, cg.time );
+	trap_S_Update( cg.view.origin, cg.view.velocity, cg.view.axis );
 
 	CG_Draw2D();
 

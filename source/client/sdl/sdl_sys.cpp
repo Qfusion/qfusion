@@ -26,6 +26,8 @@ void Sys_Error( const char *format, ... ) {
 	Q_vsnprintfz( msg, sizeof( msg ), format, argptr );
 	va_end( argptr );
 
+	printf( "%s\n", msg );
+
 	SDL_ShowSimpleMessageBox( SDL_MESSAGEBOX_ERROR, APPLICATION, msg, NULL );
 
 	exit( 1 );

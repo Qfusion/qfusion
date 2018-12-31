@@ -2218,7 +2218,7 @@ void CL_Frame( int realMsec, int gameMsec ) {
 
 	// update audio
 	if( cls.state != CA_ACTIVE && !cls.disable_screen ) {
-		CL_SoundModule_Update( vec3_origin, vec3_origin, axis_identity, cls.gametime );
+		CL_SoundModule_Update( vec3_origin, vec3_origin, axis_identity );
 	}
 
 	// advance local effects for next frame

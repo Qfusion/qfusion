@@ -36,8 +36,8 @@ void CL_SoundModule_StopAllSounds( bool stopMusic ) {
 	S_StopAllSounds( stopMusic );
 }
 
-void CL_SoundModule_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis, int64_t now ) {
-	S_Update( origin, velocity, axis, now );
+void CL_SoundModule_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis ) {
+	S_Update( origin, velocity, axis );
 }
 
 void CL_SoundModule_UpdateEntity( int entNum, vec3_t origin, vec3_t velocity ) {
@@ -69,8 +69,8 @@ void CL_SoundModule_StartLocalSound( struct sfx_s *sfx, int channel, float volum
 	S_StartLocalSound( sfx, channel, volume );
 }
 
-void CL_SoundModule_ImmediateSound( struct sfx_s *sfx, int entnum, float volume, float attenuation, int64_t now ) {
-	S_ImmediateSound( sfx, entnum, volume, attenuation, now );
+void CL_SoundModule_ImmediateSound( struct sfx_s *sfx, int entnum, float volume, float attenuation ) {
+	S_ImmediateSound( sfx, entnum, volume, attenuation );
 }
 
 void CL_SoundModule_StartMenuMusic() {
