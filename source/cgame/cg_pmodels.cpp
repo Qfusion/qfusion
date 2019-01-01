@@ -628,7 +628,7 @@ static float CG_OutlineScaleForDist( entity_t *e, float maxdist, float scale ) {
 	float dist;
 	vec3_t dir;
 
-	if( e->renderfx & ( RF_WEAPONMODEL | RF_VIEWERMODEL ) ) {
+	if( e->renderfx & RF_WEAPONMODEL ) {
 		return 0.14f;
 	}
 
@@ -716,10 +716,6 @@ static void CG_AddIconAbovePlayer( centity_t *cent ) {
 	struct shader_s *iconShader = NULL;
 	float radius = 6, upoffset = 8;
 	orientation_t tag_head;
-
-	if( cent->ent.renderfx & RF_VIEWERMODEL ) {
-		return;
-	}
 
 	if( cent->localEffects[LOCALEFFECT_VSAY_HEADICON_TIMEOUT] > cg.time ) {
 		if( cent->localEffects[LOCALEFFECT_VSAY_HEADICON] < VSAY_TOTAL ) {
@@ -1048,11 +1044,6 @@ void CG_AddPModel( centity_t *cent ) {
 			AnglesToAxis( tmpangles, cent->ent.axis );
 		} else {
 			VectorCopy( cent->ent.origin, org );
-		}
-
-		// (cheap trick) if not thirdperson offset it some units back so the shadow looks more at our feet
-		if( cent->ent.renderfx & RF_VIEWERMODEL && !( cent->renderfx & RF_NOSHADOW ) ) {
-			VectorMA( org, -24, &cent->ent.axis[AXIS_FORWARD], org );
 		}
 
 		VectorCopy( org, cent->ent.origin );

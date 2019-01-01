@@ -278,7 +278,7 @@ typedef struct entity_state_s {
 
 	vec3_t origin;
 	vec3_t angles;
-	vec3_t origin2;                 // ET_BEAM, ET_PORTALSURFACE, ET_EVENT specific
+	vec3_t origin2;                 // ET_BEAM, ET_EVENT specific
 
 	unsigned int modelindex;
 	unsigned int modelindex2;

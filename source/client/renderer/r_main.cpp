@@ -158,8 +158,7 @@ static drawSurfaceType_t spriteDrawSurf = ST_SPRITE;
 /*
 * R_BatchSpriteSurf
 */
-void R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, int lightStyleNum,
-	const portalSurface_t *portalSurface, drawSurfaceType_t *drawSurf, bool mergable ) {
+void R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, int lightStyleNum, drawSurfaceType_t *drawSurf, bool mergable ) {
 	int i;
 	vec3_t point;
 	vec3_t v_left, v_up;
@@ -178,10 +177,6 @@ void R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, int lightStyl
 	} else {
 		VectorCopy( &rn.viewAxis[AXIS_RIGHT], v_left );
 		VectorCopy( &rn.viewAxis[AXIS_UP], v_up );
-	}
-
-	if( rn.renderFlags & ( RF_MIRRORVIEW | RF_FLIPFRONTFACE ) ) {
-		VectorInverse( v_left );
 	}
 
 	VectorMA( e->origin, -radius, v_up, point );
@@ -209,7 +204,7 @@ void R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, int lightStyl
 	mesh.colorsArray[1] = NULL;
 	mesh.sVectorsArray = NULL;
 
-	RB_AddDynamicMesh( e, shader, portalSurface, &mesh, GL_TRIANGLES, 0.0f, 0.0f );
+	RB_AddDynamicMesh( e, shader, &mesh, GL_TRIANGLES, 0.0f, 0.0f );
 }
 
 /*
@@ -246,7 +241,7 @@ static bool R_AddSpriteToDrawList( const entity_t *e ) {
 		return false; // cull it because we don't want to sort unneeded things
 	}
 
-	if( !R_AddSurfToDrawList( rn.meshlist, e, shader, -1, dist, 0, NULL, &spriteDrawSurf ) ) {
+	if( !R_AddSurfToDrawList( rn.meshlist, e, shader, -1, dist, 0, &spriteDrawSurf ) ) {
 		return false;
 	}
 
@@ -309,8 +304,7 @@ mesh_vbo_t *R_InitNullModelVBO( void ) {
 /*
 * R_DrawNullSurf
 */
-void R_DrawNullSurf( const entity_t *e, const shader_t *shader, int lightStyleNum,
-	const portalSurface_t *portalSurface, drawSurfaceType_t *drawSurf ) {
+void R_DrawNullSurf( const entity_t *e, const shader_t *shader, int lightStyleNum, drawSurfaceType_t *drawSurf ) {
 	assert( rsh.nullVBO != NULL );
 	if( !rsh.nullVBO ) {
 		return;
@@ -325,7 +319,7 @@ void R_DrawNullSurf( const entity_t *e, const shader_t *shader, int lightStyleNu
 * R_AddNullSurfToDrawList
 */
 static bool R_AddNullSurfToDrawList( const entity_t *e ) {
-	if( !R_AddSurfToDrawList( rn.meshlist, e, rsh.whiteShader, -1, 0, 0, NULL, &nullDrawSurf ) ) {
+	if( !R_AddSurfToDrawList( rn.meshlist, e, rsh.whiteShader, -1, 0, 0, &nullDrawSurf ) ) {
 		return false;
 	}
 
@@ -487,7 +481,7 @@ void R_DrawRotatedStretchPic( int x, int y, int w, int h, float s1, float t1, fl
 		}
 	}
 
-	RB_AddDynamicMesh( NULL, shader, NULL, &pic_mesh, GL_TRIANGLES, 0.0f, 0.0f );
+	RB_AddDynamicMesh( NULL, shader, &pic_mesh, GL_TRIANGLES, 0.0f, 0.0f );
 }
 
 /*
@@ -775,11 +769,6 @@ static void R_Clear( int bitMask ) {
 	int bits;
 	vec4_t envColor;
 	bool clearColor = false;
-	bool depthPortal = ( rn.renderFlags & ( RF_MIRRORVIEW | RF_PORTALVIEW ) ) != 0 && ( rn.renderFlags & RF_PORTAL_CAPTURE ) == 0;
-
-	if( depthPortal ) {
-		return;
-	}
 
 	fbo = RB_BoundFrameBufferObject();
 
@@ -787,15 +776,12 @@ static void R_Clear( int bitMask ) {
 		clearColor = rn.renderTarget != rf.renderTarget;
 		Vector4Set( envColor, 1, 1, 1, 0 );
 	} else {
-		clearColor = (rn.portalmasklist && !rn.portalmasklist->numDrawSurfs) || R_FASTSKY();
+		clearColor = false;
 
 		Vector4Scale( mapConfig.environmentColor, 1.0 / 255.0, envColor );
 	}
 
-	bits = 0;
-	//if( !depthPortal ) {
-		bits |= GL_DEPTH_BUFFER_BIT;
-	//}
+	bits = GL_DEPTH_BUFFER_BIT;
 	if( clearColor ) {
 		bits |= GL_COLOR_BUFFER_BIT;
 	}
@@ -815,11 +801,6 @@ static void R_SetupGL( void ) {
 	RB_Scissor( rn.scissor[0], rn.scissor[1], rn.scissor[2], rn.scissor[3] );
 	RB_Viewport( rn.viewport[0], rn.viewport[1], rn.viewport[2], rn.viewport[3] );
 
-	if( rn.renderFlags & RF_CLIPPLANE ) {
-		cplane_t *p = &rn.clipPlane;
-		Matrix4_ObliqueNearClipping( p->normal, -p->dist, rn.cameraMatrix, rn.projectionMatrix );
-	}
-
 	RB_SetZClip( rn.nearClip, rn.farClip );
 
 	RB_SetCamera( rn.viewOrigin, rn.viewAxis );
@@ -834,10 +815,6 @@ static void R_SetupGL( void ) {
 
 	RB_LoadObjectMatrix( mat4x4_identity );
 
-	if( rn.renderFlags & RF_FLIPFRONTFACE ) {
-		RB_FlipFrontFace();
-	}
-
 	RB_PolygonOffset( rn.polygonFactor, rn.polygonUnits );
 
 	RB_SetShaderStateMask( ~0, 0 );
@@ -848,10 +825,6 @@ static void R_SetupGL( void ) {
 */
 static void R_EndGL( void ) {
 	RB_FlushDynamicMeshes();
-
-	if( rn.renderFlags & RF_FLIPFRONTFACE ) {
-		RB_FlipFrontFace();
-	}
 }
 
 /*
@@ -866,45 +839,16 @@ static void R_CullEntities( void ) {
 	rn.entpvs = NULL;
 	rn.numEntities = 0;
 
-	if( rn.renderFlags & RF_NOENTS ) {
-		return;
-	}
-
 	rn.entities = ( int * ) R_FrameCache_Alloc( sizeof( *rn.entities ) * rsc.numEntities );
 	rn.entpvs = ( uint8_t * ) R_FrameCache_Alloc( sizeof( *rn.entpvs ) * (rsc.numEntities+7)/8 );
 	memset( rn.entpvs, 0, (rsc.numEntities+7)/8 );
-
-	if( rn.renderFlags & RF_ENVVIEW ) {
-		for( i = 0; i < rsc.numBmodelEntities; i++ ) {
-			entNum = rsc.bmodelEntities[i];
-			e = R_NUM2ENT( entNum );
-
-			if( R_CullModelEntity( e, false ) ) {
-				continue;
-			}
-
-			rn.entpvs[entNum>>3] |= (1<<(entNum&7));
-			rn.entities[rn.numEntities++] = entNum;
-		}
-		return;
-	}
 
 	for( i = rsc.numLocalEntities; i < rsc.numEntities; i++ ) {
 		entNum = i;
 		e = R_NUM2ENT( entNum );
 
 		if( e->flags & RF_WEAPONMODEL ) {
-			if( rn.renderFlags & RF_NONVIEWERREF ) {
-				continue;
-			}
 			goto add;
-		}
-
-		if( e->flags & RF_VIEWERMODEL ) {
-			//if( !(rn.renderFlags & RF_NONVIEWERREF) )
-			if( !( rn.renderFlags & ( RF_MIRRORVIEW ) ) ) {
-				continue;
-			}
 		}
 
 		if( e->flags & RF_NODEPTHTEST ) {
@@ -985,10 +929,6 @@ void R_RenderView( const refdef_t *fd ) {
 
 	rn.hdrExposure = 1;
 
-	rn.numPortalSurfaces = 0;
-	rn.numDepthPortalSurfaces = 0;
-	rn.skyportalSurface = NULL;
-
 	ClearBounds( rn.visMins, rn.visMaxs );
 	ClearBounds( rn.pvsMins, rn.pvsMaxs );
 
@@ -1006,8 +946,6 @@ void R_RenderView( const refdef_t *fd ) {
 	}
 
 	R_ClearDrawList( rn.meshlist );
-
-	R_ClearDrawList( rn.portalmasklist );
 
 	if( !rsh.worldModel && !( rn.refdef.rdflags & RDF_NOWORLDMODEL ) ) {
 		return;
@@ -1050,12 +988,6 @@ void R_RenderView( const refdef_t *fd ) {
 
 	R_SetupGL();
 
-	R_DrawPortals();
-
-	if( r_portalonly->integer && !( rn.renderFlags & ( RF_MIRRORVIEW | RF_PORTALVIEW ) ) ) {
-		goto end;
-	}
-
 	R_Clear( ~0 );
 
 	if( r_speeds->integer ) {
@@ -1072,7 +1004,6 @@ void R_RenderView( const refdef_t *fd ) {
 		R_DrawOutlinedSurfaces( rn.meshlist );
 	}
 
-end:
 	R_TransformForWorld();
 
 	R_EndGL();
@@ -1467,9 +1398,7 @@ void R_RenderDebugSurface( const refdef_t *fd ) {
 
 			R_ClearDrawList( rn.meshlist );
 
-			R_ClearDrawList( rn.portalmasklist );
-
-			if( R_AddSurfToDrawList( rn.meshlist, R_NUM2ENT( tr.ent ), surf->shader, -1, 0, 0, NULL, drawSurf ) ) {
+			if( R_AddSurfToDrawList( rn.meshlist, R_NUM2ENT( tr.ent ), surf->shader, -1, 0, 0, drawSurf ) ) {
 				if( r_speeds->integer == 5 ) {
 					unsigned i;
 

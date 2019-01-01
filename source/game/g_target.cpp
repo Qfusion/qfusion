@@ -473,7 +473,7 @@ void SP_target_string( edict_t *self ) {
 //==========================================================
 
 //QUAKED target_position (0 .5 0) (-8 -8 -8) (8 8 8)
-//Aiming target for entities like light, misc_portal_camera and trigger_push (jump pads) in particular.
+//Aiming target for entities like light and trigger_push (jump pads) in particular.
 //-------- KEYS --------
 //targetname : the entity that requires an aiming direction points to this.
 //notsingle : when set to 1, entity will not spawn in Single Player mode
@@ -486,7 +486,6 @@ void SP_target_string( edict_t *self ) {
 void SP_target_position( edict_t *self ) {
 	self->r.svflags |= SVF_NOCLIENT;
 }
-
 
 //QUAKED target_print (0 .5 0) (-8 -8 -8) (8 8 8) SAMETEAM OTHERTEAM PRIVATE
 //This will print a message on the center of the screen when triggered. By default, all the clients will see the message.

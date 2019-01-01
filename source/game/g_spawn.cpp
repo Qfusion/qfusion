@@ -160,10 +160,6 @@ spawn_t spawns[] = {
 	{ "info_teleport_destination", SP_info_teleport_destination },
 
 	{ "misc_model", SP_misc_model },
-	{ "misc_portal_surface", SP_misc_portal_surface },
-	{ "misc_portal_camera", SP_misc_portal_camera },
-	{ "misc_skyportal", SP_skyportal },
-	{ "props_skyportal", SP_skyportal },
 	{ "misc_particles", SP_misc_particles },
 
 	{ NULL, NULL }

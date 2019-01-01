@@ -79,8 +79,8 @@ typedef struct image_s {
 	unsigned texnum;                              // gl texture binding
 	int width, height;                          // source image
 	int layers;                                 // texture array size
-	int upload_width,
-		upload_height;                          // after power of two and picmip
+	int upload_width;
+	int upload_height;                          // after power of two and picmip
 	int minmipsize;                             // size of the smallest mipmap that should be used
 	int samples;
 	int fbo;                                    // frame buffer object texture is attached to
@@ -101,7 +101,6 @@ void R_GetRenderBufferSize( const int inWidth, const int inHeight,
 							const int inLimit, const int flags, int *outWidth, int *outHeight );
 void R_InitViewportTexture( image_t **texture, const char *name, int id,
 							int viewportWidth, int viewportHeight, int size, int flags, int tags, int samples );
-image_t *R_GetPortalTexture( int viewportWidth, int viewportHeight, int flags, unsigned frameNum );
 void R_InitDrawFlatTexture( void );
 void R_FreeImageBuffers( void );
 

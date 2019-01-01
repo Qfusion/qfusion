@@ -512,7 +512,6 @@ typedef struct {
 	snapshot_t frame, oldFrame;
 	bool frameSequenceRunning;
 	bool oldAreabits;
-	bool portalInView;
 	bool fireEvents;
 	bool firstFrame;
 

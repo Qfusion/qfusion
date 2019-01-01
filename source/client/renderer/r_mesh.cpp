@@ -23,8 +23,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_local.h"
 
 drawList_t r_worldlist;
-drawList_t r_portalmasklist;
-drawList_t r_portallist, r_skyportallist;
 
 /*
 * R_InitDrawList
@@ -38,9 +36,6 @@ void R_InitDrawList( drawList_t *list ) {
 */
 void R_InitDrawLists( void ) {
 	R_InitDrawList( &r_worldlist );
-	R_InitDrawList( &r_portalmasklist );
-	R_InitDrawList( &r_portallist );
-	R_InitDrawList( &r_skyportallist );
 }
 
 /*
@@ -165,22 +160,21 @@ static int R_PackDistKey( int renderFx, const shader_t *shader, float dist, unsi
 /*
 * R_PackSortKey
 */
-static uint64_t R_PackSortKey( unsigned int shaderNum, int superLightStyleNum, int portalNum, unsigned int entNum ) {
+static uint64_t R_PackSortKey( unsigned int shaderNum, int superLightStyleNum, unsigned int entNum ) {
 	return 
 		( (uint64_t)shaderNum & 0xFFF ) << 36 |
-		( ( (unsigned int)( superLightStyleNum + 1 ) & 0xFF ) << 20 ) | ( entNum & 0xFFF ) << 8 |
-		( ( ( portalNum + 1 ) & 0xFF ) );
+		( ( (unsigned int)( superLightStyleNum + 1 ) & 0xFF ) << 20 ) |
+		( entNum & 0xFFF ) << 8;
 }
 
 /*
 * R_UnpackSortKey
 */
 static void R_UnpackSortKey( uint64_t sortKey, unsigned int *shaderNum,
-	int *superLightStyleNum, int *portalNum, unsigned int *entNum ) {
+	int *superLightStyleNum, unsigned int *entNum ) {
 	*shaderNum = ( sortKey >> 36 ) & 0xFFF;
 	*superLightStyleNum = (signed int)( ( sortKey >> 20 ) & 0xFF ) - 1;
 	*entNum = ( sortKey >> 8 ) & 0xFFF;
-	*portalNum = (signed int)( ( sortKey ) & 0xFF ) - 1;
 }
 
 /*
@@ -211,8 +205,7 @@ unsigned R_PackOpaqueOrder( const shader_t *shader, int numLightmaps, bool dligh
 * Calculate sortkey and store info used for batching and sorting.
 * All 3D-geometry passes this function.
 */
-void *R_AddSurfToDrawList( drawList_t *list, const entity_t *e, const shader_t *shader,
-	int superLightStyle, float dist, unsigned int order, const portalSurface_t *portalSurf, void *drawSurf ) {
+void *R_AddSurfToDrawList( drawList_t *list, const entity_t *e, const shader_t *shader, int superLightStyle, float dist, unsigned int order, void *drawSurf ) {
 	int distKey;
 	sortedDrawSurf_t *sds;
 
@@ -236,25 +229,10 @@ void *R_AddSurfToDrawList( drawList_t *list, const entity_t *e, const shader_t *
 
 	sds = &list->drawSurfs[list->numDrawSurfs++];
 	sds->drawSurf = ( drawSurfaceType_t * )drawSurf;
-	sds->sortKey = R_PackSortKey( shader->id, superLightStyle, portalSurf ? portalSurf - rn.portalSurfaces : -1, R_ENT2NUM( e ) );
+	sds->sortKey = R_PackSortKey( shader->id, superLightStyle, R_ENT2NUM( e ) );
 	sds->distKey = distKey;
 
 	return sds;
-}
-
-/*
-* R_GetDrawListSurfPortal
-*/
-portalSurface_t *R_GetDrawListSurfPortal( void *psds ) {
-	sortedDrawSurf_t *sds = ( sortedDrawSurf_t * ) psds;
-	uint64_t sortKey = sds->sortKey;
-	unsigned int shaderNum;
-	unsigned int entNum;
-	int portalNum, lightStyle;
-
-	R_UnpackSortKey( sortKey, &shaderNum, &lightStyle, &portalNum, &entNum );
-
-	return portalNum >= 0 ? rn.portalSurfaces + portalNum : NULL;
 }
 
 /*
@@ -304,7 +282,7 @@ static const drawSurf_cb r_drawSurfCb[ST_MAX_TYPES] =
 	/* ST_NONE */
 	NULL,
 	/* ST_BSP */
-	( drawSurf_cb ) NULL,
+	NULL,
 	/* ST_SKY */
 	( drawSurf_cb ) & R_DrawSkySurf,
 	/* ST_ALIAS */
@@ -388,7 +366,6 @@ static void _R_DrawSurfaces( drawList_t *list, bool *depthCopied, int mode, int 
 	uint64_t sortKey;
 	unsigned int shaderNum = 0, prevShaderNum = MAX_SHADERS;
 	unsigned int entNum = 0, prevEntNum = MAX_REF_ENTITIES;
-	int portalNum = -1, prevPortalNum = -100500;
 	int lightStyle = -1, prevLightStyle = -100500;
 	sortedDrawSurf_t *sds;
 	int drawSurfType;
@@ -396,7 +373,6 @@ static void _R_DrawSurfaces( drawList_t *list, bool *depthCopied, int mode, int 
 	flushBatchDrawSurf_cb batchFlush = NULL;
 	const shader_t *shader;
 	const entity_t *entity;
-	const portalSurface_t *portalSurface;
 	float depthmin = 0.0f, depthmax = 0.0f;
 	bool depthHack = false, cullHack = false;
 	bool infiniteProj = false, prevInfiniteProj = false;
@@ -442,11 +418,10 @@ static void _R_DrawSurfaces( drawList_t *list, bool *depthCopied, int mode, int 
 		}
 
 		// decode draw surface properties
-		R_UnpackSortKey( sortKey, &shaderNum, &lightStyle, &portalNum, &entNum );
+		R_UnpackSortKey( sortKey, &shaderNum, &lightStyle, &entNum );
 
 		entity = R_NUM2ENT( entNum );
 		entityFX = entity->renderfx;
-		portalSurface = portalNum >= 0 ? rn.portalSurfaces + portalNum : NULL;
 		shader = R_ShaderById( shaderNum );
 		depthWrite = Shader_DepthWrite( shader );
 		batchMergable = true;
@@ -459,7 +434,7 @@ static void _R_DrawSurfaces( drawList_t *list, bool *depthCopied, int mode, int 
 
 		// see if we need to reset mesh properties in the backend
 		if( !prevBatchDrawSurf || !batchDrawSurf || shaderNum != prevShaderNum ||
-			portalNum != prevPortalNum || lightStyle != prevLightStyle ||
+			lightStyle != prevLightStyle ||
 			( entNum != prevEntNum && !( shader->flags & SHADER_ENTITY_MERGABLE ) ) ||
 			entityFX != prevEntityFX ) {
 
@@ -519,8 +494,7 @@ static void _R_DrawSurfaces( drawList_t *list, bool *depthCopied, int mode, int 
 			}
 
 			if( !depthWrite && !*depthCopied && Shader_DepthRead( shader ) ) {
-				// ignore portals because oblique frustum messes up the depth values
-				if( ( rn.renderFlags & (RF_SOFT_PARTICLES|RF_CLIPPLANE) ) == RF_SOFT_PARTICLES ) {
+				if( ( rn.renderFlags & RF_SOFT_PARTICLES ) == RF_SOFT_PARTICLES ) {
 					int fbo = RB_BoundFrameBufferObject();
 					if( RFB_HasDepthRenderBuffer( fbo ) && rn.st->screenTexCopy ) {
 						// draw all dynamic surfaces that write depth before copying
@@ -558,16 +532,13 @@ static void _R_DrawSurfaces( drawList_t *list, bool *depthCopied, int mode, int 
 
 				RB_BindShader( entity, shader );
 
-				RB_SetPortalSurface( portalSurface );
-
 				batchFlush = NULL;
-				r_drawSurfCb[drawSurfType]( entity, shader, lightStyle, portalSurface, sds->drawSurf );
+				r_drawSurfCb[drawSurfType]( entity, shader, lightStyle, sds->drawSurf );
 			}
 
 			prevShaderNum = shaderNum;
 			prevEntNum = entNum;
 			prevBatchDrawSurf = batchDrawSurf;
-			prevPortalNum = portalNum;
 			prevInfiniteProj = infiniteProj;
 			prevEntityFX = entityFX;
 			prevLightStyle = lightStyle;
@@ -575,7 +546,7 @@ static void _R_DrawSurfaces( drawList_t *list, bool *depthCopied, int mode, int 
 
 		if( batchDrawSurf ) {
 			batchFlush = r_flushBatchSurfCb[drawSurfType];
-			r_batchDrawSurfCb[drawSurfType]( entity, shader, lightStyle, portalSurface, sds->drawSurf, batchMergable );
+			r_batchDrawSurfCb[drawSurfType]( entity, shader, lightStyle, sds->drawSurf, batchMergable );
 			batchFlushed = false;
 			if( depthWrite ) {
 				batchOpaque = true;
@@ -602,15 +573,6 @@ static void _R_DrawSurfaces( drawList_t *list, bool *depthCopied, int mode, int 
 }
 
 /*
-* R_DrawPortalSurfaces
-*/
-void R_DrawPortalSurfaces( drawList_t *list ) {
-	bool depthCopied = false;
-
-	_R_DrawSurfaces( list, &depthCopied, RB_MODE_NORMAL, ST_NONE, ST_NONE, SHADER_SORT_PORTAL, SHADER_SORT_PORTAL );
-}
-
-/*
 * R_DrawSurfaces
 */
 void R_DrawSurfaces( drawList_t *list ) {
@@ -622,21 +584,6 @@ void R_DrawSurfaces( drawList_t *list ) {
 		_R_DrawSurfaces( list, &depthCopied, RB_MODE_NORMAL, ST_NONE, ST_NONE, SHADER_SORT_NONE, SHADER_SORT_MAX );
 	}
 
-	RB_EnableTriangleOutlines( triOutlines );
-}
-
-/*
-* R_DrawSkySurfaces
-*/
-void R_DrawSkySurfaces( drawList_t *list ) {
-	bool triOutlines;
-	bool depthCopied = false;
-
-	triOutlines = RB_EnableTriangleOutlines( false );
-	if( !triOutlines ) {
-		// do not recurse into normal mode when rendering triangle outlines
-		_R_DrawSurfaces( list, &depthCopied, RB_MODE_NORMAL, ST_SKY, ST_NONE, SHADER_SORT_SKY, SHADER_SORT_SKY );
-	}
 	RB_EnableTriangleOutlines( triOutlines );
 }
 
@@ -664,7 +611,7 @@ void R_WalkDrawList( drawList_t *list, walkDrawSurf_cb_cb cb, void *ptr ) {
 	uint64_t sortKey;
 	unsigned int shaderNum;
 	unsigned int entNum;
-	int portalNum, lightStyleNum;
+	int lightStyleNum;
 	walkDrawSurf_cb walkCb;
 
 	if( !cb ) {
@@ -677,7 +624,7 @@ void R_WalkDrawList( drawList_t *list, walkDrawSurf_cb_cb cb, void *ptr ) {
 		drawSurfType = *(int *)sds->drawSurf;
 
 		// decode draw surface properties
-		R_UnpackSortKey( sortKey, &shaderNum, &lightStyleNum, &portalNum, &entNum );
+		R_UnpackSortKey( sortKey, &shaderNum, &lightStyleNum, &entNum );
 
 		walkCb = r_walkSurfCb[drawSurfType];
 		if( walkCb ) {

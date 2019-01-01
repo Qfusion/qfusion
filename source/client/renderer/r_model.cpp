@@ -513,11 +513,8 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, size_t *vbo_total_size
 			surf->firstDrawSurfVert = 0;
 			surf->firstDrawSurfElem = 0;
 
-			// portal or foliage surfaces can not be batched
-			mergable = true;
-			if( ( shader->flags & ( SHADER_PORTAL_CAPTURE | SHADER_PORTAL_CAPTURE2 ) ) || surf->numInstances ) {
-				mergable = false;
-			}
+			// foliage surfaces can not be batched
+			mergable = surf->numInstances == 0;
 
 			fcount = 1;
 			vcount = surf->mesh.numVerts;
@@ -1081,7 +1078,6 @@ static void R_InitMapConfig( const char *model ) {
 	mapConfig.deluxeMappingEnabled = false;
 	mapConfig.forceWorldOutlines = false;
 	mapConfig.averageLightingIntensity = 1;
-	mapConfig.writeSkyDepth = false;
 
 	VectorClear( mapConfig.ambient );
 	VectorClear( mapConfig.outlineColor );

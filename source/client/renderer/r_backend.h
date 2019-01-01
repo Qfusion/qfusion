@@ -41,7 +41,6 @@ enum {
 
 struct shader_s;
 struct superLightStyle_s;
-struct portalSurface_s;
 struct refScreenTexSet_s;
 
 // core
@@ -81,9 +80,7 @@ void RB_BlitFrameBufferObject( int src, int dest, int bitMask, int mode, int fil
 
 void RB_BindVBO( int id, int primitive );
 
-void RB_AddDynamicMesh( const entity_t *entity, const shader_t *shader,
-						const struct portalSurface_s *portalSurface,
-						const struct mesh_s *mesh, int primitive, float x_offset, float y_offset );
+void RB_AddDynamicMesh( const entity_t *entity, const shader_t *shader, const struct mesh_s *mesh, int primitive, float x_offset, float y_offset );
 void RB_FlushDynamicMeshes( void );
 
 void RB_DrawElements( int firstVert, int numVerts, int firstElem, int numElems );
@@ -96,7 +93,6 @@ void RB_FlushTextureCache( void );
 void RB_BindShader( const entity_t *e, const struct shader_s *shader );
 void RB_SetLightstyle( const struct superLightStyle_s *lightStyle, const struct superLightStyle_s *realLightStyle );
 void RB_SetBonesData( int numBones, dualquat_t *dualQuats, int maxWeights );
-void RB_SetPortalSurface( const struct portalSurface_s *portalSurface );
 void RB_SetSkyboxShader( const shader_t *shader );
 void RB_SetSkyboxSide( int side );
 void RB_SetMode( int mode );

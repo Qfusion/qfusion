@@ -407,35 +407,6 @@ void CG_AddEntityToScene( entity_t *ent ) {
 //============================================================================
 
 /*
-* CG_SkyPortal
-*/
-static void CG_SkyPortal( refdef_t *rd ) {
-	float fov = 0;
-	float scale = 0;
-	int noents = 0;
-	float pitchspeed = 0, yawspeed = 0, rollspeed = 0;
-	skyportal_t *sp = &rd->skyportal;
-
-	if( cgs.configStrings[CS_SKYBOX][0] == '\0' ) {
-		return;
-	}
-
-	if( sscanf( cgs.configStrings[CS_SKYBOX], "%f %f %f %f %f %i %f %f %f",
-				&sp->vieworg[0], &sp->vieworg[1], &sp->vieworg[2], &fov, &scale,
-				&noents,
-				&pitchspeed, &yawspeed, &rollspeed ) >= 3 ) {
-		float off = rd->time * 0.001f;
-
-		sp->fov = fov;
-		sp->noEnts = ( noents ? true : false );
-		sp->scale = scale ? 1.0f / scale : 0;
-		VectorSet( sp->viewanglesOffset, anglemod( off * pitchspeed ), anglemod( off * yawspeed ), anglemod( off * rollspeed ) );
-		rd->rdflags |= RDF_SKYPORTALINVIEW;
-		return;
-	}
-}
-
-/*
 * CG_RenderFlags
 */
 static int CG_RenderFlags( void ) {
@@ -463,10 +434,6 @@ static int CG_RenderFlags( void ) {
 
 	if( cg.oldAreabits ) {
 		rdflags |= RDF_OLDAREABITS;
-	}
-
-	if( cg.portalInView ) {
-		rdflags |= RDF_PORTALINVIEW;
 	}
 
 	if( cg_outlineWorld->integer ) {
@@ -750,8 +717,6 @@ static void CG_SetupRefDef( cg_viewdef_t *view, refdef_t *rd ) {
 		rd->fov_x *= v;
 		rd->fov_y *= v;
 	}
-
-	CG_SkyPortal( rd );
 
 	CG_asSetupRefdef( view, rd );
 }

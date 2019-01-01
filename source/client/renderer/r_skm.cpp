@@ -1053,7 +1053,7 @@ static void R_CacheBoneTransformsJob( unsigned first, unsigned items, const joba
 /*
 * R_DrawSkeletalSurf
 */
-void R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, int lightStyleNum, const portalSurface_t *portalSurface, drawSurfaceSkeletal_t *drawSurf ) {
+void R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, int lightStyleNum, drawSurfaceSkeletal_t *drawSurf ) {
 	const model_t *mod = drawSurf->model;
 	const mskmodel_t *skmodel = ( const mskmodel_t * )mod->extradata;
 	const mskmesh_t *skmesh = drawSurf->mesh;
@@ -1303,7 +1303,7 @@ bool R_AddSkeletalModelToDrawList( const entity_t *e, int lod ) {
 		}
 
 		drawOrder = R_PackOpaqueOrder( shader, 0, false );
-		R_AddSurfToDrawList( rn.meshlist, e, shader, -1, SKMSURF_DISTANCE( shader, distance ), drawOrder, NULL, skmodel->drawSurfs + i );
+		R_AddSurfToDrawList( rn.meshlist, e, shader, -1, SKMSURF_DISTANCE( shader, distance ), drawOrder, skmodel->drawSurfs + i );
 	}
 
 	return true;

@@ -511,7 +511,7 @@ bool R_AliasModelLerpTag( orientation_t *orient, const maliasmodel_t *aliasmodel
 *
 * Interpolates between two frames and origins
 */
-void R_DrawAliasSurf( const entity_t *e, const shader_t *shader, int lightStyleNum, const portalSurface_t *portalSurface, drawSurfaceAlias_t *drawSurf ) {
+void R_DrawAliasSurf( const entity_t *e, const shader_t *shader, int lightStyleNum, drawSurfaceAlias_t *drawSurf ) {
 	int i;
 	int framenum = e->frame, oldframenum = e->oldframe;
 	float backv[3], frontv[3];
@@ -627,7 +627,7 @@ void R_DrawAliasSurf( const entity_t *e, const shader_t *shader, int lightStyleN
 			dynamicMesh.sVectorsArray = aliasmesh->sVectorsArray;
 		}
 
-		RB_AddDynamicMesh( e, shader, portalSurface, &dynamicMesh, GL_TRIANGLES, 0.0f, 0.0f );
+		RB_AddDynamicMesh( e, shader, &dynamicMesh, GL_TRIANGLES, 0.0f, 0.0f );
 
 		RB_FlushDynamicMeshes();
 	}
@@ -734,7 +734,7 @@ bool R_AddAliasModelToDrawList( const entity_t *e, int lod ) {
 			}
 
 			drawOrder = R_PackOpaqueOrder( shader, 0, false );
-			R_AddSurfToDrawList( rn.meshlist, e, shader, -1, MD3SURF_DISTANCE( shader, distance ), drawOrder, NULL, aliasmodel->drawSurfs + i );
+			R_AddSurfToDrawList( rn.meshlist, e, shader, -1, MD3SURF_DISTANCE( shader, distance ), drawOrder, aliasmodel->drawSurfs + i );
 		}
 	}
 

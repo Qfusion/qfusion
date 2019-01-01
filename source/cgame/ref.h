@@ -31,7 +31,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define RF_FRAMELERP            0x4
 #define RF_NOSHADOW             0x8
 
-#define RF_VIEWERMODEL          0x10     // don't draw through eyes, only mirrors
 #define RF_WEAPONMODEL          0x20     // only draw through eyes and depth hack
 #define RF_CULLHACK             0x40
 #define RF_FORCENOLOD           0x80
@@ -45,13 +44,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define RDF_UNDERWATER          0x1     // warp the screen as apropriate
 #define RDF_NOWORLDMODEL        0x2     // used for player configuration screen
 #define RDF_OLDAREABITS         0x4     // forces R_MarkLeaves if not set
-#define RDF_PORTALINVIEW        0x8     // cull entities using vis too because pvs\areabits are merged serverside
-#define RDF_SKYPORTALINVIEW     0x10    // draw skyportal instead of regular sky
-#define RDF_RESERVED1           0x20
-#define RDF_WORLDOUTLINES       0x40    // draw cell outlines for world surfaces
-#define RDF_CROSSINGWATER       0x80    // potentially crossing water surface
-#define RDF_USEORTHO            0x100   // use orthographic projection
-#define RDF_BLURRED             0x200
+#define RDF_WORLDOUTLINES       0x8     // draw cell outlines for world surfaces
+#define RDF_CROSSINGWATER       0x10    // potentially crossing water surface
+#define RDF_USEORTHO            0x20    // use orthographic projection
+#define RDF_BLURRED             0x40
 
 // skm flags
 #define SKM_ATTACHMENT_BONE     1
@@ -87,18 +83,9 @@ typedef struct {
 	float rgb[3];                       // 0.0 - 2.0
 } lightstyle_t;
 
-typedef struct {
-	float fov;
-	float scale;
-	vec3_t vieworg;
-	vec3_t viewanglesOffset;
-	bool noEnts;
-} skyportal_t;
-
 typedef enum {
 	RT_MODEL,
 	RT_SPRITE,
-	RT_PORTALSURFACE,
 
 	NUM_RTYPES
 } refEntityType_t;
@@ -164,7 +151,6 @@ typedef struct refdef_s {
 	float blend[4];                     // rgba 0-1 full screen blend
 	int64_t time;                       // time is used for timing offsets
 	int rdflags;                        // RDF_UNDERWATER, etc
-	skyportal_t skyportal;
 	uint8_t *areabits;                  // if not NULL, only areas with set bits will be drawn
 	float minLight;                     // minimum value of ambient lighting applied to RF_MINLIGHT entities
 	struct shader_s *colorCorrection;   // post processing color correction lookup table to apply

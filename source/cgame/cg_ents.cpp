@@ -362,8 +362,6 @@ bool CG_NewFrameSnap( snapshot_t *frame, snapshot_t *lerpframe ) {
 	cg.frame = *frame;
 	gs.gameState = frame->gameState;
 
-	cg.portalInView = false;
-
 	if( cg_projectileAntilagOffset->value > 1.0f || cg_projectileAntilagOffset->value < 0.0f ) {
 		trap_Cvar_ForceSet( "cg_projectileAntilagOffset", cg_projectileAntilagOffset->dvalue );
 	}
@@ -475,10 +473,6 @@ void CG_DrawEntityBox( centity_t *cent ) {
 #ifndef PUBLIC_BUILD
 	struct cmodel_s *cmodel;
 	vec3_t mins, maxs;
-
-	if( cent->ent.renderfx & RF_VIEWERMODEL ) {
-		return;
-	}
 
 	cmodel = CG_CModelForEntity( cent->current.number );
 	if( cmodel ) {
@@ -874,22 +868,19 @@ static void CG_AddGenericEnt( centity_t *cent ) {
 * CG_AddPlayerEnt
 */
 static void CG_AddPlayerEnt( centity_t *cent ) {
-	// render effects
-	cent->ent.renderfx = cent->renderfx;
-	cent->ent.renderfx |= RF_MINLIGHT;
-
 	if( ISVIEWERENTITY( cent->current.number ) ) {
-		cg.effects = cent->effects;
-		VectorCopy( cent->ent.lightingOrigin, cg.lightingOrigin );
-		if( !cg.view.thirdperson && cent->current.modelindex ) {
-			cent->ent.renderfx |= RF_VIEWERMODEL; // only draw from mirrors
-		}
+		return;
 	}
 
 	// if set to invisible, skip
 	if( !cent->current.modelindex || cent->current.team == TEAM_SPECTATOR ) {
 		return;
 	}
+
+	// render effects
+	cent->ent.renderfx = cent->renderfx;
+	cent->ent.renderfx |= RF_MINLIGHT;
+
 
 	CG_AddPModel( cent );
 
@@ -1192,50 +1183,6 @@ static void CG_LerpLaserbeamEnt( centity_t *cent ) {
 	}
 
 	owner->localEffects[LOCALEFFECT_LASERBEAM] = cg.time + 1;
-}
-
-//==========================================================================
-//		ET_PORTALSURFACE
-//==========================================================================
-
-/*
-* CG_UpdatePortalSurfaceEnt
-*/
-static void CG_UpdatePortalSurfaceEnt( centity_t *cent ) {
-	// start from clean
-	memset( &cent->ent, 0, sizeof( cent->ent ) );
-
-	cent->ent.rtype = RT_PORTALSURFACE;
-	Matrix3_Identity( cent->ent.axis );
-	VectorCopy( cent->current.origin, cent->ent.origin );
-	VectorCopy( cent->current.origin2, cent->ent.origin2 );
-
-	if( !VectorCompare( cent->ent.origin, cent->ent.origin2 ) ) {
-		cg.portalInView = true;
-		cent->ent.frame = cent->current.skinnum;
-	}
-
-	if( cent->current.effects & EF_NOPORTALENTS ) {
-		cent->ent.renderfx |= RF_NOPORTALENTS;
-	}
-}
-
-/*
-* CG_AddPortalSurfaceEnt
-*/
-static void CG_AddPortalSurfaceEnt( centity_t *cent ) {
-	if( !VectorCompare( cent->ent.origin, cent->ent.origin2 ) ) { // construct the view matrix for portal view
-		if( cent->current.effects & EF_ROTATE_AND_BOB ) {
-			float phase = cent->current.frame / 256.0f;
-			float speed = cent->current.modelindex2 ? cent->current.modelindex2 : 50;
-
-			Matrix3_Identity( cent->ent.axis );
-			Matrix3_Rotate( cent->ent.axis, 5 * sin( ( phase + cg.time * 0.001 * speed * 0.01 ) * M_TWOPI ),
-							1, 0, 0, cent->ent.axis );
-		}
-	}
-
-	CG_AddEntityToScene( &cent->ent );
 }
 
 //==================================================
@@ -1549,11 +1496,6 @@ void CG_AddEntities( void ) {
 			case ET_LASERBEAM:
 				break;
 
-			case ET_PORTALSURFACE:
-				CG_AddPortalSurfaceEnt( cent );
-				CG_EntityLoopSound( state, ATTN_STATIC );
-				break;
-
 			case ET_DECAL:
 				CG_AddDecalEnt( cent );
 				CG_EntityLoopSound( state, ATTN_STATIC );
@@ -1649,10 +1591,6 @@ void CG_LerpEntities( void ) {
 				CG_LerpLaserbeamEnt( cent );
 				break;
 
-			case ET_PORTALSURFACE:
-				//portals aren't interpolated
-				break;
-
 			case ET_PUSH_TRIGGER:
 				break;
 
@@ -1741,10 +1679,6 @@ void CG_UpdateEntities( void ) {
 
 			case ET_DECAL:
 				CG_UpdateDecalEnt( cent );
-				break;
-
-			case ET_PORTALSURFACE:
-				CG_UpdatePortalSurfaceEnt( cent );
 				break;
 
 			case ET_PUSH_TRIGGER:

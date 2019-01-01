@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // r_program.c - OpenGL Shading Language support
 
 #include "r_local.h"
-#include "../../qalgo/q_trie.h"
+#include "qalgo/q_trie.h"
 
 #define MAX_GLSL_PROGRAMS           1024
 #define GLSL_PROGRAMS_HASH_SIZE     256
@@ -60,8 +60,6 @@ typedef struct glsl_program_s {
 		int ViewOrigin;
 		int ViewAxis;
 
-		int MirrorSide;
-
 		int Viewport;
 
 		int LightDir;
@@ -94,10 +92,6 @@ typedef struct glsl_program_s {
 		int DeluxemapOffset;
 		int LightstyleColor[MAX_LIGHTMAPS];
 
-		int DynamicLightsMatrix;
-		int DynamicLightsDiffuseAndInvRadius;
-		int DynamicLightVector;
-
 		int AttrBonesIndices;
 		int AttrBonesWeights;
 		int DualQuats;
@@ -120,7 +114,6 @@ typedef struct glsl_program_s {
 			int ShaderTime;
 			int ViewOrigin;
 			int ViewAxis;
-			int MirrorSide;
 			int EntityOrigin;
 		} builtin;
 	} loc;
@@ -763,7 +756,6 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 #define QF_BUILTIN_GLSL_UNIFORMS \
 	"uniform vec3 u_QF_ViewOrigin;\n" \
 	"uniform mat3 u_QF_ViewAxis;\n" \
-	"uniform float u_QF_MirrorSide;\n" \
 	"uniform vec3 u_QF_EntityOrigin;\n" \
 	"uniform float u_QF_ShaderTime;\n"
 
@@ -990,7 +982,7 @@ static const char *R_GLSLBuildDeformv( const deformv_t *deformv, int numDeforms 
 				break;
 			case DEFORMV_AUTOSPRITE:
 				Q_strncatz( program,
-							"right = (1.0 + step(0.5, TexCoord.s) * -2.0) * u_QF_ViewAxis[1] * u_QF_MirrorSide;\n;"
+							"right = (1.0 + step(0.5, TexCoord.s) * -2.0) * u_QF_ViewAxis[1];\n;"
 							"up = (1.0 + step(0.5, TexCoord.t) * -2.0) * u_QF_ViewAxis[2];\n"
 							"forward = -1.0 * u_QF_ViewAxis[0];\n"
 							"Position.xyz = a_SpritePoint.xyz + (right + up) * a_SpritePoint.w;\n"
@@ -1000,7 +992,7 @@ static const char *R_GLSLBuildDeformv( const deformv_t *deformv, int numDeforms 
 				break;
 			case DEFORMV_AUTOPARTICLE:
 				Q_strncatz( program,
-							"right = (1.0 + TexCoord.s * -2.0) * u_QF_ViewAxis[1] * u_QF_MirrorSide;\n;"
+							"right = (1.0 + TexCoord.s * -2.0) * u_QF_ViewAxis[1];\n;"
 							"up = (1.0 + TexCoord.t * -2.0) * u_QF_ViewAxis[2];\n"
 							"forward = -1.0 * u_QF_ViewAxis[0];\n"
 				            // prevent the particle from disappearing at large distances
@@ -1013,7 +1005,7 @@ static const char *R_GLSLBuildDeformv( const deformv_t *deformv, int numDeforms 
 			case DEFORMV_AUTOSPRITE2:
 				Q_strncatz( program,
 				            // local sprite axes
-							"right = QF_LatLong2Norm(a_SpriteRightUpAxis.xy) * u_QF_MirrorSide;\n"
+							"right = QF_LatLong2Norm(a_SpriteRightUpAxis.xy);\n"
 							"up = QF_LatLong2Norm(a_SpriteRightUpAxis.zw);\n"
 
 				            // mid of quad to camera vector
@@ -1674,7 +1666,6 @@ void RP_UpdateShaderUniforms( int elem,
 void RP_UpdateViewUniforms( int elem,
 							const mat4_t modelviewMatrix, const mat4_t modelviewProjectionMatrix,
 							const vec3_t viewOrigin, const mat3_t viewAxis,
-							const float mirrorSide,
 							int viewport[4],
 							float zNear, float zFar ) {
 	glsl_program_t *program = r_glslprograms + elem - 1;
@@ -1710,13 +1701,6 @@ void RP_UpdateViewUniforms( int elem,
 
 	if( program->loc.Viewport >= 0 ) {
 		glUniform4iv( program->loc.Viewport, 1, viewport );
-	}
-
-	if( program->loc.MirrorSide >= 0 ) {
-		glUniform1f( program->loc.MirrorSide, mirrorSide );
-	}
-	if( program->loc.builtin.MirrorSide >= 0 ) {
-		glUniform1f( program->loc.builtin.MirrorSide, mirrorSide );
 	}
 }
 
@@ -1943,8 +1927,6 @@ static void RP_GetUniformLocations( glsl_program_t *program ) {
 	program->loc.ViewOrigin = glGetUniformLocation( program->object, "u_ViewOrigin" );
 	program->loc.ViewAxis = glGetUniformLocation( program->object, "u_ViewAxis" );
 
-	program->loc.MirrorSide = glGetUniformLocation( program->object, "u_MirrorSide" );
-
 	program->loc.Viewport = glGetUniformLocation( program->object, "u_Viewport" );
 
 	program->loc.LightDir = glGetUniformLocation( program->object, "u_LightDir" );
@@ -2012,14 +1994,8 @@ static void RP_GetUniformLocations( glsl_program_t *program ) {
 
 	program->loc.builtin.ViewOrigin = glGetUniformLocation( program->object, "u_QF_ViewOrigin" );
 	program->loc.builtin.ViewAxis = glGetUniformLocation( program->object, "u_QF_ViewAxis" );
-	program->loc.builtin.MirrorSide = glGetUniformLocation( program->object, "u_QF_MirrorSide" );
 	program->loc.builtin.EntityOrigin = glGetUniformLocation( program->object, "u_QF_EntityOrigin" );
 	program->loc.builtin.ShaderTime = glGetUniformLocation( program->object, "u_QF_ShaderTime" );
-
-	// dynamic lights
-	program->loc.DynamicLightsDiffuseAndInvRadius = glGetUniformLocation( program->object, "u_DlightDiffuseAndInvRadius" );
-	program->loc.DynamicLightsMatrix = glGetUniformLocation( program->object, "u_DlightMatrix" );
-	program->loc.DynamicLightVector = glGetUniformLocation( program->object, "u_DlightVector" );
 
 	program->loc.BlendMix = glGetUniformLocation( program->object, "u_BlendMix" );
 	program->loc.ColorMod = glGetUniformLocation( program->object, "u_ColorMod" );

@@ -717,9 +717,6 @@ void SP_path_corner( edict_t *self );
 
 void SP_misc_teleporter_dest( edict_t *self );
 void SP_misc_model( edict_t *ent );
-void SP_misc_portal_surface( edict_t *ent );
-void SP_misc_portal_camera( edict_t *ent );
-void SP_skyportal( edict_t *ent );
 void SP_misc_particles( edict_t *ent );
 void SP_misc_video_speaker( edict_t *ent );
 

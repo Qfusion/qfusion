@@ -272,8 +272,6 @@ static bool Shader_ParseConditions( const char **ptr, shader_t *shader ) {
 				conditions[numConditions].operand = ( int )glConfig.maxTextureUnits;
 			} else if( !Q_stricmp( tok, "deluxeMaps" ) || !Q_stricmp( tok, "deluxe" ) ) {
 				conditions[numConditions].operand = ( int )mapConfig.deluxeMappingEnabled;
-			} else if( !Q_stricmp( tok, "portalMaps" ) ) {
-				conditions[numConditions].operand = ( int )r_portalmaps->integer;
 			} else {
 //				Com_Printf( S_COLOR_YELLOW "WARNING: Unknown expression '%s' in shader %s\n", tok, shader->name );
 //				skip = true;
@@ -704,9 +702,7 @@ static void Shader_SkyLightParms( shader_t *shader, shaderpass_t *pass, const ch
 
 static void Shader_Sort( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
 	const char *token = Shader_ParseString( ptr );
-	if( !strcmp( token, "portal" ) ) {
-		shader->sort = SHADER_SORT_PORTAL;
-	} else if( !strcmp( token, "sky" ) ) {
+	if( !strcmp( token, "sky" ) ) {
 		shader->sort = SHADER_SORT_SKY;
 	} else if( !strcmp( token, "opaque" ) ) {
 		shader->sort = SHADER_SORT_OPAQUE;
@@ -724,11 +720,6 @@ static void Shader_Sort( shader_t *shader, shaderpass_t *pass, const char **ptr 
 			shader->sort = SHADER_SORT_NEAREST;
 		}
 	}
-}
-
-static void Shader_Portal( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
-	shader->flags |= SHADER_PORTAL;
-	shader->sort = SHADER_SORT_PORTAL;
 }
 
 static void Shader_PolygonOffset( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
@@ -912,7 +903,6 @@ static const shaderkey_t shaderkeys[] =
 	{ "stenciltest", Shader_StencilTest },
 	{ "sort", Shader_Sort },
 	{ "deformvertexes", Shader_DeformVertexes },
-	{ "portal", Shader_Portal },
 	{ "entitymergable", Shader_EntityMergable },
 	{ "if", Shader_If },
 	{ "endif", Shader_Endif },
@@ -960,19 +950,9 @@ static void Shaderpass_MapExt( shader_t *shader, shaderpass_t *pass, int addFlag
 			r_shaderHasLightmapPass = true;
 
 			pass->tcgen = TC_GEN_LIGHTMAP;
-			pass->flags = ( pass->flags & ~( SHADERPASS_PORTALMAP ) ) | SHADERPASS_LIGHTMAP;
+			pass->flags = pass->flags | SHADERPASS_LIGHTMAP;
 			pass->anim_fps = 0;
 			pass->images[0] = NULL;
-			return;
-		} else if( !strcmp( token, "portalmap" ) || !strcmp( token, "mirrormap" ) ) {
-			pass->tcgen = TC_GEN_PROJECTION;
-			pass->flags = ( pass->flags & ~( SHADERPASS_LIGHTMAP ) ) | SHADERPASS_PORTALMAP;
-			pass->anim_fps = 0;
-			pass->images[0] = NULL;
-			if( ( shader->flags & SHADER_PORTAL ) && ( shader->sort == SHADER_SORT_PORTAL ) ) {
-				shader->sort = 0; // reset sorting so we can figure it out later. FIXME?
-			}
-			shader->flags |= SHADER_PORTAL | ( r_portalmaps->integer ? SHADER_PORTAL_CAPTURE : 0 );
 			return;
 		} else {
 			token--;
@@ -981,7 +961,7 @@ static void Shaderpass_MapExt( shader_t *shader, shaderpass_t *pass, int addFlag
 
 	int flags = Shader_SetImageFlags( shader ) | addFlags | IT_SRGB;
 	pass->tcgen = TC_GEN_BASE;
-	pass->flags &= ~( SHADERPASS_LIGHTMAP | SHADERPASS_PORTALMAP );
+	pass->flags &= ~SHADERPASS_LIGHTMAP;
 	pass->anim_fps = 0;
 	pass->images[0] = Shader_FindImage( shader, token, flags );
 }
@@ -990,7 +970,7 @@ static void Shaderpass_AnimMapExt( shader_t *shader, shaderpass_t *pass, int add
 	int flags = Shader_SetImageFlags( shader ) | addFlags | IT_SRGB;
 
 	pass->tcgen = TC_GEN_BASE;
-	pass->flags &= ~( SHADERPASS_LIGHTMAP | SHADERPASS_PORTALMAP );
+	pass->flags &= ~SHADERPASS_LIGHTMAP;
 	pass->anim_fps = Shader_ParseFloat( ptr );
 	pass->anim_numframes = 0;
 
@@ -1013,7 +993,7 @@ static void Shaderpass_CubeMapExt( shader_t *shader, shaderpass_t *pass, int add
 	const char *token = Shader_ParseString( ptr );
 	int flags = Shader_SetImageFlags( shader ) | addFlags | IT_SRGB;
 	pass->anim_fps = 0;
-	pass->flags &= ~( SHADERPASS_LIGHTMAP | SHADERPASS_PORTALMAP );
+	pass->flags &= ~SHADERPASS_LIGHTMAP;
 
 	pass->images[0] = R_FindImage( token, NULL, flags | IT_CUBEMAP, r_shaderMinMipSize, shader->imagetags );
 	if( pass->images[0] ) {
@@ -1075,7 +1055,7 @@ static void Shaderpass_Material( shader_t *shader, shaderpass_t *pass, const cha
 	pass->images[1] = pass->images[2] = pass->images[3] = NULL;
 
 	pass->tcgen = TC_GEN_BASE;
-	pass->flags &= ~( SHADERPASS_LIGHTMAP | SHADERPASS_PORTALMAP );
+	pass->flags &= ~SHADERPASS_LIGHTMAP;
 	if( pass->rgbgen.type == RGB_GEN_UNKNOWN ) {
 		pass->rgbgen.type = RGB_GEN_IDENTITY;
 	}
@@ -1203,8 +1183,6 @@ static void Shaderpass_RGBGen( shader_t *shader, shaderpass_t *pass, const char 
 }
 
 static void Shaderpass_AlphaGen( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
-	float dist;
-
 	const char *token = Shader_ParseString( ptr );
 	if( !strcmp( token, "vertex" ) ) {
 		pass->alphagen.type = ALPHA_GEN_VERTEX;
@@ -1215,25 +1193,9 @@ static void Shaderpass_AlphaGen( shader_t *shader, shaderpass_t *pass, const cha
 	} else if( !strcmp( token, "wave" ) ) {
 		pass->alphagen.type = ALPHA_GEN_WAVE;
 		Shader_ParseFunc( ptr, &pass->alphagen.func );
-
-		// treat custom distanceramp as portal
-		if( pass->alphagen.func.type == SHADER_FUNC_RAMP && pass->alphagen.func.args[1] == 1 ) {
-			dist = fabs( pass->alphagen.func.args[3] );
-			shader->portalDistance = max( dist, shader->portalDistance );
-		}
 	} else if( !strcmp( token, "const" ) || !strcmp( token, "constant" ) ) {
 		pass->alphagen.type = ALPHA_GEN_CONST;
 		pass->alphagen.args[0] = fabs( Shader_ParseFloat( ptr ) );
-	} else if( !strcmp( token, "portal" ) ) {
-		dist = fabs( Shader_ParseFloat( ptr ) );
-		if( !dist ) {
-			dist = 256;
-		}
-		pass->alphagen.type = ALPHA_GEN_WAVE;
-		pass->alphagen.func.type = SHADER_FUNC_RAMP;
-		Vector4Set( pass->alphagen.func.args, 0, 1, 0, dist );
-
-		shader->portalDistance = max( dist, shader->portalDistance );
 	}
 }
 
@@ -2017,11 +1979,7 @@ static void Shader_Finish( shader_t *s ) {
 	deformvKeyLen = strlen( r_shaderDeformvKey );
 
 	if( !s->numpasses && !s->sort ) {
-		if( s->flags & SHADER_PORTAL ) {
-			s->sort = SHADER_SORT_PORTAL;
-		} else {
-			s->sort = SHADER_SORT_ADDITIVE;
-		}
+		s->sort = SHADER_SORT_ADDITIVE;
 	}
 
 	if( s->flags & SHADER_SKY ) {
@@ -2427,24 +2385,6 @@ create_default:
 				pass->tcgen = TC_GEN_BASE;
 				pass->flags = SHADERPASS_SKYBOXSIDE;
 				// the actual image will be picked at rendering time based on skyside number
-				pass->images[0] = rsh.whiteTexture;
-				break;
-			case SHADER_TYPE_DEPTHONLY:
-				data = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) );
-
-				s->vattribs = VATTRIB_POSITION_BIT;
-				s->sort = SHADER_SORT_PORTAL;
-				s->flags = SHADER_CULL_FRONT | SHADER_DEPTHWRITE;
-				s->numpasses = 1;
-				s->passes = ( shaderpass_t * )data;
-				s->name = ( char * )( s->passes + 1 );
-				strcpy( s->name, shortname );
-
-				pass = &s->passes[0];
-				pass->rgbgen.type = RGB_GEN_IDENTITY;
-				pass->alphagen.type = ALPHA_GEN_IDENTITY;
-				pass->tcgen = TC_GEN_BASE;
-				pass->flags = GLSTATE_NO_COLORWRITE|GLSTATE_DEPTHWRITE;
 				pass->images[0] = rsh.whiteTexture;
 				break;
 			default:

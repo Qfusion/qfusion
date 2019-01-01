@@ -25,7 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 /*
 * R_BatchPolySurf
 */
-void R_BatchPolySurf( const entity_t *e, const shader_t *shader, int lightStyleNum, const portalSurface_t *portalSurface, drawSurfacePoly_t *poly, bool mergable ) {
+void R_BatchPolySurf( const entity_t *e, const shader_t *shader, int lightStyleNum, drawSurfacePoly_t *poly, bool mergable ) {
 	mesh_t mesh;
 
 	mesh.elems = poly->elems;
@@ -40,7 +40,7 @@ void R_BatchPolySurf( const entity_t *e, const shader_t *shader, int lightStyleN
 	mesh.colorsArray[1] = NULL;
 	mesh.sVectorsArray = NULL;
 
-	RB_AddDynamicMesh( e, shader, portalSurface, &mesh, GL_TRIANGLES, 0.0f, 0.0f );
+	RB_AddDynamicMesh( e, shader, &mesh, GL_TRIANGLES, 0.0f, 0.0f );
 }
 
 /*
@@ -51,10 +51,6 @@ void R_DrawPolys( void ) {
 	drawSurfacePoly_t *p;
 	entity_t *e;
 
-	if( rn.renderFlags & RF_ENVVIEW ) {
-		return;
-	}
-
 	for( i = 0; i < rsc.numPolys; i++ ) {
 		int renderfx;
 
@@ -62,27 +58,13 @@ void R_DrawPolys( void ) {
 		renderfx = p->renderfx;
 
 		if( renderfx & RF_WEAPONMODEL ) {
-			if( rn.renderFlags & RF_NONVIEWERREF ) {
-				continue;
-			}
-		}
-
-		if( renderfx & RF_VIEWERMODEL ) {
-			if( !( rn.renderFlags & RF_MIRRORVIEW ) ) {
-				continue;
-			}
-		}
-
-		if( renderfx & RF_VIEWERMODEL ) {
-			e = rsc.polyviewerent;
-		} else if( renderfx & RF_WEAPONMODEL ) {
 			e = rsc.polyweapent;
 		} else {
 			e = rsc.polyent;
 		}
 		e->renderfx = p->renderfx;
 
-		if( !R_AddSurfToDrawList( rn.meshlist, e, p->shader, -1, 0, i, NULL, p ) ) {
+		if( !R_AddSurfToDrawList( rn.meshlist, e, p->shader, -1, 0, i, p ) ) {
 			continue;
 		}
 	}
@@ -128,7 +110,7 @@ void R_DrawStretchPoly( const poly_t *poly, float x_offset, float y_offset ) {
 		mesh.xyzArray = translated;
 	}
 
-	RB_AddDynamicMesh( NULL, poly->shader, NULL, &mesh, GL_TRIANGLES, x_offset, y_offset );
+	RB_AddDynamicMesh( NULL, poly->shader, &mesh, GL_TRIANGLES, x_offset, y_offset );
 }
 
 //==================================================================================

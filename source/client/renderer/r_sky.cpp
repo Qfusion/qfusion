@@ -301,20 +301,15 @@ static void R_DrawBlackBottom( const skydome_t *skydome, const visSkySide_t *vis
 /*
 * R_DrawSkySurf
 */
-void R_DrawSkySurf( const entity_t *e, const shader_t *shader, int lightStyleNum, 
-	const portalSurface_t *portalSurface, drawSurfaceSky_t *drawSurf ) {
+void R_DrawSkySurf( const entity_t *e, const shader_t *shader, int lightStyleNum, drawSurfaceSky_t *drawSurf ) {
 	int i;
 	int numVisSides;
 	visSkySide_t visSkySides[6];
 	vec3_t mins, maxs;
 	int umin, umax, vmin, vmax;
-	bool skyportal = portalSurface != NULL && portalSurface->skyPortal;
 	skydome_t *skydome = rsh.worldBrushModel->skydome;
 
 	if( !skydome ) {
-		return;
-	}
-	if( skyportal ) {
 		return;
 	}
 
@@ -401,10 +396,6 @@ void R_DrawSkySurf( const entity_t *e, const shader_t *shader, int lightStyleNum
 */
 void R_DrawDepthSkySurf( void ) {
 	RB_SetShaderStateMask( ~0, GLSTATE_DEPTHWRITE );
-
-	if( mapConfig.writeSkyDepth ) {
-		R_DrawSkySurfaces( rn.meshlist );
-	}
 
 	RB_SetShaderStateMask( ~0, 0 );
 }
@@ -628,8 +619,8 @@ bool R_ClipSkySurface( drawSurfaceSky_t *drawSurf, const msurface_t *surf ) {
 /*
 * R_AddSkySurfToDrawList
 */
-void *R_AddSkySurfToDrawList( drawList_t *list, const shader_t *shader, const portalSurface_t *portalSurf, drawSurfaceSky_t *drawSurf ) {
-	return R_AddSurfToDrawList( rn.meshlist, rsc.skyent, shader, -1, 0, 0, portalSurf, drawSurf );
+void *R_AddSkySurfToDrawList( drawList_t *list, const shader_t *shader, drawSurfaceSky_t *drawSurf ) {
+	return R_AddSurfToDrawList( rn.meshlist, rsc.skyent, shader, -1, 0, 0, drawSurf );
 }
 
 /*

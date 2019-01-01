@@ -149,7 +149,6 @@ void RP_UpdateShaderUniforms( int elem,
 void RP_UpdateViewUniforms( int elem,
 							const mat4_t modelviewMatrix, const mat4_t modelviewProjectionMatrix,
 							const vec3_t viewOrigin, const mat3_t viewAxis,
-							const float mirrorSide,
 							int viewport[4],
 							float zNear, float zFar );
 

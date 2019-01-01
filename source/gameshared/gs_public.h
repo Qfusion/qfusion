@@ -860,7 +860,6 @@ enum {
 	ET_PLAYER,
 	ET_CORPSE,
 	ET_BEAM,
-	ET_PORTALSURFACE,
 	ET_PUSH_TRIGGER,
 
 	ET_GIB,         // leave a trail

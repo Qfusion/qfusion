@@ -84,8 +84,6 @@ void R_FlushBSPSurfBatch( void ) {
 
 	RB_BindShader( e, shader );
 
-	RB_SetPortalSurface( batch->portalSurface );
-
 	RB_SetLightstyle( ls, rls );
 
 	RB_BindVBO( batch->vbo, GL_TRIANGLES );
@@ -98,8 +96,7 @@ void R_FlushBSPSurfBatch( void ) {
 /*
 * R_BatchBSPSurf
 */
-void R_BatchBSPSurf( const entity_t *e, const shader_t *shader,
-	int lightStyleNum, const portalSurface_t *portalSurface, drawSurfaceBSP_t *drawSurf, bool mergable ) {
+void R_BatchBSPSurf( const entity_t *e, const shader_t *shader, int lightStyleNum, drawSurfaceBSP_t *drawSurf, bool mergable ) {
 	unsigned i;
 	drawListBatch_t *batch = &rn.meshlist->bspBatch;
 
@@ -130,7 +127,6 @@ void R_BatchBSPSurf( const entity_t *e, const shader_t *shader,
 				if( batch->count == 0 ) {
 					batch->vbo = drawSurf->vbo;
 					batch->shader = ( shader_t * )shader;
-					batch->portalSurface = ( portalSurface_t *)portalSurface;
 					batch->entity = ( entity_t * )e;
 					batch->lightStyleNum = lightStyleNum;
 					batch->lastDrawSurf = drawSurf;
@@ -174,8 +170,7 @@ static bool R_AddWorldDrawSurfaceToDrawList( const entity_t *e, unsigned ds ) {
 	drawSurfaceBSP_t *drawSurf = rsh.worldBrushModel->drawSurfaces + ds;
 	const shader_t *shader = drawSurf->shader;
 	int lightStyleNum = drawSurf->superLightStyle;
-	portalSurface_t *portalSurface = NULL;
-	bool sky, portal;
+	bool sky;
 	unsigned drawOrder = 0;
 
 	if( !drawSurf->vbo ) {
@@ -186,112 +181,28 @@ static bool R_AddWorldDrawSurfaceToDrawList( const entity_t *e, unsigned ds ) {
 	}
 
 	sky = ( shader->flags & SHADER_SKY ) != 0;
-	portal = ( shader->flags & SHADER_PORTAL ) != 0;
 
 	if( sky ) {
-		bool writeDepth = mapConfig.writeSkyDepth;
-
-		if( R_FASTSKY() ) {
-			return false;
-		}
-
 		drawSurf->visFrame = rf.frameCount;
 
-		if( rn.refdef.rdflags & RDF_SKYPORTALINVIEW ) {
-			// this will later trigger the skyportal view to be rendered in R_DrawPortals
-			portalSurface = R_AddSkyportalSurface( e, shader, drawSurf );
-		}
-
-		if( writeDepth ) {
-			if( !portalSurface ) {
-				// add the sky surface to depth mask
-				R_AddSurfToDrawList( rn.portalmasklist, e, rsh.depthOnlyShader, -1, 0, 0, NULL, drawSurf );
-			}
-
-			drawSurf->listSurf = R_AddSurfToDrawList( rn.meshlist, e, rsh.depthOnlyShader, 
-				lightStyleNum, 0, drawOrder, portalSurface, drawSurf );
-		}
-
 		// the actual skydome surface
-		R_AddSkySurfToDrawList( rn.meshlist, shader, portalSurface, &rn.skyDrawSurface );
+		R_AddSkySurfToDrawList( rn.meshlist, shader, &rn.skyDrawSurface );
 
 		rf.stats.c_world_draw_surfs++;
 		return true;
 	}
 
-	if( portal ) {
-		portalSurface = R_AddPortalSurface( e, shader, drawSurf );
-	}
-
 	drawOrder = R_PackOpaqueOrder( shader, R_DrawSurfLightsKey( drawSurf ), false );
 
 	drawSurf->visFrame = rf.frameCount;
-	drawSurf->listSurf = R_AddSurfToDrawList( rn.meshlist, e, shader, lightStyleNum, 
-		WORLDSURF_DIST, drawOrder, portalSurface, drawSurf );
+	drawSurf->listSurf = R_AddSurfToDrawList( rn.meshlist, e, shader, lightStyleNum, WORLDSURF_DIST, drawOrder, drawSurf );
 
 	if( !drawSurf->listSurf ) {
 		return false;
 	}
 
-	if( portalSurface && !( shader->flags & ( SHADER_PORTAL_CAPTURE | SHADER_PORTAL_CAPTURE2 ) ) ) {
-		R_AddSurfToDrawList( rn.portalmasklist, e, rsh.depthOnlyShader, -1, 0, 0, NULL, drawSurf );
-	}
-
 	rf.stats.c_world_draw_surfs++;
 	return true;
-}
-
-/*
-* R_CheckSpecialWorldSurfaces
-*/
-static void R_CheckSpecialWorldSurfaces( const entity_t *e, unsigned ds, const vec3_t origin ) {
-	unsigned i;
-	bool portal;
-	drawSurfaceBSP_t *drawSurf = rsh.worldBrushModel->drawSurfaces + ds;
-	const shader_t *shader = drawSurf->shader;
-
-	if( !drawSurf->listSurf ) {
-		return;
-	}
-
-	portal = ( shader->flags & SHADER_PORTAL ) != 0;
-
-	if( portal ) {
-		vec3_t centre;
-		float dist;
-		portalSurface_t *portalSurface = R_GetDrawListSurfPortal( drawSurf->listSurf );
-
-		if( !portalSurface ) {
-			return;
-		}
-
-		for( i = 0; i < drawSurf->numWorldSurfaces; i++ ) {
-			int s = drawSurf->worldSurfaces[i];
-			msurface_t *surf = rsh.worldBrushModel->surfaces + s;
-
-			if( !rn.meshlist->worldSurfVis[s] ) {
-				continue;			
-			}
-
-			if( origin ) {
-				VectorCopy( origin, centre );
-			} else {
-				VectorAdd( surf->mins, surf->maxs, centre );
-				VectorScale( centre, 0.5, centre );
-			}
-			dist = Distance( rn.refdef.vieworg, centre );
-
-			// draw portals in front-to-back order
-			dist = 1024 - dist / 100.0f;
-			if( dist < 1 ) {
-				dist = 1;
-			}
-
-			R_UpdatePortalSurface( portalSurface, &surf->mesh, surf->mins, surf->maxs, shader );
-		}
-
-		return;
-	}
 }
 
 /*
@@ -408,8 +319,6 @@ bool R_AddBrushModelToDrawList( const entity_t *e ) {
 
 		if( rn.meshlist->worldDrawSurfVis[ds] ) {
 			R_AddWorldDrawSurfaceToDrawList( e, ds );
-
-			R_CheckSpecialWorldSurfaces( e, ds, origin );
 		}
 	}
 
@@ -563,22 +472,6 @@ static void R_AddVisSurfaces( void ) {
 }
 
 /*
-* R_AddWorldDrawSurfaces
-*/
-static void R_AddWorldDrawSurfaces( unsigned firstDrawSurf, unsigned numDrawSurfs ) {
-	unsigned i;
-
-	for( i = 0; i < numDrawSurfs; i++ ) {
-		unsigned ds = firstDrawSurf + i;
-
-		if( !rn.meshlist->worldDrawSurfVis[ds] ) {
-			continue;
-		}
-		R_CheckSpecialWorldSurfaces( rsc.worldent, ds, NULL );
-	}
-}
-
-/*
 * R_GetVisFarClip
 */
 static float R_GetVisFarClip( void ) {
@@ -616,7 +509,7 @@ static void R_PostCullVisLeaves( void ) {
 		rf.stats.c_world_leafs++;
 
 		leaf = &rsh.worldBrushModel->leafs[i];
-		if( r_leafvis->integer && !( rn.renderFlags & RF_NONVIEWERREF ) ) {
+		if( r_leafvis->integer ) {
 			R_AddDebugBounds( leaf->mins, leaf->maxs, colorRed );
 		}
 
@@ -718,8 +611,6 @@ void R_DrawWorldNode( void ) {
 	}
 
 	R_AddVisSurfaces();
-
-	R_AddWorldDrawSurfaces( 0, bm->numModelDrawSurfaces );
 
 	// END t_world_node
 	if( speeds ) {

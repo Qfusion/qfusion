@@ -343,11 +343,6 @@ static inline const image_t *RB_ShaderpassTex( const shaderpass_t *pass ) {
 		return pass->images[(int)( pass->anim_fps * rb.currentShaderTime ) % pass->anim_numframes];
 	}
 
-	if( pass->flags & SHADERPASS_PORTALMAP ) {
-		return rb.currentPortalSurface && rb.currentPortalSurface->texures[0] ?
-			   rb.currentPortalSurface->texures[0] : rsh.blackTexture;
-	}
-
 	if( ( pass->flags & SHADERPASS_SKYBOXSIDE ) && rb.skyboxShader && rb.skyboxSide >= 0 ) {
 		return rb.skyboxShader->skyParms.images[rb.skyboxSide];
 	}
@@ -526,7 +521,6 @@ static void RB_UpdateCommonUniforms( int program, const shaderpass_t *pass, mat4
 	RP_UpdateViewUniforms( program,
 						   rb.modelviewMatrix, rb.modelviewProjectionMatrix,
 						   rb.cameraOrigin, rb.cameraAxis,
-						   rb.renderFlags & RF_MIRRORVIEW ? -1 : 1,
 						   rb.gl.viewport,
 						   rb.zNear, rb.zFar
 						   );
@@ -1240,8 +1234,6 @@ void RB_BindShader( const entity_t *e, const shader_t *shader ) {
 	rb.bonesData.numBones = 0;
 	rb.bonesData.maxWeights = 0;
 
-	rb.currentPortalSurface = NULL;
-
 	rb.skyboxShader = NULL;
 	rb.skyboxSide = -1;
 
@@ -1321,18 +1313,6 @@ void RB_SetBonesData( int numBones, dualquat_t *dualQuats, int maxWeights ) {
 	rb.dirtyUniformState = true;
 
 	RB_UpdateVertexAttribs();
-}
-
-/*
-* RB_SetPortalSurface
-*/
-void RB_SetPortalSurface( const portalSurface_t *portalSurface ) {
-	if( rb.currentPortalSurface == portalSurface ) {
-		return;
-	}
-	assert( rb.currentShader != NULL );
-	rb.currentPortalSurface = portalSurface;
-	rb.dirtyUniformState = true;
 }
 
 /*
@@ -1623,9 +1603,7 @@ void RB_DrawShadedElements( void ) {
 		return;
 	}
 
-	if( ENTITY_OUTLINE( rb.currentEntity ) && !( rb.renderFlags & RF_CLIPPLANE )
-		&& ( rb.currentShader->sort == SHADER_SORT_OPAQUE ) && Shader_CullFront( rb.currentShader )
-		&& !( rb.renderFlags & RF_NONVIEWERREF ) ) {
+	if( rb.currentEntity->outlineHeight && rb.currentShader->sort == SHADER_SORT_OPAQUE && Shader_CullFront( rb.currentShader ) ) {
 		addGLSLOutline = true;
 	}
 

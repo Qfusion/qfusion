@@ -524,59 +524,6 @@ void Matrix4_QuakeModelview( const vec3_t viewOrg, const mat3_t viewAxis, mat4_t
 }
 
 /*
-* Matrix4_ObliqueNearClipping
-*
-* Lengyel, Eric. "Oblique View Frustum Depth Projection and Clipping"
-* Journal of Game Development, Vol. 1, No. 2 (2005), Charles River Media, pp. 5–16.
-*
-* Version that works both for perspective and orthographic projections.
-*/
-void Matrix4_ObliqueNearClipping( const vec3_t normal, const vec_t dist, const mat4_t cm, mat4_t pm ) {
-	mat4_t tm1, tm2;
-	vec4_t c, q, p;
-	vec_t d;
-
-	// The clipping plane in object coordinates
-	q[0] = normal[0];
-	q[1] = normal[1];
-	q[2] = normal[2];
-	q[3] = dist;
-
-	// The plane is transformed by the transpose of the inverse of the
-	// camera matrix and stored in the resulting eye coordinates
-	Matrix4_Invert( cm, tm1 );
-	Matrix4_Transpose( tm1, tm2 );
-	Matrix4_Multiply_Vector( tm2, q, c );
-
-	if( c[3] >= 0.0f ) {
-		// the techinique only works when the w-coordinate is negative
-		// (corresponding to the camera being on the negative side of the plane)
-		return;
-	}
-
-	// Calculate the clip-space corner point opposite the clipping plane
-	// as (sgn(clipPlane.x), sgn(clipPlane.y), 1, 1) and
-	// transform it into camera space by multiplying it
-	// by the inverse of the projection matrix
-
-	p[0] = Q_sign( c[0] );
-	p[1] = Q_sign( c[1] );
-	p[2] = 1.0f;
-	p[3] = 1.0f;
-
-	// Calculate the scaled plane vector
-	Matrix4_Invert( pm, tm1 );
-	Matrix4_Multiply_Vector( tm1, p, q );
-	d = 2.0f / ( c[0] * q[0] + c[1] * q[1] + c[2] * q[2] + c[3] * q[3] );
-
-	// Replace the third row of the projection matrix
-	pm[ 2] = c[0] * d - pm[ 3];
-	pm[ 6] = c[1] * d - pm[ 7];
-	pm[10] = c[2] * d - pm[11];
-	pm[14] = c[3] * d - pm[15];
-}
-
-/*
 * Matrix4_CropMatrixParams
 */
 void Matrix4_CropMatrixParams( const vec3_t corners[8], const mat4_t m, vec_t *out ) {

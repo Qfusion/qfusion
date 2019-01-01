@@ -74,14 +74,6 @@ void R_ClearScene( void ) {
 	Matrix3_Identity( rsc.polyweapent->axis );
 	rsc.numLocalEntities++;
 
-	rsc.polyviewerent = R_NUM2ENT( rsc.numLocalEntities );
-	rsc.polyviewerent->scale = 1.0f;
-	rsc.polyviewerent->model = NULL;
-	rsc.polyviewerent->rtype = RT_MODEL;
-	rsc.polyviewerent->renderfx = RF_VIEWERMODEL;
-	Matrix3_Identity( rsc.polyviewerent->axis );
-	rsc.numLocalEntities++;
-
 	rsc.skyent = R_NUM2ENT( rsc.numLocalEntities );
 	*rsc.skyent = *rsc.worldent;
 	rsc.numLocalEntities++;
@@ -305,7 +297,6 @@ void R_RenderScene( const refdef_t *fd ) {
 	rn.polygonUnits = POLYOFFSET_UNITS;
 	rn.clipFlags = 15;
 	rn.meshlist = &r_worldlist;
-	rn.portalmasklist = &r_portalmasklist;
 	rn.numEntities = 0;
 
 	rn.st = &rsh.st;
@@ -620,7 +611,7 @@ static void R_RenderDebugBounds( void ) {
 		mesh.xyzArray = r_debug_bounds[i].corners;
 		mesh.colorsArray[0] = r_debug_bounds[i].colors;
 
-		RB_AddDynamicMesh( rsc.worldent, rsh.whiteShader, NULL, &mesh, GL_LINES, 0.0f, 0.0f );
+		RB_AddDynamicMesh( rsc.worldent, rsh.whiteShader, &mesh, GL_LINES, 0.0f, 0.0f );
 	}
 
 	RB_FlushDynamicMeshes();

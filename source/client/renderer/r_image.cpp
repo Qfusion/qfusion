@@ -1555,76 +1555,6 @@ void R_InitViewportTexture( image_t **texture, const char *name, int id,
 }
 
 /*
-* R_GetPortalTextureId
-*/
-static int R_GetPortalTextureId( const int viewportWidth, const int viewportHeight,
-								 const int flags, unsigned frameNum ) {
-	int i;
-	int best = -1;
-	int realwidth, realheight;
-	int realflags = IT_SPECIAL | IT_FRAMEBUFFER | IT_DEPTHRB | flags;
-	image_t *image;
-
-	R_GetRenderBufferSize( viewportWidth, viewportHeight, r_portalmaps_maxtexsize->integer,
-						   flags, &realwidth, &realheight );
-
-	for( i = 0; i < MAX_PORTAL_TEXTURES; i++ ) {
-		image = rsh.portalTextures[i];
-		if( !image ) {
-			return i;
-		}
-
-		if( image->framenum == frameNum ) {
-			// the texture is used in the current scene
-			continue;
-		}
-
-		if( image->width == realwidth &&
-			image->height == realheight &&
-			image->flags == realflags ) {
-			// 100% match
-			return i;
-		}
-
-		if( best < 0 ) {
-			// in case we don't get a 100% matching texture later,
-			// reuse this one
-			best = i;
-		}
-	}
-
-	return best;
-}
-
-/*
-* R_GetPortalTexture
-*/
-image_t *R_GetPortalTexture( int viewportWidth, int viewportHeight,
-							 int flags, unsigned frameNum ) {
-	int id;
-
-	if( glConfig.stencilBits ) {
-		flags |= IT_STENCIL;
-	}
-
-	id = R_GetPortalTextureId( viewportWidth, viewportHeight, flags, frameNum );
-	if( id < 0 || id >= MAX_PORTAL_TEXTURES ) {
-		return NULL;
-	}
-
-	R_InitViewportTexture( &rsh.portalTextures[id], "r_portaltexture", id,
-						   viewportWidth, viewportHeight, r_portalmaps_maxtexsize->integer,
-						   IT_SPECIAL | IT_FRAMEBUFFER | IT_DEPTHRB | flags, IMAGE_TAG_GENERIC,
-						   glConfig.forceRGBAFramebuffers ? 4 : 3 );
-
-	if( rsh.portalTextures[id] ) {
-		rsh.portalTextures[id]->framenum = frameNum;
-	}
-
-	return rsh.portalTextures[id];
-}
-
-/*
 * R_InitStretchRawImages
 */
 static void R_InitStretchRawImages( void ) {
@@ -1914,8 +1844,6 @@ void R_FreeUnusedImagesByTags( int tags ) {
 */
 void R_FreeUnusedImages( void ) {
 	R_FreeUnusedImagesByTags( ~IMAGE_TAG_BUILTIN );
-
-	memset( rsh.portalTextures, 0, sizeof( image_t * ) * MAX_PORTAL_TEXTURES );
 }
 
 /*
@@ -1962,8 +1890,6 @@ void R_ShutdownImages( void ) {
 
 	r_screenShotBuffer = NULL;
 	r_screenShotBufferSize = 0;
-
-	memset( rsh.portalTextures, 0, sizeof( rsh.portalTextures ) );
 
 	r_imagePathBuf = r_imagePathBuf2 = NULL;
 	r_sizeof_imagePathBuf = r_sizeof_imagePathBuf2 = 0;

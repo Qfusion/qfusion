@@ -54,7 +54,6 @@ typedef struct {
 typedef struct {
 	const entity_t *entity;
 	const shader_t *shader;
-	const portalSurface_t *portalSurface;
 	vattribmask_t vattribs; // based on the fields above - cached to avoid rebinding
 	int streamId;
 	int primitive;
@@ -119,7 +118,6 @@ typedef struct r_backend_s {
 	modtype_t currentModelType;
 	const mesh_vbo_t *currentMeshVBO;
 	rbBonesData_t bonesData;
-	const portalSurface_t *currentPortalSurface;
 
 	// glUseProgram cache
 	int currentProgram;

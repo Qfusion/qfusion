@@ -358,6 +358,8 @@ void CG_BulletExplosion( const vec3_t pos, const vec_t *dir, const trace_t *trac
 
 	if( tr->ent > 0 && cg_entities[tr->ent].current.type == ET_PLAYER ) {
 		return;
+	} else if( ISVIEWERENTITY( tr->ent ) ) {
+		return;
 	} else if( tr->surfFlags & SURF_FLESH || ( tr->ent > 0 && cg_entities[tr->ent].current.type == ET_CORPSE ) ) {
 		le = CG_AllocModel( LE_ALPHA_FADE, pos, angles, 3, //3 frames for weak
 							1, 0, 0, 1, //full white no inducted alpha
@@ -366,9 +368,6 @@ void CG_BulletExplosion( const vec3_t pos, const vec_t *dir, const trace_t *trac
 							NULL );
 		le->ent.rotation = rand() % 360;
 		le->ent.scale = 1.0f;
-		if( ISVIEWERENTITY( tr->ent ) ) {
-			le->ent.renderfx |= RF_VIEWERMODEL;
-		}
 	} else if( cg_particles->integer && ( tr->surfFlags & SURF_DUST ) ) {
 		// throw particles on dust
 		CG_ImpactSmokePuff( tr->endpos, tr->plane.normal, 4, 0.6f, 6, 8 );

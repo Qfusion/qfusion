@@ -39,11 +39,6 @@ cvar_t *r_showtris;
 cvar_t *r_showtris2D;
 cvar_t *r_leafvis;
 
-cvar_t *r_fastsky;
-cvar_t *r_portalonly;
-cvar_t *r_portalmaps;
-cvar_t *r_portalmaps_maxtexsize;
-
 cvar_t *r_lighting_deluxemapping;
 cvar_t *r_lighting_specular;
 cvar_t *r_lighting_glossintensity;
@@ -284,11 +279,6 @@ static void R_Register() {
 	r_sRGB = ri.Cvar_Get( "r_sRGB", "1", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
 
 	r_subdivisions = ri.Cvar_Get( "r_subdivisions", STR_TOSTR( SUBDIVISIONS_DEFAULT ), CVAR_ARCHIVE | CVAR_LATCH_VIDEO | CVAR_READONLY );
-
-	r_fastsky = ri.Cvar_Get( "r_fastsky", "0", CVAR_ARCHIVE );
-	r_portalonly = ri.Cvar_Get( "r_portalonly", "0", 0 );
-	r_portalmaps = ri.Cvar_Get( "r_portalmaps", "1", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
-	r_portalmaps_maxtexsize = ri.Cvar_Get( "r_portalmaps_maxtexsize", "1024", CVAR_ARCHIVE );
 
 	r_lighting_deluxemapping = ri.Cvar_Get( "r_lighting_deluxemapping", "0", CVAR_ARCHIVE | CVAR_LATCH_VIDEO | CVAR_READONLY );
 	r_lighting_specular = ri.Cvar_Get( "r_lighting_specular", "0", CVAR_ARCHIVE | CVAR_LATCH_VIDEO | CVAR_READONLY );
@@ -537,7 +527,6 @@ static void R_InitVolatileAssets( void ) {
 	rsh.envShader = R_LoadShader( "$environment", SHADER_TYPE_OPAQUE_ENV, true, NULL );
 	rsh.skyShader = R_LoadShader( "$skybox", SHADER_TYPE_SKYBOX, true, NULL );
 	rsh.whiteShader = R_LoadShader( "$whiteimage", SHADER_TYPE_2D, true, NULL );
-	rsh.depthOnlyShader = R_LoadShader( "$depthonly", SHADER_TYPE_DEPTHONLY, true, NULL );
 
 	if( !rsh.nullVBO ) {
 		rsh.nullVBO = R_InitNullModelVBO();
