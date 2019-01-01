@@ -221,7 +221,6 @@ void G_Init( unsigned int seed, unsigned int framemsec, int protocol, const char
 
 	// hack in CVAR_SERVERINFO flag
 	trap_Cvar_Get( "gamename", trap_Cvar_String( "gamename" ), CVAR_SERVERINFO );
-	trap_Cvar_Get( "gamedate", __DATE__, CVAR_SERVERINFO | CVAR_LATCH );
 
 	password = trap_Cvar_Get( "password", "", CVAR_USERINFO );
 	password->modified = true; // force an update of g_needpass in G_UpdateServerInfo
