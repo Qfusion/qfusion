@@ -172,7 +172,7 @@ const char *Key_KeynumToString( int keynum ) {
 	static char tinystr[2];
 
 	if( keynum == -1 ) {
-		return "<KEY NOT FOUND>";
+		return NULL;
 	}
 	if( keynum > 32 && keynum < 127 ) { // printable ascii
 		tinystr[0] = keynum;
@@ -185,7 +185,7 @@ const char *Key_KeynumToString( int keynum ) {
 			return kn->name;
 		}
 
-	return "<UNKNOWN KEYNUM>";
+	return NULL;
 }
 
 /*

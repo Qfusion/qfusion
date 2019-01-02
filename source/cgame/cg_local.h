@@ -719,8 +719,6 @@ void CG_DrawTeamMates( void );
 void CG_DrawHUDNumeric( int x, int y, int align, float *color, int charwidth, int charheight, int value );
 void CG_DrawNet( int x, int y, int w, int h, int align, vec4_t color );
 
-void CG_GameMenu_f( void );
-
 void CG_ClearPointedNum( void );
 
 void CG_InitDamageNumbers();
@@ -764,7 +762,6 @@ void CG_DamageIndicatorAdd( int damage, const vec3_t dir );
 // cg_scoreboard.c
 //
 void CG_DrawScoreboard( void );
-void CG_ToggleScores_f( void );
 void CG_ScoresOn_f( void );
 void CG_ScoresOff_f( void );
 bool CG_ExecuteScoreboardTemplateLayout( char *s );

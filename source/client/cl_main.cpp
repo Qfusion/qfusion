@@ -45,8 +45,6 @@ cvar_t *cl_demoavi_fps;
 //
 cvar_t *info_password;
 
-cvar_t *cl_masterservers;
-
 // wsw : debug netcode
 cvar_t *cl_debug_serverCmd;
 cvar_t *cl_debug_timeDelta;
@@ -1636,9 +1634,6 @@ void CL_ShutdownMedia( void ) {
 	// shutdown cgame
 	CL_GameModule_Shutdown();
 
-	// shutdown user interface
-	CL_UIModule_Shutdown();
-
 	SCR_ShutDownConsoleMedia();
 }
 
@@ -1714,8 +1709,6 @@ static void CL_InitLocal( void ) {
 
 	cl_extrapolationTime =  Cvar_Get( "cl_extrapolationTime", "0", CVAR_DEVELOPER );
 	cl_extrapolate = Cvar_Get( "cl_extrapolate", "1", CVAR_ARCHIVE );
-
-	cl_masterservers =  Cvar_Get( "masterservers", DEFAULT_MASTER_SERVERS_IPS, 0 );
 
 	cl_shownet =        Cvar_Get( "cl_shownet", "0", 0 );
 	cl_timeout =        Cvar_Get( "cl_timeout", "120", 0 );

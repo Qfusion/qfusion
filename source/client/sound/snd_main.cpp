@@ -10,6 +10,9 @@
 
 static cvar_t * s_volume;
 static cvar_t * s_musicvolume;
+static cvar_t * s_muteinbackground;
+
+static bool window_focused = true;
 
 static ALCdevice * alDevice;
 static ALCcontext * alContext;
@@ -179,6 +182,8 @@ bool S_Init() {
 
 	s_volume = Cvar_Get( "s_volume", "0.8", CVAR_ARCHIVE );
 	s_musicvolume = Cvar_Get( "s_musicvolume", "1", CVAR_ARCHIVE );
+	s_muteinbackground = Cvar_Get( "s_muteinbackground", "1", CVAR_ARCHIVE );
+	s_muteinbackground->modified = true;
 
 	Cmd_AddCommand( "soundlist", S_SoundList_f );
 
@@ -225,6 +230,11 @@ static void swap( PlayingSound * a, PlayingSound * b ) {
 }
 
 void S_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis ) {
+	if( s_muteinbackground->modified ) {
+		alListenerf( AL_GAIN, window_focused || s_muteinbackground->integer == 0 ? 1 : 0 );
+		s_muteinbackground->modified = false;
+	}
+
 	float orientation[ 6 ];
 	VectorCopy( &axis[ AXIS_FORWARD ], &orientation[ 0 ] );
 	VectorCopy( &axis[ AXIS_UP ], &orientation[ 3 ] );
@@ -278,7 +288,8 @@ void S_UpdateEntity( int ent_num, const vec3_t origin, const vec3_t velocity ) {
 }
 
 void S_SetWindowFocus( bool focused ) {
-	alListenerf( AL_GAIN, focused ? 1 : 0 );
+	window_focused = focused;
+	alListenerf( AL_GAIN, window_focused || s_muteinbackground->integer == 0 ? 1 : 0 );
 }
 
 static PlayingSound * S_FindEmptyPlayingSound( int ent_num, int channel ) {

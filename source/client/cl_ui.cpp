@@ -19,484 +19,773 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "client.h"
-#include "ui/ui_public.h"
-#include "qcommon/asyncstream.h"
-#include "gameshared/angelwrap/qas_public.h"
+#include "sdl/sdl_window.h"
 
-// Structure containing functions exported from user interface DLL
-static ui_export_t *uie;
+#include "ui/imgui.h"
+#include "ui/imgui_internal.h"
+#include "ui/imgui_impl_sdl.h"
+#include "ui/imgui_impl_opengl3.h"
 
-QF_DLL_EXPORT cgame_export_t *GetGameAPI( void * );
+extern SDL_Window * sdl_window;
 
-static mempool_t *ui_mempool;
-static void *module_handle;
+enum UIState {
+	UIState_MainMenu,
+	UIState_Connecting,
+	UIState_InGame,
+};
 
-static async_stream_module_t *ui_async_stream;
+enum MainMenuState {
+	MainMenuState_ServerBrowser,
+	MainMenuState_CreateServer,
+	MainMenuState_Settings,
+};
 
-//==============================================
+enum GameMenuState {
+	GameMenuState_Hidden,
+	GameMenuState_Menu,
+	GameMenuState_Settings,
+};
 
-/*
-* CL_UIModule_Print
-*/
-static void CL_UIModule_Print( const char *msg ) {
-	Com_Printf( "%s", msg );
-}
+enum SettingsState {
+	SettingsState_General,
+	SettingsState_Mouse,
+	SettingsState_Keys,
+	SettingsState_Video,
+	SettingsState_Audio,
+};
 
-#ifndef _MSC_VER
-static void CL_UIModule_Error( const char *msg ) __attribute__( ( noreturn ) );
-#else
-__declspec( noreturn ) static void CL_UIModule_Error( const char *msg );
-#endif
+struct Server {
+	const char * address;
+	const char * info;
+};
 
-/*
-* CL_UIModule_Error
-*/
-static void CL_UIModule_Error( const char *msg ) {
-	Com_Error( ERR_FATAL, "%s", msg );
-}
+static Server servers[ 1024 ];
+static int num_servers = 0;
+static int selected_server;
 
-/*
-* CL_UIModule_GetConfigString
-*/
-static void CL_UIModule_GetConfigString( int i, char *str, int size ) {
-	if( i < 0 || i >= MAX_CONFIGSTRINGS ) {
-		Com_Error( ERR_DROP, "CL_UIModule_GetConfigString: i > MAX_CONFIGSTRINGS" );
+static UIState uistate;
+
+static MainMenuState mainmenu_state;
+
+static GameMenuState gamemenu_state;
+static bool is_spectating;
+static bool can_ready;
+static bool can_unready;
+
+static SettingsState settings_state;
+static bool reset_video_settings;
+static int pressed_key;
+
+static void ResetServerBrowser() {
+	for( int i = 0; i < num_servers; i++ ) {
+		free( const_cast< char * >( servers[ i ].address ) );
+		free( const_cast< char * >( servers[ i ].info ) );
 	}
-	if( !str || size <= 0 ) {
-		Com_Error( ERR_DROP, "CL_UIModule_GetConfigString: NULL string" );
-	}
-
-	Q_strncpyz( str, cl.configstrings[i], size );
+	num_servers = 0;
+	selected_server = -1;
 }
 
-/*
-* CL_UIModule_MemAlloc
-*/
-static void *CL_UIModule_MemAlloc( size_t size, const char *filename, int fileline ) {
-	return _Mem_Alloc( ui_mempool, size, MEMPOOL_USERINTERFACE, 0, filename, fileline );
-}
+static void RefreshServerBrowser() {
+	ResetServerBrowser();
 
-/*
-* CL_UIModule_MemFree
-*/
-static void CL_UIModule_MemFree( void *data, const char *filename, int fileline ) {
-	_Mem_Free( data, MEMPOOL_USERINTERFACE, 0, filename, fileline );
-}
-
-//==============================================
-
-
-/*
-* CL_UIModule_AsyncStream_Init
-*/
-static void CL_UIModule_AsyncStream_Init( void ) {
-	ui_async_stream = AsyncStream_InitModule( "UI", CL_UIModule_MemAlloc, CL_UIModule_MemFree );
-}
-
-/*
-* CL_UIModule_AsyncStream_PerformRequest
-*/
-static int CL_UIModule_AsyncStream_PerformRequest( const char *url, const char *method,
-												   const char *data, int timeout,
-												   ui_async_stream_read_cb_t read_cb, ui_async_stream_done_cb_t done_cb, void *privatep ) {
-	const char *headers[] = { NULL, NULL, NULL, NULL, NULL };
-
-	assert( ui_async_stream );
-
-	CL_AddSessionHttpRequestHeaders( url, headers );
-
-	return AsyncStream_PerformRequestExt( ui_async_stream, url, method, data, headers, timeout,
-										  0, read_cb, done_cb, NULL, privatep );
-}
-
-/*
-* CL_UIModule_AsyncStream_Shutdown
-*/
-static void CL_UIModule_AsyncStream_Shutdown( void ) {
-	AsyncStream_ShutdownModule( ui_async_stream );
-	ui_async_stream = NULL;
-}
-
-/*
-* CL_UIModule_PlayerNum
-*/
-static int CL_UIModule_PlayerNum( void ) {
-	if( cls.state < CA_CONNECTED ) {
-		return -1;
-	}
-	return cl.playernum;
-}
-
-//==============================================
-
-/*
-* CL_UIModule_Init
-*/
-void CL_UIModule_Init( void ) {
-	int apiversion;
-	ui_import_t import;
-	dllfunc_t funcs[2];
-#ifndef UI_HARD_LINKED
-	ui_export_t *( *GetUIAPI )( void * ) = NULL;
-#endif
-
-	CL_UIModule_Shutdown();
-
-	Com_Printf( "------- UI initialization -------\n" );
-
-	ui_mempool = _Mem_AllocPool( NULL, "User Interface", MEMPOOL_USERINTERFACE, __FILE__, __LINE__ );
-
-	import.Error = CL_UIModule_Error;
-	import.Print = CL_UIModule_Print;
-
-	import.Cvar_Get = Cvar_Get;
-	import.Cvar_Set = Cvar_Set;
-	import.Cvar_SetValue = Cvar_SetValue;
-	import.Cvar_ForceSet = Cvar_ForceSet;
-	import.Cvar_String = Cvar_String;
-	import.Cvar_Value = Cvar_Value;
-
-	import.Cmd_Argc = Cmd_Argc;
-	import.Cmd_Argv = Cmd_Argv;
-	import.Cmd_Args = Cmd_Args;
-
-	import.Cmd_AddCommand = Cmd_AddCommand;
-	import.Cmd_RemoveCommand = Cmd_RemoveCommand;
-	import.Cmd_ExecuteText = Cbuf_ExecuteText;
-	import.Cmd_Execute = Cbuf_Execute;
-	import.Cmd_SetCompletionFunc = Cmd_SetCompletionFunc;
-
-	import.FS_FOpenFile = FS_FOpenFile;
-	import.FS_Read = FS_Read;
-	import.FS_Write = FS_Write;
-	import.FS_Print = FS_Print;
-	import.FS_Tell = FS_Tell;
-	import.FS_Seek = FS_Seek;
-	import.FS_Eof = FS_Eof;
-	import.FS_Flush = FS_Flush;
-	import.FS_FCloseFile = FS_FCloseFile;
-	import.FS_RemoveFile = FS_RemoveFile;
-	import.FS_GetFileList = FS_GetFileList;
-	import.FS_FirstExtension = FS_FirstExtension;
-	import.FS_MoveFile = FS_MoveFile;
-	import.FS_MoveCacheFile = FS_MoveCacheFile;
-	import.FS_IsUrl = FS_IsUrl;
-	import.FS_RemoveDirectory = FS_RemoveDirectory;
-
-	import.CL_Quit = CL_Quit;
-	import.CL_SetKeyDest = CL_SetKeyDest;
-	import.CL_ResetServerCount = CL_ResetServerCount;
-	import.CL_GetClipboardData = CL_GetClipboardData;
-	import.CL_SetClipboardData = CL_SetClipboardData;
-	import.CL_FreeClipboardData = CL_FreeClipboardData;
-	import.CL_OpenURLInBrowser = CL_OpenURLInBrowser;
-	import.CL_ReadDemoMetaData = CL_ReadDemoMetaData;
-	import.CL_PlayerNum = CL_UIModule_PlayerNum;
-
-	import.Key_GetBindingBuf = Key_GetBindingBuf;
-	import.Key_KeynumToString = Key_KeynumToString;
-	import.Key_StringToKeynum = Key_StringToKeynum;
-	import.Key_SetBinding = Key_SetBinding;
-	import.Key_IsDown = Key_IsDown;
-
-	import.R_ClearScene = re.ClearScene;
-	import.R_AddEntityToScene = re.AddEntityToScene;
-	import.R_AddLightToScene = re.AddLightToScene;
-	import.R_AddLightStyleToScene = re.AddLightStyleToScene;
-	import.R_AddPolyToScene = re.AddPolyToScene;
-	import.R_RenderScene = re.RenderScene;
-	import.R_BlurScreen = re.BlurScreen;
-	import.R_EndFrame = re.EndFrame;
-	import.R_RegisterWorldModel = re.RegisterWorldModel;
-	import.R_ModelBounds = re.ModelBounds;
-	import.R_ModelFrameBounds = re.ModelFrameBounds;
-	import.R_RegisterModel = re.RegisterModel;
-	import.R_RegisterPic = re.RegisterPic;
-	import.R_RegisterRawPic = re.RegisterRawPic;
-	import.R_RegisterLevelshot = re.RegisterLevelshot;
-	import.R_RegisterSkin = re.RegisterSkin;
-	import.R_RegisterSkinFile = re.RegisterSkinFile;
-	import.R_RegisterLinearPic = re.RegisterLinearPic;
-	import.R_LerpTag = re.LerpTag;
-	import.R_DrawStretchPic = re.DrawStretchPic;
-	import.R_DrawRotatedStretchPic = re.DrawRotatedStretchPic;
-	import.R_DrawStretchPoly = re.DrawStretchPoly;
-	import.R_TransformVectorToScreen = re.TransformVectorToScreen;
-	import.R_Scissor = re.Scissor;
-	import.R_GetScissor = re.GetScissor;
-	import.R_ResetScissor = re.ResetScissor;
-	import.R_GetShaderDimensions = re.GetShaderDimensions;
-	import.R_SkeletalGetNumBones = re.SkeletalGetNumBones;
-	import.R_SkeletalGetBoneInfo = re.SkeletalGetBoneInfo;
-	import.R_SkeletalGetBonePose = re.SkeletalGetBonePose;
-
-	import.R_PushTransformMatrix = re.PushTransformMatrix;
-	import.R_PopTransformMatrix = re.PopTransformMatrix;
-
-	import.S_RegisterSound = CL_SoundModule_RegisterSound;
-	import.S_StartLocalSound = CL_SoundModule_StartLocalSound;
-	import.S_StartMenuMusic = CL_SoundModule_StartMenuMusic;
-	import.S_StopBackgroundTrack = CL_SoundModule_StopBackgroundTrack;
-
-	import.SCR_RegisterFont = SCR_RegisterFont;
-	import.SCR_DrawString = SCR_DrawString;
-	import.SCR_DrawStringWidth = SCR_DrawStringWidth;
-	import.SCR_DrawClampString = SCR_DrawClampString;
-	import.SCR_FontSize = SCR_FontSize;
-	import.SCR_FontHeight = SCR_FontHeight;
-	import.SCR_FontUnderline = SCR_FontUnderline;
-	import.SCR_FontAdvance = SCR_FontAdvance;
-	import.SCR_FontXHeight = SCR_FontXHeight;
-	import.SCR_SetDrawCharIntercept = SCR_SetDrawCharIntercept;
-	import.SCR_strWidth = SCR_strWidth;
-	import.SCR_StrlenForWidth = SCR_StrlenForWidth;
-
-	import.GetConfigString = CL_UIModule_GetConfigString;
-
-	import.Milliseconds = Sys_Milliseconds;
-	import.Microseconds = Sys_Microseconds;
-
-	import.AsyncStream_UrlEncode = AsyncStream_UrlEncode;
-	import.AsyncStream_UrlDecode = AsyncStream_UrlDecode;
-	import.AsyncStream_PerformRequest = CL_UIModule_AsyncStream_PerformRequest;
-	import.GetBaseServerURL = CL_GetBaseServerURL;
-
-	import.VID_GetModeInfo = VID_GetModeInfo;
-
-	import.Mem_Alloc = CL_UIModule_MemAlloc;
-	import.Mem_Free = CL_UIModule_MemFree;
-
-	import.ML_GetMapByNum = ML_GetMapByNum;
-
-	import.asGetAngelExport = QAS_GetAngelExport;
-
-#ifndef UI_HARD_LINKED
-	funcs[0].name = "GetUIAPI";
-	funcs[0].funcPointer = ( void ** ) &GetUIAPI;
-	funcs[1].name = NULL;
-	module_handle = Com_LoadLibrary( LIB_DIRECTORY "/" LIB_PREFIX "ui" LIB_SUFFIX, funcs );
-	if( !module_handle ) {
-		Mem_FreePool( &ui_mempool );
-		Com_Error( ERR_FATAL, "Failed to load UI dll" );
-		uie = NULL;
-		return;
-	}
-#endif
-
-	uie = GetUIAPI( &import );
-	apiversion = uie->API();
-	if( apiversion == UI_API_VERSION ) {
-		CL_UIModule_AsyncStream_Init();
-
-		uie->Init( viddef.width, viddef.height, VID_GetPixelRatio(),
-				   APP_PROTOCOL_VERSION, APP_DEMO_EXTENSION_STR, APP_UI_BASEPATH );
-
-		uie->ShowOverlayMenu( cls.overlayMenu, cls.overlayMenuShowCursor );
-	} else {
-		// wrong version
-		uie = NULL;
-		Com_UnloadLibrary( &module_handle );
-		Mem_FreePool( &ui_mempool );
-		Com_Error( ERR_FATAL, "UI version is %i, not %i", apiversion, UI_API_VERSION );
+	for( const char * masterserver : MASTER_SERVERS ) {
+		char buf[ 256 ];
+		Q_snprintfz( buf, sizeof( buf ), "requestservers global %s %s full empty\n", masterserver, APPLICATION_NOSPACES );
+		Cbuf_ExecuteText( EXEC_APPEND, buf );
 	}
 
-	Com_Printf( "------------------------------------\n" );
+	Cbuf_ExecuteText( EXEC_APPEND, "requestservers local full empty\n" );
 }
 
-/*
-* CL_UIModule_Shutdown
-*/
-void CL_UIModule_Shutdown( void ) {
-	if( !uie ) {
-		return;
+void CL_UIModule_Init() {
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGui_ImplSDL2_InitForOpenGL( sdl_window, NULL );
+	ImGui_ImplOpenGL3_Init();
+
+	{
+		ImGuiIO & io = ImGui::GetIO();
+		io.IniFilename = NULL;
+		io.KeyMap[ ImGuiKey_Tab ] = K_TAB;
+		io.KeyMap[ ImGuiKey_LeftArrow ] = K_LEFTARROW;
+		io.KeyMap[ ImGuiKey_RightArrow ] = K_RIGHTARROW;
+		io.KeyMap[ ImGuiKey_UpArrow ] = K_UPARROW;
+		io.KeyMap[ ImGuiKey_DownArrow ] = K_DOWNARROW;
+		io.KeyMap[ ImGuiKey_PageUp ] = K_PGUP;
+		io.KeyMap[ ImGuiKey_PageDown ] = K_PGDN;
+		io.KeyMap[ ImGuiKey_Home ] = K_HOME;
+		io.KeyMap[ ImGuiKey_End ] = K_END;
+		io.KeyMap[ ImGuiKey_Insert ] = K_INS;
+		io.KeyMap[ ImGuiKey_Delete ] = K_DEL;
+		io.KeyMap[ ImGuiKey_Backspace ] = K_BACKSPACE;
+		io.KeyMap[ ImGuiKey_Space ] = K_SPACE;
+		io.KeyMap[ ImGuiKey_Enter ] = K_ENTER;
+		io.KeyMap[ ImGuiKey_Escape ] = K_ESCAPE;
+		io.KeyMap[ ImGuiKey_A ] = 'a';
+		io.KeyMap[ ImGuiKey_C ] = 'c';
+		io.KeyMap[ ImGuiKey_V ] = 'v';
+		io.KeyMap[ ImGuiKey_X ] = 'x';
+		io.KeyMap[ ImGuiKey_Y ] = 'y';
+		io.KeyMap[ ImGuiKey_Z ] = 'z';
 	}
 
-	CL_UIModule_AsyncStream_Shutdown();
-
-	uie->Shutdown();
-	Mem_FreePool( &ui_mempool );
-	Com_UnloadLibrary( &module_handle );
-	uie = NULL;
-}
-
-/*
-* CL_UIModule_TouchAllAssets
-*/
-void CL_UIModule_TouchAllAssets( void ) {
-	if( uie ) {
-		uie->TouchAllAssets();
+	{
+		ImGuiStyle & style = ImGui::GetStyle();
+		style.WindowRounding = 0;
+		style.FramePadding = ImVec2( 8, 8 );
+		style.FrameBorderSize = 0;
+		style.WindowPadding = ImVec2( 16, 16 );
+		style.WindowBorderSize = 0;
+		style.Colors[ ImGuiCol_WindowBg ] = ImColor( 0x1a, 0x1a, 0x1a );
+		style.ItemSpacing.y = 8;
 	}
+
+	ResetServerBrowser();
+
+	uistate = UIState_MainMenu;
+	mainmenu_state = MainMenuState_ServerBrowser;
+
+	reset_video_settings = true;
 }
 
-/*
-* CL_UIModule_Refresh
-*/
-void CL_UIModule_Refresh( bool backGround, bool showCursor ) {
-	if( uie ) {
-		uie->Refresh( cls.realtime, Com_ClientState(), Com_ServerState(),
-					  cls.demo.playing, cls.demo.name, cls.demo.paused, Q_rint( cls.demo.time / 1000.0f ),
-					  backGround, showCursor );
+void CL_UIModule_Shutdown() {
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplSDL2_Shutdown();
+        ImGui::DestroyContext();
+}
+
+void CL_UIModule_TouchAllAssets() {
+}
+
+static void SettingLabel( const char * label ) {
+	ImGui::AlignTextToFramePadding();
+	ImGui::Text( "%s", label );
+	ImGui::SameLine( 200 );
+}
+
+template< size_t maxlen >
+static void CvarTextbox( const char * label, const char * cvar_name, const char * def, cvar_flag_t flags ) {
+	SettingLabel( label );
+
+	cvar_t * cvar = Cvar_Get( cvar_name, def, flags );
+
+	char buf[ maxlen + 1 ];
+	Q_strncpyz( buf, cvar->string, sizeof( buf ) );
+
+	char unique[ 128 ];
+	Q_snprintfz( unique, sizeof( unique ), "##%s", cvar_name );
+	ImGui::InputText( unique, buf, sizeof( buf ) );
+
+	Cvar_Set( cvar_name, buf );
+}
+
+static void CvarCheckbox( const char * label, const char * cvar_name, const char * def, cvar_flag_t flags ) {
+	SettingLabel( label );
+
+	cvar_t * cvar = Cvar_Get( cvar_name, def, flags );
+
+	char unique[ 128 ];
+	Q_snprintfz( unique, sizeof( unique ), "##%s", cvar_name );
+	bool val = cvar->integer != 0;
+	ImGui::Checkbox( unique, &val );
+
+	Cvar_Set( cvar_name, val ? "1" : "0" );
+}
+
+static void CvarSliderInt( const char * label, const char * cvar_name, int lo, int hi, const char * def, cvar_flag_t flags, const char * format = NULL ) {
+	SettingLabel( label );
+
+	cvar_t * cvar = Cvar_Get( cvar_name, def, flags );
+
+	char unique[ 128 ];
+	Q_snprintfz( unique, sizeof( unique ), "##%s", cvar_name );
+	int val = cvar->integer;
+	ImGui::SliderInt( unique, &val, lo, hi, format );
+
+	char buf[ 128 ];
+	Q_snprintfz( buf, sizeof( buf ), "%d", val );
+	Cvar_Set( cvar_name, buf );
+}
+
+static void CvarSliderFloat( const char * label, const char * cvar_name, float lo, float hi, const char * def, cvar_flag_t flags ) {
+	SettingLabel( label );
+
+	cvar_t * cvar = Cvar_Get( cvar_name, def, flags );
+
+	char unique[ 128 ];
+	Q_snprintfz( unique, sizeof( unique ), "##%s", cvar_name );
+	float val = cvar->value;
+	ImGui::SliderFloat( unique, &val, lo, hi, "%.2f" );
+
+	char buf[ 128 ];
+	Q_snprintfz( buf, sizeof( buf ), "%f", val );
+	Cvar_Set( cvar_name, buf );
+}
+
+// TODO: put this somewhere else
+void CG_GetBoundKeysString( const char *cmd, char *keys, size_t keysSize );
+
+static void KeyBindButton( const char * label, const char * command ) {
+	SettingLabel( label );
+	ImGui::PushID( label );
+
+	char keys[ 128 ];
+	CG_GetBoundKeysString( command, keys, sizeof( keys ) );
+	if( ImGui::Button( keys, ImVec2( 200, 0 ) ) ) {
+		ImGui::OpenPopup( label );
+		pressed_key = -1;
 	}
-}
 
-/*
-* CL_UIModule_UpdateConnectScreen
-*/
-void CL_UIModule_UpdateConnectScreen( bool backGround ) {
-	if( uie ) {
-		int downloadType, downloadSpeed;
-
-		if( cls.download.web ) {
-			downloadType = DOWNLOADTYPE_WEB;
-		} else if( cls.download.filenum ) {
-			downloadType = DOWNLOADTYPE_SERVER;
-		} else {
-			downloadType = DOWNLOADTYPE_NONE;
-		}
-
-		if( downloadType ) {
-#if 0
-#define DLSAMPLESCOUNT 32
-#define DLSSAMPLESMASK ( DLSAMPLESCOUNT - 1 )
-			int i, samples;
-			size_t downloadedSize;
-			unsigned int downloadTime;
-			static int lastFrameCount = 0, frameCount = 0;
-			static unsigned int downloadSpeeds[DLSAMPLESCOUNT];
-			float avDownloadSpeed;
-
-			downloadedSize = (size_t)( cls.download.size * cls.download.percent ) - cls.download.baseoffset;
-			downloadTime = Sys_Milliseconds() - cls.download.timestart;
-			if( downloadTime > 200 ) {
-				downloadSpeed = ( downloadedSize / 1024.0f ) / ( downloadTime * 0.001f );
-
-				if( cls.framecount > lastFrameCount + DLSAMPLESCOUNT ) {
-					frameCount = 0;
-				}
-				lastFrameCount = cls.framecount;
-
-				downloadSpeeds[frameCount & DLSSAMPLESMASK] = downloadSpeed;
-				frameCount = max( frameCount + 1, 1 );
-				samples = min( frameCount, DLSAMPLESCOUNT );
-
-				for( avDownloadSpeed = 0.0f, i = 0; i < samples; i++ )
-					avDownloadSpeed += downloadSpeeds[i];
-
-				avDownloadSpeed /= samples;
-				downloadSpeed = (int)avDownloadSpeed;
-			} else {
-				lastFrameCount = -1;
-				downloadSpeed = 0;
+	if( ImGui::BeginPopupModal( label, NULL, ImGuiWindowFlags_NoDecoration ) ) {
+		ImGui::Text( "Press a key to set a new bind, or press ESCAPE to cancel." );
+		if( pressed_key != -1 ) {
+			if( pressed_key != K_ESCAPE ) {
+				Key_SetBinding( pressed_key, command );
 			}
-#else
-			size_t downloadedSize;
-			unsigned int downloadTime;
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::EndPopup();
+	}
 
-			downloadedSize = (size_t)( cls.download.size * cls.download.percent ) - cls.download.baseoffset;
-			downloadTime = Sys_Milliseconds() - cls.download.timestart;
+	ImGui::PopID();
+}
 
-			downloadSpeed = downloadTime ? ( downloadedSize / 1024.0f ) / ( downloadTime * 0.001f ) : 0;
-#endif
-		} else {
-			downloadSpeed = 0;
+static void ServerBrowser() {
+	if( ImGui::Button( "Refresh" ) ) {
+		RefreshServerBrowser();
+	}
+
+	ImGui::BeginChild( "servers" );
+	ImGui::Columns( 2, "serverbrowser", false );
+	ImGui::SetColumnWidth( 0, 200 );
+	ImGui::Text( "Address" );
+	ImGui::NextColumn();
+	ImGui::Text( "Info" );
+	ImGui::NextColumn();
+	for( int i = 0; i < num_servers; i++ ) {
+		if( ImGui::Selectable( servers[ i ].address, i == selected_server, ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowDoubleClick ) ) {
+			if( ImGui::IsMouseDoubleClicked( 0 ) ) {
+				char buf[ 256 ];
+				Q_snprintfz( buf, sizeof( buf ), "connect \"%s\"\n", servers[ i ].address );
+				Cbuf_ExecuteText( EXEC_APPEND, buf );
+			}
+			selected_server = i;
+		}
+		ImGui::NextColumn();
+		ImGui::Text( "%s", servers[ i ].info );
+		ImGui::NextColumn();
+	}
+
+	ImGui::Columns( 1 );
+	ImGui::EndChild();
+}
+
+static void CreateServer() {
+	CvarTextbox< 128 >( "Server name", "sv_hostname", APPLICATION " server", CVAR_SERVERINFO | CVAR_ARCHIVE );
+
+	{
+		cvar_t * cvar = Cvar_Get( "sv_maxclients", "16", CVAR_SERVERINFO | CVAR_LATCH );
+		int maxclients = cvar->integer;
+
+		SettingLabel( "Max players" );
+		ImGui::PushItemWidth( 150 );
+		ImGui::InputInt( "##sv_maxclients", &maxclients );
+		ImGui::PopItemWidth();
+
+		maxclients = max( maxclients, 1 );
+		maxclients = min( maxclients, 64 );
+
+		char buf[ 128 ];
+		Q_snprintfz( buf, sizeof( buf ), "%d", maxclients );
+		Cvar_Set( "sv_maxclients", buf );
+	}
+
+	static int selectedmap = 0;
+	{
+		SettingLabel( "Map" );
+		char selectedmapname[ 128 ];
+		ML_GetMapByNum( selectedmap, selectedmapname, sizeof( selectedmapname ) );
+
+		ImGui::PushItemWidth( 200 );
+		if( ImGui::BeginCombo( "##map", selectedmapname ) ) {
+			for( int i = 0; true; i++ ) {
+				char mapname[ 128 ];
+				if( ML_GetMapByNum( i, mapname, sizeof( mapname ) ) == 0 )
+					break;
+
+				if( ImGui::Selectable( mapname, i == selectedmap ) )
+					selectedmap = i;
+				if( i == selectedmap )
+					ImGui::SetItemDefaultFocus();
+			}
+			ImGui::EndCombo();
+		}
+		ImGui::PopItemWidth();
+	}
+
+	CvarCheckbox( "Public", "sv_public", "0", CVAR_ARCHIVE | CVAR_LATCH );
+
+	if( ImGui::Button( "Create server" ) ) {
+		char mapname[ 128 ];
+		if( ML_GetMapByNum( selectedmap, mapname, sizeof( mapname ) ) != 0 ) {
+			char buf[ 256 ];
+			Q_snprintfz( buf, sizeof( buf ), "map \"%s\"\n", mapname );
+			Cbuf_ExecuteText( EXEC_APPEND, buf );
+		}
+	}
+
+}
+
+static void SettingsGeneral() {
+	ImGui::Text( "These settings are saved automatically" );
+
+	CvarTextbox< MAX_NAME_BYTES >( "Name", "name", "Player", CVAR_USERINFO | CVAR_ARCHIVE );
+	CvarSliderInt( "FOV", "fov", 60, 140, "100", CVAR_ARCHIVE );
+	CvarCheckbox( "Show FPS", "cg_showFPS", "0", CVAR_ARCHIVE );
+}
+
+static void SettingsMouse() {
+	ImGui::Text( "These settings are saved automatically" );
+
+	CvarSliderFloat( "Sensitivity", "sensitivity", 1.0f, 10.0f, "3", CVAR_ARCHIVE );
+	CvarSliderFloat( "Horizontal sensitivity", "horizontalsensscale", 0.5f, 2.0f, "1.0", CVAR_ARCHIVE );
+	CvarSliderFloat( "Acceleration", "m_accel", 0.0f, 1.0f, "0", CVAR_ARCHIVE );
+}
+
+static void SettingsKeys() {
+	ImGui::Text( "These settings are saved automatically" );
+
+	ImGui::BeginChild( "binds" );
+
+	ImGui::Separator();
+	ImGui::Text( "Movement" );
+	ImGui::Separator();
+
+	KeyBindButton( "Forward", "+forward" );
+	KeyBindButton( "Back", "+back" );
+	KeyBindButton( "Left", "+moveleft" );
+	KeyBindButton( "Right", "+moveright" );
+	KeyBindButton( "Jump", "+moveup" );
+	KeyBindButton( "Dash/walljump", "+special" );
+	KeyBindButton( "Crouch", "+movedown" );
+	KeyBindButton( "Walk", "+speed" );
+
+	ImGui::Separator();
+	ImGui::Text( "Actions" );
+	ImGui::Separator();
+
+	KeyBindButton( "Attack", "+attack" );
+	KeyBindButton( "Drop bomb", "drop" );
+	KeyBindButton( "Shop", "gametypemenu" );
+	KeyBindButton( "Scoreboard", "+scores" );
+	KeyBindButton( "Chat", "messagemode" );
+	KeyBindButton( "Team chat", "messagemode2" );
+	KeyBindButton( "Zoom", "+zoom" );
+
+	ImGui::Separator();
+	ImGui::Text( "Weapons" );
+	ImGui::Separator();
+
+	KeyBindButton( "Weapon 1", "weapon 1" );
+	KeyBindButton( "Weapon 2", "weapon 2" );
+	KeyBindButton( "Weapon 3", "weapon 3" );
+	KeyBindButton( "Weapon 4", "weapon 4" );
+	KeyBindButton( "Next weapon", "weapnext" );
+	KeyBindButton( "Previous weapon", "weapprev" );
+	KeyBindButton( "Last weapon", "weaplast" );
+
+	ImGui::Separator();
+	ImGui::Text( "Voice lines" );
+	ImGui::Separator();
+
+	KeyBindButton( "Yes", "vsay yes" );
+	KeyBindButton( "No", "vsay no" );
+	KeyBindButton( "Thanks", "vsay thanks" );
+	KeyBindButton( "Good game", "vsay goodgame" );
+	KeyBindButton( "Boomstick", "vsay boomstick" );
+	KeyBindButton( "Shut up", "vsay shutup" );
+
+	ImGui::Separator();
+	ImGui::Text( "Specific weapons" );
+	ImGui::Separator();
+
+	KeyBindButton( "Gunblade", "use gb" );
+	// KeyBindButton( "Machine Gun", "use mg" );
+	KeyBindButton( "Disrespect Gun", "use rg" );
+	KeyBindButton( "Grenade Launcher", "use gl" );
+	KeyBindButton( "Rocket Launcher", "use rl" );
+	KeyBindButton( "Plasma Gun", "use pg" );
+	KeyBindButton( "Lasergun", "use lg" );
+	KeyBindButton( "Electrobolt", "use eb" );
+
+	ImGui::EndChild();
+}
+
+static void PushDisabled( bool disabled ) {
+	if( disabled ) {
+		ImGui::PushItemFlag( ImGuiItemFlags_Disabled, true );
+		ImGui::PushStyleVar( ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f );
+	}
+}
+
+static void PopDisabled( bool disabled ) {
+	if( disabled ) {
+		ImGui::PopItemFlag();
+		ImGui::PopStyleVar();
+	}
+}
+
+// vid_mode WIDTHxHEIGHT [FB MonitorIdx Hz]
+
+static void SettingsVideo() {
+	static VideoMode selected_mode;
+
+	if( reset_video_settings ) {
+		selected_mode = VID_GetCurrentVideoMode();
+		reset_video_settings = false;
+	}
+
+	SettingLabel( "Fullscreen" );
+	bool fullscreen = selected_mode.fullscreen != FullScreenMode_Windowed;
+	ImGui::Checkbox( "##vid_fullscreen", &fullscreen );
+
+	PushDisabled( !fullscreen );
+
+	SettingLabel( "Borderless fullscreen" );
+	bool borderless = selected_mode.fullscreen == FullScreenMode_FullscreenBorderless;
+	ImGui::Checkbox( "##borderless", &borderless );
+
+	selected_mode.fullscreen = FullScreenMode_Windowed;
+	if( fullscreen )
+		selected_mode.fullscreen = borderless ? FullScreenMode_FullscreenBorderless : FullScreenMode_Fullscreen;
+
+	SettingLabel( "Video mode" );
+	ImGui::PushItemWidth( 200 );
+
+	char preview[ 128 ];
+	Q_snprintfz( preview, sizeof( preview ), "%dx%d %dHz", selected_mode.width, selected_mode.height, selected_mode.frequency );
+
+	if( ImGui::BeginCombo( "##mode", preview ) ) {
+		for( int i = 0; i < VID_GetNumVideoModes(); i++ ) {
+			VideoMode mode = VID_GetVideoMode( i );
+
+			char buf[ 128 ];
+			Q_snprintfz( buf, sizeof( buf ), "%dx%d %dHz", mode.width, mode.height, mode.frequency );
+
+			bool is_selected = mode.width == selected_mode.width && mode.height == selected_mode.height && mode.frequency == selected_mode.frequency;
+			if( ImGui::Selectable( buf, is_selected ) ) {
+				selected_mode.width = mode.width;
+				selected_mode.height = mode.height;
+				selected_mode.frequency = mode.frequency;
+			}
+		}
+		ImGui::EndCombo();
+	}
+	ImGui::PopItemWidth();
+
+	PopDisabled( !fullscreen );
+
+	if( ImGui::Button( "Apply mode changes" ) ) {
+		VID_SetVideoMode( selected_mode );
+	}
+
+	ImGui::SameLine();
+	if( ImGui::Button( "Discard mode changes" ) ) {
+		reset_video_settings = true;
+	}
+
+	ImGui::Separator();
+
+	ImGui::Text( "These settings are saved automatically" );
+
+	{
+		SettingLabel( "Anti-aliasing" );
+
+		cvar_t * cvar = Cvar_Get( "r_samples", "0", CVAR_ARCHIVE );
+		int samples = cvar->integer;
+
+		char current_samples[ 16 ];
+		if( samples == 0 )
+			Q_snprintfz( current_samples, sizeof( current_samples ), "Off" );
+		else
+			Q_snprintfz( current_samples, sizeof( current_samples ), "%dx", samples );
+
+		ImGui::PushItemWidth( 100 );
+		if( ImGui::BeginCombo( "##r_samples", current_samples ) ) {
+			if( ImGui::Selectable( "Off", samples == 0 ) )
+				samples = 0;
+			if( samples == 0 )
+				ImGui::SetItemDefaultFocus();
+
+			for( int i = 1; i <= 16; i *= 2 ) {
+				char buf[ 16 ];
+				Q_snprintfz( buf, sizeof( buf ), "%dx", i );
+				if( ImGui::Selectable( buf, i == samples ) )
+					samples = i;
+				if( i == samples )
+					ImGui::SetItemDefaultFocus();
+			}
+
+			ImGui::EndCombo();
+		}
+		ImGui::PopItemWidth();
+
+		char buf[ 16 ];
+		Q_snprintfz( buf, sizeof( buf ), "%d", samples );
+		Cvar_Set( "r_samples", buf );
+	}
+
+	CvarCheckbox( "Vsync", "vid_vsync", "0", CVAR_ARCHIVE );
+}
+
+static void SettingsAudio() {
+	ImGui::Text( "These settings are saved automatically" );
+
+	CvarSliderFloat( "Master volume", "s_volume", 0.0f, 1.0f, "0.8", CVAR_ARCHIVE );
+	CvarSliderFloat( "Music volume", "s_musicvolume", 0.0f, 1.0f, "1.0", CVAR_ARCHIVE );
+	CvarCheckbox( "Mute when alt-tabbed", "s_muteinbackground", "1", CVAR_ARCHIVE );
+}
+
+static void Settings() {
+	if( ImGui::Button( "GENERAL" ) ) {
+		settings_state = SettingsState_General;
+	}
+
+	ImGui::SameLine();
+
+	if( ImGui::Button( "MOUSE" ) ) {
+		settings_state = SettingsState_Mouse;
+	}
+
+	ImGui::SameLine();
+
+	if( ImGui::Button( "KEYS" ) ) {
+		settings_state = SettingsState_Keys;
+	}
+
+	ImGui::SameLine();
+
+	if( ImGui::Button( "VIDEO" ) ) {
+		reset_video_settings = true;
+		settings_state = SettingsState_Video;
+	}
+
+	ImGui::SameLine();
+
+	if( ImGui::Button( "SOUND" ) ) {
+		settings_state = SettingsState_Audio;
+	}
+
+	if( settings_state == SettingsState_General )
+		SettingsGeneral();
+	else if( settings_state == SettingsState_Mouse )
+		SettingsMouse();
+	else if( settings_state == SettingsState_Keys )
+		SettingsKeys();
+	else if( settings_state == SettingsState_Video )
+		SettingsVideo();
+	else if( settings_state == SettingsState_Audio )
+		SettingsAudio();
+}
+
+static void GameMenuButton( const char * label, const char * command, bool * clicked ) {
+	if( ImGui::Button( label, ImVec2( -1, 0 ) ) ) {
+		char buf[ 256 ];
+		Q_snprintfz( buf, sizeof( buf ), "%s\n", command );
+		Cbuf_ExecuteText( EXEC_APPEND, buf );
+		*clicked = true;
+	}
+}
+
+void CL_UIModule_Refresh( bool background, bool showCursor ) {
+	ImGui_ImplOpenGL3_NewFrame();
+	if( cls.key_dest == key_menu ) {
+		ImGui_ImplSDL2_NewFrame( sdl_window );
+	}
+	ImGui::NewFrame();
+
+	if( uistate == UIState_MainMenu ) {
+		ImGui::SetNextWindowPos( ImVec2() );
+		ImGui::SetNextWindowSize( ImVec2( viddef.width, viddef.height ) );
+		ImGui::Begin( "mainmenu", NULL, ImGuiWindowFlags_NoDecoration );
+
+		ImGui::Text( "COCAINE DIESEL 0.0.2.0" );
+		ImGui::Text( u8"\u00A9 AHA CHEERS" );
+
+		if( ImGui::Button( "PLAY" ) ) {
+			mainmenu_state = MainMenuState_ServerBrowser;
 		}
 
-		uie->UpdateConnectScreen( cls.servername, cls.rejected ? cls.rejectmessage : NULL,
-								  downloadType, cls.download.name, cls.download.percent * 100.0f, downloadSpeed,
-								  cls.connect_count, backGround );
+		ImGui::SameLine();
 
-		CL_UIModule_Refresh( backGround, false );
+		if( ImGui::Button( "CREATE SERVER" ) ) {
+			mainmenu_state = MainMenuState_CreateServer;
+		}
+
+		ImGui::SameLine();
+
+		if( ImGui::Button( "SETTINGS" ) ) {
+			mainmenu_state = MainMenuState_Settings;
+			settings_state = SettingsState_General;
+		}
+
+		ImGui::SameLine();
+
+		if( ImGui::Button( "QUIT" ) ) {
+			CL_Quit();
+		}
+
+		ImGui::Separator();
+
+		if( mainmenu_state == MainMenuState_ServerBrowser ) {
+			ServerBrowser();
+		}
+		else if( mainmenu_state == MainMenuState_CreateServer ) {
+			CreateServer();
+		}
+		else {
+			Settings();
+		}
+
+		ImGui::End();
 	}
+
+	if( uistate == UIState_Connecting ) {
+		ImGui::SetNextWindowPos( ImVec2() );
+		ImGui::SetNextWindowSize( ImVec2( viddef.width, viddef.height ) );
+		ImGui::Begin( "mainmenu", NULL, ImGuiWindowFlags_NoDecoration );
+
+		ImGui::Text( "connecting" );
+
+		ImGui::End();
+	}
+
+	if( uistate == UIState_InGame && gamemenu_state != GameMenuState_Hidden ) {
+		ImGui::PushStyleColor( ImGuiCol_WindowBg, ImVec4( ImColor( 0x1a, 0x1a, 0x1a, 128 ) ) );
+		CL_SetKeyDest( key_menu );
+		bool should_close = false;
+
+		if( gamemenu_state == GameMenuState_Menu ) {
+			ImGui::SetNextWindowPosCenter();
+			ImGui::SetNextWindowSize( ImVec2( 300, 0 ) );
+			ImGui::Begin( "gamemenu", NULL, ImGuiWindowFlags_NoDecoration );
+
+			if( is_spectating ) {
+				GameMenuButton( "Join the game", "join", &should_close );
+			}
+			else {
+				GameMenuButton( "Spectate", "spec", &should_close );
+
+				if( can_ready )
+					GameMenuButton( "Ready", "ready", &should_close );
+				if( can_unready )
+					GameMenuButton( "Uneady", "unready", &should_close );
+			}
+
+			GameMenuButton( "Change loadout", "gametypemenu", &should_close );
+
+			if( ImGui::Button( "Settings", ImVec2( -1, 0 ) ) ) {
+				gamemenu_state = GameMenuState_Settings;
+				settings_state = SettingsState_General;
+			}
+
+			GameMenuButton( "Disconnect to main menu", "disconnect", &should_close );
+			GameMenuButton( "Exit to desktop", "quit", &should_close );
+
+			ImGui::End();
+		}
+		else {
+			ImGui::SetNextWindowPosCenter();
+			ImGui::SetNextWindowSize( ImVec2( 600, 500 ) );
+			ImGui::Begin( "settings", NULL, ImGuiWindowFlags_NoDecoration );
+
+			Settings();
+
+			ImGui::End();
+		}
+
+		if( pressed_key == K_ESCAPE || should_close ) {
+			CL_SetKeyDest( key_game );
+			gamemenu_state = GameMenuState_Hidden;
+		}
+
+		ImGui::PopStyleColor();
+	}
+
+	// ImGui::ShowDemoWindow();
+
+	ImGui::Render();
+	ImGui_ImplOpenGL3_RenderDrawData( ImGui::GetDrawData() );
+
+	Cbuf_Execute();
 }
 
-/*
-* CL_UIModule_KeyEvent
-*/
+void CL_UIModule_UpdateConnectScreen( bool background ) {
+	uistate = UIState_Connecting;
+	CL_UIModule_Refresh( background, false );
+}
+
 void CL_UIModule_KeyEvent( bool mainContext, int key, bool down ) {
-	if( uie ) {
-		uie->KeyEvent( mainContext ? UI_CONTEXT_MAIN : UI_CONTEXT_OVERLAY, key, down );
+	if( down ) {
+		pressed_key = key;
+	}
+
+	if( key != K_ESCAPE ) {
+		if( key == K_MWHEELDOWN || key == K_MWHEELUP ) {
+			if( down )
+				ImGui::GetIO().MouseWheel += key == K_MWHEELDOWN ? -1 : 1;
+		}
+		else {
+			ImGui::GetIO().KeysDown[ key ] = down;
+		}
 	}
 }
 
-/*
-* CL_UIModule_KeyEventQuick
-*/
-void CL_UIModule_KeyEventQuick( int key, bool down ) {
-	if( uie ) {
-		uie->KeyEvent( UI_CONTEXT_OVERLAY, key, down );
-	}
-}
-
-/*
-* CL_UIModule_CharEvent
-*/
 void CL_UIModule_CharEvent( bool mainContext, wchar_t key ) {
-	if( uie ) {
-		uie->CharEvent( mainContext ? UI_CONTEXT_MAIN : UI_CONTEXT_OVERLAY, key );
-	}
+	ImGui::GetIO().AddInputCharacter( key );
 }
 
-/*
-* CL_UIModule_ForceMenuOn
-*/
-void CL_UIModule_ForceMenuOn( void ) {
-	if( uie ) {
-		Cbuf_ExecuteText( EXEC_NOW, "menu_force 1" );
-	}
+void CL_UIModule_ForceMenuOn() {
+	uistate = UIState_MainMenu;
+	mainmenu_state = MainMenuState_ServerBrowser;
+	CL_SoundModule_StartMenuMusic();
+	RefreshServerBrowser();
 }
 
-/*
-* CL_UIModule_ForceMenuOff
-*/
-void CL_UIModule_ForceMenuOff( void ) {
-	if( uie ) {
-		uie->ForceMenuOff();
-	}
+void CL_UIModule_ForceMenuOff() {
+	uistate = UIState_InGame;
+	gamemenu_state = GameMenuState_Hidden;
 }
 
-/*
-* CL_UIModule_ShowOverlayMenu
-*/
+void CL_UIModule_ToggleGameMenu( bool spectating, bool ready, bool unready ) {
+	gamemenu_state = gamemenu_state == GameMenuState_Hidden ? GameMenuState_Menu : GameMenuState_Hidden;
+	pressed_key = -1;
+	is_spectating = spectating;
+	can_ready = ready;
+	can_unready = unready;
+}
+
+void CL_UIModule_ToggleDemoMenu() {
+}
+
 void CL_UIModule_ShowOverlayMenu( bool show, bool showCursor ) {
-	if( uie ) {
-		uie->ShowOverlayMenu( show, showCursor );
-	}
 }
 
-/*
-* CL_UIModule_HaveOverlayMenu
-*/
-bool CL_UIModule_HaveOverlayMenu( void ) {
-	if( uie ) {
-		return uie->HaveOverlayMenu();
-	}
+bool CL_UIModule_HaveOverlayMenu() {
 	return false;
 }
 
-/*
-* CL_UIModule_AddToServerList
-*/
-void CL_UIModule_AddToServerList( const char *adr, const char *info ) {
-	if( uie ) {
-		uie->AddToServerList( adr, info );
+void CL_UIModule_AddToServerList( const char * address, const char *info ) {
+	if( size_t( num_servers ) < ARRAY_COUNT( servers ) ) {
+		servers[ num_servers ].address = strdup( address );
+		servers[ num_servers ].info = strdup( info );
+		num_servers++;
 	}
 }
 
-/*
-* CL_UIModule_MouseSet
-*/
 void CL_UIModule_MouseSet( bool mainContext, int mx, int my, bool showCursor ) {
-	if( uie ) {
-		uie->MouseSet( mainContext ? UI_CONTEXT_MAIN : UI_CONTEXT_OVERLAY, mx, my, showCursor );
-	}
 }
 
-/*
-* CL_UIModule_MouseHover
-*/
 bool CL_UIModule_MouseHover( bool mainContext ) {
-	if( uie ) {
-		return uie->MouseHover( mainContext ? UI_CONTEXT_MAIN : UI_CONTEXT_OVERLAY );
-	}
 	return false;
 }

@@ -51,7 +51,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define APP_URI_SCHEME                  "diesel://"
 #define APP_URI_PROTO_SCHEME            "diesel" STR_TOSTR( APP_PROTOCOL_VERSION ) "://"
 
-#define APP_UI_BASEPATH                 "ui/baseui"
 #define APP_STARTUP_COLOR               0x1c1416
 
 //

@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
 #include "cg_local.h"
+#include "client/keys.h"
 
 static bool cg_inputCenterView;
 static float cg_inputCenterViewPitch;
@@ -176,7 +177,7 @@ void CG_GetBoundKeysString( const char *cmd, char *keys, size_t keysSize ) {
 	memset( charKeys, 0, sizeof( charKeys ) );
 
 	for( key = 0; key < 256; key++ ) {
-		bind = trap_Key_GetBindingBuf( key );
+		bind = Key_GetBindingBuf( key );
 		if( !bind || Q_stricmp( bind, cmd ) ) {
 			continue;
 		}
@@ -185,12 +186,14 @@ void CG_GetBoundKeysString( const char *cmd, char *keys, size_t keysSize ) {
 			charKeys[numKeys][0] = key - ( 'a' - 'A' );
 			keyNames[numKeys] = charKeys[numKeys];
 		} else {
-			keyNames[numKeys] = trap_Key_KeynumToString( key );
+			keyNames[numKeys] = Key_KeynumToString( key );
 		}
 
-		numKeys++;
-		if( numKeys == 2 ) {
-			break;
+		if( keyNames[numKeys] != NULL ) {
+			numKeys++;
+			if( numKeys == 2 ) {
+				break;
+			}
 		}
 	}
 

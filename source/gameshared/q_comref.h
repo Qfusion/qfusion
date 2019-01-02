@@ -195,7 +195,7 @@ typedef struct {
 
 //==============================================
 
-// masterservers cvar is shared by client and server. This ensures both have the same default string
+constexpr const char * MASTER_SERVERS[] = { "dpmaster.deathmask.net", "ghdigital.com", "excalibur.nvg.ntnu.no" };
 #define DEFAULT_MASTER_SERVERS_IPS          "dpmaster.deathmask.net ghdigital.com excalibur.nvg.ntnu.no"
 #define DEFAULT_MASTER_SERVERS_STEAM_IPS    "208.64.200.65:27015 208.64.200.39:27011 208.64.200.52:27011"
 #define SERVER_PINGING_TIMEOUT              50

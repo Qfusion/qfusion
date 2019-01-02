@@ -8,7 +8,6 @@ build_script:
 - cmd: ..\goodbuild\ducible.exe build\Release\client.exe
 - cmd: ..\goodbuild\ducible.exe build\Release\server.exe
 - cmd: ..\goodbuild\ducible.exe build\Release\base\game.dll
-- cmd: ..\goodbuild\ducible.exe build\Release\libs\ui.dll
 
 artifacts:
 - path: source/build/Release

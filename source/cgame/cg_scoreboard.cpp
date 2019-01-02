@@ -988,17 +988,6 @@ void SCR_UpdatePlayerStatsMessage( const char *string ) {
 }
 
 /*
-* CG_ToggleScores_f
-*/
-void CG_ToggleScores_f( void ) {
-	if( cgs.demoPlaying || cg.frame.multipov ) {
-		cg.showScoreboard = !cg.showScoreboard;
-	} else {
-		trap_Cmd_ExecuteText( EXEC_NOW, "svscore" );
-	}
-}
-
-/*
 * CG_ScoresOn_f
 */
 void CG_ScoresOn_f( void ) {

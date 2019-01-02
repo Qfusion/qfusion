@@ -483,7 +483,7 @@ void IN_Frame() {
 			SDL_SetRelativeMouseMode( SDL_TRUE );
 		}
 	}
-	else if( cls.key_dest == key_console ) {
+	else if( cls.key_dest == key_console || cls.key_dest == key_menu ) {
 		SDL_SetRelativeMouseMode( SDL_FALSE );
 		SDL_ShowCursor( SDL_ENABLE );
 	}

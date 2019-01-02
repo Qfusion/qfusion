@@ -18,8 +18,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#ifndef __Q_KEYCODES_H__
-#define __Q_KEYCODES_H__
+#pragma once
 
 //
 // these are the key numbers that should be passed to Key_Event
@@ -129,5 +128,3 @@ typedef enum {
 //
 #define KC_CTRLC 3
 #define KC_CTRLV 22
-
-#endif // __Q_KEYCODES_H__

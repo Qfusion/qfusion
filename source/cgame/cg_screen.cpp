@@ -35,6 +35,7 @@ end of unit intermissions
 #include "cg_local.h"
 #include "qcommon/qcommon.h"
 #include "qalgo/rng.h"
+#include "client/client.h"
 
 vrect_t scr_vrect;
 
@@ -194,14 +195,12 @@ void CG_ScreenInit( void ) {
 	// register our commands
 	//
 	trap_Cmd_AddCommand( "help_hud", Cmd_CG_PrintHudHelp_f );
-	trap_Cmd_AddCommand( "gamemenu", CG_GameMenu_f );
 }
 
 /*
 * CG_ScreenShutdown
 */
 void CG_ScreenShutdown( void ) {
-	trap_Cmd_RemoveCommand( "gamemenu" );
 	trap_Cmd_RemoveCommand( "help_hud" );
 
 	trap_Cmd_RemoveCommand( "+overlayMenu" );
@@ -901,73 +900,27 @@ void CG_DrawRSpeeds( int x, int y, int align, struct qfontface_s *font, const ve
 //=============================================================================
 
 /*
-* CG_OverlayMenu
-*/
-static void CG_OverlayMenu( void ) {
-	static char menuparms[MAX_STRING_CHARS];
-	int is_challenger = 0, needs_ready = 0, is_ready = 0;
-	int realteam = cg.predictedPlayerState.stats[STAT_REALTEAM];
-
-	if( GS_HasChallengers() && realteam == TEAM_SPECTATOR ) {
-		is_challenger = ( ( cg.predictedPlayerState.stats[STAT_LAYOUTS] & STAT_LAYOUT_CHALLENGER ) != 0 );
-	}
-
-	if( GS_MatchState() <= MATCH_STATE_WARMUP && realteam != TEAM_SPECTATOR ) {
-		needs_ready = !( cg.predictedPlayerState.stats[STAT_LAYOUTS] & STAT_LAYOUT_READY );
-	}
-
-	if( GS_MatchState() <= MATCH_STATE_WARMUP && realteam != TEAM_SPECTATOR ) {
-		is_ready = ( ( cg.predictedPlayerState.stats[STAT_LAYOUTS] & STAT_LAYOUT_READY ) != 0 );
-	}
-
-	Q_snprintfz( menuparms, sizeof( menuparms ),
-				 "menu_open game"
-				 " is_teambased %i"
-				 " team %i"
-				 " queue %i"
-				 " needs_ready %i"
-				 " is_ready %i"
-				 " gametype \"%s\""
-				 " has_gametypemenu %i"
-				 " team_spec %i"
-				 " team_list \"%i %i\"",
-
-				 GS_TeamBasedGametype(),
-				 realteam,
-				 ( realteam == TEAM_SPECTATOR ) ? ( GS_HasChallengers() + is_challenger ) : 0,
-				 needs_ready,
-				 is_ready,
-				 gs.gametypeName,
-				 cgs.hasGametypeMenu,
-				 TEAM_SPECTATOR,
-				 TEAM_ALPHA, TEAM_BETA
-				 );
-
-	trap_Cmd_ExecuteText( EXEC_NOW, menuparms );
-}
-
-/*
-* CG_GameMenu_f
-*/
-void CG_GameMenu_f( void ) {
-	if( cgs.demoPlaying ) {
-		trap_Cmd_ExecuteText( EXEC_NOW, "menu_open demoplay\n" );
-		return;
-	}
-
-	// if the menu is up, close it
-	if( CG_IsScoreboardShown() ) {
-		trap_Cmd_ExecuteText( EXEC_NOW, "cmd putaway\n" );
-	}
-
-	CG_OverlayMenu();
-}
-
-/*
 * CG_EscapeKey
 */
 void CG_EscapeKey( void ) {
-	CG_GameMenu_f();
+	if( cgs.demoPlaying ) {
+		CL_UIModule_ToggleDemoMenu();
+		return;
+	}
+
+	int team = cg.predictedPlayerState.stats[STAT_REALTEAM];
+	bool can_ready = false;
+	bool can_unready = false;
+
+	if( GS_MatchState() <= MATCH_STATE_WARMUP && team != TEAM_SPECTATOR ) {
+		bool ready = ( cg.predictedPlayerState.stats[STAT_LAYOUTS] & STAT_LAYOUT_READY ) != 0;
+		if( ready )
+			can_unready = true;
+		else
+			can_ready = true;
+	}
+
+	CL_UIModule_ToggleGameMenu( team == TEAM_SPECTATOR, can_ready, can_unready );
 }
 
 //=============================================================================

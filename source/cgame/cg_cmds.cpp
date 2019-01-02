@@ -1015,7 +1015,6 @@ typedef struct
 
 static const cgcmd_t cgcmds[] =
 {
-	{ "score", CG_ToggleScores_f, true },
 	{ "+scores", CG_ScoresOn_f, true },
 	{ "-scores", CG_ScoresOff_f, true },
 	{ "demoget", CG_Cmd_DemoGet_f, false },

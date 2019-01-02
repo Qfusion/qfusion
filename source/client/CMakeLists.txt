@@ -3,12 +3,14 @@ project(${QFUSION_CLIENT_NAME})
 include_directories(${FREETYPE_INCLUDE_DIR})
 
 add_definitions(-DAL_LIBTYPE_STATIC)
+add_definitions(-DIMGUI_IMPL_OPENGL_LOADER_CUSTOM=\"client/renderer/glad.h\")
 
 file(GLOB CLIENT_HEADERS
 	"*.h"
 	"renderer/*.h"
 	"ftlib/*.h"
 	"sound/*.h"
+	"ui/*.h"
 	"../gameshared/*.h"
 	"../gameshared/angelwrap/*.h"
 	"../gameshared/angelwrap/addon/*.h"
@@ -16,7 +18,6 @@ file(GLOB CLIENT_HEADERS
 	"../qalgo/*.h"
 	"../cgame/*.h"
 	"../game/g_public.h"
-	"../ui/ui_public.h"
 	"../server/*.h"
 	)
 
@@ -34,6 +35,7 @@ file(GLOB CLIENT_COMMON_SOURCES
 	"renderer/*.cpp"
 	"sdl/*.cpp"
 	"sound/*.cpp"
+	"ui/*.cpp"
 	)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
@@ -79,7 +81,7 @@ if (CMAKE_BUILD_TYPE STREQUAL "Release")
 endif()
 
 add_executable(${QFUSION_CLIENT_NAME} ${CLIENT_BINARY_TYPE} ${CLIENT_HEADERS} ${CLIENT_PLATFORM_HEADERS} ${CLIENT_COMMON_SOURCES} ${CLIENT_PLATFORM_SOURCES})
-add_dependencies(${QFUSION_CLIENT_NAME} game ui)
+add_dependencies(${QFUSION_CLIENT_NAME} game)
 
 target_link_libraries(${QFUSION_CLIENT_NAME} PRIVATE ${CURL_LIBRARIES} ${SDL2_LIBRARY} ${ZLIB_LIBRARY} ${FREETYPE_LIBRARY} ${OPENAL_LIBRARY} ${ANGELSCRIPT_LIBRARY} ${CLIENT_PLATFORM_LIBRARIES})
 qf_set_output_dir(${QFUSION_CLIENT_NAME} "")

@@ -22,20 +22,6 @@ static inline cvar_flag_t Cvar_FlagUnset( cvar_flag_t *flags, cvar_flag_t flag )
 static inline cvar_flag_t Cvar_FlagsClear( cvar_flag_t *flags );
 static inline bool Cvar_FlagIsSet( cvar_flag_t flags, cvar_flag_t flag );
 
-// inlined function declarations
-
-static inline const char *Cvar_GetName( const cvar_t *var );
-static inline const char *Cvar_GetLatchedString( const cvar_t *var );
-static inline const char *Cvar_GetDefaultValue( const cvar_t *var );
-static inline const char *Cvar_GetStringValue( const cvar_t *var );
-static inline float     Cvar_GetFloatValue( const cvar_t *var );
-static inline int       Cvar_GetIntegerValue( const cvar_t *var );
-static inline cvar_flag_t   Cvar_GetFlags( const cvar_t *var );
-
-static inline bool      Cvar_IsModified( const cvar_t *var );
-static inline void      Cvar_SetModified( cvar_t *var );
-static inline void      Cvar_UnsetModified( cvar_t *var );
-
 // Medar: undefined untill used, so gcc doesn't whine
 //static inline cvar_type_t	Cvar_GetType(const cvar_t *var);
 
@@ -81,36 +67,8 @@ char *Cvar_Serverinfo( void );
 
 // inlined function implementations
 
-static inline const char *Cvar_GetName( const cvar_t *var ) {
-	return var->name;
-}
-static inline const char *Cvar_GetLatchedString( const cvar_t *var ) {
-	return var->latched_string;
-}
-static inline const char *Cvar_GetDefaultValue( const cvar_t *var ) {
-	return var->dvalue;
-}
-static inline const char *Cvar_GetStringValue( const cvar_t *var ) {
-	return var->string;
-}
-static inline float Cvar_GetFloatValue( const cvar_t *var ) {
-	return var->value;
-}
-static inline int Cvar_GetIntegerValue( const cvar_t *var ) {
-	return var->integer;
-}
-static inline cvar_flag_t Cvar_GetFlags( const cvar_t *var ) {
-	return var->flags;
-}
-
-static inline bool Cvar_IsModified( const cvar_t *var ) {
-	return var->modified;
-}
 static inline void Cvar_SetModified( cvar_t *var ) {
-	var->modified = ( bool )1;
-}
-static inline void Cvar_UnsetModified( cvar_t *var ) {
-	var->modified = ( bool )0;
+	var->modified = true;
 }
 
 static inline cvar_flag_t Cvar_FlagSet( cvar_flag_t *flags, cvar_flag_t flag ) {

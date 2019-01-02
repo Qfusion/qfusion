@@ -385,18 +385,20 @@ void CL_SoundModule_StopAviDemo();
 //
 // cl_ui.c
 //
-void CL_UIModule_Init( void );
-void CL_UIModule_Shutdown( void );
-void CL_UIModule_TouchAllAssets( void );
+void CL_UIModule_Init();
+void CL_UIModule_Shutdown();
+void CL_UIModule_TouchAllAssets();
 void CL_UIModule_KeyEvent( bool mainContext, int key, bool down );
-void CL_UIModule_KeyEventQuick( int key, bool down );
 void CL_UIModule_CharEvent( bool mainContext, wchar_t key );
 void CL_UIModule_Refresh( bool backGround, bool showCursor );
 void CL_UIModule_UpdateConnectScreen( bool backGround );
-void CL_UIModule_ForceMenuOn( void );
-void CL_UIModule_ForceMenuOff( void );
+void CL_UIModule_ForceMenuOn();
+void CL_UIModule_ForceMenuOff();
+void CL_UIModule_ToggleGameMenu( bool spectating, bool can_ready, bool can_unready );
+void CL_UIModule_ToggleDemoMenu();
+void CL_UIModule_ForceMenuOff();
 void CL_UIModule_ShowOverlayMenu( bool show, bool showCursor );
-bool CL_UIModule_HaveOverlayMenu( void );
+bool CL_UIModule_HaveOverlayMenu();
 void CL_UIModule_AddToServerList( const char *adr, const char *info );
 void CL_UIModule_MouseSet( bool mainContext, int mx, int my, bool showCursor );
 bool CL_UIModule_MouseHover( bool mainContext );
