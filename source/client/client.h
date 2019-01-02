@@ -398,7 +398,6 @@ void CL_UIModule_ForceMenuOff( void );
 void CL_UIModule_ShowOverlayMenu( bool show, bool showCursor );
 bool CL_UIModule_HaveOverlayMenu( void );
 void CL_UIModule_AddToServerList( const char *adr, const char *info );
-void CL_UIModule_MouseMove( bool mainContext, int frameTime, int dx, int dy );
 void CL_UIModule_MouseSet( bool mainContext, int mx, int my, bool showCursor );
 bool CL_UIModule_MouseHover( bool mainContext );
 

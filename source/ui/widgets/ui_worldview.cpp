@@ -42,9 +42,6 @@ private:
 	vec3_t aWavePhase;
 	vec3_t aWaveFrequency;
 	float fovY;
-	float mouseSensitivity;
-	vec3_t anglesMove;
-	vec3_t anglesClamp;
 	String mapName;
 	String colorCorrection;
 	struct shader_s *colorCorrectionShader;
@@ -64,13 +61,9 @@ public:
 		VectorClear( aWavePhase );
 		VectorClear( aWaveFrequency );
 
-		VectorClear( anglesMove );
-		VectorClear( anglesClamp );
-
 		// Some default values
 		Matrix3_Copy( axis_identity, refdef.viewaxis );
 		fovY = 100.0f;
-		mouseSensitivity = 0.0f;
 
 		InitLightStyles();
 	}
@@ -79,7 +72,6 @@ public:
 		bool firstRender = false;
 		Rocket::Core::Dictionary parameters;
 		auto *ui_main = UI_Main::Get();
-		int mousedx, mousedy;
 		vec3_t viewAngles;
 
 		Element::OnRender();
@@ -103,8 +95,6 @@ public:
 			this->DispatchEvent( "registerworldmodel", parameters, false );
 		}
 
-		ui_main->getMouseMoveDelta( &mousedx, &mousedy );
-
 		// refdef setup
 		Rocket::Core::Vector2f box = GetBox().GetSize( Rocket::Core::Box::CONTENT );
 		refdef.width = box.x;
@@ -113,20 +103,9 @@ public:
 		refdef.fov_x = CalcHorizontalFov( refdef.fov_y, refdef.width, refdef.height );
 		refdef.time = ui_main->getRefreshState().time;
 
-		anglesMove[PITCH] += mousedy * mouseSensitivity * 0.022;
-		anglesMove[YAW] -= mousedx * mouseSensitivity * 0.022;
-
 		// angular movement for camera
 		for( int i = 0; i < 3; i++ ) {
-			float delta = anglesMove[i] + aWaveAmplitude[i] * sin( aWavePhase[i] + refdef.time * 0.001 * aWaveFrequency[i] * M_TWOPI );
-			if( anglesClamp[i] ) {
-				if( delta < -anglesClamp[i] ) {
-					delta = -anglesClamp[i];
-				}
-				if( delta >  anglesClamp[i] ) {
-					delta =  anglesClamp[i];
-				}
-			}
+			float delta = aWaveAmplitude[i] * sin( aWavePhase[i] + refdef.time * 0.001 * aWaveFrequency[i] * M_TWOPI );
 			viewAngles[i] = baseAngles[i] + delta;
 		}
 
@@ -195,14 +174,6 @@ public:
 				fovY = atof( GetProperty( *it )->Get<String>().CString() );
 			} else if( *it == "color-correction" ) {
 				colorCorrection = GetProperty( *it )->Get<String>();
-			} else if( *it == "mouse-sensitivity" ) {
-				mouseSensitivity = atof( GetProperty( *it )->Get<String>().CString() );
-			} else if( *it == "viewangle-pitch-clamp" ) {
-				anglesClamp[0] = atof( GetProperty( *it )->Get<String>().CString() );
-			} else if( *it == "viewangle-yaw-clamp" ) {
-				anglesClamp[1] = atof( GetProperty( *it )->Get<String>().CString() );
-			} else if( *it == "viewangle-roll-clamp" ) {
-				anglesClamp[2] = atof( GetProperty( *it )->Get<String>().CString() );
 			} else if( *it == "blur" ) {
 				int blur = atoi( GetProperty( *it )->Get<String>().CString() );
 				if( blur ) {

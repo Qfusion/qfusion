@@ -483,15 +483,6 @@ void CL_UIModule_AddToServerList( const char *adr, const char *info ) {
 }
 
 /*
-* CL_UIModule_MouseMove
-*/
-void CL_UIModule_MouseMove( bool mainContext, int frameTime, int dx, int dy ) {
-	if( uie ) {
-		uie->MouseMove( mainContext ? UI_CONTEXT_MAIN : UI_CONTEXT_OVERLAY, frameTime, dx, dy );
-	}
-}
-
-/*
 * CL_UIModule_MouseSet
 */
 void CL_UIModule_MouseSet( bool mainContext, int mx, int my, bool showCursor ) {

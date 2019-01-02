@@ -216,7 +216,6 @@ typedef struct {
 	void ( *KeyEvent )( int context, int key, bool down );
 	void ( *CharEvent )( int context, wchar_t key );
 
-	void ( *MouseMove )( int context, int frameTime, int dx, int dy );
 	void ( *MouseSet )( int context, int mx, int my, bool showCursor );
 
 	/**

@@ -201,7 +201,7 @@ void UI_Main::preloadUI( void ) {
 	showNavigationStack = navigator->hasDocuments();
 
 	// initial cursor setup
-	mouseMove( UI_CONTEXT_MAIN, 0, refreshState.width >> 1, refreshState.height >> 1, true, true );
+	mouseMove( UI_CONTEXT_MAIN, 0, refreshState.width >> 1, refreshState.height >> 1, true );
 
 	if( !overlayMenuURL.Empty() ) {
 		navigator = navigations[UI_CONTEXT_OVERLAY].front();
@@ -473,20 +473,9 @@ bool UI_Main::preloadEnabled( void ) {
 
 // CALLBACKS FROM MAIN PROGRAM
 
-void UI_Main::mouseMove( int contextId, int frameTime, int x, int y, bool absolute, bool showCursor ) {
-	int oldmousex, oldmousey;
-
-	oldmousex = mousex;
-	oldmousey = mousey;
-
-	// change the delta to window coordinates.
-	if( absolute ) {
-		mousex = x;
-		mousey = y;
-	} else {
-		mousex += x;
-		mousey += y;
-	}
+void UI_Main::mouseMove( int contextId, int frameTime, int x, int y, bool showCursor ) {
+	mousex = x;
+	mousey = y;
 
 	if( mousex < 0 ) {
 		mousex = 0;
@@ -497,14 +486,6 @@ void UI_Main::mouseMove( int contextId, int frameTime, int x, int y, bool absolu
 		mousey = 0;
 	} else if( mousey > refreshState.height ) {
 		mousey = refreshState.height;
-	}
-
-	if( absolute ) {
-		mousedx = 0;
-		mousedy = 0;
-	} else {
-		mousedx = mousex - oldmousex;
-		mousedy = mousey - oldmousey;
 	}
 
 	rocketModule->mouseMove( contextId, mousex, mousey );
@@ -530,11 +511,6 @@ void UI_Main::keyEvent( int contextId, int key, bool pressed ) {
 }
 
 bool ( *MouseHover )( int context );
-
-void UI_Main::getMouseMoveDelta( int *dx, int *dy ) {
-	*dx = mousedx;
-	*dy = mousedy;
-}
 
 void UI_Main::addToServerList( const char *adr, const char *info ) {
 	if( !serverBrowser ) {

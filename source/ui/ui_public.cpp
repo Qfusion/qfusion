@@ -103,12 +103,6 @@ void CharEvent( int context, wchar_t key ) {
 	}
 }
 
-void MouseMove( int context, int frameTime, int dx, int dy ) {
-	if( ui_main ) {
-		ui_main->mouseMove( context, frameTime, dx, dy, false, true );
-	}
-}
-
 bool MouseHover( int context ) {
 	if( ui_main ) {
 		return ui_main->mouseHover( context );
@@ -118,7 +112,7 @@ bool MouseHover( int context ) {
 
 void MouseSet( int context, int mx, int my, bool showCursor ) {
 	if( ui_main ) {
-		ui_main->mouseMove( context, 0, mx, my, true, showCursor );
+		ui_main->mouseMove( context, 0, mx, my, showCursor );
 	}
 }
 
@@ -168,7 +162,6 @@ ui_export_t *GetUIAPI( ui_import_t *import ) {
 
 	globals.KeyEvent = WSWUI::KeyEvent;
 	globals.CharEvent = WSWUI::CharEvent;
-	globals.MouseMove = WSWUI::MouseMove;
 	globals.MouseHover = WSWUI::MouseHover;
 	globals.MouseSet = WSWUI::MouseSet;
 

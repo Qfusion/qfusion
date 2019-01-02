@@ -63,11 +63,10 @@ public:
 	void forceMenuOff( void );
 	void addToServerList( const char *adr, const char *info );
 
-	void mouseMove( int contextId, int frameTime, int x, int y, bool absolute, bool showCursor );
+	void mouseMove( int contextId, int frameTime, int x, int y, bool showCursor );
 	bool mouseHover( int contextId );
 	void textInput( int contextId, wchar_t c );
 	void keyEvent( int contextId, int key, bool pressed );
-	void getMouseMoveDelta( int *dx, int *dy );
 
 	// Commands (these could be private)
 	static void ReloadUI_Cmd_f( void );
