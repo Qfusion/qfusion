@@ -114,13 +114,9 @@ void Move( int mx, int my ) {
 */
 Vec3 GetAngularMovement() {
 	Vec3 move;
-
-	if( mouse_x != 0.0 || mouse_y != 0.0 ) {
-		// add mouse X/Y movement to cmd
-		move[YAW] -= 0.022 * horizontalSensScale.value * mouse_x;
-		move[PITCH] += 0.022 * mouse_y;
-	}
-	
+	// m_pitch/m_yaw used to default to 0.022
+	move[YAW] -= 0.022 * horizontalSensScale.value * mouse_x;
+	move[PITCH] += 0.022 * mouse_y;
 	return move;
 }
 
