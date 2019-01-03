@@ -438,45 +438,43 @@ static void PopDisabled( bool disabled ) {
 // vid_mode WIDTHxHEIGHT [FB MonitorIdx Hz]
 
 static void SettingsVideo() {
-	static VideoMode selected_mode;
+	static WindowMode mode;
 
 	if( reset_video_settings ) {
-		selected_mode = VID_GetCurrentVideoMode();
+		mode = VID_GetWindowMode();
 		reset_video_settings = false;
 	}
 
 	SettingLabel( "Fullscreen" );
-	bool fullscreen = selected_mode.fullscreen != FullScreenMode_Windowed;
+	bool fullscreen = mode.fullscreen != FullScreenMode_Windowed;
 	ImGui::Checkbox( "##vid_fullscreen", &fullscreen );
 
 	PushDisabled( !fullscreen );
 
 	SettingLabel( "Borderless fullscreen" );
-	bool borderless = selected_mode.fullscreen == FullScreenMode_FullscreenBorderless;
+	bool borderless = mode.fullscreen == FullScreenMode_FullscreenBorderless;
 	ImGui::Checkbox( "##borderless", &borderless );
 
-	selected_mode.fullscreen = FullScreenMode_Windowed;
+	mode.fullscreen = FullScreenMode_Windowed;
 	if( fullscreen )
-		selected_mode.fullscreen = borderless ? FullScreenMode_FullscreenBorderless : FullScreenMode_Fullscreen;
+		mode.fullscreen = borderless ? FullScreenMode_FullscreenBorderless : FullScreenMode_Fullscreen;
 
 	SettingLabel( "Video mode" );
 	ImGui::PushItemWidth( 200 );
 
 	char preview[ 128 ];
-	Q_snprintfz( preview, sizeof( preview ), "%dx%d %dHz", selected_mode.width, selected_mode.height, selected_mode.frequency );
+	Q_snprintfz( preview, sizeof( preview ), "%dx%d %dHz", mode.video_mode.width, mode.video_mode.height, mode.video_mode.frequency );
 
 	if( ImGui::BeginCombo( "##mode", preview ) ) {
 		for( int i = 0; i < VID_GetNumVideoModes(); i++ ) {
-			VideoMode mode = VID_GetVideoMode( i );
+			VideoMode video_mode = VID_GetVideoMode( i );
 
 			char buf[ 128 ];
-			Q_snprintfz( buf, sizeof( buf ), "%dx%d %dHz", mode.width, mode.height, mode.frequency );
+			Q_snprintfz( buf, sizeof( buf ), "%dx%d %dHz", video_mode.width, video_mode.height, video_mode.frequency );
 
-			bool is_selected = mode.width == selected_mode.width && mode.height == selected_mode.height && mode.frequency == selected_mode.frequency;
+			bool is_selected = mode.video_mode.width == video_mode.width && mode.video_mode.height == video_mode.height && mode.video_mode.frequency == video_mode.frequency;
 			if( ImGui::Selectable( buf, is_selected ) ) {
-				selected_mode.width = mode.width;
-				selected_mode.height = mode.height;
-				selected_mode.frequency = mode.frequency;
+				mode.video_mode = video_mode;
 			}
 		}
 		ImGui::EndCombo();
@@ -486,7 +484,9 @@ static void SettingsVideo() {
 	PopDisabled( !fullscreen );
 
 	if( ImGui::Button( "Apply mode changes" ) ) {
-		VID_SetVideoMode( selected_mode );
+		char buf[ 128 ];
+		VID_WindowModeToString( buf, sizeof( buf ), mode );
+		Cvar_Set( "vid_mode", buf );
 	}
 
 	ImGui::SameLine();

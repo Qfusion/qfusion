@@ -181,14 +181,22 @@ static bool InitGL( int stencilbits ) {
 	return true;
 }
 
-void VID_WindowInit( VideoMode mode, int stencilbits ) {
+void VID_WindowInit( WindowMode mode, int stencilbits ) {
 	uint32_t flags = SDL_WINDOW_OPENGL;
 	if( mode.fullscreen == FullScreenMode_Fullscreen )
 		flags |= SDL_WINDOW_FULLSCREEN;
 	if( mode.fullscreen == FullScreenMode_FullscreenBorderless )
 		flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
 
-	sdl_window = SDL_CreateWindow( "Cocaine Diesel", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, mode.width, mode.height, flags );
+	if( mode.x == -1 && mode.y == -1 ) {
+		mode.x = SDL_WINDOWPOS_CENTERED;
+		mode.y = SDL_WINDOWPOS_CENTERED;
+	}
+
+	sdl_window = SDL_CreateWindow( "Cocaine Diesel", mode.x, mode.y, mode.video_mode.width, mode.video_mode.height, flags );
+	if( mode.fullscreen != FullScreenMode_Windowed ) {
+		VID_SetVideoMode( mode.video_mode ); // also set frequency
+	}
 
 	if( sdl_window == NULL ) {
 		Sys_Error( "Couldn't create window: \"%s\"", SDL_GetError() );
@@ -246,9 +254,11 @@ VideoMode VID_GetVideoMode( int i ) {
 	return mode;
 }
 
-static VideoMode sdl_to_videomode( SDL_DisplayMode sdl_mode ) {
+VideoMode VID_GetCurrentVideoMode() {
+	SDL_DisplayMode sdl_mode;
+	SDL_GetCurrentDisplayMode( 0, &sdl_mode );
+
 	VideoMode mode;
-	memset( &mode, 0, sizeof( mode ) );
 	mode.width = sdl_mode.w;
 	mode.height = sdl_mode.h;
 	mode.frequency = sdl_mode.refresh_rate;
@@ -256,11 +266,22 @@ static VideoMode sdl_to_videomode( SDL_DisplayMode sdl_mode ) {
 	return mode;
 }
 
-VideoMode VID_GetDefaultVideoMode() {
-	SDL_DisplayMode sdl_mode;
-	SDL_GetDesktopDisplayMode( 0, &sdl_mode );
+void VID_SetVideoMode( VideoMode mode ) {
+	SDL_DisplayMode default_sdl_mode;
+	SDL_GetDesktopDisplayMode( 0, &default_sdl_mode );
 
-	VideoMode mode = sdl_to_videomode( sdl_mode );
+	SDL_DisplayMode sdl_mode;
+	sdl_mode.w = mode.width;
+	sdl_mode.h = mode.height;
+	sdl_mode.refresh_rate = mode.frequency;
+	sdl_mode.format = default_sdl_mode.format;
+	sdl_mode.driverdata = NULL;
+
+	SDL_SetWindowDisplayMode( sdl_window, &sdl_mode );
+}
+
+WindowMode VID_GetWindowMode() {
+	WindowMode mode = { };
 
 	uint32_t flags = SDL_GetWindowFlags( sdl_window );
 	mode.fullscreen = FullScreenMode_Windowed;
@@ -269,43 +290,36 @@ VideoMode VID_GetDefaultVideoMode() {
 	if( flags & SDL_WINDOW_FULLSCREEN_DESKTOP )
 		mode.fullscreen = FullScreenMode_FullscreenBorderless;
 
+	if( mode.fullscreen == FullScreenMode_Windowed ) {
+		SDL_GetWindowSize( sdl_window, &mode.video_mode.width, &mode.video_mode.height );
+		SDL_GetWindowPosition( sdl_window, &mode.x, &mode.y );
+	}
+	else {
+		mode.video_mode = VID_GetCurrentVideoMode();
+	}
+
 	return mode;
 }
 
-bool VID_SetVideoMode( VideoMode mode ) {
-	if( SDL_SetWindowFullscreen( sdl_window, 0 ) != 0 )
-		return false;
-	SDL_SetWindowSize( sdl_window, mode.width, mode.height );
+void VID_SetWindowMode( WindowMode mode ) {
+	uint32_t flags = 0;
+	if( mode.fullscreen == FullScreenMode_Fullscreen )
+		flags = SDL_WINDOW_FULLSCREEN;
+	if( mode.fullscreen == FullScreenMode_FullscreenBorderless )
+		flags = SDL_WINDOW_FULLSCREEN_DESKTOP;
+	SDL_SetWindowFullscreen( sdl_window, flags );
 
-	if( mode.fullscreen != FullScreenMode_Windowed ) {
-		SDL_DisplayMode default_sdl_mode;
-		if( SDL_GetDesktopDisplayMode( 0, &default_sdl_mode ) != 0 )
-			return false;
-
-		SDL_DisplayMode sdl_mode;
-		memset( &sdl_mode, 0, sizeof( sdl_mode ) );
-		sdl_mode.w = mode.width;
-		sdl_mode.h = mode.height;
-		sdl_mode.refresh_rate = mode.frequency;
-		sdl_mode.format = default_sdl_mode.format;
-
-		if( SDL_SetWindowDisplayMode( sdl_window, &sdl_mode ) != 0 )
-			return false;
-
-		uint32_t flags = SDL_WINDOW_FULLSCREEN;
-		if( mode.fullscreen == FullScreenMode_FullscreenBorderless )
-			flags = SDL_WINDOW_FULLSCREEN_DESKTOP;
-		if( SDL_SetWindowFullscreen( sdl_window, flags ) != 0 )
-			return false;
+	if( mode.fullscreen == FullScreenMode_Windowed ) {
+		SDL_SetWindowSize( sdl_window, mode.video_mode.width, mode.video_mode.height );
+		if( mode.x == -1 && mode.y == -1 ) {
+			mode.x = SDL_WINDOWPOS_CENTERED;
+			mode.y = SDL_WINDOWPOS_CENTERED;
+		}
+		SDL_SetWindowPosition( sdl_window, mode.x, mode.y );
 	}
-
-	return true;
-}
-
-VideoMode VID_GetCurrentVideoMode() {
-	SDL_DisplayMode sdl_mode;
-	SDL_GetCurrentDisplayMode( 0, &sdl_mode );
-	return sdl_to_videomode( sdl_mode );
+	else {
+		VID_SetVideoMode( mode.video_mode );
+	}
 }
 
 bool VID_GetGammaRamp( size_t stride, unsigned short *psize, unsigned short *ramp ) {
