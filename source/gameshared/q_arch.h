@@ -37,7 +37,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <stdlib.h>
 #include <time.h>
 #include <stdint.h>
-#include <stdbool.h>
 #include <stddef.h>
 
 #ifndef __STDC_FORMAT_MACROS
