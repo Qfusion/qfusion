@@ -551,7 +551,6 @@ static char *qasLoadScriptSection( const char *rootDir, const char *dir, const c
 	FS_Read( data, length, filenum );
 	FS_FCloseFile( filenum );
 
-	Com_Printf( "* Loaded script section '%s'\n", filename );
 	return (char *)data;
 }
 
@@ -568,8 +567,6 @@ static asIScriptModule *qasBuildScriptProject( asIScriptEngine *asEngine, const 
 		Com_Printf( S_COLOR_RED "qasBuildGameScript: Angelscript API unavailable\n" );
 		return NULL;
 	}
-
-	Com_Printf( "* Initializing script '%s'\n", scriptName );
 
 	// count referenced script sections
 	for( numSections = 0; ( section = COM_ListNameForPosition( script, numSections, QAS_SECTIONS_SEPARATOR ) ) != NULL; numSections++ ) ;
