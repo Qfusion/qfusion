@@ -679,14 +679,14 @@ struct DamageNumber {
 
 static DamageNumber damage_numbers[ 16 ];
 size_t damage_numbers_head;
-static PCG damage_numbers_rng;
+static RNG damage_numbers_rng;
 
 void CG_InitDamageNumbers() {
 	damage_numbers_head = 0;
 	for( DamageNumber & dn : damage_numbers ) {
 		dn.damage = 0;
 	}
-	damage_numbers_rng = new_pcg();
+	damage_numbers_rng = new_rng();
 }
 
 void CG_AddDamageNumber( entity_state_t * ent ) {

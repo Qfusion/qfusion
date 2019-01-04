@@ -82,22 +82,22 @@ static double asFunc_floor( double x ) {
 	return floor( x );
 }
 
-static PCG pcg;
+static RNG rng;
 
 static uint32_t asFunc_random_uint() {
-	return random_u32( &pcg );
+	return random_u32( &rng );
 }
 
 static int asFunc_random_uniform( int lo, int hi ) {
-	return random_uniform( &pcg, lo, hi );
+	return random_uniform( &rng, lo, hi );
 }
 
 static float asFunc_random_float() {
-	return random_float( &pcg );
+	return random_float( &rng );
 }
 
 void PreRegisterMathAddon( asIScriptEngine *engine ) {
-	pcg = new_pcg();
+	rng = new_rng();
 }
 
 void RegisterMathAddon( asIScriptEngine *engine ) {
