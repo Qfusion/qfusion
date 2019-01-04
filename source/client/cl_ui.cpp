@@ -445,6 +445,8 @@ static void SettingsVideo() {
 		reset_video_settings = false;
 	}
 
+	ImGui::Text( "Changing resolution is buggy and you should restart the game after doing it" );
+
 	SettingLabel( "Fullscreen" );
 	bool fullscreen = mode.fullscreen != FullScreenMode_Windowed;
 	ImGui::Checkbox( "##vid_fullscreen", &fullscreen );
