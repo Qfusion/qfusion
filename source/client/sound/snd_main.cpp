@@ -248,7 +248,7 @@ void S_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis ) {
 
 		ALint state;
 		alGetSourcei( ps->source, AL_SOURCE_STATE, &state );
-		bool not_touched = ps->type == SoundType_AttachedImmediate && ps->touched_since_last_update;
+		bool not_touched = ps->type == SoundType_AttachedImmediate && !ps->touched_since_last_update;
 		ps->touched_since_last_update = false;
 
 		if( not_touched || state == AL_STOPPED ) {
