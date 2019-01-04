@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "qcommon.h"
 #include "cm_local.h"
-#include "qalgo/md5.h"
+#include "qalgo/hash.h"
 
 static bool cm_initialized = false;
 
@@ -232,7 +232,7 @@ cmodel_t *CM_LoadMap( cmodel_state_t *cms, const char *name, bool clientload, un
 		Com_Error( ERR_DROP, "Couldn't load %s", name );
 	}
 
-	cms->checksum = md5_digest32( ( const uint8_t * )buf, length );
+	cms->checksum = Hash32( buf, length );
 	*checksum = cms->checksum;
 
 	// call the apropriate loader

@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "sys_fs.h"
 
-#include "qalgo/md5.h"
+#include "qalgo/hash.h"
 #include "qalgo/q_trie.h"
 
 #include "zlib/zlib.h"
@@ -1597,58 +1597,47 @@ void FS_FreeBaseFile( void *buffer ) {
 * FS_ChecksumAbsoluteFile
 */
 unsigned FS_ChecksumAbsoluteFile( const char *filename ) {
-	uint8_t buffer[FS_MAX_BLOCK_SIZE];
-	int left, length, filenum;
-	md5_byte_t digest[16];
-	md5_state_t state;
-
 	Com_DPrintf( "Calculating checksum for file: %s\n", filename );
 
-	md5_init( &state );
+	uint32_t hash = Hash32( NULL, 0 );
 
-	left = FS_FOpenAbsoluteFile( filename, &filenum, FS_READ );
+	int filenum;
+	int left = FS_FOpenAbsoluteFile( filename, &filenum, FS_READ );
 	if( left == -1 ) {
 		return 0;
 	}
 
+	int length;
+	uint8_t buffer[FS_MAX_BLOCK_SIZE];
 	while( ( length = FS_Read( buffer, sizeof( buffer ), filenum ) ) ) {
 		left -= length;
-		md5_append( &state, (md5_byte_t *)buffer, length );
+		hash = Hash32( buffer, length, hash );
 	}
 
 	FS_FCloseFile( filenum );
-	md5_finish( &state, digest );
 
 	if( left != 0 ) {
 		return 0;
 	}
 
-	return md5_reduce( digest );
+	return hash;
 }
 
 /*
 * FS_ChecksumPK3File
 */
 static unsigned FS_ChecksumPK3File( const char *filename, int numPakFiles, int *checksums ) {
-	md5_byte_t digest[16];
-	md5_state_t state;
-	int pakFileInd;
-
 	Com_DPrintf( "Calculating checksum for file: %s\n", filename );
 
-	md5_init( &state );
+	uint32_t hash = Hash32( NULL, 0 );
 
-	for( pakFileInd = 0; pakFileInd < numPakFiles; pakFileInd++ ) {
-		int fixedChecksum;
-
+	for( int pakFileInd = 0; pakFileInd < numPakFiles; pakFileInd++ ) {
 		// If we're on a big endian architecture, we must swap the checksums before appending them to the MD5 digest
-		fixedChecksum = LittleLong( checksums[pakFileInd] );
-		md5_append( &state, (md5_byte_t *)&fixedChecksum, sizeof( fixedChecksum ) );
+		int fixedChecksum = LittleLong( checksums[pakFileInd] );
+		hash = Hash32( &fixedChecksum, sizeof( fixedChecksum ), hash );
 	}
 
-	md5_finish( &state, digest );
-
-	return md5_reduce( digest );
+	return hash;
 }
 
 /*

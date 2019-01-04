@@ -22,7 +22,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <setjmp.h>
 #include "wswcurl.h"
 #include "qalgo/glob.h"
-#include "qalgo/md5.h"
 #include "gameshared/angelwrap/qas_public.h"
 
 #define MAX_NUM_ARGVS   50
