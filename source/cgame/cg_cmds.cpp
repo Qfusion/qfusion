@@ -388,31 +388,6 @@ void CG_SC_AutoRecordAction( const char *action ) {
 	}
 }
 
-/*
-* CG_SC_ChannelAdd
-*/
-static void CG_SC_ChannelAdd( void ) {
-	char menuparms[MAX_STRING_CHARS];
-
-	Q_snprintfz( menuparms, sizeof( menuparms ), "menu_tvchannel_add %s\n", trap_Cmd_Args() );
-	trap_Cmd_ExecuteText( EXEC_NOW, menuparms );
-}
-
-/*
-* CG_SC_ChannelRemove
-*/
-static void CG_SC_ChannelRemove( void ) {
-	int i, id;
-
-	for( i = 1; i < trap_Cmd_Argc(); i++ ) {
-		id = atoi( trap_Cmd_Argv( i ) );
-		if( id <= 0 ) {
-			continue;
-		}
-		trap_Cmd_ExecuteText( EXEC_NOW, va( "menu_tvchannel_remove %i\n", id ) );
-	}
-}
-
 /**
  * Returns the English match state message.
  *
@@ -740,8 +715,6 @@ static const svcmd_t cg_svcmds[] =
 	{ "mm", CG_SC_MatchMessage },
 	{ "mapmsg", CG_SC_HelpMessage },
 	{ "demoget", CG_SC_DemoGet },
-	{ "cha", CG_SC_ChannelAdd },
-	{ "chr", CG_SC_ChannelRemove },
 	{ "mecu", CG_SC_MenuCustom },
 	{ "meop", CG_SC_MenuOpen },
 	{ "memo", CG_SC_MenuModal },
