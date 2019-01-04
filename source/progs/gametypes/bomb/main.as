@@ -198,14 +198,7 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
 	}
 
 	if( cmdString == "gametypemenu" ) {
-		playerFromClient( @client ).showPrimarySelection();
-
-		return true;
-	}
-
-	if( cmdString == "gametypemenu2" ) {
-		playerFromClient( @client ).showSecondarySelection();
-
+		playerFromClient( @client ).showShop();
 		return true;
 	}
 
@@ -225,22 +218,6 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
 
 	if( cmdString == "cvarinfo" ) {
 		GENERIC_CheatVarResponse( @client, cmdString, argsString, argc );
-
-		return true;
-	}
-
-	if( cmdString == "callvotevalidate" ) {
-		String votename = argsString.getToken( 0 );
-
-		client.printMessage( "Unknown callvote " + votename + "\n" );
-
-		return false;
-
-	}
-
-	if( cmdString == "callvotepassed" ) {
-		String votename = argsString.getToken( 0 );
-
 		return true;
 	}
 
@@ -382,10 +359,6 @@ void GT_PlayerRespawn( Entity @ent, int old_team, int new_team ) {
 	if( new_team != old_team ) {
 		if( @ent == @bombCarrier ) {
 			bombDrop( BombDrop_Team );
-		}
-
-		if( old_team != TEAM_SPECTATOR && new_team != TEAM_SPECTATOR ) {
-			player.showPrimarySelection();
 		}
 
 		if( matchState == MATCH_STATE_PLAYTIME ) {

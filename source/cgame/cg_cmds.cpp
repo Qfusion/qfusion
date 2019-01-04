@@ -19,6 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "cg_local.h"
+#include "client/ui.h"
 
 /*
 ==========================================================================
@@ -579,34 +580,6 @@ static void CG_SC_MOTD( void ) {
 }
 
 /*
-* CG_SC_MenuCustom
-*/
-static void CG_SC_MenuCustom( void ) {
-	char request[MAX_STRING_CHARS];
-	int i, c;
-
-	if( cgs.demoPlaying ) {
-		return;
-	}
-
-	if( trap_Cmd_Argc() < 2 ) {
-		return;
-	}
-
-	Q_strncpyz( request, va( "menu_open custom title \"%s\" ", trap_Cmd_Argv( 1 ) ), sizeof( request ) );
-
-	for( i = 2, c = 1; i < trap_Cmd_Argc() - 1; i += 2, c++ ) {
-		const char *label = trap_Cmd_Argv( i );
-		const char *cmd = trap_Cmd_Argv( i + 1 );
-
-		Q_strncatz( request, va( "btn%i \"%s\" ", c, label ), sizeof( request ) );
-		Q_strncatz( request, va( "cmd%i \"%s%s\" ", c, *cmd ? "cmd " : "", cmd ), sizeof( request ) );
-	}
-
-	trap_Cmd_ExecuteText( EXEC_APPEND, va( "%s\n", request ) );
-}
-
-/*
 * CG_SC_MenuQuick
 */
 static void CG_SC_MenuQuick( void ) {
@@ -629,6 +602,13 @@ static void CG_SC_MenuQuick( void ) {
 	}
 
 	CG_RefreshOverlayMenu();
+}
+
+static void CG_SC_ChangeLoadout() {
+	if( trap_Cmd_Argc() != 3 )
+		return;
+
+	UI_ChangeLoadout( atoi( trap_Cmd_Argv( 1 ) ), atoi( trap_Cmd_Argv( 2 ) ) );
 }
 
 static void CG_SC_SaveLoadout() {
@@ -715,12 +695,12 @@ static const svcmd_t cg_svcmds[] =
 	{ "mm", CG_SC_MatchMessage },
 	{ "mapmsg", CG_SC_HelpMessage },
 	{ "demoget", CG_SC_DemoGet },
-	{ "mecu", CG_SC_MenuCustom },
 	{ "meop", CG_SC_MenuOpen },
 	{ "memo", CG_SC_MenuModal },
 	{ "motd", CG_SC_MOTD },
 	{ "aw", CG_SC_AddAward },
 	{ "qm", CG_SC_MenuQuick },
+	{ "changeloadout", CG_SC_ChangeLoadout },
 	{ "saveloadout", CG_SC_SaveLoadout },
 
 	{ NULL }

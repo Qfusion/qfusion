@@ -21,7 +21,6 @@ enum PrimaryWeapon {
 	PrimaryWeapon_EBRL,
 	PrimaryWeapon_RLLG,
 	PrimaryWeapon_EBLG,
-	PrimaryWeapon_Pending, // used for pending test
 }
 
 enum SecondaryWeapon {
@@ -29,7 +28,6 @@ enum SecondaryWeapon {
 	SecondaryWeapon_RG,
 	SecondaryWeapon_GL,
 	SecondaryWeapon_MG,
-	SecondaryWeapon_Pending,
 }
 
 const int AMMO_EB = 15;
@@ -48,9 +46,6 @@ class cPlayer {
 
 	PrimaryWeapon weapPrimary;
 	SecondaryWeapon weapSecondary;
-
-	PrimaryWeapon pendingPrimary;
-	SecondaryWeapon pendingSecondary;
 
 	int64 lastLoadoutChangeTime; // so people can't spam change weapons during warmup
 
@@ -97,9 +92,6 @@ class cPlayer {
 			this.weapSecondary = SecondaryWeapon_PG;
 		}
 
-		this.pendingPrimary = PrimaryWeapon_Pending;
-		this.pendingSecondary = SecondaryWeapon_Pending;
-
 		this.lastLoadoutChangeTime = -1;
 
 		this.arms = 0;
@@ -114,16 +106,6 @@ class cPlayer {
 
 	void giveInventory() {
 		this.client.inventoryClear();
-
-		if( this.pendingPrimary != PrimaryWeapon_Pending ) {
-			this.weapPrimary = this.pendingPrimary;
-			this.pendingPrimary = PrimaryWeapon_Pending;
-		}
-
-		if( this.pendingSecondary != SecondaryWeapon_Pending ) {
-			this.weapSecondary = this.pendingSecondary;
-			this.pendingSecondary = SecondaryWeapon_Pending;
-		}
 
 		this.client.inventoryGiveItem( WEAP_GUNBLADE );
 
@@ -175,46 +157,20 @@ class cPlayer {
 		this.client.selectWeapon( -1 );
 	}
 
-	void showPrimarySelection() {
+	void showShop() {
 		if( this.client.team == TEAM_SPECTATOR ) {
 			return;
 		}
 
-		String command = "mecu \"Primary weapons\""
-			+ " \"EB + RL\" \"weapselect eb; gametypemenu2\""
-			+ " \"RL + LG\" \"weapselect rl; gametypemenu2\""
-			+ " \"EB + LG\" \"weapselect lg; gametypemenu2\"";
-
-		if( cvarEnableCarriers.boolean ) {
-			if( this.isCarrier ) {
-				command += " \"Carrier opt-out\" \"carrier\"";
-			}
-			else {
-				command += " \"Carrier opt-in\" \"carrier\"";
-			}
-		}
-
-		this.client.execGameCommand( command );
-	}
-
-	void showSecondarySelection() {
-		if( this.client.team == TEAM_SPECTATOR ) {
-			return;
-		}
-
-		this.client.execGameCommand( "mecu \"Secondary weapons\""
-			+ " \"Plasmagun\" \"weapselect pg\""
-			+ " \"Riotgun\" \"weapselect rg\""
-			+ " \"Grenade Launcher\" \"weapselect gl\""
-		);
+		this.client.execGameCommand( "changeloadout " + this.weapPrimary + " " + this.weapSecondary );
 	}
 
 	void selectPrimaryWeapon( PrimaryWeapon weapon ) {
-		this.pendingPrimary = weapon;
+		this.weapPrimary = weapon;
 	}
 
 	void selectSecondaryWeapon( SecondaryWeapon weapon ) {
-		this.pendingSecondary = weapon;
+		this.weapSecondary = weapon;
 
 		if( match.getState() == MATCH_STATE_WARMUP ) {
 			if( lastLoadoutChangeTime == -1 || levelTime - lastLoadoutChangeTime >= 1000 ) {
@@ -269,24 +225,22 @@ class cPlayer {
 
 		// set cg_loadout
 		String loadout = "";
-		PrimaryWeapon primary = this.pendingPrimary == PrimaryWeapon_Pending ? this.weapPrimary : this.pendingPrimary;
-		if( primary == PrimaryWeapon_EBRL )
+		if( this.weapPrimary == PrimaryWeapon_EBRL )
 			loadout = "ebrl";
-		else if( primary == PrimaryWeapon_RLLG )
+		else if( this.weapPrimary == PrimaryWeapon_RLLG )
 			loadout = "rllg";
-		else if( primary == PrimaryWeapon_EBLG )
+		else if( this.weapPrimary == PrimaryWeapon_EBLG )
 			loadout = "eblg";
 		else
 			return;
 
-		SecondaryWeapon secondary = this.pendingSecondary == SecondaryWeapon_Pending ? this.weapSecondary : this.pendingSecondary;
-		if( secondary == SecondaryWeapon_PG )
+		if( this.weapSecondary == SecondaryWeapon_PG )
 			loadout += " pg";
-		else if( secondary == SecondaryWeapon_RG )
+		else if( this.weapSecondary == SecondaryWeapon_RG )
 			loadout += " rg";
-		else if( secondary == SecondaryWeapon_GL )
+		else if( this.weapSecondary == SecondaryWeapon_GL )
 			loadout += " gl";
-		else if( secondary == SecondaryWeapon_MG )
+		else if( this.weapSecondary == SecondaryWeapon_MG )
 			loadout += " mg";
 		else
 			return;

@@ -43,6 +43,7 @@ enum MainMenuState {
 enum GameMenuState {
 	GameMenuState_Hidden,
 	GameMenuState_Menu,
+	GameMenuState_Loadout,
 	GameMenuState_Settings,
 };
 
@@ -71,6 +72,8 @@ static GameMenuState gamemenu_state;
 static bool is_spectating;
 static bool can_ready;
 static bool can_unready;
+static size_t selected_primary;
+static size_t selected_secondary;
 
 static SettingsState settings_state;
 static bool reset_video_settings;
@@ -662,13 +665,13 @@ void UI_Refresh( bool background, bool showCursor ) {
 		ImGui::SetNextWindowSize( ImVec2( viddef.width, viddef.height ) );
 		ImGui::Begin( "mainmenu", NULL, ImGuiWindowFlags_NoDecoration );
 
-		ImGui::Text( "connecting" );
+		ImGui::Text( "Connecting..." );
 
 		ImGui::End();
 	}
 
 	if( uistate == UIState_InGame && gamemenu_state != GameMenuState_Hidden ) {
-		ImGui::PushStyleColor( ImGuiCol_WindowBg, ImVec4( ImColor( 0x1a, 0x1a, 0x1a, 128 ) ) );
+		ImGui::PushStyleColor( ImGuiCol_WindowBg, ImVec4( ImColor( 0x1a, 0x1a, 0x1a, 192 ) ) );
 		CL_SetKeyDest( key_menu );
 		bool should_close = false;
 
@@ -687,9 +690,9 @@ void UI_Refresh( bool background, bool showCursor ) {
 					GameMenuButton( "Ready", "ready", &should_close );
 				if( can_unready )
 					GameMenuButton( "Uneady", "unready", &should_close );
-			}
 
-			GameMenuButton( "Change loadout", "gametypemenu", &should_close );
+				GameMenuButton( "Change loadout", "gametypemenu", &should_close );
+			}
 
 			if( ImGui::Button( "Settings", ImVec2( -1, 0 ) ) ) {
 				gamemenu_state = GameMenuState_Settings;
@@ -701,7 +704,65 @@ void UI_Refresh( bool background, bool showCursor ) {
 
 			ImGui::End();
 		}
-		else {
+		else if( gamemenu_state == GameMenuState_Loadout ) {
+			ImGui::SetNextWindowPosCenter();
+			ImGui::SetNextWindowSize( ImVec2( 250, 0 ) );
+			ImGui::Begin( "loadout", NULL, ImGuiWindowFlags_NoDecoration );
+
+			ImGui::Text( "Primary weapons" );
+
+			// this has to match up with the order in player.as
+			// TODO: should make this less fragile
+			const char * primaries[] = { "EB RL", "RL LG", "EB LG" };
+			const char * secondaries[] = { "PG", "RG", "GL" };
+
+			ImGui::Columns( ARRAY_COUNT( primaries ), NULL, false );
+
+			for( size_t i = 0; i < ARRAY_COUNT( primaries ); i++ ) {
+				char buf[ 128 ];
+				int key = '1' + int( i );
+				Q_snprintfz( buf, sizeof( buf ), "%c: %s", key, primaries[ i ] );
+				if( ImGui::Selectable( buf, i == selected_primary ) || pressed_key == key ) {
+					selected_primary = i;
+				}
+				ImGui::NextColumn();
+			}
+
+			ImGui::Columns( 1 );
+
+			ImGui::Text( "Secondary weapon" );
+
+			ImGui::Columns( ARRAY_COUNT( secondaries ), NULL, false );
+
+			bool selected_with_number = false;
+			for( size_t i = 0; i < ARRAY_COUNT( secondaries ); i++ ) {
+				char buf[ 128 ];
+				int key = '1' + int( i + ARRAY_COUNT( primaries ) );
+				Q_snprintfz( buf, sizeof( buf ), "%c: %s", key, secondaries[ i ] );
+				if( ImGui::Selectable( buf, i == selected_secondary ) || pressed_key == key ) {
+					selected_secondary = i;
+					selected_with_number = pressed_key == key;
+				}
+				ImGui::NextColumn();
+			}
+
+			if( ImGui::Button( "OK" ) || selected_with_number ) {
+				const char * primaries_weapselect[] = { "ebrl", "rllg", "eblg" };
+
+				char buf[ 128 ];
+				Q_snprintfz( buf, sizeof( buf ), "weapselect %s\nweapselect %s\n",
+					primaries_weapselect[ selected_primary ], secondaries[ selected_secondary ] );
+				Cbuf_ExecuteText( EXEC_APPEND, buf );
+				should_close = true;
+			}
+
+			if( pressed_key == K_ESCAPE || pressed_key == 'b' ) {
+				should_close = true;
+			}
+
+			ImGui::End();
+		}
+		else if( gamemenu_state == GameMenuState_Settings ) {
 			ImGui::SetNextWindowPosCenter();
 			ImGui::SetNextWindowSize( ImVec2( 600, 500 ) );
 			ImGui::Begin( "settings", NULL, ImGuiWindowFlags_NoDecoration );
@@ -795,4 +856,12 @@ void UI_MouseSet( bool mainContext, int mx, int my, bool showCursor ) {
 
 bool UI_MouseHover( bool mainContext ) {
 	return false;
+}
+
+void UI_ChangeLoadout( int primary, int secondary ) {
+	uistate = UIState_InGame;
+	gamemenu_state = GameMenuState_Loadout;
+	pressed_key = -1;
+	selected_primary = primary;
+	selected_secondary = secondary;
 }
