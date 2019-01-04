@@ -194,12 +194,12 @@ void VID_WindowInit( WindowMode mode, int stencilbits ) {
 	}
 
 	sdl_window = SDL_CreateWindow( "Cocaine Diesel", mode.x, mode.y, mode.video_mode.width, mode.video_mode.height, flags );
-	if( mode.fullscreen != FullScreenMode_Windowed ) {
-		VID_SetVideoMode( mode.video_mode ); // also set frequency
-	}
-
 	if( sdl_window == NULL ) {
 		Sys_Error( "Couldn't create window: \"%s\"", SDL_GetError() );
+	}
+
+	if( mode.fullscreen != FullScreenMode_Windowed ) {
+		VID_SetVideoMode( mode.video_mode ); // also set frequency
 	}
 
 #ifndef __APPLE__
