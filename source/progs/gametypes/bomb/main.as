@@ -203,16 +203,7 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
 	}
 
 	if( cmdString == "weapselect" ) {
-		cPlayer @player = @playerFromClient( @client );
-
-		player.selectWeapon( argsString );
-
-		// TODO: block them from shooting for 0.5s or something instead
-
-		if( /*match.getState() == MATCH_STATE_WARMUP ||*/ roundState == RoundState_Pre ) {
-			player.giveInventory();
-		}
-
+		playerFromClient( @client ).setLoadout( argsString );
 		return true;
 	}
 

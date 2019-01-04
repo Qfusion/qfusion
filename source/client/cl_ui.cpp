@@ -750,7 +750,7 @@ void UI_Refresh( bool background, bool showCursor ) {
 				const char * primaries_weapselect[] = { "ebrl", "rllg", "eblg" };
 
 				char buf[ 128 ];
-				Q_snprintfz( buf, sizeof( buf ), "weapselect %s\nweapselect %s\n",
+				Q_snprintfz( buf, sizeof( buf ), "weapselect %s %s\n",
 					primaries_weapselect[ selected_primary ], secondaries[ selected_secondary ] );
 				Cbuf_ExecuteText( EXEC_APPEND, buf );
 				should_close = true;

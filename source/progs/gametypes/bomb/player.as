@@ -30,6 +30,9 @@ enum SecondaryWeapon {
 	SecondaryWeapon_MG,
 }
 
+String[] primaryWeaponNames = { "ebrl", "rllg", "eblg" };
+String[] secondaryWeaponNames = { "pg", "rg", "gl", "mg" };
+
 const int AMMO_EB = 15;
 const int AMMO_RL = 15;
 const int AMMO_LG = 180;
@@ -61,36 +64,7 @@ class cPlayer {
 	cPlayer( Client @player ) {
 		@this.client = @player;
 
-		String loadout = this.client.getUserInfoKey( "cg_loadout" );
-		String primary = loadout.getToken( 0 );
-		String secondary = loadout.getToken( 1 );
-		bool primaryOk = true;
-		bool secondaryOk = true;
-
-		if( primary == "ebrl" )
-			this.weapPrimary = PrimaryWeapon_EBRL;
-		else if( primary == "rllg" )
-			this.weapPrimary = PrimaryWeapon_RLLG;
-		else if( primary == "eblg" )
-			this.weapPrimary = PrimaryWeapon_EBLG;
-		else
-			primaryOk = false;
-
-		if( secondary == "pg" )
-			this.weapSecondary = SecondaryWeapon_PG;
-		else if( secondary == "rg" )
-			this.weapSecondary = SecondaryWeapon_RG;
-		else if( secondary == "gl" )
-			this.weapSecondary = SecondaryWeapon_GL;
-		else if( secondary == "mg" )
-			this.weapSecondary = SecondaryWeapon_MG;
-		else
-			secondaryOk = false;
-
-		if( !primaryOk || !secondaryOk ) {
-			this.weapPrimary = PrimaryWeapon_EBRL;
-			this.weapSecondary = SecondaryWeapon_PG;
-		}
+		setLoadout( this.client.getUserInfoKey( "cg_loadout" ) );
 
 		this.lastLoadoutChangeTime = -1;
 
@@ -165,12 +139,23 @@ class cPlayer {
 		this.client.execGameCommand( "changeloadout " + this.weapPrimary + " " + this.weapSecondary );
 	}
 
-	void selectPrimaryWeapon( PrimaryWeapon weapon ) {
-		this.weapPrimary = weapon;
-	}
+	void setLoadout( String &loadout ) {
+		String primary = loadout.getToken( 0 );
+		String secondary = loadout.getToken( 1 );
 
-	void selectSecondaryWeapon( SecondaryWeapon weapon ) {
-		this.weapSecondary = weapon;
+		for( uint i = 0; i < primaryWeaponNames.length(); i++ ) {
+			if( primary == primaryWeaponNames[ i ] ) {
+				this.weapPrimary = PrimaryWeapon( i );
+			}
+		}
+
+		for( uint i = 0; i < secondaryWeaponNames.length(); i++ ) {
+			if( secondary == secondaryWeaponNames[ i ] ) {
+				this.weapSecondary = SecondaryWeapon( i );
+			}
+		}
+
+		this.client.execGameCommand( "saveloadout " + primaryWeaponNames[ this.weapPrimary ] + " " + secondaryWeaponNames[ this.weapSecondary ] );
 
 		if( match.getState() == MATCH_STATE_WARMUP ) {
 			if( lastLoadoutChangeTime == -1 || levelTime - lastLoadoutChangeTime >= 1000 ) {
@@ -181,71 +166,10 @@ class cPlayer {
 				G_PrintMsg( @this.client.getEnt(), "Wait a second\n" );
 			}
 		}
-	}
 
-	void selectWeapon( String &weapon ) {
-		String token;
-		int len;
-
-		String invalid_tokens;
-		bool has_invalid = false;
-
-		// :DD
-		for( int i = 0; ( len = ( token = weapon.getToken( i ) ).len() ) > 0; i++ ) {
-			if( token == "EB" || token == "EBRL" ) {
-				this.selectPrimaryWeapon( PrimaryWeapon_EBRL );
-			}
-			else if( token == "RL" || token == "RLLG" ) {
-				this.selectPrimaryWeapon( PrimaryWeapon_RLLG );
-			}
-			else if( token == "LG" || token == "EBLG" ) {
-				this.selectPrimaryWeapon( PrimaryWeapon_EBLG );
-			}
-			else if( token == "PG" ) {
-				this.selectSecondaryWeapon( SecondaryWeapon_PG );
-			}
-			else if( token == "RG" ) {
-				this.selectSecondaryWeapon( SecondaryWeapon_RG );
-			}
-			else if( token == "GL" ) {
-				this.selectSecondaryWeapon( SecondaryWeapon_GL );
-			}
-			else if( token == "MG" ) {
-				this.selectSecondaryWeapon( SecondaryWeapon_MG );
-			}
-			else {
-				invalid_tokens += " " + token;
-				has_invalid = true;
-			}
+		if( match.getState() == MATCH_STATE_PLAYTIME && roundState == RoundState_Pre ) {
+			giveInventory();
 		}
-
-		if( has_invalid ) {
-			G_PrintMsg( @this.client.getEnt(), "Unrecognised tokens:" + invalid_tokens + "\n" );
-		}
-
-		// set cg_loadout
-		String loadout = "";
-		if( this.weapPrimary == PrimaryWeapon_EBRL )
-			loadout = "ebrl";
-		else if( this.weapPrimary == PrimaryWeapon_RLLG )
-			loadout = "rllg";
-		else if( this.weapPrimary == PrimaryWeapon_EBLG )
-			loadout = "eblg";
-		else
-			return;
-
-		if( this.weapSecondary == SecondaryWeapon_PG )
-			loadout += " pg";
-		else if( this.weapSecondary == SecondaryWeapon_RG )
-			loadout += " rg";
-		else if( this.weapSecondary == SecondaryWeapon_GL )
-			loadout += " gl";
-		else if( this.weapSecondary == SecondaryWeapon_MG )
-			loadout += " mg";
-		else
-			return;
-
-		this.client.execGameCommand( "saveloadout " + loadout );
 	}
 }
 
