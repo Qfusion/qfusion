@@ -706,14 +706,14 @@ void UI_Refresh( bool background, bool showCursor ) {
 		}
 		else if( gamemenu_state == GameMenuState_Loadout ) {
 			ImGui::SetNextWindowPosCenter();
-			ImGui::SetNextWindowSize( ImVec2( 250, 0 ) );
+			ImGui::SetNextWindowSize( ImVec2( 300, 0 ) );
 			ImGui::Begin( "loadout", NULL, ImGuiWindowFlags_NoDecoration );
 
 			ImGui::Text( "Primary weapons" );
 
 			// this has to match up with the order in player.as
 			// TODO: should make this less fragile
-			const char * primaries[] = { "EB RL", "RL LG", "EB LG" };
+			const char * primaries[] = { "EB + RL", "RL + LG", "EB + LG" };
 			const char * secondaries[] = { "PG", "RG", "GL" };
 
 			ImGui::Columns( ARRAY_COUNT( primaries ), NULL, false );
@@ -746,7 +746,7 @@ void UI_Refresh( bool background, bool showCursor ) {
 				ImGui::NextColumn();
 			}
 
-			if( ImGui::Button( "OK" ) || selected_with_number ) {
+			if( ImGui::Button( "OK", ImVec2( -1, 0 ) ) || selected_with_number ) {
 				const char * primaries_weapselect[] = { "ebrl", "rllg", "eblg" };
 
 				char buf[ 128 ];
