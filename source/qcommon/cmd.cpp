@@ -326,7 +326,7 @@ void Cbuf_Execute( void ) {
 * Set and exec commands are added early, so they are guaranteed to be set before
 * the client and server initialize for the first time.
 *
-* This command is first run before autoexec.txt and config.txt to allow changing
+* This command is first run before autoexec.cfg and config.cfg to allow changing
 * fs_basepath etc. The second run is after those files has been execed in order
 * to allow overwriting values set in them.
 *
@@ -434,7 +434,7 @@ static void Cmd_Exec_f( void ) {
 		return;
 	}
 
-	name_size = sizeof( char ) * ( strlen( arg ) + strlen( ".txt" ) + 1 );
+	name_size = sizeof( char ) * ( strlen( arg ) + strlen( ".cfg" ) + 1 );
 	name = ( char * ) Mem_TempMalloc( name_size );
 
 	Q_strncpyz( name, arg, name_size );
@@ -448,7 +448,7 @@ static void Cmd_Exec_f( void ) {
 		return;
 	}
 
-	COM_DefaultExtension( name, ".txt", name_size );
+	COM_DefaultExtension( name, ".cfg", name_size );
 
 	basename = FS_BaseNameForFile( name );
 	if( basename ) {
@@ -482,7 +482,7 @@ static void Cmd_Exec_f( void ) {
 * CL_CompleteExecBuildList
 */
 static char **CL_CompleteExecBuildList( const char *partial ) {
-	return Cmd_CompleteFileList( partial, "", ".txt", true );
+	return Cmd_CompleteFileList( partial, "", ".cfg", true );
 }
 
 /*

@@ -95,7 +95,7 @@ static void Cmd_Match_f( void ) {
 //Prints the current list of filters.
 //
 //writeip
-//Dumps "addip <ip>" commands to listip.txt so it can be execed at a later date.  The filter lists are not saved and restored by default, because I beleive it would cause too much confusion.
+//Dumps "addip <ip>" commands to listip.cfg so it can be execed at a later date.  The filter lists are not saved and restored by default, because I beleive it would cause too much confusion.
 //
 //filterban <0 or 1>
 //
@@ -213,7 +213,7 @@ bool SV_FilterPacket( char *from ) {
 void SV_ReadIPList( void ) {
 	SV_ResetPacketFiltersTimeouts();
 
-	trap_Cmd_ExecuteText( EXEC_APPEND, "exec listip.txt silent\n" );
+	trap_Cmd_ExecuteText( EXEC_APPEND, "exec listip.cfg silent\n" );
 }
 
 /*
@@ -226,7 +226,7 @@ void SV_WriteIPList( void ) {
 	uint8_t b[4] = { 0, 0, 0, 0 };
 	int i;
 
-	Q_strncpyz( name, "listip.txt", sizeof( name ) );
+	Q_strncpyz( name, "listip.cfg", sizeof( name ) );
 
 	//G_Printf( "Writing %s.\n", name );
 

@@ -711,12 +711,12 @@ void Qcommon_Init( int argc, char **argv ) {
 
 	FS_Init();
 
-	Cbuf_AddText( "exec default.txt\n" );
+	Cbuf_AddText( "exec default.cfg\n" );
 	if( !dedicated->integer ) {
-		Cbuf_AddText( "exec config.txt\n" );
-		Cbuf_AddText( "exec autoexec.txt\n" );
+		Cbuf_AddText( "exec config.cfg\n" );
+		Cbuf_AddText( "exec autoexec.cfg\n" );
 	} else {
-		Cbuf_AddText( "exec dedicated_autoexec.txt\n" );
+		Cbuf_AddText( "exec dedicated_autoexec.cfg\n" );
 	}
 
 	Cbuf_AddEarlyCommands( true );
@@ -760,9 +760,9 @@ void Qcommon_Init( int argc, char **argv ) {
 	SCR_EndLoadingPlaque();
 
 	if( !dedicated->integer ) {
-		Cbuf_AddText( "exec autoexec_postinit.txt\n" );
+		Cbuf_AddText( "exec autoexec_postinit.cfg\n" );
 	} else {
-		Cbuf_AddText( "exec dedicated_autoexec_postinit.txt\n" );
+		Cbuf_AddText( "exec dedicated_autoexec_postinit.cfg\n" );
 	}
 
 	// add + commands from command line

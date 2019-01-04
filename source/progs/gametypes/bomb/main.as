@@ -595,7 +595,7 @@ void GT_InitGametype() {
 
 	mediaInit();
 
-	G_CmdExecute( "exec configs/server/gametypes/bomb.txt silent" ); // TODO XXX FIXME
+	G_CmdExecute( "exec configs/server/gametypes/bomb.cfg silent" ); // TODO XXX FIXME
 
 	G_Print( "Gametype initialized\n" );
 }

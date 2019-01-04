@@ -1514,7 +1514,7 @@ static void CL_WriteConfig_f( void ) {
 		return;
 	}
 
-	name_size = sizeof( char ) * ( strlen( Cmd_Argv( 1 ) ) + strlen( ".txt" ) + 1 );
+	name_size = sizeof( char ) * ( strlen( Cmd_Argv( 1 ) ) + strlen( ".cfg" ) + 1 );
 	name = ( char * ) Mem_TempMalloc( name_size );
 	Q_strncpyz( name, Cmd_Argv( 1 ), name_size );
 	COM_SanitizeFilePath( name );
@@ -1525,7 +1525,7 @@ static void CL_WriteConfig_f( void ) {
 		return;
 	}
 
-	COM_DefaultExtension( name, ".txt", name_size );
+	COM_DefaultExtension( name, ".cfg", name_size );
 
 	Com_Printf( "Writing: %s\n", name );
 	CL_WriteConfiguration( name );
@@ -2380,7 +2380,7 @@ void CL_Shutdown( void ) {
 	ML_Shutdown();
 	CL_ShutDownServerList();
 
-	CL_WriteConfiguration( "config.txt" );
+	CL_WriteConfiguration( "config.cfg" );
 
 	CL_Disconnect( NULL );
 	NET_CloseSocket( &cls.socket_udp );
