@@ -287,7 +287,7 @@ WindowMode VID_GetWindowMode() {
 	mode.fullscreen = FullScreenMode_Windowed;
 	if( flags & SDL_WINDOW_FULLSCREEN )
 		mode.fullscreen = FullScreenMode_Fullscreen;
-	if( flags & SDL_WINDOW_FULLSCREEN_DESKTOP )
+	if( ( flags & SDL_WINDOW_FULLSCREEN_DESKTOP ) == SDL_WINDOW_FULLSCREEN_DESKTOP );
 		mode.fullscreen = FullScreenMode_FullscreenBorderless;
 
 	if( mode.fullscreen == FullScreenMode_Windowed ) {
