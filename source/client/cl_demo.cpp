@@ -405,7 +405,7 @@ static void CL_StartDemo( const char *demoname, bool pause_on_stop ) {
 	Cbuf_ExecuteText( EXEC_NOW, "killserver\n" );
 	CL_Disconnect( NULL );
 	// wsw: Medar: fix for menu getting stuck on screen when starting demo, but maybe there is better fix out there?
-	CL_UIModule_ForceMenuOff();
+	UI_ForceMenuOff();
 
 	memset( &cls.demo, 0, sizeof( cls.demo ) );
 

@@ -61,9 +61,9 @@ static void CL_UpdateGameInput( int frameTime ) {
 	CL_GameModule_InputFrame( frameTime );
 
 	if( cls.key_dest == key_menu ) {
-		CL_UIModule_MouseSet( true, movement.absx, movement.absy, true );
+		UI_MouseSet( true, movement.absx, movement.absy, true );
 	} else if( overlayMenuMouse ) {
-		CL_UIModule_MouseSet( false, movement.absx, movement.absy, true );
+		UI_MouseSet( false, movement.absx, movement.absy, true );
 	} else {
 		CL_GameModule_MouseMove( movement.relx, movement.rely );
 	}

@@ -434,21 +434,21 @@ void SCR_ShutdownScreen( void ) {
 void SCR_EnableOverlayMenu( bool enable, bool showCursor ) {
 	cls.overlayMenu = enable;
 	cls.overlayMenuShowCursor = showCursor;
-	CL_UIModule_ShowOverlayMenu( enable, showCursor );
+	UI_ShowOverlayMenu( enable, showCursor );
 }
 
 /*
 * SCR_IsOverlayMenuShown
 */
 bool SCR_IsOverlayMenuShown( void ) {
-	return cls.overlayMenu && CL_UIModule_HaveOverlayMenu();
+	return cls.overlayMenu && UI_HaveOverlayMenu();
 }
 
 /*
 * SCR_IsOverlayMenuHover
 */
 bool SCR_IsOverlayMenuHover( void ) {
-	return SCR_IsOverlayMenuShown() && cls.overlayMenuShowCursor && CL_UIModule_MouseHover( false );
+	return SCR_IsOverlayMenuShown() && cls.overlayMenuShowCursor && UI_MouseHover( false );
 }
 
 /*
@@ -514,7 +514,7 @@ static void SCR_DrawNotify( void ) {
 * SCR_BeginLoadingPlaque
 */
 void SCR_BeginLoadingPlaque( void ) {
-	CL_UIModule_ForceMenuOff();
+	UI_ForceMenuOff();
 
 	CL_SoundModule_StopAllSounds( true );
 
@@ -597,23 +597,23 @@ void SCR_UpdateScreen( void ) {
 	if( scr_draw_loading == 2 ) {
 		// loading plaque over APP_STARTUP_COLOR screen
 		scr_draw_loading = 0;
-		CL_UIModule_UpdateConnectScreen( true );
+		UI_UpdateConnectScreen( true );
 	} else if( cls.state == CA_DISCONNECTED ) {
-		CL_UIModule_Refresh( true, true );
+		UI_Refresh( true, true );
 		SCR_DrawConsole();
 	} else if( cls.state == CA_GETTING_TICKET || cls.state == CA_CONNECTING || cls.state == CA_HANDSHAKE ) {
-		CL_UIModule_UpdateConnectScreen( true );
+		UI_UpdateConnectScreen( true );
 	} else if( cls.state == CA_CONNECTED ) {
 		if( cls.cgameActive ) {
-			CL_UIModule_UpdateConnectScreen( false );
+			UI_UpdateConnectScreen( false );
 			SCR_RenderView();
 		} else {
-			CL_UIModule_UpdateConnectScreen( true );
+			UI_UpdateConnectScreen( true );
 		}
 	} else if( cls.state == CA_ACTIVE ) {
 		SCR_RenderView();
 
-		CL_UIModule_Refresh( false, true );
+		UI_Refresh( false, true );
 
 		if( scr_timegraph->integer ) {
 			SCR_DebugGraph( cls.frametime * 0.3f, 1, 1, 1 );

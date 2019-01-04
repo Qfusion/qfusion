@@ -35,7 +35,7 @@ end of unit intermissions
 #include "cg_local.h"
 #include "qcommon/qcommon.h"
 #include "qalgo/rng.h"
-#include "client/client.h"
+#include "client/ui.h"
 
 vrect_t scr_vrect;
 
@@ -904,7 +904,7 @@ void CG_DrawRSpeeds( int x, int y, int align, struct qfontface_s *font, const ve
 */
 void CG_EscapeKey( void ) {
 	if( cgs.demoPlaying ) {
-		CL_UIModule_ToggleDemoMenu();
+		UI_ToggleDemoMenu();
 		return;
 	}
 
@@ -920,7 +920,7 @@ void CG_EscapeKey( void ) {
 			can_ready = true;
 	}
 
-	CL_UIModule_ToggleGameMenu( team == TEAM_SPECTATOR, can_ready, can_unready );
+	UI_ToggleGameMenu( team == TEAM_SPECTATOR, can_ready, can_unready );
 }
 
 //=============================================================================

@@ -97,7 +97,7 @@ static void RefreshServerBrowser() {
 	Cbuf_ExecuteText( EXEC_APPEND, "requestservers local full empty\n" );
 }
 
-void CL_UIModule_Init() {
+void UI_Init() {
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGui_ImplSDL2_InitForOpenGL( sdl_window, NULL );
@@ -148,13 +148,13 @@ void CL_UIModule_Init() {
 	reset_video_settings = true;
 }
 
-void CL_UIModule_Shutdown() {
+void UI_Shutdown() {
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplSDL2_Shutdown();
         ImGui::DestroyContext();
 }
 
-void CL_UIModule_TouchAllAssets() {
+void UI_TouchAllAssets() {
 }
 
 static void SettingLabel( const char * label ) {
@@ -604,7 +604,7 @@ static void GameMenuButton( const char * label, const char * command, bool * cli
 	}
 }
 
-void CL_UIModule_Refresh( bool background, bool showCursor ) {
+void UI_Refresh( bool background, bool showCursor ) {
 	ImGui_ImplOpenGL3_NewFrame();
 	if( cls.key_dest == key_menu ) {
 		ImGui_ImplSDL2_NewFrame( sdl_window );
@@ -727,12 +727,12 @@ void CL_UIModule_Refresh( bool background, bool showCursor ) {
 	Cbuf_Execute();
 }
 
-void CL_UIModule_UpdateConnectScreen( bool background ) {
+void UI_UpdateConnectScreen( bool background ) {
 	uistate = UIState_Connecting;
-	CL_UIModule_Refresh( background, false );
+	UI_Refresh( background, false );
 }
 
-void CL_UIModule_KeyEvent( bool mainContext, int key, bool down ) {
+void UI_KeyEvent( bool mainContext, int key, bool down ) {
 	if( down ) {
 		pressed_key = key;
 	}
@@ -748,23 +748,23 @@ void CL_UIModule_KeyEvent( bool mainContext, int key, bool down ) {
 	}
 }
 
-void CL_UIModule_CharEvent( bool mainContext, wchar_t key ) {
+void UI_CharEvent( bool mainContext, wchar_t key ) {
 	ImGui::GetIO().AddInputCharacter( key );
 }
 
-void CL_UIModule_ForceMenuOn() {
+void UI_ForceMenuOn() {
 	uistate = UIState_MainMenu;
 	mainmenu_state = MainMenuState_ServerBrowser;
 	CL_SoundModule_StartMenuMusic();
 	RefreshServerBrowser();
 }
 
-void CL_UIModule_ForceMenuOff() {
+void UI_ForceMenuOff() {
 	uistate = UIState_InGame;
 	gamemenu_state = GameMenuState_Hidden;
 }
 
-void CL_UIModule_ToggleGameMenu( bool spectating, bool ready, bool unready ) {
+void UI_ToggleGameMenu( bool spectating, bool ready, bool unready ) {
 	gamemenu_state = gamemenu_state == GameMenuState_Hidden ? GameMenuState_Menu : GameMenuState_Hidden;
 	pressed_key = -1;
 	is_spectating = spectating;
@@ -772,17 +772,17 @@ void CL_UIModule_ToggleGameMenu( bool spectating, bool ready, bool unready ) {
 	can_unready = unready;
 }
 
-void CL_UIModule_ToggleDemoMenu() {
+void UI_ToggleDemoMenu() {
 }
 
-void CL_UIModule_ShowOverlayMenu( bool show, bool showCursor ) {
+void UI_ShowOverlayMenu( bool show, bool showCursor ) {
 }
 
-bool CL_UIModule_HaveOverlayMenu() {
+bool UI_HaveOverlayMenu() {
 	return false;
 }
 
-void CL_UIModule_AddToServerList( const char * address, const char *info ) {
+void UI_AddToServerList( const char * address, const char *info ) {
 	if( size_t( num_servers ) < ARRAY_COUNT( servers ) ) {
 		servers[ num_servers ].address = strdup( address );
 		servers[ num_servers ].info = strdup( info );
@@ -790,9 +790,9 @@ void CL_UIModule_AddToServerList( const char * address, const char *info ) {
 	}
 }
 
-void CL_UIModule_MouseSet( bool mainContext, int mx, int my, bool showCursor ) {
+void UI_MouseSet( bool mainContext, int mx, int my, bool showCursor ) {
 }
 
-bool CL_UIModule_MouseHover( bool mainContext ) {
+bool UI_MouseHover( bool mainContext ) {
 	return false;
 }

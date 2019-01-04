@@ -357,7 +357,7 @@ void Key_CharEvent( int key, wchar_t charkey ) {
 			Con_MessageCharEvent( charkey );
 			break;
 		case key_menu:
-			CL_UIModule_CharEvent( true, charkey );
+			UI_CharEvent( true, charkey );
 			break;
 		case key_game:
 		case key_console:
@@ -422,7 +422,7 @@ void Key_Event( int key, bool down, int64_t time ) {
 	char cmd[1024];
 	bool handled = false;
 	bool have_overlayMenu = SCR_IsOverlayMenuShown();
-	bool have_overlayMenuHover = have_overlayMenu && cls.overlayMenuShowCursor && CL_UIModule_MouseHover( false );
+	bool have_overlayMenuHover = have_overlayMenu && cls.overlayMenuShowCursor && UI_MouseHover( false );
 
 	// update auto-repeat status
 	if( down ) {
@@ -465,7 +465,7 @@ void Key_Event( int key, bool down, int64_t time ) {
 				if( cls.state != CA_DISCONNECTED ) {
 					Cbuf_AddText( "disconnect\n" );
 				} else if( cls.key_dest == key_menu ) {
-					CL_UIModule_KeyEvent( true, key, down );
+					UI_KeyEvent( true, key, down );
 				}
 				return;
 			}
@@ -476,7 +476,7 @@ void Key_Event( int key, bool down, int64_t time ) {
 				Con_MessageKeyDown( key );
 				break;
 			case key_menu:
-				CL_UIModule_KeyEvent( true, key, down );
+				UI_KeyEvent( true, key, down );
 				break;
 			case key_game:
 				CL_GameModule_EscapeKey();
@@ -548,7 +548,7 @@ void Key_Event( int key, bool down, int64_t time ) {
 	}
 
 	if( cls.key_dest == key_menu || ( cls.key_dest == key_game && have_overlayMenuHover ) ) {
-		CL_UIModule_KeyEvent( cls.key_dest == key_menu, key, down );
+		UI_KeyEvent( cls.key_dest == key_menu, key, down );
 		return;
 	}
 

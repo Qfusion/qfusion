@@ -299,7 +299,7 @@ void CL_GameModule_Init( void ) {
 	import.SCR_strWidth = SCR_strWidth;
 	import.SCR_StrlenForWidth = SCR_StrlenForWidth;
 	import.SCR_EnableOverlayMenu = SCR_EnableOverlayMenu;
-	import.SCR_HaveOverlayMenu = CL_UIModule_HaveOverlayMenu;
+	import.SCR_HaveOverlayMenu = UI_HaveOverlayMenu;
 	import.SCR_IsOverlayMenuShown = SCR_IsOverlayMenuShown;
 	import.SCR_DrawChat = Con_DrawChat;
 

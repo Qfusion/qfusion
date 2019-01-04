@@ -584,7 +584,7 @@ static void CL_EndRegistration( void ) {
 	cls.registrationOpen = false;
 
 	FTLIB_TouchAllFonts();
-	CL_UIModule_TouchAllAssets();
+	UI_TouchAllAssets();
 	RF_EndRegistration();
 }
 
@@ -1543,9 +1543,9 @@ void CL_SetClientState( connstate_t state ) {
 	switch( state ) {
 		case CA_DISCONNECTED:
 			Con_Close();
-			CL_UIModule_Refresh( true, true );
-			CL_UIModule_ForceMenuOn();
-			//CL_UIModule_MenuMain ();
+			UI_Refresh( true, true );
+			UI_ForceMenuOn();
+			//UI_MenuMain ();
 			CL_SetKeyDest( key_menu );
 			//SCR_UpdateScreen();
 			break;
@@ -1553,7 +1553,7 @@ void CL_SetClientState( connstate_t state ) {
 		case CA_CONNECTING:
 			cls.cgameActive = false;
 			Con_Close();
-			CL_UIModule_ForceMenuOff();
+			UI_ForceMenuOff();
 			CL_SoundModule_StopBackgroundTrack();
 			CL_SetKeyDest( key_game );
 			//SCR_UpdateScreen();
@@ -1568,8 +1568,8 @@ void CL_SetClientState( connstate_t state ) {
 			cl_connectChain[0] = '\0';
 			CL_EndRegistration();
 			Con_Close();
-			CL_UIModule_Refresh( false, false );
-			CL_UIModule_ForceMenuOff();
+			UI_Refresh( false, false );
+			UI_ForceMenuOff();
 			CL_SetKeyDest( key_game );
 			//SCR_UpdateScreen();
 			CL_AddReliableCommand( "svmotd 1" );
@@ -1613,7 +1613,7 @@ void CL_InitMedia( void ) {
 	SCR_EnableOverlayMenu( false, true );
 
 	// load user interface
-	CL_UIModule_Init();
+	UI_Init();
 
 	// check memory integrity
 	Mem_DebugCheckSentinelsGlobal();
@@ -1663,9 +1663,9 @@ void CL_RestartMedia( void ) {
 	// register console font and background
 	SCR_RegisterConsoleMedia();
 
-	CL_UIModule_ForceMenuOff();
+	UI_ForceMenuOff();
 
-	CL_UIModule_TouchAllAssets();
+	UI_TouchAllAssets();
 
 	// check memory integrity
 	Mem_DebugCheckSentinelsGlobal();
@@ -2357,7 +2357,7 @@ void CL_Init( void ) {
 
 	CL_InitMedia();
 
-	CL_UIModule_ForceMenuOn();
+	UI_ForceMenuOn();
 
 	CL_InitServerList();
 
@@ -2391,7 +2391,7 @@ void CL_Shutdown( void ) {
 		cls.servername = NULL;
 	}
 
-	CL_UIModule_Shutdown();
+	UI_Shutdown();
 	CL_GameModule_Shutdown();
 	CL_SoundModule_Shutdown();
 	CL_ShutdownInput();
