@@ -462,8 +462,13 @@ static void SettingsVideo() {
 	SettingLabel( "Video mode" );
 	ImGui::PushItemWidth( 200 );
 
-	char preview[ 128 ];
-	Q_snprintfz( preview, sizeof( preview ), "%dx%d %dHz", mode.video_mode.width, mode.video_mode.height, mode.video_mode.frequency );
+	if( fullscreen && mode.video_mode.frequency == 0 ) {
+		mode.video_mode = VID_GetVideoMode( 0 );
+	}
+
+	char preview[ 128 ] = "";
+	if( fullscreen )
+		Q_snprintfz( preview, sizeof( preview ), "%dx%d %dHz", mode.video_mode.width, mode.video_mode.height, mode.video_mode.frequency );
 
 	if( ImGui::BeginCombo( "##mode", preview ) ) {
 		for( int i = 0; i < VID_GetNumVideoModes(); i++ ) {
