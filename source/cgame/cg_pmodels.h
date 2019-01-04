@@ -104,8 +104,6 @@ typedef struct weaponinfo_s {
 	float acIconAlpha;
 } weaponinfo_t;
 
-extern weaponinfo_t cg_pWeaponModelInfos[WEAP_TOTAL];
-
 #define SKM_MAX_BONES 256
 
 //pmodelinfo_t is the playermodel structure as originally readed
@@ -164,6 +162,7 @@ void CG_MoveToTag( vec3_t move_origin,
 
 //pmodels
 void CG_PModelsInit( void );
+void CG_PModelsShutdown( void );
 void CG_ResetPModels( void );
 void CG_RegisterBasePModel( void );
 struct pmodelinfo_s *CG_RegisterPlayerModel( const char *filename );
@@ -176,6 +175,7 @@ void CG_PModel_ClearEventAnimations( int entNum );
 //
 // cg_wmodels.c
 //
+void CG_WModelsInit();
 struct weaponinfo_s *CG_CreateWeaponZeroModel( char *cgs_name );
 struct weaponinfo_s *CG_RegisterWeaponModel( char *cgs_name, int weaponTag );
 void CG_AddWeaponOnTag( entity_t *ent, orientation_t *tag, int weapon, int effects, 

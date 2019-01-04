@@ -28,7 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 //========================================================================
 
-cgs_skeleton_t *skel_headnode;
+static cgs_skeleton_t *skel_headnode;
 
 //#define SKEL_PRINTBONETREE
 #ifdef SKEL_PRINTBONETREE
@@ -397,7 +397,7 @@ bool CG_SkeletalPoseGetAttachment( orientation_t *orient, cgs_skeleton_t *skel,
 #define TBC_Block_Size      1024
 static int TBC_Size;
 
-bonepose_t *TBC;        //Temporary Boneposes Cache
+static bonepose_t *TBC;        //Temporary Boneposes Cache
 static int TBC_Count;
 
 
@@ -409,6 +409,7 @@ void CG_InitTemporaryBoneposesCache( void ) {
 	TBC_Size = TBC_Block_Size;
 	TBC = ( bonepose_t * )CG_Malloc( sizeof( bonepose_t ) * TBC_Size );
 	TBC_Count = 0;
+	skel_headnode = NULL;
 }
 
 /*
@@ -476,4 +477,11 @@ void CG_FreeTemporaryBoneposesCache( void ) {
 	CG_Free( TBC );
 	TBC_Size = 0;
 	TBC_Count = 0;
+
+	cgs_skeleton_t * next = skel_headnode;
+	while( next != NULL ) {
+		cgs_skeleton_t * curr = next;
+		next = next->next;
+		CG_Free( curr );
+	}
 }

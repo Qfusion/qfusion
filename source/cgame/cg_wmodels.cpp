@@ -36,7 +36,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //						weaponinfo Registering
 //======================================================================
 
-weaponinfo_t cg_pWeaponModelInfos[WEAP_TOTAL];
+static weaponinfo_t cg_pWeaponModelInfos[WEAP_TOTAL];
 
 static const char *wmPartSufix[] = { "", "_expansion", "_flash", "_hand", "_barrel", "_barrel2", NULL };
 
@@ -478,11 +478,10 @@ static bool CG_WeaponModelUpdateRegistration( weaponinfo_t *weaponinfo, char *fi
 * Stored names format is without extension, like this: "rocketl/rocketl"
 */
 static struct weaponinfo_s *CG_FindWeaponModelSpot( char *filename ) {
-	int i;
 	int freespot = -1;
 
-	for( i = 0; i < WEAP_TOTAL; i++ ) {
-		if( cg_pWeaponModelInfos[i].inuse == true ) {
+	for( int i = 0; i < WEAP_TOTAL; i++ ) {
+		if( cg_pWeaponModelInfos[i].inuse ) {
 			if( !Q_stricmp( cg_pWeaponModelInfos[i].name, filename ) ) { //found it
 				if( cg_debugWeaponModels->integer ) {
 					CG_Printf( "WEAPModel: found at spot %i: %s\n", i, filename );
@@ -522,7 +521,7 @@ struct weaponinfo_s *CG_RegisterWeaponModel( char *cgs_name, int weaponTag ) {
 	if( !weaponinfo ) {
 		return NULL;
 	}
-	if( weaponinfo->inuse == true ) {
+	if( weaponinfo->inuse ) {
 		return weaponinfo;
 	}
 
@@ -557,7 +556,7 @@ struct weaponinfo_s *CG_CreateWeaponZeroModel( char *filename ) {
 	if( !weaponinfo ) {
 		return NULL;
 	}
-	if( weaponinfo->inuse == true ) {
+	if( weaponinfo->inuse ) {
 		return weaponinfo;
 	}
 
@@ -897,4 +896,8 @@ void CG_AddWeaponOnTag( entity_t *ent, orientation_t *tag, int weaponid, int eff
 	// icons
 	CG_AddItemIconOnTag( &weapon, weaponInfo, weaponItem, "tag_weapon_icon" );
 	CG_AddItemIconOnTag( &weapon, weaponInfo, ammoItem, "tag_ammo_icon" );
+}
+
+void CG_WModelsInit() {
+	memset( &cg_pWeaponModelInfos, 0, sizeof( cg_pWeaponModelInfos ) );
 }

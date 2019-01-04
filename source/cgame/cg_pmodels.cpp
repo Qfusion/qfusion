@@ -38,11 +38,18 @@ pmodelinfo_t *cg_PModelInfos;
 //						PlayerModel Registering
 //======================================================================
 
-/*
-* CG_PModelsInit
-*/
-void CG_PModelsInit( void ) {
+void CG_PModelsInit() {
 	memset( cg_entPModels, 0, sizeof( cg_entPModels ) );
+	cg_PModelInfos = NULL;
+}
+
+void CG_PModelsShutdown() {
+	pmodelinfo_t * next = cg_PModelInfos;
+	while( next != NULL ) {
+		pmodelinfo_t * curr = next;
+		next = next->next;
+		CG_Free( curr );
+	}
 }
 
 /*

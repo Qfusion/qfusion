@@ -262,9 +262,7 @@ char *_CG_CopyString( const char *in, const char *filename, int fileline ) {
 * CG_RegisterWeaponModels
 */
 static void CG_RegisterWeaponModels( void ) {
-	int i;
-
-	for( i = 0; i < cgs.numWeaponModels; i++ ) {
+	for( int i = 0; i < cgs.numWeaponModels; i++ ) {
 		cgs.weaponInfos[i] = CG_RegisterWeaponModel( cgs.weaponModels[i], i );
 	}
 
@@ -887,6 +885,7 @@ void CG_Init( const char *serverName, unsigned int playerNum,
 	CG_RegisterVariables();
 	CG_InitTemporaryBoneposesCache();
 	CG_PModelsInit();
+	CG_WModelsInit();
 
 	CG_ScreenInit();
 
@@ -942,6 +941,7 @@ void CG_Shutdown( void ) {
 	CG_DemocamShutdown();
 	CG_ScreenShutdown();
 	CG_UnregisterCGameCommands();
+	CG_PModelsShutdown();
 	CG_FreeTemporaryBoneposesCache();
 	CG_ShutdownInput();
 	CG_asUnloadGameScript();
