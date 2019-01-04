@@ -273,8 +273,8 @@ void S_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis ) {
 		}
 	}
 
-	if( s_musicvolume->modified && music_playing )
-		alSourcef( music_source, AL_GAIN, s_musicvolume->value );
+	if( ( s_volume->modified || s_musicvolume->modified ) && music_playing )
+		alSourcef( music_source, AL_GAIN, s_volume->value * s_musicvolume->value );
 
 	s_volume->modified = false;
 	s_musicvolume->modified = false;
