@@ -784,7 +784,7 @@ static void RF_IssueResizeFramebuffersCmd( ref_cmdpipe_t *cmdpipe ) {
 
 static void RF_IssueEnvScreenShotReliableCmd( ref_cmdpipe_t *cmdpipe, int id, const char *path, const char *name,
 											  const char *fmtstring, int x, int y, int w, int h, unsigned pixels, bool silent ) {
-	refReliableCmdScreenShot_t cmd = { 0 };
+	refReliableCmdScreenShot_t cmd;
 
 	cmd.id = id;
 	cmd.x = x;

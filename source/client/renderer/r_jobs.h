@@ -18,8 +18,7 @@
 
  */
 
-#ifndef R_JOBS_H
-#define R_JOBS_H
+#pragma once
 
 #define NUM_JOB_THREADS 2
 
@@ -35,5 +34,3 @@ void RJ_Init( void );
 void RJ_ScheduleJob( jobfunc_t job, jobarg_t *arg, unsigned items );
 void RJ_FinishJobs( void );
 void RJ_Shutdown( void );
-
-#endif // R_JOBS_H

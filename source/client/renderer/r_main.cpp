@@ -1380,7 +1380,7 @@ const msurface_t *R_GetDebugSurface( void ) {
 * R_RenderDebugSurface
 */
 void R_RenderDebugSurface( const refdef_t *fd ) {
-	rtrace_t tr = { 0 };
+	rtrace_t tr = { };
 	vec3_t forward;
 	vec3_t start, end;
 	msurface_t *debugSurf = NULL;

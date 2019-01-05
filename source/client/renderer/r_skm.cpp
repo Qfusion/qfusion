@@ -1167,7 +1167,7 @@ static void R_AddSkeletalModelCacheJob( const entity_t *e, const model_t *mod ) 
 	const mskmodel_t *skmodel;
 	const bonepose_t *bp, *oldbp;
 	skmcacheentry_t *cache;
-	jobarg_t ja = { 0 };
+	jobarg_t ja = { };
 
 	entNum = R_ENT2NUM( e );
 	skmodel = ( ( mskmodel_t * )mod->extradata );

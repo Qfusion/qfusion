@@ -1328,7 +1328,7 @@ static void SV_Web_InitSocket( const char *addrstr, netadrtype_t adrtype, socket
 */
 static void SV_Web_Listen( socket_t *socket ) {
 	int ret;
-	socket_t newsocket = { 0 };
+	socket_t newsocket = { };
 	netadr_t newaddress;
 	sv_http_connection_t *con;
 
