@@ -104,7 +104,7 @@ void UI_Init() {
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGui_ImplSDL2_InitForOpenGL( sdl_window, NULL );
-	ImGui_ImplOpenGL3_Init();
+	ImGui_ImplOpenGL3_Init( "#version 120" );
 
 	{
 		ImGuiIO & io = ImGui::GetIO();
