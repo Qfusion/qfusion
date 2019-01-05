@@ -100,7 +100,6 @@ static const keyname_t keynames[] =
 	{ "MOUSE6", K_MOUSE6 },
 	{ "MOUSE7", K_MOUSE7 },
 	{ "MOUSE8", K_MOUSE8 },
-	{ "MOUSE1DBLCLK", K_MOUSE1DBLCLK },
 
 	{ "KP_HOME", KP_HOME },
 	{ "KP_UPARROW", KP_UPARROW },
@@ -369,47 +368,6 @@ void Key_CharEvent( int key, wchar_t charkey ) {
 		default:
 			Com_Error( ERR_FATAL, "Bad cls.key_dest" );
 	}
-}
-
-/*
-* Key_MouseEvent
-*
-* A wrapper around Key_Event to generate double click events
-* A typical sequence of events will look like this:
-* +MOUSE1 - user pressed button
-* -MOUSE1 - user released button
-* +MOUSE1 - user pressed button  (must be within 480 ms or so of the previous down event)
-* +MOUSE1DBLCLK - inserted by Key_MouseEvent
-* -MOUSE1DBLCLK - inserted by Key_MouseEvent
-* -MOUSE1 - user released button
-* (This order is not final! We might want to suppress the second pair of
-* mouse1 down/up events, or make +MOUSE1DBLCLK come before +MOUSE1)
-*/
-void Key_MouseEvent( int key, bool down, int64_t time ) {
-	static int64_t last_button1_click = 0;
-	// use a lower delay than XP default (480 ms) because we don't support width/height yet
-	const int64_t doubleclick_time = 350;  // milliseconds
-	//	static int last_button1_x, last_button1_y; // TODO
-	//	const int doubleclick_width = 4;	// TODO
-	//	const int doubleclick_height = 4;	// TODO
-
-	if( key == K_MOUSE1 ) {
-		if( down ) {
-			if( time && last_button1_click && ( ( time - last_button1_click ) < doubleclick_time ) ) {
-				last_button1_click = 0;
-				Key_Event( key, down, time );
-				Key_Event( K_MOUSE1DBLCLK, true, time );
-				Key_Event( K_MOUSE1DBLCLK, false, time );
-				return;
-			} else {
-				last_button1_click = time;
-			}
-		}
-	} else if( key == K_MOUSE2 || key == K_MOUSE3 ) {
-		last_button1_click = 0;
-	}
-
-	Key_Event( key, down, time );
 }
 
 /*

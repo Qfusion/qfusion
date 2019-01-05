@@ -50,34 +50,34 @@ static void mouse_button_event( SDL_MouseButtonEvent *event, bool state ) {
 		// The engine only supports up to 8 buttons plus the mousewheel.
 		switch( button ) {
 			case SDL_BUTTON_LEFT:
-				Key_MouseEvent( K_MOUSE1, state, Sys_Milliseconds() );
+				Key_Event( K_MOUSE1, state, Sys_Milliseconds() );
 				break;
 			case SDL_BUTTON_MIDDLE:
-				Key_MouseEvent( K_MOUSE3, state, Sys_Milliseconds() );
+				Key_Event( K_MOUSE3, state, Sys_Milliseconds() );
 				break;
 			case SDL_BUTTON_RIGHT:
-				Key_MouseEvent( K_MOUSE2, state, Sys_Milliseconds() );
+				Key_Event( K_MOUSE2, state, Sys_Milliseconds() );
 				break;
 			case SDL_BUTTON_X1:
-				Key_MouseEvent( K_MOUSE4, state, Sys_Milliseconds() );
+				Key_Event( K_MOUSE4, state, Sys_Milliseconds() );
 				break;
 			case SDL_BUTTON_X2:
-				Key_MouseEvent( K_MOUSE5, state, Sys_Milliseconds() );
+				Key_Event( K_MOUSE5, state, Sys_Milliseconds() );
 				break;
 			case 6:
-				Key_MouseEvent( K_MOUSE6, state, Sys_Milliseconds() );
+				Key_Event( K_MOUSE6, state, Sys_Milliseconds() );
 				break;
 			case 7:
-				Key_MouseEvent( K_MOUSE7, state, Sys_Milliseconds() );
+				Key_Event( K_MOUSE7, state, Sys_Milliseconds() );
 				break;
 			case 8:
-				Key_MouseEvent( K_MOUSE4, state, Sys_Milliseconds() );
+				Key_Event( K_MOUSE4, state, Sys_Milliseconds() );
 				break;
 			case 9:
-				Key_MouseEvent( K_MOUSE5, state, Sys_Milliseconds() );
+				Key_Event( K_MOUSE5, state, Sys_Milliseconds() );
 				break;
 			case 10:
-				Key_MouseEvent( K_MOUSE8, state, Sys_Milliseconds() );
+				Key_Event( K_MOUSE8, state, Sys_Milliseconds() );
 				break;
 		}
 	} else {

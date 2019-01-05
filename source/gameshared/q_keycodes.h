@@ -119,8 +119,6 @@ typedef enum {
 
 	K_MWHEELUP,
 	K_MWHEELDOWN,
-
-	K_MOUSE1DBLCLK,
 } keyNum_t;
 
 //
