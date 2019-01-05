@@ -509,7 +509,6 @@ typedef struct {
 
 	int64_t firstViewRealTime;
 	int viewFrameCount;
-	bool startedMusic;
 
 	snapshot_t frame, oldFrame;
 	bool frameSequenceRunning;
