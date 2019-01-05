@@ -177,6 +177,8 @@ typedef struct {
 	bool overlayMenu;
 	bool overlayMenuShowCursor;
 
+	int64_t monotonicTime; // starts at 0 when the game is launched, increases forever
+
 	int64_t framecount;
 	int64_t realtime;               // always increasing, no clamping, etc
 	int64_t gametime;               // always increasing, no clamping, etc

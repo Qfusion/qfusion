@@ -834,10 +834,11 @@ static void CG_SetupViewDef( cg_viewdef_t *view, int type ) {
 /*
 * CG_RenderView
 */
-void CG_RenderView( int frameTime, int realFrameTime, int64_t realTime, int64_t serverTime, unsigned extrapolationTime ) {
+void CG_RenderView( int frameTime, int realFrameTime, int64_t monotonicTime, int64_t realTime, int64_t serverTime, unsigned extrapolationTime ) {
 	refdef_t *rd = &cg.view.refdef;
 
 	// update time
+	cg.monotonicTime = monotonicTime;
 	cg.realTime = realTime;
 	cg.frameTime = frameTime;
 	cg.realFrameTime = realFrameTime;

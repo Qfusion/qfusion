@@ -402,7 +402,7 @@ bool CL_GameModule_NewSnapshot( int pendingSnapshot ) {
 */
 void CL_GameModule_RenderView() {
 	if( cge && cls.cgameActive ) {
-		cge->RenderView( cls.frametime, cls.realFrameTime, cls.realtime, cl.serverTime,
+		cge->RenderView( cls.frametime, cls.realFrameTime, cls.monotonicTime, cls.realtime, cl.serverTime,
 						 cl_extrapolate->integer && !cls.demo.playing ? cl_extrapolationTime->integer : 0 );
 	}
 }

@@ -2099,6 +2099,7 @@ void CL_Frame( int realMsec, int gameMsec ) {
 		return;
 	}
 
+	cls.monotonicTime += realMsec;
 	cls.realtime += realMsec;
 
 	if( cls.demo.playing && cls.demo.play_ignore_next_frametime ) {
@@ -2315,6 +2316,8 @@ void CL_AsyncStreamRequest( const char *url, const char **headers, int timeout, 
 * CL_Init
 */
 void CL_Init( void ) {
+	cls.monotonicTime = 0;
+
 	netadr_t address;
 
 	assert( !cl_initialized );

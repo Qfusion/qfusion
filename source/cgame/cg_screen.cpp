@@ -254,7 +254,7 @@ void CG_DrawNet( int x, int y, int w, int h, int align, vec4_t color ) {
 * CG_DrawCrosshair
 */
 void CG_ScreenCrosshairDamageUpdate( void ) {
-	scr_damagetime = cg.time;
+	scr_damagetime = cg.monotonicTime;
 }
 
 static void CG_FillRect( int x, int y, int w, int h, vec4_t color ) {
@@ -292,7 +292,7 @@ void CG_DrawCrosshair() {
 	vec4_t inner;
 	Vector4Copy( crosshair_color, inner );
 	vec4_t border = { 0, 0, 0, 1 };
-	if( cg.time - scr_damagetime <= 300 )
+	if( cg.monotonicTime - scr_damagetime <= 300 )
 		Vector4Copy( crosshair_damage_color, inner );
 
 	int w = cgs.vidWidth;
