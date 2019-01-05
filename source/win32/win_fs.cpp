@@ -235,7 +235,7 @@ const char *Sys_FS_GetHomeDirectory( void ) {
 		return NULL;
 	}
 
-	Q_strncpyz( home, va( "%s/My Games/%s-0.0", COM_SanitizeFilePath( home ), APPLICATION ), sizeof( home ) );
+	Q_strncpyz( home, va( "%s/My Games/%s 0.0", COM_SanitizeFilePath( home ), APPLICATION ), sizeof( home ) );
 
 	return home;
 }
