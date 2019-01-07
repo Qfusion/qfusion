@@ -53,8 +53,6 @@ void CL_ClearInputState( void ) {
 * Notifies cgame of new frame, refreshes input timings, coordinates and angles
 */
 static void CL_UpdateGameInput( int frameTime ) {
-	bool overlayMenuMouse = cls.key_dest == key_game && SCR_IsOverlayMenuShown() && cls.overlayMenuShowCursor;
-
 	MouseMovement movement = IN_GetMouseMovement();
 
 	// refresh input in cgame
@@ -62,13 +60,11 @@ static void CL_UpdateGameInput( int frameTime ) {
 
 	if( cls.key_dest == key_menu ) {
 		UI_MouseSet( true, movement.absx, movement.absy, true );
-	} else if( overlayMenuMouse ) {
-		UI_MouseSet( false, movement.absx, movement.absy, true );
 	} else {
 		CL_GameModule_MouseMove( movement.relx, movement.rely );
 	}
 
-	if( (cls.key_dest == key_game && !overlayMenuMouse) || ( ( cls.key_dest == key_console ) && Cvar_Value( "in_grabinconsole" ) != 0 ) ) {
+	if( cls.key_dest == key_game ) {
 		CL_GameModule_AddViewAngles( cl.viewangles );
 	}
 }
@@ -164,9 +160,6 @@ static void CL_SetUcmdMovement( usercmd_t *ucmd ) {
 static void CL_SetUcmdButtons( usercmd_t *ucmd ) {
 	if( cls.key_dest == key_game ) {
 		ucmd->buttons |= CL_GameModule_GetButtonBits();
-		if( anykeydown ) {
-			ucmd->buttons |= BUTTON_ANY;
-		}
 		return;
 	}
 

@@ -124,33 +124,6 @@ void setTeamProgress( int teamNum, int percent, BombProgress type ) {
 	}
 }
 
-void BOMB_SetVoicecommOverlayMenu( Client @client ) {
-	String menuStr = '';
-
-	if( client.getEnt().team == attackingTeam ) {
-		menuStr +=
-			'"Attack A!" "vsay_team attack_a" ' +
-			'"Attack B!" "vsay_team attack_b" ';
-	}
-	else {
-		menuStr +=
-			'"Defend A!" "vsay_team defend_a" ' +
-			'"Defend B!" "vsay_team defend_b" ';
-	}
-
-	menuStr +=
-		'"Need backup" "vsay_team needbackup" ' +
-		'"Need offense" "vsay_team needoffense" ' +
-		'"Need defense" "vsay_team needdefense" ' +
-		'"On offense" "vsay_team onoffense" ' +
-		'"On defense" "vsay_team ondefense" ' +
-		'"Area secured" "vsay_team areasecured" ' +
-		'"Affirmative" "vsay_team affirmative" ' +
-		'"Negative" "vsay_team negative" ';
-
-	GENERIC_SetOverlayMenu( @client, menuStr );
-}
-
 bool GT_Command( Client @client, const String &cmdString, const String &argsString, int argc ) {
 	if( cmdString == "drop" ) {
 		if( @client.getEnt() == @bombCarrier && bombState == BombState_Carried ) {
@@ -373,11 +346,8 @@ void GT_PlayerRespawn( Entity @ent, int old_team, int new_team ) {
 
 	if( ent.isGhosting() ) {
 		ent.svflags &= ~SVF_FORCETEAM;
-		GENERIC_ClearOverlayMenu( @client );
 		return;
 	}
-
-	BOMB_SetVoicecommOverlayMenu( @client );
 
 	player.giveInventory();
 

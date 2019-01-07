@@ -429,29 +429,6 @@ void SCR_ShutdownScreen( void ) {
 }
 
 /*
-* SCR_EnableOverlayMenu
-*/
-void SCR_EnableOverlayMenu( bool enable, bool showCursor ) {
-	cls.overlayMenu = enable;
-	cls.overlayMenuShowCursor = showCursor;
-	UI_ShowOverlayMenu( enable, showCursor );
-}
-
-/*
-* SCR_IsOverlayMenuShown
-*/
-bool SCR_IsOverlayMenuShown( void ) {
-	return cls.overlayMenu && UI_HaveOverlayMenu();
-}
-
-/*
-* SCR_IsOverlayMenuHover
-*/
-bool SCR_IsOverlayMenuHover( void ) {
-	return SCR_IsOverlayMenuShown() && cls.overlayMenuShowCursor && UI_MouseHover( false );
-}
-
-/*
 * SCR_DrawConsole
 */
 void SCR_DrawChat( int x, int y, int width, struct qfontface_s *font ) {

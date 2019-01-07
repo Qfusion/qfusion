@@ -43,25 +43,6 @@ static cg_asApiFuncPtr_t cg_asCGameAPI[] = {
 
 //=======================================================================
 
-static const gs_asEnumVal_t asOverlayMenuEnumVals[] =
-{
-	ASLIB_ENUM_VAL( OVERLAY_MENU_LEFT ),
-	ASLIB_ENUM_VAL( OVERLAY_MENU_HIDDEN ),
-	ASLIB_ENUM_VAL( OVERLAY_MENU_RIGHT ),
-
-	ASLIB_ENUM_VAL_NULL
-};
-
-static const gs_asEnum_t asCGameEnums[] =
-{
-	{ "cg_overlayMenuState_e", asOverlayMenuEnumVals },
-
-	ASLIB_ENUM_VAL_NULL
-};
-
-
-//======================================================================
-
 static void asFunc_Print( const asstring_t *str ) {
 	if( !str || !str->buffer ) {
 		return;
@@ -73,7 +54,6 @@ static void asFunc_Print( const asstring_t *str ) {
 static const gs_asglobfuncs_t asCGameGlobalFuncs[] =
 {
 	{ "void Print( const String &in )", asFUNCTION( asFunc_Print ), NULL },
-	{ "void ShowOverlayMenu( int state, bool showCursor )", asFUNCTION( CG_ShowOverlayMenu ), NULL },
 
 	{ NULL }
 };
@@ -90,7 +70,6 @@ static void CG_asInitializeCGameEngineSyntax( asIScriptEngine *asEngine ) {
 	GS_asInitializeEngine( asEngine );
 
 	// register global enums
-	GS_asRegisterEnums( asEngine, asCGameEnums, "CGame" );
 	GS_asRegisterEnums( asEngine, asCGameCameraEnums, "CGame" );
 
 	// register global funcdefs

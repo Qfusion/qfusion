@@ -579,31 +579,6 @@ static void CG_SC_MOTD( void ) {
 	CG_Printf( "\nMessage of the Day:\n%s", motd );
 }
 
-/*
-* CG_SC_MenuQuick
-*/
-static void CG_SC_MenuQuick( void ) {
-	int i, c;
-
-	if( cgs.demoPlaying ) {
-		return;
-	}
-
-	cg.overlayMenu[0] = '\0';
-
-	if( trap_Cmd_Argc() >= 2 ) {
-		for( i = 1, c = 1; i < trap_Cmd_Argc() - 1; i += 2, c++ ) {
-			const char *label = trap_Cmd_Argv( i );
-			const char *cmd = trap_Cmd_Argv( i + 1 );
-
-			Q_strncatz( cg.overlayMenu, va( "btn%i \"%s\" ", c, label ), sizeof( cg.overlayMenu ) );
-			Q_strncatz( cg.overlayMenu, va( "cmd%i \"%s%s\" ", c, *cmd ? "cmd " : "", cmd ), sizeof( cg.overlayMenu ) );
-		}
-	}
-
-	CG_RefreshOverlayMenu();
-}
-
 static void CG_SC_ChangeLoadout() {
 	if( trap_Cmd_Argc() != 3 )
 		return;
@@ -699,7 +674,6 @@ static const svcmd_t cg_svcmds[] =
 	{ "memo", CG_SC_MenuModal },
 	{ "motd", CG_SC_MOTD },
 	{ "aw", CG_SC_AddAward },
-	{ "qm", CG_SC_MenuQuick },
 	{ "changeloadout", CG_SC_ChangeLoadout },
 	{ "saveloadout", CG_SC_SaveLoadout },
 

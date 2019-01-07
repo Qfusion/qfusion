@@ -583,8 +583,6 @@ typedef struct {
 	int64_t helpmessage_time;
 	char *motd;
 	int64_t motd_time;
-	char overlayMenu[MAX_STRING_CHARS];
-	bool overlayMenu_left;
 
 	// awards
 	char award_lines[MAX_AWARD_LINES][MAX_CONFIGSTRING_CHARS];
@@ -680,12 +678,6 @@ void CG_Predict_TouchTriggers( pmove_t *pm, vec3_t previous_origin );
 //
 // cg_screen.c
 //
-enum e_ingamestate_t {
-	OVERLAY_MENU_LEFT = -1,
-	OVERLAY_MENU_HIDDEN = 0,
-	OVERLAY_MENU_RIGHT = 1,
-};
-
 extern vrect_t scr_vrect;
 
 extern cvar_t *cg_scoreboardStats;
@@ -729,18 +721,6 @@ void CG_DrawDamageNumbers();
 void CG_AddBombHudEntity( centity_t * cent );
 void CG_DrawBombHUD();
 void CG_ResetBombHUD();
-
-/**
- * Sends current quick menu string to the UI.
- */
-void CG_RefreshOverlayMenu( void );
-
-/**
- * Toggles the visibility of the quick menu.
- *
- * @param state quick menu visibility (0 = hidden, 1 = on the right, -1 = on the left)
- */
-void CG_ShowOverlayMenu( int state, bool showCursor );
 
 //
 // cg_hud.c

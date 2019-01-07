@@ -174,8 +174,6 @@ typedef struct {
 	connstate_t state;          // only set through CL_SetClientState
 	keydest_t key_dest;
 	keydest_t old_key_dest;
-	bool overlayMenu;
-	bool overlayMenuShowCursor;
 
 	int64_t monotonicTime; // starts at 0 when the game is launched, increases forever
 
@@ -456,9 +454,6 @@ void CL_CheckDownloadTimeout( void );
 //
 void SCR_InitScreen( void );
 void SCR_ShutdownScreen( void );
-void SCR_EnableOverlayMenu( bool enable, bool showCursor );
-bool SCR_IsOverlayMenuShown( void );
-bool SCR_IsOverlayMenuHover( void );
 void SCR_UpdateScreen( void );
 void SCR_BeginLoadingPlaque( void );
 void SCR_EndLoadingPlaque( void );

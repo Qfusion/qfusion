@@ -2,7 +2,6 @@
 /shared/utils.as;
 /shared/files.as;
 
-generic/overlaymenu.as;
 generic/matchstates.as;
 
 bomb/main.as;

@@ -12,8 +12,6 @@ void UI_ForceMenuOff();
 void UI_ToggleGameMenu( bool spectating, bool can_ready, bool can_unready );
 void UI_ToggleDemoMenu();
 void UI_ForceMenuOff();
-void UI_ShowOverlayMenu( bool show, bool showCursor );
-bool UI_HaveOverlayMenu();
 void UI_AddToServerList( const char *adr, const char *info );
 void UI_MouseSet( bool mainContext, int mx, int my, bool showCursor );
 bool UI_MouseHover( bool mainContext );

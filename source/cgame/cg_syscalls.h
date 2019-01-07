@@ -444,18 +444,6 @@ static inline size_t trap_SCR_StrlenForWidth( const char *str, struct qfontface_
 	return CGAME_IMPORT.SCR_StrlenForWidth( str, font, maxwidth, 0 );
 }
 
-static inline void trap_SCR_EnableOverlayMenu( bool enable, bool showCursor ) {
-	CGAME_IMPORT.SCR_EnableOverlayMenu( enable, showCursor );
-}
-
-static inline bool trap_SCR_HaveOverlayMenu( void ) {
-	return CGAME_IMPORT.SCR_HaveOverlayMenu();
-}
-
-static inline bool trap_SCR_IsOverlayMenuShown( void ) {
-	return CGAME_IMPORT.SCR_IsOverlayMenuShown();
-}
-
 static inline void trap_SCR_DrawChat( int x, int y, int width, struct qfontface_s *font ) {
 	CGAME_IMPORT.SCR_DrawChat( x, y, width, font );
 }

@@ -427,18 +427,6 @@ static int CG_GetScoreboardShown( const void *parameter ) {
 	return CG_IsScoreboardShown() ? 1 : 0;
 }
 
-static int CG_GetOverlayMenuState( const void *parameter ) {
-	if( trap_SCR_IsOverlayMenuShown() ) {
-		return 2;
-	}
-
-	if( trap_SCR_HaveOverlayMenu() ) {
-		return 1;
-	}
-
-	return 0;
-}
-
 typedef struct
 {
 	const char *name;
@@ -505,7 +493,6 @@ static const reference_numeric_t cg_numeric_references[] =
 	{ "PMOVE_TYPE", CG_GetPmoveType, NULL },
 	{ "DEMOPLAYING", CG_IsDemoPlaying, NULL },
 	{ "INSTANTRESPAWN", CG_GetLayoutStatFlag, (void *)STAT_LAYOUT_INSTANTRESPAWN },
-	{ "QUICKMENU", CG_GetOverlayMenuState, NULL },
 
 	{ "POWERUP_QUAD_TIME", CG_GetPowerupTime, (void *)POWERUP_QUAD },
 

@@ -298,9 +298,6 @@ void CL_GameModule_Init( void ) {
 	import.SCR_SetDrawCharIntercept = SCR_SetDrawCharIntercept;
 	import.SCR_strWidth = SCR_strWidth;
 	import.SCR_StrlenForWidth = SCR_StrlenForWidth;
-	import.SCR_EnableOverlayMenu = SCR_EnableOverlayMenu;
-	import.SCR_HaveOverlayMenu = UI_HaveOverlayMenu;
-	import.SCR_IsOverlayMenuShown = SCR_IsOverlayMenuShown;
 	import.SCR_DrawChat = Con_DrawChat;
 
 	import.Mem_Alloc = CL_GameModule_MemAlloc;
@@ -309,8 +306,6 @@ void CL_GameModule_Init( void ) {
 	import.asGetAngelExport = QAS_GetAngelExport;
 
 	cge = GetCGameAPI( &import );
-
-	SCR_EnableOverlayMenu( false, true );
 
 	start = Sys_Milliseconds();
 	cge->Init( cls.servername, cl.playernum,

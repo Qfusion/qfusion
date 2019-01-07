@@ -876,26 +876,6 @@ static void objectGameClient_SetHelpMessage( unsigned int index, gclient_t *self
 	G_SetPlayerHelpMessage( PLAYERENT( playerNum ), index );
 }
 
-static void objectGameClient_SetOverlayMenuItems( asstring_t *str, gclient_t *self ) {
-	int playerNum;
-
-	if( !str || !str->buffer ) {
-		return;
-	}
-
-	playerNum = objectGameClient_PlayerNum( self );
-	if( playerNum < 0 || playerNum >= gs.maxclients ) {
-		return;
-	}
-
-	if( objectGameClient_isBot( self ) ) {
-		return;
-	}
-
-	Q_strncpyz( self->level.overlayMenuItems, str->buffer, sizeof( self->level.overlayMenuItems ) );
-	trap_GameCmd( PLAYERENT( playerNum ), va( "qm %s", str->buffer ) );
-}
-
 static const gs_asFuncdef_t gameclient_Funcdefs[] =
 {
 	ASLIB_FUNCDEF_NULL
@@ -943,7 +923,6 @@ static const gs_asMethod_t gameclient_Methods[] =
 	{ ASLIB_FUNCTION_DECL( void, set_chaseActive, ( const bool active ) ), asFUNCTION( objectGameClient_SetChaseActive ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( bool, get_chaseActive, ( ) const ), asFUNCTION( objectGameClient_GetChaseActive ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, setHelpMessage, ( uint msg ) ), asFUNCTION( objectGameClient_SetHelpMessage ), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL( void, setOverlayMenuItems, ( const String &in ) ), asFUNCTION( objectGameClient_SetOverlayMenuItems ), asCALL_CDECL_OBJLAST },
 
 	ASLIB_METHOD_NULL
 };

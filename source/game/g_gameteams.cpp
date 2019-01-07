@@ -55,7 +55,6 @@ void G_Teams_Init( void ) {
 			ent->movetype = MOVETYPE_NOCLIP; // allow freefly
 			ent->r.client->teamstate.timeStamp = level.time;
 			ent->r.client->resp.timeStamp = level.time;
-			trap_GameCmd( ent, va( "qm %s", ent->r.client->level.overlayMenuItems ) );
 		}
 	}
 

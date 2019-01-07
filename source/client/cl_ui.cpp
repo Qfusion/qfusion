@@ -836,13 +836,6 @@ void UI_ToggleGameMenu( bool spectating, bool ready, bool unready ) {
 void UI_ToggleDemoMenu() {
 }
 
-void UI_ShowOverlayMenu( bool show, bool showCursor ) {
-}
-
-bool UI_HaveOverlayMenu() {
-	return false;
-}
-
 void UI_AddToServerList( const char * address, const char *info ) {
 	if( size_t( num_servers ) < ARRAY_COUNT( servers ) ) {
 		servers[ num_servers ].address = strdup( address );

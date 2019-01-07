@@ -876,8 +876,6 @@ void CG_Init( const char *serverName, unsigned int playerNum,
 
 	CG_asInitScriptEngine();
 
-	CG_RefreshOverlayMenu();
-
 	CG_asLoadGameScript();
 
 	CG_InitInput();

@@ -115,36 +115,6 @@ static void CG_DrawCenterString( void ) {
 	trap_SCR_DrawMultilineString( cgs.vidWidth / 2, y, helpmessage, ALIGN_CENTER_TOP, cgs.vidWidth, 0, font, colorWhite );
 }
 
-/*
-* CG_RefreshInGamekMenu
-*/
-void CG_RefreshOverlayMenu( void ) {
-	if( !cg.overlayMenu[0] ) {
-		trap_Cmd_ExecuteText( EXEC_APPEND, "menu_quick 0\n" );
-		return;
-	}
-
-	trap_Cmd_ExecuteText( EXEC_APPEND, va( "menu_quick game_quick left %d %s\n", cg.overlayMenu_left ? 1 : 0, cg.overlayMenu ) );
-}
-
-/*
-* CG_ShowOverlayMenu
-*/
-void CG_ShowOverlayMenu( int state, bool showCursor ) {
-	if( state == OVERLAY_MENU_HIDDEN ) {
-		trap_SCR_EnableOverlayMenu( false, showCursor );
-		return;
-	}
-
-	bool left = state == OVERLAY_MENU_LEFT;
-	if( cg.overlayMenu_left != left ) {
-		cg.overlayMenu_left = left;
-		CG_RefreshOverlayMenu();
-	}
-
-	trap_SCR_EnableOverlayMenu( true, showCursor );
-}
-
 //=============================================================================
 
 /*
@@ -202,11 +172,7 @@ void CG_ScreenInit( void ) {
 */
 void CG_ScreenShutdown( void ) {
 	trap_Cmd_RemoveCommand( "help_hud" );
-
-	trap_Cmd_RemoveCommand( "+overlayMenu" );
-	trap_Cmd_RemoveCommand( "-overlayMenu" );
 }
-
 
 /*
 * CG_ParseValue
