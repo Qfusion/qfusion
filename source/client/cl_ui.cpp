@@ -366,12 +366,12 @@ static void SettingsKeys() {
 
 	KeyBindButton( "Forward", "+forward" );
 	KeyBindButton( "Back", "+back" );
-	KeyBindButton( "Left", "+moveleft" );
-	KeyBindButton( "Right", "+moveright" );
-	KeyBindButton( "Jump", "+moveup" );
+	KeyBindButton( "Left", "+left" );
+	KeyBindButton( "Right", "+right" );
+	KeyBindButton( "Jump", "+jump" );
 	KeyBindButton( "Dash/walljump", "+special" );
-	KeyBindButton( "Crouch", "+movedown" );
-	KeyBindButton( "Walk", "+speed" );
+	KeyBindButton( "Crouch", "+crouch" );
+	KeyBindButton( "Walk", "+walk" );
 
 	ImGui::Separator();
 	ImGui::Text( "Actions" );

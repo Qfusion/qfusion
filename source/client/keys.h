@@ -18,9 +18,7 @@
 
  */
 
-#include "../gameshared/q_keycodes.h"
-
-extern int anykeydown;
+#include "gameshared/q_keycodes.h"
 
 void Key_CharEvent( int key, wchar_t charkey );
 void Key_Event( int key, bool down, int64_t time );

@@ -64,12 +64,7 @@ uint GetButtonBits()
 
 Vec3 GetAngularMovement()
 {
-	Vec3 move;
-	
-	move += CGame::Input::Keys::GetAngularMovement();
-	move += CGame::Input::Mouse::GetAngularMovement();
-
-	return move;
+	return CGame::Input::Mouse::GetAngularMovement();
 }
 
 Vec3 GetMovement()

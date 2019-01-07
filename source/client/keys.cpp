@@ -21,8 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define SEMICOLON_BINDNAME  "SEMICOLON"
 
-int anykeydown;
-
 static char *keybindings[256];
 static bool menubound[256];     // if true, can't be rebound while in menu
 static int key_repeats[256];   // if > 1, it is autorepeating
@@ -492,18 +490,7 @@ void Key_Event( int key, bool down, int64_t time ) {
 		handled = true; // can't return here, because we want to track keydown & repeats
 	}
 
-	// track if any key is down for BUTTON_ANY
 	keydown[key] = down;
-	if( down ) {
-		if( key_repeats[key] == 1 ) {
-			anykeydown++;
-		}
-	} else {
-		anykeydown--;
-		if( anykeydown < 0 ) {
-			anykeydown = 0;
-		}
-	}
 
 	if( cls.key_dest == key_menu || ( cls.key_dest == key_game && have_overlayMenuHover ) ) {
 		UI_KeyEvent( cls.key_dest == key_menu, key, down );
@@ -537,11 +524,7 @@ void Key_Event( int key, bool down, int64_t time ) {
 * Key_ClearStates
 */
 void Key_ClearStates( void ) {
-	int i;
-
-	anykeydown = false;
-
-	for( i = 0; i < 256; i++ ) {
+	for( int i = 0; i < 256; i++ ) {
 		if( keydown[i] || key_repeats[i] ) {
 			Key_Event( i, false, 0 );
 		}

@@ -54,41 +54,52 @@ class Kbutton
 	int state;
 };
 
-Kbutton in_forward, in_back, in_moveleft, in_moveright;
-Kbutton in_use, in_attack;
-Kbutton in_up, in_down;
+Kbutton in_forward, in_back, in_left, in_right;
+Kbutton in_attack;
+Kbutton in_jump;
 Kbutton in_special;
-Kbutton in_speed;
+Kbutton in_crouch;
+Kbutton in_walk;
 Kbutton in_zoom;
-
-Cvar cl_anglespeedkey( "cl_anglespeedkey", "1.5", 0 );
 
 /*
 * Init
 */
 void Init() {
-	CGame::Cmd::AddCommand( "+moveup", UpDown );
-	CGame::Cmd::AddCommand( "-moveup", UpUp );
-	CGame::Cmd::AddCommand( "+movedown", DownDown );
-	CGame::Cmd::AddCommand( "-movedown", DownUp );
 	CGame::Cmd::AddCommand( "+forward", ForwardDown );
 	CGame::Cmd::AddCommand( "-forward", ForwardUp );
 	CGame::Cmd::AddCommand( "+back", BackDown );
 	CGame::Cmd::AddCommand( "-back", BackUp );
-	CGame::Cmd::AddCommand( "+moveleft", MoveleftDown );
-	CGame::Cmd::AddCommand( "-moveleft", MoveleftUp );
-	CGame::Cmd::AddCommand( "+moveright", MoverightDown );
-	CGame::Cmd::AddCommand( "-moveright", MoverightUp );
-	CGame::Cmd::AddCommand( "+speed", SpeedDown );
-	CGame::Cmd::AddCommand( "-speed", SpeedUp );
-	CGame::Cmd::AddCommand( "+attack", AttackDown );
-	CGame::Cmd::AddCommand( "-attack", AttackUp );
-	CGame::Cmd::AddCommand( "+use", UseDown );
-	CGame::Cmd::AddCommand( "-use", UseUp );
+	CGame::Cmd::AddCommand( "+left", LeftDown );
+	CGame::Cmd::AddCommand( "-left", LeftUp );
+	CGame::Cmd::AddCommand( "+right", RightDown );
+	CGame::Cmd::AddCommand( "-right", RightUp );
+
+	CGame::Cmd::AddCommand( "+jump", JumpDown );
+	CGame::Cmd::AddCommand( "-jump", JumpUp );
 	CGame::Cmd::AddCommand( "+special", SpecialDown );
 	CGame::Cmd::AddCommand( "-special", SpecialUp );
+	CGame::Cmd::AddCommand( "+crouch", CrouchDown );
+	CGame::Cmd::AddCommand( "-crouch", CrouchUp );
+	CGame::Cmd::AddCommand( "+walk", WalkDown );
+	CGame::Cmd::AddCommand( "-walk", WalkUp );
+
+	CGame::Cmd::AddCommand( "+attack", AttackDown );
+	CGame::Cmd::AddCommand( "-attack", AttackUp );
 	CGame::Cmd::AddCommand( "+zoom", ZoomDown );
 	CGame::Cmd::AddCommand( "-zoom", ZoomUp );
+
+	// legacy command names
+	CGame::Cmd::AddCommand( "+moveleft", LeftDown );
+	CGame::Cmd::AddCommand( "-moveleft", LeftUp );
+	CGame::Cmd::AddCommand( "+moveright", RightDown );
+	CGame::Cmd::AddCommand( "-moveright", RightUp );
+	CGame::Cmd::AddCommand( "+moveup", JumpDown );
+	CGame::Cmd::AddCommand( "-moveup", JumpUp );
+	CGame::Cmd::AddCommand( "+movedown", CrouchDown );
+	CGame::Cmd::AddCommand( "-movedown", CrouchUp );
+	CGame::Cmd::AddCommand( "+speed", WalkDown );
+	CGame::Cmd::AddCommand( "-speed", WalkUp );
 }
 
 /*
@@ -176,24 +187,22 @@ void KeyUp( Kbutton @b ) {
 }
 
 
-void UpDown( void ) { KeyDown( in_up ); }
-void UpUp( void ) { KeyUp( in_up ); }
-void DownDown( void ) { KeyDown( in_down ); }
-void DownUp( void ) { KeyUp( in_down ); }
+void JumpDown( void ) { KeyDown( in_jump ); }
+void JumpUp( void ) { KeyUp( in_jump ); }
+void CrouchDown( void ) { KeyDown( in_crouch ); }
+void CrouchUp( void ) { KeyUp( in_crouch ); }
 void ForwardDown( void ) { KeyDown( in_forward ); }
 void ForwardUp( void ) { KeyUp( in_forward ); }
 void BackDown( void ) { KeyDown( in_back ); }
 void BackUp( void ) { KeyUp( in_back ); }
-void MoveleftDown( void ) { KeyDown( in_moveleft ); }
-void MoveleftUp( void ) { KeyUp( in_moveleft ); }
-void MoverightDown( void ) { KeyDown( in_moveright ); }
-void MoverightUp( void ) { KeyUp( in_moveright ); }
-void SpeedDown( void ) { KeyDown( in_speed ); }
-void SpeedUp( void ) { KeyUp( in_speed ); }
+void LeftDown( void ) { KeyDown( in_left ); }
+void LeftUp( void ) { KeyUp( in_left ); }
+void RightDown( void ) { KeyDown( in_right ); }
+void RightUp( void ) { KeyUp( in_right ); }
+void WalkDown( void ) { KeyDown( in_walk ); }
+void WalkUp( void ) { KeyUp( in_walk ); }
 void AttackDown( void ) { KeyDown( in_attack ); }
 void AttackUp( void ) { KeyUp( in_attack ); }
-void UseDown( void ) { KeyDown( in_use ); }
-void UseUp( void ) { KeyUp( in_use ); }
 void SpecialDown( void ) { KeyDown( in_special ); }
 void SpecialUp( void ) { KeyUp( in_special ); }
 void ZoomDown( void ) { KeyDown( in_zoom ); }
@@ -203,12 +212,9 @@ void ZoomUp( void ) { KeyUp( in_zoom ); }
 * KeyState
 */
 float KeyState( Kbutton @key ) {
-	float val;
-	int msec;
-
 	key.state &= 1; // clear impulses
 
-	msec = key.msec;
+	int msec = key.msec;
 	key.msec = 0;
 
 	if( key.state != 0 ) {
@@ -221,7 +227,7 @@ float KeyState( Kbutton @key ) {
 		return 0;
 	}
 
-	val = float(msec) / float(frameTime);
+	float val = float(msec) / float(frameTime);
 	if( val <= 0.0 ) {
 		return 0.0;
 	}
@@ -232,39 +238,20 @@ float KeyState( Kbutton @key ) {
 }
 
 /*
-* GetAngularMovement
-*/
-Vec3 GetAngularMovement( void ) {
-	float speed;
-	Vec3 viewAngles;
-
-	if( ( in_speed.state & 1 ) != 0 ) {
-		speed = float(frameTime) * 0.001 * cl_anglespeedkey.value;
-	} else {
-		speed = float(frameTime) * 0.001;
-	}
-	
-	return viewAngles;
-}
-
-/*
 * GetMovement
 */
 Vec3 GetMovement() {
 	float down;
 	Vec3 movement;
 
-	movement[0] += KeyState( in_moveright );
-	movement[0] -= KeyState( in_moveleft );
+	movement[0] += KeyState( in_right );
+	movement[0] -= KeyState( in_left );
 
 	movement[1] += KeyState( in_forward );
 	movement[1] -= KeyState( in_back );
 
-	movement[2] += KeyState( in_up );
-	down = KeyState( in_down );
-	if( down > movement[2] ) {
-		movement[2] -= down;
-	}
+	movement[2] += KeyState( in_jump );
+	movement[2] -= KeyState( in_crouch );
 	
 	return movement;
 }
@@ -287,12 +274,7 @@ uint GetButtonBits() {
 	}
 	in_special.state &= ~2;
 
-	if( ( in_use.state & 3 ) != 0 ) {
-		buttons |= BUTTON_USE;
-	}
-	in_use.state &= ~2;
-
-	if( ( in_speed.state & 1 ) != 0 ) {
+	if( ( in_walk.state & 1 ) != 0 ) {
 		buttons |= BUTTON_WALK;
 	}
 
