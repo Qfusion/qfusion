@@ -17,30 +17,9 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-int rint( float x )
-{
-	return int( x < 0 ? ( x - 0.5f ) : ( x + 0.5f ) );
-}
-
-int rint( double x )
-{
-	return int( x < 0 ? ( x - 0.5f ) : ( x + 0.5f ) );
-}
-
 int COLOR_RGBA( int r, int g, int b, int a )
 {
 	return (( r & 255 ) << 0 ) | (( g & 255 ) << 8 ) | (( b & 255 ) << 16 ) | (( a & 255 ) << 24 );
-}
-
-
-Vec3 stringToVec3( const String &str )
-{
-	float x, y, z;
-	
-	x = str.getToken(0).toFloat();
-	y = str.getToken(1).toFloat();
-	z = str.getToken(2).toFloat();
-	return Vec3( x, y, z );
 }
 
 String @vec3ToString( Vec3 vec )
