@@ -562,7 +562,6 @@ void R_BuildTangentVectors( int numVertexes, vec4_t *xyzArray, vec4_t *normalsAr
 //
 void R_BatchPolySurf( const entity_t *e, const shader_t *shader, int lightStyleNum, drawSurfacePoly_t *poly, bool mergable );
 void R_DrawPolys( void );
-void R_DrawStretchPoly( const poly_t *poly, float x_offset, float y_offset );
 bool R_SurfPotentiallyFragmented( const msurface_t *surf );
 int R_GetClippedFragments( const vec3_t origin, float radius, vec3_t axis[3], int maxfverts,
 								   vec4_t *fverts, int maxfragments, fragment_t *fragments );

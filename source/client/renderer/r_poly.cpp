@@ -70,49 +70,6 @@ void R_DrawPolys( void ) {
 	}
 }
 
-/*
-* R_DrawStretchPoly
-*/
-void R_DrawStretchPoly( const poly_t *poly, float x_offset, float y_offset ) {
-	mesh_t mesh;
-	vec4_t translated[256];
-
-	assert( sizeof( *poly->elems ) == sizeof( elem_t ) );
-
-	if( !poly || !poly->shader ) {
-		return;
-	}
-
-	memset( &mesh, 0, sizeof( mesh ) );
-	mesh.numVerts = poly->numverts;
-	mesh.xyzArray = poly->verts;
-	mesh.normalsArray = poly->normals;
-	mesh.stArray = poly->stcoords;
-	mesh.colorsArray[0] = poly->colors;
-	mesh.numElems = poly->numelems;
-	mesh.elems = ( elem_t * )poly->elems;
-
-	if( ( x_offset || y_offset ) && poly->numverts <= ARRAY_COUNT( translated ) ) {
-		int i;
-		const vec_t *src = poly->verts[0];
-		vec_t *dest = translated[0];
-
-		for( i = 0; i < poly->numverts; i++, src += 4, dest += 4 ) {
-			dest[0] = src[0] + x_offset;
-			dest[1] = src[1] + y_offset;
-			dest[2] = src[2];
-			dest[3] = src[3];
-		}
-
-		x_offset = 0;
-		y_offset = 0;
-
-		mesh.xyzArray = translated;
-	}
-
-	RB_AddDynamicMesh( NULL, poly->shader, &mesh, GL_TRIANGLES, x_offset, y_offset );
-}
-
 //==================================================================================
 
 static int numFragmentVerts;

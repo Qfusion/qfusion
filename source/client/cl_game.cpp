@@ -251,7 +251,6 @@ void CL_GameModule_Init( void ) {
 	import.R_LerpTag = re.LerpTag;
 	import.R_SetCustomColor = re.SetCustomColor;
 	import.R_DrawStretchPic = re.DrawStretchPic;
-	import.R_DrawStretchPoly = re.DrawStretchPoly;
 	import.R_DrawRotatedStretchPic = re.DrawRotatedStretchPic;
 	import.R_TransformVectorToScreen = re.TransformVectorToScreen;
 	import.R_TransformVectorToScreenClamped = re.TransformVectorToScreenClamped;

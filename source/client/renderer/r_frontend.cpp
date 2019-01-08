@@ -173,10 +173,6 @@ void RF_DrawRotatedStretchPic( int x, int y, int w, int h, float s1, float t1, f
 	rrf.frame->DrawRotatedStretchPic( rrf.frame, x, y, w, h, s1, t1, s2, t2, angle, color, shader );
 }
 
-void RF_DrawStretchPoly( const poly_t *poly, float x_offset, float y_offset ) {
-	rrf.frame->DrawStretchPoly( rrf.frame, poly, x_offset, y_offset );
-}
-
 void RF_SetScissor( int x, int y, int w, int h ) {
 	rrf.frame->SetScissor( rrf.frame, x, y, w, h );
 	Vector4Set( rrf.scissor, x, y, w, h );

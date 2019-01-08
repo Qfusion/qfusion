@@ -70,7 +70,6 @@ void RF_DrawRotatedStretchPic( int x, int y, int w, int h, float s1, float t1, f
 							   const vec4_t color, const shader_t *shader );
 void RF_DrawStretchRaw( int x, int y, int w, int h, int cols, int rows,
 						float s1, float t1, float s2, float t2, uint8_t *data );
-void RF_DrawStretchPoly( const poly_t *poly, float x_offset, float y_offset );
 void RF_SetScissor( int x, int y, int w, int h );
 void RF_GetScissor( int *x, int *y, int *w, int *h );
 void RF_ResetScissor( void );

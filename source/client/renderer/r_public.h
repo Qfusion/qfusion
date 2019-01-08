@@ -132,7 +132,6 @@ typedef struct {
 	void ( *DrawRotatedStretchPic )( int x, int y, int w, int h, float s1, float t1, float s2, float t2,
 									 float angle, const vec4_t color, const struct shader_s *shader );
 
-	void ( *DrawStretchPoly )( const poly_t *poly, float x_offset, float y_offset );
 	void ( *Scissor )( int x, int y, int w, int h );
 	void ( *GetScissor )( int *x, int *y, int *w, int *h );
 	void ( *ResetScissor )( void );

@@ -34,7 +34,6 @@ typedef struct ref_cmdbuf_s {
 	void ( *EndFrame )( struct ref_cmdbuf_s *cmdbuf );
 	void ( *DrawRotatedStretchPic )( struct ref_cmdbuf_s *cmdbuf, int x, int y, int w, int h,
 									 float s1, float t1, float s2, float t2, float angle, const vec4_t color, const shader_t *shader );
-	void ( *DrawStretchPoly )( struct ref_cmdbuf_s *cmdbuf, const poly_t *poly, float x_offset, float y_offset );
 	void ( *ClearScene )( struct ref_cmdbuf_s *cmdbuf );
 	void ( *AddEntityToScene )( struct ref_cmdbuf_s *cmdbuf, const entity_t *ent );
 	void ( *AddLightToScene )( struct ref_cmdbuf_s *cmdbuf, const vec3_t org, float intensity, float r, float g, float b );

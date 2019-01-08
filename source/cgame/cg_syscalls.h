@@ -296,10 +296,6 @@ static inline void trap_R_DrawRotatedStretchPic( int x, int y, int w, int h, flo
 	CGAME_IMPORT.R_DrawRotatedStretchPic( x, y, w, h, s1, t1, s2, t2, angle, color, shader );
 }
 
-static inline void trap_R_DrawStretchPoly( const poly_t *poly, float x_offset, float y_offset ) {
-	CGAME_IMPORT.R_DrawStretchPoly( poly, x_offset, y_offset );
-}
-
 static inline void trap_R_TransformVectorToScreen( const refdef_t *rd, const vec3_t in, vec2_t out ) {
 	CGAME_IMPORT.R_TransformVectorToScreen( rd, in, out );
 }

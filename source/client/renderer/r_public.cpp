@@ -48,7 +48,6 @@ extern "C" QF_DLL_EXPORT ref_export_t *GetRefAPI( ref_import_t *import ) {
 	globals.RenderScene = RF_RenderScene;
 	globals.DrawStretchPic = RF_DrawStretchPic;
 	globals.DrawRotatedStretchPic = RF_DrawRotatedStretchPic;
-	globals.DrawStretchPoly = RF_DrawStretchPoly;
 	globals.Scissor = RF_SetScissor;
 	globals.GetScissor = RF_GetScissor;
 	globals.ResetScissor = RF_ResetScissor;
