@@ -648,7 +648,8 @@ static void CG_ProjectileFireTrail( centity_t *cent ) {
 	float len;
 	vec3_t vec;
 	int trailTime;
-	float radius = 8, alpha = cg_projectileFireTrailAlpha->value;
+	float radius = 8;
+	float alpha = clamp( cg_projectileFireTrailAlpha->value, 0.0f, 1.0f );
 	struct shader_s *shader;
 
 	if( !cg_projectileFireTrail->integer ) {
@@ -675,9 +676,10 @@ static void CG_ProjectileFireTrail( centity_t *cent ) {
 	if( cent->localEffects[LOCALEFFECT_ROCKETFIRE_LAST_DROP] + trailTime < cg.time ) {
 		cent->localEffects[LOCALEFFECT_ROCKETFIRE_LAST_DROP] = cg.time;
 
-		clamp( alpha, 0.0f, 1.0f );
+		vec4_t color;
+		CG_TeamColor( cent->current.team, color );
 		le = CG_AllocSprite( LE_INVERSESCALE_ALPHA_FADE, cent->trailOrigin, radius, 4,
-							 1.0f, 1.0f, 1.0f, alpha,
+							 color[ 0 ], color[ 1 ], color[ 2 ], alpha,
 							 0, 0, 0, 0,
 							 shader );
 		VectorSet( le->velocity, -vec[0] * 10 + crandom() * 5, -vec[1] * 10 + crandom() * 5, -vec[2] * 10 + crandom() * 5 );
@@ -689,17 +691,10 @@ static void CG_ProjectileFireTrail( centity_t *cent ) {
 * CG_ProjectileTrail
 */
 void CG_ProjectileTrail( centity_t *cent ) {
-	lentity_t   *le;
-	float len;
 	vec3_t vec;
-	int contents;
-	int trailTime;
-	float radius = 6.5f, alpha = 0.35f;
-#if 0
-	struct shader_s *shader = CG_MediaShader( cgs.media.shaderRocketTrailSmokePuff );
-#else
+	float radius = 6.5f;
+	float alpha = 0.35f;
 	struct shader_s *shader = CG_MediaShader( cgs.media.shaderSmokePuff );
-#endif
 	CG_ProjectileFireTrail( cent ); // add fire trail
 
 	if( !cg_projectileTrail->integer ) {
@@ -708,13 +703,13 @@ void CG_ProjectileTrail( centity_t *cent ) {
 
 	// didn't move
 	VectorSubtract( cent->ent.origin, cent->trailOrigin, vec );
-	len = VectorNormalize( vec );
+	float len = VectorNormalize( vec );
 	if( !len ) {
 		return;
 	}
 
 	// density is found by quantity per second
-	trailTime = (int)( 1000.0f / cg_projectileTrail->value );
+	int trailTime = (int)( 1000.0f / cg_projectileTrail->value );
 	if( trailTime < 1 ) {
 		trailTime = 1;
 	}
@@ -724,7 +719,7 @@ void CG_ProjectileTrail( centity_t *cent ) {
 	if( cent->localEffects[LOCALEFFECT_ROCKETTRAIL_LAST_DROP] + trailTime < cg.time ) {
 		cent->localEffects[LOCALEFFECT_ROCKETTRAIL_LAST_DROP] = cg.time;
 
-		contents = ( CG_PointContents( cent->trailOrigin ) & CG_PointContents( cent->ent.origin ) );
+		int contents = ( CG_PointContents( cent->trailOrigin ) & CG_PointContents( cent->ent.origin ) );
 		if( contents & MASK_WATER ) {
 			shader = CG_MediaShader( cgs.media.shaderWaterBubble );
 			radius = 3 + crandom();
@@ -732,7 +727,7 @@ void CG_ProjectileTrail( centity_t *cent ) {
 		}
 
 		clamp( alpha, 0.0f, 1.0f );
-		le = CG_AllocSprite( LE_PUFF_SHRINK, cent->trailOrigin, radius, 20,
+		lentity_t *le = CG_AllocSprite( LE_PUFF_SHRINK, cent->trailOrigin, radius, 20,
 							 1.0f, 1.0f, 1.0f, alpha,
 							 0, 0, 0, 0,
 							 shader );
@@ -800,8 +795,6 @@ void CG_NewBloodTrail( centity_t *cent ) {
 * CG_BloodDamageEffect
 */
 void CG_BloodDamageEffect( const vec3_t origin, const vec3_t dir, int damage, int team ) {
-	lentity_t *le;
-	int count, i;
 	float radius = 5.0f, alpha = cg_bloodTrailAlpha->value;
 	int time = 8;
 	struct shader_s *shader = CG_MediaShader( cgs.media.shaderBloodImpactPuff );
@@ -815,7 +808,7 @@ void CG_BloodDamageEffect( const vec3_t origin, const vec3_t dir, int damage, in
 		return;
 	}
 
-	count = (int)( damage * 0.25f );
+	int count = int( damage * 0.25f );
 	clamp( count, 1, 10 );
 
 	if( CG_PointContents( origin ) & MASK_WATER ) {
@@ -831,15 +824,10 @@ void CG_BloodDamageEffect( const vec3_t origin, const vec3_t dir, int damage, in
 	}
 
 	vec4_t color;
-	if( team == TEAM_ALPHA || team == TEAM_BETA ) {
-		CG_TeamColor( team, color );
-	}
-	else {
-		Vector4Set( color, 1, 1, 1, 1 );
-	}
+	CG_TeamColor( team, color );
 
-	for( i = 0; i < count; i++ ) {
-		le = CG_AllocSprite( LE_PUFF_SHRINK, origin, radius + crandom(), time,
+	for( int i = 0; i < count; i++ ) {
+		lentity_t *le = CG_AllocSprite( LE_PUFF_SHRINK, origin, radius + crandom(), time,
 			color[ 0 ], color[ 1 ], color[ 2 ], alpha,
 			0, 0, 0, 0, shader );
 
