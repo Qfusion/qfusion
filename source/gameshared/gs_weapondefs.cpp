@@ -437,11 +437,11 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			false,                          // smooth refire
 
 			//damages
-			75,                             // damage
+			70,                             // damage
 			0,                              // selfdamage ratio
 			80,                             // knockback
 			0,                              // splash radius
-			75,                             // minimum damage
+			70,                             // minimum damage
 			35,                             // minimum knockback
 
 			//projectile def
