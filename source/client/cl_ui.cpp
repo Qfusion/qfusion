@@ -705,7 +705,7 @@ void UI_Refresh( bool background, bool showCursor ) {
 
 		const char * buf = u8"v0.0.2.0 \u00A9 AHA CHEERS";
 		ImVec2 size = ImGui::CalcTextSize( buf );
-		ImGui::SetCursorPosX( ImGui::GetWindowWidth() - size.x - window_padding.x );
+		ImGui::SetCursorPosX( ImGui::GetWindowWidth() - size.x - window_padding.x - 1 - sinf( cls.monotonicTime / 18.0f ) );
 		ImGui::Text( buf );
 
 		ImGui::End();
