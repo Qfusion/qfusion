@@ -380,7 +380,7 @@ bool    ImGui_ImplOpenGL3_CreateDeviceObjects()
         "{\n"
         "    Frag_UV = UV;\n"
         "    Frag_Color = Color;\n"
-        "    gl_Position = ProjMtx * vec4(Position.xy,0,1);\n"
+        "    gl_Position = ProjMtx * vec4(Position.xy, 0.0, 1.0);\n"
         "}\n";
 
     const GLchar* vertex_shader_glsl_130 =
@@ -394,7 +394,7 @@ bool    ImGui_ImplOpenGL3_CreateDeviceObjects()
         "{\n"
         "    Frag_UV = UV;\n"
         "    Frag_Color = Color;\n"
-        "    gl_Position = ProjMtx * vec4(Position.xy,0,1);\n"
+        "    gl_Position = ProjMtx * vec4(Position.xy, 0.0, 1.0);\n"
         "}\n";
 
     const GLchar* vertex_shader_glsl_300_es =
@@ -409,7 +409,7 @@ bool    ImGui_ImplOpenGL3_CreateDeviceObjects()
         "{\n"
         "    Frag_UV = UV;\n"
         "    Frag_Color = Color;\n"
-        "    gl_Position = ProjMtx * vec4(Position.xy,0,1);\n"
+        "    gl_Position = ProjMtx * vec4(Position.xy, 0.0, 1.0);\n"
         "}\n";
 
     const GLchar* vertex_shader_glsl_410_core =
@@ -423,7 +423,7 @@ bool    ImGui_ImplOpenGL3_CreateDeviceObjects()
         "{\n"
         "    Frag_UV = UV;\n"
         "    Frag_Color = Color;\n"
-        "    gl_Position = ProjMtx * vec4(Position.xy,0,1);\n"
+        "    gl_Position = ProjMtx * vec4(Position.xy, 0.0, 1.0);\n"
         "}\n";
 
     const GLchar* fragment_shader_glsl_120 =
