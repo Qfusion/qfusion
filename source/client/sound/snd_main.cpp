@@ -273,6 +273,8 @@ void S_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis ) {
 
 			num_playing_sounds--;
 			swap( ps, &playing_sounds[ num_playing_sounds ] );
+			if( ps->ent_num >= 0 )
+				entities[ ps->ent_num ].ps = ps;
 
 			i--;
 			continue;
