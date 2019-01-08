@@ -498,7 +498,7 @@ void CG_RocketExplosionMode( const vec3_t pos, const vec3_t dir, float radius ) 
 	CG_SpawnDecal( pos, dir, random() * 360, radius * 0.5, 1, 1, 1, 1, 10, 1, false, CG_MediaShader( cgs.media.shaderExplosionMark ) );
 
 	// animmap shader of the explosion
-	le = CG_AllocSprite( LE_ALPHA_FADE, pos, radius * 0.75f, 8,
+	le = CG_AllocSprite( LE_ALPHA_FADE, pos, radius * 0.6f, 8,
 						 1, 1, 1, 1,
 						 radius * 4, 0.8f, 0.6f, 0, // orange dlight
 						 CG_MediaShader( cgs.media.shaderRocketExplosion ) );
