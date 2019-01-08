@@ -564,7 +564,7 @@ static void CG_RegisterVariables( void ) {
 	cg_volume_hitsound =    trap_Cvar_Get( "cg_volume_hitsound", "1.0", CVAR_ARCHIVE );
 	cg_volume_voicechats =  trap_Cvar_Get( "cg_volume_voicechats", "1.0", CVAR_ARCHIVE );
 	cg_handOffset =     trap_Cvar_Get( "cg_handOffset", "5", CVAR_ARCHIVE );
-	cg_projectileTrail =    trap_Cvar_Get( "cg_projectileTrail", "60", CVAR_ARCHIVE );
+	cg_projectileTrail =    trap_Cvar_Get( "cg_projectileTrail", "0", CVAR_CHEAT );
 	cg_projectileFireTrail =    trap_Cvar_Get( "cg_projectileFireTrail", "90", CVAR_ARCHIVE );
 	cg_bloodTrail =     trap_Cvar_Get( "cg_bloodTrail", "10", CVAR_ARCHIVE );
 	cg_showBloodTrail = trap_Cvar_Get( "cg_showBloodTrail", "1", CVAR_ARCHIVE );
