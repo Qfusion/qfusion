@@ -290,8 +290,4 @@ void        R_TouchShadersByName( const char *name );
 void        R_FreeUnusedShadersByType( const shaderType_e *types, unsigned int numTypes );
 void        R_FreeUnusedShaders( void );
 
-void        R_RemapShader( const char *from, const char *to, int timeOffset );
-
-void        R_GetShaderDimensions( const shader_t *shader, int *width, int *height );
-
 void        R_ReplaceRawSubPic( shader_t *shader, int x, int y, int width, int height, uint8_t *data );

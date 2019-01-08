@@ -308,10 +308,6 @@ static inline bool trap_R_TransformVectorToScreenClamped( const refdef_t *rd, co
 	return CGAME_IMPORT.R_TransformVectorToScreenClamped( rd, target, border, out );
 }
 
-static inline void trap_R_GetShaderDimensions( const struct shader_s *shader, int *width, int *height ) {
-	CGAME_IMPORT.R_GetShaderDimensions( shader, width, height );
-}
-
 static inline int trap_R_SkeletalGetNumBones( const struct model_s *mod, int *numFrames ) {
 	return CGAME_IMPORT.R_SkeletalGetNumBones( mod, numFrames );
 }

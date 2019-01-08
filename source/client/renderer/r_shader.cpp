@@ -2669,39 +2669,6 @@ shader_t *R_RegisterLinearPic( const char *name ) {
 }
 
 /*
-* R_RemapShader
-*/
-void R_RemapShader( const char *from, const char *to, int timeOffset ) {
-}
-
-/*
-* R_GetShaderDimensions
-*
-* Returns dimensions for shader's base (taken from the first pass) image
-*/
-void R_GetShaderDimensions( const shader_t *shader, int *width, int *height ) {
-	image_t *baseImage;
-
-	assert( shader );
-	if( !shader || !shader->numpasses ) {
-		return;
-	}
-
-	baseImage = shader->passes[0].images[0];
-	if( !baseImage ) {
-		ri.Com_DPrintf( S_COLOR_YELLOW "R_GetShaderDimensions: shader %s is missing base image\n", shader->name );
-		return;
-	}
-
-	if( width ) {
-		*width = baseImage->width;
-	}
-	if( height ) {
-		*height = baseImage->height;
-	}
-}
-
-/*
 * R_ReplaceRawSubPic
 *
 * Adds a new subimage to the specified raw pic.
