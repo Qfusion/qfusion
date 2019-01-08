@@ -61,6 +61,8 @@ struct Server {
 	const char * info;
 };
 
+static ImFont * large_font;
+
 static Server servers[ 1024 ];
 static int num_servers = 0;
 static int selected_server;
@@ -133,6 +135,7 @@ void UI_Init() {
 		io.KeyMap[ ImGuiKey_Z ] = 'z';
 
 		io.Fonts->AddFontFromFileTTF( "base/fonts/Montserrat-SemiBold.ttf", 16.0f );
+		large_font = io.Fonts->AddFontFromFileTTF( "base/fonts/Montserrat-Bold.ttf", 64.0f );
 		ImGuiFreeType::BuildFontAtlas( io.Fonts );
 	}
 
@@ -654,8 +657,14 @@ void UI_Refresh( bool background, bool showCursor ) {
 		ImGui::SetNextWindowSize( ImVec2( viddef.width, viddef.height ) );
 		ImGui::Begin( "mainmenu", NULL, ImGuiWindowFlags_NoDecoration );
 
-		ImGui::Text( "COCAINE DIESEL 0.0.2.0" );
-		ImGui::Text( u8"\u00A9 AHA CHEERS" );
+		ImVec2 window_padding = ImGui::GetStyle().WindowPadding;
+
+		ImGui::BeginChild( "mainmenubody", ImVec2( 0, -ImGui::GetFrameHeightWithSpacing() + window_padding.y ) );
+
+		ImGui::SetCursorPosX( 2 + 2 * sinf( cls.monotonicTime / 20.0f ) );
+		ImGui::PushFont( large_font );
+		ImGui::Text( "COCAINE DIESEL" );
+		ImGui::PopFont();
 
 		if( ImGui::Button( "PLAY" ) ) {
 			mainmenu_state = MainMenuState_ServerBrowser;
@@ -691,6 +700,13 @@ void UI_Refresh( bool background, bool showCursor ) {
 		else {
 			Settings();
 		}
+
+		ImGui::EndChild();
+
+		const char * buf = u8"v0.0.2.0 \u00A9 AHA CHEERS";
+		ImVec2 size = ImGui::CalcTextSize( buf );
+		ImGui::SetCursorPosX( ImGui::GetWindowWidth() - size.x - window_padding.x );
+		ImGui::Text( buf );
 
 		ImGui::End();
 	}
