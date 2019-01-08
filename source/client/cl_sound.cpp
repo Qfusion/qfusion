@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 void CL_SoundModule_Init() {
 	if( !S_Init() ) {
-		abort();
+		Com_Printf( S_COLOR_RED "Couldn't initialise audio engine\n" );
 	}
 
 	// check memory integrity

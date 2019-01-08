@@ -8,15 +8,6 @@
 #define STB_VORBIS_HEADER_ONLY
 #include "stb/stb_vorbis.h"
 
-static cvar_t * s_volume;
-static cvar_t * s_musicvolume;
-static cvar_t * s_muteinbackground;
-
-static bool window_focused = true;
-
-static ALCdevice * alDevice;
-static ALCcontext * alContext;
-
 typedef struct sfx_s {
 	int length_ms;
 	char filename[ MAX_QPATH ];
@@ -45,6 +36,16 @@ struct EntitySound {
 	PlayingSound * ps;
 };
 
+static ALCdevice * al_device;
+static ALCcontext * al_context;
+
+// so we don't crash when some other application is running in exclusive playback mode (WASAPI/JACK/etc)
+static bool initialized;
+
+static cvar_t * s_volume;
+static cvar_t * s_musicvolume;
+static cvar_t * s_muteinbackground;
+
 static sfx_s sound_assets[ 4096 ];
 static size_t num_sound_assets;
 static sfx_s * menu_music_asset;
@@ -54,6 +55,8 @@ static size_t num_playing_sounds;
 
 static ALuint music_source;
 static bool music_playing;
+
+static bool window_focused;
 
 static EntitySound entities[ MAX_EDICTS ];
 
@@ -90,20 +93,20 @@ static void S_SoundList_f( void ) {
 }
 
 static bool S_InitAL() {
-	alDevice = alcOpenDevice( NULL );
-	if( alDevice == NULL ) {
+	al_device = alcOpenDevice( NULL );
+	if( al_device == NULL ) {
 		Com_Printf( S_COLOR_RED "Failed to open device\n" );
 		return false;
 	}
 
 	ALCint attrs[] = { ALC_HRTF_SOFT, ALC_HRTF_ENABLED_SOFT, 0 };
-	alContext = alcCreateContext( alDevice, attrs );
-	if( alContext == NULL ) {
-		alcCloseDevice( alDevice );
+	al_context = alcCreateContext( al_device, attrs );
+	if( al_context == NULL ) {
+		alcCloseDevice( al_device );
 		Com_Printf( S_COLOR_RED "Failed to create context\n" );
 		return false;
 	}
-	alcMakeContextCurrent( alContext );
+	alcMakeContextCurrent( al_context );
 
 	alDopplerFactor( 1.0f );
 	alDopplerVelocity( 10976.0f );
@@ -177,6 +180,8 @@ bool S_Init() {
 	num_sound_assets = 0;
 	num_playing_sounds = 0;
 	music_playing = false;
+	window_focused = true;
+	initialized = false;
 
 	memset( entities, 0, sizeof( entities ) );
 
@@ -191,11 +196,15 @@ bool S_Init() {
 		return false;
 
 	menu_music_asset = S_Register( "sounds/music/menu_1", true );
+	initialized = true;
 
 	return true;
 }
 
 void S_Shutdown() {
+	if( !initialized )
+		return;
+
 	S_StopAllSounds( true );
 
 	for( size_t i = 0; i < ARRAY_COUNT( playing_sounds ); i++ ) {
@@ -209,13 +218,15 @@ void S_Shutdown() {
 
 	S_ALAssert();
 
-	alcDestroyContext( alContext );
-	alcCloseDevice( alDevice );
+	alcDestroyContext( al_context );
+	alcCloseDevice( al_device );
 
 	Cmd_RemoveCommand( "soundlist" );
 }
 
 SoundAsset * S_RegisterSound( const char * filename ) {
+	if( !initialized )
+		return NULL;
 	return S_Register( filename, false );
 }
 
@@ -230,6 +241,9 @@ static void swap( PlayingSound * a, PlayingSound * b ) {
 }
 
 void S_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis ) {
+	if( !initialized )
+		return;
+
 	if( s_muteinbackground->modified ) {
 		alListenerf( AL_GAIN, window_focused || s_muteinbackground->integer == 0 ? 1 : 0 );
 		s_muteinbackground->modified = false;
@@ -283,11 +297,17 @@ void S_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis ) {
 }
 
 void S_UpdateEntity( int ent_num, const vec3_t origin, const vec3_t velocity ) {
+	if( !initialized )
+		return;
+
 	VectorCopy( origin, entities[ ent_num ].origin );
 	VectorCopy( velocity, entities[ ent_num ].velocity );
 }
 
 void S_SetWindowFocus( bool focused ) {
+	if( !initialized )
+		return;
+
 	window_focused = focused;
 	alListenerf( AL_GAIN, window_focused || s_muteinbackground->integer == 0 ? 1 : 0 );
 }
@@ -312,7 +332,7 @@ static PlayingSound * S_FindEmptyPlayingSound( int ent_num, int channel ) {
 }
 
 static bool S_StartSound( SoundAsset * sfx, const vec3_t origin, int ent_num, int channel, float volume, float attenuation, SoundType type ) {
-	if( sfx == NULL )
+	if( !initialized || sfx == NULL )
 		return false;
 
 	PlayingSound * ps = S_FindEmptyPlayingSound( ent_num, channel );
@@ -396,6 +416,9 @@ void S_ImmediateSound( SoundAsset * sfx, int ent_num, float volume, float attenu
 }
 
 void S_StopAllSounds( bool stop_music ) {
+	if( !initialized )
+		return;
+
 	for( size_t i = 0; i < num_playing_sounds; i++ ) {
 		alSourceStop( playing_sounds[ i ].source );
 	}
@@ -403,11 +426,10 @@ void S_StopAllSounds( bool stop_music ) {
 
 	if( stop_music )
 		S_StopBackgroundTrack();
-
 }
 
 void S_StartMenuMusic() {
-	if( menu_music_asset == NULL )
+	if( !initialized || menu_music_asset == NULL )
 		return;
 
 	alSourcefv( music_source, AL_POSITION, vec3_origin );
@@ -423,7 +445,7 @@ void S_StartMenuMusic() {
 }
 
 void S_StopBackgroundTrack() {
-	if( music_playing )
+	if( initialized && music_playing )
 		alSourceStop( music_source );
 	music_playing = false;
 }
