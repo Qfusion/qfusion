@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "sdl/sdl_window.h"
 
 #include "ui/imgui.h"
+#include "ui/imgui_freetype.h"
 #include "ui/imgui_internal.h"
 #include "ui/imgui_impl_sdl.h"
 #include "ui/imgui_impl_opengl3.h"
@@ -130,6 +131,9 @@ void UI_Init() {
 		io.KeyMap[ ImGuiKey_X ] = 'x';
 		io.KeyMap[ ImGuiKey_Y ] = 'y';
 		io.KeyMap[ ImGuiKey_Z ] = 'z';
+
+		io.Fonts->AddFontFromFileTTF( "base/fonts/Montserrat-SemiBold.ttf", 16.0f );
+		ImGuiFreeType::BuildFontAtlas( io.Fonts );
 	}
 
 	{
