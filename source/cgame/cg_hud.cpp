@@ -772,10 +772,7 @@ void CG_SC_Obituary( void ) {
 		attacker = NULL;
 	}
 
-	cg_obituaries_current++;
-	if( cg_obituaries_current >= MAX_OBITUARIES ) {
-		cg_obituaries_current = 0;
-	}
+	cg_obituaries_current = ( cg_obituaries_current + 1 ) % MAX_OBITUARIES;
 	current = &cg_obituaries[cg_obituaries_current];
 
 	current->time = cg.monotonicTime;
@@ -895,7 +892,7 @@ static void CG_DrawObituaries( int x, int y, int align, struct qfontface_s *font
 			i = 0;
 		}
 
-		if( obr->type == OBITUARY_NONE || cg.time - obr->time > 5000 ) {
+		if( obr->type == OBITUARY_NONE || cg.monotonicTime - obr->time > 5000 ) {
 			continue;
 		}
 
