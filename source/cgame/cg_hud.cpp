@@ -778,7 +778,7 @@ void CG_SC_Obituary( void ) {
 	}
 	current = &cg_obituaries[cg_obituaries_current];
 
-	current->time = cg.time;
+	current->time = cg.monotonicTime;
 	if( victim ) {
 		Q_strncpyz( current->victim, victim->name, sizeof( current->victim ) );
 		current->victim_team = cg_entities[victimNum].current.team;
@@ -867,7 +867,7 @@ static void CG_DrawObituaries( int x, int y, int align, struct qfontface_s *font
 	num = 0;
 	i = next;
 	do {
-		if( cg_obituaries[i].type != OBITUARY_NONE && cg.time - cg_obituaries[i].time <= 5000 ) {
+		if( cg_obituaries[i].type != OBITUARY_NONE && cg.monotonicTime - cg_obituaries[i].time <= 5000 ) {
 			num++;
 		}
 		if( ++i >= MAX_OBITUARIES ) {
