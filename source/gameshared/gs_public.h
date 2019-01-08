@@ -44,8 +44,6 @@ typedef struct {
 	struct angelwrap_api_s *( *GetAngelExport )( void );
 } gs_module_api_t;
 
-extern gs_module_api_t gs_api;
-
 //===============================================================
 //		WARSOW player AAboxes sizes
 
