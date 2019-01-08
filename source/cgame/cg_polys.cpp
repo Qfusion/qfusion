@@ -266,7 +266,7 @@ void CG_QuickPolyBeam( const vec3_t start, const vec3_t end, int width, struct s
 }
 
 void CG_LGPolyBeam( const vec3_t start, const vec3_t end, const vec4_t color, int tag ) {
-	CG_SpawnPolyBeam( start, end, color, 12, 1, 0, CG_MediaShader( cgs.media.shaderLGBeam ), 64, tag );
+	CG_SpawnPolyBeam( start, end, color, 16, 1, 0, CG_MediaShader( cgs.media.shaderLGBeam ), 64, tag );
 }
 
 /*
