@@ -546,6 +546,37 @@ static void SettingsVideo() {
 	}
 
 	CvarCheckbox( "Vsync", "vid_vsync", "0", CVAR_ARCHIVE );
+
+	{
+		SettingLabel( "Max FPS" );
+
+		constexpr int values[] = { 60, 75, 120, 144, 165, 180, 200, 240, 333, 500, 1000 };
+
+		cvar_t * cvar = Cvar_Get( "cl_maxfps", "250", CVAR_ARCHIVE );
+		int maxfps = cvar->integer;
+
+		char current[ 16 ];
+		Q_snprintfz( current, sizeof( current ), "%d", maxfps );
+
+		ImGui::PushItemWidth( 100 );
+		if( ImGui::BeginCombo( "##cl_maxfps", current ) ) {
+			for( int value : values ) {
+				char buf[ 16 ];
+				Q_snprintfz( buf, sizeof( buf ), "%d", value );
+				if( ImGui::Selectable( buf, maxfps == value ) )
+					maxfps = value;
+				if( value == maxfps )
+					ImGui::SetItemDefaultFocus();
+			}
+
+			ImGui::EndCombo();
+		}
+		ImGui::PopItemWidth();
+
+		char buf[ 16 ];
+		Q_snprintfz( buf, sizeof( buf ), "%d", maxfps );
+		Cvar_Set( "cl_maxfps", buf );
+	}
 }
 
 static void SettingsAudio() {
