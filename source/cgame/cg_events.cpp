@@ -560,7 +560,7 @@ static void CG_StartVoiceTokenEffect( int entNum, int vsay ) {
 
 	// ignore repeated/flooded events
 	// TODO: this should really look at how long the vsay is...
-	if( cent->localEffects[LOCALEFFECT_VSAY_HEADICON_TIMEOUT] > cg.time ) {
+	if( cent->localEffects[LOCALEFFECT_VSAY_HEADICON_TIMEOUT] + 2000 > cg.time ) {
 		return;
 	}
 
