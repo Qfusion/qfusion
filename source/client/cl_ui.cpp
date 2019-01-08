@@ -534,7 +534,7 @@ static void SettingsVideo() {
 			if( samples == 0 )
 				ImGui::SetItemDefaultFocus();
 
-			for( int i = 1; i <= 16; i *= 2 ) {
+			for( int i = 2; i <= 16; i *= 2 ) {
 				char buf[ 16 ];
 				Q_snprintfz( buf, sizeof( buf ), "%dx", i );
 				if( ImGui::Selectable( buf, i == samples ) )
