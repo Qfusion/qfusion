@@ -81,7 +81,7 @@ if (CMAKE_BUILD_TYPE STREQUAL "Release")
 endif()
 
 add_executable(client ${CLIENT_BINARY_TYPE} ${CLIENT_HEADERS} ${CLIENT_PLATFORM_HEADERS} ${CLIENT_COMMON_SOURCES} ${CLIENT_PLATFORM_SOURCES})
-add_dependencies(${QFUSION_CLIENT_NAME} game)
+add_dependencies(client game)
 
 target_link_libraries(client PRIVATE ${CURL_LIBRARIES} ${SDL2_LIBRARY} ${ZLIB_LIBRARY} ${FREETYPE_LIBRARY} ${OPENAL_LIBRARY} ${ANGELSCRIPT_LIBRARY} ${CLIENT_PLATFORM_LIBRARIES})
 qf_set_output_dir(client "")

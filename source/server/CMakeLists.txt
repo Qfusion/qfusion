@@ -53,7 +53,7 @@ else()
 endif()
 
 add_executable(server ${SERVER_BINARY_TYPE} ${SERVER_HEADERS} ${SERVER_SOURCES} ${SERVER_PLATFORM_SOURCES})
-add_dependencies(${QFUSION_SERVER_NAME} game)
+add_dependencies(server game)
 target_link_libraries(server PRIVATE ${CURL_LIBRARIES} ${ZLIB_LIBRARY} ${ANGELSCRIPT_LIBRARY} ${SERVER_PLATFORM_LIBRARIES})
 qf_set_output_dir(server "")
 
