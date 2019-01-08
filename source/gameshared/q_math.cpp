@@ -448,6 +448,13 @@ float anglemod( float a ) {
 }
 
 /*
+* WidescreenFov
+*/
+float WidescreenFov( float fov ) {
+	return atan( tan( (fov) / 360.0 * M_PI ) * (3.0 / 4.0) ) * (360.0 / M_PI);
+}
+
+/*
 * CalcVerticalFov
 */
 float CalcVerticalFov( float fov_x, float width, float height ) {
