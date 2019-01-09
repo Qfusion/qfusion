@@ -211,8 +211,8 @@ void G_Match_Autorecord_Start( void ) {
 		}
 
 		// combine
-		Q_snprintfz( level.autorecord_name, sizeof( level.autorecord_name ), "%s_%s_%s%s%s_auto%04i",
-					 datetime, gs.gametypeName, level.mapname, players[0] == '\0' ? "" : "_", players, (int)brandom( 1, 9999 ) );
+		Q_snprintfz( level.autorecord_name, sizeof( level.autorecord_name ), "%s_%s%s%s_auto%04i",
+					 datetime, level.mapname, players[0] == '\0' ? "" : "_", players, (int)brandom( 1, 9999 ) );
 
 		trap_Cmd_ExecuteText( EXEC_APPEND, va( "serverrecord %s\n", level.autorecord_name ) );
 	}
