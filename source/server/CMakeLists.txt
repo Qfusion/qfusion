@@ -52,6 +52,8 @@ else()
 	set(SERVER_BINARY_TYPE "")
 endif()
 
+add_definitions(-DMICROPROFILE_ENABLED=0)
+
 add_executable(server ${SERVER_BINARY_TYPE} ${SERVER_HEADERS} ${SERVER_SOURCES} ${SERVER_PLATFORM_SOURCES})
 add_dependencies(server game)
 target_link_libraries(server PRIVATE ${CURL_LIBRARIES} ${ZLIB_LIBRARY} ${ANGELSCRIPT_LIBRARY} ${SERVER_PLATFORM_LIBRARIES})

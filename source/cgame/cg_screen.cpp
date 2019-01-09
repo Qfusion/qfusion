@@ -33,7 +33,6 @@ end of unit intermissions
 */
 
 #include "cg_local.h"
-#include "qcommon/qcommon.h"
 #include "qalgo/rng.h"
 #include "client/ui.h"
 

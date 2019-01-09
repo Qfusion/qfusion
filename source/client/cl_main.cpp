@@ -2088,6 +2088,8 @@ static void CL_NetFrame( int realMsec, int gameMsec ) {
 * CL_Frame
 */
 void CL_Frame( int realMsec, int gameMsec ) {
+	MICROPROFILE_SCOPEI( "Main", "CL_Frame", 0xffffffff );
+
 	static int allRealMsec = 0, allGameMsec = 0, extraMsec = 0;
 	static float roundingMsec = 0.0f;
 	int minMsec;
@@ -2215,8 +2217,6 @@ void CL_Frame( int realMsec, int gameMsec ) {
 
 	// advance local effects for next frame
 	SCR_RunConsole( allRealMsec );
-
-	CL_Profiler_Flip();
 
 	allRealMsec = 0;
 	allGameMsec = 0;

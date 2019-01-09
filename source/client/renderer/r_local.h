@@ -20,13 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 #pragma once
 
-#include "gameshared/q_arch.h"
-#include "gameshared/q_math.h"
-#include "gameshared/q_shared.h"
-#include "gameshared/q_cvar.h"
 #include "qcommon/qcommon.h"
-#include "qcommon/qfiles.h"
-#include "qcommon/bsp.h"
 #include "qcommon/patch.h"
 
 typedef struct mempool_s mempool_t;

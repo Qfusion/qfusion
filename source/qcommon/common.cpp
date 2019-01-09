@@ -783,6 +783,8 @@ void Qcommon_Init( int argc, char **argv ) {
 * Qcommon_Frame
 */
 void Qcommon_Frame( unsigned int realMsec ) {
+	MICROPROFILE_SCOPEI( "Main", "Qcommon_Frame", 0xffffffff );
+
 	char *s;
 	int time_before = 0, time_between = 0, time_after = 0;
 	static unsigned int gameMsec;
@@ -793,7 +795,6 @@ void Qcommon_Frame( unsigned int realMsec ) {
 
 	if( setjmp( abortframe ) ) {
 		return; // an ERR_DROP was thrown
-
 	}
 
 	if( logconsole && logconsole->modified ) {

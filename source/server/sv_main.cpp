@@ -499,6 +499,8 @@ static void SV_CheckPostUpdateRestart( void ) {
 * SV_Frame
 */
 void SV_Frame( unsigned realmsec, unsigned gamemsec ) {
+	MICROPROFILE_SCOPEI( "Main", "SV_Frame", 0xffffffff );
+
 	time_before_game = time_after_game = 0;
 
 	// if server is not active, do nothing
