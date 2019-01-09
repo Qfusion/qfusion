@@ -31,9 +31,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gameshared/q_comref.h"
 #include "gameshared/q_collision.h"
 
+#include "application.h"
 #include "qfiles.h"
 #include "cmodel.h"
-#include "version.h"
 #include "bsp.h"
 
 //============================================================================
@@ -584,7 +584,7 @@ void        FS_Shutdown( void );
 const char *FS_GameDirectory( void );
 const char *FS_BaseGameDirectory( void );
 int         FS_GetExplicitPurePakList( char ***paknames );
-bool        FS_IsExplicitPurePak( const char *pakname, bool *wrongver );
+bool        FS_IsExplicitPurePak( const char *pakname );
 
 // handling of absolute filenames
 // only to be used if necessary (library not supporting custom file handling functions etc.)

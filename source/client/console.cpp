@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // console.c
 
 #include "client.h"
+#include "qcommon/version.h"
 
 #define CON_MAXLINES    5000
 typedef struct {
@@ -855,8 +856,7 @@ void Con_DrawConsole( void ) {
 	time( &long_time );
 	newtime = localtime( &long_time );
 
-	Q_snprintfz( version, sizeof( version ), "%02d:%02d %s v%4.2f", newtime->tm_hour, newtime->tm_min,
-				 APPLICATION, APP_VERSION );
+	Q_snprintfz( version, sizeof( version ), "%02d:%02d %s %s", newtime->tm_hour, newtime->tm_min, APPLICATION, APP_VERSION );
 
 	scaled = 4 * pixelRatio;
 	SCR_DrawString( viddef.width - SCR_strWidth( version, cls.consoleFont, 0, 0 ) - scaled,

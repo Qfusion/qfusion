@@ -267,7 +267,7 @@ const char *Sys_FS_GetCacheDirectory( void ) {
 #endif
 
 		if( base ) {
-			Q_snprintfz( cache, sizeof( cache ), "%s/%s%s-%d.%d", base, local, APPLICATION, APP_VERSION_MAJOR, APP_VERSION_MINOR );
+			Q_snprintfz( cache, sizeof( cache ), "%s/%s%s-0.0", base, local, APPLICATION );
 		}
 	}
 

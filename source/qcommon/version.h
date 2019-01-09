@@ -18,58 +18,22 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#undef STR_HELPER
-#undef STR_TOSTR
+#include "gameshared/q_shared.h"
+#include "qalgo/hash.h"
 
-#define STR_HELPER( s )                 # s
-#define STR_TOSTR( x )                  STR_HELPER( x )
-
-#define APPLICATION                     "Cocaine Diesel"
-#define APPLICATION_NOSPACES            "CocaineDiesel"
-#define DEFAULT_BASEGAME                "base"
-
-#define APP_VERSION_MAJOR               0
-#define APP_VERSION_MINOR               0
-#define APP_VERSION_UPDATE              1
-#define APP_VERSION                     APP_VERSION_MAJOR + APP_VERSION_MINOR * 0.1 + APP_VERSION_UPDATE * 0.01
-#define APP_VERSION_STR                 STR_TOSTR( APP_VERSION_MAJOR ) "." STR_TOSTR( APP_VERSION_MINOR ) STR_TOSTR( APP_VERSION_UPDATE )
-#define APP_VERSION_STR_MAJORMINOR      STR_TOSTR( APP_VERSION_MAJOR ) STR_TOSTR( APP_VERSION_MINOR )
-
-#ifdef PUBLIC_BUILD
-#define APP_PROTOCOL_VERSION            1
+#if __has_include( "gitversion.h" )
+#include "gitversion.h"
 #else
-#define APP_PROTOCOL_VERSION            1001
+#define APP_VERSION ""
+#define APP_VERSION_A 0
+#define APP_VERSION_B 0
+#define APP_VERSION_C 0
+#define APP_VERSION_D 0
 #endif
 
-#define APP_URL                         "http://www.e4m5.net/"
+STATIC_ASSERT( APP_VERSION_A >= 0 && APP_VERSION_A <= 255 );
+STATIC_ASSERT( APP_VERSION_B >= 0 && APP_VERSION_B <= 255 );
+STATIC_ASSERT( APP_VERSION_C >= 0 && APP_VERSION_C <= 255 );
+STATIC_ASSERT( APP_VERSION_D >= 0 && APP_VERSION_D <= 255 );
 
-#define APP_COPYRIGHT_OWNER             "Aha Cheers"
-
-#define APP_SCREENSHOTS_PREFIX          "cocainediesel_"
-#define APP_DEMO_EXTENSION_STR          ".cddemo"
-
-#define APP_URI_SCHEME                  "diesel://"
-#define APP_URI_PROTO_SCHEME            "diesel" STR_TOSTR( APP_PROTOCOL_VERSION ) "://"
-
-#define APP_STARTUP_COLOR               0x1c1416
-
-//
-// the following macros are only used by the windows resource file
-//
-#ifdef __GNUC__
-
-#define APP_VERSION_RC_STR              STR_TOSTR( APP_VERSION_MAJOR ) "." STR_TOSTR( APP_VERSION_MINOR )
-#define APP_FILEVERSION_RC_STR          STR_TOSTR( APP_VERSION_MAJOR ) "," STR_TOSTR( APP_VERSION_MINOR ) "," STR_TOSTR( APP_VERSION_UPDATE ) ",0"
-
-#else // __GNUC__
-
-#define APP_VERSION_RC                  APP_VERSION_MAJOR.APP_VERSION_MINOR
-#define APP_VERSION_RC_STR              STR_TOSTR( APP_VERSION_RC )
-#define APP_FILEVERSION_RC              APP_VERSION_MAJOR,APP_VERSION_MINOR,APP_VERSION_UPDATE,0
-#define APP_FILEVERSION_RC_STR          STR_TOSTR( APP_FILEVERSION_RC )
-
-#endif // __GNUC__
-
-#define APP_ICO_ICON                    "../../icons/forksow.ico"
-#define APP_DEMO_ICO_ICON               "../../icons/forksow_demo.ico"
-#define APP_XPM_ICON                    "../../icons/forksow.xpm"
+constexpr uint32_t APP_PROTOCOL_VERSION = Hash32_CT( APP_VERSION, sizeof( APP_VERSION ) );

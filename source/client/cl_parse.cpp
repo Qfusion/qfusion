@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // cl_parse.c  -- parse a message received from the server
 
 #include "client.h"
+#include "qcommon/version.h"
 
 static void CL_InitServerDownload( const char *filename, int size, unsigned checksum, bool allow_localhttpdownload,
 								   const char *url, bool initial );
@@ -399,7 +400,7 @@ static void CL_InitServerDownload( const char *filename, int size, unsigned chec
 			return;
 		}
 
-		explicit_pure_download = FS_IsExplicitPurePak( filename, NULL );
+		explicit_pure_download = FS_IsExplicitPurePak( filename );
 	} else {
 		if( strcmp( cls.download.requestname, strchr( filename, '/' ) + 1 ) ) {
 			Com_Printf( "Can't download, got different file than requested: %s\n", filename );

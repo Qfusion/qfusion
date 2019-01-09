@@ -1139,7 +1139,7 @@ static void SV_Web_RespondToQuery( sv_http_connection_t *con ) {
 	con->state = HTTP_CONN_STATE_SEND;
 
 	Q_snprintfz( resp_stream->header_buf, sizeof( resp_stream->header_buf ),
-				 "%s %i %s\r\nServer: " APPLICATION " v" APP_VERSION_STR "\r\n",
+				 "%s %i %s\r\nServer: " APPLICATION "\r\n",
 				 request->http_ver, response->code, SV_Web_ResponseCodeMessage( response->code ) );
 
 	Q_strncatz( resp_stream->header_buf, "Accept-Ranges: bytes\r\n",

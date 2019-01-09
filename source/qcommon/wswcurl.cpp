@@ -566,9 +566,7 @@ wswcurl_req *wswcurl_create( const char *iface, const char *furl, ... ) {
 	CURLSETOPT( curl, res, CURLOPT_FOLLOWLOCATION, 1 );
 	CURLSETOPT( curl, res, CURLOPT_HEADERFUNCTION, wswcurl_readheader );
 	CURLSETOPT( curl, res, CURLOPT_CONNECTTIMEOUT, WCONNECTTIMEOUT );
-#if defined( APPLICATION ) && defined( APP_VERSION_STR ) && defined( OSNAME ) && defined( ARCH )
-	CURLSETOPT( curl, res, CURLOPT_USERAGENT, APPLICATION "/" APP_VERSION_STR " (compatible; N; " OSNAME "; " ARCH ")" );
-#endif
+	CURLSETOPT( curl, res, CURLOPT_USERAGENT, APPLICATION " (compatible; N; " OSNAME "; " ARCH ")" );
 	CURLSETOPT( curl, res, CURLOPT_WRITEDATA, ( void * )retreq );
 	CURLSETOPT( curl, res, CURLOPT_WRITEHEADER, ( void * )retreq );
 	CURLSETOPT( curl, res, CURLOPT_PRIVATE, ( void * )retreq );

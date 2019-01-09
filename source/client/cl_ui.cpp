@@ -19,6 +19,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "client.h"
+#include "qcommon/version.h"
+
 #include "sdl/sdl_window.h"
 
 #include "ui/imgui.h"
@@ -703,7 +705,7 @@ void UI_Refresh( bool background, bool showCursor ) {
 
 		ImGui::EndChild();
 
-		const char * buf = u8"v0.0.2.0 \u00A9 AHA CHEERS";
+		const char * buf = APP_VERSION u8" \u00A9 AHA CHEERS";
 		ImVec2 size = ImGui::CalcTextSize( buf );
 		ImGui::SetCursorPosX( ImGui::GetWindowWidth() - size.x - window_padding.x - 1 - sinf( cls.monotonicTime / 18.0f ) );
 		ImGui::Text( buf );

@@ -1,9 +1,5 @@
-source/release/
-source/debug/
-source/build*/
-source/*/Debug
-source/*/Release
-source/ipch
+source/build/
+
 *.sdf
 *.opensdf
 *.vcxproj.user

@@ -19,6 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "server.h"
+#include "qcommon/version.h"
 
 typedef struct sv_master_s {
 	netadr_t address;
@@ -525,13 +526,7 @@ static void SVC_DirectConnect( const socket_t *socket, const netadr_t *address )
 
 	version = atoi( Cmd_Argv( 1 ) );
 	if( version != APP_PROTOCOL_VERSION ) {
-		if( version <= 6 ) { // before reject packet was added
-			Netchan_OutOfBandPrint( socket, address, "print\nServer is version %4.2f. Protocol %3i\n",
-									APP_VERSION, APP_PROTOCOL_VERSION );
-		} else {
-			Netchan_OutOfBandPrint( socket, address,
-									"reject\n%i\n%i\nServer and client don't have the same version\n", DROP_TYPE_GENERAL, 0 );
-		}
+		Netchan_OutOfBandPrint( socket, address, "reject\n%i\n%i\nServer and client don't have the same version\n", DROP_TYPE_GENERAL, 0 );
 		Com_DPrintf( "    rejected connect from protocol %i\n", version );
 		return;
 	}

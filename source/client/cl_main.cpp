@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "client.h"
 #include "qcommon/asyncstream.h"
+#include "qcommon/version.h"
 #include "qalgo/hash.h"
 #include "ftlib/ftlib_public.h"
 #include "renderer/r_frontend.h"
@@ -325,7 +326,7 @@ static void CL_Connect_Cmd_f( socket_type_t socket ) {
 	char *servername, password[64], autowatch[64] = { 0 };
 	const char *extension;
 	char *connectstring, *connectstring_base;
-	const char *tmp, *scheme = APP_URI_SCHEME, *proto_scheme = APP_URI_PROTO_SCHEME;
+	const char *tmp;
 	const char *serverchain;
 
 	if( Cmd_Argc() < 2 ) {
@@ -337,10 +338,8 @@ static void CL_Connect_Cmd_f( socket_type_t socket ) {
 	connectstring = connectstring_base;
 	serverchain = Cmd_Argc() >= 3 ? Cmd_Argv( 2 ) : "";
 
-	if( !Q_strnicmp( connectstring, proto_scheme, strlen( proto_scheme ) ) ) {
-		connectstring += strlen( proto_scheme );
-	} else if( !Q_strnicmp( connectstring, scheme, strlen( scheme ) ) ) {
-		connectstring += strlen( scheme );
+	if( !Q_strnicmp( connectstring, APP_URI_SCHEME, strlen( APP_URI_SCHEME ) ) ) {
+		connectstring += strlen( APP_URI_SCHEME );
 	}
 
 	extension = COM_FileExtension( connectstring );

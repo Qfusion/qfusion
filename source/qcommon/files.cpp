@@ -526,7 +526,7 @@ static void Cmd_PakFile_f( void ) {
 /*
 * FS_IsExplicitPurePak
 */
-bool FS_IsExplicitPurePak( const char *pakname, bool *wrongver ) {
+bool FS_IsExplicitPurePak( const char *pakname ) {
 	bool pure;
 	const char *begin;
 	const char *pakbasename, *extension;
@@ -546,12 +546,6 @@ bool FS_IsExplicitPurePak( const char *pakname, bool *wrongver ) {
 
 	if( !Q_strnicmp( begin, "pure", strlen( "pure" ) ) ) {
 		pure = true;
-	}
-
-	// check version match
-	if( wrongver ) {
-		begin = pakbasename + pakbasename_len - strlen( APP_VERSION_STR_MAJORMINOR "pure" ) - extension_len;
-		*wrongver = begin < pakbasename || Q_strnicmp( begin,  APP_VERSION_STR_MAJORMINOR, strlen( APP_VERSION_STR_MAJORMINOR ) ) != 0;
 	}
 
 	return pure;
@@ -2212,7 +2206,7 @@ static pack_t *FS_LoadPK3File( const char *packfilename, bool silent ) {
 	pack->numFiles = numFiles;
 	pack->sysHandle = handle;
 	pack->trie = NULL;
-	pack->pure = FS_IsExplicitPurePak( packfilename, NULL ) ? FS_PURE_EXPLICIT : FS_PURE_NONE;
+	pack->pure = FS_IsExplicitPurePak( packfilename ) ? FS_PURE_EXPLICIT : FS_PURE_NONE;
 
 	Trie_Create( TRIE_CASE_INSENSITIVE, &pack->trie );
 
@@ -2967,20 +2961,6 @@ static char **FS_GamePathPaks( searchpath_t *basepath, const char *gamedir, int 
 
 	if( filenames != NULL ) {
 		qsort( filenames, numfiles, sizeof( char * ), ( int ( * )( const void *, const void * ) )FS_SortStrings );
-
-		for( int i = 0; i < numfiles; ) {
-			// ignore pure data and modules pk3 files from other versions
-			bool wrongpure;
-			bool skip = FS_IsExplicitPurePak( filenames[i], &wrongpure ) && wrongpure;
-
-			if( skip ) {
-				Mem_Free( filenames[i] );
-				memmove( &filenames[i], &filenames[i + 1], ( numfiles-- - i ) * sizeof( *filenames ) );
-				continue;
-			}
-
-			i++;
-		}
 	}
 
 	*numpaks = numfiles;

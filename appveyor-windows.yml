@@ -5,9 +5,9 @@ build_script:
 - cmd: cd source
 - cmd: cmake -G "Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE=Release .
 - cmd: msbuild /p:Configuration=Release ALL_BUILD.vcxproj
-- cmd: ..\goodbuild\ducible.exe build\Release\client.exe
-- cmd: ..\goodbuild\ducible.exe build\Release\server.exe
-- cmd: ..\goodbuild\ducible.exe build\Release\base\game.dll
+- cmd: ..\ggbuild\ducible.exe build\Release\client.exe
+- cmd: ..\ggbuild\ducible.exe build\Release\server.exe
+- cmd: ..\ggbuild\ducible.exe build\Release\base\game.dll
 
 artifacts:
 - path: source/build/Release

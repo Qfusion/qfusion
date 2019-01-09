@@ -15,6 +15,13 @@ if (CMAKE_BUILD_TYPE STREQUAL "Release")
 	add_definitions(-DPUBLIC_BUILD)
 endif()
 
+if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+	execute_process(COMMAND ../ggbuild/lua.exe ../ggbuild/git_version.lua OUTPUT_FILE qcommon/gitversion.h)
+endif()
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+	execute_process(COMMAND ../ggbuild/lua.linux ../ggbuild/git_version.lua OUTPUT_FILE qcommon/gitversion.h)
+endif()
+
 add_definitions(-DCURL_STATICLIB)
 add_definitions(-D_LIBCPP_TYPE_TRAITS)
 
