@@ -1,4 +1,5 @@
 source/build/
+source/qcommon/gitversion.h
 
 *.sdf
 *.opensdf
