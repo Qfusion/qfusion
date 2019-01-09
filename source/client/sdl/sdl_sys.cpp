@@ -28,7 +28,7 @@ void Sys_Error( const char *format, ... ) {
 
 	printf( "%s\n", msg );
 
-	SDL_ShowSimpleMessageBox( SDL_MESSAGEBOX_ERROR, APPLICATION, msg, NULL );
+	// SDL_ShowSimpleMessageBox( SDL_MESSAGEBOX_ERROR, APPLICATION, msg, NULL );
 
 	exit( 1 );
 }
