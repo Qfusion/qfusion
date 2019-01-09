@@ -18,7 +18,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#include "gameshared/q_shared.h"
 #include "qalgo/hash.h"
 
 #if __has_include( "gitversion.h" )
@@ -31,9 +30,4 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define APP_VERSION_D 0
 #endif
 
-STATIC_ASSERT( APP_VERSION_A >= 0 && APP_VERSION_A <= 255 );
-STATIC_ASSERT( APP_VERSION_B >= 0 && APP_VERSION_B <= 255 );
-STATIC_ASSERT( APP_VERSION_C >= 0 && APP_VERSION_C <= 255 );
-STATIC_ASSERT( APP_VERSION_D >= 0 && APP_VERSION_D <= 255 );
-
-constexpr uint32_t APP_PROTOCOL_VERSION = Hash32_CT( APP_VERSION, sizeof( APP_VERSION ) );
+constexpr int APP_PROTOCOL_VERSION = int( Hash32_CT( APP_VERSION, sizeof( APP_VERSION ) ) );
