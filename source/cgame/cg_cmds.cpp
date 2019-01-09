@@ -583,7 +583,7 @@ static void CG_SC_ChangeLoadout() {
 	if( trap_Cmd_Argc() != 3 )
 		return;
 
-	UI_ChangeLoadout( atoi( trap_Cmd_Argv( 1 ) ), atoi( trap_Cmd_Argv( 2 ) ) );
+	UI_ShowLoadoutMenu( atoi( trap_Cmd_Argv( 1 ) ), atoi( trap_Cmd_Argv( 2 ) ) );
 }
 
 static void CG_SC_SaveLoadout() {

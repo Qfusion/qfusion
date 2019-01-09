@@ -262,13 +262,11 @@ void VID_Init() {
 	// TODO: what is this?
 	if( cls.cgameActive ) {
 		CL_GameModule_Init();
-		UI_ForceMenuOff();
 		CL_SetKeyDest( key_game );
 
 		// this will precache game assets
 		SCR_UpdateScreen();
 	} else {
-		UI_ForceMenuOn();
 		CL_SetKeyDest( key_menu );
 	}
 

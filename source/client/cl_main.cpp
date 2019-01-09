@@ -1543,7 +1543,7 @@ void CL_SetClientState( connstate_t state ) {
 		case CA_DISCONNECTED:
 			Con_Close();
 			UI_Refresh( true, true );
-			UI_ForceMenuOn();
+			UI_ShowMainMenu();
 			//UI_MenuMain ();
 			CL_SetKeyDest( key_menu );
 			//SCR_UpdateScreen();
@@ -1552,7 +1552,7 @@ void CL_SetClientState( connstate_t state ) {
 		case CA_CONNECTING:
 			cls.cgameActive = false;
 			Con_Close();
-			UI_ForceMenuOff();
+			UI_HideMenu();
 			CL_SoundModule_StopBackgroundTrack();
 			CL_SetKeyDest( key_game );
 			//SCR_UpdateScreen();
@@ -1568,7 +1568,7 @@ void CL_SetClientState( connstate_t state ) {
 			CL_EndRegistration();
 			Con_Close();
 			UI_Refresh( false, false );
-			UI_ForceMenuOff();
+			UI_HideMenu();
 			CL_SetKeyDest( key_game );
 			//SCR_UpdateScreen();
 			CL_AddReliableCommand( "svmotd 1" );
@@ -1660,7 +1660,7 @@ void CL_RestartMedia( void ) {
 	// register console font and background
 	SCR_RegisterConsoleMedia();
 
-	UI_ForceMenuOff();
+	UI_HideMenu();
 
 	UI_TouchAllAssets();
 
@@ -2357,7 +2357,7 @@ void CL_Init( void ) {
 
 	CL_InitMedia();
 
-	UI_ForceMenuOn();
+	UI_ShowMainMenu();
 
 	CL_InitServerList();
 

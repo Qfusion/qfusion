@@ -785,7 +785,7 @@ static void CL_ParseServerData( msg_t *msg ) {
 	i = MSG_ReadInt32( msg );
 
 	if( i != APP_PROTOCOL_VERSION ) {
-		Com_Error( ERR_DROP, "Server returned version %i, not %i", i, APP_PROTOCOL_VERSION );
+		// Com_Error( ERR_DROP, "Server returned version %i, not %i", i, APP_PROTOCOL_VERSION );
 	}
 
 	cl.servercount = MSG_ReadInt32( msg );

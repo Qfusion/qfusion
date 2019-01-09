@@ -869,7 +869,7 @@ void CG_DrawRSpeeds( int x, int y, int align, struct qfontface_s *font, const ve
 */
 void CG_EscapeKey( void ) {
 	if( cgs.demoPlaying ) {
-		UI_ToggleDemoMenu();
+		UI_ShowDemoMenu();
 		return;
 	}
 
@@ -885,7 +885,7 @@ void CG_EscapeKey( void ) {
 			can_ready = true;
 	}
 
-	UI_ToggleGameMenu( team == TEAM_SPECTATOR, can_ready, can_unready );
+	UI_ShowGameMenu( team == TEAM_SPECTATOR, can_ready, can_unready );
 }
 
 //=============================================================================

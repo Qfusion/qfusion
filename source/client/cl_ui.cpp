@@ -32,9 +32,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 extern SDL_Window * sdl_window;
 
 enum UIState {
+	UIState_Hidden,
 	UIState_MainMenu,
 	UIState_Connecting,
-	UIState_InGame,
+	UIState_GameMenu,
+	UIState_DemoMenu,
 };
 
 enum MainMenuState {
@@ -44,10 +46,13 @@ enum MainMenuState {
 };
 
 enum GameMenuState {
-	GameMenuState_Hidden,
 	GameMenuState_Menu,
 	GameMenuState_Loadout,
 	GameMenuState_Settings,
+};
+
+enum DemoMenuState {
+
 };
 
 enum SettingsState {
@@ -262,90 +267,18 @@ static void KeyBindButton( const char * label, const char * command ) {
 	ImGui::PopID();
 }
 
-static void ServerBrowser() {
-	if( ImGui::Button( "Refresh" ) ) {
-		RefreshServerBrowser();
+static void PushDisabled( bool disabled ) {
+	if( disabled ) {
+		ImGui::PushItemFlag( ImGuiItemFlags_Disabled, true );
+		ImGui::PushStyleVar( ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f );
 	}
-
-	ImGui::BeginChild( "servers" );
-	ImGui::Columns( 2, "serverbrowser", false );
-	ImGui::SetColumnWidth( 0, 200 );
-	ImGui::Text( "Address" );
-	ImGui::NextColumn();
-	ImGui::Text( "Info" );
-	ImGui::NextColumn();
-	for( int i = 0; i < num_servers; i++ ) {
-		if( ImGui::Selectable( servers[ i ].address, i == selected_server, ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowDoubleClick ) ) {
-			if( ImGui::IsMouseDoubleClicked( 0 ) ) {
-				char buf[ 256 ];
-				Q_snprintfz( buf, sizeof( buf ), "connect \"%s\"\n", servers[ i ].address );
-				Cbuf_ExecuteText( EXEC_APPEND, buf );
-			}
-			selected_server = i;
-		}
-		ImGui::NextColumn();
-		ImGui::Text( "%s", servers[ i ].info );
-		ImGui::NextColumn();
-	}
-
-	ImGui::Columns( 1 );
-	ImGui::EndChild();
 }
 
-static void CreateServer() {
-	CvarTextbox< 128 >( "Server name", "sv_hostname", APPLICATION " server", CVAR_SERVERINFO | CVAR_ARCHIVE );
-
-	{
-		cvar_t * cvar = Cvar_Get( "sv_maxclients", "16", CVAR_SERVERINFO | CVAR_LATCH );
-		int maxclients = cvar->integer;
-
-		SettingLabel( "Max players" );
-		ImGui::PushItemWidth( 150 );
-		ImGui::InputInt( "##sv_maxclients", &maxclients );
-		ImGui::PopItemWidth();
-
-		maxclients = max( maxclients, 1 );
-		maxclients = min( maxclients, 64 );
-
-		char buf[ 128 ];
-		Q_snprintfz( buf, sizeof( buf ), "%d", maxclients );
-		Cvar_Set( "sv_maxclients", buf );
+static void PopDisabled( bool disabled ) {
+	if( disabled ) {
+		ImGui::PopItemFlag();
+		ImGui::PopStyleVar();
 	}
-
-	static int selectedmap = 0;
-	{
-		SettingLabel( "Map" );
-		char selectedmapname[ 128 ];
-		ML_GetMapByNum( selectedmap, selectedmapname, sizeof( selectedmapname ) );
-
-		ImGui::PushItemWidth( 200 );
-		if( ImGui::BeginCombo( "##map", selectedmapname ) ) {
-			for( int i = 0; true; i++ ) {
-				char mapname[ 128 ];
-				if( ML_GetMapByNum( i, mapname, sizeof( mapname ) ) == 0 )
-					break;
-
-				if( ImGui::Selectable( mapname, i == selectedmap ) )
-					selectedmap = i;
-				if( i == selectedmap )
-					ImGui::SetItemDefaultFocus();
-			}
-			ImGui::EndCombo();
-		}
-		ImGui::PopItemWidth();
-	}
-
-	CvarCheckbox( "Public", "sv_public", "0", CVAR_ARCHIVE | CVAR_LATCH );
-
-	if( ImGui::Button( "Create server" ) ) {
-		char mapname[ 128 ];
-		if( ML_GetMapByNum( selectedmap, mapname, sizeof( mapname ) ) != 0 ) {
-			char buf[ 256 ];
-			Q_snprintfz( buf, sizeof( buf ), "map \"%s\"\n", mapname );
-			Cbuf_ExecuteText( EXEC_APPEND, buf );
-		}
-	}
-
 }
 
 static void SettingsGeneral() {
@@ -432,22 +365,6 @@ static void SettingsKeys() {
 
 	ImGui::EndChild();
 }
-
-static void PushDisabled( bool disabled ) {
-	if( disabled ) {
-		ImGui::PushItemFlag( ImGuiItemFlags_Disabled, true );
-		ImGui::PushStyleVar( ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f );
-	}
-}
-
-static void PopDisabled( bool disabled ) {
-	if( disabled ) {
-		ImGui::PopItemFlag();
-		ImGui::PopStyleVar();
-	}
-}
-
-// vid_mode WIDTHxHEIGHT [FB MonitorIdx Hz]
 
 static void SettingsVideo() {
 	static WindowMode mode;
@@ -638,79 +555,310 @@ static void Settings() {
 		SettingsAudio();
 }
 
-static void GameMenuButton( const char * label, const char * command, bool * clicked ) {
+static void ServerBrowser() {
+	if( ImGui::Button( "Refresh" ) ) {
+		RefreshServerBrowser();
+	}
+
+	ImGui::BeginChild( "servers" );
+	ImGui::Columns( 2, "serverbrowser", false );
+	ImGui::SetColumnWidth( 0, 200 );
+	ImGui::Text( "Address" );
+	ImGui::NextColumn();
+	ImGui::Text( "Info" );
+	ImGui::NextColumn();
+	for( int i = 0; i < num_servers; i++ ) {
+		if( ImGui::Selectable( servers[ i ].address, i == selected_server, ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowDoubleClick ) ) {
+			if( ImGui::IsMouseDoubleClicked( 0 ) ) {
+				char buf[ 256 ];
+				Q_snprintfz( buf, sizeof( buf ), "connect \"%s\"\n", servers[ i ].address );
+				Cbuf_ExecuteText( EXEC_APPEND, buf );
+			}
+			selected_server = i;
+		}
+		ImGui::NextColumn();
+		ImGui::Text( "%s", servers[ i ].info );
+		ImGui::NextColumn();
+	}
+
+	ImGui::Columns( 1 );
+	ImGui::EndChild();
+}
+
+static void CreateServer() {
+	CvarTextbox< 128 >( "Server name", "sv_hostname", APPLICATION " server", CVAR_SERVERINFO | CVAR_ARCHIVE );
+
+	{
+		cvar_t * cvar = Cvar_Get( "sv_maxclients", "16", CVAR_SERVERINFO | CVAR_LATCH );
+		int maxclients = cvar->integer;
+
+		SettingLabel( "Max players" );
+		ImGui::PushItemWidth( 150 );
+		ImGui::InputInt( "##sv_maxclients", &maxclients );
+		ImGui::PopItemWidth();
+
+		maxclients = max( maxclients, 1 );
+		maxclients = min( maxclients, 64 );
+
+		char buf[ 128 ];
+		Q_snprintfz( buf, sizeof( buf ), "%d", maxclients );
+		Cvar_Set( "sv_maxclients", buf );
+	}
+
+	static int selectedmap = 0;
+	{
+		SettingLabel( "Map" );
+		char selectedmapname[ 128 ];
+		ML_GetMapByNum( selectedmap, selectedmapname, sizeof( selectedmapname ) );
+
+		ImGui::PushItemWidth( 200 );
+		if( ImGui::BeginCombo( "##map", selectedmapname ) ) {
+			for( int i = 0; true; i++ ) {
+				char mapname[ 128 ];
+				if( ML_GetMapByNum( i, mapname, sizeof( mapname ) ) == 0 )
+					break;
+
+				if( ImGui::Selectable( mapname, i == selectedmap ) )
+					selectedmap = i;
+				if( i == selectedmap )
+					ImGui::SetItemDefaultFocus();
+			}
+			ImGui::EndCombo();
+		}
+		ImGui::PopItemWidth();
+	}
+
+	CvarCheckbox( "Public", "sv_public", "0", CVAR_ARCHIVE | CVAR_LATCH );
+
+	if( ImGui::Button( "Create server" ) ) {
+		char mapname[ 128 ];
+		if( ML_GetMapByNum( selectedmap, mapname, sizeof( mapname ) ) != 0 ) {
+			char buf[ 256 ];
+			Q_snprintfz( buf, sizeof( buf ), "map \"%s\"\n", mapname );
+			Cbuf_ExecuteText( EXEC_APPEND, buf );
+		}
+	}
+}
+
+static void MainMenu() {
+	ImGui::SetNextWindowPos( ImVec2() );
+	ImGui::SetNextWindowSize( ImVec2( viddef.width, viddef.height ) );
+	ImGui::Begin( "mainmenu", NULL, ImGuiWindowFlags_NoDecoration );
+
+	ImVec2 window_padding = ImGui::GetStyle().WindowPadding;
+
+	ImGui::BeginChild( "mainmenubody", ImVec2( 0, -ImGui::GetFrameHeightWithSpacing() + window_padding.y ) );
+
+	ImGui::SetCursorPosX( 2 + 2 * sinf( cls.monotonicTime / 20.0f ) );
+	ImGui::PushFont( large_font );
+	ImGui::Text( "COCAINE DIESEL" );
+	ImGui::PopFont();
+
+	if( ImGui::Button( "PLAY" ) ) {
+		mainmenu_state = MainMenuState_ServerBrowser;
+	}
+
+	ImGui::SameLine();
+
+	if( ImGui::Button( "CREATE SERVER" ) ) {
+		mainmenu_state = MainMenuState_CreateServer;
+	}
+
+	ImGui::SameLine();
+
+	if( ImGui::Button( "SETTINGS" ) ) {
+		mainmenu_state = MainMenuState_Settings;
+		settings_state = SettingsState_General;
+	}
+
+	ImGui::SameLine();
+
+	if( ImGui::Button( "QUIT" ) ) {
+		CL_Quit();
+	}
+
+	ImGui::Separator();
+
+	if( mainmenu_state == MainMenuState_ServerBrowser ) {
+		ServerBrowser();
+	}
+	else if( mainmenu_state == MainMenuState_CreateServer ) {
+		CreateServer();
+	}
+	else {
+		Settings();
+	}
+
+	ImGui::EndChild();
+
+	const char * buf = APP_VERSION u8" \u00A9 AHA CHEERS";
+	ImVec2 size = ImGui::CalcTextSize( buf );
+	ImGui::SetCursorPosX( ImGui::GetWindowWidth() - size.x - window_padding.x - 1 - sinf( cls.monotonicTime / 18.0f ) );
+	ImGui::Text( buf );
+
+	ImGui::End();
+}
+
+static void GameMenuButton( const char * label, const char * command, bool * clicked = NULL ) {
 	if( ImGui::Button( label, ImVec2( -1, 0 ) ) ) {
 		char buf[ 256 ];
 		Q_snprintfz( buf, sizeof( buf ), "%s\n", command );
 		Cbuf_ExecuteText( EXEC_APPEND, buf );
-		*clicked = true;
+		if( clicked != NULL )
+			*clicked = true;
 	}
 }
 
-void UI_Refresh( bool background, bool showCursor ) {
-	ImGui_ImplOpenGL3_NewFrame();
-	if( cls.key_dest == key_menu ) {
-		ImGui_ImplSDL2_NewFrame( sdl_window );
-	}
-	ImGui::NewFrame();
+static void GameMenu() {
+	ImGui::PushStyleColor( ImGuiCol_WindowBg, ImVec4( ImColor( 0x1a, 0x1a, 0x1a, 192 ) ) );
+	bool should_close = false;
 
-	if( uistate == UIState_MainMenu ) {
-		ImGui::SetNextWindowPos( ImVec2() );
-		ImGui::SetNextWindowSize( ImVec2( viddef.width, viddef.height ) );
-		ImGui::Begin( "mainmenu", NULL, ImGuiWindowFlags_NoDecoration );
+	if( gamemenu_state == GameMenuState_Menu ) {
+		ImGui::SetNextWindowPosCenter();
+		ImGui::SetNextWindowSize( ImVec2( 300, 0 ) );
+		ImGui::Begin( "gamemenu", NULL, ImGuiWindowFlags_NoDecoration );
 
-		ImVec2 window_padding = ImGui::GetStyle().WindowPadding;
+		if( is_spectating ) {
+			GameMenuButton( "Join the game", "join", &should_close );
+		}
+		else {
+			GameMenuButton( "Spectate", "spec", &should_close );
 
-		ImGui::BeginChild( "mainmenubody", ImVec2( 0, -ImGui::GetFrameHeightWithSpacing() + window_padding.y ) );
+			if( can_ready )
+				GameMenuButton( "Ready", "ready", &should_close );
+			if( can_unready )
+				GameMenuButton( "Uneady", "unready", &should_close );
 
-		ImGui::SetCursorPosX( 2 + 2 * sinf( cls.monotonicTime / 20.0f ) );
-		ImGui::PushFont( large_font );
-		ImGui::Text( "COCAINE DIESEL" );
-		ImGui::PopFont();
-
-		if( ImGui::Button( "PLAY" ) ) {
-			mainmenu_state = MainMenuState_ServerBrowser;
+			GameMenuButton( "Change loadout", "gametypemenu", &should_close );
 		}
 
-		ImGui::SameLine();
-
-		if( ImGui::Button( "CREATE SERVER" ) ) {
-			mainmenu_state = MainMenuState_CreateServer;
-		}
-
-		ImGui::SameLine();
-
-		if( ImGui::Button( "SETTINGS" ) ) {
-			mainmenu_state = MainMenuState_Settings;
+		if( ImGui::Button( "Settings", ImVec2( -1, 0 ) ) ) {
+			gamemenu_state = GameMenuState_Settings;
 			settings_state = SettingsState_General;
 		}
 
-		ImGui::SameLine();
-
-		if( ImGui::Button( "QUIT" ) ) {
-			CL_Quit();
-		}
-
-		ImGui::Separator();
-
-		if( mainmenu_state == MainMenuState_ServerBrowser ) {
-			ServerBrowser();
-		}
-		else if( mainmenu_state == MainMenuState_CreateServer ) {
-			CreateServer();
-		}
-		else {
-			Settings();
-		}
-
-		ImGui::EndChild();
-
-		const char * buf = APP_VERSION u8" \u00A9 AHA CHEERS";
-		ImVec2 size = ImGui::CalcTextSize( buf );
-		ImGui::SetCursorPosX( ImGui::GetWindowWidth() - size.x - window_padding.x - 1 - sinf( cls.monotonicTime / 18.0f ) );
-		ImGui::Text( buf );
+		GameMenuButton( "Disconnect to main menu", "disconnect", &should_close );
+		GameMenuButton( "Exit to desktop", "quit", &should_close );
 
 		ImGui::End();
+	}
+	else if( gamemenu_state == GameMenuState_Loadout ) {
+		ImGui::SetNextWindowPosCenter();
+		ImGui::SetNextWindowSize( ImVec2( 300, 0 ) );
+		ImGui::Begin( "loadout", NULL, ImGuiWindowFlags_NoDecoration );
+
+		ImGui::Text( "Primary weapons" );
+
+		// this has to match up with the order in player.as
+		// TODO: should make this less fragile
+		const char * primaries[] = { "EB + RL", "RL + LG", "EB + LG" };
+		const char * secondaries[] = { "PG", "RG", "GL" };
+
+		ImGui::Columns( ARRAY_COUNT( primaries ), NULL, false );
+
+		for( size_t i = 0; i < ARRAY_COUNT( primaries ); i++ ) {
+			char buf[ 128 ];
+			int key = '1' + int( i );
+			Q_snprintfz( buf, sizeof( buf ), "%c: %s", key, primaries[ i ] );
+			if( ImGui::Selectable( buf, i == selected_primary ) || pressed_key == key ) {
+				selected_primary = i;
+			}
+			ImGui::NextColumn();
+		}
+
+		ImGui::Columns( 1 );
+
+		ImGui::Text( "Secondary weapon" );
+
+		ImGui::Columns( ARRAY_COUNT( secondaries ), NULL, false );
+
+		bool selected_with_number = false;
+		for( size_t i = 0; i < ARRAY_COUNT( secondaries ); i++ ) {
+			char buf[ 128 ];
+			int key = '1' + int( i + ARRAY_COUNT( primaries ) );
+			Q_snprintfz( buf, sizeof( buf ), "%c: %s", key, secondaries[ i ] );
+			if( ImGui::Selectable( buf, i == selected_secondary ) || pressed_key == key ) {
+				selected_secondary = i;
+				selected_with_number = pressed_key == key;
+			}
+			ImGui::NextColumn();
+		}
+
+		if( ImGui::Button( "OK", ImVec2( -1, 0 ) ) || selected_with_number ) {
+			const char * primaries_weapselect[] = { "ebrl", "rllg", "eblg" };
+
+			char buf[ 128 ];
+			Q_snprintfz( buf, sizeof( buf ), "weapselect %s %s\n",
+				primaries_weapselect[ selected_primary ], secondaries[ selected_secondary ] );
+			Cbuf_ExecuteText( EXEC_APPEND, buf );
+			should_close = true;
+		}
+
+		if( pressed_key == K_ESCAPE || pressed_key == 'b' ) {
+			should_close = true;
+		}
+
+		ImGui::End();
+	}
+	else if( gamemenu_state == GameMenuState_Settings ) {
+		ImVec2 pos = ImGui::GetIO().DisplaySize;
+		pos.x *= 0.5f;
+		pos.y *= 0.5f;
+		ImGui::SetNextWindowPos( pos, ImGuiCond_Always, ImVec2( 0.5f, 0.5f ) );
+		ImGui::SetNextWindowSize( ImVec2( 600, 500 ) );
+		ImGui::Begin( "settings", NULL, ImGuiWindowFlags_NoDecoration );
+
+		Settings();
+
+		ImGui::End();
+	}
+
+	if( pressed_key == K_ESCAPE || should_close ) {
+		uistate = UIState_Hidden;
+		CL_SetKeyDest( key_game );
+	}
+
+	ImGui::PopStyleColor();
+}
+
+static void DemoMenu() {
+	ImGui::PushStyleColor( ImGuiCol_WindowBg, ImVec4( ImColor( 0x1a, 0x1a, 0x1a, 192 ) ) );
+	bool should_close = false;
+
+	ImVec2 pos = ImGui::GetIO().DisplaySize;
+	pos.x *= 0.5f;
+	pos.y *= 0.8f;
+	ImGui::SetNextWindowPos( pos, ImGuiCond_Always, ImVec2( 0.5f, 0.5f ) );
+	ImGui::SetNextWindowSize( ImVec2( 600, 0 ) );
+	ImGui::Begin( "demomenu", NULL, ImGuiWindowFlags_NoDecoration );
+
+	GameMenuButton( cls.demo.paused ? "Play" : "Pause", "demopause" );
+	GameMenuButton( "Jump +15s", "demojump +15" );
+	GameMenuButton( "Jump -15s", "demojump -15" );
+
+	GameMenuButton( "Disconnect to main menu", "disconnect", &should_close );
+	GameMenuButton( "Exit to desktop", "quit", &should_close );
+
+	ImGui::End();
+
+	if( pressed_key == K_ESCAPE || should_close ) {
+		uistate = UIState_Hidden;
+		CL_SetKeyDest( key_game );
+	}
+
+	ImGui::PopStyleColor();
+}
+
+void UI_Refresh( bool background, bool showCursor ) {
+	if( uistate == UIState_Hidden )
+		return;
+
+	ImGui_ImplOpenGL3_NewFrame();
+	ImGui_ImplSDL2_NewFrame( sdl_window );
+	ImGui::NewFrame();
+
+	if( uistate == UIState_MainMenu ) {
+		MainMenu();
 	}
 
 	if( uistate == UIState_Connecting ) {
@@ -723,114 +871,12 @@ void UI_Refresh( bool background, bool showCursor ) {
 		ImGui::End();
 	}
 
-	if( uistate == UIState_InGame && gamemenu_state != GameMenuState_Hidden ) {
-		ImGui::PushStyleColor( ImGuiCol_WindowBg, ImVec4( ImColor( 0x1a, 0x1a, 0x1a, 192 ) ) );
-		CL_SetKeyDest( key_menu );
-		bool should_close = false;
+	if( uistate == UIState_GameMenu ) {
+		GameMenu();
+	}
 
-		if( gamemenu_state == GameMenuState_Menu ) {
-			ImGui::SetNextWindowPosCenter();
-			ImGui::SetNextWindowSize( ImVec2( 300, 0 ) );
-			ImGui::Begin( "gamemenu", NULL, ImGuiWindowFlags_NoDecoration );
-
-			if( is_spectating ) {
-				GameMenuButton( "Join the game", "join", &should_close );
-			}
-			else {
-				GameMenuButton( "Spectate", "spec", &should_close );
-
-				if( can_ready )
-					GameMenuButton( "Ready", "ready", &should_close );
-				if( can_unready )
-					GameMenuButton( "Uneady", "unready", &should_close );
-
-				GameMenuButton( "Change loadout", "gametypemenu", &should_close );
-			}
-
-			if( ImGui::Button( "Settings", ImVec2( -1, 0 ) ) ) {
-				gamemenu_state = GameMenuState_Settings;
-				settings_state = SettingsState_General;
-			}
-
-			GameMenuButton( "Disconnect to main menu", "disconnect", &should_close );
-			GameMenuButton( "Exit to desktop", "quit", &should_close );
-
-			ImGui::End();
-		}
-		else if( gamemenu_state == GameMenuState_Loadout ) {
-			ImGui::SetNextWindowPosCenter();
-			ImGui::SetNextWindowSize( ImVec2( 300, 0 ) );
-			ImGui::Begin( "loadout", NULL, ImGuiWindowFlags_NoDecoration );
-
-			ImGui::Text( "Primary weapons" );
-
-			// this has to match up with the order in player.as
-			// TODO: should make this less fragile
-			const char * primaries[] = { "EB + RL", "RL + LG", "EB + LG" };
-			const char * secondaries[] = { "PG", "RG", "GL" };
-
-			ImGui::Columns( ARRAY_COUNT( primaries ), NULL, false );
-
-			for( size_t i = 0; i < ARRAY_COUNT( primaries ); i++ ) {
-				char buf[ 128 ];
-				int key = '1' + int( i );
-				Q_snprintfz( buf, sizeof( buf ), "%c: %s", key, primaries[ i ] );
-				if( ImGui::Selectable( buf, i == selected_primary ) || pressed_key == key ) {
-					selected_primary = i;
-				}
-				ImGui::NextColumn();
-			}
-
-			ImGui::Columns( 1 );
-
-			ImGui::Text( "Secondary weapon" );
-
-			ImGui::Columns( ARRAY_COUNT( secondaries ), NULL, false );
-
-			bool selected_with_number = false;
-			for( size_t i = 0; i < ARRAY_COUNT( secondaries ); i++ ) {
-				char buf[ 128 ];
-				int key = '1' + int( i + ARRAY_COUNT( primaries ) );
-				Q_snprintfz( buf, sizeof( buf ), "%c: %s", key, secondaries[ i ] );
-				if( ImGui::Selectable( buf, i == selected_secondary ) || pressed_key == key ) {
-					selected_secondary = i;
-					selected_with_number = pressed_key == key;
-				}
-				ImGui::NextColumn();
-			}
-
-			if( ImGui::Button( "OK", ImVec2( -1, 0 ) ) || selected_with_number ) {
-				const char * primaries_weapselect[] = { "ebrl", "rllg", "eblg" };
-
-				char buf[ 128 ];
-				Q_snprintfz( buf, sizeof( buf ), "weapselect %s %s\n",
-					primaries_weapselect[ selected_primary ], secondaries[ selected_secondary ] );
-				Cbuf_ExecuteText( EXEC_APPEND, buf );
-				should_close = true;
-			}
-
-			if( pressed_key == K_ESCAPE || pressed_key == 'b' ) {
-				should_close = true;
-			}
-
-			ImGui::End();
-		}
-		else if( gamemenu_state == GameMenuState_Settings ) {
-			ImGui::SetNextWindowPosCenter();
-			ImGui::SetNextWindowSize( ImVec2( 600, 500 ) );
-			ImGui::Begin( "settings", NULL, ImGuiWindowFlags_NoDecoration );
-
-			Settings();
-
-			ImGui::End();
-		}
-
-		if( pressed_key == K_ESCAPE || should_close ) {
-			CL_SetKeyDest( key_game );
-			gamemenu_state = GameMenuState_Hidden;
-		}
-
-		ImGui::PopStyleColor();
+	if( uistate == UIState_DemoMenu ) {
+		DemoMenu();
 	}
 
 	// ImGui::ShowDemoWindow();
@@ -866,27 +912,31 @@ void UI_CharEvent( bool mainContext, wchar_t key ) {
 	ImGui::GetIO().AddInputCharacter( key );
 }
 
-void UI_ForceMenuOn() {
+void UI_ShowMainMenu() {
 	uistate = UIState_MainMenu;
 	mainmenu_state = MainMenuState_ServerBrowser;
 	CL_SoundModule_StartMenuMusic();
 	RefreshServerBrowser();
 }
 
-void UI_ForceMenuOff() {
-	uistate = UIState_InGame;
-	gamemenu_state = GameMenuState_Hidden;
-}
-
-void UI_ToggleGameMenu( bool spectating, bool ready, bool unready ) {
-	gamemenu_state = gamemenu_state == GameMenuState_Hidden ? GameMenuState_Menu : GameMenuState_Hidden;
+void UI_ShowGameMenu( bool spectating, bool ready, bool unready ) {
+	uistate = UIState_GameMenu;
+	gamemenu_state = GameMenuState_Menu;
 	pressed_key = -1;
 	is_spectating = spectating;
 	can_ready = ready;
 	can_unready = unready;
+	CL_SetKeyDest( key_menu );
 }
 
-void UI_ToggleDemoMenu() {
+void UI_ShowDemoMenu() {
+	uistate = UIState_DemoMenu;
+	pressed_key = -1;
+	CL_SetKeyDest( key_menu );
+}
+
+void UI_HideMenu() {
+	uistate = UIState_Hidden;
 }
 
 void UI_AddToServerList( const char * address, const char *info ) {
@@ -904,10 +954,11 @@ bool UI_MouseHover( bool mainContext ) {
 	return false;
 }
 
-void UI_ChangeLoadout( int primary, int secondary ) {
-	uistate = UIState_InGame;
+void UI_ShowLoadoutMenu( int primary, int secondary ) {
+	uistate = UIState_GameMenu;
 	gamemenu_state = GameMenuState_Loadout;
 	pressed_key = -1;
 	selected_primary = primary;
 	selected_secondary = secondary;
+	CL_SetKeyDest( key_menu );
 }

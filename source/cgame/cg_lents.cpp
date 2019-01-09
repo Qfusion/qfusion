@@ -479,7 +479,6 @@ void CG_EBImpact( const vec3_t pos, const vec3_t dir, int surfFlags, int team ) 
 	le->ent.rotation = rand() % 360;
 	le->ent.scale = 1.5f;
 
-	// add white energy particles on the impact
 	CG_ImpactPuffParticles( pos, dir, 15, 0.75f, color[0], color[1], color[2], color[3], NULL );
 
 	trap_S_StartFixedSound( CG_MediaSfx( cgs.media.sfxElectroboltHit ), pos, CHAN_AUTO, cg_volume_effects->value, ATTN_STATIC );

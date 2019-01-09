@@ -861,12 +861,12 @@ void CG_Init( const char *serverName, unsigned int playerNum,
 	cgs.pixelRatio = pixelRatio;
 
 	// demo
-	cgs.demoPlaying = demoplaying == true;
+	cgs.demoPlaying = demoplaying;
 	cgs.demoName = demoName;
 	Q_strncpyz( cgs.demoExtension, demoExtension, sizeof( cgs.demoExtension ) );
 
 	// whether to only allow pure files
-	cgs.pure = pure == true;
+	cgs.pure = pure;
 
 	// game protocol number
 	cgs.gameProtocol = protocol;
