@@ -1714,41 +1714,6 @@ bool Info_Validate( const char *info ) {
 }
 
 /*
-* Info_CleanValue
-*
-* Removes invalid characters from a userinfo value.
-* Used internally by steamlib at least.
-*/
-void Info_CleanValue( const char *in, char *out, size_t outsize ) {
-	size_t len = 0;
-	int c;
-
-	if( !outsize ) {
-		return;
-	}
-
-	clamp_high( outsize, MAX_INFO_VALUE );
-
-	while( ( len + 1 < outsize ) && ( ( ( c = *in ) != '\0' ) ) ) {
-		in++;
-
-		if( c == '\\' ) {
-			continue;
-		}
-		if( c == ';' ) {
-			continue;
-		}
-		if( c == '"' ) {
-			continue;
-		}
-
-		out[len++] = c;
-	}
-
-	out[len] = '\0';
-}
-
-/*
 * Info_FindKey
 *
 * Returns the pointer to the \ character if key is found

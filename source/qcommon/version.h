@@ -73,10 +73,3 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define APP_ICO_ICON                    "../../icons/forksow.ico"
 #define APP_DEMO_ICO_ICON               "../../icons/forksow_demo.ico"
 #define APP_XPM_ICON                    "../../icons/forksow.xpm"
-
-/**
- * The Steam App ID of the game.
- * 0 disables integration.
- * 480 can be used for testing with Spacewar.
- */
-#define APP_STEAMID                     0

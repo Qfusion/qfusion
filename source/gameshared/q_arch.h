@@ -99,8 +99,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define OSNAME "Windows"
 
-#define STEAMQUERY_OS 'w'
-
 #include <malloc.h>
 #define HAVE__ALLOCA
 
@@ -136,8 +134,6 @@ typedef uintptr_t socket_handle_t;
 #define OSNAME "Linux"
 #endif
 
-#define STEAMQUERY_OS 'l'
-
 #include <alloca.h>
 
 // wsw : aiwa : 64bit integers and integer-pointer types
@@ -171,7 +167,6 @@ typedef int socket_handle_t;
 //Mac OSX has universal binaries, no need for cpu dependency
 #define BUILDSTRING "MacOSX"
 #define OSNAME "MacOSX"
-#define STEAMQUERY_OS 'o'
 
 #include <alloca.h>
 

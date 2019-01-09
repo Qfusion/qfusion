@@ -210,7 +210,6 @@ PROTOCOL
 //=========================================
 
 #define PORT_MASTER         27950
-#define PORT_MASTER_STEAM   27011
 #define PORT_SERVER         44400
 #define PORT_HTTP_SERVER    44444
 #define NUM_BROADCAST_PORTS 5
