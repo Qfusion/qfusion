@@ -80,7 +80,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
 	set(CURL_LIBRARIES "${CURL_LIBRARY}" "${MBEDTLS_LIBRARY}")
 
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pipe -Wall -Werror=implicit-function-declaration -fvisibility=hidden -fno-strict-aliasing -Winvalid-pch")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pipe -Wall -Werror=implicit-function-declaration -fvisibility=hidden -fno-strict-aliasing")
 	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 -D_DEBUG")
 	set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -ffast-math -msse2 -O2")
 
