@@ -133,7 +133,6 @@ typedef struct {
 									 float angle, const vec4_t color, const struct shader_s *shader );
 
 	void ( *Scissor )( int x, int y, int w, int h );
-	void ( *GetScissor )( int *x, int *y, int *w, int *h );
 	void ( *ResetScissor )( void );
 
 	void ( *SetCustomColor )( int num, int r, int g, int b );
@@ -163,19 +162,15 @@ typedef struct {
 
 	void ( *AppActivate )( bool active, bool minimize );
 
-	/**
-	* PushTransformMatrix
-	* Called by UI when it wants to set the current transform matrix to a new matrix
-	*/
 	void ( *PushTransformMatrix )( bool projection, const float *m );
-
-	/**
-	* PopTransformMatrix
-	* Called by UI when it wants to revert the latest transform matrix change
-	*/
 	void ( *PopTransformMatrix )( bool projection );
 } ref_export_t;
 
 typedef ref_export_t *(*GetRefAPI_t)( const ref_import_t *imports );
 
 extern "C" QF_DLL_EXPORT ref_export_t *GetRefAPI( ref_import_t *import );
+
+void R_DrawDynamicPoly( const poly_t * poly );
+
+void RF_PushTransformMatrix( bool projection, const float *m );
+void RF_PopTransformMatrix( bool projection );

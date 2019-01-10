@@ -40,7 +40,7 @@ void R_BatchPolySurf( const entity_t *e, const shader_t *shader, int lightStyleN
 	mesh.colorsArray[1] = NULL;
 	mesh.sVectorsArray = NULL;
 
-	RB_AddDynamicMesh( e, shader, &mesh, GL_TRIANGLES, 0.0f, 0.0f );
+	RB_AddDynamicMesh( e, shader, &mesh, GL_TRIANGLES );
 }
 
 /*
@@ -356,7 +356,7 @@ bool R_SurfPotentiallyFragmented( const msurface_t *surf ) {
 */
 static void R_RecursiveFragmentNode( void ) {
 	unsigned i;
-	int stackdepth = 0;
+	size_t stackdepth = 0;
 	float dist;
 	bool inside;
 	mnode_t *node, *localstack[2048];
@@ -466,4 +466,19 @@ int R_GetClippedFragments( const vec3_t origin, float radius, vec3_t axis[3],
 	R_RecursiveFragmentNode();
 
 	return numClippedFragments;
+}
+
+void R_DrawDynamicPoly( const poly_t * poly ) {
+	STATIC_ASSERT( sizeof( *poly->elems ) == sizeof( elem_t ) );
+
+	mesh_t mesh = { };
+	mesh.numVerts = poly->numverts;
+	mesh.xyzArray = poly->verts;
+	mesh.normalsArray = poly->normals;
+	mesh.stArray = poly->stcoords;
+	mesh.colorsArray[0] = poly->colors;
+	mesh.numElems = poly->numelems;
+	mesh.elems = ( elem_t * )poly->elems;
+
+	RB_AddDynamicMesh( NULL, poly->shader, &mesh, GL_TRIANGLES );
 }

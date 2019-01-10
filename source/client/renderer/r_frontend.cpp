@@ -178,21 +178,6 @@ void RF_SetScissor( int x, int y, int w, int h ) {
 	Vector4Set( rrf.scissor, x, y, w, h );
 }
 
-void RF_GetScissor( int *x, int *y, int *w, int *h ) {
-	if( x ) {
-		*x = rrf.scissor[0];
-	}
-	if( y ) {
-		*y = rrf.scissor[1];
-	}
-	if( w ) {
-		*w = rrf.scissor[2];
-	}
-	if( h ) {
-		*h = rrf.scissor[3];
-	}
-}
-
 void RF_ResetScissor( void ) {
 	rrf.frame->ResetScissor( rrf.frame );
 	Vector4Set( rrf.scissor, 0, 0, glConfig.width, glConfig.height );

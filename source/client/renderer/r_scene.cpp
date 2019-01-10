@@ -611,7 +611,7 @@ static void R_RenderDebugBounds( void ) {
 		mesh.xyzArray = r_debug_bounds[i].corners;
 		mesh.colorsArray[0] = r_debug_bounds[i].colors;
 
-		RB_AddDynamicMesh( rsc.worldent, rsh.whiteShader, &mesh, GL_LINES, 0.0f, 0.0f );
+		RB_AddDynamicMesh( rsc.worldent, rsh.whiteShader, &mesh, GL_LINES );
 	}
 
 	RB_FlushDynamicMeshes();

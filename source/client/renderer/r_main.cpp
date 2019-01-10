@@ -204,7 +204,7 @@ void R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, int lightStyl
 	mesh.colorsArray[1] = NULL;
 	mesh.sVectorsArray = NULL;
 
-	RB_AddDynamicMesh( e, shader, &mesh, GL_TRIANGLES, 0.0f, 0.0f );
+	RB_AddDynamicMesh( e, shader, &mesh, GL_TRIANGLES );
 }
 
 /*
@@ -481,7 +481,7 @@ void R_DrawRotatedStretchPic( int x, int y, int w, int h, float s1, float t1, fl
 		}
 	}
 
-	RB_AddDynamicMesh( NULL, shader, &pic_mesh, GL_TRIANGLES, 0.0f, 0.0f );
+	RB_AddDynamicMesh( NULL, shader, &pic_mesh, GL_TRIANGLES );
 }
 
 /*
@@ -545,13 +545,6 @@ void R_BindFrameBufferObject( int object ) {
 */
 void R_Scissor( int x, int y, int w, int h ) {
 	RB_Scissor( x, y, w, h );
-}
-
-/*
-* R_GetScissor
-*/
-void R_GetScissor( int *x, int *y, int *w, int *h ) {
-	RB_GetScissor( x, y, w, h );
 }
 
 /*

@@ -71,7 +71,6 @@ void RF_DrawRotatedStretchPic( int x, int y, int w, int h, float s1, float t1, f
 void RF_DrawStretchRaw( int x, int y, int w, int h, int cols, int rows,
 						float s1, float t1, float s2, float t2, uint8_t *data );
 void RF_SetScissor( int x, int y, int w, int h );
-void RF_GetScissor( int *x, int *y, int *w, int *h );
 void RF_ResetScissor( void );
 void RF_SetCustomColor( int num, int r, int g, int b );
 void RF_ResizeFramebuffers();

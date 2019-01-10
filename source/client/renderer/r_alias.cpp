@@ -627,7 +627,7 @@ void R_DrawAliasSurf( const entity_t *e, const shader_t *shader, int lightStyleN
 			dynamicMesh.sVectorsArray = aliasmesh->sVectorsArray;
 		}
 
-		RB_AddDynamicMesh( e, shader, &dynamicMesh, GL_TRIANGLES, 0.0f, 0.0f );
+		RB_AddDynamicMesh( e, shader, &dynamicMesh, GL_TRIANGLES );
 
 		RB_FlushDynamicMeshes();
 	}

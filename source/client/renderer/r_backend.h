@@ -80,7 +80,7 @@ void RB_BlitFrameBufferObject( int src, int dest, int bitMask, int mode, int fil
 
 void RB_BindVBO( int id, int primitive );
 
-void RB_AddDynamicMesh( const entity_t *entity, const shader_t *shader, const struct mesh_s *mesh, int primitive, float x_offset, float y_offset );
+void RB_AddDynamicMesh( const entity_t *entity, const shader_t *shader, const struct mesh_s *mesh, int primitive );
 void RB_FlushDynamicMeshes( void );
 
 void RB_DrawElements( int firstVert, int numVerts, int firstElem, int numElems );

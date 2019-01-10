@@ -1,23 +1,3 @@
-/*
-Copyright (C) 2002-2003 Victor Luchits
-
-This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License
-as published by the Free Software Foundation; either version 2
-of the License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-
-See the GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-*/
-
 #include "client.h"
 #include "qcommon/version.h"
 
@@ -27,7 +7,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "ui/imgui_freetype.h"
 #include "ui/imgui_internal.h"
 #include "ui/imgui_impl_sdl.h"
-#include "ui/imgui_impl_opengl3.h"
 
 extern SDL_Window * sdl_window;
 
@@ -72,11 +51,12 @@ static ImFont * large_font;
 
 static Server servers[ 1024 ];
 static int num_servers = 0;
-static int selected_server;
 
 static UIState uistate;
 
 static MainMenuState mainmenu_state;
+static int selected_server;
+static int selected_map;
 
 static GameMenuState gamemenu_state;
 static bool is_spectating;
@@ -114,7 +94,6 @@ void UI_Init() {
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGui_ImplSDL2_InitForOpenGL( sdl_window, NULL );
-	ImGui_ImplOpenGL3_Init( "#version 120" );
 
 	{
 		ImGuiIO & io = ImGui::GetIO();
@@ -144,6 +123,12 @@ void UI_Init() {
 		io.Fonts->AddFontFromFileTTF( "base/fonts/Montserrat-SemiBold.ttf", 16.0f );
 		large_font = io.Fonts->AddFontFromFileTTF( "base/fonts/Montserrat-Bold.ttf", 64.0f );
 		ImGuiFreeType::BuildFontAtlas( io.Fonts );
+
+		uint8_t * pixels;
+		int width, height;
+		io.Fonts->GetTexDataAsAlpha8( &pixels, &width, &height );
+		struct shader_s * shader = re.RegisterRawAlphaMask( "imgui_font", width, height, pixels );
+		io.Fonts->TexID = shader;
 	}
 
 	{
@@ -166,12 +151,12 @@ void UI_Init() {
 }
 
 void UI_Shutdown() {
-	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplSDL2_Shutdown();
-        ImGui::DestroyContext();
+	ImGui::DestroyContext();
 }
 
 void UI_TouchAllAssets() {
+	re.RegisterPic( "imgui_font" );
 }
 
 static void SettingLabel( const char * label ) {
@@ -605,11 +590,10 @@ static void CreateServer() {
 		Cvar_Set( "sv_maxclients", buf );
 	}
 
-	static int selectedmap = 0;
 	{
 		SettingLabel( "Map" );
 		char selectedmapname[ 128 ];
-		ML_GetMapByNum( selectedmap, selectedmapname, sizeof( selectedmapname ) );
+		ML_GetMapByNum( selected_map, selectedmapname, sizeof( selectedmapname ) );
 
 		ImGui::PushItemWidth( 200 );
 		if( ImGui::BeginCombo( "##map", selectedmapname ) ) {
@@ -618,9 +602,9 @@ static void CreateServer() {
 				if( ML_GetMapByNum( i, mapname, sizeof( mapname ) ) == 0 )
 					break;
 
-				if( ImGui::Selectable( mapname, i == selectedmap ) )
-					selectedmap = i;
-				if( i == selectedmap )
+				if( ImGui::Selectable( mapname, i == selected_map ) )
+					selected_map = i;
+				if( i == selected_map )
 					ImGui::SetItemDefaultFocus();
 			}
 			ImGui::EndCombo();
@@ -632,7 +616,7 @@ static void CreateServer() {
 
 	if( ImGui::Button( "Create server" ) ) {
 		char mapname[ 128 ];
-		if( ML_GetMapByNum( selectedmap, mapname, sizeof( mapname ) ) != 0 ) {
+		if( ML_GetMapByNum( selected_map, mapname, sizeof( mapname ) ) != 0 ) {
 			char buf[ 256 ];
 			Q_snprintfz( buf, sizeof( buf ), "map \"%s\"\n", mapname );
 			Cbuf_ExecuteText( EXEC_APPEND, buf );
@@ -662,6 +646,7 @@ static void MainMenu() {
 
 	if( ImGui::Button( "CREATE SERVER" ) ) {
 		mainmenu_state = MainMenuState_CreateServer;
+		selected_map = 0;
 	}
 
 	ImGui::SameLine();
@@ -693,7 +678,7 @@ static void MainMenu() {
 
 	const char * buf = APP_VERSION u8" \u00A9 AHA CHEERS";
 	ImVec2 size = ImGui::CalcTextSize( buf );
-	ImGui::SetCursorPosX( ImGui::GetWindowWidth() - size.x - window_padding.x - 1 - sinf( cls.monotonicTime / 18.0f ) );
+	ImGui::SetCursorPosX( ImGui::GetWindowWidth() - size.x - window_padding.x - 1 - sinf( cls.monotonicTime / 29.0f ) );
 	ImGui::Text( buf );
 
 	ImGui::End();
@@ -849,11 +834,76 @@ static void DemoMenu() {
 	ImGui::PopStyleColor();
 }
 
+static void RenderUI() {
+	ImDrawData * draw_data = ImGui::GetDrawData();
+
+	ImGuiIO& io = ImGui::GetIO();
+	int fb_width = int( draw_data->DisplaySize.x * io.DisplayFramebufferScale.x );
+	int fb_height = int( draw_data->DisplaySize.y * io.DisplayFramebufferScale.y );
+	if( fb_width <= 0 || fb_height <= 0 )
+		return;
+	draw_data->ScaleClipRects( io.DisplayFramebufferScale );
+
+	ImVec2 pos = draw_data->DisplayPos;
+	for( int n = 0; n < draw_data->CmdListsCount; n++ ) {
+		const ImDrawList * cmd_list = draw_data->CmdLists[n];
+		uint16_t idx_buffer_offset = 0;
+
+		vec4_t * verts = ( vec4_t * ) Mem_TempMalloc( cmd_list->VtxBuffer.Size * sizeof( vec4_t ) );
+		vec2_t * uvs = ( vec2_t * ) Mem_TempMalloc( cmd_list->VtxBuffer.Size * sizeof( vec2_t ) );
+		byte_vec4_t * colors = ( byte_vec4_t * ) Mem_TempMalloc( cmd_list->VtxBuffer.Size * sizeof( byte_vec4_t ) );
+		uint16_t * indices = ( uint16_t * ) Mem_TempMalloc( cmd_list->IdxBuffer.Size * sizeof( uint16_t ) );
+
+		for( int i = 0; i < cmd_list->VtxBuffer.Size; i++ ) {
+			const ImDrawVert & v = cmd_list->VtxBuffer.Data[ i ];
+			verts[ i ][ 0 ] = v.pos.x;
+			verts[ i ][ 1 ] = v.pos.y;
+			verts[ i ][ 2 ] = 0;
+			verts[ i ][ 3 ] = 1;
+			uvs[ i ][ 0 ] = v.uv.x;
+			uvs[ i ][ 1 ] = v.uv.y;
+			memcpy( &colors[ i ], &v.col, sizeof( byte_vec4_t ) );
+		}
+
+		memcpy( indices, cmd_list->IdxBuffer.Data, cmd_list->IdxBuffer.Size * sizeof( uint16_t ) );
+
+		for( int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++ ) {
+			const ImDrawCmd * pcmd = &cmd_list->CmdBuffer[cmd_i];
+			if( pcmd->UserCallback ) {
+				pcmd->UserCallback( cmd_list, pcmd );
+			}
+			else {
+				ImVec4 clip_rect = ImVec4( pcmd->ClipRect.x - pos.x, pcmd->ClipRect.y - pos.y, pcmd->ClipRect.z - pos.x, pcmd->ClipRect.w - pos.y );
+				if( clip_rect.x < fb_width && clip_rect.y < fb_height && clip_rect.z >= 0.0f && clip_rect.w >= 0.0f ) {
+					re.Scissor( int( clip_rect.x ), int( clip_rect.y ), int( clip_rect.z - clip_rect.x ), int( clip_rect.w - clip_rect.y ) );
+
+					poly_t poly = { };
+					poly.numverts = cmd_list->VtxBuffer.Size;
+					poly.verts = verts;
+					poly.stcoords = uvs;
+					poly.colors = colors;
+					poly.numelems = pcmd->ElemCount;
+					poly.elems = indices + idx_buffer_offset;
+					poly.shader = ( shader_s * ) pcmd->TextureId;
+					R_DrawDynamicPoly( &poly );
+				}
+			}
+			idx_buffer_offset += pcmd->ElemCount;
+		}
+
+		Mem_TempFree( verts );
+		Mem_TempFree( uvs );
+		Mem_TempFree( colors );
+		Mem_TempFree( indices );
+	}
+
+	re.ResetScissor();
+}
+
 void UI_Refresh( bool background, bool showCursor ) {
 	if( uistate == UIState_Hidden )
 		return;
 
-	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplSDL2_NewFrame( sdl_window );
 	ImGui::NewFrame();
 
@@ -882,7 +932,7 @@ void UI_Refresh( bool background, bool showCursor ) {
 	// ImGui::ShowDemoWindow();
 
 	ImGui::Render();
-	ImGui_ImplOpenGL3_RenderDrawData( ImGui::GetDrawData() );
+	RenderUI();
 
 	Cbuf_Execute();
 }

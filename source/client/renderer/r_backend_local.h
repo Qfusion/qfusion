@@ -57,7 +57,6 @@ typedef struct {
 	vattribmask_t vattribs; // based on the fields above - cached to avoid rebinding
 	int streamId;
 	int primitive;
-	vec2_t offset;
 	int scissor[4];
 	rbDrawElements_t drawElements;
 } rbDynamicDraw_t;

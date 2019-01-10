@@ -49,7 +49,6 @@ extern "C" QF_DLL_EXPORT ref_export_t *GetRefAPI( ref_import_t *import ) {
 	globals.DrawStretchPic = RF_DrawStretchPic;
 	globals.DrawRotatedStretchPic = RF_DrawRotatedStretchPic;
 	globals.Scissor = RF_SetScissor;
-	globals.GetScissor = RF_GetScissor;
 	globals.ResetScissor = RF_ResetScissor;
 	globals.SetCustomColor = RF_SetCustomColor;
 	globals.ReplaceRawSubPic = RF_ReplaceRawSubPic;
