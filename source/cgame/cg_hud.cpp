@@ -1510,50 +1510,6 @@ static bool CG_LFuncDrawRotatedPicByName( struct cg_layoutnode_s *commandnode, s
 	return true;
 }
 
-static bool CG_LFuncDrawModelByIndex( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
-	struct model_s *model;
-	int value = (int)CG_GetNumericArg( &argumentnode );
-
-	if( value >= 0 && value < MAX_MODELS ) {
-		model = value > 1 ? CG_RegisterModel( cgs.configStrings[CS_MODELS + value] ) : NULL;
-		CG_DrawHUDModel( layout_cursor_x, layout_cursor_y, layout_cursor_align, layout_cursor_width, layout_cursor_height, model, NULL, layout_cursor_rotation[YAW] );
-		return true;
-	}
-
-	return false;
-}
-
-static bool CG_LFuncDrawModelByName( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
-	struct model_s *model;
-	struct shader_s *shader;
-	const char *shadername;
-
-	model = CG_RegisterModel( CG_GetStringArg( &argumentnode ) );
-	shadername = CG_GetStringArg( &argumentnode );
-	shader = Q_stricmp( shadername, "NULL" ) ? trap_R_RegisterPic( shadername ) : NULL;
-	CG_DrawHUDModel( layout_cursor_x, layout_cursor_y, layout_cursor_align, layout_cursor_width, layout_cursor_height, model, shader, layout_cursor_rotation[YAW] );
-	return true;
-}
-
-static bool CG_LFuncDrawModelByItemIndex( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
-	int i;
-	gsitem_t    *item;
-	struct model_s *model;
-	int itemindex = (int)CG_GetNumericArg( &argumentnode );
-
-	item = GS_FindItemByTag( itemindex );
-	if( !item ) {
-		return false;
-	}
-	for( i = 0; i < MAX_ITEM_MODELS; i++ ) {
-		if( item->world_model[i] != NULL ) {
-			model = itemindex >= 1 ? CG_RegisterModel( item->world_model[i] ) : NULL;
-			CG_DrawHUDModel( layout_cursor_x, layout_cursor_y, layout_cursor_align, layout_cursor_width, layout_cursor_height, model, NULL, layout_cursor_rotation[YAW] );
-		}
-	}
-	return true;
-}
-
 static bool CG_LFuncScale( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	layout_cursor_scale = (int)CG_GetNumericArg( &argumentnode );
 	return true;
@@ -2483,30 +2439,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 		2,
 		"Draws a pic with arguments being the file path and the rotation",
 		true
-	},
-
-	{
-		"drawModelByIndex",
-		CG_LFuncDrawModelByIndex,
-		1,
-		"Draws a model with argument being the modelIndex",
-		true
-	},
-
-	{
-		"drawModelByName",
-		CG_LFuncDrawModelByName,
-		2,
-		"Draws a model with argument being the path to the model file",
-		true
-	},
-
-	{
-		"drawModelByItemIndex",
-		CG_LFuncDrawModelByItemIndex,
-		1,
-		"Draws a item model with argument being the item index",
-		false
 	},
 
 	{

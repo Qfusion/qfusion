@@ -20,14 +20,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "cg_local.h"
 
-/*
-===============================================================================
-
-HELPER FUNCTIONS
-
-===============================================================================
-*/
-
 int CG_HorizontalAlignForWidth( const int x, int align, int width ) {
 	int nx = x;
 
@@ -66,82 +58,6 @@ int CG_HorizontalMovementForAlign( int align ) {
 
 	}
 	return m;
-}
-
-/*
-===============================================================================
-
-STRINGS DRAWING
-
-===============================================================================
-*/
-
-/*
-* CG_DrawModel
-*/
-static void CG_DrawModel( int x, int y, int align, int w, int h, struct model_s *model, struct shader_s *shader, vec3_t origin, vec3_t angles, bool outline ) {
-	refdef_t refdef;
-	entity_t entity;
-
-	if( !model ) {
-		return;
-	}
-
-	x = CG_HorizontalAlignForWidth( x, align, w );
-	y = CG_VerticalAlignForHeight( y, align, h );
-
-	memset( &refdef, 0, sizeof( refdef ) );
-
-	refdef.x = x;
-	refdef.y = y;
-	refdef.width = w;
-	refdef.height = h;
-	refdef.fov_y = WidescreenFov( 30 );
-	refdef.fov_x = CalcHorizontalFov( refdef.fov_y, w, h );
-	refdef.time = cg.time;
-	refdef.rdflags = RDF_NOWORLDMODEL;
-	Matrix3_Copy( axis_identity, refdef.viewaxis );
-	refdef.scissor_x = x;
-	refdef.scissor_y = y;
-	refdef.scissor_width = w;
-	refdef.scissor_height = h;
-
-	memset( &entity, 0, sizeof( entity ) );
-	entity.model = model;
-	entity.customShader = shader;
-	entity.scale = 1.0f;
-	entity.renderfx = RF_FULLBRIGHT | RF_NOSHADOW | RF_FORCENOLOD;
-	VectorCopy( origin, entity.origin );
-	VectorCopy( entity.origin, entity.origin2 );
-	AnglesToAxis( angles, entity.axis );
-	if( outline ) {
-		entity.outlineHeight = DEFAULT_OUTLINE_HEIGHT;
-		Vector4Set( entity.outlineRGBA, 0, 0, 0, 255 );
-	}
-
-	trap_R_ClearScene();
-	CG_SetBoneposesForTemporaryEntity( &entity );
-	CG_AddEntityToScene( &entity );
-	trap_R_RenderScene( &refdef );
-}
-
-/*
-* CG_DrawHUDModel
-*/
-void CG_DrawHUDModel( int x, int y, int align, int w, int h, struct model_s *model, struct shader_s *shader, float yawspeed ) {
-	vec3_t mins, maxs;
-	vec3_t origin, angles;
-
-	// get model bounds
-	trap_R_ModelBounds( model, mins, maxs );
-
-	// try to fill the the window with the model
-	origin[0] = 0.5 * ( maxs[2] - mins[2] ) * ( 1.0 / 0.179 );
-	origin[1] = 0.5 * ( mins[1] + maxs[1] );
-	origin[2] = -0.5 * ( mins[2] + maxs[2] );
-	VectorSet( angles, 0, anglemod( yawspeed * ( cg.time & 2047 ) * ( 360.0 / 2048.0 ) ), 0 );
-
-	CG_DrawModel( x, y, align, w, h, model, shader, origin, angles, cg_outlineModels->integer ? true : false );
 }
 
 /*
