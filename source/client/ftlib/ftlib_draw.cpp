@@ -19,8 +19,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
+#include "client/client.h"
 #include "ftlib_local.h"
-#include "client/renderer/r_local.h"
 
 static fdrawchar_t drawCharIntercept = NULL;
 
@@ -264,7 +264,7 @@ fdrawchar_t FTLIB_SetDrawCharIntercept( fdrawchar_t intercept ) {
 */
 void FTLIB_DrawRawChar( int x, int y, wchar_t num, qfontface_t *font, const vec4_t color ) {
 	qglyph_t *glyph;
-	fdrawchar_t draw = R_DrawStretchPic;
+	fdrawchar_t draw = re.DrawStretchPic;
 
 	if( ( num <= ' ' ) || !font || ( y <= -font->height ) ) {
 		return;
@@ -305,7 +305,7 @@ void FTLIB_DrawClampChar( int x, int y, wchar_t num, int xmin, int ymin, int xma
 	int x2, y2;
 	float s1 = 0.0f, t1 = 0.0f, s2 = 1.0f, t2 = 1.0f;
 	float tw, th;
-	fdrawchar_t draw = R_DrawStretchPic;
+	fdrawchar_t draw = re.DrawStretchPic;
 
 	if( ( num <= ' ' ) || !font || ( xmax <= xmin ) || ( ymax <= ymin ) ) {
 		return;

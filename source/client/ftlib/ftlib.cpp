@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "ftlib_local.h"
-#include "client/renderer/r_local.h"
+#include "client/client.h"
 
 static qfontfamily_t *fontFamilies;
 
@@ -211,7 +211,7 @@ static void QFT_UploadRenderedGlyphs( uint8_t *pic, struct shader_s *shader, int
 	for( i = 0; i < height; i++, src += src_width, dest += width ) {
 		memmove( dest, src, width );
 	}
-	R_ReplaceRawSubPic( shader, x, y, width, height, pic );
+	re.ReplaceRawSubPic( shader, x, y, width, height, pic );
 }
 
 /*
@@ -318,7 +318,7 @@ static void QFT_RenderString( qfontface_t *qfont, const char *str ) {
 					qttf->imageCurX = 0;
 					qttf->imageCurY = 0;
 					shaderNum = ( qfont->numShaders )++;
-					shader = R_RegisterRawAlphaMask( FTLIB_FontShaderName( qfont, shaderNum ),
+					shader = re.RegisterRawAlphaMask( FTLIB_FontShaderName( qfont, shaderNum ),
 														  qfont->shaderWidth, qfont->shaderHeight, NULL );
 					qfont->shaders = ( shader_s ** ) Mem_Realloc( qfont->shaders, qfont->numShaders * sizeof( struct shader_s * ) );
 					qfont->shaders[shaderNum] = shader;
@@ -478,7 +478,7 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size ) {
 
 	qfont->numShaders = 1;
 	qfont->shaders = ( shader_s ** ) Mem_Alloc( ftlibPool, sizeof( struct shader_s * ) );
-	qfont->shaders[0] = R_RegisterRawAlphaMask( FTLIB_FontShaderName( qfont, 0 ),
+	qfont->shaders[0] = re.RegisterRawAlphaMask( FTLIB_FontShaderName( qfont, 0 ),
 													 qfont->shaderWidth, qfont->shaderHeight, NULL );
 	qfont->hasKerning = hasKerning;
 	qfont->f = &qft_face_funcs;
@@ -802,7 +802,7 @@ void FTLIB_TouchFont( qfontface_t *qfont ) {
 	unsigned int i;
 
 	for( i = 0; i < qfont->numShaders; i++ ) {
-		R_RegisterPic( FTLIB_FontShaderName( qfont, i ) );
+		re.RegisterPic( FTLIB_FontShaderName( qfont, i ) );
 	}
 }
 
