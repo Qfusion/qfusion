@@ -1,11 +1,5 @@
 #pragma once
 
-#undef STR_HELPER
-#undef STR_TOSTR
-
-#define STR_HELPER( s )                 # s
-#define STR_TOSTR( x )                  STR_HELPER( x )
-
 #define APPLICATION                     "Cocaine Diesel"
 #define APPLICATION_NOSPACES            "CocaineDiesel"
 #define DEFAULT_BASEGAME                "base"
