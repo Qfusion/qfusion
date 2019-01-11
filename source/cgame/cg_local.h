@@ -242,8 +242,6 @@ typedef struct {
 	cgs_media_handle_t *shaderEnergyMark;
 	cgs_media_handle_t *shaderLaser;
 	cgs_media_handle_t *shaderNet;
-	cgs_media_handle_t *shaderBackTile;
-	cgs_media_handle_t *shaderWhiteTile;
 	cgs_media_handle_t *shaderDownArrow;
 	cgs_media_handle_t *shaderTeleportShellGfx;
 
