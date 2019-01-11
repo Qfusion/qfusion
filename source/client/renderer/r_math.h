@@ -18,12 +18,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 #pragma once
 
-#include "../../gameshared/q_math.h"
+#include "gameshared/q_math.h"
 
 // r_math.h
 typedef vec_t mat4_t[16];
 
-extern const mat4_t mat4x4_identity;
+alignas( 16 ) constexpr mat4_t mat4x4_identity = {
+	1, 0, 0, 0,
+	0, 1, 0, 0,
+	0, 0, 1, 0,
+	0, 0, 0, 1
+};
 
 void Matrix4_Identity( mat4_t m );
 void Matrix4_Copy( const mat4_t m1, mat4_t m2 );

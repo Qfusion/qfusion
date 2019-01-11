@@ -373,7 +373,7 @@ void R_Begin2D( bool multiSamples ) {
 */
 void R_SetupGL2D( void ) {
 	int width, height;
-	/*ATTRIBUTE_ALIGNED( 16 ) */mat4_t projectionMatrix;
+	mat4_t projectionMatrix;
 
 	width = rf.twoD.width;
 	height = rf.twoD.height;

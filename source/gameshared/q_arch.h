@@ -227,14 +227,6 @@ typedef int socket_handle_t;
 #define BUILDSTRING "NON-WIN32"
 #endif
 
-#if defined ( __GNUC__ )
-#define ATTRIBUTE_ALIGNED( x ) __attribute__( ( aligned( x ) ) )
-#elif defined ( _MSC_VER )
-#define ATTRIBUTE_ALIGNED( x ) __declspec( align( x ) )
-#else
-#define ATTRIBUTE_ALIGNED( x )
-#endif
-
 #ifdef HAVE___STRTOI64
 #define strtoll _strtoi64
 #define strtoull _strtoi64

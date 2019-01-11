@@ -22,14 +22,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "r_math.h"
 
-const ATTRIBUTE_ALIGNED( 16 ) mat4_t mat4x4_identity =
-{
-	1, 0, 0, 0,
-	0, 1, 0, 0,
-	0, 0, 1, 0,
-	0, 0, 0, 1
-};
-
 void Matrix4_Identity( mat4_t m ) {
 	m[0] = 1, m[1] = m[2] = m[3] = 0;
 	m[4] = 0, m[5] = 1, m[6] = m[7] = 0;

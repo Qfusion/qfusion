@@ -270,7 +270,7 @@ typedef struct {
 	qmutex_t        *debugSurfaceLock;
 
 	int transformMatrixStackSize[2];
-	/*ATTRIBUTE_ALIGNED( 16 ) */mat4_t transformMatricesStack[2][MAX_PROJMATRIX_STACK_SIZE];
+	mat4_t transformMatricesStack[2][MAX_PROJMATRIX_STACK_SIZE];
 } r_globals_t;
 
 extern ref_import_t ri;
