@@ -189,14 +189,6 @@ int Com_GlobMatch( const char *pattern, const char *text, const bool casecmp );
 
 void Info_Print( char *s );
 
-//============================================================================
-
-/* crc.h */
-void CRC_Init( unsigned short *crcvalue );
-void CRC_ProcessByte( unsigned short *crcvalue, uint8_t data );
-unsigned short CRC_Value( unsigned short crcvalue );
-unsigned short CRC_Block( uint8_t *start, int count );
-
 /*
 ==============================================================
 
