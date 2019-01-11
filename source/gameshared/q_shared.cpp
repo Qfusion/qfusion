@@ -225,12 +225,6 @@ short ShortSwap( short l ) {
 	return ( b1 << 8 ) + b2;
 }
 
-#if !defined ( ENDIAN_LITTLE ) && !defined ( ENDIAN_BIG )
-static short ShortNoSwap( short l ) {
-	return l;
-}
-#endif
-
 int LongSwap( int l ) {
 	uint8_t b1, b2, b3, b4;
 
@@ -241,12 +235,6 @@ int LongSwap( int l ) {
 
 	return ( (int)b1 << 24 ) + ( (int)b2 << 16 ) + ( (int)b3 << 8 ) + b4;
 }
-
-#if !defined ( ENDIAN_LITTLE ) && !defined ( ENDIAN_BIG )
-static int LongNoSwap( int l ) {
-	return l;
-}
-#endif
 
 float FloatSwap( float f ) {
 	union {
@@ -262,56 +250,6 @@ float FloatSwap( float f ) {
 	dat2.b[3] = dat1.b[0];
 	return dat2.f;
 }
-
-#if !defined ( ENDIAN_LITTLE ) && !defined ( ENDIAN_BIG )
-static float FloatNoSwap( float f ) {
-	return f;
-}
-#endif
-
-#if !defined ( ENDIAN_LITTLE ) && !defined ( ENDIAN_BIG )
-
-/*
-* Swap_Init
-*/
-static void Swap_Init( void ) {
-	uint8_t swaptest[2] = { 1, 0 };
-
-	// set the byte swapping variables in a portable manner
-	if( *(short *)swaptest == 1 ) {
-		BigShort = ShortSwap;
-		LittleShort = ShortNoSwap;
-		BigLong = LongSwap;
-		LittleLong = LongNoSwap;
-		BigFloat = FloatSwap;
-		LittleFloat = FloatNoSwap;
-	} else {
-		BigShort = ShortNoSwap;
-		LittleShort = ShortSwap;
-		BigLong = LongNoSwap;
-		LittleLong = LongSwap;
-		BigFloat = FloatNoSwap;
-		LittleFloat = FloatSwap;
-	}
-}
-
-static short BigShortDetectSwap( short l ) { Swap_Init(); return BigShort( l ); }
-static short LittleShortDetectSwap( short l ) { Swap_Init(); return LittleShort( l ); }
-
-static int BigLongDetectSwap( int l ) { Swap_Init(); return BigLong( l ); }
-static int LittleLongDetectSwap( int l ) { Swap_Init(); return LittleLong( l ); }
-
-static float BigFloatDetectSwap( float l ) { Swap_Init(); return BigFloat( l ); }
-static float LittleFloatDetectSwap( float l ) { Swap_Init(); return LittleFloat( l ); }
-
-short ( *BigShort )( short l ) = &BigShortDetectSwap;
-short ( *LittleShort )( short l ) = &LittleShortDetectSwap;
-int ( *BigLong )( int l ) = &BigLongDetectSwap;
-int ( *LittleLong )( int l ) = &LittleLongDetectSwap;
-float ( *BigFloat )( float l ) = &BigFloatDetectSwap;
-float ( *LittleFloat )( float l ) = &LittleFloatDetectSwap;
-#endif
-
 
 /*
 * TempVector

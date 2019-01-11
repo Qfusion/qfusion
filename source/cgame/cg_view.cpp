@@ -938,8 +938,6 @@ void CG_RenderView( int frameTime, int realFrameTime, int64_t monotonicTime, int
 
 	CG_UpdateChaseCam();
 
-	CG_RunLightStyles();
-
 	CG_ClearFragmentedDecals();
 
 	trap_R_ClearScene();
@@ -966,7 +964,6 @@ void CG_RenderView( int frameTime, int realFrameTime, int64_t monotonicTime, int
 	CG_AddShadeBoxes();
 	CG_AddDecals();
 	CG_AddPolys();
-	CG_AddLightStyles();
 
 #ifndef PUBLIC_BUILD
 	CG_AddTest();

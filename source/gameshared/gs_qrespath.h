@@ -422,21 +422,3 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define S_VSAY_BOOMSTICK            "sounds/vsay/boomstick"
 #define S_VSAY_OK                   "sounds/vsay/ok"
 #define S_VSAY_SHUTUP               "sounds/vsay/shutup"
-
-//===============================
-// Lightstyles
-//===============================
-// light animation tables. 'a' is total darkness, 'z' is doublebright.
-
-#define LS_NORMAL                   "m" // 0
-#define LS_FLICKER1                 "mmnmmommommnonmmonqnmmo" // 1
-#define LS_SLOW_STRONG_PULSE        "abcdefghijklmnopqrstuvwxyzyxwvutsrqponmlkjihgfedcba" // 2
-#define LS_CANDLE1                  "mmmmmaaaaammmmmaaaaaabcdefgabcdefg" // 3
-#define LS_FAST_STROBE              "mamamamamama" // 4
-#define LS_GENTLE_PULSE_1           "jklmnopqrstuvwxyzyxwvutsrqponmlkj" // 5
-#define LS_FLICKER2                 "nmonqnmomnmomomno" // 6
-#define LS_CANDLE2                  "mmmaaaabcdefgmmmmaaaammmaamm" // 7
-#define LS_CANDLE3                  "mmmaaammmaaammmabcdefaaaammmmabcdefmmmaaaa" // 8
-#define LS_SLOW_STROBE              "aaaaaaaazzzzzzzz" // 9
-#define LS_FLUORESCENT_FLICKER      "mmamammmmammamamaaamammma" // 10
-#define LS_SLOW_PULSE_NOT_FADE      "abcdefghijklmnopqrrqponmlkjihgfedcba" // 11

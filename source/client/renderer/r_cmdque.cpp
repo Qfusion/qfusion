@@ -44,7 +44,6 @@ enum {
 	REF_CMD_ADD_ENTITY_TO_SCENE,
 	REF_CMD_ADD_LIGHT_TO_SCENE,
 	REF_CMD_ADD_POLY_TO_SCENE,
-	REF_CMD_ADD_LIGHT_STYLE_TO_SCENE,
 	REF_CMD_RENDER_SCENE,
 	REF_CMD_BLUR_SCREEN,
 
@@ -99,12 +98,6 @@ typedef struct {
 	float intensity;
 	float r, g, b;
 } refCmdAddLightToScene_t;
-
-typedef struct {
-	int id;
-	int style;
-	float r, g, b;
-} refCmdAddLightStyleToScene_t;
 
 typedef struct {
 	int id;
@@ -187,12 +180,6 @@ static unsigned R_HandleAddPolyToSceneCmd( const void *pcmd ) {
 	return cmd->length;
 }
 
-static unsigned R_HandleAddLightStyleToSceneCmd( const void *pcmd ) {
-	const refCmdAddLightStyleToScene_t *cmd = ( const refCmdAddLightStyleToScene_t * ) pcmd;
-	R_AddLightStyleToScene( cmd->style, cmd->r, cmd->g, cmd->b );
-	return sizeof( *cmd );
-}
-
 static unsigned R_HandleRenderSceneCmd( const void *pcmd ) {
 	const refCmdRenderScene_t *cmd = ( const refCmdRenderScene_t * ) pcmd;
 
@@ -249,7 +236,6 @@ static const refCmdHandler_t refCmdHandlers[NUM_REF_CMDS] =
 	R_HandleAddEntityToSceneCmd,
 	R_HandleAddLightToSceneCmd,
 	R_HandleAddPolyToSceneCmd,
-	R_HandleAddLightStyleToSceneCmd,
 	R_HandleRenderSceneCmd,
 	R_HandleBlurScreenCmd,
 	R_HandleSetScissorCmd,
@@ -432,18 +418,6 @@ static void RF_IssueAddPolyToSceneCmd( ref_cmdbuf_t *cmdbuf, const poly_t *poly 
 	RF_IssueAbstractCmd( cmdbuf, &cmd, sizeof( cmd ), cmd_len );
 }
 
-static void RF_IssueAddLightStyleToSceneCmd( ref_cmdbuf_t *cmdbuf, int style, float r, float g, float b ) {
-	refCmdAddLightStyleToScene_t cmd;
-
-	cmd.id = REF_CMD_ADD_LIGHT_STYLE_TO_SCENE;
-	cmd.style = style;
-	cmd.r = r;
-	cmd.g = g;
-	cmd.b = b;
-
-	RF_IssueAbstractCmd( cmdbuf, &cmd, sizeof( cmd ), sizeof( cmd ) );
-}
-
 static void RF_IssueRenderSceneCmd( ref_cmdbuf_t *cmdbuf, const refdef_t *fd ) {
 	refCmdRenderScene_t cmd;
 	size_t cmd_len = sizeof( cmd );
@@ -536,7 +510,6 @@ ref_cmdbuf_t *RF_CreateCmdBuf() {
 	cmdbuf->AddEntityToScene = &RF_IssueAddEntityToSceneCmd;
 	cmdbuf->AddLightToScene = &RF_IssueAddLightToSceneCmd;
 	cmdbuf->AddPolyToScene = &RF_IssueAddPolyToSceneCmd;
-	cmdbuf->AddLightStyleToScene = &RF_IssueAddLightStyleToSceneCmd;
 	cmdbuf->RenderScene = &RF_IssueRenderSceneCmd;
 	cmdbuf->BlurScreen = &RF_IssueBlurScreenCmd;
 	cmdbuf->SetScissor = &RF_IssueSetScissorCmd;

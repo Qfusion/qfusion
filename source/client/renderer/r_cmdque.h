@@ -38,7 +38,6 @@ typedef struct ref_cmdbuf_s {
 	void ( *AddEntityToScene )( struct ref_cmdbuf_s *cmdbuf, const entity_t *ent );
 	void ( *AddLightToScene )( struct ref_cmdbuf_s *cmdbuf, const vec3_t org, float intensity, float r, float g, float b );
 	void ( *AddPolyToScene )( struct ref_cmdbuf_s *cmdbuf, const poly_t *poly );
-	void ( *AddLightStyleToScene )( struct ref_cmdbuf_s *cmdbuf, int style, float r, float g, float b );
 	void ( *RenderScene )( struct ref_cmdbuf_s *cmdbuf, const refdef_t *fd );
 	void ( *BlurScreen )( struct ref_cmdbuf_s *cmdbuf );
 	void ( *SetScissor )( struct ref_cmdbuf_s *cmdbuf, int x, int y, int w, int h );

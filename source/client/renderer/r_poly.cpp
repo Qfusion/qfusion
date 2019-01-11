@@ -25,7 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 /*
 * R_BatchPolySurf
 */
-void R_BatchPolySurf( const entity_t *e, const shader_t *shader, int lightStyleNum, drawSurfacePoly_t *poly, bool mergable ) {
+void R_BatchPolySurf( const entity_t *e, const shader_t *shader, drawSurfacePoly_t *poly, bool mergable ) {
 	mesh_t mesh;
 
 	mesh.elems = poly->elems;
@@ -33,11 +33,8 @@ void R_BatchPolySurf( const entity_t *e, const shader_t *shader, int lightStyleN
 	mesh.numVerts = poly->numVerts;
 	mesh.xyzArray = poly->xyzArray;
 	mesh.normalsArray = poly->normalsArray;
-	mesh.lmstArray[0] = NULL;
-	mesh.lmlayersArray[0] = NULL;
 	mesh.stArray = poly->stArray;
-	mesh.colorsArray[0] = poly->colorsArray;
-	mesh.colorsArray[1] = NULL;
+	mesh.colorsArray = poly->colorsArray;
 	mesh.sVectorsArray = NULL;
 
 	RB_AddDynamicMesh( e, shader, &mesh, GL_TRIANGLES );
@@ -47,24 +44,13 @@ void R_BatchPolySurf( const entity_t *e, const shader_t *shader, int lightStyleN
 * R_DrawPolys
 */
 void R_DrawPolys( void ) {
-	unsigned int i;
-	drawSurfacePoly_t *p;
-	entity_t *e;
-
-	for( i = 0; i < rsc.numPolys; i++ ) {
-		int renderfx;
-
-		p = rsc.polys + i;
-		renderfx = p->renderfx;
-
-		if( renderfx & RF_WEAPONMODEL ) {
-			e = rsc.polyweapent;
-		} else {
-			e = rsc.polyent;
-		}
+	for( unsigned i = 0; i < rsc.numPolys; i++ ) {
+		drawSurfacePoly_t *p = rsc.polys + i;
+		int renderfx = p->renderfx;
+		entity_t *e = ( renderfx & RF_WEAPONMODEL ) ? rsc.polyweapent : rsc.polyent;
 		e->renderfx = p->renderfx;
 
-		if( !R_AddSurfToDrawList( rn.meshlist, e, p->shader, -1, 0, i, p ) ) {
+		if( !R_AddSurfToDrawList( rn.meshlist, e, p->shader, 0, i, p ) ) {
 			continue;
 		}
 	}
@@ -476,7 +462,7 @@ void R_DrawDynamicPoly( const poly_t * poly ) {
 	mesh.xyzArray = poly->verts;
 	mesh.normalsArray = poly->normals;
 	mesh.stArray = poly->stcoords;
-	mesh.colorsArray[0] = poly->colors;
+	mesh.colorsArray = poly->colors;
 	mesh.numElems = poly->numelems;
 	mesh.elems = ( elem_t * )poly->elems;
 

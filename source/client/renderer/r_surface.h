@@ -50,10 +50,6 @@ typedef struct {
 
 	unsigned int numInstances;
 
-	int superLightStyle;
-
-	unsigned int numLightmaps;
-
 	unsigned int surfFlags;
 
 	int vbo;

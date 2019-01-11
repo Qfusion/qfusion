@@ -35,9 +35,7 @@ typedef struct mesh_s {
 	vec4_t              *normalsArray;
 	vec4_t              *sVectorsArray;
 	vec2_t              *stArray;
-	vec2_t              *lmstArray[MAX_LIGHTMAPS];
-	byte_vec4_t         *lmlayersArray[( MAX_LIGHTMAPS + 3 ) / 4];
-	byte_vec4_t         *colorsArray[MAX_LIGHTMAPS];
+	byte_vec4_t         *colorsArray;
 
 	uint8_t             *blendIndices;
 	uint8_t             *blendWeights;
@@ -54,7 +52,6 @@ typedef struct {
 	unsigned count;
 	unsigned firstVert, numVerts;
 	unsigned firstElem, numElems;
-	int lightStyleNum;
 	drawSurfaceBSP_t *lastDrawSurf;
 	entity_t *entity;
 	struct shader_s *shader;
@@ -77,10 +74,10 @@ typedef struct {
 	volatile unsigned char *worldDrawSurfVis;
 } drawList_t;
 
-typedef void *(*drawSurf_cb)( const entity_t *, const struct shader_s *, int, void * );
+typedef void *(*drawSurf_cb)( const entity_t *, const struct shader_s *, void * );
 
 typedef void (*flushBatchDrawSurf_cb)( void );
-typedef void (*batchDrawSurf_cb)( const entity_t *, const struct shader_s *, int, void *, bool );
+typedef void (*batchDrawSurf_cb)( const entity_t *, const struct shader_s *, void *, bool );
 
-typedef void (*walkDrawSurf_cb_cb)( void *, const entity_t *, const struct shader_s *, int, void *, void *p );
-typedef void (*walkDrawSurf_cb)( const entity_t *, const struct shader_s *, int, void *, walkDrawSurf_cb_cb, void * );
+typedef void (*walkDrawSurf_cb_cb)( void *, const entity_t *, const struct shader_s *, void *, void *p );
+typedef void (*walkDrawSurf_cb)( const entity_t *, const struct shader_s *, void *, walkDrawSurf_cb_cb, void * );

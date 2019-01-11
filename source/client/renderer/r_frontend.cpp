@@ -151,10 +151,6 @@ void RF_AddPolyToScene( const poly_t *poly ) {
 	rrf.frame->AddPolyToScene( rrf.frame, poly );
 }
 
-void RF_AddLightStyleToScene( int style, float r, float g, float b ) {
-	rrf.frame->AddLightStyleToScene( rrf.frame, style, r, g, b );
-}
-
 void RF_RenderScene( const refdef_t *fd ) {
 	rrf.frame->RenderScene( rrf.frame, fd );
 }

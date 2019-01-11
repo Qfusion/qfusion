@@ -50,16 +50,6 @@ void main(void)
 	v_Normal = Normal;
 #endif
 
-#ifdef NUM_LIGHTMAPS
-	v_LightmapTexCoord01 = a_LightmapCoord01;
-#if NUM_LIGHTMAPS > 2
-	v_LightmapTexCoord23 = a_LightmapCoord23;
-#endif // NUM_LIGHTMAPS > 2
-#ifdef LIGHTMAP_ARRAYS
-	v_LightmapLayer0123 = a_LightmapLayer0123;
-#endif // LIGHTMAP_ARRAYS
-#endif // NUM_LIGHTMAPS
-
 	gl_Position = u_ModelViewProjectionMatrix * Position;
 
 #if defined(APPLY_SOFT_PARTICLE)

@@ -31,7 +31,6 @@ mempool_t *r_mempool;
 cvar_t *r_drawentities;
 cvar_t *r_drawworld;
 cvar_t *r_speeds;
-cvar_t *r_lightmap;
 cvar_t *r_sRGB;
 
 cvar_t *r_subdivisions;
@@ -39,16 +38,11 @@ cvar_t *r_showtris;
 cvar_t *r_showtris2D;
 cvar_t *r_leafvis;
 
-cvar_t *r_lighting_deluxemapping;
 cvar_t *r_lighting_specular;
 cvar_t *r_lighting_glossintensity;
 cvar_t *r_lighting_glossexponent;
 cvar_t *r_lighting_ambientscale;
 cvar_t *r_lighting_directedscale;
-cvar_t *r_lighting_maxlmblocksize;
-cvar_t *r_lighting_vertexlight;
-cvar_t *r_lighting_intensity;
-cvar_t *r_lighting_bicubic;
 
 cvar_t *r_outlines_world;
 cvar_t *r_outlines_scale;
@@ -244,12 +238,6 @@ static void R_FinalizeGLExtensions( void ) {
 
 	ri.Cvar_Get( "r_texturefilter_max", "0", CVAR_READONLY );
 	ri.Cvar_ForceSet( "r_texturefilter_max", va_r( tmp, sizeof( tmp ), "%i", glConfig.maxTextureFilterAnisotropic ) );
-
-	// don't allow too high values for lightmap block size as they negatively impact performance
-	if( r_lighting_maxlmblocksize->integer > glConfig.maxTextureSize / 4 &&
-		!( glConfig.maxTextureSize / 4 < min( QF_LIGHTMAP_WIDTH,QF_LIGHTMAP_HEIGHT ) * 2 ) ) {
-		ri.Cvar_ForceSet( "r_lighting_maxlmblocksize", va_r( tmp, sizeof( tmp ), "%i", glConfig.maxTextureSize / 4 ) );
-	}
 }
 
 /*
@@ -267,7 +255,6 @@ static void R_FillStartupBackgroundColor( float r, float g, float b ) {
 static void R_Register() {
 	char tmp[128];
 
-	r_lightmap = ri.Cvar_Get( "r_lightmap", "0", 0 );
 	r_drawentities = ri.Cvar_Get( "r_drawentities", "1", CVAR_CHEAT );
 	r_drawworld = ri.Cvar_Get( "r_drawworld", "1", CVAR_CHEAT );
 	r_speeds = ri.Cvar_Get( "r_speeds", "0", 0 );
@@ -280,17 +267,11 @@ static void R_Register() {
 
 	r_subdivisions = ri.Cvar_Get( "r_subdivisions", STR_TOSTR( SUBDIVISIONS_DEFAULT ), CVAR_ARCHIVE | CVAR_LATCH_VIDEO | CVAR_READONLY );
 
-	r_lighting_deluxemapping = ri.Cvar_Get( "r_lighting_deluxemapping", "0", CVAR_ARCHIVE | CVAR_LATCH_VIDEO | CVAR_READONLY );
 	r_lighting_specular = ri.Cvar_Get( "r_lighting_specular", "0", CVAR_ARCHIVE | CVAR_LATCH_VIDEO | CVAR_READONLY );
 	r_lighting_glossintensity = ri.Cvar_Get( "r_lighting_glossintensity", "1.5", CVAR_ARCHIVE );
 	r_lighting_glossexponent = ri.Cvar_Get( "r_lighting_glossexponent", "24", CVAR_ARCHIVE );
 	r_lighting_ambientscale = ri.Cvar_Get( "r_lighting_ambientscale", "1", 0 );
 	r_lighting_directedscale = ri.Cvar_Get( "r_lighting_directedscale", "1", 0 );
-
-	r_lighting_maxlmblocksize = ri.Cvar_Get( "r_lighting_maxlmblocksize", "2048", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
-	r_lighting_vertexlight = ri.Cvar_Get( "r_lighting_vertexlight", "0", CVAR_CHEAT | CVAR_LATCH_VIDEO );
-	r_lighting_intensity = ri.Cvar_Get( "r_lighting_intensity", "1.75", CVAR_ARCHIVE );
-	r_lighting_bicubic = ri.Cvar_Get( "r_lighting_bicubic", "1", CVAR_ARCHIVE );
 
 	r_outlines_world = ri.Cvar_Get( "r_outlines_world", "1.8", CVAR_ARCHIVE );
 	r_outlines_scale = ri.Cvar_Get( "r_outlines_scale", "1", CVAR_ARCHIVE );

@@ -42,10 +42,8 @@ enum {
 	IT_NO_DATA_SYNC      = 1 << 16,    // owned by the drawing thread, do not sync in the frontend thread
 	IT_FLOAT             = 1 << 17,
 	IT_SRGB              = 1 << 18,
-	IT_MIPTEX            = 1 << 19,
-	IT_MIPTEX_FULLBRIGHT = 1 << 20,
-	IT_LEFTHALF          = 1 << 21,
-	IT_RIGHTHALF         = 1 << 22,
+	IT_LEFTHALF          = 1 << 19,
+	IT_RIGHTHALF         = 1 << 20,
 };
 
 /**

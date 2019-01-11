@@ -56,12 +56,11 @@ typedef vec_t instancePoint_t[8]; // quaternion for rotation + xyz pos + uniform
 #define SIDE_BACK               1
 #define SIDE_ON                 2
 
-#define RF_BIT( x )               ( 1ULL << ( x ) )
+#define RF_BIT( x )             ( 1ULL << ( x ) )
 
-#define RF_NONE                 0x0
-#define RF_DRAWFLAT             RF_BIT( 1 )
-#define RF_LIGHTMAP             RF_BIT( 2 )
-#define RF_SOFT_PARTICLES       RF_BIT( 3 )
+#define RF_NONE                 0
+#define RF_DRAWFLAT             ( 1 << 0 )
+#define RF_SOFT_PARTICLES       ( 1 << 1 )
 
 #define MAX_REF_ENTITIES        ( MAX_ENTITIES + 48 ) // must not exceed 2048 because of sort key packing
 
@@ -69,7 +68,6 @@ typedef vec_t instancePoint_t[8]; // quaternion for rotation + xyz pos + uniform
 
 #include "r_public.h"
 #include "r_vattribs.h"
-#include "r_light.h"
 #include "r_glimp.h"
 #include "r_surface.h"
 #include "r_image.h"
@@ -221,8 +219,6 @@ typedef struct {
 	unsigned int numPolys;
 	drawSurfacePoly_t polys[MAX_POLYS];
 
-	lightstyle_t lightStyles[MAX_LIGHTSTYLES];
-
 	unsigned int numBmodelEntities;
 	int bmodelEntities[MAX_REF_ENTITIES];
 
@@ -292,7 +288,6 @@ extern r_globals_t rf;
 extern cvar_t *r_drawentities;
 extern cvar_t *r_drawworld;
 extern cvar_t *r_speeds;
-extern cvar_t *r_lightmap;
 extern cvar_t *r_sRGB;
 
 extern cvar_t *r_subdivisions;
@@ -300,16 +295,11 @@ extern cvar_t *r_showtris;
 extern cvar_t *r_showtris2D;
 extern cvar_t *r_leafvis;
 
-extern cvar_t *r_lighting_deluxemapping;
 extern cvar_t *r_lighting_specular;
 extern cvar_t *r_lighting_glossintensity;
 extern cvar_t *r_lighting_glossexponent;
 extern cvar_t *r_lighting_ambientscale;
 extern cvar_t *r_lighting_directedscale;
-extern cvar_t *r_lighting_maxlmblocksize;
-extern cvar_t *r_lighting_vertexlight;
-extern cvar_t *r_lighting_intensity;
-extern cvar_t *r_lighting_bicubic;
 
 extern cvar_t *r_outlines_world;
 extern cvar_t *r_outlines_scale;
@@ -352,7 +342,7 @@ void R_LatLongToNorm4( const uint8_t latlong[2], vec4_t out );
 //
 void R_CacheAliasModelEntity( const entity_t *e );
 bool R_AddAliasModelToDrawList( const entity_t *e, int lod );
-void R_DrawAliasSurf( const entity_t *e, const shader_t *shader, int lightStyleNum, drawSurfaceAlias_t *drawSurf );
+void R_DrawAliasSurf( const entity_t *e, const shader_t *shader, drawSurfaceAlias_t *drawSurf );
 bool R_AliasModelLerpTag( orientation_t *orient, const maliasmodel_t *aliasmodel, int framenum, int oldframenum,
 	float lerpfrac, const char *name );
 void R_AliasModelFrameBounds( const model_t *mod, int frame, vec3_t mins, vec3_t maxs );
@@ -476,10 +466,10 @@ void R_DeferDataSync( void );
 
 float R_DefaultFarClip( void );
 
-void R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, int lightStyleNum, drawSurfaceType_t *drawSurf, bool mergable );
+void R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, drawSurfaceType_t *drawSurf, bool mergable );
 
 struct mesh_vbo_s *R_InitNullModelVBO( void );
-void R_DrawNullSurf( const entity_t *e, const shader_t *shader, int lightStyleNum, drawSurfaceType_t *drawSurf );
+void R_DrawNullSurf( const entity_t *e, const shader_t *shader, drawSurfaceType_t *drawSurf );
 
 void R_CacheSpriteEntity( const entity_t *e );
 
@@ -533,8 +523,7 @@ void R_FrameCache_FreeToMark_( void *mark, const char *filename, int fileline );
 //
 void R_InitDrawList( drawList_t *list );
 void R_ClearDrawList( drawList_t *list );
-unsigned R_PackOpaqueOrder( const shader_t *shader, int numLightmaps, bool dlight );
-void *R_AddSurfToDrawList( drawList_t *list, const entity_t *e, const shader_t *shader, int superLightStyle, float dist, unsigned int order, void *drawSurf );
+void *R_AddSurfToDrawList( drawList_t *list, const entity_t *e, const shader_t *shader, float dist, unsigned int order, void *drawSurf );
 void R_ReserveDrawListWorldSurfaces( drawList_t *list );
 
 void R_InitDrawLists( void );
@@ -553,7 +542,7 @@ void R_BuildTangentVectors( int numVertexes, vec4_t *xyzArray, vec4_t *normalsAr
 //
 // r_poly.c
 //
-void R_BatchPolySurf( const entity_t *e, const shader_t *shader, int lightStyleNum, drawSurfacePoly_t *poly, bool mergable );
+void R_BatchPolySurf( const entity_t *e, const shader_t *shader, drawSurfacePoly_t *poly, bool mergable );
 void R_DrawPolys( void );
 bool R_SurfPotentiallyFragmented( const msurface_t *surf );
 int R_GetClippedFragments( const vec3_t origin, float radius, vec3_t axis[3], int maxfverts,
@@ -579,7 +568,6 @@ void R_ClearScene( void );
 void R_AddEntityToScene( const entity_t *ent );
 void R_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b );
 void R_AddPolyToScene( const poly_t *poly );
-void R_AddLightStyleToScene( int style, float r, float g, float b );
 void R_RenderScene( const refdef_t *fd );
 void R_BlurScreen( void );
 
@@ -594,10 +582,9 @@ bool R_SurfNoDlight( const msurface_t *surf );
 void R_CacheBrushModelEntity( const entity_t *e );
 bool R_AddBrushModelToDrawList( const entity_t *e );
 float R_BrushModelBBox( const entity_t *e, vec3_t mins, vec3_t maxs, bool *rotated );
-void R_BatchBSPSurf( const entity_t *e, const shader_t *shader, int lightStyleNum, drawSurfaceBSP_t *drawSurf, bool mergable );
+void R_BatchBSPSurf( const entity_t *e, const shader_t *shader, drawSurfaceBSP_t *drawSurf, bool mergable );
 void R_FlushBSPSurfBatch( void );
-void R_WalkBSPSurf( const entity_t *e, const shader_t *shader, int lightStyleNum, 
-	drawSurfaceBSP_t *drawSurf, walkDrawSurf_cb_cb cb, void *ptr );
+void R_WalkBSPSurf( const entity_t *e, const shader_t *shader, drawSurfaceBSP_t *drawSurf, walkDrawSurf_cb_cb cb, void *ptr );
 
 //
 // r_skin.c
@@ -614,7 +601,7 @@ shader_t    *R_FindShaderForSkinFile( const struct skinfile_s *skinfile, const c
 //
 void R_CacheSkeletalModelEntity( const entity_t *e );
 bool R_AddSkeletalModelToDrawList( const entity_t *e, int lod );
-void R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, int lightStyleNum, drawSurfaceSkeletal_t *drawSurf );
+void R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, drawSurfaceSkeletal_t *drawSurf );
 void R_SkeletalModelFrameBounds( const model_t *mod, int frame, vec3_t mins, vec3_t maxs );
 int R_SkeletalGetBoneInfo( const model_t *mod, int bonenum, char *name, size_t name_size, int *flags );
 void R_SkeletalGetBonePose( const model_t *mod, int bonenum, int frame, bonepose_t *bonepose );
@@ -656,10 +643,7 @@ typedef struct mesh_vbo_s {
 	size_t sVectorsOffset;
 	size_t stOffset;
 	size_t siOffset;
-	size_t lmstOffset[( MAX_LIGHTMAPS + 1 ) / 2];
-	size_t lmstSize[( MAX_LIGHTMAPS + 1 ) / 2];
-	size_t lmlayersOffset[( MAX_LIGHTMAPS + 3 ) / 4];
-	size_t colorsOffset[MAX_LIGHTMAPS];
+	size_t colorsOffset;
 	size_t bonesIndicesOffset;
 	size_t bonesWeightsOffset;
 	size_t spritePointsOffset;              // autosprite or autosprite2 centre + radius
@@ -701,7 +685,7 @@ enum {
 
 struct skydome_s *R_CreateSkydome( model_t *model );
 void R_TouchSkydome( struct skydome_s *skydome );
-void R_DrawSkySurf( const entity_t *e, const shader_t *shader, int lightStyleNum, drawSurfaceSky_t *drawSurf );
+void R_DrawSkySurf( const entity_t *e, const shader_t *shader, drawSurfaceSky_t *drawSurf );
 void R_ClearSky( drawSurfaceSky_t *drawSurf );
 void R_DrawDepthSkySurf( void );
 
@@ -720,14 +704,6 @@ typedef struct {
 	float ambient[3];
 	byte_vec4_t outlineColor;
 	byte_vec4_t environmentColor;
-	float averageLightingIntensity;
-
-	bool lightmapArrays;                    // true if using array textures for lightmaps
-	int maxLightmapSize;                    // biggest dimension of the largest lightmap
-	bool deluxeMaps;                        // true if there are valid deluxemaps in the .bsp
-	bool deluxeMappingEnabled;              // true if deluxeMaps is true and r_lighting_deluxemaps->integer != 0
-
-	bool forceWorldOutlines;
 } mapconfig_t;
 
 extern mapconfig_t mapConfig;

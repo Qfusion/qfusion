@@ -30,19 +30,10 @@ char ( &ArrayCountObj( const T ( & )[ N ] ) )[ N ];
 
 #define STATIC_ASSERT( p ) static_assert( p, #p )
 
-#if !defined ( ENDIAN_LITTLE ) && !defined ( ENDIAN_BIG )
-#if defined ( __i386__ ) || defined ( __ia64__ ) || defined ( WIN32 ) || ( defined ( __alpha__ ) || defined ( __alpha ) ) || defined ( __arm__ ) || ( defined ( __mips__ ) && defined ( __MIPSEL__ ) ) || defined ( __LITTLE_ENDIAN__ ) || defined ( __x86_64__ )
-#define ENDIAN_LITTLE
-#else
-#define ENDIAN_BIG
-#endif
-#endif
-
 short ShortSwap( short l );
 int LongSwap( int l );
 float FloatSwap( float f );
 
-#ifdef ENDIAN_LITTLE
 // little endian
 #define BigShort( l ) ShortSwap( l )
 #define LittleShort( l ) ( l )
@@ -50,23 +41,6 @@ float FloatSwap( float f );
 #define LittleLong( l ) ( l )
 #define BigFloat( l ) FloatSwap( l )
 #define LittleFloat( l ) ( l )
-#elif defined ( ENDIAN_BIG )
-// big endian
-#define BigShort( l ) ( l )
-#define LittleShort( l ) ShortSwap( l )
-#define BigLong( l ) ( l )
-#define LittleLong( l ) LongSwap( l )
-#define BigFloat( l ) ( l )
-#define LittleFloat( l ) FloatSwap( l )
-#else
-// figure it out at runtime
-extern short ( *BigShort )( short l );
-extern short ( *LittleShort )( short l );
-extern int ( *BigLong )( int l );
-extern int ( *LittleLong )( int l );
-extern float ( *BigFloat )( float l );
-extern float ( *LittleFloat )( float l );
-#endif
 
 //==============================================
 
@@ -287,7 +261,6 @@ bool Info_Validate( const char *s );
 //
 #define MAX_CLIENTS                 256         // absolute limit
 #define MAX_EDICTS                  1024        // must change protocol to increase more
-#define MAX_LIGHTSTYLES             256
 #define MAX_MODELS                  1024        // these are sent over the net as shorts
 #define MAX_SOUNDS                  1024        // so they cannot be blindly increased
 #define MAX_IMAGES                  256

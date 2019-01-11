@@ -18,8 +18,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#include "../gameshared/q_shared.h"
-#include "../qcommon/qfiles.h"
+#include "gameshared/q_shared.h"
+#include "qcommon/qfiles.h"
 #include "bsp.h"
 
 /*
@@ -34,14 +34,11 @@ static const int mod_IBSPQ3Versions[] = { Q3BSPVERSION, RTCWBSPVERSION, 0 };
 static const int mod_RBSPQ3Versions[] = { RBSPVERSION, 0 };
 static const int mod_FBSPQ3Versions[] = { QFBSPVERSION, 0 };
 
-const bspFormatDesc_t q3BSPFormats[] =
-{
-	{ QFBSPHEADER, mod_FBSPQ3Versions, QF_LIGHTMAP_WIDTH, QF_LIGHTMAP_HEIGHT, BSP_RAVEN, LUMP_ENTITIES },
-	{ IDBSPHEADER, mod_IBSPQ3Versions, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, BSP_NONE, LUMP_ENTITIES },
-	{ RBSPHEADER, mod_RBSPQ3Versions, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, BSP_RAVEN, LUMP_ENTITIES },
-
-	// trailing NULL
-	{ NULL, NULL, 0, 0, 0, 0 }
+const bspFormatDesc_t q3BSPFormats[] = {
+	{ QFBSPHEADER, mod_FBSPQ3Versions, BSP_RAVEN, LUMP_ENTITIES },
+	{ IDBSPHEADER, mod_IBSPQ3Versions, BSP_NONE, LUMP_ENTITIES },
+	{ RBSPHEADER, mod_RBSPQ3Versions, BSP_RAVEN, LUMP_ENTITIES },
+	{ },
 };
 
 /*

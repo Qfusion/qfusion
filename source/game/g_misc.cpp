@@ -251,55 +251,7 @@ void SP_info_notnull( edict_t *self ) {
 	VectorCopy( self->s.origin, self->r.absmax );
 }
 
-
-//QUAKED info_camp (0 .5 0) (-8 -8 -8) (8 8 8)
-//Don't use. Can be used as pointing origin, but there are other entities for it. removed during gameplay.
-//-------- KEYS --------
-//targetname : must match the target key of entity that uses this for pointing.
-//notsingle : when set to 1, entity will not spawn in Single Player mode
-//notfree : when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.
-//notduel : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jaltodo)
-//notteam : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.
-//-------- NOTES --------
-//It was created to mark camp spots for monsters and bots, but it isn't used anymore and is only kept in for legacy purposes.
-void SP_info_camp( edict_t *self ) {
-}
-
-//QUAKED light (0 1 0) (-8 -8 -8) (8 8 8) LINEAR NOANGLE UNUSED1 UNUSED2 NOGRIDLIGHT UNUSED4 START_OFF
-//Non-displayed light.
-//Default light value is 300.
-//Default style is 0.
-//If targeted, will toggle between on and off.
-//Default _cone value is 10 (used to set size of light for spotlights)
-//
-
 #define START_OFF   64
-
-static void light_use( edict_t *self, edict_t *other, edict_t *activator ) {
-	if( self->spawnflags & START_OFF ) {
-		trap_ConfigString( CS_LIGHTS + self->style, "m" );
-		self->spawnflags &= ~START_OFF;
-	} else {
-		trap_ConfigString( CS_LIGHTS + self->style, "a" );
-		self->spawnflags |= START_OFF;
-	}
-}
-
-void SP_light( edict_t *self ) {
-	if( !self->targetname ) {
-		G_FreeEdict( self );
-		return;
-	}
-
-	if( self->style >= 32 ) {
-		self->use = light_use;
-		if( self->spawnflags & START_OFF ) {
-			trap_ConfigString( CS_LIGHTS + self->style, "a" );
-		} else {
-			trap_ConfigString( CS_LIGHTS + self->style, "m" );
-		}
-	}
-}
 
 //========================================================
 //
@@ -672,15 +624,6 @@ void SP_func_explosive( edict_t *self ) {
 //	MISC_*
 //
 //========================================================
-
-
-//QUAKED light_mine (0 1 0) (-2 -2 -12) (2 2 12)
-void SP_light_mine( edict_t *ent ) {
-	G_FreeEdict( ent );
-}
-
-
-//=====================================================
 
 //QUAKED misc_teleporter_dest (1 .5 .25) (-32 -32 -24) (32 32 -16)
 //Teleport destination location point for trigger_teleporter entities.

@@ -18,8 +18,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#ifndef __BSP_H__
-#define __BSP_H__
+#pragma once
 
 /*
 ==============================================================
@@ -38,8 +37,6 @@ typedef void ( *modelLoader_t )( void *param0, void *param1, void *param2, void 
 typedef struct {
 	const char *header;
 	const int *versions;
-	int lightmapWidth;
-	int lightmapHeight;
 	int flags;
 	int entityLumpNum;
 } bspFormatDesc_t;
@@ -56,5 +53,3 @@ extern const bspFormatDesc_t q3BSPFormats[];
 
 const bspFormatDesc_t *Q_FindBSPFormat( const bspFormatDesc_t *formats, const char *header, int version );
 const modelFormatDescr_t *Q_FindFormatDescriptor( const modelFormatDescr_t *formats, const uint8_t *buf, const bspFormatDesc_t **bspFormat );
-
-#endif // __BSP_H__

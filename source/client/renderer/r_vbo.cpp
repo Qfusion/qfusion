@@ -143,13 +143,11 @@ static void R_UnlinkVBO( mesh_vbo_t *vbo ) {
 */
 mesh_vbo_t *R_CreateMeshVBO( void *owner, int numVerts, int numElems, int numInstances,
 							 vattribmask_t vattribs, vbo_tag_t tag, vattribmask_t halfFloatVattribs ) {
-	int i;
 	size_t size;
 	GLuint vbo_id;
 	mesh_vbo_t *vbo = NULL;
 	GLenum usage = VBO_USAGE_FOR_TAG( tag );
 	size_t vertexSize;
-	int lmattrbit;
 
 	vbo = R_AllocVBO();
 	if( !vbo ) {
@@ -168,9 +166,7 @@ mesh_vbo_t *R_CreateMeshVBO( void *owner, int numVerts, int numElems, int numIns
 	halfFloatVattribs &= ~VATTRIB_INSTANCES_BITS;
 
 	// vertex data
-	vertexSize = 0;
-
-	vertexSize += FLOAT_VATTRIB_SIZE( VATTRIB_POSITION_BIT, halfFloatVattribs ) * 4;
+	vertexSize = FLOAT_VATTRIB_SIZE( VATTRIB_POSITION_BIT, halfFloatVattribs ) * 4;
 
 	// normals data
 	if( vattribs & VATTRIB_NORMAL_BIT ) {
@@ -193,33 +189,10 @@ mesh_vbo_t *R_CreateMeshVBO( void *owner, int numVerts, int numElems, int numIns
 		vertexSize += FLOAT_VATTRIB_SIZE( VATTRIB_TEXCOORDS_BIT, halfFloatVattribs ) * 2;
 	}
 
-	// lightmap texture coordinates
-	lmattrbit = VATTRIB_LMCOORDS0_BIT;
-	for( i = 0; i < ( MAX_LIGHTMAPS + 1 ) / 2; i++ ) {
-		if( !( vattribs & lmattrbit ) ) {
-			break;
-		}
-		assert( !( vertexSize & 3 ) );
-		vbo->lmstOffset[i] = vertexSize;
-		vbo->lmstSize[i] = ( vattribs & ( lmattrbit << 1 ) ) ? 4 : 2;
-		vertexSize += FLOAT_VATTRIB_SIZE( VATTRIB_LMCOORDS0_BIT, halfFloatVattribs ) * vbo->lmstSize[i];
-		lmattrbit = lmattrbit << 2;
-	}
-
-	// lightmap array texture layers
-	for( i = 0; i < ( MAX_LIGHTMAPS + 3 ) / 4; i++ ) {
-		if( !( vattribs & ( VATTRIB_LMLAYERS0123_BIT << i ) ) ) {
-			break;
-		}
-		assert( !( vertexSize & 3 ) );
-		vbo->lmlayersOffset[i] = vertexSize;
-		vertexSize += sizeof( int );
-	}
-
 	// vertex colors
 	if( vattribs & VATTRIB_COLOR0_BIT ) {
 		assert( !( vertexSize & 3 ) );
-		vbo->colorsOffset[0] = vertexSize;
+		vbo->colorsOffset = vertexSize;
 		vertexSize += sizeof( int );
 	}
 
@@ -535,72 +508,12 @@ vattribmask_t R_FillVBOVertexDataBuffer( mesh_vbo_t *vbo, vattribmask_t vattribs
 		}
 	}
 
-	// upload lightmap texture coordinates
-	if( vbo->lmstOffset[0] && ( vattribs & VATTRIB_LMCOORDS0_BIT ) ) {
-		int lmattrbit;
-		int type = FLOAT_VATTRIB_GL_TYPE( VATTRIB_LMCOORDS0_BIT, hfa );
-		int lmstSize = ( ( type == GL_HALF_FLOAT ) ? 2 * sizeof( GLhalf ) : 2 * sizeof( float ) );
-
-		lmattrbit = VATTRIB_LMCOORDS0_BIT;
-
-		for( i = 0; i < ( MAX_LIGHTMAPS + 1 ) / 2; i++ ) {
-			if( !( vattribs & lmattrbit ) ) {
-				break;
-			}
-			if( !mesh->lmstArray[i * 2 + 0] ) {
-				errMask |= lmattrbit;
-				break;
-			}
-
-			R_FillVertexBuffer_float_or_half( type,
-											  mesh->lmstArray[i * 2 + 0][0],
-											  2, vertSize, numVerts, data + vbo->lmstOffset[i] );
-
-			if( vattribs & ( lmattrbit << 1 ) ) {
-				if( !mesh->lmstArray[i * 2 + 1] ) {
-					errMask |= lmattrbit << 1;
-					break;
-				}
-				R_FillVertexBuffer_float_or_half( type,
-												  mesh->lmstArray[i * 2 + 1][0],
-												  2, vertSize, numVerts, data + vbo->lmstOffset[i] + lmstSize );
-			}
-
-			lmattrbit <<= 2;
-		}
-	}
-
-	// upload lightmap array texture layers
-	if( vbo->lmlayersOffset[0] && ( vattribs & VATTRIB_LMLAYERS0123_BIT ) ) {
-		int lmattrbit;
-
-		lmattrbit = VATTRIB_LMLAYERS0123_BIT;
-
-		for( i = 0; i < ( MAX_LIGHTMAPS + 3 ) / 4; i++ ) {
-			if( !( vattribs & lmattrbit ) ) {
-				break;
-			}
-			if( !mesh->lmlayersArray[i] ) {
-				errMask |= lmattrbit;
-				break;
-			}
-
-			R_FillVertexBuffer( int, int,
-								( int * )&mesh->lmlayersArray[i][0],
-								1, vertSize, numVerts, data + vbo->lmlayersOffset[i] );
-
-			lmattrbit <<= 1;
-		}
-	}
-
 	// upload vertex colors (although indices > 0 are never used)
-	if( vbo->colorsOffset[0] && ( vattribs & VATTRIB_COLOR0_BIT ) ) {
+	if( vbo->colorsOffset && ( vattribs & VATTRIB_COLOR0_BIT ) ) {
 		if( !mesh->colorsArray[0] ) {
 			errMask |= VATTRIB_COLOR0_BIT;
 		} else {
-			R_FillVertexBuffer( int, int,
-								(int *)&mesh->colorsArray[0][0],
-								1, vertSize, numVerts, data + vbo->colorsOffset[0] );
+			R_FillVertexBuffer( int, int, (int *)&mesh->colorsArray[0], 1, vertSize, numVerts, data + vbo->colorsOffset );
 		}
 	}
 

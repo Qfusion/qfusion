@@ -60,12 +60,9 @@ typedef struct glsl_program_s {
 		int ViewOrigin;
 		int ViewAxis;
 
-		int Viewport;
-
 		int LightDir;
 		int LightAmbient;
 		int LightDiffuse;
-		int LightingIntensity;
 
 		int TextureMatrix;
 
@@ -86,11 +83,7 @@ typedef struct glsl_program_s {
 
 		int ShaderTime;
 
-		int ReflectionTexMatrix;
 		int VectorTexMatrix;
-
-		int DeluxemapOffset;
-		int LightstyleColor[MAX_LIGHTMAPS];
 
 		int AttrBonesIndices;
 		int AttrBonesWeights;
@@ -538,22 +531,18 @@ static const glsl_feature_t glsl_features_material[] =
 	{ GLSL_SHADER_COMMON_BONE_TRANSFORMS1, "#define QF_NUM_BONE_INFLUENCES 1\n", "_bones1" },
 
 	{ GLSL_SHADER_COMMON_RGB_DISTANCERAMP, "#define APPLY_RGB_DISTANCERAMP\n", "_rgb_dr" },
-	{ GLSL_SHADER_COMMON_RGB_GEN_ONE_MINUS_VERTEX, "#define APPLY_RGB_ONE_MINUS_VERTEX\n", "_c1-v" },
 	{ GLSL_SHADER_COMMON_RGB_GEN_VERTEX, "#define APPLY_RGB_VERTEX\n", "_cv" },
 
 	{ GLSL_SHADER_COMMON_SRGB2LINEAR, "#define APPLY_SRGB2LINEAR\n", "_srgb" },
 	{ GLSL_SHADER_COMMON_LINEAR2SRB, "#define APPLY_LINEAR2SRGB\n", "_linear" },
 
 	{ GLSL_SHADER_COMMON_ALPHA_DISTANCERAMP, "#define APPLY_ALPHA_DISTANCERAMP\n", "_alpha_dr" },
-	{ GLSL_SHADER_COMMON_ALPHA_GEN_ONE_MINUS_VERTEX, "#define APPLY_ALPHA_ONE_MINUS_VERTEX\n", "_a1-v" },
 	{ GLSL_SHADER_COMMON_ALPHA_GEN_VERTEX, "#define APPLY_ALPHA_VERTEX\n", "_av" },
 
 	{ GLSL_SHADER_COMMON_DRAWFLAT, "#define APPLY_DRAWFLAT\n", "_flat" },
 
 	{ GLSL_SHADER_COMMON_AUTOSPRITE, "#define APPLY_AUTOSPRITE\n", "" },
 	{ GLSL_SHADER_COMMON_AUTOSPRITE2, "#define APPLY_AUTOSPRITE2\n", "" },
-
-	{ GLSL_SHADER_COMMON_LIGHTING, "#define APPLY_LIGHTING\n", "" },
 
 	{ GLSL_SHADER_COMMON_INSTANCED_TRANSFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n", "_instanced" },
 	{ GLSL_SHADER_COMMON_INSTANCED_ATTRIB_TRANSFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n"
@@ -563,15 +552,6 @@ static const glsl_feature_t glsl_features_material[] =
 	{ GLSL_SHADER_COMMON_AFUNC_LT128, "#define QF_ALPHATEST(a) { if ((a) >= 0.5) discard; }\n", "_afunc_lt128" },
 	{ GLSL_SHADER_COMMON_AFUNC_GT0, "#define QF_ALPHATEST(a) { if ((a) <= 0.0) discard; }\n", "_afunc_gt0" },
 
-	{ GLSL_SHADER_COMMON_VERTEX_LIGHTING, "#define APPLY_VERTEX_LIGHTING\n", "_bvc" },
-
-	{ GLSL_SHADER_MATERIAL_LIGHTSTYLE3, "#define NUM_LIGHTMAPS 4\n#define qf_lmvec01 vec4\n#define qf_lmvec23 vec4\n", "_ls3" },
-	{ GLSL_SHADER_MATERIAL_LIGHTSTYLE2, "#define NUM_LIGHTMAPS 3\n#define qf_lmvec01 vec4\n#define qf_lmvec23 vec2\n", "_ls2" },
-	{ GLSL_SHADER_MATERIAL_LIGHTSTYLE1, "#define NUM_LIGHTMAPS 2\n#define qf_lmvec01 vec4\n", "_ls1" },
-	{ GLSL_SHADER_MATERIAL_LIGHTSTYLE0, "#define NUM_LIGHTMAPS 1\n#define qf_lmvec01 vec2\n", "_ls0" },
-	{ GLSL_SHADER_MATERIAL_LIGHTMAP_ARRAYS, "#define LIGHTMAP_ARRAYS\n", "_lmarray" },
-	{ GLSL_SHADER_MATERIAL_LIGHTMAP_BICUBIC, "#define LIGHTMAP_BICUBIC\n", "_bicubic" },
-	{ GLSL_SHADER_MATERIAL_FB_LIGHTMAP, "#define APPLY_FBLIGHTMAP\n", "_fb" },
 	{ GLSL_SHADER_MATERIAL_DIRECTIONAL_LIGHT, "#define APPLY_DIRECTIONAL_LIGHT\n", "_dirlight" },
 
 	{ GLSL_SHADER_MATERIAL_SPECULAR, "#define APPLY_SPECULAR\n", "_gloss" },
@@ -612,19 +592,15 @@ static const glsl_feature_t glsl_features_q3a[] =
 	{ GLSL_SHADER_COMMON_BONE_TRANSFORMS1, "#define QF_NUM_BONE_INFLUENCES 1\n", "_bones1" },
 
 	{ GLSL_SHADER_COMMON_RGB_DISTANCERAMP, "#define APPLY_RGB_DISTANCERAMP\n", "_rgb_dr" },
-	{ GLSL_SHADER_COMMON_RGB_GEN_ONE_MINUS_VERTEX, "#define APPLY_RGB_ONE_MINUS_VERTEX\n", "_c1-v" },
 	{ GLSL_SHADER_COMMON_RGB_GEN_VERTEX, "#define APPLY_RGB_VERTEX\n", "_cv" },
 
 	{ GLSL_SHADER_COMMON_ALPHA_DISTANCERAMP, "#define APPLY_ALPHA_DISTANCERAMP\n", "_alpha_dr" },
-	{ GLSL_SHADER_COMMON_ALPHA_GEN_ONE_MINUS_VERTEX, "#define APPLY_ALPHA_ONE_MINUS_VERTEX\n", "_a1-v" },
 	{ GLSL_SHADER_COMMON_ALPHA_GEN_VERTEX, "#define APPLY_ALPHA_VERTEX\n", "_av" },
 
 	{ GLSL_SHADER_COMMON_DRAWFLAT, "#define APPLY_DRAWFLAT\n", "_flat" },
 
 	{ GLSL_SHADER_COMMON_AUTOSPRITE, "#define APPLY_AUTOSPRITE\n", "" },
 	{ GLSL_SHADER_COMMON_AUTOSPRITE2, "#define APPLY_AUTOSPRITE2\n", "" },
-
-	{ GLSL_SHADER_COMMON_LIGHTING, "#define APPLY_LIGHTING\n", "" },
 
 	{ GLSL_SHADER_COMMON_INSTANCED_TRANSFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n", "_instanced" },
 	{ GLSL_SHADER_COMMON_INSTANCED_ATTRIB_TRANSFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n#define APPLY_INSTANCED_ATTRIB_TRANSFORMS\n", "_instanced_va" },
@@ -638,21 +614,11 @@ static const glsl_feature_t glsl_features_q3a[] =
 	{ GLSL_SHADER_COMMON_SRGB2LINEAR, "#define APPLY_SRGB2LINEAR\n", "_srgb" },
 	{ GLSL_SHADER_COMMON_LINEAR2SRB, "#define APPLY_LINEAR2SRGB\n", "_linear" },
 
-	{ GLSL_SHADER_COMMON_VERTEX_LIGHTING, "#define APPLY_VERTEX_LIGHTING\n", "_bvc" },
-
 	{ GLSL_SHADER_Q3_TC_GEN_PROJECTION, "#define APPLY_TC_GEN_PROJECTION\n", "_tc_proj" },
 	{ GLSL_SHADER_Q3_TC_GEN_REFLECTION, "#define APPLY_TC_GEN_REFLECTION\n", "_tc_refl" },
 	{ GLSL_SHADER_Q3_TC_GEN_ENV, "#define APPLY_TC_GEN_ENV\n", "_tc_env" },
 	{ GLSL_SHADER_Q3_TC_GEN_VECTOR, "#define APPLY_TC_GEN_VECTOR\n", "_tc_vec" },
 	{ GLSL_SHADER_Q3_TC_GEN_SURROUND, "#define APPLY_TC_GEN_SURROUND\n", "_tc_surr" },
-
-	{ GLSL_SHADER_Q3_LIGHTSTYLE3, "#define NUM_LIGHTMAPS 4\n#define qf_lmvec01 vec4\n#define qf_lmvec23 vec4\n", "_ls3" },
-	{ GLSL_SHADER_Q3_LIGHTSTYLE2, "#define NUM_LIGHTMAPS 3\n#define qf_lmvec01 vec4\n#define qf_lmvec23 vec2\n", "_ls2" },
-	{ GLSL_SHADER_Q3_LIGHTSTYLE1, "#define NUM_LIGHTMAPS 2\n#define qf_lmvec01 vec4\n", "_ls1" },
-	{ GLSL_SHADER_Q3_LIGHTSTYLE0, "#define NUM_LIGHTMAPS 1\n#define qf_lmvec01 vec2\n", "_ls0" },
-	{ GLSL_SHADER_Q3_LIGHTMAP_BICUBIC, "#define LIGHTMAP_BICUBIC\n", "_bicubic" },
-
-	{ GLSL_SHADER_Q3_LIGHTMAP_ARRAYS, "#define LIGHTMAP_ARRAYS\n", "_lmarray" },
 
 	{ GLSL_SHADER_Q3_ALPHA_MASK, "#define APPLY_ALPHA_MASK\n", "_alpha_mask" },
 
@@ -866,9 +832,6 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 	"\n"
 
 #define QF_GLSL_WAVEFUNCS \
-	"\n" \
-	QF_GLSL_PI \
-	"\n" \
 	"#ifndef WAVE_SIN\n" \
 	"float QF_WaveFunc_Sin(float x)\n" \
 	"{\n" \
@@ -1121,12 +1084,6 @@ static bool RF_LoadShaderFromFile_r( glslParser_t *parser, const char *fileName,
 
 			if(
 				( !Q_stricmp( token, "APPLY_GREYSCALE)" ) && ( features & GLSL_SHADER_COMMON_GREYSCALE ) ) ||
-
-				( ( programType == GLSL_PROGRAM_TYPE_Q3A_SHADER ) && !Q_stricmp( token, "NUM_LIGHTMAPS)" )
-				  && ( features & GLSL_SHADER_Q3_LIGHTSTYLE ) ) ||
-
-				( ( programType == GLSL_PROGRAM_TYPE_MATERIAL ) && !Q_stricmp( token, "NUM_LIGHTMAPS)" )
-				  && ( features & GLSL_SHADER_MATERIAL_LIGHTSTYLE ) ) ||
 
 				( ( programType == GLSL_PROGRAM_TYPE_MATERIAL ) && !Q_stricmp( token, "APPLY_DIRECTIONAL_LIGHT)" )
 				  && ( features & GLSL_SHADER_MATERIAL_DIRECTIONAL_LIGHT ) )
@@ -1652,9 +1609,6 @@ void RP_UpdateShaderUniforms( int elem,
 		glUniform4fv( program->loc.TextureMatrix, 2, m );
 	}
 
-	if( program->loc.LightingIntensity >= 0 ) {
-		glUniform1f( program->loc.LightingIntensity, 1.0 );
-	}
 	if( program->loc.ColorMod >= 0 ) {
 		glUniform1f( program->loc.ColorMod, colorMod );
 	}
@@ -1697,10 +1651,6 @@ void RP_UpdateViewUniforms( int elem,
 		if( program->loc.builtin.ViewAxis >= 0 ) {
 			glUniformMatrix3fv( program->loc.builtin.ViewAxis, 1, GL_FALSE, viewAxis );
 		}
-	}
-
-	if( program->loc.Viewport >= 0 ) {
-		glUniform4iv( program->loc.Viewport, 1, viewport );
 	}
 }
 
@@ -1747,9 +1697,6 @@ void RP_UpdateDiffuseLightUniforms( int elem,
 	if( program->loc.LightDiffuse >= 0 && lightDiffuse ) {
 		glUniform3f( program->loc.LightDiffuse, lightDiffuse[0], lightDiffuse[1], lightDiffuse[2] );
 	}
-	if( program->loc.LightingIntensity >= 0 ) {
-		glUniform1f( program->loc.LightingIntensity, r_lighting_intensity->value );
-	}
 }
 
 /*
@@ -1790,53 +1737,11 @@ void RP_UpdateOutlineUniforms( int elem, float projDistance ) {
 }
 
 /*
-* RP_UpdateLightstyleUniforms
-*/
-void RP_UpdateLightstyleUniforms( int elem, const superLightStyle_t *superLightStyle ) {
-	unsigned i;
-	GLfloat rgb[3];
-	float deluxemapOffset[( MAX_LIGHTMAPS + 3 ) & ( ~3 )] = { 0 };
-	glsl_program_t *program = r_glslprograms + elem - 1;
-
-	for( i = 0; i < MAX_LIGHTMAPS; i++ ) {
-		VectorClear( rgb );
-
-		if( superLightStyle ) {
-			if( superLightStyle->lightmapStyles[i] != 255 ) {
-				VectorCopy( rsc.lightStyles[superLightStyle->lightmapStyles[i]].rgb, rgb );
-			} else if( superLightStyle->vertexStyles[i] != 255 ) {
-				VectorCopy( rsc.lightStyles[superLightStyle->vertexStyles[i]].rgb, rgb );
-			}
-			if( program->loc.DeluxemapOffset >= 0 ) {
-				deluxemapOffset[i] = superLightStyle->stOffset[i][0];
-			}
-		}
-
-		if( program->loc.LightstyleColor[i] >= 0 ) {
-			glUniform3fv( program->loc.LightstyleColor[i], 1, rgb );
-		} else if( program->loc.DeluxemapOffset < 0 ) {
-			break;
-		}
-	}
-	
-	if( i && ( program->loc.DeluxemapOffset >= 0 ) ) {
-		glUniform4fv( program->loc.DeluxemapOffset, ( i + 3 ) / 4, deluxemapOffset );
-	}
-}
-
-/*
 * RP_UpdateTexGenUniforms
 */
-void RP_UpdateTexGenUniforms( int elem, const mat4_t reflectionMatrix, const mat4_t vectorMatrix ) {
+void RP_UpdateTexGenUniforms( int elem, const mat4_t vectorMatrix ) {
 	glsl_program_t *program = r_glslprograms + elem - 1;
 
-	if( program->loc.ReflectionTexMatrix >= 0 ) {
-		mat3_t m;
-		memcpy( &m[0], &reflectionMatrix[0], 3 * sizeof( vec_t ) );
-		memcpy( &m[3], &reflectionMatrix[4], 3 * sizeof( vec_t ) );
-		memcpy( &m[6], &reflectionMatrix[8], 3 * sizeof( vec_t ) );
-		glUniformMatrix3fv( program->loc.ReflectionTexMatrix, 1, GL_FALSE, m );
-	}
 	if( program->loc.VectorTexMatrix >= 0 ) {
 		glUniformMatrix4fv( program->loc.VectorTexMatrix, 1, GL_FALSE, vectorMatrix );
 	}
@@ -1927,12 +1832,9 @@ static void RP_GetUniformLocations( glsl_program_t *program ) {
 	program->loc.ViewOrigin = glGetUniformLocation( program->object, "u_ViewOrigin" );
 	program->loc.ViewAxis = glGetUniformLocation( program->object, "u_ViewAxis" );
 
-	program->loc.Viewport = glGetUniformLocation( program->object, "u_Viewport" );
-
 	program->loc.LightDir = glGetUniformLocation( program->object, "u_LightDir" );
 	program->loc.LightAmbient = glGetUniformLocation( program->object, "u_LightAmbient" );
 	program->loc.LightDiffuse = glGetUniformLocation( program->object, "u_LightDiffuse" );
-	program->loc.LightingIntensity = glGetUniformLocation( program->object, "u_LightingIntensity" );
 
 	program->loc.TextureMatrix = glGetUniformLocation( program->object, "u_TextureMatrix" );
 
@@ -1942,10 +1844,6 @@ static void RP_GetUniformLocations( glsl_program_t *program ) {
 	int locDecalTexture = glGetUniformLocation( program->object, "u_DecalTexture" );
 	int locEntityDecalTexture = glGetUniformLocation( program->object, "u_EntityDecalTexture" );
 
-	int locDuDvMapTexture = glGetUniformLocation( program->object, "u_DuDvMapTexture" );
-	int locReflectionTexture = glGetUniformLocation( program->object, "u_ReflectionTexture" );
-	int locRefractionTexture = glGetUniformLocation( program->object, "u_RefractionTexture" );
-
 	int locDepthTexture = glGetUniformLocation( program->object, "u_DepthTexture" );
 
 	int locBlueNoiseTexture = glGetUniformLocation( program->object, "u_BlueNoiseTexture" );
@@ -1953,23 +1851,6 @@ static void RP_GetUniformLocations( glsl_program_t *program ) {
 
 	int locColorLUT = glGetUniformLocation( program->object, "u_ColorLUT" );
 	int locCubeFilter = glGetUniformLocation( program->object, "u_CubeFilter" );
-
-	program->loc.DeluxemapOffset = glGetUniformLocation( program->object, "u_DeluxemapOffset" );
-
-	int locLightmapTexture[MAX_LIGHTMAPS];
-	for( unsigned int i = 0; i < MAX_LIGHTMAPS; i++ ) {
-		char tmp[1024];
-		// arrays of samplers are broken on ARM Mali so get u_LightmapTexture%i instead of u_LightmapTexture[%i]
-		locLightmapTexture[i] = glGetUniformLocation( program->object,
-			va_r( tmp, sizeof( tmp ), "u_LightmapTexture%i", i ) );
-
-		program->loc.LightstyleColor[i] = glGetUniformLocation( program->object,
-			va_r( tmp, sizeof( tmp ), "u_LightstyleColor[%i]", i ) );
-
-		if( locLightmapTexture[i] < 0 && program->loc.LightstyleColor[i] < 0 ) {
-			break;
-		}
-	}
 
 	program->loc.GlossFactors = glGetUniformLocation( program->object, "u_GlossFactors" );
 
@@ -1989,7 +1870,6 @@ static void RP_GetUniformLocations( glsl_program_t *program ) {
 
 	program->loc.ShaderTime = glGetUniformLocation( program->object, "u_ShaderTime" );
 
-	program->loc.ReflectionTexMatrix = glGetUniformLocation( program->object, "u_ReflectionTexMatrix" );
 	program->loc.VectorTexMatrix = glGetUniformLocation( program->object, "u_VectorTexMatrix" );
 
 	program->loc.builtin.ViewOrigin = glGetUniformLocation( program->object, "u_QF_ViewOrigin" );
@@ -2015,9 +1895,6 @@ static void RP_GetUniformLocations( glsl_program_t *program ) {
 	if( locBaseTexture >= 0 ) {
 		glUniform1i( locBaseTexture, 0 );
 	}
-	if( locDuDvMapTexture >= 0 ) {
-		glUniform1i( locDuDvMapTexture, 0 );
-	}
 
 	if( locNormalmapTexture >= 0 ) {
 		glUniform1i( locNormalmapTexture, 1 );
@@ -2032,19 +1909,9 @@ static void RP_GetUniformLocations( glsl_program_t *program ) {
 		glUniform1i( locEntityDecalTexture, 4 );
 	}
 
-	if( locReflectionTexture >= 0 ) {
-		glUniform1i( locReflectionTexture, 2 );
-	}
-	if( locRefractionTexture >= 0 ) {
-		glUniform1i( locRefractionTexture, 3 );
-	}
-
 	if( locDepthTexture >= 0 ) {
 		glUniform1i( locDepthTexture, 3 );
 	}
-
-	for( unsigned int i = 0; i < MAX_LIGHTMAPS && locLightmapTexture[i] >= 0; i++ )
-		glUniform1i( locLightmapTexture[i], i + 4 );
 
 	if( locBlueNoiseTexture >= 0 ) {
 		assert( locBlueNoiseTextureSize >= 0 );
@@ -2077,12 +1944,7 @@ static void RP_BindAttrbibutesLocations( glsl_program_t *program ) {
 	glBindAttribLocation( program->object, VATTRIB_BONESINDICES, "a_BonesIndices" );
 	glBindAttribLocation( program->object, VATTRIB_BONESWEIGHTS, "a_BonesWeights" );
 
-	glBindAttribLocation( program->object, VATTRIB_LMCOORDS01, "a_LightmapCoord01" );
-	glBindAttribLocation( program->object, VATTRIB_LMCOORDS23, "a_LightmapCoord23" );
-
 	glBindAttribLocation( program->object, VATTRIB_SURFINDEX, "a_SurfaceIndex" );
-
-	glBindAttribLocation( program->object, VATTRIB_LMLAYERS0123, "a_LightmapLayer0123" );
 
 	glBindAttribLocation( program->object, VATTRIB_INSTANCE_QUAT, "a_InstanceQuat" );
 	glBindAttribLocation( program->object, VATTRIB_INSTANCE_XYZS, "a_InstancePosAndScale" );

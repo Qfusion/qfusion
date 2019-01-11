@@ -79,10 +79,6 @@ typedef struct poly_s {
 	int renderfx;
 } poly_t;
 
-typedef struct {
-	float rgb[3];                       // 0.0 - 2.0
-} lightstyle_t;
-
 typedef enum {
 	RT_MODEL,
 	RT_SPRITE,

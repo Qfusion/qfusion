@@ -158,7 +158,7 @@ static drawSurfaceType_t spriteDrawSurf = ST_SPRITE;
 /*
 * R_BatchSpriteSurf
 */
-void R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, int lightStyleNum, drawSurfaceType_t *drawSurf, bool mergable ) {
+void R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, drawSurfaceType_t *drawSurf, bool mergable ) {
 	int i;
 	vec3_t point;
 	vec3_t v_left, v_up;
@@ -197,11 +197,8 @@ void R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, int lightStyl
 	mesh.numVerts = 4;
 	mesh.xyzArray = xyz;
 	mesh.normalsArray = normals;
-	mesh.lmstArray[0] = NULL;
-	mesh.lmlayersArray[0] = NULL;
 	mesh.stArray = texcoords;
-	mesh.colorsArray[0] = colors;
-	mesh.colorsArray[1] = NULL;
+	mesh.colorsArray = colors;
 	mesh.sVectorsArray = NULL;
 
 	RB_AddDynamicMesh( e, shader, &mesh, GL_TRIANGLES );
@@ -241,7 +238,7 @@ static bool R_AddSpriteToDrawList( const entity_t *e ) {
 		return false; // cull it because we don't want to sort unneeded things
 	}
 
-	if( !R_AddSurfToDrawList( rn.meshlist, e, shader, -1, dist, 0, &spriteDrawSurf ) ) {
+	if( !R_AddSurfToDrawList( rn.meshlist, e, shader, dist, 0, &spriteDrawSurf ) ) {
 		return false;
 	}
 
@@ -291,7 +288,7 @@ mesh_vbo_t *R_InitNullModelVBO( void ) {
 	mesh.xyzArray = xyz;
 	mesh.normalsArray = normals;
 	mesh.stArray = texcoords;
-	mesh.colorsArray[0] = colors;
+	mesh.colorsArray = colors;
 	mesh.numElems = 6;
 	mesh.elems = elems;
 
@@ -304,7 +301,7 @@ mesh_vbo_t *R_InitNullModelVBO( void ) {
 /*
 * R_DrawNullSurf
 */
-void R_DrawNullSurf( const entity_t *e, const shader_t *shader, int lightStyleNum, drawSurfaceType_t *drawSurf ) {
+void R_DrawNullSurf( const entity_t *e, const shader_t *shader, drawSurfaceType_t *drawSurf ) {
 	assert( rsh.nullVBO != NULL );
 	if( !rsh.nullVBO ) {
 		return;
@@ -319,7 +316,7 @@ void R_DrawNullSurf( const entity_t *e, const shader_t *shader, int lightStyleNu
 * R_AddNullSurfToDrawList
 */
 static bool R_AddNullSurfToDrawList( const entity_t *e ) {
-	if( !R_AddSurfToDrawList( rn.meshlist, e, rsh.whiteShader, -1, 0, 0, &nullDrawSurf ) ) {
+	if( !R_AddSurfToDrawList( rn.meshlist, e, rsh.whiteShader, 0, 0, &nullDrawSurf ) ) {
 		return false;
 	}
 
@@ -333,7 +330,7 @@ static vec4_t pic_normals[4] = { {0,0,0,0}, {0,0,0,0}, {0,0,0,0}, {0,0,0,0} };
 static vec2_t pic_st[4];
 static byte_vec4_t pic_colors[4];
 static elem_t pic_elems[6] = { 0, 1, 2, 0, 2, 3 };
-static mesh_t pic_mesh = { 4, 6, pic_elems, pic_xyz, pic_normals, NULL, pic_st, { 0, 0, 0, 0 }, { 0 }, { pic_colors, pic_colors, pic_colors, pic_colors }, NULL, NULL };
+static mesh_t pic_mesh = { 4, 6, pic_elems, pic_xyz, pic_normals, NULL, pic_st, pic_colors, NULL, NULL };
 
 /*
 * R_Begin2D
@@ -930,10 +927,6 @@ void R_RenderView( const refdef_t *fd ) {
 
 	R_ClearSky( &rn.skyDrawSurface );
 
-	if( r_lightmap->integer ) {
-		rn.renderFlags |= RF_LIGHTMAP;
-	}
-
 	if( r_drawflat->integer ) {
 		rn.renderFlags |= RF_DRAWFLAT;
 	}
@@ -1391,7 +1384,7 @@ void R_RenderDebugSurface( const refdef_t *fd ) {
 
 			R_ClearDrawList( rn.meshlist );
 
-			if( R_AddSurfToDrawList( rn.meshlist, R_NUM2ENT( tr.ent ), surf->shader, -1, 0, 0, drawSurf ) ) {
+			if( R_AddSurfToDrawList( rn.meshlist, R_NUM2ENT( tr.ent ), surf->shader, 0, 0, drawSurf ) ) {
 				if( r_speeds->integer == 5 ) {
 					unsigned i;
 

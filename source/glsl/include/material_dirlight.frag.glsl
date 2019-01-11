@@ -22,7 +22,6 @@ myhalf3 DirectionalLightColor(in myhalf3 surfaceNormalModelspace, out myhalf3 we
 #endif // APPLY_HALFLAMBERT
 
 	myhalf3 diffuse = LinearColor(u_LightDiffuse.rgb) * myhalf(max (diffuseProduct, 0.0)) + LinearColor(u_LightAmbient.rgb);
-	diffuse *= u_LightingIntensity;
 	color.rgb += diffuse;
 
 #endif // APPLY_DIRECTIONAL_LIGHT_MIX

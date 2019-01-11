@@ -121,13 +121,6 @@ typedef struct mleaf_s {
 	unsigned *fragmentSurfaces;
 } mleaf_t;
 
-typedef struct {
-	uint8_t ambient[MAX_LIGHTMAPS][3];
-	uint8_t diffuse[MAX_LIGHTMAPS][3];
-	uint8_t styles[MAX_LIGHTMAPS];
-	uint8_t direction[2];
-} mgridlight_t;
-
 typedef struct mbrushmodel_s {
 	const bspFormatDesc_t *format;
 
@@ -157,12 +150,6 @@ typedef struct mbrushmodel_s {
 	unsigned int numsurfaces;
 	msurface_t      *surfaces;
 
-	unsigned int numlightgridelems;
-	mgridlight_t    *lightgrid;
-
-	unsigned int numlightarrayelems;
-	int             *lightarray;
-
 	/*unsigned*/ int numareas;
 
 	vec3_t gridSize;
@@ -173,15 +160,6 @@ typedef struct mbrushmodel_s {
 
 	unsigned int numDrawSurfaces;
 	drawSurfaceBSP_t *drawSurfaces;
-
-	unsigned int numLightmapImages;
-	struct image_s  **lightmapImages;
-
-	unsigned int numSuperLightStyles;
-	struct superLightStyle_s *superLightStyles;
-
-	unsigned numMiptex;
-	void *mipTex;
 
 	unsigned entityStringLen;
 	char *entityString;

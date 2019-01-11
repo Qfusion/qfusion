@@ -44,7 +44,6 @@ extern "C" QF_DLL_EXPORT ref_export_t *GetRefAPI( ref_import_t *import ) {
 	globals.AddEntityToScene = RF_AddEntityToScene;
 	globals.AddLightToScene = RF_AddLightToScene;
 	globals.AddPolyToScene = RF_AddPolyToScene;
-	globals.AddLightStyleToScene = RF_AddLightStyleToScene;
 	globals.RenderScene = RF_RenderScene;
 	globals.DrawStretchPic = RF_DrawStretchPic;
 	globals.DrawRotatedStretchPic = RF_DrawRotatedStretchPic;

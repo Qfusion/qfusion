@@ -509,23 +509,6 @@ static void CG_RegisterClients( void ) {
 }
 
 /*
-* CG_RegisterLightStyles
-*/
-static void CG_RegisterLightStyles( void ) {
-	int i;
-	const char *name;
-
-	for( i = 0; i < MAX_LIGHTSTYLES; i++ ) {
-		name = cgs.configStrings[CS_LIGHTS + i];
-		if( !name[0] ) {
-			continue;
-		}
-
-		CG_SetLightStyle( i );
-	}
-}
-
-/*
 * CG_RegisterVariables
 */
 static void CG_RegisterVariables( void ) {
@@ -887,8 +870,6 @@ void CG_Init( const char *serverName, unsigned int playerNum,
 
 	CG_ScreenInit();
 
-	CG_ClearLightStyles();
-
 	CG_ClearLocalEntities();
 
 	CG_InitDamageNumbers();
@@ -901,7 +882,6 @@ void CG_Init( const char *serverName, unsigned int playerNum,
 	cgs.shaderWhite = trap_R_RegisterPic( "$whiteimage" );
 
 	CG_RegisterCGameCommands();
-	CG_RegisterLightStyles();
 
 	CG_ValidateItemList();
 

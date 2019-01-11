@@ -217,10 +217,6 @@ static inline void trap_R_AddPolyToScene( const poly_t *poly ) {
 	CGAME_IMPORT.R_AddPolyToScene( poly );
 }
 
-static inline void trap_R_AddLightStyleToScene( int style, float r, float g, float b ) {
-	CGAME_IMPORT.R_AddLightStyleToScene( style, r, g, b );
-}
-
 static inline void trap_R_RenderScene( const refdef_t *fd ) {
 	CGAME_IMPORT.R_RenderScene( fd );
 }

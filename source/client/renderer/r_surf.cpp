@@ -26,8 +26,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 static vec3_t modelOrg;                         // relative to view point
 
-#define R_DrawSurfLightsKey(ds) ((ds)->numLightmaps)
-
 //==================================================================================
 
 /*
@@ -63,10 +61,8 @@ bool R_SurfNoDlight( const msurface_t *surf ) {
 void R_FlushBSPSurfBatch( void ) {
 	drawListBatch_t *batch = &rn.meshlist->bspBatch;
 	drawSurfaceBSP_t *drawSurf = batch->lastDrawSurf;
-	int lightStyleNum = batch->lightStyleNum;
 	const entity_t *e = batch->entity;
 	const shader_t *shader = batch->shader;
-	superLightStyle_t *ls = NULL, *rls = NULL;
 
 	if( batch->count == 0 ) {
 		return;
@@ -78,13 +74,7 @@ void R_FlushBSPSurfBatch( void ) {
 		return;
 	}
 
-	if( lightStyleNum >= 0 ) {
-		ls = rls = rsh.worldBrushModel->superLightStyles + lightStyleNum;
-	}
-
 	RB_BindShader( e, shader );
-
-	RB_SetLightstyle( ls, rls );
 
 	RB_BindVBO( batch->vbo, GL_TRIANGLES );
 
@@ -96,7 +86,7 @@ void R_FlushBSPSurfBatch( void ) {
 /*
 * R_BatchBSPSurf
 */
-void R_BatchBSPSurf( const entity_t *e, const shader_t *shader, int lightStyleNum, drawSurfaceBSP_t *drawSurf, bool mergable ) {
+void R_BatchBSPSurf( const entity_t *e, const shader_t *shader, drawSurfaceBSP_t *drawSurf, bool mergable ) {
 	unsigned i;
 	drawListBatch_t *batch = &rn.meshlist->bspBatch;
 
@@ -128,7 +118,6 @@ void R_BatchBSPSurf( const entity_t *e, const shader_t *shader, int lightStyleNu
 					batch->vbo = drawSurf->vbo;
 					batch->shader = ( shader_t * )shader;
 					batch->entity = ( entity_t * )e;
-					batch->lightStyleNum = lightStyleNum;
 					batch->lastDrawSurf = drawSurf;
 					batch->firstVert = surfFirstVert;
 					batch->firstElem = surfFirstElem;
@@ -147,18 +136,15 @@ void R_BatchBSPSurf( const entity_t *e, const shader_t *shader, int lightStyleNu
 /*
 * R_WalkBSPSurf
 */
-void R_WalkBSPSurf( const entity_t *e, const shader_t *shader, int lightStyleNum,
-	drawSurfaceBSP_t *drawSurf, walkDrawSurf_cb_cb cb, void *ptr ) {
-	unsigned i;
-
-	for( i = 0; i < drawSurf->numWorldSurfaces; i++ ) {
+void R_WalkBSPSurf( const entity_t *e, const shader_t *shader, drawSurfaceBSP_t *drawSurf, walkDrawSurf_cb_cb cb, void *ptr ) {
+	for( unsigned i = 0; i < drawSurf->numWorldSurfaces; i++ ) {
 		int s = drawSurf->worldSurfaces[i];
 		msurface_t *surf = rsh.worldBrushModel->surfaces + s;
 
 		assert( rn.meshlist->worldDrawSurfVis[surf->drawSurf - 1] );
 
 		if( rn.meshlist->worldSurfVis[s] ) {
-			cb( ptr, e, shader, lightStyleNum, drawSurf, surf );
+			cb( ptr, e, shader, drawSurf, surf );
 		}
 	}
 }
@@ -169,7 +155,6 @@ void R_WalkBSPSurf( const entity_t *e, const shader_t *shader, int lightStyleNum
 static bool R_AddWorldDrawSurfaceToDrawList( const entity_t *e, unsigned ds ) {
 	drawSurfaceBSP_t *drawSurf = rsh.worldBrushModel->drawSurfaces + ds;
 	const shader_t *shader = drawSurf->shader;
-	int lightStyleNum = drawSurf->superLightStyle;
 	bool sky;
 	unsigned drawOrder = 0;
 
@@ -192,10 +177,10 @@ static bool R_AddWorldDrawSurfaceToDrawList( const entity_t *e, unsigned ds ) {
 		return true;
 	}
 
-	drawOrder = R_PackOpaqueOrder( shader, R_DrawSurfLightsKey( drawSurf ), false );
+	drawOrder = R_PackShaderOrder( shader );
 
 	drawSurf->visFrame = rf.frameCount;
-	drawSurf->listSurf = R_AddSurfToDrawList( rn.meshlist, e, shader, lightStyleNum, WORLDSURF_DIST, drawOrder, drawSurf );
+	drawSurf->listSurf = R_AddSurfToDrawList( rn.meshlist, e, shader, WORLDSURF_DIST, drawOrder, drawSurf );
 
 	if( !drawSurf->listSurf ) {
 		return false;
@@ -296,12 +281,6 @@ bool R_AddBrushModelToDrawList( const entity_t *e ) {
 
 		if( !surf->drawSurf ) {
 			continue;
-		}
-
-		if( rn.renderFlags & RF_LIGHTMAP ) {
-			if( R_SurfNoDlight( surf ) ) {
-				continue;
-			}
 		}
 
 		rn.meshlist->worldSurfVis[s] = 1;
@@ -533,7 +512,6 @@ static void R_PostCullVisLeaves( void ) {
 */
 void R_DrawWorldNode( void ) {
 	int64_t msec = 0, msec2 = 0;
-	bool worldOutlines;
 	bool speeds = r_speeds->integer != 0;
 	mbrushmodel_t *bm = rsh.worldBrushModel;
 
@@ -548,7 +526,7 @@ void R_DrawWorldNode( void ) {
 
 	VectorCopy( rn.refdef.vieworg, modelOrg );
 
-	worldOutlines = mapConfig.forceWorldOutlines || ( rn.refdef.rdflags & RDF_WORLDOUTLINES );
+	bool worldOutlines = rn.refdef.rdflags & RDF_WORLDOUTLINES;
 
 	if( worldOutlines && ( rn.viewcluster != -1 ) && r_outlines_scale->value > 0 ) {
 		rsc.worldent->outlineHeight = max( 0.0f, r_outlines_world->value );

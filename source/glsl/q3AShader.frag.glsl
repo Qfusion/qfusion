@@ -1,7 +1,6 @@
 #include "include/common.glsl"
 #include "include/dither.glsl"
 #include "include/fog.glsl"
-#include "include/lightmap.glsl"
 #include "include/uniforms.glsl"
 #include_if(APPLY_GREYSCALE) "include/greyscale.glsl"
 
@@ -18,19 +17,6 @@ uniform myhalf3 u_WallColor;
 uniform myhalf3 u_FloorColor;
 #endif
 
-#ifdef NUM_LIGHTMAPS
-uniform LightmapSampler u_LightmapTexture0;
-#if NUM_LIGHTMAPS >= 2
-uniform LightmapSampler u_LightmapTexture1;
-#if NUM_LIGHTMAPS >= 3
-uniform LightmapSampler u_LightmapTexture2;
-#if NUM_LIGHTMAPS >= 4
-uniform LightmapSampler u_LightmapTexture3;
-#endif // NUM_LIGHTMAPS >= 4
-#endif // NUM_LIGHTMAPS >= 3
-#endif // NUM_LIGHTMAPS >= 2
-#endif // NUM_LIGHTMAPS
-
 #if defined(APPLY_SOFT_PARTICLE)
 #include "include/softparticle.glsl"
 uniform sampler2D u_DepthTexture;
@@ -38,25 +24,7 @@ uniform sampler2D u_DepthTexture;
 
 void main(void)
 {
-	myhalf4 color;
-
-#ifdef NUM_LIGHTMAPS420
-	color = myhalf4(0.0, 0.0, 0.0, qf_FrontColor.a);
-	color.rgb += myhalf3(Lightmap(u_LightmapTexture0, v_LightmapTexCoord01.st, v_LightmapLayer0123.x)) * LinearColor(u_LightstyleColor[0]);
-#if NUM_LIGHTMAPS >= 2
-	color.rgb += myhalf3(Lightmap(u_LightmapTexture1, v_LightmapTexCoord01.pq, v_LightmapLayer0123.y)) * LinearColor(u_LightstyleColor[1]);
-#if NUM_LIGHTMAPS >= 3
-	color.rgb += myhalf3(Lightmap(u_LightmapTexture2, v_LightmapTexCoord23.st, v_LightmapLayer0123.z)) * LinearColor(u_LightstyleColor[2]);
-#if NUM_LIGHTMAPS >= 4
-	color.rgb += myhalf3(Lightmap(u_LightmapTexture3, v_LightmapTexCoord23.pq, v_LightmapLayer0123.w)) * LinearColor(u_LightstyleColor[3]);
-#endif // NUM_LIGHTMAPS >= 4
-#endif // NUM_LIGHTMAPS >= 3
-#endif // NUM_LIGHTMAPS >= 2
-	color.rgb *= u_LightingIntensity;
-#else
-	color = myhalf4(qf_FrontColor);
-#endif // NUM_LIGHTMAPS
-
+	myhalf4 color = myhalf4(qf_FrontColor);
 	myhalf4 diffuse;
 
 #if defined(APPLY_CUBEMAP)
@@ -78,11 +46,6 @@ void main(void)
 	color.a *= diffuse.a;
 #else
 	color *= diffuse;
-#endif
-
-#ifdef NUM_LIGHTMAPS420
-	// so that team-colored shaders work
-	color *= myhalf4(qf_FrontColor);
 #endif
 
 #ifdef APPLY_GREYSCALE

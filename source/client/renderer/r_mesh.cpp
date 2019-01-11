@@ -160,43 +160,16 @@ static int R_PackDistKey( int renderFx, const shader_t *shader, float dist, unsi
 /*
 * R_PackSortKey
 */
-static uint64_t R_PackSortKey( unsigned int shaderNum, int superLightStyleNum, unsigned int entNum ) {
-	return 
-		( (uint64_t)shaderNum & 0xFFF ) << 36 |
-		( ( (unsigned int)( superLightStyleNum + 1 ) & 0xFF ) << 20 ) |
-		( entNum & 0xFFF ) << 8;
+static uint64_t R_PackSortKey( unsigned int shaderNum, unsigned int entNum ) {
+	return ( (uint64_t)shaderNum & 0xFFF ) << 36 | ( entNum & 0xFFF ) << 8;
 }
 
 /*
 * R_UnpackSortKey
 */
-static void R_UnpackSortKey( uint64_t sortKey, unsigned int *shaderNum,
-	int *superLightStyleNum, unsigned int *entNum ) {
+static void R_UnpackSortKey( uint64_t sortKey, unsigned int *shaderNum, unsigned int *entNum ) {
 	*shaderNum = ( sortKey >> 36 ) & 0xFFF;
-	*superLightStyleNum = (signed int)( ( sortKey >> 20 ) & 0xFF ) - 1;
 	*entNum = ( sortKey >> 8 ) & 0xFFF;
-}
-
-/*
-* R_PackOpaqueOrder
-*
-* Returns sort order for opaque objects.
-*/
-unsigned R_PackOpaqueOrder( const shader_t *shader, int numLightmaps, bool dlight ) {
-	int order = 0;
-
-	// shader order
-	if( shader != NULL ) {
-		order = R_PackShaderOrder( shader );
-	}
-	// group by dlight
-	if( dlight ) {
-		order |= 0x40;
-	}
-	// group by lightmaps
-	order |= ( (MAX_LIGHTMAPS - numLightmaps) << 10 );
-
-	return order;
 }
 
 /*
@@ -205,7 +178,7 @@ unsigned R_PackOpaqueOrder( const shader_t *shader, int numLightmaps, bool dligh
 * Calculate sortkey and store info used for batching and sorting.
 * All 3D-geometry passes this function.
 */
-void *R_AddSurfToDrawList( drawList_t *list, const entity_t *e, const shader_t *shader, int superLightStyle, float dist, unsigned int order, void *drawSurf ) {
+void *R_AddSurfToDrawList( drawList_t *list, const entity_t *e, const shader_t *shader, float dist, unsigned int order, void *drawSurf ) {
 	int distKey;
 	sortedDrawSurf_t *sds;
 
@@ -229,7 +202,7 @@ void *R_AddSurfToDrawList( drawList_t *list, const entity_t *e, const shader_t *
 
 	sds = &list->drawSurfs[list->numDrawSurfs++];
 	sds->drawSurf = ( drawSurfaceType_t * )drawSurf;
-	sds->sortKey = R_PackSortKey( shader->id, superLightStyle, R_ENT2NUM( e ) );
+	sds->sortKey = R_PackSortKey( shader->id, R_ENT2NUM( e ) );
 	sds->distKey = distKey;
 
 	return sds;
@@ -366,7 +339,6 @@ static void _R_DrawSurfaces( drawList_t *list, bool *depthCopied, int mode, int 
 	uint64_t sortKey;
 	unsigned int shaderNum = 0, prevShaderNum = MAX_SHADERS;
 	unsigned int entNum = 0, prevEntNum = MAX_REF_ENTITIES;
-	int lightStyle = -1, prevLightStyle = -100500;
 	sortedDrawSurf_t *sds;
 	int drawSurfType;
 	bool batchDrawSurf = false, prevBatchDrawSurf = false;
@@ -418,7 +390,7 @@ static void _R_DrawSurfaces( drawList_t *list, bool *depthCopied, int mode, int 
 		}
 
 		// decode draw surface properties
-		R_UnpackSortKey( sortKey, &shaderNum, &lightStyle, &entNum );
+		R_UnpackSortKey( sortKey, &shaderNum, &entNum );
 
 		entity = R_NUM2ENT( entNum );
 		entityFX = entity->renderfx;
@@ -434,7 +406,6 @@ static void _R_DrawSurfaces( drawList_t *list, bool *depthCopied, int mode, int 
 
 		// see if we need to reset mesh properties in the backend
 		if( !prevBatchDrawSurf || !batchDrawSurf || shaderNum != prevShaderNum ||
-			lightStyle != prevLightStyle ||
 			( entNum != prevEntNum && !( shader->flags & SHADER_ENTITY_MERGABLE ) ) ||
 			entityFX != prevEntityFX ) {
 
@@ -533,7 +504,7 @@ static void _R_DrawSurfaces( drawList_t *list, bool *depthCopied, int mode, int 
 				RB_BindShader( entity, shader );
 
 				batchFlush = NULL;
-				r_drawSurfCb[drawSurfType]( entity, shader, lightStyle, sds->drawSurf );
+				r_drawSurfCb[drawSurfType]( entity, shader, sds->drawSurf );
 			}
 
 			prevShaderNum = shaderNum;
@@ -541,12 +512,11 @@ static void _R_DrawSurfaces( drawList_t *list, bool *depthCopied, int mode, int 
 			prevBatchDrawSurf = batchDrawSurf;
 			prevInfiniteProj = infiniteProj;
 			prevEntityFX = entityFX;
-			prevLightStyle = lightStyle;
 		}
 
 		if( batchDrawSurf ) {
 			batchFlush = r_flushBatchSurfCb[drawSurfType];
-			r_batchDrawSurfCb[drawSurfType]( entity, shader, lightStyle, sds->drawSurf, batchMergable );
+			r_batchDrawSurfCb[drawSurfType]( entity, shader, sds->drawSurf, batchMergable );
 			batchFlushed = false;
 			if( depthWrite ) {
 				batchOpaque = true;
@@ -611,7 +581,6 @@ void R_WalkDrawList( drawList_t *list, walkDrawSurf_cb_cb cb, void *ptr ) {
 	uint64_t sortKey;
 	unsigned int shaderNum;
 	unsigned int entNum;
-	int lightStyleNum;
 	walkDrawSurf_cb walkCb;
 
 	if( !cb ) {
@@ -624,11 +593,11 @@ void R_WalkDrawList( drawList_t *list, walkDrawSurf_cb_cb cb, void *ptr ) {
 		drawSurfType = *(int *)sds->drawSurf;
 
 		// decode draw surface properties
-		R_UnpackSortKey( sortKey, &shaderNum, &lightStyleNum, &entNum );
+		R_UnpackSortKey( sortKey, &shaderNum, &entNum );
 
 		walkCb = r_walkSurfCb[drawSurfType];
 		if( walkCb ) {
-			walkCb( R_NUM2ENT( entNum ), R_ShaderById( shaderNum ), lightStyleNum, sds->drawSurf, cb, ptr );
+			walkCb( R_NUM2ENT( entNum ), R_ShaderById( shaderNum ), sds->drawSurf, cb, ptr );
 		}
 	}
 }

@@ -119,7 +119,6 @@ typedef struct {
 	void ( *AddEntityToScene )( const entity_t *ent );
 	void ( *AddLightToScene )( const vec3_t org, float intensity, float r, float g, float b );
 	void ( *AddPolyToScene )( const poly_t *poly );
-	void ( *AddLightStyleToScene )( int style, float r, float g, float b );
 	void ( *RenderScene )( const refdef_t *fd );
 
 	/**

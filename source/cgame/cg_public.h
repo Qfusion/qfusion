@@ -141,7 +141,6 @@ typedef struct {
 	void ( *R_AddEntityToScene )( const struct entity_s *ent );
 	void ( *R_AddLightToScene )( const vec3_t org, float intensity, float r, float g, float b );
 	void ( *R_AddPolyToScene )( const struct poly_s *poly );
-	void ( *R_AddLightStyleToScene )( int style, float r, float g, float b );
 	void ( *R_RenderScene )( const struct refdef_s *fd );
 	const char *( *R_GetSpeedsMessage )( char *out, size_t size );
 	int ( *R_GetAverageFrametime )( void );

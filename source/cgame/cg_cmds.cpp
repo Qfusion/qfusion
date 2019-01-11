@@ -133,8 +133,6 @@ void CG_ConfigString( int i, const char *s ) {
 		}
 	} else if( i >= CS_SKINFILES && i < CS_SKINFILES + MAX_SKINFILES ) {
 		cgs.skinPrecache[i - CS_SKINFILES] = trap_R_RegisterSkinFile( cgs.configStrings[i] );
-	} else if( i >= CS_LIGHTS && i < CS_LIGHTS + MAX_LIGHTSTYLES ) {
-		CG_SetLightStyle( i - CS_LIGHTS );
 	} else if( i >= CS_ITEMS && i < CS_ITEMS + MAX_ITEMS ) {
 		CG_ValidateItemDef( i - CS_ITEMS, cgs.configStrings[i] );
 	} else if( i >= CS_PLAYERINFOS && i < CS_PLAYERINFOS + MAX_CLIENTS ) {

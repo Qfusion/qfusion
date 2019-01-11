@@ -54,7 +54,6 @@ static vec4_t r_currentTcGen[MAX_SHADER_PASSES][2];
 static bool r_shaderNoMipMaps;
 static bool r_shaderNoFiltering;
 static int r_shaderMinMipSize;
-static bool r_shaderHasLightmapPass;
 static bool r_shaderHasAutosprite;
 static char r_shaderDeformvKey[1024];
 
@@ -270,8 +269,6 @@ static bool Shader_ParseConditions( const char **ptr, shader_t *shader ) {
 				conditions[numConditions].operand = ( int )glConfig.maxTextureCubemapSize;
 			} else if( !Q_stricmp( tok, "maxTextureUnits" ) ) {
 				conditions[numConditions].operand = ( int )glConfig.maxTextureUnits;
-			} else if( !Q_stricmp( tok, "deluxeMaps" ) || !Q_stricmp( tok, "deluxe" ) ) {
-				conditions[numConditions].operand = ( int )mapConfig.deluxeMappingEnabled;
 			} else {
 //				Com_Printf( S_COLOR_YELLOW "WARNING: Unknown expression '%s' in shader %s\n", tok, shader->name );
 //				skip = true;
@@ -552,11 +549,6 @@ static image_t *Shader_FindImage( shader_t *shader, const char *name, int flags 
 	}
 	if( !Q_stricmp( name, "$particleimage" ) || !Q_stricmp( name, "*particle" ) ) {
 		return rsh.particleTexture;
-	}
-
-	if( !Q_strnicmp( name, "*lm", 3 ) ) {
-		ri.Com_DPrintf( S_COLOR_YELLOW "WARNING: shader %s has a stage with explicit lightmap image\n", shader->name );
-		return rsh.whiteTexture;
 	}
 
 	image = R_FindImage( name, NULL, flags, r_shaderMinMipSize, shader->imagetags );
@@ -944,24 +936,9 @@ static void Shaderpass_LoadMaterial( image_t **normalmap, image_t **glossmap, im
 
 static void Shaderpass_MapExt( shader_t *shader, shaderpass_t *pass, int addFlags, const char **ptr ) {
 	const char *token = Shader_ParseString( ptr );
-	if( token[0] == '$' ) {
-		token++;
-		if( !strcmp( token, "lightmap" ) ) {
-			r_shaderHasLightmapPass = true;
-
-			pass->tcgen = TC_GEN_LIGHTMAP;
-			pass->flags = pass->flags | SHADERPASS_LIGHTMAP;
-			pass->anim_fps = 0;
-			pass->images[0] = NULL;
-			return;
-		} else {
-			token--;
-		}
-	}
-
 	int flags = Shader_SetImageFlags( shader ) | addFlags | IT_SRGB;
+
 	pass->tcgen = TC_GEN_BASE;
-	pass->flags &= ~SHADERPASS_LIGHTMAP;
 	pass->anim_fps = 0;
 	pass->images[0] = Shader_FindImage( shader, token, flags );
 }
@@ -970,7 +947,6 @@ static void Shaderpass_AnimMapExt( shader_t *shader, shaderpass_t *pass, int add
 	int flags = Shader_SetImageFlags( shader ) | addFlags | IT_SRGB;
 
 	pass->tcgen = TC_GEN_BASE;
-	pass->flags &= ~SHADERPASS_LIGHTMAP;
 	pass->anim_fps = Shader_ParseFloat( ptr );
 	pass->anim_numframes = 0;
 
@@ -993,7 +969,6 @@ static void Shaderpass_CubeMapExt( shader_t *shader, shaderpass_t *pass, int add
 	const char *token = Shader_ParseString( ptr );
 	int flags = Shader_SetImageFlags( shader ) | addFlags | IT_SRGB;
 	pass->anim_fps = 0;
-	pass->flags &= ~SHADERPASS_LIGHTMAP;
 
 	pass->images[0] = R_FindImage( token, NULL, flags | IT_CUBEMAP, r_shaderMinMipSize, shader->imagetags );
 	if( pass->images[0] ) {
@@ -1055,13 +1030,9 @@ static void Shaderpass_Material( shader_t *shader, shaderpass_t *pass, const cha
 	pass->images[1] = pass->images[2] = pass->images[3] = NULL;
 
 	pass->tcgen = TC_GEN_BASE;
-	pass->flags &= ~SHADERPASS_LIGHTMAP;
 	if( pass->rgbgen.type == RGB_GEN_UNKNOWN ) {
 		pass->rgbgen.type = RGB_GEN_IDENTITY;
 	}
-
-	// I assume materials are only applied to lightmapped surfaces
-	r_shaderHasLightmapPass = true;
 
 	while( !endl ) {
 		token = Shader_ParseString( ptr );
@@ -1161,8 +1132,6 @@ static void Shaderpass_RGBGen( shader_t *shader, shaderpass_t *pass, const char 
 		pass->rgbgen.type = RGB_GEN_ONE_MINUS_ENTITY;
 	} else if( !strcmp( token, "vertex" ) ) {
 		pass->rgbgen.type = RGB_GEN_VERTEX;
-	} else if( !strcmp( token, "oneminusvertex" ) ) {
-		pass->rgbgen.type = RGB_GEN_ONE_MINUS_VERTEX;
 	} else if( !strcmp( token, "lightingdiffuse" ) ) {
 		if( shader->type < SHADER_TYPE_DIFFUSE ) {
 			pass->rgbgen.type = RGB_GEN_VERTEX;
@@ -1186,8 +1155,6 @@ static void Shaderpass_AlphaGen( shader_t *shader, shaderpass_t *pass, const cha
 	const char *token = Shader_ParseString( ptr );
 	if( !strcmp( token, "vertex" ) ) {
 		pass->alphagen.type = ALPHA_GEN_VERTEX;
-	} else if( !strcmp( token, "oneminusvertex" ) ) {
-		pass->alphagen.type = ALPHA_GEN_ONE_MINUS_VERTEX;
 	} else if( !strcmp( token, "entity" ) ) {
 		pass->alphagen.type = ALPHA_GEN_ENTITY;
 	} else if( !strcmp( token, "wave" ) ) {
@@ -1357,8 +1324,6 @@ static void Shaderpass_TcGen( shader_t *shader, shaderpass_t *pass, const char *
 	const char *token = Shader_ParseString( ptr );
 	if( !strcmp( token, "base" ) ) {
 		pass->tcgen = TC_GEN_BASE;
-	} else if( !strcmp( token, "lightmap" ) ) {
-		pass->tcgen = TC_GEN_LIGHTMAP;
 	} else if( !strcmp( token, "environment" ) ) {
 		pass->tcgen = TC_GEN_ENVIRONMENT;
 	} else if( !strcmp( token, "vector" ) ) {
@@ -1836,10 +1801,6 @@ static void Shader_Readpass( shader_t *shader, const char **ptr ) {
 
 	blendmask = ( pass->flags & GLSTATE_BLEND_MASK );
 
-	if( ( pass->flags & SHADERPASS_LIGHTMAP ) && r_lighting_vertexlight->integer ) {
-		return;
-	}
-
 	if( pass->rgbgen.type == RGB_GEN_UNKNOWN ) {
 		pass->rgbgen.type = RGB_GEN_IDENTITY;
 	}
@@ -1914,18 +1875,17 @@ static void Shader_SetVertexAttribs( shader_t *s ) {
 
 	for( i = 0, pass = s->passes; i < s->numpasses; i++, pass++ ) {
 		if( pass->program_type == GLSL_PROGRAM_TYPE_MATERIAL ) {
-			s->vattribs |= VATTRIB_NORMAL_BIT | VATTRIB_SVECTOR_BIT | VATTRIB_LMCOORDS0_BIT;
+			s->vattribs |= VATTRIB_NORMAL_BIT | VATTRIB_SVECTOR_BIT;
 		}
 
 		switch( pass->rgbgen.type ) {
 			case RGB_GEN_LIGHTING_DIFFUSE:
 				if( pass->program_type == GLSL_PROGRAM_TYPE_MATERIAL ) {
-					s->vattribs = ( s->vattribs | VATTRIB_COLOR0_BIT ) & ~VATTRIB_LMCOORDS0_BIT;
+					s->vattribs = s->vattribs | VATTRIB_COLOR0_BIT;
 				}
 				s->vattribs |= VATTRIB_NORMAL_BIT;
 				break;
 			case RGB_GEN_VERTEX:
-			case RGB_GEN_ONE_MINUS_VERTEX:
 			case RGB_GEN_EXACT_VERTEX:
 				s->vattribs |= VATTRIB_COLOR0_BIT;
 				break;
@@ -1938,7 +1898,6 @@ static void Shader_SetVertexAttribs( shader_t *s ) {
 
 		switch( pass->alphagen.type ) {
 			case ALPHA_GEN_VERTEX:
-			case ALPHA_GEN_ONE_MINUS_VERTEX:
 				s->vattribs |= VATTRIB_COLOR0_BIT;
 				break;
 			case ALPHA_GEN_WAVE:
@@ -1949,9 +1908,6 @@ static void Shader_SetVertexAttribs( shader_t *s ) {
 		}
 
 		switch( pass->tcgen ) {
-			case TC_GEN_LIGHTMAP:
-				s->vattribs |= VATTRIB_LMCOORDS0_BIT;
-				break;
 			case TC_GEN_ENVIRONMENT:
 				s->vattribs |= VATTRIB_NORMAL_BIT;
 				break;
@@ -1987,26 +1943,6 @@ static void Shader_Finish( shader_t *s ) {
 	}
 	if( ( s->flags & SHADER_POLYGONOFFSET ) && !s->sort ) {
 		s->sort = SHADER_SORT_DECAL;
-	}
-
-	// fix up rgbgen's and blendmodes for lightmapped shaders and vertex lighting
-	if( r_shaderHasLightmapPass && r_lighting_vertexlight->integer && ( s->type == SHADER_TYPE_DELUXEMAP || s->type == SHADER_TYPE_VERTEX ) ) {
-		for( i = 0, pass = r_currentPasses; i < s->numpasses; i++, pass++ ) {
-			blendmask = pass->flags & GLSTATE_BLEND_MASK;
-
-			if( !blendmask || blendmask == ( GLSTATE_SRCBLEND_DST_COLOR | GLSTATE_DSTBLEND_ZERO ) || s->numpasses == 1 ) {
-				if( pass->rgbgen.type == RGB_GEN_IDENTITY ) {
-					pass->rgbgen.type = RGB_GEN_VERTEX;
-				}
-				//if( pass->alphagen.type == ALPHA_GEN_IDENTITY )
-				//	pass->alphagen.type = ALPHA_GEN_VERTEX;
-
-				if( !( pass->flags & SHADERPASS_ALPHAFUNC ) && ( blendmask != ( GLSTATE_SRCBLEND_SRC_ALPHA | GLSTATE_DSTBLEND_ONE_MINUS_SRC_ALPHA ) ) ) {
-					pass->flags &= ~blendmask;
-				}
-				break;
-			}
-		}
 	}
 
 	size = s->numpasses * sizeof( shaderpass_t );
@@ -2101,10 +2037,6 @@ static void Shader_Finish( shader_t *s ) {
 
 		if( !blendmask ) {
 			pass->flags |= GLSTATE_DEPTHWRITE;
-		}
-		if( ( pass->flags & SHADERPASS_LIGHTMAP ||
-			  pass->program_type == GLSL_PROGRAM_TYPE_MATERIAL ) && ( s->type >= SHADER_TYPE_DELUXEMAP ) ) {
-			s->flags |= SHADER_LIGHTMAP;
 		}
 		if( pass->flags & GLSTATE_DEPTHWRITE ) {
 			if( s->flags & SHADER_SKY ) {
@@ -2219,7 +2151,6 @@ static void R_LoadShaderReal( shader_t *s, const char *shortname,
 	r_shaderNoMipMaps = false;
 	r_shaderNoFiltering = false;
 	r_shaderMinMipSize = 1;
-	r_shaderHasLightmapPass = false;
 	r_shaderHasAutosprite = false;
 	r_shaderDeformvKey[0] = '\0';
 	if( !r_defaultImage ) {
@@ -2273,30 +2204,6 @@ create_default:
 				pass->rgbgen.type = RGB_GEN_VERTEX;
 				pass->alphagen.type = ALPHA_GEN_IDENTITY;
 				pass->images[0] = Shader_FindImage( s, longname, IT_SRGB );
-				break;
-			case SHADER_TYPE_DELUXEMAP:
-				// deluxemapping
-				Shaderpass_LoadMaterial( &materialImages[0], &materialImages[1], &materialImages[2], shortname, 0, s->imagetags );
-
-				data = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) );
-				s->flags = SHADER_DEPTHWRITE | SHADER_CULL_FRONT | SHADER_LIGHTMAP;
-				s->vattribs = VATTRIB_POSITION_BIT | VATTRIB_TEXCOORDS_BIT | VATTRIB_LMCOORDS0_BIT | VATTRIB_NORMAL_BIT | VATTRIB_SVECTOR_BIT;
-				s->sort = SHADER_SORT_OPAQUE;
-				s->numpasses = 1;
-				s->passes = ( shaderpass_t * )data;
-				s->name = ( char * )( s->passes + 1 );
-				strcpy( s->name, shortname );
-
-				pass = &s->passes[0];
-				pass->flags = GLSTATE_DEPTHWRITE;
-				pass->tcgen = TC_GEN_BASE;
-				pass->rgbgen.type = RGB_GEN_IDENTITY;
-				pass->alphagen.type = ALPHA_GEN_IDENTITY;
-				pass->program_type = GLSL_PROGRAM_TYPE_MATERIAL;
-				pass->images[0] = Shader_FindImage( s, longname, IT_SRGB );
-				pass->images[1] = materialImages[0]; // normalmap
-				pass->images[2] = materialImages[1]; // glossmap
-				pass->images[3] = materialImages[2]; // decalmap
 				break;
 			case SHADER_TYPE_DIFFUSE:
 				// load material images

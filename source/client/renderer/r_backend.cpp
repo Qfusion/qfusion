@@ -919,7 +919,7 @@ static void RB_EnableVertexAttribs( void ) {
 	if( vattribs & VATTRIB_COLOR0_BIT ) {
 		RB_EnableVertexAttrib( VATTRIB_COLOR0, true );
 		glVertexAttribPointer( VATTRIB_COLOR0, 4, GL_UNSIGNED_BYTE,
-								   GL_TRUE, vbo->vertexSize, (const GLvoid * )vbo->colorsOffset[0] );
+								   GL_TRUE, vbo->vertexSize, (const GLvoid * )vbo->colorsOffset );
 	} else {
 		RB_EnableVertexAttrib( VATTRIB_COLOR0, false );
 	}
@@ -953,51 +953,12 @@ static void RB_EnableVertexAttribs( void ) {
 		RB_EnableVertexAttrib( VATTRIB_BONESWEIGHTS, true );
 		glVertexAttribPointer( VATTRIB_BONESWEIGHTS, 4, GL_UNSIGNED_BYTE,
 								   GL_TRUE, vbo->vertexSize, ( const GLvoid * )vbo->bonesWeightsOffset );
+	} else if( vattribs & VATTRIB_SURFINDEX_BIT ) {
+		RB_EnableVertexAttrib( VATTRIB_SURFINDEX, true );
+		glVertexAttribPointer( VATTRIB_SURFINDEX, 1, FLOAT_VATTRIB_GL_TYPE( VATTRIB_SURFINDEX_BIT, hfa ),
+			GL_FALSE, vbo->vertexSize, ( const GLvoid * )vbo->siOffset );
 	} else {
-		int i;
-		unsigned int lmattr;
-		unsigned int lmattrbit;
-
-		// lightmap texture coordinates - aliasing bones, so not disabling bones
-		lmattr = VATTRIB_LMCOORDS01;
-		lmattrbit = VATTRIB_LMCOORDS0_BIT;
-
-		for( i = 0; i < ( MAX_LIGHTMAPS + 1 ) / 2; i++ ) {
-			if( vattribs & lmattrbit ) {
-				RB_EnableVertexAttrib( lmattr, true );
-				glVertexAttribPointer( lmattr, vbo->lmstSize[i],
-										   FLOAT_VATTRIB_GL_TYPE( VATTRIB_LMCOORDS0_BIT, hfa ),
-										   GL_FALSE, vbo->vertexSize, ( const GLvoid * )vbo->lmstOffset[i] );
-			} else {
-				RB_EnableVertexAttrib( lmattr, false );
-			}
-
-			lmattr = lmattr + 1;
-			lmattrbit <<= 2;
-		}
-
-		// lightmap array texture layers
-		lmattr = VATTRIB_LMLAYERS0123;
-
-		for( i = 0; i < ( MAX_LIGHTMAPS + 3 ) / 4; i++ ) {
-			if( vattribs & ( VATTRIB_LMLAYERS0123_BIT << i ) ) {
-				RB_EnableVertexAttrib( lmattr, true );
-				glVertexAttribPointer( lmattr, 4, GL_UNSIGNED_BYTE,
-										   GL_FALSE, vbo->vertexSize, ( const GLvoid * )vbo->lmlayersOffset[i] );
-			} else {
-				RB_EnableVertexAttrib( lmattr, false );
-			}
-
-			lmattr++;
-		}
-
-		if( vattribs & VATTRIB_SURFINDEX_BIT ) {
-			RB_EnableVertexAttrib( VATTRIB_SURFINDEX, true );
-			glVertexAttribPointer( VATTRIB_SURFINDEX, 1, FLOAT_VATTRIB_GL_TYPE( VATTRIB_SURFINDEX_BIT, hfa ),
-				GL_FALSE, vbo->vertexSize, ( const GLvoid * )vbo->siOffset );
-		} else {
-			RB_EnableVertexAttrib( VATTRIB_SURFINDEX, false );
-		}
+		RB_EnableVertexAttrib( VATTRIB_SURFINDEX, false );
 	}
 
 	if( ( vattribs & VATTRIB_INSTANCES_BITS ) == VATTRIB_INSTANCES_BITS ) {

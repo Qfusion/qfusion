@@ -1,12 +1,10 @@
 #include "include/common.glsl"
 #include "include/dither.glsl"
 #include "include/fog.glsl"
-#include "include/lightmap.glsl"
 #include "include/uniforms.glsl"
 #include "include/varying_material.glsl"
 
 #include_if(APPLY_GREYSCALE) "include/greyscale.glsl"
-#include_if(NUM_LIGHTMAPS) "include/material_lightmaps.frag.glsl"
 #include_if(APPLY_DIRECTIONAL_LIGHT) "include/material_dirlight.frag.glsl"
 
 uniform sampler2D u_BaseTexture;
@@ -33,11 +31,7 @@ void main()
 	myhalf3 surfaceNormalModelspace;
 	myhalf3 weightedDiffuseNormalModelspace;
 
-#if !defined(APPLY_DIRECTIONAL_LIGHT) && !defined(NUM_LIGHTMAPS) && 0
-	myhalf4 color = myhalf4 (1.0, 1.0, 1.0, 1.0);
-#else
 	myhalf4 color = myhalf4 (0.0, 0.0, 0.0, 1.0);
-#endif
 
 	myhalf4 decal = myhalf4 (0.0, 0.0, 0.0, 1.0);
 	myhalf3 lightColor = myhalf3 (0.0);
@@ -49,10 +43,6 @@ void main()
 
 #ifdef APPLY_DIRECTIONAL_LIGHT
 	lightColor += DirectionalLightColor(surfaceNormalModelspace, weightedDiffuseNormalModelspace);
-#endif
-
-#ifdef NUM_LIGHTMAPS420
-	lightColor += LightmapColor(surfaceNormalModelspace, weightedDiffuseNormalModelspace);
 #endif
 
 #ifdef APPLY_SPECULAR

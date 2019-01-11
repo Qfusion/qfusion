@@ -207,23 +207,6 @@ void R_AddPolyToScene( const poly_t *poly ) {
 }
 
 /*
-* R_AddLightStyleToScene
-*/
-void R_AddLightStyleToScene( int style, float r, float g, float b ) {
-	lightstyle_t *ls;
-
-	if( style < 0 || style >= MAX_LIGHTSTYLES ) {
-		ri.Com_Error( ERR_DROP, "R_AddLightStyleToScene: bad light style %i", style );
-		return;
-	}
-
-	ls = &rsc.lightStyles[style];
-	ls->rgb[0] = max( 0, r );
-	ls->rgb[1] = max( 0, g );
-	ls->rgb[2] = max( 0, b );
-}
-
-/*
 * R_BlurTextureToScrFbo
 *
 * Performs Kawase blur which approximates standard Gaussian blur in multiple passes.
@@ -601,15 +584,13 @@ static void R_RenderDebugBounds( void ) {
 
 	RB_SetShaderStateMask( ~0, GLSTATE_NO_DEPTH_TEST );
 
-	RB_SetLightstyle( NULL, NULL );
-
 	for( i = 0; i < 24; i++ ) {
 		elems[i] = r_boxedges[i];
 	}
 
 	for( i = 0; i < r_num_debug_bounds; i++ ) {
 		mesh.xyzArray = r_debug_bounds[i].corners;
-		mesh.colorsArray[0] = r_debug_bounds[i].colors;
+		mesh.colorsArray = r_debug_bounds[i].colors;
 
 		RB_AddDynamicMesh( rsc.worldent, rsh.whiteShader, &mesh, GL_LINES );
 	}

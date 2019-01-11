@@ -708,11 +708,8 @@ void ThrowSmallPileOfGibs( edict_t *self, int damage );
 
 void BecomeExplosion1( edict_t *self );
 
-void SP_light( edict_t *self );
-void SP_light_mine( edict_t *ent );
 void SP_info_null( edict_t *self );
 void SP_info_notnull( edict_t *self );
-void SP_info_camp( edict_t *self );
 void SP_path_corner( edict_t *self );
 
 void SP_misc_teleporter_dest( edict_t *self );
@@ -792,8 +789,6 @@ void SP_target_explosion( edict_t *ent );
 void SP_target_crosslevel_trigger( edict_t *ent );
 void SP_target_crosslevel_target( edict_t *ent );
 void SP_target_laser( edict_t *self );
-void SP_target_lightramp( edict_t *self );
-void SP_target_string( edict_t *ent );
 void SP_target_position( edict_t *self );
 void SP_target_print( edict_t *self );
 void SP_target_give( edict_t *self );

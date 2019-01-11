@@ -30,17 +30,15 @@ enum {
 	RB_MODE_NORMAL,		// regular mode, render all passes
 	RB_MODE_DEPTH,		// only render passes that write to depth buffer, writing to color buffer is disabled
 	RB_MODE_BLACK_GT,	// write black color, depth func is set to GT
-	RB_MODE_LIGHTMAP,	// only render the lightmap, diffuse lighting pass or fullbright, depth func EQ
 	RB_MODE_DIFFUSE,	// diffuse lighting pass or fullbright, depth func EQ
-	RB_MODE_POST_LIGHT, // render decals on materials, depth func EQ
-	RB_MODE_DECALS,	    // render additive stuff which isn't a material (translucent windows, etc)
+	RB_MODE_POST_LIGHT,     // render decals on materials, depth func EQ
+	RB_MODE_DECALS,	        // render additive stuff which isn't a material (translucent windows, etc)
 	RB_MODE_TRIANGLE_OUTLINES,
 };
 
 //===================================================================
 
 struct shader_s;
-struct superLightStyle_s;
 struct refScreenTexSet_s;
 
 // core
@@ -91,7 +89,6 @@ void RB_FlushTextureCache( void );
 
 // shader
 void RB_BindShader( const entity_t *e, const struct shader_s *shader );
-void RB_SetLightstyle( const struct superLightStyle_s *lightStyle, const struct superLightStyle_s *realLightStyle );
 void RB_SetBonesData( int numBones, dualquat_t *dualQuats, int maxWeights );
 void RB_SetSkyboxShader( const shader_t *shader );
 void RB_SetSkyboxSide( int side );

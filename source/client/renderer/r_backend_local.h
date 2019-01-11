@@ -156,8 +156,6 @@ typedef struct r_backend_s {
 
 	bool triangleOutlines;
 
-	const superLightStyle_t *superLightStyle, *realSuperLightStyle;
-
 	uint8_t entityColor[4];
 	uint8_t entityOutlineColor[4];
 	entity_t nullEnt;

@@ -335,8 +335,6 @@ static mbrushmodel_t *loadbmodel_; // FIXME
 * R_SurfaceCmp
 */
 static int R_SurfaceCmp( const msurface_t *s1, const msurface_t *s2 ) {
-	struct superLightStyle_s *sl1 = NULL;
-	struct superLightStyle_s *sl2 = NULL;
 	int va1 = 0, va2  = 0;
 	int sid1 = 0, sid2 = 0;
 
@@ -348,15 +346,6 @@ static int R_SurfaceCmp( const msurface_t *s1, const msurface_t *s2 ) {
 	if( s2->shader != NULL ) {
 		va2 = s2->shader->vattribs;
 		sid2 = s2->shader->id;
-	}
-
-	if( s1->superLightStyle >= 0 ) {
-		sl1 = &loadbmodel_->superLightStyles[s1->superLightStyle];
-		va1 |= sl1->vattribs;
-	}
-	if( s2->superLightStyle >= 0 ) {
-		sl2 = &loadbmodel_->superLightStyles[s2->superLightStyle];
-		va2 |= sl2->vattribs;
 	}
 
 	if( s1->numInstances ) {
@@ -377,13 +366,6 @@ static int R_SurfaceCmp( const msurface_t *s1, const msurface_t *s2 ) {
 		return 1;
 	}
 	if( sid1 < sid2 ) {
-		return -1;
-	}
-
-	if( s1->superLightStyle > s2->superLightStyle ) {
-		return 1;
-	}
-	if( s1->superLightStyle < s2->superLightStyle ) {
 		return -1;
 	}
 
@@ -437,16 +419,9 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, size_t *vbo_total_size
 	maxTempVBOs = 1024;
 	tempVBOs = ( mesh_vbo_t * )Mod_Malloc( mod, maxTempVBOs * sizeof( *tempVBOs ) );
 
-	// now linearly scan all faces for this submodel, merging them into
-	// vertex buffer objects if they share shader, lightmap texture and we can render
-	// them in hardware (some Q3A shaders require GLSL for that)
+	// merge faces if they have the same shader
 
-	// don't use half-floats for XYZ due to precision issues
 	floatVattribs = VATTRIB_POSITION_BIT|VATTRIB_SURFINDEX_BIT;
-	if( mapConfig.maxLightmapSize > 1024 ) {
-		// don't use half-floats for lightmaps if there's not enough precision (half mantissa is 10 bits)
-		floatVattribs |= VATTRIB_LMCOORDS_BITS;
-	}
 
 	num_vbos = 0;
 	*vbo_total_size = 0;
@@ -480,29 +455,14 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, size_t *vbo_total_size
 			if( surf->numInstances ) {
 				vattribs |= VATTRIB_INSTANCES_BITS;
 			}
-			if( surf->superLightStyle >= 0 ) {
-				vattribs |= loadbmodel->superLightStyles[surf->superLightStyle].vattribs;
-			}
 
 			// allocate a drawsurf
 			drawSurf = &loadbmodel->drawSurfaces[loadbmodel->numDrawSurfaces++];
 			drawSurf->type = ST_BSP;
-			drawSurf->superLightStyle = surf->superLightStyle;
 			drawSurf->instances = surf->instances;
 			drawSurf->numInstances = surf->numInstances;
 			drawSurf->shader = surf->shader;
-			drawSurf->numLightmaps = 0;
 			drawSurf->surfFlags = surf->flags;
-			drawSurf->numLightmaps = 0;
-
-			// count lightmaps
-			if( surf->superLightStyle >= 0 ) {
-				for( j = 0; j < MAX_LIGHTMAPS; j++ ) {
-					if( loadbmodel->superLightStyles[surf->superLightStyle].lightmapStyles[j] == 255 )
-						break;
-					drawSurf->numLightmaps++;
-				}
-			}
 
 			drawSurf->numWorldSurfaces = 1;
 			drawSurf->worldSurfaces = worldSurfaces;
@@ -732,8 +692,6 @@ static void Mod_TouchBrushModel( model_t *model ) {
 	if( loadbmodel->skydome ) {
 		R_TouchSkydome( loadbmodel->skydome );
 	}
-
-	R_TouchLightmapImages( model );
 }
 
 //===============================================================================
@@ -1071,16 +1029,6 @@ static void R_TouchModel( model_t *mod ) {
 */
 static void R_InitMapConfig( const char *model ) {
 	memset( &mapConfig, 0, sizeof( mapConfig ) );
-
-	mapConfig.lightmapArrays = false;
-	mapConfig.maxLightmapSize = 0;
-	mapConfig.deluxeMaps = false;
-	mapConfig.deluxeMappingEnabled = false;
-	mapConfig.forceWorldOutlines = false;
-	mapConfig.averageLightingIntensity = 1;
-
-	VectorClear( mapConfig.ambient );
-	VectorClear( mapConfig.outlineColor );
 }
 
 /*

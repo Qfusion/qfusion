@@ -132,8 +132,6 @@ spawn_t spawns[] = {
 	{ "target_crosslevel_trigger", SP_target_crosslevel_trigger },
 	{ "target_crosslevel_target", SP_target_crosslevel_target },
 	{ "target_laser", SP_target_laser },
-	{ "target_lightramp", SP_target_lightramp },
-	{ "target_string", SP_target_string },
 	{ "target_position", SP_target_position },
 	{ "target_print", SP_target_print },
 	{ "target_give", SP_target_give },
@@ -146,12 +144,9 @@ spawn_t spawns[] = {
 
 	{ "worldspawn", SP_worldspawn },
 
-	{ "light", SP_light },
-	{ "light_mine1", SP_light_mine },
 	{ "info_null", SP_info_null },
 	{ "func_group", SP_info_null },
 	{ "info_notnull", SP_info_notnull },
-	{ "info_camp", SP_info_camp },
 	{ "path_corner", SP_path_corner },
 
 	{ "misc_teleporter_dest", SP_misc_teleporter_dest },
@@ -656,25 +651,6 @@ void G_PrecacheMedia( void ) {
 		//trap_SoundIndex( va( S_ANNOUNCER_SCORE_TEAM_1_to_4_TAKEN_LEAD_1_to_2, 4, 1 ) );
 		//trap_SoundIndex( va( S_ANNOUNCER_SCORE_TEAM_1_to_4_TAKEN_LEAD_1_to_2, 4, 2 ) );
 	}
-
-	//
-	// LIGHTSTYLES
-	//
-	trap_ConfigString( CS_LIGHTS + 0, LS_NORMAL );
-	trap_ConfigString( CS_LIGHTS + 1, LS_FLICKER1 );
-	trap_ConfigString( CS_LIGHTS + 2, LS_SLOW_STRONG_PULSE );
-	trap_ConfigString( CS_LIGHTS + 3, LS_CANDLE1 );
-	trap_ConfigString( CS_LIGHTS + 4, LS_FAST_STROBE );
-	trap_ConfigString( CS_LIGHTS + 5, LS_GENTLE_PULSE_1 );
-	trap_ConfigString( CS_LIGHTS + 6, LS_FLICKER2 );
-	trap_ConfigString( CS_LIGHTS + 7, LS_CANDLE2 );
-	trap_ConfigString( CS_LIGHTS + 8, LS_CANDLE3 );
-	trap_ConfigString( CS_LIGHTS + 9, LS_SLOW_STROBE );
-	trap_ConfigString( CS_LIGHTS + 10, LS_FLUORESCENT_FLICKER );
-	trap_ConfigString( CS_LIGHTS + 11, LS_SLOW_PULSE_NOT_FADE );
-
-	// styles 32-62 are assigned by the light program for switchable lights
-	trap_ConfigString( CS_LIGHTS + 63, "a" );
 }
 
 /*
