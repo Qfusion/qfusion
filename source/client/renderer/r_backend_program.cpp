@@ -811,23 +811,20 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 	int program;
 	int rgbgen = pass->rgbgen.type;
 	const image_t *image;
-	bool isWorldSurface = rb.currentModelType == mod_brush ? true : false;
+	bool isWorldSurface = rb.currentModelType == mod_brush;
 	bool isWorldVertexLight = false;
 	bool applyLighting;
 	vec3_t lightDir;
 	vec4_t lightAmbient, lightDiffuse;
 	mat4_t texMatrix, genVectors;
-	bool noDlight = ( ( rb.surfFlags & (SURF_SKY|SURF_NODLIGHT) ) != 0 );
+	bool noDlight = ( rb.surfFlags & (SURF_SKY|SURF_NODLIGHT) ) != 0;
 
 	if( isWorldSurface ) {
 		if( rb.mode == RB_MODE_DIFFUSE ) {
 			return;
 		}
 
-		if( rgbgen == RGB_GEN_VERTEX || rgbgen == RGB_GEN_EXACT_VERTEX ) {
-			// vertex-lit world surface
-			isWorldVertexLight = !noDlight;
-		}
+		isWorldVertexLight = !noDlight;
 	}
 
 	// diffuse lighting for entities
@@ -845,7 +842,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 	if( !applyLighting && rb.mode == RB_MODE_DIFFUSE ) {
 		return;
 	}
-	if( applyLighting && ( rb.mode == RB_MODE_POST_LIGHT ) ) {
+	if( applyLighting && rb.mode == RB_MODE_POST_LIGHT ) {
 		return;
 	}
 

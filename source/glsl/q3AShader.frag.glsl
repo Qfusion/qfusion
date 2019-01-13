@@ -24,7 +24,11 @@ uniform sampler2D u_DepthTexture;
 
 void main(void)
 {
+#ifndef APPLY_DRAWFLAT
 	myhalf4 color = myhalf4(qf_FrontColor);
+#else
+	myhalf4 color = myhalf4(1.0);
+#endif
 	myhalf4 diffuse;
 
 #if defined(APPLY_CUBEMAP)
