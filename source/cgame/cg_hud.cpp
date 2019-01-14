@@ -1918,18 +1918,6 @@ static bool CG_LFuncDrawConfigstring( struct cg_layoutnode_s *commandnode, struc
 	return true;
 }
 
-static bool CG_LFuncDrawCleanConfigstring( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
-	int index = (int)CG_GetNumericArg( &argumentnode );
-
-	if( index < 0 || index >= MAX_CONFIGSTRINGS ) {
-		CG_Printf( "WARNING 'CG_LFuncDrawCleanConfigstring' Bad stat_string index" );
-		return false;
-	}
-	trap_SCR_DrawString( layout_cursor_x, layout_cursor_y, layout_cursor_align,
-						 COM_RemoveColorTokensExt( cgs.configStrings[index], true ), CG_GetLayoutCursorFont(), layout_cursor_color );
-	return true;
-}
-
 static bool CG_LFuncDrawPlayerName( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	int index = (int)CG_GetNumericArg( &argumentnode ) - 1;
 
@@ -1939,17 +1927,6 @@ static bool CG_LFuncDrawPlayerName( struct cg_layoutnode_s *commandnode, struct 
 		color[3] = layout_cursor_color[3];
 		trap_SCR_DrawString( layout_cursor_x, layout_cursor_y, layout_cursor_align,
 							 cgs.clientInfo[index].name, CG_GetLayoutCursorFont(), color );
-		return true;
-	}
-	return false;
-}
-
-static bool CG_LFuncDrawCleanPlayerName( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
-	int index = (int)CG_GetNumericArg( &argumentnode ) - 1;
-
-	if( ( index >= 0 && index < gs.maxclients ) && cgs.clientInfo[index].name[0] ) {
-		trap_SCR_DrawString( layout_cursor_x, layout_cursor_y, layout_cursor_align,
-							 COM_RemoveColorTokensExt( cgs.clientInfo[index].name, true ), CG_GetLayoutCursorFont(), layout_cursor_color );
 		return true;
 	}
 	return false;
@@ -2250,14 +2227,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	},
 
 	{
-		"drawCleanPlayerName",
-		CG_LFuncDrawCleanPlayerName,
-		1,
-		"Draws the name of the player with id provided by the argument, using the current color",
-		false
-	},
-
-	{
 		"drawPointing",
 		CG_LFuncDrawPointed,
 		0,
@@ -2294,14 +2263,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 		CG_LFuncDrawConfigstring,
 		1,
 		"Draws configstring of argument id",
-		false
-	},
-
-	{
-		"drawCleanStatString",
-		CG_LFuncDrawCleanConfigstring,
-		1,
-		"Draws configstring of argument id, ignoring color codes",
 		false
 	},
 
