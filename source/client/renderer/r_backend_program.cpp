@@ -1059,10 +1059,6 @@ static void RB_UpdateVertexAttribs( void ) {
 * RB_BindShader
 */
 void RB_BindShader( const entity_t *e, const shader_t *shader ) {
-	if( rb.mode == RB_MODE_BLACK_GT ) {
-		shader = rsh.whiteShader;
-	}
-
 	if( !rb.dirtyUniformState ) {
 		if( rb.currentEntity == e && rb.currentShader == shader ) {
 			return;
@@ -1322,9 +1318,6 @@ static int RB_GetShaderpassState( int state ) {
 			state |= GLSTATE_DEPTHFUNC_EQ;
 		}
 		state |= GLSTATE_SRCBLEND_SRC_ALPHA | GLSTATE_DSTBLEND_ONE;
-	} else if( rb.mode == RB_MODE_BLACK_GT ) {
-		state &= ~(GLSTATE_BLEND_MASK|GLSTATE_DEPTHWRITE);
-		state |= GLSTATE_DEPTHFUNC_GT | GLSTATE_SRCBLEND_ZERO | GLSTATE_DSTBLEND_ZERO;
 	} else {
 		if( rb.alphaHack && !( state & GLSTATE_BLEND_MASK ) ) {
 			// force alpha blending

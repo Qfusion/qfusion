@@ -29,7 +29,6 @@ enum {
 enum {
 	RB_MODE_NORMAL,		// regular mode, render all passes
 	RB_MODE_DEPTH,		// only render passes that write to depth buffer, writing to color buffer is disabled
-	RB_MODE_BLACK_GT,	// write black color, depth func is set to GT
 	RB_MODE_DIFFUSE,	// diffuse lighting pass or fullbright, depth func EQ
 	RB_MODE_POST_LIGHT,     // render decals on materials, depth func EQ
 	RB_MODE_DECALS,	        // render additive stuff which isn't a material (translucent windows, etc)
