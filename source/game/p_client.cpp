@@ -626,9 +626,6 @@ bool G_PlayerCanTeleport( edict_t *player ) {
 	if( player->r.client->ps.pmove.pm_type > PM_SPECTATOR ) {
 		return false;
 	}
-	if( GS_MatchState() == MATCH_STATE_COUNTDOWN ) { // match countdown
-		return false;
-	}
 	return true;
 }
 
