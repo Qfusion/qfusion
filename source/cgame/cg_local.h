@@ -955,8 +955,8 @@ void CG_ClearEffects( void );
 
 void CG_AddLightToScene( vec3_t org, float radius, float r, float g, float b );
 void CG_AddDlights( void );
-void CG_AllocShadeBox( int entNum, const vec3_t origin, const vec3_t mins, const vec3_t maxs, struct shader_s *shader );
-void CG_AddShadeBoxes( void );
+void CG_AllocPlayerShadow( int entNum, const vec3_t origin, const vec3_t mins, const vec3_t maxs );
+void CG_AddPlayerShadows( void );
 
 void CG_ClearFragmentedDecals( void );
 void CG_AddFragmentedDecal( vec3_t origin, vec3_t dir, float orient, float radius,

@@ -1134,7 +1134,7 @@ void CG_AddPModel( centity_t *cent ) {
 	cent->ent.renderfx |= RF_NOSHADOW;
 
 	if( !( cent->renderfx & RF_NOSHADOW ) ) {
-		CG_AllocShadeBox( cent->current.number, cent->ent.origin, playerbox_stand_mins, playerbox_stand_maxs, NULL );
+		CG_AllocPlayerShadow( cent->current.number, cent->ent.origin, playerbox_stand_mins, playerbox_stand_maxs );
 	}
 
 	if( !( cent->effects & EF_RACEGHOST ) ) {

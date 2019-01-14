@@ -824,7 +824,7 @@ static void CG_AddGenericEnt( centity_t *cent ) {
 
 		// add shadows for items (do it before offseting for weapons)
 		if( !( cent->renderfx & RF_NOSHADOW ) ) {
-			CG_AllocShadeBox( cent->current.number, cent->ent.origin, item_box_mins, item_box_maxs, NULL );
+			CG_AllocPlayerShadow( cent->current.number, cent->ent.origin, item_box_mins, item_box_maxs );
 			cent->ent.renderfx |= RF_NOSHADOW;
 		} else {
 			cent->ent.renderfx |= RF_NOSHADOW;
@@ -869,7 +869,14 @@ static void CG_AddGenericEnt( centity_t *cent ) {
 */
 static void CG_AddPlayerEnt( centity_t *cent ) {
 	if( ISVIEWERENTITY( cent->current.number ) ) {
-		return;
+		cg.effects = cent->effects;
+		VectorCopy( cent->ent.lightingOrigin, cg.lightingOrigin );
+		if( !cg.view.thirdperson && cent->current.modelindex ) {
+			if( !( cent->renderfx & RF_NOSHADOW ) ) {
+				CG_AllocPlayerShadow( cent->current.number, cent->ent.origin, playerbox_stand_mins, playerbox_stand_maxs );
+			}
+			return;
+		}
 	}
 
 	// if set to invisible, skip
@@ -880,7 +887,6 @@ static void CG_AddPlayerEnt( centity_t *cent ) {
 	// render effects
 	cent->ent.renderfx = cent->renderfx;
 	cent->ent.renderfx |= RF_MINLIGHT;
-
 
 	CG_AddPModel( cent );
 
