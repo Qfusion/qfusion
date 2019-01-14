@@ -19,26 +19,26 @@ uniform sampler2D u_EntityDecalTexture;
 #endif
 
 #ifdef APPLY_DRAWFLAT
-uniform myhalf3 u_WallColor;
-uniform myhalf3 u_FloorColor;
+uniform vec3 u_WallColor;
+uniform vec3 u_FloorColor;
 #endif
 
-uniform myhalf2 u_GlossFactors; // gloss scaling and exponent factors
+uniform vec2 u_GlossFactors; // gloss scaling and exponent factors
 
 void main()
 {
-	myhalf3 surfaceNormal;
-	myhalf3 surfaceNormalModelspace;
-	myhalf3 weightedDiffuseNormalModelspace;
+	vec3 surfaceNormal;
+	vec3 surfaceNormalModelspace;
+	vec3 weightedDiffuseNormalModelspace;
 
-	myhalf4 color = myhalf4 (0.0, 0.0, 0.0, 1.0);
+	vec4 color = vec4 (0.0, 0.0, 0.0, 1.0);
 
-	myhalf4 decal = myhalf4 (0.0, 0.0, 0.0, 1.0);
-	myhalf3 lightColor = myhalf3 (0.0);
-	myhalf3 specular = myhalf3 (0.0);
+	vec4 decal = vec4 (0.0, 0.0, 0.0, 1.0);
+	vec3 lightColor = vec3 (0.0);
+	vec3 specular = vec3 (0.0);
 
 	// get the surface normal
-	surfaceNormal = normalize(myhalf3(qf_texture (u_NormalmapTexture, v_TexCoord)) - myhalf3 (0.5));
+	surfaceNormal = normalize(vec3(qf_texture (u_NormalmapTexture, v_TexCoord)) - vec3 (0.5));
 	surfaceNormalModelspace = normalize(v_StrMatrix * surfaceNormal);
 
 #ifdef APPLY_DIRECTIONAL_LIGHT
@@ -48,63 +48,63 @@ void main()
 #ifdef APPLY_SPECULAR
 
 #ifdef NORMALIZE_DIFFUSE_NORMAL
-	myhalf3 specularNormal = normalize (myhalf3 (normalize (weightedDiffuseNormalModelspace)) + myhalf3 (normalize (u_EntityDist - v_Position)));
+	vec3 specularNormal = normalize (vec3 (normalize (weightedDiffuseNormalModelspace)) + vec3 (normalize (u_EntityDist - v_Position)));
 #else
-	myhalf3 specularNormal = normalize (weightedDiffuseNormalModelspace + myhalf3 (normalize (u_EntityDist - v_Position)));
+	vec3 specularNormal = normalize (weightedDiffuseNormalModelspace + vec3 (normalize (u_EntityDist - v_Position)));
 #endif
 
-	myhalf specularProduct = myhalf(dot (surfaceNormalModelspace, specularNormal));
-	specular = myhalf3(qf_texture(u_GlossTexture, v_TexCoord).r * u_GlossFactors.x * pow(myhalf(max(specularProduct, 0.0)), u_GlossFactors.y));
+	float specularProduct = float(dot (surfaceNormalModelspace, specularNormal));
+	specular = vec3(qf_texture(u_GlossTexture, v_TexCoord).r * u_GlossFactors.x * pow(float(max(specularProduct, 0.0)), u_GlossFactors.y));
 #endif // APPLY_SPECULAR
 
 #if defined(APPLY_BASETEX_ALPHA_ONLY) && !defined(APPLY_DRAWFLAT)
 	color.rgb = lightColor.rgb + specular.rgb;
-	color = min(color, myhalf4(qf_texture(u_BaseTexture, v_TexCoord).a));
+	color = min(color, vec4(qf_texture(u_BaseTexture, v_TexCoord).a));
 #else
-	myhalf4 diffuse;
+	vec4 diffuse;
 
 #ifdef APPLY_DRAWFLAT
-	myhalf n = myhalf(step(DRAWFLAT_NORMAL_STEP, abs(v_StrMatrix[2].z)));
-	diffuse = myhalf4(mix(u_WallColor, u_FloorColor, n), myhalf(qf_texture(u_BaseTexture, v_TexCoord).a));
+	float n = float(step(DRAWFLAT_NORMAL_STEP, abs(v_StrMatrix[2].z)));
+	diffuse = vec4(mix(u_WallColor, u_FloorColor, n), float(qf_texture(u_BaseTexture, v_TexCoord).a));
 #else
-	diffuse = myhalf4(qf_texture(u_BaseTexture, v_TexCoord));
+	diffuse = vec4(qf_texture(u_BaseTexture, v_TexCoord));
 #endif
 
 #ifdef APPLY_ENTITY_DECAL
-	myhalf3 entColor = LinearColor(u_EntityColor.rgb);
+	vec3 entColor = LinearColor(u_EntityColor.rgb);
 
 #ifdef APPLY_ENTITY_DECAL_ADD
-	decal.rgb = myhalf3(qf_texture(u_EntityDecalTexture, v_TexCoord));
+	decal.rgb = vec3(qf_texture(u_EntityDecalTexture, v_TexCoord));
 	diffuse.rgb += entColor * decal.rgb;
 #else
-	decal = myhalf4(entColor, 1.0) * myhalf4(qf_texture(u_EntityDecalTexture, v_TexCoord));
+	decal = vec4(entColor, 1.0) * vec4(qf_texture(u_EntityDecalTexture, v_TexCoord));
 	diffuse.rgb = mix(diffuse.rgb, decal.rgb, decal.a);
 #endif // APPLY_ENTITY_DECAL_ADD
 
 #endif // APPLY_ENTITY_DECAL
 
-	color = myhalf4(lightColor.rgb * (diffuse.rgb + specular.rgb), diffuse.a);
+	color = vec4(lightColor.rgb * (diffuse.rgb + specular.rgb), diffuse.a);
 #endif // defined(APPLY_BASETEX_ALPHA_ONLY) && !defined(APPLY_DRAWFLAT)
 
 #ifdef APPLY_DECAL
 
 #ifdef APPLY_DECAL_ADD
-	decal.rgb = myhalf3(qf_FrontColor.rgb) * myhalf3(qf_texture(u_DecalTexture, v_TexCoord));
+	decal.rgb = vec3(qf_FrontColor.rgb) * vec3(qf_texture(u_DecalTexture, v_TexCoord));
 	color.rgb += decal.rgb;
 #else
-	decal = myhalf4(qf_FrontColor.rgb, 1.0) * myhalf4(qf_texture(u_DecalTexture, v_TexCoord));
+	decal = vec4(qf_FrontColor.rgb, 1.0) * vec4(qf_texture(u_DecalTexture, v_TexCoord));
 	color.rgb = mix(color.rgb, decal.rgb, decal.a);
 #endif // APPLY_DECAL_ADD
-	color.a *= myhalf(qf_FrontColor.a);
+	color.a *= float(qf_FrontColor.a);
 
 #else
 
 #if !defined (APPLY_DIRECTIONAL_LIGHT) || !defined(APPLY_DIRECTIONAL_LIGHT_MIX)
 # if defined(APPLY_ENV_MODULATE_COLOR)
-	color *= myhalf4(qf_FrontColor);
+	color *= vec4(qf_FrontColor);
 # endif
 #else
-	color.a *= myhalf(qf_FrontColor.a);
+	color.a *= float(qf_FrontColor.a);
 #endif
 
 #endif // APPLY_DECAL

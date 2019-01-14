@@ -13,8 +13,8 @@ uniform sampler2D u_BaseTexture;
 #endif
 
 #ifdef APPLY_DRAWFLAT
-uniform myhalf3 u_WallColor;
-uniform myhalf3 u_FloorColor;
+uniform vec3 u_WallColor;
+uniform vec3 u_FloorColor;
 #endif
 
 #if defined(APPLY_SOFT_PARTICLE)
@@ -25,25 +25,25 @@ uniform sampler2D u_DepthTexture;
 void main(void)
 {
 #ifndef APPLY_DRAWFLAT
-	myhalf4 color = myhalf4(qf_FrontColor);
+	vec4 color = vec4(qf_FrontColor);
 #else
-	myhalf4 color = myhalf4(1.0);
+	vec4 color = vec4(1.0);
 #endif
-	myhalf4 diffuse;
+	vec4 diffuse;
 
 #if defined(APPLY_CUBEMAP)
-	diffuse = myhalf4(qf_textureCube(u_BaseTexture, reflect(v_Position - u_EntityDist, normalize(v_Normal))));
+	diffuse = vec4(qf_textureCube(u_BaseTexture, reflect(v_Position - u_EntityDist, normalize(v_Normal))));
 #elif defined(APPLY_CUBEMAP_VERTEX)
-	diffuse = myhalf4(qf_textureCube(u_BaseTexture, v_TexCoord));
+	diffuse = vec4(qf_textureCube(u_BaseTexture, v_TexCoord));
 #elif defined(APPLY_SURROUNDMAP)
-	diffuse = myhalf4(qf_textureCube(u_BaseTexture, v_Position - u_EntityDist));
+	diffuse = vec4(qf_textureCube(u_BaseTexture, v_Position - u_EntityDist));
 #else
-	diffuse = myhalf4(qf_texture(u_BaseTexture, v_TexCoord));
+	diffuse = vec4(qf_texture(u_BaseTexture, v_TexCoord));
 #endif
 
 #ifdef APPLY_DRAWFLAT
-	myhalf n = myhalf(step(DRAWFLAT_NORMAL_STEP, abs(v_Normal.z)));
-	diffuse.rgb = myhalf3(mix(LinearColor(u_WallColor), LinearColor(u_FloorColor), n));
+	float n = float(step(DRAWFLAT_NORMAL_STEP, abs(v_Normal.z)));
+	diffuse.rgb = vec3(mix(LinearColor(u_WallColor), LinearColor(u_FloorColor), n));
 #endif
 
 #ifdef APPLY_ALPHA_MASK
@@ -57,8 +57,8 @@ void main(void)
 #endif
 
 #if defined(APPLY_SOFT_PARTICLE)
-	myhalf softness = FragmentSoftness(v_Depth, u_DepthTexture, gl_FragCoord.xy, u_ZRange);
-	color *= mix(myhalf4(1.0), myhalf4(softness), u_BlendMix.xxxy);
+	float softness = FragmentSoftness(v_Depth, u_DepthTexture, gl_FragCoord.xy, u_ZRange);
+	color *= mix(vec4(1.0), vec4(softness), u_BlendMix.xxxy);
 #endif
 
 #ifdef QF_ALPHATEST

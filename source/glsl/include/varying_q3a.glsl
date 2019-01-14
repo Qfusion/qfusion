@@ -7,7 +7,7 @@
 qf_varying vec3 v_Position;
 
 #if defined(APPLY_CUBEMAP) || defined(APPLY_DRAWFLAT)
-qf_varying myhalf3 v_Normal;
+qf_varying vec3 v_Normal;
 #endif
 
 #if defined(APPLY_CUBEMAP_VERTEX)

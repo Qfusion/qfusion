@@ -655,18 +655,6 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 
 // ======================================================================================
 
-#ifndef STR_HELPER
-#define STR_HELPER( s )                 # s
-#define STR_TOSTR( x )                  STR_HELPER( x )
-#endif
-
-#define QF_BUILTIN_GLSL_MACROS "" \
-	"#define myhalf float\n" \
-	"#define myhalf2 vec2\n" \
-	"#define myhalf3 vec3\n" \
-	"#define myhalf4 vec4\n" \
-	"\n"
-
 #define QF_BUILTIN_GLSL_MACROS_GLSL120 "" \
 	"#define qf_varying varying\n" \
 	"#define qf_flat_varying varying\n" \
@@ -687,15 +675,15 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 #define QF_BUILTIN_GLSL_MACROS_GLSL130 "" \
 	"precision highp float;\n" \
         "#ifdef VERTEX_SHADER\n" \
-        "  out myhalf4 qf_FrontColor;\n" \
+        "  out vec4 qf_FrontColor;\n" \
         "# define qf_varying out\n" \
         "# define qf_flat_varying flat out\n" \
         "# define qf_attribute in\n" \
         "#endif\n" \
         "#ifdef FRAGMENT_SHADER\n" \
-        "  in myhalf4 qf_FrontColor;\n" \
-        "  out myhalf4 qf_FragColor;\n" \
-        "  out myhalf4 qf_BrightColor;\n" \
+        "  in vec4 qf_FrontColor;\n" \
+        "  out vec4 qf_FragColor;\n" \
+        "  out vec4 qf_BrightColor;\n" \
         "# define qf_varying in\n" \
         "# define qf_flat_varying flat in\n" \
         "#endif\n" \
@@ -1334,7 +1322,6 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 	}
 	shaderTypeIdx = i;
 	shaderStrings[i++] = "\n";
-	shaderStrings[i++] = QF_BUILTIN_GLSL_MACROS;
 	if( glConfig.ext.glsl130 )
 		shaderStrings[i++] = QF_BUILTIN_GLSL_MACROS_GLSL130;
 	else
@@ -1660,7 +1647,7 @@ void RP_UpdateViewUniforms( int elem,
 * The first component corresponds to RGB, the second to ALPHA.
 * Whenever the program needs to scale source colors, the mask needs
 * to be used in the following manner:
-* color *= mix(myhalf4(1.0), myhalf4(scale), u_BlendMix.xxxy);
+* color *= mix(vec4(1.0), vec4(scale), u_BlendMix.xxxy);
 */
 void RP_UpdateBlendMixUniform( int elem, vec2_t blendMix ) {
 	glsl_program_t *program = r_glslprograms + elem - 1;
