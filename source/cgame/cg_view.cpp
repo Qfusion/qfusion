@@ -26,7 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //					ChaseHack (In Eyes Chasecam)
 //======================================================================
 
-cg_chasecam_t chaseCam;
+ChasecamState chaseCam;
 
 int CG_LostMultiviewPOV( void );
 
@@ -639,29 +639,29 @@ static void CG_UpdateChaseCam( void ) {
 		chaseCam.mode = CAM_INEYES;
 	}
 
-	if( cg.time > chaseCam.cmd_mode_delay ) {
-		const int delay = 250;
+	usercmd_t cmd;
+	trap_NET_GetUserCmd( trap_NET_GetCurrentUserCmdNum() - 1, &cmd );
 
-		usercmd_t cmd;
-		trap_NET_GetUserCmd( trap_NET_GetCurrentUserCmdNum() - 1, &cmd );
+	if( chaseCam.key_pressed ) {
+		chaseCam.key_pressed = ( cmd.buttons & ( BUTTON_ATTACK | BUTTON_SPECIAL ) ) != 0 || cmd.upmove != 0 || cmd.sidemove != 0;
+		return;
+	}
 
-		if( cmd.buttons & BUTTON_ATTACK ) {
-			if( CG_SwitchChaseCamMode() ) {
-				chaseCam.cmd_mode_delay = cg.time + delay;
-			}
-		}
+	if( cmd.buttons & BUTTON_ATTACK ) {
+		CG_SwitchChaseCamMode();
+		chaseCam.key_pressed = true;
+	}
 
-		int chaseStep = 0;
-		if( cmd.upmove > 0 || cmd.sidemove > 0 || ( cmd.buttons & BUTTON_SPECIAL ) ) {
-			chaseStep = 1;
-		} else if( cmd.upmove < 0 || cmd.sidemove < 0 ) {
-			chaseStep = -1;
-		}
-		if( chaseStep ) {
-			if( CG_ChaseStep( chaseStep ) ) {
-				chaseCam.cmd_mode_delay = cg.time + delay;
-			}
-		}
+	int chaseStep = 0;
+	if( cmd.upmove > 0 || cmd.sidemove > 0 || ( cmd.buttons & BUTTON_SPECIAL ) ) {
+		chaseStep = 1;
+	} else if( cmd.upmove < 0 || cmd.sidemove < 0 ) {
+		chaseStep = -1;
+	}
+
+	if( chaseStep != 0 ) {
+		CG_ChaseStep( chaseStep );
+		chaseCam.key_pressed = true;
 	}
 }
 

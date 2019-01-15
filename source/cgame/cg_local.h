@@ -862,12 +862,12 @@ enum {
 	CAM_MODES
 };
 
-typedef struct {
+struct ChasecamState {
 	int mode;
-	unsigned int cmd_mode_delay;
-} cg_chasecam_t;
+	bool key_pressed;
+};
 
-extern cg_chasecam_t chaseCam;
+extern ChasecamState chaseCam;
 
 extern cvar_t *cg_thirdPerson;
 extern cvar_t *cg_thirdPersonAngle;

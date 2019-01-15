@@ -804,7 +804,7 @@ void CG_Reset( void ) {
 	cg.helpmessage_time = 0;
 	cg.motd_time = 0;
 
-	chaseCam.cmd_mode_delay = 0; // cg.time
+	chaseCam.key_pressed = false;
 
 	// reset prediction optimization
 	cg.predictFrom = 0;
