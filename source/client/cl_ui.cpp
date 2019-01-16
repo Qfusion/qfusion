@@ -268,9 +268,7 @@ static void PopDisabled( bool disabled ) {
 }
 
 static bool SelectableColor( const char * label, RGB rgb, bool selected ) {
-	ImGui::PushStyleColor( ImGuiCol_Text, ImVec4( ImColor( rgb.r, rgb.g, rgb.b ) ) );
 	bool clicked = ImGui::Selectable( "", selected, ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_PressedOnRelease );
-	ImGui::PopStyleColor();
 
 	ImGui::NextColumn();
 	ImVec2 window_pos = ImGui::GetWindowPos();
