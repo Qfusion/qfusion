@@ -266,14 +266,17 @@ void S_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis ) {
 		ps->touched_since_last_update = false;
 
 		if( not_touched || state == AL_STOPPED ) {
+			// stop the current sound
 			alSourceStop( ps->source );
-
-			if( ps->ent_num >= 0 )
+			if( ps->type == SoundType_AttachedImmediate && ps->ent_num >= 0 )
 				entities[ ps->ent_num ].ps = NULL;
 
+			// remove-swap it from the playing sounds array
 			num_playing_sounds--;
 			swap( ps, &playing_sounds[ num_playing_sounds ] );
-			if( ps->ent_num >= 0 )
+
+			// fix up the ent->ps pointer for the sound that got swapped in
+			if( ps->type == SoundType_AttachedImmediate && ps->ent_num >= 0 )
 				entities[ ps->ent_num ].ps = ps;
 
 			i--;
