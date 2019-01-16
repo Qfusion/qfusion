@@ -23,14 +23,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 enum {
 	PPFX_SOFT_PARTICLES,
 	PPFX_TONE_MAPPING,
-	PPFX_COLOR_CORRECTION,
 	PPFX_BLUR,
 };
 
 enum {
 	PPFX_BIT_SOFT_PARTICLES = RF_BIT( PPFX_SOFT_PARTICLES ),
 	PPFX_BIT_TONE_MAPPING = RF_BIT( PPFX_TONE_MAPPING ),
-	PPFX_BIT_COLOR_CORRECTION = RF_BIT( PPFX_COLOR_CORRECTION ),
 	PPFX_BIT_BLUR = RF_BIT( PPFX_BLUR ),
 };
 
@@ -250,7 +248,6 @@ void R_RenderScene( const refdef_t *fd ) {
 	int ppFrontBuffer = 0;
 	int samples = 0;
 	image_t *ppSource;
-	shader_t *cc;
 
 	R_End2D();
 
@@ -287,10 +284,6 @@ void R_RenderScene( const refdef_t *fd ) {
 	rn.multisampleDepthResolved = false;
 
 	fbFlags = 0;
-	cc = rn.refdef.colorCorrection;
-	if( !( cc && cc->numpasses > 0 && cc->passes[0].images[0] && cc->passes[0].images[0] != rsh.noTexture ) ) {
-		cc = NULL;
-	}
 
 	if( !( fd->rdflags & RDF_NOWORLDMODEL ) ) {
 		bool useFloat;
@@ -322,10 +315,7 @@ void R_RenderScene( const refdef_t *fd ) {
 			int oldFlags = fbFlags;
 
 			if( rn.st == &rsh.stf ) {
-				fbFlags |= PPFX_BIT_TONE_MAPPING | PPFX_BIT_COLOR_CORRECTION;
-			}
-			if( cc ) {
-				fbFlags |= PPFX_BIT_COLOR_CORRECTION;
+				fbFlags |= PPFX_BIT_TONE_MAPPING;
 			}
 			if( fd->rdflags & RDF_BLURRED ) {
 				fbFlags |= PPFX_BIT_BLUR;
@@ -419,35 +409,6 @@ void R_RenderScene( const refdef_t *fd ) {
 		fbFlags &= ~PPFX_BIT_TONE_MAPPING;
 		dest = fbFlags ? rsh.st.screenPPCopies[ppFrontBuffer] : NULL; // LDR
 
-		if( cc ) {
-			images[0] = cc->passes[0].images[0];
-			numImages = 2;
-			fbFlags &= ~PPFX_BIT_COLOR_CORRECTION;
-			dest = fbFlags ? rsh.st.screenPPCopies[ppFrontBuffer] : NULL; // re-evaluate
-			cc = NULL;
-		}
-
-		R_BlitTextureToScrFbo( fd,
-							   ppSource, dest ? dest->fbo : rf.renderTarget,
-							   GLSL_PROGRAM_TYPE_COLOR_CORRECTION,
-							   colorWhite, 0,
-							   numImages, images, 0 );
-
-		ppFrontBuffer ^= 1;
-		ppSource = dest;
-	}
-
-	// apply color correction
-	if( fbFlags & PPFX_BIT_COLOR_CORRECTION ) {
-		image_t *dest;
-		unsigned numImages = 0;
-		image_t *images[MAX_SHADER_IMAGES] = { NULL };
-
-		fbFlags &= ~PPFX_BIT_COLOR_CORRECTION;
-		images[0] = cc ? cc->passes[0].images[0] : NULL;
-		numImages = MAX_SHADER_IMAGES;
-
-		dest = fbFlags ? rsh.st.screenPPCopies[ppFrontBuffer] : NULL;
 		R_BlitTextureToScrFbo( fd,
 							   ppSource, dest ? dest->fbo : rf.renderTarget,
 							   GLSL_PROGRAM_TYPE_COLOR_CORRECTION,
@@ -460,11 +421,7 @@ void R_RenderScene( const refdef_t *fd ) {
 
 	if( fbFlags & PPFX_BIT_BLUR ) {
 		ppSource = R_BlurTextureToScrFbo( fd, ppSource, rsh.st.screenPPCopies[ppFrontBuffer] );
-		R_BlitTextureToScrFbo( fd,
-							   ppSource, rf.renderTarget,
-							   GLSL_PROGRAM_TYPE_NONE,
-							   colorWhite, 0,
-							   0, NULL, 0 );
+		R_BlitTextureToScrFbo( fd, ppSource, rf.renderTarget, GLSL_PROGRAM_TYPE_NONE, colorWhite, 0, 0, NULL, 0 );
 	}
 
 done:

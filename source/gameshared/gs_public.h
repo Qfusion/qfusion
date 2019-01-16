@@ -105,7 +105,6 @@ enum {
 	GAMESTAT_MATCHDURATION,
 	GAMESTAT_CLOCKOVERRIDE,
 	GAMESTAT_MAXPLAYERSINTEAM,
-	GAMESTAT_COLORCORRECTION,
 };
 
 #define GAMESTAT_FLAG_PAUSED ( 1 << 0LL )
@@ -155,8 +154,6 @@ extern gs_state_t gs;
 #define GS_MatchStartTime() ( gs.gameState.stats[GAMESTAT_MATCHSTART] )
 #define GS_MatchEndTime() ( gs.gameState.stats[GAMESTAT_MATCHDURATION] ? gs.gameState.stats[GAMESTAT_MATCHSTART] + gs.gameState.stats[GAMESTAT_MATCHDURATION] : 0 )
 #define GS_MatchClockOverride() ( gs.gameState.stats[GAMESTAT_CLOCKOVERRIDE] )
-
-#define GS_ColorCorrection() ( gs.gameState.stats[GAMESTAT_COLORCORRECTION] )
 
 #define DEFAULT_PLAYERSPEED ( GS_RaceGametype() ? DEFAULT_PLAYERSPEED_RACE : DEFAULT_PLAYERSPEED_STANDARD )
 

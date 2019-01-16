@@ -696,14 +696,6 @@ static void CG_SetupRefDef( cg_viewdef_t *view, refdef_t *rd ) {
 	Matrix3_Copy( cg.view.axis, rd->viewaxis );
 	VectorInverse( &rd->viewaxis[AXIS_RIGHT] );
 
-	rd->colorCorrection = NULL;
-	if( cg_colorCorrection->integer ) {
-		int colorCorrection = GS_ColorCorrection();
-		if( ( colorCorrection > 0 ) && ( colorCorrection < MAX_IMAGES ) ) {
-			rd->colorCorrection = cgs.imagePrecache[colorCorrection];
-		}
-	}
-
 	VectorCopy( view->origin, rd->vieworg );
 
 	AnglesToAxis( view->angles, rd->viewaxis );

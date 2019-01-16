@@ -630,7 +630,6 @@ static const glsl_feature_t glsl_features_colcorrection[] =
 	{ GLSL_SHADER_COMMON_SRGB2LINEAR, "#define APPLY_SRGB2LINEAR\n", "_srgb" },
 	{ GLSL_SHADER_COMMON_LINEAR2SRB, "#define APPLY_LINEAR2SRGB\n", "_linear" },
 
-	{ GLSL_SHADER_COLOR_CORRECTION_LUT, "#define APPLY_LUT\n", "_lut" },
 	{ GLSL_SHADER_COLOR_CORRECTION_HDR, "#define APPLY_HDR\n", "_hdr" },
 
 	{ 0, NULL, NULL }
@@ -1836,9 +1835,6 @@ static void RP_GetUniformLocations( glsl_program_t *program ) {
 	int locBlueNoiseTexture = glGetUniformLocation( program->object, "u_BlueNoiseTexture" );
 	int locBlueNoiseTextureSize = glGetUniformLocation( program->object, "u_BlueNoiseTextureSize" );
 
-	int locColorLUT = glGetUniformLocation( program->object, "u_ColorLUT" );
-	int locCubeFilter = glGetUniformLocation( program->object, "u_CubeFilter" );
-
 	program->loc.GlossFactors = glGetUniformLocation( program->object, "u_GlossFactors" );
 
 	program->loc.OutlineHeight = glGetUniformLocation( program->object, "u_OutlineHeight" );
@@ -1904,14 +1900,6 @@ static void RP_GetUniformLocations( glsl_program_t *program ) {
 		assert( locBlueNoiseTextureSize >= 0 );
 		glUniform1i( locBlueNoiseTexture, 7 );
 		glUniform2f( locBlueNoiseTextureSize, BLUENOISE_TEXTURE_SIZE, BLUENOISE_TEXTURE_SIZE );
-	}
-
-	if( locColorLUT >= 0 ) {
-		glUniform1i( locColorLUT, 1 );
-	}
-
-	if( locCubeFilter >= 0 ) {
-		glUniform1i( locCubeFilter, 5 );
 	}
 }
 

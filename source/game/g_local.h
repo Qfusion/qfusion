@@ -199,8 +199,6 @@ typedef struct {
 
 	timeout_t timeout;
 	float gravity;
-
-	int colorCorrection;
 } level_locals_t;
 
 
@@ -242,8 +240,6 @@ typedef struct {
 	const char *not_gametype;
 	const char *shaderName;
 	int size;
-
-	const char *colorCorrection;
 } spawn_temp_t;
 
 

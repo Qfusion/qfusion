@@ -926,9 +926,6 @@ static void RB_RenderMeshGLSL_ColorCorrection( const shaderpass_t *pass, r_glslf
 	mat4_t texMatrix;
 
 	programFeatures &= ~GLSL_SHADER_COMMON_SRGB2LINEAR;
-	if( pass->images[1] ) { // lut
-		programFeatures |= GLSL_SHADER_COLOR_CORRECTION_LUT;
-	}
 
 	if( pass->images[0]->flags & IT_FLOAT ) {
 		if( glConfig.sSRGB ) {
@@ -945,9 +942,6 @@ static void RB_RenderMeshGLSL_ColorCorrection( const shaderpass_t *pass, r_glslf
 	Matrix4_Identity( texMatrix );
 
 	RB_BindImage( 0, pass->images[0] );
-	if( pass->images[1] ) {
-		RB_BindImage( 1, pass->images[1] );
-	}
 
 	// update uniforms
 	program = RB_RegisterProgram( GLSL_PROGRAM_TYPE_COLOR_CORRECTION, NULL,

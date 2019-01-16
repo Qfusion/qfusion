@@ -101,8 +101,7 @@ enum {
 #define GLSL_SHADER_OUTLINE_OUTLINES_CUTOFF     GLSL_BIT( 32 )
 
 // hdr/color-correction
-#define GLSL_SHADER_COLOR_CORRECTION_LUT        GLSL_BIT( 32 )
-#define GLSL_SHADER_COLOR_CORRECTION_HDR        GLSL_BIT( 33 )
+#define GLSL_SHADER_COLOR_CORRECTION_HDR        GLSL_BIT( 32 )
 
 void RP_Init( void );
 void RP_Shutdown( void );

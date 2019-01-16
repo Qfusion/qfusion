@@ -873,8 +873,6 @@ extern cvar_t *cg_thirdPerson;
 extern cvar_t *cg_thirdPersonAngle;
 extern cvar_t *cg_thirdPersonRange;
 
-extern cvar_t *cg_colorCorrection;
-
 void CG_ResetKickAngles( void );
 void CG_ResetColorBlend( void );
 
