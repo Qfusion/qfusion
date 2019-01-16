@@ -439,7 +439,7 @@ void S_StartMenuMusic() {
 
 	alSourcefv( music_source, AL_POSITION, vec3_origin );
 	alSourcefv( music_source, AL_VELOCITY, vec3_origin );
-	alSourcef( music_source, AL_GAIN, s_musicvolume->value );
+	alSourcef( music_source, AL_GAIN, s_volume->value * s_musicvolume->value );
 	alSourcei( music_source, AL_SOURCE_RELATIVE, AL_FALSE );
 	alSourcei( music_source, AL_LOOPING, AL_TRUE );
 	alSourcei( music_source, AL_BUFFER, menu_music_asset->buffer );
