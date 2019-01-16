@@ -468,8 +468,6 @@ size_t SCR_FontHeight( qfontface_t *font );
 size_t SCR_strWidth( const char *str, qfontface_t *font, size_t maxlen, int flags );
 size_t SCR_StrlenForWidth( const char *str, qfontface_t *font, size_t maxwidth, int flags );
 int SCR_FontUnderline( qfontface_t *font, int *thickness );
-size_t SCR_FontAdvance( qfontface_t *font );
-size_t SCR_FontXHeight( qfontface_t *font );
 fdrawchar_t SCR_SetDrawCharIntercept( fdrawchar_t intercept );
 int SCR_DrawString( int x, int y, int align, const char *str, qfontface_t *font, const vec4_t color, int flags );
 size_t SCR_DrawStringWidth( int x, int y, int align, const char *str, size_t maxwidth, qfontface_t *font, const vec4_t color, int flags );

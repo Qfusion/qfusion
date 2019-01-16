@@ -215,33 +215,6 @@ int FTLIB_FontUnderline( qfontface_t *font, int *thickness ) {
 	return p;
 }
 
-/*
-* FTLIB_FontAdvance
-*/
-size_t FTLIB_FontAdvance( qfontface_t *font ) {
-	if( font ) {
-		return font->advance;
-	}
-	return 0;
-}
-
-/*
-* FTLIB_FontXHeight
-*/
-size_t FTLIB_FontXHeight( qfontface_t *font ) {
-	if( font ) {
-		if( !font->xHeight ) {
-			qglyph_t *glyph = FTLIB_GetGlyph( font, 'x' );
-			if( !glyph ) {
-				glyph = FTLIB_GetGlyph( font, FTLIB_REPLACEMENT_GLYPH );
-			}
-			font->xHeight = glyph->height;
-		}
-		return font->xHeight;
-	}
-	return 0;
-}
-
 //===============================================================================
 //STRINGS DRAWING
 //===============================================================================

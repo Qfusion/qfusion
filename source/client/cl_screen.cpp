@@ -157,14 +157,6 @@ int SCR_FontUnderline( qfontface_t *font, int *thickness ) {
 	return FTLIB_FontUnderline( font, thickness );
 }
 
-size_t SCR_FontAdvance( qfontface_t *font ) {
-	return FTLIB_FontAdvance( font );
-}
-
-size_t SCR_FontXHeight( qfontface_t *font ) {
-	return FTLIB_FontXHeight( font );
-}
-
 fdrawchar_t SCR_SetDrawCharIntercept( fdrawchar_t intercept ) {
 	return FTLIB_SetDrawCharIntercept( intercept );
 }

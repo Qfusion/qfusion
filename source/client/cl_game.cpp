@@ -291,8 +291,6 @@ void CL_GameModule_Init( void ) {
 	import.SCR_FontSize = SCR_FontSize;
 	import.SCR_FontHeight = SCR_FontHeight;
 	import.SCR_FontUnderline = SCR_FontUnderline;
-	import.SCR_FontAdvance = SCR_FontAdvance;
-	import.SCR_FontXHeight = SCR_FontXHeight;
 	import.SCR_SetDrawCharIntercept = SCR_SetDrawCharIntercept;
 	import.SCR_strWidth = SCR_strWidth;
 	import.SCR_StrlenForWidth = SCR_StrlenForWidth;

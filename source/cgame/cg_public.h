@@ -202,8 +202,6 @@ typedef struct {
 	size_t ( *SCR_FontSize )( struct qfontface_s *font );
 	size_t ( *SCR_FontHeight )( struct qfontface_s *font );
 	int ( *SCR_FontUnderline )( struct qfontface_s *font, int *thickness );
-	size_t ( *SCR_FontAdvance )( struct qfontface_s *font );
-	size_t ( *SCR_FontXHeight )( struct qfontface_s *font );
 	size_t ( *SCR_strWidth )( const char *str, struct qfontface_s *font, size_t maxlen, int flags );
 	size_t ( *SCR_StrlenForWidth )( const char *str, struct qfontface_s *font, size_t maxwidth, int flags );
 	cg_fdrawchar_t ( *SCR_SetDrawCharIntercept )( cg_fdrawchar_t intercept );

@@ -22,8 +22,6 @@ size_t FTLIB_FontHeight( struct qfontface_s *font );
 size_t FTLIB_StringWidth( const char *str, struct qfontface_s *font, size_t maxlen, int flags );
 size_t FTLIB_StrlenForWidth( const char *str, struct qfontface_s *font, size_t maxwidth, int flags );
 int FTLIB_FontUnderline( struct qfontface_s *font, int *thickness );
-size_t FTLIB_FontAdvance( struct qfontface_s *font );
-size_t FTLIB_FontXHeight( struct qfontface_s *font );
 void FTLIB_DrawRawChar( int x, int y, wchar_t num, struct qfontface_s *font, const vec4_t color );
 void FTLIB_DrawClampChar( int x, int y, wchar_t num, int xmin, int ymin, int xmax, int ymax, struct qfontface_s *font, const vec4_t color );
 void FTLIB_DrawClampString( int x, int y, const char *str, int xmin, int ymin, int xmax, int ymax, struct qfontface_s *font, const vec4_t color, int flags );
