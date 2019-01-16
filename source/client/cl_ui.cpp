@@ -1,5 +1,6 @@
 #include "client.h"
 #include "qcommon/version.h"
+#include "gameshared/gs_public.h"
 
 #include "sdl/sdl_window.h"
 
@@ -266,12 +267,70 @@ static void PopDisabled( bool disabled ) {
 	}
 }
 
+static bool SelectableColor( const char * label, RGB rgb, bool selected ) {
+	ImGui::PushStyleColor( ImGuiCol_Text, ImVec4( ImColor( rgb.r, rgb.g, rgb.b ) ) );
+	bool clicked = ImGui::Selectable( "", selected, ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_PressedOnRelease );
+	ImGui::PopStyleColor();
+
+	ImGui::NextColumn();
+	ImVec2 window_pos = ImGui::GetWindowPos();
+	ImVec2 top_left = ImGui::GetCursorPos();
+	top_left.x += window_pos.x;
+	top_left.y += window_pos.y;
+	ImVec2 bottom_right = top_left;
+	bottom_right.x += ImGui::GetTextLineHeight() * 1.618f;
+	bottom_right.y += ImGui::GetTextLineHeight();
+	ImGui::GetWindowDrawList()->AddRectFilled( top_left, bottom_right, IM_COL32( rgb.r, rgb.g, rgb.b, 255 ) );
+	ImGui::NextColumn();
+
+	return clicked;
+}
+
+static void CvarTeamColorCombo( const char * label, const char * cvar_name, int def ) {
+	SettingLabel( label );
+	ImGui::PushItemWidth( 100 );
+
+	char def_str[ 16 ];
+	Q_snprintfz( def_str, sizeof( def_str ), "%d", def );
+	cvar_t * cvar = Cvar_Get( cvar_name, def_str, CVAR_ARCHIVE );
+
+	char unique[ 128 ];
+	Q_snprintfz( unique, sizeof( unique ), "##%s", cvar_name );
+
+	int selected = cvar->integer;
+	if( selected >= int( ARRAY_COUNT( TEAM_COLORS ) ) )
+		selected = def;
+
+	if( ImGui::BeginCombo( unique, TEAM_COLORS[ selected ].name ) ) {
+		ImGui::Columns( 2, cvar_name, false );
+		ImGui::SetColumnWidth( 0, 0 );
+
+		for( int i = 0; i < int( ARRAY_COUNT( TEAM_COLORS ) ); i++ ) {
+			if( SelectableColor( TEAM_COLORS[ i ].name, TEAM_COLORS[ i ].rgb, i == selected ) )
+				selected = i;
+			if( i == selected )
+				ImGui::SetItemDefaultFocus();
+		}
+
+		ImGui::EndCombo();
+		ImGui::Columns( 1 );
+	}
+	ImGui::PopItemWidth();
+
+	char buf[ 16 ];
+	Q_snprintfz( buf, sizeof( buf ), "%d", selected );
+	Cvar_Set( cvar_name, buf );
+}
+
 static void SettingsGeneral() {
 	ImGui::Text( "These settings are saved automatically" );
 
 	CvarTextbox< MAX_NAME_BYTES >( "Name", "name", "Player", CVAR_USERINFO | CVAR_ARCHIVE );
 	CvarSliderInt( "FOV", "fov", 60, 140, "100", CVAR_ARCHIVE );
 	CvarCheckbox( "Show FPS", "cg_showFPS", "0", CVAR_ARCHIVE );
+
+	CvarTeamColorCombo( "Ally color", "cg_allyColor", 0 );
+	CvarTeamColorCombo( "Enemy color", "cg_enemyColor", 1 );
 }
 
 static void SettingsMouse() {

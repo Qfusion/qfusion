@@ -581,17 +581,15 @@ static void CG_RegisterVariables( void ) {
 	// developer cvars
 	cg_showClamp = trap_Cvar_Get( "cg_showClamp", "0", CVAR_DEVELOPER );
 
-	cg_allyColor = trap_Cvar_Get( "cg_allyColor", "0 160 255", CVAR_ARCHIVE );
+	cg_allyColor = trap_Cvar_Get( "cg_allyColor", "0", CVAR_ARCHIVE );
 	cg_allyModel = trap_Cvar_Get( "cg_allyModel", "bigvic", CVAR_ARCHIVE );
 	cg_allyForceModel = trap_Cvar_Get( "cg_allyForceModel", "1", CVAR_ARCHIVE | CVAR_READONLY );
-	cg_allyColor->modified = true;
 	cg_allyModel->modified = true;
 	cg_allyForceModel->modified = true;
 
-	cg_enemyColor = trap_Cvar_Get( "cg_enemyColor", "255 20 60", CVAR_ARCHIVE );
+	cg_enemyColor = trap_Cvar_Get( "cg_enemyColor", "1", CVAR_ARCHIVE );
 	cg_enemyModel = trap_Cvar_Get( "cg_enemyModel", "padpork", CVAR_ARCHIVE );
 	cg_enemyForceModel = trap_Cvar_Get( "cg_enemyForceModel", "1", CVAR_ARCHIVE | CVAR_READONLY );
-	cg_enemyColor->modified = true;
 	cg_enemyModel->modified = true;
 	cg_enemyForceModel->modified = true;
 

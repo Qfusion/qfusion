@@ -59,6 +59,11 @@ typedef vec_t dualquat_t[8];
 
 typedef uint8_t byte_vec4_t[4];
 
+struct RGB {
+	uint8_t r, g, b;
+	constexpr RGB( uint8_t r_, uint8_t g_, uint8_t b_ ) : r( r_ ), g( g_ ), b( b_ ) { }
+};
+
 // 0-2 are axial planes
 #define PLANE_X     0
 #define PLANE_Y     1

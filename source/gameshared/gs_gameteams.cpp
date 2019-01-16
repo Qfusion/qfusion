@@ -79,7 +79,7 @@ const char *GS_TeamSkinName( int team ) {
 /*
 * GS_Teams_TeamFromName
 */
-int GS_Teams_TeamFromName( const char *teamname ) {
+int GS_TeamFromName( const char *teamname ) {
 	const char *s;
 	int i;
 

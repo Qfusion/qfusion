@@ -466,11 +466,23 @@ enum {
 	TEAM_ENEMY,
 };
 
+struct TeamColor {
+	const char * name;
+	RGB rgb;
+};
+
+constexpr TeamColor TEAM_COLORS[] = {
+	{ "Blue", RGB( 0, 160, 255 ) },
+	{ "Red", RGB( 255, 20, 60 ) },
+	{ "Green", RGB( 0, 255, 160 ) },
+	{ "Yellow", RGB( 255, 255, 0 ) },
+};
+
 // teams
 const char *GS_TeamName( int team );
 const char *GS_DefaultTeamName( int team );
 const char *GS_TeamSkinName( int team );
-int GS_Teams_TeamFromName( const char *teamname );
+int GS_TeamFromName( const char *teamname );
 bool GS_IsTeamDamage( entity_state_t *targ, entity_state_t *attacker );
 
 //===============================================================

@@ -73,7 +73,7 @@ void AI_SpawnBot( const char * teamName ) {
 
 		AI_Respawn( ent );
 
-		int team = GS_Teams_TeamFromName( teamName );
+		int team = GS_TeamFromName( teamName );
 		if( team != -1 && team > TEAM_PLAYERS ) {
 			// Join specified team immediately
 			G_Teams_JoinTeam( ent, team );

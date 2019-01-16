@@ -1678,7 +1678,7 @@ void G_OperatorVote_Cmd( edict_t *ent ) {
 			return;
 		}
 
-		if( ( newTeam = GS_Teams_TeamFromName( steam ) ) < 0 ) {
+		if( ( newTeam = GS_TeamFromName( steam ) ) < 0 ) {
 			G_PrintMsg( ent, "The team '%s' doesn't exist.\n", steam );
 			return;
 		}
