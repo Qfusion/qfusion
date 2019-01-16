@@ -645,9 +645,6 @@ void CG_GunBladeBlastImpact( const vec3_t pos, const vec3_t dir, float radius ) 
 	CG_SpawnDecal( pos, dir, random() * 360, 3 + ( radius * 0.5f ), 1, 1, 1, 1, 10, 1, false, CG_MediaShader( cgs.media.shaderExplosionMark ) );
 }
 
-static void CG_ProjectileFireTrail( centity_t *cent ) {
-}
-
 /*
 * CG_ProjectileTrail
 */
