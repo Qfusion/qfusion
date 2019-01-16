@@ -237,7 +237,6 @@ void RB_GetShaderpassColor( const shaderpass_t *pass, byte_vec4_t rgba_, float *
 			break;
 		case RGB_GEN_ENTITYWAVE:
 		case RGB_GEN_WAVE:
-		case RGB_GEN_CUSTOMWAVE:
 			if( rgbgenfunc->type == SHADER_FUNC_NONE ) {
 				temp = 1;
 			} else if( rgbgenfunc->type == SHADER_FUNC_RAMP ) {
@@ -260,12 +259,6 @@ void RB_GetShaderpassColor( const shaderpass_t *pass, byte_vec4_t rgba_, float *
 						   rb.entityColor[0] * ( 1.0 / 255.0 ),
 						   rb.entityColor[1] * ( 1.0 / 255.0 ),
 						   rb.entityColor[2] * ( 1.0 / 255.0 ) );
-			} else if( pass->rgbgen.type == RGB_GEN_CUSTOMWAVE ) {
-				c = R_GetCustomColor( (int)pass->rgbgen.args[0] );
-				VectorSet( v,
-						   COLOR_R( c ) * ( 1.0 / 255.0 ),
-						   COLOR_G( c ) * ( 1.0 / 255.0 ),
-						   COLOR_B( c ) * ( 1.0 / 255.0 ) );
 			} else {
 				VectorCopy( pass->rgbgen.args, v );
 			}
@@ -374,7 +367,6 @@ static int RB_RGBAlphaGenToProgramFeatures( const colorgen_t *rgbgen, const colo
 			programFeatures |= GLSL_SHADER_COMMON_RGB_GEN_VERTEX;
 			break;
 		case RGB_GEN_WAVE:
-		case RGB_GEN_CUSTOMWAVE:
 		case RGB_GEN_ENTITYWAVE:
 			if( rgbgen->func.type == SHADER_FUNC_RAMP ) {
 				programFeatures |= GLSL_SHADER_COMMON_RGB_DISTANCERAMP;

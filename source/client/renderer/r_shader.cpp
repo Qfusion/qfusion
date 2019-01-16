@@ -1110,17 +1110,6 @@ static void Shaderpass_RGBGen( shader_t *shader, shaderpass_t *pass, const char 
 		pass->rgbgen.type = RGB_GEN_WAVE;
 		Shader_ParseVector( ptr, pass->rgbgen.args, 3 );
 		Shader_ParseFunc( ptr, &pass->rgbgen.func );
-	} else if( !strcmp( token, "custom" ) || !strcmp( token, "teamcolor" )
-			   || ( wave = !strcmp( token, "teamcolorwave" ) || !strcmp( token, "customcolorwave" ) ? true : false ) ) {
-		pass->rgbgen.type = RGB_GEN_CUSTOMWAVE;
-		pass->rgbgen.args[0] = (int)Shader_ParseFloat( ptr );
-		if( pass->rgbgen.args[0] < 0 || pass->rgbgen.args[0] >= NUM_CUSTOMCOLORS ) {
-			pass->rgbgen.args[0] = 0;
-		}
-		pass->rgbgen.func.type = SHADER_FUNC_NONE;
-		if( wave ) {
-			Shader_ParseFunc( ptr, &pass->rgbgen.func );
-		}
 	} else if( !strcmp( token, "entity" ) || ( wave = !strcmp( token, "entitycolorwave" ) ? true : false ) ) {
 		pass->rgbgen.type = RGB_GEN_ENTITYWAVE;
 		pass->rgbgen.func.type = SHADER_FUNC_NONE;
@@ -1954,8 +1943,6 @@ static void Shader_Finish( shader_t *s ) {
 		if( pass->rgbgen.type == RGB_GEN_WAVE ||
 			pass->rgbgen.type == RGB_GEN_CONST ) {
 			size += sizeof( float ) * 4;
-		} else if( pass->rgbgen.type == RGB_GEN_CUSTOMWAVE ) {
-			size += sizeof( float ) * 2;
 		}
 
 		// alphagen args
@@ -1981,13 +1968,9 @@ static void Shader_Finish( shader_t *s ) {
 	for( i = 0, pass = s->passes; i < s->numpasses; i++, pass++ ) {
 		bufferOffset = ALIGN( bufferOffset, 16 );
 
-		if( pass->rgbgen.type == RGB_GEN_WAVE ||
-			pass->rgbgen.type == RGB_GEN_CONST ) {
+		if( pass->rgbgen.type == RGB_GEN_WAVE || pass->rgbgen.type == RGB_GEN_CONST ) {
 			pass->rgbgen.args = ( float * )( buffer + bufferOffset ); bufferOffset += sizeof( float ) * 4;
 			memcpy( pass->rgbgen.args, r_currentPasses[i].rgbgen.args, sizeof( float ) * 3 );
-		} else if( pass->rgbgen.type == RGB_GEN_CUSTOMWAVE ) {
-			pass->rgbgen.args = ( float * )( buffer + bufferOffset ); bufferOffset += sizeof( float ) * 2;
-			memcpy( pass->rgbgen.args, r_currentPasses[i].rgbgen.args, sizeof( float ) * 1 );
 		}
 
 		if( pass->alphagen.type == ALPHA_GEN_CONST ) {
@@ -2047,8 +2030,7 @@ static void Shader_Finish( shader_t *s ) {
 		}
 
 		// disable r_drawflat for shaders with customizable color passes
-		if( pass->rgbgen.type == RGB_GEN_CONST || pass->rgbgen.type == RGB_GEN_CUSTOMWAVE ||
-			pass->rgbgen.type == RGB_GEN_ENTITYWAVE || pass->rgbgen.type == RGB_GEN_ONE_MINUS_ENTITY ) {
+		if( pass->rgbgen.type == RGB_GEN_CONST || pass->rgbgen.type == RGB_GEN_ENTITYWAVE || pass->rgbgen.type == RGB_GEN_ONE_MINUS_ENTITY ) {
 			s->flags |= SHADER_NODRAWFLAT;
 		}
 	}
