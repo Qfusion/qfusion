@@ -10,7 +10,6 @@ file(GLOB CLIENT_HEADERS
 	"renderer/*.h"
 	"ftlib/*.h"
 	"sound/*.h"
-	"ui/*.h"
 	"../gameshared/*.h"
 	"../gameshared/angelwrap/*.h"
 	"../gameshared/angelwrap/addon/*.h"
@@ -19,6 +18,8 @@ file(GLOB CLIENT_HEADERS
 	"../cgame/*.h"
 	"../game/g_public.h"
 	"../server/*.h"
+
+	"../../libs/imgui/*.h"
 	)
 
 file(GLOB CLIENT_COMMON_SOURCES
@@ -35,7 +36,7 @@ file(GLOB CLIENT_COMMON_SOURCES
 	"renderer/*.cpp"
 	"sdl/*.cpp"
 	"sound/*.cpp"
-	"ui/*.cpp"
+	"../../libs/imgui/*.cpp"
 	)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")

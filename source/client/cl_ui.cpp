@@ -3,10 +3,10 @@
 
 #include "sdl/sdl_window.h"
 
-#include "ui/imgui.h"
-#include "ui/imgui_freetype.h"
-#include "ui/imgui_internal.h"
-#include "ui/imgui_impl_sdl.h"
+#include "imgui/imgui.h"
+#include "imgui/imgui_freetype.h"
+#include "imgui/imgui_internal.h"
+#include "imgui/imgui_impl_sdl.h"
 
 extern SDL_Window * sdl_window;
 
