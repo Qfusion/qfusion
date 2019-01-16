@@ -325,10 +325,9 @@ static void SettingsGeneral() {
 
 	CvarTextbox< MAX_NAME_BYTES >( "Name", "name", "Player", CVAR_USERINFO | CVAR_ARCHIVE );
 	CvarSliderInt( "FOV", "fov", 60, 140, "100", CVAR_ARCHIVE );
-	CvarCheckbox( "Show FPS", "cg_showFPS", "0", CVAR_ARCHIVE );
-
 	CvarTeamColorCombo( "Ally color", "cg_allyColor", 0 );
 	CvarTeamColorCombo( "Enemy color", "cg_enemyColor", 1 );
+	CvarCheckbox( "Show FPS", "cg_showFPS", "0", CVAR_ARCHIVE );
 }
 
 static void SettingsMouse() {
