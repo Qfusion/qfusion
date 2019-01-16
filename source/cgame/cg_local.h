@@ -894,8 +894,6 @@ void CG_FreeLocalEntities( void );
 
 void CG_BulletExplosion( const vec3_t origin, const vec_t *dir, const trace_t *trace );
 void CG_BubbleTrail( const vec3_t start, const vec3_t end, int dist );
-void CG_Explosion1( const vec3_t pos );
-void CG_Explosion2( const vec3_t pos );
 void CG_ProjectileTrail( centity_t *cent );
 void CG_NewBloodTrail( centity_t *cent );
 void CG_BloodDamageEffect( const vec3_t origin, const vec3_t dir, int damage, int team );
@@ -903,9 +901,9 @@ void CG_FlagTrail( const vec3_t origin, const vec3_t start, const vec3_t end, fl
 void CG_GreenLaser( const vec3_t start, const vec3_t end );
 void CG_SmallPileOfGibs( const vec3_t origin, int damage, const vec3_t initialVelocity, int team );
 void CG_PlasmaExplosion( const vec3_t pos, const vec3_t dir, int team, float radius );
-void CG_GrenadeExplosionMode( const vec3_t pos, const vec3_t dir, float radius );
+void CG_GrenadeExplosionMode( const vec3_t pos, const vec3_t dir, float radius, int team );
 void CG_GenericExplosion( const vec3_t pos, const vec3_t dir, float radius );
-void CG_RocketExplosionMode( const vec3_t pos, const vec3_t dir, float radius );
+void CG_RocketExplosionMode( const vec3_t pos, const vec3_t dir, float radius, int team );
 void CG_EBBeam( const vec3_t start, const vec3_t end, int team );
 void CG_EBImpact( const vec3_t pos, const vec3_t dir, int surfFlags, int team );
 void CG_ImpactSmokePuff( const vec3_t origin, const vec3_t dir, float radius, float alpha, int time, int speed );

@@ -487,7 +487,7 @@ void CG_EBImpact( const vec3_t pos, const vec3_t dir, int surfFlags, int team ) 
 /*
 * CG_RocketExplosionMode
 */
-void CG_RocketExplosionMode( const vec3_t pos, const vec3_t dir, float radius ) {
+void CG_RocketExplosionMode( const vec3_t pos, const vec3_t dir, float radius, int team ) {
 	lentity_t *le;
 	vec3_t angles, vec;
 	float expvelocity = 8.0f;
@@ -496,11 +496,14 @@ void CG_RocketExplosionMode( const vec3_t pos, const vec3_t dir, float radius ) 
 
 	CG_SpawnDecal( pos, dir, random() * 360, radius * 0.5, 1, 1, 1, 1, 10, 1, false, CG_MediaShader( cgs.media.shaderExplosionMark ) );
 
+	vec4_t color;
+	CG_TeamColor( team, color );
+
 	// animmap shader of the explosion
 	le = CG_AllocSprite( LE_ALPHA_FADE, pos, radius * 0.6f, 8,
-						 1, 1, 1, 1,
-						 radius * 4, 0.8f, 0.6f, 0, // orange dlight
-						 CG_MediaShader( cgs.media.shaderRocketExplosion ) );
+		color[0], color[1], color[2], color[3],
+		radius * 4, 0.8f, 0.6f, 0, // orange dlight
+		CG_MediaShader( cgs.media.shaderRocketExplosion ) );
 
 	VectorSet( vec, crandom() * expvelocity, crandom() * expvelocity, crandom() * expvelocity );
 	VectorScale( dir, expvelocity, le->velocity );
@@ -512,9 +515,9 @@ void CG_RocketExplosionMode( const vec3_t pos, const vec3_t dir, float radius ) 
 		vec3_t origin;
 		VectorMA( pos, radius * 0.20f, dir, origin );
 		le = CG_AllocSprite( LE_ALPHA_FADE, origin, radius, 3,
-							 1, 1, 1, 1,
-							 0, 0, 0, 0, // no dlight
-							 CG_MediaShader( cgs.media.shaderRocketExplosionRing ) );
+			color[0], color[1], color[2], color[3],
+			0, 0, 0, 0, // no dlight
+			CG_MediaShader( cgs.media.shaderRocketExplosionRing ) );
 
 		le->ent.rotation = rand() % 360;
 	}
@@ -849,7 +852,7 @@ void CG_PModel_SpawnTeleportEffect( centity_t *cent ) {
 /*
 * CG_GrenadeExplosionMode
 */
-void CG_GrenadeExplosionMode( const vec3_t pos, const vec3_t dir, float radius ) {
+void CG_GrenadeExplosionMode( const vec3_t pos, const vec3_t dir, float radius, int team ) {
 	lentity_t *le;
 	vec3_t angles;
 	vec3_t decaldir;
@@ -859,17 +862,17 @@ void CG_GrenadeExplosionMode( const vec3_t pos, const vec3_t dir, float radius )
 	VectorCopy( dir, decaldir );
 	VecToAngles( dir, angles );
 
-	//if( CG_PointContents( pos ) & MASK_WATER )
-	//jalfixme: (shouldn't we do the water sound variation?)
-
 	CG_SpawnDecal( pos, decaldir, random() * 360, radius * 0.5, 1, 1, 1, 1, 10, 1, false, CG_MediaShader( cgs.media.shaderExplosionMark ) );
+
+	vec4_t color;
+	CG_TeamColor( team, color );
 
 	// animmap shader of the explosion
 	VectorMA( pos, radius * 0.15f, dir, origin );
 	le = CG_AllocSprite( LE_ALPHA_FADE, origin, radius * 0.5f, 8,
-						 1, 1, 1, 1,
-						 radius * 4, 0.75f, 0.533f, 0, // yellow dlight
-						 CG_MediaShader( cgs.media.shaderGrenadeExplosion ) );
+		color[0], color[1], color[2], color[3],
+		radius * 4, 0.75f, 0.533f, 0, // yellow dlight
+		CG_MediaShader( cgs.media.shaderGrenadeExplosion ) );
 
 	VectorSet( vec, crandom() * expvelocity, crandom() * expvelocity, crandom() * expvelocity );
 	VectorScale( dir, expvelocity, le->velocity );
@@ -880,9 +883,9 @@ void CG_GrenadeExplosionMode( const vec3_t pos, const vec3_t dir, float radius )
 	if( cg_explosionsRing->integer ) {
 		VectorMA( pos, radius * 0.25f, dir, origin );
 		le = CG_AllocSprite( LE_ALPHA_FADE, origin, radius, 3,
-							 1, 1, 1, 1,
-							 0, 0, 0, 0, // no dlight
-							 CG_MediaShader( cgs.media.shaderGrenadeExplosionRing ) );
+			color[0], color[1], color[2], color[3],
+			0, 0, 0, 0, // no dlight
+			CG_MediaShader( cgs.media.shaderGrenadeExplosionRing ) );
 
 		le->ent.rotation = rand() % 360;
 	}
@@ -956,20 +959,6 @@ void CG_FlagTrail( const vec3_t origin, const vec3_t start, const vec3_t end, fl
 	//friction and gravity
 	VectorSet( le->accel, -0.2f, -0.2f, -9.8f * mass );
 	le->bounce = 50;
-}
-
-/*
-* CG_Explosion1
-*/
-void CG_Explosion1( const vec3_t pos ) {
-	CG_RocketExplosionMode( pos, vec3_origin, 150 );
-}
-
-/*
-* CG_Explosion2
-*/
-void CG_Explosion2( const vec3_t pos ) {
-	CG_GrenadeExplosionMode( pos, vec3_origin, 150 );
 }
 
 /*

@@ -348,6 +348,7 @@ static void W_Grenade_ExplodeDir( edict_t *ent, vec3_t normal ) {
 	VectorMA( ent->s.origin, -0.02, ent->velocity, origin );
 	event = G_SpawnEvent( EV_GRENADE_EXPLOSION, ( dir ? DirToByte( dir ) : 0 ), ent->s.origin );
 	event->s.weapon = radius;
+	event->s.team = ent->s.team;
 
 	G_FreeEdict( ent );
 }
@@ -447,6 +448,7 @@ static void W_Touch_Rocket( edict_t *ent, edict_t *other, cplane_t *plane, int s
 
 	edict_t *event = G_SpawnEvent( EV_ROCKET_EXPLOSION, DirToByte( plane ? plane->normal : NULL ), explosion_origin );
 	event->s.weapon = min( ent->projectileInfo.radius / 8, 255 );
+	event->s.team = ent->s.team;
 
 	G_FreeEdict( ent );
 }

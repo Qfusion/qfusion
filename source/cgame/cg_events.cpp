@@ -1110,10 +1110,10 @@ void CG_EntityEvent( entity_state_t *ent, int ev, int parm, bool predicted ) {
 			if( parm ) {
 				// we have a direction
 				ByteToDir( parm, dir );
-				CG_GrenadeExplosionMode( ent->origin, dir, (float)ent->weapon * 8.0f );
+				CG_GrenadeExplosionMode( ent->origin, dir, (float)ent->weapon * 8.0f, ent->team );
 			} else {
 				// no direction
-				CG_GrenadeExplosionMode( ent->origin, vec3_origin, (float)ent->weapon * 8.0f );
+				CG_GrenadeExplosionMode( ent->origin, vec3_origin, (float)ent->weapon * 8.0f, ent->team );
 			}
 
 			CG_StartKickAnglesEffect( ent->origin, 135, ent->weapon * 8, 325 );
@@ -1121,7 +1121,7 @@ void CG_EntityEvent( entity_state_t *ent, int ev, int parm, bool predicted ) {
 
 		case EV_ROCKET_EXPLOSION:
 			ByteToDir( parm, dir );
-			CG_RocketExplosionMode( ent->origin, dir, (float)ent->weapon * 8.0f );
+			CG_RocketExplosionMode( ent->origin, dir, (float)ent->weapon * 8.0f, ent->team );
 
 			CG_StartKickAnglesEffect( ent->origin, 135, ent->weapon * 8, 300 );
 			break;
