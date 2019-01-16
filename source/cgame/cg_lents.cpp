@@ -643,29 +643,29 @@ void CG_GunBladeBlastImpact( const vec3_t pos, const vec3_t dir, float radius ) 
 }
 
 static void CG_ProjectileFireTrail( centity_t *cent ) {
-	lentity_t *le;
-	float len;
-	vec3_t vec;
-	int trailTime;
+}
+
+/*
+* CG_ProjectileTrail
+*/
+void CG_ProjectileTrail( centity_t *cent ) {
+	if( !cg_projectileFireTrail->integer )
+		return;
+
 	float radius = 8;
 	float alpha = clamp( cg_projectileFireTrailAlpha->value, 0.0f, 1.0f );
-	struct shader_s *shader;
-
-	if( !cg_projectileFireTrail->integer ) {
-		return;
-	}
 
 	// didn't move
+	vec3_t vec;
 	VectorSubtract( cent->ent.origin, cent->trailOrigin, vec );
-	len = VectorNormalize( vec );
-	if( !len ) {
+	float len = VectorNormalize( vec );
+	if( len == 0 )
 		return;
-	}
 
-	shader = CG_MediaShader( cgs.media.shaderRocketFireTrailPuff );
+	struct shader_s * shader = CG_MediaShader( cgs.media.shaderRocketFireTrailPuff );
 
 	// density is found by quantity per second
-	trailTime = (int)( 1000.0f / cg_projectileFireTrail->value );
+	int trailTime = int( 1000.0f / cg_projectileFireTrail->value );
 	if( trailTime < 1 ) {
 		trailTime = 1;
 	}
@@ -677,60 +677,11 @@ static void CG_ProjectileFireTrail( centity_t *cent ) {
 
 		vec4_t color;
 		CG_TeamColor( cent->current.team, color );
-		le = CG_AllocSprite( LE_INVERSESCALE_ALPHA_FADE, cent->trailOrigin, radius, 4,
+		lentity_t * le = CG_AllocSprite( LE_INVERSESCALE_ALPHA_FADE, cent->trailOrigin, radius, 4,
 							 color[ 0 ], color[ 1 ], color[ 2 ], alpha,
 							 0, 0, 0, 0,
 							 shader );
 		VectorSet( le->velocity, -vec[0] * 10 + crandom() * 5, -vec[1] * 10 + crandom() * 5, -vec[2] * 10 + crandom() * 5 );
-		le->ent.rotation = rand() % 360;
-	}
-}
-
-/*
-* CG_ProjectileTrail
-*/
-void CG_ProjectileTrail( centity_t *cent ) {
-	vec3_t vec;
-	float radius = 6.5f;
-	float alpha = 0.35f;
-	struct shader_s *shader = CG_MediaShader( cgs.media.shaderSmokePuff );
-	CG_ProjectileFireTrail( cent ); // add fire trail
-
-	if( !cg_projectileTrail->integer ) {
-		return;
-	}
-
-	// didn't move
-	VectorSubtract( cent->ent.origin, cent->trailOrigin, vec );
-	float len = VectorNormalize( vec );
-	if( !len ) {
-		return;
-	}
-
-	// density is found by quantity per second
-	int trailTime = (int)( 1000.0f / cg_projectileTrail->value );
-	if( trailTime < 1 ) {
-		trailTime = 1;
-	}
-
-	// we don't add more than one sprite each frame. If frame
-	// ratio is too slow, people will prefer having less sprites on screen
-	if( cent->localEffects[LOCALEFFECT_ROCKETTRAIL_LAST_DROP] + trailTime < cg.time ) {
-		cent->localEffects[LOCALEFFECT_ROCKETTRAIL_LAST_DROP] = cg.time;
-
-		int contents = ( CG_PointContents( cent->trailOrigin ) & CG_PointContents( cent->ent.origin ) );
-		if( contents & MASK_WATER ) {
-			shader = CG_MediaShader( cgs.media.shaderWaterBubble );
-			radius = 3 + crandom();
-			alpha = 1.0f;
-		}
-
-		clamp( alpha, 0.0f, 1.0f );
-		lentity_t *le = CG_AllocSprite( LE_PUFF_SHRINK, cent->trailOrigin, radius, 20,
-							 1.0f, 1.0f, 1.0f, alpha,
-							 0, 0, 0, 0,
-							 shader );
-		VectorSet( le->velocity, -vec[0] * 5 + crandom() * 5, -vec[1] * 5 + crandom() * 5, -vec[2] * 5 + crandom() * 5 + 3 );
 		le->ent.rotation = rand() % 360;
 	}
 }

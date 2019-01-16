@@ -767,7 +767,6 @@ extern cvar_t *cg_volume_players; // players sound volume
 extern cvar_t *cg_volume_effects; // world sound volume
 extern cvar_t *cg_volume_announcer; // announcer sounds volume
 extern cvar_t *cg_volume_voicechats; //vsays volume
-extern cvar_t *cg_projectileTrail;
 extern cvar_t *cg_projectileFireTrail;
 extern cvar_t *cg_bloodTrail;
 extern cvar_t *cg_showBloodTrail;
