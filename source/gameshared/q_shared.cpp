@@ -1416,6 +1416,27 @@ char *Q_chrreplace( char *s, const char subj, const char repl ) {
 	return s;
 }
 
+void TruncateFloat( char * str ) {
+	size_t len = strlen( str );
+	if( len == 0 )
+		return;
+
+	if( strchr( str, '.' ) == NULL )
+		return;
+
+	len--;
+	while( true ) {
+		char c = str[ len ];
+		if( c == '.' )
+			len--;
+		if( c != '0' )
+			break;
+		len--;
+	}
+
+	str[ len + 1 ] = '\0';
+}
+
 /*
 * Q_urlencode_unsafechars
 */

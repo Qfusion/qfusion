@@ -193,6 +193,7 @@ const char *Q_strrstr( const char *s, const char *substr );
 bool Q_isdigit( const char *str );
 char *Q_trim( char *s );
 char *Q_chrreplace( char *s, const char subj, const char repl );
+void TruncateFloat( char * str );
 
 /**
  * Converts the given null-terminated string to an URL encoded null-terminated string.

@@ -185,7 +185,7 @@ bool S_Init() {
 
 	memset( entities, 0, sizeof( entities ) );
 
-	s_volume = Cvar_Get( "s_volume", "0.8", CVAR_ARCHIVE );
+	s_volume = Cvar_Get( "s_volume", "1", CVAR_ARCHIVE );
 	s_musicvolume = Cvar_Get( "s_musicvolume", "1", CVAR_ARCHIVE );
 	s_muteinbackground = Cvar_Get( "s_muteinbackground", "1", CVAR_ARCHIVE );
 	s_muteinbackground->modified = true;

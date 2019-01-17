@@ -222,6 +222,7 @@ static void CvarSliderFloat( const char * label, const char * cvar_name, float l
 
 	char buf[ 128 ];
 	Q_snprintfz( buf, sizeof( buf ), "%f", val );
+	TruncateFloat( buf );
 	Cvar_Set( cvar_name, buf );
 }
 
@@ -334,7 +335,7 @@ static void SettingsMouse() {
 	ImGui::Text( "These settings are saved automatically" );
 
 	CvarSliderFloat( "Sensitivity", "sensitivity", 1.0f, 10.0f, "3", CVAR_ARCHIVE );
-	CvarSliderFloat( "Horizontal sensitivity", "horizontalsensscale", 0.5f, 2.0f, "1.0", CVAR_ARCHIVE );
+	CvarSliderFloat( "Horizontal sensitivity", "horizontalsensscale", 0.5f, 2.0f, "1", CVAR_ARCHIVE );
 	CvarSliderFloat( "Acceleration", "m_accel", 0.0f, 1.0f, "0", CVAR_ARCHIVE );
 }
 
@@ -549,8 +550,8 @@ static void SettingsVideo() {
 static void SettingsAudio() {
 	ImGui::Text( "These settings are saved automatically" );
 
-	CvarSliderFloat( "Master volume", "s_volume", 0.0f, 1.0f, "0.8", CVAR_ARCHIVE );
-	CvarSliderFloat( "Music volume", "s_musicvolume", 0.0f, 1.0f, "1.0", CVAR_ARCHIVE );
+	CvarSliderFloat( "Master volume", "s_volume", 0.0f, 1.0f, "1", CVAR_ARCHIVE );
+	CvarSliderFloat( "Music volume", "s_musicvolume", 0.0f, 1.0f, "1", CVAR_ARCHIVE );
 	CvarCheckbox( "Mute when alt-tabbed", "s_muteinbackground", "1", CVAR_ARCHIVE );
 }
 
