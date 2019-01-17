@@ -1014,7 +1014,6 @@ static void CL_ConnectionlessPacket( const socket_t *socket, const netadr_t *add
 			Com_Printf( "Command packet from remote host, ignored\n" );
 			return;
 		}
-		Sys_AppActivate();
 		s = MSG_ReadString( msg );
 		Cbuf_AddText( s );
 		Cbuf_AddText( "\n" );

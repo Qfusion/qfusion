@@ -50,12 +50,6 @@ void Sys_Quit( void ) {
 }
 
 /*
-* Sys_AppActivate
-*/
-void Sys_AppActivate( void ) {
-}
-
-/*
 * Sys_SendKeyEvents
 */
 void Sys_SendKeyEvents( void ) {

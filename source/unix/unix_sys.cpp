@@ -145,14 +145,6 @@ void Sys_Sleep( unsigned int millis ) {
 	usleep( millis * 1000 );
 }
 
-//===============================================================================
-
-/*
-* Sys_AppActivate
-*/
-void Sys_AppActivate( void ) {
-}
-
 /*
 * Sys_SendKeyEvents
 */

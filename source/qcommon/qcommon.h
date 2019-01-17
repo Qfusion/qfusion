@@ -808,8 +808,6 @@ NON-PORTABLE SYSTEM SERVICES
 
 void    Sys_Init( void );
 
-void    Sys_AppActivate( void );
-
 int64_t    Sys_Milliseconds( void );
 uint64_t        Sys_Microseconds( void );
 void        Sys_Sleep( unsigned int millis );

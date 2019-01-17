@@ -41,16 +41,9 @@ __declspec( dllexport ) int AmdPowerXpressRequestHighPerformance = 1;
 
 #if defined( DEDICATED_ONLY )
 
-int starttime;
-int ActiveApp;
-int Minimized;
-int AppFocused;
-
-int64_t sys_msg_time;
-
 #define MAX_NUM_ARGVS   128
-int argc;
-char *argv[MAX_NUM_ARGVS];
+static int argc;
+static char *argv[MAX_NUM_ARGVS];
 
 void Sys_InitTime( void );
 
@@ -132,7 +125,6 @@ void Sys_SendKeyEvents( void ) {
 		if( !GetMessageW( &msg, NULL, 0, 0 ) ) {
 			Sys_Quit();
 		}
-		sys_msg_time = msg.time;
 		TranslateMessage( &msg );
 		DispatchMessageW( &msg );
 	}
@@ -155,13 +147,6 @@ int Sys_GetCurrentProcessId( void ) {
 }
 
 #if defined( DEDICATED_ONLY )
-
-/*
-* Sys_AppActivate
-*/
-void Sys_AppActivate( void ) { }
-
-//========================================================================
 
 /*
 * ParseCommandLine
@@ -214,7 +199,7 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	/* main window message loop */
 	while( 1 ) {
 		// if at a full screen console, don't update unless needed
-		if( Minimized || ( dedicated && dedicated->integer ) ) {
+		if( dedicated && dedicated->integer ) {
 			Sleep( 1 );
 		}
 
@@ -222,7 +207,6 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 			if( !GetMessageW( &msg, NULL, 0, 0 ) ) {
 				Com_Quit();
 			}
-			sys_msg_time = msg.time;
 			TranslateMessage( &msg );
 			DispatchMessageW( &msg );
 		}
