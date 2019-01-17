@@ -814,7 +814,6 @@ void        Sys_Sleep( unsigned int millis );
 
 char    *Sys_ConsoleInput( void );
 void    Sys_ConsoleOutput( char *string );
-void    Sys_SendKeyEvents( void );
 
 #ifndef _MSC_VER
 void Sys_Error( const char *error, ... ) __attribute__( ( format( printf, 1, 2 ) ) ) __attribute__( ( noreturn ) );
@@ -827,10 +826,6 @@ __declspec( noreturn ) void Sys_Quit( void );
 char    *Sys_GetClipboardData( void );
 bool Sys_SetClipboardData( const char *data );
 void    Sys_FreeClipboardData( char *data );
-
-void    Sys_OpenURLInBrowser( const char *url );
-
-int     Sys_GetCurrentProcessId( void );
 
 /*
 ==============================================================

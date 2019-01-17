@@ -496,13 +496,6 @@ void CL_FreeClipboardData( char *data ) {
 }
 
 /*
-* CL_OpenURLInBrowser
-*/
-void CL_OpenURLInBrowser( const char *url ) {
-	Sys_OpenURLInBrowser( url );
-}
-
-/*
 * CL_GetKeyDest
 */
 keydest_t CL_GetKeyDest( void ) {

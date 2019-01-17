@@ -26,7 +26,16 @@ file(GLOB CLIENT_COMMON_SOURCES
 	"*.cpp"
 	"../cgame/*.cpp"
 	"../qcommon/*.cpp"
-	"../server/*.cpp"
+	"../server/sv_ccmds.cpp"
+	"../server/sv_client.cpp"
+	"../server/sv_demos.cpp"
+	"../server/sv_game.cpp"
+	"../server/sv_init.cpp"
+	"../server/sv_main.cpp"
+	"../server/sv_motd.cpp"
+	"../server/sv_oob.cpp"
+	"../server/sv_send.cpp"
+	"../server/sv_web.cpp"
 	"../gameshared/*.cpp"
 	"../gameshared/angelwrap/*.cpp"
 	"../gameshared/angelwrap/addon/*.cpp"
@@ -42,7 +51,6 @@ file(GLOB CLIENT_COMMON_SOURCES
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 	file(GLOB CLIENT_PLATFORM_HEADERS
 		"../win32/resource.h"
-		"../win32/conproc.h"
 		"../win32/winquake.h"
 		"../win32/win_input.h"
 		)
@@ -50,7 +58,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 	file(GLOB CLIENT_PLATFORM_SOURCES
 		"../win32/win_fs.cpp"
 		"../win32/win_net.cpp"
-		"../win32/win_sys.cpp"
+		"../win32/win_client.cpp"
 		"../win32/win_console.cpp"
 		"../win32/win_threads.cpp"
 
@@ -68,7 +76,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 	file(GLOB CLIENT_PLATFORM_SOURCES
 		"../unix/unix_fs.cpp"
 		"../unix/unix_net.cpp"
-		"../unix/unix_sys.cpp"
 		"../unix/unix_console.cpp"
 		"../unix/unix_threads.cpp"
 		)

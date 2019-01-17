@@ -316,8 +316,6 @@ void CL_ClearState( void );
 void CL_ReadPackets( void );
 void CL_Disconnect_f( void );
 
-void CL_OpenURLInBrowser( const char *url );
-
 void CL_Reconnect_f( void );
 void CL_ServerReconnect_f( void );
 void CL_Changing_f( void );

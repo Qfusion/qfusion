@@ -47,17 +47,12 @@ void Sys_Quit( void ) {
 	exit( 0 );
 }
 
-/*
-* Sys_SendKeyEvents
-*/
-void Sys_SendKeyEvents( void ) { }
-
 /*****************************************************************************/
 
 int main( int argc, char **argv ) {
 	int64_t oldtime, newtime;
 
-#if defined( __APPLE__ ) && !defined( DEDICATED_ONLY )
+#if defined( __APPLE__ )
 	char resourcesPath[MAXPATHLEN];
 	CFURLGetFileSystemRepresentation( CFBundleCopyResourcesDirectoryURL( CFBundleGetMainBundle() ), 1, (UInt8 *)resourcesPath, MAXPATHLEN );
 	chdir( resourcesPath );

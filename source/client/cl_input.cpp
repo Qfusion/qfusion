@@ -76,9 +76,6 @@ void CL_UserInputFrame( int realMsec ) {
 	// let the mouse activate or deactivate
 	IN_Frame();
 
-	// get new key events
-	Sys_SendKeyEvents();
-
 	// refresh mouse angles and movement velocity
 	CL_UpdateGameInput( realMsec );
 

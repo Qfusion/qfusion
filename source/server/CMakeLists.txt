@@ -16,7 +16,6 @@ file(GLOB SERVER_HEADERS
 file(GLOB SERVER_SOURCES
 	"*.cpp"
 	"../qcommon/*.cpp"
-	"../null/cl_null.cpp"
 	"../gameshared/angelwrap/*.cpp"
 	"../gameshared/angelwrap/addon/*.cpp"
 	"../gameshared/q_*.cpp"
@@ -27,12 +26,11 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 	file(GLOB SERVER_PLATFORM_SOURCES 
 		"../win32/win_fs.cpp"
 		"../win32/win_net.cpp"
-		"../win32/win_sys.cpp"
+		"../win32/win_server.cpp"
 		"../win32/win_console.cpp"
 		"../win32/win_time.cpp"
 		"../win32/win_lib.cpp"
 		"../win32/win_threads.cpp"
-		"../win32/conproc.cpp"
 		)
 
 	set(SERVER_PLATFORM_LIBRARIES "kernel32.lib" "ws2_32.lib" "crypt32.lib" "winmm.lib")
@@ -41,7 +39,7 @@ else()
 	file(GLOB SERVER_PLATFORM_SOURCES 
 		"../unix/unix_fs.cpp"
 		"../unix/unix_net.cpp"
-		"../unix/unix_sys.cpp"
+		"../unix/unix_server.cpp"
 		"../unix/unix_console.cpp"
 		"../unix/unix_time.cpp"
 		"../unix/unix_lib.cpp"

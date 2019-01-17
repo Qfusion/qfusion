@@ -2,9 +2,9 @@
 #include <sys/time.h>
 #include <unistd.h>
 
-#include "../qcommon/qcommon.h"
+#include "qcommon/qcommon.h"
 
-bool stdin_active = true;
+static bool stdin_active = true;
 
 char *Sys_ConsoleInput( void ) {
 	static char text[256];
