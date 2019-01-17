@@ -1,10 +1,6 @@
 #include "sdl/SDL.h"
 #include "client/client.h"
 
-#if defined( _WIN32 )
-#include "win32/resource.h"
-#endif
-
 #if defined( __APPLE__ )
 #include <CoreFoundation/CoreFoundation.h>
 #include <sys/param.h>
