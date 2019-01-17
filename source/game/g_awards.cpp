@@ -21,28 +21,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "g_local.h"
 
-#define EBHIT_FOR_AWARD     3
-#define DIRECTROCKET_FOR_AWARD  3
-#define DIRECTGRENADE_FOR_AWARD 3
-#define MULTIKILL_INTERVAL  3000
-#define LB_TIMEOUT_FOR_COMBO    200
-#define GUNBLADE_TIMEOUT_FOR_COMBO  400
-
 void G_PlayerAward( edict_t *ent, const char *awardMsg ) {
 	edict_t *other;
 	char cmd[MAX_STRING_CHARS];
 
-	//asdasd
 	if( !awardMsg || !awardMsg[0] || !ent->r.client ) {
 		return;
 	}
 
 	Q_snprintfz( cmd, sizeof( cmd ), "aw \"%s\"", awardMsg );
 	trap_GameCmd( ent, cmd );
-
-	if( dedicated->integer ) {
-		G_Printf( "%s", COM_RemoveColorTokens( va( "%s receives a '%s' award.\n", ent->r.client->netname, awardMsg ) ) );
-	}
 
 	G_Gametype_ScoreEvent( ent->r.client, "award", awardMsg );
 
@@ -80,6 +68,7 @@ void G_AwardPlayerKilled( edict_t *self, edict_t *inflictor, edict_t *attacker, 
 	}
 
 	// Multikill
+	constexpr int MULTIKILL_INTERVAL = 3000;
 	if( game.serverTime - attacker->r.client->resp.awardInfo.multifrag_timer < MULTIKILL_INTERVAL ) {
 		attacker->r.client->resp.awardInfo.multifrag_count++;
 	} else {

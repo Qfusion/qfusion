@@ -1012,7 +1012,7 @@ void G_PrintMsg( edict_t *ent, const char *format, ... ) {
 
 	if( !ent ) {
 		// mirror at server console
-		if( dedicated->integer ) {
+		if( GAME_IMPORT.is_dedicated_server ) {
 			G_Printf( "%s", msg );
 		}
 		trap_GameCmd( NULL, s );
@@ -1046,7 +1046,7 @@ void G_ChatMsg( edict_t *ent, edict_t *who, bool teamonly, const char *format, .
 
 	if( !ent ) {
 		// mirror at server console
-		if( dedicated->integer ) {
+		if( GAME_IMPORT.is_dedicated_server ) {
 			if( !who ) {
 				G_Printf( S_COLOR_GREEN "console: %s\n", msg );     // admin console
 			} else if( !who->r.client ) {

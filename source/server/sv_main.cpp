@@ -379,7 +379,7 @@ static bool SV_RunGameFrame( int msec ) {
 	}
 
 	// if there aren't pending packets to be sent, we can sleep
-	if( dedicated->integer && !sentFragments && !refreshSnapshot ) {
+	if( is_dedicated_server && !sentFragments && !refreshSnapshot ) {
 		int sleeptime = min( WORLDFRAMETIME - ( accTime + 1 ), sv.nextSnapTime - ( svs.gametime + 1 ) );
 
 		if( sleeptime > 0 ) {
@@ -458,7 +458,7 @@ static void SV_CheckDefaultMap( void ) {
 	}
 
 	svc.autostarted = true;
-	if( dedicated->integer ) {
+	if( is_dedicated_server ) {
 		if( ( sv.state == ss_dead ) && sv_defaultmap && strlen( sv_defaultmap->string ) && !strlen( sv.mapname ) ) {
 			Cbuf_ExecuteText( EXEC_APPEND, va( "map %s\n", sv_defaultmap->string ) );
 		}
@@ -636,7 +636,7 @@ void SV_Init( void ) {
 	sv_uploads_baseurl =    Cvar_Get( "sv_uploads_baseurl", "", CVAR_ARCHIVE );
 	sv_uploads_demos =      Cvar_Get( "sv_uploads_demos", "1", CVAR_ARCHIVE );
 	sv_uploads_demos_baseurl =  Cvar_Get( "sv_uploads_demos_baseurl", "", CVAR_ARCHIVE );
-	if( dedicated->integer ) {
+	if( is_dedicated_server ) {
 		sv_pure =       Cvar_Get( "sv_pure", "1", CVAR_ARCHIVE | CVAR_LATCH | CVAR_SERVERINFO );
 
 #ifdef PUBLIC_BUILD
@@ -696,7 +696,7 @@ void SV_Init( void ) {
 	MSG_Init( &tmpMessage, tmpMessageData, sizeof( tmpMessageData ) );
 
 	// init server updates ratio
-	if( dedicated->integer ) {
+	if( is_dedicated_server ) {
 		sv_pps = Cvar_Get( "sv_pps", "20", CVAR_SERVERINFO | CVAR_NOSET );
 	} else {
 		sv_pps = Cvar_Get( "sv_pps", "20", CVAR_SERVERINFO );

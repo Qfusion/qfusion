@@ -12,7 +12,7 @@ char *Sys_ConsoleInput( void ) {
 	fd_set fdset;
 	struct timeval timeout;
 
-	if( !dedicated || !dedicated->integer ) {
+	if( !is_dedicated_server ) {
 		return NULL;
 	}
 

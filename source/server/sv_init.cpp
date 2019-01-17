@@ -340,14 +340,14 @@ void SV_InitGame( void ) {
 	address.type = NA_NOTRANSMIT;
 	ipv6_address.type = NA_NOTRANSMIT;
 
-	if( !dedicated->integer ) {
+	if( !is_dedicated_server ) {
 		NET_InitAddress( &address, NA_LOOPBACK );
 		if( !NET_OpenSocket( &svs.socket_loopback, SOCKET_LOOPBACK, &address, true ) ) {
 			Com_Error( ERR_FATAL, "Couldn't open loopback socket: %s\n", NET_ErrorString() );
 		}
 	}
 
-	if( dedicated->integer || sv_maxclients->integer > 1 ) {
+	if( is_dedicated_server || sv_maxclients->integer > 1 ) {
 		// IPv4
 		NET_StringToAddress( sv_ip->string, &address );
 		NET_SetAddressPort( &address, sv_port->integer );
@@ -371,7 +371,7 @@ void SV_InitGame( void ) {
 		}
 	}
 
-	if( dedicated->integer && !socket_opened ) {
+	if( is_dedicated_server && !socket_opened ) {
 		Com_Error( ERR_FATAL, "Couldn't open any socket\n" );
 	}
 

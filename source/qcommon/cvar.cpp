@@ -867,7 +867,6 @@ void Cvar_Shutdown( void ) {
 		// reset the pointers to NULL
 		developer = NULL;
 		developer_memory = NULL;
-		dedicated = NULL;
 
 		Cmd_RemoveCommand( "set" );
 		Cmd_RemoveCommand( "seta" );

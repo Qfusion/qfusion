@@ -32,7 +32,6 @@ int meansOfDeath;
 cvar_t *password;
 cvar_t *g_operator_password;
 cvar_t *g_select_empty;
-cvar_t *dedicated;
 cvar_t *developer;
 
 cvar_t *filterban;
@@ -212,9 +211,6 @@ void G_Init( unsigned int seed, unsigned int framemsec, int protocol, const char
 	g_gravity = trap_Cvar_Get( "g_gravity", va( "%i", GRAVITY ), 0 );
 	developer = trap_Cvar_Get( "developer", "0", 0 );
 
-	// noset vars
-	dedicated = trap_Cvar_Get( "dedicated", "0", CVAR_NOSET );
-
 	// latched vars
 	sv_cheats = trap_Cvar_Get( "sv_cheats", "0", CVAR_SERVERINFO | CVAR_LATCH );
 	sv_mm_enable = trap_Cvar_Get( "sv_mm_enable", "0", CVAR_ARCHIVE | CVAR_NOSET | CVAR_SERVERINFO );
@@ -242,7 +238,7 @@ void G_Init( unsigned int seed, unsigned int framemsec, int protocol, const char
 
 	g_allow_spectator_voting = trap_Cvar_Get( "g_allow_spectator_voting", "1", CVAR_ARCHIVE );
 
-	if( dedicated->integer ) {
+	if( GAME_IMPORT.is_dedicated_server ) {
 		g_autorecord = trap_Cvar_Get( "g_autorecord", "1", CVAR_ARCHIVE );
 		g_autorecord_maxdemos = trap_Cvar_Get( "g_autorecord_maxdemos", "200", CVAR_ARCHIVE );
 	} else {

@@ -2086,10 +2086,6 @@ void CL_Frame( int realMsec, int gameMsec ) {
 	int minMsec;
 	float maxFps;
 
-	if( dedicated->integer ) {
-		return;
-	}
-
 	cls.monotonicTime += realMsec;
 	cls.realtime += realMsec;
 
@@ -2311,10 +2307,6 @@ void CL_Init( void ) {
 
 	assert( !cl_initialized );
 
-	if( dedicated->integer ) {
-		return; // nothing running on the client
-
-	}
 	cl_initialized = true;
 
 	// all archived variables will now be loaded

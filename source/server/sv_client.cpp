@@ -414,7 +414,7 @@ static void SV_Begin_f( client_t *client ) {
 
 	// wsw : r1q2[start] : could be abused to respawn or cause spam/other mod-specific problems
 	if( client->state != CS_CONNECTED ) {
-		if( dedicated->integer ) {
+		if( is_dedicated_server ) {
 			Com_Printf( "SV_Begin_f: 'Begin' from already spawned client: %s.\n", client->name );
 		}
 		SV_DropClient( client, DROP_TYPE_GENERAL, "Error: Begin while connected" );

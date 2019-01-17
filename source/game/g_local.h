@@ -258,7 +258,6 @@ extern int meansOfDeath;
 
 extern cvar_t *password;
 extern cvar_t *g_operator_password;
-extern cvar_t *dedicated;
 extern cvar_t *developer;
 
 extern cvar_t *filterban;

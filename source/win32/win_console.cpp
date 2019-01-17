@@ -1,4 +1,4 @@
-#include "../qcommon/qcommon.h"
+#include "qcommon/qcommon.h"
 #include "winquake.h"
 
 static HANDLE hinput = NULL;
@@ -41,7 +41,7 @@ char *Sys_ConsoleInput( void ) {
 	DWORD dummy;
 	DWORD numread, numevents;
 
-	if( !dedicated || !dedicated->integer ) {
+	if( !is_dedicated_server ) {
 		return NULL;
 	}
 
@@ -154,7 +154,7 @@ void Sys_ConsoleOutput( char *string ) {
 	DWORD dummy;
 	char text[MAX_CONSOLETEXT + 2];   /* need 2 chars for the \r's */
 
-	if( !dedicated || !dedicated->integer ) {
+	if( !is_dedicated_server ) {
 		return;
 	}
 

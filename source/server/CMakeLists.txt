@@ -56,5 +56,3 @@ add_executable(server ${SERVER_BINARY_TYPE} ${SERVER_HEADERS} ${SERVER_SOURCES} 
 add_dependencies(server game)
 target_link_libraries(server PRIVATE ${CURL_LIBRARIES} ${ZLIB_LIBRARY} ${ANGELSCRIPT_LIBRARY} ${SERVER_PLATFORM_LIBRARIES})
 qf_set_output_dir(server "")
-
-set_target_properties(server PROPERTIES COMPILE_DEFINITIONS "DEDICATED_ONLY")

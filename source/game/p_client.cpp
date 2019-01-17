@@ -55,13 +55,13 @@ static void ClientObituary( edict_t *self, edict_t *inflictor, edict_t *attacker
 	if( attacker && attacker->r.client ) {
 		if( attacker != self ) { // regular death message
 			self->enemy = attacker;
-			if( dedicated->integer ) {
+			if( GAME_IMPORT.is_dedicated_server ) {
 				G_Printf( "%s%s %s %s%s%s\n", self->r.client->netname, S_COLOR_WHITE, message,
 						  attacker->r.client->netname, S_COLOR_WHITE, message2 );
 			}
 		} else {      // suicide
 			self->enemy = NULL;
-			if( dedicated->integer ) {
+			if( GAME_IMPORT.is_dedicated_server ) {
 				G_Printf( "%s %s%s\n", self->r.client->netname, S_COLOR_WHITE, message );
 			}
 		}
@@ -69,7 +69,7 @@ static void ClientObituary( edict_t *self, edict_t *inflictor, edict_t *attacker
 		G_Obituary( self, attacker, mod );
 	} else {      // wrong place, suicide, etc.
 		self->enemy = NULL;
-		if( dedicated->integer ) {
+		if( GAME_IMPORT.is_dedicated_server ) {
 			G_Printf( "%s %s%s\n", self->r.client->netname, S_COLOR_WHITE, message );
 		}
 

@@ -702,7 +702,7 @@ void        Com_SetServerCM( struct cmodel_state_s *cms, unsigned checksum );
 unsigned int Com_DaysSince1900( void );
 
 extern cvar_t *developer;
-extern cvar_t *dedicated;
+extern const bool is_dedicated_server;
 extern cvar_t *host_speeds;
 extern cvar_t *versioncvar;
 

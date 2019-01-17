@@ -169,9 +169,7 @@ void SV_MasterHeartbeat( void ) {
 		if( master->address.type != NA_NOTRANSMIT ) {
 			socket_t *socket;
 
-			if( dedicated && dedicated->integer ) {
-				Com_Printf( "Sending heartbeat to %s\n", NET_AddressToString( &master->address ) );
-			}
+			Com_Printf( "Sending heartbeat to %s\n", NET_AddressToString( &master->address ) );
 
 			socket = ( master->address.type == NA_IP6 ? &svs.socket_udp6 : &svs.socket_udp );
 

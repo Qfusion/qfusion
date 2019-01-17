@@ -6,6 +6,8 @@
 #include <sys/param.h>
 #endif
 
+const bool is_dedicated_server = false;
+
 void Sys_InitTime( void );
 
 void Sys_Sleep( unsigned int millis ) {

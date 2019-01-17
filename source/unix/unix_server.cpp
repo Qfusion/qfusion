@@ -4,6 +4,8 @@
 
 #include "qcommon/qcommon.h"
 
+const bool is_dedicated_server = true;
+
 static void sigusr_handler( int sig ) {
 	if( sig == SIGUSR1 ) {
 		Com_DeferConsoleLogReopen();

@@ -522,6 +522,8 @@ void SV_InitGameProgs( void ) {
 
 	import.asGetAngelExport = QAS_GetAngelExport;
 
+	import.is_dedicated_server = is_dedicated_server;
+
 	// clear module manifest string
 	assert( sizeof( manifest ) >= MAX_INFO_STRING );
 	memset( manifest, 0, sizeof( manifest ) );

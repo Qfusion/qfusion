@@ -40,7 +40,6 @@ static jmp_buf abortframe;     // an ERR_DROP occured, exit the entire frame
 cvar_t *host_speeds;
 cvar_t *developer;
 cvar_t *timescale;
-cvar_t *dedicated;
 cvar_t *versioncvar;
 
 static cvar_t *logconsole = NULL;
@@ -635,7 +634,7 @@ void Qcommon_InitCommands( void ) {
 	Cmd_AddCommand( "lag", Com_Lag_f );
 #endif
 
-	if( dedicated->integer ) {
+	if( is_dedicated_server ) {
 		Cmd_AddCommand( "quit", Com_Quit );
 	}
 
@@ -655,7 +654,7 @@ void Qcommon_ShutdownCommands( void ) {
 	Cmd_RemoveCommand( "lag" );
 #endif
 
-	if( dedicated->integer ) {
+	if( is_dedicated_server ) {
 		Cmd_RemoveCommand( "quit" );
 	}
 
@@ -702,18 +701,12 @@ void Qcommon_Init( int argc, char **argv ) {
 	Cbuf_AddEarlyCommands( false );
 	Cbuf_Execute();
 
-#ifdef DEDICATED_ONLY
-	dedicated =     Cvar_Get( "dedicated", "1", CVAR_NOSET );
-	Cvar_ForceSet( "dedicated", "1" );
-#else
-	dedicated =     Cvar_Get( "dedicated", "0", CVAR_NOSET );
-#endif
 	developer =     Cvar_Get( "developer", "0", 0 );
 
 	FS_Init();
 
 	Cbuf_AddText( "exec default.cfg\n" );
-	if( !dedicated->integer ) {
+	if( !is_dedicated_server ) {
 		Cbuf_AddText( "exec config.cfg\n" );
 		Cbuf_AddText( "exec autoexec.cfg\n" );
 	} else {
@@ -732,7 +725,7 @@ void Qcommon_Init( int argc, char **argv ) {
 
 	host_speeds =       Cvar_Get( "host_speeds", "0", 0 );
 	timescale =     Cvar_Get( "timescale", "1.0", CVAR_CHEAT );
-	if( dedicated->integer ) {
+	if( is_dedicated_server ) {
 		logconsole =        Cvar_Get( "logconsole", "wswconsole.log", CVAR_ARCHIVE );
 	} else {
 		logconsole =        Cvar_Get( "logconsole", "", CVAR_ARCHIVE );
@@ -760,7 +753,7 @@ void Qcommon_Init( int argc, char **argv ) {
 
 	SCR_EndLoadingPlaque();
 
-	if( !dedicated->integer ) {
+	if( !is_dedicated_server ) {
 		Cbuf_AddText( "exec autoexec_postinit.cfg\n" );
 	} else {
 		Cbuf_AddText( "exec dedicated_autoexec_postinit.cfg\n" );
@@ -786,7 +779,6 @@ void Qcommon_Init( int argc, char **argv ) {
 void Qcommon_Frame( unsigned int realMsec ) {
 	MICROPROFILE_SCOPEI( "Main", "Qcommon_Frame", 0xffffffff );
 
-	char *s;
 	int time_before = 0, time_between = 0, time_after = 0;
 	static unsigned int gameMsec;
 
@@ -823,7 +815,8 @@ void Qcommon_Frame( unsigned int realMsec ) {
 
 	FS_Frame();
 
-	if( dedicated->integer ) {
+	if( is_dedicated_server ) {
+		char *s;
 		do {
 			s = Sys_ConsoleInput();
 			if( s ) {

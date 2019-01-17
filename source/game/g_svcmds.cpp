@@ -343,7 +343,7 @@ static void Cmd_WriteIP_f( void ) {
 * G_AddCommands
 */
 void G_AddServerCommands( void ) {
-	if( dedicated->integer ) {
+	if( GAME_IMPORT.is_dedicated_server ) {
 		trap_Cmd_AddCommand( "say", Cmd_ConsoleSay_f );
 	}
 	trap_Cmd_AddCommand( "kick", Cmd_ConsoleKick_f );
@@ -364,7 +364,7 @@ void G_AddServerCommands( void ) {
 * G_RemoveCommands
 */
 void G_RemoveCommands( void ) {
-	if( dedicated->integer ) {
+	if( GAME_IMPORT.is_dedicated_server ) {
 		trap_Cmd_RemoveCommand( "say" );
 	}
 	trap_Cmd_RemoveCommand( "kick" );

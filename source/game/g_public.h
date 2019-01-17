@@ -177,12 +177,7 @@ typedef struct {
 	// angelscript api
 	struct angelwrap_api_s *( *asGetAngelExport )( void );
 
-	// Match reporting to MM
-
-	// GAME CANT USE ->Send directly!
-	struct stat_query_api_s *( *GetStatQueryAPI )( void );
-	void ( *MM_SendQuery )( struct stat_query_s *query );
-	void ( *MM_GameState )( bool state );
+	bool is_dedicated_server;
 } game_import_t;
 
 //

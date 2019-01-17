@@ -2,6 +2,8 @@
 
 #include "qcommon/qcommon.h"
 
+const bool is_dedicated_server = true;
+
 #define MAX_NUM_ARGVS   128
 static int argc;
 static char *argv[MAX_NUM_ARGVS];
