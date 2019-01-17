@@ -98,7 +98,7 @@ void CG_PModelForCentity( centity_t *cent, pmodelinfo_t **pmodelinfo, struct ski
 	}
 }
 
-static RGB CG_TeamColorRGB( int team ) {
+static RGB8 CG_TeamColorRGB8( int team ) {
 	cvar_t * cvar = CG_IsAlly( team ) ? cg_allyColor : cg_enemyColor;
 
 	if( cvar->integer >= int( ARRAY_COUNT( TEAM_COLORS ) ) )
@@ -108,7 +108,7 @@ static RGB CG_TeamColorRGB( int team ) {
 }
 
 void CG_TeamColor( int team, vec4_t color ) {
-	RGB rgb = CG_TeamColorRGB( team );
+	RGB8 rgb = CG_TeamColorRGB8( team );
 	color[0] = rgb.r * ( 1.0f / 255.0f );
 	color[1] = rgb.g * ( 1.0f / 255.0f );
 	color[2] = rgb.b * ( 1.0f / 255.0f );
@@ -127,7 +127,7 @@ void CG_TeamColorForEntity( int entNum, byte_vec4_t color ) {
 		return;
 	}
 
-	RGB rgb = CG_TeamColorRGB( cent->current.team );
+	RGB8 rgb = CG_TeamColorRGB8( cent->current.team );
 	color[0] = rgb.r;
 	color[1] = rgb.g;
 	color[2] = rgb.b;

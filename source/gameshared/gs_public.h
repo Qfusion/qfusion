@@ -468,14 +468,14 @@ enum {
 
 struct TeamColor {
 	const char * name;
-	RGB rgb;
+	RGB8 rgb;
 };
 
 constexpr TeamColor TEAM_COLORS[] = {
-	{ "Blue", RGB( 0, 160, 255 ) },
-	{ "Red", RGB( 255, 20, 60 ) },
-	{ "Green", RGB( 0, 255, 160 ) },
-	{ "Yellow", RGB( 255, 255, 0 ) },
+	{ "Blue", RGB8( 0, 160, 255 ) },
+	{ "Red", RGB8( 255, 20, 60 ) },
+	{ "Green", RGB8( 0, 255, 160 ) },
+	{ "Yellow", RGB8( 255, 255, 0 ) },
 };
 
 // teams

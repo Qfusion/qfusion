@@ -267,7 +267,7 @@ static void PopDisabled( bool disabled ) {
 	}
 }
 
-static bool SelectableColor( const char * label, RGB rgb, bool selected ) {
+static bool SelectableColor( const char * label, RGB8 rgb, bool selected ) {
 	bool clicked = ImGui::Selectable( "", selected, ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_PressedOnRelease );
 
 	ImGui::NextColumn();
