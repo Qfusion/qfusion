@@ -1416,7 +1416,7 @@ char *Q_chrreplace( char *s, const char subj, const char repl ) {
 	return s;
 }
 
-void TruncateFloat( char * str ) {
+void RemoveTrailingZeroesFloat( char * str ) {
 	size_t len = strlen( str );
 	if( len == 0 )
 		return;

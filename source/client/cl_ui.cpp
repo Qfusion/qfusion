@@ -222,7 +222,7 @@ static void CvarSliderFloat( const char * label, const char * cvar_name, float l
 
 	char buf[ 128 ];
 	Q_snprintfz( buf, sizeof( buf ), "%f", val );
-	TruncateFloat( buf );
+	RemoveTrailingZeroesFloat( buf );
 	Cvar_Set( cvar_name, buf );
 }
 
