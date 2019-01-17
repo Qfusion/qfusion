@@ -240,44 +240,6 @@ vec_t BoundsFurthestDistance( const vec3_t point, const vec3_t mins, const vec3_
 	(n)[2] = ((a)[0] - (b)[0]) * ((c)[1] - (b)[1]) - ((a)[1] - (b)[1]) * ((c)[0] - (b)[0]) \
 	)
 
-/*! Fast PointInfrontOfTriangle.
-* subtracts v1 from v0 and v2, combined into a crossproduct, combined with a
-* dotproduct of the light location relative to the first point of the
-* triangle (any point works, since any triangle is obviously flat), and
-* finally a comparison to determine if the light is infront of the triangle
-* (the goal of this statement) we do not need to normalize the surface
-* normal because both sides of the comparison use it, therefore they are
-* both multiplied the same amount...  furthermore a subtract can be done on
-* the point to eliminate one dotproduct
-* this is ((p - a) * cross(a-b,c-b))
-*/
-#define PointInfrontOfTriangle(p,a,b,c) \
-( ((p)[0] - (a)[0]) * (((a)[1] - (b)[1]) * ((c)[2] - (b)[2]) - ((a)[2] - (b)[2]) * ((c)[1] - (b)[1])) \
-+ ((p)[1] - (a)[1]) * (((a)[2] - (b)[2]) * ((c)[0] - (b)[0]) - ((a)[0] - (b)[0]) * ((c)[2] - (b)[2])) \
-+ ((p)[2] - (a)[2]) * (((a)[0] - (b)[0]) * ((c)[1] - (b)[1]) - ((a)[1] - (b)[1]) * ((c)[0] - (b)[0])) > 0)
-
-#if 0
-// readable version, kept only for explanatory reasons
-inline int PointInfrontOfTriangle(const float *p, const float *a, const float *b, const float *c)
-{
-	float dir0[3], dir1[3], normal[3];
-
-	// calculate two mostly perpendicular edge directions
-	VectorSubtract(a, b, dir0);
-	VectorSubtract(c, b, dir1);
-
-	// we have two edge directions, we can calculate a third vector from
-	// them, which is the direction of the surface normal (its magnitude
-	// is not 1 however)
-	CrossProduct(dir0, dir1, normal);
-
-	// compare distance of light along normal, with distance of any point
-	// of the triangle along the same normal (the triangle is planar,
-	// I.E. flat, so all points give the same answer)
-	return DotProduct(p, normal) > DotProduct(a, normal);
-}
-#endif
-
 #define NUMVERTEXNORMALS    162
 int DirToByte( vec3_t dir );
 void ByteToDir( int b, vec3_t dir );

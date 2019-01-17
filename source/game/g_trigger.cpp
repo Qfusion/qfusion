@@ -363,13 +363,7 @@ static void trigger_push_touch( edict_t *self, edict_t *other, cplane_t *plane, 
 			return;
 		}
 
-#if 0
-
-		// grenades have more air friction than players (weird, isn't it?), so we need some extra velocity
-		//VectorScale( self->s.origin2, 1.25, other->velocity );
-#else
 		VectorCopy( self->s.origin2, other->velocity );
-#endif
 	}
 
 	// game timers for fall damage

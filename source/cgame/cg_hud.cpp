@@ -2689,21 +2689,6 @@ static cg_layoutnode_t *CG_LayoutParseArgumentNode( const char *token ) {
 			}
 		}
 
-#if 0 // not used yet at least
-	} else if( token[0] == '$' ) {   // it's a string constant
-		int i;
-		type = LNODE_STRING;
-		valuetok++; // skip $
-
-		// replace stat names by values
-		for( i = 0; cg_string_constants[i].name != NULL; i++ ) {
-			if( !Q_stricmp( valuetok, cg_string_constants[i].name ) ) {
-				Q_snprintfz( tmpstring, sizeof( tmpstring ), "%s", cg_string_constants[i].value );
-				valuetok = tmpstring;
-				break;
-			}
-		}
-#endif
 	} else if( token[0] == '\\' ) {
 		valuetok = ++token;
 		type = LNODE_STRING;
@@ -2741,10 +2726,6 @@ static int CG_LayoutCathegorizeToken( char *token ) {
 		return LNODE_REFERENCE_NUMERIC;
 	} else if( token[0] == '#' ) {   // it's a numerical constant
 		return LNODE_NUMERIC;
-#if 0
-	} else if( token[0] == '$' ) {   // it's a string constant
-		return LNODE_STRING;
-#endif
 	} else if( token[0] < '0' && token[0] > '9' && token[0] != '.' ) {
 		return LNODE_STRING;
 	}
@@ -3008,29 +2989,6 @@ static cg_layoutnode_t *CG_RecurseParseLayoutScript( char **ptr, int level ) {
 	return rootnode;
 }
 
-#if 0
-static void CG_RecursePrintLayoutThread( cg_layoutnode_t *rootnode, int level ) {
-	int i;
-	cg_layoutnode_t *node;
-
-	node = rootnode;
-	while( node->parent )
-		node = node->parent;
-
-	while( node ) {
-		for( i = 0; i < level; i++ )
-			CG_Printf( "   " );
-		CG_Printf( "%s\n", node->string );
-
-		if( node->ifthread ) {
-			CG_RecursePrintLayoutThread( node->ifthread, level + 1 );
-		}
-
-		node = node->next;
-	}
-}
-#endif
-
 /*
 * CG_ParseLayoutScript
 */
@@ -3038,10 +2996,6 @@ static void CG_ParseLayoutScript( char *string, cg_layoutnode_t *rootnode ) {
 
 	CG_RecurseFreeLayoutThread( cg.statusBar );
 	cg.statusBar = CG_RecurseParseLayoutScript( &string, 0 );
-
-#if 0
-	CG_RecursePrintLayoutThread( cg_layoutRootNode, 0 );
-#endif
 }
 
 //=============================================================================

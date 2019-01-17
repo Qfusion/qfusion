@@ -121,12 +121,10 @@ static void SV_CalcPings( void ) {
 
 		if( !count ) {
 			cl->ping = 0;
-		} else
-#if 1
-		{ cl->ping = ( best + ( total / count ) ) * 0.5f;}
-#else
-		{ cl->ping = total / count;}
-#endif
+		}
+		else {
+			cl->ping = ( best + ( total / count ) ) * 0.5f;
+		}
 		// let the game dll know about the ping
 		cl->edict->r.client->r.ping = cl->ping;
 	}

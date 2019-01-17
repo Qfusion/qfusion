@@ -541,10 +541,6 @@ int BoxOnPlaneSide( const vec3_t emins, const vec3_t emaxs, const struct cplane_
 		sides |= 2;
 	}
 
-#if 0
-	assert( sides != 0 );
-#endif
-
 	return sides;
 }
 

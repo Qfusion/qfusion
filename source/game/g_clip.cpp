@@ -205,11 +205,6 @@ static c4clipedict_t *GClip_GetClipEdictForDeltaTime( int entNum, int deltaTime 
 			clipentNewer = cframeNewer->clipEdicts[entNum];
 		}
 
-#if 0
-		G_Printf( "backTime:%i cframeBackTime:%i backFrames:%i lerfrac:%f\n",
-				  backTime, game.serverTime - cframe->timestamp, backframes, lerpFrac );
-#endif
-
 		// interpolate
 		VectorLerp( clipent->s.origin, lerpFrac, clipentNewer.s.origin, clipent->s.origin );
 		VectorLerp( clipent->r.mins, lerpFrac, clipentNewer.r.mins, clipent->r.mins );
@@ -217,11 +212,6 @@ static c4clipedict_t *GClip_GetClipEdictForDeltaTime( int entNum, int deltaTime 
 		for( i = 0; i < 3; i++ )
 			clipent->s.angles[i] = LerpAngle( clipent->s.angles[i], clipentNewer.s.angles[i], lerpFrac );
 	}
-
-#if 0
-	G_Printf( "backTime:%i cframeBackTime:%i backFrames:%i\n", backTime,
-			  game.serverTime - cframe->timestamp, backframes );
-#endif
 
 	// back time entity
 	return clipent;

@@ -1,8 +1,8 @@
 #include "../qcommon/qcommon.h"
 #include "winquake.h"
 
-HANDLE hinput = NULL;
-HANDLE houtput = NULL;
+static HANDLE hinput = NULL;
+static HANDLE houtput = NULL;
 
 #define MAX_CONSOLETEXT 256
 static char console_text[MAX_CONSOLETEXT];
@@ -172,11 +172,7 @@ void Sys_ConsoleOutput( char *string ) {
 
 	string = utf8_to_OEM( string );
 
-#if 0
-	WriteFile( houtput, string, (unsigned)strlen( string ), &dummy, NULL );
-#else
 	PrintColoredText( string );
-#endif
 
 	if( console_textlen ) {
 		WriteFile( houtput, console_text, console_textlen, &dummy, NULL );
