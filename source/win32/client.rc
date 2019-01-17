@@ -1,4 +1,3 @@
-#include "resource.h"
 #include "../qcommon/application.h"
 #include "../qcommon/version.h"
 
