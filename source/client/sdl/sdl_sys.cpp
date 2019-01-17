@@ -10,8 +10,6 @@
 #include <sys/param.h>
 #endif
 
-int64_t sys_frame_time;
-
 void Sys_InitTime( void );
 
 void Sys_Sleep( unsigned int millis ) {
@@ -52,10 +50,7 @@ void Sys_Quit( void ) {
 /*
 * Sys_SendKeyEvents
 */
-void Sys_SendKeyEvents( void ) {
-	// grab frame time
-	sys_frame_time = Sys_Milliseconds();
-}
+void Sys_SendKeyEvents( void ) { }
 
 /*****************************************************************************/
 

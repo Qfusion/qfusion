@@ -37,14 +37,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <machine/param.h>
 #endif
 
-#include "../qcommon/qcommon.h"
+#include "qcommon/qcommon.h"
 #include "glob.h"
 
 #if defined( DEDICATED_ONLY )
-
-int64_t sys_frame_time;
-
-uid_t saved_euid;
 
 // =======================================================================
 // General routines
@@ -148,10 +144,7 @@ void Sys_Sleep( unsigned int millis ) {
 /*
 * Sys_SendKeyEvents
 */
-void Sys_SendKeyEvents( void ) {
-	// grab frame time
-	sys_frame_time = Sys_Milliseconds();
-}
+void Sys_SendKeyEvents( void ) { }
 
 #endif // defined( DEDICATED_ONLY )
 
