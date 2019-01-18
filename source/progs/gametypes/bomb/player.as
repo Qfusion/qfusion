@@ -230,48 +230,37 @@ cPlayer @playerFromClient( Client @client ) {
 	return @player;
 }
 
-void team_CTF_genericSpawnpoint( Entity @ent, int team ) {
-	ent.team = team;
-
-	Trace trace;
-
-	Vec3 start, end;
+void dropSpawnToFloor( Entity @ent, int team ) {
 	Vec3 mins( -16, -16, -24 ), maxs( 16, 16, 40 );
 
-	start = end = ent.origin;
+	Vec3 start = ent.origin;
+	Vec3 end = ent.origin - Vec3( 0, 0, 1024 );
 
-	start.z += 16;
-	end.z -= 1024;
-
+	Trace trace;
 	trace.doTrace( start, mins, maxs, end, ent.entNum, MASK_SOLID );
 
 	if( trace.startSolid ) {
 		G_Print( ent.classname + " starts inside solid, removing...\n" );
-
 		ent.freeEntity();
-
 		return;
 	}
 
-	if( ent.spawnFlags & 1 == 0 ) {
-		// move it 1 unit away from the plane
-
-		ent.origin = trace.endPos + trace.planeNormal;
-	}
+	// move it 1 unit away from the plane
+	ent.origin = trace.endPos + trace.planeNormal;
 }
 
 void team_CTF_alphaspawn( Entity @ent ) {
-	team_CTF_genericSpawnpoint( ent, defendingTeam );
+	dropSpawnToFloor( ent, defendingTeam );
 }
 
 void team_CTF_betaspawn( Entity @ent ) {
-	team_CTF_genericSpawnpoint( ent, attackingTeam );
+	dropSpawnToFloor( ent, attackingTeam );
 }
 
-void team_CTF_alphaplayer( Entity @ent ) {
-	team_CTF_genericSpawnpoint( ent, defendingTeam );
+void spawn_offense( Entity @ent ) {
+	dropSpawnToFloor( ent, attackingTeam );
 }
 
-void team_CTF_betaplayer( Entity @ent ) {
-	team_CTF_genericSpawnpoint( ent, attackingTeam );
+void spawn_defense( Entity @ent ) {
+	dropSpawnToFloor( ent, attackingTeam );
 }

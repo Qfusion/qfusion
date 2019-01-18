@@ -350,10 +350,6 @@ static int GClip_EntitiesInBox_AreaGrid( areagrid_t *areagrid, const vec3_t mins
 	vec3_t paddedmins, paddedmaxs;
 	int igrid[3], igridmins[3], igridmaxs[3];
 
-	// LordHavoc: discovered this actually causes its own bugs (dm6 teleporters
-	// being too close to info_teleport_destination)
-	//VectorSet( paddedmins, mins[0] - 1.0f, mins[1] - 1.0f, mins[2] - 1.0f );
-	//VectorSet( paddedmaxs, maxs[0] + 1.0f, maxs[1] + 1.0f, maxs[2] + 1.0f );
 	VectorCopy( mins, paddedmins );
 	VectorCopy( maxs, paddedmaxs );
 

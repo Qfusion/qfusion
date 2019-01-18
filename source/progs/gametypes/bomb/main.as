@@ -190,9 +190,15 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
 
 Entity @GT_SelectSpawnPoint( Entity @self ) {
 	if( self.team == attackingTeam ) {
+		Entity @spawn = GENERIC_SelectBestRandomSpawnPoint( @self, "spawn_offense" );
+		if( @spawn != null )
+			return spawn;
 		return GENERIC_SelectBestRandomSpawnPoint( @self, "team_CTF_betaspawn" );
 	}
 
+	Entity @spawn = GENERIC_SelectBestRandomSpawnPoint( @self, "spawn_defense" );
+	if( @spawn != null )
+		return spawn;
 	return GENERIC_SelectBestRandomSpawnPoint( @self, "team_CTF_alphaspawn" );
 }
 

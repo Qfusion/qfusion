@@ -634,8 +634,6 @@ void SP_func_explosive( edict_t *self ) {
 //notfree : when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.
 //notduel : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jaltodo)
 //notteam : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.
-//-------- NOTES --------
-//Does the same thing as info_teleport_destination
 void SP_misc_teleporter_dest( edict_t *ent ) {
 	//ent->s.origin[2] += 16;
 }

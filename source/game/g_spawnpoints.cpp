@@ -32,11 +32,7 @@ void SP_info_player_deathmatch( edict_t *self ) {
 	G_DropSpawnpointToFloor( self );
 }
 
-//QUAKED info_player_intermission (1 0 1) (-16 -16 -24) (16 16 32)
-//The deathmatch intermission point will be at one of these
-//Use 'angles' instead of 'angle', so you can set pitch or roll as well as yaw.  'pitch yaw roll'
-void SP_info_player_intermission( edict_t *ent ) {
-}
+void SP_post_match_camera( edict_t *ent ) { }
 
 //=======================================================================
 //
@@ -81,35 +77,12 @@ float PlayersRangeFromSpot( edict_t *spot, int ignore_team ) {
 	return bestplayerdistance;
 }
 
+static edict_t *G_FindPostMatchCamera( void ) {
+	edict_t * ent = G_Find( NULL, FOFS( classname ), "post_match_camera" );
+	if( ent != NULL )
+		return ent;
 
-/*
-* G_SelectIntermissionSpawnPoint
-* Returns a intermission spawnpoint, or a deathmatch spawnpoint if
-* no info_player_intermission was found.
-*/
-edict_t *G_SelectIntermissionSpawnPoint( void ) {
-	edict_t *ent;
-	int i;
-
-	// find an intermission spot
-	ent = G_Find( NULL, FOFS( classname ), "info_player_intermission" );
-	if( !ent ) { // the map creator forgot to put in an intermission point...
-		ent = G_Find( NULL, FOFS( classname ), "info_player_start" );
-		if( !ent ) {
-			ent = G_Find( NULL, FOFS( classname ), "info_player_deathmatch" );
-		}
-	} else {
-		// chose one of four spots
-		i = rand() & 3;
-		while( i-- ) {
-			ent = G_Find( ent, FOFS( classname ), "info_player_intermission" );
-			if( !ent ) { // wrap around the list
-				ent = G_Find( ent, FOFS( classname ), "info_player_intermission" );
-			}
-		}
-	}
-
-	return ent;
+	return G_Find( NULL, FOFS( classname ), "info_player_intermission" );
 }
 
 /*
@@ -310,7 +283,7 @@ void SelectSpawnPoint( edict_t *ent, edict_t **spawnpoint, vec3_t origin, vec3_t
 	edict_t *spot = NULL;
 
 	if( GS_MatchState() >= MATCH_STATE_POSTMATCH ) {
-		spot = G_SelectIntermissionSpawnPoint();
+		spot = G_FindPostMatchCamera();
 	} else {
 		if( game.asEngine != NULL ) {
 			spot = GT_asCallSelectSpawnPoint( ent );

@@ -97,7 +97,9 @@ static void SP_worldspawn( edict_t *ent );
 spawn_t spawns[] = {
 	{ "info_player_start", SP_info_player_start },
 	{ "info_player_deathmatch", SP_info_player_deathmatch },
-	{ "info_player_intermission", SP_info_player_intermission },
+
+	{ "post_match_camera", SP_post_match_camera },
+	{ "info_player_intermission", SP_post_match_camera },
 
 	{ "func_plat", SP_func_plat },
 	{ "func_button", SP_func_button },
@@ -148,10 +150,8 @@ spawn_t spawns[] = {
 	{ "info_notnull", SP_info_notnull },
 	{ "path_corner", SP_path_corner },
 
-	{ "misc_teleporter_dest", SP_misc_teleporter_dest },
-
 	{ "trigger_teleport", SP_trigger_teleport },
-	{ "info_teleport_destination", SP_info_teleport_destination },
+	{ "misc_teleporter_dest", SP_misc_teleporter_dest },
 
 	{ "misc_model", SP_misc_model },
 	{ "misc_particles", SP_misc_particles },

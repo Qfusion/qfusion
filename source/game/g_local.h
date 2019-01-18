@@ -328,7 +328,6 @@ void G_Teams_JoinChallengersQueue( edict_t *ent );
 void G_Teams_LeaveChallengersQueue( edict_t *ent );
 void G_InitChallengersQueue( void );
 
-void G_MoveClientToPostMatchScoreBoards( edict_t *ent, edict_t *spawnpoint );
 void G_Gametype_Init( void );
 void G_Gametype_ScoreEvent( gclient_t *client, const char *score_event, const char *args );
 void G_RunGametype( void );
@@ -367,7 +366,7 @@ edict_t *G_SelectIntermissionSpawnPoint( void );
 float PlayersRangeFromSpot( edict_t *spot, int ignore_team );
 void SP_info_player_start( edict_t *ent );
 void SP_info_player_deathmatch( edict_t *ent );
-void SP_info_player_intermission( edict_t *ent );
+void SP_post_match_camera( edict_t *ent );
 
 //
 // g_func.c
@@ -629,7 +628,6 @@ http_response_code_t G_CallVotes_WebRequest( http_query_method_t method, const c
 // g_trigger.c
 //
 void SP_trigger_teleport( edict_t *ent );
-void SP_info_teleport_destination( edict_t *ent );
 void SP_trigger_always( edict_t *ent );
 void SP_trigger_once( edict_t *ent );
 void SP_trigger_multiple( edict_t *ent );
@@ -819,7 +817,6 @@ extern char scoreboardString[MAX_STRING_CHARS];
 extern const unsigned int scoreboardInterval;
 #define SCOREBOARD_MSG_MAXSIZE ( MAX_STRING_CHARS - 8 ) //I know, I know, doesn't make sense having a bigger string than the maxsize value
 
-void MoveClientToIntermission( edict_t *client );
 void G_SetClientStats( edict_t *ent );
 void G_Snap_UpdateWeaponListMessages( void );
 void G_ScoreboardMessage_AddSpectators( void );

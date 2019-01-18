@@ -676,7 +676,7 @@ void SP_trigger_gravity( edict_t *self ) {
 //-------- NOTES --------
 //Target it to a misc_teleporter_dest.
 
-static void old_teleporter_touch( edict_t *self, edict_t *other, cplane_t *plane, int surfFlags ) {
+static void TeleporterTouch( edict_t *self, edict_t *other, cplane_t *plane, int surfFlags ) {
 	edict_t *dest;
 
 	if( !G_PlayerCanTeleport( other ) ) {
@@ -745,18 +745,5 @@ void SP_trigger_teleport( edict_t *ent ) {
 	}
 
 	InitTrigger( ent );
-	ent->touch = old_teleporter_touch;
-}
-
-//QUAKED info_teleport_destination (0.5 0.5 0.5) (-16 -16 -24) (16 16 32)
-//You can point trigger_teleports at these.
-//-------- KEYS --------
-//targetname : must match the target key of entity that uses this for pointing.
-//notsingle : when set to 1, entity will not spawn in Single Player mode
-//notfree : when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.
-//notduel : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jaltodo)
-//notteam : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.
-
-void SP_info_teleport_destination( edict_t *ent ) {
-	ent->s.origin[2] += 16;
+	ent->touch = TeleporterTouch;
 }
