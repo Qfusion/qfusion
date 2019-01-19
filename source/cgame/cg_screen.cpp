@@ -87,8 +87,6 @@ cvar_t *cg_scoreboardStats;
 cvar_t *cg_showTeamLocations;
 cvar_t *cg_showViewBlends;
 
-static int scr_damagetime_off;
-
 /*
 ===============================================================================
 
@@ -141,8 +139,8 @@ static void CG_DrawCenterString( void ) {
 //=============================================================================
 
 static void CG_CheckDamageCrosshair( void ) {
-	scr_damagetime_off -= cg.frameTime;
-	if( scr_damagetime_off <= 0 ) {
+	cg.screenDamageTimeOff -= cg.frameTime;
+	if( cg.screenDamageTimeOff <= 0 ) {
 		if( !cg_crosshair_damage_color->modified ) {
 			return;
 		}
@@ -421,8 +419,8 @@ void CG_DrawCrosshair( int x, int y, int align ) {
 
 	if( cg_crosshair_color->modified || cg_crosshair_damage_color->modified ) {
 		if( cg_crosshair_damage_color->modified ) {
-			if( scr_damagetime_off <= 0 ) {
-				scr_damagetime_off = 300;
+			if( cg.screenDamageTimeOff <= 0 ) {
+				cg.screenDamageTimeOff = 300;
 			}
 			rgbcolor = COM_ReadColorRGBString( cg_crosshair_damage_color->string );
 		} else {

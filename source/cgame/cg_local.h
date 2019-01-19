@@ -622,6 +622,8 @@ typedef struct {
 	int64_t fallEffectTime;
 	int64_t fallEffectRebounceTime;
 
+	int64_t screenDamageTimeOff;
+
 	//
 	// transient data from server
 	//
