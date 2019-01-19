@@ -271,16 +271,6 @@ static void RF_CheckCvars( void ) {
 		r_texturemode->modified = false;
 		rrf.adapter.cmdPipe->SetTextureMode( rrf.adapter.cmdPipe, r_texturemode->string );
 	}
-
-	// keep r_outlines_cutoff value in sane bounds to prevent wallhacking
-	if( r_outlines_scale->modified ) {
-		if( r_outlines_scale->value < 0 ) {
-			ri.Cvar_ForceSet( r_outlines_scale->name, "0" );
-		} else if( r_outlines_scale->value > 3 ) {
-			ri.Cvar_ForceSet( r_outlines_scale->name, "3" );
-		}
-		r_outlines_scale->modified = false;
-	}
 }
 
 void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync, bool uncappedFPS ) {

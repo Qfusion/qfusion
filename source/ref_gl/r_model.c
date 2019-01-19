@@ -1133,12 +1133,10 @@ static void R_InitMapConfig( const char *model ) {
 	mapConfig.deluxeMaps = false;
 	mapConfig.deluxeMappingEnabled = false;
 	mapConfig.forceClear = false;
-	mapConfig.forceWorldOutlines = false;
 	mapConfig.averageLightingIntensity = 1;
 	mapConfig.writeSkyDepth = false;
 
 	VectorClear( mapConfig.ambient );
-	VectorClear( mapConfig.outlineColor );
 
 	if( r_lighting_packlightmaps->integer ) {
 		char lightmapsPath[MAX_QPATH], *p;

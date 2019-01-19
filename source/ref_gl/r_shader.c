@@ -965,10 +965,6 @@ static void Shader_SoftParticle( shader_t *shader, shaderpass_t *pass, const cha
 	shader->flags |= SHADER_SOFT_PARTICLE;
 }
 
-static void Shader_ForceWorldOutlines( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
-	shader->flags |= SHADER_FORCE_OUTLINE_WORLD;
-}
-
 static const shaderkey_t shaderkeys[] =
 {
 	{ "cull", Shader_Cull },
@@ -996,7 +992,6 @@ static const shaderkey_t shaderkeys[] =
 	{ "template", Shader_Template },
 	{ "skip", Shader_Skip },
 	{ "softparticle", Shader_SoftParticle },
-	{ "forceworldoutlines", Shader_ForceWorldOutlines },
 
 	{ NULL, NULL }
 };

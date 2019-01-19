@@ -467,10 +467,6 @@ extern cvar_t *r_shadows_cascades_debug;
 extern cvar_t *r_shadows_cascades_blendarea;
 extern cvar_t *r_shadows_lodbias;
 
-extern cvar_t *r_outlines_world;
-extern cvar_t *r_outlines_scale;
-extern cvar_t *r_outlines_cutoff;
-
 extern cvar_t *r_soft_particles;
 extern cvar_t *r_soft_particles_scale;
 
@@ -729,8 +725,6 @@ void        R_SetCustomColor( int num, int r, int g, int b );
 int         R_GetCustomColor( int num );
 void        R_ShutdownCustomColors( void );
 
-#define ENTITY_OUTLINE( ent ) ( ( !( rn.renderFlags & RF_MIRRORVIEW ) && ( ( ent )->renderfx & RF_VIEWERMODEL ) ) ? 0 : ( ent )->outlineHeight )
-
 void        R_ClearRefInstStack( void );
 refinst_t  *R_PushRefInst( void );
 void        R_PopRefInst( void );
@@ -963,7 +957,6 @@ typedef struct {
 	int overbrightBits;                     // map specific overbright bits
 
 	float ambient[3];
-	byte_vec4_t outlineColor;
 	byte_vec4_t environmentColor;
 	float averageLightingIntensity;
 
@@ -974,8 +967,6 @@ typedef struct {
 	bool deluxeMappingEnabled;              // true if deluxeMaps is true and r_lighting_deluxemaps->integer != 0
 
 	bool forceClear;
-
-	bool forceWorldOutlines;
 	bool writeSkyDepth;
 } mapconfig_t;
 

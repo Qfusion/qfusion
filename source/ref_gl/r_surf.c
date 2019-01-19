@@ -961,7 +961,6 @@ void R_DrawWorldShadowNode( void ) {
 void R_DrawWorldNode( void ) {
 	int clipFlags = r_nocull->integer ? 0 : rn.clipFlags;
 	int64_t msec = 0, msec2 = 0;
-	bool worldOutlines;
 	bool speeds = r_speeds->integer != 0;
 	mbrushmodel_t *bm = rsh.worldBrushModel;
 
@@ -978,15 +977,6 @@ void R_DrawWorldNode( void ) {
 	}
 
 	VectorCopy( rn.refdef.vieworg, modelOrg );
-
-	worldOutlines = mapConfig.forceWorldOutlines || ( rn.refdef.rdflags & RDF_WORLDOUTLINES );
-
-	if( worldOutlines && ( rn.viewcluster != -1 ) && r_outlines_scale->value > 0 ) {
-		rsc.worldent->outlineHeight = max( 0.0f, r_outlines_world->value );
-	} else {
-		rsc.worldent->outlineHeight = 0;
-	}
-	Vector4Copy( mapConfig.outlineColor, rsc.worldent->outlineColor );
 
 	// BEGIN t_world_node
 	if( speeds ) {

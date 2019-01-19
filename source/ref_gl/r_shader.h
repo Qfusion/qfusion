@@ -65,8 +65,7 @@ enum {
 	SHADER_ALLDETAIL                = 1 << 12,
 	SHADER_NODRAWFLAT               = 1 << 13,
 	SHADER_SOFT_PARTICLE            = 1 << 14,
-	SHADER_FORCE_OUTLINE_WORLD      = 1 << 15,
-	SHADER_STENCILTEST              = 1 << 16
+	SHADER_STENCILTEST              = 1 << 15
 };
 
 // sorting
@@ -182,8 +181,7 @@ enum {
 	DEFORMV_MOVE,
 	DEFORMV_AUTOSPRITE,
 	DEFORMV_AUTOSPRITE2,
-	DEFORMV_AUTOPARTICLE,
-	DEFORMV_OUTLINE
+	DEFORMV_AUTOPARTICLE
 };
 
 typedef struct {

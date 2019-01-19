@@ -78,8 +78,6 @@ typedef struct glsl_program_s {
 			GlossFactors,
 
 			OffsetMappingScale,
-			OutlineHeight,
-			OutlineCutOff,
 
 			FrontPlane,
 			TextureParams,
@@ -186,7 +184,6 @@ void RP_Init( void ) {
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_MATERIAL, DEFAULT_GLSL_MATERIAL_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_DISTORTION, DEFAULT_GLSL_DISTORTION_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_SHADOW, DEFAULT_GLSL_SHADOW_PROGRAM, NULL, NULL, 0, 0 );
-	RP_RegisterProgram( GLSL_PROGRAM_TYPE_OUTLINE, DEFAULT_GLSL_OUTLINE_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_Q3A_SHADER, DEFAULT_GLSL_Q3A_SHADER_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_FOG, DEFAULT_GLSL_FOG_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_FXAA, DEFAULT_GLSL_FXAA_PROGRAM, NULL, NULL, 0, 0 );
@@ -708,24 +705,6 @@ static const glsl_feature_t glsl_features_shadow[] =
 	{ 0, NULL, NULL }
 };
 
-static const glsl_feature_t glsl_features_outline[] =
-{
-	{ GLSL_SHADER_COMMON_BONE_TRANSFORMS4, "#define QF_NUM_BONE_INFLUENCES 4\n", "_bones4" },
-	{ GLSL_SHADER_COMMON_BONE_TRANSFORMS3, "#define QF_NUM_BONE_INFLUENCES 3\n", "_bones3" },
-	{ GLSL_SHADER_COMMON_BONE_TRANSFORMS2, "#define QF_NUM_BONE_INFLUENCES 2\n", "_bones2" },
-	{ GLSL_SHADER_COMMON_BONE_TRANSFORMS1, "#define QF_NUM_BONE_INFLUENCES 1\n", "_bones1" },
-
-	{ GLSL_SHADER_COMMON_FOG, "#define APPLY_FOG\n#define APPLY_FOG_IN 1\n", "_fog" },
-	{ GLSL_SHADER_COMMON_FOG_RGB, "#define APPLY_FOG_COLOR\n", "_rgb" },
-
-	{ GLSL_SHADER_COMMON_INSTANCED_TRANSFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n", "_instanced" },
-	{ GLSL_SHADER_COMMON_INSTANCED_ATTRIB_TRANSFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n#define APPLY_INSTANCED_ATTRIB_TRANSFORMS\n", "_instanced_va" },
-
-	{ GLSL_SHADER_OUTLINE_OUTLINES_CUTOFF, "#define APPLY_OUTLINES_CUTOFF\n", "_outcut" },
-
-	{ 0, NULL, NULL }
-};
-
 static const glsl_feature_t glsl_features_q3a[] =
 {
 	{ GLSL_SHADER_COMMON_GREYSCALE, "#define APPLY_GREYSCALE\n", "_grey" },
@@ -848,8 +827,6 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 	glsl_features_distortion,
 	// GLSL_PROGRAM_TYPE_SHADOW
 	glsl_features_shadow,
-	// GLSL_PROGRAM_TYPE_OUTLINE
-	glsl_features_outline,
 	// GLSL_PROGRAM_TYPE_UNUSED
 	glsl_features_empty,
 	// GLSL_PROGRAM_TYPE_Q3A_SHADER
@@ -2171,20 +2148,6 @@ void RP_UpdateTextureUniforms( int elem, int TexWidth, int TexHeight ) {
 }
 
 /*
-* RP_UpdateOutlineUniforms
-*/
-void RP_UpdateOutlineUniforms( int elem, float projDistance ) {
-	glsl_program_t *program = r_glslprograms + elem - 1;
-
-	if( program->loc.OutlineHeight >= 0 ) {
-		qglUniform1fARB( program->loc.OutlineHeight, projDistance );
-	}
-	if( program->loc.OutlineCutOff >= 0 ) {
-		qglUniform1fARB( program->loc.OutlineCutOff, max( 0, r_outlines_cutoff->value ) );
-	}
-}
-
-/*
 * RP_UpdateFogUniforms
 */
 void RP_UpdateFogUniforms( int elem, byte_vec4_t color, float clearDist, float opaqueDist, cplane_t *fogPlane, cplane_t *eyePlane, float eyeDist ) {
@@ -2544,9 +2507,6 @@ static void RP_GetUniformLocations( glsl_program_t *program ) {
 	program->loc.GlossFactors = qglGetUniformLocationARB( program->object, "u_GlossFactors" );
 
 	program->loc.OffsetMappingScale = qglGetUniformLocationARB( program->object, "u_OffsetMappingScale" );
-
-	program->loc.OutlineHeight = qglGetUniformLocationARB( program->object, "u_OutlineHeight" );
-	program->loc.OutlineCutOff = qglGetUniformLocationARB( program->object, "u_OutlineCutOff" );
 
 	program->loc.FrontPlane = qglGetUniformLocationARB( program->object, "u_FrontPlane" );
 

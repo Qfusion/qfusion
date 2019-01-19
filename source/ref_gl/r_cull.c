@@ -643,11 +643,6 @@ int R_CullModelEntity( const entity_t *e, bool pvsCull ) {
 		return false;
 	}
 
-	// account for possible outlines
-	if( e->outlineHeight ) {
-		radius += e->outlineHeight * r_outlines_scale->value * 1.733 /*sqrt(3)*/;
-	}
-
 	if( sphereCull ) {
 		if( R_CullSphere( e->origin, radius, rn.clipFlags ) ) {
 			return 1;

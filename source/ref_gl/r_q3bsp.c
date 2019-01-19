@@ -1434,7 +1434,7 @@ static void Mod_LoadVisibility( const lump_t *l ) {
 /*
 * Mod_LoadEntities
 */
-static void Mod_LoadEntities( const lump_t *l, vec3_t gridSize, vec3_t ambient, vec3_t outline ) {
+static void Mod_LoadEntities( const lump_t *l, vec3_t gridSize, vec3_t ambient ) {
 	int n;
 	char *data;
 	bool isworld;
@@ -1444,11 +1444,9 @@ static void Mod_LoadEntities( const lump_t *l, vec3_t gridSize, vec3_t ambient, 
 
 	assert( gridSize );
 	assert( ambient );
-	assert( outline );
 
 	VectorClear( gridSize );
 	VectorClear( ambient );
-	VectorClear( outline );
 
 	data = (char *)mod_base + l->fileofs;
 	if( !data[0] ) {
@@ -1519,13 +1517,6 @@ static void Mod_LoadEntities( const lump_t *l, vec3_t gridSize, vec3_t ambient, 
 				if( atof( value ) != 0 ) {
 					mapConfig.forceClear = true;
 				}
-			} else if( !strcmp( key, "_outlinecolor" ) ) {
-				n = sscanf( value, "%8f %8f %8f", &celcolorf[0], &celcolorf[1], &celcolorf[2] );
-				if( n != 3 ) {
-					int celcolori[3] = { 0, 0, 0 };
-					sscanf( value, "%3i %3i %3i", &celcolori[0], &celcolori[1], &celcolori[2] );
-					VectorCopy( celcolori, celcolorf );
-				}
 			}
 		}
 
@@ -1540,7 +1531,6 @@ static void Mod_LoadEntities( const lump_t *l, vec3_t gridSize, vec3_t ambient, 
 			if( max( celcolorf[0], max( celcolorf[1], celcolorf[2] ) ) > 1.0f ) {
 				VectorScale( celcolorf, 1.0f / 255.0f, celcolorf );   // [0..1] RGB -> [0..255] RGB
 			}
-			VectorCopy( celcolorf, outline );
 		}
 	}
 }
@@ -1591,7 +1581,7 @@ static void Mod_ApplySuperStylesToFace( const rdface_t *in, msurface_t *out ) {
 /*
 * Mod_Finish
 */
-static void Mod_Finish( const lump_t *faces, const lump_t *light, vec3_t gridSize, vec3_t ambient, vec3_t outline ) {
+static void Mod_Finish( const lump_t *faces, const lump_t *light, vec3_t gridSize, vec3_t ambient ) {
 	unsigned int i, j;
 	msurface_t *surf;
 	mfog_t *testFog;
@@ -1636,11 +1626,6 @@ static void Mod_Finish( const lump_t *faces, const lump_t *light, vec3_t gridSiz
 		clamp( mapConfig.averageLightingIntensity, 0.0f, 1.0f );
 	}
 
-	// outline color
-	for( i = 0; i < 3; i++ )
-		mapConfig.outlineColor[i] = (uint8_t)( bound( 0, outline[i] * 255.0f, 255 ) );
-	mapConfig.outlineColor[3] = 255;
-
 	for( i = 0, testFog = loadbmodel->fogs; i < loadbmodel->numfogs; testFog++, i++ ) {
 		if( !testFog->shader ) {
 			continue;
@@ -1676,12 +1661,6 @@ static void Mod_Finish( const lump_t *faces, const lump_t *light, vec3_t gridSiz
 		Mod_ApplySuperStylesToFace( in, surf );
 
 		shader = surf->shader;
-
-		// force outlines hack for old maps
-		if( !mapConfig.forceWorldOutlines
-			&& shader && ( shader->flags & SHADER_FORCE_OUTLINE_WORLD )  ) {
-			mapConfig.forceWorldOutlines = true;
-		}
 
 		if( globalFog && surf->mesh.numVerts != 0 && surf->fog != testFog ) {
 			if( shader && !( shader->flags & SHADER_SKY ) && !shader->fog_dist ) {
@@ -1731,7 +1710,7 @@ static void Mod_Finish( const lump_t *faces, const lump_t *light, vec3_t gridSiz
 void Mod_LoadQ3BrushModel( model_t *mod, model_t *parent, void *buffer, bspFormatDesc_t *format ) {
 	int i;
 	dheader_t *header;
-	vec3_t gridSize, ambient, outline;
+	vec3_t gridSize, ambient;
 
 	mod->type = mod_brush;
 	mod->registrationSequence = rsh.registrationSequence;
@@ -1753,7 +1732,7 @@ void Mod_LoadQ3BrushModel( model_t *mod, model_t *parent, void *buffer, bspForma
 	// load into heap
 	Mod_LoadSubmodels( &header->lumps[LUMP_MODELS] );
 	Mod_LoadVisibility( &header->lumps[LUMP_VISIBILITY] );
-	Mod_LoadEntities( &header->lumps[LUMP_ENTITIES], gridSize, ambient, outline );
+	Mod_LoadEntities( &header->lumps[LUMP_ENTITIES], gridSize, ambient );
 	Mod_LoadLighting( &header->lumps[LUMP_LIGHTING], &header->lumps[LUMP_FACES] );
 	Mod_LoadShaderrefs( &header->lumps[LUMP_SHADERREFS] );
 	Mod_PreloadFaces( &header->lumps[LUMP_FACES] );
@@ -1780,5 +1759,5 @@ void Mod_LoadQ3BrushModel( model_t *mod, model_t *parent, void *buffer, bspForma
 		Mod_LoadLightArray();
 	}
 
-	Mod_Finish( &header->lumps[LUMP_FACES], &header->lumps[LUMP_LIGHTING], gridSize, ambient, outline );
+	Mod_Finish( &header->lumps[LUMP_FACES], &header->lumps[LUMP_LIGHTING], gridSize, ambient );
 }

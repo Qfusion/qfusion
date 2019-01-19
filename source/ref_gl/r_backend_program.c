@@ -30,7 +30,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 enum {
 	BUILTIN_GLSLPASS_FOG,
-	BUILTIN_GLSLPASS_OUTLINE,
 	BUILTIN_GLSLPASS_SKYBOX,
 	MAX_BUILTIN_GLSLPASSES
 };
@@ -79,14 +78,6 @@ static void RB_InitBuiltinPasses( void ) {
 	pass->alphagen.type = ALPHA_GEN_IDENTITY;
 	pass->flags = GLSTATE_SRCBLEND_SRC_ALPHA | GLSTATE_DSTBLEND_ONE_MINUS_SRC_ALPHA;
 	pass->program_type = GLSL_PROGRAM_TYPE_FOG;
-
-	// outlines
-	pass = &r_GLSLpasses[BUILTIN_GLSLPASS_OUTLINE];
-	pass->flags = GLSTATE_DEPTHWRITE;
-	pass->rgbgen.type = RGB_GEN_OUTLINE;
-	pass->alphagen.type = ALPHA_GEN_OUTLINE;
-	pass->tcgen = TC_GEN_NONE;
-	pass->program_type = GLSL_PROGRAM_TYPE_OUTLINE;
 
 	// skybox
 	pass = &r_GLSLpasses[BUILTIN_GLSLPASS_SKYBOX];
@@ -368,11 +359,6 @@ void RB_GetShaderpassColor( const shaderpass_t *pass, byte_vec4_t rgba_, float *
 			a = v[2]; rgba[2] = ( int )( a * 255.0f );
 			*colorMod = (float)temp;
 			break;
-		case RGB_GEN_OUTLINE:
-			rgba[0] = rb.entityOutlineColor[0];
-			rgba[1] = rb.entityOutlineColor[1];
-			rgba[2] = rb.entityOutlineColor[2];
-			break;
 		case RGB_GEN_ONE_MINUS_ENTITY:
 			rgba[0] = 255 - rb.entityColor[0];
 			rgba[1] = 255 - rb.entityColor[1];
@@ -420,8 +406,6 @@ void RB_GetShaderpassColor( const shaderpass_t *pass, byte_vec4_t rgba_, float *
 		case ALPHA_GEN_ENTITY:
 			rgba[3] = rb.entityColor[3];
 			break;
-		case ALPHA_GEN_OUTLINE:
-			rgba[3] = rb.entityOutlineColor[3];
 		default:
 			break;
 	}
@@ -1154,55 +1138,6 @@ static void RB_RenderMeshGLSL_Shadow( const shaderpass_t *pass, r_glslfeat_t pro
 }
 
 /*
-* RB_RenderMeshGLSL_Outline
-*/
-static void RB_RenderMeshGLSL_Outline( const shaderpass_t *pass, r_glslfeat_t programFeatures ) {
-	int faceCull;
-	int program;
-	mat4_t texMatrix;
-
-	if( rb.currentModelType == mod_brush ) {
-		programFeatures |= GLSL_SHADER_OUTLINE_OUTLINES_CUTOFF;
-	}
-
-	programFeatures |= RB_RGBAlphaGenToProgramFeatures( &pass->rgbgen, &pass->alphagen );
-
-	programFeatures |= RB_FogProgramFeatures( pass, rb.fog );
-
-	// update uniforcms
-	program = RB_RegisterProgram( GLSL_PROGRAM_TYPE_OUTLINE, NULL,
-								  rb.currentShader->deformsKey, rb.currentShader->deforms, rb.currentShader->numdeforms, programFeatures );
-	if( !RB_BindProgram( program ) ) {
-		return;
-	}
-
-	Matrix4_Identity( texMatrix );
-
-	faceCull = rb.gl.faceCull;
-	RB_Cull( GL_BACK );
-
-	// set shaderpass state (blending, depthwrite, etc)
-	RB_SetState( RB_GetShaderpassState( pass->flags ) );
-
-	RB_UpdateCommonUniforms( program, pass, texMatrix );
-
-	RP_UpdateOutlineUniforms( program, rb.currentEntity->outlineHeight * r_outlines_scale->value );
-
-	if( programFeatures & GLSL_SHADER_COMMON_FOG ) {
-		RB_UpdateFogUniforms( program, rb.fog );
-	}
-
-	// submit animation data
-	if( programFeatures & GLSL_SHADER_COMMON_BONE_TRANSFORMS ) {
-		RP_UpdateBonesUniforms( program, rb.bonesData.numBones, rb.bonesData.dualQuats );
-	}
-
-	RB_DrawElementsReal( &rb.drawElements );
-
-	RB_Cull( faceCull );
-}
-
-/*
 * RB_TcGenToProgramFeatures
 */
 r_glslfeat_t RB_TcGenToProgramFeatures( int tcgen, vec_t *tcgenVec, mat4_t texMatrix, mat4_t genVectors ) {
@@ -1671,9 +1606,6 @@ void RB_RenderMeshGLSLProgrammed( const shaderpass_t *pass, int programType ) {
 		case GLSL_PROGRAM_TYPE_SHADOW:
 			RB_RenderMeshGLSL_Shadow( pass, features );
 			break;
-		case GLSL_PROGRAM_TYPE_OUTLINE:
-			RB_RenderMeshGLSL_Outline( pass, features );
-			break;
 		case GLSL_PROGRAM_TYPE_Q3A_SHADER:
 			RB_RenderMeshGLSL_Q3AShader( pass, features );
 			break;
@@ -1714,9 +1646,6 @@ static void RB_UpdateVertexAttribs( void ) {
 	}
 	if( rb.bonesData.numBones ) {
 		vattribs |= VATTRIB_BONES_BITS;
-	}
-	if( rb.currentEntity && rb.currentEntity->outlineHeight ) {
-		vattribs |= VATTRIB_NORMAL_BIT;
 	}
 	if( DRAWFLAT() ) {
 		vattribs |= VATTRIB_NORMAL_BIT;
@@ -1784,7 +1713,6 @@ void RB_BindShader( const entity_t *e, const shader_t *shader, const mfog_t *fog
 		rb.depthEqual = false;
 	} else {
 		Vector4Copy( rb.currentEntity->shaderRGBA, rb.entityColor );
-		Vector4Copy( rb.currentEntity->outlineColor, rb.entityOutlineColor );
 		if( rb.currentEntity->shaderTime > rb.time ) {
 			rb.currentShaderTime = 0;
 		} else {
@@ -2198,7 +2126,6 @@ void RB_DrawOutlinedElements( void ) {
 */
 void RB_DrawShadedElements( void ) {
 	unsigned i;
-	bool addGLSLOutline = false;
 	shaderpass_t *pass;
 
 	if( ( rb.mode == RB_MODE_DEPTH ) && !( rb.currentShader->flags & SHADER_DEPTHWRITE ) ) {
@@ -2206,12 +2133,6 @@ void RB_DrawShadedElements( void ) {
 	}
 	if( RB_CleanSinglePass() ) {
 		return;
-	}
-
-	if( ENTITY_OUTLINE( rb.currentEntity ) && !( rb.renderFlags & RF_CLIPPLANE )
-		&& ( rb.currentShader->sort == SHADER_SORT_OPAQUE ) && Shader_CullFront( rb.currentShader )
-		&& !( rb.renderFlags & RF_NONVIEWERREF ) ) {
-		addGLSLOutline = true;
 	}
 
 	RB_SetShaderState();
@@ -2237,11 +2158,6 @@ void RB_DrawShadedElements( void ) {
 
 	if( rb.mode == RB_MODE_DEPTH || rb.mode == RB_MODE_TRIANGLE_OUTLINES || rb.mode == RB_MODE_LIGHT || rb.mode == RB_MODE_LIGHTMAP || rb.mode == RB_MODE_DIFFUSE ) {
 		goto end;
-	}
-
-	// outlines
-	if( addGLSLOutline ) {
-		RB_RenderPass( &r_GLSLpasses[BUILTIN_GLSLPASS_OUTLINE] );
 	}
 
 	// fog
