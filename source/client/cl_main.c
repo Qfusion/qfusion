@@ -2402,6 +2402,7 @@ void CL_Frame( int realMsec, int gameMsec ) {
 	static float roundingMsec = 0.0f;
 	int minMsec;
 	float maxFps;
+	const int absMinFps = 24;
 
 	if( dedicated->integer ) {
 		return;
@@ -2478,12 +2479,12 @@ void CL_Frame( int realMsec, int gameMsec ) {
 		roundingMsec += 1000.0f / maxFps - minMsec;
 	} else if( cl_maxfps->integer > 0 && !(cl_timedemo->integer && cls.demo.playing)
 			   && !( cls.demo.avi_video && cls.state == CA_ACTIVE ) ) {
-		const int absMinFps = 24;
-
 		// do not allow setting cl_maxfps to very low values to prevent cheating
 		if( cl_maxfps->integer < absMinFps ) {
-			Cvar_ForceSet( "cl_maxfps", STR_TOSTR( absMinFps ) );
+			char buf[32];
+			Cvar_ForceSet( "cl_maxfps", va_r( buf, sizeof( buf ), "%d", absMinFps ) );
 		}
+
 		maxFps = VID_AppIsMinimized() ? absMinFps : cl_maxfps->value;
 		minMsec = max( ( 1000.0f / maxFps ), 1 );
 		roundingMsec += max( ( 1000.0f / maxFps ), 1.0f ) - minMsec;
