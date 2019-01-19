@@ -406,7 +406,7 @@ void G_Match_LaunchState( int matchState ) {
 			}
 
 			gs.gameState.stats[GAMESTAT_MATCHSTATE] = MATCH_STATE_WAITEXIT;
-			gs.gameState.stats[GAMESTAT_MATCHDURATION] = 25000;
+			gs.gameState.stats[GAMESTAT_MATCHDURATION] = 3000;
 			gs.gameState.stats[GAMESTAT_MATCHSTART] = game.serverTime;
 
 			level.exitNow = false;

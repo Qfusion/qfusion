@@ -1363,11 +1363,6 @@ void ClientThink( edict_t *ent, usercmd_t *ucmd, int timeDelta ) {
 
 	client->ucmd = *ucmd;
 
-	// can exit intermission after two seconds, not counting postmatch
-	if( GS_MatchState() == MATCH_STATE_WAITEXIT && game.serverTime > GS_MatchStartTime() + 2000 ) {
-		level.exitNow = true;
-	}
-
 	// (is this really needed?:only if not cared enough about ps in the rest of the code)
 	// refresh player state position from the entity
 	VectorCopy( ent->s.origin, client->ps.pmove.origin );
