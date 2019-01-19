@@ -469,28 +469,6 @@ static const char *G_MapRotationNormal( void ) {
 }
 
 /*
-* G_MapRotationNormal
-*/
-static const char *G_MapRotationRandom( void ) {
-	int seed, selection;
-
-	G_UpdateMapRotation();
-
-	// avoid eternal loop
-	if( !map_rotation_count || map_rotation_count == 1 ) {
-		return NULL;
-	}
-
-	seed = game.realtime;
-	do {
-		selection = (int)Q_brandom( &seed, 0, map_rotation_count );
-	} while( selection == map_rotation_current );
-
-	map_rotation_current = selection;
-	return map_rotation_p[map_rotation_current];
-}
-
-/*
 * G_ChooseNextMap
 */
 static edict_t *G_ChooseNextMap( void ) {
@@ -508,10 +486,6 @@ static edict_t *G_ChooseNextMap( void ) {
 		next = G_MapRotationNormal();
 
 		// not in the list, we go for the first one
-		ent = CreateTargetChangeLevel( next ? next : level.mapname );
-		return ent;
-	} else if( g_maprotation->integer == 2 ) {
-		next = G_MapRotationRandom();
 		ent = CreateTargetChangeLevel( next ? next : level.mapname );
 		return ent;
 	}

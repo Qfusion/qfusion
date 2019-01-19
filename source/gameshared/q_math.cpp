@@ -349,22 +349,6 @@ float Q_RSqrt( float x ) {
 	return _mm_cvtss_f32( _mm_rsqrt_ss( _mm_set_ss( x ) ) );
 }
 
-int Q_rand( int *seed ) {
-	*seed = *seed * 1103515245 + 12345;
-	return ( (unsigned int)( *seed / 65536 ) % 32768 );
-}
-
-// found here: http://graphics.stanford.edu/~seander/bithacks.html
-int Q_bitcount( int v ) {
-	int c;
-
-	v = v - ( ( v >> 1 ) & 0x55555555 );                    // reuse input as temporary
-	v = ( v & 0x33333333 ) + ( ( v >> 2 ) & 0x33333333 );     // temp
-	c = ( ( ( v + ( v >> 4 ) ) & 0xF0F0F0F ) * 0x1010101 ) >> 24; // count
-
-	return c;
-}
-
 /*
 * LerpAngle
 *

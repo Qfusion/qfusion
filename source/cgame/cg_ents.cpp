@@ -19,6 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "cg_local.h"
+#include "qalgo/rng.h"
 
 static void CG_UpdateEntities( void );
 
@@ -1255,10 +1256,7 @@ static void CG_AddParticlesEnt( centity_t *cent ) {
 		VectorNormalizeFast( dir );
 		VectorScale( dir, speed, dir );
 	} else {   // DIRECTIONAL DROP
-		float r, u;
-		double alpha;
-		double s;
-		int seed = cg.time % 255;
+		RNG rng = new_rng( cg.time, 0 );
 		int spread = (unsigned)cent->current.modelindex2 * 25;
 
 		// interpolate dropping angles
@@ -1267,10 +1265,10 @@ static void CG_AddParticlesEnt( centity_t *cent ) {
 
 		Matrix3_FromAngles( angles, cent->ent.axis );
 
-		alpha = M_PI * Q_crandom( &seed ); // [-PI ..+PI]
-		s = fabs( Q_crandom( &seed ) ); // [0..1]
-		r = s * cos( alpha ) * spread;
-		u = s * sin( alpha ) * spread;
+		float alpha = float( M_PI ) * random_float11( &rng );
+		float s = random_float01( &rng );
+		float r = s * cosf( alpha ) * spread;
+		float u = s * sinf( alpha ) * spread;
 
 		// apply spread on the direction
 		VectorMA( vec3_origin, 1024, &cent->ent.axis[AXIS_FORWARD], dir );

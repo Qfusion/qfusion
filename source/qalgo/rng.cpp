@@ -79,15 +79,23 @@ int random_uniform( RNG * rng, int lo, int hi ) {
 	return lo + ( m >> 32 );
 }
 
-float random_float( RNG * rng ) {
+float random_float01( RNG * rng ) {
         return float( random_u32( rng ) ) / ( float( UINT32_MAX ) + 1 );
 }
 
-double random_double( RNG * rng ) {
+float random_float11( RNG * rng ) {
+	return random_float01( rng ) * 2.0f - 1.0f;
+}
+
+double random_double01( RNG * rng ) {
         uint64_t r64 = ( uint64_t( random_u32( rng ) ) << 32 ) | random_u32( rng );
         uint64_t r53 = r64 & ( ( uint64_t( 1 ) << 53 ) - 1 );
 
         return double( r53 ) / double( ( uint64_t( 1 ) << 53 ) + 1 );
+}
+
+double random_double11( RNG * rng ) {
+	return random_double01( rng ) * 2.0f - 1.0f;
 }
 
 bool random_p( RNG * rng, float p ) {

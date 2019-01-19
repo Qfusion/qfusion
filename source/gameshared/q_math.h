@@ -141,15 +141,8 @@ constexpr vec4_t color_table[MAX_S_COLORS] =
 #define brandom( a, b )    ( ( a ) + random() * ( ( b ) - ( a ) ) )                // a..b
 #define crandom()   brandom( -1, 1 )                           // -1..1
 
-int Q_rand( int *seed );
-#define Q_random( seed )      ( ( Q_rand( seed ) & 0x7fff ) / ( (float)0x7fff ) )    // 0..1
-#define Q_brandom( seed, a, b ) ( ( a ) + Q_random( seed ) * ( ( b ) - ( a ) ) )                      // a..b
-#define Q_crandom( seed )     Q_brandom( seed, -1, 1 )
-
 float   Q_RSqrt( float number );
 int Q_log2( int val );
-
-int Q_bitcount( int v );
 
 #define ISPOWOF2( x ) ( !( ( x ) & ( ( x ) - 1 ) ) )
 

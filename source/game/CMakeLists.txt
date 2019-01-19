@@ -6,6 +6,7 @@ file(GLOB GAME_HEADERS
 	"*.h"
 	"../gameshared/*.h"
 	"../qalgo/hash.h"
+	"../qalgo/rng.h"
 )
 
 file(GLOB GAME_SOURCES
@@ -13,6 +14,7 @@ file(GLOB GAME_SOURCES
 	"../gameshared/*.cpp"
 	"../qalgo/base64.cpp"
 	"../qalgo/hash.cpp"
+	"../qalgo/rng.cpp"
 )
 
 add_library(game SHARED ${GAME_SOURCES} ${GAME_HEADERS})

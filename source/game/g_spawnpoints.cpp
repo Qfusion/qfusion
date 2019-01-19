@@ -19,6 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "g_local.h"
+#include "qalgo/rng.h"
 
 //QUAKED info_player_start (1 0 0) (-16 -16 -24) (16 16 32)
 //The normal starting point for a level.
@@ -162,9 +163,8 @@ bool G_OffsetSpawnPoint( vec3_t origin, const vec3_t box_mins, const vec3_t box_
 	float playerbox_rowwidth;
 	float playerbox_columnwidth;
 	int rows, columns;
-	int i, j, row = 0, column = 0;
-	int rowseed = rand() & 255;
-	int columnseed = rand() & 255;
+	int i, j;
+	RNG rng = new_rng( rand(), 0 );
 	int mask_spawn = MASK_PLAYERSOLID | ( CONTENTS_LAVA | CONTENTS_SLIME | CONTENTS_TELEPORTER | CONTENTS_JUMPPAD | CONTENTS_BODY | CONTENTS_NODROP );
 	int playersFound = 0, worldfound = 0, nofloorfound = 0, badclusterfound = 0;
 
@@ -199,8 +199,8 @@ bool G_OffsetSpawnPoint( vec3_t origin, const vec3_t box_mins, const vec3_t box_
 	// no, we won't just do a while, let's go safe and just check as many times as
 	// positions in the grid. If we didn't found a spawnpoint by then, we let it telefrag.
 	for( i = 0; i < ( rows * columns ); i++ ) {
-		row = Q_brandom( &rowseed, -rows, rows );
-		column = Q_brandom( &columnseed, -columns, columns );
+		int row = random_uniform( &rng, -rows, rows + 1 );
+		int column = random_uniform( &rng, -columns, columns + 1 );
 
 		VectorSet( virtualorigin, origin[0] + ( row * playerbox_rowwidth ),
 				   origin[1] + ( column * playerbox_columnwidth ),

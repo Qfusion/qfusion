@@ -216,36 +216,6 @@ static edict_t *G_Fire_Gunblade_Knife( vec3_t origin, vec3_t angles, firedef_t *
 }
 
 /*
-* G_LocalSpread
-*/
-static void G_LocalSpread( vec3_t angles, int spread, int seed ) {
-	float r, u;
-	vec3_t axis[3], dir;
-	double alpha;
-	double s;
-
-	if( spread <= 0 ) {
-		return;
-	}
-
-	seed &= 255;
-
-	alpha = M_PI * Q_crandom( &seed ); // [-PI ..+PI]
-	s = fabs( Q_crandom( &seed ) ); // [0..1]
-
-	r = s * cos( alpha ) * spread;
-	u = s * sin( alpha ) * spread;
-
-	AngleVectors( angles, axis[0], axis[1], axis[2] );
-
-	VectorMA( vec3_origin, 8192, axis[0], dir );
-	VectorMA( dir, r, axis[1], dir );
-	VectorMA( dir, u, axis[2], dir );
-
-	VecToAngles( dir, angles );
-}
-
-/*
 * G_Fire_Gunblade_Blast
 */
 static edict_t *G_Fire_Gunblade_Blast( vec3_t origin, vec3_t angles, firedef_t *firedef, edict_t *owner, int seed ) {
@@ -256,10 +226,6 @@ static edict_t *G_Fire_Gunblade_Blast( vec3_t origin, vec3_t angles, firedef_t *
 	timeDelta = 0;
 	if( owner && owner->r.client ) {
 		timeDelta = owner->r.client->timeDelta;
-	}
-
-	if( firedef->spread ) {
-		G_LocalSpread( angles, firedef->spread, seed );
 	}
 
 	speed = firedef->speed;
@@ -291,10 +257,6 @@ static edict_t *G_Fire_Rocket( vec3_t origin, vec3_t angles, firedef_t *firedef,
 	timeDelta = 0;
 	if( owner && owner->r.client ) {
 		timeDelta = owner->r.client->timeDelta;
-	}
-
-	if( firedef->spread ) {
-		G_LocalSpread( angles, firedef->spread, seed );
 	}
 
 	speed = firedef->speed;
@@ -386,10 +348,6 @@ static edict_t *G_Fire_Grenade( vec3_t origin, vec3_t angles, firedef_t *firedef
 		timeDelta = owner->r.client->timeDelta;
 	}
 
-	if( firedef->spread ) {
-		G_LocalSpread( angles, firedef->spread, seed );
-	}
-
 	speed = firedef->speed;
 	damage = firedef->damage;
 	knockback = firedef->knockback;
@@ -422,10 +380,6 @@ static edict_t *G_Fire_Plasma( vec3_t origin, vec3_t angles, firedef_t *firedef,
 		timeDelta = owner->r.client->timeDelta;
 	}
 
-	if( firedef->spread ) {
-		G_LocalSpread( angles, firedef->spread, seed );
-	}
-
 	speed = firedef->speed;
 	damage = firedef->damage;
 	knockback = firedef->knockback;
@@ -455,10 +409,6 @@ static edict_t *G_Fire_Lasergun( vec3_t origin, vec3_t angles, firedef_t *firede
 		timeDelta = owner->r.client->timeDelta;
 	}
 
-	if( firedef->spread ) {
-		G_LocalSpread( angles, firedef->spread, seed );
-	}
-
 	range = firedef->timeout;
 	damage = firedef->damage;
 	knockback = firedef->knockback;
@@ -484,10 +434,6 @@ static edict_t *G_Fire_Bolt( vec3_t origin, vec3_t angles, firedef_t *firedef, e
 	timeDelta = 0;
 	if( owner && owner->r.client ) {
 		timeDelta = owner->r.client->timeDelta;
-	}
-
-	if( firedef->spread ) {
-		G_LocalSpread( angles, firedef->spread, seed );
 	}
 
 	minDamageRange = firedef->timeout;

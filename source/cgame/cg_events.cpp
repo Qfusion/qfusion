@@ -372,23 +372,15 @@ static void CG_BulletImpact( trace_t *tr ) {
 }
 
 static void CG_Event_FireMachinegun( vec3_t origin, vec3_t dir, int weapon, int seed, int owner ) {
-	float r, u;
-	double alpha, s;
 	trace_t trace, *water_trace;
 	const gs_weapon_definition_t *weapondef = GS_GetWeaponDef( weapon );
 	const firedef_t *firedef = &weapondef->firedef;
-	int range = firedef->timeout, hspread = firedef->spread, vspread = firedef->v_spread;
-
-	// circle shape
-	alpha = M_PI * Q_crandom( &seed ); // [-PI ..+PI]
-	s = fabs( Q_crandom( &seed ) ); // [0..1]
-	r = s * cos( alpha ) * hspread;
-	u = s * sin( alpha ) * vspread;
+	int range = firedef->timeout;
 
 	vec3_t right, up;
 	ViewVectors( dir, right, up );
 
-	water_trace = GS_TraceBullet( &trace, origin, dir, right, up, r, u, range, owner, 0 );
+	water_trace = GS_TraceBullet( &trace, origin, dir, right, up, 0, 0, range, owner, 0 );
 	if( water_trace ) {
 		if( !VectorCompare( water_trace->endpos, origin ) ) {
 			CG_LeadWaterSplash( water_trace );

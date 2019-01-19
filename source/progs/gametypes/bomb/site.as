@@ -38,9 +38,9 @@ float max( float a, float b ) {
 }
 
 Vec3 random_point_on_hemisphere() {
-	float z = random_float();
+	float z = random_float01();
 	float r = sqrt( max( 0.0f, 1.0f - z * z ) );
-	float phi = 2 * PI * random_float();
+	float phi = 2 * PI * random_float01();
 	return Vec3( r * cos( phi ), r * sin( phi ), z );
 }
 
@@ -179,7 +179,7 @@ class cBombSite
 			trace.doTrace( origin, vec3Origin, vec3Origin, end, this.indicator.entNum, MASK_SOLID );
 
 			// pick a random point along the line
-			this.explosionPoints[i] = origin + random_float() * ( trace.endPos - origin );
+			this.explosionPoints[i] = origin + random_float01() * ( trace.endPos - origin );
 		}
 	}
 }

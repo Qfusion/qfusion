@@ -46,10 +46,14 @@ uint64_t random_u64( RNG * rng );
 int random_uniform( RNG * rng, int lo, int hi );
 
 // return a random float in [0, 1)
-float random_float( RNG * rng );
+float random_float01( RNG * rng );
+// return a random float in [-1, 1)
+float random_float11( RNG * rng );
 
 // return a random double in [0, 1)
-double random_double( RNG * rng );
+double random_double01( RNG * rng );
+// return a random double in [-1, 1)
+double random_double11( RNG * rng );
 
 // returns true with probability p
 bool random_p( RNG * rng, float p );

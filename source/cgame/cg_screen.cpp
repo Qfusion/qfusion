@@ -664,10 +664,10 @@ void CG_AddDamageNumber( entity_state_t * ent ) {
 	dn->damage = ent->damage;
 
 	float distance_jitter = 4;
-	dn->origin[ 0 ] += random_float( &damage_numbers_rng ) * distance_jitter * 2 - distance_jitter;
-	dn->origin[ 1 ] += random_float( &damage_numbers_rng ) * distance_jitter * 2 - distance_jitter;
+	dn->origin[ 0 ] += random_float11( &damage_numbers_rng ) * distance_jitter;
+	dn->origin[ 1 ] += random_float11( &damage_numbers_rng ) * distance_jitter;
 	dn->origin[ 2 ] += 48;
-	dn->drift = random_float( &damage_numbers_rng ) * 2 - 1;
+	dn->drift = random_float11( &damage_numbers_rng );
 	dn->obituary = random_select( &damage_numbers_rng, mini_obituaries );
 
 	damage_numbers_head = ( damage_numbers_head + 1 ) % ARRAY_COUNT( damage_numbers );

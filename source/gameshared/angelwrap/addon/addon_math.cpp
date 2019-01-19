@@ -92,8 +92,8 @@ static int asFunc_random_uniform( int lo, int hi ) {
 	return random_uniform( &rng, lo, hi );
 }
 
-static float asFunc_random_float() {
-	return random_float( &rng );
+static float asFunc_random_float01() {
+	return random_float01( &rng );
 }
 
 void PreRegisterMathAddon( asIScriptEngine *engine ) {
@@ -124,7 +124,7 @@ void RegisterMathAddon( asIScriptEngine *engine ) {
 		{ "double floor( double x )", asFUNCTION( asFunc_floor ) },
 		{ "uint random_uint()", asFUNCTION( asFunc_random_uint ) },
 		{ "int random_uniform( int lo, int hi )", asFUNCTION( asFunc_random_uniform ) },
-		{ "float random_float()", asFUNCTION( asFunc_random_float ) },
+		{ "float random_float01()", asFUNCTION( asFunc_random_float01 ) },
 
 		{ NULL, asFUNCTION( 0 ) }
 	}, *func;
