@@ -52,8 +52,6 @@ static void G_Gametype_GENERIC_Init( void ) {
 	level.gametype.forceTeamHumans = TEAM_SPECTATOR;
 	level.gametype.forceTeamBots = TEAM_SPECTATOR;
 
-	level.gametype.mmCompatible = false;
-
 	trap_ConfigString( CS_SCB_PLAYERTAB_LAYOUT, "%n 164 %i 64 %l 48 %p 18 %p 18" );
 	trap_ConfigString( CS_SCB_PLAYERTAB_TITLES, "Name Score Ping C R" );
 }
@@ -1299,8 +1297,6 @@ void G_Gametype_SetDefaults( void ) {
 
 	level.gametype.forceTeamHumans = TEAM_SPECTATOR;
 	level.gametype.forceTeamBots = TEAM_SPECTATOR;
-
-	level.gametype.mmCompatible = false;
 }
 
 /*

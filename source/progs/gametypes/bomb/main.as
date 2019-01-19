@@ -546,8 +546,6 @@ void GT_InitGametype() {
 	gametype.canForceModels = true;
 	gametype.removeInactivePlayers = true;
 
-	gametype.mmCompatible = true;
-
 	gametype.spawnpointRadius = 256;
 
 	// set spawnsystem type to instant while players join

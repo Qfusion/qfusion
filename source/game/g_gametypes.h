@@ -119,8 +119,6 @@ typedef struct {
 
 	int spawnpointRadius;
 
-	bool mmCompatible;
-
 	int numBots;
 	bool dummyBots;
 

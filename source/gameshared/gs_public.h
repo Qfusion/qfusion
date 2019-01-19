@@ -118,8 +118,7 @@ enum {
 #define GAMESTAT_FLAG_SELFDAMAGE ( 1 << 9LL )
 #define GAMESTAT_FLAG_INFINITEAMMO ( 1 << 10LL )
 #define GAMESTAT_FLAG_CANFORCEMODELS ( 1 << 11LL )
-#define GAMESTAT_FLAG_MMCOMPATIBLE ( 1 << 12LL )
-#define GAMESTAT_FLAG_CANDROPWEAPON ( 1 << 13LL )
+#define GAMESTAT_FLAG_CANDROPWEAPON ( 1 << 12LL )
 
 typedef struct {
 	int module;
@@ -143,7 +142,6 @@ extern gs_state_t gs;
 #define GS_Countdown() ( ( gs.gameState.stats[GAMESTAT_FLAGS] & GAMESTAT_FLAG_COUNTDOWN ) ? true : false )
 #define GS_InfiniteAmmo() ( ( gs.gameState.stats[GAMESTAT_FLAGS] & GAMESTAT_FLAG_INFINITEAMMO ) ? true : false )
 #define GS_CanForceModels() ( ( gs.gameState.stats[GAMESTAT_FLAGS] & GAMESTAT_FLAG_CANFORCEMODELS ) ? true : false )
-#define GS_MMCompatible() ( ( gs.gameState.stats[GAMESTAT_FLAGS] & GAMESTAT_FLAG_MMCOMPATIBLE ) ? true : false )
 #define GS_CanDropWeapon() ( gs.gameState.stats[GAMESTAT_FLAGS] & GAMESTAT_FLAG_CANDROPWEAPON ? true : false )
 
 #define GS_MatchState() ( gs.gameState.stats[GAMESTAT_MATCHSTATE] )

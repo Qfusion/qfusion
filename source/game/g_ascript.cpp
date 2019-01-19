@@ -311,7 +311,6 @@ static const gs_asProperty_t gametypedescr_Properties[] =
 	{ ASLIB_PROPERTY_DECL( int, spawnpointRadius ), ASLIB_FOFFSET( gametype_descriptor_t, spawnpointRadius ) },
 	{ ASLIB_PROPERTY_DECL( bool, customDeadBodyCam ), ASLIB_FOFFSET( gametype_descriptor_t, customDeadBodyCam ) },
 	{ ASLIB_PROPERTY_DECL( bool, removeInactivePlayers ), ASLIB_FOFFSET( gametype_descriptor_t, removeInactivePlayers ) },
-	{ ASLIB_PROPERTY_DECL( bool, mmCompatible ), ASLIB_FOFFSET( gametype_descriptor_t, mmCompatible ) },
 	{ ASLIB_PROPERTY_DECL( uint, numBots ), ASLIB_FOFFSET( gametype_descriptor_t, numBots ) },
 	{ ASLIB_PROPERTY_DECL( bool, dummyBots ), ASLIB_FOFFSET( gametype_descriptor_t, dummyBots ) },
 	{ ASLIB_PROPERTY_DECL( uint, forceTeamHumans ), ASLIB_FOFFSET( gametype_descriptor_t, forceTeamHumans ) },
