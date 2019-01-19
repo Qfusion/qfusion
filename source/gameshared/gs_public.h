@@ -123,7 +123,6 @@ enum {
 typedef struct {
 	int module;
 	int maxclients;
-	char gametypeName[MAX_CONFIGSTRING_CHARS];
 	game_state_t gameState;
 	gs_module_api_t api;
 } gs_state_t;
@@ -540,7 +539,6 @@ typedef enum {
 } matchmessage_t;
 
 // gs_misc.c
-void GS_SetGametypeName( const char *name );
 void GS_Obituary( void *victim, int gender, void *attacker, int mod, char *message, char *message2 );
 void GS_TouchPushTrigger( player_state_t *playerState, entity_state_t *pusher );
 int GS_WaterLevel( entity_state_t *state, vec3_t mins, vec3_t maxs );

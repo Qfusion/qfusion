@@ -157,13 +157,6 @@ float GS_FrameForTime( int *frame, int64_t curTime, int64_t startTimeStamp, floa
 //============================================================================
 
 /*
-* GS_SetGametypeName
-*/
-void GS_SetGametypeName( const char *name ) {
-	Q_strncpyz( gs.gametypeName, name, sizeof( gs.gametypeName ) );
-}
-
-/*
 * GS_Obituary
 *
 * Can be called by either the server or the client

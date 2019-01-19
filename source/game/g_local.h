@@ -210,8 +210,6 @@ typedef struct {
 	float fov;
 	const char *nextmap;
 
-	const char *music;
-
 	int lip;
 	int distance;
 	int height;
@@ -236,8 +234,6 @@ typedef struct {
 
 	int weight;
 	float scale;
-	const char *gametype;
-	const char *not_gametype;
 	const char *shaderName;
 	int size;
 } spawn_temp_t;

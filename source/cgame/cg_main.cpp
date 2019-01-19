@@ -754,10 +754,6 @@ static void CG_RegisterConfigStrings( void ) {
 	// backup initial configstrings for CG_Reset
 	memcpy( &cgs.baseConfigStrings[0][0], &cgs.configStrings[0][0], MAX_CONFIGSTRINGS*MAX_CONFIGSTRING_CHARS );
 
-	GS_SetGametypeName( cgs.configStrings[CS_GAMETYPENAME] );
-
-	trap_Cmd_ExecuteText( EXEC_NOW, va( "exec configs/client/%s.cfg silent", gs.gametypeName ) );
-
 	CG_SC_AutoRecordAction( cgs.configStrings[CS_AUTORECORDSTATE] );
 }
 

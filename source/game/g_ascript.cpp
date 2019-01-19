@@ -240,10 +240,6 @@ static const gs_asClassDescriptor_t asMatchClassDescriptor =
 
 // CLASS: GametypeDesc
 
-static asstring_t *objectGametypeDescriptor_getName( gametype_descriptor_t *self ) {
-	return game.asExport->asStringFactoryBuffer( gs.gametypeName, strlen( gs.gametypeName ) );
-}
-
 static asstring_t *objectGametypeDescriptor_getManifest( gametype_descriptor_t *self ) {
 	const char *s = trap_GetConfigString( CS_MODMANIFEST );
 
@@ -274,7 +270,6 @@ static const gs_asBehavior_t gametypedescr_ObjectBehaviors[] =
 
 static const gs_asMethod_t gametypedescr_Methods[] =
 {
-	{ ASLIB_FUNCTION_DECL( const String @, get_name, ( ) const ), asFUNCTION( objectGametypeDescriptor_getName ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( const String @, get_manifest, ( ) const ), asFUNCTION( objectGametypeDescriptor_getManifest ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, setTeamSpawnsystem, ( int team, int spawnsystem, int wave_time, int wave_maxcount, bool deadcam ) ), asFUNCTION( objectGametypeDescriptor_SetTeamSpawnsystem ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( bool, get_hasSelfDamage, ( ) const ), asFUNCTION( objectGametypeDescriptor_hasSelfDamage ), asCALL_CDECL_OBJLAST },
@@ -312,9 +307,6 @@ static const gs_asProperty_t gametypedescr_Properties[] =
 	{ ASLIB_PROPERTY_DECL( bool, customDeadBodyCam ), ASLIB_FOFFSET( gametype_descriptor_t, customDeadBodyCam ) },
 	{ ASLIB_PROPERTY_DECL( bool, removeInactivePlayers ), ASLIB_FOFFSET( gametype_descriptor_t, removeInactivePlayers ) },
 	{ ASLIB_PROPERTY_DECL( uint, numBots ), ASLIB_FOFFSET( gametype_descriptor_t, numBots ) },
-	{ ASLIB_PROPERTY_DECL( bool, dummyBots ), ASLIB_FOFFSET( gametype_descriptor_t, dummyBots ) },
-	{ ASLIB_PROPERTY_DECL( uint, forceTeamHumans ), ASLIB_FOFFSET( gametype_descriptor_t, forceTeamHumans ) },
-	{ ASLIB_PROPERTY_DECL( uint, forceTeamBots ), ASLIB_FOFFSET( gametype_descriptor_t, forceTeamBots ) },
 	{ ASLIB_PROPERTY_DECL( bool, disableObituaries ), ASLIB_FOFFSET( gametype_descriptor_t, disableObituaries ) },
 
 	ASLIB_PROPERTY_NULL

@@ -47,10 +47,6 @@ static void G_Gametype_GENERIC_Init( void ) {
 	level.gametype.spawnpointRadius = 256;
 
 	level.gametype.numBots = 0;
-	level.gametype.dummyBots = false;
-
-	level.gametype.forceTeamHumans = TEAM_SPECTATOR;
-	level.gametype.forceTeamBots = TEAM_SPECTATOR;
 
 	trap_ConfigString( CS_SCB_PLAYERTAB_LAYOUT, "%n 164 %i 64 %l 48 %p 18 %p 18" );
 	trap_ConfigString( CS_SCB_PLAYERTAB_TITLES, "Name Score Ping C R" );
@@ -1293,10 +1289,6 @@ void G_Gametype_SetDefaults( void ) {
 	level.gametype.spawnpointRadius = 64;
 
 	level.gametype.numBots = 0;
-	level.gametype.dummyBots = false;
-
-	level.gametype.forceTeamHumans = TEAM_SPECTATOR;
-	level.gametype.forceTeamBots = TEAM_SPECTATOR;
 }
 
 /*
@@ -1342,9 +1334,6 @@ void G_Gametype_Init( void ) {
 	G_CheckCvars();
 
 	G_Gametype_SetDefaults();
-
-	// most GT_InitGametype implementations rely on gs.gametypeName being set for checking their default config file
-	GS_SetGametypeName( g_gametype->string );
 
 	// Init the current gametype
 	if( !GT_asLoadScript( g_gametype->string ) ) {

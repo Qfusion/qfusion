@@ -64,7 +64,6 @@ const field_t fields[] = {
 	{ "pausetime", STOFS( pausetime ), F_FLOAT, FFL_SPAWNTEMP },
 	{ "item", STOFS( item ), F_LSTRING, FFL_SPAWNTEMP },
 	{ "gravity", STOFS( gravity ), F_LSTRING, FFL_SPAWNTEMP },
-	{ "music", STOFS( music ), F_LSTRING, FFL_SPAWNTEMP },
 	{ "fov", STOFS( fov ), F_FLOAT, FFL_SPAWNTEMP },
 	{ "nextmap", STOFS( nextmap ), F_LSTRING, FFL_SPAWNTEMP },
 	{ "notsingle", STOFS( notsingle ), F_INT, FFL_SPAWNTEMP },
@@ -75,8 +74,6 @@ const field_t fields[] = {
 	{ "gameteam", STOFS( gameteam ), F_INT, FFL_SPAWNTEMP },
 	{ "weight", STOFS( weight ), F_INT, FFL_SPAWNTEMP },
 	{ "scale", STOFS( scale ), F_FLOAT, FFL_SPAWNTEMP },
-	{ "gametype", STOFS( gametype ), F_LSTRING, FFL_SPAWNTEMP },
-	{ "not_gametype", STOFS( not_gametype ), F_LSTRING, FFL_SPAWNTEMP },
 	{ "debris1", STOFS( debris1 ), F_LSTRING, FFL_SPAWNTEMP },
 	{ "debris2", STOFS( debris2 ), F_LSTRING, FFL_SPAWNTEMP },
 	{ "shaderName", STOFS( shaderName ), F_LSTRING, FFL_SPAWNTEMP },
@@ -171,30 +168,6 @@ static const gsitem_t *G_ItemForEntity( edict_t *ent ) {
 }
 
 /*
-* G_GametypeFilterMatch
-*
-* Returns true if there's a direct match
-*/
-static bool G_GametypeFilterMatch( const char *filter ) {
-	const char *list_separators = ", ";
-	char *tok, *temp;
-	bool match = false;
-
-	temp = G_CopyString( filter );
-	tok = strtok( temp, list_separators );
-	while( tok ) {
-		if( !Q_stricmp( tok, gs.gametypeName ) ) {
-			match = true;
-			break;
-		}
-		tok = strtok( NULL, list_separators );
-	}
-	G_Free( temp );
-
-	return match;
-}
-
-/*
 * G_CanSpawnEntity
 */
 static bool G_CanSpawnEntity( edict_t *ent ) {
@@ -212,18 +185,6 @@ static bool G_CanSpawnEntity( edict_t *ent ) {
 	}
 	if( ( GS_TeamBasedGametype() && ( GS_MaxPlayersInTeam() != 1 ) ) && st.notteam ) {
 		return false;
-	}
-
-	// check for Q3TA-style inhibition key
-	if( st.gametype ) {
-		if( !G_GametypeFilterMatch( st.gametype ) ) {
-			return false;
-		}
-	}
-	if( st.not_gametype ) {
-		if( G_GametypeFilterMatch( st.not_gametype ) ) {
-			return false;
-		}
 	}
 
 	if( ( item = G_ItemForEntity( ent ) ) != NULL ) {

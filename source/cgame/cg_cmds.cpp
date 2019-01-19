@@ -111,9 +111,7 @@ void CG_ConfigString( int i, const char *s ) {
 	Q_strncpyz( cgs.configStrings[i], s, sizeof( cgs.configStrings[i] ) );
 
 	// do something apropriate
-	if( i == CS_GAMETYPENAME ) {
-		GS_SetGametypeName( cgs.configStrings[CS_GAMETYPENAME] );
-	} else if( i == CS_AUTORECORDSTATE ) {
+	if( i == CS_AUTORECORDSTATE ) {
 		CG_SC_AutoRecordAction( cgs.configStrings[i] );
 	} else if( i >= CS_MODELS && i < CS_MODELS + MAX_MODELS ) {
 		if( cgs.configStrings[i][0] == '$' ) {  // indexed pmodel
@@ -307,8 +305,7 @@ static const char *CG_SC_AutoRecordName( void ) {
 
 	// make file name
 	// duel_year-month-day_hour-min_map_player
-	Q_snprintfz( name, sizeof( name ), "%s_%04d-%02d-%02d_%02d-%02d_%s_%s_%04i",
-				 gs.gametypeName,
+	Q_snprintfz( name, sizeof( name ), "%04d-%02d-%02d_%02d-%02d_%s_%s_%04i",
 				 newtime->tm_year + 1900, newtime->tm_mon + 1, newtime->tm_mday,
 				 newtime->tm_hour, newtime->tm_min,
 				 mapname,
@@ -352,14 +349,12 @@ void CG_SC_AutoRecordAction( const char *action ) {
 	if( !Q_stricmp( action, "start" ) ) {
 		if( cg_autoaction_demo->integer && ( !spectator || cg_autoaction_spectator->integer ) ) {
 			trap_Cmd_ExecuteText( EXEC_NOW, "stop silent" );
-			trap_Cmd_ExecuteText( EXEC_NOW, va( "record autorecord/%s/%s silent",
-												gs.gametypeName, name ) );
+			trap_Cmd_ExecuteText( EXEC_NOW, va( "record autorecord/%s silent", name ) );
 			autorecording = true;
 		}
 	} else if( !Q_stricmp( action, "altstart" ) ) {
 		if( cg_autoaction_demo->integer && ( !spectator || cg_autoaction_spectator->integer ) ) {
-			trap_Cmd_ExecuteText( EXEC_NOW, va( "record autorecord/%s/%s silent",
-												gs.gametypeName, name ) );
+			trap_Cmd_ExecuteText( EXEC_NOW, va( "record autorecord/%s silent", name ) );
 			autorecording = true;
 		}
 	} else if( !Q_stricmp( action, "stop" ) ) {
@@ -369,8 +364,7 @@ void CG_SC_AutoRecordAction( const char *action ) {
 		}
 
 		if( cg_autoaction_screenshot->integer && ( !spectator || cg_autoaction_spectator->integer ) ) {
-			trap_Cmd_ExecuteText( EXEC_NOW, va( "screenshot autorecord/%s/%s silent",
-												gs.gametypeName, name ) );
+			trap_Cmd_ExecuteText( EXEC_NOW, va( "screenshot autorecord/%s silent", name ) );
 		}
 	} else if( !Q_stricmp( action, "cancel" ) ) {
 		if( autorecording ) {
@@ -379,7 +373,7 @@ void CG_SC_AutoRecordAction( const char *action ) {
 		}
 	} else if( !Q_stricmp( action, "stats" ) ) {
 		if( cg_autoaction_stats->integer && ( !spectator || cg_autoaction_spectator->integer ) ) {
-			const char *filename = va( "stats/%s/%s.txt", gs.gametypeName, name );
+			const char *filename = va( "stats/%s.txt", name );
 			CG_SC_DumpPlayerStats( filename, trap_Cmd_Argv( 2 ) );
 		}
 	} else if( developer->integer ) {
