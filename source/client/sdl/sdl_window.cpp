@@ -362,3 +362,21 @@ void VID_FlashWindow() {
 void VID_Swap() {
 	SDL_GL_SwapWindow( sdl_window );
 }
+
+void format( FormatBuffer * fb, VideoMode mode, const FormatOpts & opts ) {
+	ggformat_impl( fb, "{}x{} {}Hz", mode.width, mode.height, mode.frequency );
+}
+
+void format( FormatBuffer * fb, WindowMode mode, const FormatOpts & opts ) {
+	if( mode.fullscreen == FullScreenMode_Windowed ) {
+		ggformat_impl( fb, "{}x{} {}x{}",
+			mode.video_mode.width, mode.video_mode.height,
+			mode.x, mode.y );
+	}
+	else {
+		ggformat_impl( fb, "{}x{} {} {} {}Hz",
+			mode.video_mode.width, mode.video_mode.height,
+			mode.fullscreen == FullScreenMode_Fullscreen ? 'F' : 'B',
+			mode.monitor, mode.video_mode.frequency );
+	}
+}

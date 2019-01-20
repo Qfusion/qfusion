@@ -83,8 +83,7 @@ static void RefreshServerBrowser() {
 	ResetServerBrowser();
 
 	for( const char * masterserver : MASTER_SERVERS ) {
-		char buf[ 256 ];
-		Q_snprintfz( buf, sizeof( buf ), "requestservers global %s %s full empty\n", masterserver, APPLICATION_NOSPACES );
+		String< 256 > buf( "requestservers global {} {} full empty\n", masterserver, APPLICATION_NOSPACES );
 		Cbuf_ExecuteText( EXEC_APPEND, buf );
 	}
 
@@ -175,8 +174,7 @@ static void CvarTextbox( const char * label, const char * cvar_name, const char 
 	char buf[ maxlen + 1 ];
 	Q_strncpyz( buf, cvar->string, sizeof( buf ) );
 
-	char unique[ 128 ];
-	Q_snprintfz( unique, sizeof( unique ), "##%s", cvar_name );
+	String< 128 > unique( "##{}", cvar_name );
 	ImGui::InputText( unique, buf, sizeof( buf ) );
 
 	Cvar_Set( cvar_name, buf );
@@ -187,8 +185,7 @@ static void CvarCheckbox( const char * label, const char * cvar_name, const char
 
 	cvar_t * cvar = Cvar_Get( cvar_name, def, flags );
 
-	char unique[ 128 ];
-	Q_snprintfz( unique, sizeof( unique ), "##%s", cvar_name );
+	String< 128 > unique( "##{}", cvar_name );
 	bool val = cvar->integer != 0;
 	ImGui::Checkbox( unique, &val );
 
@@ -200,13 +197,11 @@ static void CvarSliderInt( const char * label, const char * cvar_name, int lo, i
 
 	cvar_t * cvar = Cvar_Get( cvar_name, def, flags );
 
-	char unique[ 128 ];
-	Q_snprintfz( unique, sizeof( unique ), "##%s", cvar_name );
+	String< 128 > unique( "##{}", cvar_name );
 	int val = cvar->integer;
 	ImGui::SliderInt( unique, &val, lo, hi, format );
 
-	char buf[ 128 ];
-	Q_snprintfz( buf, sizeof( buf ), "%d", val );
+	String< 128 > buf( "{}", val );
 	Cvar_Set( cvar_name, buf );
 }
 
@@ -215,8 +210,7 @@ static void CvarSliderFloat( const char * label, const char * cvar_name, float l
 
 	cvar_t * cvar = Cvar_Get( cvar_name, def, flags );
 
-	char unique[ 128 ];
-	Q_snprintfz( unique, sizeof( unique ), "##%s", cvar_name );
+	String< 128 > unique( "##{}", cvar_name );
 	float val = cvar->value;
 	ImGui::SliderFloat( unique, &val, lo, hi, "%.2f" );
 
@@ -289,12 +283,10 @@ static void CvarTeamColorCombo( const char * label, const char * cvar_name, int 
 	SettingLabel( label );
 	ImGui::PushItemWidth( 100 );
 
-	char def_str[ 16 ];
-	Q_snprintfz( def_str, sizeof( def_str ), "%d", def );
+	String< 16 > def_str( "{}", def );
 	cvar_t * cvar = Cvar_Get( cvar_name, def_str, CVAR_ARCHIVE );
 
-	char unique[ 128 ];
-	Q_snprintfz( unique, sizeof( unique ), "##%s", cvar_name );
+	String< 128 > unique( "##{}", cvar_name );
 
 	int selected = cvar->integer;
 	if( selected >= int( ARRAY_COUNT( TEAM_COLORS ) ) )
@@ -316,8 +308,7 @@ static void CvarTeamColorCombo( const char * label, const char * cvar_name, int 
 	}
 	ImGui::PopItemWidth();
 
-	char buf[ 16 ];
-	Q_snprintfz( buf, sizeof( buf ), "%d", selected );
+	String< 16 > buf( "{}", selected );
 	Cvar_Set( cvar_name, buf );
 }
 
@@ -439,17 +430,15 @@ static void SettingsVideo() {
 		mode.video_mode = VID_GetVideoMode( 0 );
 	}
 
-	char preview[ 128 ] = "";
+	String< 128 > preview;
 	if( fullscreen )
-		Q_snprintfz( preview, sizeof( preview ), "%dx%d %dHz", mode.video_mode.width, mode.video_mode.height, mode.video_mode.frequency );
+		preview.append( "{}", mode.video_mode );
 
 	if( ImGui::BeginCombo( "##mode", preview ) ) {
 		for( int i = 0; i < VID_GetNumVideoModes(); i++ ) {
 			VideoMode video_mode = VID_GetVideoMode( i );
 
-			char buf[ 128 ];
-			Q_snprintfz( buf, sizeof( buf ), "%dx%d %dHz", video_mode.width, video_mode.height, video_mode.frequency );
-
+			String< 128 > buf( "{}", video_mode );
 			bool is_selected = mode.video_mode.width == video_mode.width && mode.video_mode.height == video_mode.height && mode.video_mode.frequency == video_mode.frequency;
 			if( ImGui::Selectable( buf, is_selected ) ) {
 				mode.video_mode = video_mode;
@@ -462,8 +451,7 @@ static void SettingsVideo() {
 	PopDisabled( !fullscreen );
 
 	if( ImGui::Button( "Apply mode changes" ) ) {
-		char buf[ 128 ];
-		VID_WindowModeToString( buf, sizeof( buf ), mode );
+		String< 128 > buf( "{}", mode );
 		Cvar_Set( "vid_mode", buf );
 	}
 
@@ -482,11 +470,11 @@ static void SettingsVideo() {
 		cvar_t * cvar = Cvar_Get( "r_samples", "0", CVAR_ARCHIVE );
 		int samples = cvar->integer;
 
-		char current_samples[ 16 ];
+		String< 16 > current_samples;
 		if( samples == 0 )
-			Q_snprintfz( current_samples, sizeof( current_samples ), "Off" );
+			current_samples.format( "Off" );
 		else
-			Q_snprintfz( current_samples, sizeof( current_samples ), "%dx", samples );
+			current_samples.format( "{}x", samples );
 
 		ImGui::PushItemWidth( 100 );
 		if( ImGui::BeginCombo( "##r_samples", current_samples ) ) {
@@ -496,8 +484,7 @@ static void SettingsVideo() {
 				ImGui::SetItemDefaultFocus();
 
 			for( int i = 2; i <= 16; i *= 2 ) {
-				char buf[ 16 ];
-				Q_snprintfz( buf, sizeof( buf ), "%dx", i );
+				String< 16 > buf( "{}x", i );
 				if( ImGui::Selectable( buf, i == samples ) )
 					samples = i;
 				if( i == samples )
@@ -508,8 +495,7 @@ static void SettingsVideo() {
 		}
 		ImGui::PopItemWidth();
 
-		char buf[ 16 ];
-		Q_snprintfz( buf, sizeof( buf ), "%d", samples );
+		String< 16 > buf( "{}", samples );
 		Cvar_Set( "r_samples", buf );
 	}
 
@@ -523,14 +509,12 @@ static void SettingsVideo() {
 		cvar_t * cvar = Cvar_Get( "cl_maxfps", "250", CVAR_ARCHIVE );
 		int maxfps = cvar->integer;
 
-		char current[ 16 ];
-		Q_snprintfz( current, sizeof( current ), "%d", maxfps );
+		String< 16 > current( "{}", maxfps );
 
 		ImGui::PushItemWidth( 100 );
 		if( ImGui::BeginCombo( "##cl_maxfps", current ) ) {
 			for( int value : values ) {
-				char buf[ 16 ];
-				Q_snprintfz( buf, sizeof( buf ), "%d", value );
+				String< 16 > buf( "{}", value );
 				if( ImGui::Selectable( buf, maxfps == value ) )
 					maxfps = value;
 				if( value == maxfps )
@@ -541,8 +525,7 @@ static void SettingsVideo() {
 		}
 		ImGui::PopItemWidth();
 
-		char buf[ 16 ];
-		Q_snprintfz( buf, sizeof( buf ), "%d", maxfps );
+		String< 16 > buf( "{}", maxfps );
 		Cvar_Set( "cl_maxfps", buf );
 	}
 }
@@ -612,8 +595,7 @@ static void ServerBrowser() {
 	for( int i = 0; i < num_servers; i++ ) {
 		if( ImGui::Selectable( servers[ i ].address, i == selected_server, ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowDoubleClick ) ) {
 			if( ImGui::IsMouseDoubleClicked( 0 ) ) {
-				char buf[ 256 ];
-				Q_snprintfz( buf, sizeof( buf ), "connect \"%s\"\n", servers[ i ].address );
+				String< 256 > buf( "connect \"{}\"\n", servers[ i ].address );
 				Cbuf_ExecuteText( EXEC_APPEND, buf );
 			}
 			selected_server = i;
@@ -642,8 +624,7 @@ static void CreateServer() {
 		maxclients = max( maxclients, 1 );
 		maxclients = min( maxclients, 64 );
 
-		char buf[ 128 ];
-		Q_snprintfz( buf, sizeof( buf ), "%d", maxclients );
+		String< 128 > buf( "{}", maxclients );
 		Cvar_Set( "sv_maxclients", buf );
 	}
 
@@ -674,8 +655,7 @@ static void CreateServer() {
 	if( ImGui::Button( "Create server" ) ) {
 		char mapname[ 128 ];
 		if( ML_GetMapByNum( selected_map, mapname, sizeof( mapname ) ) != 0 ) {
-			char buf[ 256 ];
-			Q_snprintfz( buf, sizeof( buf ), "map \"%s\"\n", mapname );
+			String< 256 > buf( "map \"{}\"\n", mapname );
 			Cbuf_ExecuteText( EXEC_APPEND, buf );
 		}
 	}
@@ -743,8 +723,7 @@ static void MainMenu() {
 
 static void GameMenuButton( const char * label, const char * command, bool * clicked = NULL ) {
 	if( ImGui::Button( label, ImVec2( -1, 0 ) ) ) {
-		char buf[ 256 ];
-		Q_snprintfz( buf, sizeof( buf ), "%s\n", command );
+		String< 256 > buf( "{}\n", command );
 		Cbuf_ExecuteText( EXEC_APPEND, buf );
 		if( clicked != NULL )
 			*clicked = true;
@@ -799,9 +778,8 @@ static void GameMenu() {
 		ImGui::Columns( ARRAY_COUNT( primaries ), NULL, false );
 
 		for( size_t i = 0; i < ARRAY_COUNT( primaries ); i++ ) {
-			char buf[ 128 ];
+			String< 128 > buf( "{}: {}", i + 1, primaries[ i ] );
 			int key = '1' + int( i );
-			Q_snprintfz( buf, sizeof( buf ), "%c: %s", key, primaries[ i ] );
 			if( ImGui::Selectable( buf, i == selected_primary ) || pressed_key == key ) {
 				selected_primary = i;
 			}
@@ -816,9 +794,8 @@ static void GameMenu() {
 
 		bool selected_with_number = false;
 		for( size_t i = 0; i < ARRAY_COUNT( secondaries ); i++ ) {
-			char buf[ 128 ];
-			int key = '1' + int( i + ARRAY_COUNT( primaries ) );
-			Q_snprintfz( buf, sizeof( buf ), "%c: %s", key, secondaries[ i ] );
+			String< 128 > buf( "{}: {}", i + 1, secondaries[ i ] );
+			int key = '1' + int( i );
 			if( ImGui::Selectable( buf, i == selected_secondary ) || pressed_key == key ) {
 				selected_secondary = i;
 				selected_with_number = pressed_key == key;
@@ -829,8 +806,7 @@ static void GameMenu() {
 		if( ImGui::Button( "OK", ImVec2( -1, 0 ) ) || selected_with_number ) {
 			const char * primaries_weapselect[] = { "ebrl", "rllg", "eblg" };
 
-			char buf[ 128 ];
-			Q_snprintfz( buf, sizeof( buf ), "weapselect %s %s\n",
+			String< 128 > buf( "weapselect {} {}\n", 
 				primaries_weapselect[ selected_primary ], secondaries[ selected_secondary ] );
 			Cbuf_ExecuteText( EXEC_APPEND, buf );
 			should_close = true;

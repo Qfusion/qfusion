@@ -159,20 +159,6 @@ static bool ParseWindowMode( const char * str, WindowMode * mode ) {
 	return false;
 }
 
-void VID_WindowModeToString( char * buf, size_t buf_len, WindowMode mode ) {
-	if( mode.fullscreen == FullScreenMode_Windowed ) {
-		Q_snprintfz( buf, buf_len, "%dx%d %dx%d",
-			mode.video_mode.width, mode.video_mode.height,
-			mode.x, mode.y );
-	}
-	else {
-		Q_snprintfz( buf, buf_len, "%dx%d %c %d %dHz",
-			mode.video_mode.width, mode.video_mode.height,
-			mode.fullscreen == FullScreenMode_Fullscreen ? 'F' : 'B',
-			mode.monitor, mode.video_mode.frequency );
-	}
-}
-
 // this is shit and should not exist but i am sick of working on this
 void Retarded_SetWindowSize( int w, int h ) {
 	viddef.width = w;
@@ -183,9 +169,8 @@ void Retarded_SetWindowSize( int w, int h ) {
 
 static void UpdateVidModeCvar() {
 	WindowMode mode = VID_GetWindowMode();
-	char buf[ 128 ];
-	VID_WindowModeToString( buf, sizeof( buf ), mode );
-	Cvar_Set( vid_mode->name, buf );
+	String< 128 > buf( "{}", mode );
+	Cvar_Set( vid_mode->name, buf.c_str() );
 	vid_mode->modified = false;
 
 	Retarded_SetWindowSize( mode.video_mode.width, mode.video_mode.height );

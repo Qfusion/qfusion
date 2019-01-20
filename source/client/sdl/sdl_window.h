@@ -2,6 +2,8 @@
 
 #include <stddef.h>
 
+#include "qcommon/ggformat.h"
+
 enum FullScreenMode {
 	FullScreenMode_Windowed,
 	FullScreenMode_Fullscreen,
@@ -30,8 +32,6 @@ VideoMode VID_GetVideoMode( int i );
 VideoMode VID_GetCurrentVideoMode();
 void VID_SetVideoMode( VideoMode mode );
 
-void VID_WindowModeToString( char * buf, size_t buf_len, WindowMode mode );
-
 void VID_WindowInit( WindowMode mode, int stencilbits );
 void VID_WindowShutdown();
 
@@ -44,3 +44,6 @@ bool VID_GetGammaRamp( size_t stride, unsigned short *psize, unsigned short *ram
 void VID_SetGammaRamp( size_t stride, unsigned short size, unsigned short *ramp );
 
 void VID_Swap();
+
+void format( FormatBuffer * fb, VideoMode mode, const FormatOpts & opts );
+void format( FormatBuffer * fb, WindowMode mode, const FormatOpts & opts );
