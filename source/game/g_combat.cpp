@@ -335,7 +335,20 @@ void G_Damage( edict_t *targ, edict_t *inflictor, edict_t *attacker, const vec3_
 		}
 		else if( attacker == targ ) {
 			if( GS_SelfDamage() ) {
-				take = damage * 0.75f;
+				switch( mod ) {
+				case MOD_PLASMA_SPLASH:
+					take = damage * GS_GetWeaponDef( WEAP_PLASMAGUN )->firedef.selfdamage;
+					break;
+				case MOD_GRENADE_SPLASH:
+					take = damage * GS_GetWeaponDef( WEAP_GRENADELAUNCHER )->firedef.selfdamage;
+					break;
+				case MOD_ROCKET_SPLASH:
+					take = damage * GS_GetWeaponDef( WEAP_ROCKETLAUNCHER )->firedef.selfdamage;
+					break;
+				default:
+					take = damage * 0.75f;
+					break;
+				}
 				save = damage - take;
 			}
 			else {

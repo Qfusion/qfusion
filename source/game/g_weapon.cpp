@@ -489,10 +489,10 @@ static void W_Touch_Plasma( edict_t *ent, edict_t *other, cplane_t *plane, int s
 	if( other->takedamage ) {
 		vec3_t push_dir;
 		G_SplashFrac4D( ENTNUM( other ), ent->s.origin, ent->projectileInfo.radius, push_dir, NULL, ent->timeDelta );
-		G_Damage( other, ent, ent->r.owner, push_dir, ent->velocity, ent->s.origin, ent->projectileInfo.maxDamage, ent->projectileInfo.maxKnockback, DAMAGE_KNOCKBACK_SOFT, MOD_PLASMA );
+		G_Damage( other, ent, ent->r.owner, push_dir, ent->velocity, ent->s.origin, ent->projectileInfo.maxDamage, ent->projectileInfo.maxKnockback, DAMAGE_KNOCKBACK_SOFT, MOD_PLASMA_SPLASH );
 	}
 
-	G_RadiusDamage( ent, ent->r.owner, plane, other, MOD_PLASMA );
+	G_RadiusDamage( ent, ent->r.owner, plane, other, MOD_PLASMA_SPLASH );
 
 	edict_t *event = G_SpawnEvent( EV_PLASMA_EXPLOSION, DirToByte( plane ? plane->normal : NULL ), ent->s.origin );
 	event->s.weapon = min( ent->projectileInfo.radius / 8, 127 );
