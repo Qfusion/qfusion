@@ -391,7 +391,6 @@ typedef enum {
 #define ITFLAG_PICKABLE     1
 #define ITFLAG_USABLE       2
 #define ITFLAG_DROPABLE     4
-#define ITFLAG_STAY_COOP    8
 
 // gsitem_t->type
 // define as bitflags values so they can be masked
