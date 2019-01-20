@@ -778,8 +778,8 @@ static void GameMenu() {
 		ImGui::Columns( ARRAY_COUNT( primaries ), NULL, false );
 
 		for( size_t i = 0; i < ARRAY_COUNT( primaries ); i++ ) {
-			String< 128 > buf( "{}: {}", i + 1, primaries[ i ] );
 			int key = '1' + int( i );
+			String< 128 > buf( "{}: {}", char( key ), primaries[ i ] );
 			if( ImGui::Selectable( buf, i == selected_primary ) || pressed_key == key ) {
 				selected_primary = i;
 			}
@@ -794,8 +794,8 @@ static void GameMenu() {
 
 		bool selected_with_number = false;
 		for( size_t i = 0; i < ARRAY_COUNT( secondaries ); i++ ) {
-			String< 128 > buf( "{}: {}", i + 1, secondaries[ i ] );
-			int key = '1' + int( i );
+			int key = '1' + int( i + ARRAY_COUNT( primaries ) );
+			String< 128 > buf( "{}: {}", char( key ), secondaries[ i ] );
 			if( ImGui::Selectable( buf, i == selected_secondary ) || pressed_key == key ) {
 				selected_secondary = i;
 				selected_with_number = pressed_key == key;
