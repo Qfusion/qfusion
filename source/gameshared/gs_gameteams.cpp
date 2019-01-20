@@ -106,17 +106,7 @@ int GS_TeamFromName( const char *teamname ) {
 * GS_IsTeamDamage
 */
 bool GS_IsTeamDamage( entity_state_t *targ, entity_state_t *attacker ) {
-	if( !GS_TeamBasedGametype() ) {
+	if( !GS_TeamBasedGametype() )
 		return false;
-	}
-
-	assert( targ && attacker );
-
-	if( targ->team && attacker->team &&
-		targ->team == attacker->team &&
-		targ->number != attacker->number ) {
-		return true;
-	}
-
-	return false;
+	return targ->number != attacker->number && targ->team == attacker->team;
 }
