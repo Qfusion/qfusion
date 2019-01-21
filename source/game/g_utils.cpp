@@ -1461,7 +1461,7 @@ bool KillBox( edict_t *ent ) {
 
 		}
 		// nail it
-		G_Damage( &game.edicts[tr.ent], ent, ent, vec3_origin, vec3_origin, ent->s.origin, 100000, 0, DAMAGE_NO_PROTECTION, MOD_TELEFRAG );
+		G_Damage( &game.edicts[tr.ent], ent, ent, vec3_origin, vec3_origin, ent->s.origin, 100000, 0, 1, MOD_TELEFRAG );
 		telefragged = true;
 
 		// if we didn't kill it, fail
