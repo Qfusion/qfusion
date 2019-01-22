@@ -979,23 +979,16 @@ void *Q_memset32( void *dest, int c, size_t dwords ) {
 * Q_strncpyz
 */
 void Q_strncpyz( char *dest, const char *src, size_t size ) {
-#ifdef HAVE_STRLCPY
-	strlcpy( dest, src, size );
-#else
 	if( size ) {
 		while( --size && ( *dest++ = *src++ ) ) ;
 		*dest = '\0';
 	}
-#endif
 }
 
 /*
 * Q_strncatz
 */
 void Q_strncatz( char *dest, const char *src, size_t size ) {
-#ifdef HAVE_STRLCAT
-	strlcat( dest, src, size );
-#else
 	if( size ) {
 		while( --size && *dest++ ) ;
 		if( size ) {
@@ -1004,7 +997,6 @@ void Q_strncatz( char *dest, const char *src, size_t size ) {
 		}
 		*dest = '\0';
 	}
-#endif
 }
 
 /*

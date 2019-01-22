@@ -3,7 +3,6 @@
 #include <stddef.h>
 #include <string.h>
 
-#include "strlcpy.h"
 #include "ggformat.h"
 
 template< size_t N >
