@@ -723,8 +723,8 @@ static void MainMenu() {
 	ImGui::End();
 }
 
-static void GameMenuButton( const char * label, const char * command, bool * clicked = NULL ) {
-	if( ImGui::Button( label, ImVec2( -1, 0 ) ) ) {
+static void GameMenuButton( const char * label, const char * command, bool * clicked = NULL , ImVec2 size = ImVec2( -1, 0 ) ) {
+	if( ImGui::Button( label, size ) ) {
 		String< 256 > buf( "{}\n", command );
 		Cbuf_ExecuteText( EXEC_APPEND, buf );
 		if( clicked != NULL )
@@ -740,11 +740,20 @@ static void GameMenu() {
 		ImGui::SetNextWindowPosCenter();
 		ImGui::SetNextWindowSize( ImVec2( 300, 0 ) );
 		ImGui::Begin( "gamemenu", NULL, ImGuiWindowFlags_NoDecoration );
+		ImGuiStyle & style = ImGui::GetStyle();
+		const double half = 300/2 - style.ItemInnerSpacing.x - style.ItemSpacing.x;
 
 		if( is_spectating ) {
-			GameMenuButton( "Join the game", "join", &should_close );
+			ImGui::Columns( 2, NULL, false );
+			ImGui::SetColumnWidth( 0, half );
+			ImGui::SetColumnWidth( 1, half );
+
+			GameMenuButton( "Join Cocaine", "join cocaine", &should_close, ImVec2( ImGui::GetColumnWidth( 0 ), 0 ) );
+			ImGui::NextColumn();
+			GameMenuButton( "Join Diesel", "join diesel", &should_close, ImVec2( ImGui::GetColumnWidth( 1 ), 0 ) );
 		}
 		else {
+			ImGui::Columns( 1 );
 			GameMenuButton( "Spectate", "spec", &should_close );
 
 			if( can_ready )
@@ -754,14 +763,21 @@ static void GameMenu() {
 
 			GameMenuButton( "Change loadout", "gametypemenu", &should_close );
 		}
+		ImGui::Columns( 1 );
 
 		if( ImGui::Button( "Settings", ImVec2( -1, 0 ) ) ) {
 			gamemenu_state = GameMenuState_Settings;
 			settings_state = SettingsState_General;
 		}
 
-		GameMenuButton( "Disconnect to main menu", "disconnect", &should_close );
-		GameMenuButton( "Exit to desktop", "quit", &should_close );
+
+		ImGui::Columns( 2, NULL, false );
+		ImGui::SetColumnWidth( 0, half );
+		ImGui::SetColumnWidth( 1, half );
+
+		GameMenuButton( "Disconnect", "disconnect", &should_close, ImVec2( ImGui::GetColumnWidth( 0 ), 0 ) );
+		ImGui::NextColumn();
+		GameMenuButton( "Exit game", "quit", &should_close, ImVec2( ImGui::GetColumnWidth( 1 ), 0 ) );
 
 		ImGui::End();
 	}
@@ -1004,13 +1020,13 @@ void UI_ShowMainMenu() {
 	RefreshServerBrowser();
 }
 
-void UI_ShowGameMenu( bool spectating, bool ready, bool unready ) {
+void UI_ShowGameMenu( bool spectating, bool is_ready, bool is_unready ) {
 	uistate = UIState_GameMenu;
 	gamemenu_state = GameMenuState_Menu;
 	pressed_key = -1;
 	is_spectating = spectating;
-	can_ready = ready;
-	can_unready = unready;
+	can_ready = is_unready;
+	can_unready = is_ready;
 	CL_SetKeyDest( key_menu );
 }
 

@@ -873,19 +873,17 @@ void CG_EscapeKey( void ) {
 		return;
 	}
 
-	int team = cg.predictedPlayerState.stats[STAT_REALTEAM];
-	bool can_ready = false;
-	bool can_unready = false;
+	bool spectator  = ( cg.predictedPlayerState.stats[STAT_REALTEAM] == TEAM_SPECTATOR );
+	bool is_ready   = false;
+	bool is_unready = false;
 
-	if( GS_MatchState() <= MATCH_STATE_WARMUP && team != TEAM_SPECTATOR ) {
+	if( GS_MatchState() <= MATCH_STATE_WARMUP && !spectator ) {
 		bool ready = ( cg.predictedPlayerState.stats[STAT_LAYOUTS] & STAT_LAYOUT_READY ) != 0;
-		if( ready )
-			can_unready = true;
-		else
-			can_ready = true;
+		is_ready   = ready;
+		is_unready = !ready;
 	}
 
-	UI_ShowGameMenu( team == TEAM_SPECTATOR, can_ready, can_unready );
+	UI_ShowGameMenu( spectator, is_ready, is_unready );
 }
 
 //=============================================================================
