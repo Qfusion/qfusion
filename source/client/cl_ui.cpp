@@ -821,6 +821,9 @@ static void GameMenu() {
 			ImGui::NextColumn();
 		}
 
+		ImGui::Spacing();
+		ImGui::Columns( 1 );
+
 		if( ImGui::Button( "OK", ImVec2( -1, 0 ) ) || selected_with_number ) {
 			const char * primaries_weapselect[] = { "ebrl", "rllg", "eblg" };
 
