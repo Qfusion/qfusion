@@ -134,6 +134,8 @@ void UI_Init() {
 	{
 		ImGuiStyle & style = ImGui::GetStyle();
 		style.WindowRounding = 0;
+		style.FrameRounding = 1;
+		style.GrabRounding = 2;
 		style.FramePadding = ImVec2( 8, 8 );
 		style.FrameBorderSize = 0;
 		style.WindowPadding = ImVec2( 16, 16 );
@@ -312,12 +314,8 @@ static void CvarTeamColorCombo( const char * label, const char * cvar_name, int 
 	Cvar_Set( cvar_name, buf );
 }
 
-static void SettingsSavedText() {
-	ImGui::Text( "These settings are saved automatically" );
-}
-
 static void SettingsGeneral() {
-	SettingsSavedText();
+	ImGui::Text( "These settings are saved automatically" );
 
 	CvarTextbox< MAX_NAME_BYTES >( "Name", "name", "Player", CVAR_USERINFO | CVAR_ARCHIVE );
 	CvarSliderInt( "FOV", "fov", 60, 140, "100", CVAR_ARCHIVE );
@@ -327,7 +325,7 @@ static void SettingsGeneral() {
 }
 
 static void SettingsMouse() {
-	SettingsSavedText();
+	ImGui::Text( "These settings are saved automatically" );
 
 	CvarSliderFloat( "Sensitivity", "sensitivity", 1.0f, 10.0f, "3", CVAR_ARCHIVE );
 	CvarSliderFloat( "Horizontal sensitivity", "horizontalsensscale", 0.5f, 2.0f, "1", CVAR_ARCHIVE );
@@ -335,7 +333,7 @@ static void SettingsMouse() {
 }
 
 static void SettingsKeys() {
-	SettingsSavedText();
+	ImGui::Text( "These settings are saved automatically" );
 
 	ImGui::BeginChild( "binds" );
 
@@ -466,7 +464,7 @@ static void SettingsVideo() {
 
 	ImGui::Separator();
 
-	SettingsSavedText();
+	ImGui::Text( "These settings are saved automatically" );
 
 	{
 		SettingLabel( "Anti-aliasing" );
@@ -535,7 +533,7 @@ static void SettingsVideo() {
 }
 
 static void SettingsAudio() {
-	SettingsSavedText();
+	ImGui::Text( "These settings are saved automatically" );
 
 	CvarSliderFloat( "Master volume", "s_volume", 0.0f, 1.0f, "1", CVAR_ARCHIVE );
 	CvarSliderFloat( "Music volume", "s_musicvolume", 0.0f, 1.0f, "1", CVAR_ARCHIVE );
