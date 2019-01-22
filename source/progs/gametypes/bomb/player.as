@@ -233,7 +233,7 @@ cPlayer @playerFromClient( Client @client ) {
 void dropSpawnToFloor( Entity @ent, int team ) {
 	Vec3 mins( -16, -16, -24 ), maxs( 16, 16, 40 );
 
-	Vec3 start = ent.origin;
+	Vec3 start = ent.origin + Vec3( 0, 0, 16 );
 	Vec3 end = ent.origin - Vec3( 0, 0, 1024 );
 
 	Trace trace;
