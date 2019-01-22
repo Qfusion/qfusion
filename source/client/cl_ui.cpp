@@ -790,7 +790,7 @@ static void GameMenu() {
 
 		// this has to match up with the order in player.as
 		// TODO: should make this less fragile
-		const char * primaries[] = { "EB + RL", "RL + LG", "EB + LG" };
+		const char * primaries[]   = { "EB + RL", "RL + LG", "EB + LG" };
 		const char * secondaries[] = { "PG", "RG", "GL" };
 
 		ImGui::Columns( ARRAY_COUNT( primaries ), NULL, false );
@@ -798,7 +798,7 @@ static void GameMenu() {
 		for( size_t i = 0; i < ARRAY_COUNT( primaries ); i++ ) {
 			int key = '1' + int( i );
 			String< 128 > buf( "{}: {}", char( key ), primaries[ i ] );
-			if( ImGui::Selectable( buf, i == selected_primary ) || pressed_key == key ) {
+			if( ImGui::Selectable( buf, i == selected_primary, 0, ImVec2( ImGui::GetColumnWidth( i ), 0 )) || pressed_key == key ) {
 				selected_primary = i;
 			}
 			ImGui::NextColumn();
@@ -814,7 +814,7 @@ static void GameMenu() {
 		for( size_t i = 0; i < ARRAY_COUNT( secondaries ); i++ ) {
 			int key = '1' + int( i + ARRAY_COUNT( primaries ) );
 			String< 128 > buf( "{}: {}", char( key ), secondaries[ i ] );
-			if( ImGui::Selectable( buf, i == selected_secondary ) || pressed_key == key ) {
+			if( ImGui::Selectable( buf, i == selected_secondary, 0, ImVec2( ImGui::GetColumnWidth( i ), 0 )) || pressed_key == key ) {
 				selected_secondary = i;
 				selected_with_number = pressed_key == key;
 			}
