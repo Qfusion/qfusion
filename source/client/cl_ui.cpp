@@ -312,8 +312,12 @@ static void CvarTeamColorCombo( const char * label, const char * cvar_name, int 
 	Cvar_Set( cvar_name, buf );
 }
 
-static void SettingsGeneral() {
+static void SettingsSavedText() {
 	ImGui::Text( "These settings are saved automatically" );
+}
+
+static void SettingsGeneral() {
+	SettingsSavedText();
 
 	CvarTextbox< MAX_NAME_BYTES >( "Name", "name", "Player", CVAR_USERINFO | CVAR_ARCHIVE );
 	CvarSliderInt( "FOV", "fov", 60, 140, "100", CVAR_ARCHIVE );
@@ -323,7 +327,7 @@ static void SettingsGeneral() {
 }
 
 static void SettingsMouse() {
-	ImGui::Text( "These settings are saved automatically" );
+	SettingsSavedText();
 
 	CvarSliderFloat( "Sensitivity", "sensitivity", 1.0f, 10.0f, "3", CVAR_ARCHIVE );
 	CvarSliderFloat( "Horizontal sensitivity", "horizontalsensscale", 0.5f, 2.0f, "1", CVAR_ARCHIVE );
@@ -331,7 +335,7 @@ static void SettingsMouse() {
 }
 
 static void SettingsKeys() {
-	ImGui::Text( "These settings are saved automatically" );
+	SettingsSavedText();
 
 	ImGui::BeginChild( "binds" );
 
@@ -462,7 +466,7 @@ static void SettingsVideo() {
 
 	ImGui::Separator();
 
-	ImGui::Text( "These settings are saved automatically" );
+	SettingsSavedText();
 
 	{
 		SettingLabel( "Anti-aliasing" );
@@ -531,7 +535,7 @@ static void SettingsVideo() {
 }
 
 static void SettingsAudio() {
-	ImGui::Text( "These settings are saved automatically" );
+	SettingsSavedText();
 
 	CvarSliderFloat( "Master volume", "s_volume", 0.0f, 1.0f, "1", CVAR_ARCHIVE );
 	CvarSliderFloat( "Music volume", "s_musicvolume", 0.0f, 1.0f, "1", CVAR_ARCHIVE );
@@ -748,7 +752,7 @@ static void GameMenu() {
 			if( can_ready )
 				GameMenuButton( "Ready", "ready", &should_close );
 			if( can_unready )
-				GameMenuButton( "Uneady", "unready", &should_close );
+				GameMenuButton( "Unready", "unready", &should_close );
 
 			GameMenuButton( "Change loadout", "gametypemenu", &should_close );
 		}
