@@ -983,7 +983,7 @@ void UI_Refresh( bool background, bool showCursor ) {
 		DemoMenu();
 	}
 
-	 ImGui::ShowDemoWindow();
+	// ImGui::ShowDemoWindow();
 
 	ImGui::Render();
 	RenderUI();
