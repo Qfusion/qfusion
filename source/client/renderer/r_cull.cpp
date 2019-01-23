@@ -508,7 +508,8 @@ bool R_CullSphere( const vec3_t centre, const float radius, const unsigned int c
 * R_VisCullBox
 */
 bool R_VisCullBox( const vec3_t mins, const vec3_t maxs ) {
-	int s, stackdepth = 0;
+	int s;
+	size_t stackdepth = 0;
 	vec3_t extmins, extmaxs;
 	mnode_t *node, *localstack[2048];
 
@@ -561,7 +562,7 @@ bool R_VisCullBox( const vec3_t mins, const vec3_t maxs ) {
 */
 bool R_VisCullSphere( const vec3_t origin, float radius ) {
 	float dist;
-	int stackdepth = 0;
+	size_t stackdepth = 0;
 	mnode_t *node, *localstack[2048];
 
 	if( !rsh.worldModel || ( rn.refdef.rdflags & RDF_NOWORLDMODEL ) ) {

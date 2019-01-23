@@ -331,16 +331,12 @@ int QBufPipe_ReadCmds( qbufPipe_t *pipe, unsigned( **cmdHandlers )( const void *
 	}
 
 	while( Sys_Atomic_CAS( &pipe->cmdbuf_len, 0, 0 ) == false && !pipe->terminated ) {
-		int cmd;
-		int cmd_size;
-		int read_remains;
-
 		assert( pipe->bufSize >= pipe->read_pos );
 		if( pipe->bufSize < pipe->read_pos ) {
 			pipe->read_pos = 0;
 		}
 
-		read_remains = pipe->bufSize - pipe->read_pos;
+		size_t read_remains = pipe->bufSize - pipe->read_pos;
 
 		if( sizeof( int ) > read_remains ) {
 			// implicit reset
@@ -348,7 +344,7 @@ int QBufPipe_ReadCmds( qbufPipe_t *pipe, unsigned( **cmdHandlers )( const void *
 			QBufPipe_BufLenAdd( pipe, -read_remains );
 		}
 
-		cmd = *( (int *)( pipe->buf + pipe->read_pos ) );
+		int cmd = *( (int *)( pipe->buf + pipe->read_pos ) );
 		if( cmd == -1 ) {
 			// this cmd is special
 			pipe->read_pos = 0;
@@ -356,7 +352,7 @@ int QBufPipe_ReadCmds( qbufPipe_t *pipe, unsigned( **cmdHandlers )( const void *
 			continue;
 		}
 
-		cmd_size = cmdHandlers[cmd]( pipe->buf + pipe->read_pos );
+		int cmd_size = cmdHandlers[cmd]( pipe->buf + pipe->read_pos );
 		read++;
 
 		if( !cmd_size ) {

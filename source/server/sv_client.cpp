@@ -491,7 +491,7 @@ static void SV_NextDownload_f( client_t *client ) {
 	SV_InitClientMessage( client, &tmpMessage, NULL, 0 );
 	SV_AddReliableCommandsToMessage( client, &tmpMessage );
 
-	size_t blocksize = client->download.size - offset;
+	int blocksize = client->download.size - offset;
 	if( blocksize > sizeof( data ) ) {
 		blocksize = sizeof( data );
 	}
@@ -649,7 +649,7 @@ static void SV_BeginDownload_f( client_t *client ) {
 	}
 
 	client->download.size = FS_LoadBaseFile( uploadname, NULL, NULL, 0 );
-	if( client->download.size ) {
+	if( client->download.size == -1 ) {
 		Com_Printf( "Error getting size of %s for uploading\n", uploadname );
 		client->download.size = 0;
 		SV_DenyDownload( client, "Error getting file size" );

@@ -327,12 +327,11 @@ void SNAP_SkipFrame( msg_t *msg, snapshot_t *header ) {
 * SNAP_ParseFrame
 */
 snapshot_t *SNAP_ParseFrame( msg_t *msg, snapshot_t *lastFrame, snapshot_t *backup, entity_state_t *baselines, int showNet ) {
-	int cmd;
 	size_t len;
 	snapshot_t  *deltaframe;
 	int numplayers;
 	char *text;
-	int framediff, numtargets;
+	int framediff;
 	gcommand_t *gcmd;
 	snapshot_t  *newframe;
 
@@ -352,12 +351,12 @@ snapshot_t *SNAP_ParseFrame( msg_t *msg, snapshot_t *lastFrame, snapshot_t *back
 	}
 
 	// read game commands
-	cmd = MSG_ReadUint8( msg );
+	int cmd = MSG_ReadUint8( msg );
 	if( cmd != svc_gamecommands ) {
 		Com_Error( ERR_DROP, "SNAP_ParseFrame: not gamecommands" );
 	}
 
-	numtargets = 0;
+	size_t numtargets = 0;
 	while( ( framediff = MSG_ReadInt16( msg ) ) != -1 ) {
 		text = MSG_ReadString( msg );
 
