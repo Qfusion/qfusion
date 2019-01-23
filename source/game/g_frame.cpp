@@ -25,11 +25,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 * G_Timeout_Reset
 */
 void G_Timeout_Reset( void ) {
+	int i;
+
 	GS_GamestatSetFlag( GAMESTAT_FLAG_PAUSED, false );
 	level.timeout.time = 0;
 	level.timeout.endtime = 0;
 	level.timeout.caller = 0;
-	for( int i = 0; i < MAX_CLIENTS; i++ )
+	for( i = 0; i < MAX_CLIENTS; i++ )
 		level.timeout.used[i] = 0;
 }
 
@@ -236,10 +238,11 @@ static bool g_snapStarted = false;
 * G_SnapClients
 */
 void G_SnapClients( void ) {
+	int i;
 	edict_t *ent;
 
 	// calc the player views now that all pushing and damage has been added
-	for( int i = 0; i < gs.maxclients; i++ ) {
+	for( i = 0; i < gs.maxclients; i++ ) {
 		ent = game.edicts + 1 + i;
 		if( !ent->r.inuse || !ent->r.client ) {
 			continue;
@@ -264,8 +267,8 @@ void G_SnapClients( void ) {
 * add effects based on accumulated info along the server frame
 */
 static void G_SnapEntities( void ) {
-	int i;
 	edict_t *ent;
+	int i;
 	vec3_t dir, origin;
 
 	for( i = 0, ent = &game.edicts[0]; i < game.numentities; i++, ent++ ) {

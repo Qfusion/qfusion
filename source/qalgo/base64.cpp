@@ -106,14 +106,15 @@ unsigned char * base64_encode( const unsigned char *src, size_t len,
 unsigned char * base64_decode( const unsigned char *src, size_t len,
 							   size_t *out_len ) {
 	unsigned char dtable[256], *out, *pos, in[4], block[4], tmp;
+	size_t i, count, olen;
 
 	memset( dtable, 0x80, 256 );
-	for( size_t i = 0; i < sizeof( base64_table ); i++ )
+	for( i = 0; i < sizeof( base64_table ); i++ )
 		dtable[base64_table[i]] = (unsigned char)i;
 	dtable['='] = 0;
 
-	size_t count = 0;
-	for( size_t i = 0; i < len; i++ ) {
+	count = 0;
+	for( i = 0; i < len; i++ ) {
 		if( dtable[src[i]] != 0x80 ) {
 			count++;
 		}
@@ -123,7 +124,7 @@ unsigned char * base64_decode( const unsigned char *src, size_t len,
 		return NULL;
 	}
 
-	size_t olen = count / 4 * 3;
+	olen = count / 4 * 3;
 	olen++; /* nul termination */
 	pos = out = ( unsigned char * )malloc( olen );
 	if( out == NULL ) {
@@ -131,7 +132,7 @@ unsigned char * base64_decode( const unsigned char *src, size_t len,
 	}
 
 	count = 0;
-	for( size_t i = 0; i < len; i++ ) {
+	for( i = 0; i < len; i++ ) {
 		tmp = dtable[src[i]];
 		if( tmp == 0x80 ) {
 			continue;

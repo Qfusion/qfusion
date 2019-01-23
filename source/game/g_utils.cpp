@@ -300,11 +300,12 @@ void G_StringPoolInit( void ) {
 * G_StringPoolHashKey
 */
 static unsigned int G_StringPoolHashKey( const char *string ) {
+	int i;
 	unsigned int v;
 	unsigned int c;
 
 	v = 0;
-	for( int i = 0; string[i]; i++ ) {
+	for( i = 0; string[i]; i++ ) {
 		c = string[i];
 		v = ( v + i ) * 37 + c;
 	}
@@ -1059,7 +1060,9 @@ void G_ChatMsg( edict_t *ent, edict_t *who, bool teamonly, const char *format, .
 		}
 
 		if( who && teamonly ) {
-			for( int i = 0; i < gs.maxclients; i++ ) {
+			int i;
+
+			for( i = 0; i < gs.maxclients; i++ ) {
 				ent = game.edicts + 1 + i;
 
 				if( ent->r.inuse && ent->r.client && trap_GetClientState( i ) >= CS_CONNECTED ) {
@@ -1126,6 +1129,7 @@ void G_CenterPrintMsg( edict_t *ent, const char *format, ... ) {
 * NULL sends to all the message to all clients
 */
 void G_CenterPrintFormatMsg( edict_t *ent, int numVargs, const char *format, ... ) {
+	int i;
 	char cmd[MAX_STRING_CHARS];
 	char arg_fmt[MAX_TOKEN_CHARS];
 	va_list argptr;
@@ -1147,7 +1151,7 @@ void G_CenterPrintFormatMsg( edict_t *ent, int numVargs, const char *format, ...
 
 	va_start( argptr, format );
 
-	for( int i = 0; i <= numVargs; i++ ) {
+	for( i = 0; i <= numVargs; i++ ) {
 		size_t cmd_len;
 		size_t arg_len;
 
@@ -1257,9 +1261,10 @@ void G_UpdatePlayerMatchMsg( edict_t *ent, bool force ) {
 * Must be called whenever match state changes
 */
 void G_UpdatePlayersMatchMsgs( void ) {
+	int i;
 	edict_t *cl_ent;
 
-	for( int i = 0; i < gs.maxclients; i++ ) {
+	for( i = 0; i < gs.maxclients; i++ ) {
 		cl_ent = game.edicts + 1 + i;
 		if( !cl_ent->r.inuse ) {
 			continue;
@@ -1690,6 +1695,7 @@ void G_DropSpawnpointToFloor( edict_t *ent ) {
 bool G_CheckBottom( edict_t *ent ) {
 	vec3_t mins, maxs, start, stop;
 	trace_t trace;
+	int x, y;
 	float mid, bottom;
 
 	VectorAdd( ent->s.origin, ent->r.mins, mins );
@@ -1699,8 +1705,8 @@ bool G_CheckBottom( edict_t *ent ) {
 	// with the tougher checks
 	// the corners must be within 16 of the midpoint
 	start[2] = mins[2] - 1;
-	for( int x = 0; x <= 1; x++ ) {
-		for( int y = 0; y <= 1; y++ ) {
+	for( x = 0; x <= 1; x++ ) {
+		for( y = 0; y <= 1; y++ ) {
 			start[0] = x ? maxs[0] : mins[0];
 			start[1] = y ? maxs[1] : mins[1];
 			if( G_PointContents( start ) != CONTENTS_SOLID ) {
@@ -1730,8 +1736,8 @@ realcheck:
 	mid = bottom = trace.endpos[2];
 
 	// the corners must be within 16 of the midpoint
-	for( int x = 0; x <= 1; x++ ) {
-		for( int y = 0; y <= 1; y++ ) {
+	for( x = 0; x <= 1; x++ ) {
+		for( y = 0; y <= 1; y++ ) {
 			start[0] = stop[0] = x ? maxs[0] : mins[0];
 			start[1] = stop[1] = y ? maxs[1] : mins[1];
 
@@ -1772,8 +1778,10 @@ void G_SetBoundsForSpanEntity( edict_t *ent, vec_t size ) {
 * G_ReleaseClientPSEvent
 */
 void G_ReleaseClientPSEvent( gclient_t *client ) {
+	int i;
+
 	if( client ) {
-		for( int i = 0; i < 2; i++ ) {
+		for( i = 0; i < 2; i++ ) {
 			if( client->resp.eventsCurrent < client->resp.eventsHead ) {
 				client->ps.event[i] = client->resp.events[client->resp.eventsCurrent & MAX_CLIENT_EVENTS_MASK] & 127;
 				client->ps.eventParm[i] = ( client->resp.events[client->resp.eventsCurrent & MAX_CLIENT_EVENTS_MASK] >> 8 ) & 0xFF;
@@ -1819,18 +1827,20 @@ void G_ClearPlayerStateEvents( gclient_t *client ) {
 * Returns player matching given text. It can be either number of the player or player's name.
 */
 edict_t *G_PlayerForText( const char *text ) {
+	int pnum;
+
 	if( !text || !text[0] ) {
 		return NULL;
 	}
 
-	int pnum = atoi( text );
+	pnum = atoi( text );
 
 	if( !Q_stricmp( text, va( "%i", pnum ) ) && pnum >= 0 && pnum < gs.maxclients && game.edicts[pnum + 1].r.inuse ) {
 		return &game.edicts[atoi( text ) + 1];
 	} else {
+		int i;
 		edict_t *e;
 		char colorless[MAX_INFO_VALUE];
-		int i;
 
 		Q_strncpyz( colorless, COM_RemoveColorTokens( text ), sizeof( colorless ) );
 
@@ -2108,9 +2118,10 @@ static bool G_LoadFiredefFromFile( int weapon, firedef_t *firedef ) {
 
 void G_LoadFiredefsFromDisk( void ) {
 #ifdef WEAPONDEFS_FROM_DISK
+	int i;
 	gs_weapon_definition_t *weapondef;
 
-	for( int i = WEAP_GUNBLADE; i < WEAP_TOTAL; i++ ) {
+	for( i = WEAP_GUNBLADE; i < WEAP_TOTAL; i++ ) {
 		weapondef = GS_GetWeaponDef( i );
 		if( !weapondef ) {
 			continue;

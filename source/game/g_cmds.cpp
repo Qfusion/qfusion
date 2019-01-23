@@ -26,6 +26,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 * If client is not spectator teleporting is only done if position is free and teleport effects are drawn.
 */
 static bool G_Teleport( edict_t *ent, vec3_t origin, vec3_t angles ) {
+	int i;
+
 	if( !ent->r.inuse || !ent->r.client ) {
 		return false;
 	}
@@ -58,7 +60,7 @@ static bool G_Teleport( edict_t *ent, vec3_t origin, vec3_t angles ) {
 	VectorCopy( angles, ent->r.client->ps.viewangles );
 
 	// set the delta angle
-	for( int i = 0; i < 3; i++ )
+	for( i = 0; i < 3; i++ )
 		ent->r.client->ps.pmove.delta_angles[i] = ANGLE2SHORT( ent->r.client->ps.viewangles[i] ) - ent->r.client->ucmd.angles[i];
 
 	return true;
@@ -75,6 +77,7 @@ static bool G_Teleport( edict_t *ent, vec3_t origin, vec3_t angles ) {
 static void Cmd_Give_f( edict_t *ent ) {
 	char *name;
 	const gsitem_t *it;
+	int i;
 	bool give_all;
 
 	if( !sv_cheats->integer ) {
@@ -102,7 +105,7 @@ static void Cmd_Give_f( edict_t *ent ) {
 	}
 
 	if( give_all || !Q_stricmp( name, "weapons" ) ) {
-		for( int i = 0; i < GS_MAX_ITEM_TAGS; i++ ) {
+		for( i = 0; i < GS_MAX_ITEM_TAGS; i++ ) {
 			it = GS_FindItemByTag( i );
 			if( !it ) {
 				continue;
@@ -124,7 +127,7 @@ static void Cmd_Give_f( edict_t *ent ) {
 	}
 
 	if( give_all || !Q_stricmp( name, "ammo" ) ) {
-		for( int i = 0; i < GS_MAX_ITEM_TAGS; i++ ) {
+		for( i = 0; i < GS_MAX_ITEM_TAGS; i++ ) {
 			it = GS_FindItemByTag( i );
 			if( !it ) {
 				continue;
@@ -146,7 +149,7 @@ static void Cmd_Give_f( edict_t *ent ) {
 	}
 
 	if( give_all ) {
-		for( int i = 0; i < GS_MAX_ITEM_TAGS; i++ ) {
+		for( i = 0; i < GS_MAX_ITEM_TAGS; i++ ) {
 			it = GS_FindItemByTag( i );
 			if( !it ) {
 				continue;
@@ -390,11 +393,11 @@ static void Cmd_Position_f( edict_t *ent ) {
 		}
 	} else if( !Q_stricmp( action, "set" ) && trap_Cmd_Argc() == 7 ) {
 		vec3_t origin, angles;
-		int argnumber = 2;
+		int i, argnumber = 2;
 
-		for( int i = 0; i < 3; i++ )
+		for( i = 0; i < 3; i++ )
 			origin[i] = atof( trap_Cmd_Argv( argnumber++ ) );
-		for( int i = 0; i < 2; i++ )
+		for( i = 0; i < 2; i++ )
 			angles[i] = atof( trap_Cmd_Argv( argnumber++ ) );
 		angles[2] = 0;
 
@@ -933,7 +936,7 @@ static void Cmd_Timein_f( edict_t *ent ) {
 char *G_StatsMessage( edict_t *ent ) {
 	gclient_t *client;
 	const gsitem_t *item;
-	int shot_weak, hit_weak, shot_strong, hit_strong, shot_total, hit_total;
+	int i, shot_weak, hit_weak, shot_strong, hit_strong, shot_total, hit_total;
 	static char entry[MAX_TOKEN_CHARS];
 
 	assert( ent && ent->r.client );
@@ -942,7 +945,7 @@ char *G_StatsMessage( edict_t *ent ) {
 	// message header
 	Q_snprintfz( entry, sizeof( entry ), "%d", PLAYERNUM( ent ) );
 
-	for( int i = WEAP_GUNBLADE; i < WEAP_TOTAL; i++ ) {
+	for( i = WEAP_GUNBLADE; i < WEAP_TOTAL; i++ ) {
 		item = GS_FindItemByTag( i );
 		assert( item );
 
@@ -1049,7 +1052,9 @@ void Cmd_deleteClosestNode_f( edict_t *ent );
 * G_PrecacheGameCommands
 */
 void G_PrecacheGameCommands( void ) {
-	for( int i = 0; i < MAX_GAMECOMMANDS; i++ )
+	int i;
+
+	for( i = 0; i < MAX_GAMECOMMANDS; i++ )
 		trap_ConfigString( CS_GAMECOMMANDS + i, g_Commands[i].name );
 }
 
@@ -1103,7 +1108,9 @@ void G_AddCommand( const char *name, gamecommandfunc_t callback ) {
 * G_InitGameCommands
 */
 void G_InitGameCommands( void ) {
-	for( int i = 0; i < MAX_GAMECOMMANDS; i++ ) {
+	int i;
+
+	for( i = 0; i < MAX_GAMECOMMANDS; i++ ) {
 		g_Commands[i].func = NULL;
 		g_Commands[i].name[0] = 0;
 	}
@@ -1160,6 +1167,7 @@ void G_InitGameCommands( void ) {
 */
 void ClientCommand( edict_t *ent ) {
 	char *cmd;
+	int i;
 
 	if( !ent->r.client || trap_GetClientState( PLAYERNUM( ent ) ) < CS_SPAWNED ) {
 		return; // not fully in game yet
@@ -1171,7 +1179,7 @@ void ClientCommand( edict_t *ent ) {
 		G_Client_UpdateActivity( ent->r.client ); // activity detected
 
 	}
-	for( int i = 0; i < MAX_GAMECOMMANDS; i++ ) {
+	for( i = 0; i < MAX_GAMECOMMANDS; i++ ) {
 		if( !g_Commands[i].name[0] ) {
 			break;
 		}

@@ -119,6 +119,7 @@ static void G_AppendString( char **pdst, const char *src, size_t *pdst_len, size
 
 static http_response_code_t G_PlayerlistWebRequest( http_query_method_t method, const char *resource,
 													const char *query_string, char **content, size_t *content_length ) {
+	int i;
 	char *msg = NULL;
 	size_t msg_len = 0, msg_size = 0;
 
@@ -126,7 +127,7 @@ static http_response_code_t G_PlayerlistWebRequest( http_query_method_t method, 
 		return HTTP_RESP_BAD_REQUEST;
 	}
 
-	for( int i = 0; i < gs.maxclients; i++ ) {
+	for( i = 0; i < gs.maxclients; i++ ) {
 		if( trap_GetClientState( i ) >= CS_SPAWNED ) {
 			G_AppendString( &msg, va(
 								"{\n"
@@ -154,7 +155,7 @@ static void G_VoteMapExtraHelp( edict_t *ent ) {
 	char *s;
 	char buffer[MAX_STRING_CHARS];
 	char message[MAX_STRING_CHARS / 4 * 3];    // use buffer to send only one print message
-	int nummaps, start;
+	int nummaps, i, start;
 	size_t length, msglength;
 
 	// update the maplist
@@ -171,7 +172,8 @@ static void G_VoteMapExtraHelp( edict_t *ent ) {
 	memset( message, 0, sizeof( message ) );
 	strcpy( message, "- Available maps:" );
 
-	for( nummaps = 0; trap_ML_GetMapByNum( nummaps, NULL, 0 ); nummaps++ );
+	for( nummaps = 0; trap_ML_GetMapByNum( nummaps, NULL, 0 ); nummaps++ )
+		;
 
 	if( trap_Cmd_Argc() > 2 ) {
 		start = atoi( trap_Cmd_Argv( 2 ) ) - 1;
@@ -182,7 +184,7 @@ static void G_VoteMapExtraHelp( edict_t *ent ) {
 		start = 0;
 	}
 
-	int i = start;
+	i = start;
 	msglength = strlen( message );
 	while( trap_ML_GetMapByNum( i, buffer, sizeof( buffer ) ) ) {
 		i++;
@@ -286,6 +288,7 @@ static const char *G_VoteMapCurrent( void ) {
 
 static http_response_code_t G_VoteMapWebRequest( http_query_method_t method, const char *resource,
 												 const char *query_string, char **content, size_t *content_length ) {
+	int i;
 	char *msg = NULL;
 	size_t msg_len = 0, msg_size = 0;
 	char buffer[MAX_STRING_CHARS];
@@ -317,7 +320,7 @@ static http_response_code_t G_VoteMapWebRequest( http_query_method_t method, con
 
 		G_Free( s );
 	} else {
-		for( int i = 0; trap_ML_GetMapByNum( i, buffer, sizeof( buffer ) ); i++ ) {
+		for( i = 0; trap_ML_GetMapByNum( i, buffer, sizeof( buffer ) ); i++ ) {
 			G_AppendString( &msg, va(
 								"{\n"
 								"\"value\"" " " "\"%s\"" "\n"
@@ -517,12 +520,14 @@ static bool G_VoteLockValidate( callvotedata_t *vote, bool first ) {
 }
 
 static void G_VoteLockPassed( callvotedata_t *vote ) {
+	int team;
+
 	level.teamlock = true;
 
 	// if we are inside a match, update the teams state
 	if( GS_MatchState() >= MATCH_STATE_COUNTDOWN && GS_MatchState() <= MATCH_STATE_PLAYTIME ) {
 		if( GS_TeamBasedGametype() ) {
-			for( int team = TEAM_ALPHA; team < GS_MAX_TEAMS; team++ )
+			for( team = TEAM_ALPHA; team < GS_MAX_TEAMS; team++ )
 				G_Teams_LockTeam( team );
 		} else {
 			G_Teams_LockTeam( TEAM_PLAYERS );
@@ -558,12 +563,14 @@ static bool G_VoteUnlockValidate( callvotedata_t *vote, bool first ) {
 }
 
 static void G_VoteUnlockPassed( callvotedata_t *vote ) {
+	int team;
+
 	level.teamlock = false;
 
 	// if we are inside a match, update the teams state
 	if( GS_MatchState() >= MATCH_STATE_COUNTDOWN && GS_MatchState() <= MATCH_STATE_PLAYTIME ) {
 		if( GS_TeamBasedGametype() ) {
-			for( int team = TEAM_ALPHA; team < GS_MAX_TEAMS; team++ )
+			for( team = TEAM_ALPHA; team < GS_MAX_TEAMS; team++ )
 				G_Teams_UnLockTeam( team );
 		} else {
 			G_Teams_UnLockTeam( TEAM_PLAYERS );
@@ -579,15 +586,17 @@ static void G_VoteUnlockPassed( callvotedata_t *vote ) {
 */
 
 static void G_VoteRemoveExtraHelp( edict_t *ent ) {
+	int i;
 	edict_t *e;
 	char msg[1024];
-	int i;
 
 	msg[0] = 0;
 	Q_strncatz( msg, "- List of players in game:\n", sizeof( msg ) );
 
 	if( GS_TeamBasedGametype() ) {
-		for( int team = TEAM_ALPHA; team < GS_MAX_TEAMS; team++ ) {
+		int team;
+
+		for( team = TEAM_ALPHA; team < GS_MAX_TEAMS; team++ ) {
 			Q_strncatz( msg, va( "%s:\n", GS_TeamName( team ) ), sizeof( msg ) );
 			for( i = 0, e = game.edicts + 1; i < gs.maxclients; i++, e++ ) {
 				if( !e->r.inuse || e->s.team != team ) {
@@ -678,9 +687,9 @@ static void G_VoteRemovePassed( callvotedata_t *vote ) {
 */
 
 static void G_VoteKickExtraHelp( edict_t *ent ) {
+	int i;
 	edict_t *e;
 	char msg[1024];
-	int i;
 
 	msg[0] = 0;
 	Q_strncatz( msg, "- List of current players:\n", sizeof( msg ) );
@@ -761,9 +770,9 @@ static void G_VoteKickPassed( callvotedata_t *vote ) {
 */
 
 static void G_VoteKickBanExtraHelp( edict_t *ent ) {
+	int i;
 	edict_t *e;
 	char msg[1024];
-	int i;
 
 	msg[0] = 0;
 	Q_strncatz( msg, "- List of current players:\n", sizeof( msg ) );
@@ -849,9 +858,9 @@ static void G_VoteKickBanPassed( callvotedata_t *vote ) {
 */
 
 static void G_VoteMuteExtraHelp( edict_t *ent ) {
+	int i;
 	edict_t *e;
 	char msg[1024];
-	int i;
 
 	msg[0] = 0;
 	Q_strncatz( msg, "- List of current players:\n", sizeof( msg ) );
@@ -938,9 +947,9 @@ static void G_VoteVMutePassed( callvotedata_t *vote ) {
 */
 
 static void G_VoteUnmuteExtraHelp( edict_t *ent ) {
+	int i;
 	edict_t *e;
 	char msg[1024];
-	int i;
 
 	msg[0] = 0;
 	Q_strncatz( msg, "- List of current players:\n", sizeof( msg ) );
@@ -1172,12 +1181,14 @@ void G_CallVotes_ResetClient( int n ) {
 * G_CallVotes_Reset
 */
 static void G_CallVotes_Reset( bool vote_happened ) {
+	int i;
+
 	if( vote_happened && callvoteState.vote.caller && callvoteState.vote.caller->r.client ) {
 		callvoteState.vote.caller->r.client->level.callvote_when = game.realtime;
 	}
 
 	callvoteState.vote.callvote = NULL;
-	for( int i = 0; i < gs.maxclients; i++ )
+	for( i = 0; i < gs.maxclients; i++ )
 		G_CallVotes_ResetClient( i );
 	callvoteState.timeout = 0;
 
@@ -1188,7 +1199,7 @@ static void G_CallVotes_Reset( bool vote_happened ) {
 	if( callvoteState.vote.data ) {
 		G_Free( callvoteState.vote.data );
 	}
-	for( int i = 0; i < callvoteState.vote.argc; i++ ) {
+	for( i = 0; i < callvoteState.vote.argc; i++ ) {
 		if( callvoteState.vote.argv[i] ) {
 			G_Free( callvoteState.vote.argv[i] );
 		}
@@ -1243,12 +1254,14 @@ static void G_CallVotes_PrintHelpToPlayer( edict_t *ent, callvotetype_t *callvot
 */
 static const char *G_CallVotes_ArgsToString( const callvotedata_t *vote ) {
 	static char argstring[MAX_STRING_CHARS];
+	int i;
+
 	argstring[0] = 0;
 
 	if( vote->argc > 0 ) {
 		Q_strncatz( argstring, vote->argv[0], sizeof( argstring ) );
 	}
-	for( int i = 1; i < vote->argc; i++ ) {
+	for( i = 1; i < vote->argc; i++ ) {
 		Q_strncatz( argstring, " ", sizeof( argstring ) );
 		Q_strncatz( argstring, vote->argv[i], sizeof( argstring ) );
 	}
@@ -1414,11 +1427,12 @@ void G_CallVotes_CmdVote( edict_t *ent ) {
 */
 static void G_CallVotes_UpdateVotesConfigString( void ) {
 #define NUM_VOTEINTS ( ( MAX_CLIENTS + 31 ) / 32 )
-	int votebits[NUM_VOTEINTS], n;
+	int i, n;
+	int votebits[NUM_VOTEINTS];
 	char cs[MAX_CONFIGSTRING_CHARS + 1];
 
 	memset( votebits, 0, sizeof( votebits ) );
-	for( int i = 0; i < gs.maxclients; i++ ) {
+	for( i = 0; i < gs.maxclients; i++ ) {
 		votebits[i >> 5] |= clientVoteChanges[i] == 0 ? ( 1 << ( i & 31 ) ) : 0;
 	}
 
@@ -1426,7 +1440,7 @@ static void G_CallVotes_UpdateVotesConfigString( void ) {
 	for( n = NUM_VOTEINTS; n > 0 && !votebits[n - 1]; n-- ) ;
 
 	cs[0] = cs[1] = '\0';
-	for( int i = 0; i < n; i++ ) {
+	for( i = 0; i < n; i++ ) {
 		Q_strncatz( cs, va( " %x", votebits[i] ), sizeof( cs ) );
 	}
 	cs[MAX_CONFIGSTRING_CHARS] = '\0';
@@ -1457,6 +1471,7 @@ void G_CallVotes_Think( void ) {
 * G_CallVote
 */
 static void G_CallVote( edict_t *ent, bool isopcall ) {
+	int i;
 	const char *votename;
 	callvotetype_t *callvote;
 
@@ -1470,7 +1485,7 @@ static void G_CallVote( edict_t *ent, bool isopcall ) {
 				continue;
 			}
 
-			for( int i = 0; i < teamlist[team].numplayers; i++ ) {
+			for( i = 0; i < teamlist[team].numplayers; i++ ) {
 				e = game.edicts + teamlist[team].playerIndices[i];
 				if( e->r.inuse && ( e->r.svflags & SVF_FAKECLIENT ) ) {
 					count++;
@@ -1550,7 +1565,7 @@ static void G_CallVote( edict_t *ent, bool isopcall ) {
 	}
 
 	callvoteState.vote.argc = trap_Cmd_Argc() - 2;
-	for( int i = 0; i < callvoteState.vote.argc; i++ )
+	for( i = 0; i < callvoteState.vote.argc; i++ )
 		callvoteState.vote.argv[i] = G_CopyString( trap_Cmd_Argv( i + 2 ) );
 
 	callvoteState.vote.callvote = callvote;
@@ -1565,7 +1580,7 @@ static void G_CallVote( edict_t *ent, bool isopcall ) {
 	}
 
 	//we're done. Proceed launching the election
-	for( int i = 0; i < gs.maxclients; i++ )
+	for( i = 0; i < gs.maxclients; i++ )
 		G_CallVotes_ResetClient( i );
 	callvoteState.timeout = game.realtime + ( g_callvote_electtime->integer * 1000 );
 
@@ -1692,13 +1707,14 @@ void G_OperatorVote_Cmd( edict_t *ent ) {
 */
 static bool G_VoteFromScriptValidate( callvotedata_t *vote, bool first ) {
 	char argsString[MAX_STRING_CHARS];
+	int i;
 
 	if( !vote || !vote->callvote || !vote->caller ) {
 		return false;
 	}
 
 	Q_snprintfz( argsString, MAX_STRING_CHARS, "\"%s\"", vote->callvote->name );
-	for( int i = 0; i < vote->argc; i++ ) {
+	for( i = 0; i < vote->argc; i++ ) {
 		Q_strncatz( argsString, " ", MAX_STRING_CHARS );
 		Q_strncatz( argsString, va( " \"%s\"", vote->argv[i] ), MAX_STRING_CHARS );
 	}
@@ -1711,13 +1727,14 @@ static bool G_VoteFromScriptValidate( callvotedata_t *vote, bool first ) {
 */
 static void G_VoteFromScriptPassed( callvotedata_t *vote ) {
 	char argsString[MAX_STRING_CHARS];
+	int i;
 
 	if( !vote || !vote->callvote || !vote->caller ) {
 		return;
 	}
 
 	Q_snprintfz( argsString, MAX_STRING_CHARS, "\"%s\"", vote->callvote->name );
-	for( int i = 0; i < vote->argc; i++ ) {
+	for( i = 0; i < vote->argc; i++ ) {
 		Q_strncatz( argsString, " ", MAX_STRING_CHARS );
 		Q_strncatz( argsString, va( " \"%s\"", vote->argv[i] ), MAX_STRING_CHARS );
 	}

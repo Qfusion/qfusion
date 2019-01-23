@@ -187,6 +187,7 @@ static void G_BlendFrameDamage( edict_t *ent, float damage, float *old_damage, c
 	vec3_t offset;
 	float frac;
 	vec3_t dir;
+	int i;
 
 	if( !point ) {
 		VectorSet( offset, 0, 0, ent->viewheight );
@@ -204,7 +205,7 @@ static void G_BlendFrameDamage( edict_t *ent, float damage, float *old_damage, c
 	}
 
 	frac = damage / ( damage + *old_damage );
-	for( int i = 0; i < 3; i++ ) {
+	for( i = 0; i < 3; i++ ) {
 		old_point[i] = ( old_point[i] * ( 1.0f - frac ) ) + offset[i] * frac;
 		old_dir[i] = ( old_dir[i] * ( 1.0f - frac ) ) + dir[i] * frac;
 	}
@@ -479,6 +480,7 @@ void G_SplashFrac( const vec3_t origin, const vec3_t mins, const vec3_t maxs, co
 	vec3_t boxcenter = { 0, 0, 0 };
 	vec3_t hitpoint;
 	float distance;
+	int i;
 	float innerradius;
 	float refdistance;
 
@@ -531,7 +533,7 @@ void G_SplashFrac( const vec3_t origin, const vec3_t mins, const vec3_t maxs, co
 	// find push direction
 	if( pushdir ) {
 		// find real center of the box again
-		for( int i = 0; i < 3; i++ )
+		for( i = 0; i < 3; i++ )
 			boxcenter[i] = origin[i] + ( 0.5f * ( maxs[i] + mins[i] ) );
 
 		VectorSubtract( boxcenter, hitpoint, pushdir );
@@ -543,7 +545,7 @@ void G_SplashFrac( const vec3_t origin, const vec3_t mins, const vec3_t maxs, co
 * G_RadiusDamage
 */
 void G_RadiusDamage( edict_t *inflictor, edict_t *attacker, cplane_t *plane, edict_t *ignore, int mod ) {
-	int numtouch;
+	int i, numtouch;
 	int touch[MAX_EDICTS];
 	edict_t *ent = NULL;
 	float frac, damage, knockback;
@@ -566,7 +568,7 @@ void G_RadiusDamage( edict_t *inflictor, edict_t *attacker, cplane_t *plane, edi
 	clamp_high( minknockback, maxknockback );
 
 	numtouch = GClip_FindInRadius4D( inflictor->s.origin, radius, touch, MAX_EDICTS, inflictor->timeDelta );
-	for( int i = 0; i < numtouch; i++ ) {
+	for( i = 0; i < numtouch; i++ ) {
 		ent = game.edicts + touch[i];
 		if( ent == ignore || !ent->takedamage ) {
 			continue;

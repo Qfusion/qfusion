@@ -87,10 +87,11 @@ static void ClientObituary( edict_t *self, edict_t *inflictor, edict_t *attacker
 */
 static void G_Client_UnlinkBodies( edict_t *ent ) {
 	edict_t *body;
+	int i;
 
 	// find bodies linked to us
 	body = &game.edicts[gs.maxclients + 1];
-	for( int i = 0; i < BODY_QUEUE_SIZE; body++, i++ ) {
+	for( i = 0; i < BODY_QUEUE_SIZE; body++, i++ ) {
 		if( !body->r.inuse ) {
 			continue;
 		}
@@ -106,10 +107,11 @@ static void G_Client_UnlinkBodies( edict_t *ent ) {
 * InitBodyQue
 */
 void G_InitBodyQueue( void ) {
+	int i;
 	edict_t *ent;
 
 	level.body_que = 0;
-	for( int i = 0; i < BODY_QUEUE_SIZE; i++ ) {
+	for( i = 0; i < BODY_QUEUE_SIZE; i++ ) {
 		ent = G_Spawn();
 		ent->classname = "bodyque";
 	}
@@ -457,6 +459,7 @@ void G_GhostClient( edict_t *ent ) {
 * G_ClientRespawn
 */
 void G_ClientRespawn( edict_t *self, bool ghost ) {
+	int i;
 	edict_t *spawnpoint;
 	vec3_t spawn_origin, spawn_angles;
 	gclient_t *client;
@@ -569,7 +572,7 @@ void G_ClientRespawn( edict_t *self, bool ghost ) {
 	VectorCopy( self->s.angles, client->ps.viewangles );
 
 	// set the delta angle
-	for( int i = 0; i < 3; i++ )
+	for( i = 0; i < 3; i++ )
 		client->ps.pmove.delta_angles[i] = ANGLE2SHORT( client->ps.viewangles[i] ) - client->ucmd.angles[i];
 
 	// don't put spectators in the game
@@ -630,6 +633,7 @@ bool G_PlayerCanTeleport( edict_t *player ) {
 * G_TeleportPlayer
 */
 void G_TeleportPlayer( edict_t *player, edict_t *dest ) {
+	int i;
 	vec3_t velocity;
 	mat3_t axis;
 	float speed;
@@ -662,7 +666,7 @@ void G_TeleportPlayer( edict_t *player, edict_t *dest ) {
 	VectorCopy( dest->s.origin, client->ps.pmove.origin );
 
 	// set the delta angle
-	for( int i = 0; i < 3; i++ )
+	for( i = 0; i < 3; i++ )
 		client->ps.pmove.delta_angles[i] = ANGLE2SHORT( client->ps.viewangles[i] ) - client->ucmd.angles[i];
 
 	client->ps.pmove.pm_flags |= PMF_TIME_TELEPORT;
@@ -744,6 +748,7 @@ static void strip_highchars( char *in ) {
 static int G_SanitizeUserString( char *string, size_t size ) {
 	static char *colorless = NULL;
 	static size_t colorless_size = 0;
+	int i, c_ascii;
 
 	// life is hard, UTF-8 will have to go
 	strip_highchars( string );
@@ -765,8 +770,8 @@ static int G_SanitizeUserString( char *string, size_t size ) {
 	// (this will upset people who would like to have a name entirely in a non-latin
 	// script, but it makes damn sure you can't get an empty name by exploiting some
 	// utf-8 decoder quirk)
-	int c_ascii = 0;
-	for( int i = 0; colorless[i]; i++ )
+	c_ascii = 0;
+	for( i = 0; colorless[i]; i++ )
 		if( colorless[i] > 32 && colorless[i] < 127 ) {
 			c_ascii++;
 		}
@@ -782,6 +787,7 @@ static void G_SetName( edict_t *ent, const char *original_name ) {
 	edict_t *other;
 	char name[MAX_NAME_BYTES];
 	char colorless[MAX_NAME_BYTES];
+	int i, trynum, trylen;
 	int c_ascii;
 	int maxchars;
 
@@ -803,7 +809,7 @@ static void G_SetName( edict_t *ent, const char *original_name ) {
 	Q_strncpyz( colorless, COM_RemoveColorTokens( name ), sizeof( colorless ) );
 
 	if( !( ent->r.svflags & SVF_FAKECLIENT ) ) {
-		for( int i = 0; invalid_prefixes[i] != NULL; i++ ) {
+		for( i = 0; invalid_prefixes[i] != NULL; i++ ) {
 			if( !Q_strnicmp( colorless, invalid_prefixes[i], strlen( invalid_prefixes[i] ) ) ) {
 				Q_strncpyz( name, "Player", sizeof( name ) );
 				Q_strncpyz( colorless, COM_RemoveColorTokens( name ), sizeof( colorless ) );
@@ -820,7 +826,7 @@ static void G_SetName( edict_t *ent, const char *original_name ) {
 							 maxchars, COLOR_WHITE );
 	Q_strncpyz( colorless, COM_RemoveColorTokens( name ), sizeof( colorless ) );
 
-	int i, trylen, trynum = 1;
+	trynum = 1;
 	do {
 		for( i = 0; i < gs.maxclients; i++ ) {
 			other = game.edicts + 1 + i;
@@ -863,6 +869,7 @@ static void G_SetClan( edict_t *ent, const char *original_clan ) {
 	const char *invalid_values[] = { "console", "spec", "bot", NULL };
 	char clan[MAX_CLANNAME_BYTES];
 	char colorless[MAX_CLANNAME_BYTES];
+	int i;
 	int c_ascii;
 	int maxchars;
 
@@ -888,7 +895,7 @@ static void G_SetClan( edict_t *ent, const char *original_clan ) {
 	}
 
 	if( !( ent->r.svflags & SVF_FAKECLIENT ) ) {
-		for( int i = 0; invalid_values[i] != NULL; i++ ) {
+		for( i = 0; invalid_values[i] != NULL; i++ ) {
 			if( !Q_strnicmp( colorless, invalid_values[i], strlen( invalid_values[i] ) ) ) {
 				clan[0] = colorless[0] = '\0';
 				break;
@@ -1298,6 +1305,7 @@ bool ClientMultiviewChanged( edict_t *ent, bool multiview ) {
 */
 void ClientThink( edict_t *ent, usercmd_t *ucmd, int timeDelta ) {
 	gclient_t *client;
+	int i, j;
 	static pmove_t pm;
 	int delta, count;
 
@@ -1319,10 +1327,10 @@ void ClientThink( edict_t *ent, usercmd_t *ucmd, int timeDelta ) {
 		clamp( timeDelta, -g_antilag_maxtimedelta->integer, 0 );
 
 		// smooth using last valid deltas
-		int i = client->timeDeltasHead - 6;
-		if( i < 0 )
+		i = client->timeDeltasHead - 6;
+		if( i < 0 ) {
 			i = 0;
-
+		}
 		for( count = 0, delta = 0; i < client->timeDeltasHead; i++ ) {
 			if( client->timeDeltas[i & G_MAX_TIME_DELTAS_MASK] < 0 ) {
 				delta += client->timeDeltas[i & G_MAX_TIME_DELTAS_MASK];
@@ -1409,7 +1417,7 @@ void ClientThink( edict_t *ent, usercmd_t *ucmd, int timeDelta ) {
 		edict_t *other;
 
 		// touch other objects
-		for( int i = 0, j; i < pm.numtouch; i++ ) {
+		for( i = 0; i < pm.numtouch; i++ ) {
 			other = &game.edicts[pm.touchents[i]];
 			for( j = 0; j < i; j++ ) {
 				if( &game.edicts[pm.touchents[j]] == other ) {

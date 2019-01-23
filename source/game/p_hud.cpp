@@ -37,6 +37,7 @@ static const char *G_PlayerStatsMessage( edict_t *ent );
 */
 void G_UpdateScoreBoardMessages( void ) {
 	static int nexttime = 0;
+	int i;
 	edict_t *ent;
 	gclient_t *client;
 	bool forcedUpdate = false;
@@ -57,7 +58,7 @@ void G_UpdateScoreBoardMessages( void ) {
 update:
 
 	// send to players who have scoreboard visible
-	for( int i = 0; i < gs.maxclients; i++ ) {
+	for( i = 0; i < gs.maxclients; i++ ) {
 		ent = game.edicts + 1 + i;
 		if( !ent->r.inuse || !ent->r.client ) {
 			continue;
@@ -113,7 +114,7 @@ update:
 
 void G_ScoreboardMessage_AddSpectators( void ) {
 	char entry[MAX_TOKEN_CHARS];
-	int clstate;
+	int i, clstate;
 	edict_t *e;
 	edict_t **challengers;
 	size_t len;
@@ -128,7 +129,7 @@ void G_ScoreboardMessage_AddSpectators( void ) {
 		Q_strncpyz( entry, "&w ", sizeof( entry ) );
 		ADD_SCOREBOARD_ENTRY( scoreboardString, len, entry );
 
-		for( int i = 0; challengers[i]; i++ ) {
+		for( i = 0; challengers[i]; i++ ) {
 			e = challengers[i];
 
 			//spectator tab entry
@@ -145,7 +146,7 @@ void G_ScoreboardMessage_AddSpectators( void ) {
 	Q_strncpyz( entry, "&s ", sizeof( entry ) );
 	ADD_SCOREBOARD_ENTRY( scoreboardString, len, entry );
 
-	for( int i = 0; i < teamlist[TEAM_SPECTATOR].numplayers; i++ ) {
+	for( i = 0; i < teamlist[TEAM_SPECTATOR].numplayers; i++ ) {
 		e = game.edicts + teamlist[TEAM_SPECTATOR].playerIndices[i];
 
 		if( e->r.client->connecting == true || trap_GetClientState( PLAYERNUM( e ) ) < CS_SPAWNED ) {
@@ -162,7 +163,7 @@ void G_ScoreboardMessage_AddSpectators( void ) {
 	}
 
 	// add connecting spectators
-	for( int i = 0; i < teamlist[TEAM_SPECTATOR].numplayers; i++ ) {
+	for( i = 0; i < teamlist[TEAM_SPECTATOR].numplayers; i++ ) {
 		e = game.edicts + teamlist[TEAM_SPECTATOR].playerIndices[i];
 
 		// spectator tab entry
@@ -180,6 +181,7 @@ void G_ScoreboardMessage_AddSpectators( void ) {
 */
 static const char *G_PlayerStatsMessage( edict_t *ent ) {
 	const gsitem_t *it;
+	int i;
 	int weakhit, weakshot;
 	int hit, shot;
 	edict_t *target;
@@ -201,7 +203,7 @@ static const char *G_PlayerStatsMessage( edict_t *ent ) {
 	Q_strncatz( entry, va( " %d", PLAYERNUM( target ) ), sizeof( entry ) );
 
 	// weapon loop
-	for( int i = WEAP_GUNBLADE; i < WEAP_TOTAL; i++ ) {
+	for( i = WEAP_GUNBLADE; i < WEAP_TOTAL; i++ ) {
 		it = GS_FindItemByTag( i );
 		assert( it );
 
@@ -243,7 +245,7 @@ static const char *G_PlayerStatsMessage( edict_t *ent ) {
 
 static unsigned int G_FindPointedPlayer( edict_t *self ) {
 	trace_t trace;
-	int bestNum = 0;
+	int i, j, bestNum = 0;
 	vec3_t boxpoints[8];
 	float value, dist, value_best = 0.90f;   // if nothing better is found, print nothing
 	edict_t *other;
@@ -257,7 +259,7 @@ static unsigned int G_FindPointedPlayer( edict_t *self ) {
 	VectorSet( vieworg, self->r.client->ps.pmove.origin[0], self->r.client->ps.pmove.origin[1], self->r.client->ps.pmove.origin[2] + self->r.client->ps.viewheight );
 	AngleVectors( self->r.client->ps.viewangles, viewforward, NULL, NULL );
 
-	for( int i = 0; i < gs.maxclients; i++ ) {
+	for( i = 0; i < gs.maxclients; i++ ) {
 		other = PLAYERENT( i );
 		if( !other->r.inuse ) {
 			continue;
@@ -282,7 +284,7 @@ static unsigned int G_FindPointedPlayer( edict_t *self ) {
 
 		if( value > value_best ) {
 			BuildBoxPoints( boxpoints, other->s.origin, tv( 4, 4, 4 ), tv( 4, 4, 4 ) );
-			for( int j = 0; j < 8; j++ ) {
+			for( j = 0; j < 8; j++ ) {
 				G_Trace( &trace, vieworg, vec3_origin, vec3_origin, boxpoints[j], self, MASK_SHOT | MASK_OPAQUE );
 				if( trace.ent && trace.ent == ENTNUM( other ) ) {
 					value_best = value;
@@ -300,6 +302,7 @@ static unsigned int G_FindPointedPlayer( edict_t *self ) {
 */
 void G_SetClientStats( edict_t *ent ) {
 	gclient_t *client = ent->r.client;
+	int team, i;
 
 	if( ent->r.client->resp.chase.active ) { // in chasecam it copies the other player stats
 		return;
@@ -363,12 +366,18 @@ void G_SetClientStats( edict_t *ent ) {
 	//
 	if( GS_TeamBasedGametype() ) {
 		// team based
-		for( int team = TEAM_ALPHA, i = 0; team < GS_MAX_TEAMS; team++, i++ )
+		i = 0;
+		for( team = TEAM_ALPHA; team < GS_MAX_TEAMS; team++ ) {
 			client->ps.stats[STAT_TEAM_ALPHA_SCORE + i] = teamlist[team].stats.score;
+			i++;
+		}
 	} else {
 		// not team based
-		for( int team = TEAM_ALPHA, i = 0; team < GS_MAX_TEAMS; team++, i++ )
+		i = 0;
+		for( team = TEAM_ALPHA; team < GS_MAX_TEAMS; team++ ) {
 			client->ps.stats[STAT_TEAM_ALPHA_SCORE + i] = STAT_NOTSET;
+			i++;
+		}
 	}
 
 	// spawn system

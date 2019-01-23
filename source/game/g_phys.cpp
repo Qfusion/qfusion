@@ -200,6 +200,7 @@ edict_t *obstacle;
 * otherwise riders would continue to slide.
 */
 static bool SV_Push( edict_t *pusher, vec3_t move, vec3_t amove ) {
+	int i, e;
 	edict_t *check, *block;
 	vec3_t mins, maxs;
 	pushed_t *p;
@@ -207,7 +208,7 @@ static bool SV_Push( edict_t *pusher, vec3_t move, vec3_t amove ) {
 	vec3_t org, org2, move2;
 
 	// find the bounding box
-	for( int i = 0; i < 3; i++ ) {
+	for( i = 0; i < 3; i++ ) {
 		mins[i] = pusher->r.absmin[i] + move[i];
 		maxs[i] = pusher->r.absmax[i] + move[i];
 	}
@@ -233,7 +234,7 @@ static bool SV_Push( edict_t *pusher, vec3_t move, vec3_t amove ) {
 
 	// see if any solid entities are inside the final position
 	check = game.edicts + 1;
-	for( int e = 1; e < game.numentities; e++, check++ ) {
+	for( e = 1; e < game.numentities; e++, check++ ) {
 		if( !check->r.inuse ) {
 			continue;
 		}
