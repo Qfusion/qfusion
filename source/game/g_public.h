@@ -172,7 +172,7 @@ typedef struct {
 
 	// The edict array is allocated in the game dll so it
 	// can vary in size from one game to another.
-	void ( *LocateEntities )( struct edict_s *edicts, int edict_size, int num_edicts, int max_edicts );
+	void ( *LocateEntities )( struct edict_s *edicts, size_t edict_size, int num_edicts, int max_edicts );
 
 	// angelscript api
 	struct angelwrap_api_s *( *asGetAngelExport )( void );

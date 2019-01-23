@@ -446,8 +446,6 @@ static void SV_Begin_f( client_t *client ) {
 * If nextdl packet's offet information is negative, download will be stopped
 */
 static void SV_NextDownload_f( client_t *client ) {
-	int blocksize;
-	int offset;
 	uint8_t data[FRAGMENT_SIZE * 2];
 
 	if( !client->download.name ) {
@@ -460,7 +458,7 @@ static void SV_NextDownload_f( client_t *client ) {
 		return;
 	}
 
-	offset = atoi( Cmd_Argv( 2 ) );
+	int offset = atoi( Cmd_Argv( 2 ) );
 
 	if( offset > client->download.size ) {
 		Com_Printf( "nextdl message with too big offset, from: %s\n", client->name );
@@ -493,7 +491,7 @@ static void SV_NextDownload_f( client_t *client ) {
 	SV_InitClientMessage( client, &tmpMessage, NULL, 0 );
 	SV_AddReliableCommandsToMessage( client, &tmpMessage );
 
-	blocksize = client->download.size - offset;
+	size_t blocksize = client->download.size - offset;
 	if( blocksize > sizeof( data ) ) {
 		blocksize = sizeof( data );
 	}
@@ -651,7 +649,7 @@ static void SV_BeginDownload_f( client_t *client ) {
 	}
 
 	client->download.size = FS_LoadBaseFile( uploadname, NULL, NULL, 0 );
-	if( client->download.size == -1 ) {
+	if( client->download.size ) {
 		Com_Printf( "Error getting size of %s for uploading\n", uploadname );
 		client->download.size = 0;
 		SV_DenyDownload( client, "Error getting file size" );

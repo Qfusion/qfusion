@@ -54,7 +54,7 @@ static struct qfontface_s *con_chatFont;
 // console input line editing
 #define     MAXCMDLINE  256
 static char key_lines[32][MAXCMDLINE];
-static unsigned int key_linepos;    // byte offset of cursor in edit line
+static size_t key_linepos;    // byte offset of cursor in edit line
 static int input_prestep;           // pixels to skip at start when drawing
 static int edit_line = 0;
 static int history_line = 0;
@@ -972,8 +972,8 @@ static void Con_CompleteCommandLine( void ) {
 	static char empty[ 1 ] = { '\0' };
 	char *cmd = empty;
 	char *s;
-	int c, v, a, ca, i;
-	int cmd_len;
+	int i;
+	size_t cmd_len;
 	char **list[6] = { 0, 0, 0, 0, 0, 0 };
 
 	s = key_lines[edit_line] + 1;
@@ -985,10 +985,10 @@ static void Con_CompleteCommandLine( void ) {
 	}
 
 	// Count number of possible matches
-	c = Cmd_CompleteCountPossible( s );
-	v = Cvar_CompleteCountPossible( s );
-	a = Cmd_CompleteAliasCountPossible( s );
-	ca = 0;
+	int c = Cmd_CompleteCountPossible( s );
+	int v = Cvar_CompleteCountPossible( s );
+	int a = Cmd_CompleteAliasCountPossible( s );
+	int ca = 0;
 
 	if( !( c + v + a ) ) {
 		// now see if there's any valid cmd in there, providing

@@ -741,7 +741,7 @@ static void GameMenu() {
 		ImGui::SetNextWindowSize( ImVec2( 300, 0 ) );
 		ImGui::Begin( "gamemenu", NULL, ImGuiWindowFlags_NoDecoration );
 		ImGuiStyle & style = ImGui::GetStyle();
-		const double half = 300/2 - style.ItemInnerSpacing.x - style.ItemSpacing.x;
+		const double half = ImGui::GetWindowWidth()/2 - style.ItemSpacing.x - style.ItemInnerSpacing.x;
 
 		if( is_spectating ) {
 			ImGui::Columns( 2, NULL, false );
@@ -983,7 +983,7 @@ void UI_Refresh( bool background, bool showCursor ) {
 		DemoMenu();
 	}
 
-	// ImGui::ShowDemoWindow();
+	 ImGui::ShowDemoWindow();
 
 	ImGui::Render();
 	RenderUI();

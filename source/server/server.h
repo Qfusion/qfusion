@@ -99,7 +99,7 @@ typedef struct {
 typedef struct {
 	char *name;
 	int file;
-	int size;               // total bytes (can't use EOF because of paks)
+	size_t size;               // total bytes (can't use EOF because of paks)
 	int64_t timeout;   // so we can free the file being downloaded
 	                        // if client omits sending success or failure message
 } client_download_t;

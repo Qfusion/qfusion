@@ -407,7 +407,7 @@ void SV_ShutdownGameProgs( void ) {
 /*
 * SV_LocateEntities
 */
-static void SV_LocateEntities( struct edict_s *edicts, int edict_size, int num_edicts, int max_edicts ) {
+static void SV_LocateEntities( struct edict_s *edicts, size_t edict_size, int num_edicts, int max_edicts ) {
 	if( !edicts || edict_size < sizeof( entity_shared_t ) ) {
 		Com_Error( ERR_DROP, "SV_LocateEntities: bad edicts" );
 	}

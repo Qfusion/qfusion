@@ -366,7 +366,7 @@ static void CL_Connect_Cmd_f( socket_type_t socket ) {
 	if( ( tmp = Q_strrstr( connectstring, "@" ) ) != NULL ) {
 		Q_strncpyz( password, connectstring, min( sizeof( password ),( tmp - connectstring + 1 ) ) );
 		Cvar_Set( "password", password );
-		connectstring = connectstring + ( tmp - connectstring ) + 1;
+		connectstring += ( tmp - connectstring ) + 1;
 	}
 
 	if( ( tmp = Q_strrstr( connectstring, "#" ) ) != NULL ) {

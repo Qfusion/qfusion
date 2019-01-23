@@ -539,7 +539,7 @@ static void CL_InitServerDownload( const char *filename, int size, unsigned chec
 	cls.download.timeout = Sys_Milliseconds() + 3000;
 	cls.download.retries = 0;
 
-	CL_AddReliableCommand( va( "nextdl \"%s\" %i", cls.download.name, cls.download.offset ) );
+	CL_AddReliableCommand( va( "nextdl \"%s\" %li", cls.download.name, cls.download.offset ) );
 }
 
 /*
@@ -617,7 +617,7 @@ static void CL_RetryDownload( void ) {
 		CL_DownloadDone();
 	} else {
 		cls.download.timeout = Sys_Milliseconds() + 3000;
-		CL_AddReliableCommand( va( "nextdl \"%s\" %i", cls.download.name, cls.download.offset ) );
+		CL_AddReliableCommand( va( "nextdl \"%s\" %li", cls.download.name, cls.download.offset ) );
 	}
 }
 
@@ -744,7 +744,7 @@ static void CL_ParseDownload( msg_t *msg ) {
 		cls.download.timeout = Sys_Milliseconds() + 3000;
 		cls.download.retries = 0;
 
-		CL_AddReliableCommand( va( "nextdl \"%s\" %i", cls.download.name, cls.download.offset ) );
+		CL_AddReliableCommand( va( "nextdl \"%s\" %li", cls.download.name, cls.download.offset ) );
 	} else {
 		Com_Printf( "Download complete: %s\n", cls.download.name );
 
@@ -1268,7 +1268,7 @@ void CL_ParseServerMessage( msg_t *msg ) {
 	}
 
 	if( cl_debug_serverCmd->integer & 4 ) {
-		Com_Printf( "%3i:CMD %i %s\n", msg->readcount, -1, "EOF" );
+		Com_Printf( "%3li:CMD %i %s\n", msg->readcount, -1, "EOF" );
 	}
 	SHOWNET( msg, "END OF MESSAGE" );
 
