@@ -339,8 +339,7 @@ trie_error_t Trie_FreeDump(
 	struct trie_dump_s *dump
 	) {
 	if( dump ) {
-		unsigned int i;
-		for( i = 0; i < dump->size; ++i )
+		for( unsigned int i = 0; i < dump->size; ++i )
 			if( dump->key_value_vector[i].key ) {
 				free( (char *) dump->key_value_vector[i].key );
 			}

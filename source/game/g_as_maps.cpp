@@ -197,7 +197,6 @@ bool G_asLoadMapScript( const char *mapName ) {
 * G_asShutdownMapScript
 */
 void G_asShutdownMapScript( void ) {
-	int i;
 	edict_t *e;
 
 	if( game.asEngine == NULL ) {
@@ -205,7 +204,7 @@ void G_asShutdownMapScript( void ) {
 	}
 
 	// release the callback and any other objects obtained from the script engine before releasing the engine
-	for( i = 0; i < game.numentities; i++ ) {
+	for( int i = 0; i < game.numentities; i++ ) {
 		e = &game.edicts[i];
 
 		if( e->scriptSpawned && e->asScriptModule &&

@@ -82,11 +82,11 @@ static int G_Teams_CompareMembers( const void *a, const void *b ) {
 */
 void G_Teams_UpdateMembersList( void ) {
 	edict_t *ent;
-	int i, team;
 
-	for( team = TEAM_SPECTATOR; team < GS_MAX_TEAMS; team++ ) {
+	for( int team = TEAM_SPECTATOR; team < GS_MAX_TEAMS; team++ ) {
 		teamlist[team].numplayers = 0;
 		teamlist[team].ping = 0;
+		int i;
 
 		//create a temp list with the clients inside this team
 		for( i = 0, ent = game.edicts + 1; i < gs.maxclients; i++, ent++ ) {
@@ -102,7 +102,7 @@ void G_Teams_UpdateMembersList( void ) {
 		qsort( teamlist[team].playerIndices, teamlist[team].numplayers, sizeof( teamlist[team].playerIndices[0] ), G_Teams_CompareMembers );
 
 		if( teamlist[team].numplayers ) {
-			for( i = 0; i < teamlist[team].numplayers; i++ )
+			for( int i = 0; i < teamlist[team].numplayers; i++ )
 				teamlist[team].ping += game.edicts[teamlist[team].playerIndices[i]].r.client->r.ping;
 			teamlist[team].ping /= teamlist[team].numplayers;
 		}
@@ -197,9 +197,8 @@ static bool G_Teams_CanKeepEvenTeam( int leaving, int joining ) {
 	int max = 0;
 	int min = gs.maxclients + 1;
 	int numplayers;
-	int i;
 
-	for( i = TEAM_ALPHA; i < GS_MAX_TEAMS; i++ ) {
+	for( int i = TEAM_ALPHA; i < GS_MAX_TEAMS; i++ ) {
 		numplayers = teamlist[i].numplayers;
 		if( i == leaving ) {
 			numplayers--;
@@ -316,8 +315,7 @@ bool G_Teams_JoinTeam( edict_t *ent, int team ) {
 * G_Teams_JoinAnyTeam - find us a team since we are too lazy to do ourselves
 */
 bool G_Teams_JoinAnyTeam( edict_t *ent, bool silent ) {
-	int best_numplayers = gs.maxclients + 1, best_score = 999999;
-	int i, team = -1;
+	int best_numplayers = gs.maxclients + 1, best_score = 999999, team = -1;
 	bool wasinqueue = ( ent->r.client->queueTimeStamp != 0 );
 
 	G_Teams_UpdateMembersList(); // make sure we have up-to-date data
@@ -341,7 +339,7 @@ bool G_Teams_JoinAnyTeam( edict_t *ent, bool silent ) {
 	} else {   //team based
 
 		//find the available team with smaller player count or worse score
-		for( i = TEAM_ALPHA; i < GS_MAX_TEAMS; i++ ) {
+		for( int i = TEAM_ALPHA; i < GS_MAX_TEAMS; i++ ) {
 			if( G_GameTypes_DenyJoinTeam( ent, i ) ) {
 				continue;
 			}
@@ -518,9 +516,7 @@ void G_Teams_ExecuteChallengersQueue( void ) {
 	// game until we get the first refused one.
 	challengers = G_Teams_ChallengersQueue();
 	if( challengers ) {
-		int i;
-
-		for( i = 0; challengers[i]; i++ ) {
+		for( int i = 0; challengers[i]; i++ ) {
 			ent = challengers[i];
 			if( !G_Teams_JoinAnyTeam( ent, true ) ) {
 				break;
@@ -544,13 +540,12 @@ void G_Teams_ExecuteChallengersQueue( void ) {
 * G_Teams_BestScoreBelow
 */
 static edict_t *G_Teams_BestScoreBelow( int maxscore ) {
-	int team, i;
 	edict_t *e, *best = NULL;
 	int bestScore = -9999999;
 
 	if( GS_TeamBasedGametype() ) {
-		for( team = TEAM_ALPHA; team < GS_MAX_TEAMS; team++ ) {
-			for( i = 0; i < teamlist[team].numplayers; i++ ) {
+		for( int team = TEAM_ALPHA; team < GS_MAX_TEAMS; team++ ) {
+			for( int i = 0; i < teamlist[team].numplayers; i++ ) {
 				e = game.edicts + teamlist[team].playerIndices[i];
 				if( e->r.client->level.stats.score > bestScore &&
 					e->r.client->level.stats.score <= maxscore
@@ -561,7 +556,7 @@ static edict_t *G_Teams_BestScoreBelow( int maxscore ) {
 			}
 		}
 	} else {
-		for( i = 0; i < teamlist[TEAM_PLAYERS].numplayers; i++ ) {
+		for( int i = 0; i < teamlist[TEAM_PLAYERS].numplayers; i++ ) {
 			e = game.edicts + teamlist[TEAM_PLAYERS].playerIndices[i];
 			if( e->r.client->level.stats.score > bestScore &&
 				e->r.client->level.stats.score <= maxscore
@@ -579,7 +574,7 @@ static edict_t *G_Teams_BestScoreBelow( int maxscore ) {
 * G_Teams_AdvanceChallengersQueue
 */
 void G_Teams_AdvanceChallengersQueue( void ) {
-	int i, team, loserscount, winnerscount, playerscount = 0;
+	int loserscount, winnerscount, playerscount = 0;
 	int maxscore = 999999;
 	edict_t *won, *e;
 	int START_TEAM = TEAM_PLAYERS, END_TEAM = TEAM_PLAYERS + 1;
@@ -596,7 +591,7 @@ void G_Teams_AdvanceChallengersQueue( void ) {
 	}
 
 	// assign new timestamps to all the players inside teams
-	for( team = START_TEAM; team < END_TEAM; team++ ) {
+	for( int team = START_TEAM; team < END_TEAM; team++ ) {
 		playerscount += teamlist[team].numplayers;
 	}
 
@@ -611,8 +606,8 @@ void G_Teams_AdvanceChallengersQueue( void ) {
 	winnerscount = playerscount - loserscount;
 
 	// put everyone who just played out of the challengers queue
-	for( team = START_TEAM; team < END_TEAM; team++ ) {
-		for( i = 0; i < teamlist[team].numplayers; i++ ) {
+	for( int team = START_TEAM; team < END_TEAM; team++ ) {
+		for( int i = 0; i < teamlist[team].numplayers; i++ ) {
 			e = game.edicts + teamlist[team].playerIndices[i];
 			e->r.client->queueTimeStamp = 0;
 		}
@@ -620,7 +615,7 @@ void G_Teams_AdvanceChallengersQueue( void ) {
 
 	if( !level.gametype.hasChallengersRoulette ) {
 		// put (back) the best scoring players in first positions of challengers queue
-		for( i = 0; i < winnerscount; i++ ) {
+		for( int i = 0; i < winnerscount; i++ ) {
 			won = G_Teams_BestScoreBelow( maxscore );
 			if( won ) {
 				maxscore = won->r.client->level.stats.score;
@@ -693,9 +688,7 @@ void G_Teams_JoinChallengersQueue( edict_t *ent ) {
 }
 
 void G_InitChallengersQueue( void ) {
-	int i;
-
-	for( i = 0; i < gs.maxclients; i++ )
+	for( int i = 0; i < gs.maxclients; i++ )
 		game.clients[i].queueTimeStamp = 0;
 }
 

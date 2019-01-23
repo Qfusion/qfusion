@@ -36,7 +36,6 @@ static void GT_ResetScriptData( void ) {
 }
 
 void GT_asShutdownScript( void ) {
-	int i;
 	edict_t *e;
 
 	if( game.asEngine == NULL ) {
@@ -44,7 +43,7 @@ void GT_asShutdownScript( void ) {
 	}
 
 	// release the callback and any other objects obtained from the script engine before releasing the engine
-	for( i = 0; i < game.numentities; i++ ) {
+	for( int i = 0; i < game.numentities; i++ ) {
 		e = &game.edicts[i];
 
 		if( e->scriptSpawned && e->asScriptModule &&

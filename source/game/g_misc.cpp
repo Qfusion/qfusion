@@ -43,14 +43,13 @@ void ThrowSmallPileOfGibs( edict_t *self, int damage ) {
 	vec3_t origin;
 	edict_t *event;
 	int contents;
-	int i;
 
 	contents = G_PointContents( self->s.origin );
 	if( contents & CONTENTS_NODROP ) {
 		return;
 	}
 
-	for( i = 0; i < 3; i++ )
+	for( int i = 0; i < 3; i++ )
 		origin[i] = self->s.origin[i];
 
 	self->s.origin[2] += 4;

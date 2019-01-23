@@ -50,12 +50,11 @@ void SP_post_match_camera( edict_t *ent ) { }
 float PlayersRangeFromSpot( edict_t *spot, int ignore_team ) {
 	edict_t *player;
 	float bestplayerdistance;
-	int n;
 	float playerdistance;
 
 	bestplayerdistance = 9999999;
 
-	for( n = 1; n <= gs.maxclients; n++ ) {
+	for( int n = 1; n <= gs.maxclients; n++ ) {
 		player = &game.edicts[n];
 
 		if( !player->r.inuse ) {
@@ -163,7 +162,6 @@ bool G_OffsetSpawnPoint( vec3_t origin, const vec3_t box_mins, const vec3_t box_
 	float playerbox_rowwidth;
 	float playerbox_columnwidth;
 	int rows, columns;
-	int i, j;
 	RNG rng = new_rng( rand(), 0 );
 	int mask_spawn = MASK_PLAYERSOLID | ( CONTENTS_LAVA | CONTENTS_SLIME | CONTENTS_TELEPORTER | CONTENTS_JUMPPAD | CONTENTS_BODY | CONTENTS_NODROP );
 	int playersFound = 0, worldfound = 0, nofloorfound = 0, badclusterfound = 0;
@@ -198,7 +196,7 @@ bool G_OffsetSpawnPoint( vec3_t origin, const vec3_t box_mins, const vec3_t box_
 
 	// no, we won't just do a while, let's go safe and just check as many times as
 	// positions in the grid. If we didn't found a spawnpoint by then, we let it telefrag.
-	for( i = 0; i < ( rows * columns ); i++ ) {
+	for( int i = 0; i < ( rows * columns ); i++ ) {
 		int row = random_uniform( &rng, -rows, rows + 1 );
 		int column = random_uniform( &rng, -columns, columns + 1 );
 
@@ -208,7 +206,7 @@ bool G_OffsetSpawnPoint( vec3_t origin, const vec3_t box_mins, const vec3_t box_
 
 		VectorAdd( virtualorigin, box_mins, absmins );
 		VectorAdd( virtualorigin, box_maxs, absmaxs );
-		for( j = 0; j < 2; j++ ) {
+		for( int j = 0; j < 2; j++ ) {
 			absmaxs[j] += 1;
 			absmins[j] -= 1;
 		}
@@ -218,7 +216,7 @@ bool G_OffsetSpawnPoint( vec3_t origin, const vec3_t box_mins, const vec3_t box_
 		// check if valid cluster
 		cluster = -1; // fix a warning
 		num_leafs = trap_CM_BoxLeafnums( absmins, absmaxs, leafs, 8, NULL );
-		for( j = 0; j < num_leafs; j++ ) {
+		for( int j = 0; j < num_leafs; j++ ) {
 			cluster = trap_CM_LeafCluster( leafs[j] );
 			if( cluster == -1 ) {
 				break;
@@ -382,7 +380,6 @@ void G_SpawnQueue_SetTeamSpawnsystem( int team, int spawnsystem, int wave_time, 
 * G_SpawnQueue_Init
 */
 void G_SpawnQueue_Init( void ) {
-	int spawnsystem, team;
 	cvar_t *g_spawnsystem;
 	cvar_t *g_spawnsystem_wave_time;
 	cvar_t *g_spawnsystem_wave_maxcount;
@@ -392,16 +389,16 @@ void G_SpawnQueue_Init( void ) {
 	g_spawnsystem_wave_maxcount = trap_Cvar_Get( "g_spawnsystem_wave_maxcount", va( "%i", REINFORCEMENT_WAVE_MAXCOUNT ), CVAR_ARCHIVE );
 
 	memset( g_spawnQueues, 0, sizeof( g_spawnQueues ) );
-	for( team = TEAM_SPECTATOR; team < GS_MAX_TEAMS; team++ )
+	for( int team = TEAM_SPECTATOR; team < GS_MAX_TEAMS; team++ )
 		memset( &g_spawnQueues[team].list, -1, sizeof( g_spawnQueues[team].list ) );
 
-	spawnsystem = g_spawnsystem->integer;
+	int spawnsystem = g_spawnsystem->integer;
 	clamp( spawnsystem, SPAWNSYSTEM_INSTANT, SPAWNSYSTEM_HOLD );
 	if( spawnsystem != g_spawnsystem->integer ) {
 		trap_Cvar_ForceSet( "g_spawnsystem", va( "%i", spawnsystem ) );
 	}
 
-	for( team = TEAM_SPECTATOR; team < GS_MAX_TEAMS; team++ ) {
+	for( int team = TEAM_SPECTATOR; team < GS_MAX_TEAMS; team++ ) {
 		if( team == TEAM_SPECTATOR ) {
 			G_SpawnQueue_SetTeamSpawnsystem( team, SPAWNSYSTEM_INSTANT, 0, 0, false );
 		} else {
@@ -433,15 +430,14 @@ int G_SpawnQueue_NextRespawnTime( int team ) {
 */
 void G_SpawnQueue_RemoveClient( edict_t *ent ) {
 	g_teamspawnqueue_t *queue;
-	int i, team;
 
 	if( !ent->r.client ) {
 		return;
 	}
 
-	for( team = TEAM_SPECTATOR; team < GS_MAX_TEAMS; team++ ) {
+	for( int team = TEAM_SPECTATOR; team < GS_MAX_TEAMS; team++ ) {
 		queue = &g_spawnQueues[team];
-		for( i = queue->start; i < queue->head; i++ ) {
+		for( int i = queue->start; i < queue->head; i++ ) {
 			if( queue->list[i % MAX_CLIENTS] == ENTNUM( ent ) ) {
 				queue->list[i % MAX_CLIENTS] = -1;
 			}
@@ -482,7 +478,6 @@ int G_SpawnQueue_GetSystem( int team ) {
 void G_SpawnQueue_ReleaseTeamQueue( int team ) {
 	g_teamspawnqueue_t *queue;
 	edict_t *ent;
-	int count;
 
 	if( team < TEAM_SPECTATOR || team >= GS_MAX_TEAMS ) {
 		return;
@@ -497,7 +492,7 @@ void G_SpawnQueue_ReleaseTeamQueue( int team ) {
 	bool ghost = team == TEAM_SPECTATOR;
 
 	// try to spawn them
-	for( count = 0; ( queue->start < queue->head ) && ( count < gs.maxclients ); queue->start++, count++ ) {
+	for( int count = 0; ( queue->start < queue->head ) && ( count < gs.maxclients ); queue->start++, count++ ) {
 		if( queue->list[queue->start % MAX_CLIENTS] <= 0 || queue->list[queue->start % MAX_CLIENTS] > gs.maxclients ) {
 			continue;
 		}
@@ -518,7 +513,6 @@ void G_SpawnQueue_ReleaseTeamQueue( int team ) {
 */
 void G_SpawnQueue_AddClient( edict_t *ent ) {
 	g_teamspawnqueue_t *queue;
-	int i;
 
 	if( !ent || !ent->r.client ) {
 		return;
@@ -534,7 +528,7 @@ void G_SpawnQueue_AddClient( edict_t *ent ) {
 
 	queue = &g_spawnQueues[ent->r.client->team];
 
-	for( i = queue->start; i < queue->head; i++ ) {
+	for( int i = queue->start; i < queue->head; i++ ) {
 		if( queue->list[i % MAX_CLIENTS] == ENTNUM( ent ) ) {
 			return;
 		}
@@ -553,7 +547,7 @@ void G_SpawnQueue_AddClient( edict_t *ent ) {
 * G_SpawnQueue_Think
 */
 void G_SpawnQueue_Think( void ) {
-	int team, maxCount, count, spawnSystem;
+	int team, maxCount, spawnSystem;
 	g_teamspawnqueue_t *queue;
 	edict_t *ent;
 
@@ -596,7 +590,7 @@ void G_SpawnQueue_Think( void ) {
 		bool ghost = team == TEAM_SPECTATOR;
 
 		// try to spawn them
-		for( count = 0; ( queue->start < queue->head ) && ( count < maxCount ); queue->start++, count++ ) {
+		for( int count = 0; ( queue->start < queue->head ) && ( count < maxCount ); queue->start++, count++ ) {
 			if( queue->list[queue->start % MAX_CLIENTS] <= 0 || queue->list[queue->start % MAX_CLIENTS] > gs.maxclients ) {
 				continue;
 			}

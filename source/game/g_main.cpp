@@ -304,8 +304,6 @@ void G_Init( unsigned int seed, unsigned int framemsec, int protocol, const char
 * G_Shutdown
 */
 void G_Shutdown( void ) {
-	int i;
-
 	G_Printf( "==== G_Shutdown ====\n" );
 
 	GT_asCallShutdown();
@@ -327,7 +325,7 @@ void G_Shutdown( void ) {
 
 	G_LevelFreePool();
 
-	for( i = 0; i < game.numentities; i++ ) {
+	for( int i = 0; i < game.numentities; i++ ) {
 		if( game.edicts[i].r.inuse ) {
 			G_FreeEdict( &game.edicts[i] );
 		}
@@ -369,7 +367,7 @@ static edict_t *CreateTargetChangeLevel( const char *map ) {
 * Reads current map rotation into internal list
 */
 static void G_UpdateMapRotation( void ) {
-	int count, i;
+	int count;
 	bool thiswhitespace, lastwhitespace, found;
 	char *p, *start;
 	static const char *seps = " ,\n\r";
@@ -403,7 +401,7 @@ static void G_UpdateMapRotation( void ) {
 				count++;
 			} else if( thiswhitespace && !lastwhitespace && !found && start ) {
 				found = true;
-				for( i = 0; start + i < p; i++ ) {
+				for( int i = 0; start + i < p; i++ ) {
 					if( tolower( start[i] ) != tolower( level.mapname[i] ) ) {
 						found = false;
 					}
@@ -518,7 +516,6 @@ static const char *G_SelectNextMapName( void ) {
 * G_ExitLevel
 */
 void G_ExitLevel( void ) {
-	int i;
 	edict_t *ent;
 	char command[256];
 	const char *nextmapname;
@@ -543,7 +540,7 @@ void G_ExitLevel( void ) {
 	G_SnapClients();
 
 	// clear some things before going to next level
-	for( i = 0; i < gs.maxclients; i++ ) {
+	for( int i = 0; i < gs.maxclients; i++ ) {
 		ent = game.edicts + 1 + i;
 		if( !ent->r.inuse ) {
 			continue;

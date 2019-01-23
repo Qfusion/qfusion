@@ -395,7 +395,6 @@ void G_SetClientFrame( edict_t *ent ) {
 */
 void G_ClientEndSnapFrame( edict_t *ent ) {
 	gclient_t *client;
-	int i;
 
 	if( trap_GetClientState( PLAYERNUM( ent ) ) < CS_SPAWNED ) {
 		return;
@@ -425,7 +424,7 @@ void G_ClientEndSnapFrame( edict_t *ent ) {
 	G_ReleaseClientPSEvent( client );
 
 	// set the delta angle
-	for( i = 0; i < 3; i++ )
+	for( int i = 0; i < 3; i++ )
 		client->ps.pmove.delta_angles[i] = ANGLE2SHORT( client->ps.viewangles[i] ) - client->ucmd.angles[i];
 
 	// this is pretty hackish

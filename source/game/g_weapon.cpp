@@ -739,14 +739,14 @@ static void _LaserImpact( trace_t *trace, vec3_t dir ) {
 }
 
 static edict_t *_FindOrSpawnLaser( edict_t *owner, int entType, bool *newLaser ) {
-	int i, ownerNum;
+	int ownerNum;
 	edict_t *e, *laser;
 
 	// first of all, see if we already have a beam entity for this laser
 	*newLaser = false;
 	laser = NULL;
 	ownerNum = ENTNUM( owner );
-	for( i = gs.maxclients + 1; i < game.maxentities; i++ ) {
+	for( int i = gs.maxclients + 1; i < game.maxentities; i++ ) {
 		e = &game.edicts[i];
 		if( !e->r.inuse ) {
 			continue;

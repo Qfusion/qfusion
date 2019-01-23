@@ -386,7 +386,6 @@ static void SP_target_print_print( edict_t *self, edict_t *activator ) {
 }
 
 static void SP_target_print_use( edict_t *self, edict_t *other, edict_t *activator ) {
-	int n;
 	edict_t *player;
 
 	if( activator->r.client && ( self->spawnflags & 4 ) ) {
@@ -410,7 +409,7 @@ static void SP_target_print_use( edict_t *self, edict_t *other, edict_t *activat
 		return;
 	}
 
-	for( n = 1; n <= gs.maxclients; n++ ) {
+	for( int n = 1; n <= gs.maxclients; n++ ) {
 		player = &game.edicts[n];
 		if( !player->r.inuse ) {
 			continue;
@@ -513,7 +512,7 @@ void SP_target_delay( edict_t *ent ) {
 static void target_give_use( edict_t *self, edict_t *other, edict_t *activator ) {
 	edict_t *give;
 	const gsitem_t *item;
-	int i, numsounds;
+	int numsounds;
 	float attenuation;
 	const char *pickup_sound;
 	int prev_pickup = -1;
@@ -559,6 +558,7 @@ static void target_give_use( edict_t *self, edict_t *other, edict_t *activator )
 
 			// see if we don't know this pickup sound yet
 			if( pickup_sound ) {
+				int i;
 				for( i = 0; i < numsounds; i++ ) {
 					if( !Q_stricmp( sounds[i]->pickup_sound, pickup_sound ) ) {
 						break;
@@ -573,7 +573,7 @@ static void target_give_use( edict_t *self, edict_t *other, edict_t *activator )
 	}
 
 	// play unique pickup sounds
-	for( i = 0; i < numsounds; i++ ) {
+	for( int i = 0; i < numsounds; i++ ) {
 		Touch_ItemSound( activator, sounds[i] );
 	}
 }

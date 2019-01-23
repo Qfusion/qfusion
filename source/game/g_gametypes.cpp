@@ -77,15 +77,13 @@ game_state_t *G_GetGameState( void ) {
 * G_Match_Tied
 */
 bool G_Match_Tied( void ) {
-	int team, total, numteams;
+	int numteams, total = 0;
 
-	total = 0; numteams = 0;
-	for( team = TEAM_ALPHA; team < GS_MAX_TEAMS; team++ ) {
+	for( int team = TEAM_ALPHA, numteams = 0; team < GS_MAX_TEAMS; team++, numteams++ ) {
 		if( !teamlist[team].numplayers ) {
 			continue;
 		}
 
-		numteams++;
 		total += teamlist[team].stats.score;
 	}
 
@@ -94,7 +92,7 @@ bool G_Match_Tied( void ) {
 	} else {
 
 		// total / numteams = averaged score
-		for( team = TEAM_ALPHA; team < GS_MAX_TEAMS; team++ ) {
+		for( int team = TEAM_ALPHA; team < GS_MAX_TEAMS; team++ ) {
 			if( !teamlist[team].numplayers ) {
 				continue;
 			}
@@ -146,14 +144,14 @@ static void G_Match_SetAutorecordState( const char *state ) {
 * G_Match_Autorecord_Start
 */
 void G_Match_Autorecord_Start( void ) {
-	int team, i, playerCount;
+	int playerCount, team;
 
 	G_Match_SetAutorecordState( "start" );
 
 	// do not start autorecording if all playing clients are bots
 	for( playerCount = 0, team = TEAM_PLAYERS; team < GS_MAX_TEAMS; team++ ) {
 		// add our team info to the string
-		for( i = 0; i < teamlist[team].numplayers; i++ ) {
+		for( int i = 0; i < teamlist[team].numplayers; i++ ) {
 			if( game.edicts[ teamlist[team].playerIndices[i] ].r.svflags & SVF_FAKECLIENT ) {
 				continue;
 			}
@@ -182,7 +180,7 @@ void G_Match_Autorecord_Start( void ) {
 				const char *netname;
 				edict_t *ent;
 
-				for( team = TEAM_ALPHA; team < GS_MAX_TEAMS; team++ ) {
+				for( int team = TEAM_ALPHA; team < GS_MAX_TEAMS; team++ ) {
 					if( !teamlist[team].numplayers ) {
 						continue;
 					}
@@ -275,9 +273,9 @@ static void G_Match_CheckStateAbort( void ) {
 	}
 
 	if( GS_TeamBasedGametype() ) {
-		int team, emptyteams = 0;
+		int emptyteams = 0;
 
-		for( team = TEAM_ALPHA; team < GS_MAX_TEAMS; team++ ) {
+		for( int team = TEAM_ALPHA; team < GS_MAX_TEAMS; team++ ) {
 			if( !teamlist[team].numplayers ) {
 				emptyteams++;
 			} else {
@@ -439,9 +437,7 @@ bool G_Match_ScorelimitHit( void ) {
 				}
 			}
 		} else {
-			int team;
-
-			for( team = TEAM_ALPHA; team < GS_MAX_TEAMS; team++ ) {
+			for( int team = TEAM_ALPHA; team < GS_MAX_TEAMS; team++ ) {
 				if( teamlist[team].stats.score >= g_scorelimit->integer ) {
 					return true;
 				}
@@ -498,7 +494,7 @@ static int leaders[MAX_CLIENTS];
 * G_IsLeading
 */
 static bool G_IsLeading( edict_t *ent ) {
-	int num, i;
+	int num;
 
 	if( GS_TeamBasedGametype() ) {
 		num = ent->s.team;
@@ -506,7 +502,7 @@ static bool G_IsLeading( edict_t *ent ) {
 		num = PLAYERNUM( ent ) + 1;
 	}
 
-	for( i = 0; i < MAX_CLIENTS && leaders[i] != 0; i++ ) {
+	for( int i = 0; i < MAX_CLIENTS && leaders[i] != 0; i++ ) {
 		if( leaders[i] == num ) {
 			return true;
 		}
@@ -519,7 +515,7 @@ static bool G_IsLeading( edict_t *ent ) {
 * G_WasLeading
 */
 static bool G_WasLeading( edict_t *ent ) {
-	int num, i;
+	int num;
 
 	if( GS_TeamBasedGametype() ) {
 		num = ent->s.team;
@@ -527,7 +523,7 @@ static bool G_WasLeading( edict_t *ent ) {
 		num = PLAYERNUM( ent ) + 1;
 	}
 
-	for( i = 0; i < MAX_CLIENTS && last_leaders[i] != 0; i++ ) {
+	for( int i = 0; i < MAX_CLIENTS && last_leaders[i] != 0; i++ ) {
 		if( last_leaders[i] == num ) {
 			return true;
 		}
@@ -540,21 +536,19 @@ static bool G_WasLeading( edict_t *ent ) {
 * G_Match_ScoreAnnouncement
 */
 static void G_Match_ScoreAnnouncement( void ) {
-	int i;
 	edict_t *e, *chased;
-	int num_leaders, team;
 
 	if( !level.gametype.scoreAnnouncementEnabled ) {
 		return;
 	}
 
-	num_leaders = 0;
+	int num_leaders = 0;
 	memset( leaders, 0, sizeof( leaders ) );
 
 	if( GS_TeamBasedGametype() ) {
 		int score_max = -999999999;
 
-		for( team = TEAM_ALPHA; team < GS_MAX_TEAMS; team++ ) {
+		for( int team = TEAM_ALPHA; team < GS_MAX_TEAMS; team++ ) {
 			if( !teamlist[team].numplayers ) {
 				continue;
 			}
@@ -571,7 +565,7 @@ static void G_Match_ScoreAnnouncement( void ) {
 	} else {
 		int score_max = -999999999;
 
-		for( i = 0; i < MAX_CLIENTS && i < teamlist[TEAM_PLAYERS].numplayers; i++ ) {
+		for( int i = 0; i < MAX_CLIENTS && i < teamlist[TEAM_PLAYERS].numplayers; i++ ) {
 			if( game.clients[teamlist[TEAM_PLAYERS].playerIndices[i] - 1].level.stats.score > score_max ) {
 				score_max = game.clients[teamlist[TEAM_PLAYERS].playerIndices[i] - 1].level.stats.score;
 				leaders[0] = teamlist[TEAM_PLAYERS].playerIndices[i];
@@ -653,9 +647,7 @@ static void G_Match_ScoreAnnouncement( void ) {
 * G_Match_ReadyAnnouncement
 */
 static void G_Match_ReadyAnnouncement( void ) {
-	int i;
 	edict_t *e;
-	int team;
 	bool readyupwarnings = false;
 	int START_TEAM, END_TEAM;
 
@@ -673,12 +665,12 @@ static void G_Match_ReadyAnnouncement( void ) {
 		END_TEAM = TEAM_PLAYERS + 1;
 	}
 
-	for( team = START_TEAM; team < END_TEAM; team++ ) {
+	for( int team = START_TEAM; team < END_TEAM; team++ ) {
 		if( !teamlist[team].numplayers ) {
 			continue;
 		}
 
-		for( i = 0; i < teamlist[team].numplayers; i++ ) {
+		for( int i = 0; i < teamlist[team].numplayers; i++ ) {
 			e = game.edicts + teamlist[team].playerIndices[i];
 			if( e->r.svflags & SVF_FAKECLIENT ) {
 				continue;
@@ -696,11 +688,11 @@ static void G_Match_ReadyAnnouncement( void ) {
 	}
 
 	// now let's repeat and warn
-	for( team = START_TEAM; team < END_TEAM; team++ ) {
+	for( int team = START_TEAM; team < END_TEAM; team++ ) {
 		if( !teamlist[team].numplayers ) {
 			continue;
 		}
-		for( i = 0; i < teamlist[team].numplayers; i++ ) {
+		for( int i = 0; i < teamlist[team].numplayers; i++ ) {
 			if( !level.ready[teamlist[team].playerIndices[i] - 1] ) {
 				e = game.edicts + teamlist[team].playerIndices[i];
 				if( !e->r.client || trap_GetClientState( PLAYERNUM( e ) ) != CS_SPAWNED ) {
@@ -737,7 +729,6 @@ void G_Match_CheckReadys( void ) {
 	edict_t *e;
 	bool allready;
 	int readys, notreadys, teamsready;
-	int team, i;
 
 	if( GS_MatchState() != MATCH_STATE_WARMUP && GS_MatchState() != MATCH_STATE_COUNTDOWN ) {
 		return;
@@ -748,9 +739,9 @@ void G_Match_CheckReadys( void ) {
 
 	}
 	teamsready = 0;
-	for( team = TEAM_PLAYERS; team < GS_MAX_TEAMS; team++ ) {
+	for( int team = TEAM_PLAYERS; team < GS_MAX_TEAMS; team++ ) {
 		readys = notreadys = 0;
-		for( i = 0; i < teamlist[team].numplayers; i++ ) {
+		for( int i = 0; i < teamlist[team].numplayers; i++ ) {
 			e = game.edicts + teamlist[team].playerIndices[i];
 
 			if( !e->r.inuse ) {
@@ -889,10 +880,9 @@ void G_Match_RemoveProjectiles( edict_t *owner ) {
 */
 void G_Match_FreeBodyQueue( void ) {
 	edict_t *ent;
-	int i;
 
 	ent = &game.edicts[gs.maxclients + 1];
-	for( i = 0; i < BODY_QUEUE_SIZE; ent++, i++ ) {
+	for( int i = 0; i < BODY_QUEUE_SIZE; ent++, i++ ) {
 		if( !ent->r.inuse ) {
 			continue;
 		}
@@ -1112,11 +1102,10 @@ static void G_CheckNumBots( void ) {
 static void G_TickOutPowerUps( void ) {
 	edict_t *ent;
 	const gsitem_t *item;
-	int i;
 
 	for( ent = game.edicts + 1; PLAYERNUM( ent ) < gs.maxclients; ent++ ) {
 		if( ent->r.inuse && trap_GetClientState( PLAYERNUM( ent ) ) >= CS_SPAWNED ) {
-			for( i = POWERUP_QUAD; i < POWERUP_TOTAL; i++ ) {
+			for( int i = POWERUP_QUAD; i < POWERUP_TOTAL; i++ ) {
 				item = GS_FindItemByTag( i );
 				if( item && item->quantity && ent->r.client->ps.inventory[item->tag] > 0 ) {
 					ent->r.client->ps.inventory[item->tag]--;
@@ -1168,7 +1157,6 @@ static void G_CheckEvenTeam( void ) {
 	int max = 0;
 	int min = gs.maxclients + 1;
 	int uneven_team = TEAM_SPECTATOR;
-	int i;
 
 	if( GS_MatchState() >= MATCH_STATE_POSTMATCH ) {
 		return;
@@ -1182,7 +1170,7 @@ static void G_CheckEvenTeam( void ) {
 		return;
 	}
 
-	for( i = TEAM_ALPHA; i < GS_MAX_TEAMS; i++ ) {
+	for( int i = TEAM_ALPHA; i < GS_MAX_TEAMS; i++ ) {
 		if( max < teamlist[i].numplayers ) {
 			max = teamlist[i].numplayers;
 			uneven_team = i;
@@ -1193,7 +1181,7 @@ static void G_CheckEvenTeam( void ) {
 	}
 
 	if( max - min > 1 ) {
-		for( i = 0; i < teamlist[uneven_team].numplayers; i++ ) {
+		for( int i = 0; i < teamlist[uneven_team].numplayers; i++ ) {
 			edict_t *e = game.edicts + teamlist[uneven_team].playerIndices[i];
 			if( !e->r.inuse ) {
 				continue;

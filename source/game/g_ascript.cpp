@@ -1028,12 +1028,10 @@ static void objectGameEntity_SetAngles( asvec3_t *vec, edict_t *self ) {
 	VectorCopy( vec->v, self->s.angles );
 
 	if( self->r.client && trap_GetClientState( PLAYERNUM( self ) ) >= CS_SPAWNED ) {
-		int i;
-
 		VectorCopy( vec->v, self->r.client->ps.viewangles );
 
 		// update the delta angle
-		for( i = 0; i < 3; i++ )
+		for( int i = 0; i < 3; i++ )
 			self->r.client->ps.pmove.delta_angles[i] = ANGLE2SHORT( self->r.client->ps.viewangles[i] ) - self->r.client->ucmd.angles[i];
 	}
 }
@@ -1259,7 +1257,7 @@ static void objectGameEntity_splashDamage( edict_t *attacker, int radius, float 
 }
 
 static void objectGameEntity_explosionEffect( int radius, edict_t *self ) {
-	int i, eventType, eventRadius;
+	int eventType, eventRadius;
 	vec3_t center;
 
 	if( radius < 8 ) {
@@ -1279,7 +1277,7 @@ static void objectGameEntity_explosionEffect( int radius, edict_t *self ) {
 		eventRadius = 1;
 	}
 
-	for( i = 0; i < 3; i++ )
+	for( int i = 0; i < 3; i++ )
 		center[i] = self->s.origin[i] + ( 0.5f * ( self->r.maxs[i] + self->r.mins[i] ) );
 
 	G_SpawnEvent( eventType, eventRadius, center );
@@ -2535,7 +2533,6 @@ void G_asGarbageCollect( bool force ) {
 * Dump all classes, global functions and variables into a file
 */
 static void G_asDumpAPIToFile( const char *path ) {
-	int i, j;
 	int file;
 	const gs_asClassDescriptor_t *cDescr;
 	const char *name;
@@ -2546,7 +2543,7 @@ static void G_asDumpAPIToFile( const char *path ) {
 	// dump class definitions, containing methods, behaviors and properties
 	const gs_asClassDescriptor_t *const *allDescriptors[] = { asGameClassesDescriptors };
 	for( const gs_asClassDescriptor_t *const *descriptors: allDescriptors ) {
-		for( i = 0;; i++ ) {
+		for( int i = 0;; i++ ) {
 			if( !( cDescr = descriptors[i] ) ) {
 				break;
 			}
@@ -2571,7 +2568,7 @@ static void G_asDumpAPIToFile( const char *path ) {
 				Q_snprintfz( string, sizeof( string ), "/* funcdefs */\r\n" );
 				trap_FS_Write( string, strlen( string ), file );
 
-				for( j = 0;; j++ ) {
+				for( int j = 0;; j++ ) {
 					const gs_asFuncdef_t *funcdef = &cDescr->funcdefs[j];
 					if( !funcdef->declaration ) {
 						break;
@@ -2596,7 +2593,7 @@ static void G_asDumpAPIToFile( const char *path ) {
 				Q_snprintfz( string, sizeof( string ), "\r\n\t/* object properties */\r\n" );
 				trap_FS_Write( string, strlen( string ), file );
 
-				for( j = 0;; j++ ) {
+				for( int j = 0;; j++ ) {
 					const gs_asProperty_t *objProperty = &cDescr->objProperties[j];
 					if( !objProperty->declaration ) {
 						break;
@@ -2612,7 +2609,7 @@ static void G_asDumpAPIToFile( const char *path ) {
 				Q_snprintfz( string, sizeof( string ), "\r\n\t/* object behaviors */\r\n" );
 				trap_FS_Write( string, strlen( string ), file );
 
-				for( j = 0;; j++ ) {
+				for( int j = 0;; j++ ) {
 					const gs_asBehavior_t *objBehavior = &cDescr->objBehaviors[j];
 					if( !objBehavior->declaration ) {
 						break;
@@ -2635,7 +2632,7 @@ static void G_asDumpAPIToFile( const char *path ) {
 				Q_snprintfz( string, sizeof( string ), "\r\n\t/* object methods */\r\n" );
 				trap_FS_Write( string, strlen( string ), file );
 
-				for( j = 0;; j++ ) {
+				for( int j = 0;; j++ ) {
 					const gs_asMethod_t *objMethod = &cDescr->objMethods[j];
 					if( !objMethod->declaration ) {
 						break;
@@ -2681,10 +2678,12 @@ static void G_asDumpAPIToFile( const char *path ) {
 
 		const gs_asEnum_t *const allEnumsLists[] = { asGameEnums };
 		for( const gs_asEnum_t *const enumsList: allEnumsLists ) {
+			int i;
 			for( i = 0, asEnum = enumsList; asEnum->name != NULL; i++, asEnum++ ) {
 				Q_snprintfz( string, sizeof( string ), "typedef enum\r\n{\r\n" );
 				trap_FS_Write( string, strlen( string ), file );
 
+				int j;
 				for( j = 0, asEnumVal = asEnum->values; asEnumVal->name != NULL; j++, asEnumVal++ ) {
 					Q_snprintfz( string, sizeof( string ), "\t%s = 0x%x,\r\n", asEnumVal->name, asEnumVal->value );
 					trap_FS_Write( string, strlen( string ), file );

@@ -81,7 +81,6 @@ static int64_t sv_collisionFrameNum = 0;
 void GClip_BackUpCollisionFrame( void ) {
 	c4frame_t *cframe;
 	edict_t *svedict;
-	int i;
 
 	// fixme: should check for any validation here?
 
@@ -93,7 +92,7 @@ void GClip_BackUpCollisionFrame( void ) {
 	//memset( cframe->clipEdicts, 0, sizeof(cframe->clipEdicts) );
 
 	//backup edicts
-	for( i = 0; i < game.numentities; i++ ) {
+	for( int i = 0; i < game.numentities; i++ ) {
 		svedict = &game.edicts[i];
 
 		cframe->clipEdicts[i].r.inuse = svedict->r.inuse;
@@ -116,7 +115,7 @@ static c4clipedict_t *GClip_GetClipEdictForDeltaTime( int entNum, int deltaTime 
 	static c4clipedict_t clipentNewer; // for interpolation
 	c4frame_t *cframe = NULL;
 	int64_t backTime, cframenum;
-	unsigned bf, i;
+	unsigned bf;
 	edict_t *ent = game.edicts + entNum;
 
 	// pick one of the 8 slots to prevent overwritings
@@ -209,7 +208,7 @@ static c4clipedict_t *GClip_GetClipEdictForDeltaTime( int entNum, int deltaTime 
 		VectorLerp( clipent->s.origin, lerpFrac, clipentNewer.s.origin, clipent->s.origin );
 		VectorLerp( clipent->r.mins, lerpFrac, clipentNewer.r.mins, clipent->r.mins );
 		VectorLerp( clipent->r.maxs, lerpFrac, clipentNewer.r.maxs, clipent->r.maxs );
-		for( i = 0; i < 3; i++ )
+		for( unsigned i = 0; i < 3; i++ )
 			clipent->s.angles[i] = LerpAngle( clipent->s.angles[i], clipentNewer.s.angles[i], lerpFrac );
 	}
 
@@ -241,8 +240,6 @@ static void GClip_InsertLinkBefore( link_t *l, link_t *before, int entNum ) {
 * GClip_Init_AreaGrid
 */
 static void GClip_Init_AreaGrid( areagrid_t *areagrid, const vec3_t world_mins, const vec3_t world_maxs ) {
-	int i;
-
 	// the areagrid_marknumber is not allowed to be 0
 	if( areagrid->marknumber < 1 ) {
 		areagrid->marknumber = 1;
@@ -268,9 +265,8 @@ static void GClip_Init_AreaGrid( areagrid_t *areagrid, const vec3_t world_mins, 
 	areagrid->scale[2] = AREA_GRID / areagrid->size[2];
 
 	GClip_ClearLink( &areagrid->outside );
-	for( i = 0; i < AREA_GRIDNODES; i++ ) {
+	for( int i = 0; i < AREA_GRIDNODES; i++ )
 		GClip_ClearLink( &areagrid->grid[i] );
-	}
 
 	memset( areagrid->entmarknumber, 0, sizeof( areagrid->entmarknumber ) );
 
@@ -304,7 +300,7 @@ static void GClip_UnlinkEntity_AreaGrid( edict_t *ent ) {
 */
 static void GClip_LinkEntity_AreaGrid( areagrid_t *areagrid, edict_t *ent ) {
 	link_t *grid;
-	int igrid[3], igridmins[3], igridmaxs[3], gridnum, entitynumber;
+	int igrid[3], igridmins[3], igridmaxs[3], entitynumber;
 
 	entitynumber = NUM_FOR_EDICT( ent );
 	if( entitynumber <= 0 || entitynumber >= game.maxentities || EDICT_NUM( entitynumber ) != ent ) {
@@ -330,7 +326,7 @@ static void GClip_LinkEntity_AreaGrid( areagrid_t *areagrid, edict_t *ent ) {
 		return;
 	}
 
-	gridnum = 0;
+	int gridnum = 0;
 	for( igrid[1] = igridmins[1]; igrid[1] < igridmaxs[1]; igrid[1]++ ) {
 		grid = areagrid->grid + igrid[1] * AREA_GRID + igridmins[0];
 		for( igrid[0] = igridmins[0]; igrid[0] < igridmaxs[0]; igrid[0]++, grid++, gridnum++ )
@@ -343,7 +339,6 @@ static void GClip_LinkEntity_AreaGrid( areagrid_t *areagrid, edict_t *ent ) {
 */
 static int GClip_EntitiesInBox_AreaGrid( areagrid_t *areagrid, const vec3_t mins, const vec3_t maxs,
 										 int *list, int maxcount, int areatype, int timeDelta ) {
-	int numlist;
 	link_t *grid;
 	link_t *l;
 	c4clipedict_t *clipEnt;
@@ -377,7 +372,7 @@ static int GClip_EntitiesInBox_AreaGrid( areagrid_t *areagrid, const vec3_t mins
 	// paranoid debugging
 	//VectorSet( igridmins, 0, 0, 0 );VectorSet( igridmaxs, AREA_GRID, AREA_GRID, AREA_GRID );
 
-	numlist = 0;
+	int numlist = 0;
 
 	// add entities not linked into areagrid because they are too big or
 	// outside the grid bounds
@@ -492,8 +487,6 @@ void GClip_UnlinkEntity( edict_t *ent ) {
 void GClip_LinkEntity( edict_t *ent ) {
 	int leafs[MAX_TOTAL_ENT_LEAFS];
 	int clusters[MAX_TOTAL_ENT_LEAFS];
-	int num_leafs;
-	int i, j, k;
 	int area;
 	int topnode;
 
@@ -524,15 +517,15 @@ void GClip_LinkEntity( edict_t *ent ) {
 			ent->s.solid = 0;
 		} else {
 			// assume that x/y are equal and symetric
-			i = ent->r.maxs[0] / 8;
+			int i = ent->r.maxs[0] / 8;
 			clamp( i, 1, 31 );
 
 			// z is not symetric
-			j = ( -ent->r.mins[2] ) / 8;
+			int j = ( -ent->r.mins[2] ) / 8;
 			clamp( j, 1, 31 );
 
 			// and z maxs can be negative...
-			k = ( ent->r.maxs[2] + 32 ) / 8;
+			int k = ( ent->r.maxs[2] + 32 ) / 8;
 			clamp( k, 1, 63 );
 
 			ent->s.solid = ( k << 10 ) | ( j << 5 ) | i;
@@ -543,11 +536,10 @@ void GClip_LinkEntity( edict_t *ent ) {
 	if( ISBRUSHMODEL( ent->s.modelindex ) &&
 		( ent->s.angles[0] || ent->s.angles[1] || ent->s.angles[2] ) ) {
 		// expand for rotation
-		float radius;
 
-		radius = RadiusFromBounds( ent->r.mins, ent->r.maxs );
+		float radius = RadiusFromBounds( ent->r.mins, ent->r.maxs );
 
-		for( i = 0; i < 3; i++ ) {
+		for( int i = 0; i < 3; i++ ) {
 			ent->r.absmin[i] = ent->s.origin[i] - radius;
 			ent->r.absmax[i] = ent->s.origin[i] + radius;
 		}
@@ -570,11 +562,11 @@ void GClip_LinkEntity( edict_t *ent ) {
 	ent->r.areanum = ent->r.areanum2 = -1;
 
 	// get all leafs, including solids
-	num_leafs = trap_CM_BoxLeafnums( ent->r.absmin, ent->r.absmax,
+	int num_leafs = trap_CM_BoxLeafnums( ent->r.absmin, ent->r.absmax,
 									 leafs, MAX_TOTAL_ENT_LEAFS, &topnode );
 
 	// set areas
-	for( i = 0; i < num_leafs; i++ ) {
+	for( int i = 0; i < num_leafs; i++ ) {
 		clusters[i] = trap_CM_LeafCluster( leafs[i] );
 		area = trap_CM_LeafArea( leafs[i] );
 		if( area > -1 ) {
@@ -601,7 +593,7 @@ void GClip_LinkEntity( edict_t *ent ) {
 		ent->r.headnode = topnode;
 	} else {
 		ent->r.num_clusters = 0;
-		for( i = 0; i < num_leafs; i++ ) {
+		for( int i = 0, j; i < num_leafs; i++ ) {
 			if( clusters[i] == -1 ) {
 				continue; // not a visible leaf
 			}
@@ -706,17 +698,16 @@ static struct cmodel_s *GClip_CollisionModelForEntity( entity_state_t *s, entity
 static int GClip_PointContents( const vec3_t p, int timeDelta ) {
 	c4clipedict_t *clipEnt;
 	int touch[MAX_EDICTS];
-	int i, num;
-	int contents, c2;
+	int c2;
 	struct cmodel_s *cmodel;
 
 	// get base contents from world
-	contents = trap_CM_TransformedPointContents( p, NULL, NULL, NULL );
+	int contents = trap_CM_TransformedPointContents( p, NULL, NULL, NULL );
 
 	// or in contents from all the other entities
-	num = GClip_AreaEdicts( p, p, touch, MAX_EDICTS, AREA_SOLID, timeDelta );
+	int num = GClip_AreaEdicts( p, p, touch, MAX_EDICTS, AREA_SOLID, timeDelta );
 
-	for( i = 0; i < num; i++ ) {
+	for( int i = 0; i < num; i++ ) {
 		clipEnt = GClip_GetClipEdictForDeltaTime( touch[i], timeDelta );
 
 		// might intersect, so do an exact clip
@@ -753,18 +744,17 @@ typedef struct {
 * GClip_ClipMoveToEntities
 */
 /*static*/ void GClip_ClipMoveToEntities( moveclip_t *clip, int timeDelta ) {
-	int i, num;
 	c4clipedict_t *touch;
 	int touchlist[MAX_EDICTS];
 	trace_t trace;
 	struct cmodel_s *cmodel;
 	const float *angles;
 
-	num = GClip_AreaEdicts( clip->boxmins, clip->boxmaxs, touchlist, MAX_EDICTS, AREA_SOLID, timeDelta );
+	int num = GClip_AreaEdicts( clip->boxmins, clip->boxmaxs, touchlist, MAX_EDICTS, AREA_SOLID, timeDelta );
 
 	// be careful, it is possible to have an entity in this
 	// list removed before we get to it (killtriggered)
-	for( i = 0; i < num; i++ ) {
+	for( int i = 0; i < num; i++ ) {
 		touch = GClip_GetClipEdictForDeltaTime( touchlist[i], timeDelta );
 		if( clip->passent >= 0 ) {
 			// when they are offseted in time, they can be a different pointer but be the same entity
@@ -829,9 +819,7 @@ typedef struct {
 */
 static void GClip_TraceBounds( const vec3_t start, const vec3_t mins, const vec3_t maxs,
 							   const vec3_t end, vec3_t boxmins, vec3_t boxmaxs ) {
-	int i;
-
-	for( i = 0; i < 3; i++ ) {
+	for( int i = 0; i < 3; i++ ) {
 		if( end[i] > start[i] ) {
 			boxmins[i] = start[i] + mins[i] - 1;
 			boxmaxs[i] = end[i] + maxs[i] + 1;
@@ -1105,8 +1093,6 @@ void G_PMoveTouchTriggers( pmove_t *pm, vec3_t previous_origin ) {
 * Returns entities that have their boxes within a spherical area
 */
 int GClip_FindInRadius4D( vec3_t org, float rad, int *list, int maxcount, int timeDelta ) {
-	int i, num;
-	int listnum;
 	edict_t *check;
 	vec3_t mins, maxs;
 	float rad_ = rad * 1.42;
@@ -1115,10 +1101,10 @@ int GClip_FindInRadius4D( vec3_t org, float rad, int *list, int maxcount, int ti
 	VectorSet( mins, org[0] - ( rad_ + 1 ), org[1] - ( rad_ + 1 ), org[2] - ( rad_ + 1 ) );
 	VectorSet( maxs, org[0] + ( rad_ + 1 ), org[1] + ( rad_ + 1 ), org[2] + ( rad_ + 1 ) );
 
-	listnum = 0;
-	num = GClip_AreaEdicts( mins, maxs, touch, MAX_EDICTS, AREA_ALL, timeDelta );
+	int listnum = 0;
+	int num = GClip_AreaEdicts( mins, maxs, touch, MAX_EDICTS, AREA_ALL, timeDelta );
 
-	for( i = 0; i < num; i++ ) {
+	for( int i = 0; i < num; i++, listnum++ ) {
 		check = EDICT_NUM( touch[i] );
 
 		// make absolute mins and maxs
@@ -1129,7 +1115,6 @@ int GClip_FindInRadius4D( vec3_t org, float rad, int *list, int maxcount, int ti
 		if( listnum < maxcount ) {
 			list[listnum] = touch[i];
 		}
-		listnum++;
 	}
 
 	return listnum;

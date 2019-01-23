@@ -26,7 +26,6 @@ static void MegaHealth_think( edict_t *self );
 void DoRespawn( edict_t *ent ) {
 	if( ent->team ) {
 		edict_t *master;
-		int count;
 		int choice;
 
 		master = ent->teammaster;
@@ -34,6 +33,7 @@ void DoRespawn( edict_t *ent ) {
 		assert( master != NULL );
 
 		if( master ) {
+			int count;
 			for( count = 0, ent = master; ent; ent = ent->chain, count++ ) ;
 
 			choice = rand() % count;
@@ -612,7 +612,6 @@ void SpawnItem( edict_t *ent, const gsitem_t *item ) {
 * and for each item in each client's inventory.
 */
 void PrecacheItem( const gsitem_t *it ) {
-	int i;
 	const char *s, *start;
 	char data[MAX_QPATH];
 	int len;
@@ -625,7 +624,7 @@ void PrecacheItem( const gsitem_t *it ) {
 	if( it->pickup_sound ) {
 		trap_SoundIndex( it->pickup_sound );
 	}
-	for( i = 0; i < MAX_ITEM_MODELS; i++ ) {
+	for( int i = 0; i < MAX_ITEM_MODELS; i++ ) {
 		if( it->world_model[i] ) {
 			trap_ModelIndex( it->world_model[i] );
 		}
@@ -644,7 +643,7 @@ void PrecacheItem( const gsitem_t *it ) {
 	}
 
 	// parse the space separated precache string for other items
-	for( i = 0; i < 3; i++ ) {
+	for( int i = 0; i < 3; i++ ) {
 		if( i == 0 ) {
 			s = it->precache_models;
 		} else if( i == 1 ) {
@@ -692,11 +691,10 @@ void PrecacheItem( const gsitem_t *it ) {
 * Called by worldspawn
 */
 void G_PrecacheItems( void ) {
-	int i;
 	const gsitem_t *item;
 
 	// precache item names and weapondefs
-	for( i = 1; i < GS_MAX_ITEM_TAGS; i++ ) {
+	for( int i = 1; i < GS_MAX_ITEM_TAGS; i++ ) {
 		item = GS_FindItemByTag( i );
 		if( !item )
 			break;
@@ -710,7 +708,7 @@ void G_PrecacheItems( void ) {
 	}
 
 	// precache items
-	for( i = WEAP_GUNBLADE; i < WEAP_TOTAL; i++ ) {
+	for( int i = WEAP_GUNBLADE; i < WEAP_TOTAL; i++ ) {
 		item = GS_FindItemByTag( i );
 		PrecacheItem( item );
 	}

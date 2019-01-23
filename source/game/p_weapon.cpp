@@ -137,7 +137,7 @@ edict_t *Drop_Weapon( edict_t *ent, const gsitem_t *item ) {
 static void G_ProjectileDistancePrestep( edict_t *projectile, float distance ) {
 	float speed;
 	vec3_t dir, dest;
-	int mask, i;
+	int mask;
 	trace_t trace;
 #ifdef PLASMAHACK
 	vec3_t plasma_hack_start;
@@ -167,7 +167,7 @@ static void G_ProjectileDistancePrestep( edict_t *projectile, float distance ) {
 	VectorMA( projectile->s.origin, distance, dir, dest );
 	G_Trace4D( &trace, projectile->s.origin, projectile->r.mins, projectile->r.maxs, dest, projectile->r.owner, mask, projectile->timeDelta );
 
-	for( i = 0; i < 3; i++ )
+	for( int i = 0; i < 3; i++ )
 		projectile->s.origin[i] = projectile->olds.origin[i] = trace.endpos[i];
 
 	GClip_LinkEntity( projectile );

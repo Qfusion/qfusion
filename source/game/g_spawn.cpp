@@ -302,15 +302,14 @@ const char *G_GetEntitySpawnKey( const char *key, edict_t *self ) {
 */
 static char *ED_NewString( const char *string ) {
 	char *newb, *new_p;
-	size_t i, l;
 
-	l = strlen( string ) + 1;
+	size_t l = strlen( string ) + 1;
 	newb = &level.map_parsed_ents[level.map_parsed_len];
 	level.map_parsed_len += l;
 
 	new_p = newb;
 
-	for( i = 0; i < l; i++ ) {
+	for( size_t i = 0; i < l; i++ ) {
 		if( string[i] == '\\' && i < l - 1 ) {
 			i++;
 			if( string[i] == 'n' ) {
@@ -454,11 +453,8 @@ static char *ED_ParseEdict( char *data, edict_t *ent ) {
 */
 static void G_FindTeams( void ) {
 	edict_t *e, *e2, *chain;
-	int i, j;
-	int c, c2;
 
-	c = 0;
-	c2 = 0;
+	int c = 0, c2 = 0, i, j;
 	for( i = 1, e = game.edicts + i; i < game.numentities; i++, e++ ) {
 		if( !e->r.inuse ) {
 			continue;
@@ -471,8 +467,8 @@ static void G_FindTeams( void ) {
 		}
 		chain = e;
 		e->teammaster = e;
-		c++;
-		c2++;
+		c++; c2++;
+
 		for( j = i + 1, e2 = e + 1; j < game.numentities; j++, e2++ ) {
 			if( !e2->r.inuse ) {
 				continue;
@@ -617,13 +613,11 @@ void G_PrecacheMedia( void ) {
 * G_FreeEntities
 */
 static void G_FreeEntities( void ) {
-	int i;
-
 	if( !level.time ) {
 		memset( game.edicts, 0, game.maxentities * sizeof( game.edicts[0] ) );
 	} else {
 		G_FreeEdict( world );
-		for( i = gs.maxclients + 1; i < game.maxentities; i++ ) {
+		for( int i = gs.maxclients + 1; i < game.maxentities; i++ ) {
 			if( game.edicts[i].r.inuse ) {
 				G_FreeEdict( game.edicts + i );
 			}
@@ -735,7 +729,6 @@ static void G_SpawnEntities( void ) {
 void G_InitLevel( char *mapname, char *entities, int entstrlen, int64_t levelTime, int64_t serverTime, int64_t realTime ) {
 	char *mapString = NULL;
 	char name[MAX_CONFIGSTRING_CHARS];
-	int i;
 
 	G_asGarbageCollect( true );
 
@@ -789,7 +782,7 @@ void G_InitLevel( char *mapname, char *entities, int entstrlen, int64_t levelTim
 	G_FreeEntities();
 
 	// link client fields on player ents
-	for( i = 0; i < gs.maxclients; i++ ) {
+	for( int i = 0; i < gs.maxclients; i++ ) {
 		game.edicts[i + 1].s.number = i + 1;
 		game.edicts[i + 1].r.client = &game.clients[i];
 		game.edicts[i + 1].r.inuse = ( trap_GetClientState( i ) >= CS_CONNECTED ) ? true : false;
@@ -808,7 +801,7 @@ void G_InitLevel( char *mapname, char *entities, int entstrlen, int64_t levelTim
 	trap_ConfigString( CS_MATCHSCORE, "" );
 
 	// reset map messages
-	for( i = 0; i < MAX_HELPMESSAGES; i++ ) {
+	for( int i = 0; i < MAX_HELPMESSAGES; i++ ) {
 		trap_ConfigString( CS_HELPMESSAGES + i, "" );
 	}
 
@@ -848,10 +841,8 @@ void G_InitLevel( char *mapname, char *entities, int entstrlen, int64_t levelTim
 }
 
 void G_ResetLevel( void ) {
-	int i;
-
 	G_FreeEdict( world );
-	for( i = gs.maxclients + 1; i < game.maxentities; i++ ) {
+	for( int i = gs.maxclients + 1; i < game.maxentities; i++ ) {
 		if( game.edicts[i].r.inuse ) {
 			G_FreeEdict( game.edicts + i );
 		}

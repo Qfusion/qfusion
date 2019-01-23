@@ -122,22 +122,21 @@ static int numipfilters;
 */
 static bool StringToFilter( char *s, ipfilter_t *f ) {
 	char num[128];
-	int i, j;
 	uint8_t b[4];
 	uint8_t m[4];
 
-	for( i = 0; i < 4; i++ ) {
+	for( int i = 0; i < 4; i++ ) {
 		b[i] = 0;
 		m[i] = 0;
 	}
 
-	for( i = 0; i < 4; i++ ) {
+	for( int i = 0; i < 4; i++, s++ ) {
 		if( *s < '0' || *s > '9' ) {
 			G_Printf( "Bad filter address: %s\n", s );
 			return false;
 		}
 
-		j = 0;
+		int j = 0;
 		while( *s >= '0' && *s <= '9' ) {
 			num[j++] = *s++;
 		}
@@ -150,7 +149,6 @@ static bool StringToFilter( char *s, ipfilter_t *f ) {
 		if( !*s || *s == ':' ) {
 			break;
 		}
-		s++;
 	}
 
 	f->mask = *(unsigned *)m;
@@ -163,9 +161,7 @@ static bool StringToFilter( char *s, ipfilter_t *f ) {
 * SV_ResetPacketFiltersTimeouts
 */
 void SV_ResetPacketFiltersTimeouts( void ) {
-	int i;
-
-	for( i = 0; i < MAX_IPFILTERS; i++ )
+	for( int i = 0; i < MAX_IPFILTERS; i++ )
 		ipfilters[i].timeout = 0;
 }
 
@@ -173,7 +169,6 @@ void SV_ResetPacketFiltersTimeouts( void ) {
 * SV_FilterPacket
 */
 bool SV_FilterPacket( char *from ) {
-	int i;
 	unsigned in;
 	uint8_t m[4];
 	char *p;
@@ -182,9 +177,8 @@ bool SV_FilterPacket( char *from ) {
 		return false;
 	}
 
-	i = 0;
 	p = from;
-	while( *p && i < 4 ) {
+	for(int i = 0; *p && (i < 4); i++, p++ ) {
 		m[i] = 0;
 		while( *p >= '0' && *p <= '9' ) {
 			m[i] = m[i] * 10 + ( *p - '0' );
@@ -193,16 +187,16 @@ bool SV_FilterPacket( char *from ) {
 		if( !*p || *p == ':' ) {
 			break;
 		}
-		i++, p++;
 	}
 
 	in = *(unsigned *)m;
 
-	for( i = 0; i < numipfilters; i++ )
+	for( int i = 0; i < numipfilters; i++ ) {
 		if( ( in & ipfilters[i].mask ) == ipfilters[i].compare
 			&& ( !ipfilters[i].timeout || ipfilters[i].timeout > game.serverTime ) ) {
 			return true;
 		}
+	}
 
 	return false;
 }
@@ -224,7 +218,6 @@ void SV_WriteIPList( void ) {
 	char name[MAX_QPATH];
 	char string[MAX_STRING_CHARS];
 	uint8_t b[4] = { 0, 0, 0, 0 };
-	int i;
 
 	Q_strncpyz( name, "listip.cfg", sizeof( name ) );
 
@@ -238,7 +231,7 @@ void SV_WriteIPList( void ) {
 	Q_snprintfz( string, sizeof( string ), "set filterban %d\r\n", filterban->integer );
 	trap_FS_Write( string, strlen( string ), file );
 
-	for( i = 0; i < numipfilters; i++ ) {
+	for( int i = 0; i < numipfilters; i++ ) {
 		if( ipfilters[i].timeout && ipfilters[i].timeout <= game.serverTime ) {
 			continue;
 		}
@@ -258,17 +251,18 @@ void SV_WriteIPList( void ) {
 * Cmd_AddIP_f
 */
 static void Cmd_AddIP_f( void ) {
-	int i;
-
 	if( trap_Cmd_Argc() < 2 ) {
 		G_Printf( "Usage: addip <ip-mask> [time-mins]\n" );
 		return;
 	}
 
-	for( i = 0; i < numipfilters; i++ )
+	int i;
+	for( i = 0; i < numipfilters; i++ ) {
 		if( ipfilters[i].compare == 0xffffffff || ( ipfilters[i].timeout && ipfilters[i].timeout <= game.serverTime ) ) {
 			break;
 		}          // free spot
+	}
+	
 	if( i == numipfilters ) {
 		if( numipfilters == MAX_IPFILTERS ) {
 			G_Printf( "IP filter list is full\n" );
@@ -290,7 +284,6 @@ static void Cmd_AddIP_f( void ) {
 */
 static void Cmd_RemoveIP_f( void ) {
 	ipfilter_t f;
-	int i, j;
 
 	if( trap_Cmd_Argc() < 2 ) {
 		G_Printf( "Usage: removeip <ip-mask>\n" );
@@ -301,15 +294,15 @@ static void Cmd_RemoveIP_f( void ) {
 		return;
 	}
 
-	for( i = 0; i < numipfilters; i++ )
-		if( ipfilters[i].mask == f.mask
-			&& ipfilters[i].compare == f.compare ) {
-			for( j = i + 1; j < numipfilters; j++ )
+	for( int i = 0; i < numipfilters; i++ ) {
+		if( ipfilters[i].mask == f.mask && ipfilters[i].compare == f.compare ) {
+			for( int j = i + 1; j < numipfilters; j++ )
 				ipfilters[j - 1] = ipfilters[j];
 			numipfilters--;
 			G_Printf( "Removed.\n" );
 			return;
 		}
+	}
 	G_Printf( "Didn't find %s.\n", trap_Cmd_Argv( 1 ) );
 }
 
@@ -317,11 +310,10 @@ static void Cmd_RemoveIP_f( void ) {
 * Cmd_ListIP_f
 */
 static void Cmd_ListIP_f( void ) {
-	int i;
 	uint8_t b[4];
 
 	G_Printf( "Filter list:\n" );
-	for( i = 0; i < numipfilters; i++ ) {
+	for( int i = 0; i < numipfilters; i++ ) {
 		*(unsigned *)b = ipfilters[i].compare;
 		if( ipfilters[i].timeout && ipfilters[i].timeout > game.serverTime ) {
 			G_Printf( "%3i.%3i.%3i.%3i %.2f\n", b[0], b[1], b[2], b[3],
