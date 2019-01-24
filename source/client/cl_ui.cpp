@@ -1038,8 +1038,8 @@ void UI_ShowGameMenu( bool spectating, bool ready, bool unready ) {
 	gamemenu_state = GameMenuState_Menu;
 	pressed_key = -1;
 	is_spectating = spectating;
-	can_ready = unready;
-	can_unready = ready;
+	can_ready = ready;
+	can_unready = unready;
 	CL_SetKeyDest( key_menu );
 }
 

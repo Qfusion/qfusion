@@ -879,8 +879,8 @@ void CG_EscapeKey( void ) {
 
 	if( GS_MatchState() <= MATCH_STATE_WARMUP && !spectator ) {
 		bool ready = ( cg.predictedPlayerState.stats[STAT_LAYOUTS] & STAT_LAYOUT_READY ) != 0;
-		can_ready = ready;
-		can_unready = !ready;
+		can_ready = !ready;
+		can_unready = ready;
 	}
 
 	UI_ShowGameMenu( spectator, can_ready, can_unready );
