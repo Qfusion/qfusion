@@ -52,7 +52,7 @@ local configs = {
 		cxxflags = "-O2 -DPUBLIC_BUILD -DNDEBUG",
 		ldflags = "-s",
 		bin_prefix = "release/",
-		dll_prefix = "release/base/",
+		dll_prefix = "release/base/lib",
 	},
 
 	-- TODO: mingw?
