@@ -321,10 +321,10 @@ static void G_Fire_SunflowerPattern( edict_t *self, vec3_t start, vec3_t dir, in
 		if( hits[i] == 0 )
 			continue;
 		edict_t * target = &game.edicts[i];
-		edict_t * damage = G_SpawnEvent( EV_DAMAGE, 0, target->s.origin );
-		damage->r.svflags |= SVF_ONLYOWNER;
-		damage->s.ownerNum = ENTNUM( self );
-		damage->s.damage = HEALTH_TO_INT( hits[i] * damage );
+		edict_t * ev = G_SpawnEvent( EV_DAMAGE, 0, target->s.origin );
+		ev->r.svflags |= SVF_ONLYOWNER;
+		ev->s.ownerNum = ENTNUM( self );
+		ev->s.damage = HEALTH_TO_INT( hits[i] * damage );
 	}
 }
 
