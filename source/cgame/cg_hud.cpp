@@ -612,6 +612,7 @@ static const char * obituaries[] = {
 	"CURED",
 	"DEBUGGED",
 	"DECIMATED",
+	"DECREMENTED",
 	"DEEP FRIED",
 	"DEEPWATER HORIZONED",
 	"DEFACED",
