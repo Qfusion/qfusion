@@ -29,7 +29,6 @@ extern int c_pointcontents;
 
 struct cmodel_s *CM_LoadMap( cmodel_state_t *cms, const char *name, bool clientload, unsigned *checksum );
 struct cmodel_s *CM_InlineModel( cmodel_state_t *cms, int num ); // 1, 2, etc
-char *CM_LoadMapMessage( char *name, char *message, int size );
 
 int CM_NumClusters( cmodel_state_t *cms );
 int CM_NumAreas( cmodel_state_t *cms );

@@ -77,10 +77,6 @@ cvar_t *sv_skilllevel;
 // wsw : debug netcode
 cvar_t *sv_debug_serverCmd;
 
-cvar_t *sv_MOTD;
-cvar_t *sv_MOTDFile;
-cvar_t *sv_MOTDString;
-
 cvar_t *sv_demodir;
 
 //============================================================================
@@ -686,11 +682,6 @@ void SV_Init( void ) {
 	sv_masterservers =          Cvar_Get( "masterservers", DEFAULT_MASTER_SERVERS_IPS, CVAR_LATCH );
 
 	sv_debug_serverCmd =        Cvar_Get( "sv_debug_serverCmd", "0", CVAR_ARCHIVE );
-
-	sv_MOTD = Cvar_Get( "sv_MOTD", "0", CVAR_ARCHIVE );
-	sv_MOTDFile = Cvar_Get( "sv_MOTDFile", "", CVAR_ARCHIVE );
-	sv_MOTDString = Cvar_Get( "sv_MOTDString", "", CVAR_ARCHIVE );
-	SV_MOTD_Update();
 
 	// this is a message holder for shared use
 	MSG_Init( &tmpMessage, tmpMessageData, sizeof( tmpMessageData ) );

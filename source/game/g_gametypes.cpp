@@ -294,12 +294,10 @@ static void G_Match_CheckStateAbort( void ) {
 	// if waiting, turn on match states when enough players joined
 	if( GS_MatchWaiting() && enough ) {
 		GS_GamestatSetFlag( GAMESTAT_FLAG_WAITING, false );
-		G_UpdatePlayersMatchMsgs();
 	}
 	// turn off active match states if not enough players left
 	else if( GS_MatchState() == MATCH_STATE_WARMUP && !enough && GS_MatchDuration() ) {
 		GS_GamestatSetFlag( GAMESTAT_FLAG_WAITING, true );
-		G_UpdatePlayersMatchMsgs();
 	} else if( GS_MatchState() == MATCH_STATE_COUNTDOWN && !enough ) {
 		if( any ) {
 			G_PrintMsg( NULL, "Not enough players left. Countdown aborted.\n" );
@@ -308,7 +306,6 @@ static void G_Match_CheckStateAbort( void ) {
 		G_Match_Autorecord_Cancel();
 		G_Match_LaunchState( MATCH_STATE_WARMUP );
 		GS_GamestatSetFlag( GAMESTAT_FLAG_WAITING, true );
-		G_UpdatePlayersMatchMsgs();
 	}
 	// match running, but not enough players left
 	else if( GS_MatchState() == MATCH_STATE_PLAYTIME && !enough ) {
@@ -413,8 +410,6 @@ void G_Match_LaunchState( int matchState ) {
 	if( game.asEngine != NULL ) {
 		GT_asCallMatchStateStarted();
 	}
-
-	G_UpdatePlayersMatchMsgs();
 }
 
 /*
@@ -826,8 +821,6 @@ void G_Match_Ready( edict_t *ent ) {
 
 	G_PrintMsg( NULL, "%s%s is ready!\n", ent->r.client->netname, S_COLOR_WHITE );
 
-	G_UpdatePlayerMatchMsg( ent );
-
 	G_Match_CheckReadys();
 }
 
@@ -853,8 +846,6 @@ void G_Match_NotReady( edict_t *ent ) {
 	level.ready[PLAYERNUM( ent )] = false;
 
 	G_PrintMsg( NULL, "%s%s is no longer ready.\n", ent->r.client->netname, S_COLOR_WHITE );
-
-	G_UpdatePlayerMatchMsg( ent );
 
 	G_Match_CheckReadys();
 }

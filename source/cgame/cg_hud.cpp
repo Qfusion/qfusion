@@ -441,6 +441,8 @@ static const reference_numeric_t cg_numeric_references[] =
 	{ "WEAPON_ITEM", CG_GetStatValue, (void *)STAT_WEAPON },
 	{ "PENDING_WEAPON", CG_GetStatValue, (void *)STAT_PENDING_WEAPON },
 
+	{ "READY", CG_GetLayoutStatFlag, (void *)STAT_LAYOUT_READY },
+
 	{ "PICKUP_ITEM", CG_GetStatValue, (void *)STAT_PICKUP_ITEM },
 
 	{ "SCORE", CG_GetStatValue, (void *)STAT_SCORE },
@@ -1773,57 +1775,6 @@ static bool CG_LFuncDrawClock( struct cg_layoutnode_s *commandnode, struct cg_la
 	return true;
 }
 
-static bool CG_LFuncDrawHelpMessage( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
-	// hide this one when scoreboard is up
-	if( !CG_IsScoreboardShown() ) {
-		if( !cgs.demoPlaying ) {
-			int i;
-			int y = layout_cursor_y;
-			int font_height = trap_SCR_FontHeight( CG_GetLayoutCursorFont() );
-			const char *helpmessage = "";
-			vec4_t color;
-			bool showhelp = cg_showhelp->integer;
-
-			// scale alpha to text appears more faint if the player's moving
-			Vector4Copy( layout_cursor_color, color );
-
-			for( i = 0; i < 3; i++ ) {
-				int x = layout_cursor_x;
-
-				switch( i ) {
-					case 0:
-						helpmessage = "";
-						if( showhelp ) {
-							if( cg.helpmessage[0] ) {
-								helpmessage = cg.helpmessage;
-							} else if( cg.matchmessage ) {
-								helpmessage = cg.matchmessage;
-							}
-						}
-						break;
-					case 1:
-						if( !cg.motd ) {
-							return true;
-						}
-						helpmessage = "Message of the day:";
-						break;
-					case 2:
-						helpmessage = cg.motd;
-						break;
-					default:
-						return true;
-				}
-
-				if( helpmessage[0] ) {
-					y += trap_SCR_DrawMultilineString( x, y, helpmessage, layout_cursor_align,
-													   layout_cursor_width, 0, CG_GetLayoutCursorFont(), color ) * font_height;
-				}
-			}
-		}
-	}
-	return true;
-}
-
 static bool CG_LFuncDrawTeamMates( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
 	CG_DrawTeamMates();
 	return true;
@@ -2230,14 +2181,6 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 		CG_LFuncDrawClock,
 		0,
 		"Draws clock",
-		false
-	},
-
-	{
-		"drawHelpString",
-		CG_LFuncDrawHelpMessage,
-		0,
-		"Draws the help message",
 		false
 	},
 

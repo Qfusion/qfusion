@@ -1563,7 +1563,6 @@ void CL_SetClientState( connstate_t state ) {
 			UI_HideMenu();
 			CL_SetKeyDest( key_game );
 			//SCR_UpdateScreen();
-			CL_AddReliableCommand( "svmotd 1" );
 			break;
 		default:
 			break;

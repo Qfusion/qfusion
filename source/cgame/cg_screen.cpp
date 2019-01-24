@@ -1060,11 +1060,6 @@ void CG_Draw2DView( void ) {
 
 	CG_SCRDrawViewBlend();
 
-	if( cg.motd && ( cg.time > cg.motd_time ) ) {
-		CG_Free( cg.motd );
-		cg.motd = NULL;
-	}
-
 	CG_DrawHUD();
 
 	scr_centertime_off -= cg.frameTime;

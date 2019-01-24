@@ -450,8 +450,6 @@ void G_GhostClient( edict_t *ent ) {
 	ent->r.client->ps.weaponState = WEAPON_STATE_READY;
 	ent->r.client->ps.stats[STAT_WEAPON_TIME] = 0;
 
-	G_SetPlayerHelpMessage( ent, 0 );
-
 	GClip_LinkEntity( ent );
 }
 
@@ -709,8 +707,6 @@ void ClientBegin( edict_t *ent ) {
 	client->team = TEAM_SPECTATOR;
 	G_ClientRespawn( ent, true ); // respawn as ghost
 	ent->movetype = MOVETYPE_NOCLIP; // allow freefly
-
-	G_UpdatePlayerMatchMsg( ent );
 
 	if( !level.gametype.disableObituaries || !( ent->r.svflags & SVF_FAKECLIENT ) ) {
 		G_PrintMsg( NULL, "%s" S_COLOR_WHITE " entered the game\n", client->netname );

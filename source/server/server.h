@@ -206,8 +206,6 @@ typedef struct {
 
 typedef server_static_demo_t demorec_t;
 
-#define MAX_MOTD_LEN 1024
-
 typedef struct client_entities_s {
 	unsigned num_entities;              // maxclients->integer*UPDATE_BACKUP*MAX_PACKET_ENTITIES
 	unsigned next_entities;             // next client_entity to use
@@ -238,8 +236,6 @@ typedef struct {
 	purelist_t *purelist;               // pure file support
 
 	cmodel_state_t *cms;                // passed to CM-functions
-
-	char *motd;
 } server_static_t;
 
 typedef struct {
@@ -298,15 +294,6 @@ extern cvar_t *sv_uploads_demos_baseurl;
 
 extern cvar_t *sv_pure;
 extern cvar_t *sv_pure_forcemodulepk3;
-
-// MOTD: 0=disable MOTD
-//       1=Enable MOTD
-extern cvar_t *sv_MOTD;
-// File to read MOTD from
-extern cvar_t *sv_MOTDFile;
-// String to display
-extern cvar_t *sv_MOTDString;
-extern cvar_t *sv_defaultmap;
 
 extern cvar_t *sv_demodir;
 
@@ -454,12 +441,6 @@ void SV_DemoGet_f( client_t *client );
 #define SV_SetDemoMetaKeyValue( k,v ) svs.demo.meta_data_realsize = SNAP_SetDemoMetaKeyValue( svs.demo.meta_data, sizeof( svs.demo.meta_data ), svs.demo.meta_data_realsize, k, v )
 
 bool SV_IsDemoDownloadRequest( const char *request );
-
-//
-// sv_motd.c
-//
-void SV_MOTD_Update( void );
-void SV_MOTD_Get_f( client_t *client );
 
 //
 // sv_web.c

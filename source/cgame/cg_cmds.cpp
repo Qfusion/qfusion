@@ -381,113 +381,6 @@ void CG_SC_AutoRecordAction( const char *action ) {
 	}
 }
 
-/**
- * Returns the English match state message.
- *
- * @param mm match message ID
- * @return match message text
- */
-static const char *CG_MatchMessageString( matchmessage_t mm ) {
-	switch( mm ) {
-		case MATCHMESSAGE_CHALLENGERS_QUEUE:
-			return "'ESC' for in-game menu or 'ENTER' for in-game chat.\n"
-				   "You are inside the challengers queue waiting for your turn to play.\n"
-				   "Use the in-game menu to exit the queue.\n"
-				   "\nUse the mouse buttons for switching spectator modes.";
-
-		case MATCHMESSAGE_ENTER_CHALLENGERS_QUEUE:
-			return "'ESC' for in-game menu or 'ENTER' for in-game chat.\n"
-				   "Use the in-game menu or press 'F3' to enter the challengers queue.\n"
-				   "Only players in the queue will have a turn to play against the last winner.\n"
-				   "\nUse the mouse buttons for switching spectator modes.";
-
-		case MATCHMESSAGE_SPECTATOR_MODES:
-			return "'ESC' for in-game menu or 'ENTER' for in-game chat.\n"
-				   "Mouse buttons for switching spectator modes.\n"
-				   "This message can be hidden by disabling 'help' in player setup menu.";
-
-		case MATCHMESSAGE_GET_READY:
-			return "Set yourself READY to start the match!\n"
-				   "You can use the in-game menu or simply press 'F4'.\n"
-				   "'ESC' for in-game menu or 'ENTER' for in-game chat.";
-
-		case MATCHMESSAGE_WAITING_FOR_PLAYERS:
-			return "Waiting for players.\n"
-				   "'ESC' for in-game menu.";
-
-		default:
-			return "";
-	}
-
-	return "";
-}
-
-/*
-* CG_SC_MatchMessage
-*/
-static void CG_SC_MatchMessage( void ) {
-	matchmessage_t mm = (matchmessage_t)atoi( trap_Cmd_Argv( 1 ) );
-	cg.matchmessage = CG_MatchMessageString( mm );
-}
-
-/*
-* CG_SC_HelpMessage
-*/
-static void CG_SC_HelpMessage( void ) {
-	unsigned index;
-	unsigned outlen = 0;
-	int c;
-
-	cg.helpmessage[0] = '\0';
-
-	index = atoi( trap_Cmd_Argv( 1 ) );
-	if( !index || index > MAX_HELPMESSAGES ) {
-		return;
-	}
-
-	const char *helpmessage = cgs.configStrings[CS_HELPMESSAGES + index - 1];
-	if( !helpmessage[0] ) {
-		return;
-	}
-
-	while( ( c = helpmessage[0] ) && ( outlen < MAX_HELPMESSAGE_CHARS - 1 ) ) {
-		helpmessage++;
-
-		if( c == '{' ) { // template
-			int t = *( helpmessage++ );
-			switch( t ) {
-				case 'B': // key binding
-				{
-					char cmd[MAX_STRING_CHARS];
-					unsigned cmdlen = 0;
-					while( ( c = helpmessage[0] ) != '\0' ) {
-						helpmessage++;
-						if( c == '}' ) {
-							break;
-						}
-						if( cmdlen < MAX_STRING_CHARS - 1 ) {
-							cmd[cmdlen++] = c;
-						}
-					}
-					cmd[cmdlen] = '\0';
-					CG_GetBoundKeysString( cmd, cg.helpmessage + outlen, MAX_HELPMESSAGE_CHARS - outlen );
-					outlen += strlen( cg.helpmessage + outlen );
-				}
-					continue;
-				default:
-					helpmessage--;
-					break;
-			}
-		}
-
-		cg.helpmessage[outlen++] = c;
-	}
-	cg.helpmessage[outlen] = '\0';
-	Q_FixTruncatedUtf8( cg.helpmessage );
-
-	cg.helpmessage_time = cg.time;
-}
-
 /*
 * CG_Cmd_DemoGet_f
 */
@@ -542,33 +435,6 @@ static void CG_SC_DemoGet( void ) {
 	}
 
 	trap_DownloadRequest( filename, false );
-}
-
-/*
-* CG_SC_MOTD
-*/
-static void CG_SC_MOTD( void ) {
-	char *motd;
-
-	if( cg.motd ) {
-		CG_Free( cg.motd );
-	}
-	cg.motd = NULL;
-
-	motd = trap_Cmd_Argv( 2 );
-	if( !motd[0] ) {
-		return;
-	}
-
-	if( !strcmp( trap_Cmd_Argv( 1 ), "1" ) ) {
-		cg.motd = CG_CopyString( motd );
-		cg.motd_time = cg.time + 50 * strlen( motd );
-		if( cg.motd_time < cg.time + 5000 ) {
-			cg.motd_time = cg.time + 5000;
-		}
-	}
-
-	CG_Printf( "\nMessage of the Day:\n%s", motd );
 }
 
 static void CG_SC_ChangeLoadout() {
@@ -659,12 +525,9 @@ static const svcmd_t cg_svcmds[] =
 	{ "obry", CG_SC_Obituary },
 	{ "scb", CG_SC_Scoreboard },
 	{ "plstats", CG_SC_PlayerStats },
-	{ "mm", CG_SC_MatchMessage },
-	{ "mapmsg", CG_SC_HelpMessage },
 	{ "demoget", CG_SC_DemoGet },
 	{ "meop", CG_SC_MenuOpen },
 	{ "memo", CG_SC_MenuModal },
-	{ "motd", CG_SC_MOTD },
 	{ "aw", CG_SC_AddAward },
 	{ "changeloadout", CG_SC_ChangeLoadout },
 	{ "saveloadout", CG_SC_SaveLoadout },

@@ -849,22 +849,10 @@ static void objectGameClient_SetChaseActive( bool active, gclient_t *self ) {
 	}
 
 	self->resp.chase.active = active;
-	G_UpdatePlayerMatchMsg( PLAYERENT( playerNum ) );
 }
 
 static bool objectGameClient_GetChaseActive( gclient_t *self ) {
 	return self->resp.chase.active;
-}
-
-static void objectGameClient_SetHelpMessage( unsigned int index, gclient_t *self ) {
-	int playerNum;
-
-	playerNum = objectGameClient_PlayerNum( self );
-	if( playerNum < 0 || playerNum >= gs.maxclients ) {
-		return;
-	}
-
-	G_SetPlayerHelpMessage( PLAYERENT( playerNum ), index );
 }
 
 static const gs_asFuncdef_t gameclient_Funcdefs[] =
@@ -913,7 +901,6 @@ static const gs_asMethod_t gameclient_Methods[] =
 	{ ASLIB_FUNCTION_DECL( void, chaseCam, ( const String @, bool teamOnly ) ), asFUNCTION( objectGameClient_ChaseCam ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, set_chaseActive, ( const bool active ) ), asFUNCTION( objectGameClient_SetChaseActive ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( bool, get_chaseActive, ( ) const ), asFUNCTION( objectGameClient_GetChaseActive ), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL( void, setHelpMessage, ( uint msg ) ), asFUNCTION( objectGameClient_SetHelpMessage ), asCALL_CDECL_OBJLAST },
 
 	ASLIB_METHOD_NULL
 };
@@ -2000,10 +1987,6 @@ static edict_t *asFunc_FireBlast( asvec3_t *origin, asvec3_t *angles, int speed,
 	return W_Fire_GunbladeBlast( owner, origin->v, angles->v, damage, 1, knockback, 1, radius, speed, 5000, 0 );
 }
 
-static unsigned asFunc_G_RegisterHelpMessage( asstring_t *str ) {
-	return G_RegisterHelpMessage( str->buffer );
-}
-
 static const gs_asglobfuncs_t asGameGlobFuncs[] =
 {
 	{ "Entity @G_SpawnEntity( const String &in )", asFUNCTION( asFunc_G_Spawn ), NULL },
@@ -2084,8 +2067,6 @@ static const gs_asglobfuncs_t asGameGlobFuncs[] =
 
 	{ "bool ML_FilenameExists( String & )", asFUNCTION( asFunc_ML_FilenameExists ), NULL },
 	{ "const String @ML_GetMapByNum( int num )", asFUNCTION( asFunc_ML_GetMapByNum ), NULL },
-
-	{ "uint G_RegisterHelpMessage( const String &in )", asFUNCTION( asFunc_G_RegisterHelpMessage ), NULL },
 
 	{ NULL }
 };

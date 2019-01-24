@@ -472,11 +472,6 @@ void SV_ShutdownGame( const char *finalmsg, bool reconnect ) {
 
 	Com_FreePureList( &svs.purelist );
 
-	if( svs.motd ) {
-		Mem_Free( svs.motd );
-		svs.motd = NULL;
-	}
-
 	if( sv_mempool ) {
 		Mem_EmptyPool( sv_mempool );
 	}
@@ -526,8 +521,6 @@ void SV_Map( const char *level, bool devmap ) {
 		svs.clients[i].lastframe = -1;
 		memset( svs.clients[i].gameCommands, 0, sizeof( svs.clients[i].gameCommands ) );
 	}
-
-	SV_MOTD_Update();
 
 	SCR_BeginLoadingPlaque();       // for local system
 	SV_BroadcastCommand( "changing\n" );

@@ -455,7 +455,6 @@ static void G_VoteAllreadyPassed( callvotedata_t *vote ) {
 
 		if( ent->s.team > TEAM_SPECTATOR && !level.ready[PLAYERNUM( ent )] ) {
 			level.ready[PLAYERNUM( ent )] = true;
-			G_UpdatePlayerMatchMsg( ent );
 			G_Match_CheckReadys();
 		}
 	}

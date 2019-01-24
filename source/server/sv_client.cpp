@@ -786,8 +786,6 @@ ucmd_t ucmds[] =
 	{ "demolist", SV_DemoList_f },
 	{ "demoget", SV_DemoGet_f },
 
-	{ "svmotd", SV_MOTD_Get_f },
-
 	{ NULL, NULL }
 };
 

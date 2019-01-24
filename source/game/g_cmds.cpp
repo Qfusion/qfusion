@@ -1020,16 +1020,6 @@ static void Cmd_ShowStats_f( edict_t *ent ) {
 	trap_GameCmd( ent, va( "plstats 1 \"%s\"", G_StatsMessage( target ) ) );
 }
 
-/*
-* Cmd_Upstate_f
-*
-* Update client on the state of things
-*/
-static void Cmd_Upstate_f( edict_t *ent ) {
-	G_UpdatePlayerMatchMsg( ent, true );
-	G_SetPlayerHelpMessage( ent, ent->r.client->level.helpmessage, true );
-}
-
 //===========================================================
 //	client commands
 //===========================================================
@@ -1157,9 +1147,6 @@ void G_InitGameCommands( void ) {
 
 	G_AddCommand( "vsay", G_vsay_Cmd );
 	G_AddCommand( "vsay_team", G_Teams_vsay_Cmd );
-
-	// misc
-	G_AddCommand( "upstate", Cmd_Upstate_f );
 }
 
 /*

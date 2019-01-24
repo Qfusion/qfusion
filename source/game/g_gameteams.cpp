@@ -179,7 +179,6 @@ void G_Teams_SetTeam( edict_t *ent, int team ) {
 	level.ready[PLAYERNUM( ent )] = false;
 
 	G_Match_CheckReadys();
-	G_UpdatePlayerMatchMsg( ent );
 }
 
 enum
@@ -647,7 +646,6 @@ void G_Teams_LeaveChallengersQueue( edict_t *ent ) {
 	if( ent->r.client->queueTimeStamp ) {
 		ent->r.client->queueTimeStamp = 0;
 		G_PrintMsg( ent, "%sYou left the challengers queue\n", S_COLOR_CYAN );
-		G_UpdatePlayerMatchMsg( ent );
 	}
 }
 
@@ -688,7 +686,6 @@ void G_Teams_JoinChallengersQueue( edict_t *ent ) {
 		}
 
 		G_PrintMsg( ent, "%sYou entered the challengers queue in position %i\n", S_COLOR_CYAN, pos + 1 );
-		G_UpdatePlayerMatchMsg( ent );
 	}
 }
 

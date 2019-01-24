@@ -561,12 +561,7 @@ void G_CenterPrintMsg( edict_t *ent, _Printf_format_string_ const char *format, 
 void G_CenterPrintFormatMsg( edict_t *ent, int numVargs, _Printf_format_string_ const char *format, ... );
 #endif
 
-void G_UpdatePlayerMatchMsg( edict_t *ent, bool force = false );
-void G_UpdatePlayersMatchMsgs( void );
 void G_Obituary( edict_t *victim, edict_t *attacker, int mod );
-
-unsigned G_RegisterHelpMessage( const char *str );
-void G_SetPlayerHelpMessage( edict_t *ent, unsigned index, bool force = false );
 
 edict_t *G_Sound( edict_t *owner, int channel, int soundindex, float attenuation );
 edict_t *G_PositionedSound( vec3_t origin, int channel, int soundindex, float attenuation );
@@ -976,8 +971,6 @@ typedef struct {
 	int64_t timeStamp;				// last time it was reset
 
 	unsigned int respawnCount;
-	matchmessage_t matchmessage;
-	unsigned int helpmessage;
 
 	int64_t last_vsay;				// time when last vsay was said
 	int64_t last_activity;
@@ -1177,8 +1170,6 @@ struct edict_s {
 	int dmg;
 
 	const char *message;
-	const char *helpmessage;
-	unsigned mapmessage_index;
 
 	int mass;
 	int64_t air_finished;

@@ -525,17 +525,7 @@ void GS_PModel_AnimToFrame( int64_t curTime, gs_pmodel_animationset_t *animSet, 
 void GS_PlayerModel_ClearEventAnimations( gs_pmodel_animationset_t *animSet, gs_pmodel_animationstate_t *animState );
 void GS_PlayerModel_AddAnimation( gs_pmodel_animationstate_t *animState, int loweranim, int upperanim, int headanim, int channel );
 
-
 //===============================================================
-
-typedef enum {
-	MATCHMESSAGE_NONE
-	, MATCHMESSAGE_CHALLENGERS_QUEUE
-	, MATCHMESSAGE_ENTER_CHALLENGERS_QUEUE
-	, MATCHMESSAGE_SPECTATOR_MODES
-	, MATCHMESSAGE_GET_READY
-	, MATCHMESSAGE_WAITING_FOR_PLAYERS
-} matchmessage_t;
 
 // gs_misc.c
 void GS_Obituary( void *victim, int gender, void *attacker, int mod, char *message, char *message2 );
@@ -626,13 +616,12 @@ static constexpr const char *gs_keyicon_names[] = {
 };
 
 // STAT_LAYOUTS flag bits meanings
-#define STAT_LAYOUT_INSTANTRESPAWN  0x00000002
-#define STAT_LAYOUT_SCOREBOARD      0x00000004
-#define STAT_LAYOUT_TEAMTAB         0x00000008
-#define STAT_LAYOUT_CHALLENGER      0x00000010 // player is in challengers queue (used for ingame menu)
-#define STAT_LAYOUT_READY           0x00000020 // player is ready (used for ingame menu)
-//#define	STAT_LAYOUT_UNUSED			0x00000040
-#define STAT_LAYOUT_SPECTEAMONLY    0x00000080
+#define STAT_LAYOUT_INSTANTRESPAWN  ( 1 << 1 )
+#define STAT_LAYOUT_SCOREBOARD      ( 1 << 2 )
+#define STAT_LAYOUT_TEAMTAB         ( 1 << 3 )
+#define STAT_LAYOUT_CHALLENGER      ( 1 << 4 ) // player is in challengers queue (used for ingame menu)
+#define STAT_LAYOUT_READY           ( 1 << 5 ) // player is ready (used for ingame menu)
+#define STAT_LAYOUT_SPECTEAMONLY    ( 1 << 6 )
 
 #define STAT_NOTSET                 -9999 // used for stats that don't have meaningful value atm.
 

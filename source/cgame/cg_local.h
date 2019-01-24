@@ -491,8 +491,6 @@ typedef struct {
 	cg_gamemessage_t messages[GAMECHAT_STACK_SIZE];
 } cg_gamechat_t;
 
-#define MAX_HELPMESSAGE_CHARS 4096
-
 typedef struct {
 	int64_t time;
 	float delay;
@@ -571,15 +569,6 @@ typedef struct {
 	int64_t damageBlends[4];
 	int64_t fallEffectTime;
 	int64_t fallEffectRebounceTime;
-
-	//
-	// transient data from server
-	//
-	const char *matchmessage;
-	char helpmessage[MAX_HELPMESSAGE_CHARS];
-	int64_t helpmessage_time;
-	char *motd;
-	int64_t motd_time;
 
 	// awards
 	char award_lines[MAX_AWARD_LINES][MAX_CONFIGSTRING_CHARS];
@@ -784,7 +773,6 @@ extern cvar_t *cg_drawEntityBoxes;
 extern cvar_t *cg_fov;
 extern cvar_t *cg_zoomfov;
 extern cvar_t *cg_particles;
-extern cvar_t *cg_showhelp;
 extern cvar_t *cg_voiceChats;
 extern cvar_t *cg_projectileAntilagOffset;
 extern cvar_t *cg_raceGhosts;

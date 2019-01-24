@@ -83,7 +83,6 @@ cvar_t *cg_simpleItemsSize;
 cvar_t *cg_showObituaries;
 cvar_t *cg_damageNumbers;
 cvar_t *cg_particles;
-cvar_t *cg_showhelp;
 cvar_t *cg_showClamp;
 
 cvar_t *cg_damage_indicator;
@@ -562,7 +561,6 @@ static void CG_RegisterVariables( void ) {
 	cg_simpleItems =    trap_Cvar_Get( "cg_simpleItems", "0", CVAR_ARCHIVE );
 	cg_simpleItemsSize =    trap_Cvar_Get( "cg_simpleItemsSize", "16", CVAR_ARCHIVE );
 	cg_particles =      trap_Cvar_Get( "cg_particles", "1", CVAR_ARCHIVE );
-	cg_showhelp =       trap_Cvar_Get( "cg_showhelp", "1", CVAR_ARCHIVE );
 
 	cg_cartoonEffects =     trap_Cvar_Get( "cg_cartoonEffects", "7", CVAR_ARCHIVE );
 
@@ -789,8 +787,6 @@ void CG_Reset( void ) {
 
 	cg.time = 0;
 	cg.realTime = 0;
-	cg.helpmessage_time = 0;
-	cg.motd_time = 0;
 
 	chaseCam.key_pressed = false;
 

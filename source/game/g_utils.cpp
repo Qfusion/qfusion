@@ -596,21 +596,6 @@ void G_UseTargets( edict_t *ent, edict_t *activator ) {
 	}
 
 	//
-	// set the help message
-	//
-	if( ent->helpmessage && ent->mapmessage_index <= MAX_HELPMESSAGES ) {
-		G_SetPlayerHelpMessage( activator, ent->mapmessage_index );
-
-		if( !ent->message ) {
-			if( ent->noise_index ) {
-				G_Sound( activator, CHAN_AUTO, ent->noise_index, ATTN_NORM );
-			} else {
-				G_Sound( activator, CHAN_AUTO, trap_SoundIndex( S_WORLD_MESSAGE ), ATTN_NORM );
-			}
-		}
-	}
-
-	//
 	// kill killtargets
 	//
 	if( ent->killtarget ) {
@@ -1218,105 +1203,6 @@ void G_CenterPrintFormatMsg( edict_t *ent, int numVargs, const char *format, ...
 void G_Obituary( edict_t *victim, edict_t *attacker, int mod ) {
 	if( victim && attacker ) {
 		trap_GameCmd( NULL, va( "obry %i %i %i", (int)(victim - game.edicts), (int)(attacker - game.edicts), mod ) );
-	}
-}
-
-/*
-* G_UpdatePlayerMatchMsg
-*
-* Sends correct match msg to one client
-* Must be called whenever client's team, ready status or chase mode changes
-*/
-void G_UpdatePlayerMatchMsg( edict_t *ent, bool force ) {
-	matchmessage_t newmm;
-
-	if( GS_MatchWaiting() ) {
-		newmm = MATCHMESSAGE_WAITING_FOR_PLAYERS;
-	} else if( GS_MatchState() > MATCH_STATE_PLAYTIME ) {
-		newmm = MATCHMESSAGE_NONE;
-	} else if( ent->s.team == TEAM_SPECTATOR ) {
-		if( GS_HasChallengers() ) { // He is in the queue
-			newmm = ( ent->r.client->queueTimeStamp ? MATCHMESSAGE_CHALLENGERS_QUEUE : MATCHMESSAGE_ENTER_CHALLENGERS_QUEUE );
-		} else {
-			newmm = ( ent->r.client->resp.chase.active ? MATCHMESSAGE_NONE : MATCHMESSAGE_SPECTATOR_MODES );
-		}
-	} else {
-		if( GS_MatchState() == MATCH_STATE_WARMUP ) {
-			newmm = ( !level.ready[PLAYERNUM( ent )] ? MATCHMESSAGE_GET_READY : MATCHMESSAGE_NONE );
-		} else {
-			newmm = MATCHMESSAGE_NONE;
-		}
-	}
-
-	if( newmm != ent->r.client->level.matchmessage || force ) {
-		ent->r.client->level.matchmessage = newmm;
-		trap_GameCmd( ent, va( "mm %i", newmm ) );
-	}
-}
-
-/*
-* G_UpdatePlayerMatchMsg
-*
-* Sends correct match msg to every client
-* Must be called whenever match state changes
-*/
-void G_UpdatePlayersMatchMsgs( void ) {
-	int i;
-	edict_t *cl_ent;
-
-	for( i = 0; i < gs.maxclients; i++ ) {
-		cl_ent = game.edicts + 1 + i;
-		if( !cl_ent->r.inuse ) {
-			continue;
-		}
-		G_UpdatePlayerMatchMsg( cl_ent );
-	}
-}
-
-//==================================================
-// MAP MESSAGES
-//==================================================
-
-/*
-* G_RegisterHelpMessage
-*/
-unsigned G_RegisterHelpMessage( const char *str ) {
-	unsigned i;
-
-	if( !str || !*str ) {
-		return 0;
-	}
-
-	for( i = 0; i < MAX_HELPMESSAGES; i++ ) {
-		const char *cs = trap_GetConfigString( CS_HELPMESSAGES + i );
-		if( !cs[0] ) {
-			break;
-		}
-		if( !strcmp( cs, str ) ) {
-			return i + 1;
-		}
-	}
-
-	if( i < MAX_HELPMESSAGES ) {
-		trap_ConfigString( CS_HELPMESSAGES + i, str );
-	}
-	return i + 1;
-}
-
-/*
-* G_SetPlayerHelpMessage
-*/
-void G_SetPlayerHelpMessage( edict_t *ent, unsigned index, bool force ) {
-	if( index > MAX_HELPMESSAGES ) {
-		return;
-	}
-	if( !ent || !ent->r.client ) {
-		return;
-	}
-
-	if( index != ent->r.client->level.helpmessage || force ) {
-		ent->r.client->level.helpmessage = index;
-		trap_GameCmd( ent, va( "mapmsg %i", index ) );
 	}
 }
 
