@@ -8,7 +8,7 @@
 
 const bool is_dedicated_server = false;
 
-void Sys_InitTime( void );
+void Sys_InitTime();
 
 void Sys_Sleep( unsigned int millis ) {
 	SDL_Delay( millis );
@@ -29,23 +29,14 @@ void Sys_Error( const char *format, ... ) {
 	exit( 1 );
 }
 
-/*
-* Sys_Init
-*/
-void Sys_Init( void ) {
+void Sys_Init() {
 	Sys_InitTime();
 }
 
-/*
-* Sys_Quit
-*/
-void Sys_Quit( void ) {
+void Sys_Quit() {
 	Qcommon_Shutdown();
-
 	exit( 0 );
 }
-
-/*****************************************************************************/
 
 int main( int argc, char **argv ) {
 	int64_t oldtime, newtime;

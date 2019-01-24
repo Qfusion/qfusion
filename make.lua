@@ -61,13 +61,14 @@ do
 			platform_libs
 		},
 
-		rc = "win32/qfusion",
+		rc = "source/win32/client",
 
 		gcc_extra_ldflags = "-lm -lpthread -ldl -no-pie -static-libstdc++",
-		msvc_extra_ldflags = "ws2_32.lib crypt32.lib winmm.lib version.lib imm32.lib",
+		msvc_extra_ldflags = "gdi32.lib ole32.lib oleaut32.lib ws2_32.lib crypt32.lib winmm.lib version.lib imm32.lib /link /SUBSYSTEM:WINDOWS",
 	} )
 
 	obj_cxxflags( "source/client/ftlib/.+", "-I libs/freetype" )
+	obj_cxxflags( "source/client/sound/.+", "-DAL_LIBTYPE_STATIC" )
 end
 
 do
@@ -114,8 +115,6 @@ do
 			"zlib",
 			platform_libs
 		},
-
-		rc = "win32/qfusion",
 
 		gcc_extra_ldflags = "-lm -lpthread -ldl -no-pie -static-libstdc++",
 		msvc_extra_ldflags = "ws2_32.lib crypt32.lib",

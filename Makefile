@@ -3,7 +3,9 @@ all: debug
 
 LUA = ggbuild/lua.linux
 NINJA = ggbuild/ninja.linux
-ifeq ($(OS),Windows_NT)
+
+WSLENV ?= notwsl
+ifndef WSLENV
 	LUA = ggbuild/lua.exe
 	NINJA = ggbuild/ninja.exe
 endif

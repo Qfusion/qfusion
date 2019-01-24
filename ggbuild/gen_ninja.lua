@@ -4,13 +4,14 @@ local configs = {
 	[ "windows" ] = {
 		bin_suffix = ".exe",
 		obj_suffix = ".obj",
+		pie_obj_suffix = ".obj",
 		lib_suffix = ".lib",
 		dll_prefix = "base/",
 		dll_suffix = ".dll",
 
 		toolchain = "msvc",
 
-		cxxflags = "/c /Oi /Gm- /GR- /EHa- /EHsc /nologo /DNOMINMAX /DWIN32_LEAN_AND_MEAN",
+		cxxflags = "/c /Oi /Gm- /GR /EHsc /nologo /DNOMINMAX /DWIN32_LEAN_AND_MEAN",
 		ldflags = "user32.lib shell32.lib advapi32.lib dbghelp.lib /nologo",
 	},
 
@@ -165,7 +166,7 @@ local function printf( form, ... )
 end
 
 local objs = { }
-local pie_objs = OS == "windows" and objs or { }
+local pie_objs = { }
 local objs_flags = { }
 local objs_extra_flags = { }
 
@@ -254,7 +255,11 @@ function dll( dll_name, srcs )
 
 	local globbed = glob( srcs )
 	dlls[ dll_name ] = globbed
-	add_pie_srcs( globbed )
+	if toolchain == "msvc" then
+		add_srcs( globbed )
+	else
+		add_pie_srcs( globbed )
+	end
 end
 
 function obj_cxxflags( pattern, flags )
@@ -295,6 +300,9 @@ rule bin
 
 rule lib
     command = lib -OUT:$out $in
+
+rule dll
+    command = cl -LD -Fe$out $in $ldflags $extra_ldflags
 
 rule rc
     command = rc /fo$out /nologo $in_rc
@@ -402,7 +410,8 @@ function build()
 
 		if OS == "windows" and cfg.rc then
 			srcs = { cfg.srcs, cfg.rc }
-			printf( "build %s/%s%s: rc %s.rc %s.xml", dir, cfg.rc, obj_suffix, cfg.rc, cfg.rc )
+			-- printf( "build %s/%s%s: rc %s.rc %s.xml", dir, cfg.rc, obj_suffix, cfg.rc, cfg.rc )
+			printf( "build %s/%s%s: rc %s.rc", dir, cfg.rc, obj_suffix, cfg.rc )
 			printf( "    in_rc = %s.rc", cfg.rc )
 		end
 
