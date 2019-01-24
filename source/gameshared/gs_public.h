@@ -470,7 +470,7 @@ struct TeamColor {
 constexpr TeamColor TEAM_COLORS[] = {
 	{ "Blue", RGB8( 0, 160, 255 ) },
 	{ "Red", RGB8( 255, 20, 60 ) },
-	{ "Green", RGB8( 0, 255, 160 ) },
+	{ "Green", RGB8( 82, 252, 95 ) },
 	{ "Yellow", RGB8( 255, 255, 0 ) },
 };
 
