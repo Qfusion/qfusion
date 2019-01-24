@@ -22,6 +22,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 cg_static_t cgs;
 cg_state_t cg;
 
+mempool_t *cg_mempool;
+
 centity_t cg_entities[MAX_EDICTS];
 
 cvar_t *cg_showMiss;
@@ -249,7 +251,7 @@ static void CG_InitGameShared( void ) {
 char *_CG_CopyString( const char *in, const char *filename, int fileline ) {
 	char *out;
 
-	out = ( char * )trap_MemAlloc( strlen( in ) + 1, filename, fileline );
+	out = ( char * )CG_Malloc( strlen( in ) + 1 );
 	strcpy( out, in );
 	return out;
 }
@@ -804,6 +806,8 @@ void CG_Init( const char *serverName, unsigned int playerNum,
 			  bool demoplaying, const char *demoName, bool pure,
 			  unsigned snapFrameTime, int protocol, const char *demoExtension,
 			  int sharedSeed, bool gameStart ) {
+	cg_mempool = _Mem_AllocPool( NULL, "CGame", MEMPOOL_CLIENTGAME, __FILE__, __LINE__ );
+
 	CG_InitGameShared();
 
 	memset( &cg, 0, sizeof( cg_state_t ) );
@@ -908,4 +912,6 @@ void CG_Shutdown( void ) {
 	CG_ShutdownInput();
 	CG_asUnloadGameScript();
 	CG_asShutdownScriptEngine();
+
+	Mem_FreePool( &cg_mempool );
 }

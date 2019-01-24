@@ -19,13 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // cg_local.h -- local definitions for client game module
 
-#include "gameshared/q_arch.h"
-#include "gameshared/q_math.h"
-#include "gameshared/q_shared.h"
-#include "gameshared/q_cvar.h"
-#include "gameshared/q_comref.h"
-#include "gameshared/q_collision.h"
-
+#include "qcommon/qcommon.h"
 #include "gameshared/gs_public.h"
 #include "ref.h"
 
@@ -587,6 +581,8 @@ typedef struct {
 extern cg_static_t cgs;
 extern cg_state_t cg;
 
+extern mempool_t *cg_mempool;
+
 #define ISVIEWERENTITY( entNum )  ( ( cg.predictedPlayerState.POVnum > 0 ) && ( (int)cg.predictedPlayerState.POVnum == entNum ) && ( cg.view.type == VIEWDEF_PLAYERVIEW ) )
 #define ISBRUSHMODEL( x ) ( ( ( x > 0 ) && ( (int)x < trap_CM_NumInlineModels() ) ) ? true : false )
 
@@ -787,8 +783,8 @@ extern cvar_t *cg_enemyColor;
 extern cvar_t *cg_enemyModel;
 extern cvar_t *cg_enemyForceModel;
 
-#define CG_Malloc( size ) trap_MemAlloc( size, __FILE__, __LINE__ )
-#define CG_Free( data ) trap_MemFree( data, __FILE__, __LINE__ )
+#define CG_Malloc( size ) _Mem_AllocExt( cg_mempool, size, 16, 1, 0, 0, __FILE__, __LINE__ );
+#define CG_Free( data ) Mem_Free( data )
 
 int CG_API( void );
 void CG_Init( const char *serverName, unsigned int playerNum,

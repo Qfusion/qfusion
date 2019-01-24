@@ -26,8 +26,6 @@ static cgame_export_t *cge;
 
 extern "C" QF_DLL_EXPORT cgame_export_t *GetCGameAPI( void * );
 
-static mempool_t *cl_gamemodulepool;
-
 //======================================================================
 
 // CL_GameModule versions of the CM functions passed to the game module
@@ -148,20 +146,6 @@ static void CL_GameModule_NET_GetCurrentState( int64_t *incomingAcknowledged, in
 	}
 }
 
-/*
-* CL_GameModule_MemAlloc
-*/
-static void *CL_GameModule_MemAlloc( size_t size, const char *filename, int fileline ) {
-	return _Mem_Alloc( cl_gamemodulepool, size, MEMPOOL_CLIENTGAME, 0, filename, fileline );
-}
-
-/*
-* CL_GameModule_MemFree
-*/
-static void CL_GameModule_MemFree( void *data, const char *filename, int fileline ) {
-	_Mem_Free( data, MEMPOOL_CLIENTGAME, 0, filename, fileline );
-}
-
 //==============================================
 
 float VID_GetPixelRatio() { return 1; }
@@ -177,8 +161,6 @@ void CL_GameModule_Init( void ) {
 	CL_SoundModule_StopAllSounds( true );
 
 	CL_GameModule_Shutdown();
-
-	cl_gamemodulepool = _Mem_AllocPool( NULL, "Client Game Progs", MEMPOOL_CLIENTGAME, __FILE__, __LINE__ );
 
 	import.Error = CL_GameModule_Error;
 	import.Print = CL_GameModule_Print;
@@ -296,9 +278,6 @@ void CL_GameModule_Init( void ) {
 	import.SCR_StrlenForWidth = SCR_StrlenForWidth;
 	import.SCR_DrawChat = Con_DrawChat;
 
-	import.Mem_Alloc = CL_GameModule_MemAlloc;
-	import.Mem_Free = CL_GameModule_MemFree;
-
 	import.asGetAngelExport = QAS_GetAngelExport;
 
 	cge = GetCGameAPI( &import );
@@ -342,7 +321,6 @@ void CL_GameModule_Shutdown( void ) {
 	cls.cgameActive = false;
 
 	cge->Shutdown();
-	Mem_FreePool( &cl_gamemodulepool );
 	cge = NULL;
 }
 

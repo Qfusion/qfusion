@@ -17,6 +17,5 @@ int64_t Sys_Milliseconds( void ) {
 }
 
 uint64_t Sys_Microseconds( void ) {
-	MICROPROFILE_SCOPEI( "Main", "Sys_Microseconds", 0xffffffff );
 	return 1000000ULL * ( SDL_GetPerformanceCounter() - base ) / freq;
 }

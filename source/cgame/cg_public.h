@@ -207,10 +207,6 @@ typedef struct {
 	cg_fdrawchar_t ( *SCR_SetDrawCharIntercept )( cg_fdrawchar_t intercept );
 	void ( *SCR_DrawChat )( int x, int y, int width, struct qfontface_s *font );
 
-	// managed memory allocation
-	void *( *Mem_Alloc )( size_t size, const char *filename, int fileline );
-	void ( *Mem_Free )( void *data, const char *filename, int fileline );
-
 	// angelscript api
 	struct angelwrap_api_s *( *asGetAngelExport )( void );
 } cgame_import_t;

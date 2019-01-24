@@ -1106,7 +1106,7 @@ void RB_DrawElementsInstanced( int firstVert, int numVerts, int firstElem, int n
 		// the uniform state in between draw calls
 		if( rb.maxDrawInstances < numInstances ) {
 			if( rb.drawInstances ) {
-				RB_Free( rb.drawInstances );
+				R_Free( rb.drawInstances );
 			}
 			rb.drawInstances = ( instancePoint_t * ) RB_Alloc( numInstances * sizeof( *rb.drawInstances ) );
 			rb.maxDrawInstances = numInstances;

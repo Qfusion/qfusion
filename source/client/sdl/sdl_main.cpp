@@ -71,12 +71,15 @@ int main( int argc, char **argv ) {
 		CL_Profiler_Flip();
 
 		int time;
-		// find time spent rendering last frame
-		do {
-			newtime = Sys_Milliseconds();
-			time = newtime - oldtime;
-		} while( time == 0 );
-		oldtime = newtime;
+		{
+			MICROPROFILE_SCOPEI( "Main", "Interframe", 0xffff0000 );
+			// find time spent rendering last frame
+			do {
+				newtime = Sys_Milliseconds();
+				time = newtime - oldtime;
+			} while( time == 0 );
+			oldtime = newtime;
+		}
 
 		Qcommon_Frame( time );
 	}

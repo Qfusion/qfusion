@@ -440,14 +440,6 @@ inline cg_fdrawchar_t trap_SCR_SetDrawCharIntercept( cg_fdrawchar_t intercept ) 
 	return CGAME_IMPORT.SCR_SetDrawCharIntercept( intercept );
 }
 
-static inline ATTRIBUTE_MALLOC void *trap_MemAlloc( size_t size, const char *filename, int fileline ) {
-	return CGAME_IMPORT.Mem_Alloc( size, filename, fileline );
-}
-
-static inline void trap_MemFree( void *data, const char *filename, int fileline ) {
-	CGAME_IMPORT.Mem_Free( data, filename, fileline );
-}
-
 static inline struct angelwrap_api_s *trap_asGetAngelExport( void ) {
 	return CGAME_IMPORT.asGetAngelExport();
 }
