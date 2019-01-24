@@ -18,8 +18,21 @@ if not a then
 	d = 0
 end
 
-print( "#define APP_VERSION \"" .. version .. "\"" )
-print( "#define APP_VERSION_A " .. a )
-print( "#define APP_VERSION_B " .. b )
-print( "#define APP_VERSION_C " .. c )
-print( "#define APP_VERSION_D " .. d )
+local gitversion = ""
+	.. "#define APP_VERSION \"" .. version .. "\"\n"
+	.. "#define APP_VERSION_A " .. a .. "\n"
+	.. "#define APP_VERSION_B " .. b .. "\n"
+	.. "#define APP_VERSION_C " .. c .. "\n"
+	.. "#define APP_VERSION_D " .. d .. "\n"
+
+local r = io.open( "source/qcommon/gitversion.h", "r" )
+local current = r and r:read( "*all" )
+if r then
+	r:close()
+end
+
+if current ~= gitversion then
+	local w = assert( io.open( "source/qcommon/gitversion.h", "w" ) )
+	w:write( gitversion )
+	assert( w:close() )
+end

@@ -1,4 +1,5 @@
 require( "ggbuild.gen_ninja" )
+require( "ggbuild.git_version" )
 
 require( "libs.imgui" )
 
