@@ -127,6 +127,7 @@ dll( "game", {
 	"source/gameshared/*.cpp",
 	"source/qalgo/base64.cpp",
 	"source/qalgo/hash.cpp",
+	"source/qalgo/rng.cpp",
 } )
 
 obj_cxxflags( "source/gameshared/angelwrap/.+", "-I third-party/angelscript/sdk/angelscript/include" )
