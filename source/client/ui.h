@@ -9,7 +9,7 @@ void UI_Refresh( bool backGround, bool showCursor );
 void UI_UpdateConnectScreen( bool backGround );
 
 void UI_ShowMainMenu();
-void UI_ShowGameMenu( bool spectating, bool is_ready, bool is_unready );
+void UI_ShowGameMenu( bool spectating, bool can_ready, bool can_unready );
 void UI_ShowLoadoutMenu( int primary, int secondary );
 void UI_ShowDemoMenu();
 void UI_HideMenu();

@@ -741,7 +741,7 @@ static void GameMenu() {
 		ImGui::SetNextWindowSize( ImVec2( 300, 0 ) );
 		ImGui::Begin( "gamemenu", NULL, ImGuiWindowFlags_NoDecoration );
 		ImGuiStyle & style = ImGui::GetStyle();
-		const double half = ImGui::GetWindowWidth()/2 - style.ItemSpacing.x - style.ItemInnerSpacing.x;
+		const double half = ImGui::GetWindowWidth() / 2 - style.ItemSpacing.x - style.ItemInnerSpacing.x;
 
 		if( is_spectating ) {
 			ImGui::Columns( 2, NULL, false );
@@ -751,9 +751,10 @@ static void GameMenu() {
 			GameMenuButton( "Join Cocaine", "join cocaine", &should_close, ImVec2( ImGui::GetColumnWidth( 0 ), 0 ) );
 			ImGui::NextColumn();
 			GameMenuButton( "Join Diesel", "join diesel", &should_close, ImVec2( ImGui::GetColumnWidth( 1 ), 0 ) );
+			ImGui::NextColumn();
+			ImGui::Columns( 1 );
 		}
 		else {
-			ImGui::Columns( 1 );
 			GameMenuButton( "Spectate", "spec", &should_close );
 
 			if( can_ready )
@@ -763,13 +764,11 @@ static void GameMenu() {
 
 			GameMenuButton( "Change loadout", "gametypemenu", &should_close );
 		}
-		ImGui::Columns( 1 );
 
 		if( ImGui::Button( "Settings", ImVec2( -1, 0 ) ) ) {
 			gamemenu_state = GameMenuState_Settings;
 			settings_state = SettingsState_General;
 		}
-
 
 		ImGui::Columns( 2, NULL, false );
 		ImGui::SetColumnWidth( 0, half );
@@ -778,6 +777,9 @@ static void GameMenu() {
 		GameMenuButton( "Disconnect", "disconnect", &should_close, ImVec2( ImGui::GetColumnWidth( 0 ), 0 ) );
 		ImGui::NextColumn();
 		GameMenuButton( "Exit game", "quit", &should_close, ImVec2( ImGui::GetColumnWidth( 1 ), 0 ) );
+		ImGui::NextColumn();
+
+		ImGui::Columns( 1 );
 
 		ImGui::End();
 	}
@@ -798,12 +800,14 @@ static void GameMenu() {
 		for( size_t i = 0; i < ARRAY_COUNT( primaries ); i++ ) {
 			int key = '1' + int( i );
 			String< 128 > buf( "{}: {}", char( key ), primaries[ i ] );
-			if( ImGui::Selectable( buf, i == selected_primary, 0, ImVec2( ImGui::GetColumnWidth( i ), 0 )) || pressed_key == key ) {
+			ImVec2 size = ImVec2( ImGui::GetColumnWidth( i ), 0 );
+			if( ImGui::Selectable( buf, i == selected_primary, 0, size ) || pressed_key == key ) {
 				selected_primary = i;
 			}
 			ImGui::NextColumn();
 		}
 
+		ImGui::Spacing();
 		ImGui::Columns( 1 );
 
 		ImGui::Text( "Secondary weapon" );
@@ -814,7 +818,8 @@ static void GameMenu() {
 		for( size_t i = 0; i < ARRAY_COUNT( secondaries ); i++ ) {
 			int key = '1' + int( i + ARRAY_COUNT( primaries ) );
 			String< 128 > buf( "{}: {}", char( key ), secondaries[ i ] );
-			if( ImGui::Selectable( buf, i == selected_secondary, 0, ImVec2( ImGui::GetColumnWidth( i ), 0 )) || pressed_key == key ) {
+			ImVec2 size = ImVec2( ImGui::GetColumnWidth( i ), 0 );
+			if( ImGui::Selectable( buf, i == selected_secondary, 0, size ) || pressed_key == key ) {
 				selected_secondary = i;
 				selected_with_number = pressed_key == key;
 			}
@@ -822,13 +827,12 @@ static void GameMenu() {
 		}
 
 		ImGui::Spacing();
+		ImGui::Spacing();
 		ImGui::Columns( 1 );
 
 		if( ImGui::Button( "OK", ImVec2( -1, 0 ) ) || selected_with_number ) {
 			const char * primaries_weapselect[] = { "ebrl", "rllg", "eblg" };
-
-			String< 128 > buf( "weapselect {} {}\n", 
-				primaries_weapselect[ selected_primary ], secondaries[ selected_secondary ] );
+			String< 128 > buf( "weapselect {} {}\n", primaries_weapselect[ selected_primary ], secondaries[ selected_secondary ] );
 			Cbuf_ExecuteText( EXEC_APPEND, buf );
 			should_close = true;
 		}
@@ -1023,13 +1027,13 @@ void UI_ShowMainMenu() {
 	RefreshServerBrowser();
 }
 
-void UI_ShowGameMenu( bool spectating, bool is_ready, bool is_unready ) {
+void UI_ShowGameMenu( bool spectating, bool ready, bool unready ) {
 	uistate = UIState_GameMenu;
 	gamemenu_state = GameMenuState_Menu;
 	pressed_key = -1;
 	is_spectating = spectating;
-	can_ready = is_unready;
-	can_unready = is_ready;
+	can_ready = unready;
+	can_unready = ready;
 	CL_SetKeyDest( key_menu );
 }
 
