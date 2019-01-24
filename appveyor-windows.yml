@@ -6,9 +6,9 @@ build_script:
 - cmd: call "C:\\Program Files (x86)\\Microsoft Visual Studio 14.0\\VC\\vcvarsall.bat" x86_amd64
 - cmd: ggbuild\lua.exe make.lua release > build.ninja
 - cmd: ggbuild\ninja.exe -v -k 0
-- cmd: ..\ggbuild\ducible.exe release\client.exe
-- cmd: ..\ggbuild\ducible.exe release\server.exe
-- cmd: ..\ggbuild\ducible.exe release\base\game.dll
+- cmd: ggbuild\ducible.exe release\client.exe
+- cmd: ggbuild\ducible.exe release\server.exe
+- cmd: ggbuild\ducible.exe release\base\game.dll
 
 artifacts:
 - path: release
