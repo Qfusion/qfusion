@@ -6,5 +6,9 @@
 client
 server
 *.exe
-*.so
+*.exp
+*.ilk
+*.lib
+*.pdb
 *.dll
+*.so
