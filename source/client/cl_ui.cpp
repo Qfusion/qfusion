@@ -723,7 +723,13 @@ static void MainMenu() {
 	ImGui::End();
 }
 
-static void GameMenuButton( const char * label, const char * command, bool * clicked = NULL , ImVec2 size = ImVec2( -1, 0 ) ) {
+static void GameMenuButton( const char * label, const char * command, bool * clicked = NULL, int column = -1 ) {
+	ImVec2 size = ImVec2( -1, 0 );
+	if( column != -1 ) {
+		ImGuiStyle & style = ImGui::GetStyle();
+		size = ImVec2( ImGui::GetColumnWidth( 0 ) - style.ItemSpacing.x, 0 );
+	}
+
 	if( ImGui::Button( label, size ) ) {
 		String< 256 > buf( "{}\n", command );
 		Cbuf_ExecuteText( EXEC_APPEND, buf );
@@ -748,9 +754,9 @@ static void GameMenu() {
 			ImGui::SetColumnWidth( 0, half );
 			ImGui::SetColumnWidth( 1, half );
 
-			GameMenuButton( "Join Cocaine", "join cocaine", &should_close, ImVec2( ImGui::GetColumnWidth( 0 ), 0 ) );
+			GameMenuButton( "Join Cocaine", "join cocaine", &should_close, 0 );
 			ImGui::NextColumn();
-			GameMenuButton( "Join Diesel", "join diesel", &should_close, ImVec2( ImGui::GetColumnWidth( 1 ), 0 ) );
+			GameMenuButton( "Join Diesel", "join diesel", &should_close, 1 );
 			ImGui::NextColumn();
 			ImGui::Columns( 1 );
 		}
@@ -774,9 +780,9 @@ static void GameMenu() {
 		ImGui::SetColumnWidth( 0, half );
 		ImGui::SetColumnWidth( 1, half );
 
-		GameMenuButton( "Disconnect", "disconnect", &should_close, ImVec2( ImGui::GetColumnWidth( 0 ), 0 ) );
+		GameMenuButton( "Disconnect", "disconnect", &should_close, 0 );
 		ImGui::NextColumn();
-		GameMenuButton( "Exit game", "quit", &should_close, ImVec2( ImGui::GetColumnWidth( 1 ), 0 ) );
+		GameMenuButton( "Exit game", "quit", &should_close, 1 );
 		ImGui::NextColumn();
 
 		ImGui::Columns( 1 );
