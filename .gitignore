@@ -1,34 +1,10 @@
-source/build/
-source/qcommon/gitversion.h
+/build
+/release
+/build.ninja
+/source/qcommon/gitversion.h
 
-*.sdf
-*.opensdf
-*.vcxproj.user
-*.suo
-*.opendb
-*.db
-
-# Ignore cmake generated files
-**/CMakeCache.txt
-**/CPackConfig.cmake
-**/CPackSourceConfig.cmake
-**/CMakeFiles/
-**/CMakeScripts/
-**/qfusion.build/
-**/*.xcodeproj
-**/Makefile
-*cmake_install.cmake
-*.sln
-*.vcxproj
-*.vcxproj.filters
-
-# Ignore windows cmake generated files
-**/*.dir/
-.vs
-
-# Ignore SDL2 build files
-libsrcs/SDL2/VisualC/Win32
-libsrcs/SDL2/VisualC/SDL/Win32
-libsrcs/SDL2/VisualC/SDLmain/Win32
-libsrcs/SDL2/VisualC/SDLtest/Win32
-libsrcs/SDL2/VisualC/tests/*/Win32
+client
+server
+*.exe
+*.so
+*.dll

@@ -1,3 +1,7 @@
+#define MICROPROFILE_MAX_FRAME_HISTORY 2048
+#define MICROPROFILE_IMPL
+#include "microprofile/microprofile.h"
+
 #include "qcommon/qcommon.h"
 
 void CL_Init() { }

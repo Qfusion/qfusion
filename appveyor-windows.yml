@@ -2,13 +2,14 @@ version: "{build}"
 clone_depth: 1
 
 build_script:
-- cmd: cd source
-- cmd: cmake -G "Visual Studio 14 2015 Win64" -DCMAKE_BUILD_TYPE=Release .
-- cmd: msbuild /p:Configuration=Release ALL_BUILD.vcxproj
-- cmd: ..\ggbuild\ducible.exe build\Release\client.exe
-- cmd: ..\ggbuild\ducible.exe build\Release\server.exe
-- cmd: ..\ggbuild\ducible.exe build\Release\base\game.dll
+- cmd: call "C:\\Program Files\\Microsoft SDKs\\Windows\\v7.1\\Bin\\SetEnv.cmd" /x64
+- cmd: call "C:\\Program Files (x86)\\Microsoft Visual Studio 14.0\\VC\\vcvarsall.bat" x86_amd64
+- cmd: scripts\lua.exe make.lua release > build.ninja
+- cmd: scripts\ninja.exe -v -k 0
+- cmd: ..\ggbuild\ducible.exe release\client.exe
+- cmd: ..\ggbuild\ducible.exe release\server.exe
+- cmd: ..\ggbuild\ducible.exe release\base\game.dll
 
 artifacts:
-- path: source/build/Release
+- path: release
   name: cocaine_diesel_windows
