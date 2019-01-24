@@ -376,11 +376,14 @@ void G_Damage( edict_t *targ, edict_t *inflictor, edict_t *attacker, const vec3_
 		attacker->r.client->level.stats.total_damage_given += take;
 		teamlist[attacker->s.team].stats.total_damage_given += take;
 
-		// TODO: merge rg damage into one event
-		edict_t * damage = G_SpawnEvent( EV_DAMAGE, 0, targ->s.origin );
-		damage->r.svflags |= SVF_ONLYOWNER;
-		damage->s.ownerNum = ENTNUM( attacker );
-		damage->s.damage = HEALTH_TO_INT( take );
+		// RG calls G_Damage for every bullet, so we accumulate damage
+		// in G_Fire_SunflowerPattern and show one number there instead
+		if( mod != MOD_RIOTGUN ) {
+			edict_t * damage = G_SpawnEvent( EV_DAMAGE, 0, targ->s.origin );
+			damage->r.svflags |= SVF_ONLYOWNER;
+			damage->s.ownerNum = ENTNUM( attacker );
+			damage->s.damage = HEALTH_TO_INT( take );
+		}
 
 		if( GS_IsTeamDamage( &targ->s, &attacker->s ) ) {
 			attacker->r.client->level.stats.total_teamdamage_given += take;
