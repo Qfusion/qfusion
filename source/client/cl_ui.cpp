@@ -718,7 +718,7 @@ static void MainMenu() {
 	const char * buf = APP_VERSION u8" \u00A9 AHA CHEERS";
 	ImVec2 size = ImGui::CalcTextSize( buf );
 	ImGui::SetCursorPosX( ImGui::GetWindowWidth() - size.x - window_padding.x - 1 - sinf( cls.monotonicTime / 29.0f ) );
-	ImGui::Text( buf );
+	ImGui::Text( "%s", buf );
 
 	ImGui::End();
 }
