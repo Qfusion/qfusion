@@ -458,14 +458,6 @@ void IN_Shutdown() {
 }
 
 /**
- * Restart the input subsystem.
- */
-void IN_Restart( void ) {
-	IN_Shutdown();
-	IN_Init();
-}
-
-/**
  * This function is called for every frame and gives us some time to poll
  * for events that occured at our input devices.
  */

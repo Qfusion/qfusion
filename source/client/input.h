@@ -24,10 +24,8 @@ typedef struct {
 	int absx, absy;
 } MouseMovement;
 
-void IN_Init( void );
-void IN_Shutdown( void );
-void IN_Restart( void );
+void IN_Init();
+void IN_Shutdown();
 
+void IN_Frame();
 MouseMovement IN_GetMouseMovement();
-
-void IN_Frame( void );

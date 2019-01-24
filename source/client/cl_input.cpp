@@ -94,8 +94,6 @@ void CL_InitInput( void ) {
 		return;
 	}
 
-	Cmd_AddCommand( "in_restart", IN_Restart );
-
 	IN_Init();
 
 	cl_ucmdMaxResend =  Cvar_Get( "cl_ucmdMaxResend", "3", CVAR_ARCHIVE );
@@ -122,8 +120,6 @@ void CL_ShutdownInput( void ) {
 	if( !in_initialized ) {
 		return;
 	}
-
-	Cmd_RemoveCommand( "in_restart" );
 
 	IN_Shutdown();
 
