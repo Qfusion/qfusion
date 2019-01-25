@@ -153,15 +153,15 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//timings (in msecs)
 			WEAPONUP_FRAMETIME,             // weapon up frametime
 			WEAPONDOWN_FRAMETIME,           // weapon down frametime
-			600,                            // reload frametime
+			750,                            // reload frametime
 			0,                              // cooldown frametime
 			64,                             // projectile timeout  / projectile range for instant weapons
 			false,                          // smooth refire
 
 			//damages
-			50,                             // damage
+			40,                             // damage
 			0,                              // selfdamage ratio
-			50,                             // knockback
+			60,                             // knockback
 			0,                              // splash radius
 			0,                              // splash minimum damage
 			0,                              // splash minimum knockback
@@ -359,7 +359,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//damages
 			15,                             // damage
 			0.2,                            // selfdamage ratio
-			20,                             // knockback
+			22,                             // knockback
 			45,                             // splash radius
 			5,                              // splash minimum damage
 			1,                              // splash minimum knockback
