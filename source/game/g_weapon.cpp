@@ -280,7 +280,7 @@ static void W_Bullet_Touch( edict_t *ent, edict_t *other, cplane_t *plane, int s
 */
 void W_Fire_Bullet( edict_t *self, vec3_t start, vec3_t angles, int seed, int range, int hspread, int vspread,
 					float damage, int knockback, int timeDelta ) {
-	edict_t *bullet = W_Fire_TossProjectile( self, start, angles, 3000, 12, 0, 0, 0, 0, 9000, timeDelta );
+	edict_t *bullet = W_Fire_TossProjectile( self, start, angles, 3000, damage, 0, 0, 0, 0, 9000, timeDelta );
 
 	bullet->s.type = ET_PLASMA;
 	bullet->movetype = MOVETYPE_TOSS;
