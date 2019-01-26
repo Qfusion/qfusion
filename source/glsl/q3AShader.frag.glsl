@@ -57,7 +57,7 @@ void main(void)
 #endif
 
 #if defined(APPLY_SOFT_PARTICLE)
-	float softness = FragmentSoftness(v_Depth, u_DepthTexture, gl_FragCoord.xy, u_ZRange);
+	float softness = FragmentSoftness(v_Depth, u_DepthTexture, gl_FragCoord.xy, u_NearClip);
 	color *= mix(vec4(1.0), vec4(softness), u_BlendMix.xxxy);
 #endif
 

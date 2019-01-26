@@ -21,6 +21,6 @@ uniform float u_ColorMod;
 uniform vec4 u_TextureMatrix[2];
 #define TextureMatrix2x3Mul(m2x3,tc) (vec2(dot((m2x3)[0].xy, (tc)), dot((m2x3)[0].zw, (tc))) + (m2x3)[1].xy)
 
-uniform vec2 u_ZRange;
+uniform float u_NearClip;
 
 uniform vec4 u_TextureParams;

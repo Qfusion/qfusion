@@ -370,57 +370,9 @@ void Matrix4_OrthoProjection( vec_t left, vec_t right, vec_t bottom, vec_t top,
 }
 
 /*
-* Matrix4_InfiniteOrthoProjection
-*/
-void Matrix4_InfiniteOrthoProjection( vec_t left, vec_t right, vec_t bottom, vec_t top,
-										   mat4_t m ) {
-	m[0] = 2.0f / ( right - left );
-	m[1] = 0.0f;
-	m[2] = 0.0f;
-	m[3] = 0.0f;
-
-	m[4] = 0.0f;
-	m[5] = 2.0f / ( top - bottom );
-	m[6] = 0.0f;
-	m[7] = 0.0f;
-
-	m[8] = 0.0f;
-	m[9] = 0.0f;
-	m[10] = 0.0f;
-	m[11] = 0.0f;
-
-	m[12] = -( right + left ) / ( right - left );
-	m[13] = -( top + bottom ) / ( top - bottom );
-	m[14] = -1.0f;
-	m[15] = 1.0f;
-}
-
-/*
 * Matrix4_PerspectiveProjection
 */
-void Matrix4_PerspectiveProjection( vec_t fov_x, vec_t fov_y, vec_t near, vec_t far, mat4_t m ) {
-	m[0] = 1.0f / tan( fov_x * M_PI / 360.0 );
-	m[1] = 0.0f;
-	m[2] = 0.0f;
-	m[3] = 0.0f;
-	m[4] = 0.0f;
-	m[5] = 1.0f / tan( fov_y * M_PI / 360.0 );
-	m[6] = 0.0f;
-	m[7] = 0.0f;
-	m[8] = 0.0f;
-	m[9] = 0.0f;
-	m[10] = -( far + near ) / ( far - near );
-	m[11] = -1.0f;
-	m[12] = 0.0f;
-	m[13] = 0.0f;
-	m[14] = -( 2.0 * far * near ) / ( far - near );
-	m[15] = 0.0f;
-}
-
-/*
-* Matrix4_InfinitePerspectiveProjection
-*/
-void Matrix4_InfinitePerspectiveProjection( vec_t fov_x, vec_t fov_y, vec_t near, mat4_t m ) {
+void Matrix4_PerspectiveProjection( vec_t fov_x, vec_t fov_y, vec_t near, mat4_t m ) {
 	constexpr float epsilon = 1.0f / ( 1 << 22 );
 	m[0] = 1.0f / tan( fov_x * M_PI / 360.0 );
 	m[1] = 0.0f;
@@ -438,14 +390,6 @@ void Matrix4_InfinitePerspectiveProjection( vec_t fov_x, vec_t fov_y, vec_t near
 	m[13] = 0.0f;
 	m[14] = ( epsilon - 2.0f ) * near;
 	m[15] = 0.0f;
-}
-
-/*
-* Matrix4_PerspectiveProjectionToInfinity
-*/
-void Matrix4_PerspectiveProjectionToInfinity( vec_t near, mat4_t m, vec_t epsilon ) {
-	m[10] = epsilon - 1.0f;
-	m[14] = ( epsilon - 2.0f ) * near;
 }
 
 /*

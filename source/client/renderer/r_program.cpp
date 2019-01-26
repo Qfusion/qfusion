@@ -55,7 +55,7 @@ typedef struct glsl_program_s {
 		int ModelViewMatrix;
 		int ModelViewProjectionMatrix;
 
-		int ZRange;
+		int NearClip;
 
 		int ViewOrigin;
 		int ViewAxis;
@@ -1617,8 +1617,8 @@ void RP_UpdateViewUniforms( int elem,
 		glUniformMatrix4fv( program->loc.ModelViewProjectionMatrix, 1, GL_FALSE, modelviewProjectionMatrix );
 	}
 
-	if( program->loc.ZRange >= 0 ) {
-		glUniform2f( program->loc.ZRange, zNear, zFar );
+	if( program->loc.NearClip >= 0 ) {
+		glUniform1f( program->loc.NearClip, zNear );
 	}
 
 	if( viewOrigin ) {
@@ -1813,7 +1813,7 @@ static void RP_GetUniformLocations( glsl_program_t *program ) {
 	program->loc.ModelViewMatrix = glGetUniformLocation( program->object, "u_ModelViewMatrix" );
 	program->loc.ModelViewProjectionMatrix = glGetUniformLocation( program->object, "u_ModelViewProjectionMatrix" );
 
-	program->loc.ZRange = glGetUniformLocation( program->object, "u_ZRange" );
+	program->loc.NearClip = glGetUniformLocation( program->object, "u_NearClip" );
 
 	program->loc.ViewOrigin = glGetUniformLocation( program->object, "u_ViewOrigin" );
 	program->loc.ViewAxis = glGetUniformLocation( program->object, "u_ViewAxis" );

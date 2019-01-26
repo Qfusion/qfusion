@@ -2,11 +2,11 @@
 
 uniform float u_SoftParticlesScale;
 
-float FragmentSoftness(float Depth, sampler2D DepthTexture, in vec2 ScreenCoord, in vec2 ZRange)
+float FragmentSoftness(float Depth, sampler2D DepthTexture, in vec2 ScreenCoord, in float NearClip)
 {
 	vec2 tc = ScreenCoord * u_TextureParams.zw;
 
-	float fragdepth = ZRange.x*ZRange.y/(ZRange.y - qf_texture(DepthTexture, tc).r*(ZRange.y-ZRange.x));
+	float fragdepth = NearClip / ( 1.0 - qf_texture(DepthTexture, tc).r );
 	float partdepth = Depth;
 	
 	float d = max((fragdepth - partdepth) * u_SoftParticlesScale, 0.0);

@@ -39,10 +39,6 @@ void R_InitSky() {
 }
 
 void R_DrawSky( const refdef_t * rd ) {
-	mat4_t world_to_clip;
-	Matrix4_InfinitePerspectiveProjection( rd->fov_x, rd->fov_y, rn.nearClip, world_to_clip );
-	RB_LoadProjectionMatrix( world_to_clip );
-
 	mat4_t model_to_world;
 	Matrix4_ObjectMatrix( rn.viewOrigin, rn.viewAxis, 1.0f, model_to_world );
 	RB_LoadObjectMatrix( model_to_world );

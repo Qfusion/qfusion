@@ -669,7 +669,7 @@ static void R_SetupViewMatrices_( const refdef_t *rd, const mat4_t camTransform 
 		Matrix4_OrthoProjection( -rd->ortho_x, rd->ortho_x, -rd->ortho_y, rd->ortho_y,
 			rn.nearClip, rn.farClip, proj );
 	} else {
-		Matrix4_PerspectiveProjection( rd->fov_x, rd->fov_y, rn.nearClip, rn.farClip, proj );
+		Matrix4_PerspectiveProjection( rd->fov_x, rd->fov_y, rn.nearClip, proj );
 	}
 
 	Matrix4_Multiply( camTransform, cam, cam_ );
