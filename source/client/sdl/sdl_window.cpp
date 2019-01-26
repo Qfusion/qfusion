@@ -18,16 +18,16 @@
 
  */
 
+#include "qcommon/qcommon.h"
+#include "client/renderer/glad.h"
+
+#include "sdl_window.h"
+#include "icon.h"
+
 #include "sdl/SDL.h"
 #include "sdl/SDL_syswm.h"
 
-#include "qcommon/qcommon.h"
-#include "client/renderer/glad.h"
-#include "client/xpm.h"
-const
-#include "../../../icons/forksow.xpm"
-
-#include "sdl_window.h"
+#include "stb/stb_image.h"
 
 SDL_Window * sdl_window = NULL;
 
@@ -202,26 +202,12 @@ void VID_WindowInit( WindowMode mode, int stencilbits ) {
 		VID_SetVideoMode( mode.video_mode ); // also set frequency
 	}
 
-#ifndef __APPLE__
-	uint32_t r = 0x00ff0000;
-	uint32_t g = 0x0000ff00;
-	uint32_t b = 0x000000ff;
-	uint32_t a = 0xff000000;
-
-#ifndef ENDIAN_LITTLE
-	r = 0x000000ff;
-	g = 0x0000ff00;
-	b = 0x00ff0000;
-	a = 0xff000000;
-#endif
-
-	int * xpm = XPM_ParseIcon( sizeof( ahacheers_xpm ) / sizeof( ahacheers_xpm[ 0 ] ), ahacheers_xpm );
-	SDL_Surface * surface = SDL_CreateRGBSurfaceFrom( ( xpm + 2 ), xpm[ 0 ], xpm[ 1 ], 32, xpm[ 0 ] * 4, r, g, b, a );
-	free( xpm );
-
+	int w, h;
+	uint8_t * icon = stbi_load_from_memory( icon_png, icon_png_len, &w, &h, NULL, 3 );
+	SDL_Surface * surface = SDL_CreateRGBSurfaceFrom( icon, w, h, 24, w * 3, 0, 0, 0, 0 );
 	SDL_SetWindowIcon( sdl_window, surface );
 	SDL_FreeSurface( surface );
-#endif
+	free( icon );
 
 	InitGL( stencilbits );
 }

@@ -22,7 +22,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // is used for both the software and OpenGL rendering versions of the
 // qfusion refresh engine.
 #include "client.h"
-#include "xpm.h"
 #include "ftlib/ftlib_public.h"
 #include "renderer/r_frontend.h"
 #include "sdl/sdl_window.h"
