@@ -39,11 +39,6 @@ void R_InitSky() {
 }
 
 void R_DrawSky( const refdef_t * rd ) {
-	mat4_t oldprojection;
-	mat4_t oldobject;
-	Matrix4_Copy( rb.projectionMatrix, oldprojection );
-	Matrix4_Copy( rb.objectMatrix, oldobject );
-
 	mat4_t world_to_clip;
 	Matrix4_InfinitePerspectiveProjection( rd->fov_x, rd->fov_y, rn.nearClip, world_to_clip );
 	RB_LoadProjectionMatrix( world_to_clip );
@@ -55,7 +50,4 @@ void R_DrawSky( const refdef_t * rd ) {
 	RB_BindShader( NULL, sky_shader );
 	RB_BindVBO( sky_vbo->index, GL_TRIANGLE_STRIP );
 	RB_DrawElements( 0, ARRAY_COUNT( cube_verts ), 0, ARRAY_COUNT( cube_indices ) );
-
-	RB_LoadProjectionMatrix( oldprojection );
-	RB_LoadObjectMatrix( oldobject );
 }
