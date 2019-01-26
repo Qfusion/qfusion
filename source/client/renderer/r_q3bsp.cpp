@@ -1020,7 +1020,7 @@ static void Mod_LoadEntities( const lump_t *l, vec3_t gridSize, vec3_t ambient, 
 /*
 * Mod_Finish
 */
-static void Mod_Finish( const lump_t *faces, vec3_t gridSize, vec3_t ambient, vec3_t outline ) {
+static void Mod_Finish( vec3_t gridSize, vec3_t ambient, vec3_t outline ) {
 	unsigned int i, j;
 	msurface_t *surf;
 	rdface_t *in;
@@ -1127,5 +1127,5 @@ void Mod_LoadQ3BrushModel( model_t *mod, const model_t *parent, void *buffer, bs
 	Mod_LoadLeafs( &header->lumps[LUMP_LEAFS], &header->lumps[LUMP_LEAFFACES] );
 	Mod_LoadNodes( &header->lumps[LUMP_NODES] );
 
-	Mod_Finish( &header->lumps[LUMP_FACES], gridSize, ambient, outline );
+	Mod_Finish( gridSize, ambient, outline );
 }

@@ -256,8 +256,6 @@ static const drawSurf_cb r_drawSurfCb[ST_MAX_TYPES] =
 	NULL,
 	/* ST_BSP */
 	NULL,
-	/* ST_SKY */
-	( drawSurf_cb ) & R_DrawSkySurf,
 	/* ST_ALIAS */
 	( drawSurf_cb ) & R_DrawAliasSurf,
 	/* ST_SKELETAL */
@@ -276,8 +274,6 @@ static const batchDrawSurf_cb r_batchDrawSurfCb[ST_MAX_TYPES] =
 	NULL,
 	/* ST_BSP */
 	( batchDrawSurf_cb ) & R_BatchBSPSurf,
-	/* ST_SKY */
-	NULL,
 	/* ST_ALIAS */
 	NULL,
 	/* ST_SKELETAL */
@@ -296,8 +292,6 @@ static const walkDrawSurf_cb r_walkSurfCb[ST_MAX_TYPES] =
 	NULL,
 	/* ST_BSP */
 	( walkDrawSurf_cb ) & R_WalkBSPSurf,
-	/* ST_SKY */
-	NULL,
 	/* ST_ALIAS */
 	NULL,
 	/* ST_SKELETAL */
@@ -316,8 +310,6 @@ static const flushBatchDrawSurf_cb r_flushBatchSurfCb[ST_MAX_TYPES] =
 	NULL,
 	/* ST_BSP */
 	( flushBatchDrawSurf_cb ) & R_FlushBSPSurfBatch,
-	/* ST_SKY */
-	NULL,
 	/* ST_ALIAS */
 	NULL,
 	/* ST_SKELETAL */
@@ -346,13 +338,11 @@ static void _R_DrawSurfaces( drawList_t *list, bool *depthCopied, int mode, int 
 	const shader_t *shader;
 	const entity_t *entity;
 	float depthmin = 0.0f, depthmax = 0.0f;
-	bool depthHack = false, cullHack = false;
-	bool infiniteProj = false, prevInfiniteProj = false;
+	bool depthHack = false;
 	bool depthWrite = false;
 	bool batchFlushed = true, batchOpaque = false;
 	bool batchMergable = true;
 	int entityFX = 0, prevEntityFX = -1;
-	mat4_t projectionMatrix;
 	int riFBO = 0;
 
 	if( !list ) {
@@ -429,32 +419,6 @@ static void _R_DrawSurfaces( drawList_t *list, bool *depthCopied, int mode, int 
 				}
 			}
 
-			if( entNum != prevEntNum ) {
-				// backface culling for left-handed weapons
-				bool oldCullHack = cullHack;
-				cullHack = ( ( entity->flags & RF_CULLHACK ) ? true : false );
-				if( cullHack != oldCullHack ) {
-					if( batchFlush ) batchFlush();
-					batchFlushed = true;
-					RB_FlipFrontFace();
-				}
-			}
-
-			// sky and things that don't use depth test use infinite projection matrix
-			// to not pollute the farclip
-			infiniteProj = entity->renderfx & RF_NODEPTHTEST ? true : ( shader->flags & SHADER_SKY ? true : false );
-			if( infiniteProj != prevInfiniteProj ) {
-				if( batchFlush ) batchFlush();
-				batchFlushed = true;
-				if( infiniteProj ) {
-					Matrix4_Copy( rn.projectionMatrix, projectionMatrix );
-					Matrix4_PerspectiveProjectionToInfinity( rn.nearClip, projectionMatrix, glConfig.depthEpsilon );
-					RB_LoadProjectionMatrix( projectionMatrix );
-				} else {
-					RB_LoadProjectionMatrix( rn.projectionMatrix );
-				}
-			}
-
 			if( ( prevBatchDrawSurf && !batchDrawSurf ) || ( batchFlush != r_flushBatchSurfCb[drawSurfType] ) ) {
 				if( batchFlush ) batchFlush();
 				batchFlushed = true;
@@ -510,7 +474,6 @@ static void _R_DrawSurfaces( drawList_t *list, bool *depthCopied, int mode, int 
 			prevShaderNum = shaderNum;
 			prevEntNum = entNum;
 			prevBatchDrawSurf = batchDrawSurf;
-			prevInfiniteProj = infiniteProj;
 			prevEntityFX = entityFX;
 		}
 
@@ -531,12 +494,6 @@ static void _R_DrawSurfaces( drawList_t *list, bool *depthCopied, int mode, int 
 
 	if( depthHack ) {
 		RB_DepthRange( depthmin, depthmax );
-	}
-	if( cullHack ) {
-		RB_FlipFrontFace();
-	}
-	if( infiniteProj ) {
-		RB_LoadProjectionMatrix( rn.projectionMatrix );
 	}
 
 	RB_BindFrameBufferObject( riFBO );

@@ -30,8 +30,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 enum {
 	BUILTIN_GLSLPASS_OUTLINE,
-	BUILTIN_GLSLPASS_SKYBOX,
-	MAX_BUILTIN_GLSLPASSES
+	MAX_BUILTIN_GLSLPASSES,
 };
 
 static float rb_sintable[FTABLE_SIZE];
@@ -60,25 +59,16 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 * RB_InitBuiltinPasses
 */
 static void RB_InitBuiltinPasses( void ) {
-	shaderpass_t *pass;
-
 	// init optional GLSL program passes
 	memset( r_GLSLpasses, 0, sizeof( r_GLSLpasses ) );
 
 	// outlines
-	pass = &r_GLSLpasses[BUILTIN_GLSLPASS_OUTLINE];
+	shaderpass_t * pass = &r_GLSLpasses[BUILTIN_GLSLPASS_OUTLINE];
 	pass->flags = GLSTATE_DEPTHWRITE;
 	pass->rgbgen.type = RGB_GEN_OUTLINE;
 	pass->alphagen.type = ALPHA_GEN_OUTLINE;
 	pass->tcgen = TC_GEN_NONE;
 	pass->program_type = GLSL_PROGRAM_TYPE_OUTLINE;
-
-	// skybox
-	pass = &r_GLSLpasses[BUILTIN_GLSLPASS_SKYBOX];
-	pass->program_type = GLSL_PROGRAM_TYPE_Q3A_SHADER;
-	pass->tcgen = TC_GEN_BASE;
-	pass->rgbgen.type = RGB_GEN_IDENTITY;
-	pass->alphagen.type = ALPHA_GEN_IDENTITY;
 }
 
 /*
@@ -334,10 +324,6 @@ static inline const image_t *RB_ShaderpassTex( const shaderpass_t *pass ) {
 
 	if( pass->anim_fps && pass->anim_numframes ) {
 		return pass->images[(int)( pass->anim_fps * rb.currentShaderTime ) % pass->anim_numframes];
-	}
-
-	if( ( pass->flags & SHADERPASS_SKYBOXSIDE ) && rb.skyboxShader && rb.skyboxSide >= 0 ) {
-		return rb.skyboxShader->skyParms.images[rb.skyboxSide];
 	}
 
 	tex = pass->images[0];
@@ -809,7 +795,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 	vec3_t lightDir;
 	vec4_t lightAmbient, lightDiffuse;
 	mat4_t texMatrix, genVectors;
-	bool noDlight = ( rb.surfFlags & (SURF_SKY|SURF_NODLIGHT) ) != 0;
+	bool noDlight = ( rb.surfFlags & SURF_NODLIGHT ) != 0;
 
 	if( isWorldSurface ) {
 		if( rb.mode == RB_MODE_DIFFUSE ) {
@@ -1062,9 +1048,6 @@ void RB_BindShader( const entity_t *e, const shader_t *shader ) {
 	rb.bonesData.numBones = 0;
 	rb.bonesData.maxWeights = 0;
 
-	rb.skyboxShader = NULL;
-	rb.skyboxSide = -1;
-
 	rb.surfFlags = SURF_NODLIGHT;
 
 	if( !e ) {
@@ -1120,33 +1103,6 @@ void RB_SetBonesData( int numBones, dualquat_t *dualQuats, int maxWeights ) {
 	rb.dirtyUniformState = true;
 
 	RB_UpdateVertexAttribs();
-}
-
-/*
-* RB_SetSkyboxShader
-*/
-void RB_SetSkyboxShader( const shader_t *shader ) {
-	if( rb.skyboxShader == shader ) {
-		return;
-	}
-	rb.skyboxShader = shader;
-	rb.dirtyUniformState = true;
-}
-
-/*
-* RB_SetSkyboxSide
-*/
-void RB_SetSkyboxSide( int side ) {
-	if( side < 0 || side >= 6 ) {
-		side = -1;
-	}
-
-	if( rb.skyboxSide == side ) {
-		return;
-	}
-
-	rb.skyboxSide = side;
-	rb.dirtyUniformState = true;
 }
 
 /*

@@ -32,37 +32,20 @@ FRUSTUM AND PVS CULLING
 /*
 * R_SideViewAxis
 */
-static void R_SideViewAxis( const refdef_t *rd, int side, vec3_t forward, vec3_t left, vec3_t up ) {
-	float sign;
-	int a0, a1, a2;
-
-	// 0 - left
-	// 1 - right
-	// 2 - down
-	// 3 - up
-	// 4 - nearclip
-	// 5 - farclip
-
-	sign = side & 1 ? -1 : 1;
-	a0 = (AXIS_FORWARD + 3 * (side >> 1)) % 12;
-	a1 = (AXIS_RIGHT + 3 * (side >> 1)) % 12;
-	a2 = (AXIS_UP + 3 * (side >> 1)) % 12;
-
-	VectorCopy( &rd->viewaxis[a0], forward );
-	VectorCopy( &rd->viewaxis[a1], left );
-	VectorCopy( &rd->viewaxis[a2], up );
-
-	VectorScale( forward, sign, forward );
+static void R_SideViewAxis( const refdef_t *rd, vec3_t forward, vec3_t left, vec3_t up ) {
+	VectorCopy( &rd->viewaxis[AXIS_FORWARD], forward );
+	VectorCopy( &rd->viewaxis[AXIS_RIGHT], left );
+	VectorCopy( &rd->viewaxis[AXIS_UP], up );
 }
 
 /*
 * R_ComputeFrustumSplit
 */
-void R_ComputeFrustumSplit( const refdef_t *rd, int side, float dist, vec3_t corner[4] ) {
+static void R_ComputeFrustumSplit( const refdef_t *rd, float dist, vec3_t corner[4] ) {
 	vec3_t forward, left, up;
 	vec_t fpx, fnx, fpy, fny;
 
-	R_SideViewAxis( rd, side, forward, left, up );
+	R_SideViewAxis( rd, forward, left, up );
 
 	fpx = dist * tan( rd->fov_x * M_PI / 360.0 );
 	fnx = -1.0 * fpx;
@@ -87,13 +70,13 @@ void R_ComputeFrustumSplit( const refdef_t *rd, int side, float dist, vec3_t cor
 }
 
 /*
-* R_SetupSideViewFrustum
+* R_SetupFrustum
 */
-void R_SetupSideViewFrustum( const refdef_t *rd, int side, float nearClip, float farClip, cplane_t *frustum, vec3_t corner[4] ) {
+void R_SetupFrustum( const refdef_t *rd, float nearClip, float farClip, cplane_t *frustum, vec3_t corner[4] ) {
 	int i;
 	vec3_t forward, left, up;
 
-	R_SideViewAxis( rd, side, forward, left, up );
+	R_SideViewAxis( rd, forward, left, up );
 
 	if( rd->rdflags & RDF_USEORTHO ) {
 		VectorNegate( left, frustum[0].normal );
@@ -135,7 +118,7 @@ void R_SetupSideViewFrustum( const refdef_t *rd, int side, float nearClip, float
 
 		// change this dist to nearClip to calculate the near corner
 		// instead of an arbitrary corner on the frustum
-		R_ComputeFrustumSplit( rd, side, 1024.0f, corner );
+		R_ComputeFrustumSplit( rd, 1024.0f, corner );
 	}
 
 	// near clip
@@ -149,13 +132,6 @@ void R_SetupSideViewFrustum( const refdef_t *rd, int side, float nearClip, float
 	frustum[5].type = PLANE_NONAXIAL;
 	frustum[5].dist = DotProduct( rd->vieworg, frustum[5].normal ) - farClip;
 	frustum[5].signbits = SignbitsForPlane( &frustum[5] );
-}
-
-/*
-* R_SetupFrustum
-*/
-void R_SetupFrustum( const refdef_t *rd, float nearClip, float farClip, cplane_t *frustum, vec3_t corner[4] ) {
-	R_SetupSideViewFrustum( rd, 0, nearClip, farClip, frustum, corner );
 }
 
 /*
@@ -352,42 +328,6 @@ bool R_ScissorForBBox( const refinst_t *rnp, vec3_t mins, vec3_t maxs, int *scis
 	}
 
 	return R_ScissorForCorners( rnp, corner, scissor );
-}
-
-/*
-* R_ComputeVolumeSphereForFrustumSplit
-*
-* Computes bounding sphere radius and center coordinate for a frustum split, defined by two split distances.
-*/
-vec_t R_ComputeVolumeSphereForFrustumSplit( const refinst_t *rnp, const vec_t n, const vec_t f, vec3_t center ) {
-	const refdef_t *rd = &rnp->refdef;
-	const vec_t *eye = rd->vieworg;
-	const vec_t *direction = &rd->viewaxis[AXIS_FORWARD];
-	vec_t u, r, u2pr2;
-	vec_t s, radius, dist2;
-
-	u = tan( rd->fov_x * M_PI / 360.0 );
-	r = tan( rd->fov_y * M_PI / 360.0 );
-
-	// the sphere center is equidistant to two corner points on both planes, which leads to:
-	// (s - n)^2 + r^2 + u^2 = (s - f)^2 + r^2(f/n)^2 + u^2(f/n)^2
-	// solving the above for s gives:
-	u2pr2 = u * u + r * r;
-	s = 0.5 * (n + f) * (1.0 + u2pr2);
-
-	if( s >= n ) {
-		// the center lies outside the frustum, move it to the far plane
-		s = f;
-		dist2 = 0.0;
-	} else {
-		// the center is inside the frustum
-		dist2 = (1.0f - s / f);
-		dist2 *= dist2;
-	}
-
-	radius = f * sqrt( dist2 + u2pr2 );
-	VectorMA( eye, s, direction, center );
-	return radius;
 }
 
 /*

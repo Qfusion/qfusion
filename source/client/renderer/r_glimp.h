@@ -128,8 +128,6 @@ typedef struct {
 	unsigned short gammaRampSize;
 	unsigned short originalGammaRamp[3 * GAMMARAMP_STRIDE];
 
-	float depthEpsilon;
-
 	int maxTextureSize;
 	int maxTextureUnits;
 	int maxTextureCubemapSize;

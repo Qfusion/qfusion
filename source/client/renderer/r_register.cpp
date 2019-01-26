@@ -228,8 +228,6 @@ static void R_FinalizeGLExtensions( void ) {
 	glGetIntegerv( GL_MAX_VERTEX_UNIFORM_COMPONENTS, &glConfig.maxVertexUniformComponents );
 	glGetIntegerv( GL_MAX_FRAGMENT_UNIFORM_COMPONENTS, &glConfig.maxFragmentUniformComponents );
 
-	glConfig.depthEpsilon = 1.0 / ( 1 << 22 );
-
 	// require both texture_sRGB and texture_float for sRGB rendering as 8bit framebuffers
 	// run out of precision for linear colors in darker areas
 	glConfig.sSRGB = r_sRGB->integer && glConfig.ext.texture_sRGB;
@@ -506,7 +504,6 @@ static void R_InitVolatileAssets( void ) {
 	R_InitCustomColors();
 
 	rsh.envShader = R_LoadShader( "$environment", SHADER_TYPE_OPAQUE_ENV, true, NULL );
-	rsh.skyShader = R_LoadShader( "$skybox", SHADER_TYPE_SKYBOX, true, NULL );
 	rsh.whiteShader = R_LoadShader( "$whiteimage", SHADER_TYPE_2D, true, NULL );
 
 	if( !rsh.nullVBO ) {
@@ -520,6 +517,9 @@ static void R_InitVolatileAssets( void ) {
 	} else {
 		R_TouchMeshVBO( rsh.postProcessingVBO );
 	}
+
+	printf( "init sky\n" );
+	R_InitSky();
 }
 
 /*

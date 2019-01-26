@@ -251,7 +251,7 @@ void RF_TransformVectorToScreen( const refdef_t *rd, const vec3_t in, vec2_t out
 		Matrix4_OrthoProjection( rd->ortho_x, rd->ortho_x, rd->ortho_y, rd->ortho_y,
 									  -4096.0f, 4096.0f, p );
 	} else {
-		Matrix4_InfinitePerspectiveProjection( rd->fov_x, rd->fov_y, Z_NEAR, p, glConfig.depthEpsilon );
+		Matrix4_InfinitePerspectiveProjection( rd->fov_x, rd->fov_y, Z_NEAR, p );
 	}
 
 	Matrix4_QuakeModelview( rd->vieworg, rd->viewaxis, m );
@@ -270,7 +270,7 @@ void RF_TransformVectorToScreen( const refdef_t *rd, const vec3_t in, vec2_t out
 bool RF_TransformVectorToScreenClamped( const refdef_t *rd, const vec3_t target, int border, vec2_t out ) {
 	float near_plane = 0.0001f;
 	mat4_t p, v;
-	Matrix4_InfinitePerspectiveProjection( rd->fov_x, rd->fov_y, near_plane, p, glConfig.depthEpsilon );
+	Matrix4_InfinitePerspectiveProjection( rd->fov_x, rd->fov_y, near_plane, p );
 	Matrix4_QuakeModelview( rd->vieworg, rd->viewaxis, v );
 
 	vec4_t homo, view, clip;
@@ -370,12 +370,4 @@ shader_t *RF_GetShaderForOrigin( const vec3_t origin ) {
 	}
 
 	return best;
-}
-
-void RF_PushTransformMatrix( bool projection, const float *m ) {
-	rrf.frame->PushTransformMatrix( rrf.frame, projection, m );
-}
-
-void RF_PopTransformMatrix( bool projection ) {
-	rrf.frame->PopTransformMatrix( rrf.frame, projection );
 }

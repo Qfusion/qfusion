@@ -156,8 +156,6 @@ typedef struct mbrushmodel_s {
 	vec3_t gridMins;
 	int gridBounds[4];
 
-	struct skydome_s *skydome;
-
 	unsigned int numDrawSurfaces;
 	drawSurfaceBSP_t *drawSurfaces;
 

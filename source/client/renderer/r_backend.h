@@ -67,7 +67,7 @@ void RB_GetScissor( int *x, int *y, int *w, int *h );
 void RB_ApplyScissor( void );
 void RB_Viewport( int x, int y, int w, int h );
 void RB_GetViewport( int *x, int *y, int *w, int *h );
-void RB_Clear( int bits, float r, float g, float b, float a );
+void RB_Clear( int bits );
 void RB_SetZClip( float zNear, float zFar );
 void RB_SetScreenImageSet( const struct refScreenTexSet_s *st );
 
@@ -89,8 +89,6 @@ void RB_FlushTextureCache( void );
 // shader
 void RB_BindShader( const entity_t *e, const struct shader_s *shader );
 void RB_SetBonesData( int numBones, dualquat_t *dualQuats, int maxWeights );
-void RB_SetSkyboxShader( const shader_t *shader );
-void RB_SetSkyboxSide( int side );
 void RB_SetMode( int mode );
 void RB_SetSurfFlags( int flags );
 void RB_SetRenderFlags( int flags );

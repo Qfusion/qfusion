@@ -50,9 +50,6 @@ enum {
 	REF_CMD_SET_SCISSOR,
 	REF_CMD_RESET_SCISSOR,
 
-	REF_CMD_PUSH_TRANSFORM_MATRIX,
-	REF_CMD_POP_TRANSFORM_MATRIX,
-
 	NUM_REF_CMDS
 };
 
@@ -124,17 +121,6 @@ typedef struct {
 typedef struct {
 	int id;
 } refCmdSync_t;
-
-typedef struct {
-	int id;
-	int proj;
-	float m[16];
-} refCmdPushProjectionMatrix_t;
-
-typedef struct {
-	int id;
-	int proj;
-} refCmdPopProjectionMatrix_t;
 
 static unsigned R_HandleBeginFrameCmd( const void *pcmd ) {
 	const refCmdBeginFrame_t *cmd = ( const refCmdBeginFrame_t * ) pcmd;
@@ -213,18 +199,6 @@ static unsigned R_HandleResetScissorCmd( const void *pcmd ) {
 	return sizeof( *cmd );
 }
 
-static unsigned R_HandlePushProjectionMatrixCmd( const void *pcmd ) {
-	const refCmdPushProjectionMatrix_t *cmd = ( const refCmdPushProjectionMatrix_t * ) pcmd;
-	R_PushTransformMatrix( cmd->proj != 0, cmd->m );
-	return sizeof( *cmd );
-}
-
-static unsigned R_HandlePopProjectionMatrixCmd( const void *pcmd ) {
-	const refCmdPopProjectionMatrix_t *cmd = ( const refCmdPopProjectionMatrix_t * ) pcmd;
-	R_PopTransformMatrix( cmd->proj != 0 );
-	return sizeof( *cmd );
-}
-
 // must match the corresponding REF_CMD_ enums!
 typedef unsigned (*refCmdHandler_t)( const void * );
 static const refCmdHandler_t refCmdHandlers[NUM_REF_CMDS] =
@@ -240,8 +214,6 @@ static const refCmdHandler_t refCmdHandlers[NUM_REF_CMDS] =
 	R_HandleBlurScreenCmd,
 	R_HandleSetScissorCmd,
 	R_HandleResetScissorCmd,
-	R_HandlePushProjectionMatrixCmd,
-	R_HandlePopProjectionMatrixCmd,
 };
 
 // ============================================================================
@@ -474,25 +446,6 @@ static void RF_IssueResetScissorCmd( ref_cmdbuf_t *cmdbuf ) {
 	RF_IssueAbstractCmd( cmdbuf, &cmd, sizeof( cmd ), sizeof( cmd ) );
 }
 
-void RF_IssuePushProjectionMatrixCmd( struct ref_cmdbuf_s *cmdbuf, bool projection, const float *m ) {
-	refCmdPushProjectionMatrix_t cmd;
-
-	cmd.id = REF_CMD_PUSH_TRANSFORM_MATRIX;
-	cmd.proj = projection ? 1 : 0;
-	memcpy( cmd.m, m, sizeof( float ) * 16 );
-
-	RF_IssueAbstractCmd( cmdbuf, &cmd, sizeof( cmd ), sizeof( cmd ) );
-}
-
-void RF_IssuePopProjectionMatrixCmd( struct ref_cmdbuf_s *cmdbuf, bool projection ) {
-	refCmdPopProjectionMatrix_t cmd;
-
-	cmd.id = REF_CMD_POP_TRANSFORM_MATRIX;
-	cmd.proj = projection ? 1 : 0;
-
-	RF_IssueAbstractCmd( cmdbuf, &cmd, sizeof( cmd ), sizeof( cmd ) );
-}
-
 // ============================================================================
 
 static void RF_ClearCmdBuf( ref_cmdbuf_t *cmdbuf ) {
@@ -514,8 +467,6 @@ ref_cmdbuf_t *RF_CreateCmdBuf() {
 	cmdbuf->BlurScreen = &RF_IssueBlurScreenCmd;
 	cmdbuf->SetScissor = &RF_IssueSetScissorCmd;
 	cmdbuf->ResetScissor = &RF_IssueResetScissorCmd;
-	cmdbuf->PushTransformMatrix = &RF_IssuePushProjectionMatrixCmd;
-	cmdbuf->PopTransformMatrix = &RF_IssuePopProjectionMatrixCmd;
 
 	cmdbuf->Clear = &RF_ClearCmdBuf;
 

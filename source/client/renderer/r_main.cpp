@@ -388,16 +388,8 @@ void R_SetupGL2D( void ) {
 	RB_SetCamera( vec3_origin, axis_identity );
 
 	RB_LoadCameraMatrix( mat4x4_identity );
-
-	if( rf.transformMatrixStackSize[0] > 0 )
-		RB_LoadObjectMatrix( rf.transformMatricesStack[0][rf.transformMatrixStackSize[0] - 1] );
-	else
-		RB_LoadObjectMatrix( mat4x4_identity );
-
-	if( rf.transformMatrixStackSize[1] > 0 )
-		RB_LoadProjectionMatrix( rf.transformMatricesStack[1][rf.transformMatrixStackSize[1] - 1] );
-	else
-		RB_LoadProjectionMatrix( projectionMatrix );
+	RB_LoadObjectMatrix( mat4x4_identity );
+	RB_LoadProjectionMatrix( projectionMatrix );
 
 	RB_SetShaderStateMask( ~0, GLSTATE_NO_DEPTH_TEST );
 
@@ -754,34 +746,14 @@ void R_SetupSideViewMatrices( const refdef_t *rd, int side ) {
 /*
 * R_Clear
 */
-static void R_Clear( int bitMask ) {
-	int fbo;
-	int bits;
-	vec4_t envColor;
-	bool clearColor = false;
-
-	fbo = RB_BoundFrameBufferObject();
-
-	if( rn.refdef.rdflags & RDF_NOWORLDMODEL ) {
-		clearColor = rn.renderTarget != rf.renderTarget;
-		Vector4Set( envColor, 1, 1, 1, 0 );
-	} else {
-		clearColor = false;
-
-		Vector4Scale( mapConfig.environmentColor, 1.0 / 255.0, envColor );
-	}
-
-	bits = GL_DEPTH_BUFFER_BIT;
-	if( clearColor ) {
-		bits |= GL_COLOR_BUFFER_BIT;
-	}
+static void R_Clear() {
+	int bits = GL_DEPTH_BUFFER_BIT;
+	int fbo = RB_BoundFrameBufferObject();
 	if( RFB_HasStencilRenderBuffer( fbo ) ) {
 		bits |= GL_STENCIL_BUFFER_BIT;
 	}
 
-	bits &= bitMask;
-
-	RB_Clear( bits, envColor[0], envColor[1], envColor[2], envColor[3] );
+	RB_Clear( bits );
 }
 
 /*
@@ -925,8 +897,6 @@ void R_RenderView( const refdef_t *fd ) {
 	VectorCopy( rn.refdef.vieworg, rn.viewOrigin );
 	Matrix3_Copy( rn.refdef.viewaxis, rn.viewAxis );
 
-	R_ClearSky( &rn.skyDrawSurface );
-
 	if( r_drawflat->integer ) {
 		rn.renderFlags |= RF_DRAWFLAT;
 	}
@@ -974,13 +944,14 @@ void R_RenderView( const refdef_t *fd ) {
 
 	R_SetupGL();
 
-	R_Clear( ~0 );
+	R_Clear();
 
 	if( r_speeds->integer ) {
 		msec = ri.Sys_Milliseconds();
 	}
 
 	R_DrawSurfaces( rn.meshlist );
+	R_DrawSky( fd );
 
 	if( r_speeds->integer ) {
 		rf.stats.t_draw_meshes += ( ri.Sys_Milliseconds() - msec );
@@ -1034,54 +1005,6 @@ void R_PopRefInst( void ) {
 	R_BindRefInstFBO();
 
 	R_SetupGL();
-}
-
-//=======================================================================
-
-/*
-* R_PushTransformMatrix
-*/
-void R_PushTransformMatrix( bool projection, const float *pm ) {
-	int i;
-	int p;
-	int l = projection ? 1 : 0;
-
-	p = rf.transformMatrixStackSize[l];
-	if( p == MAX_PROJMATRIX_STACK_SIZE ) {
-		return;
-	}
-	for( i = 0; i < 16; i++ ) {
-		rf.transformMatricesStack[l][p][i] = pm[i];
-	}
-
-	RB_FlushDynamicMeshes();
-
-	RB_LoadObjectMatrix( rf.transformMatricesStack[l][p] );
-	rf.transformMatrixStackSize[l]++;
-}
-
-/*
-* R_PopTransformMatrix
-*/
-void R_PopTransformMatrix( bool projection ) {
-	int p;
-	int l = projection ? 1 : 0;
-
-	p = rf.transformMatrixStackSize[l];
-	if( p == 0 ) {
-		return;
-	}
-
-	RB_FlushDynamicMeshes();
-
-	if( p == 1 ) {
-		rf.transformMatrixStackSize[l] = 0;
-		RB_LoadObjectMatrix( mat4x4_identity );
-		return;
-	}
-
-	RB_LoadObjectMatrix( rf.transformMatricesStack[l][p - 1] );
-	rf.transformMatrixStackSize[l]--;
 }
 
 //=======================================================================
@@ -1479,9 +1402,6 @@ void R_EndFrame( void ) {
 	R_DrawProfiler();
 
 	VID_Swap(); // TODO: this doesn't belong here
-
-	rf.transformMatrixStackSize[0] = 0;
-	rf.transformMatrixStackSize[1] = 0;
 }
 
 //===================================================================

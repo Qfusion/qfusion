@@ -159,9 +159,6 @@ typedef struct {
 	void ( *StopAviDemo )( void );
 
 	void ( *AppActivate )( bool active, bool minimize );
-
-	void ( *PushTransformMatrix )( bool projection, const float *m );
-	void ( *PopTransformMatrix )( bool projection );
 } ref_export_t;
 
 typedef ref_export_t *(*GetRefAPI_t)( const ref_import_t *imports );
@@ -169,6 +166,3 @@ typedef ref_export_t *(*GetRefAPI_t)( const ref_import_t *imports );
 extern "C" QF_DLL_EXPORT ref_export_t *GetRefAPI( ref_import_t *import );
 
 void R_DrawDynamicPoly( const poly_t * poly );
-
-void RF_PushTransformMatrix( bool projection, const float *m );
-void RF_PopTransformMatrix( bool projection );

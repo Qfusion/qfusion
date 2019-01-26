@@ -18,8 +18,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#ifndef R_FRONTEND_H
-#define R_FRONTEND_H
+#pragma once
 
 #include "r_local.h"
 #include "r_cmdque.h"
@@ -85,15 +84,3 @@ void RF_TransformVectorToScreen( const refdef_t *rd, const vec3_t in, vec2_t out
 bool RF_TransformVectorToScreenClamped( const refdef_t *rd, const vec3_t target, int border, vec2_t out );
 bool RF_LerpTag( orientation_t *orient, const model_t *mod, int oldframe, int frame, float lerpfrac, const char *name );
 shader_t *RF_GetShaderForOrigin( const vec3_t origin );
-
-/**
-* Called by UI when it wants to set the current transform matrix to a new matrix
-*/
-void RF_PushTransformMatrix( bool projection, const float *m );
-
-/**
-* Called by UI when it wants to revert the latest transform matrix change
-*/
-void RF_PopTransformMatrix( bool projection );
-
-#endif // R_FRONTEND_H

@@ -589,7 +589,7 @@ void RB_GetViewport( int *x, int *y, int *w, int *h ) {
 /*
 * RB_Clear
 */
-void RB_Clear( int bits, float r, float g, float b, float a ) {
+void RB_Clear( int bits ) {
 	int state = rb.gl.state;
 
 	if( bits & GL_DEPTH_BUFFER_BIT ) {
@@ -598,11 +598,6 @@ void RB_Clear( int bits, float r, float g, float b, float a ) {
 
 	if( bits & GL_STENCIL_BUFFER_BIT ) {
 		glClearStencil( 128 );
-	}
-
-	if( bits & GL_COLOR_BUFFER_BIT ) {
-		state = ( state & ~GLSTATE_NO_COLORWRITE ) | GLSTATE_ALPHAWRITE;
-		glClearColor( r, g, b, a );
 	}
 
 	RB_SetState( state );

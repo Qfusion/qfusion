@@ -420,7 +420,8 @@ void Matrix4_PerspectiveProjection( vec_t fov_x, vec_t fov_y, vec_t near, vec_t 
 /*
 * Matrix4_InfinitePerspectiveProjection
 */
-void Matrix4_InfinitePerspectiveProjection( vec_t fov_x, vec_t fov_y, vec_t near, mat4_t m, vec_t epsilon ) {
+void Matrix4_InfinitePerspectiveProjection( vec_t fov_x, vec_t fov_y, vec_t near, mat4_t m ) {
+	constexpr float epsilon = 1.0f / ( 1 << 22 );
 	m[0] = 1.0f / tan( fov_x * M_PI / 360.0 );
 	m[1] = 0.0f;
 	m[2] = 0.0f;

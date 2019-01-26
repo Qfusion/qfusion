@@ -42,8 +42,6 @@ typedef struct ref_cmdbuf_s {
 	void ( *BlurScreen )( struct ref_cmdbuf_s *cmdbuf );
 	void ( *SetScissor )( struct ref_cmdbuf_s *cmdbuf, int x, int y, int w, int h );
 	void ( *ResetScissor )( struct ref_cmdbuf_s *cmdbuf );
-	void ( *PushTransformMatrix )( struct ref_cmdbuf_s *cmdbuf, bool projection, const float *m );
-	void ( *PopTransformMatrix )( struct ref_cmdbuf_s *cmdbuf, bool projection );
 
 	// execution proc
 	void ( *Clear )( struct ref_cmdbuf_s *cmdbuf );

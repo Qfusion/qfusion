@@ -49,7 +49,7 @@ bool R_SurfNoDraw( const msurface_t *surf ) {
 * R_SurfNoDlight
 */
 bool R_SurfNoDlight( const msurface_t *surf ) {
-	if( surf->flags & (SURF_NODRAW|SURF_SKY|SURF_NODLIGHT) ) {
+	if( surf->flags & (SURF_NODRAW|SURF_NODLIGHT) ) {
 		return true;
 	}
 	return R_ShaderNoDlight( surf->shader );
@@ -69,10 +69,6 @@ void R_FlushBSPSurfBatch( void ) {
 	}
 
 	batch->count = 0;
-
-	if( shader->flags & SHADER_SKY ) {
-		return;
-	}
 
 	RB_BindShader( e, shader );
 
@@ -155,25 +151,12 @@ void R_WalkBSPSurf( const entity_t *e, const shader_t *shader, drawSurfaceBSP_t 
 static bool R_AddWorldDrawSurfaceToDrawList( const entity_t *e, unsigned ds ) {
 	drawSurfaceBSP_t *drawSurf = rsh.worldBrushModel->drawSurfaces + ds;
 	const shader_t *shader = drawSurf->shader;
-	bool sky;
 	unsigned drawOrder = 0;
 
 	if( !drawSurf->vbo ) {
 		return false;
 	}
 	if( drawSurf->visFrame == rf.frameCount ) {
-		return true;
-	}
-
-	sky = ( shader->flags & SHADER_SKY ) != 0;
-
-	if( sky ) {
-		drawSurf->visFrame = rf.frameCount;
-
-		// the actual skydome surface
-		R_AddSkySurfToDrawList( rn.meshlist, shader, &rn.skyDrawSurface );
-
-		rf.stats.c_world_draw_surfs++;
 		return true;
 	}
 
@@ -426,10 +409,6 @@ static void R_CullVisSurfaces( unsigned firstSurf, unsigned numSurfs, unsigned c
 
 		if( rn.meshlist->worldSurfVis[i] ) {
 			rn.meshlist->worldDrawSurfVis[surf->drawSurf - 1] = 1;
-
-			if( surf->flags & SURF_SKY ) {
-				R_ClipSkySurface( &rn.skyDrawSurface, surf );
-			}
 
 			rf.stats.c_brush_polys++;
 		}

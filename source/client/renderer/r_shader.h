@@ -38,7 +38,6 @@ typedef enum {
 	SHADER_TYPE_2D_RAW,
 	SHADER_TYPE_OPAQUE_ENV,
 	SHADER_TYPE_VIDEO,
-	SHADER_TYPE_SKYBOX,
 	SHADER_TYPE_2D_LINEAR,
 } shaderType_e;
 
@@ -47,18 +46,17 @@ typedef enum {
 // shader flags
 enum {
 	SHADER_DEPTHWRITE               = 1 << 0,
-	SHADER_SKY                      = 1 << 1,
-	SHADER_CULL_FRONT               = 1 << 2,
-	SHADER_CULL_BACK                = 1 << 3,
-	SHADER_POLYGONOFFSET            = 1 << 4,
-	SHADER_ENTITY_MERGABLE          = 1 << 5,
-	SHADER_AUTOSPRITE               = 1 << 6,
-	SHADER_NO_TEX_FILTERING         = 1 << 7,
-	SHADER_ALLDETAIL                = 1 << 8,
-	SHADER_NODRAWFLAT               = 1 << 9,
-	SHADER_SOFT_PARTICLE            = 1 << 10,
-	SHADER_FORCE_OUTLINE_WORLD      = 1 << 11,
-	SHADER_STENCILTEST              = 1 << 12,
+	SHADER_CULL_FRONT               = 1 << 1,
+	SHADER_CULL_BACK                = 1 << 2,
+	SHADER_POLYGONOFFSET            = 1 << 3,
+	SHADER_ENTITY_MERGABLE          = 1 << 4,
+	SHADER_AUTOSPRITE               = 1 << 5,
+	SHADER_NO_TEX_FILTERING         = 1 << 6,
+	SHADER_ALLDETAIL                = 1 << 7,
+	SHADER_NODRAWFLAT               = 1 << 8,
+	SHADER_SOFT_PARTICLE            = 1 << 9,
+	SHADER_FORCE_OUTLINE_WORLD      = 1 << 10,
+	SHADER_STENCILTEST              = 1 << 11,
 };
 
 // sorting
@@ -83,12 +81,11 @@ enum {
 enum {
 	SHADERPASS_DETAIL               = SHADERPASS_MARK_BEGIN << 0,
 	SHADERPASS_GREYSCALE            = SHADERPASS_MARK_BEGIN << 1,
-	SHADERPASS_SKYBOXSIDE           = SHADERPASS_MARK_BEGIN << 2,
 
-	SHADERPASS_AFUNC_GT0            = SHADERPASS_MARK_BEGIN << 3,
-	SHADERPASS_AFUNC_LT128          = SHADERPASS_MARK_BEGIN << 4,
+	SHADERPASS_AFUNC_GT0            = SHADERPASS_MARK_BEGIN << 2,
+	SHADERPASS_AFUNC_LT128          = SHADERPASS_MARK_BEGIN << 3,
 	SHADERPASS_AFUNC_GE128          = SHADERPASS_AFUNC_GT0 | SHADERPASS_AFUNC_LT128,
-	SHADERPASS_NOSRGB               = SHADERPASS_MARK_BEGIN << 5,
+	SHADERPASS_NOSRGB               = SHADERPASS_MARK_BEGIN << 4,
 };
 
 #define SHADERPASS_ALPHAFUNC ( SHADERPASS_AFUNC_GT0 | SHADERPASS_AFUNC_LT128 | SHADERPASS_AFUNC_GE128 )
@@ -191,13 +188,6 @@ typedef struct {
 	shaderfunc_t func;
 } deformv_t;
 
-typedef struct {
-	float height;
-	image_t *images[6];
-	vec3_t lightDir;
-	vec3_t lightColor;
-} shaderskyparms_t;
-
 // Per-pass rendering state information
 typedef struct {
 	unsigned int flags;
@@ -243,8 +233,6 @@ typedef struct shader_s {
 
 	float glossIntensity;
 	float glossExponent;
-
-	shaderskyparms_t skyParms;
 
 	struct shader_s     *prev, *next;
 } shader_t;

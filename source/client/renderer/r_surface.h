@@ -24,7 +24,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 typedef enum {
 	ST_NONE,
 	ST_BSP,
-	ST_SKY,
 	ST_ALIAS,
 	ST_SKELETAL,
 	ST_SPRITE,

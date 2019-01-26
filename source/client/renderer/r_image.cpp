@@ -85,10 +85,6 @@ int R_TextureTarget( int flags, int *uploadTarget ) {
 	if( flags & IT_CUBEMAP ) {
 		target = GL_TEXTURE_CUBE_MAP;
 		target2 = GL_TEXTURE_CUBE_MAP_POSITIVE_X;
-	} else if( flags & IT_ARRAY ) {
-		target = target2 = GL_TEXTURE_2D_ARRAY;
-	} else if( flags & IT_3D ) {
-		target = target2 = GL_TEXTURE_3D;
 	} else {
 		target = target2 = GL_TEXTURE_2D;
 	}
@@ -330,8 +326,6 @@ static int R_ScaledImageSize( int width, int height, int *scaledWidth, int *scal
 		maxSize = glConfig.maxRenderbufferSize;
 	} else if( flags & IT_CUBEMAP ) {
 		maxSize = glConfig.maxTextureCubemapSize;
-	} else if( flags & IT_3D ) {
-		maxSize = glConfig.maxTexture3DSize;
 	} else {
 		maxSize = glConfig.maxTextureSize;
 	}
@@ -580,9 +574,7 @@ static void R_TextureFormat( int flags, int samples, int *comp, int *format, int
 			*type = GL_UNSIGNED_BYTE;
 			*comp = *format;
 
-			if( !( flags & IT_3D ) ) {
-				*comp = R_TextureInternalFormat( samples, flags, GL_UNSIGNED_BYTE );
-			}
+			*comp = R_TextureInternalFormat( samples, flags, GL_UNSIGNED_BYTE );
 		}
 	}
 }
@@ -642,9 +634,6 @@ static void R_SetupTexParameters( int flags, int upload_width, int upload_height
 	}
 	glTexParameteri( target, GL_TEXTURE_WRAP_S, wrap );
 	glTexParameteri( target, GL_TEXTURE_WRAP_T, wrap );
-	if( flags & IT_3D ) {
-		glTexParameteri( target, GL_TEXTURE_WRAP_R, wrap );
-	}
 
 	if( flags & IT_ALPHAMASK ) {
 		glTexParameteri( target, GL_TEXTURE_SWIZZLE_R, GL_ONE );
@@ -667,7 +656,7 @@ static void R_SetupTexParameters( int flags, int upload_width, int upload_height
 /*
 * R_Upload32
 */
-static void R_Upload32( uint8_t **data, int layer,
+static void R_Upload32( uint8_t **data,
 						int x, int y, int width, int height,
 						int flags, int minmipsize, int *upload_width, int *upload_height, int samples,
 						bool subImage, bool noScale ) {
@@ -679,8 +668,7 @@ static void R_Upload32( uint8_t **data, int layer,
 
 	assert( samples );
 
-	R_ScaledImageSize( width, height, &scaledWidth, &scaledHeight, flags, 1, minmipsize,
-					   ( subImage && noScale ) ? true : false );
+	R_ScaledImageSize( width, height, &scaledWidth, &scaledHeight, flags, 1, minmipsize, subImage && noScale );
 
 	R_TextureTarget( flags, &target );
 
@@ -720,17 +708,12 @@ static void R_Upload32( uint8_t **data, int layer,
 
 	R_TextureFormat( flags, samples, &comp, &format, &type );
 
-	if( !( flags & ( IT_ARRAY | IT_3D ) ) ) { // set in R_Create3DImage
-		R_SetupTexParameters( flags, scaledWidth, scaledHeight, minmipsize, samples );
-	}
+	R_SetupTexParameters( flags, scaledWidth, scaledHeight, minmipsize, samples );
 
 	R_UnpackAlignment( 1 );
 
 	if( scaledWidth == width && scaledHeight == height && ( flags & IT_NOMIPMAP ) ) {
-		if( flags & ( IT_ARRAY | IT_3D ) ) {
-			for( i = 0; i < numTextures; i++, target++ )
-				glTexSubImage3D( target, 0, 0, 0, layer, scaledWidth, scaledHeight, 1, format, type, data[i] );
-		} else if( subImage ) {
+		if( subImage ) {
 			for( i = 0; i < numTextures; i++, target++ )
 				glTexSubImage2D( target, 0, x, y, scaledWidth, scaledHeight, format, type, data[i] );
 		} else {
@@ -753,9 +736,7 @@ static void R_Upload32( uint8_t **data, int layer,
 				mip = NULL;
 			}
 
-			if( flags & ( IT_ARRAY | IT_3D ) ) {
-				glTexSubImage3D( target, 0, 0, 0, layer, scaledWidth, scaledHeight, 1, format, type, mip );
-			} else if( subImage ) {
+			if( subImage ) {
 				glTexSubImage2D( target, 0, x, y, scaledWidth, scaledHeight, format, type, mip );
 			} else {
 				glTexImage2D( target, 0, comp, scaledWidth, scaledHeight, 0, format, type, mip );
@@ -779,9 +760,7 @@ static void R_Upload32( uint8_t **data, int layer,
 					}
 					miplevel++;
 
-					if( flags & ( IT_ARRAY | IT_3D ) ) {
-						glTexSubImage3D( target, miplevel, 0, 0, layer, w, h, 1, format, type, mip );
-					} else if( subImage ) {
+					if( subImage ) {
 						glTexSubImage2D( target, miplevel, x, y, w, h, format, type, mip );
 					} else {
 						glTexImage2D( target, miplevel, comp, w, h, 0, format, type, mip );
@@ -887,7 +866,7 @@ static bool R_LoadImageFromDisk( image_t *image ) {
 
 			R_BindImage( image );
 
-			R_Upload32( pic, 0, 0, 0, width, height, flags, image->minmipsize, &image->upload_width,
+			R_Upload32( pic, 0, 0, width, height, flags, image->minmipsize, &image->upload_width,
 				&image->upload_height, samples, false, false );
 
 			Q_strncpyz( image->extension, &pathname[len + k + 2], sizeof( image->extension ) );
@@ -908,7 +887,7 @@ static bool R_LoadImageFromDisk( image_t *image ) {
 
 			R_BindImage( image );
 
-			R_Upload32( &pic, 0, 0, 0, width, height, flags, image->minmipsize, &image->upload_width,
+			R_Upload32( &pic, 0, 0, width, height, flags, image->minmipsize, &image->upload_width,
 						&image->upload_height, samples, false, false );
 
 			Q_strncpyz( image->extension, &pathname[len], sizeof( image->extension ) );
@@ -1025,55 +1004,8 @@ image_t *R_LoadImage( const char *name, uint8_t **pic, int width, int height, in
 
 	R_BindImage( image );
 
-	R_Upload32( pic, 0, 0, 0, width, height, flags, minmipsize,
+	R_Upload32( pic, 0, 0, width, height, flags, minmipsize,
 				&image->upload_width, &image->upload_height, image->samples, false, false );
-
-	return image;
-}
-
-/*
-* R_Create3DImage
-*/
-image_t *R_Create3DImage( const char *name, int width, int height, int layers, int flags, int tags, int samples, bool array ) {
-	image_t *image;
-	int scaledWidth, scaledHeight;
-	int target, comp, format, type;
-
-	assert( array ? ( layers <= glConfig.maxTextureLayers ) : ( layers <= glConfig.maxTexture3DSize ) );
-
-	flags |= ( array ? IT_ARRAY : IT_3D );
-	if( !glConfig.sSRGB ) {
-		flags &= ~IT_SRGB;
-	}
-
-	image = R_CreateImage( name, width, height, layers, flags, 1, tags, samples );
-	R_BindImage( image );
-
-	R_ScaledImageSize( width, height, &scaledWidth, &scaledHeight, flags, 1, 1, false );
-	image->upload_width = scaledWidth;
-	image->upload_height = scaledHeight;
-
-	R_SetupTexParameters( flags, scaledWidth, scaledHeight, 1, samples );
-
-	R_TextureTarget( flags, &target );
-	R_TextureFormat( flags, samples, &comp, &format, &type );
-
-	glTexImage3D( target, 0, comp, scaledWidth, scaledHeight, layers, 0, format, type, NULL );
-
-	if( !( flags & IT_NOMIPMAP ) ) {
-		int miplevel = 0;
-		while( scaledWidth > 1 || scaledHeight > 1 ) {
-			scaledWidth >>= 1;
-			scaledHeight >>= 1;
-			if( scaledWidth < 1 ) {
-				scaledWidth = 1;
-			}
-			if( scaledHeight < 1 ) {
-				scaledHeight = 1;
-			}
-			glTexImage3D( target, miplevel++, comp, scaledWidth, scaledHeight, layers, 0, format, type, NULL );
-		}
-	}
 
 	return image;
 }
@@ -1111,10 +1043,10 @@ void R_ReplaceImage( image_t *image, uint8_t **pic, int width, int height, int f
 	R_BindImage( image );
 
 	if( image->width != width || image->height != height || image->samples != samples ) {
-		R_Upload32( pic, 0, 0, 0, width, height, flags, minmipsize,
+		R_Upload32( pic, 0, 0, width, height, flags, minmipsize,
 					&( image->upload_width ), &( image->upload_height ), samples, false, false );
 	} else {
-		R_Upload32( pic, 0, 0, 0, width, height, flags, minmipsize,
+		R_Upload32( pic, 0, 0, width, height, flags, minmipsize,
 					&( image->upload_width ), &( image->upload_height ), samples, true, false );
 	}
 
@@ -1134,33 +1066,14 @@ void R_ReplaceImage( image_t *image, uint8_t **pic, int width, int height, int f
 /*
 * R_ReplaceSubImage
 */
-void R_ReplaceSubImage( image_t *image, int layer, int x, int y, uint8_t **pic, int width, int height ) {
+void R_ReplaceSubImage( image_t *image, int x, int y, uint8_t **pic, int width, int height ) {
 	assert( image );
 	assert( image->texnum );
 
 	R_BindImage( image );
 
-	R_Upload32( pic, layer, x, y, width, height, image->flags, image->minmipsize,
+	R_Upload32( pic, x, y, width, height, image->flags, image->minmipsize,
 				NULL, NULL, image->samples, true, true );
-
-	if( !( image->flags & IT_NO_DATA_SYNC ) ) {
-		R_DeferDataSync();
-	}
-
-	image->registrationSequence = rsh.registrationSequence;
-}
-
-/*
-* R_ReplaceImageLayer
-*/
-void R_ReplaceImageLayer( image_t *image, int layer, uint8_t **pic ) {
-	assert( image );
-	assert( image->texnum );
-
-	R_BindImage( image );
-
-	R_Upload32( pic, layer, 0, 0, image->width, image->height, image->flags, image->minmipsize,
-				NULL, NULL, image->samples, true, false );
 
 	if( !( image->flags & IT_NO_DATA_SYNC ) ) {
 		R_DeferDataSync();
@@ -1531,7 +1444,7 @@ void R_InitViewportTexture( image_t **texture, const char *name, int id,
 
 			R_BindImage( t );
 
-			R_Upload32( &data, 0, 0, 0, width, height, flags, 1,
+			R_Upload32( &data, 0, 0, width, height, flags, 1,
 						&t->upload_width, &t->upload_height, t->samples, false, false );
 		}
 

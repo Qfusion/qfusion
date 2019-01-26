@@ -142,8 +142,6 @@ typedef struct refinst_s {
 	mat4_t cameraProjectionMatrix;                  // cameraMatrix * projectionMatrix
 	mat4_t modelviewProjectionMatrix;               // modelviewMatrix * projectionMatrix
 
-	drawSurfaceSky_t skyDrawSurface;
-
 	refdef_t refdef;
 
 	unsigned int numEntities;
@@ -179,6 +177,7 @@ typedef struct {
 
 	struct mesh_vbo_s *nullVBO;
 	struct mesh_vbo_s *postProcessingVBO;
+	struct mesh_vbo_s *skyVBO;
 
 	vec3_t wallColor, floorColor;
 
@@ -195,7 +194,6 @@ typedef struct {
 	refScreenTexSet_t st, stf, st2D;
 
 	shader_t *envShader;
-	shader_t *skyShader;
 	shader_t *whiteShader;
 
 	byte_vec4_t customColors[NUM_CUSTOMCOLORS];
@@ -214,7 +212,6 @@ typedef struct {
 	entity_t *worldent;
 	entity_t *polyent;
 	entity_t *polyweapent;
-	entity_t *skyent;
 
 	unsigned int numPolys;
 	drawSurfacePoly_t polys[MAX_POLYS];
@@ -227,8 +224,6 @@ typedef struct {
 
 // global frontend variables are stored here
 // the backend should never attempt reading or modifying them
-#define MAX_PROJMATRIX_STACK_SIZE 16
-
 typedef struct {
 	struct {
 		bool enabled;
@@ -268,9 +263,6 @@ typedef struct {
 	rtrace_t		debugTrace;
 	msurface_t      *debugSurface;
 	qmutex_t        *debugSurfaceLock;
-
-	int transformMatrixStackSize[2];
-	mat4_t transformMatricesStack[2][MAX_PROJMATRIX_STACK_SIZE];
 } r_globals_t;
 
 extern ref_import_t ri;
@@ -364,8 +356,6 @@ void R_ShaderDump_f( void );
 // r_cull.c
 //
 void R_SetupFrustum( const refdef_t *rd, float nearClip, float farClip, cplane_t *frustum, vec3_t corner[4] );
-void R_ComputeFrustumSplit( const refdef_t *rd, int side, float dist, vec3_t corner[4] );
-void R_SetupSideViewFrustum( const refdef_t *rd, int side, float nearClip, float farClip, cplane_t *frustum, vec3_t corner[4] );
 int R_DeformFrustum( const cplane_t *frustum, const vec3_t corners[4], const vec3_t origin, const vec3_t point, cplane_t *deformed );
 bool R_CullBoxCustomPlanes( const cplane_t *p, unsigned nump, const vec3_t mins, const vec3_t maxs, unsigned int clipflags );
 bool R_CullSphereCustomPlanes( const cplane_t *p, unsigned nump, const vec3_t centre, const float radius, unsigned int clipflags );
@@ -376,7 +366,6 @@ bool R_VisCullSphere( const vec3_t origin, float radius );
 bool R_CullModelEntity( const entity_t *e, bool pvsCull );
 void R_OrthoFrustumPlanesFromCorners( vec3_t corners[8], cplane_t *frustum );
 float R_ProjectFarFrustumCornersOnBounds( vec3_t corners[8], const vec3_t mins, const vec3_t maxs );
-vec_t R_ComputeVolumeSphereForFrustumSplit( const refinst_t *rnp, const vec_t dnear, const vec_t dfar, vec3_t center );
 
 //
 // r_framebuffer.c
@@ -503,9 +492,6 @@ void R_BindFrameBufferObject( int object );
 
 void R_Scissor( int x, int y, int w, int h );
 void R_ResetScissor( void );
-
-void R_PushTransformMatrix( bool projection, const float *pm );
-void R_PopTransformMatrix( bool projection );
 
 void R_FrameCache_Free( void );
 void R_FrameCache_Clear( void );
@@ -674,29 +660,8 @@ void R_ShutdownVBO( void );
 // r_sky.c
 //
 
-enum {
-	SKYBOX_RIGHT,
-	SKYBOX_LEFT,
-	SKYBOX_FRONT,
-	SKYBOX_BACK,
-	SKYBOX_TOP,
-	SKYBOX_BOTTOM       // not used for skydome, but is used for skybox
-};
-
-struct skydome_s *R_CreateSkydome( model_t *model );
-void R_TouchSkydome( struct skydome_s *skydome );
-void R_DrawSkySurf( const entity_t *e, const shader_t *shader, drawSurfaceSky_t *drawSurf );
-void R_ClearSky( drawSurfaceSky_t *drawSurf );
-void R_DrawDepthSkySurf( void );
-
-/**
-* Maps world surface to skybox side
-*
-* @param fa world surface
-* @return returns true if surface has been successfully mapped to skybox axis
-*/
-bool R_ClipSkySurface( drawSurfaceSky_t *drawSurf, const msurface_t *fa );
-void *R_AddSkySurfToDrawList( drawList_t *list, const shader_t *shader, drawSurfaceSky_t *drawSurf );
+void R_InitSky();
+void R_DrawSky( const refdef_t * rd );
 
 //====================================================================
 
