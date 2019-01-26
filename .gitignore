@@ -3,8 +3,9 @@
 /build.ninja
 /source/qcommon/gitversion.h
 
-client
-server
+/client
+/server
+
 *.exe
 *.exp
 *.ilk
