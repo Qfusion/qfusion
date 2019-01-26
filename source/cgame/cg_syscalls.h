@@ -197,10 +197,6 @@ static inline int trap_R_GetClippedFragments( const vec3_t origin, float radius,
 											   maxfverts, fverts, maxfragments, fragments );
 }
 
-static inline struct shader_s *trap_R_GetShaderForOrigin( const vec3_t origin ) {
-	return CGAME_IMPORT.R_GetShaderForOrigin( origin );
-}
-
 static inline void trap_R_ClearScene( void ) {
 	CGAME_IMPORT.R_ClearScene();
 }

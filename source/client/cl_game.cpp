@@ -239,8 +239,6 @@ void CL_GameModule_Init( void ) {
 	import.R_SkeletalGetBoneInfo = re.SkeletalGetBoneInfo;
 	import.R_SkeletalGetBonePose = re.SkeletalGetBonePose;
 
-	import.R_GetShaderForOrigin = re.GetShaderForOrigin;
-
 	import.VID_FlashWindow = VID_FlashWindow;
 
 	import.CM_NumInlineModels = CL_GameModule_CM_NumInlineModels;

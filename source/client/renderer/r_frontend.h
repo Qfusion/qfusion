@@ -83,4 +83,3 @@ void RF_StopAviDemo( void );
 void RF_TransformVectorToScreen( const refdef_t *rd, const vec3_t in, vec2_t out );
 bool RF_TransformVectorToScreenClamped( const refdef_t *rd, const vec3_t target, int border, vec2_t out );
 bool RF_LerpTag( orientation_t *orient, const model_t *mod, int oldframe, int frame, float lerpfrac, const char *name );
-shader_t *RF_GetShaderForOrigin( const vec3_t origin );

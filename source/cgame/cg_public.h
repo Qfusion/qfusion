@@ -163,7 +163,6 @@ typedef struct {
 	int ( *R_SkeletalGetNumBones )( const struct model_s *mod, int *numFrames );
 	int ( *R_SkeletalGetBoneInfo )( const struct model_s *mod, int bone, char *name, size_t name_size, int *flags );
 	void ( *R_SkeletalGetBonePose )( const struct model_s *mod, int bone, int frame, struct bonepose_s *bonepose );
-	struct shader_s *( *R_GetShaderForOrigin )( const vec3_t origin );
 
 	void ( *VID_FlashWindow )();
 

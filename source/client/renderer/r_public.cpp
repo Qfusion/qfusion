@@ -53,8 +53,6 @@ extern "C" QF_DLL_EXPORT ref_export_t *GetRefAPI( ref_import_t *import ) {
 	globals.ReplaceRawSubPic = RF_ReplaceRawSubPic;
 	globals.BlurScreen = RF_BlurScreen;
 
-	globals.GetShaderForOrigin = RF_GetShaderForOrigin;
-
 	globals.LerpTag = RF_LerpTag;
 	globals.TransformVectorToScreen = RF_TransformVectorToScreen;
 	globals.TransformVectorToScreenClamped = RF_TransformVectorToScreenClamped;

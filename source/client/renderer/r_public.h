@@ -144,8 +144,6 @@ typedef struct {
 	int ( *GetClippedFragments )( const vec3_t origin, float radius, vec3_t axis[3], int maxfverts, vec4_t *fverts,
 								  int maxfragments, fragment_t *fragments );
 
-	struct shader_s * ( *GetShaderForOrigin )( const vec3_t origin );
-
 	void ( *TransformVectorToScreen )( const refdef_t *rd, const vec3_t in, vec2_t out );
 	bool ( *TransformVectorToScreenClamped )( const refdef_t *rd, const vec3_t target, int border, vec2_t out );
 
