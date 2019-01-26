@@ -20,7 +20,7 @@
 // TODO: organise this crap
 //       maybe move to constants.as
 
-const uint BOMB_MAX_PLANT_SPEED = 400; // can't plant above this speed
+const uint BOMB_MAX_PLANT_SPEED = 150; // can't plant above crouch walk speed
 
 const uint BOMB_DROP_RETAKE_DELAY = 1000; // time (ms) after dropping before you can retake it
 
@@ -54,8 +54,6 @@ const uint BOMB_EXPLOSION_EFFECT_RADIUS = 256;
 
 const uint BOMB_DEAD_CAMERA_DIST = 256;
 
-const uint POINTS_DEFUSE = 0;
-
 const int INITIAL_ATTACKERS = TEAM_ALPHA;
 const int INITIAL_DEFENDERS = TEAM_BETA;
 
@@ -63,7 +61,7 @@ const int SITE_EXPLOSION_POINTS   = 30;
 
 const int SITE_EXPLOSION_MAX_DELAY = 1500; // XXX THIS MUST BE BIGGER THAN BOMB_SPRITE_RESIZE_TIME OR EVERYTHING DIES FIXME?
 
-const float SITE_EXPLOSION_MAX_DIST    = 512.0f;
+const float SITE_EXPLOSION_MAX_DIST = 512.0f;
 
 // jit cries if i use const
 Vec3 BOMB_MINS( -16, -16, -8 );
@@ -71,7 +69,7 @@ Vec3 BOMB_MAXS(  16,  16, 48 ); // same size as player i guess
 
 // cvars
 Cvar cvarRoundTime( "g_bomb_roundtime", "60", CVAR_ARCHIVE );
-Cvar cvarExplodeTime( "g_bomb_bombtimer", "45", CVAR_ARCHIVE );
+Cvar cvarExplodeTime( "g_bomb_bombtimer", "40", CVAR_ARCHIVE );
 Cvar cvarArmTime( "g_bomb_armtime", "1", CVAR_ARCHIVE );
 Cvar cvarDefuseTime( "g_bomb_defusetime", "5", CVAR_ARCHIVE );
 Cvar cvarEnableCarriers( "g_bomb_carriers", "1", CVAR_ARCHIVE );
@@ -254,12 +252,7 @@ void GT_updateScore( Client @client ) {
 	cPlayer @player = @playerFromClient( @client );
 	Stats @stats = @client.stats;
 
-	// 2 * teamDamage because totalDamage includes it
-	client.stats.setScore( int(
-			( stats.frags - stats.teamFrags ) * 0.5
-			+ ( stats.totalDamageGiven - 2 * stats.totalTeamDamageGiven ) * 0.01
-			+ player.defuses * POINTS_DEFUSE )
-	);
+	client.stats.setScore( int( stats.frags * 0.5 + stats.totalDamageGiven * 0.01 ) );
 }
 
 // Some game actions trigger score events. These are events not related to killing
