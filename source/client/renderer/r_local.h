@@ -429,7 +429,6 @@ void R_SetupPVSFromCluster( int cluster, int area );
 void R_SetupPVS( const refdef_t *fd );
 void R_SetCameraAndProjectionMatrices( const mat4_t cam, const mat4_t proj );
 void R_SetupViewMatrices( const refdef_t *rd );
-void R_SetupSideViewMatrices( const refdef_t *rd, int side );
 void R_RenderView( const refdef_t *fd );
 const msurface_t *R_GetDebugSurface( void );
 const char *R_WriteSpeedsMessage( char *out, size_t size );

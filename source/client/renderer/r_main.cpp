@@ -691,59 +691,6 @@ void R_SetupViewMatrices( const refdef_t *rd ) {
 }
 
 /*
-* R_SetupSideViewMatrices
-*/
-void R_SetupSideViewMatrices( const refdef_t *rd, int side ) {
-	const mat4_t rectviewmatrix[6] =
-	{
-		// sign-preserving cubemap projections
-		{ // +X
-			0, 0,-1, 0,
-			0, 1, 0, 0,
-			1, 0, 0, 0,
-			0, 0, 0, 1,
-		},
-		{ // -X
-			0, 0, 1, 0,
-			0, 1, 0, 0,
-			1, 0, 0, 0,
-			0, 0, 0, 1,
-		},
-		{ // +Y
-			1, 0, 0, 0,
-			0, 0,-1, 0,
-			0, 1, 0, 0,
-			0, 0, 0, 1,
-		},
-		{ // -Y
-			1, 0, 0, 0,
-			0, 0, 1, 0,
-			0, 1, 0, 0,
-			0, 0, 0, 1,
-		},
-		{ // +Z
-			1, 0, 0, 0,
-			0, 1, 0, 0,
-			0, 0,-1, 0,
-			0, 0, 0, 1,
-		},
-		{ // -Z
-			1, 0, 0, 0,
-			0, 1, 0, 0,
-			0, 0, 1, 0,
-			0, 0, 0, 1,
-		},
-	};
-
-	assert( side >= 0 && side < 6 );
-	if( side < 0 || side >= 6 ) {
-		return;
-	}
-
-	R_SetupViewMatrices_( rd, rectviewmatrix[side] );
-}
-
-/*
 * R_Clear
 */
 static void R_Clear() {
