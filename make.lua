@@ -124,7 +124,6 @@ end
 dll( "game", {
 	"source/game/*.cpp",
 	"source/gameshared/*.cpp",
-	"source/qalgo/base64.cpp",
 	"source/qalgo/hash.cpp",
 	"source/qalgo/rng.cpp",
 } )
