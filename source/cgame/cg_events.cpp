@@ -567,7 +567,10 @@ static void CG_StartVoiceTokenEffect( int entNum, int vsay ) {
 	}
 
 	// played as it was made by the 1st person player
-	trap_S_StartEntitySound( CG_MediaSfx( sound ), entNum, CHAN_AUTO, cg_volume_voicechats->value, ATTN_DISTANT );
+	if( GS_MatchState() >= MATCH_STATE_POSTMATCH )
+		trap_S_StartGlobalSound( CG_MediaSfx( sound ), CHAN_AUTO, cg_volume_voicechats->value );
+	else
+		trap_S_StartEntitySound( CG_MediaSfx( sound ), entNum, CHAN_AUTO, cg_volume_voicechats->value, ATTN_DISTANT );
 }
 
 //==================================================================

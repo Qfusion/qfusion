@@ -759,7 +759,7 @@ static void G_vsay_f( edict_t *ent, bool team ) {
 		return;
 	}
 
-	if( G_ISGHOSTING( ent ) ) {
+	if( G_ISGHOSTING( ent ) && GS_MatchState() < MATCH_STATE_POSTMATCH ) {
 		return;
 	}
 
