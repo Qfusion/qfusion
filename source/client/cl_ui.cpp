@@ -127,7 +127,7 @@ void UI_Init() {
 		uint8_t * pixels;
 		int width, height;
 		io.Fonts->GetTexDataAsAlpha8( &pixels, &width, &height );
-		struct shader_s * shader = re.RegisterRawAlphaMask( "imgui_font", width, height, pixels );
+		struct shader_s * shader = re.RegisterAlphaMask( "imgui_font", width, height, pixels );
 		io.Fonts->TexID = shader;
 	}
 

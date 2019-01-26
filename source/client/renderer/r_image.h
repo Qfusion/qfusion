@@ -95,8 +95,6 @@ void R_FreeUnusedImages( void );
 void R_InitBuiltinScreenImages( void );
 void R_ReleaseBuiltinScreenImages( void );
 void R_ShutdownImages( void );
-void R_GetRenderBufferSize( const int inWidth, const int inHeight,
-							const int inLimit, const int flags, int *outWidth, int *outHeight );
 void R_InitViewportTexture( image_t **texture, const char *name, int id,
 							int viewportWidth, int viewportHeight, int size, int flags, int tags, int samples );
 void R_InitDrawFlatTexture( void );

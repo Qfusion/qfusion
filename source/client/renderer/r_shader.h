@@ -270,8 +270,7 @@ shader_t    *R_LoadShader( const char *name, shaderType_e type, bool forceDefaul
 
 shader_t    *R_RegisterShader( const char *name, shaderType_e type );
 shader_t    *R_RegisterPic( const char *name );
-shader_t    *R_RegisterRawPic( const char *name, int width, int height, uint8_t *data, int samples );
-shader_t    *R_RegisterRawAlphaMask( const char *name, int width, int height, uint8_t *data );
+shader_t    *R_RegisterAlphaMask( const char *name, int width, int height, uint8_t *data );
 shader_t    *R_RegisterLevelshot( const char *name, shader_t *defaultShader, bool *matchesDefault );
 shader_t    *R_RegisterSkin( const char *name );
 shader_t    *R_RegisterLinearPic( const char *name );

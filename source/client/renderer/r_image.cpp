@@ -1488,8 +1488,7 @@ static void R_InitBlueNoiseTexture( int * w, int * h, int * flags, int * samples
 /*
 * R_GetRenderBufferSize
 */
-void R_GetRenderBufferSize( const int inWidth, const int inHeight,
-							const int inLimit, const int flags, int *outWidth, int *outHeight ) {
+static void R_GetRenderBufferSize( int inWidth, int inHeight, int inLimit, int *outWidth, int *outHeight ) {
 	int limit;
 
 	// limit the texture size to either screen resolution in case we can't use FBO
@@ -1514,7 +1513,7 @@ void R_InitViewportTexture( image_t **texture, const char *name, int id,
 	int width, height;
 	image_t *t;
 
-	R_GetRenderBufferSize( viewportWidth, viewportHeight, size, flags, &width, &height );
+	R_GetRenderBufferSize( viewportWidth, viewportHeight, size, &width, &height );
 
 	// create a new texture or update the old one
 	if( !( *texture ) || ( *texture )->width != width || ( *texture )->height != height ) {
@@ -1672,7 +1671,7 @@ int R_RegisterMultisampleTarget( refScreenTexSet_t *st, int samples, bool useFlo
 	}
 
 	if( !st->multisampleTarget || RFB_GetSamples( st->multisampleTarget ) != samples ) {
-		R_GetRenderBufferSize( glConfig.width, glConfig.height, 0, IT_SPECIAL, &width, &height );
+		R_GetRenderBufferSize( glConfig.width, glConfig.height, 0, &width, &height );
 
 		if( st->multisampleTarget ) {
 			RFB_UnregisterObject( st->multisampleTarget );

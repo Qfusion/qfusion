@@ -2473,14 +2473,13 @@ shader_t *R_RegisterPic( const char *name ) {
 }
 
 /*
-* R_RegisterRawPic_
+* R_RegisterAlphaMask
 *
-* Registers default 2D shader with base image provided as raw data.
+* Registers default alpha mask shader with base image provided as raw alpha values.
 */
-shader_t *R_RegisterRawPic_( const char *name, int width, int height, uint8_t *data, int flags, int samples ) {
+shader_t *R_RegisterAlphaMask( const char *name, int width, int height, uint8_t *data ) {
 	shader_t *s;
 	shaderType_e type = SHADER_TYPE_2D_RAW;
-	flags |= IT_SPECIAL;
 
 	s = R_LoadShader( name, type, true, NULL );
 	if( s ) {
@@ -2490,7 +2489,7 @@ shader_t *R_RegisterRawPic_( const char *name, int width, int height, uint8_t *d
 		image = s->passes[0].images[0];
 		if( !image || image == rsh.noTexture ) {
 			// try to load new image
-			image = R_LoadImage( name, &data, width, height, flags, 1, IMAGE_TAG_GENERIC, samples );
+			image = R_LoadImage( name, &data, width, height, IT_ALPHAMASK | IT_SPECIAL, 1, IMAGE_TAG_GENERIC, 1 );
 			s->passes[0].images[0] = image;
 		} else {
 			// replace current texture data
@@ -2498,24 +2497,6 @@ shader_t *R_RegisterRawPic_( const char *name, int width, int height, uint8_t *d
 		}
 	}
 	return s;
-}
-
-/*
-* R_RegisterRawPic
-*
-* Registers default 2D shader with base image provided as raw color data.
-*/
-shader_t *R_RegisterRawPic( const char *name, int width, int height, uint8_t *data, int samples ) {
-	return R_RegisterRawPic_( name, width, height, data, IT_SRGB, samples );
-}
-
-/*
-* R_RegisterRawAlphaMask
-*
-* Registers default alpha mask shader with base image provided as raw alpha values.
-*/
-shader_t *R_RegisterRawAlphaMask( const char *name, int width, int height, uint8_t *data ) {
-	return R_RegisterRawPic_( name, width, height, data, IT_SRGB|IT_ALPHAMASK, 1 );
 }
 
 /*
