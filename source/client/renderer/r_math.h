@@ -59,4 +59,3 @@ void Matrix4_PerspectiveProjection( vec_t fov_x, vec_t fov_y, vec_t near, mat4_t
 void Matrix4_Modelview( const vec3_t viewOrg, const mat3_t viewAxis, mat4_t m );
 void Matrix4_ObjectMatrix( const vec3_t origin, const mat3_t axis, float scale, mat4_t m );
 void Matrix4_QuakeModelview( const vec3_t viewOrg, const mat3_t viewAxis, mat4_t m );
-void Matrix4_CropMatrixParams( const vec3_t corners[8], const mat4_t m, vec_t *out );

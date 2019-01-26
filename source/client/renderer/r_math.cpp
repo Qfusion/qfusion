@@ -459,38 +459,3 @@ void Matrix4_QuakeModelview( const vec3_t viewOrg, const mat3_t viewAxis, mat4_t
 	Matrix4_Modelview( viewOrg, viewAxis, view );
 	Matrix4_Multiply( flip, view, m );
 }
-
-/*
-* Matrix4_CropMatrixParams
-*/
-void Matrix4_CropMatrixParams( const vec3_t corners[8], const mat4_t m, vec_t *out ) {
-	int i, j;
-	vec3_t mins, maxs;
-
-	// compute the off-center orthographic projection parameters to fit corners into the view
-	for( i = 0; i < 8; i++ ) {
-		vec4_t c = { 0, 0, 0, 1 }, vv;
-
-		VectorCopy( corners[i], c );
-		Matrix4_Multiply_Vector( m, c, vv );
-
-		if( i == 0 ) {
-			for( j = 0; j < 3; j++ ) {
-				mins[j] = vv[j];
-				maxs[j] = vv[j];
-			}
-		} else {
-			for( j = 0; j < 3; j++ ) {
-				mins[j] = min( mins[j], vv[j] );
-				maxs[j] = max( maxs[j], vv[j] );
-			}
-		}
-	}
-
-	out[0] = mins[0];
-	out[1] = maxs[0];
-	out[2] = mins[1];
-	out[3] = maxs[1];
-	out[4] = mins[2];
-	out[5] = maxs[2];
-}
