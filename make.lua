@@ -9,7 +9,7 @@ msvc_obj_cxxflags( ".*", "/W4 /wd4100 /wd4146 /wd4189 /wd4201 /wd4324 /wd4351 /w
 gcc_obj_cxxflags( ".*", "-std=c++11 -static-libstdc++ -msse2 -ffast-math -fno-strict-aliasing -fno-strict-overflow -fvisibility=hidden" )
 gcc_obj_cxxflags( ".*", "-Wall -Wextra -Wno-unused-parameter -Wno-unused-function -Wshadow -Wcast-align -Wvla -Wformat-security" ) -- -Wconversion
 
-obj_cxxflags( ".*", "-DCURL_STATICLIB -D_LIBCPP_TYPE_TRAITS" )
+obj_cxxflags( ".*", "-D_LIBCPP_TYPE_TRAITS" )
 
 if config == "release" then
 	obj_cxxflags( ".*", "-DMICROPROFILE_ENABLED=0" )
@@ -68,7 +68,6 @@ do
 	} )
 
 	obj_cxxflags( "source/client/ftlib/.+", "-I libs/freetype" )
-	obj_cxxflags( "source/client/sound/.+", "-DAL_LIBTYPE_STATIC" )
 end
 
 do

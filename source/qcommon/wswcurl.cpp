@@ -15,9 +15,11 @@
 #include <stdarg.h>
 #include <string.h>
 #include <time.h>
-#include "curl/curl.h"
 #include "wswcurl.h"
 #include "qcommon.h"
+
+#define CURL_STATICLIB
+#include "curl/curl.h"
 
 ///////////////////////
 #define WMALLOC( x )      _Mem_Alloc( wswcurl_mempool, x, 0, 0, __FILE__, __LINE__ )

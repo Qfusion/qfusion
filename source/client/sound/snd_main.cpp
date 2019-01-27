@@ -1,6 +1,7 @@
 #include "qcommon/qcommon.h"
 #include "snd_public.h"
 
+#define AL_LIBTYPE_STATIC
 #include "openal/al.h"
 #include "openal/alc.h"
 #include "openal/alext.h"
