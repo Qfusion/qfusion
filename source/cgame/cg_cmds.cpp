@@ -67,31 +67,6 @@ static void CG_SC_CenterPrint( void ) {
 }
 
 /*
-* CG_SC_CenterPrintFormat
-*/
-static void CG_SC_CenterPrintFormat( void ) {
-	if( trap_Cmd_Argc() == 8 ) {
-		CG_CenterPrint( va( trap_Cmd_Argv( 1 ), trap_Cmd_Argv( 2 ), trap_Cmd_Argv( 3 ),
-							trap_Cmd_Argv( 4 ), trap_Cmd_Argv( 5 ), trap_Cmd_Argv( 6 ), trap_Cmd_Argv( 7 ) ) );
-	} else if( trap_Cmd_Argc() == 7 ) {
-		CG_CenterPrint( va( trap_Cmd_Argv( 1 ), trap_Cmd_Argv( 2 ), trap_Cmd_Argv( 3 ),
-							trap_Cmd_Argv( 4 ), trap_Cmd_Argv( 5 ), trap_Cmd_Argv( 6 ) ) );
-	} else if( trap_Cmd_Argc() == 6 ) {
-		CG_CenterPrint( va( trap_Cmd_Argv( 1 ), trap_Cmd_Argv( 2 ), trap_Cmd_Argv( 3 ),
-							trap_Cmd_Argv( 4 ), trap_Cmd_Argv( 5 ) ) );
-	} else if( trap_Cmd_Argc() == 5 ) {
-		CG_CenterPrint( va( trap_Cmd_Argv( 1 ), trap_Cmd_Argv( 2 ), trap_Cmd_Argv( 3 ),
-							trap_Cmd_Argv( 4 ) ) );
-	} else if( trap_Cmd_Argc() == 4 ) {
-		CG_CenterPrint( va( trap_Cmd_Argv( 1 ), trap_Cmd_Argv( 2 ), trap_Cmd_Argv( 3 ) ) );
-	} else if( trap_Cmd_Argc() == 3 ) {
-		CG_CenterPrint( va( trap_Cmd_Argv( 1 ), trap_Cmd_Argv( 2 ) ) );
-	} else if( trap_Cmd_Argc() == 2 ) {
-		CG_CenterPrint( trap_Cmd_Argv( 1 ) ); // theoretically, shouldn't happen
-	}
-}
-
-/*
 * CG_ConfigString
 */
 void CG_ConfigString( int i, const char *s ) {
@@ -521,7 +496,6 @@ static const svcmd_t cg_svcmds[] =
 	{ "ch", CG_SC_ChatPrint },
 	{ "tch", CG_SC_ChatPrint },
 	{ "cp", CG_SC_CenterPrint },
-	{ "cpf", CG_SC_CenterPrintFormat },
 	{ "obry", CG_SC_Obituary },
 	{ "scb", CG_SC_Scoreboard },
 	{ "plstats", CG_SC_PlayerStats },

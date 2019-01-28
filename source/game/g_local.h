@@ -553,12 +553,10 @@ int G_PlayerGender( edict_t *player );
 void G_PrintMsg( edict_t *ent, const char *format, ... ) __attribute__( ( format( printf, 2, 3 ) ) );
 void G_ChatMsg( edict_t *ent, edict_t *who, bool teamonly, const char *format, ... ) __attribute__( ( format( printf, 4, 5 ) ) );
 void G_CenterPrintMsg( edict_t *ent, const char *format, ... ) __attribute__( ( format( printf, 2, 3 ) ) );
-void G_CenterPrintFormatMsg( edict_t *ent, int numVargs, const char *format, ... ) __attribute__( ( format( printf, 3, 4 ) ) );
 #else
 void G_PrintMsg( edict_t *ent, _Printf_format_string_ const char *format, ... );
 void G_ChatMsg( edict_t *ent, edict_t *who, bool teamonly, _Printf_format_string_ const char *format, ... );
 void G_CenterPrintMsg( edict_t *ent, _Printf_format_string_ const char *format, ... );
-void G_CenterPrintFormatMsg( edict_t *ent, int numVargs, _Printf_format_string_ const char *format, ... );
 #endif
 
 void G_Obituary( edict_t *victim, edict_t *attacker, int mod );
@@ -626,7 +624,6 @@ void SP_trigger_relay( edict_t *ent );
 void SP_trigger_push( edict_t *ent );
 void SP_trigger_hurt( edict_t *ent );
 void SP_trigger_key( edict_t *ent );
-void SP_trigger_counter( edict_t *ent );
 void SP_trigger_elevator( edict_t *ent );
 void SP_trigger_gravity( edict_t *ent );
 

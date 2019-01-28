@@ -245,7 +245,7 @@ void bombPlanted() {
 
 	announce( Announcement_Armed );
 
-	G_CenterPrintFormatMsg( null, "Bomb planted at %s!", bombSite.letter );
+	G_CenterPrintMsg( null, "Bomb planted at " + bombSite.letter + "!" );
 
 	@bombCarrier = null;
 	defuseProgress = 0;
@@ -474,7 +474,7 @@ void bombGiveToRandom() {
 			if( seenCarriers == carrierIdx ) {
 				bombSetCarrier( @ent, true );
 
-				G_CenterPrintFormatMsg( null, "%s has the bomb!", client.name );
+				G_CenterPrintMsg( null, client.name + " has the bomb!" );
 
 				break;
 			}

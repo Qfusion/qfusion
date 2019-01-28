@@ -79,11 +79,7 @@ static void G_Timeout_Update( unsigned int msec ) {
 															 countdown_set ) ), GS_MAX_TEAMS, false, NULL );
 			}
 
-			if( seconds_left > 1 ) {
-				G_CenterPrintFormatMsg( NULL, 1, "Match will resume in %s seconds", va( "%i", seconds_left ) );
-			} else {
-				G_CenterPrintMsg( NULL, "Match will resume in 1 second" );
-			}
+			G_CenterPrintMsg( NULL, "Match will resume in %i %s", seconds_left, seconds_left == 1 ? "second" : "seconds" );
 		} else {
 			G_CenterPrintMsg( NULL, "Match paused" );
 		}

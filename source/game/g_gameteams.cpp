@@ -508,7 +508,7 @@ void G_Teams_ExecuteChallengersQueue( void ) {
 		}
 		lasttime = time;
 		if( lasttime ) {
-			G_CenterPrintFormatMsg( NULL, 1, "Waiting... %s", va( "%i", lasttime ) );
+			G_CenterPrintMsg( NULL, "Waiting... %i", lasttime );
 		}
 		return;
 	}

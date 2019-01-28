@@ -121,7 +121,6 @@ spawn_t spawns[] = {
 	{ "trigger_relay", SP_trigger_relay },
 	{ "trigger_push", SP_trigger_push },
 	{ "trigger_hurt", SP_trigger_hurt },
-	{ "trigger_counter", SP_trigger_counter },
 	{ "trigger_elevator", SP_trigger_elevator },
 	{ "trigger_gravity", SP_trigger_gravity },
 

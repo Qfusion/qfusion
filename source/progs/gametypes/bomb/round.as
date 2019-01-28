@@ -81,7 +81,7 @@ void playerKilled( Entity @victim, Entity @attacker, Entity @inflictor ) {
 
 			G_AnnouncerSound( null, sndBongo, GS_MAX_TEAMS, true, null );
 
-			G_CenterPrintFormatMsg( null, "%s is the King of Bongo!", player.client.name );
+			G_CenterPrintMsg( null, player.client.name + " is the King of Bongo!" );
 		}
 	}
 
