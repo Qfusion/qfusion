@@ -11,7 +11,7 @@ local configs = {
 
 		toolchain = "msvc",
 
-		cxxflags = "/c /Oi /Gm- /GR /EHsc /nologo /DNOMINMAX /DWIN32_LEAN_AND_MEAN",
+		cxxflags = "/c /Oi /Gm- /EHsc /nologo /DNOMINMAX /DWIN32_LEAN_AND_MEAN",
 		ldflags = "user32.lib shell32.lib advapi32.lib dbghelp.lib /nologo",
 	},
 
@@ -20,7 +20,7 @@ local configs = {
 		ldflags = "/Od /MDd /Z7 /Zo",
 	},
 	[ "windows-release" ] = {
-		cxxflags = "/O2 /MD /DPUBLIC_BUILD /DNDEBUG",
+		cxxflags = "/O2 /MD /DNDEBUG",
 		bin_prefix = "release/",
 		dll_prefix = "release/base/",
 	},
@@ -50,7 +50,7 @@ local configs = {
 		ldflags = "-fsanitize=address",
 	},
 	[ "linux-release" ] = {
-		cxxflags = "-O2 -DPUBLIC_BUILD -DNDEBUG",
+		cxxflags = "-O2 -DNDEBUG",
 		ldflags = "-s",
 		bin_prefix = "release/",
 		dll_prefix = "release/base/lib",
