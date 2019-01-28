@@ -463,7 +463,7 @@ void G_Damage( edict_t *targ, edict_t *inflictor, edict_t *attacker, const vec3_
 			targ->flags |= FL_NO_KNOCKBACK;
 		}
 
-		if( targ->s.type != ET_CORPSE ) {
+		if( targ->s.type != ET_CORPSE && attacker != targ ) {
 			edict_t * killed = G_SpawnEvent( EV_DAMAGE, 0, targ->s.origin );
 			killed->r.svflags |= SVF_ONLYOWNER;
 			killed->s.ownerNum = ENTNUM( attacker );
