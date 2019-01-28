@@ -146,7 +146,6 @@ typedef struct {
 //
 #define CS_HOSTNAME         0
 #define CS_MAXCLIENTS       1
-#define CS_MODMANIFEST      2
 
 #define SERVER_PROTECTED_CONFIGSTRINGS 4
 

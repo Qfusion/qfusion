@@ -429,7 +429,6 @@ void SV_InitGameProgs( void ) {
 	int apiversion;
 	game_import_t import;
 	game_export_t *( *builtinAPIfunc )( void * ) = NULL;
-	char manifest[MAX_INFO_STRING];
 
 #ifdef GAME_HARD_LINKED
 	builtinAPIfunc = GetGameAPI;
@@ -524,14 +523,10 @@ void SV_InitGameProgs( void ) {
 
 	import.is_dedicated_server = is_dedicated_server;
 
-	// clear module manifest string
-	assert( sizeof( manifest ) >= MAX_INFO_STRING );
-	memset( manifest, 0, sizeof( manifest ) );
-
 	if( builtinAPIfunc ) {
 		ge = builtinAPIfunc( &import );
 	} else {
-		ge = (game_export_t *)Com_LoadGameLibrary( "game", "GetGameAPI", &module_handle, &import, false, manifest );
+		ge = (game_export_t *)Com_LoadGameLibrary( "game", "GetGameAPI", &module_handle, &import );
 	}
 	if( !ge ) {
 		Com_Error( ERR_DROP, "Failed to load game DLL" );
@@ -544,8 +539,6 @@ void SV_InitGameProgs( void ) {
 		ge = NULL;
 		Com_Error( ERR_DROP, "Game is version %i, not %i", apiversion, GAME_API_VERSION );
 	}
-
-	Cvar_ForceSet( "sv_modmanifest", manifest );
 
 	SV_SetServerConfigStrings();
 

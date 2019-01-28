@@ -240,12 +240,6 @@ static const gs_asClassDescriptor_t asMatchClassDescriptor =
 
 // CLASS: GametypeDesc
 
-static asstring_t *objectGametypeDescriptor_getManifest( gametype_descriptor_t *self ) {
-	const char *s = trap_GetConfigString( CS_MODMANIFEST );
-
-	return game.asExport->asStringFactoryBuffer( s, strlen( s ) );
-}
-
 static void objectGametypeDescriptor_SetTeamSpawnsystem( int team, int spawnsystem, int wave_time, int wave_maxcount, bool spectate_team, gametype_descriptor_t *self ) {
 	G_SpawnQueue_SetTeamSpawnsystem( team, spawnsystem, wave_time, wave_maxcount, spectate_team );
 }
@@ -270,7 +264,6 @@ static const gs_asBehavior_t gametypedescr_ObjectBehaviors[] =
 
 static const gs_asMethod_t gametypedescr_Methods[] =
 {
-	{ ASLIB_FUNCTION_DECL( const String @, get_manifest, ( ) const ), asFUNCTION( objectGametypeDescriptor_getManifest ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, setTeamSpawnsystem, ( int team, int spawnsystem, int wave_time, int wave_maxcount, bool deadcam ) ), asFUNCTION( objectGametypeDescriptor_SetTeamSpawnsystem ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( bool, get_hasSelfDamage, ( ) const ), asFUNCTION( objectGametypeDescriptor_hasSelfDamage ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( bool, get_isInvidualGameType, ( ) const ), asFUNCTION( objectGametypeDescriptor_isInvidualGameType ), asCALL_CDECL_OBJLAST },

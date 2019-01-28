@@ -280,14 +280,7 @@ Dynamic library loading
 */
 
 // qcommon/library.c
-typedef struct { const char *name; void **funcPointer; } dllfunc_t;
-
-void Com_UnloadLibrary( void **lib );
-void *Com_LoadLibrary( const char *name, dllfunc_t *funcs ); // NULL-terminated array of functions
-void *Com_LibraryProcAddress( void *lib, const char *name );
-
-void *Com_LoadGameLibrary( const char *basename, const char *apifuncname, void **handle, void *parms,
-						   bool pure, char *manifest );
+void *Com_LoadGameLibrary( const char *basename, const char *apifuncname, void **handle, void *parms );
 void Com_UnloadGameLibrary( void **handle );
 
 /*
@@ -649,7 +642,6 @@ bool    FS_PakFileExists( const char *packfilename );
 const char *FS_FirstExtension( const char *filename, const char *extensions[], int num_extensions );
 const char *FS_PakNameForFile( const char *filename );
 bool    FS_IsPureFile( const char *pakname );
-const char *FS_FileManifest( const char *filename );
 const char *FS_BaseNameForFile( const char *filename );
 
 int         FS_GetFileList( const char *dir, const char *extension, char *buf, size_t bufsize, int start, int end );

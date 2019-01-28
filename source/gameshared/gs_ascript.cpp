@@ -32,7 +32,6 @@ void gs_asemptyfunc( void ) {}
 
 static const gs_asEnumVal_t asConfigstringEnumVals[] =
 {
-	ASLIB_ENUM_VAL( CS_MODMANIFEST ),
 	ASLIB_ENUM_VAL( CS_MESSAGE ),
 	ASLIB_ENUM_VAL( CS_MAPNAME ),
 	ASLIB_ENUM_VAL( CS_HOSTNAME ),

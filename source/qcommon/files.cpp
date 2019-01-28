@@ -47,8 +47,6 @@ QUAKE FILESYSTEM
 #define FS_ZIP_CENTRALHEADERMAGIC   0x02014b50
 #define FS_ZIP_ENDHEADERMAGIC       0x06054b50
 
-#define FS_PAK_MANIFEST_FILE        "manifest.txt"
-
 #define FZ_GZ_BUFSIZE               0x00020000
 
 enum {
@@ -91,7 +89,6 @@ typedef struct packfile_s {
 //
 typedef struct pack_s {
 	char *filename;     // full path
-	char *manifest;
 	unsigned checksum;
 	fs_pure_t pure;
 	bool deferred_load;
@@ -1736,19 +1733,6 @@ bool FS_IsPureFile( const char *filename ) {
 }
 
 /*
-* FS_FileManifest
-*/
-const char *FS_FileManifest( const char *filename ) {
-	searchpath_t *search = FS_SearchPathForFile( filename, NULL, NULL, 0, FS_SEARCH_PAKS );
-
-	if( !search || !search->pack ) {
-		return NULL;
-	}
-
-	return search->pack->manifest;
-}
-
-/*
 * FS_RemoveAbsoluteFile
 */
 bool FS_RemoveAbsoluteFile( const char *filename ) {
@@ -1953,31 +1937,6 @@ bool FS_RemoveDirectory( const char *dirname ) {
 }
 
 /*
-* FS_ReadPackManifest
-*/
-static void FS_ReadPackManifest( pack_t *pack ) {
-	int size;
-	int file = 0;
-	packfile_t *pakFile = NULL;
-
-	if( !FS_SearchPakForFile( pack, FS_PAK_MANIFEST_FILE, &pakFile ) ) {
-		return;
-	}
-
-	size = _FS_FOpenPakFile( pakFile, &file );
-	if( ( size > -1 ) && file ) {
-		pack->manifest = ( char* )FS_Malloc( size + 1 );
-
-		// read the file into memory
-		FS_Read( ( uint8_t * )pack->manifest, size, file );
-		FS_FCloseFile( file );
-
-		// compress (get rid of comments, etc)
-		COM_Compress( pack->manifest );
-	}
-}
-
-/*
 * FS_PK3SearchCentralDir
 *
 * Locate the central directory of a zipfile (at the end, just before the global comment)
@@ -2116,7 +2075,6 @@ static pack_t *FS_LoadPK3File( const char *packfilename, bool silent ) {
 	unsigned char zipHeader[20]; // we can't use a struct here because of packing
 	unsigned offset, centralPos, sizeCentralDir, offsetCentralDir, byteBeforeTheZipFile;
 	bool modulepack;
-	int manifestFilesize;
 	void *handle = NULL;
 
 	if( FS_AbsoluteFileExists( packfilename ) == -1 ) {
@@ -2219,8 +2177,6 @@ static pack_t *FS_LoadPK3File( const char *packfilename, bool silent ) {
 		modulepack = false;
 	}
 
-	manifestFilesize = -1;
-
 	// add all files to the trie
 	for( i = 0, file = pack->files, centralPos = offsetCentralDir + byteBeforeTheZipFile; i < numFiles; i++, file++, centralPos += offset, names += len + 1 ) {
 		const char *ext;
@@ -2248,10 +2204,6 @@ static pack_t *FS_LoadPK3File( const char *packfilename, bool silent ) {
 				}
 				goto error;
 			}
-		} else {
-			if( !Q_stricmp( file->name, FS_PAK_MANIFEST_FILE ) && !( file->flags & FS_PACKFILE_DIRECTORY ) ) {
-				manifestFilesize = file->uncompressedSize;
-			}
 		}
 
 		trie_err = Trie_Replace( pack->trie, file->name, file, (void **)&trie_file );
@@ -2274,11 +2226,6 @@ static pack_t *FS_LoadPK3File( const char *packfilename, bool silent ) {
 	}
 
 	Mem_TempFree( checksums );
-
-	// read manifest file if it's a module pk3
-	if( modulepack && manifestFilesize > 0 ) {
-		FS_ReadPackManifest( pack );
-	}
 
 	if( !silent ) {
 		Com_Printf( "Added pk3 file %s (%i files)\n", pack->filename, pack->numFiles );
