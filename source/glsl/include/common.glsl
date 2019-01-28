@@ -34,6 +34,11 @@ vec4 sRGBFromLinear(vec4 v)
 	return vec4(sRGBFromLinear(v.r), sRGBFromLinear(v.g), sRGBFromLinear(v.b), v.a);
 }
 
+float LinearizeDepth(float ndc, float nearclip)
+{
+	return nearclip / (1.0 - ndc);
+}
+
 #ifdef APPLY_SRGB2LINEAR
 # define LinearColor(c) LinearFromsRGB(c)
 #else
