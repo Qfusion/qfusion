@@ -293,19 +293,24 @@ if toolchain == "msvc" then
 printf( [[
 rule cpp
     command = cl /showIncludes $cxxflags $extra_cxxflags -Fo$out $in
+    description = $in
     deps = msvc
 
 rule bin
     command = cl -Fe$out $in $ldflags $extra_ldflags
+    description = $out
 
 rule lib
     command = lib -OUT:$out $in
+    description = $out
 
 rule dll
     command = cl -LD -Fe$out $in $ldflags $extra_ldflags
+    description = $out
 
 rule rc
     command = rc /fo$out /nologo $in_rc
+    description = $in
 ]] )
 
 elseif toolchain == "gcc" then
@@ -318,21 +323,26 @@ cpp = %s
 rule cpp
     command = $cpp -MD -MF $out.d $cxxflags $extra_cxxflags -c -o $out $in
     depfile = $out.d
+    description = $in
     deps = gcc
 
 rule m
     command = $cpp -MD -MF $out.d $mflags $extra_mflags -c -o $out $in
     depfile = $out.d
+    description = $in
     deps = gcc
 
 rule bin
     command = $cpp -o $out $in $ldflags $extra_ldflags
+    description = $out
 
 rule lib
     command = ar rs $out $in
+    description = $out
 
 rule dll
     command = $cpp -o $out $in $ldflags $extra_ldflags -shared
+    description = $out
 ]], cxx )
 
 end
