@@ -56,12 +56,10 @@ void GENERIC_SetUpWarmup()
 
 void GENERIC_SetUpCountdown( bool respawnItems = true )
 {
-	G_RemoveAllProjectiles();
-
 	if( respawnItems )
 		G_Items_RespawnByType( 0, 0, 0 ); // respawn all items
 
-	gametype.shootingDisabled = true;
+	gametype.shootingDisabled = false;
 	gametype.readyAnnouncementEnabled = false;
 	gametype.scoreAnnouncementEnabled = false;
 	gametype.countdownEnabled = true;
