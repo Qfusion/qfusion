@@ -203,8 +203,8 @@ void VID_WindowInit( WindowMode mode, int stencilbits ) {
 	}
 
 	int w, h;
-	uint8_t * icon = stbi_load_from_memory( icon_png, icon_png_len, &w, &h, NULL, 3 );
-	SDL_Surface * surface = SDL_CreateRGBSurfaceFrom( icon, w, h, 24, w * 3, 0, 0, 0, 0 );
+	uint8_t * icon = stbi_load_from_memory( icon_png, icon_png_len, &w, &h, NULL, 4 );
+	SDL_Surface * surface = SDL_CreateRGBSurfaceFrom( icon, w, h, 32, w * 4, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000 );
 	SDL_SetWindowIcon( sdl_window, surface );
 	SDL_FreeSurface( surface );
 	free( icon );
