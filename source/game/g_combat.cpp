@@ -382,7 +382,7 @@ void G_Damage( edict_t *targ, edict_t *inflictor, edict_t *attacker, const vec3_
 			edict_t * damage = G_SpawnEvent( EV_DAMAGE, 0, targ->s.origin );
 			damage->r.svflags |= SVF_ONLYOWNER;
 			damage->s.ownerNum = ENTNUM( attacker );
-			damage->s.damage = HEALTH_TO_INT( take );
+			damage->s.damage = HEALTH_TO_INT( take / 2.0f );
 		}
 
 		if( GS_IsTeamDamage( &targ->s, &attacker->s ) ) {

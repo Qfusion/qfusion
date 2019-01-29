@@ -709,10 +709,7 @@ void CG_DrawDamageNumbers() {
 			font = cgs.fontSystemSmall;
 		}
 		else {
-			float damage = dn.damage;
-			if( dn.damage > 10 )
-				damage -= dn.damage % 2;
-			Q_snprintfz( buf, sizeof( buf ), "%g", damage / 2.0f );
+			Q_snprintfz( buf, sizeof( buf ), "%d", dn.damage );
 			Vector4Copy( colorWhite, color );
 			font = cgs.fontSystemTiny;
 		}
