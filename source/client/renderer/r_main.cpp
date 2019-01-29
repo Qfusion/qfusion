@@ -694,10 +694,7 @@ void R_SetupViewMatrices( const refdef_t *rd ) {
 * R_Clear
 */
 static void R_Clear() {
-	int bits = GL_DEPTH_BUFFER_BIT;
-	int fbo = RB_BoundFrameBufferObject();
-
-	RB_Clear( bits );
+	RB_Clear( GL_DEPTH_BUFFER_BIT );
 }
 
 /*

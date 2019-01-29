@@ -704,7 +704,7 @@ void CG_DrawDamageNumbers() {
 		vec4_t color;
 		qfontface_s * font;
 		if( dn.damage == MINI_OBITUARY_DAMAGE ) {
-			Q_snprintfz( buf, sizeof( buf ), dn.obituary );
+			Q_strncpyz( buf, dn.obituary, sizeof( buf ) );
 			CG_TeamColor( TEAM_ENEMY, color );
 			font = cgs.fontSystemSmall;
 		}
