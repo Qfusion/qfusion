@@ -2142,7 +2142,7 @@ void CL_Frame( int realMsec, int gameMsec ) {
 
 		// do not allow setting cl_maxfps to very low values to prevent cheating
 		if( cl_maxfps->integer < absMinFps ) {
-			Cvar_ForceSet( "cl_maxfps", STR_TOSTR( absMinFps ) );
+			Cvar_ForceSet( "cl_maxfps", va( "%i", absMinFps ) );
 		}
 		maxFps = VID_AppIsActive() ? cl_maxfps->value : absMinFps;
 		minMsec = max( ( 1000.0f / maxFps ), 1 );

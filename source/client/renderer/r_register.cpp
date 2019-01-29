@@ -518,7 +518,6 @@ static void R_InitVolatileAssets( void ) {
 		R_TouchMeshVBO( rsh.postProcessingVBO );
 	}
 
-	printf( "init sky\n" );
 	R_InitSky();
 }
 
