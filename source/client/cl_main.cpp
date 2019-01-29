@@ -323,7 +323,7 @@ static void CL_Connect( const char *servername, socket_type_t type, netadr_t *ad
 */
 static void CL_Connect_Cmd_f( socket_type_t socket ) {
 	netadr_t serveraddress;
-	char *servername, password[64], autowatch[64] = { 0 };
+	char *servername, password[64];
 	const char *extension;
 	char *connectstring, *connectstring_base;
 	const char *tmp;
@@ -369,16 +369,9 @@ static void CL_Connect_Cmd_f( socket_type_t socket ) {
 		connectstring += ( tmp - connectstring ) + 1;
 	}
 
-	if( ( tmp = Q_strrstr( connectstring, "#" ) ) != NULL ) {
-		Q_strncpyz( autowatch, COM_RemoveColorTokens( tmp + 1 ), sizeof( autowatch ) );
-		connectstring[tmp - connectstring] = '\0';
-	}
-
 	if( ( tmp = Q_strrstr( connectstring, "/" ) ) != NULL ) {
 		connectstring[tmp - connectstring] = '\0';
 	}
-
-	Cvar_ForceSet( "autowatch", autowatch );
 
 	if( !NET_StringToAddress( connectstring, &serveraddress ) ) {
 		Mem_TempFree( connectstring_base );
