@@ -652,7 +652,7 @@ static void CreateServer() {
 		ImGui::PopItemWidth();
 	}
 
-	CvarCheckbox( "Public", "sv_public", "0", CVAR_ARCHIVE | CVAR_LATCH );
+	CvarCheckbox( "Public", "sv_public", "0", CVAR_LATCH );
 
 	if( ImGui::Button( "Create server" ) ) {
 		char mapname[ 128 ];

@@ -636,13 +636,13 @@ void SV_Init( void ) {
 		sv_pure =       Cvar_Get( "sv_pure", "1", CVAR_ARCHIVE | CVAR_LATCH | CVAR_SERVERINFO );
 
 #ifdef PUBLIC_BUILD
-		sv_public =     Cvar_Get( "sv_public", "1", CVAR_ARCHIVE | CVAR_LATCH );
+		sv_public =     Cvar_Get( "sv_public", "1", CVAR_LATCH );
 #else
-		sv_public =     Cvar_Get( "sv_public", "0", CVAR_ARCHIVE | CVAR_LATCH );
+		sv_public =     Cvar_Get( "sv_public", "0", CVAR_LATCH );
 #endif
 	} else {
 		sv_pure =       Cvar_Get( "sv_pure", "0", CVAR_ARCHIVE | CVAR_LATCH | CVAR_SERVERINFO );
-		sv_public =     Cvar_Get( "sv_public", "0", CVAR_ARCHIVE );
+		sv_public =     Cvar_Get( "sv_public", "0", CVAR_LATCH );
 	}
 
 	sv_iplimit = Cvar_Get( "sv_iplimit", "3", CVAR_ARCHIVE );
