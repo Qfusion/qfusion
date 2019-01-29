@@ -19,7 +19,7 @@
  */
 
 #include "qcommon/qcommon.h"
-#include "client/renderer/glad.h"
+#include "glad/glad.h"
 
 #include "sdl_window.h"
 #include "icon.h"

@@ -1,6 +1,7 @@
 require( "ggbuild.gen_ninja" )
 require( "ggbuild.git_version" )
 
+require( "libs.glad" )
 require( "libs.imgui" )
 
 obj_cxxflags( ".*", "-I source -I libs" )
@@ -51,7 +52,7 @@ do
 			platform_srcs
 		},
 
-		libs = { "imgui" },
+		libs = { "glad", "imgui" },
 
 		prebuilt_libs = {
 			"angelscript",

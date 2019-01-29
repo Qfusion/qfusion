@@ -1,4 +1,4 @@
-#include "renderer/glad.h"
+#include "glad/glad.h"
 
 #define MICROPROFILE_MAX_FRAME_HISTORY 2048
 #define MICROPROFILE_GPU_TIMERS_GL 1
