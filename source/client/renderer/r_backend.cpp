@@ -141,12 +141,6 @@ void RB_StatsMessage( char *msg, size_t size ) {
 * RB_SetGLDefaults
 */
 static void RB_SetGLDefaults( void ) {
-	if( glConfig.stencilBits ) {
-		glStencilMask( ( GLuint ) ~0 );
-		glStencilFunc( GL_EQUAL, 128, 0xFF );
-		glStencilOp( GL_KEEP, GL_KEEP, GL_INCR );
-	}
-
 	glDisable( GL_CULL_FACE );
 	glFrontFace( GL_CCW );
 	glDisable( GL_BLEND );
@@ -433,16 +427,6 @@ void RB_SetState( int state ) {
 		}
 	}
 
-	if( diff & GLSTATE_STENCIL_TEST ) {
-		if( glConfig.stencilBits ) {
-			if( state & GLSTATE_STENCIL_TEST ) {
-				glEnable( GL_STENCIL_TEST );
-			} else {
-				glDisable( GL_STENCIL_TEST );
-			}
-		}
-	}
-
 	if( diff & GLSTATE_ALPHATEST ) {
 		if( state & GLSTATE_ALPHATEST ) {
 			glEnable( GL_SAMPLE_ALPHA_TO_COVERAGE );
@@ -594,10 +578,6 @@ void RB_Clear( int bits ) {
 
 	if( bits & GL_DEPTH_BUFFER_BIT ) {
 		state |= GLSTATE_DEPTHWRITE;
-	}
-
-	if( bits & GL_STENCIL_BUFFER_BIT ) {
-		glClearStencil( 128 );
 	}
 
 	RB_SetState( state );

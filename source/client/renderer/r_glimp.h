@@ -66,11 +66,9 @@ enum {
 	GLSTATE_OFFSET_FILL                     = 0x2000,
 	GLSTATE_NO_DEPTH_TEST                   = 0x4000,
 
-	GLSTATE_STENCIL_TEST                    = 0x8000,
+	GLSTATE_ALPHATEST                       = 0x8000,
 
-	GLSTATE_ALPHATEST                       = 0x10000,
-
-	GLSTATE_MARK_END                        = 0x20000 // SHADERPASS_MARK_BEGIN
+	GLSTATE_MARK_END                        = 0x10000 // SHADERPASS_MARK_BEGIN
 };
 
 #define GLSTATE_MASK        ( GLSTATE_MARK_END - 1 )
@@ -122,8 +120,6 @@ typedef struct {
 	bool fullScreen;
 	bool borderless;
 
-	int stencilBits;
-
 	bool hwGamma;
 	unsigned short gammaRampSize;
 	unsigned short originalGammaRamp[3 * GAMMARAMP_STRIDE];
@@ -140,7 +136,6 @@ typedef struct {
 	int maxFragmentUniformComponents;
 	int maxFramebufferSamples;
 
-	bool forceRGBAFramebuffers;             // PowerVR hack - its blending interprets alpha in RGB FBs as 0, not 1
 	bool sSRGB;
 
 	glextinfo_t ext;

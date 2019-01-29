@@ -32,7 +32,7 @@ VideoMode VID_GetVideoMode( int i );
 VideoMode VID_GetCurrentVideoMode();
 void VID_SetVideoMode( VideoMode mode );
 
-void VID_WindowInit( WindowMode mode, int stencilbits );
+void VID_WindowInit( WindowMode mode );
 void VID_WindowShutdown();
 
 void VID_EnableVsync( VsyncEnabled enabled );

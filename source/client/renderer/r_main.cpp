@@ -696,9 +696,6 @@ void R_SetupViewMatrices( const refdef_t *rd ) {
 static void R_Clear() {
 	int bits = GL_DEPTH_BUFFER_BIT;
 	int fbo = RB_BoundFrameBufferObject();
-	if( RFB_HasStencilRenderBuffer( fbo ) ) {
-		bits |= GL_STENCIL_BUFFER_BIT;
-	}
 
 	RB_Clear( bits );
 }

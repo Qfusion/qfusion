@@ -196,11 +196,7 @@ void R_PrintImageList( const char *mask, bool ( *filter )( const char *mask, con
 		}
 
 		if( image->flags & ( IT_DEPTH | IT_DEPTHRB ) ) {
-			if( image->flags & IT_STENCIL ) {
-				bpp += 4;
-			} else {
-				bpp += 3;
-			}
+			bpp += 3;
 		}
 
 		bytes = add * bpp;
@@ -531,13 +527,8 @@ static int R_TextureInternalFormat( int samples, int flags, int pixelType ) {
 */
 static void R_TextureFormat( int flags, int samples, int *comp, int *format, int *type ) {
 	if( flags & IT_DEPTH ) {
-		if( flags & IT_STENCIL ) {
-			*comp = *format = GL_DEPTH_STENCIL;
-			*type = GL_UNSIGNED_INT_24_8;
-		} else {
-			*comp = *format = GL_DEPTH_COMPONENT;
-			*type = GL_UNSIGNED_INT;
-		}
+		*comp = *format = GL_DEPTH_COMPONENT;
+		*type = GL_UNSIGNED_INT;
 	} else if( flags & IT_FRAMEBUFFER ) {
 		if( flags & IT_FLOAT ) {
 			*type = GL_FLOAT;
@@ -1457,7 +1448,6 @@ void R_InitViewportTexture( image_t **texture, const char *name, int id,
 			t->fbo = RFB_RegisterObject( t->upload_width, t->upload_height, 
 				( tags & IMAGE_TAG_BUILTIN ) != 0,
 				( flags & IT_DEPTHRB ) != 0, 
-				( flags & IT_STENCIL ) != 0, 
 				false, 0, false, 
 				( flags & IT_SRGB ) != 0
 			);
@@ -1482,10 +1472,6 @@ static void R_InitScreenImagePair( const char *name, image_t **color, image_t **
 
 	assert( glConfig.width >= 1 && glConfig.height >= 1 );
 
-	if( !glConfig.stencilBits ) {
-		orFlags &= ~IT_STENCIL;
-	}
-
 	flags = IT_SPECIAL;
 	flags |= orFlags;
 
@@ -1494,21 +1480,12 @@ static void R_InitScreenImagePair( const char *name, image_t **color, image_t **
 	if( !depth ) {
 		colorFlags |= IT_DEPTHRB;
 	}
-	if( flags & IT_STENCIL ) {
-		if( depth ) {
-			depthFlags |= IT_STENCIL;
-		} else {
-			colorFlags |= IT_STENCIL;
-		}
-	}
 	if( flags & IT_FLOAT ) {
 		colorFlags |= IT_FLOAT;
 	}
 
 	if( color ) {
-		R_InitViewportTexture( color, name,
-							   0, glConfig.width, glConfig.height, 0, colorFlags, IMAGE_TAG_BUILTIN,
-							   glConfig.forceRGBAFramebuffers ? 4 : 3 );
+		R_InitViewportTexture( color, name, 0, glConfig.width, glConfig.height, 0, colorFlags, IMAGE_TAG_BUILTIN, 3 );
 	}
 	if( depth && color && *color ) {
 		R_InitViewportTexture( depth, va_r( tn, sizeof( tn ), "%s_depth", name ),
@@ -1535,11 +1512,10 @@ static void R_InitBuiltinScreenImageSet( refScreenTexSet_t *st, int flags ) {
 	postfix = useFloat ? "16f" : "";
 
 	Q_snprintfz( name, sizeof( name ), "r_screenTex%s", postfix );
-	R_InitScreenImagePair( name, &st->screenTex, &st->screenDepthTex, IT_STENCIL|flags );
+	R_InitScreenImagePair( name, &st->screenTex, &st->screenDepthTex, flags );
 
-	// stencil is required in the copy for depth/stencil formats to match when blitting.
 	Q_snprintfz( name, sizeof( name ), "r_screenTexCopy%s", postfix );
-	R_InitScreenImagePair( name, &st->screenTexCopy, &st->screenDepthTexCopy, IT_STENCIL|flags );
+	R_InitScreenImagePair( name, &st->screenTexCopy, &st->screenDepthTexCopy, flags );
 
 	for( int j = 0; j < 2; j++ ) {
 		Q_snprintfz( name, sizeof( name ), "rsh.screenPP%sCopy%i", postfix, j );
@@ -1590,8 +1566,7 @@ int R_RegisterMultisampleTarget( refScreenTexSet_t *st, int samples, bool useFlo
 			RFB_UnregisterObject( st->multisampleTarget );
 		}
 
-		st->multisampleTarget = RFB_RegisterObject( width, height, true, true, 
-			glConfig.stencilBits != 0, true, samples, useFloat, sRGB );
+		st->multisampleTarget = RFB_RegisterObject( width, height, true, true, true, samples, useFloat, sRGB );
 	}
 
 	return st->multisampleTarget;

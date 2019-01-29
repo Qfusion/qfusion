@@ -1236,9 +1236,6 @@ static void RB_SetShaderState( void ) {
 	if( shaderFlags & SHADER_POLYGONOFFSET ) {
 		state |= GLSTATE_OFFSET_FILL;
 	}
-	if( shaderFlags & SHADER_STENCILTEST ) {
-		state |= GLSTATE_STENCIL_TEST;
-	}
 
 	if( rb.noDepthTest ) {
 		state |= GLSTATE_NO_DEPTH_TEST;

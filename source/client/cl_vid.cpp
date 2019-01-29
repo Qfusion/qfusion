@@ -215,7 +215,7 @@ void VID_Init() {
 		mode.y = -1;
 	}
 
-	VID_WindowInit( mode, 8 );
+	VID_WindowInit( mode );
 	UpdateVidModeCvar();
 
 	CL_Profiler_InitGL();

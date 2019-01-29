@@ -29,7 +29,6 @@ typedef struct {
 	int registrationSequence; // -1 if builtin
 	unsigned int objectID;
 	unsigned int depthRenderBuffer;
-	unsigned int stencilRenderBuffer;
 	unsigned int colorRenderBuffer;
 	int width, height;
 	int samples;
@@ -72,10 +71,6 @@ static void RFB_DeleteObject( r_fbo_t *fbo ) {
 		glDeleteRenderbuffers( 1, &fbo->depthRenderBuffer );
 	}
 
-	if( fbo->stencilRenderBuffer && ( fbo->stencilRenderBuffer != fbo->depthRenderBuffer ) ) {
-		glDeleteRenderbuffers( 1, &fbo->stencilRenderBuffer );
-	}
-
 	if( fbo->colorRenderBuffer ) {
 		glDeleteRenderbuffers( 1, &fbo->colorRenderBuffer );
 	}
@@ -85,7 +80,6 @@ static void RFB_DeleteObject( r_fbo_t *fbo ) {
 	}
 
 	fbo->depthRenderBuffer = 0;
-	fbo->stencilRenderBuffer = 0;
 	fbo->colorRenderBuffer = 0;
 	fbo->objectID = 0;
 }
@@ -93,8 +87,7 @@ static void RFB_DeleteObject( r_fbo_t *fbo ) {
 /*
 * RFB_RegisterObject
 */
-int RFB_RegisterObject( int width, int height, bool builtin, bool depthRB, bool stencilRB,
-						bool colorRB, int samples, bool useFloat, bool sRGB ) {
+int RFB_RegisterObject( int width, int height, bool builtin, bool depthRB, bool colorRB, int samples, bool useFloat, bool sRGB ) {
 	int i;
 	int format;
 	GLuint fbID;
@@ -139,10 +132,7 @@ found:
 	glBindFramebuffer( GL_FRAMEBUFFER, fbo->objectID );
 
 	if( colorRB ) {
-		format = glConfig.forceRGBAFramebuffers ? GL_RGBA : GL_RGB;
-		if( useFloat ) {
-			format = glConfig.forceRGBAFramebuffers ? GL_RGBA16F : GL_RGB16F;
-		}
+		format = useFloat ? GL_RGB16F : GL_RGB;
 
 		glGenRenderbuffers( 1, &rbID );
 		fbo->colorRenderBuffer = rbID;
@@ -164,20 +154,12 @@ found:
 		fbo->depthRenderBuffer = rbID;
 		glBindRenderbuffer( GL_RENDERBUFFER, rbID );
 
-		if( stencilRB ) {
-			format = GL_DEPTH24_STENCIL8;
-		} else {
-			format = GL_DEPTH_COMPONENT24;
-		}
+		format = GL_DEPTH_COMPONENT24;
 
 		if( samples ) {
 			glRenderbufferStorageMultisample( GL_RENDERBUFFER, samples, format, width, height );
 		} else {
 			glRenderbufferStorage( GL_RENDERBUFFER, format, width, height );
-		}
-
-		if( stencilRB ) {
-			fbo->stencilRenderBuffer = rbID;
 		}
 	}
 
@@ -190,9 +172,6 @@ found:
 	}
 	if( fbo->depthRenderBuffer ) {
 		glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, fbo->depthRenderBuffer );
-	}
-	if( fbo->stencilRenderBuffer ) {
-		glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, fbo->stencilRenderBuffer );
 	}
 
 	if( colorRB && depthRB ) {
@@ -345,16 +324,6 @@ bind:
 
 	// attach texture
 	glFramebufferTexture2D( GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D, texnum, 0 );
-	if( texture ) {
-		if( ( texture->flags & ( IT_DEPTH | IT_STENCIL ) ) == ( IT_DEPTH | IT_STENCIL ) ) {
-			glFramebufferTexture2D( GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_TEXTURE_2D, texnum, 0 );
-		}
-	}
-	else {
-		if( depth ) {
-			glFramebufferTexture2D( GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_TEXTURE_2D, texnum, 0 );
-		}
-	}
 	glBindFramebuffer( GL_FRAMEBUFFER, r_bound_framebuffer_objectID ? r_bound_framebuffer_object->objectID : 0 );
 
 	// check framebuffer status and unbind if failed
@@ -436,24 +405,6 @@ bool RFB_HasDepthRenderBuffer( int object ) {
 
 	fbo = r_framebuffer_objects + object - 1;
 	return fbo->depthRenderBuffer != 0 || fbo->depthTexture != NULL;
-}
-
-/*
-* RFB_HasStencilRenderBuffer
-*/
-bool RFB_HasStencilRenderBuffer( int object ) {
-	r_fbo_t *fbo;
-
-	assert( object >= 0 && object <= r_num_framebuffer_objects );
-	if( object == 0 ) {
-		return glConfig.stencilBits != 0;
-	}
-	if( object < 0 || object > r_num_framebuffer_objects ) {
-		return false;
-	}
-
-	fbo = r_framebuffer_objects + object - 1;
-	return fbo->stencilRenderBuffer != 0;
 }
 
 /*

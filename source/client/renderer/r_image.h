@@ -34,12 +34,11 @@ enum {
 	IT_DEPTHRB           = 1 << 9,    // framebuffer has a depth renderbuffer
 	IT_NOFILTERING       = 1 << 10,
 	IT_ALPHAMASK         = 1 << 11,    // image only contains an alpha mask
-	IT_STENCIL           = 1 << 12,    // for IT_DEPTH or IT_DEPTHRB textures, whether there's stencil
-	IT_NO_DATA_SYNC      = 1 << 13,    // owned by the drawing thread, do not sync in the frontend thread
-	IT_FLOAT             = 1 << 14,
-	IT_SRGB              = 1 << 15,
-	IT_LEFTHALF          = 1 << 16,
-	IT_RIGHTHALF         = 1 << 17,
+	IT_NO_DATA_SYNC      = 1 << 12,    // owned by the drawing thread, do not sync in the frontend thread
+	IT_FLOAT             = 1 << 13,
+	IT_SRGB              = 1 << 14,
+	IT_LEFTHALF          = 1 << 15,
+	IT_RIGHTHALF         = 1 << 16,
 };
 
 /**

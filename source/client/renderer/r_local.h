@@ -378,8 +378,7 @@ enum {
 };
 
 void RFB_Init( void );
-int RFB_RegisterObject( int width, int height, 
-				bool builtin, bool depthRB, bool stencilRB, bool colorRB, int samples, bool useFloat, bool sRGB );
+int RFB_RegisterObject( int width, int height, bool builtin, bool depthRB, bool colorRB, int samples, bool useFloat, bool sRGB );
 void RFB_UnregisterObject( int object );
 void RFB_TouchObject( int object );
 void RFB_BindObject( int object );
@@ -388,7 +387,6 @@ bool RFB_AttachTextureToObject( int object, bool depth, int target, image_t *tex
 image_t *RFB_GetObjectTextureAttachment( int object, bool depth, int target );
 bool RFB_HasColorRenderBuffer( int object );
 bool RFB_HasDepthRenderBuffer( int object );
-bool RFB_HasStencilRenderBuffer( int object );
 int RFB_GetSamples( int object );
 bool RFB_sRGBColorSpace( int object );
 void RFB_BlitObject( int src, int dest, int bitMask, int mode, int filter, int readAtt, int drawAtt );

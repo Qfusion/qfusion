@@ -56,7 +56,6 @@ enum {
 	SHADER_NODRAWFLAT               = 1 << 8,
 	SHADER_SOFT_PARTICLE            = 1 << 9,
 	SHADER_FORCE_OUTLINE_WORLD      = 1 << 10,
-	SHADER_STENCILTEST              = 1 << 11,
 };
 
 // sorting

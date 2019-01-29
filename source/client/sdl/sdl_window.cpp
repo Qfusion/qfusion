@@ -114,9 +114,7 @@ static void gl_debug_output_callback_amd(
         gl_debug_output_callback( GL_DONT_CARE, type, id, severity, length, message, _ );
 }
 
-static bool InitGL( int stencilbits ) {
-	SDL_GL_SetAttribute( SDL_GL_STENCIL_SIZE, max( 0, stencilbits ) );
-
+static bool InitGL() {
 	int flags = SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG;
 #if PUBLIC_BUILD
 	flags |= SDL_GL_CONTEXT_NO_ERROR;
@@ -181,7 +179,7 @@ static bool InitGL( int stencilbits ) {
 	return true;
 }
 
-void VID_WindowInit( WindowMode mode, int stencilbits ) {
+void VID_WindowInit( WindowMode mode ) {
 	uint32_t flags = SDL_WINDOW_OPENGL;
 	if( mode.fullscreen == FullScreenMode_Fullscreen )
 		flags |= SDL_WINDOW_FULLSCREEN;
@@ -209,7 +207,7 @@ void VID_WindowInit( WindowMode mode, int stencilbits ) {
 	SDL_FreeSurface( surface );
 	free( icon );
 
-	InitGL( stencilbits );
+	InitGL();
 }
 
 void VID_WindowShutdown() {
