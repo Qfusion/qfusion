@@ -3,6 +3,7 @@ require( "ggbuild.git_version" )
 
 require( "libs.glad" )
 require( "libs.imgui" )
+require( "libs.stb" )
 
 obj_cxxflags( ".*", "-I source -I libs" )
 
@@ -52,7 +53,13 @@ do
 			platform_srcs
 		},
 
-		libs = { "glad", "imgui" },
+		libs = {
+			"glad",
+			"imgui",
+			"stb_image",
+			"stb_image_write",
+			"stb_vorbis"
+		},
 
 		prebuilt_libs = {
 			"angelscript",
