@@ -964,7 +964,7 @@ static void RenderUI() {
 	re.ResetScissor();
 }
 
-void UI_Refresh( bool background, bool showCursor ) {
+void UI_Refresh() {
 	if( uistate == UIState_Hidden )
 		return;
 
@@ -1001,9 +1001,9 @@ void UI_Refresh( bool background, bool showCursor ) {
 	Cbuf_Execute();
 }
 
-void UI_UpdateConnectScreen( bool background ) {
+void UI_UpdateConnectScreen() {
 	uistate = UIState_Connecting;
-	UI_Refresh( background, false );
+	UI_Refresh();
 }
 
 void UI_KeyEvent( bool mainContext, int key, bool down ) {
@@ -1062,10 +1062,6 @@ void UI_AddToServerList( const char * address, const char *info ) {
 }
 
 void UI_MouseSet( bool mainContext, int mx, int my, bool showCursor ) {
-}
-
-bool UI_MouseHover( bool mainContext ) {
-	return false;
 }
 
 void UI_ShowLoadoutMenu( int primary, int secondary ) {

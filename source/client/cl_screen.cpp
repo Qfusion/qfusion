@@ -564,23 +564,23 @@ void SCR_UpdateScreen( void ) {
 	if( scr_draw_loading == 2 ) {
 		// loading plaque over APP_STARTUP_COLOR screen
 		scr_draw_loading = 0;
-		UI_UpdateConnectScreen( true );
+		UI_UpdateConnectScreen();
 	} else if( cls.state == CA_DISCONNECTED ) {
-		UI_Refresh( true, true );
+		UI_Refresh();
 		SCR_DrawConsole();
 	} else if( cls.state == CA_GETTING_TICKET || cls.state == CA_CONNECTING || cls.state == CA_HANDSHAKE ) {
-		UI_UpdateConnectScreen( true );
+		UI_UpdateConnectScreen();
 	} else if( cls.state == CA_CONNECTED ) {
 		if( cls.cgameActive ) {
-			UI_UpdateConnectScreen( false );
+			UI_UpdateConnectScreen();
 			SCR_RenderView();
 		} else {
-			UI_UpdateConnectScreen( true );
+			UI_UpdateConnectScreen();
 		}
 	} else if( cls.state == CA_ACTIVE ) {
 		SCR_RenderView();
 
-		UI_Refresh( false, true );
+		UI_Refresh();
 
 		if( scr_timegraph->integer ) {
 			SCR_DebugGraph( cls.frametime * 0.3f, 1, 1, 1 );

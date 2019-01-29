@@ -1534,7 +1534,7 @@ void CL_SetClientState( connstate_t state ) {
 	switch( state ) {
 		case CA_DISCONNECTED:
 			Con_Close();
-			UI_Refresh( true, true );
+			UI_Refresh();
 			UI_ShowMainMenu();
 			//UI_MenuMain ();
 			CL_SetKeyDest( key_menu );
@@ -1559,7 +1559,7 @@ void CL_SetClientState( connstate_t state ) {
 			cl_connectChain[0] = '\0';
 			CL_EndRegistration();
 			Con_Close();
-			UI_Refresh( false, false );
+			UI_Refresh();
 			UI_HideMenu();
 			CL_SetKeyDest( key_game );
 			//SCR_UpdateScreen();
