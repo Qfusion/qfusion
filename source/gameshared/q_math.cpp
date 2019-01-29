@@ -22,8 +22,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "q_shared.h"
 #include "q_collision.h"
 
-#include <emmintrin.h>
-
 //============================================================================
 
 vec3_t bytedirs[NUMVERTEXNORMALS] =
@@ -253,24 +251,6 @@ void BuildBoxPoints( vec3_t p[8], const vec3_t org, const vec3_t mins, const vec
 	VectorSet( p[7], p[1][0], p[0][1], p[0][2] );
 }
 
-void ProjectPointOntoPlane( vec3_t dst, const vec3_t p, const vec3_t normal ) {
-	float d;
-	vec3_t n;
-	float inv_denom;
-
-	inv_denom = 1.0F / DotProduct( normal, normal );
-
-	d = DotProduct( normal, p ) * inv_denom;
-
-	n[0] = normal[0] * inv_denom;
-	n[1] = normal[1] * inv_denom;
-	n[2] = normal[2] * inv_denom;
-
-	dst[0] = p[0] - d * n[0];
-	dst[1] = p[1] - d * n[1];
-	dst[2] = p[2] - d * n[2];
-}
-
 //
 // assumes "src" is normalized
 //
@@ -303,6 +283,24 @@ void PerpendicularVector( vec3_t dst, const vec3_t src ) {
 	VectorNormalize( dst );
 }
 
+void ProjectPointOntoPlane( vec3_t dst, const vec3_t p, const vec3_t normal ) {
+	float d;
+	vec3_t n;
+	float inv_denom;
+
+	inv_denom = 1.0F / DotProduct( normal, normal );
+
+	d = DotProduct( normal, p ) * inv_denom;
+
+	n[0] = normal[0] * inv_denom;
+	n[1] = normal[1] * inv_denom;
+	n[2] = normal[2] * inv_denom;
+
+	dst[0] = p[0] - d * n[0];
+	dst[1] = p[1] - d * n[1];
+	dst[2] = p[2] - d * n[2];
+}
+
 /*
 * ProjectPointOntoVector
 */
@@ -314,40 +312,7 @@ void ProjectPointOntoVector( const vec3_t point, const vec3_t vStart, const vec3
 	VectorMA( vStart, DotProduct( pVec, vDir ), vDir, vProj );
 }
 
-/*
-* DistanceFromLineSquared
-*/
-float DistanceFromLineSquared( const vec3_t p, const vec3_t lp1, const vec3_t lp2, const vec3_t dir ) {
-	vec3_t proj, t;
-	int j;
-
-	ProjectPointOntoVector( p, lp1, dir, proj );
-
-	for( j = 0; j < 3; j++ ) {
-		if( ( proj[j] > lp1[j] && proj[j] > lp2[j] ) ||
-			( proj[j] < lp1[j] && proj[j] < lp2[j] ) ) {
-			break;
-		}
-	}
-
-	if( j < 3 ) {
-		if( fabs( proj[j] - lp1[j] ) < fabs( proj[j] - lp2[j] ) ) {
-			VectorSubtract( p, lp1, t );
-		} else {
-			VectorSubtract( p, lp2, t );
-		}
-		return VectorLengthSquared( t );
-	}
-
-	VectorSubtract( p, proj, t );
-	return VectorLengthSquared( t );
-}
-
 //============================================================================
-
-float Q_RSqrt( float x ) {
-	return _mm_cvtss_f32( _mm_rsqrt_ss( _mm_set_ss( x ) ) );
-}
 
 /*
 * LerpAngle
@@ -762,30 +727,6 @@ void BoundsFromRadius( const vec3_t centre, vec_t radius, vec3_t mins, vec3_t ma
 }
 
 /*
-* ClipBounds
-*/
-void ClipBounds( vec3_t mins, vec3_t maxs, const vec3_t mins2, const vec3_t maxs2 ) {
-	int i;
-
-	for( i = 0; i < 3; i++ ) {
-		mins[i] = max( mins[i], mins2[i] );
-		maxs[i] = min( maxs[i], maxs2[i] );
-	}
-}
-
-/*
-* UnionBounds
-*/
-void UnionBounds( vec3_t mins, vec3_t maxs, const vec3_t mins2, const vec3_t maxs2 ) {
-	int i;
-
-	for( i = 0; i < 3; i++ ) {
-		mins[i] = min( mins[i], mins2[i] );
-		maxs[i] = max( maxs[i], maxs2[i] );
-	}
-}
-
-/*
 * BoundsCorners
 */
 void BoundsCorners( const vec3_t mins, const vec3_t maxs, vec3_t corners[8] ) {
@@ -797,56 +738,6 @@ void BoundsCorners( const vec3_t mins, const vec3_t maxs, vec3_t corners[8] ) {
 		corners[j][2] = ( ( j & 4 ) ? mins[2] : maxs[2] );
 	}
 }
-
-/*
-* BoundsOverlapTriangle
-*/
-bool BoundsOverlapTriangle( const vec3_t v1, const vec3_t v2, const vec3_t v3, const vec3_t mins, const vec3_t maxs ) {
-	const vec_t *a = v1, *b = v2, *c = v3;
-	vec3_t tmins = { min( a[0], min( b[0], c[0] ) ), min( a[1], min( b[1], c[1] ) ), min( a[2], min( b[2], c[2] ) ) };
-	vec3_t tmaxs = { max( a[0], max( b[0], c[0] ) ), max( a[1], max( b[1], c[1] ) ), max( a[2], max( b[2], c[2] ) ) };
-	return BoundsOverlap( tmins, tmaxs, mins, maxs );
-}
-
-/*
-* BoundsInsideBounds
-*/
-bool BoundsInsideBounds( const vec3_t mins1, const vec3_t maxs1, const vec3_t mins2, const vec3_t maxs2 ) {
-	const vec_t *a = mins1, *b = maxs1, *c = mins2, *d = maxs2;
-	return ( a[0] >= c[0] && b[0] <= d[0] && a[1] >= c[1]  && b[1] <= d[1] && a[2] >= c[2] && b[2] <= d[2] );
-}
-
-/*
-* BoundsNearestDistance
-*/
-vec_t BoundsNearestDistance( const vec3_t point, const vec3_t mins, const vec3_t maxs ) {
-	int i;
-	vec3_t nearestpoint;
-
-	for( i = 0; i < 3; i++ )
-		nearestpoint[i] = bound( mins[i], point[i], maxs[i] );
-	return DistanceFast( nearestpoint, point );
-}
-
-/*
-* BoundsFurthestDistance
-*/
-vec_t BoundsFurthestDistance( const vec3_t point, const vec3_t mins, const vec3_t maxs ) {
-	int i;
-	vec3_t corners[8];
-	vec_t maxDist = 0;
-
-	BoundsCorners( mins, maxs, corners );
-
-	maxDist = 0;
-	for( i = 0; i < 8; i++ ) {
-		vec_t dist = DistanceSquared( point, corners[i] );
-		maxDist = max( maxDist, dist );
-	}
-
-	return sqrt( maxDist );
-}
-
 
 vec_t VectorNormalize( vec3_t v ) {
 	float length = v[0] * v[0] + v[1] * v[1] + v[2] * v[2];
@@ -907,50 +798,11 @@ void VectorNormalizeFast( vec3_t v ) {
 	v[2] *= ilength;
 }
 
-void _VectorMA( const vec3_t veca, float scale, const vec3_t vecb, vec3_t vecc ) {
-	vecc[0] = veca[0] + scale * vecb[0];
-	vecc[1] = veca[1] + scale * vecb[1];
-	vecc[2] = veca[2] + scale * vecb[2];
-}
-
-
-vec_t _DotProduct( const vec3_t v1, const vec3_t v2 ) {
-	return v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2];
-}
-
-void _VectorSubtract( const vec3_t veca, const vec3_t vecb, vec3_t out ) {
-	out[0] = veca[0] - vecb[0];
-	out[1] = veca[1] - vecb[1];
-	out[2] = veca[2] - vecb[2];
-}
-
-void _VectorAdd( const vec3_t veca, const vec3_t vecb, vec3_t out ) {
-	out[0] = veca[0] + vecb[0];
-	out[1] = veca[1] + vecb[1];
-	out[2] = veca[2] + vecb[2];
-}
-
-void _VectorCopy( const vec3_t in, vec3_t out ) {
-	out[0] = in[0];
-	out[1] = in[1];
-	out[2] = in[2];
-}
-
 int Q_log2( int val ) {
 	int answer = 0;
 	while( val >>= 1 )
 		answer++;
 	return answer;
-}
-
-/*
-* VectorReflect
-*/
-void VectorReflect( const vec3_t v, const vec3_t n, const vec_t dist, vec3_t out ) {
-	vec_t d;
-
-	d = -2 * ( DotProduct( v, n ) - dist );
-	VectorMA( v, d, n, out );
 }
 
 //============================================================================
@@ -1275,12 +1127,6 @@ void Quat_TransformVector( const quat_t q, const vec3_t v, vec3_t out ) {
 	VectorMA( out, q[3], t, out );// 3 muls, 3 adds
 }
 
-void Quat_ConcatTransforms( const quat_t q1, const vec3_t v1, const quat_t q2, const vec3_t v2, quat_t q, vec3_t v ) {
-	Quat_Multiply( q1, q2, q );
-	Quat_TransformVector( q1, v2, v );
-	v[0] += v1[0]; v[1] += v1[1]; v[2] += v1[2];
-}
-
 //============================================================================
 
 void DualQuat_Identity( dualquat_t dq ) {
@@ -1414,74 +1260,6 @@ void DualQuat_Lerp( const dualquat_t dq1, const dualquat_t dq2, vec_t t, dualqua
 	Quat_Normalize( &out[0] );
 }
 
-/*
- * Distribution functions
- * Standard distribution is expected with mean=0, deviation=1
- */
-
-vec_t LogisticCDF( vec_t x ) {
-	return 1.0 / ( 1.0 + exp( -x ) );
-}
-
-vec_t LogisticPDF( vec_t x ) {
-	float e;
-	e = exp( -x );
-	return e / ( ( 1.0 + e ) * ( 1.0 + e ) );
-}
-
-// closer approximation from
-// http://www.wilmott.com/pdfs/090721_west.pdf
-vec_t NormalCDF( vec_t x ) {
-	float cumnorm = 0.0;
-	float sign = 1.0;
-	float build = 0;
-	float e = 0.0;
-
-	if( x < 0.0 ) {
-		sign = -1.0;
-	}
-	x = fabs( x );
-	if( x > 37.0 ) {
-		cumnorm = 0.0;
-	} else {
-		e = expf( -( x * x ) * 0.5 );
-		if( x < 7.07106781186547 ) {
-			build = 3.52624965998911e-02 * x + 0.700383064443688;
-			build = build * x + 6.37396220353165;
-			build = build * x + 33.912866078383;
-			build = build * x + 112.079291497871;
-			build = build * x + 221.213596169931;
-			build = build * x + 220.206867912376;
-			cumnorm = e * build;
-			build = 8.8388347683184e-02;
-			build = build * x + 16.064177579207;
-			build = build * x + 86.7807322029461;
-			build = build * x + 296.564248779674;
-			build = build * x + 637.333633378831;
-			build = build * x + 793.826512519948;
-			build = build * x + 440.413735824752;
-			cumnorm /= build;
-		} else {
-			build = x + 0.65;
-			build = x + 4 / build;
-			build = x + 3 / build;
-			build = x + 2 / build;
-			build = x + 1 / build;
-			cumnorm = e / build / 2.506628274631;
-		}
-	}
-
-	if( sign > 0 ) {
-		cumnorm = 1 - cumnorm;
-	}
-
-	return cumnorm;
-}
-
-vec_t NormalPDF( vec_t x ) {
-	return exp( ( -x * x ) / 2 ) / sqrt( 2.0 * M_PI );
-}
-
 //============================================================================
 
 /*
@@ -1540,20 +1318,4 @@ float Q_GetNoiseValueFromTable( float *noisetable, int *noiseperm, float x, floa
 	finalvalue = NOISE_LERP( value[0], value[1], ft );
 
 	return finalvalue;
-}
-
-/*
-* Q_GetNoiseValue
-*/
-float Q_GetNoiseValue( float x, float y, float z, float t ) {
-	static int init;
-	static float noisetable[NOISE_SIZE];
-	static int noiseperm[NOISE_SIZE];
-
-	if( !init ) {
-		init = 1;
-		Q_InitNoiseTable( 2002, noisetable, noiseperm );
-	}
-
-	return Q_GetNoiseValueFromTable( noisetable, noiseperm, x, y, z, t );
 }
