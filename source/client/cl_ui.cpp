@@ -739,7 +739,7 @@ static void GameMenuButton( const char * label, const char * command, bool * cli
 }
 
 static void GameMenu() {
-	ImGui::PushStyleColor( ImGuiCol_WindowBg, ImVec4( ImColor( 0x1a, 0x1a, 0x1a, 192 ) ) );
+	ImGui::PushStyleColor( ImGuiCol_WindowBg, IM_COL32( 0x1a, 0x1a, 0x1a, 192 ) );
 	bool should_close = false;
 
 	if( gamemenu_state == GameMenuState_Menu ) {
@@ -871,7 +871,7 @@ static void GameMenu() {
 }
 
 static void DemoMenu() {
-	ImGui::PushStyleColor( ImGuiCol_WindowBg, ImVec4( ImColor( 0x1a, 0x1a, 0x1a, 192 ) ) );
+	ImGui::PushStyleColor( ImGuiCol_WindowBg, IM_COL32( 0x1a, 0x1a, 0x1a, 192 ) );
 	bool should_close = false;
 
 	ImVec2 pos = ImGui::GetIO().DisplaySize;
