@@ -193,25 +193,18 @@ void G_ClientDamageFeedback( edict_t *ent ) {
 	}
 
 	// add hitsounds from given damage
-	if( ent->snap.damage_given || ent->snap.damageteam_given || ent->snap.kill || ent->snap.teamkill ) {
-		// we can't make team damage hit sound at the same time as we do damage hit sound
-		// let's determine what's more relevant
-		if( ent->snap.teamkill || ent->snap.damageteam_given > 50 ||
-			( ent->snap.damageteam_given > 2 * ent->snap.damage_given && !ent->snap.kill ) ) {
-			G_AddPlayerStateEvent( ent->r.client, PSEV_HIT, 5 );
-		} else {
-			if( ent->snap.kill ) {
-				G_AddPlayerStateEvent( ent->r.client, PSEV_HIT, 4 );
-			} else if( ent->snap.damage_given >= 70 ) {
-				G_AddPlayerStateEvent( ent->r.client, PSEV_HIT, 0 );
-			} else if( ent->snap.damage_given >= 45 ) {
-				G_AddPlayerStateEvent( ent->r.client, PSEV_HIT, 1 );
-			} else if( ent->snap.damage_given >= 20 ) {
-				G_AddPlayerStateEvent( ent->r.client, PSEV_HIT, 2 );
-			} else {
-				G_AddPlayerStateEvent( ent->r.client, PSEV_HIT, 3 );
-			}
-		}
+	if( ent->snap.damageteam_given ) { //keep it in case we use a sound for teamhit
+		G_AddPlayerStateEvent( ent->r.client, PSEV_HIT, 5 );
+	} else if( ent->snap.kill ) { //kill
+		G_AddPlayerStateEvent( ent->r.client, PSEV_HIT, 4 );
+	} else if( ent->snap.damage_given >= 70 ) {
+		G_AddPlayerStateEvent( ent->r.client, PSEV_HIT, 0 );
+	} else if( ent->snap.damage_given >= 45 ) {
+		G_AddPlayerStateEvent( ent->r.client, PSEV_HIT, 1 );
+	} else if( ent->snap.damage_given >= 20 ) {
+		G_AddPlayerStateEvent( ent->r.client, PSEV_HIT, 2 );
+	} else if( ent->snap.damage_given ) {
+		G_AddPlayerStateEvent( ent->r.client, PSEV_HIT, 3 );
 	}
 }
 

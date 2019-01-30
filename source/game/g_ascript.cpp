@@ -494,11 +494,8 @@ static const gs_asProperty_t scorestats_Properties[] =
 	{ ASLIB_PROPERTY_DECL( const int, deaths ), ASLIB_FOFFSET( score_stats_t, deaths ) },
 	{ ASLIB_PROPERTY_DECL( const int, frags ), ASLIB_FOFFSET( score_stats_t, frags ) },
 	{ ASLIB_PROPERTY_DECL( const int, suicides ), ASLIB_FOFFSET( score_stats_t, suicides ) },
-	{ ASLIB_PROPERTY_DECL( const int, teamFrags ), ASLIB_FOFFSET( score_stats_t, teamfrags ) },
 	{ ASLIB_PROPERTY_DECL( const int, totalDamageGiven ), ASLIB_FOFFSET( score_stats_t, total_damage_given ) },
 	{ ASLIB_PROPERTY_DECL( const int, totalDamageReceived ), ASLIB_FOFFSET( score_stats_t, total_damage_received ) },
-	{ ASLIB_PROPERTY_DECL( const int, totalTeamDamageGiven ), ASLIB_FOFFSET( score_stats_t, total_teamdamage_given ) },
-	{ ASLIB_PROPERTY_DECL( const int, totalTeamDamageReceived ), ASLIB_FOFFSET( score_stats_t, total_teamdamage_received ) },
 	{ ASLIB_PROPERTY_DECL( const int, healthTaken ), ASLIB_FOFFSET( score_stats_t, health_taken ) },
 
 	ASLIB_PROPERTY_NULL

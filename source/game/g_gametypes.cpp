@@ -902,20 +902,6 @@ bool G_Gametype_CanDropItem( const gsitem_t *item, bool ignoreMatchState ) {
 	return ( itemmask & item->type ) ? true : false;
 }
 
-/*
-* G_Gametype_CanTeamDamage
-*/
-bool G_Gametype_CanTeamDamage( int damageflags ) {
-	if( damageflags & DAMAGE_NO_PROTECTION ) {
-		return true;
-	}
-
-	if( !GS_TeamBasedGametype() ) {
-		return true;
-	}
-
-	return g_allow_teamdamage->integer ? true : false;
-}
 
 /*
 * G_Gametype_RespawnTimeForItem
@@ -1226,7 +1212,6 @@ void G_Gametype_Init( void ) {
 
 	// game settings
 	g_scorelimit = trap_Cvar_Get( "g_scorelimit", "10", CVAR_ARCHIVE );
-	g_allow_teamdamage = trap_Cvar_Get( "g_allow_teamdamage", "0", CVAR_ARCHIVE | CVAR_READONLY );
 
 	G_Printf( "-------------------------------------\n" );
 	G_Printf( "Initalizing '%s' gametype\n", g_gametype->string );

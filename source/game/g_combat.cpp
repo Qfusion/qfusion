@@ -145,33 +145,22 @@ void G_Killed( edict_t *targ, edict_t *inflictor, edict_t *attacker, int damage,
 	targ->deadflag = DEAD_DEAD;
 	targ->enemy = attacker;
 
-	if( targ->r.client ) {
-		if( attacker && targ != attacker ) {
-			if( GS_IsTeamDamage( &targ->s, &attacker->s ) ) {
-				attacker->snap.teamkill = true;
-			} else {
-				attacker->snap.kill = true;
-			}
-		}
+	if( targ->r.client && attacker && targ != attacker ) {
+		attacker->snap.kill = true;
+	}
 
-		// count stats
-		if( GS_MatchState() == MATCH_STATE_PLAYTIME ) {
-			targ->r.client->level.stats.deaths++;
-			teamlist[targ->s.team].stats.deaths++;
+	// count stats
+	if( GS_MatchState() == MATCH_STATE_PLAYTIME ) {
+		targ->r.client->level.stats.deaths++;
+		teamlist[targ->s.team].stats.deaths++;
 
-			if( !attacker || !attacker->r.client || attacker == targ || attacker == world ) {
-				targ->r.client->level.stats.suicides++;
-				teamlist[targ->s.team].stats.suicides++;
-			} else {
-				if( GS_IsTeamDamage( &targ->s, &attacker->s ) ) {
-					attacker->r.client->level.stats.teamfrags++;
-					teamlist[attacker->s.team].stats.teamfrags++;
-				} else {
-					attacker->r.client->level.stats.frags++;
-					teamlist[attacker->s.team].stats.frags++;
-					G_AwardPlayerKilled( targ, inflictor, attacker, mod );
-				}
-			}
+		if( !attacker || !attacker->r.client || attacker == targ || attacker == world ) {
+		targ->r.client->level.stats.suicides++;
+			teamlist[targ->s.team].stats.suicides++;
+		} else {
+			attacker->r.client->level.stats.frags++;
+			teamlist[attacker->s.team].stats.frags++;
+			G_AwardPlayerKilled( targ, inflictor, attacker, mod );
 		}
 	}
 
@@ -277,9 +266,6 @@ static void G_KnockBackPush( edict_t *targ, edict_t *attacker, const vec3_t base
 */
 void G_Damage( edict_t *targ, edict_t *inflictor, edict_t *attacker, const vec3_t pushdir, const vec3_t dmgdir, const vec3_t point, float damage, float knockback, int dflags, int mod ) {
 	gclient_t *client;
-	float take;
-	float save;
-	bool statDmg;
 
 	if( !targ || !targ->takedamage ) {
 		return;
@@ -295,21 +281,21 @@ void G_Damage( edict_t *targ, edict_t *inflictor, edict_t *attacker, const vec3_
 	client = targ->r.client;
 
 	// Cgg - race mode: players don't interact with one another
-	if( GS_RaceGametype() ) {
-		if( attacker->r.client && targ->r.client && attacker != targ ) {
-			return;
-		}
+	if( GS_RaceGametype() && attacker->r.client && targ->r.client && attacker != targ ) {
+		return;
 	}
 
-	bool teamdamage = GS_IsTeamDamage( &targ->s, &attacker->s ) && !G_Gametype_CanTeamDamage( dflags );
-
-	// push
-	if( !( dflags & DAMAGE_NO_KNOCKBACK ) && !teamdamage ) {
-		G_KnockBackPush( targ, attacker, pushdir, knockback, dflags );
+	if( GS_IsTeamDamage( &targ->s, &attacker->s ) ) {
+		return;
 	}
 
 	// dont count self-damage cause it just adds the same to both stats
-	statDmg = ( attacker != targ ) && ( mod != MOD_TELEFRAG );
+	bool statDmg = ( attacker != targ ) && ( mod != MOD_TELEFRAG );
+
+	// push
+	if( !( dflags & DAMAGE_NO_KNOCKBACK ) ) {
+		G_KnockBackPush( targ, attacker, pushdir, knockback, dflags );
+	}
 
 	// apply handicap on the damage given
 	if( statDmg && attacker->r.client ) {
@@ -319,8 +305,8 @@ void G_Damage( edict_t *targ, edict_t *inflictor, edict_t *attacker, const vec3_
 		}
 	}
 
-	take = damage;
-	save = 0;
+	float take = damage;
+	float save = 0;
 
 	// check for cases where damage is protected
 	if( !( dflags & DAMAGE_NO_PROTECTION ) ) {
@@ -360,10 +346,6 @@ void G_Damage( edict_t *targ, edict_t *inflictor, edict_t *attacker, const vec3_
 				 ( attacker->r.client != targ->r.client ) ) {
 			take = save = 0;
 		}
-		// team damage avoidance
-		else if( teamdamage ) {
-			take = save = 0;
-		}
 	}
 
 	// do the damage
@@ -384,11 +366,6 @@ void G_Damage( edict_t *targ, edict_t *inflictor, edict_t *attacker, const vec3_
 			damage->s.ownerNum = ENTNUM( attacker );
 			damage->s.damage = HEALTH_TO_INT( take / 2.0f );
 		}
-
-		if( GS_IsTeamDamage( &targ->s, &attacker->s ) ) {
-			attacker->r.client->level.stats.total_teamdamage_given += take;
-			teamlist[attacker->s.team].stats.total_teamdamage_given += take;
-		}
 	}
 
 	G_Gametype_ScoreEvent( attacker->r.client, "dmg", va( "%i %f %i", targ->s.number, damage, attacker->s.number ) );
@@ -396,10 +373,6 @@ void G_Damage( edict_t *targ, edict_t *inflictor, edict_t *attacker, const vec3_
 	if( statDmg && client ) {
 		client->level.stats.total_damage_received += take;
 		teamlist[targ->s.team].stats.total_damage_received += take;
-		if( GS_IsTeamDamage( &targ->s, &attacker->s ) ) {
-			client->level.stats.total_teamdamage_received += take;
-			teamlist[targ->s.team].stats.total_teamdamage_received += take;
-		}
 	}
 
 	// accumulate received damage for snapshot effects
@@ -422,17 +395,15 @@ void G_Damage( edict_t *targ, edict_t *inflictor, edict_t *attacker, const vec3_
 		G_BlendFrameDamage( targ, take, &targ->snap.damage_taken, dorigin, dmgdir, targ->snap.damage_at, targ->snap.damage_dir );
 		G_BlendFrameDamage( targ, save, &targ->snap.damage_saved, dorigin, dmgdir, targ->snap.damage_at, targ->snap.damage_dir );
 
-		if( targ->r.client ) {
-			if( mod != MOD_FALLING && mod != MOD_TELEFRAG && mod != MOD_SUICIDE ) {
-				if( inflictor == world || attacker == world ) {
-					// for world inflicted damage use always 'frontal'
-					G_ClientAddDamageIndicatorImpact( targ->r.client, take + save, NULL );
-				} else if( dflags & DAMAGE_RADIUS ) {
-					// for splash hits the direction is from the inflictor origin
-					G_ClientAddDamageIndicatorImpact( targ->r.client, take + save, pushdir );
-				} else {   // for direct hits the direction is the projectile direction
-					G_ClientAddDamageIndicatorImpact( targ->r.client, take + save, dmgdir );
-				}
+		if( targ->r.client && mod != MOD_FALLING && mod != MOD_TELEFRAG && mod != MOD_SUICIDE ) {
+			if( inflictor == world || attacker == world ) {
+				// for world inflicted damage use always 'frontal'
+				G_ClientAddDamageIndicatorImpact( targ->r.client, take + save, NULL );
+			} else if( dflags & DAMAGE_RADIUS ) {
+				// for splash hits the direction is from the inflictor origin
+				G_ClientAddDamageIndicatorImpact( targ->r.client, take + save, pushdir );
+			} else {   // for direct hits the direction is the projectile direction
+				G_ClientAddDamageIndicatorImpact( targ->r.client, take + save, dmgdir );
 			}
 		}
 	}
@@ -440,7 +411,7 @@ void G_Damage( edict_t *targ, edict_t *inflictor, edict_t *attacker, const vec3_
 	targ->health = targ->health - take;
 
 	// add damage done to stats
-	if( !GS_IsTeamDamage( &targ->s, &attacker->s ) && statDmg && G_ModToAmmo( mod ) != AMMO_NONE && client && attacker->r.client ) {
+	if( statDmg && G_ModToAmmo( mod ) != AMMO_NONE && client && attacker->r.client ) {
 		attacker->r.client->level.stats.accuracy_hits[G_ModToAmmo( mod ) - AMMO_GUNBLADE]++;
 		attacker->r.client->level.stats.accuracy_damage[G_ModToAmmo( mod ) - AMMO_GUNBLADE] += damage;
 		teamlist[attacker->s.team].stats.accuracy_hits[G_ModToAmmo( mod ) - AMMO_GUNBLADE]++;
@@ -448,14 +419,8 @@ void G_Damage( edict_t *targ, edict_t *inflictor, edict_t *attacker, const vec3_
 	}
 
 	// accumulate given damage for hit sounds
-	if( targ != attacker && client && !targ->deadflag ) {
-		if( attacker ) {
-			if( GS_IsTeamDamage( &targ->s, &attacker->s ) ) {
-				attacker->snap.damageteam_given += take;
-			} else {
-				attacker->snap.damage_given += take;
-			}
-		}
+	if( targ != attacker && client && !targ->deadflag && attacker ) {
+		attacker->snap.damage_given += take;
 	}
 
 	if( G_IsDead( targ ) ) {

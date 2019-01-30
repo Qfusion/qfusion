@@ -66,7 +66,6 @@ cvar_t *g_autorecord_maxdemos;
 
 cvar_t *g_self_knockback;
 cvar_t *g_knockback_scale;
-cvar_t *g_allow_teamdamage;
 
 cvar_t *g_respawn_delay_min;
 cvar_t *g_respawn_delay_max;

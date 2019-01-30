@@ -86,7 +86,7 @@ static int G_Chase_FindFollowPOV( edict_t *ent ) {
 			edict_t *attacker = targ->r.client->teamstate.last_killer;
 
 			// ignore world and team kills
-			if( attacker && attacker->r.client && !GS_IsTeamDamage( &targ->s, &attacker->s ) ) {
+			if( attacker && attacker->r.client ) {
 				newpov = ENTNUM( attacker );
 			}
 		}

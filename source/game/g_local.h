@@ -284,7 +284,6 @@ extern cvar_t *g_maxtimeouts;
 
 extern cvar_t *g_self_knockback;
 extern cvar_t *g_knockback_scale;
-extern cvar_t *g_allow_teamdamage;
 extern cvar_t *g_respawn_delay_min;
 extern cvar_t *g_respawn_delay_max;
 extern cvar_t *g_deadbody_followkiller;
@@ -331,7 +330,6 @@ bool G_Gametype_CanPickUpItem( const gsitem_t *item );
 bool G_Gametype_CanSpawnItem( const gsitem_t *item );
 bool G_Gametype_CanRespawnItem( const gsitem_t *item );
 bool G_Gametype_CanDropItem( const gsitem_t *item, bool ignoreMatchState );
-bool G_Gametype_CanTeamDamage( int damageflags );
 int G_Gametype_RespawnTimeForItem( const gsitem_t *item );
 int G_Gametype_DroppedItemTimeout( const gsitem_t *item );
 
@@ -667,7 +665,6 @@ bool GClip_EntityContact( const vec3_t mins, const vec3_t maxs, edict_t *ent );
 //
 void G_Killed( edict_t *targ, edict_t *inflictor, edict_t *attacker, int damage, const vec3_t point, int mod );
 int G_ModToAmmo( int mod );
-bool CheckTeamDamage( edict_t *targ, edict_t *attacker );
 void G_SplashFrac( const vec3_t origin, const vec3_t mins, const vec3_t maxs, const vec3_t point, float maxradius, vec3_t pushdir, float *frac );
 void G_Damage( edict_t *targ, edict_t *inflictor, edict_t *attacker, const vec3_t pushdir, const vec3_t dmgdir, const vec3_t point, float damage, float knockback, int dflags, int mod );
 void G_RadiusDamage( edict_t *inflictor, edict_t *attacker, cplane_t *plane, edict_t *ignore, int mod );
