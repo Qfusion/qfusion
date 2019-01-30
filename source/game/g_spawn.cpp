@@ -549,10 +549,6 @@ void G_PrecacheMedia( void ) {
 
 	// announcer
 
-	// readyup
-	trap_SoundIndex( S_ANNOUNCER_READY_UP_POLITE );
-	trap_SoundIndex( S_ANNOUNCER_READY_UP_PISSEDOFF );
-
 	// countdown
 	trap_SoundIndex( va( S_ANNOUNCER_COUNTDOWN_GET_READY_TO_FIGHT_1_to_2, 1 ) );
 	trap_SoundIndex( va( S_ANNOUNCER_COUNTDOWN_GET_READY_TO_FIGHT_1_to_2, 2 ) );

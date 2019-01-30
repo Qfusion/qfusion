@@ -307,9 +307,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define S_WEAPON_ELECTROBOLT_HIT        "sounds/weapons/electrobolt_hit"
 
 // announcer sounds
-// readyup
-#define S_ANNOUNCER_READY_UP_POLITE     "sounds/announcer/pleasereadyup"
-#define S_ANNOUNCER_READY_UP_PISSEDOFF      "sounds/announcer/readyupalready"
 
 // countdown
 #define S_ANNOUNCER_COUNTDOWN_READY_1_to_2      "sounds/announcer/countdown/ready%02i"

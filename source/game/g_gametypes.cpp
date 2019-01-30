@@ -487,7 +487,6 @@ bool G_Match_TimelimitHit( void ) {
 static bool score_announcement_init = false;
 static int last_leaders[MAX_CLIENTS];
 static int leaders[MAX_CLIENTS];
-#define G_ANNOUNCER_READYUP_DELAY 20000; // milliseconds
 
 /*
 * G_IsLeading
@@ -642,79 +641,6 @@ static void G_Match_ScoreAnnouncement( void ) {
 
 	// copy over to last_leaders
 	memcpy( last_leaders, leaders, sizeof( leaders ) );
-}
-
-/*
-* G_Match_ReadyAnnouncement
-*/
-static void G_Match_ReadyAnnouncement( void ) {
-	int i;
-	edict_t *e;
-	int team;
-	bool readyupwarnings = false;
-	int START_TEAM, END_TEAM;
-
-	if( !level.gametype.readyAnnouncementEnabled ) {
-		return;
-	}
-
-	// ready up announcements
-
-	if( GS_TeamBasedGametype() ) {
-		START_TEAM = TEAM_ALPHA;
-		END_TEAM = GS_MAX_TEAMS;
-	} else {
-		START_TEAM = TEAM_PLAYERS;
-		END_TEAM = TEAM_PLAYERS + 1;
-	}
-
-	for( team = START_TEAM; team < END_TEAM; team++ ) {
-		if( !teamlist[team].numplayers ) {
-			continue;
-		}
-
-		for( i = 0; i < teamlist[team].numplayers; i++ ) {
-			e = game.edicts + teamlist[team].playerIndices[i];
-			if( e->r.svflags & SVF_FAKECLIENT ) {
-				continue;
-			}
-
-			if( level.ready[teamlist[team].playerIndices[i] - 1] ) {
-				readyupwarnings = true;
-				break;
-			}
-		}
-	}
-
-	if( !readyupwarnings ) {
-		return;
-	}
-
-	// now let's repeat and warn
-	for( team = START_TEAM; team < END_TEAM; team++ ) {
-		if( !teamlist[team].numplayers ) {
-			continue;
-		}
-		for( i = 0; i < teamlist[team].numplayers; i++ ) {
-			if( !level.ready[teamlist[team].playerIndices[i] - 1] ) {
-				e = game.edicts + teamlist[team].playerIndices[i];
-				if( !e->r.client || trap_GetClientState( PLAYERNUM( e ) ) != CS_SPAWNED ) {
-					continue;
-				}
-
-				if( e->r.client->teamstate.readyUpWarningNext < game.realtime ) {
-					e->r.client->teamstate.readyUpWarningNext = game.realtime + G_ANNOUNCER_READYUP_DELAY;
-					e->r.client->teamstate.readyUpWarningCount++;
-					if( e->r.client->teamstate.readyUpWarningCount > 3 ) {
-						G_AnnouncerSound( e, trap_SoundIndex( S_ANNOUNCER_READY_UP_PISSEDOFF ), GS_MAX_TEAMS, true, NULL );
-						e->r.client->teamstate.readyUpWarningCount = 0;
-					} else {
-						G_AnnouncerSound( e, trap_SoundIndex( S_ANNOUNCER_READY_UP_POLITE ), GS_MAX_TEAMS, true, NULL );
-					}
-				}
-			}
-		}
-	}
 }
 
 /*
@@ -1235,7 +1161,6 @@ void G_RunGametype( void ) {
 	}
 
 	G_Match_ScoreAnnouncement();
-	G_Match_ReadyAnnouncement();
 
 	G_asGarbageCollect( false );
 }
