@@ -411,15 +411,15 @@ static void SettingsVideo() {
 
 	ImGui::Text( "Changing resolution is buggy and you should restart the game after doing it" );
 
-	SettingLabel( "Fullscreen" );
-	bool fullscreen = mode.fullscreen != FullScreenMode_Windowed;
-	ImGui::Checkbox( "##vid_fullscreen", &fullscreen );
-
-	PushDisabled( !fullscreen );
-
 	SettingLabel( "Borderless fullscreen" );
 	bool borderless = mode.fullscreen == FullScreenMode_FullscreenBorderless;
 	ImGui::Checkbox( "##borderless", &borderless );
+
+	PushDisabled( borderless );
+
+	SettingLabel( "Fullscreen" );
+	bool fullscreen = mode.fullscreen != FullScreenMode_Windowed;
+	ImGui::Checkbox( "##vid_fullscreen", &fullscreen );
 
 	mode.fullscreen = FullScreenMode_Windowed;
 	if( fullscreen )
@@ -450,7 +450,7 @@ static void SettingsVideo() {
 	}
 	ImGui::PopItemWidth();
 
-	PopDisabled( !fullscreen );
+	PopDisabled( borderless );
 
 	if( ImGui::Button( "Apply mode changes" ) ) {
 		String< 128 > buf( "{}", mode );
