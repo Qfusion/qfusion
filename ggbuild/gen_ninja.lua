@@ -350,7 +350,7 @@ local function rule_for_src( src_name )
 	return ( { cc = "cpp", cpp = "cpp", m = "m" } )[ ext ]
 end
 
-function build()
+local function write_ninja_script()
 	for _, flag in ipairs( objs_flags ) do
 		for name, cfg in pairs( objs ) do
 			if name:match( flag.pattern ) then
@@ -444,4 +444,4 @@ function build()
 end
 end
 
-automatically_print_output_at_exit = setmetatable( { }, { __gc = build } )
+automatically_print_output_at_exit = setmetatable( { }, { __gc = write_ninja_script } )
