@@ -28,8 +28,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 extern cvar_t *cg_clientHUD;
 extern cvar_t *cg_specHUD;
 
-cvar_t *cg_strafeHUD;
-
 //=============================================================================
 
 enum { DEFAULTSCALE=0, NOSCALE, SCALEBYWIDTH, SCALEBYHEIGHT };
@@ -322,107 +320,6 @@ enum race_index {
 	max_index
 };
 
-static int CG_GetRaceVars( const void* parameter ) {
-	int index = (intptr_t)parameter;
-	int iNum;
-	vec3_t hor_vel, view_dir, an;
-
-	if( GS_MatchState() != MATCH_STATE_WARMUP && !GS_RaceGametype() ) {
-		return 0;
-	}
-
-	switch( index ) {
-		case diff_an:
-
-			// difference of look and move angles
-			hor_vel[0] = cg.predictedPlayerState.pmove.velocity[0];
-			hor_vel[1] = cg.predictedPlayerState.pmove.velocity[1];
-			hor_vel[2] = 0;
-			VecToAngles( hor_vel, an );
-			AngleVectors( cg.predictedPlayerState.viewangles, view_dir, NULL, NULL );
-			iNum = Q_rint( 100 * ( cg.predictedPlayerState.viewangles[YAW] - an[YAW] ) );
-			while( iNum > 18000 )
-				iNum -= 36000;
-			while( iNum < -18000 )
-				iNum += 36000;
-
-			// ch : check if player is moving backwards so iNum wont wrap around
-			if( DotProduct( hor_vel, view_dir ) >= 0.0 ) {
-				return iNum;
-			} else if( iNum < 0 ) {
-				return 18000 + iNum;
-			} else {
-				return -18000 + iNum;
-			}
-
-		case strafe_an:
-
-			// optimal strafing angle
-			iNum = Q_rint( 100 * ( acos( ( 320 - 0.32f * (float)cg.realFrameTime ) / CG_GetSpeed( 0 ) ) * 180 / M_PI - 45 ) ); //maybe need to check if speed below 320 is allowed for acos
-			if( iNum > 0 ) {
-				return iNum;
-			} else {
-				return 0;
-			}
-		case move_an:
-
-			// angle of current moving direction
-			hor_vel[0] = cg.predictedPlayerState.pmove.velocity[0];
-			hor_vel[1] = cg.predictedPlayerState.pmove.velocity[1];
-			hor_vel[2] = 0;
-			VecToAngles( hor_vel, an );
-			iNum = Q_rint( 100 * an[YAW] );
-			while( iNum > 18000 )
-				iNum -= 36000;
-			while( iNum < -18000 )
-				iNum += 36000;
-			return iNum;
-		case mouse_x:
-			return Q_rint( 100 * cg.predictedPlayerState.viewangles[YAW] );
-		case mouse_y:
-			return Q_rint( 100 * cg.predictedPlayerState.viewangles[PITCH] );
-		default:
-			return STAT_NOTSET;
-	}
-}
-
-static int CG_GetAccel( const void* parameter ) {
-#define ACCEL_SAMPLE_COUNT 16
-#define ACCEL_SAMPLE_MASK ( ACCEL_SAMPLE_COUNT - 1 )
-	int i;
-	float t, dt;
-	float accel;
-	float newSpeed;
-	static float oldSpeed = 0.0;
-	static float oldTime = 0.0;
-	static float accelHistory[ACCEL_SAMPLE_COUNT] = {0.0};
-	static int sampleCount = 0;
-
-	t = cg.realTime * 0.001f;
-	dt = t - oldTime;
-	if( dt > 0.0 ) {
-		// raw acceleration
-		newSpeed = _getspeed();
-		accel = ( newSpeed - oldSpeed ) / dt;
-		accelHistory[sampleCount & ACCEL_SAMPLE_MASK] = accel;
-		sampleCount++;
-		oldSpeed = newSpeed;
-		oldTime = t;
-	}
-
-	// average accel for n frames (TODO: emphasis on later frames)
-	accel = 0.0f;
-	for( i = 0; i < ACCEL_SAMPLE_COUNT; i++ )
-		accel += accelHistory[i];
-	accel /= (float)( ACCEL_SAMPLE_COUNT );
-
-	if( GS_MatchState() != MATCH_STATE_WARMUP && !GS_RaceGametype() ) {
-		return 0;
-	}
-
-	return (int)accel;
-}
-
 static int CG_GetScoreboardShown( const void *parameter ) {
 	return CG_IsScoreboardShown() ? 1 : 0;
 }
@@ -503,15 +400,6 @@ static const reference_numeric_t cg_numeric_references[] =
 	{ "DAMAGE_INDICATOR_BOTTOM", CG_GetDamageIndicatorDirValue, (void *)2 },
 	{ "DAMAGE_INDICATOR_LEFT", CG_GetDamageIndicatorDirValue, (void *)3 },
 
-// ch : backport racesow hud elements
-//lm: race stuff
-	{ "MOUSE_X", CG_GetRaceVars, (void *)mouse_x },
-	{ "MOUSE_Y", CG_GetRaceVars, (void *)mouse_y },
-	{ "ACCELERATION", CG_GetAccel, NULL },
-	{ "MOVEANGLE", CG_GetRaceVars, (void *)move_an  },
-	{ "STRAFEANGLE", CG_GetRaceVars, (void *)strafe_an },
-	{ "DIFF_ANGLE", CG_GetRaceVars, (void *)diff_an },
-
 	// cvars
 	{ "SHOW_FPS", CG_GetCvar, "cg_showFPS" },
 	{ "SHOW_OBITUARIES", CG_GetCvar, "cg_showObituaries" },
@@ -520,7 +408,6 @@ static const reference_numeric_t cg_numeric_references[] =
 	{ "SHOW_SPEED", CG_GetCvar, "cg_showSpeed" },
 	{ "SHOW_AWARDS", CG_GetCvar, "cg_showAwards" },
 	{ "SHOW_R_SPEEDS", CG_GetCvar, "r_speeds" },
-	{ "SHOW_STRAFE", CG_GetCvar, "cg_strafeHUD" },
 
 	{ "DOWNLOAD_IN_PROGRESS", CG_DownloadInProgress, NULL },
 	{ "DOWNLOAD_PERCENT", CG_GetCvar, "cl_download_percent" },

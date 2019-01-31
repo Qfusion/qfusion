@@ -706,8 +706,6 @@ void CG_ResetBombHUD();
 //
 // cg_hud.c
 //
-extern cvar_t *cg_strafeHUD;
-
 void CG_SC_ResetObituaries( void );
 void CG_SC_Obituary( void );
 void Cmd_CG_PrintHudHelp_f( void );

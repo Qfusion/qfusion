@@ -593,8 +593,6 @@ static void CG_RegisterVariables( void ) {
 	cg_enemyModel->modified = true;
 	cg_enemyForceModel->modified = true;
 
-	cg_strafeHUD = trap_Cvar_Get( "cg_strafeHUD", "0", CVAR_ARCHIVE );
-
 	trap_Cvar_Get( "cg_loadout", "", CVAR_ARCHIVE | CVAR_USERINFO );
 }
 
