@@ -63,33 +63,6 @@ void ThrowSmallPileOfGibs( edict_t *self, int damage ) {
 	VectorCopy( self->velocity, event->s.origin2 );
 }
 
-void ThrowClientHead( edict_t *self, int damage ) {
-	vec3_t vd;
-
-	self->s.modelindex = 1;
-	self->s.modelindex2 = 0;
-	self->s.skinnum = 0;
-
-	self->s.origin[2] += 32;
-	self->s.frame = 0;
-
-	VectorSet( self->r.mins, -16, -16, 0 );
-	VectorSet( self->r.maxs, 16, 16, 16 );
-
-	self->takedamage = DAMAGE_NO;
-	self->r.solid = SOLID_NOT;
-	self->s.type = ET_GIB;
-	self->s.sound = 0;
-	self->s.effects = 0;
-	self->flags |= FL_NO_KNOCKBACK;
-
-	self->movetype = MOVETYPE_BOUNCE;
-	VelocityForDamage( max( damage, 50 ), vd );
-	VectorAdd( self->velocity, vd, self->velocity );
-
-	G_AddEvent( self, EV_GIB, 0, false );
-	GClip_LinkEntity( self );
-}
 
 /*
 * debris

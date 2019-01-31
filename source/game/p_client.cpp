@@ -123,7 +123,6 @@ void G_InitBodyQueue( void ) {
 static void body_die( edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, const vec3_t point ) {
 	ThrowSmallPileOfGibs( self, damage );
 	self->s.origin[2] -= 48;
-	ThrowClientHead( self, damage );
 	self->nextThink = level.time + 3000 + random() * 3000;
 }
 
@@ -224,9 +223,9 @@ static edict_t *CopyToBodyQue( edict_t *ent, edict_t *attacker, int damage ) {
 	body->think = body_think; // body self destruction countdown
 
 	int mod = meansOfDeath;
-	bool is_gibbable =	( mod == MOD_ELECTROBOLT || mod == MOD_ROCKET || mod == MOD_GRENADE ||
-						  mod == MOD_TRIGGER_HURT || mod == MOD_TELEFRAG || mod == MOD_EXPLOSIVE ||
-					  ( ( mod == MOD_ROCKET_SPLASH || mod == MOD_GRENADE_SPLASH ) && damage > 40 ) );
+	bool is_gibbable = mod == MOD_ELECTROBOLT || mod == MOD_ROCKET || mod == MOD_GRENADE ||
+					   mod == MOD_TRIGGER_HURT || mod == MOD_TELEFRAG || mod == MOD_EXPLOSIVE ||
+					(( mod == MOD_ROCKET_SPLASH || mod == MOD_GRENADE_SPLASH ) && damage > 40 );
 
 
 	if( is_gibbable ) {
@@ -234,7 +233,6 @@ static edict_t *CopyToBodyQue( edict_t *ent, edict_t *attacker, int damage ) {
 
 		// reset gib impulse
 		VectorClear( body->velocity );
-		ThrowClientHead( body, damage ); // sets ET_GIB
 
 		body->s.frame = 0;
 		body->nextThink = level.time + 3000 + random() * 3000;

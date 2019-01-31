@@ -678,7 +678,6 @@ void G_RadiusDamage( edict_t *inflictor, edict_t *attacker, cplane_t *plane, edi
 //
 // g_misc.c
 //
-void ThrowClientHead( edict_t *self, int damage );
 void ThrowSmallPileOfGibs( edict_t *self, int damage );
 
 void BecomeExplosion1( edict_t *self );
