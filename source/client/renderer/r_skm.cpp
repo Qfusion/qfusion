@@ -971,6 +971,7 @@ static skmcacheentry_t *R_AllocSkeletalDataCache( int entNum, int lodNum, const 
 * R_CacheBoneTransformsJob
 */
 static void R_CacheBoneTransformsJob( unsigned first, unsigned items, const jobarg_t *ja ) {
+	MICROPROFILE_SCOPEI( "Renderer", "R_CacheBoneTransformsJob", 0xffffffff );
 	unsigned i, j;
 	const entity_t *e;
 	float frontlerp;

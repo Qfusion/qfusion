@@ -138,6 +138,8 @@ static void RJ_IssueJobQuitCmd( unsigned thread ) {
 * R_HandleJobTakeCmd
 */
 static unsigned R_HandleJobTakeCmd( const void *pcmd ) {
+	MICROPROFILE_SCOPEI( "Renderer", "R_HandleJobTakeCmd", 0xffffffff );
+
 	const jobTakeCmd_t *cmd = ( const jobTakeCmd_t * ) pcmd;
 
 	cmd->job( cmd->first, cmd->items, &cmd->job_arg );
@@ -163,6 +165,8 @@ static int R_JobCmdsWaiter( qbufPipe_t *queue, queueCmdHandler_t *cmdHandlers ) 
 * R_JobThreadProc
 */
 static void *R_JobThreadProc( void *param ) {
+	MicroProfileOnThreadCreate( "Renderer worker" );
+
 	qbufPipe_t *cmdQueue = ( qbufPipe_t * ) param;
 	queueCmdHandler_t cmdHandlers[NUM_JOB_CMDS] =
 	{
