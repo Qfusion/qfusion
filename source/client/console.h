@@ -37,7 +37,6 @@ void Con_Shutdown( void );
 void Con_DrawConsole( void );
 void Con_Print( const char *txt );
 void Con_PrintSilent( const char *txt );
-void Con_CenteredPrint( char *text );
 void Con_Clear_f( void );
 void Con_DrawNotify( void );
 void Con_DrawChat( int x, int y, int width, struct qfontface_s *font );

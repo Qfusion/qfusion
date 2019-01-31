@@ -54,9 +54,9 @@ float FloatSwap( float f );
 //=============================================
 
 #define SYSTEM_FONT_FAMILY          "Montserrat"
-#define SYSTEM_FONT_FAMILY_FALLBACK "Droid Sans Fallback"
-#define SYSTEM_FONT_FAMILY_MONO     "Droid Sans Mono"
+#define SYSTEM_FONT_FAMILY_FALLBACK "Montserrat"
 #define SYSTEM_FONT_TINY_SIZE       8
+#define SYSTEM_FONT_CONSOLE_SIZE    12
 #define SYSTEM_FONT_SMALL_SIZE      14
 #define SYSTEM_FONT_MEDIUM_SIZE     16
 #define SYSTEM_FONT_BIG_SIZE        24

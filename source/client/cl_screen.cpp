@@ -77,13 +77,9 @@ qfontface_t *SCR_RegisterSpecialFont( const char *family, int style, unsigned in
 * SCR_RegisterConsoleFont
 */
 static void SCR_RegisterConsoleFont( void ) {
-	const int con_fontSystemStyle = SYSTEM_FONT_STYLE;
-	float pixelRatio = Con_GetPixelRatio();
-
-	int size = ceil( SYSTEM_FONT_SMALL_SIZE * pixelRatio );
-	cls.consoleFont = SCR_RegisterFont( SYSTEM_FONT_FAMILY_MONO, con_fontSystemStyle, size );
+	cls.consoleFont = SCR_RegisterFont( SYSTEM_FONT_FAMILY, SYSTEM_FONT_STYLE, SYSTEM_FONT_CONSOLE_SIZE );
 	if( !cls.consoleFont ) {
-		Com_Error( ERR_FATAL, "Couldn't load default font \"" SYSTEM_FONT_FAMILY_MONO "\"" );
+		Com_Error( ERR_FATAL, "Couldn't load default font \"" SYSTEM_FONT_FAMILY "\"" );
 	}
 }
 

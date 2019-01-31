@@ -892,7 +892,6 @@ void CG_DrawScoreboard( void ) {
 	int xpos;
 	int ypos, yoffset, maxyoffset;
 	struct qfontface_s *font;
-	struct qfontface_s *monofont;
 	struct qfontface_s *titlefont;
 	int width, panelWidth;
 	vec4_t whiteTransparent = { 1.0f, 1.0f, 1.0f, 0.5f };
@@ -907,7 +906,6 @@ void CG_DrawScoreboard( void ) {
 	}
 
 	font = CG_ScoreboardFont( SYSTEM_FONT_FAMILY, SCOREBOARD_FONT_SIZE );
-	monofont = CG_ScoreboardFont( SYSTEM_FONT_FAMILY_MONO, SCOREBOARD_FONT_SIZE );
 	titlefont = CG_ScoreboardFont( SYSTEM_FONT_FAMILY, SCOREBOARD_TITLE_FONT_SIZE );
 
 	xpos = (int)( cgs.vidWidth * 0.5 );
@@ -968,7 +966,7 @@ void CG_DrawScoreboard( void ) {
 
 	// add the player stats
 	yoffset = maxyoffset + trap_SCR_FontHeight( font );
-	yoffset += SCB_DrawPlayerStats( xpos, ypos + yoffset, monofont );
+	yoffset += SCB_DrawPlayerStats( xpos, ypos + yoffset, font );
 }
 
 
