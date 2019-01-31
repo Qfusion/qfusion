@@ -121,10 +121,6 @@ void G_InitBodyQueue( void ) {
 * body_die
 */
 static void body_die( edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, const vec3_t point ) {
-	if( self->health >= GIB_HEALTH ) {
-		return;
-	}
-
 	ThrowSmallPileOfGibs( self, damage );
 	self->s.origin[2] -= 48;
 	ThrowClientHead( self, damage );
@@ -135,7 +131,7 @@ static void body_die( edict_t *self, edict_t *inflictor, edict_t *attacker, int 
 * body_think
 */
 static void body_think( edict_t *self ) {
-	self->health = GIB_HEALTH - 1;
+	self->health = -1;
 
 	// disallow interaction with the world.
 	self->takedamage = DAMAGE_NO;
@@ -227,7 +223,13 @@ static edict_t *CopyToBodyQue( edict_t *ent, edict_t *attacker, int damage ) {
 	body->die = body_die;
 	body->think = body_think; // body self destruction countdown
 
-	if( ent->health < GIB_HEALTH || meansOfDeath == MOD_ELECTROBOLT ) {
+	int mod = meansOfDeath;
+	bool is_gibbable =	( mod == MOD_ELECTROBOLT || mod == MOD_ROCKET || mod == MOD_GRENADE ||
+						  mod == MOD_TRIGGER_HURT || mod == MOD_TELEFRAG || mod == MOD_EXPLOSIVE ||
+					  ( ( mod == MOD_ROCKET_SPLASH || mod == MOD_GRENADE_SPLASH ) && damage > 40 ) );
+
+
+	if( is_gibbable ) {
 		ThrowSmallPileOfGibs( body, damage );
 
 		// reset gib impulse

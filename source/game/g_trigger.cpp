@@ -425,7 +425,7 @@ static void hurt_use( edict_t *self, edict_t *other, edict_t *activator ) {
 
 static void hurt_delayer_think( edict_t *self ) {
 	edict_t *target = &game.edicts[self->s.ownerNum];
-	float damage = target->health + ( -GIB_HEALTH ) + 1;
+	float damage = target->health + 1;
 
 	if( target->r.client && target->r.client->resp.timeStamp == self->deathTimeStamp ) {
 		target->takedamage = true;
@@ -453,7 +453,7 @@ static void hurt_touch( edict_t *self, edict_t *other, cplane_t *plane, int surf
 
 	damage = self->dmg;
 	if( self->spawnflags & ( 32 | 64 ) ) {
-		damage = other->health + ( -GIB_HEALTH ) + 1;
+		damage = other->health + 1;
 	}
 
 	if( self->spawnflags & 8 ) {

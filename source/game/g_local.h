@@ -675,9 +675,6 @@ void G_RadiusDamage( edict_t *inflictor, edict_t *attacker, cplane_t *plane, edi
 #define DAMAGE_NO_KNOCKBACK 0x00000004
 #define DAMAGE_KNOCKBACK_SOFT 0x00000040
 
-#define GIB_HEALTH      -40
-
-
 //
 // g_misc.c
 //
