@@ -395,8 +395,8 @@ void G_SetClientStats( edict_t *ent ) {
 
 	// last killer. ignore world and team kills
 	if( client->teamstate.last_killer ) {
-		edict_t *targ = ent, *attacker = client->teamstate.last_killer;
-		client->ps.stats[STAT_LAST_KILLER] = ( attacker->r.client ? ENTNUM( attacker ) : 0 );
+		edict_t *attacker = client->teamstate.last_killer;
+		client->ps.stats[STAT_LAST_KILLER] = attacker->r.client ? ENTNUM( attacker ) : 0;
 	} else {
 		client->ps.stats[STAT_LAST_KILLER] = 0;
 	}
