@@ -1016,6 +1016,15 @@ void UI_KeyEvent( bool mainContext, int key, bool down ) {
 			if( down )
 				ImGui::GetIO().MouseWheel += key == K_MWHEELDOWN ? -1 : 1;
 		}
+		else if( key == K_LCTRL || key == K_RCTRL ) {
+			ImGui::GetIO().KeyCtrl = down;
+		}
+		else if( key == K_LSHIFT || key == K_RSHIFT ) {
+			ImGui::GetIO().KeyShift = down;
+		}
+		else if( key == K_LALT || key == K_RALT ) {
+			ImGui::GetIO().KeyAlt = down;
+		}
 		else {
 			ImGui::GetIO().KeysDown[ key ] = down;
 		}
