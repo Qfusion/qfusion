@@ -55,8 +55,6 @@ local configs = {
 		bin_prefix = "release/",
 		dll_prefix = "release/base/lib",
 	},
-
-	-- TODO: mingw?
 }
 
 local function identify_host()
