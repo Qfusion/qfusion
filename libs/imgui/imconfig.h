@@ -71,3 +71,21 @@ namespace ImGui
     void MyFunction(const char* name, const MyMatrix44& v);
 }
 */
+
+// copied from gpuvis
+// https://github.com/ocornut/imgui/issues/902
+#define IMGUI_TEXT_ESCAPE_SKIP()    \
+	if (c == '\033' && s[1] && s[2] && s[3] && s[4]) \
+	{ \
+		s += 5; \
+		continue; \
+	}
+
+#define IMGUI_TEXT_ESCAPE_RENDER()  \
+	if (c == '\033' && s[1] && s[2] && s[3] && s[4]) \
+	{ \
+		const unsigned char *us = (const unsigned char *)s; \
+		col = IM_COL32(us[1], us[2], us[3], us[4]); \
+		s += 5; \
+		continue; \
+	}

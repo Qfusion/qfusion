@@ -2558,6 +2558,11 @@ const char* ImFont::CalcWordWrapPositionA(float scale, const char* text, const c
     {
         unsigned int c = (unsigned int)*s;
         const char* next_s;
+
+#ifdef IMGUI_TEXT_ESCAPE_SKIP
+	IMGUI_TEXT_ESCAPE_SKIP();
+#endif
+
         if (c < 0x80)
             next_s = s + 1;
         else
@@ -2674,6 +2679,11 @@ ImVec2 ImFont::CalcTextSizeA(float size, float max_width, float wrap_width, cons
         // Decode and advance source
         const char* prev_s = s;
         unsigned int c = (unsigned int)*s;
+
+#ifdef IMGUI_TEXT_ESCAPE_SKIP
+	IMGUI_TEXT_ESCAPE_SKIP();
+#endif
+
         if (c < 0x80)
         {
             s += 1;
@@ -2819,6 +2829,11 @@ void ImFont::RenderText(ImDrawList* draw_list, float size, ImVec2 pos, ImU32 col
 
         // Decode and advance source
         unsigned int c = (unsigned int)*s;
+
+#ifdef IMGUI_TEXT_ESCAPE_RENDER
+	IMGUI_TEXT_ESCAPE_RENDER();
+#endif
+
         if (c < 0x80)
         {
             s += 1;
