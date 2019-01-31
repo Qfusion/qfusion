@@ -156,7 +156,7 @@ class cBombSite
 			ent.linkEntity();
 
 			ent.explosionEffect( BOMB_EXPLOSION_EFFECT_RADIUS );
-			ent.splashDamage( @ent, 3000, 9001, 9001, MOD_EXPLOSIVE );
+			ent.splashDamage( @ent, 3000, 9001, 100, MOD_EXPLOSIVE );
 
 			ent.freeEntity();
 
