@@ -225,7 +225,7 @@ static edict_t *CopyToBodyQue( edict_t *ent, edict_t *attacker, int damage ) {
 	int mod = meansOfDeath;
 	bool is_gibbable = mod == MOD_ELECTROBOLT || mod == MOD_ROCKET || mod == MOD_GRENADE ||
 					   mod == MOD_TRIGGER_HURT || mod == MOD_TELEFRAG || mod == MOD_EXPLOSIVE ||
-					(( mod == MOD_ROCKET_SPLASH || mod == MOD_GRENADE_SPLASH ) && damage > 40 );
+					(( mod == MOD_ROCKET_SPLASH || mod == MOD_GRENADE_SPLASH ) && damage >= 40 );
 
 
 	if( is_gibbable ) {

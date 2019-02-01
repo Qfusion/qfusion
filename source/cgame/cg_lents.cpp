@@ -1153,20 +1153,13 @@ void CG_SmallPileOfGibs( const vec3_t origin, int damage, const vec3_t initialVe
 	lentity_t *le;
 	vec3_t angles, velocity;
 
-	int time = 50;
-	int count = 30;
-	clamp( count, 15, 128 );
+	int time = 25;
+	int count = max( damage * 2, 80 );
 
 	for( int i = 0; i < count; i++ ) {
 		vec4_t color;
 
-		if( team == TEAM_ALPHA || team == TEAM_BETA ) {
-			// team
-			CG_TeamColor( team, color );
-		} else {
-			// grey
-			Vector4Set( color, 60.0f / 255.0f, 60.0f / 255.0f, 60.0f / 255.0f, 1.0f );
-		}
+		CG_TeamColor( team, color );
 
 		le = CG_AllocModel( LE_ALPHA_FADE, origin, vec3_origin, time + time * random(),
 							color[0], color[1], color[2], color[3],
@@ -1177,14 +1170,13 @@ void CG_SmallPileOfGibs( const vec3_t origin, int damage, const vec3_t initialVe
 		// random rotation and scale variations
 		VectorSet( angles, crandom() * 360, crandom() * 360, crandom() * 360 );
 		AnglesToAxis( angles, le->ent.axis );
-		le->ent.scale = 0.8f - ( random() * 0.25 );
-		le->ent.renderfx = RF_FULLBRIGHT | RF_NOSHADOW;
+		le->ent.scale = 0.5f - ( random() * 0.25 );
 
 		velocity[0] = crandom() * 0.5;
 		velocity[1] = crandom() * 0.5;
-		velocity[2] = 0.5 + random() * 0.5; // always have upwards
+		velocity[2] = random() * 0.5; // always have upwards
 		VectorNormalize( velocity );
-		VectorScale( velocity, min( damage * 10, 300 ), velocity );
+		VectorScale( velocity, max( damage * 6, 200 ), velocity );
 
 		velocity[0] += crandom() * bound( 0, damage, 150 );
 		velocity[1] += crandom() * bound( 0, damage, 150 );
@@ -1197,9 +1189,9 @@ void CG_SmallPileOfGibs( const vec3_t origin, int damage, const vec3_t initialVe
 		le->avelocity[2] = random() * 1200;
 
 		//friction and gravity
-		VectorSet( le->accel, -0.2f, -0.2f, -900 );
+		VectorSet( le->accel, -1.0f, -1.0f, -1000 );
 
-		le->bounce = 75;
+		le->bounce = 20;
 	}
 }
 
