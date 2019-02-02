@@ -23,7 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 typedef uint64_t r_glslfeat_t;
 
 #define GLSL_BIT( x )                           ( 1ULL << ( x ) )
-#define GLSL_BITS_VERSION                       22
+#define GLSL_BITS_VERSION                       23
 
 #define DEFAULT_GLSL_MATERIAL_PROGRAM           "defaultMaterial"
 #define DEFAULT_GLSL_DISTORTION_PROGRAM         "defaultDistortion"
