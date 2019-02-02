@@ -1128,7 +1128,7 @@ void CG_SmallPileOfGibs( const vec3_t origin, int damage, const vec3_t initialVe
 	vec3_t angles, velocity;
 
 	int time = 25;
-	int count = min( damage, 40 );
+	int count = min( damage * 0.75, 60 );
 
 	for( int i = 0; i < count; i++ ) {
 		vec4_t color;
@@ -1150,7 +1150,7 @@ void CG_SmallPileOfGibs( const vec3_t origin, int damage, const vec3_t initialVe
 		velocity[1] = crandom() * 0.5;
 		velocity[2] = random() * 0.5; // always have upwards
 		VectorNormalize( velocity );
-		VectorScale( velocity, min( damage * 6, 200 ), velocity );
+		VectorScale( velocity, min( damage * 4, 320 ), velocity );
 
 		velocity[0] += crandom() * bound( 0, damage, 150 );
 		velocity[1] += crandom() * bound( 0, damage, 150 );
