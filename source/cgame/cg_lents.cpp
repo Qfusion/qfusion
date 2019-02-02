@@ -933,32 +933,6 @@ void CG_GenericExplosion( const vec3_t pos, const vec3_t dir, float radius ) {
 }
 
 /*
-* CG_FlagFlareTrail
-*/
-void CG_FlagTrail( const vec3_t origin, const vec3_t start, const vec3_t end, float r, float g, float b ) {
-	lentity_t *le;
-	float len, mass = 20;
-	vec3_t dir;
-
-	VectorSubtract( end, start, dir );
-	len = VectorNormalize( dir );
-	if( !len ) {
-		return;
-	}
-
-	le = CG_AllocSprite( LE_SCALE_ALPHA_FADE, origin, 8, 50 + 50 * random(),
-						 r, g, b, 0.7f,
-						 0, 0, 0, 0,
-						 CG_MediaShader( cgs.media.shaderTeleporterSmokePuff ) );
-	VectorSet( le->velocity, -dir[0] * 5 + crandom() * 5, -dir[1] * 5 + crandom() * 5, -dir[2] * 5 + crandom() * 5 + 3 );
-	le->ent.rotation = rand() % 360;
-
-	//friction and gravity
-	VectorSet( le->accel, -0.2f, -0.2f, -9.8f * mass );
-	le->bounce = 50;
-}
-
-/*
 * CG_GreenLaser
 */
 void CG_GreenLaser( const vec3_t start, const vec3_t end ) {
@@ -1008,9 +982,9 @@ void CG_Dash( const entity_state_t *state ) {
 
 	if( CG_PointContents( pos ) & MASK_WATER ) {
 		return; // no smoke under water :)
-
 	}
-	le = CG_AllocModel( LE_DASH_SCALE, pos, angle, 7, //5
+
+	le = CG_AllocModel( LE_DASH_SCALE, pos, angle, 7,
 						1.0, 1.0, 1.0, 0.2f,
 						0, 0, 0, 0,
 						CG_MediaModel( cgs.media.modDash ),
@@ -1154,7 +1128,7 @@ void CG_SmallPileOfGibs( const vec3_t origin, int damage, const vec3_t initialVe
 	vec3_t angles, velocity;
 
 	int time = 25;
-	int count = max( damage * 2, 80 );
+	int count = min( damage, 40 );
 
 	for( int i = 0; i < count; i++ ) {
 		vec4_t color;
@@ -1176,17 +1150,13 @@ void CG_SmallPileOfGibs( const vec3_t origin, int damage, const vec3_t initialVe
 		velocity[1] = crandom() * 0.5;
 		velocity[2] = random() * 0.5; // always have upwards
 		VectorNormalize( velocity );
-		VectorScale( velocity, max( damage * 6, 200 ), velocity );
+		VectorScale( velocity, min( damage * 6, 200 ), velocity );
 
 		velocity[0] += crandom() * bound( 0, damage, 150 );
 		velocity[1] += crandom() * bound( 0, damage, 150 );
 		velocity[2] += random() * bound( 0, damage, 250 );
 
 		VectorAdd( initialVelocity, velocity, le->velocity );
-
-		le->avelocity[0] = random() * 1200;
-		le->avelocity[1] = random() * 1200;
-		le->avelocity[2] = random() * 1200;
 
 		//friction and gravity
 		VectorSet( le->accel, -1.0f, -1.0f, -1000 );
