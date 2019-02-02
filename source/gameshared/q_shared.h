@@ -25,8 +25,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //==============================================
 
 template< typename T, size_t N >
-char ( &ArrayCountObj( const T ( & )[ N ] ) )[ N ];
-#define ARRAY_COUNT( arr ) ( sizeof( ArrayCountObj( arr ) ) )
+constexpr size_t ARRAY_COUNT( const T ( &arr )[ N ] ) {
+        return N;
+}
 
 #define STATIC_ASSERT( p ) static_assert( p, #p )
 
