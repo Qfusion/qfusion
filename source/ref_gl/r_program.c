@@ -816,9 +816,7 @@ static const glsl_feature_t glsl_features_colcorrection[] =
 	{ 0, NULL, NULL }
 };
 
-
-static const glsl_feature_t * const glsl_programtypes_features[] =
-{
+static const glsl_feature_t *const glsl_programtypes_features[GLSL_PROGRAM_TYPE_MAXTYPE] = {
 	// GLSL_PROGRAM_TYPE_NONE
 	NULL,
 	// GLSL_PROGRAM_TYPE_MATERIAL
@@ -827,8 +825,6 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 	glsl_features_distortion,
 	// GLSL_PROGRAM_TYPE_SHADOW
 	glsl_features_shadow,
-	// GLSL_PROGRAM_TYPE_UNUSED
-	glsl_features_empty,
 	// GLSL_PROGRAM_TYPE_Q3A_SHADER
 	glsl_features_q3a,
 	// GLSL_PROGRAM_TYPE_FOG
