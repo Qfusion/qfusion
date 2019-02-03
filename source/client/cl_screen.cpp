@@ -34,10 +34,6 @@ end of unit intermissions
 #include "client.h"
 #include "ftlib/ftlib_public.h"
 
-float scr_con_current;    // aproaches scr_conlines at scr_conspeed
-float scr_con_previous;
-float scr_conlines;       // 0.0 to 1.0 lines of console to display
-
 static bool scr_initialized;    // ready to draw
 
 static int scr_draw_loading;
@@ -417,63 +413,13 @@ void SCR_ShutdownScreen( void ) {
 }
 
 /*
-* SCR_DrawConsole
+* SCR_DrawChat
 */
 void SCR_DrawChat( int x, int y, int width, struct qfontface_s *font ) {
 	Con_DrawChat( x, y, width, font );
 }
 
 //=============================================================================
-
-/*
-* SCR_RunConsole
-*
-* Scroll it up or down
-*/
-void SCR_RunConsole( int msec ) {
-	// decide on the height of the console
-	if( cls.key_dest == key_console ) {
-		scr_conlines = bound( 0.1f, scr_consize->value, 1.0f );
-	} else {
-		scr_conlines = 0;
-	}
-
-	if( scr_conspeed->value == 0 ) {
-		scr_con_current = scr_conlines;
-		return;
-	}
-
-	scr_con_previous = scr_con_current;
-	if( scr_conlines < scr_con_current ) {
-		scr_con_current -= scr_conspeed->value * msec * 0.001f;
-		if( scr_conlines > scr_con_current ) {
-			scr_con_current = scr_conlines;
-		}
-
-	} else if( scr_conlines > scr_con_current ) {
-		scr_con_current += scr_conspeed->value * msec * 0.001f;
-		if( scr_conlines < scr_con_current ) {
-			scr_con_current = scr_conlines;
-		}
-	}
-}
-
-/*
-* SCR_DrawConsole
-*/
-static void SCR_DrawConsole( void ) {
-	if( scr_con_current ) {
-		Con_DrawConsole();
-		return;
-	}
-}
-
-/*
-* SCR_DrawNotify
-*/
-static void SCR_DrawNotify( void ) {
-	Con_DrawNotify();
-}
 
 /*
 * SCR_BeginLoadingPlaque
@@ -483,7 +429,6 @@ void SCR_BeginLoadingPlaque( void ) {
 
 	memset( cl.configstrings, 0, sizeof( cl.configstrings ) );
 
-	scr_conlines = 0;       // none visible
 	scr_draw_loading = 2;   // clear to black first
 
 	SCR_UpdateScreen();
@@ -494,7 +439,6 @@ void SCR_BeginLoadingPlaque( void ) {
 */
 void SCR_EndLoadingPlaque( void ) {
 	cls.disable_screen = 0;
-	Con_ClearNotify();
 }
 
 
@@ -505,7 +449,6 @@ void SCR_EndLoadingPlaque( void ) {
 */
 void SCR_RegisterConsoleMedia() {
 	cls.whiteShader = re.RegisterPic( "$whiteimage" );
-	cls.consoleShader = re.RegisterPic( "gfx/ui/console" );
 
 	SCR_InitFonts();
 }
@@ -547,11 +490,9 @@ void SCR_UpdateScreen( void ) {
 		return;
 	}
 
-	if( !scr_initialized || !con_initialized || !cls.mediaInitialized ) {
-		return;     // not ready yet
-
+	if( !scr_initialized || !cls.mediaInitialized ) {
+		return; // not ready yet
 	}
-	Con_CheckResize();
 
 	CL_ForceVsync( cls.state == CA_DISCONNECTED );
 
@@ -563,7 +504,6 @@ void SCR_UpdateScreen( void ) {
 		UI_UpdateConnectScreen();
 	} else if( cls.state == CA_DISCONNECTED ) {
 		UI_Refresh();
-		SCR_DrawConsole();
 	} else if( cls.state == CA_GETTING_TICKET || cls.state == CA_CONNECTING || cls.state == CA_HANDSHAKE ) {
 		UI_UpdateConnectScreen();
 	} else if( cls.state == CA_CONNECTED ) {
@@ -585,9 +525,6 @@ void SCR_UpdateScreen( void ) {
 		if( scr_debuggraph->integer || scr_timegraph->integer || scr_netgraph->integer ) {
 			SCR_DrawDebugGraph();
 		}
-
-		SCR_DrawConsole();
-		SCR_DrawNotify();
 	}
 
 	re.EndFrame();

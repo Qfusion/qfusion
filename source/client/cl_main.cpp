@@ -2194,9 +2194,6 @@ void CL_Frame( int realMsec, int gameMsec ) {
 		CL_SoundModule_Update( vec3_origin, vec3_origin, axis_identity );
 	}
 
-	// advance local effects for next frame
-	SCR_RunConsole( allRealMsec );
-
 	allRealMsec = 0;
 	allGameMsec = 0;
 

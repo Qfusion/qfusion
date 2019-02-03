@@ -229,7 +229,6 @@ int Q_GrabWCharFromColorString( const char **pstr, wchar_t *wc, int *colorindex 
 #define UTF8SYNC_LEFT 0
 #define UTF8SYNC_RIGHT 1
 int Q_Utf8SyncPos( const char *str, int pos, int dir );
-void Q_FixTruncatedUtf8( char *str );
 bool Q_IsBreakingSpace( const char *str );
 bool Q_IsBreakingSpaceChar( wchar_t c );
 

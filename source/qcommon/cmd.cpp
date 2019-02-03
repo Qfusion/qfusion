@@ -36,7 +36,6 @@ static bool cmd_preinitialized = false;
 static bool cmd_initialized = false;
 
 static trie_t *cmd_alias_trie = NULL;
-static const trie_casing_t CMD_ALIAS_TRIE_CASING = CON_CASE_SENSITIVE ? TRIE_CASE_SENSITIVE : TRIE_CASE_INSENSITIVE;;
 
 static bool cmd_wait;
 static int alias_count;    // for detecting runaway loops
@@ -697,7 +696,6 @@ static char cmd_null_string[ 1 ] = { '\0' };
 static char cmd_args[MAX_STRING_CHARS];
 
 static trie_t *cmd_function_trie = NULL;
-static const trie_casing_t CMD_FUNCTION_TRIE_CASING = CON_CASE_SENSITIVE ? TRIE_CASE_SENSITIVE : TRIE_CASE_INSENSITIVE;
 
 static int Cmd_PatternMatchesFunction( void *cmd, void *pattern ) {
 	assert( cmd );
@@ -1297,8 +1295,8 @@ void Cmd_PreInit( void ) {
 	assert( !cmd_alias_trie );
 	assert( !cmd_function_trie );
 
-	Trie_Create( CMD_ALIAS_TRIE_CASING, &cmd_alias_trie );
-	Trie_Create( CMD_FUNCTION_TRIE_CASING, &cmd_function_trie );
+	Trie_Create( TRIE_CASE_INSENSITIVE, &cmd_alias_trie );
+	Trie_Create( TRIE_CASE_INSENSITIVE, &cmd_function_trie );
 
 	cmd_preinitialized = true;
 }

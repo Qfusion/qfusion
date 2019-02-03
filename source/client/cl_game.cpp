@@ -92,7 +92,7 @@ static void CL_GameModule_Print( const char *msg ) {
 * CL_GameModule_PrintToLog
 */
 static void CL_GameModule_PrintToLog( const char *msg ) {
-	Con_PrintSilent( msg );
+	Con_Print( msg );
 }
 
 /*

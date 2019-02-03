@@ -354,11 +354,10 @@ void Key_CharEvent( int key, wchar_t charkey ) {
 			Con_MessageCharEvent( charkey );
 			break;
 		case key_menu:
+		case key_console:
 			UI_CharEvent( true, charkey );
 			break;
 		case key_game:
-		case key_console:
-			Con_CharEvent( charkey );
 			break;
 		case key_delegate:
 			Key_DelegateCallCharDel( charkey );
@@ -483,7 +482,7 @@ void Key_Event( int key, bool down, int64_t time ) {
 
 	keydown[key] = down;
 
-	if( cls.key_dest == key_menu ) {
+	if( cls.key_dest == key_menu || cls.key_dest == key_console ) {
 		UI_KeyEvent( cls.key_dest == key_menu, key, down );
 		return;
 	}
@@ -497,9 +496,6 @@ void Key_Event( int key, bool down, int64_t time ) {
 			Con_MessageKeyDown( key );
 			break;
 		case key_game:
-			break;
-		case key_console:
-			Con_KeyDown( key );
 			break;
 		case key_delegate:
 			Key_DelegateCallKeyDel( key );

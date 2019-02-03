@@ -1339,25 +1339,6 @@ wchar_t Q_GrabWCharFromUtf8String( const char **pstr ) {
 }
 
 /*
-* Q_FixTruncatedUtf8
-*
-* Terminates a UTF-8 string correctly if it's cut to a specific buffer length (for instance, when using strncpyz).
-*/
-void Q_FixTruncatedUtf8( char *str ) {
-	size_t len = strlen( str );
-	const char *temp;
-	if( !len ) {
-		return;
-	}
-
-	len = Q_Utf8SyncPos( str, len - 1, UTF8SYNC_LEFT );
-	temp = str + len;
-	if( ( *temp != '?' ) && ( Q_GrabWCharFromUtf8String( &temp ) == '?' ) ) {
-		str[len] = '\0';
-	}
-}
-
-/*
 * Q_IsBreakingSpace
 */
 bool Q_IsBreakingSpace( const char *str ) {

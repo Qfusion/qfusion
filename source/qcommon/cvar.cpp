@@ -27,7 +27,6 @@ static bool cvar_preinitialized = false;
 
 static trie_t *cvar_trie = NULL;
 static qmutex_t *cvar_mutex = NULL;
-static const trie_casing_t CVAR_TRIE_CASING = CON_CASE_SENSITIVE ? TRIE_CASE_SENSITIVE : TRIE_CASE_INSENSITIVE;
 
 static int Cvar_HasFlags( void *cvar, void *flags ) {
 	assert( cvar );
@@ -807,7 +806,7 @@ void Cvar_PreInit( void ) {
 
 	cvar_mutex = QMutex_Create();
 
-	Trie_Create( CVAR_TRIE_CASING, &cvar_trie );
+	Trie_Create( TRIE_CASE_INSENSITIVE, &cvar_trie );
 
 	cvar_preinitialized = true;
 }

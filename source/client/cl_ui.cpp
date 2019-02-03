@@ -49,6 +49,7 @@ struct Server {
 };
 
 static ImFont * large_font;
+static ImFont * console_font;
 
 static Server servers[ 1024 ];
 static int num_servers = 0;
@@ -84,10 +85,10 @@ static void RefreshServerBrowser() {
 
 	for( const char * masterserver : MASTER_SERVERS ) {
 		String< 256 > buf( "requestservers global {} {} full empty\n", masterserver, APPLICATION_NOSPACES );
-		Cbuf_ExecuteText( EXEC_APPEND, buf );
+		Cbuf_AddText( buf );
 	}
 
-	Cbuf_ExecuteText( EXEC_APPEND, "requestservers local full empty\n" );
+	Cbuf_AddText( "requestservers local full empty\n" );
 }
 
 void UI_Init() {
@@ -122,6 +123,7 @@ void UI_Init() {
 
 		io.Fonts->AddFontFromFileTTF( "base/fonts/Montserrat-SemiBold.ttf", 16.0f );
 		large_font = io.Fonts->AddFontFromFileTTF( "base/fonts/Montserrat-Bold.ttf", 64.0f );
+		console_font = io.Fonts->AddFontFromFileTTF( "base/fonts/Montserrat-SemiBold.ttf", 14.0f );
 		ImGuiFreeType::BuildFontAtlas( io.Fonts );
 
 		uint8_t * pixels;
@@ -598,7 +600,7 @@ static void ServerBrowser() {
 		if( ImGui::Selectable( servers[ i ].address, i == selected_server, ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowDoubleClick ) ) {
 			if( ImGui::IsMouseDoubleClicked( 0 ) ) {
 				String< 256 > buf( "connect \"{}\"\n", servers[ i ].address );
-				Cbuf_ExecuteText( EXEC_APPEND, buf );
+				Cbuf_AddText( buf );
 			}
 			selected_server = i;
 		}
@@ -658,7 +660,7 @@ static void CreateServer() {
 		char mapname[ 128 ];
 		if( ML_GetMapByNum( selected_map, mapname, sizeof( mapname ) ) != 0 ) {
 			String< 256 > buf( "map \"{}\"\n", mapname );
-			Cbuf_ExecuteText( EXEC_APPEND, buf );
+			Cbuf_AddText( buf );
 		}
 	}
 }
@@ -666,7 +668,7 @@ static void CreateServer() {
 static void MainMenu() {
 	ImGui::SetNextWindowPos( ImVec2() );
 	ImGui::SetNextWindowSize( ImVec2( viddef.width, viddef.height ) );
-	ImGui::Begin( "mainmenu", NULL, ImGuiWindowFlags_NoDecoration );
+	ImGui::Begin( "mainmenu", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBringToFrontOnFocus );
 
 	ImVec2 window_padding = ImGui::GetStyle().WindowPadding;
 
@@ -732,7 +734,7 @@ static void GameMenuButton( const char * label, const char * command, bool * cli
 
 	if( ImGui::Button( label, size ) ) {
 		String< 256 > buf( "{}\n", command );
-		Cbuf_ExecuteText( EXEC_APPEND, buf );
+		Cbuf_AddText( buf );
 		if( clicked != NULL )
 			*clicked = true;
 	}
@@ -745,7 +747,7 @@ static void GameMenu() {
 	if( gamemenu_state == GameMenuState_Menu ) {
 		ImGui::SetNextWindowPosCenter();
 		ImGui::SetNextWindowSize( ImVec2( 300, 0 ) );
-		ImGui::Begin( "gamemenu", NULL, ImGuiWindowFlags_NoDecoration );
+		ImGui::Begin( "gamemenu", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBringToFrontOnFocus );
 		ImGuiStyle & style = ImGui::GetStyle();
 		const double half = ImGui::GetWindowWidth() / 2 - style.ItemSpacing.x - style.ItemInnerSpacing.x;
 
@@ -792,7 +794,7 @@ static void GameMenu() {
 	else if( gamemenu_state == GameMenuState_Loadout ) {
 		ImGui::SetNextWindowPosCenter();
 		ImGui::SetNextWindowSize( ImVec2( 300, 0 ) );
-		ImGui::Begin( "loadout", NULL, ImGuiWindowFlags_NoDecoration );
+		ImGui::Begin( "loadout", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBringToFrontOnFocus );
 
 		ImGui::Text( "Primary weapons" );
 
@@ -839,7 +841,7 @@ static void GameMenu() {
 		if( ImGui::Button( "OK", ImVec2( -1, 0 ) ) || selected_with_number ) {
 			const char * primaries_weapselect[] = { "ebrl", "rllg", "eblg" };
 			String< 128 > buf( "weapselect {} {}\n", primaries_weapselect[ selected_primary ], secondaries[ selected_secondary ] );
-			Cbuf_ExecuteText( EXEC_APPEND, buf );
+			Cbuf_AddText( buf );
 			should_close = true;
 		}
 
@@ -855,7 +857,7 @@ static void GameMenu() {
 		pos.y *= 0.5f;
 		ImGui::SetNextWindowPos( pos, ImGuiCond_Always, ImVec2( 0.5f, 0.5f ) );
 		ImGui::SetNextWindowSize( ImVec2( 600, 500 ) );
-		ImGui::Begin( "settings", NULL, ImGuiWindowFlags_NoDecoration );
+		ImGui::Begin( "settings", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBringToFrontOnFocus );
 
 		Settings();
 
@@ -879,7 +881,7 @@ static void DemoMenu() {
 	pos.y *= 0.8f;
 	ImGui::SetNextWindowPos( pos, ImGuiCond_Always, ImVec2( 0.5f, 0.5f ) );
 	ImGui::SetNextWindowSize( ImVec2( 600, 0 ) );
-	ImGui::Begin( "demomenu", NULL, ImGuiWindowFlags_NoDecoration );
+	ImGui::Begin( "demomenu", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBringToFrontOnFocus );
 
 	GameMenuButton( cls.demo.paused ? "Play" : "Pause", "demopause" );
 	GameMenuButton( "Jump +15s", "demojump +15" );
@@ -898,7 +900,7 @@ static void DemoMenu() {
 	ImGui::PopStyleColor();
 }
 
-static void RenderUI() {
+static void SubmitDrawCalls() {
 	ImDrawData * draw_data = ImGui::GetDrawData();
 
 	ImGuiIO& io = ImGui::GetIO();
@@ -965,8 +967,7 @@ static void RenderUI() {
 }
 
 void UI_Refresh() {
-	if( uistate == UIState_Hidden )
-		return;
+	MICROPROFILE_SCOPEI( "Main", "UI_Refresh", 0xffffffff );
 
 	ImGui_ImplSDL2_NewFrame( sdl_window );
 	ImGui::NewFrame();
@@ -978,7 +979,7 @@ void UI_Refresh() {
 	if( uistate == UIState_Connecting ) {
 		ImGui::SetNextWindowPos( ImVec2() );
 		ImGui::SetNextWindowSize( ImVec2( viddef.width, viddef.height ) );
-		ImGui::Begin( "mainmenu", NULL, ImGuiWindowFlags_NoDecoration );
+		ImGui::Begin( "mainmenu", NULL, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoBringToFrontOnFocus );
 
 		ImGui::Text( "Connecting..." );
 
@@ -995,8 +996,12 @@ void UI_Refresh() {
 
 	// ImGui::ShowDemoWindow();
 
+	ImGui::PushFont( console_font );
+	Con_Draw();
+	ImGui::PopFont();
+
 	ImGui::Render();
-	RenderUI();
+	SubmitDrawCalls();
 
 	Cbuf_Execute();
 }

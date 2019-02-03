@@ -229,7 +229,6 @@ typedef struct {
 
 	// these shaders have nothing to do with media
 	shader_t *whiteShader;
-	shader_t *consoleShader;
 
 	// system font
 	qfontface_t *consoleFont;
@@ -456,7 +455,6 @@ void SCR_UpdateScreen( void );
 void SCR_BeginLoadingPlaque( void );
 void SCR_EndLoadingPlaque( void );
 void SCR_DebugGraph( float value, float r, float g, float b );
-void SCR_RunConsole( int msec );
 void SCR_RegisterConsoleMedia( void );
 void SCR_ShutDownConsoleMedia( void );
 qfontface_t *SCR_RegisterFont( const char *family, int style, unsigned int size );
@@ -482,9 +480,6 @@ void CL_ShutdownMedia( void );
 void CL_RestartMedia( void );
 
 void CL_AddNetgraph( void );
-
-extern float scr_con_current;
-extern float scr_conlines;       // lines of console to display
 
 extern ref_export_t re;     // interface to refresh .dll
 

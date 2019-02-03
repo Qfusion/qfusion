@@ -3,6 +3,8 @@
 #include <stddef.h>
 #include <string.h>
 
+#include "gameshared/q_math.h"
+#include "gameshared/q_shared.h"
 #include "ggformat.h"
 
 template< size_t N >
@@ -43,6 +45,22 @@ public:
 	void append( const char * fmt, const Rest & ... rest ) {
 		size_t copied = ggformat( buf + length, N - length, fmt, rest... );
 		length += min( copied, N - length - 1 );
+	}
+
+	void append_raw( const char * str, size_t len ) {
+		size_t to_copy = min( N - length - 1, len );
+		memmove( buf + length, str, to_copy );
+		length += to_copy;
+		buf[ length ] = '\0';
+	}
+
+	void remove( size_t start, size_t len ) {
+		if( start >= length )
+			return;
+		size_t to_remove = min( length - start, len );
+		memmove( buf + start, buf + start + to_remove, length - to_remove );
+		length -= to_remove;
+		buf[ length ] = '\0';
 	}
 
 	void truncate( size_t n ) {
