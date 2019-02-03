@@ -976,9 +976,6 @@ void CG_EntityEvent( entity_state_t *ent, int ev, int parm, bool predicted ) {
 			CG_Event_Die( ent, parm );
 			break;
 
-		case EV_GIB:
-			break;
-
 		case EV_EXPLOSION1:
 			CG_GenericExplosion( ent->origin, vec3_origin, parm * 8 );
 			break;
