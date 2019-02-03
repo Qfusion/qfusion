@@ -411,15 +411,6 @@ Entity @ firstNearbyTeammate( Vec3 origin, int team ) {
 }
 
 bool bombCanPlant() {
-	// check carrier is moving slowly enough
-	// comparing squared length because it's faster
-
-	Vec3 velocity = bombCarrier.velocity;
-
-	if( velocity * velocity > BOMB_MAX_PLANT_SPEED * BOMB_MAX_PLANT_SPEED ) {
-		return false;
-	}
-
 	// check carrier is on the ground
 	// XXX: old bomb checked if they were < 32 units above ground
 	Trace trace;
@@ -427,7 +418,7 @@ bool bombCanPlant() {
 	Vec3 start = bombCarrier.origin;
 
 	Vec3 end = start;
-	end.z -= 1; // const this? max height for planting
+	end.z -= BOMB_MAX_PLANT_HEIGHT;
 
 	Vec3 mins, maxs;
 	bombCarrier.getSize( mins, maxs );

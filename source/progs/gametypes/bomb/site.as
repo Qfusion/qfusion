@@ -107,13 +107,13 @@ class cBombSite
 	}
 
 	void carrierTouched() {
+		bombCarrierCanPlantTime = levelTime;
 		if( bombCanPlant() ) {
-			bombCarrierCanPlantTime = levelTime;
-			bombCarrier.client.setHUDStat( STAT_CAN_PLANT_BOMB, 1 );
-
 			Vec3 mins, maxs;
 			bombCarrier.getSize( mins, maxs );
-			if( maxs.z < 40 && levelTime - bombActionTime >= 1000 ) {
+			Vec3 velocity = bombCarrier.velocity;
+
+			if( maxs.z < 40 && levelTime - bombActionTime >= 1000 && velocity * velocity < BOMB_MAX_PLANT_SPEED * BOMB_MAX_PLANT_SPEED ) {
 				bombStartPlanting( this );
 			}
 		}

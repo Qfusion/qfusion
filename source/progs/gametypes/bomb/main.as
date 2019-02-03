@@ -20,7 +20,8 @@
 // TODO: organise this crap
 //       maybe move to constants.as
 
-const uint BOMB_MAX_PLANT_SPEED = 150; // can't plant above crouch walk speed
+const uint BOMB_MAX_PLANT_SPEED = 150;	// can't plant above crouch walk speed
+const uint BOMB_MAX_PLANT_HEIGHT = 100; // doesn't detect site above that height above ground
 
 const uint BOMB_DROP_RETAKE_DELAY = 1000; // time (ms) after dropping before you can retake it
 
