@@ -118,15 +118,6 @@ void G_InitBodyQueue( void ) {
 }
 
 /*
-* body_die
-*/
-static void body_die( edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, const vec3_t point ) {
-	ThrowSmallPileOfGibs( self, damage );
-	self->s.origin[2] -= 48;
-	self->nextThink = level.time + 3000 + random() * 3000;
-}
-
-/*
 * body_think
 */
 static void body_think( edict_t *self ) {
@@ -215,11 +206,9 @@ static edict_t *CopyToBodyQue( edict_t *ent, edict_t *attacker, int damage ) {
 	VectorCopy( ent->velocity, body->velocity );
 	body->r.maxs[2] = body->r.mins[2] + 8;
 
-	body->r.solid = SOLID_YES;
-	body->takedamage = DAMAGE_YES;
-	body->r.clipmask = CONTENTS_SOLID | CONTENTS_PLAYERCLIP;
+	body->r.solid = SOLID_NOT;
+	body->takedamage = DAMAGE_NO;
 	body->movetype = MOVETYPE_TOSS;
-	body->die = body_die;
 	body->think = body_think; // body self destruction countdown
 
 	int mod = meansOfDeath;
@@ -265,8 +254,6 @@ static edict_t *CopyToBodyQue( edict_t *ent, edict_t *attacker, int damage ) {
 		}
 
 		body->think = body_think;
-		body->takedamage = DAMAGE_NO;
-		body->r.solid = SOLID_NOT;
 		body->nextThink = level.time + 3500;
 	} else {   // wasn't a player, just copy it's model
 		VectorClear( body->velocity );
