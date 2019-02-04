@@ -430,10 +430,10 @@ static void TabCompletion( char * buf ) {
 	for( size_t i = 0; i < ARRAY_COUNT( completion_lists ); i++ ) {
 		if( completion_lists[ i ] == NULL )
 			continue;
-		char ** c = &completion_lists[ i ][ 0 ];
-		while( *c != NULL ) {
-			common_prefix_len = min( common_prefix_len, CommonPrefixLength( completion, *c ) );
-			c++;
+		char ** candidate = &completion_lists[ i ][ 0 ];
+		while( *candidate != NULL ) {
+			common_prefix_len = min( common_prefix_len, CommonPrefixLength( completion, *candidate ) );
+			candidate++;
 		}
 	}
 
