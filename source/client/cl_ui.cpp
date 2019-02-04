@@ -969,6 +969,9 @@ static void SubmitDrawCalls() {
 void UI_Refresh() {
 	MICROPROFILE_SCOPEI( "Main", "UI_Refresh", 0xffffffff );
 
+	if( uistate == UIState_Hidden && !Con_IsVisible() )
+		return;
+
 	ImGui_ImplSDL2_NewFrame( sdl_window );
 	ImGui::NewFrame();
 

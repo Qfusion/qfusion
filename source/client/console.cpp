@@ -95,6 +95,10 @@ void Con_ToggleConsole() {
 	console.visible = !console.visible;
 }
 
+bool Con_IsVisible() {
+	return console.visible;
+}
+
 void Con_Close() {
 	if( console.visible ) {
 		CL_SetKeyDest( cls.old_key_dest );
@@ -215,9 +219,6 @@ static int InputCallback( ImGuiInputTextCallbackData * data ) {
 			data->CursorPos = strlen( data->Buf );
 		}
 	}
-
-	if( data->EventChar == 'z' )
-		asm( "int $3" );
 
 	return 0;
 }
