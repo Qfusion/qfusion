@@ -2,7 +2,6 @@
 #include "qcommon/utf8.h"
 #include "imgui/imgui.h"
 
-// TODO: do tab completion
 // TODO: revamp key_dest garbage
 // TODO: finish cleaning up old stuff
 // TODO: check if mutex is really needed
@@ -72,7 +71,7 @@ void Con_Shutdown() {
 	Cmd_RemoveCommand( "messagemode" );
 	Cmd_RemoveCommand( "messagemode2" );
 	Cmd_RemoveCommand( "clear" );
-	Cmd_RemoveCommand( "condump" );
+	// Cmd_RemoveCommand( "condump" );
 }
 
 void Con_ToggleConsole() {
@@ -176,14 +175,15 @@ void Con_Print( const char * str ) {
 	QMutex_Unlock( console.mutex );
 }
 
-static void Con_CompleteCommandLine( void );
+static void TabCompletion( char * buf );
 
 static int InputCallback( ImGuiInputTextCallbackData * data ) {
 	if( data->EventChar == 0 ) {
 		bool dirty = false;
 
 		if( data->EventKey == ImGuiKey_Tab ) {
-			Con_CompleteCommandLine();
+			TabCompletion( data->Buf );
+			dirty = true;
 		}
 		else if( data->EventKey == ImGuiKey_UpArrow || data->EventKey == ImGuiKey_DownArrow ) {
 			if( data->EventKey == ImGuiKey_UpArrow && console.history_idx < console.history_count ) {
@@ -346,6 +346,123 @@ void Con_Draw( int pressed_key ) {
 
 	QMutex_Unlock( console.mutex );
 }
+
+static void Con_DisplayList( char ** list ) {
+	for( int i = 0; list[ i ] != NULL; i++ ) {
+		Com_Printf( "%s ", list[ i ] );
+	}
+	Com_Printf( "\n" );
+}
+
+static size_t CommonPrefixLength( const char * a, const char * b ) {
+	size_t n = min( strlen( a ), strlen( b ) );
+	size_t len = 0;
+	for( size_t i = 0; i < n; i++ ) {
+		if( a[ i ] != b[ i ] )
+			break;
+		len++;
+	}
+	return len;
+}
+
+static void TabCompletion( char * buf ) {
+	char * input = buf;
+	if( *input == '\\' || *input == '/' )
+		input++;
+	if( strlen( input ) == 0 )
+		return;
+
+	// Count number of possible matches
+	int c = Cmd_CompleteCountPossible( input );
+	int v = Cvar_CompleteCountPossible( input );
+	int a = Cmd_CompleteAliasCountPossible( input );
+	int ca = 0;
+
+	char ** completion_lists[ 4 ] = { };
+
+	const char * completion = NULL;
+
+	if( !( c + v + a ) ) {
+		// now see if there's any valid cmd in there, providing
+		// a list of matching arguments
+		completion_lists[3] = Cmd_CompleteBuildArgList( input );
+		if( !completion_lists[3] ) {
+			// No possible matches, let the user know they're insane
+			Com_Printf( "\nNo matching aliases, commands, or cvars were found.\n" );
+			return;
+		}
+
+		// count the number of matching arguments
+		while( completion_lists[3][ca] != NULL )
+			ca++;
+		if( ca == 0 ) {
+			// the list is empty, although non-NULL list pointer suggests that the command
+			// exists, so clean up and exit without printing anything
+			Mem_TempFree( completion_lists[3] );
+			return;
+		}
+	}
+
+	if( c != 0 ) {
+		completion_lists[0] = Cmd_CompleteBuildList( input );
+		completion = *completion_lists[0];
+	}
+	if( v != 0 ) {
+		completion_lists[1] = Cvar_CompleteBuildList( input );
+		completion = *completion_lists[1];
+	}
+	if( a != 0 ) {
+		completion_lists[2] = Cmd_CompleteAliasBuildList( input );
+		completion = *completion_lists[2];
+	}
+	if( ca != 0 ) {
+		input = StrChrUTF8( input, ' ' ) + 1;
+		completion = *completion_lists[3];
+	}
+
+	size_t common_prefix_len = SIZE_MAX;
+	for( size_t i = 0; i < ARRAY_COUNT( completion_lists ); i++ ) {
+		if( completion_lists[ i ] == NULL )
+			continue;
+		char ** c = &completion_lists[ i ][ 0 ];
+		while( *c != NULL ) {
+			common_prefix_len = min( common_prefix_len, CommonPrefixLength( completion, *c ) );
+			c++;
+		}
+	}
+
+	if( c + v + a + ca != 1 ) {
+		if( c != 0 ) {
+			Com_Printf( S_COLOR_RED "%i possible command%s%s\n", c, ( c > 1 ) ? "s: " : ":", S_COLOR_WHITE );
+			Con_DisplayList( completion_lists[0] );
+		}
+		if( v != 0 ) {
+			Com_Printf( S_COLOR_CYAN "%i possible variable%s%s\n", v, ( v > 1 ) ? "s: " : ":", S_COLOR_WHITE );
+			Con_DisplayList( completion_lists[1] );
+		}
+		if( a != 0 ) {
+			Com_Printf( S_COLOR_MAGENTA "%i possible alias%s%s\n", a, ( a > 1 ) ? "es: " : ":", S_COLOR_WHITE );
+			Con_DisplayList( completion_lists[2] );
+		}
+		if( ca != 0 ) {
+			Com_Printf( S_COLOR_GREEN "%i possible argument%s%s\n", ca, ( ca > 1 ) ? "s: " : ":", S_COLOR_WHITE );
+			Con_DisplayList( completion_lists[3] );
+		}
+	}
+
+	if( completion != NULL ) {
+		size_t to_copy = min( common_prefix_len + 1, sizeof( console.input ) - ( input - console.input ) );
+		Q_strncpyz( input, completion, to_copy );
+	}
+
+	for( size_t i = 0; i < ARRAY_COUNT( completion_lists ); i++ ) {
+		Mem_TempFree( completion_lists[i] );
+	}
+}
+
+/*
+ * chat stuff
+ */
 
 // keep these around from previous Con_DrawChat call
 static int con_chatX, con_chatY;
@@ -540,175 +657,6 @@ void Con_DrawChat( int x, int y, int width, struct qfontface_s *font ) {
 	}
 }
 
-static void Con_DisplayList( char ** list ) {
-	for( int i = 0; list[ i ] != NULL; i++ ) {
-		Com_Printf( "%s ", list[ i ] );
-	}
-	Com_Printf( "\n" );
-}
-
-/*
-* Con_CompleteCommandLine
-
-* New function for tab-completion system
-* Added by EvilTypeGuy
-* Thanks to Fett erich@heintz.com
-* Thanks to taniwha
-*/
-static void Con_CompleteCommandLine( void ) {
-	static char empty[ 1 ] = { '\0' };
-	char *cmd = empty;
-	char *s;
-	int i;
-	size_t cmd_len;
-	char **list[6] = { 0, 0, 0, 0, 0, 0 };
-
-	s = console.input;
-	if( *s == '\\' || *s == '/' ) {
-		s++;
-	}
-	if( !*s ) {
-		return;
-	}
-
-	// Count number of possible matches
-	int c = Cmd_CompleteCountPossible( s );
-	int v = Cvar_CompleteCountPossible( s );
-	int a = Cmd_CompleteAliasCountPossible( s );
-	int ca = 0;
-
-	if( !( c + v + a ) ) {
-		// now see if there's any valid cmd in there, providing
-		// a list of matching arguments
-		list[4] = Cmd_CompleteBuildArgList( s );
-		if( !list[4] ) {
-			// No possible matches, let the user know they're insane
-			Com_Printf( "\nNo matching aliases, commands, or cvars were found.\n\n" );
-			return;
-		}
-
-		// count the number of matching arguments
-		for( ca = 0; list[4][ca]; ca++ ) ;
-		if( !ca ) {
-			// the list is empty, although non-NULL list pointer suggests that the command
-			// exists, so clean up and exit without printing anything
-			Mem_TempFree( list[4] );
-			return;
-		}
-	}
-
-	if( c + v + a + ca == 1 ) {
-		// find the one match to rule them all
-		if( c ) {
-			list[0] = Cmd_CompleteBuildList( s );
-		} else if( v ) {
-			list[0] = Cvar_CompleteBuildList( s );
-		} else if( a ) {
-			list[0] = Cmd_CompleteAliasBuildList( s );
-		} else {
-			list[0] = list[4], list[4] = NULL;
-		}
-		cmd = *list[0];
-		cmd_len = (int)strlen( cmd );
-	} else {
-		int i_start = 0;
-
-		if( c ) {
-			cmd = *( list[0] = Cmd_CompleteBuildList( s ) );
-		}
-		if( v ) {
-			cmd = *( list[1] = Cvar_CompleteBuildList( s ) );
-		}
-		if( a ) {
-			cmd = *( list[2] = Cmd_CompleteAliasBuildList( s ) );
-		}
-		if( ca ) {
-			s = strstr( s, " " ) + 1, cmd = *( list[4] ), i_start = 4;
-		}
-
-		cmd_len = (int)strlen( s );
-		do {
-			for( i = i_start; i < 5; i++ ) {
-				char ch = cmd[cmd_len];
-				char **l = list[i];
-				if( l ) {
-					while( *l && ( *l )[cmd_len] == ch )
-						l++;
-					if( *l ) {
-						break;
-					}
-				}
-			}
-			if( i == 5 ) {
-				cmd_len++;
-			}
-		} while( i == 5 );
-
-		// Print Possible Commands
-		if( c ) {
-			Com_Printf( S_COLOR_RED "%i possible command%s%s\n", c, ( c > 1 ) ? "s: " : ":", S_COLOR_WHITE );
-			Con_DisplayList( list[0] );
-		}
-
-		if( v ) {
-			Com_Printf( S_COLOR_CYAN "%i possible variable%s%s\n", v, ( v > 1 ) ? "s: " : ":", S_COLOR_WHITE );
-			Con_DisplayList( list[1] );
-		}
-
-		if( a ) {
-			Com_Printf( S_COLOR_MAGENTA "%i possible alias%s%s\n", a, ( a > 1 ) ? "es: " : ":", S_COLOR_WHITE );
-			Con_DisplayList( list[2] );
-		}
-
-		if( ca ) {
-			Com_Printf( S_COLOR_GREEN "%i possible argument%s%s\n", ca, ( ca > 1 ) ? "s: " : ":", S_COLOR_WHITE );
-			Con_DisplayList( list[4] );
-		}
-	}
-
-	if( cmd ) {
-		int skip = 1;
-		char *cmd_temp = NULL, *p;
-                //
-		// if( ca ) {
-		// 	size_t temp_size;
-                //
-		// 	temp_size = sizeof( key_lines[edit_line] );
-		// 	cmd_temp = ( char * ) Mem_TempMalloc( temp_size );
-                //
-		// 	Q_strncpyz( cmd_temp, key_lines[edit_line] + skip, temp_size );
-		// 	p = strstr( cmd_temp, " " );
-		// 	if( p ) {
-		// 		*( p + 1 ) = '\0';
-		// 	}
-                //
-		// 	cmd_len += strlen( cmd_temp );
-                //
-		// 	Q_strncatz( cmd_temp, cmd, temp_size );
-		// 	cmd = cmd_temp;
-		// }
-                //
-		// Q_strncpyz( key_lines[edit_line] + skip, cmd, sizeof( key_lines[edit_line] ) - ( 1 + skip ) );
-		// key_linepos = min( cmd_len + skip, sizeof( key_lines[edit_line] ) - 1 );
-                //
-		// if( c + v + a == 1 && key_linepos < sizeof( key_lines[edit_line] ) - 1 ) {
-		// 	key_lines[edit_line][key_linepos] = ' ';
-		// 	key_linepos++;
-		// }
-		// key_lines[edit_line][key_linepos] = 0;
-
-		if( cmd == cmd_temp ) {
-			Mem_TempFree( cmd );
-		}
-	}
-
-	for( i = 0; i < 5; ++i ) {
-		if( list[i] ) {
-			Mem_TempFree( list[i] );
-		}
-	}
-}
-
 /*
 * Con_SendChatMessage
 */
@@ -832,7 +780,6 @@ static int Con_NumPadValue( int key ) {
 
 	return key;
 }
-
 
 /*
 * Con_MessageCharEvent
