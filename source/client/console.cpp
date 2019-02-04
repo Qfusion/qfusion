@@ -276,69 +276,75 @@ const char * NextChunkEnd( const char * str ) {
 void Con_Draw( int pressed_key ) {
 	QMutex_Lock( console.mutex );
 
-	ImGui::PushStyleColor( ImGuiCol_FrameBg, IM_COL32( 27, 24, 33, 192 ) );
-	ImGui::PushStyleColor( ImGuiCol_WindowBg, IM_COL32( 27, 24, 33, 192 ) );
-	ImGui::PushStyleVar( ImGuiStyleVar_ItemSpacing, ImVec2( 0, 1 ) );
+	ImGui::PushStyleColor( ImGuiCol_FrameBg, IM_COL32( 27, 24, 33, 224 ) );
+	ImGui::PushStyleColor( ImGuiCol_WindowBg, IM_COL32( 0, 0, 0, 0 ) );
+	ImGui::PushStyleVar( ImGuiStyleVar_ItemSpacing, ImVec2( 0, 0 ) );
 	ImGui::PushStyleVar( ImGuiStyleVar_FramePadding, ImVec2( 8, 4 ) );
 	ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 0, 0 ) );
 	ImGui::SetNextWindowPos( ImVec2() );
-	ImGui::SetNextWindowSize( ImVec2( viddef.width, viddef.height * 0.4 ) );
+	ImGui::SetNextWindowSize( ImVec2( viddef.width, viddef.height ) );
 	ImGui::Begin( "console", NULL, ImGuiWindowFlags_NoDecoration );
+	{
+		ImGui::PushStyleColor( ImGuiCol_ChildBg, IM_COL32( 27, 24, 33, 224 ) );
+		ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 8, 4 ) );
+		ImGui::BeginChild( "consoletext", ImVec2( 0, viddef.height * 0.4 - ImGui::GetFrameHeightWithSpacing() - 3 ), false, ImGuiWindowFlags_AlwaysUseWindowPadding );
+		{
+			ImGui::PushTextWrapPos( 0 );
+			const char * p = console.log.c_str();
+			while( p != NULL ) {
+				const char * end = NextChunkEnd( p );
+				ImGui::TextUnformatted( p, end );
+				p = end;
+			}
+			ImGui::PopTextWrapPos();
 
-	ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 8, 4 ) );
-	ImGui::BeginChild( "consoletext", ImVec2( 0, -ImGui::GetFrameHeightWithSpacing() - 3 ), false, ImGuiWindowFlags_AlwaysUseWindowPadding );
+			if( console.scroll_to_bottom )
+				ImGui::SetScrollHereY( 1.0f );
+			console.scroll_to_bottom = false;
 
-	ImGui::PushTextWrapPos( 0 );
-	const char * p = console.log.c_str();
-	while( p != NULL ) {
-		const char * end = NextChunkEnd( p );
-		ImGui::TextUnformatted( p, end );
-		p = end;
+			if( pressed_key == K_PGUP || pressed_key == K_PGDN ) {
+				float scroll = ImGui::GetScrollY();
+				float page = ImGui::GetWindowSize().y - ImGui::GetTextLineHeight();
+				scroll += page * ( pressed_key == K_PGUP ? -1 : 1 );
+				scroll = bound( 0.0f, scroll, ImGui::GetScrollMaxY() );
+				ImGui::SetScrollY( scroll );
+			}
+
+			console.at_bottom = ImGui::GetScrollY() == ImGui::GetScrollMaxY();
+		}
+
+		ImGui::EndChild();
+		ImGui::PopStyleVar();
+		ImGui::PopStyleColor();
+
+		ImGui::PushStyleVar( ImGuiStyleVar_ItemSpacing, ImVec2( 0, 1 ) );
+		ImGui::Separator();
+		ImGui::PopStyleVar();
+
+		ImGuiInputTextFlags input_flags = 0;
+		input_flags |= ImGuiInputTextFlags_CallbackCharFilter;
+		input_flags |= ImGuiInputTextFlags_CallbackCompletion;
+		input_flags |= ImGuiInputTextFlags_CallbackHistory;
+		input_flags |= ImGuiInputTextFlags_EnterReturnsTrue;
+
+		ImGui::PushItemWidth( ImGui::GetWindowWidth() );
+		bool enter = ImGui::InputText( "##consoleinput", console.input, sizeof( console.input ), input_flags, InputCallback );
+		// can't drag the scrollbar without this
+		if( !ImGui::IsAnyItemActive() )
+			ImGui::SetKeyboardFocusHere();
+		ImGui::PopItemWidth();
+
+		if( enter ) {
+			Con_Execute();
+		}
+
+		ImVec2 top_left = ImGui::GetCursorPos();
+		top_left.y -= 1;
+		ImVec2 bottom_right = top_left;
+		bottom_right.x += ImGui::GetWindowWidth();
+		bottom_right.y += 2;
+		ImGui::GetWindowDrawList()->AddRectFilled( top_left, bottom_right, ImGui::GetColorU32( ImGuiCol_Separator ) );
 	}
-	ImGui::PopTextWrapPos();
-
-	if( console.scroll_to_bottom )
-		ImGui::SetScrollHereY( 1.0f );
-	console.scroll_to_bottom = false;
-
-	if( pressed_key == K_PGUP || pressed_key == K_PGDN ) {
-		float scroll = ImGui::GetScrollY();
-		float page = ImGui::GetWindowSize().y - ImGui::GetTextLineHeight();
-		scroll += page * ( pressed_key == K_PGUP ? -1 : 1 );
-		scroll = bound( 0.0f, scroll, ImGui::GetScrollMaxY() );
-		ImGui::SetScrollY( scroll );
-	}
-
-	console.at_bottom = ImGui::GetScrollY() == ImGui::GetScrollMaxY();
-
-	ImGui::EndChild();
-	ImGui::PopStyleVar();
-
-	ImGui::Separator();
-
-	ImGuiInputTextFlags input_flags = 0;
-	input_flags |= ImGuiInputTextFlags_CallbackCharFilter;
-	input_flags |= ImGuiInputTextFlags_CallbackCompletion;
-	input_flags |= ImGuiInputTextFlags_CallbackHistory;
-	input_flags |= ImGuiInputTextFlags_EnterReturnsTrue;
-
-	ImGui::PushItemWidth( ImGui::GetWindowWidth() );
-	bool enter = ImGui::InputText( "##consoleinput", console.input, sizeof( console.input ), input_flags, InputCallback );
-	// can't drag the scrollbar without this
-	if( !ImGui::IsAnyItemActive() ) 
-		ImGui::SetKeyboardFocusHere();
-	ImGui::PopItemWidth();
-
-	if( enter ) {
-		Con_Execute();
-	}
-
-	ImVec2 top_left = ImGui::GetCursorPos();
-	top_left.y -= 1;
-	ImVec2 bottom_right = top_left;
-	bottom_right.x += ImGui::GetWindowWidth();
-	bottom_right.y += 2;
-	ImGui::GetWindowDrawList()->AddRectFilled( top_left, bottom_right, ImGui::GetColorU32( ImGuiCol_Separator ) );
 
 	ImGui::End();
 	ImGui::PopStyleVar( 3 );
