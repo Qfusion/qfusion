@@ -17,7 +17,6 @@ obj_cxxflags( ".*", "-D_LIBCPP_TYPE_TRAITS" )
 
 if config == "release" then
 	obj_cxxflags( ".*", "-DPUBLIC_BUILD -DMICROPROFILE_ENABLED=0" )
-
 end
 
 do
