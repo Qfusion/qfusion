@@ -216,30 +216,28 @@ static int InputCallback( ImGuiInputTextCallbackData * data ) {
 }
 
 static void Con_Execute() {
-	bool chat = true;
-	chat = chat && cls.state == CA_ACTIVE;
-	chat = chat && console.input[ 0 ] != '/' && console.input[ 0 ] != '\\';
-	chat = chat && !Cmd_CheckForCommand( console.input );
-
-	if( chat ) {
-		char * p = console.input;
-		while( ( p = StrChrUTF8( p, '"' ) ) != NULL )
-			*p = '\'';
-		Cbuf_AddText( "say \"" );
-		Cbuf_AddText( console.input );
-		Cbuf_AddText( "\"\n" );
-	}
-	else {
-		const char * cmd = console.input;
-		if( cmd[ 0 ] == '/' || cmd[ 0 ] == '\\' )
-			cmd++;
-		Cbuf_AddText( cmd );
-		Cbuf_AddText( "\n" );
-	}
-
-	Com_Printf( "> %s\n", console.input );
-
 	if( strlen( console.input ) != 0 ) {
+		bool chat = true;
+		chat = chat && cls.state == CA_ACTIVE;
+		chat = chat && console.input[ 0 ] != '/' && console.input[ 0 ] != '\\';
+		chat = chat && !Cmd_CheckForCommand( console.input );
+
+		if( chat ) {
+			char * p = console.input;
+			while( ( p = StrChrUTF8( p, '"' ) ) != NULL )
+				*p = '\'';
+			Cbuf_AddText( "say \"" );
+			Cbuf_AddText( console.input );
+			Cbuf_AddText( "\"\n" );
+		}
+		else {
+			const char * cmd = console.input;
+			if( cmd[ 0 ] == '/' || cmd[ 0 ] == '\\' )
+				cmd++;
+			Cbuf_AddText( cmd );
+			Cbuf_AddText( "\n" );
+		}
+
 		const HistoryEntry * last = &console.input_history[ ( console.history_head + console.history_count - 1 ) % ARRAY_COUNT( console.input_history ) ];
 
 		if( console.history_count == 0 || strcmp( last->cmd, console.input ) != 0 ) {
@@ -254,6 +252,8 @@ static void Con_Execute() {
 			}
 		}
 	}
+
+	Com_Printf( "> %s\n", console.input );
 
 	Con_ClearInput();
 }
