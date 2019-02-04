@@ -3,7 +3,8 @@ void Con_Shutdown();
 
 void Con_Print( const char * str );
 void Con_Clear();
-void Con_Draw();
+// imgui text fields don't have pageup/down callbacks so we have to do it like this
+void Con_Draw( int pressed_key );
 
 struct qfontface_s;
 void Con_DrawChat( int x, int y, int width, struct qfontface_s *font );

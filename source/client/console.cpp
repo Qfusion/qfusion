@@ -3,7 +3,6 @@
 #include "imgui/imgui.h"
 
 // TODO: do tab completion
-// TODO: pageup/pagedown scrolling
 // TODO: revamp key_dest garbage
 // TODO: finish cleaning up old stuff
 // TODO: check if mutex is really needed
@@ -224,10 +223,8 @@ static void Con_Execute() {
 
 	if( chat ) {
 		char * p = console.input;
-		while( ( p = StrChrUTF8( p, '"' ) ) != NULL ) {
+		while( ( p = StrChrUTF8( p, '"' ) ) != NULL )
 			*p = '\'';
-		}
-
 		Cbuf_AddText( "say \"" );
 		Cbuf_AddText( console.input );
 		Cbuf_AddText( "\"\n" );
@@ -276,10 +273,7 @@ const char * NextChunkEnd( const char * str ) {
 	return NULL;
 }
 
-void Con_Draw() {
-	if( !console.visible )
-		return;
-
+void Con_Draw( int pressed_key ) {
 	QMutex_Lock( console.mutex );
 
 	ImGui::PushStyleColor( ImGuiCol_FrameBg, IM_COL32( 27, 24, 33, 192 ) );
@@ -306,6 +300,15 @@ void Con_Draw() {
 	if( console.scroll_to_bottom )
 		ImGui::SetScrollHereY( 1.0f );
 	console.scroll_to_bottom = false;
+
+	if( pressed_key == K_PGUP || pressed_key == K_PGDN ) {
+		float scroll = ImGui::GetScrollY();
+		float page = ImGui::GetWindowSize().y - ImGui::GetTextLineHeight();
+		scroll += page * ( pressed_key == K_PGUP ? -1 : 1 );
+		scroll = bound( 0.0f, scroll, ImGui::GetScrollMaxY() );
+		ImGui::SetScrollY( scroll );
+	}
+
 	console.at_bottom = ImGui::GetScrollY() == ImGui::GetScrollMaxY();
 
 	ImGui::EndChild();

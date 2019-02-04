@@ -235,7 +235,6 @@ static void KeyBindButton( const char * label, const char * command ) {
 	CG_GetBoundKeysString( command, keys, sizeof( keys ) );
 	if( ImGui::Button( keys, ImVec2( 200, 0 ) ) ) {
 		ImGui::OpenPopup( label );
-		pressed_key = -1;
 	}
 
 	if( ImGui::BeginPopupModal( label, NULL, ImGuiWindowFlags_NoDecoration ) ) {
@@ -969,8 +968,10 @@ static void SubmitDrawCalls() {
 void UI_Refresh() {
 	MICROPROFILE_SCOPEI( "Main", "UI_Refresh", 0xffffffff );
 
-	if( uistate == UIState_Hidden && !Con_IsVisible() )
+	if( uistate == UIState_Hidden && !Con_IsVisible() ) {
+		pressed_key = -1;
 		return;
+	}
 
 	ImGui_ImplSDL2_NewFrame( sdl_window );
 	ImGui::NewFrame();
@@ -999,14 +1000,18 @@ void UI_Refresh() {
 
 	// ImGui::ShowDemoWindow();
 
-	ImGui::PushFont( console_font );
-	Con_Draw();
-	ImGui::PopFont();
+	if( Con_IsVisible() ) {
+		ImGui::PushFont( console_font );
+		Con_Draw( pressed_key );
+		ImGui::PopFont();
+	}
 
 	ImGui::Render();
 	SubmitDrawCalls();
 
 	Cbuf_Execute();
+
+	pressed_key = -1;
 }
 
 void UI_UpdateConnectScreen() {
@@ -1053,7 +1058,6 @@ void UI_ShowMainMenu() {
 void UI_ShowGameMenu( bool spectating, bool ready, bool unready ) {
 	uistate = UIState_GameMenu;
 	gamemenu_state = GameMenuState_Menu;
-	pressed_key = -1;
 	is_spectating = spectating;
 	can_ready = ready;
 	can_unready = unready;
@@ -1062,7 +1066,6 @@ void UI_ShowGameMenu( bool spectating, bool ready, bool unready ) {
 
 void UI_ShowDemoMenu() {
 	uistate = UIState_DemoMenu;
-	pressed_key = -1;
 	CL_SetKeyDest( key_menu );
 }
 
@@ -1084,7 +1087,6 @@ void UI_MouseSet( bool mainContext, int mx, int my, bool showCursor ) {
 void UI_ShowLoadoutMenu( int primary, int secondary ) {
 	uistate = UIState_GameMenu;
 	gamemenu_state = GameMenuState_Loadout;
-	pressed_key = -1;
 	selected_primary = primary;
 	selected_secondary = secondary;
 	CL_SetKeyDest( key_menu );
