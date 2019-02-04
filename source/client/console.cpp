@@ -4,7 +4,6 @@
 
 // TODO: do tab completion
 // TODO: pageup/pagedown scrolling
-// TODO: chat from console if not a command
 // TODO: revamp key_dest garbage
 // TODO: finish cleaning up old stuff
 // TODO: check if mutex is really needed
@@ -223,9 +222,36 @@ static int InputCallback( ImGuiInputTextCallbackData * data ) {
 	return 0;
 }
 
+static void ReplaceDoubleQuotes( char * str ) {
+	uint32_t state = 0;
+	for( char * p = str; *p != '\0'; p++ ) {
+		uint32_t c;
+		if( DecodeUTF8( &state, &c, *p ) != 0 )
+			continue;
+		if( c == '"' )
+			*p = '\'';
+	}
+}
+
 static void Con_Execute() {
-	Cbuf_AddText( console.input );
-	Cbuf_AddText( "\n" );
+	bool chat = true;
+	chat = chat && cls.state == CA_ACTIVE;
+	chat = chat && console.input[ 0 ] != '/' && console.input[ 0 ] != '\\';
+	chat = chat && !Cmd_CheckForCommand( console.input );
+
+	if( chat ) {
+		ReplaceDoubleQuotes( console.input );
+		Cbuf_AddText( "say \"" );
+		Cbuf_AddText( console.input );
+		Cbuf_AddText( "\"\n" );
+	}
+	else {
+		const char * cmd = console.input;
+		if( cmd[ 0 ] == '/' || cmd[ 0 ] == '\\' )
+			cmd++;
+		Cbuf_AddText( cmd );
+		Cbuf_AddText( "\n" );
+	}
 
 	Com_Printf( "> %s\n", console.input );
 
@@ -384,7 +410,7 @@ static void Con_MessageMode2_f( void ) {
 /*
 * Q_ColorCharCount
 */
-int Q_ColorCharCount( const char *s, int byteofs ) {
+static int Q_ColorCharCount( const char *s, int byteofs ) {
 	wchar_t c;
 	const char *end = s + byteofs;
 	int charcount = 0;
@@ -408,7 +434,7 @@ int Q_ColorCharCount( const char *s, int byteofs ) {
 /*
 * Q_ColorCharOffset
 */
-int Q_ColorCharOffset( const char *s, int charcount ) {
+static int Q_ColorCharOffset( const char *s, int charcount ) {
 	const char *start = s;
 	wchar_t c;
 
@@ -718,84 +744,6 @@ static void Con_SendChatMessage( const char *text, bool team ) {
 	Cbuf_AddText( va( "%s \"%s\"\n", cmd, buf ) );
 }
 
-#if 0
-/*
-* Con_Key_Enter
-*
-* Handle K_ENTER keypress in console
-*/
-static void Con_Key_Enter( void ) {
-	enum {COMMAND, CHAT, TEAMCHAT} type;
-	char *p;
-	int chatmode = con_chatmode ? con_chatmode->integer : 3;
-	/* 1 = always chat unless with a slash;  non-1 = smart: unknown commands are chat.
-	0 used to be the NetQuake way (always a command),
-	but no one will probably want it in now */
-
-	if( search_text[0] ) {
-		key_lines[edit_line][0] = ']';
-		Q_strncpyz( key_lines[edit_line] + 1, search_text, sizeof( key_lines[edit_line] ) - 1 );
-		key_linepos = (unsigned int)strlen( key_lines[edit_line] );
-		input_prestep = 0;
-		search_line = 0;
-		search_text[0] = 0;
-	}
-
-	// decide whether to treat the text as chat or command
-	p = key_lines[edit_line] + 1;
-	if( cls.state <= CA_HANDSHAKE || cls.demo.playing ) {
-		type = COMMAND;
-	} else if( *p == '\\' || *p == '/' ) {
-		type = COMMAND;
-	} else if( ctrl_is_down ) {
-		type = TEAMCHAT;
-	} else if( chatmode == 1 || !Cmd_CheckForCommand( p ) ) {
-		type = CHAT;
-	} else {
-		type = COMMAND;
-	}
-
-	// do appropriate action
-	switch( type ) {
-		case CHAT:
-		case TEAMCHAT:
-			for( p = key_lines[edit_line] + 1; *p; p++ ) {
-				if( *p != ' ' ) {
-					break;
-				}
-			}
-			if( !*p ) {
-				break;  // just whitespace
-			}
-			Con_SendChatMessage( key_lines[edit_line] + 1, type == TEAMCHAT );
-			break;
-
-		case COMMAND:
-			p = key_lines[edit_line] + 1; // skip the "]"
-			if( *p == '\\' || ( *p == '/' && p[1] != '/' ) ) {
-				p++;
-			}
-			Cbuf_AddText( p );
-			Cbuf_AddText( "\n" );
-			break;
-	}
-
-	// echo to the console and cycle command history
-	Com_Printf( "%s\n", key_lines[edit_line] );
-	edit_line = ( edit_line + 1 ) & 31;
-	history_line = edit_line;
-	search_line = edit_line;
-	search_text[0] = 0;
-	key_lines[edit_line][0] = ']';
-	key_lines[edit_line][1] = 0;
-	key_linepos = 1;
-	if( cls.state == CA_DISCONNECTED ) {
-		SCR_UpdateScreen(); // force an update, because the command
-	}
-	// may take some time
-}
-#endif
-
 /*
 * Con_MessageKeyPaste
 */
@@ -1077,8 +1025,8 @@ static void Con_MessageCompletion( const char *partial, bool teamonly ) {
 
 	if( comp_len == 0 || comp_len == partial_len || chat_bufferlen + comp_len >= MAX_CHAT_BYTES - 1 ) {
 		return;     // won't fit
-
 	}
+
 	chat_linepos -= partial_len;
 	chat_bufferlen -= partial_len;
 	memcpy( chat_buffer + chat_linepos, comp, comp_len + 1 );

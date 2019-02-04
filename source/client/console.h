@@ -16,6 +16,3 @@ void Con_Close();
 // nuke this
 void Con_MessageKeyDown( int key );
 void Con_MessageCharEvent( wchar_t key );
-
-int Q_ColorCharCount( const char *s, int byteofs );
-int Q_ColorCharOffset( const char *s, int charcount );
