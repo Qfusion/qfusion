@@ -20,6 +20,7 @@
  * IN THE SOFTWARE.
  */
 
+#include <stddef.h>
 #include <stdint.h>
 
 // See http://bjoern.hoehrmann.de/utf-8/decoder/dfa/ for details.
@@ -52,4 +53,20 @@ uint32_t DecodeUTF8( uint32_t * state, uint32_t * codep, uint32_t byte ) {
 
 	*state = utf8d[256 + *state*16 + type];
 	return *state;
+}
+
+const char * StrChrUTF8( const char * str, uint32_t needle ) {
+	uint32_t state = 0;
+	for( const char * p = str; *p != '\0'; p++ ) {
+		uint32_t c;
+		if( DecodeUTF8( &state, &c, *p ) != 0 )
+			continue;
+		if( c == needle )
+			return p;
+	}
+	return NULL;
+}
+
+char * StrChrUTF8( char * str, uint32_t needle ) {
+	return const_cast< char * >( StrChrUTF8( const_cast< const char * >( str ), needle ) );
 }

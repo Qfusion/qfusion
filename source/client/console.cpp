@@ -109,7 +109,7 @@ static void Con_Append( const char * str, size_t len ) {
 	// delete lines until we have enough space to add str
 	size_t trim = 0;
 	while( console.log.len() - trim + len >= CONSOLE_LOG_SIZE ) {
-		const char * newline = strchr( console.log.c_str() + trim, '\n' );
+		const char * newline = StrChrUTF8( console.log.c_str() + trim, '\n' );
 		if( newline == NULL ) {
 			trim = console.log.len();
 			break;
@@ -126,19 +126,13 @@ static void Con_Append( const char * str, size_t len ) {
 }
 
 static const char * FindNextColorToken( const char * str, char * token ) {
-	uint32_t state = 0;
-	for( const char * p = str; *p != '\0'; p++ ) {
-		uint32_t c;
-		if( DecodeUTF8( &state, &c, *p ) != 0 )
-			continue;
-		if( c == Q_COLOR_ESCAPE ) {
-			if( p[ 1 ] == Q_COLOR_ESCAPE || ( p[ 1 ] >= '0' && p[ 1 ] <= char( '0' + MAX_S_COLORS ) ) ) {
-				*token = p[ 1 ];
-				return p;
-			}
+	const char * p = str;
+	while( ( p = StrChrUTF8( p, Q_COLOR_ESCAPE ) ) != NULL ) {
+		if( p[ 1 ] == Q_COLOR_ESCAPE || ( p[ 1 ] >= '0' && p[ 1 ] <= char( '0' + MAX_S_COLORS ) ) ) {
+			*token = p[ 1 ];
+			return p;
 		}
 	}
-
 	return NULL;
 }
 
@@ -222,17 +216,6 @@ static int InputCallback( ImGuiInputTextCallbackData * data ) {
 	return 0;
 }
 
-static void ReplaceDoubleQuotes( char * str ) {
-	uint32_t state = 0;
-	for( char * p = str; *p != '\0'; p++ ) {
-		uint32_t c;
-		if( DecodeUTF8( &state, &c, *p ) != 0 )
-			continue;
-		if( c == '"' )
-			*p = '\'';
-	}
-}
-
 static void Con_Execute() {
 	bool chat = true;
 	chat = chat && cls.state == CA_ACTIVE;
@@ -240,7 +223,11 @@ static void Con_Execute() {
 	chat = chat && !Cmd_CheckForCommand( console.input );
 
 	if( chat ) {
-		ReplaceDoubleQuotes( console.input );
+		char * p = console.input;
+		while( ( p = StrChrUTF8( p, '"' ) ) != NULL ) {
+			*p = '\'';
+		}
+
 		Cbuf_AddText( "say \"" );
 		Cbuf_AddText( console.input );
 		Cbuf_AddText( "\"\n" );
