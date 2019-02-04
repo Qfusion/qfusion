@@ -267,7 +267,7 @@ const char * NextChunkEnd( const char * str ) {
 		if( p == NULL )
 			break;
 		p++;
-		if( p - str > 1024 )
+		if( p - str > 512 )
 			return p;
 	}
 	return NULL;
