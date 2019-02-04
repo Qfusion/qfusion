@@ -55,11 +55,15 @@ uint32_t DecodeUTF8( uint32_t * state, uint32_t * codep, uint32_t byte ) {
 	return *state;
 }
 
+uint32_t DecodeUTF8( uint32_t * state, uint32_t * codep, char byte ) {
+	return DecodeUTF8( state, codep, uint32_t( uint8_t( byte ) ) );
+}
+
 const char * StrChrUTF8( const char * str, uint32_t needle ) {
 	uint32_t state = 0;
 	for( const char * p = str; *p != '\0'; p++ ) {
 		uint32_t c;
-		if( DecodeUTF8( &state, &c, uint8_t( *p ) ) != 0 )
+		if( DecodeUTF8( &state, &c, *p ) != 0 )
 			continue;
 		if( c == needle )
 			return p;
