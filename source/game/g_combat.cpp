@@ -286,6 +286,17 @@ void G_Damage( edict_t *targ, edict_t *inflictor, edict_t *attacker, const vec3_
 	}
 
 	if( GS_IsTeamDamage( &targ->s, &attacker->s ) ) {
+		if( mod == MOD_ELECTROBOLT || mod == MOD_LASERGUN ) {
+			edict_t *event;
+			vec3_t origin;
+			
+			VectorCopy( point, origin );
+
+			event = G_SpawnEvent( EV_BLOOD, DirToByte( origin ), origin );
+			event->s.damage = HEALTH_TO_INT( damage );
+			event->s.ownerNum = ENTNUM( targ );
+			event->s.team = targ->s.team;
+		}
 		return;
 	}
 
