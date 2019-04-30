@@ -11,7 +11,7 @@ GameTypesDataSource::GameTypesDataSource() : Rocket::Controls::DataSource( "game
 
 	for( std::vector<std::string>::const_iterator it = listedGameTypes.begin();
 		 it != listedGameTypes.end(); ++it ) {
-		if( std::find_if( gameTypes.begin(), gameTypes.end(), [it](auto const& elem) { return elem.name == *it; } ) == gameTypes.end() )
+		if( std::find_if( gameTypes.begin(), gameTypes.end(), [it](const gametype& elem) { return elem.name == *it; } ) == gameTypes.end() )
 			{
 			gametype gt( *it );
 

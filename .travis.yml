@@ -42,6 +42,7 @@ matrix:
             - libfreetype6-dev
             - zlib1g-dev
             - libcurl4-gnutls-dev
+            - libstdc++-7-dev
         coverity_scan:
           project:
             name: "Qfusion/qfusion"
