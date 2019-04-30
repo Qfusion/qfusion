@@ -6,6 +6,7 @@
 
 #undef min
 #undef max
+#undef clamp
 #include <memory>
 #include <tuple>
 
@@ -211,7 +212,7 @@ int AiAasWorld::TraceAreas( const vec3_t start, const vec3_t end, int *areas_, v
 			//calculate the hitpoint with the node (split point of the line)
 			//put the crosspoint TRACEPLANE_EPSILON pixels on the near side
 			float frac = front / ( front - back );
-			clamp( frac, 0.0f, 1.0f );
+			frac = bound( frac, 0.0f, 1.0f );
 			//frac = front / (front-back);
 			//
 			cur_mid[0] = cur_start[0] + ( cur_end[0] - cur_start[0] ) * frac;

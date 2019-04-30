@@ -31,10 +31,46 @@ class NinePatchDecorator : public Decorator
 	int texture_index;
 	Vector2f coords[2];
 	bool coords_absolute[2][2];
+	bool size_auto[2][2];
 	PropertyDictionary properties;
 
 public:
 	NinePatchDecorator() : Decorator(), texture_index( -1 ) {}
+
+	static float ResolveProperty( const PropertyDictionary &properties, const String &name, float base_value ) {
+		const Property *property = properties.GetProperty( name );
+		if( property == NULL ) {
+			ROCKET_ERROR;
+			return 0;
+		}
+
+		// Need to include em!
+		if( property->unit & Property::RELATIVE_UNIT )
+			return base_value * property->value.Get<float>() * 0.01f;
+
+		if( property->unit & Property::ABSOLUTE_UNIT )
+			return property->value.Get<float>();
+
+		// Values based on pixels-per-inch.
+		if( property->unit & Property::PPI_UNIT ) {
+			Rocket::Core::RenderInterface *renderInterface = GetRenderInterface();
+			float inch = property->value.Get<float>() * renderInterface->GetPixelsPerInch();
+
+			if( property->unit & Property::INCH ) // inch
+				return inch;
+			if( property->unit & Property::CM ) // centimeter
+				return inch * ( 1.0f / 2.54f );
+			if( property->unit & Property::MM ) // millimeter
+				return inch * ( 1.0f / 25.4f );
+			if( property->unit & Property::PT ) // point
+				return inch * ( 1.0f / 72.0f );
+			if( property->unit & Property::PC ) // pica
+				return inch * ( 1.0f / 6.0f );
+		}
+
+		ROCKET_ERROR;
+		return 0;
+	}
 
 	bool Initialise( const PropertyDictionary &_properties ) {
 		const Property *property = _properties.GetProperty( "src" );
@@ -57,6 +93,15 @@ public:
 		property = properties.GetProperty( "coords-bottom" );
 		coords[1].y = Math::Max( 0.0f, property->Get< float >() );
 		coords_absolute[1][1] = ( property->unit == Property::PX );
+
+		property = properties.GetProperty( "size-left" );
+		size_auto[0][0] = property->unit == Property::KEYWORD;
+		property = properties.GetProperty( "size-top" );
+		size_auto[0][1] = property->unit == Property::KEYWORD;
+		property = properties.GetProperty( "size-right" );
+		size_auto[1][0] = property->unit == Property::KEYWORD;
+		property = properties.GetProperty( "size-bottom" );
+		size_auto[1][1] = property->unit == Property::KEYWORD;
 
 		return true;
 	}
@@ -87,22 +132,22 @@ public:
 		}
 
 		Vector2f dimensions[2];
-		if( properties.GetProperty( "size-left" )->unit == Property::KEYWORD ) {
+		if( size_auto[0][0] ) {
 			dimensions[0].x = ( float )texture_dimensions.x * tex_coords[0].x;
 		} else {
 			dimensions[0].x = ResolveProperty( properties, "size-left", padded_size.x );
 		}
-		if( properties.GetProperty( "size-top" )->unit == Property::KEYWORD ) {
+		if( size_auto[0][1] ) {
 			dimensions[0].y = ( float )texture_dimensions.y * tex_coords[0].y;
 		} else {
 			dimensions[0].y = ResolveProperty( properties, "size-top", padded_size.y );
 		}
-		if( properties.GetProperty( "size-right" )->unit == Property::KEYWORD ) {
+		if( size_auto[1][0] ) {
 			dimensions[1].x = ( float )texture_dimensions.x * tex_coords[1].x;
 		} else {
 			dimensions[1].x = ResolveProperty( properties, "size-right", padded_size.x );
 		}
-		if( properties.GetProperty( "size-bottom" )->unit == Property::KEYWORD ) {
+		if( size_auto[1][1] ) {
 			dimensions[1].y = ( float )texture_dimensions.y * tex_coords[1].y;
 		} else {
 			dimensions[1].y = ResolveProperty( properties, "size-bottom", padded_size.y );

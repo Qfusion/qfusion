@@ -310,7 +310,7 @@ void BotBrain::UpdateBlockedAreasStatus() {
 			if( float factor = ComputeEnemyAreasBlockingFactor( enemy, damageToKillBot, botBestWeaponTier ) ) {
 				// Modify the factor by the effective bot offensiveness
 				factor *= 1.0f - 0.5f * self->ai->botRef->GetEffectiveOffensiveness();
-				clamp( factor, 0.0f, 4.0f );
+				factor = bound( factor, 0.0f, 4.0f );
 				// Allocate a raw storage and create an object in-place
 				new( requestsStorage.unsafe_grow_back() )DisableBlockedByEnemyZoneRequest( self, enemy, factor );
 				// Add the reference to the list
@@ -321,7 +321,7 @@ void BotBrain::UpdateBlockedAreasStatus() {
 		// This branch should not be really triggered in-game, but its algorithmically possible
 		for(; enemy; enemy = enemy->NextInTrackedList() ) {
 			if( float factor = ComputeEnemyAreasBlockingFactor( enemy, damageToKillBot, botBestWeaponTier ) ) {
-				clamp( factor, 0.0f, 3.0f );
+				factor = bound( factor, 0.0f, 3.0f );
 				new( requestsStorage.unsafe_grow_back() )DisableBlockedByEnemyZoneRequest( self, enemy, factor );
 				requestsRefs.push_back( &requestsStorage.back() );
 				if( requestsRefs.size() == requestsRefs.capacity() ) {

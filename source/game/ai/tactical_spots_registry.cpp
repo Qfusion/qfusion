@@ -1046,8 +1046,8 @@ uint16_t TacticalSpotsRegistry::BaseSpotsGrid::FindSpotsInRadius( const OriginPa
 	unsigned maxCellDimIndex[3];
 	for( int i = 0; i < 3; ++i ) {
 		// Clamp box bounds by world bounds
-		clamp( boxMins[i], worldMins[i], worldMaxs[i] );
-		clamp( boxMaxs[i], worldMins[i], worldMaxs[i] );
+		boxMins[i] = bound( boxMins[i], worldMins[i], worldMaxs[i] );
+		boxMaxs[i] = bound( boxMaxs[i], worldMins[i], worldMaxs[i] );
 
 		// Convert box bounds to relative
 		boxMins[i] -= worldMins[i];

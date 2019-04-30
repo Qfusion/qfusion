@@ -21,8 +21,8 @@ UI_SystemInterface::~UI_SystemInterface() {
 }
 
 
-float UI_SystemInterface::GetElapsedTime() {
-	return float( trap::Milliseconds() ) * 0.001;
+double UI_SystemInterface::GetElapsedTime() {
+	return double( trap::Milliseconds() ) * 0.001;
 }
 
 bool UI_SystemInterface::LogMessage( Log::Type type, const String& message ) {

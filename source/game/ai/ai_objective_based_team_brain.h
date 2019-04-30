@@ -40,10 +40,10 @@ class AiObjectiveBasedTeamBrain : public AiSquadBasedTeamBrain
 			alertLevel( 0.0f ),
 			alertTimeoutAt( 0 ) {
 			clamp_low( radius, 16.0f );
-			clamp( regularEnemyAlertScale, 0.0f, 1.0f );
-			clamp( carrierEnemyAlertScale, 0.0f, 1.0f );
+			regularEnemyAlertScale = bound( regularEnemyAlertScale, 0.0f, 1.0f );
+			carrierEnemyAlertScale = bound( carrierEnemyAlertScale, 0.0f, 1.0f );
 			clamp_high( minDefenders, MAX_SPOT_DEFENDERS );
-			clamp( maxDefenders, 1, MAX_SPOT_DEFENDERS );
+			maxDefenders = bound( maxDefenders, 1, MAX_SPOT_DEFENDERS );
 			if( minDefenders > maxDefenders ) {
 				minDefenders = maxDefenders;
 			}
@@ -59,7 +59,7 @@ class AiObjectiveBasedTeamBrain : public AiSquadBasedTeamBrain
 		OffenseSpot( const AiOffenseSpot &spot )
 			: AiOffenseSpot( spot ), weight( 0.0f ) {
 			clamp_high( minAttackers, MAX_SPOT_ATTACKERS );
-			clamp( maxAttackers, 1, MAX_SPOT_ATTACKERS );
+			maxAttackers = bound( maxAttackers, 1, MAX_SPOT_ATTACKERS );
 			if( minAttackers > maxAttackers ) {
 				minAttackers = maxAttackers;
 			}
