@@ -113,6 +113,8 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} /MD /W4")
         set(CMAKE_C_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} /MD /W4")	
     endif()
+
+	set(CMAKE_CXX_STANDARD 17)
 endif()
 
 # OS X specific settings
@@ -135,6 +137,8 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS}")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
+
+	set(CMAKE_CXX_STANDARD 17)
 endif()
 
 # Linux or mingw specific settings
@@ -173,6 +177,8 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR MINGW)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unknown-pragmas")
         add_common_link_flags("-static -static-libgcc -static-libstdc++")
     endif()
+
+	set(CMAKE_CXX_STANDARD 17)
 endif()
 
 # Linux-only specific settings
