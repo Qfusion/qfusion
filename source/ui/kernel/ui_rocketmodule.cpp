@@ -82,8 +82,10 @@ RocketModule::RocketModule( int vidWidth, int vidHeight, float pixelRatio )
 
 	// Create our contexts
 	contextMain = Rocket::Core::CreateContext( contextName, Vector2i( vidWidth, vidHeight ) );
+	contextMain->SetDensityIndependentPixelRatio( pixelRatio );
 
 	contextQuick = Rocket::Core::CreateContext( contextName + "_quick", Vector2i( vidWidth, vidHeight ) );
+	contextQuick->SetDensityIndependentPixelRatio( pixelRatio );
 
 	memset( hideCursorBits, 0, sizeof( *hideCursorBits ) * UI_NUM_CONTEXTS );
 	memset( contextsTouch, -1, sizeof( *contextsTouch ) * UI_NUM_CONTEXTS );
@@ -244,7 +246,7 @@ bool RocketModule::touchEvent( int contextId, int id, touchevent_t type, int x, 
 		int delta = contextTouch.y - y;
 		if( delta ) {
 			if( !contextTouch.scroll ) {
-				int threshold = 32 * ( renderInterface->GetPixelsPerInch() / renderInterface->GetBasePixelsPerInch() );
+				int threshold = 32 * renderInterface->GetPixelRatio();
 				if( abs( delta ) > threshold ) {
 					contextTouch.scroll = true;
 					contextTouch.y += ( ( delta < 0 ) ? threshold : -threshold );

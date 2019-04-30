@@ -78,7 +78,7 @@ void AiObjectiveBasedTeamBrain::ClearExternalEntityWeights( const edict_t *ent )
 void AiObjectiveBasedTeamBrain::SetDefenceSpotAlert( int id, float alertLevel, unsigned timeoutPeriod ) {
 	for( unsigned i = 0; i < defenceSpots.size(); ++i ) {
 		if( defenceSpots[i].id == id ) {
-			clamp( alertLevel, 0.0f, 1.0f );
+			alertLevel = bound( alertLevel, 0.0f, 1.0f );
 			defenceSpots[i].alertLevel = alertLevel;
 			defenceSpots[i].alertTimeoutAt = level.time + timeoutPeriod;
 			return;

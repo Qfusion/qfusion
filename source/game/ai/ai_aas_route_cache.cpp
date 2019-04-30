@@ -4,6 +4,7 @@
 
 #undef min
 #undef max
+#undef clamp
 #include <stdlib.h>
 #include <algorithm>
 #include <limits>

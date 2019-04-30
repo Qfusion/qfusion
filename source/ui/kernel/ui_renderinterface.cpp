@@ -23,8 +23,8 @@ typedef Rocket::Core::CompiledGeometryHandle CompiledGeometryHandle;
 typedef struct shader_s shader_t;
 
 UI_RenderInterface::UI_RenderInterface( int vidWidth, int vidHeight, float pixelRatio )
-	: vid_width( vidWidth ), vid_height( vidHeight ), polyAlloc() {
-	pixelsPerInch = 160.0f * pixelRatio;
+	: vid_width( vidWidth ), vid_height( vidHeight ), polyAlloc(), pixelRatio( pixelRatio ) {
+	pixelsPerInch = basePixelsPerInch * pixelRatio;
 
 	texCounter = 0;
 
@@ -159,11 +159,11 @@ bool UI_RenderInterface::LoadTexture( Rocket::Core::TextureHandle & texture_hand
 }
 
 void UI_RenderInterface::PushTransform( bool projection, const Rocket::Core::RowMajorMatrix4f& transform ) {
-	trap::R_PushTransformMatrix( projection, (const float *)transform.Transpose() );
+	trap::R_PushTransformMatrix( projection, (const float *)transform.Transpose().data() );
 }
 
 void UI_RenderInterface::PushTransform( bool projection, const Rocket::Core::ColumnMajorMatrix4f& transform ) {
-	trap::R_PushTransformMatrix( projection, (const float *)transform );
+	trap::R_PushTransformMatrix( projection, (const float *)transform.data() );
 }
 
 void UI_RenderInterface::PopTransform( bool projection, const Rocket::Core::Matrix4f& ROCKET_UNUSED_PARAMETER( transform ) ) {
@@ -171,20 +171,8 @@ void UI_RenderInterface::PopTransform( bool projection, const Rocket::Core::Matr
 	trap::R_PopTransformMatrix( projection );
 }
 
-int UI_RenderInterface::GetHeight( void ) {
-	return this->vid_height;
-}
-
-int UI_RenderInterface::GetWidth( void ) {
-	return this->vid_width;
-}
-
 float UI_RenderInterface::GetPixelsPerInch( void ) {
 	return this->pixelsPerInch;
-}
-
-float UI_RenderInterface::GetBasePixelsPerInch( void ) {
-	return 160.0f;
 }
 
 poly_t *UI_RenderInterface::RocketGeometry2Poly( bool temp, Rocket::Core::Vertex* vertices, int num_vertices, int* indices, int num_indices, Rocket::Core::TextureHandle texture ) {
