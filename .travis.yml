@@ -43,6 +43,9 @@ matrix:
             - zlib1g-dev
             - libcurl4-gnutls-dev
             - libstdc++-7-dev
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-trusty-6.0
         coverity_scan:
           project:
             name: "Qfusion/qfusion"
