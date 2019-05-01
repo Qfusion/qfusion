@@ -27,7 +27,7 @@ matrix:
     - os: linux
       language: c++
       compiler: clang
-      env: QF_ARCH=x86_64
+      env: QF_ARCH=x86_64 CC=clang-6.0 CXX=clang-6.0
       addons:
         apt:
           packages:
