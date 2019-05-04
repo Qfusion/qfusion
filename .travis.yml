@@ -31,7 +31,7 @@ matrix:
       addons:
         apt:
           packages:
-            - clang-6.0
+            - clang
             - cmake
             - build-essential
             - libsdl2-dev
@@ -57,7 +57,7 @@ matrix:
       android:
         components:
           - build-tools-21.0.2
-          - android-19
+          - android-18
 
 install:
   - if [[ "$QF_ARCH" == "android" ]] && [ ! -e "$HOME/.deps/android-ndk-r11c" ]; then curl -L http://dl.google.com/android/repository/android-ndk-r11c-linux-x86_64.zip >ndk.zip && unzip ndk.zip -d $HOME/.deps &> /dev/null && rm ndk.zip; fi
