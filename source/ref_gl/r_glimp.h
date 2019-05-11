@@ -35,9 +35,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define QGL_GLX_EXT( type, name, params )
 #define QGL_EGL( type, name, params )
 #define QGL_EGL_EXT( type, name, params )
-#endif
 
-#if defined ( __ANDROID__ )
+#elif defined ( __ANDROID__ )
 #define QGL_WGL( type, name, params )
 #define QGL_WGL_EXT( type, name, params )
 #define QGL_GLX( type, name, params )
@@ -45,20 +44,19 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define QGL_EGL( type, name, params ) QGL_EXTERN type( APIENTRY * q ## name ) params;
 #define QGL_EGL_EXT( type, name, params ) QGL_EXTERN type( APIENTRY * q ## name ) params;
 
-#elif defined ( __linux__ ) || defined ( __FreeBSD__ )
-#define QGL_WGL( type, name, params )
-#define QGL_WGL_EXT( type, name, params )
-#define QGL_GLX( type, name, params ) QGL_EXTERN type( APIENTRY * q ## name ) params;
-#define QGL_GLX_EXT( type, name, params ) QGL_EXTERN type( APIENTRY * q ## name ) params;
-#define QGL_EGL( type, name, params )
-#define QGL_EGL_EXT( type, name, params )
-#endif
-
-#if defined ( __MACOSX__ )
+#elif defined ( __MACOSX__ )
 #define QGL_WGL( type, name, params )
 #define QGL_WGL_EXT( type, name, params )
 #define QGL_GLX( type, name, params )
 #define QGL_GLX_EXT( type, name, params )
+#define QGL_EGL( type, name, params )
+#define QGL_EGL_EXT( type, name, params )
+
+#else
+#define QGL_WGL( type, name, params )
+#define QGL_WGL_EXT( type, name, params )
+#define QGL_GLX( type, name, params ) QGL_EXTERN type( APIENTRY * q ## name ) params;
+#define QGL_GLX_EXT( type, name, params ) QGL_EXTERN type( APIENTRY * q ## name ) params;
 #define QGL_EGL( type, name, params )
 #define QGL_EGL_EXT( type, name, params )
 #endif

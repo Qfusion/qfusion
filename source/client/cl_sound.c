@@ -136,9 +136,9 @@ static bool CL_SoundModule_Load( const char *name, sound_import_t *import, bool 
 		Com_Printf( "Loading sound module: %s\n", name );
 	}
 
-	file_size = strlen( LIB_DIRECTORY "/" LIB_PREFIX "snd_" ) + strlen( name ) + 1 + strlen( ARCH ) + strlen( LIB_SUFFIX ) + 1;
+	file_size = strlen( LIB_DIRECTORY "/" LIB_PREFIX "snd_" ) + strlen( name ) + strlen( LIB_SUFFIX ) + 1;
 	file = Mem_TempMalloc( file_size );
-	Q_snprintfz( file, file_size, LIB_DIRECTORY "/" LIB_PREFIX "snd_%s_" ARCH LIB_SUFFIX, name );
+	Q_snprintfz( file, file_size, LIB_DIRECTORY "/" LIB_PREFIX "snd_%s" LIB_SUFFIX, name );
 
 	funcs[0].name = "GetSoundAPI";
 	funcs[0].funcPointer = ( void ** )&GetSoundAPI;

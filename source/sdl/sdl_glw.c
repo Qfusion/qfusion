@@ -29,7 +29,7 @@ cvar_t *vid_fullscreen;
 static bool GLimp_InitGL( int stencilbits, bool stereo );
 
 void GLimp_SetWindowIcon( void ) {
-#ifndef __APPLE__
+#if !(defined __APPLE__ || defined __OpenBSD__)
 	const int *xpm_icon = glw_state.applicationIcon;
 
 	if( xpm_icon ) {

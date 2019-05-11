@@ -37,8 +37,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../android/android_sys.h"
 #endif
 
-// Mac OS X and FreeBSD don't know the readdir64 and dirent64
-#if ( defined ( __FreeBSD__ ) || defined ( __ANDROID__ ) || !defined( _LARGEFILE64_SOURCE ) )
+// I am sure readdir64 and dirent64 are Linux-specific
+#if ( !defined ( __linux__ ) || !defined( _LARGEFILE64_SOURCE ) )
 #define readdir64 readdir
 #define dirent64 dirent
 #endif

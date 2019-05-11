@@ -12,10 +12,8 @@ file(GLOB FTLIB_SOURCES
     "../gameshared/q_*.c"
 )
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-        set(FTLIB_PLATFORM_LIBRARIES "m")
-else ()
-        set(FTLIB_PLATFORM_LIBRARIES "")
+if (UNIX AND NOT APPLE)
+        set(FTLIB_PLATFORM_LIBRARIES m)
 endif()
 
 add_library(ftlib SHARED ${FTLIB_SOURCES} ${FTLIB_HEADERS})

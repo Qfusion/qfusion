@@ -49,7 +49,7 @@ void Steam_LoadLibrary( void ) {
 	funcs[0].name = "GetSteamLibAPI";
 	funcs[0].funcPointer = (void **) &GetSteamLibAPI;
 	funcs[1].name = NULL;
-	steamlib_libhandle = Com_LoadLibrary( LIB_DIRECTORY "/" LIB_PREFIX "steamlib_" ARCH LIB_SUFFIX, funcs );
+	steamlib_libhandle = Com_LoadLibrary( LIB_DIRECTORY "/" LIB_PREFIX "steamlib" LIB_SUFFIX, funcs );
 
 	if( steamlib_libhandle ) {
 		// load succeeded

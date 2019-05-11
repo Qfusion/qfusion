@@ -12,10 +12,8 @@ file(GLOB CIN_SOURCES
     "../gameshared/q_*.c"
 )
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-        set(CIN_PLATFORM_LIBRARIES "m")
-else ()
-        set(CIN_PLATFORM_LIBRARIES "")
+if (UNIX AND NOT APPLE)
+        set(CIN_PLATFORM_LIBRARIES m)
 endif()
 
 add_library(cin SHARED ${CIN_SOURCES} ${CIN_HEADERS})

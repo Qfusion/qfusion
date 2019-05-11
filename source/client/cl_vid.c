@@ -409,9 +409,9 @@ static bool VID_LoadRefresh( const char *name ) {
 	import.BufPipe_ReadCmds = QBufPipe_ReadCmds;
 	import.BufPipe_Wait = QBufPipe_Wait;
 
-	file_size = strlen( LIB_DIRECTORY "/" LIB_PREFIX ) + strlen( name ) + 1 + strlen( ARCH ) + strlen( LIB_SUFFIX ) + 1;
+	file_size = strlen( LIB_DIRECTORY "/" LIB_PREFIX ) + strlen( name ) + strlen( LIB_SUFFIX ) + 1;
 	file = Mem_TempMalloc( file_size );
-	Q_snprintfz( file, file_size, LIB_DIRECTORY "/" LIB_PREFIX "%s_" ARCH LIB_SUFFIX, name );
+	Q_snprintfz( file, file_size, LIB_DIRECTORY "/" LIB_PREFIX "%s" LIB_SUFFIX, name );
 
 	// load dynamic library
 	Com_Printf( "Loading refresh module %s... ", name );
@@ -439,7 +439,7 @@ static bool VID_LoadRefresh( const char *name ) {
 			return false;
 		}
 	} else {
-		Com_Printf( "Not found %s.\n", va( LIB_DIRECTORY "/" LIB_PREFIX "%s_" ARCH LIB_SUFFIX, name ) );
+		Com_Printf( "Not found %s.\n", va( LIB_DIRECTORY "/" LIB_PREFIX "%s" LIB_SUFFIX, name ) );
 		return false;
 	}
 

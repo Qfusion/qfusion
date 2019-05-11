@@ -81,9 +81,9 @@ static void *Com_LoadScriptLibrary( const char *basename, void *parms ) {
 		Com_Error( ERR_FATAL, "Com_LoadScriptLibrary without Com_UnloadScriptLibrary" );
 	}
 
-	file_size = strlen( LIB_DIRECTORY "/" LIB_PREFIX ) + strlen( basename ) + 1 + strlen( ARCH ) + strlen( LIB_SUFFIX ) + 1;
+	file_size = strlen( LIB_DIRECTORY "/" LIB_PREFIX ) + strlen( basename ) + strlen( LIB_SUFFIX ) + 1;
 	file = ( char* )Mem_TempMalloc( file_size );
-	Q_snprintfz( file, file_size, LIB_DIRECTORY "/" LIB_PREFIX "%s_" ARCH LIB_SUFFIX, basename );
+	Q_snprintfz( file, file_size, LIB_DIRECTORY "/" LIB_PREFIX "%s" LIB_SUFFIX, basename );
 
 	funcs[0].name = "GetAngelwrapAPI";
 	funcs[0].funcPointer = ( void ** )&GetAngelwrapAPI;

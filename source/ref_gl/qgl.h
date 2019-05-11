@@ -72,14 +72,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #if defined ( __ANDROID__ )
 #include <GLES2/gl2.h>
 #include <EGL/egl.h>
-
-#elif defined ( __linux__ ) || defined ( __FreeBSD__ )
+#elif defined ( __MACOSX__ )
+#include <OpenGL/gl.h>
+#include <OpenGL/glext.h>
+#elif !defined ( _WIN32 )
 #include <GL/glx.h>
-#endif
-
-#if defined ( __MACOSX__ )
-# include <OpenGL/gl.h>
-# include <OpenGL/glext.h>
 #endif
 
 #undef GL_GLEXT_LEGACY
