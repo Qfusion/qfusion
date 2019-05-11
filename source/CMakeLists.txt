@@ -73,7 +73,7 @@ set(NANOSVG_DIR ${CMAKE_HOME_DIRECTORY}/../third-party/nanosvg)
 set(NANOSVG_INCLUDE_DIR ${NANOSVG_DIR}/src)
 
 # Windows specific settings
-if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+if (WIN32)
     set(QFUSION_WINDOWS_ARCH "x86")
 
     if ((MINGW AND CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64") OR (CMAKE_SIZEOF_VOID_P EQUAL 8))
@@ -115,10 +115,9 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     endif()
 
 	set(CMAKE_CXX_STANDARD 14)
-endif()
 
 # OS X specific settings
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+elseif (APPLE)
     set(CMAKE_OSX_ARCHITECTURES "$(ARCHS_STANDARD_64_BIT)")        # Compile only 64-bit version
     set(CMAKE_OSX_SYSROOT "macosx")                                # Compile with latest available OS X sdk
     set(CMAKE_XCODE_ATTRIBUTE_MACOSX_DEPLOYMENT_TARGET "10.8")     # Use 10.8 as deployment target
@@ -134,15 +133,10 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 -D_DEBUG")
     set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -fno-strict-aliasing -ffast-math -funroll-loops -msse2")
 
-    set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS}")
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
-
 	set(CMAKE_CXX_STANDARD 14)
-endif()
 
-# Linux or mingw specific settings
-if (${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR MINGW)
+# Unix specific settings
+else()
     # If no build type was specified - use release build settings
     if (NOT CMAKE_BUILD_TYPE)
         set(CMAKE_BUILD_TYPE "Release")
@@ -154,16 +148,9 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR MINGW)
     set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 -D_DEBUG")
     set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -fno-strict-aliasing -ffast-math -funroll-loops -msse2 -O2")
 
-    if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-        set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -std=c++14")
-    else()
-        set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -std=c++14")
-    endif()
+    set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -std=c++14")
 
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
-
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99 -D_POSIX_C_SOURCE=200112L -D_XOPEN_SOURCE=500")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99")
 
     # -Wl,--as-needed
     add_common_link_flags("-Wl,--as-needed")
@@ -213,9 +200,10 @@ if (NOT GAME_MODULES_ONLY)
         find_package(JPEG REQUIRED)
         find_package(PNG REQUIRED)
         find_package(OpenAL)
+        find_package(OpenGL)
 
         # We need SDL only on non-Windows platforms or when with SDL2-backend
-        if (USE_SDL2 OR (${CMAKE_SYSTEM_NAME} MATCHES "Linux"))
+        if (USE_SDL2 OR UNIX)
             set(USE_SDL2 1)
             find_package(SDL2 REQUIRED)
         endif()
@@ -227,7 +215,7 @@ if (NOT GAME_MODULES_ONLY)
 endif()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR MINGW)
-    if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    if (WIN32)
         STRING(TOLOWER "win32_${QFUSION_WINDOWS_ARCH}.tar.gz" TAR_GZ_NAME)
     else()
         STRING(TOLOWER "${CMAKE_SYSTEM_NAME}_${CMAKE_SYSTEM_PROCESSOR}.tar.gz" TAR_GZ_NAME)
@@ -241,14 +229,8 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR MINGW)
     add_dependencies(tar_gz ${QFUSION_CLIENT_NAME} game ${QFUSION_SERVER_NAME} ${QFUSION_TVSERVER_NAME})
 endif()
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    set(CMAKE_EXECUTABLE_SUFFIX "_${QFUSION_WINDOWS_ARCH}${CMAKE_EXECUTABLE_SUFFIX}")
-    set(CMAKE_SHARED_LIBRARY_PREFIX "")
-    set(CMAKE_SHARED_LIBRARY_SUFFIX "_${QFUSION_WINDOWS_ARCH}${CMAKE_SHARED_LIBRARY_SUFFIX}")
-endif()
-
 if (NOT GAME_MODULES_ONLY)
-    if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    if (WIN32)
         find_windows_release_libs(ZLIB_LIBRARY)
         find_windows_release_libs(CURL_LIBRARY)
         find_windows_release_libs(ANGELSCRIPT_LIBRARY)
@@ -289,15 +271,19 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux") # Do not add 'OR MINGW' here - we need
     set(ZLIB_LIBRARY "")
     add_definitions(-DZLIB_RUNTIME)
 
-    set(CMAKE_EXECUTABLE_SUFFIX ".${CMAKE_SYSTEM_PROCESSOR}${CMAKE_EXECUTABLE_SUFFIX}")
-    set(CMAKE_SHARED_LIBRARY_SUFFIX "_${CMAKE_SYSTEM_PROCESSOR}${CMAKE_SHARED_LIBRARY_SUFFIX}")
-endif()
-
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    set(CMAKE_SHARED_LIBRARY_SUFFIX "_mac${CMAKE_SHARED_LIBRARY_SUFFIX}")
-
+elseif (APPLE)
     capitalize(QFUSION_CLIENT_NAME)
 endif()
+
+if (UNIX)
+    add_definitions(-DBUILDSTRING="${CMAKE_SYSTEM_NAME}")
+    add_definitions(-DOSNAME="${CMAKE_SYSTEM_NAME}")
+    add_definitions(-DCPUSTRING="${CMAKE_SYSTEM_PROCESSOR}")
+    add_definitions(-DLIB_DIRECTORY="libs")
+    add_definitions(-DLIB_PREFIX="${CMAKE_SHARED_LIBRARY_PREFIX}")
+    add_definitions(-DLIB_SUFFIX="${CMAKE_SHARED_LIBRARY_SUFFIX}")
+endif()
+
 
 add_subdirectory(angelwrap)
 add_subdirectory(cgame)

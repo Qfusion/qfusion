@@ -2,7 +2,7 @@ project(snd_qf)
 
 include_directories(${VORBIS_INCLUDE_DIR} ${OGG_INCLUDE_DIR} "../snd_common" ".")
 
-if (USE_SDL2 OR (${CMAKE_SYSTEM_NAME} MATCHES "Linux"))
+if (USE_SDL2 OR (UNIX AND NOT APPLE))
     include_directories(${SDL2_INCLUDE_DIR})
 endif()
 
@@ -18,13 +18,13 @@ file(GLOB SND_QF_SOURCES
     "../gameshared/q_*.c"
 )
 
-if (USE_SDL2 OR (${CMAKE_SYSTEM_NAME} MATCHES "Linux"))
+if (USE_SDL2 OR (UNIX AND NOT APPLE))
     file(GLOB SND_QF_PLATFORM_SOURCES
         "../sdl/sdl_snd.c"
     )
 
-    if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-	set(SND_QF_PLATFORM_LIBRARIES ${SDL2_LIBRARY} "m")
+    if (UNIX AND NOT APPLE)
+	set(SND_QF_PLATFORM_LIBRARIES ${SDL2_LIBRARY} m)
     else()
 	set(SND_QF_PLATFORM_LIBRARIES ${SDL2_LIBRARY})
     endif()
@@ -33,7 +33,7 @@ else()
         "../win32/win_snd.c"
     )
 
-    set(SND_QF_PLATFORM_LIBRARIES "winmm.lib")
+    set(SND_QF_PLATFORM_LIBRARIES winmm.lib)
 endif()
 
 add_library(snd_qf SHARED ${SND_QF_HEADERS} ${SND_QF_SOURCES} ${SND_QF_PLATFORM_SOURCES})

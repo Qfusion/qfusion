@@ -272,9 +272,9 @@ void *Com_LoadGameLibrary( const char *basename, const char *apifuncname, void *
 	gamelib->lib = NULL;
 	gamelib->fullname = NULL;
 
-	libname_size = strlen( LIB_PREFIX ) + strlen( basename ) + 1 + strlen( ARCH ) + strlen( LIB_SUFFIX ) + 1;
+	libname_size = strlen( LIB_PREFIX ) + strlen( basename ) + strlen( LIB_SUFFIX ) + 1;
 	libname = ( char* )Mem_TempMalloc( libname_size );
-	Q_snprintfz( libname, libname_size, LIB_PREFIX "%s_" ARCH LIB_SUFFIX, basename );
+	Q_snprintfz( libname, libname_size, LIB_PREFIX "%s" LIB_SUFFIX, basename );
 
 	// it exists?
 	if( FS_FOpenFile( libname, NULL, FS_READ ) == -1 ) {

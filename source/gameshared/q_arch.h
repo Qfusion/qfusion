@@ -158,13 +158,10 @@ extern "C" {
 
 #ifdef _M_IX86
 #define CPUSTRING "x86"
-#define ARCH "x86"
 #elif defined ( __x86_64__ ) || defined( _M_AMD64 )
 #define CPUSTRING "x64"
-#define ARCH "x64"
 #elif defined ( _M_ALPHA )
 #define CPUSTRING "axp"
-#define ARCH      "axp"
 #endif
 
 // doh, some compilers need a _ prefix for variables so they can be
@@ -192,11 +189,48 @@ typedef unsigned long ioctl_param_t;
 
 typedef uintptr_t socket_handle_t;
 
+#elif defined ( __APPLE__ ) && defined ( __MACH__ )
+
+#ifndef __MACOSX__
+#define __MACOSX__
 #endif
 
-//==============================================
+#define HAVE_INLINE
 
-#if defined ( __linux__ ) || defined ( __FreeBSD__ )
+#ifndef HAVE_STRCASECMP // SDL_config.h seems to define this too...
+#define HAVE_STRCASECMP
+#endif
+
+//#define HAVE_TYPEOF
+
+#define MUMBLE_SUPPORT
+#define OPENAL_RUNTIME
+
+// FIXME: move these to CMakeLists.txt
+#define LIBZ_LIBNAME "libz.dylib"
+#define LIBCURL_LIBNAME "libcurl.4.dylib|libcurl.3.dylib|libcurl.2.dylib"
+#define LIBPNG_LIBNAME "libpng16.16.dylib|libpng15.15.dylib|libpng14.14.dylib|libpng12.0.dylib"
+#define LIBJPEG_LIBNAME "libjpeg.62.dylib"
+#define LIBOGG_LIBNAME "libogg.0.dylib|libogg.dylib"
+#define LIBVORBIS_LIBNAME "libvorbis.dylib"
+#define LIBVORBISFILE_LIBNAME "libvorbisfile.dylib"
+#define LIBTHEORA_LIBNAME "libtheora.0.dylib|libtheora.dylib"
+#define LIBFREETYPE_LIBNAME "libfreetype.6.dylib|libfreetype.dylib"
+
+#define STEAMQUERY_OS 'o'
+
+#define VAR( x ) # x
+
+#include <alloca.h>
+
+typedef int ioctl_param_t;
+
+typedef int socket_handle_t;
+
+#define SOCKET_ERROR ( -1 )
+#define INVALID_SOCKET ( -1 )
+
+#else
 
 #define HAVE_INLINE
 
@@ -205,10 +239,6 @@ typedef uintptr_t socket_handle_t;
 #endif
 
 #define HAVE_TYPEOF
-
-#define LIB_DIRECTORY "libs"
-#define LIB_PREFIX "lib"
-#define LIB_SUFFIX ".so"
 
 #ifndef __ANDROID__
 #define MUMBLE_SUPPORT
@@ -226,124 +256,33 @@ typedef uintptr_t socket_handle_t;
 #define LIBTHEORA_LIBNAME "libtheora.so.0|libtheora.so"
 #define LIBFREETYPE_LIBNAME "libfreetype.so.6|libfreetype.so"
 
-#if defined ( __FreeBSD__ )
-#define BUILDSTRING "FreeBSD"
-#define OSNAME "FreeBSD"
-#elif defined ( __ANDROID__ )
+#if defined ( __ANDROID__ )
 #define BUILDSTRING "Android"
 #define OSNAME "Android"
-#else
-#define BUILDSTRING "Linux"
-#define OSNAME "Linux"
+#define LIB_DIRECTORY "libs"
+#define LIB_PREFIX "lib"
+#define LIB_SUFFIX ".so"
 #endif
 
 #define STEAMQUERY_OS 'l'
 
+#if defined ( __ANDROID__ )
 #ifdef __i386__
-#if defined ( __FreeBSD__ )
-#define ARCH "freebsd_i386"
 #define CPUSTRING "i386"
-#elif defined ( __ANDROID__ )
-#define ARCH "android_x86"
-#define CPUSTRING "i386"
-#else
-#define ARCH "i386"
-#define CPUSTRING "i386"
-#endif
-#elif defined ( __x86_64__ )
-#if defined __FreeBSD__
-#define ARCH "freebsd_x86_64"
-#define CPUSTRING "x86_64"
-#else
-#define ARCH "x86_64"
-#define CPUSTRING "x86_64"
-#endif
-#elif defined ( __powerpc__ )
-#define ARCH "ppc"
-#define CPUSTRING "ppc"
-#elif defined ( __alpha__ )
-#define ARCH "axp"
-#define CPUSTRING "axp"
 #elif defined ( __arm__ )
-#if defined ( __ANDROID__ )
-#define ARCH "android_armeabi-v7a"
 #define CPUSTRING "arm"
-#else
-#define ARCH "arm"
-#define CPUSTRING "arm"
-#endif
 #elif defined ( _MIPS_ARCH )
-#if defined ( __ANDROID__ )
-#define ARCH "android_mips"
-#define CPUSTRING "mips"
-#else
-#define ARCH "mips"
 #define CPUSTRING "mips"
 #endif
-#else
-#define CPUSTRING "Unknown"
-#define ARCH "Unknown"
 #endif
 
 #define VAR( x ) # x
 
+#if defined ( __linux__ )
 #include <alloca.h>
+#endif
 
 // wsw : aiwa : 64bit integers and integer-pointer types
-typedef int ioctl_param_t;
-
-typedef int socket_handle_t;
-
-#define SOCKET_ERROR ( -1 )
-#define INVALID_SOCKET ( -1 )
-
-#endif
-
-//==============================================
-
-#if defined ( __APPLE__ ) && defined ( __MACH__ )
-
-#ifndef __MACOSX__
-#define __MACOSX__
-#endif
-
-#define HAVE_INLINE
-
-#ifndef HAVE_STRCASECMP // SDL_config.h seems to define this too...
-#define HAVE_STRCASECMP
-#endif
-
-//#define HAVE_TYPEOF
-
-#define LIB_DIRECTORY "libs"
-#define LIB_PREFIX "lib"
-#define LIB_SUFFIX ".dylib"
-
-#define MUMBLE_SUPPORT
-#define OPENAL_RUNTIME
-
-// FIXME: move these to CMakeLists.txt
-#define LIBZ_LIBNAME "libz.dylib"
-#define LIBCURL_LIBNAME "libcurl.4.dylib|libcurl.3.dylib|libcurl.2.dylib"
-#define LIBPNG_LIBNAME "libpng16.16.dylib|libpng15.15.dylib|libpng14.14.dylib|libpng12.0.dylib"
-#define LIBJPEG_LIBNAME "libjpeg.62.dylib"
-#define LIBOGG_LIBNAME "libogg.0.dylib|libogg.dylib"
-#define LIBVORBIS_LIBNAME "libvorbis.dylib"
-#define LIBVORBISFILE_LIBNAME "libvorbisfile.dylib"
-#define LIBTHEORA_LIBNAME "libtheora.0.dylib|libtheora.dylib"
-#define LIBFREETYPE_LIBNAME "libfreetype.6.dylib|libfreetype.dylib"
-
-//Mac OSX has universal binaries, no need for cpu dependency
-#define BUILDSTRING "MacOSX"
-#define OSNAME "MacOSX"
-#define STEAMQUERY_OS 'o'
-#define CPUSTRING "universal"
-#define ARCH "mac"
-
-#define VAR( x ) # x
-
-#include <alloca.h>
-
 typedef int ioctl_param_t;
 
 typedef int socket_handle_t;

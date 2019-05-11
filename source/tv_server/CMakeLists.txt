@@ -50,7 +50,7 @@ file(GLOB TV_SERVER_SOURCES
     "tv_module/*.c"
 )
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+if (WIN32)
     file(GLOB TV_SERVER_PLATFORM_SOURCES 
         "../win32/win_fs.c"
         "../win32/win_net.c"
@@ -63,7 +63,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         "../win32/conproc.c"
     )
 
-    set(TV_SERVER_PLATFORM_LIBRARIES "ws2_32.lib" "winmm.lib")
+    set(TV_SERVER_PLATFORM_LIBRARIES ws2_32.lib winmm.lib)
     set(TV_SERVER_BINARY_TYPE WIN32)
 else()
     file(GLOB TV_SERVER_PLATFORM_SOURCES 
@@ -77,7 +77,12 @@ else()
         "../null/sys_vfs_null.c"
     )
 
-    set(TV_SERVER_PLATFORM_LIBRARIES "pthread" "dl" "m")
+    if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+        set(TV_SERVER_PLATFORM_LIBRARIES pthread dl m)
+    else()
+        set(TV_SERVER_PLATFORM_LIBRARIES pthread m)
+    endif()
+
     set(TV_SERVER_BINARY_TYPE "")
 endif()
 

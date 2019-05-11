@@ -24,7 +24,6 @@ FIXME:  This will be remidied once a native Mac port is complete
 #if defined ( __APPLE__ ) && !defined ( DEDICATED_ONLY )
 #include <SDL.h>
 #include <CoreFoundation/CoreFoundation.h>
-#include <sys/param.h>
 #endif
 
 #include <signal.h>
@@ -32,6 +31,7 @@ FIXME:  This will be remidied once a native Mac port is complete
 #include <limits.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#include <sys/param.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdarg.h>
@@ -42,10 +42,6 @@ FIXME:  This will be remidied once a native Mac port is complete
 #include <sys/mman.h>
 #include <errno.h>
 #include <locale.h>
-
-#if defined ( __FreeBSD__ )
-#include <machine/param.h>
-#endif
 
 #include "../qcommon/qcommon.h"
 #include "glob.h"

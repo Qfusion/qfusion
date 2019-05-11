@@ -1299,7 +1299,7 @@ static unsigned R_GLVersionHash( const char *vendorString,
 	unsigned hash;
 
 	tmp_size = strlen( vendorString ) + strlen( rendererString ) +
-			   strlen( versionString ) + strlen( ARCH ) + 1;
+			   strlen( versionString ) + strlen( CPUSTRING ) + 1;
 
 	pos = 0;
 	tmp = R_Malloc( tmp_size );
@@ -1317,8 +1317,8 @@ static unsigned R_GLVersionHash( const char *vendorString,
 	pos += csize;
 
 	// shaders are not compatible between 32-bit and 64-bit at least on Nvidia
-	csize = strlen( ARCH );
-	memcpy( tmp + pos, ARCH, csize );
+	csize = strlen( CPUSTRING );
+	memcpy( tmp + pos, CPUSTRING, csize );
 	pos += csize;
 
 	hash = COM_SuperFastHash( tmp, tmp_size, tmp_size );

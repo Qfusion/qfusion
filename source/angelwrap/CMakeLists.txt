@@ -15,10 +15,8 @@ file(GLOB angelwrap_SOURCES
     "../gameshared/q_*.c"
 )
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-	set(ANGELWRAP_PLATFORM_LIBRARIES "pthread")
-else ()
-        set(ANGELWRAP_PLATFORM_LIBRARIES "")
+if (UNIX AND NOT APPLE)
+	set(ANGELWRAP_PLATFORM_LIBRARIES pthread)
 endif()
 
 add_library(angelwrap SHARED ${angelwrap_SOURCES} ${angelwrap_HEADERS})

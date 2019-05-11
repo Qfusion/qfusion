@@ -42,18 +42,15 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define SYMLOAD( x, y ) GetProcAddress( x, y )
 #define OBJFREE( x ) FreeLibrary( x )
 
-#elif defined __linux__ || defined __FreeBSD__ || defined __MACOSX__ || defined __sun
+#else
 #include <dlfcn.h>
 #define OBJTYPE void *
 #define OBJLOAD( x ) dlopen( x, RTLD_LAZY | RTLD_GLOBAL )
 #define SYMLOAD( x, y ) dlsym( x, y )
 #define OBJFREE( x ) dlclose( x )
-#else
-
-#error "No lib loading code defined for platform."
 #endif
 
-#if defined __linux__ || defined __FreeBSD__ || defined __MACOSX__
+#if !(defined _WIN32 || defined __ANDROID__)
 #include <unistd.h>
 #include <sys/types.h>
 #endif

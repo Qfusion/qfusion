@@ -26,7 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/uio.h>
-#if !defined ( __APPLE__ )
+#if defined ( __linux__ )
 #include <sys/sendfile.h>
 #endif
 #include <errno.h>
@@ -81,9 +81,21 @@ int64_t Sys_NET_SendFile( socket_handle_t handle, int fileno, size_t offset, siz
 	len = count;
 	ssize_t result = sendfile( fileno, handle, _offset, &len, NULL, 0 );
 	result = len;
-#else
+#elif defined ( __linux__ )
 	ssize_t result = sendfile( handle, fileno, &_offset, count );
 	len = result;
+#elif defined ( __DragonFly__ ) || defined ( __FreeBSD__ )
+	ssize_t result = sendfile( fileno, handle, _offset, count, NULL, &len, 0 );
+#else
+        void *sendfilebuf = malloc(count);
+        ssize_t result = pread(fileno, sendfilebuf, count, _offset);
+
+        if (result > 0) {
+            result = write(handle, sendfilebuf, (size_t) result);
+        }
+
+        len = result;
+        free(sendfilebuf);
 #endif
 	if( result < 0 ) {
 		return result;

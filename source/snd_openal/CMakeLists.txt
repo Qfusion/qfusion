@@ -15,9 +15,9 @@ file(GLOB SND_OPENAL_SOURCES
 )
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-        set(SND_OPENAL_PLATFORM_LIBRARIES "m" "dl")
-else ()
-        set(SND_OPENAL_PLATFORM_LIBRARIES "")
+        set(SND_OPENAL_PLATFORM_LIBRARIES m dl)
+elseif (UNIX AND NOT APPLE)
+        set(SND_OPENAL_PLATFORM_LIBRARIES m)
 endif()
 
 add_library(snd_openal SHARED ${SND_OPENAL_HEADERS} ${SND_OPENAL_SOURCES})
