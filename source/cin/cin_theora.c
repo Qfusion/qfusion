@@ -426,7 +426,7 @@ read_samples:
 			samplesNeeded = qth->s_samples_need - qth->s_samples_read;
 		}
 
-		if( cin->listeners > 0 ) {
+		if( cin->num_listeners > 0 ) {
 			if( cin->s_channels == 1 ) {
 				left = right = pcm[0];
 				for( i = 0; i < samplesNeeded; i++ ) {
