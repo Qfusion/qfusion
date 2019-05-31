@@ -482,7 +482,7 @@ void *Sys_FS_MMapFile( int fileno, size_t size, size_t offset, void **mapping, s
 
 	*mapping = (void *)1;
 	*mapping_offset = offsetpad;
-	return data + offsetpad;
+	return (char *)data + offsetpad;
 }
 
 /*
