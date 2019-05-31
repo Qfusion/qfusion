@@ -337,7 +337,7 @@ bool Netchan_TransmitNextFragment( netchan_t *chan ) {
 	}
 
 	if( showpackets->integer ) {
-		Com_Printf( "%s send %4i : s=%i fragment=%i,%i\n", NET_SocketToString( chan->socket ), send.cursize,
+		Com_Printf( "%s send %4zu : s=%i fragment=%zu,%i\n", NET_SocketToString( chan->socket ), send.cursize,
 					chan->outgoingSequence, chan->unsentFragmentStart, fragmentLength );
 	}
 
@@ -383,7 +383,7 @@ bool Netchan_Transmit( netchan_t *chan, msg_t *msg ) {
 	assert( msg );
 
 	if( msg->cursize > MAX_MSGLEN ) {
-		Com_Error( ERR_DROP, "Netchan_Transmit: Excessive length = %i", msg->cursize );
+		Com_Error( ERR_DROP, "Netchan_Transmit: Excessive length = %zu", msg->cursize );
 		return false;
 	}
 	chan->unsentFragmentStart = 0;
@@ -428,7 +428,7 @@ bool Netchan_Transmit( netchan_t *chan, msg_t *msg ) {
 	}
 
 	if( showpackets->integer ) {
-		Com_Printf( "%s send %4i : s=%i ack=%i\n", NET_SocketToString( chan->socket ), send.cursize,
+		Com_Printf( "%s send %4zu : s=%i ack=%i\n", NET_SocketToString( chan->socket ), send.cursize,
 					chan->outgoingSequence - 1, chan->incomingSequence );
 	}
 
@@ -500,10 +500,10 @@ bool Netchan_Process( netchan_t *chan, msg_t *msg ) {
 
 	if( showpackets->integer ) {
 		if( fragmented ) {
-			Com_Printf( "%s recv %4i : s=%i fragment=%i,%i\n", NET_SocketToString( chan->socket ), msg->cursize,
+			Com_Printf( "%s recv %4zu : s=%i fragment=%i,%i\n", NET_SocketToString( chan->socket ), msg->cursize,
 						sequence, fragmentStart, fragmentLength );
 		} else {
-			Com_Printf( "%s recv %4i : s=%i\n", NET_SocketToString( chan->socket ), msg->cursize, sequence );
+			Com_Printf( "%s recv %4zu : s=%i\n", NET_SocketToString( chan->socket ), msg->cursize, sequence );
 		}
 	}
 
@@ -547,7 +547,7 @@ bool Netchan_Process( netchan_t *chan, msg_t *msg ) {
 		// if we missed a fragment, dump the message
 		if( fragmentStart != (int) chan->fragmentLength ) {
 			if( showdrop->integer || showpackets->integer ) {
-				Com_Printf( "%s:Dropped a message fragment\n", NET_AddressToString( &chan->remoteAddress ), sequence );
+				Com_Printf( "%s:Dropped a message fragment %d\n", NET_AddressToString( &chan->remoteAddress ), sequence );
 			}
 			// we can still keep the part that we have so far,
 			// so we don't need to clear chan->fragmentLength
@@ -573,7 +573,7 @@ bool Netchan_Process( netchan_t *chan, msg_t *msg ) {
 		}
 
 		if( chan->fragmentLength > msg->maxsize ) {
-			Com_Printf( "%s:fragmentLength %i > msg->maxsize\n", NET_AddressToString( &chan->remoteAddress ),
+			Com_Printf( "%s:fragmentLength %zu > msg->maxsize\n", NET_AddressToString( &chan->remoteAddress ),
 						chan->fragmentLength );
 			return false;
 		}
