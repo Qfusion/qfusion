@@ -460,9 +460,9 @@ int R_GetNumberOfActiveVBOs( void ) {
 		} \
 	}
 
-R_FillVertexBuffer_f( float, float, );
-R_FillVertexBuffer_f( float, GLhalfARB, Com_FloatToHalf );
-R_FillVertexBuffer_f( int, int, );
+R_FillVertexBuffer_f( float, float, )
+R_FillVertexBuffer_f( float, GLhalfARB, Com_FloatToHalf )
+R_FillVertexBuffer_f( int, int, )
 #define R_FillVertexBuffer_float_or_half( gl_type,in,size,stride,numVerts,out ) \
 	do { \
 		if( gl_type == GL_HALF_FLOAT ) { \
