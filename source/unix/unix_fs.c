@@ -21,8 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "../qcommon/sys_fs.h"
 
-#define __USE_BSD
-
 #include <dirent.h>
 
 #ifdef __linux__

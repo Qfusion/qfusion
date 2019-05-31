@@ -805,7 +805,7 @@ SERVER CONNECTING MESSAGES
 static void CL_ParseServerData( msg_t *msg ) {
 	const char *str, *gamedir;
 	int i, sv_bitflags, numpure;
-	int http_portnum;
+	unsigned short http_portnum;
 	bool old_sv_pure;
 
 	Com_DPrintf( "Serverdata packet received.\n" );
@@ -1330,7 +1330,7 @@ void CL_ParseServerMessage( msg_t *msg ) {
 	}
 
 	if( cl_debug_serverCmd->integer & 4 ) {
-		Com_Printf( "%3i:CMD %i %s\n", msg->readcount, -1, "EOF" );
+		Com_Printf( "%3zu:CMD %i %s\n", msg->readcount, -1, "EOF" );
 	}
 	SHOWNET( msg, "END OF MESSAGE" );
 

@@ -1381,7 +1381,7 @@ void G_MoveClientToTV( edict_t *ent ) {
 	static int last_tv = 0;
 	bool isIPv6;
 	char ip[MAX_INFO_VALUE];
-	int port;
+	unsigned short port;
 	const char *p;
 
 	if( !ent->r.client ) {
