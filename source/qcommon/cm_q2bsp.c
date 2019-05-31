@@ -106,7 +106,6 @@ MAP LOADING
 /*
 * CMod_SubmodelBrushes_r
 */
-static int cmap_checkcount;
 static void CMod_SubmodelBrushes_r( cmodel_state_t *cms, int nodenum, int *count, int *markbrushes ) {
 	if( nodenum < 0 ) {
 		int i;

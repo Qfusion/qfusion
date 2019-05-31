@@ -1269,7 +1269,7 @@ error:
 	// that we know if the application was compiled with a compatible
 	// version of the library. REQUIRED
 	ver = qpng_access_version_number();
-	Q_snprintfz( ver_string, sizeof( ver_string ), "%u.%u.%u", ver / 10000, ( ver / 100 ) % 100, ver % 100 );
+	Q_snprintfz( ver_string, sizeof( ver_string ), "%lu.%lu.%lu", ver / 10000, ( ver / 100 ) % 100, ver % 100 );
 	png_ptr = qpng_create_read_struct( ver_string, 0, q_png_error_fn, q_png_warning_fn );
 	if( png_ptr == NULL ) {
 		goto error;

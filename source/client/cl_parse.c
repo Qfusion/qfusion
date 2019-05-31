@@ -573,7 +573,7 @@ static void CL_InitServerDownload( const char *filename, int size, unsigned chec
 	cls.download.timeout = Sys_Milliseconds() + 3000;
 	cls.download.retries = 0;
 
-	CL_AddReliableCommand( va( "nextdl \"%s\" %i", cls.download.name, cls.download.offset ) );
+	CL_AddReliableCommand( va( "nextdl \"%s\" %zu", cls.download.name, cls.download.offset ) );
 }
 
 /*
@@ -651,7 +651,7 @@ static void CL_RetryDownload( void ) {
 		CL_DownloadDone();
 	} else {
 		cls.download.timeout = Sys_Milliseconds() + 3000;
-		CL_AddReliableCommand( va( "nextdl \"%s\" %i", cls.download.name, cls.download.offset ) );
+		CL_AddReliableCommand( va( "nextdl \"%s\" %zu", cls.download.name, cls.download.offset ) );
 	}
 }
 
@@ -778,7 +778,7 @@ static void CL_ParseDownload( msg_t *msg ) {
 		cls.download.timeout = Sys_Milliseconds() + 3000;
 		cls.download.retries = 0;
 
-		CL_AddReliableCommand( va( "nextdl \"%s\" %i", cls.download.name, cls.download.offset ) );
+		CL_AddReliableCommand( va( "nextdl \"%s\" %zu", cls.download.name, cls.download.offset ) );
 	} else {
 		Com_Printf( "Download complete: %s\n", cls.download.name );
 
