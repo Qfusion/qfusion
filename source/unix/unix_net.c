@@ -88,6 +88,11 @@ int64_t Sys_NET_SendFile( socket_handle_t handle, int fileno, size_t offset, siz
 	ssize_t result = sendfile( fileno, handle, _offset, count, NULL, &len, 0 );
 #else
         void *sendfilebuf = malloc(count);
+
+	if (sendfilebuf == NULL) {
+		return SOCKET_ERROR;
+	}
+
         ssize_t result = pread(fileno, sendfilebuf, count, _offset);
 
         if (result > 0) {

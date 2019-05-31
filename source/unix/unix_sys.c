@@ -43,6 +43,9 @@ FIXME:  This will be remidied once a native Mac port is complete
 #include <errno.h>
 #include <locale.h>
 
+#ifdef ALIGN
+#undef ALIGN
+#endif
 #include "../qcommon/qcommon.h"
 #include "glob.h"
 

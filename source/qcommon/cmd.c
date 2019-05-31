@@ -36,7 +36,7 @@ static bool cmd_preinitialized = false;
 static bool cmd_initialized = false;
 
 static trie_t *cmd_alias_trie = NULL;
-static const trie_casing_t CMD_ALIAS_TRIE_CASING = CON_CASE_SENSITIVE ? TRIE_CASE_SENSITIVE : TRIE_CASE_INSENSITIVE;;
+static const trie_casing_t CMD_ALIAS_TRIE_CASING = CON_CASE_SENSITIVE ? TRIE_CASE_SENSITIVE : TRIE_CASE_INSENSITIVE;
 
 static bool cmd_wait;
 static int alias_count;    // for detecting runaway loops
