@@ -152,10 +152,10 @@ static void TVM_PM_ClampAngles( void ) {
 			// don't let the player look up or down more than 90 degrees
 			if( temp > (short)ANGLE2SHORT( 90 ) - 1 ) {
 				pm->playerState->pmove.delta_angles[i] = ( ANGLE2SHORT( 90 ) - 1 ) - pm->cmd.angles[i];
-				temp = ANGLE2SHORT( 90 ) - 1;
+				temp = (short)ANGLE2SHORT( 90 ) - 1;
 			} else if( temp < (short)ANGLE2SHORT( -90 ) + 1 ) {
 				pm->playerState->pmove.delta_angles[i] = ( ANGLE2SHORT( -90 ) + 1 ) - pm->cmd.angles[i];
-				temp = ANGLE2SHORT( -90 ) + 1;
+				temp = (short)ANGLE2SHORT( -90 ) + 1;
 			}
 		}
 
