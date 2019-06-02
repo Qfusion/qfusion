@@ -146,7 +146,7 @@ qgl_initerr_t QGL_Init( const char *dllname ) {
 	}
 
 #define QGL_FUNC( type, name, params )                                   \
-	( q ## name ) = (void *)qglGetProcAddress( (const GLubyte *)#name );   \
+	*( (void **)&q ## name ) = (void *)qglGetProcAddress( (const GLubyte *)#name );   \
 	if( !( q ## name ) ) {                                                 \
 		Com_Printf( "QGL_Init: Failed to get address for %s\n", #name ); \
 		return qgl_initerr_invalid_driver;                               \
