@@ -723,19 +723,6 @@ static inline filehandle_t *FS_FileHandleForNum( int file ) {
 }
 
 /*
-* FS_FileNumForHandle
-*/
-static inline int FS_FileNumForHandle( filehandle_t *fh ) {
-	int file;
-
-	file = ( fh - fs_filehandles ) + 1;
-	if( file < 1 || file > FS_MAX_HANDLES ) {
-		Sys_Error( "FS_FileHandleForNum: bad handle: %i", file );
-	}
-	return file;
-}
-
-/*
 * FS_CloseFileHandle
 */
 static void FS_CloseFileHandle( filehandle_t *fh ) {

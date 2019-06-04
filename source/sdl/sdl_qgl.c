@@ -75,7 +75,6 @@ and Zephaniah E. Hull. Adapted by Victor Luchits for qfusion project.
 #undef QGL_FUNC
 
 static const char *_qglGetGLWExtensionsString( void );
-static const char *_qglGetGLWExtensionsStringInit( void );
 
 /*
 ** QGL_Shutdown
