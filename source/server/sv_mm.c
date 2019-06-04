@@ -64,7 +64,6 @@ cvar_t *sv_mm_debug_reportbots;
 /*
 * prototypes
 */
-static void SV_MM_ReportMatch( const char *report );
 static bool SV_MM_Login( void );
 static void SV_MM_Logout( bool force );
 static void SV_MM_GetMatchUUIDThink( void );
