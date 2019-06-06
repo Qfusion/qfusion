@@ -129,10 +129,10 @@ public:
 	// struct that can be used for both values and pointers
 	template<typename T, T ServerInfo::*comp_member>
 	struct _LessBinary {
-		bool operator()( const ServerInfo &lhs, const ServerInfo &rhs ) {
+		bool operator()( const ServerInfo &lhs, const ServerInfo &rhs ) const {
 			return lhs.*comp_member < rhs.*comp_member;
 		}
-		bool operator()( const ServerInfo *lhs, const ServerInfo *rhs ) {
+		bool operator()( const ServerInfo *lhs, const ServerInfo *rhs ) const {
 			return lhs->*comp_member < rhs->*comp_member;
 		}
 	};
