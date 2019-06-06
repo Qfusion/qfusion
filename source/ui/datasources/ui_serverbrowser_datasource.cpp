@@ -21,23 +21,6 @@ namespace WSWUI
 
 //=====================================
 
-namespace
-{
-
-void DEBUG_PRINT_SERVERINFO( const ServerInfo &info ) {
-	Com_Printf( "^6Serverinfo:\n%s %s %s %d/%d %s %s %d %d %d %d %d\n",
-				info.address.c_str(), info.hostname.c_str(), info.map.c_str(),
-				info.curuser, info.maxuser, info.gametype.c_str(),
-				info.modname.c_str(), int(info.instagib), info.skilllevel,
-				int(info.password), int(info.mm), info.ping );
-}
-
-// TODO: move this as general utility
-
-}
-
-//=====================================
-
 // ServerInfo
 ServerInfo::ServerInfo( const char *adr, const char *info )
 	:   has_changed( false ), ping_updated( false ), has_ping( false ), address( adr ),
@@ -579,8 +562,6 @@ void ServerBrowserDataSource::updateFrame() {
 
 			// yes this is safe, its only a pointer
 			referenceQueue.pop_front();
-
-			// DEBUG_PRINT_SERVERINFO( serverInfo );
 
 			// put to the visible list if it passes the filters
 			if( filter.filterServer( serverInfo ) ) {
