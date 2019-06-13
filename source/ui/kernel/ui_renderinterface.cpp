@@ -129,7 +129,7 @@ bool UI_RenderInterface::LoadTexture( Rocket::Core::TextureHandle & texture_hand
 	} else if( source2[0] == '?' ) {
 		String protocol = source2.Substring( 1, source2.Find( "::" ) - 1 );
 		if( protocol == "fonthandle" ) {
-			if( sscanf( source2.CString(), "?fonthandle::%p", &shader ) != 1 ) {
+			if( sscanf( source2.CString(), "?fonthandle::%p", (void **)&shader ) != 1 ) {
 				Com_Printf( S_COLOR_RED "Warning: RenderInterface couldnt load pic %s!\n", source.CString() );
 				return false;
 			}

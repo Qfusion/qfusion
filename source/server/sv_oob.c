@@ -950,6 +950,7 @@ static void SVC_RemoteCommand( const socket_t *socket, const netadr_t *address )
  *
  * @param tags string where to write the tags (at least MAX_STEAMQUERY_TAG_STRING bytes)
  */
+#if APP_STEAMID
 static void SV_GetSteamTags( char *tags ) {
 	// Currently there is no way to filter by tag in the game itself,
 	// so this is mostly to make sure the tags aren't empty on old servers if they are added.
@@ -967,6 +968,7 @@ static void SV_GetSteamTags( char *tags ) {
 	// (so the last tag exceeding MAX_STEAMQUERY_TAG_STRING isn't cut off)
 	// and validated not to contain any characters disallowed in userinfo (CVAR_SERVERINFO).
 }
+#endif
 
 /**
  * Responds to a Steam server query.

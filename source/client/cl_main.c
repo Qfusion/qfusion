@@ -836,7 +836,7 @@ void CL_Disconnect( const char *message ) {
 		}
 
 		Com_Printf( "\n" );
-		if( time > 0 ) {
+		if( sumcounts > 0 ) {
 			float mean = 1000.0 / (double)sumcounts * cl.timedemo.frames;
 			int64_t duration = Sys_Milliseconds() - cl.timedemo.startTime;
 			Com_Printf( "%3.1f seconds: %3.1f mean fps\n", duration / 1000.0, mean );
@@ -2572,6 +2572,8 @@ void CL_Frame( int realMsec, int gameMsec ) {
 
 //============================================================================
 
+#ifdef PUBLIC_BUILD
+
 static char *updateRemoteData;
 static size_t updateRemoteDataSize;
 
@@ -2683,6 +2685,8 @@ static void CL_CheckForUpdateHeaderCb( const char *buf, void *privatep ) {
 		}
 	}
 }
+
+#endif
 
 /*
 * CL_CheckForUpdate
