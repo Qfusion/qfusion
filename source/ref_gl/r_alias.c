@@ -303,7 +303,7 @@ void Mod_LoadAliasMD3Model( model_t *mod, model_t *parent, void *buffer, bspForm
 			ri.Com_Error( ERR_DROP, "mesh %i in model %s has too many vertices", i, mod->name );
 		}
 
-		bufsize = ALIGN( sizeof( maliasskin_t ) * poutmesh->numskins, sizeof( vec_t ) ) +
+		bufsize = Q_ALIGN( sizeof( maliasskin_t ) * poutmesh->numskins, sizeof( vec_t ) ) +
 				  numverts * ( sizeof( vec2_t ) + sizeof( maliasvertex_t ) * poutmodel->numframes ) +
 				  poutmesh->numtris * sizeof( elem_t ) * 3;
 		buf = ( uint8_t * )Mod_Malloc( mod, bufsize );
@@ -313,7 +313,7 @@ void Mod_LoadAliasMD3Model( model_t *mod, model_t *parent, void *buffer, bspForm
 		//
 		pinskin = ( dmd3skin_t * )( ( uint8_t * )pinmesh + LittleLong( inmesh.ofs_skins ) );
 		poutskin = poutmesh->skins = ( maliasskin_t * )buf;
-		buf += ALIGN( sizeof( maliasskin_t ) * poutmesh->numskins, sizeof( vec_t ) );
+		buf += Q_ALIGN( sizeof( maliasskin_t ) * poutmesh->numskins, sizeof( vec_t ) );
 		for( j = 0; j < poutmesh->numskins; j++, pinskin++, poutskin++ ) {
 			Q_strncpyz( poutskin->name, pinskin->name, sizeof( poutskin->name ) );
 			poutskin->shader = R_RegisterSkin( poutskin->name );

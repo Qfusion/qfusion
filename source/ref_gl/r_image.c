@@ -362,7 +362,7 @@ void R_FreeImageBuffers( void ) {
 static void R_SwapBlueRed( uint8_t *data, int width, int height, int samples, int alignment ) {
 	int i, j, k, padding;
 
-	padding = ALIGN( width * samples, alignment ) - width * samples;
+	padding = Q_ALIGN( width * samples, alignment ) - width * samples;
 	for( i = 0; i < height; i++, data += padding ) {
 		for( j = 0; j < width; j++, data += samples ) {
 			k = data[0];
@@ -596,7 +596,7 @@ static void R_ResampleTexture( int ctx, const uint8_t *in, int inwidth, int inhe
 	uint8_t *opix;
 
 	if( inwidth == outwidth && inheight == outheight ) {
-		memcpy( out, in, inheight * ALIGN( inwidth * samples, alignment ) );
+		memcpy( out, in, inheight * Q_ALIGN( inwidth * samples, alignment ) );
 		return;
 	}
 
@@ -617,8 +617,8 @@ static void R_ResampleTexture( int ctx, const uint8_t *in, int inwidth, int inhe
 		frac += fracstep;
 	}
 
-	inwidthS = ALIGN( inwidth * samples, alignment );
-	outwidthS = ALIGN( outwidth * samples, alignment );
+	inwidthS = Q_ALIGN( inwidth * samples, alignment );
+	outwidthS = Q_ALIGN( outwidth * samples, alignment );
 	for( i = 0; i < outheight; i++, out += outwidthS ) {
 		inrow = in + inwidthS * (int)( ( i + 0.25 ) * inheight / outheight );
 		inrow2 = in + inwidthS * (int)( ( i + 0.75 ) * inheight / outheight );
@@ -650,7 +650,7 @@ static void R_ResampleTexture16( int ctx, const unsigned short *in, int inwidth,
 	unsigned short *opix;
 
 	if( inwidth == outwidth && inheight == outheight ) {
-		memcpy( out, in, inheight * ALIGN( inwidth * sizeof( unsigned short ), 4 ) );
+		memcpy( out, in, inheight * Q_ALIGN( inwidth * sizeof( unsigned short ), 4 ) );
 		return;
 	}
 
@@ -671,8 +671,8 @@ static void R_ResampleTexture16( int ctx, const unsigned short *in, int inwidth,
 		frac += fracstep;
 	}
 
-	inwidthA = ALIGN( inwidth, 2 );
-	outwidthA = ALIGN( outwidth, 2 );
+	inwidthA = Q_ALIGN( inwidth, 2 );
+	outwidthA = Q_ALIGN( outwidth, 2 );
 	for( i = 0; i < outheight; i++, out += outwidthA ) {
 		inrow = in + inwidthA * (int)( ( i + 0.25 ) * inheight / outheight );
 		inrow2 = in + inwidthA * (int)( ( i + 0.75 ) * inheight / outheight );
@@ -698,7 +698,7 @@ static void R_ResampleTexture16( int ctx, const unsigned short *in, int inwidth,
 */
 static void R_MipMap( uint8_t *in, int width, int height, int samples, int alignment ) {
 	int i, j, k;
-	int instride = ALIGN( width * samples, alignment );
+	int instride = Q_ALIGN( width * samples, alignment );
 	int outwidth, outheight, outpadding;
 	uint8_t *out = in;
 	uint8_t *next;
@@ -712,7 +712,7 @@ static void R_MipMap( uint8_t *in, int width, int height, int samples, int align
 	if( !outheight ) {
 		outheight = 1;
 	}
-	outpadding = ALIGN( outwidth * samples, alignment ) - outwidth * samples;
+	outpadding = Q_ALIGN( outwidth * samples, alignment ) - outwidth * samples;
 
 	for( i = 0; i < outheight; i++, in += instride * 2, out += outpadding ) {
 		next = ( ( ( i << 1 ) + 1 ) < height ) ? ( in + instride ) : in;
@@ -735,7 +735,7 @@ static void R_MipMap( uint8_t *in, int width, int height, int samples, int align
 */
 static void R_MipMap16( unsigned short *in, int width, int height, int rMask, int gMask, int bMask, int aMask ) {
 	int i, j;
-	int instride = ALIGN( width, 2 );
+	int instride = Q_ALIGN( width, 2 );
 	int outwidth, outheight, outpadding;
 	unsigned short *out = in;
 	unsigned short *next;
@@ -1324,7 +1324,7 @@ static void R_UploadMipmapped( int ctx, uint8_t **data,
 	}
 
 	if( mip < 0 ) {
-		faceSize = ALIGN( scaledWidth * pixelSize, 4 ) * scaledHeight;
+		faceSize = Q_ALIGN( scaledWidth * pixelSize, 4 ) * scaledHeight;
 
 		for( i = 0; i < faces; i++ )
 			scaled[i] = R_PrepareImageBuffer( ctx, TEXTURE_RESAMPLING_BUF0 + i, faceSize );
@@ -1372,7 +1372,7 @@ static void R_UploadMipmapped( int ctx, uint8_t **data,
 
 	mips = ( flags & IT_NOMIPMAP ) ? 1 : R_MipCount( scaledWidth, scaledHeight, minmipsize );
 	for( i = 0; ( i < mips ) && ( mip < mipLevels ); i++, mip++ ) {
-		faceSize = ALIGN( scaledWidth * pixelSize, 4 ) * scaledHeight; // will be used for the first remaining mipmap
+		faceSize = Q_ALIGN( scaledWidth * pixelSize, 4 ) * scaledHeight; // will be used for the first remaining mipmap
 		for( j = 0; j < faces; j++ )
 			qglTexImage2D( target + j, i, comp, scaledWidth, scaledHeight, 0, format, type, data[mip * faces + j] );
 		oldWidth = scaledWidth;
@@ -1555,8 +1555,8 @@ static bool R_LoadKTX( int ctx, image_t *image, const char *pathname ) {
 		// If different compression formats are added, make this more general-purpose!
 
 		if( !glConfig.ext.texture_compression || !( glConfig.ext.compressed_ETC1_RGB8_texture || glConfig.ext.ES3_compatibility ) || ( mip < 0 ) ) {
-			int inSize = ( ( ALIGN( header->pixelWidth, 4 ) * ALIGN( header->pixelHeight, 4 ) ) >> 4 ) * 8;
-			int outSize = ALIGN( header->pixelWidth * 3, 4 ) * header->pixelHeight;
+			int inSize = ( ( Q_ALIGN( header->pixelWidth, 4 ) * Q_ALIGN( header->pixelHeight, 4 ) ) >> 4 ) * 8;
+			int outSize = Q_ALIGN( header->pixelWidth * 3, 4 ) * header->pixelHeight;
 			uint8_t *in = data + sizeof( int );
 			uint8_t *decompressed[6];
 
@@ -1586,14 +1586,14 @@ static bool R_LoadKTX( int ctx, image_t *image, const char *pathname ) {
 
 			for( i = 0; i < mip; ++i ) {
 				data += sizeof( int ) + numFaces * ( (
-														 ALIGN( max( header->pixelWidth >> i, 1 ), 4 ) *
-														 ALIGN( max( header->pixelHeight >> i, 1 ), 4 )
+														 Q_ALIGN( max( header->pixelWidth >> i, 1 ), 4 ) *
+														 Q_ALIGN( max( header->pixelHeight >> i, 1 ), 4 )
 														 ) >> 4 ) * 8;
 			}
 
 			mips -= mip;
 			for( i = 0; i < mips; ++i ) {
-				faceSize = ( ( ALIGN( scaledWidth, 4 ) * ALIGN( scaledHeight, 4 ) ) >> 4 ) * 8;
+				faceSize = ( ( Q_ALIGN( scaledWidth, 4 ) * Q_ALIGN( scaledHeight, 4 ) ) >> 4 ) * 8;
 				data += sizeof( int );
 				for( j = 0; j < numFaces; ++j ) {
 					qglCompressedTexImage2DARB( target + j, i, compressedFormat,
@@ -1651,7 +1651,7 @@ static bool R_LoadKTX( int ctx, image_t *image, const char *pathname ) {
 		}
 
 		for( i = 0; i < mips; i++ ) {
-			faceSize = ALIGN( max( header->pixelWidth >> i, 1 ) * pixelSize, 4 ) * max( header->pixelHeight >> i, 1 );
+			faceSize = Q_ALIGN( max( header->pixelWidth >> i, 1 ) * pixelSize, 4 ) * max( header->pixelHeight >> i, 1 );
 			data += sizeof( int );
 			for( j = 0; j < numFaces; j++ )
 				images[i * numFaces + j] = data + faceSize * j;

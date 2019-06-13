@@ -2228,7 +2228,7 @@ static void Shader_Finish( shader_t *s ) {
 	size = s->numpasses * sizeof( shaderpass_t );
 
 	for( i = 0, pass = r_currentPasses; i < s->numpasses; i++, pass++ ) {
-		size = ALIGN( size, 16 );
+		size = Q_ALIGN( size, 16 );
 
 		// rgbgen args
 		if( pass->rgbgen.type == RGB_GEN_WAVE ||
@@ -2259,7 +2259,7 @@ static void Shader_Finish( shader_t *s ) {
 	memcpy( s->passes, r_currentPasses, s->numpasses * sizeof( shaderpass_t ) );
 
 	for( i = 0, pass = s->passes; i < s->numpasses; i++, pass++ ) {
-		bufferOffset = ALIGN( bufferOffset, 16 );
+		bufferOffset = Q_ALIGN( bufferOffset, 16 );
 
 		if( pass->rgbgen.type == RGB_GEN_WAVE ||
 			pass->rgbgen.type == RGB_GEN_CONST ) {
@@ -2617,14 +2617,14 @@ create_default:
 				break;
 			case SHADER_TYPE_OPAQUE_ENV:
 				// pad to 4 floats
-				data = R_Malloc( ALIGN( sizeof( shaderpass_t ), 16 ) + 4 * sizeof( float ) + shortname_length + 1 );
+				data = R_Malloc( Q_ALIGN( sizeof( shaderpass_t ), 16 ) + 4 * sizeof( float ) + shortname_length + 1 );
 
 				s->vattribs = VATTRIB_POSITION_BIT;
 				s->sort = SHADER_SORT_OPAQUE;
 				s->flags = SHADER_CULL_FRONT | SHADER_DEPTHWRITE;
 				s->numpasses = 1;
 				s->passes = ( shaderpass_t * )( data );
-				s->passes[0].rgbgen.args = ( float * )( (uint8_t *)data + ALIGN( sizeof( shaderpass_t ), 16 ) );
+				s->passes[0].rgbgen.args = ( float * )( (uint8_t *)data + Q_ALIGN( sizeof( shaderpass_t ), 16 ) );
 				s->name = ( char * )( s->passes[0].rgbgen.args + 4 );
 				strcpy( s->name, shortname );
 

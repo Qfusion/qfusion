@@ -1469,9 +1469,9 @@ static void q_etc1_block( const uint8_t *in, uint8_t *out, int stride, bool bgr 
 }
 
 void DecompressETC1( const uint8_t *in, int width, int height, uint8_t *out, bool bgr ) {
-	int stride = ALIGN( width, 4 ) * 3;
+	int stride = Q_ALIGN( width, 4 ) * 3;
 	uint8_t *uncompressed = alloca( 4 * stride );
-	int i, j, rows, rowSize = width * 3, rowSizeAligned = ALIGN( rowSize, 4 );
+	int i, j, rows, rowSize = width * 3, rowSizeAligned = Q_ALIGN( rowSize, 4 );
 	for( i = 0; i < height; i += 4 ) {
 		for( j = 0; j < width; j += 4 ) {
 			q_etc1_block( in, uncompressed + j * 3, stride, bgr );

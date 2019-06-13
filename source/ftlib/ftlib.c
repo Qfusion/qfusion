@@ -355,7 +355,7 @@ static void QFT_RenderString( qfontface_t *qfont, const char *str ) {
 		pixelMode = ftglyph->bitmap.pixel_mode;
 		switch( pixelMode ) {
 			case FT_PIXEL_MODE_MONO:
-				srcStride = ALIGN( ftglyph->bitmap.width, 8 ) >> 3;
+				srcStride = Q_ALIGN( ftglyph->bitmap.width, 8 ) >> 3;
 				break;
 			case FT_PIXEL_MODE_GRAY:
 				srcStride = ftglyph->bitmap.width;
@@ -387,7 +387,7 @@ static void QFT_RenderString( qfontface_t *qfont, const char *str ) {
 		}
 
 		if( bitmapHeight > qftGlyphTempBitmapHeight ) {
-			qftGlyphTempBitmapHeight = ALIGN( bitmapHeight, QFT_GLYPH_BITMAP_HEIGHT_INCREMENT );
+			qftGlyphTempBitmapHeight = Q_ALIGN( bitmapHeight, QFT_GLYPH_BITMAP_HEIGHT_INCREMENT );
 			qftGlyphTempBitmap = FTLIB_Realloc( qftGlyphTempBitmap, FTLIB_FONT_MAX_IMAGE_WIDTH * qftGlyphTempBitmapHeight );
 		}
 

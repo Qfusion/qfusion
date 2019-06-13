@@ -694,7 +694,7 @@ void Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, int patchGro
 			}
 			for( j = 0; j < MAX_LIGHTMAPS && in->vertexStyles[j] != 255; j++ )
 				bufSize += numVerts * sizeof( byte_vec4_t );
-			bufSize = ALIGN( bufSize, sizeof( elem_t ) ) + numElems * sizeof( elem_t );
+			bufSize = Q_ALIGN( bufSize, sizeof( elem_t ) ) + numElems * sizeof( elem_t );
 			buffer = ( uint8_t * )Mod_Malloc( loadmodel, bufSize );
 			bufPos = 0;
 
@@ -799,7 +799,7 @@ void Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, int patchGro
 					}
 				}
 
-				bufSize = ALIGN( bufPos, sizeof( elem_t ) ) + numElems * sizeof( elem_t );
+				bufSize = Q_ALIGN( bufPos, sizeof( elem_t ) ) + numElems * sizeof( elem_t );
 				buffer = ( uint8_t * )Mod_Malloc( loadmodel, bufSize );
 				memcpy( buffer, oldBuffer, bufSize );
 				R_Free( oldBuffer );
@@ -823,7 +823,7 @@ void Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, int patchGro
 			}
 
 			// compute new elems
-			bufPos = ALIGN( bufPos, sizeof( elem_t ) );
+			bufPos = Q_ALIGN( bufPos, sizeof( elem_t ) );
 			mesh->elems = elems = ( elem_t * )( buffer + bufPos ); bufPos += numElems * sizeof( elem_t );
 			for( v = 0, i = 0; v < size[1] - 1; v++ ) {
 				for( u = 0; u < size[0] - 1; u++ ) {
@@ -887,8 +887,8 @@ void Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, int patchGro
 			}
 			for( j = 0; j < MAX_LIGHTMAPS && in->vertexStyles[j] != 255; j++ )
 				bufSize += numVerts * sizeof( byte_vec4_t );
-			bufSize = ALIGN( bufSize, sizeof( elem_t ) ) + numElems * sizeof( elem_t );
-			bufSize = ALIGN( bufSize, 16 ) + numFoliageInstances * sizeof( instancePoint_t );
+			bufSize = Q_ALIGN( bufSize, sizeof( elem_t ) ) + numElems * sizeof( elem_t );
+			bufSize = Q_ALIGN( bufSize, 16 ) + numFoliageInstances * sizeof( instancePoint_t );
 
 			buffer = ( uint8_t * )Mod_Malloc( loadmodel, bufSize );
 			bufPos = 0;
@@ -929,7 +929,7 @@ void Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, int patchGro
 				memcpy( mesh->colorsArray[j], loadmodel_colors_array[j] + firstVert, numVerts * sizeof( byte_vec4_t ) );
 			}
 
-			bufPos = ALIGN( bufPos, sizeof( elem_t ) );
+			bufPos = Q_ALIGN( bufPos, sizeof( elem_t ) );
 			mesh->elems = ( elem_t * )( buffer + bufPos ); bufPos += numElems * sizeof( elem_t );
 			memcpy( mesh->elems, loadmodel_surfelems + firstElem, numElems * sizeof( elem_t ) );
 
@@ -956,7 +956,7 @@ void Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, int patchGro
 				instancePoint_t *instance;
 
 				out->numInstances = numFoliageInstances;
-				out->instances = ( instancePoint_t * )( buffer + ALIGN( bufPos, 16 ) );
+				out->instances = ( instancePoint_t * )( buffer + Q_ALIGN( bufPos, 16 ) );
 
 				for( j = 0; j < out->numInstances; j++ ) {
 					// add pseudo random YAW-angle rotation

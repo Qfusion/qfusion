@@ -177,7 +177,7 @@ extern "C" {
 #endif
 
 #ifdef __GNUC__
-#define HAVE_TYPEOF
+#define HAVE___TYPEOF__
 #endif
 
 #include <malloc.h>
@@ -201,7 +201,7 @@ typedef uintptr_t socket_handle_t;
 #define HAVE_STRCASECMP
 #endif
 
-//#define HAVE_TYPEOF
+//#define HAVE___TYPEOF__
 
 #define MUMBLE_SUPPORT
 #define OPENAL_RUNTIME
@@ -238,7 +238,7 @@ typedef int socket_handle_t;
 #define HAVE_STRCASECMP
 #endif
 
-#define HAVE_TYPEOF
+#define HAVE___TYPEOF__
 
 #ifndef __ANDROID__
 #define MUMBLE_SUPPORT
@@ -403,16 +403,12 @@ typedef int socket_handle_t;
 #define strtoull _strtoi64
 #endif
 
-#ifdef ALIGN
-#undef ALIGN
-#endif
-
 // the ALIGN macro as defined by Linux kernel
-#ifdef HAVE_TYPEOF
-#define __ALIGN_MASK( x,mask )    ( ( ( x ) + ( mask ) ) & ~( mask ) )
-#define ALIGN( x,a )              __ALIGN_MASK( x,( typeof( x ) )( a ) - 1 )
+#ifdef HAVE___TYPEOF__
+#define Q_ALIGN_MASK( x,mask )      ( ( ( x ) + ( mask ) ) & ~( mask ) )
+#define Q_ALIGN( x,a )              Q_ALIGN_MASK( x,( __typeof__( x ) )( a ) - 1 )
 #else
-#define ALIGN( x, a ) ( ( ( x ) + ( ( size_t )( a ) - 1 ) ) & ~( ( size_t )( a ) - 1 ) )
+#define Q_ALIGN( x, a ) ( ( ( x ) + ( ( size_t )( a ) - 1 ) ) & ~( ( size_t )( a ) - 1 ) )
 #endif
 
 #ifdef _M_AMD64

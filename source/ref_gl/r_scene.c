@@ -716,7 +716,7 @@ void R_AddDebugCorners( const vec3_t corners[8], const vec4_t color ) {
 	r_num_debug_bounds++;
 
 	if( r_num_debug_bounds > r_debug_bounds_current_size ) {
-		r_debug_bounds_current_size = ALIGN( r_num_debug_bounds, 256 );
+		r_debug_bounds_current_size = Q_ALIGN( r_num_debug_bounds, 256 );
 		if( r_debug_bounds ) {
 			r_debug_bounds = R_Realloc( r_debug_bounds, r_debug_bounds_current_size * sizeof( r_debug_bound_t ) );
 		} else {
