@@ -327,7 +327,7 @@ static void GClip_LinkEntity_AreaGrid( areagrid_t *areagrid, edict_t *ent ) {
 	if( entitynumber <= 0 || entitynumber >= game.maxentities || EDICT_NUM( entitynumber ) != ent ) {
 		Com_Printf( "GClip_LinkEntity_AreaGrid: invalid edict %p "
 					"(edicts is %p, edict compared to prog->edicts is %i)\n",
-					(void *)ent, game.edicts, entitynumber );
+					(void *)ent, (void *)game.edicts, entitynumber );
 		return;
 	}
 

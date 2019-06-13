@@ -415,9 +415,9 @@ static int R_SurfaceCmp( const msurface_t *s1, const msurface_t *s2 ) {
 /*
 * R_SortSurfacesCmp
 */
-static int R_SortSurfacesCmp( const void **ps1, const void **ps2 ) {
-	const msurface_t *s1 = *ps1;
-	const msurface_t *s2 = *ps2;
+static int R_SortSurfacesCmp( const void *ps1, const void *ps2 ) {
+	const msurface_t *s1 = *((const msurface_t **)ps1);
+	const msurface_t *s2 = *((const msurface_t **)ps2);
 	int cmp;
 	
 	cmp = R_SurfaceCmp( s1, s2 );
