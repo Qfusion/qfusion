@@ -2223,7 +2223,7 @@ void RP_UpdateRealtimeLightsUniforms( int elem, const vec3_t lightVec, const mat
 				qglUniformMatrix4fvARB( program->loc.DynamicLightsMatrix, 1, GL_FALSE, objectToLightMatrix );
 			}
 
-			if( program->loc.ShadowmapCascadeMatrix >= 0 ) {
+			if( program->loc.ShadowmapCascadeMatrix[0] >= 0 ) {
 				int j;
 				mat4_t bias;
 
