@@ -238,7 +238,7 @@ static void R_Imagelib_LoadLibpng( void ) {
 #ifdef LIBPNG_RUNTIME
 	pngLibrary = ri.Com_LoadSysLibrary( LIBPNG_LIBNAME, libpngfuncs );
 	if( pngLibrary ) {
-		qpng_set_longjmp_fn = ri.Com_LibraryProcAddress( pngLibrary, "png_set_longjmp_fn" );
+		*(void **)&qpng_set_longjmp_fn = ri.Com_LibraryProcAddress( pngLibrary, "png_set_longjmp_fn" );
 	}
 #else
 	pngLibrary =  (void *)1;
