@@ -158,7 +158,7 @@ void GLimp_Shutdown() {
 
 bool GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, void *parenthWnd,
 				 int iconResource, const int *iconXPM ) {
-	glw_state.wndproc = wndproc;
+	*(void **)&glw_state.wndproc = wndproc;
 	glw_state.applicationName = strdup( applicationName );
 	glw_state.applicationIcon = NULL;
 	memcpy( glw_state.applicationName, applicationName, strlen( applicationName ) + 1 );

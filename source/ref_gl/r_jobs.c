@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "r_local.h"
 
-typedef void (*queueCmdHandler_t)( const void * );
+typedef unsigned (*queueCmdHandler_t)( const void * );
 
 enum {
 	CMD_JOB_TAKE,
@@ -171,7 +171,7 @@ static void *R_JobThreadProc( void *param ) {
 
 	};
 
-	ri.BufPipe_Wait( cmdQueue, (void*)&R_JobCmdsWaiter, (void*)cmdHandlers, Q_THREADS_WAIT_INFINITE );
+	ri.BufPipe_Wait( cmdQueue, R_JobCmdsWaiter, (void*)cmdHandlers, Q_THREADS_WAIT_INFINITE );
 
 	return NULL;
 }

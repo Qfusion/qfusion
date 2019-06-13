@@ -129,7 +129,7 @@ bool TVM_ClientCommand( tvm_relay_t *relay, edict_t *ent ) {
 /*
 * TVM_AddGameCommand
 */
-static void TVM_AddGameCommand( tvm_relay_t *relay, const char *name, void *callback ) {
+static void TVM_AddGameCommand( tvm_relay_t *relay, const char *name, void ( *callback )( edict_t *ent ) ) {
 	int i;
 
 #ifndef NDEBUG
