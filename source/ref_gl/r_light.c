@@ -1159,10 +1159,6 @@ static void R_GetRtLightSurfaceVisInfo( rtlight_t *l, mbrushmodel_t *bm, r_light
 					float dot, epsilon = ON_EPSILON;
 
 					dot = DotProduct( surf->plane, &l->axis[AXIS_FORWARD] );
-					if( s == 926 ) {
-						Com_Printf("%f %s\n", VectorLength( surf->plane ), vtos( surf->plane ) );
-					}
-
 					if( Shader_CullBack( surf->shader ) ) {
 						dot = -dot;
 						epsilon = -ON_EPSILON;
