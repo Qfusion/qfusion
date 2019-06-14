@@ -23,7 +23,7 @@ typedef Rocket::Core::CompiledGeometryHandle CompiledGeometryHandle;
 typedef struct shader_s shader_t;
 
 UI_RenderInterface::UI_RenderInterface( int vidWidth, int vidHeight, float pixelRatio )
-	: vid_width( vidWidth ), vid_height( vidHeight ), polyAlloc(), pixelRatio( pixelRatio ) {
+	: vid_width( vidWidth ), vid_height( vidHeight ), pixelRatio( pixelRatio ), polyAlloc() {
 	pixelsPerInch = basePixelsPerInch * pixelRatio;
 
 	texCounter = 0;
