@@ -28,6 +28,14 @@ extern "C" {
 // global preprocessor defines
 #include "config.h"
 
+#ifndef __STDC_FORMAT_MACROS
+#define __STDC_FORMAT_MACROS 1
+#endif
+
+#ifndef __STDC_LIMIT_MACROS
+#define __STDC_LIMIT_MACROS 1
+#endif
+
 // q_shared.h -- included first by ALL program modules
 #include <assert.h>
 #include <ctype.h>
@@ -44,12 +52,7 @@ extern "C" {
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
-
-#ifndef __STDC_FORMAT_MACROS
-#define __STDC_FORMAT_MACROS 1
-#endif
 #include <inttypes.h>
-
 
 #ifdef __cplusplus
 };
