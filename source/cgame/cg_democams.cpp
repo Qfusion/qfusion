@@ -93,7 +93,7 @@ static cg_democam_t *CG_Democam_FindCurrent( int64_t time ) {
 	cam = cg_cams_headnode;
 	curcam = NULL;
 	while( cam != NULL ) {
-		if( curcam == NULL || ( cam->timeStamp <= time && cam->timeStamp > higher_time ) ) {
+		if( cam->timeStamp <= time && cam->timeStamp > higher_time ) {
 			higher_time = cam->timeStamp;
 			curcam = cam;
 		}
@@ -107,13 +107,13 @@ static cg_democam_t *CG_Democam_FindCurrent( int64_t time ) {
 * CG_Democam_FindNext
 */
 static cg_democam_t *CG_Democam_FindNext( int64_t time ) {
-	int64_t lower_time = 0;
+	int64_t lower_time = INT64_MAX;
 	cg_democam_t *cam, *ncam;
 
 	cam = cg_cams_headnode;
 	ncam = NULL;
 	while( cam != NULL ) {
-		if( ncam == NULL || ( cam->timeStamp > time && cam->timeStamp < lower_time ) ) {
+		if( cam->timeStamp > time && cam->timeStamp < lower_time ) {
 			lower_time = cam->timeStamp;
 			ncam = cam;
 		}
@@ -223,7 +223,7 @@ static cg_subtitle_t *CG_Democam_FindCurrentSubtitle( void ) {
 	sub = cg_subs_headnode;
 	currentsub = NULL;
 	while( sub != NULL ) {
-		if( ( currentsub == NULL || sub->timeStamp > higher_time ) && sub->timeStamp <= demo_time &&
+		if( sub->timeStamp > higher_time && sub->timeStamp <= demo_time &&
 			( sub->timeStamp + sub->maxDuration > demo_time ) ) {
 			higher_time = sub->timeStamp;
 			currentsub = sub;
@@ -1074,7 +1074,6 @@ static int CG_Democam_CalcView( void ) {
 
 				// set velocity
 				VectorSubtract( cam_origin, v, cam_velocity );
-				VectorScale( cam_velocity, 1.0f / (float)cg.frameTime, cam_velocity );
 				break;
 
 			case DEMOCAM_PATH_SPLINE:
@@ -1146,7 +1145,6 @@ static int CG_Democam_CalcView( void ) {
 
 				// set velocity
 				VectorSubtract( cam_origin, v, cam_velocity );
-				VectorScale( cam_velocity, 1.0f / (float)cg.frameTime, cam_velocity );
 				break;
 
 			case DEMOCAM_ORBITAL:
@@ -1198,7 +1196,6 @@ static int CG_Democam_CalcView( void ) {
 
 				// set velocity
 				VectorSubtract( cam_origin, v, cam_velocity );
-				VectorScale( cam_velocity, 1.0f / ( cg.frameTime * 1000.0f ), cam_velocity );
 				break;
 
 			default:
