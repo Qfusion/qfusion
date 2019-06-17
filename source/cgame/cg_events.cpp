@@ -471,7 +471,7 @@ static void CG_LeadBubbleTrail( trace_t *tr, vec3_t water_start ) {
 	if( CG_PointContents( pos ) & MASK_WATER ) {
 		VectorCopy( pos, tr->endpos );
 	} else {
-		CG_Trace( tr, pos, vec3_origin, vec3_origin, water_start, tr->ent ? cg_entities[tr->ent].current.number : 0, MASK_WATER );
+		CG_Trace( tr, pos, vec3_origin, vec3_origin, water_start, tr->ent, MASK_WATER );
 	}
 
 	VectorAdd( water_start, tr->endpos, pos );
