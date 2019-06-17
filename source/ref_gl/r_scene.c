@@ -390,7 +390,7 @@ void R_RenderScene( const refdef_t *fd ) {
 	rn.polygonFactor = POLYOFFSET_FACTOR;
 	rn.polygonUnits = POLYOFFSET_UNITS;
 	rn.clipFlags = 15;
-	if( rsh.worldModel && !( fd->rdflags & RDF_NOWORLDMODEL ) && rsh.worldBrushModel->globalfog ) {
+	if( rsh.worldBrushModel && !( fd->rdflags & RDF_NOWORLDMODEL ) && rsh.worldBrushModel->globalfog ) {
 		rn.clipFlags |= 32; // farlip
 	}
 	rn.meshlist = &r_worldlist;
