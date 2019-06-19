@@ -40,16 +40,16 @@ file(GLOB CLIENT_COMMON_SOURCES
     "../gameshared/q_*.c"
     "../qalgo/*.c"
     "../matchmaker/*.c"
-	"libmumblelink/*.c"
+    "libmumblelink/*.c"
 )
 
 if (WIN32)
-	file(GLOB CLIENT_PLATFORM_HEADERS
-		"../win32/resource.h"
-		"../win32/conproc.h"
-		"../win32/winquake.h"
-		"../win32/win_input.h"
-	)
+    file(GLOB CLIENT_PLATFORM_HEADERS
+        "../win32/resource.h"
+        "../win32/conproc.h"
+        "../win32/winquake.h"
+        "../win32/win_input.h"
+    )
 
     if (USE_SDL2)
         file(GLOB CLIENT_PLATFORM_SOURCES
@@ -102,7 +102,7 @@ if (WIN32)
     set(BUNDLE_RESOURCES "")
 
 elseif (APPLE)
-	set(CLIENT_PLATFORM_HEADERS "")
+    set(CLIENT_PLATFORM_HEADERS "")
 	
     file(GLOB CLIENT_PLATFORM_SOURCES
         "../unix/unix_fs.c"
@@ -133,15 +133,15 @@ elseif (APPLE)
         ../../libsrcs/lib/mac/Frameworks
         ${QFUSION_MAC_ICON}
     )
-	if (QFUSION_DATA_DIR)
-		list(APPEND BUNDLE_RESOURCES
-			${QFUSION_DATA_DIR}/${QFUSION_GAME_DIR}
-			${QFUSION_DATA_DIR}/docs
-		)
-	endif()
 
+    if (QFUSION_DATA_DIR)
+        list(APPEND BUNDLE_RESOURCES
+            ${QFUSION_DATA_DIR}/${QFUSION_GAME_DIR}
+            ${QFUSION_DATA_DIR}/docs
+        )
+    endif()
 else()
-	set(CLIENT_PLATFORM_HEADERS "")
+    set(CLIENT_PLATFORM_HEADERS "")
 
     if (USE_SDL2)
         file(GLOB CLIENT_PLATFORM_SOURCES
@@ -167,31 +167,6 @@ else()
             set(CLIENT_PLATFORM_LIBRARIES ${SDL2_LIBRARY} pthread m dl rt)
         else()
             set(CLIENT_PLATFORM_LIBRARIES ${SDL2_LIBRARY} pthread m)
-        endif()
-    else()
-        file(GLOB CLIENT_PLATFORM_SOURCES
-            "../unix/unix_fs.c"
-            "../unix/unix_lib.c"
-            "../unix/unix_net.c"
-            "../unix/unix_sys.c"
-            "../unix/unix_console.c"
-            "../unix/unix_clipboard.c"
-            "../unix/unix_time.c"
-            "../unix/unix_threads.c"
-            "../null/sys_vfs_null.c"
-
-            "../unix/keysym2ucs.c"
-            "../unix/unix_client.c"
-            "../unix/unix_input.c"
-            "../unix/unix_vid.c"
-
-            "../sdl/sdl_input_joy.c"
-        )
-    
-        if (${CMAKE_SYSTEM_NAME} MATCHES Linux)
-            set(CLIENT_PLATFORM_LIBRARIES ${SDL2_LIBRARY} pthread dl m X11 Xi Xext Xrandr rt)
-        else()
-            set(CLIENT_PLATFORM_LIBRARIES ${SDL2_LIBRARY} pthread m X11 Xi Xext Xrandr)
         endif()
     endif()
     set(CLIENT_BINARY_TYPE "")

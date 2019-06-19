@@ -107,7 +107,7 @@ if (WIN32)
         set(CMAKE_C_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} /MD /W4")	
     endif()
 
-	set(CMAKE_CXX_STANDARD 14)
+    set(CMAKE_CXX_STANDARD 14)
 
 # OS X specific settings
 elseif (APPLE)
@@ -130,8 +130,8 @@ elseif (APPLE)
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -D_DEBUG")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fno-strict-aliasing -ffast-math -funroll-loops -msse2")
 
-	set(CMAKE_C_STANDARD 11)
-	set(CMAKE_CXX_STANDARD 14)
+    set(CMAKE_C_STANDARD 11)
+    set(CMAKE_CXX_STANDARD 14)
 
 # Unix specific settings
 else()
@@ -163,8 +163,12 @@ else()
         add_common_link_flags("-static -static-libgcc -static-libstdc++")
     endif()
 
-	set(CMAKE_C_STANDARD 11)
-	set(CMAKE_CXX_STANDARD 14)
+    if (UNIX)
+        set(USE_SDL2 1)
+    endif()
+
+    set(CMAKE_C_STANDARD 11)
+    set(CMAKE_CXX_STANDARD 14)
 endif()
 
 # Linux-only specific settings
@@ -202,12 +206,8 @@ if (NOT GAME_MODULES_ONLY)
         find_package(OpenGL)
 
         # We need SDL only on non-Windows platforms or when with SDL2-backend
-        if (USE_SDL2 OR UNIX)
-            set(USE_SDL2 1)
-            find_package(SDL2 REQUIRED)
-        endif()
-
         if (USE_SDL2)
+            find_package(SDL2 REQUIRED)
             add_definitions(-DUSE_SDL2)
         endif()
     endif()
