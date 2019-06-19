@@ -1566,9 +1566,10 @@ void R_BeginRegistration( void ) {
 	R_DestroyVolatileAssets();
 
 	rsh.registrationSequence++;
+
+	// global registration sequence can not be 0
+	// as this is a special value which is reserved for free/unsed asets
 	if( !rsh.registrationSequence ) {
-		// make sure assumption that an asset is free it its registrationSequence is 0
-		// since rsh.registrationSequence never equals 0
 		rsh.registrationSequence = 1;
 	}
 	rsh.registrationOpen = true;
