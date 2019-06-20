@@ -25,25 +25,3 @@ uint64_t Sys_Microseconds( void ) {
 int64_t Sys_Milliseconds( void ) {
 	return Sys_Microseconds() / 1000;
 }
-
-/*
-* Sys_XTimeToSysTime
-*
-* Sub-frame timing of events returned by X
-* Ported from Quake III Arena source code.
-*/
-int Sys_XTimeToSysTime( unsigned long xtime ) {
-	int ret, time, test;
-
-	// some X servers (like suse 8.1's) report weird event times
-	// if the game is loading, resolving DNS, etc. we are also getting old events
-	// so we only deal with subframe corrections that look 'normal'
-	ret = xtime - (unsigned long)( sys_secbase * 1000 );
-	time = Sys_Milliseconds();
-	test = time - ret;
-
-	if( test < 0 || test > 30 ) { // in normal conditions I've never seen this go above
-		return time;
-	}
-	return ret;
-}
