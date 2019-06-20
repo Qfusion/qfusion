@@ -457,12 +457,6 @@ void CL_SoundModule_LockBackgroundTrack( bool lock );
 void CL_SoundModule_BeginAviDemo( void );
 void CL_SoundModule_StopAviDemo( void );
 
-void CL_Mumble_Init( void );
-void CL_Mumble_Link( void );
-void CL_Mumble_Unlink( void );
-void CL_Mumble_Update( const vec3_t origin, const mat3_t axis, const char *identity );
-void CL_Mumble_Shutdown( void );
-
 //
 // cl_ui.c
 //

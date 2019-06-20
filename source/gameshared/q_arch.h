@@ -135,7 +135,6 @@ extern "C" {
 
 #define VID_INITFIRST
 
-#define MUMBLE_SUPPORT
 #define OPENAL_RUNTIME
 
 // FIXME: move these to CMakeLists.txt
@@ -206,7 +205,6 @@ typedef uintptr_t socket_handle_t;
 
 //#define HAVE___TYPEOF__
 
-#define MUMBLE_SUPPORT
 #define OPENAL_RUNTIME
 
 // FIXME: move these to CMakeLists.txt
@@ -244,7 +242,6 @@ typedef int socket_handle_t;
 #define HAVE___TYPEOF__
 
 #ifndef __ANDROID__
-#define MUMBLE_SUPPORT
 #define OPENAL_RUNTIME
 #endif
 

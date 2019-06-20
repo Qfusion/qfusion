@@ -40,7 +40,6 @@ file(GLOB CLIENT_COMMON_SOURCES
     "../gameshared/q_*.c"
     "../qalgo/*.c"
     "../matchmaker/*.c"
-    "libmumblelink/*.c"
 )
 
 if (WIN32)
