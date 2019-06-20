@@ -26,7 +26,6 @@ void SV_Physics_LinearProjectile( edict_t *ent );
 
 static bool is_quad;
 
-#define NO_ROCKET_ANTILAG
 #define PLASMAHACK // ffs : hack for the plasmagun
 
 #ifdef PLASMAHACK
@@ -219,31 +218,6 @@ static void G_ProjectileDistancePrestep( edict_t *projectile, float distance ) {
 		W_Plasma_Backtrace( projectile, plasma_hack_start );
 	}
 #endif
-}
-
-/*
-* G_ProjectileTimePrestep
-*/
-static void G_ProjectileTimePrestep( edict_t *projectile, int timeOffset ) {
-	if( projectile->movetype != MOVETYPE_TOSS && projectile->movetype != MOVETYPE_LINEARPROJECTILE
-		&& projectile->movetype != MOVETYPE_BOUNCE && projectile->movetype != MOVETYPE_BOUNCEGRENADE ) {
-		return;
-	}
-
-	if( timeOffset <= 0 ) {
-		return;
-	}
-
-	if( projectile->movetype != MOVETYPE_LINEARPROJECTILE ) {
-		vec3_t distVec;
-
-		VectorScale( projectile->velocity, (float)timeOffset * 0.001f, distVec );
-		G_ProjectileDistancePrestep( projectile, VectorLength( distVec ) );
-		return;
-	}
-
-	projectile->s.linearMovementTimeStamp -= timeOffset;
-	SV_Physics_LinearProjectile( projectile );
 }
 
 /*
@@ -795,27 +769,9 @@ void G_FireWeapon( edict_t *ent, int parm ) {
 		}
 
 		if( projectile ) {
-			//if( projectile->s.linearProjectile ) // convert distance to time for linear projectiles
-			//	G_ProjectileTimePrestep( projectile, 1000.0f * ( g_projectile_prestep->value / VectorLengthFast( projectile->velocity ) ) );
-			//else
 			G_ProjectileDistancePrestep( projectile, g_projectile_prestep->value );
 			if( projectile->s.linearMovement )
 				VectorCopy( projectile->s.origin, projectile->s.linearMovementBegin );
 		}
-
-#ifdef NO_ROCKET_ANTILAG
-		// hack for disabling antilag on rockets
-		if( projectile && projectile->s.type == ET_ROCKET ) {
-			int timeOffset;
-
-			timeOffset = -projectile->timeDelta;
-			projectile->timeDelta = 0;
-			if( projectile->s.linearMovement ) {
-				projectile->s.modelindex2 = 0;
-			}
-
-			G_ProjectileTimePrestep( projectile, timeOffset );
-		}
-#endif
 	}
 }
