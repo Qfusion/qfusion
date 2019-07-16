@@ -670,23 +670,6 @@ static bool objectGameClient_isBot( gclient_t *self ) {
 	return ( ( ent->r.svflags & SVF_FAKECLIENT ) && AI_GetType( ent->ai ) == AI_ISBOT );
 }
 
-static ai_handle_t *objectGameClient_getBot( gclient_t *self ) {
-	int playerNum;
-	const edict_t *ent;
-
-	playerNum = objectGameClient_PlayerNum( self );
-	if( playerNum < 0 && playerNum >= gs.maxclients ) {
-		return NULL;
-	}
-
-	ent = PLAYERENT( playerNum );
-	if( !( ent->r.svflags & SVF_FAKECLIENT ) || AI_GetType( ent->ai ) != AI_ISBOT ) {
-		return NULL;
-	}
-
-	return ent->ai;
-}
-
 static int objectGameClient_ClientState( gclient_t *self ) {
 	if( self->asFactored ) {
 		return CS_FREE;
@@ -1081,8 +1064,6 @@ static const gs_asMethod_t gameclient_Methods[] =
 {
 	{ ASLIB_FUNCTION_DECL( int, get_playerNum, ( ) const ), asFUNCTION( objectGameClient_PlayerNum ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( bool, isReady, ( ) const ), asFUNCTION( objectGameClient_isReady ), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL( bool, isBot, ( ) const ), asFUNCTION( objectGameClient_isBot ), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL( Bot @, getBot, ( ) const ), asFUNCTION( objectGameClient_getBot ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( int, state, ( ) const ), asFUNCTION( objectGameClient_ClientState ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, respawn, ( bool ghost ) ), asFUNCTION( objectGameClient_Respawn ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, clearPlayerStateEvents, ( ) ), asFUNCTION( objectGameClient_ClearPlayerStateEvents ), asCALL_CDECL_OBJLAST },
@@ -1496,6 +1477,10 @@ static void objectGameEntity_explosionEffect( int radius, edict_t *self ) {
 	G_SpawnEvent( eventType, eventRadius, center );
 }
 
+static entity_state_t *objectGameEntity_getEntityState( edict_t *self ) {
+	return &self->s;
+}
+
 static const gs_asFuncdef_t gedict_Funcdefs[] =
 {
 	{ ASLIB_FUNCTION_DECL( void, entThink, ( Entity @ent ) ) },
@@ -1562,6 +1547,7 @@ static const gs_asMethod_t gedict_Methods[] =
 	{ ASLIB_FUNCTION_DECL( void, sustainDamage, ( Entity @inflicter, Entity @attacker, const Vec3 &in dir, float damage, float knockback, float stun, int mod ) ), asFUNCTION( objectGameEntity_sustainDamage ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, splashDamage, ( Entity @attacker, int radius, float damage, float knockback, float stun, int mod ) ), asFUNCTION( objectGameEntity_splashDamage ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, explosionEffect, ( int radius ) ), asFUNCTION( objectGameEntity_explosionEffect ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( EntityState &, getState, () const ), asFUNCTION( objectGameEntity_getEntityState ), asCALL_CDECL_OBJLAST },
 
 	ASLIB_METHOD_NULL
 };

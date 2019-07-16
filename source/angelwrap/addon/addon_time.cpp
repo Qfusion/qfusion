@@ -27,12 +27,13 @@ void objectTime_DefaultConstructor( astime_t *self ) {
 	self->time = 0;
 }
 
-void objectTime_ConstructorUInt64( time_t time, astime_t *self ) {
+void objectTime_ConstructorInt64( int64_t time, astime_t *self ) {
 	self->time = time;
 
 	if( time ) {
 		struct tm *tm;
-		tm = localtime( &time );
+		time_t time_ = time;
+		tm = localtime( &time_ );
 		self->localtime = *tm;
 	}
 }
@@ -66,7 +67,7 @@ void RegisterTimeAddon( asIScriptEngine *engine ) {
 
 	// register object behaviours
 	r = engine->RegisterObjectBehaviour( "Time", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION( objectTime_DefaultConstructor ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour( "Time", asBEHAVE_CONSTRUCT, "void f(uint64 t)", asFUNCTION( objectTime_ConstructorUInt64 ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour( "Time", asBEHAVE_CONSTRUCT, "void f(int64 t)", asFUNCTION( objectTime_ConstructorInt64 ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour( "Time", asBEHAVE_CONSTRUCT, "void f(const Time &in)", asFUNCTION( objectTime_CopyConstructor ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 
 	// register object methods
@@ -78,7 +79,7 @@ void RegisterTimeAddon( asIScriptEngine *engine ) {
 	r = engine->RegisterObjectMethod( "Time", "bool opEquals(const Time &in, const Time &in)", asFUNCTION( objectTime_EqualBehaviour ), asCALL_CDECL_OBJFIRST ); assert( r >= 0 );
 
 	// properties
-	r = engine->RegisterObjectProperty( "Time", "const uint64 time", asOFFSET( astime_t, time ) ); assert( r >= 0 );
+	r = engine->RegisterObjectProperty( "Time", "const int64 time", asOFFSET( astime_t, time ) ); assert( r >= 0 );
 	r = engine->RegisterObjectProperty( "Time", "const int sec", asOFFSET( astime_t, localtime.tm_sec ) ); assert( r >= 0 );
 	r = engine->RegisterObjectProperty( "Time", "const int min", asOFFSET( astime_t, localtime.tm_min ) ); assert( r >= 0 );
 	r = engine->RegisterObjectProperty( "Time", "const int hour", asOFFSET( astime_t, localtime.tm_hour ) ); assert( r >= 0 );

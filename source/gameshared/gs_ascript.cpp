@@ -783,7 +783,7 @@ static const gs_asProperty_t asitem_Properties[] =
 static const gs_asClassDescriptor_t asItemClassDescriptor =
 {
 	"Item",                     /* name */
-	asOBJ_REF | asOBJ_NOCOUNT,    /* object type flags */
+	asOBJ_REF | asOBJ_NOCOUNT,  /* object type flags */
 	sizeof( gsitem_t ),         /* size */
 	asitem_Funcdefs,            /* funcdefs */
 	asitem_ObjectBehaviors,     /* object behaviors */
@@ -795,10 +795,184 @@ static const gs_asClassDescriptor_t asItemClassDescriptor =
 
 //=======================================================================
 
+// CLASS: EntityState
+
+void objectEntityState_DefaultConstructor( entity_state_t *state ) {
+	memset( state, 0, sizeof( entity_state_t ) );
+}
+
+void objectEntityState_CopyConstructor( entity_state_t *other, entity_state_t *state ) {
+	*state = *other;
+}
+
+static const gs_asFuncdef_t asEntityState_Funcdefs[] =
+{
+	ASLIB_FUNCDEF_NULL
+};
+
+static const gs_asBehavior_t asEntityState_ObjectBehaviors[] =
+{
+	{ asBEHAVE_CONSTRUCT, ASLIB_FUNCTION_DECL( void, f, ( ) ), asFUNCTION( objectEntityState_DefaultConstructor ), asCALL_CDECL_OBJLAST },
+	{ asBEHAVE_CONSTRUCT, ASLIB_FUNCTION_DECL( void, f, ( const Trace &in ) ), asFUNCTION( objectEntityState_CopyConstructor ), asCALL_CDECL_OBJLAST },
+	
+	ASLIB_BEHAVIOR_NULL
+};
+
+static asvec3_t objectEntityState_GetOrigin( entity_state_t *state ) {
+	asvec3_t origin;
+	VectorCopy( state->origin, origin.v );
+	return origin;
+}
+
+static void objectEntityState_SetOrigin( asvec3_t *vec, entity_state_t *state ) {
+	VectorCopy( vec->v, state->origin );
+}
+
+static asvec3_t objectEntityState_GetOrigin2( entity_state_t *state ) {
+	asvec3_t origin;
+	VectorCopy( state->origin2, origin.v );
+	return origin;
+}
+
+static void objectEntityState_SetOrigin2( asvec3_t *vec, entity_state_t *state ) {
+	VectorCopy( vec->v, state->origin2 );
+}
+
+static asvec3_t objectEntityState_GetOrigin3( entity_state_t *state ) {
+	asvec3_t origin;
+	VectorCopy( state->origin3, origin.v );
+	return origin;
+}
+
+static void objectEntityState_SetOrigin3( asvec3_t *vec, entity_state_t *state ) {
+	VectorCopy( vec->v, state->origin3 );
+}
+
+static asvec3_t objectEntityState_GetAngles( entity_state_t *state ) {
+	asvec3_t angles;
+	VectorCopy( state->angles, angles.v );
+	return angles;
+}
+
+static void objectEntityState_SetAngles( asvec3_t *vec, entity_state_t *state ) {
+	VectorCopy( vec->v, state->angles );
+}
+
+static asvec3_t objectEntityState_GetLinearMovementVelocity( entity_state_t *state ) {
+	asvec3_t angles;
+	VectorCopy( state->linearMovementVelocity, angles.v );
+	return angles;
+}
+
+static void objectEntityState_SetLinearMovementVelocity( asvec3_t *vec, entity_state_t *state ) {
+	VectorCopy( vec->v, state->linearMovementVelocity );
+}
+
+static asvec3_t objectEntityState_GetLinearMovementBegin( entity_state_t *state ) {
+	asvec3_t angles;
+	VectorCopy( state->linearMovementBegin, angles.v );
+	return angles;
+}
+
+static void objectEntityState_SetLinearMovementBegin( asvec3_t *vec, entity_state_t *state ) {
+	VectorCopy( vec->v, state->linearMovementBegin );
+}
+
+static asvec3_t objectEntityState_GetLinearMovementEnd( entity_state_t *state ) {
+	asvec3_t angles;
+	VectorCopy( state->linearMovementEnd, angles.v );
+	return angles;
+}
+
+static void objectEntityState_SetLinearMovementEnd( asvec3_t *vec, entity_state_t *state ) {
+	VectorCopy( vec->v, state->linearMovementEnd );
+}
+
+static const gs_asMethod_t asEntityState_Methods[] =
+{
+	{ ASLIB_FUNCTION_DECL( Vec3, get_origin, ( ) const ), asFUNCTION( objectEntityState_GetOrigin ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( void, set_origin, ( const Vec3 &in ) ), asFUNCTION( objectEntityState_SetOrigin ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( Vec3, get_origin2, ( ) const ), asFUNCTION( objectEntityState_GetOrigin2 ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( void, set_origin2, ( const Vec3 &in ) ), asFUNCTION( objectEntityState_SetOrigin2 ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( Vec3, get_origin3, ( ) const ), asFUNCTION( objectEntityState_GetOrigin3 ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( void, set_origin3, ( const Vec3 &in ) ), asFUNCTION( objectEntityState_SetOrigin3 ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( Vec3, get_angles, ( ) const ), asFUNCTION( objectEntityState_GetAngles ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( void, set_angles, ( const Vec3 &in ) ), asFUNCTION( objectEntityState_SetAngles ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( Vec3, get_linearMovementVelocity, ( ) const ), asFUNCTION( objectEntityState_GetLinearMovementVelocity ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( void, set_linearMovementVelocity, ( const Vec3 &in ) ), asFUNCTION( objectEntityState_SetLinearMovementVelocity ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( Vec3, get_linearMovementBegin, ( ) const ), asFUNCTION( objectEntityState_GetLinearMovementBegin ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( void, set_linearMovementEnd, ( const Vec3 &in ) ), asFUNCTION( objectEntityState_SetLinearMovementEnd ), asCALL_CDECL_OBJLAST },
+
+	ASLIB_METHOD_NULL
+};
+
+static const gs_asProperty_t asEntityState_Properties[] =
+{
+	{ ASLIB_PROPERTY_DECL( int, number ), ASLIB_FOFFSET( entity_state_t, number ) },
+	{ ASLIB_PROPERTY_DECL( uint, svFlags ), ASLIB_FOFFSET( entity_state_t, svflags ) },
+	{ ASLIB_PROPERTY_DECL( int, type ), ASLIB_FOFFSET( entity_state_t, type ) },
+	{ ASLIB_PROPERTY_DECL( int, solid ), ASLIB_FOFFSET( entity_state_t, solid ) },
+	{ ASLIB_PROPERTY_DECL( int, modelindex ), ASLIB_FOFFSET( entity_state_t, modelindex ) },
+	{ ASLIB_PROPERTY_DECL( int, modelindex2 ), ASLIB_FOFFSET( entity_state_t, modelindex2 ) },
+	{ ASLIB_PROPERTY_DECL( int, bodyOwner ), ASLIB_FOFFSET( entity_state_t, bodyOwner ) },
+	{ ASLIB_PROPERTY_DECL( int, channel ), ASLIB_FOFFSET( entity_state_t, channel ) },
+	{ ASLIB_PROPERTY_DECL( int, frame ), ASLIB_FOFFSET( entity_state_t, frame ) },
+	{ ASLIB_PROPERTY_DECL( int, ownerNum ), ASLIB_FOFFSET( entity_state_t, ownerNum ) },
+	{ ASLIB_PROPERTY_DECL( uint, effects ), ASLIB_FOFFSET( entity_state_t, effects ) },
+	{ ASLIB_PROPERTY_DECL( int, counterNum ), ASLIB_FOFFSET( entity_state_t, counterNum ) },
+	{ ASLIB_PROPERTY_DECL( int, skinNum ), ASLIB_FOFFSET( entity_state_t, skinnum ) },
+	{ ASLIB_PROPERTY_DECL( int, itemNum ), ASLIB_FOFFSET( entity_state_t, itemNum ) },
+	{ ASLIB_PROPERTY_DECL( int, fireMode ), ASLIB_FOFFSET( entity_state_t, firemode ) },
+	{ ASLIB_PROPERTY_DECL( int, damage ), ASLIB_FOFFSET( entity_state_t, damage ) },
+	{ ASLIB_PROPERTY_DECL( int, targetNum ), ASLIB_FOFFSET( entity_state_t, targetNum ) },
+	{ ASLIB_PROPERTY_DECL( int, colorRGBA ), ASLIB_FOFFSET( entity_state_t, colorRGBA ) },
+	{ ASLIB_PROPERTY_DECL( int, range ), ASLIB_FOFFSET( entity_state_t, range ) },
+	{ ASLIB_PROPERTY_DECL( float, attenuation ), ASLIB_FOFFSET( entity_state_t, attenuation ) },
+	{ ASLIB_PROPERTY_DECL( int, weapon ), ASLIB_FOFFSET( entity_state_t, weapon ) },
+	{ ASLIB_PROPERTY_DECL( bool, teleported ), ASLIB_FOFFSET( entity_state_t, teleported ) },
+	{ ASLIB_PROPERTY_DECL( int, sound ), ASLIB_FOFFSET( entity_state_t, sound ) },
+	{ ASLIB_PROPERTY_DECL( int, light ), ASLIB_FOFFSET( entity_state_t, light ) },
+	{ ASLIB_PROPERTY_DECL( int, team ), ASLIB_FOFFSET( entity_state_t, team ) },
+	{ ASLIB_PROPERTY_DECL( int, event1 ), ASLIB_FOFFSET( entity_state_t, events[0] ) },
+	{ ASLIB_PROPERTY_DECL( int, event2 ), ASLIB_FOFFSET( entity_state_t, events[1] ) },
+	{ ASLIB_PROPERTY_DECL( int, eventParm1 ), ASLIB_FOFFSET( entity_state_t, eventParms[0] ) },
+	{ ASLIB_PROPERTY_DECL( int, eventParm2 ), ASLIB_FOFFSET( entity_state_t, eventParms[1] ) },
+	{ ASLIB_PROPERTY_DECL( bool, linearMovement ), ASLIB_FOFFSET( entity_state_t, linearMovement ) },
+	{ ASLIB_PROPERTY_DECL( uint, linearMovementDuration ), ASLIB_FOFFSET( entity_state_t, linearMovementDuration ) },
+	{ ASLIB_PROPERTY_DECL( int64, linearMovementTimeStamp ), ASLIB_FOFFSET( entity_state_t, linearMovementTimeStamp ) },
+
+	ASLIB_PROPERTY_NULL
+};
+
+static const gs_asClassDescriptor_t asEntityStateClassDescriptor =
+{
+	"EntityState",              /* name */
+	asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CK,   /* object type flags */
+	sizeof( entity_state_t ),   /* size */
+	asEntityState_Funcdefs,     /* funcdefs */
+	asEntityState_ObjectBehaviors,/* object behaviors */
+	asEntityState_Methods,      /* methods */
+	asEntityState_Properties,   /* properties */
+	
+	NULL, NULL                  /* string factory hack */
+};
+
+/*
+typedef struct entity_state_s {
+	vec3_t linearMovementVelocity;
+	vec3_t linearMovementEnd;           // the end movement point for objects moving along linear path
+	vec3_t linearMovementBegin;			// the starting movement point for objects moving along linear path
+ 
+} entity_state_t;
+*/
+
+//=======================================================================
+
 static const gs_asClassDescriptor_t * const asGameClassesDescriptors[] =
 {
 	&asTraceClassDescriptor,
 	&asItemClassDescriptor,
+	&asEntityStateClassDescriptor,
 
 	NULL
 };
