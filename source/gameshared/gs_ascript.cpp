@@ -901,6 +901,8 @@ static const gs_asMethod_t asEntityState_Methods[] =
 	{ ASLIB_FUNCTION_DECL( Vec3, get_linearMovementVelocity, ( ) const ), asFUNCTION( objectEntityState_GetLinearMovementVelocity ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, set_linearMovementVelocity, ( const Vec3 &in ) ), asFUNCTION( objectEntityState_SetLinearMovementVelocity ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( Vec3, get_linearMovementBegin, ( ) const ), asFUNCTION( objectEntityState_GetLinearMovementBegin ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( void, set_linearMovementBegin, ( const Vec3 &in ) ), asFUNCTION( objectEntityState_SetLinearMovementBegin ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( Vec3, get_linearMovementEnd, ( ) const ), asFUNCTION( objectEntityState_GetLinearMovementEnd ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, set_linearMovementEnd, ( const Vec3 &in ) ), asFUNCTION( objectEntityState_SetLinearMovementEnd ), asCALL_CDECL_OBJLAST },
 
 	ASLIB_METHOD_NULL
@@ -956,15 +958,6 @@ static const gs_asClassDescriptor_t asEntityStateClassDescriptor =
 	
 	NULL, NULL                  /* string factory hack */
 };
-
-/*
-typedef struct entity_state_s {
-	vec3_t linearMovementVelocity;
-	vec3_t linearMovementEnd;           // the end movement point for objects moving along linear path
-	vec3_t linearMovementBegin;			// the starting movement point for objects moving along linear path
- 
-} entity_state_t;
-*/
 
 //=======================================================================
 
