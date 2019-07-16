@@ -2180,6 +2180,9 @@ static void Mod_Q1FixUpMiptexShader( q1mmiptex_t *miptex ) {
 			}
 
 			for( k = 0, step = miptex; k < max( pass->anim_numframes, 1 ); k++, step = step->anim_next ) {
+				if( !pass->images[k] ) {
+					continue;
+				}
 				if( pass->images[k]->missing || pass->images[k] == rsh.noTexture ) {
 					data = step->texdata;
 					pass->images[k] = R_LoadImage( step->texture, &data, step->width, step->height,
