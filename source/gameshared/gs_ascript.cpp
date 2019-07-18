@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "q_comref.h"
 #include "q_collision.h"
 #include "gs_ascript.h"
+#include <map>
 
 angelwrap_api_t *module_angelExport = NULL;
 void gs_asemptyfunc( void ) {}
@@ -796,27 +797,51 @@ static const gs_asClassDescriptor_t asItemClassDescriptor =
 //=======================================================================
 
 // CLASS: EntityState
-
-void objectEntityState_DefaultConstructor( entity_state_t *state ) {
-	memset( state, 0, sizeof( entity_state_t ) );
-}
-
-void objectEntityState_CopyConstructor( entity_state_t *other, entity_state_t *state ) {
-	*state = *other;
-}
+static std::map<entity_state_t *, int> esRefCounters;
 
 static const gs_asFuncdef_t asEntityState_Funcdefs[] =
 {
 	ASLIB_FUNCDEF_NULL
 };
 
+static entity_state_t *objectEntityState_Factory( void ) {
+	entity_state_t *state = (entity_state_t *)gs.api.Malloc( sizeof( entity_state_t ) );
+	memset( state, 0, sizeof( *state ) );
+	esRefCounters[state] = 1;
+	return state;
+}
+
+static void objectEntityState_AddRef( entity_state_t *state ) {
+	auto it = esRefCounters.find( state );
+	if( it == esRefCounters.end() ) {
+		return;
+	}
+	it->second++;
+}
+
+static void objectEntityState_Release( entity_state_t *state ) {
+	auto it = esRefCounters.find( state );
+	if( it == esRefCounters.end() ) {
+		return;
+	}
+	if( --(it->second) == 0 ) {
+		gs.api.Free( state );
+		esRefCounters.erase( it );
+	}
+}
+
 static const gs_asBehavior_t asEntityState_ObjectBehaviors[] =
 {
-	{ asBEHAVE_CONSTRUCT, ASLIB_FUNCTION_DECL( void, f, ( ) ), asFUNCTION( objectEntityState_DefaultConstructor ), asCALL_CDECL_OBJLAST },
-	{ asBEHAVE_CONSTRUCT, ASLIB_FUNCTION_DECL( void, f, ( const Trace &in ) ), asFUNCTION( objectEntityState_CopyConstructor ), asCALL_CDECL_OBJLAST },
-	
+	{ asBEHAVE_FACTORY, ASLIB_FUNCTION_DECL(EntityState @, f, ()), asFUNCTION( objectEntityState_Factory ), asCALL_CDECL },
+	{ asBEHAVE_ADDREF, ASLIB_FUNCTION_DECL(void, f, ()), asFUNCTION( objectEntityState_AddRef ), asCALL_CDECL_OBJLAST },
+	{ asBEHAVE_RELEASE, ASLIB_FUNCTION_DECL(void, f, ()), asFUNCTION( objectEntityState_Release ), asCALL_CDECL_OBJLAST },
+
 	ASLIB_BEHAVIOR_NULL
 };
+
+static int objectEntityState_GetNumber( entity_state_t *state ) {
+	return state->number;
+}
 
 static asvec3_t objectEntityState_GetOrigin( entity_state_t *state ) {
 	asvec3_t origin;
@@ -888,8 +913,24 @@ static void objectEntityState_SetLinearMovementEnd( asvec3_t *vec, entity_state_
 	VectorCopy( vec->v, state->linearMovementEnd );
 }
 
+static void objectEntityState_Assign( entity_state_t *other, entity_state_t *state ) {
+	int number = other->number;
+	
+	auto it = esRefCounters.find( state );
+	if( it == esRefCounters.end() ) {
+		// not a script-allocated state, keep the number
+		number = state->number;
+	}
+	
+	*state = *other;
+	state->number = number;
+}
+
 static const gs_asMethod_t asEntityState_Methods[] =
 {
+	{ ASLIB_FUNCTION_DECL( Vec3, &opAssign, ( const EntityState &in ) ), asFUNCTION( objectEntityState_Assign ), asCALL_CDECL_OBJLAST },
+
+	{ ASLIB_FUNCTION_DECL( int, get_number, ( ) const ), asFUNCTION( objectEntityState_GetNumber ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( Vec3, get_origin, ( ) const ), asFUNCTION( objectEntityState_GetOrigin ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, set_origin, ( const Vec3 &in ) ), asFUNCTION( objectEntityState_SetOrigin ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( Vec3, get_origin2, ( ) const ), asFUNCTION( objectEntityState_GetOrigin2 ), asCALL_CDECL_OBJLAST },
@@ -910,7 +951,6 @@ static const gs_asMethod_t asEntityState_Methods[] =
 
 static const gs_asProperty_t asEntityState_Properties[] =
 {
-	{ ASLIB_PROPERTY_DECL( int, number ), ASLIB_FOFFSET( entity_state_t, number ) },
 	{ ASLIB_PROPERTY_DECL( uint, svFlags ), ASLIB_FOFFSET( entity_state_t, svflags ) },
 	{ ASLIB_PROPERTY_DECL( int, type ), ASLIB_FOFFSET( entity_state_t, type ) },
 	{ ASLIB_PROPERTY_DECL( int, solid ), ASLIB_FOFFSET( entity_state_t, solid ) },
@@ -949,7 +989,7 @@ static const gs_asProperty_t asEntityState_Properties[] =
 static const gs_asClassDescriptor_t asEntityStateClassDescriptor =
 {
 	"EntityState",              /* name */
-	asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CK,   /* object type flags */
+	asOBJ_REF,                  /* object type flags */
 	sizeof( entity_state_t ),   /* size */
 	asEntityState_Funcdefs,     /* funcdefs */
 	asEntityState_ObjectBehaviors,/* object behaviors */

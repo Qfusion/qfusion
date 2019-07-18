@@ -1547,7 +1547,7 @@ static const gs_asMethod_t gedict_Methods[] =
 	{ ASLIB_FUNCTION_DECL( void, sustainDamage, ( Entity @inflicter, Entity @attacker, const Vec3 &in dir, float damage, float knockback, float stun, int mod ) ), asFUNCTION( objectGameEntity_sustainDamage ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, splashDamage, ( Entity @attacker, int radius, float damage, float knockback, float stun, int mod ) ), asFUNCTION( objectGameEntity_splashDamage ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, explosionEffect, ( int radius ) ), asFUNCTION( objectGameEntity_explosionEffect ), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL( EntityState &, getState, () const ), asFUNCTION( objectGameEntity_getEntityState ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( EntityState @, getState, () const ), asFUNCTION( objectGameEntity_getEntityState ), asCALL_CDECL_OBJLAST },
 
 	ASLIB_METHOD_NULL
 };
