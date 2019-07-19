@@ -27,7 +27,7 @@ static void asFunc_RemoveCommand( const asstring_t *cmd );
 
 // Handles addition and removal of Angelscript console commands.
 // Passed script function handles are properly reference counted
-// and call via a proxy function.
+// and called via proxy function.
 
 /*
 * asFunc_CmdProxyFunc
@@ -37,6 +37,7 @@ static void asFunc_RemoveCommand( const asstring_t *cmd );
 * executed in AngelScript context.
 */
 static void asFunc_CmdProxyFunc( void ) {
+	int error = 0;
 	std::string cmdName = trap_Cmd_Argv( 0 );
 
 	// scan all modules to find the matching command
@@ -49,15 +50,15 @@ static void asFunc_CmdProxyFunc( void ) {
 			// call the script function
 			auto f = fit->second;
 			auto ctx = cgs.asExport->asAcquireContext( CGAME_AS_ENGINE() );
-			auto error = ctx->Prepare( f );
+
+			error = ctx->Prepare( f );
 			if( error < 0 ) {
-				return;
+				break;
 			}
 			error = ctx->Execute();
+			break;
 		}
 	}
-
-	return;
 }
 
 /*
@@ -86,8 +87,8 @@ static void asFunc_AddCommand( const asstring_t *cmd, asIScriptFunction *f ) {
 /*
 * asFunc_RemoveCommand
 *
-* Removes the command from command map and also handles unreferencing
-* of the AS functio handle.
+* Removes the command from the command map and also unreferences
+* the AS function handle.
 */
 static void asFunc_RemoveCommand( const asstring_t *cmd ) {
 	asIScriptContext *ctx = cgs.asExport->asGetActiveContext();
@@ -144,8 +145,11 @@ const gs_asglobfuncs_t asCGameCmdGlobalFuncs[] =
 */
 void CG_asReleaseModuleCommands( const char *moduleName ) {
 	auto &cmds = moduleConsoleCmds[moduleName];
+
 	for( scriptCommandMap_t::const_iterator fit = cmds.begin(); fit != cmds.end(); ++fit ) {
+		trap_Cmd_RemoveCommand( fit->first.c_str() );
 		fit->second->Release();
 	}
+
 	cmds.clear();
 }
