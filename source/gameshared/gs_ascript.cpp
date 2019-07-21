@@ -194,7 +194,57 @@ static const gs_asEnumVal_t asSolidEnumVals[] =
 	ASLIB_ENUM_VAL_NULL
 };
 
-static const gs_asEnumVal_t asPMoveFeaturesVals[] =
+static const gs_asEnumVal_t asPMoveStatEnumVals[] =
+{
+	ASLIB_ENUM_VAL( PM_STAT_FEATURES ),
+	ASLIB_ENUM_VAL( PM_STAT_NOUSERCONTROL ),
+	ASLIB_ENUM_VAL( PM_STAT_CROUCHTIME ),
+	ASLIB_ENUM_VAL( PM_STAT_ZOOMTIME ),
+	ASLIB_ENUM_VAL( PM_STAT_DASHTIME ),
+	ASLIB_ENUM_VAL( PM_STAT_WJTIME ),
+	ASLIB_ENUM_VAL( PM_STAT_NOAUTOATTACK ),
+	ASLIB_ENUM_VAL( PM_STAT_STUN ),
+	ASLIB_ENUM_VAL( PM_STAT_MAXSPEED ),
+	ASLIB_ENUM_VAL( PM_STAT_JUMPSPEED ),
+	ASLIB_ENUM_VAL( PM_STAT_DASHSPEED ),
+	ASLIB_ENUM_VAL( PM_STAT_FWDTIME ),
+	ASLIB_ENUM_VAL( PM_STAT_CROUCHSLIDETIME ),
+	ASLIB_ENUM_VAL( PM_STAT_SIZE ),
+
+	ASLIB_ENUM_VAL_NULL
+};
+
+static const gs_asEnumVal_t asPMoveTypeEnumVals[] =
+{
+	ASLIB_ENUM_VAL( PM_NORMAL ),
+	ASLIB_ENUM_VAL( PM_SPECTATOR ),
+	ASLIB_ENUM_VAL( PM_GIB ),
+	ASLIB_ENUM_VAL( PM_FREEZE ),
+	ASLIB_ENUM_VAL( PM_CHASECAM ),
+
+	ASLIB_ENUM_VAL_NULL
+};
+
+static const gs_asEnumVal_t asPMoveFlagEnumVals[] =
+{
+	ASLIB_ENUM_VAL( PMF_WALLJUMPCOUNT ),
+	ASLIB_ENUM_VAL( PMF_JUMP_HELD ),
+	ASLIB_ENUM_VAL( PMF_ON_GROUND ),
+	ASLIB_ENUM_VAL( PMF_TIME_WATERJUMP ),
+	ASLIB_ENUM_VAL( PMF_TIME_LAND ),
+	ASLIB_ENUM_VAL( PMF_TIME_TELEPORT ),
+	ASLIB_ENUM_VAL( PMF_NO_PREDICTION ),
+	ASLIB_ENUM_VAL( PMF_DASHING ),
+	ASLIB_ENUM_VAL( PMF_SPECIAL_HELD ),
+	ASLIB_ENUM_VAL( PMF_WALLJUMPING ),
+	ASLIB_ENUM_VAL( PMF_DOUBLEJUMPED ),
+	ASLIB_ENUM_VAL( PMF_JUMPPAD_TIME ),
+	ASLIB_ENUM_VAL( PMF_CROUCH_SLIDING ),
+
+	ASLIB_ENUM_VAL_NULL
+};
+
+static const gs_asEnumVal_t asPMoveFeaturesEnumVals[] =
 {
 	ASLIB_ENUM_VAL( PMFEAT_CROUCH ),
 	ASLIB_ENUM_VAL( PMFEAT_WALK ),
@@ -313,6 +363,9 @@ static const gs_asEnumVal_t asMiscItemTagEnumVals[] =
 	ASLIB_ENUM_VAL( AMMO_PACK_WEAK ),
 	ASLIB_ENUM_VAL( AMMO_PACK_STRONG ),
 	ASLIB_ENUM_VAL( AMMO_PACK ),
+
+	ASLIB_ENUM_VAL( MAX_ITEMS ),
+
 	ASLIB_ENUM_VAL_NULL
 };
 
@@ -504,6 +557,13 @@ static const gs_asEnumVal_t asButtonEnumVals[] =
 	ASLIB_ENUM_VAL_NULL
 };
 
+static const gs_asEnumVal_t asPlayerStateMiscEnumVals[] =
+{
+	ASLIB_ENUM_VAL( PS_MAX_STATS ),
+
+	ASLIB_ENUM_VAL_NULL
+};
+
 //=======================================================================
 
 static const gs_asEnum_t asGameEnums[] =
@@ -515,7 +575,10 @@ static const gs_asEnum_t asGameEnums[] =
 	{ "teams_e", asTeamEnumVals },
 	{ "entitytype_e", asEntityTypeEnumVals },
 	{ "solid_e", asSolidEnumVals },
-	{ "pmovefeats_e", asPMoveFeaturesVals },
+	{ "pmovestats_e", asPMoveStatEnumVals },
+	{ "pmovefeats_e", asPMoveFeaturesEnumVals },
+	{ "pmovetype_e", asPMoveTypeEnumVals },
+	{ "pmoveflag_e", asPMoveFlagEnumVals },
 	{ "itemtype_e", asItemTypeEnumVals },
 
 	{ "weapon_tag_e", asWeaponTagEnumVals },
@@ -535,6 +598,7 @@ static const gs_asEnum_t asGameEnums[] =
 
 	{ "axis_e", asAxisEnumVals },
 	{ "button_e", asButtonEnumVals },
+	{ "playerstatemisc_e", asPlayerStateMiscEnumVals },
 
 	ASLIB_ENUM_VAL_NULL
 };
@@ -913,6 +977,34 @@ static void objectEntityState_SetLinearMovementEnd( asvec3_t *vec, entity_state_
 	VectorCopy( vec->v, state->linearMovementEnd );
 }
 
+static int objectEntityState_GetEvent( unsigned int idx, entity_state_t *state ) {
+	if( idx >= sizeof(state->events)/sizeof(state->events[0]) ) {
+		return -1;
+	}
+	return state->events[idx];
+}
+
+static void objectEntityState_SetEvent( unsigned int idx, int value, entity_state_t *state ) {
+	if( idx >= sizeof(state->events)/sizeof(state->events[0]) ) {
+		return;
+	}
+	state->events[idx] = value;
+}
+
+static int objectEntityState_GetEventParm( unsigned int idx, entity_state_t *state ) {
+	if( idx >= sizeof(state->eventParms)/sizeof(state->eventParms[0]) ) {
+		return -1;
+	}
+	return state->eventParms[idx];
+}
+
+static void objectEntityState_SetEventParm( unsigned int idx, int value, entity_state_t *state ) {
+	if( idx >= sizeof(state->eventParms)/sizeof(state->eventParms[0]) ) {
+		return;
+	}
+	state->eventParms[idx] = value;
+}
+
 static void objectEntityState_Assign( entity_state_t *other, entity_state_t *state ) {
 	int number = other->number;
 	
@@ -945,6 +1037,10 @@ static const gs_asMethod_t asEntityState_Methods[] =
 	{ ASLIB_FUNCTION_DECL( void, set_linearMovementBegin, ( const Vec3 &in ) ), asFUNCTION( objectEntityState_SetLinearMovementBegin ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( Vec3, get_linearMovementEnd, ( ) const ), asFUNCTION( objectEntityState_GetLinearMovementEnd ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, set_linearMovementEnd, ( const Vec3 &in ) ), asFUNCTION( objectEntityState_SetLinearMovementEnd ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( int, get_events, ( uint index ) const ), asFUNCTION( objectEntityState_GetEvent ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( void, set_events, ( uint index, int value ) ), asFUNCTION( objectEntityState_SetEvent ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( int, get_eventParms, ( uint index ) const ), asFUNCTION( objectEntityState_GetEventParm ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( void, set_eventParms, ( uint index, int value ) ), asFUNCTION( objectEntityState_SetEventParm ), asCALL_CDECL_OBJLAST },
 
 	ASLIB_METHOD_NULL
 };
@@ -975,10 +1071,6 @@ static const gs_asProperty_t asEntityState_Properties[] =
 	{ ASLIB_PROPERTY_DECL( int, sound ), ASLIB_FOFFSET( entity_state_t, sound ) },
 	{ ASLIB_PROPERTY_DECL( int, light ), ASLIB_FOFFSET( entity_state_t, light ) },
 	{ ASLIB_PROPERTY_DECL( int, team ), ASLIB_FOFFSET( entity_state_t, team ) },
-	{ ASLIB_PROPERTY_DECL( int, event1 ), ASLIB_FOFFSET( entity_state_t, events[0] ) },
-	{ ASLIB_PROPERTY_DECL( int, event2 ), ASLIB_FOFFSET( entity_state_t, events[1] ) },
-	{ ASLIB_PROPERTY_DECL( int, eventParm1 ), ASLIB_FOFFSET( entity_state_t, eventParms[0] ) },
-	{ ASLIB_PROPERTY_DECL( int, eventParm2 ), ASLIB_FOFFSET( entity_state_t, eventParms[1] ) },
 	{ ASLIB_PROPERTY_DECL( bool, linearMovement ), ASLIB_FOFFSET( entity_state_t, linearMovement ) },
 	{ ASLIB_PROPERTY_DECL( uint, linearMovementDuration ), ASLIB_FOFFSET( entity_state_t, linearMovementDuration ) },
 	{ ASLIB_PROPERTY_DECL( int64, linearMovementTimeStamp ), ASLIB_FOFFSET( entity_state_t, linearMovementTimeStamp ) },
@@ -1001,14 +1093,480 @@ static const gs_asClassDescriptor_t asEntityStateClassDescriptor =
 
 //=======================================================================
 
+// CLASS: UserCmd
+
+static const gs_asFuncdef_t asUserCmd_Funcdefs[] =
+{
+	ASLIB_FUNCDEF_NULL
+};
+
+void objectUserCmd_DefaultConstructor( usercmd_t *cmd ) {
+	memset( cmd, 0, sizeof( usercmd_t ) );
+}
+
+void objectUserCmd_CopyConstructor( usercmd_t *other, usercmd_t *cmd ) {
+	*cmd = *other;
+}
+
+static const gs_asBehavior_t asUserCmd_ObjectBehaviors[] =
+{
+	{ asBEHAVE_CONSTRUCT, ASLIB_FUNCTION_DECL( void, f, ( ) ), asFUNCTION( objectUserCmd_DefaultConstructor ), asCALL_CDECL_OBJLAST },
+	{ asBEHAVE_CONSTRUCT, ASLIB_FUNCTION_DECL( void, f, ( const UserCmd &in ) ), asFUNCTION( objectUserCmd_CopyConstructor ), asCALL_CDECL_OBJLAST },
+
+	ASLIB_BEHAVIOR_NULL
+};
+
+static int16_t objectPMoveState_GetAngles( unsigned int idx, usercmd_t *cmd ) {
+	if( idx > 2 ) {
+		return 0;
+	}
+	return cmd->angles[idx];
+}
+
+static void objectPMoveState_SetAngles( unsigned int idx, int16_t value, usercmd_t *cmd ) {
+	if( idx > 2 ) {
+		return;
+	}
+	cmd->angles[idx] = value;
+}
+
+static const gs_asMethod_t asUserCmd_Methods[] =
+{
+	{ ASLIB_FUNCTION_DECL( int16, get_angles, ( uint index ) const ), asFUNCTION( objectPMoveState_GetAngles ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( void, set_angles, ( uint index, int16 value ) ), asFUNCTION( objectPMoveState_SetAngles ), asCALL_CDECL_OBJLAST },
+
+	ASLIB_METHOD_NULL
+};
+
+static const gs_asProperty_t asUserCmd_Properties[] =
+{
+	{ ASLIB_PROPERTY_DECL( int8, msec ), ASLIB_FOFFSET( usercmd_t, msec ) },
+	{ ASLIB_PROPERTY_DECL( uint32, buttons ), ASLIB_FOFFSET( usercmd_t, buttons ) },
+	{ ASLIB_PROPERTY_DECL( int64, serverTimeStamp ), ASLIB_FOFFSET( usercmd_t, serverTimeStamp ) },
+	{ ASLIB_PROPERTY_DECL( int8, forwardmove ), ASLIB_FOFFSET( usercmd_t, forwardmove ) },
+	{ ASLIB_PROPERTY_DECL( int8, sidemove ), ASLIB_FOFFSET( usercmd_t, sidemove ) },
+	{ ASLIB_PROPERTY_DECL( int8, upmove ), ASLIB_FOFFSET( usercmd_t, upmove ) },
+
+	ASLIB_PROPERTY_NULL
+};
+
+static const gs_asClassDescriptor_t asUserCmdClassDescriptor =
+{
+	"UserCmd",               /* name */
+	asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CK, /* object type flags */
+	sizeof( usercmd_t ),     /* size */
+	asUserCmd_Funcdefs,      /* funcdefs */
+	asUserCmd_ObjectBehaviors,/* object behaviors */
+	asUserCmd_Methods,       /* methods */
+	asUserCmd_Properties,    /* properties */
+
+	NULL, NULL               /* string factory hack */
+};
+
+//=======================================================================
+
+// CLASS: PMoveState
+static std::map<pmove_state_t *, int> pmsRefCounters;
+
+static const gs_asFuncdef_t asPMoveState_Funcdefs[] =
+{
+	ASLIB_FUNCDEF_NULL
+};
+
+static pmove_state_t *objectPMoveState_Factory( void ) {
+	pmove_state_t *state = (pmove_state_t *)gs.api.Malloc( sizeof( pmove_state_t ) );
+	memset( state, 0, sizeof( *state ) );
+	pmsRefCounters[state] = 1;
+	return state;
+}
+
+static void objectPMoveState_AddRef( pmove_state_t *state ) {
+	auto it = pmsRefCounters.find( state );
+	if( it == pmsRefCounters.end() ) {
+		return;
+	}
+	it->second++;
+}
+
+static void objectPMoveState_Release( pmove_state_t *state ) {
+	auto it = pmsRefCounters.find( state );
+	if( it == pmsRefCounters.end() ) {
+		return;
+	}
+	if( --(it->second) == 0 ) {
+		gs.api.Free( state );
+		pmsRefCounters.erase( it );
+	}
+}
+
+static const gs_asBehavior_t asPMoveState_ObjectBehaviors[] =
+{
+	{ asBEHAVE_FACTORY, ASLIB_FUNCTION_DECL(PMoveState @, f, ()), asFUNCTION( objectPMoveState_Factory ), asCALL_CDECL },
+	{ asBEHAVE_ADDREF, ASLIB_FUNCTION_DECL(void, f, ()), asFUNCTION( objectPMoveState_AddRef ), asCALL_CDECL_OBJLAST },
+	{ asBEHAVE_RELEASE, ASLIB_FUNCTION_DECL(void, f, ()), asFUNCTION( objectPMoveState_Release ), asCALL_CDECL_OBJLAST },
+
+	ASLIB_BEHAVIOR_NULL
+};
+
+static void objectPMoveState_Assign( pmove_state_t *other, pmove_state_t *state ) {
+	*state = *other;
+}
+
+static asvec3_t objectPMoveState_GetOrigin( pmove_state_t *state ) {
+	asvec3_t origin;
+	VectorCopy( state->origin, origin.v );
+	return origin;
+}
+
+static void objectPMoveState_SetOrigin( asvec3_t *vec, pmove_state_t *state ) {
+	VectorCopy( vec->v, state->origin );
+}
+
+static int16_t objectPMoveState_GetStat( unsigned int idx, pmove_state_t *state ) {
+	if( idx >= PM_STAT_SIZE ) {
+		return 0;
+	}
+	return state->stats[idx];
+}
+
+static void objectPMoveState_SetStat( unsigned int idx, int16_t value, pmove_state_t *state ) {
+	if( idx >= PM_STAT_SIZE ) {
+		return;
+	}
+	state->stats[idx] = value;
+}
+
+static int16_t objectPMoveState_GetDeltaAngles( unsigned int idx, pmove_state_t *state ) {
+	if( idx > 2 ) {
+		return 0;
+	}
+	return state->delta_angles[idx];
+}
+
+static void objectPMoveState_SetDeltaAngles( unsigned int idx, int16_t value, pmove_state_t *state ) {
+	if( idx > 2 ) {
+		return;
+	}
+	state->delta_angles[idx] = value;
+}
+
+static const gs_asMethod_t asPMoveState_Methods[] =
+{
+	{ ASLIB_FUNCTION_DECL( Vec3, &opAssign, ( const PMoveState &in ) ), asFUNCTION( objectPMoveState_Assign ), asCALL_CDECL_OBJLAST },
+
+	{ ASLIB_FUNCTION_DECL( Vec3, get_origin, ( ) const ), asFUNCTION( objectPMoveState_GetOrigin ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( void, set_origin, ( const Vec3 &in ) ), asFUNCTION( objectPMoveState_SetOrigin ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( int16, get_stats, ( uint index ) const ), asFUNCTION( objectPMoveState_GetStat ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( void, set_stats, ( uint index, int16 value ) ), asFUNCTION( objectPMoveState_SetStat ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( int16, get_deltaAngles, ( uint index ) const ), asFUNCTION( objectPMoveState_GetDeltaAngles ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( void, set_deltaAngles, ( uint index, int16 value ) ), asFUNCTION( objectPMoveState_SetDeltaAngles ), asCALL_CDECL_OBJLAST },
+
+	ASLIB_METHOD_NULL
+};
+
+static const gs_asProperty_t asPMoveState_Properties[] =
+{
+	{ ASLIB_PROPERTY_DECL( int, pm_type ), ASLIB_FOFFSET( pmove_state_t, pm_type ) },
+	{ ASLIB_PROPERTY_DECL( int, pm_flags ), ASLIB_FOFFSET( pmove_state_t, pm_flags ) },
+	{ ASLIB_PROPERTY_DECL( int, pm_time ), ASLIB_FOFFSET( pmove_state_t, pm_time ) },
+	{ ASLIB_PROPERTY_DECL( int, skim_time ), ASLIB_FOFFSET( pmove_state_t, skim_time ) },
+	{ ASLIB_PROPERTY_DECL( int, gravity ), ASLIB_FOFFSET( pmove_state_t, gravity ) },
+
+	ASLIB_PROPERTY_NULL
+};
+
+static const gs_asClassDescriptor_t asPMoveStateClassDescriptor =
+{
+	"PMoveState",               /* name */
+	asOBJ_REF,                  /* object type flags */
+	sizeof( pmove_state_t ),    /* size */
+	asPMoveState_Funcdefs,      /* funcdefs */
+	asPMoveState_ObjectBehaviors,/* object behaviors */
+	asPMoveState_Methods,       /* methods */
+	asPMoveState_Properties,    /* properties */
+
+	NULL, NULL                  /* string factory hack */
+};
+
+//=======================================================================
+
+// CLASS: PlayerState
+
+static const gs_asFuncdef_t asPlayerState_Funcdefs[] =
+{
+	ASLIB_FUNCDEF_NULL
+};
+
+static const gs_asBehavior_t asPlayerState_ObjectBehaviors[] =
+{
+	ASLIB_BEHAVIOR_NULL
+};
+
+static asvec3_t objectPlayerState_GetViewAngles( player_state_t *state ) {
+	asvec3_t angles;
+	VectorCopy( state->viewangles, angles.v );
+	return angles;
+}
+
+static void objectPlayerState_SetViewAngles( asvec3_t *vec, player_state_t *state ) {
+	VectorCopy( vec->v, state->viewangles );
+}
+
+static int objectPlayerState_GetEvent( unsigned int idx, player_state_t *state ) {
+	if( idx >= sizeof(state->event)/sizeof(state->event[0]) ) {
+		return -1;
+	}
+	return state->event[idx];
+}
+
+static void objectPlayerState_SetEvent( unsigned int idx, int value, player_state_t *state ) {
+	if( idx >= sizeof(state->event)/sizeof(state->event[0]) ) {
+		return;
+	}
+	state->event[idx] = value;
+}
+
+static int objectPlayerState_GetEventParm( unsigned int idx, player_state_t *state ) {
+	if( idx >= sizeof(state->eventParm)/sizeof(state->eventParm[0]) ) {
+		return -1;
+	}
+	return state->eventParm[idx];
+}
+
+static void objectPlayerState_SetEventParm( unsigned int idx, int value, player_state_t *state ) {
+	if( idx >= sizeof(state->eventParm)/sizeof(state->eventParm[0]) ) {
+		return;
+	}
+	state->eventParm[idx] = value;
+}
+
+static pmove_state_t *objectPlayerState_GetPMove( player_state_t *state ) {
+	return &state->pmove;
+}
+
+static int objectPlayerState_GetInventory( unsigned int idx, player_state_t *state ) {
+	if( idx >= MAX_ITEMS ) {
+		return 0;
+	}
+	return state->inventory[idx];
+}
+
+static void objectPlayerState_SetInventory( unsigned int idx, int value, player_state_t *state ) {
+	if( idx >= MAX_ITEMS ) {
+		return;
+	}
+	state->inventory[idx] = value;
+}
+
+static int16_t objectPlayerState_GetStat( unsigned int idx, player_state_t *state ) {
+	if( idx >= PS_MAX_STATS ) {
+		return 0;
+	}
+	return state->stats[idx];
+}
+
+static void objectPlayerState_SetStat( unsigned int idx, int16_t value, player_state_t *state ) {
+	if( idx >= PS_MAX_STATS ) {
+		return;
+	}
+	state->stats[idx] = value;
+}
+
+static const gs_asMethod_t asPlayerState_Methods[] =
+{
+	{ ASLIB_FUNCTION_DECL( Vec3, get_viewAngles, ( ) const ), asFUNCTION( objectPlayerState_GetViewAngles ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( void, set_viewAngles, ( const Vec3 &in ) ), asFUNCTION( objectPlayerState_SetViewAngles ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( int, get_events, ( uint index ) const ), asFUNCTION( objectPlayerState_GetEvent ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( void, set_events, ( uint index, int value ) ), asFUNCTION( objectPlayerState_SetEvent ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( int, get_eventParms, ( uint index ) const ), asFUNCTION( objectPlayerState_GetEventParm ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( void, set_eventParms, ( uint index, int value ) ), asFUNCTION( objectPlayerState_SetEventParm ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( PMoveState &, get_pmove, () const ), asFUNCTION( objectPlayerState_GetPMove ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( int, get_inventory, ( uint index ) const ), asFUNCTION( objectPlayerState_GetInventory ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( void, set_inventory, ( uint index, int value ) ), asFUNCTION( objectPlayerState_SetInventory ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( int16, get_stats, ( uint index ) const ), asFUNCTION( objectPlayerState_GetStat ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( void, set_stats, ( uint index, int16 value ) ), asFUNCTION( objectPlayerState_SetStat ), asCALL_CDECL_OBJLAST },
+
+	ASLIB_METHOD_NULL
+};
+
+static const gs_asProperty_t asPlayerState_Properties[] =
+{
+	{ ASLIB_PROPERTY_DECL( uint, POVnum ), ASLIB_FOFFSET( player_state_t, POVnum ) },
+	{ ASLIB_PROPERTY_DECL( uint, playerNum ), ASLIB_FOFFSET( player_state_t, playerNum ) },
+	{ ASLIB_PROPERTY_DECL( float, viewHeight ), ASLIB_FOFFSET( player_state_t, viewheight ) },
+	{ ASLIB_PROPERTY_DECL( float, fov ), ASLIB_FOFFSET( player_state_t, fov ) },
+	{ ASLIB_PROPERTY_DECL( uint, plrkeys ), ASLIB_FOFFSET( player_state_t, plrkeys ) },
+	{ ASLIB_PROPERTY_DECL( uint8, weaponState ), ASLIB_FOFFSET( player_state_t, weaponState ) },
+
+	ASLIB_PROPERTY_NULL
+};
+
+static const gs_asClassDescriptor_t asPlayerStateClassDescriptor =
+{
+	"PlayerState",              /* name */
+	asOBJ_REF | asOBJ_NOCOUNT,  /* object type flags */
+	sizeof( player_state_t ),   /* size */
+	asPlayerState_Funcdefs,     /* funcdefs */
+	asPlayerState_ObjectBehaviors,/* object behaviors */
+	asPlayerState_Methods,      /* methods */
+	asPlayerState_Properties,   /* properties */
+
+	NULL, NULL                  /* string factory hack */
+};
+
+//=======================================================================
+
+// CLASS: PMove
+
+static const gs_asFuncdef_t asPMove_Funcdefs[] =
+{
+	ASLIB_FUNCDEF_NULL
+};
+
+static const gs_asBehavior_t asPMove_ObjectBehaviors[] =
+{
+	ASLIB_BEHAVIOR_NULL
+};
+
+static player_state_t *objectPMove_GetPlayerState( pmove_t *pmove ) {
+	return pmove->playerState;
+}
+
+static usercmd_t *objectPMove_GetCmd( pmove_t *pmove ) {
+	return &pmove->cmd;
+}
+
+static void objectPMove_GetSize( asvec3_t *mins, asvec3_t *maxs, pmove_t *pmove ) {
+	VectorCopy( pmove->maxs, maxs->v );
+	VectorCopy( pmove->mins, mins->v );
+}
+
+static void objectPMove_SetSize( asvec3_t *mins, asvec3_t *maxs, pmove_t *pmove ) {
+	VectorCopy( mins->v, pmove->mins );
+	VectorCopy( maxs->v, pmove->maxs );
+}
+
+static asvec3_t objectPMove_GetGroundPlaneNormal( pmove_t *pmove ) {
+	asvec3_t asvec;
+	VectorCopy( pmove->groundplane.normal, asvec.v );
+	return asvec;
+}
+
+static void objectPMove_SetGroundPlaneNormal( asvec3_t *norm, pmove_t *pmove ) {
+	VectorCopy( norm->v, pmove->groundplane.normal );
+}
+
+static int objectPMove_GetTouchEnt( unsigned int idx, pmove_t *pmove ) {
+	if( idx >= MAXTOUCH ) {
+		return -1;
+	}
+	return pmove->touchents[idx];
+}
+
+static void objectPMove_SetTouchEnt( unsigned int idx, int value, pmove_t *pmove ) {
+	if( idx >= MAXTOUCH ) {
+		return;
+	}
+	pmove->touchents[idx] = value;
+}
+
+static void objectPMove_TouchTriggers( asvec3_t *prevOrigin, pmove_t *pmove ) {
+	gs.api.PMoveTouchTriggers( pmove, prevOrigin->v );
+}
+
+static const gs_asMethod_t asPMove_Methods[] =
+{
+	{ ASLIB_FUNCTION_DECL( PlayerState &, get_playerState, () const ), asFUNCTION( objectPMove_GetPlayerState ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( UserCmd &, get_cmd, () const ), asFUNCTION( objectPMove_GetCmd ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( void, getSize, ( Vec3 & out, Vec3 & out ) ), asFUNCTION( objectPMove_GetSize ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( void, setSize, ( const Vec3 &in, const Vec3 &in ) ), asFUNCTION( objectPMove_SetSize ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( void, get_groundPlaneNormal, () const ), asFUNCTION( objectPMove_GetGroundPlaneNormal ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( void, set_groundPlaneNormal, ( const Vec3 &in ) ), asFUNCTION( objectPMove_SetGroundPlaneNormal ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( int, get_touchEnts, ( uint index ) const ), asFUNCTION( objectPMove_GetTouchEnt ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( void, set_touchEnts, ( uint index, int value ) ), asFUNCTION( objectPMove_SetTouchEnt ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( void, touchTriggers, ( const Vec3 &in prevOrigin ) ), asFUNCTION( objectPMove_TouchTriggers ), asCALL_CDECL_OBJLAST },
+
+	ASLIB_METHOD_NULL
+};
+
+static const gs_asProperty_t asPMove_Properties[] =
+{
+	{ ASLIB_PROPERTY_DECL( bool, skipCollision ), ASLIB_FOFFSET( pmove_t, skipCollision ) },
+	{ ASLIB_PROPERTY_DECL( int, numTouchEnts ), ASLIB_FOFFSET( pmove_t, numtouch ) },
+	{ ASLIB_PROPERTY_DECL( float, step ), ASLIB_FOFFSET( pmove_t, step ) },
+	{ ASLIB_PROPERTY_DECL( int, groundEntity ), ASLIB_FOFFSET( pmove_t, groundentity ) },
+	{ ASLIB_PROPERTY_DECL( int, groundSurfFlags ), ASLIB_FOFFSET( pmove_t, groundsurfFlags ) },
+	{ ASLIB_PROPERTY_DECL( int, groundContents ), ASLIB_FOFFSET( pmove_t, groundcontents ) },
+	{ ASLIB_PROPERTY_DECL( int, waterType ), ASLIB_FOFFSET( pmove_t, watertype ) },
+	{ ASLIB_PROPERTY_DECL( int, waterLevel ), ASLIB_FOFFSET( pmove_t, waterlevel ) },
+	{ ASLIB_PROPERTY_DECL( int, contentMask ), ASLIB_FOFFSET( pmove_t, contentmask ) },
+	{ ASLIB_PROPERTY_DECL( bool, ladder ), ASLIB_FOFFSET( pmove_t, ladder ) },
+	{ ASLIB_PROPERTY_DECL( float, groundPlaneDist ), ASLIB_FOFFSET( pmove_t, groundplane.dist ) },
+	{ ASLIB_PROPERTY_DECL( int16, groundPlaneType ), ASLIB_FOFFSET( pmove_t, groundplane.type ) },
+	{ ASLIB_PROPERTY_DECL( int16, groundPlaneSignBits ), ASLIB_FOFFSET( pmove_t, groundplane.signbits ) },
+
+	ASLIB_PROPERTY_NULL
+};
+
+static const gs_asClassDescriptor_t asPMoveClassDescriptor =
+{
+	"PMove",                    /* name */
+	asOBJ_REF | asOBJ_NOCOUNT,  /* object type flags */
+	sizeof( pmove_t ),          /* size */
+	asPMove_Funcdefs,           /* funcdefs */
+	asPMove_ObjectBehaviors,    /* object behaviors */
+	asPMove_Methods,            /* methods */
+	asPMove_Properties,         /* properties */
+
+	NULL, NULL                  /* string factory hack */
+};
+
+//=======================================================================
+
 static const gs_asClassDescriptor_t * const asGameClassesDescriptors[] =
 {
 	&asTraceClassDescriptor,
 	&asItemClassDescriptor,
 	&asEntityStateClassDescriptor,
+	&asUserCmdClassDescriptor,
+	&asPMoveStateClassDescriptor,
+	&asPlayerStateClassDescriptor,
+	&asPMoveClassDescriptor,
 
 	NULL
 };
+
+//=======================================================================
+
+static int GS_asPointContents( asvec3_t *vec ) {
+	return gs.api.PointContents( vec->v, 0 );
+}
+
+static int GS_asPointContents4D( asvec3_t *vec, int timeDelta ) {
+	return gs.api.PointContents( vec->v, timeDelta );
+}
+
+static void GS_asPredictedEvent( int entityNumber, int event, int param ) {
+	gs.api.PredictedEvent( entityNumber, event, param );
+}
+
+static void GS_asRoundUpToHullSize( asvec3_t *inmins, asvec3_t *inmaxs, asvec3_t *outmins, asvec3_t *outmaxs ) {
+	VectorCopy( inmins->v, outmins->v );
+	VectorCopy( inmaxs->v, outmaxs->v );
+	gs.api.RoundUpToHullSize( outmins->v, outmaxs->v );
+}
+
+const gs_asglobfuncs_t asGameGlobalFunctions[] =
+{
+	{ "int PointContents( const Vec3 &in )", asFUNCTION( GS_asPointContents ), NULL },
+	{ "int PointContents4D( const Vec3 &in, int timeDelta )", asFUNCTION( GS_asPointContents4D ), NULL },
+	{ "void PredictedEvent( int entityNumber, int event, int param )", asFUNCTION( GS_asPredictedEvent ), NULL },
+	{ "void RoundUpToHullSize( const Vec3 &in inmins, const Vec3 &in inmaxs, Vec3 &out mins, Vec3 &out maxs )", asFUNCTION( GS_asRoundUpToHullSize ), NULL },
+
+	{ NULL }
+};
+
+//=======================================================================
 
 /*
 * GS_asRegisterObjectClassNames
@@ -1203,6 +1761,9 @@ void GS_asInitializeEngine( asIScriptEngine *asEngine ) {
 
 	// first register all class names so methods using custom classes work
 	GS_asRegisterObjectClassNames( asEngine, asGameClassesDescriptors, NULL );
+
+	// register global functions
+	GS_asRegisterGlobalFunctions( asEngine, asGameGlobalFunctions, "GS" );
 
 	// register classes
 	GS_asRegisterObjectClasses( asEngine, asGameClassesDescriptors, NULL );
