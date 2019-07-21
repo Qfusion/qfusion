@@ -1556,12 +1556,17 @@ static void GS_asRoundUpToHullSize( asvec3_t *inmins, asvec3_t *inmaxs, asvec3_t
 	gs.api.RoundUpToHullSize( outmins->v, outmaxs->v );
 }
 
+static void GS_asClipVelocity( asvec3_t *in, asvec3_t *normal, asvec3_t *out, float overbounce ) {
+	GS_ClipVelocity( in->v, normal->v, out->v, overbounce );
+}
+
 const gs_asglobfuncs_t asGameGlobalFunctions[] =
 {
 	{ "int PointContents( const Vec3 &in )", asFUNCTION( GS_asPointContents ), NULL },
 	{ "int PointContents4D( const Vec3 &in, int timeDelta )", asFUNCTION( GS_asPointContents4D ), NULL },
 	{ "void PredictedEvent( int entityNumber, int event, int param )", asFUNCTION( GS_asPredictedEvent ), NULL },
 	{ "void RoundUpToHullSize( const Vec3 &in inmins, const Vec3 &in inmaxs, Vec3 &out mins, Vec3 &out maxs )", asFUNCTION( GS_asRoundUpToHullSize ), NULL },
+	{ "void ClipVelocity( const Vec3 &in, const Vec3 &in, Vec3 &out, float overbounce )", asFUNCTION( GS_asClipVelocity ), NULL },
 
 	{ NULL }
 };

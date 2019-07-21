@@ -39,7 +39,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 /*
 * GS_ClipVelocity
 */
-void GS_ClipVelocity( vec3_t in, vec3_t normal, vec3_t out, float overbounce ) {
+void GS_ClipVelocity( const vec3_t in, const vec3_t normal, vec3_t out, float overbounce ) {
 	float backoff;
 	float change;
 	int i;
