@@ -140,16 +140,6 @@ typedef struct {
 //
 //==========================================================
 
-
-// note that Q_rint was causing problems here
-// (spawn looking straight up\down at delta_angles wrapping)
-
-#define ANGLE2SHORT( x )    ( (int)( ( x ) * 65536 / 360 ) & 65535 )
-#define SHORT2ANGLE( x )    ( ( x ) * ( 360.0 / 65536 ) )
-
-#define ANGLE2BYTE( x )     ( (int)( ( x ) * 256 / 360 ) & 255 )
-#define BYTE2ANGLE( x )     ( ( x ) * ( 360.0 / 256 ) )
-
 #define MAX_GAMECOMMANDS    256     // command names for command completion
 #define MAX_LOCATIONS       256
 #define MAX_WEAPONDEFS      MAX_ITEMS

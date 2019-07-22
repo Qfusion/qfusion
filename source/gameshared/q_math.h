@@ -115,6 +115,14 @@ extern vec4_t color_table[MAX_S_COLORS];
 #define DEG2RAD( a ) ( a * M_PI ) / 180.0F
 #define RAD2DEG( a ) ( a * 180.0F ) / M_PI
 
+// note that Q_rint was causing problems here
+// (spawn looking straight up\down at delta_angles wrapping)
+
+#define ANGLE2SHORT( x )    ( (int)( ( x ) * 65536 / 360 ) & 65535 )
+#define SHORT2ANGLE( x )    ( ( x ) * ( 360.0 / 65536 ) )
+
+#define ANGLE2BYTE( x )     ( (int)( ( x ) * 256 / 360 ) & 255 )
+#define BYTE2ANGLE( x )     ( ( x ) * ( 360.0 / 256 ) )
 
 // returns b clamped to [a..c] range
 //#define bound(a,b,c) (max((a), min((b), (c))))
