@@ -1633,6 +1633,10 @@ void ClientThink( edict_t *ent, usercmd_t *ucmd, int timeDelta ) {
 	// perform a pmove
 	Pmove( &pm );
 
+	// in case some trigger action has moved the view angles (like teleported)
+	for( i = 0; i < 3; i++ )
+		client->ps.pmove.delta_angles[i] = ANGLE2SHORT( client->ps.viewangles[i] ) - pm.cmd.angles[i];
+
 	// save results of pmove
 	client->old_pmove = client->ps.pmove;
 

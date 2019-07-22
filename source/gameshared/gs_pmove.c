@@ -1065,9 +1065,8 @@ static void PM_CategorizePosition( void ) {
 			}
 		}
 
-		if( ( pm->numtouch < MAXTOUCH ) && ( trace.fraction < 1.0 ) ) {
-			pm->touchents[pm->numtouch] = trace.ent;
-			pm->numtouch++;
+		if( trace.fraction < 1.0 ) {
+			PM_AddTouchEnt( trace.ent );
 		}
 	}
 
@@ -1698,50 +1697,33 @@ void PM_AdjustViewheight( void ) {
 	}
 }
 
-static void PM_UpdateDeltaAngles( void ) {
-	int i;
-
-	if( gs.module != GS_MODULE_GAME ) {
-		return;
-	}
-
-	for( i = 0; i < 3; i++ )
-		pm->playerState->pmove.delta_angles[i] = ANGLE2SHORT( pm->playerState->viewangles[i] ) - pm->cmd.angles[i];
-}
-
 /*
-* PM_ApplyMouseAnglesClamp
+* PM_ClampAngles
 *
 */
 #if defined ( _WIN32 ) && ( _MSC_VER >= 1400 )
 #pragma warning( push )
 #pragma warning( disable : 4310 )   // cast truncates constant value
 #endif
-static void PM_ApplyMouseAnglesClamp( void ) {
+static void PM_ClampAngles( pmove_t *pmove ) {
 	int i;
 	short temp;
 
 	for( i = 0; i < 3; i++ ) {
-		temp = pm->cmd.angles[i] + pm->playerState->pmove.delta_angles[i];
+		temp = pmove->cmd.angles[i] + pmove->playerState->pmove.delta_angles[i];
 		if( i == PITCH ) {
 			// don't let the player look up or down more than 90 degrees
 			if( temp > (short)ANGLE2SHORT( 90 ) - 1 ) {
-				pm->playerState->pmove.delta_angles[i] = ( ANGLE2SHORT( 90 ) - 1 ) - pm->cmd.angles[i];
+				pmove->playerState->pmove.delta_angles[i] = ( ANGLE2SHORT( 90 ) - 1 ) - pmove->cmd.angles[i];
 				temp = (short)ANGLE2SHORT( 90 ) - 1;
 			} else if( temp < (short)ANGLE2SHORT( -90 ) + 1 ) {
-				pm->playerState->pmove.delta_angles[i] = ( ANGLE2SHORT( -90 ) + 1 ) - pm->cmd.angles[i];
+				pmove->playerState->pmove.delta_angles[i] = ( ANGLE2SHORT( -90 ) + 1 ) - pmove->cmd.angles[i];
 				temp = (short)ANGLE2SHORT( -90 ) + 1;
 			}
 		}
 
-		pm->playerState->viewangles[i] = SHORT2ANGLE( (short)temp );
+		pmove->playerState->viewangles[i] = SHORT2ANGLE( (short)temp );
 	}
-
-	AngleVectors( pm->playerState->viewangles, pml.forward, pml.right, pml.up );
-
-	VectorCopy( pml.forward, pml.flatforward );
-	pml.flatforward[2] = 0.0f;
-	VectorNormalize( pml.flatforward );
 }
 #if defined ( _WIN32 ) && ( _MSC_VER >= 1400 )
 #pragma warning( pop )
@@ -1766,6 +1748,12 @@ static void PM_BeginMove( void ) {
 
 	// save old org in case we get stuck
 	VectorCopy( pm->playerState->pmove.origin, pml.previous_origin );
+
+	AngleVectors( pm->playerState->viewangles, pml.forward, pml.right, pml.up );
+
+	VectorCopy( pml.forward, pml.flatforward );
+	pml.flatforward[2] = 0.0f;
+	VectorNormalize( pml.flatforward );
 }
 
 /*
@@ -1777,17 +1765,11 @@ static void PM_EndMove( void ) {
 }
 
 /*
-* Pmove
-*
-* Can be called by either the server or the client
+* _Pmove
 */
-void Pmove( pmove_t *pmove ) {
+static void _Pmove( pmove_t *pmove ) {
 	float fallvelocity, falldelta, damage;
 	int oldGroundEntity;
-
-	if( !pmove->playerState ) {
-		return;
-	}
 
 	pm = pmove;
 
@@ -1971,20 +1953,14 @@ void Pmove( pmove_t *pmove ) {
 		PM_AdjustViewheight();
 
 		if( pm->playerState->pmove.pm_type == PM_SPECTATOR ) {
-			PM_ApplyMouseAnglesClamp();
-
 			PM_FlyMove( false );
 		} else {
-			pml.forwardPush = 0;
-			pml.sidePush = 0;
-			pml.upPush = 0;
+			pml.forwardPush = pml.sidePush = pml.upPush = 0;
 		}
 
 		PM_EndMove();
 		return;
 	}
-
-	PM_ApplyMouseAnglesClamp();
 
 	// set mins, maxs, viewheight amd fov
 	PM_AdjustBBox();
@@ -2073,8 +2049,6 @@ void Pmove( pmove_t *pmove ) {
 	// Note that this method assumes the movement has been linear.
 	gs.api.PMoveTouchTriggers( pm, pml.previous_origin );
 
-	PM_UpdateDeltaAngles(); // in case some trigger action has moved the view angles (like teleported).
-
 	// touching triggers may force groundentity off
 	if( !( pm->playerState->pmove.pm_flags & PMF_ON_GROUND ) && pm->groundentity != -1 ) {
 		pm->groundentity = -1;
@@ -2119,4 +2093,19 @@ void Pmove( pmove_t *pmove ) {
 
 		pm->playerState->pmove.pm_flags &= ~PMF_JUMPPAD_TIME;
 	}
+}
+
+/*
+ * Pmove
+ *
+ * Can be called by either the server or the client
+ */
+void Pmove( pmove_t *pmove ) {
+	if( !pmove->playerState ) {
+		return;
+	}
+
+	PM_ClampAngles( pmove );
+
+	_Pmove( pmove );
 }
