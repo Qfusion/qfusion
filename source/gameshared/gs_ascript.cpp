@@ -1250,6 +1250,22 @@ static void objectPMoveState_SetDeltaAngles( unsigned int idx, int16_t value, pm
 	state->delta_angles[idx] = value;
 }
 
+static int objectPMoveState_GetPmFlags( pmove_state_t *state ) {
+	return state->pm_flags;
+}
+
+static void objectPMoveState_SetPmFlags( int value, pmove_state_t *state ) {
+	if( gs.module == GS_MODULE_GAME ) {
+		state->pm_flags = value;
+		return;
+	}
+
+	// the no_prediction bit can't be changed client-side
+	int mask = PMF_NO_PREDICTION;
+	int preserve = state->pm_flags & mask;
+	state->pm_flags = (value & ~mask) | preserve;
+}
+
 static const gs_asMethod_t asPMoveState_Methods[] =
 {
 	{ ASLIB_FUNCTION_DECL( Vec3, &opAssign, ( const PMoveState &in ) ), asFUNCTION( objectPMoveState_Assign ), asCALL_CDECL_OBJLAST },
@@ -1260,6 +1276,8 @@ static const gs_asMethod_t asPMoveState_Methods[] =
 	{ ASLIB_FUNCTION_DECL( void, set_stats, ( uint index, int16 value ) ), asFUNCTION( objectPMoveState_SetStat ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( int16, get_deltaAngles, ( uint index ) const ), asFUNCTION( objectPMoveState_GetDeltaAngles ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, set_deltaAngles, ( uint index, int16 value ) ), asFUNCTION( objectPMoveState_SetDeltaAngles ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( int, get_pm_flags, () const ), asFUNCTION( objectPMoveState_GetPmFlags ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( void, set_pm_flags, ( int value ) ), asFUNCTION( objectPMoveState_SetPmFlags ), asCALL_CDECL_OBJLAST },
 
 	ASLIB_METHOD_NULL
 };
@@ -1267,7 +1285,6 @@ static const gs_asMethod_t asPMoveState_Methods[] =
 static const gs_asProperty_t asPMoveState_Properties[] =
 {
 	{ ASLIB_PROPERTY_DECL( int, pm_type ), ASLIB_FOFFSET( pmove_state_t, pm_type ) },
-	{ ASLIB_PROPERTY_DECL( int, pm_flags ), ASLIB_FOFFSET( pmove_state_t, pm_flags ) },
 	{ ASLIB_PROPERTY_DECL( int, pm_time ), ASLIB_FOFFSET( pmove_state_t, pm_time ) },
 	{ ASLIB_PROPERTY_DECL( int, skim_time ), ASLIB_FOFFSET( pmove_state_t, skim_time ) },
 	{ ASLIB_PROPERTY_DECL( int, gravity ), ASLIB_FOFFSET( pmove_state_t, gravity ) },
