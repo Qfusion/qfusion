@@ -116,6 +116,43 @@ static const gs_asEnumVal_t asMatchStateEnumVals[] =
 	ASLIB_ENUM_VAL_NULL
 };
 
+static const gs_asEnumVal_t asGameStatEnumVals[] =
+{
+	ASLIB_ENUM_VAL( GAMESTAT_FLAGS ),
+	ASLIB_ENUM_VAL( GAMESTAT_MATCHSTATE ),
+	ASLIB_ENUM_VAL( GAMESTAT_MATCHSTART ),
+	ASLIB_ENUM_VAL( GAMESTAT_MATCHDURATION ),
+	ASLIB_ENUM_VAL( GAMESTAT_CLOCKOVERRIDE ),
+	ASLIB_ENUM_VAL( GAMESTAT_MAXPLAYERSINTEAM ),
+	ASLIB_ENUM_VAL( GAMESTAT_COLORCORRECTION ),
+
+	ASLIB_ENUM_VAL_NULL
+};
+
+static const gs_asEnumVal_t asGameStatFlagsEnumVals[] =
+{
+	ASLIB_ENUM_VAL( GAMESTAT_FLAG_PAUSED ),
+	ASLIB_ENUM_VAL( GAMESTAT_FLAG_WAITING ),
+	ASLIB_ENUM_VAL( GAMESTAT_FLAG_INSTAGIB ),
+	ASLIB_ENUM_VAL( GAMESTAT_FLAG_MATCHEXTENDED ),
+	ASLIB_ENUM_VAL( GAMESTAT_FLAG_FALLDAMAGE ),
+	ASLIB_ENUM_VAL( GAMESTAT_FLAG_HASCHALLENGERS ),
+	ASLIB_ENUM_VAL( GAMESTAT_FLAG_INHIBITSHOOTING ),
+	ASLIB_ENUM_VAL( GAMESTAT_FLAG_ISTEAMBASED ),
+	ASLIB_ENUM_VAL( GAMESTAT_FLAG_ISRACE ),
+	ASLIB_ENUM_VAL( GAMESTAT_FLAG_COUNTDOWN ),
+	ASLIB_ENUM_VAL( GAMESTAT_FLAG_SELFDAMAGE ),
+	ASLIB_ENUM_VAL( GAMESTAT_FLAG_INFINITEAMMO ),
+	ASLIB_ENUM_VAL( GAMESTAT_FLAG_CANFORCEMODELS ),
+	ASLIB_ENUM_VAL( GAMESTAT_FLAG_CANSHOWMINIMAP ),
+	ASLIB_ENUM_VAL( GAMESTAT_FLAG_TEAMONLYMINIMAP ),
+	ASLIB_ENUM_VAL( GAMESTAT_FLAG_MMCOMPATIBLE ),
+	ASLIB_ENUM_VAL( GAMESTAT_FLAG_ISTUTORIAL ),
+	ASLIB_ENUM_VAL( GAMESTAT_FLAG_CANDROPWEAPON ),
+
+	ASLIB_ENUM_VAL_NULL
+};
+
 static const gs_asEnumVal_t asHUDStatEnumVals[] =
 {
 	ASLIB_ENUM_VAL( STAT_PROGRESS_SELF ),
@@ -364,8 +401,6 @@ static const gs_asEnumVal_t asMiscItemTagEnumVals[] =
 	ASLIB_ENUM_VAL( AMMO_PACK_STRONG ),
 	ASLIB_ENUM_VAL( AMMO_PACK ),
 
-	ASLIB_ENUM_VAL( MAX_ITEMS ),
-
 	ASLIB_ENUM_VAL_NULL
 };
 
@@ -557,13 +592,6 @@ static const gs_asEnumVal_t asButtonEnumVals[] =
 	ASLIB_ENUM_VAL_NULL
 };
 
-static const gs_asEnumVal_t asPlayerStateMiscEnumVals[] =
-{
-	ASLIB_ENUM_VAL( PS_MAX_STATS ),
-
-	ASLIB_ENUM_VAL_NULL
-};
-
 //=======================================================================
 
 static const gs_asEnum_t asGameEnums[] =
@@ -571,6 +599,8 @@ static const gs_asEnum_t asGameEnums[] =
 	{ "configstrings_e", asConfigstringEnumVals },
 	{ "state_effects_e", asEffectEnumVals },
 	{ "matchstates_e", asMatchStateEnumVals },
+	{ "gamestats_e", asGameStatEnumVals },
+	{ "gamestatflags_e", asGameStatFlagsEnumVals },
 	{ "hudstats_e", asHUDStatEnumVals },
 	{ "teams_e", asTeamEnumVals },
 	{ "entitytype_e", asEntityTypeEnumVals },
@@ -598,7 +628,6 @@ static const gs_asEnum_t asGameEnums[] =
 
 	{ "axis_e", asAxisEnumVals },
 	{ "button_e", asButtonEnumVals },
-	{ "playerstatemisc_e", asPlayerStateMiscEnumVals },
 
 	ASLIB_ENUM_VAL_NULL
 };
@@ -1100,11 +1129,11 @@ static const gs_asFuncdef_t asUserCmd_Funcdefs[] =
 	ASLIB_FUNCDEF_NULL
 };
 
-void objectUserCmd_DefaultConstructor( usercmd_t *cmd ) {
+static void objectUserCmd_DefaultConstructor( usercmd_t *cmd ) {
 	memset( cmd, 0, sizeof( usercmd_t ) );
 }
 
-void objectUserCmd_CopyConstructor( usercmd_t *other, usercmd_t *cmd ) {
+static void objectUserCmd_CopyConstructor( usercmd_t *other, usercmd_t *cmd ) {
 	*cmd = *other;
 }
 
@@ -1577,7 +1606,7 @@ static void GS_asClipVelocity( asvec3_t *in, asvec3_t *normal, asvec3_t *out, fl
 	GS_ClipVelocity( in->v, normal->v, out->v, overbounce );
 }
 
-const gs_asglobfuncs_t asGameGlobalFunctions[] =
+static const gs_asglobfuncs_t asGameGlobalFunctions[] =
 {
 	{ "int PointContents( const Vec3 &in )", asFUNCTION( GS_asPointContents ), NULL },
 	{ "int PointContents4D( const Vec3 &in, int timeDelta )", asFUNCTION( GS_asPointContents4D ), NULL },
@@ -1586,6 +1615,17 @@ const gs_asglobfuncs_t asGameGlobalFunctions[] =
 	{ "void ClipVelocity( const Vec3 &in, const Vec3 &in, Vec3 &out, float overbounce )", asFUNCTION( GS_asClipVelocity ), NULL },
 
 	{ NULL }
+};
+
+//=======================================================================
+
+static int asMAX_ITEMS = MAX_ITEMS;
+static int asPS_MAX_STATS = PS_MAX_STATS;
+
+static const gs_asglobproperties_t asGameGlobalProperties[] =
+{
+	{ "const int MAX_ITEMS", &asMAX_ITEMS },
+	{ "const int PS_MAX_STATS", &asPS_MAX_STATS },
 };
 
 //=======================================================================
@@ -1784,9 +1824,9 @@ void GS_asInitializeEngine( asIScriptEngine *asEngine ) {
 	// first register all class names so methods using custom classes work
 	GS_asRegisterObjectClassNames( asEngine, asGameClassesDescriptors, NULL );
 
-	// register global functions
+	GS_asRegisterGlobalProperties( asEngine, asGameGlobalProperties, NULL );
+
 	GS_asRegisterGlobalFunctions( asEngine, asGameGlobalFunctions, "GS" );
 
-	// register classes
 	GS_asRegisterObjectClasses( asEngine, asGameClassesDescriptors, NULL );
 }
