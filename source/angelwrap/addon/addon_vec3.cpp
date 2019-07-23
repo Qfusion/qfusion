@@ -152,6 +152,10 @@ static float objectVec3_Length( const asvec3_t *vec ) {
 	return VectorLength( vec->v );
 }
 
+static float objectVec3_LengthSquared( const asvec3_t *vec ) {
+	return DotProduct( vec->v, vec->v );
+}
+
 static float objectVec3_Normalize( asvec3_t *vec ) {
 	return VectorNormalize( vec->v );
 }
@@ -239,6 +243,7 @@ void RegisterVec3Addon( asIScriptEngine *engine ) {
 
 	r = engine->RegisterObjectMethod( "Vec3", "void set(float x, float y, float z)", asFUNCTION( objectVec3_Set ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "Vec3", "float length() const", asFUNCTION( objectVec3_Length ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
+	r = engine->RegisterObjectMethod( "Vec3", "float lengthSquared() const", asFUNCTION( objectVec3_LengthSquared ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "Vec3", "float normalize()", asFUNCTION( objectVec3_Normalize ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "Vec3", "float distance(const Vec3 &in) const", asFUNCTION( objectVec3_Distance ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "Vec3", "void angleVectors(Vec3 &out, Vec3 &out, Vec3 &out) const", asFUNCTION( objectVec3_AngleVectors ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
