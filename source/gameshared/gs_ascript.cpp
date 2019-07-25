@@ -1569,6 +1569,61 @@ static const gs_asClassDescriptor_t asPMoveClassDescriptor =
 
 //=======================================================================
 
+// CLASS: PMove
+
+static const gs_asFuncdef_t asGameState_Funcdefs[] =
+{
+	ASLIB_FUNCDEF_NULL
+};
+
+static const gs_asBehavior_t asGameState_ObjectBehaviors[] =
+{
+	ASLIB_BEHAVIOR_NULL
+};
+
+static int64_t objectGameState_GetStat( unsigned int idx, game_state_t *state ) {
+	if( idx >= MAX_GAME_STATS ) {
+		return -1;
+	}
+	return state->stats[idx];
+}
+
+static void objectGameState_SetStat( unsigned int idx, int64_t value, game_state_t *state ) {
+	if( idx >= MAX_GAME_STATS ) {
+		return;
+	}
+	state->stats[idx] = value;
+}
+
+static const gs_asMethod_t asGameState_Methods[] =
+{
+	{ ASLIB_FUNCTION_DECL( int64, get_stats, ( uint index ) const ), asFUNCTION( objectGameState_GetStat ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( void, set_stats, ( uint index, int64 value ) ), asFUNCTION( objectGameState_SetStat ), asCALL_CDECL_OBJLAST },
+
+	ASLIB_METHOD_NULL
+};
+
+static const gs_asProperty_t asGameState_Properties[] =
+{
+	ASLIB_PROPERTY_NULL
+};
+
+static const gs_asClassDescriptor_t asGameStateClassDescriptor =
+{
+	"GameState",                /* name */
+	asOBJ_REF | asOBJ_NOCOUNT,  /* object type flags */
+	sizeof( game_state_t ),     /* size */
+	asGameState_Funcdefs,       /* funcdefs */
+	asGameState_ObjectBehaviors,/* object behaviors */
+	asGameState_Methods,        /* methods */
+	asGameState_Properties,     /* properties */
+
+	NULL, NULL                  /* string factory hack */
+};
+
+
+//=======================================================================
+
 static const gs_asClassDescriptor_t * const asGameClassesDescriptors[] =
 {
 	&asTraceClassDescriptor,
@@ -1578,6 +1633,7 @@ static const gs_asClassDescriptor_t * const asGameClassesDescriptors[] =
 	&asPMoveStateClassDescriptor,
 	&asPlayerStateClassDescriptor,
 	&asPMoveClassDescriptor,
+	&asGameStateClassDescriptor,
 
 	NULL
 };
@@ -1621,11 +1677,22 @@ static const gs_asglobfuncs_t asGameGlobalFunctions[] =
 
 static int asMAX_ITEMS = MAX_ITEMS;
 static int asPS_MAX_STATS = PS_MAX_STATS;
+static int asMAX_GAME_STATS = MAX_GAME_STATS;
 
-static const gs_asglobproperties_t asGameGlobalProperties[] =
+static const gs_asglobproperties_t asGameGlobalConstants[] =
 {
 	{ "const int MAX_ITEMS", &asMAX_ITEMS },
 	{ "const int PS_MAX_STATS", &asPS_MAX_STATS },
+	{ "const int MAX_GAME_STATS", &asMAX_GAME_STATS },
+
+	{ NULL }
+};
+
+static const gs_asglobproperties_t asGameGlobalProperties[] =
+{
+	{ "GameState gameState", &gs.gameState },
+
+	{ NULL }
 };
 
 //=======================================================================
@@ -1824,7 +1891,9 @@ void GS_asInitializeEngine( asIScriptEngine *asEngine ) {
 	// first register all class names so methods using custom classes work
 	GS_asRegisterObjectClassNames( asEngine, asGameClassesDescriptors, NULL );
 
-	GS_asRegisterGlobalProperties( asEngine, asGameGlobalProperties, NULL );
+	GS_asRegisterGlobalProperties( asEngine, asGameGlobalConstants, NULL );
+
+	GS_asRegisterGlobalProperties( asEngine, asGameGlobalProperties, "GS" );
 
 	GS_asRegisterGlobalFunctions( asEngine, asGameGlobalFunctions, "GS" );
 
