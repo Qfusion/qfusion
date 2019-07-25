@@ -24,6 +24,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "q_comref.h"
 #include "q_collision.h"
 #include "gs_public.h"
+#include "angelscript.h"
+#include "q_angeliface.h"
+#include "gs_ascript.h"
 
 //===============================================================
 //		WARSOW player AAboxes sizes
@@ -2108,4 +2111,17 @@ void Pmove( pmove_t *pmove ) {
 	PM_ClampAngles( pmove );
 
 	_Pmove( pmove );
+}
+
+/*
+ * PmoveExt
+ */
+void PmoveExt( pmove_t *pmove, void *PmoveFn( pmove_t * ) ) {
+	if( !pmove->playerState ) {
+		return;
+	}
+
+	PM_ClampAngles( pmove );
+
+	PmoveFn( pmove );
 }

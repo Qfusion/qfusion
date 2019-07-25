@@ -397,7 +397,7 @@ static const gs_asProperty_t gametypedescr_Properties[] =
 static const gs_asClassDescriptor_t asGametypeClassDescriptor =
 {
 	"GametypeDesc",                 /* name */
-	asOBJ_REF | asOBJ_NOHANDLE,       /* object type flags */
+	asOBJ_REF | asOBJ_NOHANDLE,     /* object type flags */
 	sizeof( gametype_descriptor_t ),/* size */
 	gametypedescr_Funcdefs,         /* funcdefs */
 	gametypedescr_ObjectBehaviors,  /* object behaviors */

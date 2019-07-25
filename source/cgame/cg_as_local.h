@@ -37,6 +37,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define CG_SCRIPTS_GAME_MODULE_NAME "cgame"
 #define CG_SCRIPTS_INPUT_MODULE_NAME "input"
+#define CG_SCRIPTS_PMOVE_MODULE_NAME "cgpmove"
 
 #define CGAME_AS_ENGINE() static_cast<asIScriptEngine *>( cgs.asEngine )
 
@@ -52,7 +53,7 @@ typedef struct {
 extern std::function<void(asIScriptContext *)> cg_empty_as_cb;
 
 void CG_asUnloadScriptModule( const char *moduleName, cg_asApiFuncPtr_t *api );
-asIScriptModule *CG_asLoadScriptModule( const char *moduleName, const char *filename, cg_asApiFuncPtr_t *api );
+asIScriptModule *CG_asLoadScriptModule( const char *moduleName, const char *dir, const char *filename, const char *ext, cg_asApiFuncPtr_t *api );
 
 bool CG_asExecutionErrorReport( int error );
 bool CG_asCallScriptFunc( void *ptr, std::function<void(asIScriptContext *)> setArgs,

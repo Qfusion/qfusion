@@ -105,6 +105,9 @@ void gs_asemptyfunc( void );
 #define ASLIB_METHOD_NULL                       { ASLIB_FUNCTION_NULL, asFUNCTION( gs_asemptyfunc ), asCALL_CDECL }
 #define ASLIB_PROPERTY_NULL                     { NULL, 0 }
 
+#define PMOVE_SCRIPTS_DIRECTORY             "pmove"
+#define PMOVE_SCRIPTS_PROJECT_EXTENSION     ".mp"
+
 void GS_asInitializeEngine( asIScriptEngine *asEngine );
 void GS_asRegisterEnums( asIScriptEngine *asEngine, const gs_asEnum_t *asEnums, const char *nameSpace );
 void GS_asRegisterFuncdefs( asIScriptEngine *asEngine, const gs_asFuncdef_t *asFuncdefs, const char *nameSpace );

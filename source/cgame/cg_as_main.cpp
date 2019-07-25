@@ -230,8 +230,8 @@ void CG_asUnloadScriptModule( const char *moduleName, cg_asApiFuncPtr_t *api ) {
 /*
 * CG_asLoadScriptModule
 */
-asIScriptModule *CG_asLoadScriptModule( const char *moduleName, const char *filename, 
-	cg_asApiFuncPtr_t *api ) {
+asIScriptModule *CG_asLoadScriptModule( const char *moduleName, const char *dir,
+	const char *filename, const char *ext, cg_asApiFuncPtr_t *api ) {
 	auto asEngine = CGAME_AS_ENGINE();
 	if( asEngine == NULL ) {
 		return NULL;
@@ -240,7 +240,7 @@ asIScriptModule *CG_asLoadScriptModule( const char *moduleName, const char *file
 	asEngine->DiscardModule( moduleName );
 
 	auto asModule = cgs.asExport->asLoadScriptProject( asEngine, moduleName, 
-		"progs", "client", filename, ".cp" );
+		"progs", dir, filename, ext );
 	if( asModule == nullptr ) {
 		return nullptr;
 	}
@@ -283,11 +283,7 @@ error:
 * CG_asLoadGameScript
 */
 bool CG_asLoadGameScript( void ) {
-	auto asModule = CG_asLoadScriptModule( CG_SCRIPTS_GAME_MODULE_NAME, "cgame", cg_asCGameAPI );
-	if( asModule == nullptr ) {
-		return false;
-	}
-	return true;
+	return CG_asLoadScriptModule( CG_SCRIPTS_GAME_MODULE_NAME, "client", "cgame", ".cp", cg_asCGameAPI ) != nullptr;
 }
 
 /*
@@ -295,4 +291,27 @@ bool CG_asLoadGameScript( void ) {
 */
 void CG_asUnloadGameScript( void ) {
 	CG_asUnloadScriptModule( CG_SCRIPTS_GAME_MODULE_NAME, NULL );
+}
+
+//======================================================================
+
+static cg_asApiFuncPtr_t cg_asPmoveAPI[] = {
+	{ "void PM::Load()", &cgs.asMain.load, false },
+	{ "void PM::PMove( PMove @pm )", &cgs.asPMove.pmove, true },
+
+	{ nullptr, nullptr, false },
+};
+
+/*
+ * CG_asLoadPMoveScript
+ */
+bool CG_asLoadPMoveScript( void ) {
+	return CG_asLoadScriptModule( CG_SCRIPTS_PMOVE_MODULE_NAME, PMOVE_SCRIPTS_DIRECTORY, "pmove", PMOVE_SCRIPTS_PROJECT_EXTENSION, cg_asPmoveAPI ) != nullptr;
+}
+
+/*
+ * CG_asUnloadPMoveScript
+ */
+void CG_asUnloadPMoveScript( void ) {
+	CG_asUnloadScriptModule( CG_SCRIPTS_PMOVE_MODULE_NAME, NULL );
 }

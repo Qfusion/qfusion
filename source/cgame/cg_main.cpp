@@ -1185,6 +1185,8 @@ void CG_Init( const char *serverName, unsigned int playerNum,
 
 	CG_asLoadGameScript();
 
+	CG_asLoadPMoveScript();
+
 	CG_InitInput();
 
 	CG_RegisterVariables();
@@ -1250,6 +1252,7 @@ void CG_Shutdown( void ) {
 	CG_FreeTemporaryBoneposesCache();
 	CG_ShutdownInput();
 	CG_asUnloadGameScript();
+	CG_asUnloadPMoveScript();
 	CG_asShutdownScriptEngine();
 }
 
