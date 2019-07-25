@@ -12,7 +12,7 @@ file(GLOB GAME_HEADERS
 file(GLOB GAME_SOURCES
 	"*.cpp"
 	"../gameshared/*.c"
-	"../gameshared/gs_ascript.cpp"
+	"../gameshared/gs_*.cpp"
 	"../matchmaker/mm_rating.c"
 	"../qalgo/base64.c"
 	"../qalgo/md5.c"

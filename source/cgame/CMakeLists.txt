@@ -10,7 +10,7 @@ file(GLOB CGAME_HEADES
 file(GLOB CGAME_SOURCES
 	"*.cpp"
 	"../gameshared/*.c"
-	"../gameshared/gs_ascript.cpp"
+	"../gameshared/gs_*.cpp"
 )
 
 add_library(cgame SHARED ${CGAME_SOURCES} ${CGAME_HEADES})
