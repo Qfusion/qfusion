@@ -171,6 +171,11 @@ typedef struct {
 	struct angelwrap_api_s *asExport;
 	void *asEngine;
 
+	struct {
+		void *initFunc;
+		void *pmoveFunc;
+	} pmovescript;
+
 	unsigned int frametime;         // in milliseconds
 	int snapFrameTime;              // in milliseconds
 	int64_t realtime;				// actual time, set with Sys_Milliseconds every frame
@@ -529,6 +534,10 @@ void G_asCallMapExit( void );
 const char *G_asCallMapGametype( void );
 
 bool G_asCallMapEntitySpawnScript( const char *classname, edict_t *ent );
+
+bool G_asLoadPMoveScript( void );
+void G_asShutdownPMoveScript( void );
+void G_asCallPMovePMoveFunction( pmove_t *pmove );
 
 void G_asInitGameModuleEngine( void );
 void G_asShutdownGameModuleEngine( void );

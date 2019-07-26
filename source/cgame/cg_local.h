@@ -1213,8 +1213,10 @@ void CG_asInitScriptEngine( void );
 void CG_asShutdownScriptEngine( void );
 bool CG_asLoadGameScript( void );
 void CG_asUnloadGameScript( void );
+
 bool CG_asLoadPMoveScript( void );
 void CG_asUnloadPMoveScript( void );
+void CG_asPMove( pmove_t *pm );
 
 void CG_asInputInit( void );
 void CG_asInputShutdown( void );

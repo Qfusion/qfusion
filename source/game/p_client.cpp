@@ -1543,6 +1543,7 @@ void ClientThink( edict_t *ent, usercmd_t *ucmd, int timeDelta ) {
 	int i, j;
 	static pmove_t pm;
 	int delta, count;
+	void (*pmoveFn)( pmove_t * ) = game.pmovescript.pmoveFunc != nullptr ? &G_asCallPMovePMoveFunction : &Pmove;
 
 	client = ent->r.client;
 
@@ -1631,7 +1632,7 @@ void ClientThink( edict_t *ent, usercmd_t *ucmd, int timeDelta ) {
 	}
 
 	// perform a pmove
-	Pmove( &pm );
+	pmoveFn( &pm );
 
 	// in case some trigger action has moved the view angles (like teleported)
 	for( i = 0; i < 3; i++ )

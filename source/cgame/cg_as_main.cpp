@@ -290,7 +290,7 @@ bool CG_asLoadGameScript( void ) {
 * CG_asUnloadGameScript
 */
 void CG_asUnloadGameScript( void ) {
-	CG_asUnloadScriptModule( CG_SCRIPTS_GAME_MODULE_NAME, NULL );
+	CG_asUnloadScriptModule( CG_SCRIPTS_GAME_MODULE_NAME, cg_asCGameAPI );
 }
 
 //======================================================================
@@ -313,5 +313,18 @@ bool CG_asLoadPMoveScript( void ) {
  * CG_asUnloadPMoveScript
  */
 void CG_asUnloadPMoveScript( void ) {
-	CG_asUnloadScriptModule( CG_SCRIPTS_PMOVE_MODULE_NAME, NULL );
+	CG_asUnloadScriptModule( CG_SCRIPTS_PMOVE_MODULE_NAME, cg_asPmoveAPI );
+}
+
+/*
+ * CG_asPMove
+ */
+void CG_asPMove( pmove_t *pm ) {
+	CG_asCallScriptFunc( cgs.asPMove.pmove,
+		[pm](asIScriptContext *ctx)
+		{
+			ctx->SetArgObject( 0, pm );
+		},
+		cg_empty_as_cb
+	);
 }

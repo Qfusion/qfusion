@@ -34,6 +34,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define MAP_SCRIPTS_DIRECTORY               "maps"
 #define MAP_SCRIPTS_PROJECT_EXTENSION       ".mp"
 
+#define PMOVE_SCRIPTS_MODULE_NAME          "gpmove"
+
 #define GAME_AS_ENGINE()                    ( static_cast<asIScriptEngine *>( game.asEngine ) )
 
 asIScriptModule *G_LoadGameScript( const char *moduleName, const char *dir, const char *filename, const char *ext );

@@ -367,6 +367,8 @@ void G_Init( unsigned int seed, unsigned int framemsec, int protocol, const char
 
 	// init AS engine
 	G_asInitGameModuleEngine();
+	
+	G_asLoadPMoveScript();
 }
 
 /*
@@ -384,6 +386,9 @@ void G_Shutdown( void ) {
 
 	G_asShutdownMapScript();
 	GT_asShutdownScript();
+
+	G_asShutdownPMoveScript();
+
 	G_asShutdownGameModuleEngine();
 
 	AI_AfterLevelScriptShutdown();

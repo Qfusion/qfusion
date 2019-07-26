@@ -404,6 +404,7 @@ void CG_PredictMovement( void ) {
 	int64_t ucmdExecuted, ucmdHead;
 	int64_t frame;
 	pmove_t pm;
+	void (*pmoveFn)( pmove_t * ) = cgs.asPMove.pmove != nullptr ? &CG_asPMove : &Pmove;
 
 	trap_NET_GetCurrentState( NULL, &ucmdHead, NULL );
 	ucmdExecuted = cg.frame.ucmdExecuted;
@@ -449,7 +450,7 @@ void CG_PredictMovement( void ) {
 			cg.predictingTimeStamp = pm.cmd.serverTimeStamp;
 		}
 
-		Pmove( &pm );
+		pmoveFn( &pm );
 
 		// copy for stair smoothing
 		predictedSteps[frame] = pm.step;
