@@ -129,6 +129,10 @@ static bool objectVec4_EqualBehaviour( asvec4_t *first, asvec4_t *second ) {
 	return Vector4Compare( first->v, second->v );
 }
 
+static void objectVec4_Clear( asvec4_t *vec ) {
+	Vector4Clear( vec->v );
+}
+
 static void objectVec4_Set( float x, float y, float z, float w, asvec4_t *vec ) {
 	Vector4Set( vec->v, x, y, z, w );
 }
@@ -205,6 +209,7 @@ void RegisterVec4Addon( asIScriptEngine *engine ) {
 	// == !=
 	r = engine->RegisterObjectMethod( "Vec4", "bool opEquals(const Vec4 &in) const", asFUNCTION( objectVec4_EqualBehaviour ), asCALL_CDECL_OBJFIRST ); assert( r >= 0 );
 
+	r = engine->RegisterObjectMethod( "Vec4", "void clear()", asFUNCTION( objectVec4_Clear ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "Vec4", "void set(float x, float y, float z, float w)", asFUNCTION( objectVec4_Set ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "Vec4", "float length() const", asFUNCTION( objectVec4_Length ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "Vec4", "float normalize()", asFUNCTION( objectVec4_Normalize ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );

@@ -144,6 +144,10 @@ static bool objectVec3_EqualBehaviour( asvec3_t *first, asvec3_t *second ) {
 	return VectorCompare( first->v, second->v );
 }
 
+static void objectVec3_Clear( asvec3_t *vec ) {
+	VectorClear( vec->v );
+}
+
 static void objectVec3_Set( float x, float y, float z, asvec3_t *vec ) {
 	VectorSet( vec->v, x, y, z );
 }
@@ -241,6 +245,7 @@ void RegisterVec3Addon( asIScriptEngine *engine ) {
 	// == !=
 	r = engine->RegisterObjectMethod( "Vec3", "bool opEquals(const Vec3 &in) const", asFUNCTION( objectVec3_EqualBehaviour ), asCALL_CDECL_OBJFIRST ); assert( r >= 0 );
 
+	r = engine->RegisterObjectMethod( "Vec3", "void clear()", asFUNCTION( objectVec3_Clear ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "Vec3", "void set(float x, float y, float z)", asFUNCTION( objectVec3_Set ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "Vec3", "float length() const", asFUNCTION( objectVec3_Length ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "Vec3", "float lengthSquared() const", asFUNCTION( objectVec3_LengthSquared ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
