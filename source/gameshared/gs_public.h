@@ -277,7 +277,7 @@ enum {
 };
 
 void Pmove( pmove_t *pmove );
-void PmoveExt( pmove_t *pmove, void *PmoveFn( pmove_t * ) );
+void PmoveExt( pmove_t *pmove, void (*PmoveFn)( pmove_t * ) );
 
 //===============================================================
 

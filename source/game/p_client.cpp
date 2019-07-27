@@ -1632,7 +1632,7 @@ void ClientThink( edict_t *ent, usercmd_t *ucmd, int timeDelta ) {
 	}
 
 	// perform a pmove
-	pmoveFn( &pm );
+	PmoveExt( &pm, pmoveFn );
 
 	// in case some trigger action has moved the view angles (like teleported)
 	for( i = 0; i < 3; i++ )

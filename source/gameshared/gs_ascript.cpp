@@ -235,6 +235,7 @@ static const gs_asEnumVal_t asPMoveStatEnumVals[] =
 {
 	ASLIB_ENUM_VAL( PM_STAT_FEATURES ),
 	ASLIB_ENUM_VAL( PM_STAT_NOUSERCONTROL ),
+	ASLIB_ENUM_VAL( PM_STAT_KNOCKBACK ),
 	ASLIB_ENUM_VAL( PM_STAT_CROUCHTIME ),
 	ASLIB_ENUM_VAL( PM_STAT_ZOOMTIME ),
 	ASLIB_ENUM_VAL( PM_STAT_DASHTIME ),
@@ -1251,6 +1252,16 @@ static void objectPMoveState_SetOrigin( asvec3_t *vec, pmove_state_t *state ) {
 	VectorCopy( vec->v, state->origin );
 }
 
+static asvec3_t objectPMoveState_GetVelocity( pmove_state_t *state ) {
+	asvec3_t velocity;
+	VectorCopy( state->velocity, velocity.v );
+	return velocity;
+}
+
+static void objectPMoveState_SetVelocity( asvec3_t *vec, pmove_state_t *state ) {
+	VectorCopy( vec->v, state->velocity );
+}
+
 static int16_t objectPMoveState_GetStat( unsigned int idx, pmove_state_t *state ) {
 	if( idx >= PM_STAT_SIZE ) {
 		return 0;
@@ -1301,6 +1312,8 @@ static const gs_asMethod_t asPMoveState_Methods[] =
 
 	{ ASLIB_FUNCTION_DECL( Vec3, get_origin, ( ) const ), asFUNCTION( objectPMoveState_GetOrigin ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, set_origin, ( const Vec3 &in ) ), asFUNCTION( objectPMoveState_SetOrigin ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( Vec3, get_velocity, ( ) const ), asFUNCTION( objectPMoveState_GetVelocity ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( void, set_velocity, ( const Vec3 &in ) ), asFUNCTION( objectPMoveState_SetVelocity ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( int16, get_stats, ( uint index ) const ), asFUNCTION( objectPMoveState_GetStat ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, set_stats, ( uint index, int16 value ) ), asFUNCTION( objectPMoveState_SetStat ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( int16, get_deltaAngles, ( uint index ) const ), asFUNCTION( objectPMoveState_GetDeltaAngles ), asCALL_CDECL_OBJLAST },
@@ -1522,7 +1535,7 @@ static void objectPMove_TouchTriggers( asvec3_t *prevOrigin, pmove_t *pmove ) {
 
 static const gs_asMethod_t asPMove_Methods[] =
 {
-	{ ASLIB_FUNCTION_DECL( PlayerState &, get_playerState, () const ), asFUNCTION( objectPMove_GetPlayerState ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( PlayerState @, get_playerState, () const ), asFUNCTION( objectPMove_GetPlayerState ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( UserCmd &, get_cmd, () const ), asFUNCTION( objectPMove_GetCmd ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, getSize, ( Vec3 & out, Vec3 & out ) ), asFUNCTION( objectPMove_GetSize ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, setSize, ( const Vec3 &in, const Vec3 &in ) ), asFUNCTION( objectPMove_SetSize ), asCALL_CDECL_OBJLAST },
@@ -1640,6 +1653,10 @@ static const gs_asClassDescriptor_t * const asGameClassesDescriptors[] =
 
 //=======================================================================
 
+static void GS_asPrint( asstring_t *str ) {
+	gs.api.Printf( "%s", str->buffer );
+}
+
 static int GS_asPointContents( asvec3_t *vec ) {
 	return gs.api.PointContents( vec->v, 0 );
 }
@@ -1664,6 +1681,7 @@ static void GS_asClipVelocity( asvec3_t *in, asvec3_t *normal, asvec3_t *out, fl
 
 static const gs_asglobfuncs_t asGameGlobalFunctions[] =
 {
+	{"void Print( const String &in )", asFUNCTION( GS_asPrint ), NULL},
 	{ "int PointContents( const Vec3 &in )", asFUNCTION( GS_asPointContents ), NULL },
 	{ "int PointContents4D( const Vec3 &in, int timeDelta )", asFUNCTION( GS_asPointContents4D ), NULL },
 	{ "void PredictedEvent( int entityNumber, int event, int param )", asFUNCTION( GS_asPredictedEvent ), NULL },
@@ -1679,11 +1697,18 @@ static int asMAX_ITEMS = MAX_ITEMS;
 static int asPS_MAX_STATS = PS_MAX_STATS;
 static int asMAX_GAME_STATS = MAX_GAME_STATS;
 
+static float asBASEGRAVITY = BASEGRAVITY;
+static float asGRAVITY = GRAVITY;
+static float asGRAVITY_COMPENSATE = GRAVITY_COMPENSATE;
+
 static const gs_asglobproperties_t asGameGlobalConstants[] =
 {
 	{ "const int MAX_ITEMS", &asMAX_ITEMS },
 	{ "const int PS_MAX_STATS", &asPS_MAX_STATS },
 	{ "const int MAX_GAME_STATS", &asMAX_GAME_STATS },
+	{ "const float BASEGRAVITY", &asBASEGRAVITY },
+	{ "const float GRAVITY", &asGRAVITY },
+	{ "const float GRAVITY_COMPENSATE", &asGRAVITY_COMPENSATE },
 
 	{ NULL }
 };

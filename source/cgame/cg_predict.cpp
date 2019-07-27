@@ -450,7 +450,7 @@ void CG_PredictMovement( void ) {
 			cg.predictingTimeStamp = pm.cmd.serverTimeStamp;
 		}
 
-		pmoveFn( &pm );
+		PmoveExt( &pm, pmoveFn );
 
 		// copy for stair smoothing
 		predictedSteps[frame] = pm.step;

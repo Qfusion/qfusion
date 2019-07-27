@@ -2116,7 +2116,7 @@ void Pmove( pmove_t *pmove ) {
 /*
  * PmoveExt
  */
-void PmoveExt( pmove_t *pmove, void *PmoveFn( pmove_t * ) ) {
+void PmoveExt( pmove_t *pmove, void (*PmoveFn)( pmove_t * ) ) {
 	if( !pmove->playerState ) {
 		return;
 	}
