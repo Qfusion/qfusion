@@ -1745,14 +1745,48 @@ static void GS_asClipVelocity( asvec3_t *in, asvec3_t *normal, asvec3_t *out, fl
 	GS_ClipVelocity( in->v, normal->v, out->v, overbounce );
 }
 
-static const gs_asglobfuncs_t asGameGlobalFunctions[] =
-{
-	{"void Print( const String &in )", asFUNCTION( GS_asPrint ), NULL},
+static void GS_asGetPlayerStandSize( asvec3_t *mins, asvec3_t *maxs ) {
+	VectorCopy( playerbox_stand_mins, mins->v );
+	VectorCopy( playerbox_stand_maxs, maxs->v );
+}
+
+static void GS_asGetPlayerCrouchSize( asvec3_t *mins, asvec3_t *maxs ) {
+	VectorCopy( playerbox_crouch_mins, mins->v );
+	VectorCopy( playerbox_crouch_maxs, maxs->v );
+}
+
+static void GS_asGetPlayerGibSize( asvec3_t *mins, asvec3_t *maxs ) {
+	VectorCopy( playerbox_gib_mins, mins->v );
+	VectorCopy( playerbox_gib_maxs, maxs->v );
+}
+
+static float GS_asGetPlayerStandViewHeight( void ) {
+	return float( playerbox_stand_viewheight );
+}
+
+static float GS_asGetPlayerCrouchViewHeight( void ) {
+	return float( playerbox_crouch_viewheight );
+}
+
+static float GS_asGetPlayerGibViewHeight( void ) {
+	return float( playerbox_gib_viewheight );
+}
+
+static const gs_asglobfuncs_t asGameGlobalFunctions[] = {
+	{ "void Print( const String &in )", asFUNCTION( GS_asPrint ), NULL },
 	{ "int PointContents( const Vec3 &in )", asFUNCTION( GS_asPointContents ), NULL },
 	{ "int PointContents4D( const Vec3 &in, int timeDelta )", asFUNCTION( GS_asPointContents4D ), NULL },
 	{ "void PredictedEvent( int entityNumber, int event, int param )", asFUNCTION( GS_asPredictedEvent ), NULL },
 	{ "void RoundUpToHullSize( const Vec3 &in inmins, const Vec3 &in inmaxs, Vec3 &out mins, Vec3 &out maxs )", asFUNCTION( GS_asRoundUpToHullSize ), NULL },
 	{ "void ClipVelocity( const Vec3 &in, const Vec3 &in, Vec3 &out, float overbounce )", asFUNCTION( GS_asClipVelocity ), NULL },
+
+	{ "void GetPlayerStandSize( Vec3 & out, Vec3 & out )", asFUNCTION( GS_asGetPlayerStandSize ), NULL },
+	{ "void GetPlayerCrouchSize( Vec3 & out, Vec3 & out )", asFUNCTION( GS_asGetPlayerCrouchSize ), NULL },
+	{ "void GetPlayerGibSize( Vec3 & out, Vec3 & out )", asFUNCTION( GS_asGetPlayerGibSize ), NULL },
+
+	{ "float GetPlayerStandViewHeight()", asFUNCTION( GS_asGetPlayerStandViewHeight ), NULL },
+	{ "float GetPlayerCrouchHeight()", asFUNCTION( GS_asGetPlayerCrouchViewHeight ), NULL },
+	{ "float GetPlayerGibHeight()", asFUNCTION( GS_asGetPlayerGibViewHeight ), NULL },
 
 	{ NULL }
 };
