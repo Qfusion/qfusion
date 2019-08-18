@@ -93,6 +93,14 @@ static int asFunc_rand( void ) {
 	return rand();
 }
 
+static double asFunc_deg2rad( double deg ) {
+	return DEG2RAD( deg );
+}
+
+static double asFunc_rad2deg( double rad ) {
+	return RAD2DEG( rad );
+}
+
 static asvec3_t asFunc_RotatePointAroundVector( const asvec3_t *dir, const asvec3_t *point, float degrees ) {
 	asvec3_t dst;
 	RotatePointAroundVector( dst.v, dir->v, point->v, degrees );
@@ -126,6 +134,8 @@ void RegisterMathAddon( asIScriptEngine *engine ) {
 		{ "double floor( double x )", asFUNCTION( asFunc_floor ) },
 		{ "double random()", asFUNCTION( asFunc_random ) },
 		{ "double brandom( double min, double max )", asFUNCTION( asFunc_brandom ) },
+		{ "double deg2rad( double deg )", asFUNCTION( asFunc_deg2rad ) },
+		{ "double rad2deg( double rad )", asFUNCTION( asFunc_rad2deg ) },
 		{ "int rand()", asFUNCTION( asFunc_rand ) },
 		{ "Vec3 RotatePointAroundVector( const Vec3 &in dir, const Vec3 &in point, float degrees )", asFUNCTION( asFunc_RotatePointAroundVector ) },
 
