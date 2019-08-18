@@ -549,6 +549,7 @@ static const gs_asEnumVal_t asSurfFlagEnumVals[] =
 	ASLIB_ENUM_VAL( SURF_ALPHASHADOW ),
 	ASLIB_ENUM_VAL( SURF_NODLIGHT ),
 	ASLIB_ENUM_VAL( SURF_DUST ),
+	ASLIB_ENUM_VAL( SURF_NOWALLJUMP ),
 
 	ASLIB_ENUM_VAL_NULL
 };
@@ -1776,6 +1777,14 @@ static float GS_asGetPlayerGibViewHeight( void ) {
 	return float( playerbox_gib_viewheight );
 }
 
+static entity_state_t *GS_asGetEntityState( int number, int deltaTime ) {
+	return gs.api.GetEntityState( number, deltaTime );
+}
+
+static int GS_asDirToByte( asvec3_t *vec ) {
+	return DirToByte( vec->v );
+}
+
 static const gs_asglobfuncs_t asGameGlobalFunctions[] = {
 	{ "void Print( const String &in )", asFUNCTION( GS_asPrint ), NULL },
 	{ "int PointContents( const Vec3 &in )", asFUNCTION( GS_asPointContents ), NULL },
@@ -1792,6 +1801,10 @@ static const gs_asglobfuncs_t asGameGlobalFunctions[] = {
 	{ "float GetPlayerCrouchHeight()", asFUNCTION( GS_asGetPlayerCrouchViewHeight ), NULL },
 	{ "float GetPlayerGibHeight()", asFUNCTION( GS_asGetPlayerGibViewHeight ), NULL },
 
+	{ "EntityState @GetEntityState( int number, int deltaTime = 0 )", asFUNCTION( GS_asGetEntityState ), NULL },
+
+	{ "int DirToByte( const Vec3 &in )", asFUNCTION( GS_asDirToByte ), NULL },
+
 	{ NULL }
 };
 
@@ -1807,6 +1820,7 @@ static float asBASEGRAVITY = BASEGRAVITY;
 static float asGRAVITY = GRAVITY;
 static float asGRAVITY_COMPENSATE = GRAVITY_COMPENSATE;
 static int asZOOMTIME = ZOOMTIME;
+static float asSTEPSIZE = STEPSIZE;
 
 static const gs_asglobproperties_t asGameGlobalConstants[] =
 {
@@ -1819,6 +1833,7 @@ static const gs_asglobproperties_t asGameGlobalConstants[] =
 	{ "const float GRAVITY", &asGRAVITY },
 	{ "const float GRAVITY_COMPENSATE", &asGRAVITY_COMPENSATE },
 	{ "const int ZOOMTIME", &asZOOMTIME },
+	{ "const float STEPSIZE", &asSTEPSIZE },
 
 	{ NULL }
 };
