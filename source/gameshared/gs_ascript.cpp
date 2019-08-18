@@ -1591,11 +1591,30 @@ static int objectPMove_GetTouchEnt( unsigned int idx, pmove_t *pmove ) {
 	return pmove->touchents[idx];
 }
 
-static void objectPMove_SetTouchEnt( unsigned int idx, int value, pmove_t *pmove ) {
+static void objectPMove_SetTouchEnt( unsigned int idx, int entNum, pmove_t *pmove ) {
 	if( idx >= MAXTOUCH ) {
 		return;
 	}
-	pmove->touchents[idx] = value;
+	pmove->touchents[idx] = entNum;
+}
+
+static void objectPMove_AddTouchEnt( int entNum, pmove_t *pm ) {
+	int i;
+
+	if( pm->numtouch >= MAXTOUCH || entNum < 0 ) {
+		return;
+	}
+
+	// see if it is already added
+	for( i = 0; i < pm->numtouch; i++ ) {
+		if( pm->touchents[i] == entNum ) {
+			return;
+		}
+	}
+
+	// add it
+	pm->touchents[pm->numtouch] = entNum;
+	pm->numtouch++;
 }
 
 static void objectPMove_TouchTriggers( asvec3_t *prevOrigin, pmove_t *pmove ) {
@@ -1611,8 +1630,9 @@ static const gs_asMethod_t asPMove_Methods[] =
 	{ ASLIB_FUNCTION_DECL( Vec3, get_groundPlaneNormal, () const ), asFUNCTION( objectPMove_GetGroundPlaneNormal ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, set_groundPlaneNormal, ( const Vec3 &in ) ), asFUNCTION( objectPMove_SetGroundPlaneNormal ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( int, get_touchEnts, ( uint index ) const ), asFUNCTION( objectPMove_GetTouchEnt ), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL( void, set_touchEnts, ( uint index, int value ) ), asFUNCTION( objectPMove_SetTouchEnt ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( void, set_touchEnts, ( uint index, int entNum ) ), asFUNCTION( objectPMove_SetTouchEnt ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, touchTriggers, ( const Vec3 &in prevOrigin ) ), asFUNCTION( objectPMove_TouchTriggers ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( void, addTouchEnt, ( int entNum ) ), asFUNCTION( objectPMove_AddTouchEnt ), asCALL_CDECL_OBJLAST },
 
 	ASLIB_METHOD_NULL
 };
