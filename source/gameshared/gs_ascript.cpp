@@ -758,6 +758,8 @@ typedef struct
 
 void objectTrace_DefaultConstructor( astrace_t *self ) {
 	memset( &self->trace, 0, sizeof( trace_t ) );
+	self->trace.fraction = 1.0f;
+	self->trace.ent = -1;
 }
 
 void objectTrace_CopyConstructor( astrace_t *other, astrace_t *self ) {
@@ -1605,7 +1607,7 @@ static const gs_asMethod_t asPMove_Methods[] =
 	{ ASLIB_FUNCTION_DECL( UserCmd &, get_cmd, () const ), asFUNCTION( objectPMove_GetCmd ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, getSize, ( Vec3 & out, Vec3 & out ) ), asFUNCTION( objectPMove_GetSize ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, setSize, ( const Vec3 &in, const Vec3 &in ) ), asFUNCTION( objectPMove_SetSize ), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL( void, get_groundPlaneNormal, () const ), asFUNCTION( objectPMove_GetGroundPlaneNormal ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( Vec3, get_groundPlaneNormal, () const ), asFUNCTION( objectPMove_GetGroundPlaneNormal ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, set_groundPlaneNormal, ( const Vec3 &in ) ), asFUNCTION( objectPMove_SetGroundPlaneNormal ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( int, get_touchEnts, ( uint index ) const ), asFUNCTION( objectPMove_GetTouchEnt ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, set_touchEnts, ( uint index, int value ) ), asFUNCTION( objectPMove_SetTouchEnt ), asCALL_CDECL_OBJLAST },
@@ -1741,8 +1743,10 @@ static void GS_asRoundUpToHullSize( asvec3_t *inmins, asvec3_t *inmaxs, asvec3_t
 	gs.api.RoundUpToHullSize( outmins->v, outmaxs->v );
 }
 
-static void GS_asClipVelocity( asvec3_t *in, asvec3_t *normal, asvec3_t *out, float overbounce ) {
-	GS_ClipVelocity( in->v, normal->v, out->v, overbounce );
+static asvec3_t GS_asClipVelocity( asvec3_t *in, asvec3_t *normal, float overbounce ) {
+	asvec3_t out;
+	GS_ClipVelocity( in->v, normal->v, out.v, overbounce );
+	return out;
 }
 
 static void GS_asGetPlayerStandSize( asvec3_t *mins, asvec3_t *maxs ) {
@@ -1778,7 +1782,7 @@ static const gs_asglobfuncs_t asGameGlobalFunctions[] = {
 	{ "int PointContents4D( const Vec3 &in, int timeDelta )", asFUNCTION( GS_asPointContents4D ), NULL },
 	{ "void PredictedEvent( int entityNumber, int event, int param )", asFUNCTION( GS_asPredictedEvent ), NULL },
 	{ "void RoundUpToHullSize( const Vec3 &in inmins, const Vec3 &in inmaxs, Vec3 &out mins, Vec3 &out maxs )", asFUNCTION( GS_asRoundUpToHullSize ), NULL },
-	{ "void ClipVelocity( const Vec3 &in, const Vec3 &in, Vec3 &out, float overbounce )", asFUNCTION( GS_asClipVelocity ), NULL },
+	{ "Vec3 ClipVelocity( const Vec3 &in, const Vec3 &in, float overbounce )", asFUNCTION( GS_asClipVelocity ), NULL },
 
 	{ "void GetPlayerStandSize( Vec3 & out, Vec3 & out )", asFUNCTION( GS_asGetPlayerStandSize ), NULL },
 	{ "void GetPlayerCrouchSize( Vec3 & out, Vec3 & out )", asFUNCTION( GS_asGetPlayerCrouchSize ), NULL },
@@ -1797,10 +1801,12 @@ static int asMAX_ITEMS = MAX_ITEMS;
 static int asPS_MAX_STATS = PS_MAX_STATS;
 static int asMAX_GAME_STATS = MAX_GAME_STATS;
 static int asMAX_EVENTS = MAX_EVENTS;
+static int asMAX_TOUCHENTS = MAXTOUCH;
 
 static float asBASEGRAVITY = BASEGRAVITY;
 static float asGRAVITY = GRAVITY;
 static float asGRAVITY_COMPENSATE = GRAVITY_COMPENSATE;
+static int asZOOMTIME = ZOOMTIME;
 
 static const gs_asglobproperties_t asGameGlobalConstants[] =
 {
@@ -1808,9 +1814,11 @@ static const gs_asglobproperties_t asGameGlobalConstants[] =
 	{ "const int PS_MAX_STATS", &asPS_MAX_STATS },
 	{ "const int MAX_GAME_STATS", &asMAX_GAME_STATS },
 	{ "const int MAX_EVENTS", &asMAX_EVENTS },
+	{ "const int MAX_TOUCHENTS", &asMAX_TOUCHENTS },
 	{ "const float BASEGRAVITY", &asBASEGRAVITY },
 	{ "const float GRAVITY", &asGRAVITY },
 	{ "const float GRAVITY_COMPENSATE", &asGRAVITY_COMPENSATE },
+	{ "const int ZOOMTIME", &asZOOMTIME },
 
 	{ NULL }
 };
