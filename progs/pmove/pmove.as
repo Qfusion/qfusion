@@ -64,6 +64,11 @@ const float pm_wishspeed = 30;
 
 const float pm_dashupspeed = ( 174.0f * GRAVITY_COMPENSATE );
 
+const float pm_wjupspeed = ( 330.0f * GRAVITY_COMPENSATE );
+const float pm_failedwjupspeed = ( 50.0f * GRAVITY_COMPENSATE );
+const float pm_wjbouncefactor = 0.3f;
+const float pm_failedwjbouncefactor = 0.1f;
+
 Vec3 playerboxStandMins, playerboxStandMaxs;
 float playerboxStandViewheight;
 
@@ -72,6 +77,31 @@ float playerboxCrouchViewheight;
 
 Vec3 playerboxGibMins, playerboxGibMaxs;
 float playerboxGibViewheight;
+
+int CrouchLerpPlayerSize( int timer, Vec3 &out mins, Vec3 &out maxs, float &out viewHeight ) {
+	if( timer < 0 ) {
+		timer = 0;
+	} else if( timer > CROUCHTIME ) {
+		timer = CROUCHTIME;
+	}
+
+	float crouchFrac = float( timer ) / float( CROUCHTIME );
+	if( crouchFrac < 0.0f ) {
+		crouchFrac = 0.0f;
+	} else if( crouchFrac > 1.0f ) {
+		crouchFrac = 1.0f;
+	}
+
+	mins = playerboxStandMins - ( crouchFrac * ( playerboxStandMins - playerboxCrouchMins ) );
+	maxs = playerboxStandMaxs - ( crouchFrac * ( playerboxStandMaxs - playerboxCrouchMaxs ) );
+	viewHeight = playerboxStandViewheight - ( crouchFrac * ( playerboxStandViewheight - playerboxCrouchViewheight ) );
+
+	return timer;
+}
+
+bool IsWalkablePlane( const Vec3 &in normal ) {
+	return normal.z >= 0.7;
+}
 
 class PMoveLocal {
 	Vec3 origin;          // full float precision
@@ -100,7 +130,6 @@ class PMoveLocal {
 	float maxCrouchedSpeed;
 	float jumpPlayerSpeed;
 	float dashPlayerSpeed;
-
 
 	void BeginMove( PMove @pm ) {
 		auto @pml = @this;
@@ -149,6 +178,146 @@ class PMoveLocal {
 		pml.upPush = float( pm.cmd.upmove ) * SPEEDKEY / 127.0f;
 	}
 
+	/*
+	* If the player hull point one-quarter unit down is solid, the player is on ground
+	*/
+	void GroundTrace( PMove @pm, Trace &out trace ) {
+		Vec3 mins, maxs;
+		auto @pml = @this;
+		auto @playerState = @pm.playerState;
+
+		if( pm.skipCollision ) {
+			return;
+		}
+
+		// see if standing on something solid
+		Vec3 point( pml.origin.x, pml.origin.y, pml.origin.z - 0.25 );
+		pm.getSize( mins, maxs );
+
+		trace.doTrace( pml.origin, mins, maxs, point, playerState.POVnum, pm.contentMask );
+//GS::Print( "" + trace.fraction + " " + trace.entNum + "\n" );
+	}
+
+	void UnstickPosition( PMove @pm, Trace &out trace ) {
+		int j;
+		Vec3 origin;
+		Vec3 mins, maxs;
+		auto @pml = @this;
+		auto @playerState = @pm.playerState;
+
+		if( pm.skipCollision ) {
+			return;
+		}
+		if( playerState.pmove.pm_type == PM_SPECTATOR ) {
+			return;
+		}
+
+		origin = pml.origin;
+		pm.getSize( mins, maxs );
+
+		// try all combinations
+		for( j = 0; j < 8; j++ ) {
+			origin = pml.origin;
+
+			origin.x += ( j & 1 ) != 0 ? -1.0f : 1.0f;
+			origin.y += ( j & 2 ) != 0 ? -1.0f : 1.0f;
+			origin.z += ( j & 4 ) != 0 ? -1.0f : 1.0f;
+
+			trace.doTrace( origin, mins, maxs, origin, playerState.POVnum, pm.contentMask );
+
+			if( !trace.allSolid ) {
+				pml.origin = origin;
+				GroundTrace( pm, trace );
+				return;
+			}
+		}
+
+		// go back to the last position
+		pml.origin = pml.previousOrigin;
+	}
+
+	void CategorizePosition( PMove @pm ) {
+		auto @pml = @this;
+		auto @playerState = @pm.playerState;
+		auto @pmoveState = @playerState.pmove;
+
+		if( pml.velocity.z > 180 ) { // !!ZOID changed from 100 to 180 (ramp accel)
+			pmoveState.pm_flags = pmoveState.pm_flags & ~PMF_ON_GROUND;
+			pm.groundEntity = -1;
+		} else {
+			Trace trace;
+
+			// see if standing on something solid
+			GroundTrace( pm, trace );
+
+			if( trace.allSolid ) {
+				// try to unstick position
+				UnstickPosition( pm, trace );
+			}
+
+			pml.groundPlaneNormal = trace.planeNormal;
+			pml.groundPlaneDist = trace.planeDist;
+			pml.groundSurfFlags = trace.surfFlags;
+			pml.groundContents = trace.contents;
+
+			if( ( trace.fraction == 1.0f ) || ( !IsWalkablePlane( trace.planeNormal ) && !trace.startSolid ) ) {
+				pm.groundEntity = -1;
+				pmoveState.pm_flags = pmoveState.pm_flags & ~PMF_ON_GROUND;
+			} else {
+				pm.groundEntity = trace.entNum;
+				pm.groundPlaneNormal = trace.planeNormal;
+				pm.groundPlaneDist = trace.planeDist;
+				pm.groundSurfFlags = trace.surfFlags;
+				pm.groundContents = trace.contents;
+
+				// hitting solid ground will end a waterjump
+				if( ( pmoveState.pm_flags & PMF_TIME_WATERJUMP ) != 0 ) {
+					pmoveState.pm_flags = pmoveState.pm_flags & int( ~( PMF_TIME_WATERJUMP | PMF_TIME_LAND | PMF_TIME_TELEPORT ) );
+					pmoveState.pm_time = 0;
+				}
+
+				if( ( pmoveState.pm_flags & PMF_ON_GROUND ) == 0 ) { // just hit the ground
+					pmoveState.pm_flags = pmoveState.pm_flags | PMF_ON_GROUND;
+				}
+			}
+
+			if( trace.fraction < 1.0 ) {
+				pm.addTouchEnt( trace.entNum );
+			}
+		}
+
+		//
+		// get waterlevel, accounting for ducking
+		//
+		pm.waterLevel = 0;
+		pm.waterType = 0;
+
+		Vec3 mins, maxs;
+		pm.getSize( mins, maxs );
+
+		float sample2 = playerState.viewHeight - mins.z;
+		float sample1 = sample2 / 2.0f;
+
+		Vec3 point = pml.origin;
+		point.z = pml.origin.z + mins.z + 1.0f;
+		int cont = GS::PointContents( point );
+
+		if( ( cont & MASK_WATER ) != 0 ) {
+			pm.waterType = cont;
+			pm.waterLevel = 1;
+			point.z = pml.origin.z + mins.z + sample1;
+			cont = GS::PointContents( point );
+			if( ( cont & MASK_WATER ) != 0 ) {
+				pm.waterLevel = 2;
+				point.z = pml.origin.z + mins.z + sample2;
+				cont = GS::PointContents( point );
+				if( ( cont & MASK_WATER ) != 0 ) {
+					pm.waterLevel = 3;
+				}
+			}
+		}
+	}
+
 	void ClearDash( PMove @pm ) {
 		auto @pmoveState = @pm.playerState.pmove;
 		pmoveState.pm_flags = pmoveState.pm_flags & int( ~PMF_DASHING );
@@ -166,7 +335,408 @@ class PMoveLocal {
 		pmoveState.stats[PM_STAT_STUN] = 0;
 	}
 
-	void DecPMoveStat( PMove @pm, int stat ) {
+	void ClipVelocityAgainstGround( void ) {
+		auto @pml = @this;
+		
+		// clip against the ground when jumping if moving that direction
+		if( pml.groundPlaneNormal.z > 0 && pml.velocity.z < 0 ) {
+			Vec3 n2( pml.groundPlaneNormal.x, pml.groundPlaneNormal.y, 0.0f );
+			Vec3 v2( pml.velocity.x, pml.velocity.y, 0.0f );
+			if( n2 * v2 > 0.0f ) {
+				pml.velocity = GS::ClipVelocity( pml.velocity, pml.groundPlaneNormal, PM_OVERBOUNCE );
+			}
+		}
+	}
+
+	// Walljump wall availability check
+	// nbTestDir is the number of directions to test around the player
+	// maxZnormal is the max Z value of the normal of a poly to consider it a wall
+	// normal becomes a pointer to the normal of the most appropriate wall
+	Vec3 PlayerTouchWall( PMove @pm, int nbTestDir, float maxZnormal ) {
+		int i;
+		Trace trace;
+		Vec3 zero, dir, mins, maxs;
+		Vec3 pm_mins, pm_maxs;
+		bool alternate;
+		float r, d, dx, dy, m;
+		auto @pml = @this;
+		auto @playerState = @pm.playerState;
+		auto @pmoveState = @playerState.pmove;
+
+		pm.getSize( pm_mins, pm_maxs );
+
+		// if there is nothing at all within the checked area, we can skip the individual checks
+		// this optimization must always overapproximate the combination of those checks
+		mins.x = pm_mins.x - pm_maxs.x;
+		mins.y = pm_mins.y - pm_maxs.y;
+		maxs.x = pm_maxs.x + pm_maxs.x;
+		maxs.y = pm_maxs.y + pm_maxs.y;
+		if( pml.velocity[0] > 0 ) {
+			maxs.x += pml.velocity.x * 0.015f;
+		} else {
+			mins.x += pml.velocity.x * 0.015f;
+		}
+		if( pml.velocity[1] > 0 ) {
+			maxs.y += pml.velocity.y * 0.015f;
+		} else {
+			mins.y += pml.velocity.y * 0.015f;
+		}
+		mins.z = maxs.z = 0;
+		trace.doTrace( pml.origin, mins, maxs, pml.origin, playerState.POVnum, pm.contentMask );
+		if( !trace.allSolid && trace.fraction == 1.0f ) {
+			return Vec3( 0.0f );
+		}
+
+		// determine the primary direction
+		if( pml.sidePush > 0 ) {
+			r = -180.0f / 2.0f;
+		} else if( pml.sidePush < 0 ) {
+			r = 180.0f / 2.0f;
+		} else if( pml.forwardPush > 0 ) {
+			r = 0.0f;
+		} else {
+			r = 180.0f;
+		}
+		alternate = pml.sidePush == 0 || pml.forwardPush == 0;
+
+		d = 0.0f; // current distance from the primary direction
+
+		for( i = 0; i < nbTestDir; i++ ) {
+			if( i != 0 ) {
+				if( alternate ) {
+					r += 180.0f; // switch front and back
+				}
+				if( ( !alternate && i % 2 == 0 ) || ( alternate && i % 4 == 0 ) ) { // switch from left to right
+					r -= 2 * d;
+				} else if( !alternate || ( alternate && i % 4 == 2 ) ) {   // switch from right to left and move further away
+					r += d;
+					d += 360.0f / nbTestDir;
+					r += d;
+				}
+			}
+
+			// determine the relative offsets from the origin
+			dx = cos( deg2rad( playerState.viewAngles[YAW] + r ) );
+			dy = sin( deg2rad( playerState.viewAngles[YAW] + r ) );
+
+			// project onto the player box
+			if( dx == 0.0f ) {
+				m = pm_maxs[1];
+			} else if( dy == 0.0f ) {
+				m = pm_maxs[0];
+			} else if( abs( dx / pm_maxs.x ) > abs( dy / pm_maxs.y ) ) {
+				m = abs( pm_maxs.x / dx );
+			} else {
+				m = abs( pm_maxs.y / dy );
+			}
+
+			// allow a gap between the player and the wall
+			m += pm_maxs.x;
+
+			dir.x = pml.origin.x + dx * m + pml.velocity.x * 0.015f;
+			dir.y = pml.origin.y + dy * m + pml.velocity.y * 0.015f;
+			dir.z = pml.origin.z;
+
+			trace.doTrace( pml.origin, zero, zero, dir, playerState.POVnum, pm.contentMask );
+
+			if( trace.allSolid ) {
+				return Vec3( 0.0f );
+			}
+
+			if( trace.fraction == 1.0f ) {
+				continue; // no wall in this direction
+
+			}
+			if( ( trace.surfFlags & ( SURF_SKY | SURF_NOWALLJUMP ) ) != 0 ) {
+				continue;
+			}
+
+			if( trace.entNum > 0 && GS::GetEntityState( trace.entNum ).type == ET_PLAYER ) {
+				continue;
+			}
+
+			if( trace.fraction > 0.0f && abs( trace.planeNormal.z ) < maxZnormal ) {
+				return trace.planeNormal;
+			}
+		}
+
+		return Vec3( 0.0f );
+	}
+
+	/*
+	* CheckJump
+	*/
+	void CheckJump( PMove @pm ) {
+		auto @pml = @this;
+		auto @playerState = @pm.playerState;
+		auto @pmoveState = @playerState.pmove;
+
+		if( pml.upPush < 10 ) {
+			// not holding jump
+			if( ( pmoveState.stats[PM_STAT_FEATURES] & PMFEAT_CONTINOUSJUMP ) == 0 ) {
+				pmoveState.pm_flags = pmoveState.pm_flags & ~PMF_JUMP_HELD;
+			}
+			return;
+		}
+
+		if( ( pmoveState.stats[PM_STAT_FEATURES] & PMFEAT_CONTINOUSJUMP ) == 0 ) {
+			// must wait for jump to be released
+			if( ( pmoveState.pm_flags & PMF_JUMP_HELD ) != 0 ) {
+				return;
+			}
+		}
+
+		if( pmoveState.pm_type != PM_NORMAL ) {
+			return;
+		}
+
+		if( pm.waterLevel >= 2 ) { // swimming, not jumping
+			pm.groundEntity = -1;
+			return;
+		}
+
+		if( pm.groundEntity == -1 ) {
+			return;
+		}
+
+		if( ( pmoveState.stats[PM_STAT_FEATURES] & PMFEAT_JUMP ) == 0 ) {
+			return;
+		}
+
+		if( ( pmoveState.stats[PM_STAT_FEATURES] & PMFEAT_CONTINOUSJUMP ) == 0 ) {
+			pmoveState.pm_flags = pmoveState.pm_flags | PMF_JUMP_HELD;
+		}
+
+		pm.groundEntity = -1;
+
+		ClipVelocityAgainstGround();
+
+		pmoveState.skim_time = PM_SKIM_TIME;
+
+		//if( gs.module == GS_MODULE_GAME ) GS_Printf( "upvel %f\n", pml.velocity[2] );
+
+		if( pml.velocity.z > 100 ) {
+			GS::PredictedEvent( playerState.POVnum, EV_DOUBLEJUMP, 0 );
+			pml.velocity.z += pml.jumpPlayerSpeed;
+		} else if( pml.velocity[2] > 0 ) {
+			GS::PredictedEvent( playerState.POVnum, EV_JUMP, 0 );
+			pml.velocity.z += pml.jumpPlayerSpeed;
+		} else {
+			GS::PredictedEvent( playerState.POVnum, EV_JUMP, 0 );
+			pml.velocity.z = pml.jumpPlayerSpeed;
+		}
+
+		// remove wj count
+		pmoveState.pm_flags = pmoveState.pm_flags & ~PMF_JUMPPAD_TIME;
+
+		ClearDash( pm );
+		ClearWallJump( pm );
+	}
+
+	void CheckDash( PMove @pm ) {
+		auto @pml = @this;
+		auto @playerState = @pm.playerState;
+		auto @pmoveState = @playerState.pmove;
+		float upspeed;
+		Vec3 dashdir;
+
+		if( ( pm.cmd.buttons & BUTTON_SPECIAL ) == 0 ) {
+			pmoveState.pm_flags = pmoveState.pm_flags & ~PMF_SPECIAL_HELD;
+		}
+
+		if( pmoveState.pm_type != PM_NORMAL ) {
+			return;
+		}
+
+		if( pmoveState.stats[PM_STAT_DASHTIME] > 0 ) {
+			return;
+		}
+
+		if( pmoveState.stats[PM_STAT_KNOCKBACK] > 0 ) { // can not start a new dash during knockback time
+			return;
+		}
+//GS::Print("WOOT " + pm.groundEntity + "\n");
+		if( ( pm.cmd.buttons & BUTTON_SPECIAL ) != 0 && pm.groundEntity != -1
+			&& ( pmoveState.stats[PM_STAT_FEATURES] & PMFEAT_DASH ) != 0 ) {
+			if( ( pmoveState.pm_flags & PMF_SPECIAL_HELD ) != 0 ) {
+				return;
+			}
+
+			pmoveState.pm_flags = pmoveState.pm_flags & ~PMF_JUMPPAD_TIME;
+			ClearWallJump( pm );
+
+			pmoveState.pm_flags = pmoveState.pm_flags | (PMF_DASHING | PMF_SPECIAL_HELD);
+			pm.groundEntity = -1;
+
+			ClipVelocityAgainstGround();
+
+			if( pml.velocity.z <= 0.0f ) {
+				upspeed = pm_dashupspeed;
+			} else {
+				upspeed = pm_dashupspeed + pml.velocity.z;
+			}
+
+			// ch : we should do explicit forwardPush here, and ignore sidePush ?
+			dashdir = pml.flatforward * pml.forwardPush + pml.sidePush * pml.right;
+			dashdir.z = 0.0;
+
+			if( dashdir.length() < 0.01f ) { // if not moving, dash like a "forward dash"
+				dashdir = pml.flatforward;
+			} else {
+				dashdir.normalize();
+			}
+
+			float actual_velocity = Vec3( pml.velocity.x, pml.velocity.y, 0.0 ).length();
+			if( actual_velocity <= pml.dashPlayerSpeed ) {
+				dashdir *= pml.dashPlayerSpeed;
+			} else {
+				dashdir *= actual_velocity;
+			}
+
+			pml.velocity = dashdir;
+			pml.velocity.z = upspeed;
+
+			pmoveState.stats[PM_STAT_DASHTIME] = PM_DASHJUMP_TIMEDELAY;
+
+			pmoveState.skim_time = PM_SKIM_TIME;
+
+			// return sound events
+			if( abs( pml.sidePush ) > 10 && abs( pml.sidePush ) >= abs( pml.forwardPush ) ) {
+				if( pml.sidePush > 0 ) {
+					GS::PredictedEvent( playerState.POVnum, EV_DASH, 2 );
+				} else {
+					GS::PredictedEvent( playerState.POVnum, EV_DASH, 1 );
+				}
+			} else if( pml.forwardPush < -10 ) {
+				GS::PredictedEvent( playerState.POVnum, EV_DASH, 3 );
+			} else {
+				GS::PredictedEvent( playerState.POVnum, EV_DASH, 0 );
+			}
+		} else if( pm.groundEntity == -1 ) {
+			pmoveState.pm_flags = pmoveState.pm_flags & ~PMF_DASHING;
+		}
+	}
+
+	/*
+	* CheckWallJump -- By Kurim
+	*/
+	void CheckWallJump( PMove @pm ) {
+		auto @pml = @this;
+		auto @playerState = @pm.playerState;
+		auto @pmoveState = @playerState.pmove;
+		Vec3 normal;
+		float hspeed;
+		Vec3 pm_mins, pm_maxs;
+		const float pm_wjminspeed = ( ( pml.maxWalkSpeed + pml.maxPlayerSpeed ) * 0.5f );
+
+		if( ( pm.cmd.buttons & BUTTON_SPECIAL ) == 0 ) {
+			pmoveState.pm_flags = pmoveState.pm_flags & ~PMF_SPECIAL_HELD;
+		}
+
+		if( pm.groundEntity != -1 ) {
+			pmoveState.pm_flags = pmoveState.pm_flags & ~(PMF_WALLJUMPING | PMF_WALLJUMPCOUNT);
+		}
+
+		if( ( pmoveState.pm_flags & PMF_WALLJUMPING ) != 0 && pml.velocity.z < 0.0 ) {
+			pmoveState.pm_flags = pmoveState.pm_flags & ~PMF_WALLJUMPING;
+		}
+
+		if( pmoveState.stats[PM_STAT_WJTIME] <= 0 ) { // reset the wj count after wj delay
+			pmoveState.pm_flags = pmoveState.pm_flags & ~PMF_WALLJUMPCOUNT;
+		}
+
+		if( pmoveState.pm_type != PM_NORMAL ) {
+			return;
+		}
+
+		// don't walljump in the first 100 milliseconds of a dash jump
+		if( ( pmoveState.pm_flags & PMF_DASHING ) != 0
+			&& ( pmoveState.stats[PM_STAT_DASHTIME] > ( PM_DASHJUMP_TIMEDELAY - 100 ) ) ) {
+			return;
+		}
+
+		pm.getSize( pm_mins, pm_maxs );
+
+		// markthis
+
+		if( pm.groundEntity == -1 && ( pm.cmd.buttons & BUTTON_SPECIAL ) != 0
+			&& ( pmoveState.stats[PM_STAT_FEATURES] & PMFEAT_WALLJUMP ) != 0 &&
+			( ( pmoveState.pm_flags & PMF_WALLJUMPCOUNT ) == 0 )
+			&& pmoveState.stats[PM_STAT_WJTIME] <= 0
+			&& !pm.skipCollision
+			) {
+			Trace trace;
+			Vec3 point = pml.origin;
+			point.z -= STEPSIZE;
+
+			// don't walljump if our height is smaller than a step
+			// unless jump is pressed or the player is moving faster than dash speed and upwards
+			hspeed = Vec3( pml.velocity.x, pml.velocity.y, 0.0f ).length();
+			trace.doTrace( pml.origin, pm_mins, pm_maxs, point, playerState.POVnum, pm.contentMask );
+
+			if( pml.upPush >= 10
+				|| ( hspeed > pmoveState.stats[PM_STAT_DASHSPEED] && pml.velocity[2] > 8 )
+				|| ( trace.fraction == 1.0f ) || ( !IsWalkablePlane( trace.planeNormal ) && !trace.startSolid ) ) {
+				normal = PlayerTouchWall( pm, 20, 0.3f );
+				if( normal.length() == 0.0f ) {
+					return;
+				}
+
+				if( ( pmoveState.pm_flags & PMF_SPECIAL_HELD ) == 0
+					&& ( pmoveState.pm_flags & PMF_WALLJUMPING ) == 0 ) {
+					float oldupvelocity = pml.velocity.z;
+					pml.velocity.z = 0.0;
+
+					hspeed = pml.velocity.normalize();
+
+					// if stunned almost do nothing
+					if( pmoveState.stats[PM_STAT_STUN] > 0 ) {
+						pml.velocity = GS::ClipVelocity( pml.velocity, normal, 1.0f );
+						pml.velocity += pm_failedwjbouncefactor * normal;
+
+						pml.velocity.normalize();
+
+						pml.velocity *= hspeed;
+						pml.velocity.z = ( oldupvelocity + pm_failedwjupspeed > pm_failedwjupspeed ) ? oldupvelocity : oldupvelocity + pm_failedwjupspeed;
+					} else {
+						pml.velocity = GS::ClipVelocity( pml.velocity, normal, 1.0005f );
+						pml.velocity += pm_wjbouncefactor * normal;
+
+						if( hspeed < pm_wjminspeed ) {
+							hspeed = pm_wjminspeed;
+						}
+
+						pml.velocity.normalize();
+
+						pml.velocity *= hspeed;
+						pml.velocity.z = ( oldupvelocity > pm_wjupspeed ) ? oldupvelocity : pm_wjupspeed; // jal: if we had a faster upwards speed, keep it
+					}
+
+					// set the walljumping state
+					pml.ClearDash( pm );
+
+					pmoveState.pm_flags = (pmoveState.pm_flags & ~PMF_JUMPPAD_TIME) | PMF_WALLJUMPING | PMF_SPECIAL_HELD | PMF_WALLJUMPCOUNT;
+
+					if( pmoveState.stats[PM_STAT_STUN] > 0 ) {
+						pmoveState.stats[PM_STAT_WJTIME] = PM_WALLJUMP_FAILED_TIMEDELAY;
+
+						// Create the event
+						GS::PredictedEvent( playerState.POVnum, EV_WALLJUMP_FAILED, GS::DirToByte( normal ) );
+					} else {
+						pmoveState.stats[PM_STAT_WJTIME] = PM_WALLJUMP_TIMEDELAY;
+						pmoveState.skim_time = PM_SKIM_TIME;
+
+						// Create the event
+						GS::PredictedEvent( playerState.POVnum, EV_WALLJUMP, GS::DirToByte( normal ) );
+					}
+				}
+			}
+		} else {
+			pmoveState.pm_flags = pmoveState.pm_flags & ~PMF_WALLJUMPING;
+		}
+	}
+
+	void DecreasePMoveStat( PMove @pm, int stat ) {
 		auto @pmoveState = @pm.playerState.pmove;
 
 		int value = pmoveState.stats[stat];
@@ -233,17 +803,17 @@ class PMoveLocal {
 				}
 			}
 
-			DecPMoveStat( pm, PM_STAT_NOUSERCONTROL ); 
-			DecPMoveStat( pm, PM_STAT_KNOCKBACK ); 
+			DecreasePMoveStat( pm, PM_STAT_NOUSERCONTROL ); 
+			DecreasePMoveStat( pm, PM_STAT_KNOCKBACK ); 
 
 			// PM_STAT_CROUCHTIME is handled at PM_AdjustBBox
 			// PM_STAT_ZOOMTIME is handled at PM_CheckZoom
 
-			DecPMoveStat( pm, PM_STAT_DASHTIME ); 
-			DecPMoveStat( pm, PM_STAT_WJTIME ); 
-			DecPMoveStat( pm, PM_STAT_NOAUTOATTACK ); 
-			DecPMoveStat( pm, PM_STAT_STUN ); 
-			DecPMoveStat( pm, PM_STAT_FWDTIME ); 
+			DecreasePMoveStat( pm, PM_STAT_DASHTIME ); 
+			DecreasePMoveStat( pm, PM_STAT_WJTIME ); 
+			DecreasePMoveStat( pm, PM_STAT_NOAUTOATTACK ); 
+			DecreasePMoveStat( pm, PM_STAT_STUN ); 
+			DecreasePMoveStat( pm, PM_STAT_FWDTIME ); 
 		}
 
 		if( pmoveState.stats[PM_STAT_NOUSERCONTROL] > 0 ) {
@@ -260,21 +830,6 @@ class PMoveLocal {
 		}
 	}
 
-	int CrouchLerpPlayerSize( int timer, Vec3 &out mins, Vec3 &out maxs, float &out viewHeight ) {
-		if( timer < 0 ) {
-			timer = 0;
-		} else if( timer > CROUCHTIME ) {
-			timer = CROUCHTIME;
-		}
-
-		float crouchFrac = float( timer ) / float( CROUCHTIME );
-		mins = playerboxStandMins - ( crouchFrac * ( playerboxStandMins - playerboxCrouchMins ) );
-		maxs = playerboxStandMaxs - ( crouchFrac * ( playerboxStandMaxs - playerboxCrouchMaxs ) );
-		viewHeight = playerboxStandViewheight - ( crouchFrac * ( playerboxStandViewheight - playerboxCrouchViewheight ) );
-
-		return timer;
-	}
-
 	void CheckZoom( PMove @pm ) {
 		auto @pml = @this;
 		auto @playerState = @pm.playerState;
@@ -287,9 +842,9 @@ class PMoveLocal {
 
 		int zoom = pmoveState.stats[PM_STAT_ZOOMTIME];
 		if( ( pm.cmd.buttons & BUTTON_ZOOM ) != 0 && ( pmoveState.stats[PM_STAT_FEATURES] & PMFEAT_ZOOM ) != 0 ) {
-			zoom += pm->cmd.msec;
+			zoom += pm.cmd.msec;
 		} else if( zoom > 0 ) {
-			zoom -= pm->cmd.msec;
+			zoom -= pm.cmd.msec;
 		}
 
 		if( zoom < 0 ) {
@@ -404,6 +959,63 @@ class PMoveLocal {
 		if( height > 0.0f ) {
 			playerState.viewHeight -= height;
 		}
+	}
+
+	void CheckSpecialMovement( PMove @pm ) {
+		Vec3 spot;
+		int cont;
+		Trace trace;
+		auto @pml = @this;
+		auto @playerState = @pm.playerState;
+		auto @pmoveState = @pm.playerState.pmove;
+		Vec3 mins, maxs;
+
+		pm.ladder = false;
+
+		if( pmoveState.pm_time != 0 ) {
+			return;
+		}
+
+		pml.ladder = false;
+
+
+		// check for ladder
+		if( !pm.skipCollision ) {
+			spot = pml.origin + pml.flatforward;
+
+			pm.getSize( mins, maxs );
+
+			trace.doTrace( pml.origin, mins, maxs, spot, playerState.POVnum, pm.contentMask );
+			if( ( trace.fraction < 1.0f ) && ( trace.surfFlags & SURF_LADDER ) != 0 ) {
+				pml.ladder = true;
+				pm.ladder = true;
+			}
+		}
+
+		// check for water jump
+		if( pm.waterLevel != 2 ) {
+			return;
+		}
+
+		spot = pml.origin + 30.0f * pml.flatforward;
+		spot.z += 4;
+		cont = GS::PointContents( spot );
+		if( ( cont & CONTENTS_SOLID ) == 0 ) {
+			return;
+		}
+
+		spot.z += 16;
+		cont = GS::PointContents( spot );
+		if( cont != 0 ) {
+			return;
+		}
+
+		// jump out of water
+		pml.velocity = pml.flatforward * 50.0f;
+		pml.velocity.z = 350.0f;
+
+		pmoveState.pm_flags = pmoveState.pm_flags | PMF_TIME_WATERJUMP;
+		pmoveState.pm_time = 255;
 	}
 
 	void FlyMove( PMove @pm, bool doClip ) {
@@ -560,11 +1172,11 @@ void PMove( PMove @pm ) {
 
 	pml.AdjustViewheight( pm );
 
-	//pml.CategorizePosition();
+	pml.CategorizePosition( pm );
 
 	int oldGroundEntity = pm.groundEntity;
 
-	//pml.CheckSpecialMovement();
+	pml.CheckSpecialMovement( pm );
 
 	if( ( pmoveState.pm_flags & PMF_TIME_TELEPORT ) != 0 ) {
 		// teleport pause stays exactly in place
@@ -582,11 +1194,11 @@ void PMove( PMove @pm ) {
 	} else {
 		// Kurim
 		// Keep this order !
-		//pml.CheckJump();
+		pml.CheckJump( pm );
 
-		//pml.CheckDash();
+		pml.CheckDash( pm );
 
-		//pml.CheckWallJump();
+		pml.CheckWallJump( pm );
 
 		//pml.CheckCrouchSlide();
 
@@ -620,7 +1232,7 @@ void PMove( PMove @pm ) {
 	}
 	
 	// set groundentity, watertype, and waterlevel for final spot
-	//pml.CategorizePosition();
+	pml.CategorizePosition( pm );
 
 	pml.EndMove( pm );
 
@@ -641,11 +1253,11 @@ void PMove( PMove @pm ) {
 	if( pm.groundEntity != -1 ) { // remove wall-jump and dash bits when touching ground
 		// always keep the dash flag 50 msecs at least (to prevent being removed at the start of the dash)
 		if( pmoveState.stats[PM_STAT_DASHTIME] < ( PM_DASHJUMP_TIMEDELAY - 50 ) ) {
-			pmoveState.pm_flags = pmoveState.pm_flags & int( ~PMF_DASHING );
+			pmoveState.pm_flags = pmoveState.pm_flags & ~PMF_DASHING;
 		}
 
 		if( pmoveState.stats[PM_STAT_WJTIME] < ( PM_WALLJUMP_TIMEDELAY - 50 ) ) {
-			//pml.ClearWallJump();
+			pml.ClearWallJump( pm );
 		}
 	}
 
