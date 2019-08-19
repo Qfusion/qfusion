@@ -276,6 +276,7 @@ enum {
 	GS_MAXBUNNIES
 };
 
+int PM_SlideMove( pmove_t *pmove );
 void Pmove( pmove_t *pmove );
 void PmoveExt( pmove_t *pmove, void (*PmoveFn)( pmove_t * ) );
 

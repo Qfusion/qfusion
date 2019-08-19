@@ -659,6 +659,17 @@ static const gs_asEnumVal_t asButtonEnumVals[] =
 	ASLIB_ENUM_VAL_NULL
 };
 
+static const gs_asEnumVal_t asSlideMoveEnumVals[] =
+{
+	ASLIB_ENUM_VAL( SLIDEMOVEFLAG_MOVED ),
+	ASLIB_ENUM_VAL( SLIDEMOVEFLAG_BLOCKED ),
+	ASLIB_ENUM_VAL( SLIDEMOVEFLAG_TRAPPED ),
+	ASLIB_ENUM_VAL( SLIDEMOVEFLAG_WALL_BLOCKED ),
+	ASLIB_ENUM_VAL( SLIDEMOVEFLAG_PLANE_TOUCHED ),
+
+	ASLIB_ENUM_VAL_NULL
+};
+
 //=======================================================================
 
 static const gs_asEnum_t asGameEnums[] =
@@ -696,6 +707,8 @@ static const gs_asEnum_t asGameEnums[] =
 
 	{ "axis_e", asAxisEnumVals },
 	{ "button_e", asButtonEnumVals },
+
+	{ "slidemoveflags_e", asSlideMoveEnumVals },
 
 	ASLIB_ENUM_VAL_NULL
 };
@@ -1621,6 +1634,26 @@ static void objectPMove_TouchTriggers( asvec3_t *prevOrigin, pmove_t *pmove ) {
 	gs.api.PMoveTouchTriggers( pmove, prevOrigin->v );
 }
 
+static asvec3_t objectPMove_GetOrigin( pmove_t *pmove) {
+	asvec3_t origin;
+	VectorCopy( pmove->origin, origin.v );
+	return origin;
+}
+
+static void objectPMove_SetOrigin( asvec3_t *vec, pmove_t *pmove ) {
+	VectorCopy( vec->v, pmove->origin );
+}
+
+static asvec3_t objectPMove_GetVelocity( pmove_t *pmove ) {
+	asvec3_t origin;
+	VectorCopy( pmove->velocity, origin.v );
+	return origin;
+}
+
+static void objectPMove_SetVelocity( asvec3_t *vec, pmove_t *pmove ) {
+	VectorCopy( vec->v, pmove->velocity );
+}
+
 static const gs_asMethod_t asPMove_Methods[] =
 {
 	{ ASLIB_FUNCTION_DECL( PlayerState @, get_playerState, () const ), asFUNCTION( objectPMove_GetPlayerState ), asCALL_CDECL_OBJLAST },
@@ -1633,6 +1666,11 @@ static const gs_asMethod_t asPMove_Methods[] =
 	{ ASLIB_FUNCTION_DECL( void, set_touchEnts, ( uint index, int entNum ) ), asFUNCTION( objectPMove_SetTouchEnt ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, touchTriggers, ( const Vec3 &in prevOrigin ) ), asFUNCTION( objectPMove_TouchTriggers ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, addTouchEnt, ( int entNum ) ), asFUNCTION( objectPMove_AddTouchEnt ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( int, slideMove, () ), asFUNCTION( PM_SlideMove ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( Vec3, get_origin, () const ), asFUNCTION( objectPMove_GetOrigin ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( void, set_origin, ( const Vec3 &in ) ), asFUNCTION( objectPMove_SetOrigin ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( Vec3, get_velocity, () const ), asFUNCTION( objectPMove_GetVelocity ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( void, set_velocity, ( const Vec3 &in ) ), asFUNCTION( objectPMove_SetVelocity ), asCALL_CDECL_OBJLAST },
 
 	ASLIB_METHOD_NULL
 };
@@ -1652,6 +1690,8 @@ static const gs_asProperty_t asPMove_Properties[] =
 	{ ASLIB_PROPERTY_DECL( float, groundPlaneDist ), ASLIB_FOFFSET( pmove_t, groundplane.dist ) },
 	{ ASLIB_PROPERTY_DECL( int16, groundPlaneType ), ASLIB_FOFFSET( pmove_t, groundplane.type ) },
 	{ ASLIB_PROPERTY_DECL( int16, groundPlaneSignBits ), ASLIB_FOFFSET( pmove_t, groundplane.signbits ) },
+	{ ASLIB_PROPERTY_DECL( float, remainingTime ), ASLIB_FOFFSET( pmove_t, remainingTime ) },
+	{ ASLIB_PROPERTY_DECL( float, slideBounce ), ASLIB_FOFFSET( pmove_t, slideBounce ) },
 
 	ASLIB_PROPERTY_NULL
 };
@@ -1841,6 +1881,7 @@ static float asGRAVITY = GRAVITY;
 static float asGRAVITY_COMPENSATE = GRAVITY_COMPENSATE;
 static int asZOOMTIME = ZOOMTIME;
 static float asSTEPSIZE = STEPSIZE;
+static float asSLIDEMOVE_PLANEINTERACT_EPSILON = SLIDEMOVE_PLANEINTERACT_EPSILON;
 
 static const gs_asglobproperties_t asGameGlobalConstants[] =
 {
@@ -1854,6 +1895,7 @@ static const gs_asglobproperties_t asGameGlobalConstants[] =
 	{ "const float GRAVITY_COMPENSATE", &asGRAVITY_COMPENSATE },
 	{ "const int ZOOMTIME", &asZOOMTIME },
 	{ "const float STEPSIZE", &asSTEPSIZE },
+	{ "const float SLIDEMOVE_PLANEINTERACT_EPSILON", &asSLIDEMOVE_PLANEINTERACT_EPSILON },
 
 	{ NULL }
 };
