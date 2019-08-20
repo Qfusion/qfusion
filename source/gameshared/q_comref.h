@@ -64,7 +64,7 @@ typedef struct usercmd_s {
 	int8_t forwardmove, sidemove, upmove;
 } usercmd_t;
 
-#define MAX_PM_STATS 16
+#define MAX_PM_STATS 32
 
 enum {
 	PM_STAT_FEATURES,
