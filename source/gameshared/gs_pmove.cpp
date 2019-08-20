@@ -271,26 +271,26 @@ static void PlayerTouchWall( int nbTestDir, float maxZnormal, vec3_t *normal ) {
 
 #define MAX_CLIP_PLANES 5
 
-static void PM_AddTouchEnt( int entNum ) {
+static void PM_AddTouchEnt( pmove_t *pmove, int entNum ) {
 	int i;
 
-	if( pm->numtouch >= MAXTOUCH || entNum < 0 ) {
+	if( pmove->numtouch >= MAXTOUCH || entNum < 0 ) {
 		return;
 	}
 
 	// see if it is already added
-	for( i = 0; i < pm->numtouch; i++ ) {
-		if( pm->touchents[i] == entNum ) {
+	for( i = 0; i < pmove->numtouch; i++ ) {
+		if( pmove->touchents[i] == entNum ) {
 			return;
 		}
 	}
 
 	// add it
-	pm->touchents[pm->numtouch] = entNum;
-	pm->numtouch++;
+	pmove->touchents[pmove->numtouch] = entNum;
+	pmove->numtouch++;
 }
 
-int PM_SlideMove(pmove_t *pmove) {
+int PM_SlideMove( pmove_t *pmove ) {
 	vec3_t end, dir;
 	vec3_t old_velocity, last_valid_origin;
 	float value;
@@ -299,7 +299,7 @@ int PM_SlideMove(pmove_t *pmove) {
 	trace_t trace;
 	int moves, i, j, k;
 	int maxmoves = 4;
-	float remainingTime = pm->remainingTime;
+	float remainingTime = pmove->remainingTime;
 	int blockedmask = 0;
 	vec_t *pml_velocity = pmove->velocity;
 	vec_t *pml_origin = pmove->origin;
@@ -308,7 +308,7 @@ int PM_SlideMove(pmove_t *pmove) {
 	VectorCopy(pml_origin, last_valid_origin);
 
 	// Do a shortcut in this case
-	if( pm->skipCollision ) {
+	if( pmove->skipCollision ) {
 		VectorMA( pml_origin, remainingTime, pml_velocity, pml_origin );
 		return blockedmask;
 	}
@@ -317,7 +317,7 @@ int PM_SlideMove(pmove_t *pmove) {
 
 	for (moves = 0; moves < maxmoves; moves++) {
 		VectorMA(pml_origin, remainingTime, pml_velocity, end);
-		gs.api.Trace(&trace, pml_origin, pm->mins, pm->maxs, end, pm->playerState->POVnum, pm->contentmask, 0);
+		gs.api.Trace(&trace, pml_origin, pmove->mins, pmove->maxs, end, pmove->playerState->POVnum, pmove->contentmask, 0);
 		if (trace.allsolid) { // trapped into a solid
 			VectorCopy(last_valid_origin, pml_origin);
 			return SLIDEMOVEFLAG_TRAPPED;
@@ -333,7 +333,7 @@ int PM_SlideMove(pmove_t *pmove) {
 
 		}
 		// save touched entity for return output
-		PM_AddTouchEnt(trace.ent);
+		PM_AddTouchEnt(pmove, trace.ent);
 
 		// at this point we are blocked but not trapped.
 
@@ -343,7 +343,7 @@ int PM_SlideMove(pmove_t *pmove) {
 		}
 
 		remainingTime -= (trace.fraction * remainingTime);
-		pm->remainingTime = remainingTime;
+		pmove->remainingTime = remainingTime;
 
 		// we got blocked, add the plane for sliding along it
 
@@ -378,7 +378,7 @@ int PM_SlideMove(pmove_t *pmove) {
 				continue;
 			}
 
-			GS_ClipVelocity(pml_velocity, planes[i], pml_velocity, pm->slideBounce);
+			GS_ClipVelocity(pml_velocity, planes[i], pml_velocity, pmove->slideBounce);
 			// see if we enter a second plane
 			for (j = 0; j < numplanes; j++) {
 				if (j == i) { // it's the same plane
@@ -389,7 +389,7 @@ int PM_SlideMove(pmove_t *pmove) {
 
 				}
 				//there was a second one. Try to slide along it too
-				GS_ClipVelocity(pml_velocity, planes[j], pml_velocity, pm->slideBounce);
+				GS_ClipVelocity(pml_velocity, planes[j], pml_velocity, pmove->slideBounce);
 
 				// check if the slide sent it back to the first plane
 				if (DotProduct(pml_velocity, planes[i]) >= SLIDEMOVE_PLANEINTERACT_EPSILON) {
@@ -1079,7 +1079,7 @@ static void PM_CategorizePosition( void ) {
 		}
 
 		if( trace.fraction < 1.0 ) {
-			PM_AddTouchEnt( trace.ent );
+			PM_AddTouchEnt( pm, trace.ent );
 		}
 	}
 
