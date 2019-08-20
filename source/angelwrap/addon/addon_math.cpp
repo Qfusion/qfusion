@@ -73,6 +73,30 @@ static double asFunc_sqrt( double x ) {
 	return sqrt( x );
 }
 
+static double asFunc_fmax( double x, double y ) {
+	return x > y ? x : y;
+}
+
+static double asFunc_fmin( double x, double y ) {
+	return x < y ? x : y;
+}
+
+static int64_t asFunc_imax( int64_t x, int64_t y ) {
+	return x > y ? x : y;
+}
+
+static int64_t asFunc_imin( int64_t x, int64_t y ) {
+	return x < y ? x : y;
+}
+
+static uint64_t asFunc_umax( uint64_t x, uint64_t y ) {
+	return x > y ? x : y;
+}
+
+static uint64_t asFunc_umin( uint64_t x, uint64_t y ) {
+	return x < y ? x : y;
+}
+
 static double asFunc_ceil( double x ) {
 	return ceil( x );
 }
@@ -131,6 +155,12 @@ void RegisterMathAddon( asIScriptEngine *engine ) {
 		{ "double atan2( double x, double y )", asFUNCTION( asFunc_atan2 ) },
 		{ "double sqrt( double x )", asFUNCTION( asFunc_sqrt ) },
 		{ "double ceil( double x )", asFUNCTION( asFunc_ceil ) },
+		{ "double max( double x, double y )", asFUNCTION( asFunc_fmax ) },
+		{ "double min( double x, double y )", asFUNCTION( asFunc_fmin ) },
+		{ "double max( int64 x, int64 y )", asFUNCTION( asFunc_imax ) },
+		{ "double min( int64 x, int64 y )", asFUNCTION( asFunc_imin ) },
+		{ "double max( uint64 x, uint64 y )", asFUNCTION( asFunc_umax ) },
+		{ "double min( uint64 x, uint64 y )", asFUNCTION( asFunc_umin ) },
 		{ "double floor( double x )", asFUNCTION( asFunc_floor ) },
 		{ "double random()", asFUNCTION( asFunc_random ) },
 		{ "double brandom( double min, double max )", asFUNCTION( asFunc_brandom ) },
