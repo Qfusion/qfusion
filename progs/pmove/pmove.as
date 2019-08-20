@@ -35,11 +35,13 @@ const int PM_WALLJUMP_TIMEDELAY = 1300;
 const int PM_WALLJUMP_FAILED_TIMEDELAY = 700;
 const int PM_SPECIAL_CROUCH_INHIBIT = 400;
 const int PM_AIRCONTROL_BOUNCE_DELAY = 200;
+const int PM_FORWARD_ACCEL_TIMEDELAY = 0; // delay before the forward acceleration kicks in
+const float PM_OVERBOUNCE = 1.01f;
+
+const int PM_CROUCHSLIDE = 1500;
+const int PM_CROUCHSLIDE_FADE = 500;
 const int PM_CROUCHSLIDE_TIMEDELAY = 700;
 const int PM_CROUCHSLIDE_CONTROL = 3;
-const int PM_FORWARD_ACCEL_TIMEDELAY = 0; // delay before the forward acceleration kicks in
-const int PM_SKIM_TIME = 230;
-const float PM_OVERBOUNCE = 1.01f;
 
 const float FALL_DAMAGE_MIN_DELTA = 675.0f;
 const float FALL_STEP_MIN_DELTA = 400.0f;
@@ -78,6 +80,16 @@ float playerboxCrouchViewheight;
 Vec3 playerboxGibMins, playerboxGibMaxs;
 float playerboxGibViewheight;
 
+float Bound( float a, float b, float c ) {
+	if( b < a ) {
+		return a;
+	}
+	if( b > c ) {
+		return c;
+	}
+	return b;
+}
+
 int CrouchLerpPlayerSize( int timer, Vec3 &out mins, Vec3 &out maxs, float &out viewHeight ) {
 	if( timer < 0 ) {
 		timer = 0;
@@ -85,13 +97,7 @@ int CrouchLerpPlayerSize( int timer, Vec3 &out mins, Vec3 &out maxs, float &out 
 		timer = CROUCHTIME;
 	}
 
-	float crouchFrac = float( timer ) / float( CROUCHTIME );
-	if( crouchFrac < 0.0f ) {
-		crouchFrac = 0.0f;
-	} else if( crouchFrac > 1.0f ) {
-		crouchFrac = 1.0f;
-	}
-
+	float crouchFrac = Bound( 0.0f, float( timer ) / float( CROUCHTIME ), 1.0f );
 	mins = playerboxStandMins - ( crouchFrac * ( playerboxStandMins - playerboxCrouchMins ) );
 	maxs = playerboxStandMaxs - ( crouchFrac * ( playerboxStandMaxs - playerboxCrouchMaxs ) );
 	viewHeight = playerboxStandViewheight - ( crouchFrac * ( playerboxStandViewheight - playerboxCrouchViewheight ) );
@@ -101,6 +107,11 @@ int CrouchLerpPlayerSize( int timer, Vec3 &out mins, Vec3 &out maxs, float &out 
 
 bool IsWalkablePlane( const Vec3 &in normal ) {
 	return normal.z >= 0.7;
+}
+
+float HorizontalLength( const Vec3 &in v ) {
+	float x = v.x, y = v.y;
+	return sqrt( x * x + y * y );
 }
 
 class PMoveLocal {
@@ -178,6 +189,358 @@ class PMoveLocal {
 		pml.upPush = float( pm.cmd.upmove ) * SPEEDKEY / 127.0f;
 	}
 
+	float Speed() {
+		return velocity.length();
+	}
+
+	float HorizontalSpeed() {
+		return HorizontalLength( velocity );
+	}
+
+	void SetHorizontalSpeed( float speed ) {
+		float hnorm = HorizontalSpeed();
+		if( hnorm != 0.0f ) {
+			hnorm = 1.0f / hnorm;
+		}
+		hnorm *= speed;
+
+		velocity.x *= hnorm;
+		velocity.y *= hnorm;
+	}
+
+	int SlideMove( PMove @pm ) {
+		auto @pml = @this;
+
+		if( pm.groundEntity != -1 ) { // clip velocity to ground, no need to wait
+			// if the ground is not horizontal (a ramp) clipping will slow the player down
+			if( pml.groundPlaneNormal.z == 1.0f && pml.velocity.z < 0.0f ) {
+				pml.velocity.z = 0.0f;
+			}
+		}
+
+		pm.velocity = pml.velocity;
+		pm.origin = pml.origin;
+		pm.remainingTime = pml.frametime;
+		pm.slideBounce = PM_OVERBOUNCE;
+
+		int blockedmask = pm.slideMove();
+
+		pml.velocity = pm.velocity;
+		pml.origin = pm.origin;
+
+		return blockedmask;
+	}
+
+	/*
+	* StepSlideMove
+	*
+	* Each intersection will try to step over the obstruction instead of
+	* sliding along it.
+	*/
+	void StepSlideMove( PMove @pm ) {
+		auto @pml = @this;
+		auto @playerState = @pm.playerState;
+		Vec3 start_o, start_v;
+		Vec3 down_o, down_v;
+		Trace trace;
+		float down_dist, up_dist;
+		float hspeed;
+		Vec3 up, down;
+		int blocked;
+		Vec3 pm_mins, pm_maxs;
+
+		pm.getSize( pm_mins, pm_maxs );
+
+		start_o = pml.origin;
+		start_v = pml.velocity;
+
+		blocked = SlideMove( pm );
+
+		// We have modified the origin in PM_SlideMove() in this case.
+		// No further computations are required.
+		if( pm.skipCollision ) {
+			return;
+		}
+
+		down_o = pml.origin;
+		down_v = pml.velocity;
+
+		up = start_o;
+		up.z += STEPSIZE;
+
+		trace.doTrace( up, pm_mins, pm_maxs, up, playerState.POVnum, pm.contentMask );
+		if( trace.allSolid ) {
+			return; // can't step up
+
+		}
+		// try sliding above
+		pml.origin = up;
+		pml.velocity = start_v;
+
+		SlideMove( pm );
+
+		// push down the final amount
+		down = pml.origin;
+		down.z -= STEPSIZE;
+		trace.doTrace( up, pm_mins, pm_maxs, up, playerState.POVnum, pm.contentMask );
+		if( !trace.allSolid ) {
+			pml.origin = trace.endPos;
+		}
+
+		up = pml.origin;
+
+		// decide which one went farther
+		down_dist = ( down_o.x - start_o.x ) * ( down_o.x - start_o.x )
+					+ ( down_o.y - start_o.y ) * ( down_o.y - start_o.y );
+		up_dist = ( up.x - start_o.x ) * ( up.x - start_o.x )
+				  + ( up.y - start_o.y ) * ( up.y - start_o.y );
+
+		if( down_dist >= up_dist || trace.allSolid || ( trace.fraction != 1.0 && !IsWalkablePlane( trace.planeNormal ) ) ) {
+			pml.origin = down_o;
+			pml.velocity = down_v;
+			return;
+		}
+
+		// only add the stepping output when it was a vertical step
+		if( ( blocked & SLIDEMOVEFLAG_WALL_BLOCKED ) != 0 ){
+			pm.step = ( pml.origin.z - pml.previousOrigin.z );
+		}
+
+		// Preserve speed when sliding up ramps
+		hspeed = HorizontalLength( start_v );
+		if( hspeed > 0.0f && IsWalkablePlane( trace.planeNormal ) ) {
+			if( trace.planeNormal.z >= 1.0f - SLIDEMOVE_PLANEINTERACT_EPSILON ) {
+				pml.velocity = start_v;
+			} else {
+				SetHorizontalSpeed( hspeed );
+			}
+		}
+
+		// wsw : jal : The following line is what produces the ramp sliding.
+
+		//!! Special case
+		// if we were walking along a plane, then we need to copy the Z over
+		pml.velocity.z = down_v.z;
+	}
+
+	/*
+	* Friction -- Modified for wsw
+	*
+	* Handles both ground friction and water friction
+	*/
+	void Friction( PMove @pm ) {
+		float speed, newspeed, control;
+		float friction;
+		float drop;
+		auto @pml = @this;
+		auto @playerState = @pm.playerState;
+		auto @pmoveState = @playerState.pmove;
+
+		drop = 0.0f;
+		speed = Speed();
+		if( speed < 1 ) {
+			pml.velocity.x = pml.velocity.y = 0;
+			return;
+		}
+
+		// apply ground friction
+		if( ( ( ( ( pm.groundEntity != -1 ) && ( pml.groundSurfFlags & SURF_SLICK ) == 0 ) )
+			  && ( pm.waterLevel < 2 ) ) || pml.ladder ) {
+			if( pmoveState.stats[PM_STAT_KNOCKBACK] <= 0 ) {
+				friction = pm_friction;
+				control = speed < pm_decelerate ? pm_decelerate : speed;
+				if( ( pmoveState.pm_flags & PMF_CROUCH_SLIDING ) != 0 ) {
+					if( pmoveState.stats[PM_STAT_CROUCHSLIDETIME] < PM_CROUCHSLIDE_FADE ) {
+						friction *= 1 - sqrt( float( pmoveState.stats[PM_STAT_CROUCHSLIDETIME] ) / PM_CROUCHSLIDE_FADE );
+					} else {
+						friction = 0;
+					}
+				}
+				drop += control * friction * pml.frametime;
+			}
+		}
+
+		// apply water friction
+		if( ( pm.waterLevel >= 2 ) && !pml.ladder ) {
+			drop += speed * pm_waterfriction * pm.waterLevel * pml.frametime;
+		}
+
+		// scale the velocity
+		newspeed = speed - drop;
+		if( newspeed <= 0 ) {
+			pml.velocity.clear();
+		} else {
+			newspeed /= speed;
+			pml.velocity *= newspeed;
+		}
+	}
+
+	/*
+	* Accelerate
+	*
+	* Handles user intended acceleration
+	*/
+	void Accelerate( PMove @pm, const Vec3 &in wishdir, float wishspeed, float accel ) {
+		float addspeed, accelspeed, currentspeed, realspeed, newspeed;
+		bool crouchslide;
+		auto @pml = @this;
+		auto @playerState = @pm.playerState;
+		auto @pmoveState = @playerState.pmove;
+
+		realspeed = Speed();
+
+		currentspeed = pml.velocity * wishdir;
+		addspeed = wishspeed - currentspeed;
+		if( addspeed <= 0 ) {
+			return;
+		}
+
+		accelspeed = accel * pml.frametime * wishspeed;
+		if( accelspeed > addspeed ) {
+			accelspeed = addspeed;
+		}
+
+		crouchslide = ( pmoveState.pm_flags & PMF_CROUCH_SLIDING ) != 0 && pm.groundEntity != -1 && ( pml.groundSurfFlags & SURF_SLICK ) == 0;
+
+		if( crouchslide ) {
+			accelspeed *= PM_CROUCHSLIDE_CONTROL;
+		}
+
+		pml.velocity += accelspeed * wishdir;
+
+		if( crouchslide ) { // disable overacceleration while crouch sliding
+			newspeed = Speed();
+			if( newspeed > wishspeed && newspeed != 0 ) {
+				pml.velocity *= max( wishspeed, realspeed ) / newspeed;
+			}
+		}
+	}
+
+	void AirAccelerate( PMove @pm, const Vec3 &in wishdir, float wishspeed ) {
+		Vec3 heading( velocity.x, velocity.y, 0 );
+		float speed = heading.normalize();
+		auto @pml = @this;
+
+		// Speed is below player walk speed
+		if( speed <= pml.maxPlayerSpeed ) {
+			// Apply acceleration
+			pml.velocity += ( pml.maxPlayerSpeed * pml.frametime ) * wishdir;
+			return;
+		}
+
+		// Calculate a dot product between heading and wishdir
+		// Looking straight results in better acceleration
+		float dot = Bound( 0.0f, 50 * ( heading * wishdir - 0.98 ), 1.0f );
+
+		// Calculate resulting acceleration
+		float accel = dot * pml.maxPlayerSpeed * pml.maxPlayerSpeed * pml.maxPlayerSpeed / ( speed * speed );
+
+		// Apply acceleration
+		pml.velocity += accel * pml.frametime * heading;
+	}
+
+	// when using +strafe convert the inertia to forward speed.
+	void Aircontrol( PMove @pm, const Vec3 &in wishdir, float wishspeed ) {
+		int i;
+		float zspeed, speed, dot, k;
+		float smove;
+		auto @pml = @this;
+
+		if( pm_aircontrol == 0 ) {
+			return;
+		}
+
+		// accelerate
+		smove = pml.sidePush;
+
+		if( ( smove > 0 || smove < 0 ) || ( wishspeed == 0.0 ) ) {
+			return; // can't control movement if not moving forward or backward
+		}
+
+		zspeed = pml.velocity.z;
+		pml.velocity.z = 0;
+		speed = pml.velocity.normalize();
+
+		dot = pml.velocity * wishdir;
+		k = 32.0f * pm_aircontrol * dot * dot * pml.frametime;
+
+		if( dot > 0 ) {
+			// we can't change direction while slowing down
+			pml.velocity = pml.velocity * speed + wishdir * k;
+			pml.velocity.normalize();
+		}
+
+		pml.velocity.x *= speed;
+		pml.velocity.y *= speed;
+		pml.velocity.z = zspeed;
+	}
+
+	Vec3 AddCurrents( PMove @pm, Vec3 wishvel ) {
+		auto @pml = @this;
+		auto @playerState = @pm.playerState;
+		auto @pmoveState = @playerState.pmove;
+
+		//
+		// account for ladders
+		//
+
+		if( pml.ladder && abs( pml.velocity[2] ) <= DEFAULT_LADDERSPEED ) {
+			if( ( playerState.viewAngles[PITCH] <= -15 ) && ( pml.forwardPush > 0 ) ) {
+				wishvel.z = DEFAULT_LADDERSPEED;
+			} else if( ( playerState.viewAngles[PITCH] >= 15 ) && ( pml.forwardPush > 0 ) ) {
+				wishvel.z = -DEFAULT_LADDERSPEED;
+			} else if( pml.upPush > 0 ) {
+				wishvel.z = DEFAULT_LADDERSPEED;
+			} else if( pml.upPush < 0 ) {
+				wishvel.z = -DEFAULT_LADDERSPEED;
+			} else {
+				wishvel.z = 0;
+			}
+
+			// limit horizontal speed when on a ladder
+			wishvel.x = Bound( -25.0f, wishvel.x, 25.0f );
+			wishvel.y = Bound( -25.0f, wishvel.y, 25.0f );
+		}
+
+		return wishvel;
+	}
+
+	/*
+	* WaterMove
+	*/
+	void WaterMove( PMove @pm ) {
+		int i;
+		Vec3 wishvel;
+		float wishspeed;
+		Vec3 wishdir;
+		auto @pml = @this;
+		auto @playerState = @pm.playerState;
+		auto @pmoveState = @playerState.pmove;
+
+		// user intentions
+		wishvel = pml.forward * pml.forwardPush + pml.right * pml.sidePush;
+
+		if( pml.forwardPush == 0 && pml.sidePush == 0 && pml.upPush == 0 ) {
+			wishvel.z -= 60; // drift towards bottom
+		} else {
+			wishvel.z += pml.upPush;
+		}
+
+		wishvel = AddCurrents( pm, wishvel );
+		wishdir = wishvel;
+		wishspeed = wishdir.normalize();
+
+		if( wishspeed > pml.maxPlayerSpeed ) {
+			wishspeed = pml.maxPlayerSpeed / wishspeed;
+			wishvel *= wishspeed;
+			wishspeed = pml.maxPlayerSpeed;
+		}
+		wishspeed *= 0.5;
+
+		Accelerate( pm, wishdir, wishspeed, pm_wateraccelerate );
+		StepSlideMove( pm );
+	}
+
 	/*
 	* If the player hull point one-quarter unit down is solid, the player is on ground
 	*/
@@ -204,11 +567,12 @@ class PMoveLocal {
 		Vec3 mins, maxs;
 		auto @pml = @this;
 		auto @playerState = @pm.playerState;
+		auto @pmoveState = @playerState.pmove;
 
 		if( pm.skipCollision ) {
 			return;
 		}
-		if( playerState.pmove.pm_type == PM_SPECTATOR ) {
+		if( pmoveState.pm_type == PM_SPECTATOR ) {
 			return;
 		}
 
@@ -511,8 +875,6 @@ class PMoveLocal {
 
 		ClipVelocityAgainstGround();
 
-		pmoveState.skim_time = PM_SKIM_TIME;
-
 		//if( gs.module == GS_MODULE_GAME ) GS_Printf( "upvel %f\n", pml.velocity[2] );
 
 		if( pml.velocity.z > 100 ) {
@@ -586,7 +948,7 @@ class PMoveLocal {
 				dashdir.normalize();
 			}
 
-			float actual_velocity = Vec3( pml.velocity.x, pml.velocity.y, 0.0 ).length();
+			float actual_velocity = HorizontalSpeed();
 			if( actual_velocity <= pml.dashPlayerSpeed ) {
 				dashdir *= pml.dashPlayerSpeed;
 			} else {
@@ -597,8 +959,6 @@ class PMoveLocal {
 			pml.velocity.z = upspeed;
 
 			pmoveState.stats[PM_STAT_DASHTIME] = PM_DASHJUMP_TIMEDELAY;
-
-			pmoveState.skim_time = PM_SKIM_TIME;
 
 			// return sound events
 			if( abs( pml.sidePush ) > 10 && abs( pml.sidePush ) >= abs( pml.forwardPush ) ) {
@@ -671,7 +1031,7 @@ class PMoveLocal {
 
 			// don't walljump if our height is smaller than a step
 			// unless jump is pressed or the player is moving faster than dash speed and upwards
-			hspeed = Vec3( pml.velocity.x, pml.velocity.y, 0.0f ).length();
+			hspeed = HorizontalSpeed();
 			trace.doTrace( pml.origin, pm_mins, pm_maxs, point, playerState.POVnum, pm.contentMask );
 
 			if( pml.upPush >= 10
@@ -724,7 +1084,6 @@ class PMoveLocal {
 						GS::PredictedEvent( playerState.POVnum, EV_WALLJUMP_FAILED, GS::DirToByte( normal ) );
 					} else {
 						pmoveState.stats[PM_STAT_WJTIME] = PM_WALLJUMP_TIMEDELAY;
-						pmoveState.skim_time = PM_SKIM_TIME;
 
 						// Create the event
 						GS::PredictedEvent( playerState.POVnum, EV_WALLJUMP, GS::DirToByte( normal ) );
@@ -961,6 +1320,38 @@ class PMoveLocal {
 		}
 	}
 
+	
+	/*
+	* CheckCrouchSlide
+	*/
+	void CheckCrouchSlide( PMove @pm ) {
+		auto @pml = @this;
+		auto @playerState = @pm.playerState;
+		auto @pmoveState = @pm.playerState.pmove;
+
+		if( ( pmoveState.stats[PM_STAT_FEATURES] & PMFEAT_CROUCHSLIDING ) == 0 ) {
+			return;
+		}
+
+		if( pml.upPush < 0 && HorizontalSpeed() > pml.maxWalkSpeed ) {
+			if( pmoveState.stats[PM_STAT_CROUCHSLIDETIME] > 0 ) {
+				return; // cooldown or already sliding
+			}
+
+			if( pm.groundEntity != -1 ) {
+				return; // already on the ground
+			}
+
+			// start sliding when we land
+			pmoveState.pm_flags = pmoveState.pm_flags | PMF_CROUCH_SLIDING;
+			pmoveState.stats[PM_STAT_CROUCHSLIDETIME] = PM_CROUCHSLIDE + PM_CROUCHSLIDE_FADE;
+		} else if( ( pmoveState.pm_flags & PMF_CROUCH_SLIDING ) != 0 ) {
+			if( pmoveState.stats[PM_STAT_CROUCHSLIDETIME] > PM_CROUCHSLIDE_FADE ) {
+				pmoveState.stats[PM_STAT_CROUCHSLIDETIME] = PM_CROUCHSLIDE_FADE;
+			}
+		}
+	}
+
 	void CheckSpecialMovement( PMove @pm ) {
 		Vec3 spot;
 		int cont;
@@ -1037,7 +1428,7 @@ class PMoveLocal {
 		}
 
 		// friction
-		speed = pml.velocity.length();
+		speed = Speed();
 		if( speed < 1 ) {
 			pml.velocity.clear();
 		} else {
@@ -1190,7 +1581,7 @@ void PMove( PMove @pm ) {
 			pmoveState.pm_time = 0;
 		}
 
-		//pml.StepSlideMove();
+		pml.StepSlideMove( pm );
 	} else {
 		// Kurim
 		// Keep this order !
@@ -1200,12 +1591,12 @@ void PMove( PMove @pm ) {
 
 		pml.CheckWallJump( pm );
 
-		//pml.CheckCrouchSlide();
+		pml.CheckCrouchSlide( pm );
 
-		//pml.Friction();
+		pml.Friction( pm );
 
 		if( pm.waterLevel >= 2 ) {
-			//pml.WaterMove();
+			pml.WaterMove( pm );
 		} else {
 			Vec3 angles = playerState.viewAngles;
 
