@@ -56,6 +56,10 @@ int playerbox_gib_viewheight = 8;
 #define PM_FORWARD_ACCEL_TIMEDELAY 0 // delay before the forward acceleration kicks in
 #define PM_SKIM_TIME 230
 
+#define PM_CROUCHSLIDE 1500
+#define PM_CROUCHSLIDE_FADE 500
+
+
 //===============================================================
 
 // all of the locals will be zeroed before each
