@@ -118,7 +118,7 @@ class PMoveLocal {
 	Vec3 origin;          // full float precision
 	Vec3 velocity;        // full float precision
 
-	Vec3 mins, maxs;
+	//Vec3 mins, maxs;
 
 	Vec3 forward, right, up;
 	Vec3 flatforward;     // normalized forward without z component, saved here because it needs
@@ -182,7 +182,7 @@ class PMoveLocal {
 			pml.maxCrouchedSpeed = pml.maxPlayerSpeed * 0.5f;
 		}
 
-		pm.getSize( pml.mins, pml.maxs );
+		//pm.getSize( pml.mins, pml.maxs );
 
 		pml.forwardPush = float( pm.cmd.forwardmove ) * SPEEDKEY / 127.0f;
 		pml.sidePush = float( pm.cmd.sidemove ) * SPEEDKEY / 127.0f;
@@ -282,7 +282,7 @@ class PMoveLocal {
 		// push down the final amount
 		down = pml.origin;
 		down.z -= STEPSIZE;
-		trace.doTrace( up, pm_mins, pm_maxs, up, playerState.POVnum, pm.contentMask );
+		trace.doTrace( pml.origin, pm_mins, pm_maxs, down, playerState.POVnum, pm.contentMask );
 		if( !trace.allSolid ) {
 			pml.origin = trace.endPos;
 		}
@@ -539,6 +539,200 @@ class PMoveLocal {
 
 		Accelerate( pm, wishdir, wishspeed, pm_wateraccelerate );
 		StepSlideMove( pm );
+	}
+
+	/*
+	* Move -- Kurim
+	*/
+	void Move( PMove @pm ) {
+		int i;
+		Vec3 wishvel;
+		float fmove, smove;
+		Vec3 wishdir;
+		float wishspeed;
+		float maxspeed;
+		float accel;
+		float wishspeed2;
+		auto @pml = @this;
+		auto @playerState = @pm.playerState;
+		auto @pmoveState = @playerState.pmove;
+
+		fmove = pml.forwardPush;
+		smove = pml.sidePush;
+
+		wishvel = pml.forward * fmove + pml.right * smove;
+		wishvel.z = 0;
+		wishvel = AddCurrents( pm, wishvel );
+
+		wishdir = wishvel;
+		wishspeed = wishdir.normalize();
+
+		// clamp to server defined max speed
+
+		if( pmoveState.stats[PM_STAT_CROUCHTIME] != 0 ) {
+			maxspeed = pml.maxCrouchedSpeed;
+		} else if( ( pm.cmd.buttons & BUTTON_WALK ) != 0 && ( pmoveState.stats[PM_STAT_FEATURES] & PMFEAT_WALK ) != 0 ) {
+			maxspeed = pml.maxWalkSpeed;
+		} else {
+			maxspeed = pml.maxPlayerSpeed;
+		}
+
+		if( wishspeed > maxspeed ) {
+			wishspeed = maxspeed / wishspeed;
+			wishvel *= wishspeed;
+			wishspeed = maxspeed;
+		}
+
+		if( pml.ladder ) {
+			Accelerate( pm, wishdir, wishspeed, pm_accelerate );
+
+			if( wishvel.z == 0.0f ) {
+				if( pml.velocity.z > 0 ) {
+					pml.velocity.z -= pmoveState.gravity * pml.frametime;
+					if( pml.velocity.z < 0 ) {
+						pml.velocity.z = 0;
+					}
+				} else {
+					pml.velocity.z += pmoveState.gravity * pml.frametime;
+					if( pml.velocity.z > 0 ) {
+						pml.velocity.z  = 0;
+					}
+				}
+			}
+
+			StepSlideMove( pm );
+		} else if( pm.groundEntity != -1 ) {
+			// walking on ground
+			if( pml.velocity.z > 0 ) {
+				pml.velocity.z = 0; //!!! this is before the accel
+			}
+
+			Accelerate( pm, wishdir, wishspeed, pm_accelerate );
+
+			// fix for negative trigger_gravity fields
+			if( pmoveState.gravity > 0 ) {
+				if( pml.velocity.z > 0 ) {
+					pml.velocity.z = 0;
+				}
+			} else {
+				pml.velocity.z -= pmoveState.gravity * pml.frametime;
+			}
+
+			if( pml.velocity.x == 0.0f && pml.velocity.y == 0.0f ) {
+				return;
+			}
+
+			StepSlideMove( pm );
+		} else if( ( pmoveState.stats[PM_STAT_FEATURES] & PMFEAT_AIRCONTROL ) != 0
+				   && ( pmoveState.stats[PM_STAT_FEATURES] & PMFEAT_FWDBUNNY ) == 0 ) {
+			// Air Control
+			wishspeed2 = wishspeed;
+			if( pml.velocity * wishdir < 0
+				&& ( pmoveState.pm_flags & PMF_WALLJUMPING ) == 0
+				&& ( pmoveState.stats[PM_STAT_KNOCKBACK] <= 0 ) ) {
+				accel = pm_airdecelerate;
+			} else {
+				accel = pm_airaccelerate;
+			}
+
+			// ch : remove knockback test here
+			if( ( pmoveState.pm_flags & PMF_WALLJUMPING ) != 0
+				/* || ( pmoveState.stats[PM_STAT_KNOCKBACK] > 0 ) */ ) {
+				accel = 0; // no stopmove while walljumping
+			}
+
+			if( ( smove > 0 || smove < 0 ) && ( fmove == 0 ) && ( pmoveState.stats[PM_STAT_KNOCKBACK] <= 0 ) ) {
+				if( wishspeed > pm_wishspeed ) {
+					wishspeed = pm_wishspeed;
+				}
+				accel = pm_strafebunnyaccel;
+			}
+
+			// Air control
+			Accelerate( pm, wishdir, wishspeed, accel );
+			if( pm_aircontrol > 0 && ( pmoveState.pm_flags & PMF_WALLJUMPING ) == 0 && ( pmoveState.stats[PM_STAT_KNOCKBACK] <= 0 ) ) { // no air ctrl while wjing
+				Aircontrol( pm, wishdir, wishspeed2 );
+			}
+
+			// add gravity
+			pml.velocity.z -= pmoveState.gravity * pml.frametime;
+			StepSlideMove( pm );
+		} else {   // air movement (old school)
+			bool inhibit = false;
+			bool accelerating, decelerating;
+
+			accelerating = ( pml.velocity * wishdir ) > 0.0f ? true : false;
+			decelerating = ( pml.velocity * wishdir ) < -0.0f ? true : false;
+
+			if( ( pmoveState.pm_flags & PMF_WALLJUMPING ) != 0 &&
+				( pmoveState.stats[PM_STAT_WJTIME] >= ( PM_WALLJUMP_TIMEDELAY - PM_AIRCONTROL_BOUNCE_DELAY ) ) ) {
+				inhibit = true;
+			}
+
+			if( ( pmoveState.pm_flags & PMF_DASHING ) != 0 &&
+				( pmoveState.stats[PM_STAT_DASHTIME] >= ( PM_DASHJUMP_TIMEDELAY - PM_AIRCONTROL_BOUNCE_DELAY ) ) ) {
+				inhibit = true;
+			}
+
+			if( ( pmoveState.stats[PM_STAT_FEATURES] & PMFEAT_FWDBUNNY ) == 0 ||
+				pmoveState.stats[PM_STAT_FWDTIME] > 0 ) {
+				inhibit = true;
+			}
+
+			// ch : remove this because of the knockback 'bug'?
+			/*
+			if( pmoveState.stats[PM_STAT_KNOCKBACK] > 0 )
+				inhibit = true;
+			*/
+
+			// (aka +fwdbunny) pressing forward or backward but not pressing strafe and not dashing
+			if( accelerating && !inhibit && smove == 0 && fmove != 0 ) {
+				AirAccelerate( pm, wishdir, wishspeed );
+				Aircontrol( pm, wishdir, wishspeed );
+			} else {   // strafe running
+				bool aircontrol = true;
+
+				wishspeed2 = wishspeed;
+				if( decelerating &&
+					( pmoveState.pm_flags & PMF_WALLJUMPING ) == 0 ) {
+					accel = pm_airdecelerate;
+				} else {
+					accel = pm_airaccelerate;
+				}
+
+				// ch : knockback out
+				if( ( pmoveState.pm_flags & PMF_WALLJUMPING ) != 0
+					/*	|| ( pmoveState.stats[PM_STAT_KNOCKBACK] > 0 ) */) {
+					accel = 0; // no stop-move while wall-jumping
+					aircontrol = false;
+				}
+
+				if( ( pmoveState.pm_flags & PMF_DASHING ) != 0 &&
+					( pmoveState.stats[PM_STAT_DASHTIME] >= ( PM_DASHJUMP_TIMEDELAY - PM_AIRCONTROL_BOUNCE_DELAY ) ) ) {
+					aircontrol = false;
+				}
+
+				if( ( pmoveState.stats[PM_STAT_FEATURES] & PMFEAT_AIRCONTROL ) == 0 ) {
+					aircontrol = false;
+				}
+
+				// +strafe bunnyhopping
+				if( aircontrol && smove != 0 && fmove == 0 ) {
+					if( wishspeed > pm_wishspeed ) {
+						wishspeed = pm_wishspeed;
+					}
+
+					Accelerate( pm, wishdir, wishspeed, pm_strafebunnyaccel );
+					Aircontrol( pm, wishdir, wishspeed2 );
+				} else {   // standard movement (includes strafejumping)
+					Accelerate( pm, wishdir, wishspeed, accel );
+				}
+			}
+
+			// add gravity
+			pml.velocity.z -= pmoveState.gravity * pml.frametime;
+			StepSlideMove( pm );
+		}
 	}
 
 	/*
@@ -875,8 +1069,6 @@ class PMoveLocal {
 
 		ClipVelocityAgainstGround();
 
-		//if( gs.module == GS_MODULE_GAME ) GS_Printf( "upvel %f\n", pml.velocity[2] );
-
 		if( pml.velocity.z > 100 ) {
 			GS::PredictedEvent( playerState.POVnum, EV_DOUBLEJUMP, 0 );
 			pml.velocity.z += pml.jumpPlayerSpeed;
@@ -917,7 +1109,7 @@ class PMoveLocal {
 		if( pmoveState.stats[PM_STAT_KNOCKBACK] > 0 ) { // can not start a new dash during knockback time
 			return;
 		}
-//GS::Print("WOOT " + pm.groundEntity + "\n");
+
 		if( ( pm.cmd.buttons & BUTTON_SPECIAL ) != 0 && pm.groundEntity != -1
 			&& ( pmoveState.stats[PM_STAT_FEATURES] & PMFEAT_DASH ) != 0 ) {
 			if( ( pmoveState.pm_flags & PMF_SPECIAL_HELD ) != 0 ) {
@@ -1420,6 +1612,9 @@ class PMoveLocal {
 		float wishspeed;
 		Vec3 end;
 		Trace trace;
+		Vec3 pm_mins, pm_maxs;
+
+		pm.getSize( pm_mins, pm_maxs );
 
 		maxspeed = pml.maxPlayerSpeed * 1.5;
 
@@ -1488,7 +1683,7 @@ class PMoveLocal {
 		end = pml.origin + pml.velocity * pml.frametime;
 
 		if( doClip ) {
-			trace.doTrace( pml.origin, pml.mins, pml.maxs, end, pm.playerState.POVnum, pm.contentMask );
+			trace.doTrace( pml.origin, pm_mins, pm_maxs, end, pm.playerState.POVnum, pm.contentMask );
 			end = trace.endPos;
 		}
 
@@ -1618,7 +1813,7 @@ void PMove( PMove @pm ) {
 			pml.flatforward.z = 0.0f;
 			pml.flatforward.normalize();
 
-			//pml.Move();
+			pml.Move( pm );
 		}
 	}
 	
