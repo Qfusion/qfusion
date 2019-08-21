@@ -537,7 +537,7 @@ bool G_asCallMapEntitySpawnScript( const char *classname, edict_t *ent );
 
 bool G_asLoadPMoveScript( void );
 void G_asShutdownPMoveScript( void );
-void G_asCallPMovePMoveFunction( pmove_t *pmove );
+void G_asCallPMovePMoveFunction( pmove_t *pmove, player_state_t *ps, usercmd_t *cmd );
 
 void G_asInitGameModuleEngine( void );
 void G_asShutdownGameModuleEngine( void );
@@ -791,7 +791,7 @@ void GClip_SetAreaPortalState( edict_t *ent, bool open );
 void GClip_LinkEntity( edict_t *ent );
 void GClip_UnlinkEntity( edict_t *ent );
 void GClip_TouchTriggers( edict_t *ent );
-void G_PMoveTouchTriggers( pmove_t *pm, vec3_t previous_origin );
+void G_PMoveTouchTriggers( pmove_t *pm, player_state_t *ps, vec3_t previous_origin );
 entity_state_t *G_GetEntityStateForDeltaTime( int entNum, int deltaTime );
 int GClip_FindInRadius( vec3_t org, float rad, int *list, int maxcount );
 

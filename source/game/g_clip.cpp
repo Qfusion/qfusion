@@ -1047,27 +1047,27 @@ void GClip_TouchTriggers( edict_t *ent ) {
 	}
 }
 
-void G_PMoveTouchTriggers( pmove_t *pm, vec3_t previous_origin ) {
+void G_PMoveTouchTriggers( pmove_t *pm, player_state_t *ps, vec3_t previous_origin ) {
 	int i, num;
 	edict_t *hit;
 	int touch[MAX_EDICTS];
 	vec3_t mins, maxs;
 	edict_t *ent;
 
-	if( pm->playerState->POVnum <= 0 || (int)pm->playerState->POVnum > gs.maxclients ) {
+	if( ps->POVnum <= 0 || (int)ps->POVnum > gs.maxclients ) {
 		return;
 	}
 
-	ent = game.edicts + pm->playerState->POVnum;
+	ent = game.edicts + ps->POVnum;
 	if( !ent->r.client || G_IsDead( ent ) ) { // dead things don't activate triggers!
 		return;
 	}
 
 	// update the entity with the new position
-	VectorCopy( pm->playerState->pmove.origin, ent->s.origin );
-	VectorCopy( pm->playerState->pmove.velocity, ent->velocity );
-	VectorCopy( pm->playerState->viewangles, ent->s.angles );
-	ent->viewheight = pm->playerState->viewheight;
+	VectorCopy( ps->pmove.origin, ent->s.origin );
+	VectorCopy( ps->pmove.velocity, ent->velocity );
+	VectorCopy( ps->viewangles, ent->s.angles );
+	ent->viewheight = ps->viewheight;
 	VectorCopy( pm->mins, ent->r.mins );
 	VectorCopy( pm->maxs, ent->r.maxs );
 
@@ -1084,17 +1084,17 @@ void G_PMoveTouchTriggers( pmove_t *pm, vec3_t previous_origin ) {
 
 	// expand the search bounds to include the space between the previous and current origin
 	for( i = 0; i < 3; i++ ) {
-		if( previous_origin[i] < pm->playerState->pmove.origin[i] ) {
+		if( previous_origin[i] < ps->pmove.origin[i] ) {
 			mins[i] = previous_origin[i] + pm->maxs[i];
-			if( mins[i] > pm->playerState->pmove.origin[i] + pm->mins[i] ) {
-				mins[i] = pm->playerState->pmove.origin[i] + pm->mins[i];
+			if( mins[i] > ps->pmove.origin[i] + pm->mins[i] ) {
+				mins[i] = ps->pmove.origin[i] + pm->mins[i];
 			}
-			maxs[i] = pm->playerState->pmove.origin[i] + pm->maxs[i];
+			maxs[i] = ps->pmove.origin[i] + pm->maxs[i];
 		} else {
-			mins[i] = pm->playerState->pmove.origin[i] + pm->mins[i];
+			mins[i] = ps->pmove.origin[i] + pm->mins[i];
 			maxs[i] = previous_origin[i] + pm->mins[i];
-			if( maxs[i] < pm->playerState->pmove.origin[i] + pm->maxs[i] ) {
-				maxs[i] = pm->playerState->pmove.origin[i] + pm->maxs[i];
+			if( maxs[i] < ps->pmove.origin[i] + pm->maxs[i] ) {
+				maxs[i] = ps->pmove.origin[i] + pm->maxs[i];
 			}
 		}
 	}
@@ -1123,6 +1123,9 @@ void G_PMoveTouchTriggers( pmove_t *pm, vec3_t previous_origin ) {
 
 		G_CallTouch( hit, ent, NULL, 0 );
 	}
+
+	VectorCopy( ps->pmove.origin, pm->origin );
+	VectorCopy( ps->pmove.velocity, pm->velocity );
 }
 
 /*

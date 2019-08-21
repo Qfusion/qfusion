@@ -1543,7 +1543,7 @@ void ClientThink( edict_t *ent, usercmd_t *ucmd, int timeDelta ) {
 	int i, j;
 	static pmove_t pm;
 	int delta, count;
-	void (*pmoveFn)( pmove_t * ) = game.pmovescript.pmoveFunc != nullptr ? &G_asCallPMovePMoveFunction : &Pmove;
+	void (*pmoveFn)( pmove_t *, player_state_t *, usercmd_t * ) = game.pmovescript.pmoveFunc != nullptr ? &G_asCallPMovePMoveFunction : &Pmove;
 
 	client = ent->r.client;
 
@@ -1625,18 +1625,13 @@ void ClientThink( edict_t *ent, usercmd_t *ucmd, int timeDelta ) {
 
 	// set up for pmove
 	memset( &pm, 0, sizeof( pmove_t ) );
-	pm.playerState = &client->ps;
-
-	if( !client->isTV ) {
-		pm.cmd = *ucmd;
-	}
 
 	// perform a pmove
-	PmoveExt( &pm, pmoveFn );
+	PmoveExt( &pm, &client->ps, ucmd, pmoveFn );
 
 	// in case some trigger action has moved the view angles (like teleported)
 	for( i = 0; i < 3; i++ )
-		client->ps.pmove.delta_angles[i] = ANGLE2SHORT( client->ps.viewangles[i] ) - pm.cmd.angles[i];
+		client->ps.pmove.delta_angles[i] = ANGLE2SHORT( client->ps.viewangles[i] ) - ucmd->angles[i];
 
 	// save results of pmove
 	client->old_pmove = client->ps.pmove;

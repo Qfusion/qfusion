@@ -44,7 +44,7 @@ typedef struct {
 	entity_state_t *( *GetEntityState )( int entNum, int deltaTime );
 	int ( *PointContents )( vec3_t point, int timeDelta );
 	void ( *PredictedEvent )( int entNum, int ev, int parm );
-	void ( *PMoveTouchTriggers )( pmove_t *pm, vec3_t previous_origin );
+	void ( *PMoveTouchTriggers )( pmove_t *pm, player_state_t *ps, vec3_t previous_origin );
 	void ( *RoundUpToHullSize )( vec3_t mins, vec3_t maxs );
 	const char *( *GetConfigString )( int index );
 	struct angelwrap_api_s *( *GetAngelExport )( void );
@@ -277,8 +277,8 @@ enum {
 };
 
 int PM_SlideMove( pmove_t *pmove );
-void Pmove( pmove_t *pmove );
-void PmoveExt( pmove_t *pmove, void (*PmoveFn)( pmove_t * ) );
+void Pmove( pmove_t *pmove, player_state_t *ps, usercmd_t *cmd );
+void PmoveExt( pmove_t *pmove, player_state_t *ps, usercmd_t *cmd, void (*PmoveFn)( pmove_t *, player_state_t *, usercmd_t * ) );
 
 //===============================================================
 

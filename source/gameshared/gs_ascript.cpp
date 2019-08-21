@@ -1569,13 +1569,6 @@ static const gs_asBehavior_t asPMove_ObjectBehaviors[] =
 	ASLIB_BEHAVIOR_NULL
 };
 
-static player_state_t *objectPMove_GetPlayerState( pmove_t *pmove ) {
-	return pmove->playerState;
-}
-
-static usercmd_t *objectPMove_GetCmd( pmove_t *pmove ) {
-	return &pmove->cmd;
-}
 
 static void objectPMove_GetSize( asvec3_t *mins, asvec3_t *maxs, pmove_t *pmove ) {
 	VectorCopy( pmove->maxs, maxs->v );
@@ -1630,8 +1623,8 @@ static void objectPMove_AddTouchEnt( int entNum, pmove_t *pm ) {
 	pm->numtouch++;
 }
 
-static void objectPMove_TouchTriggers( asvec3_t *prevOrigin, pmove_t *pmove ) {
-	gs.api.PMoveTouchTriggers( pmove, prevOrigin->v );
+static void objectPMove_TouchTriggers( player_state_t *ps, asvec3_t *prevOrigin, pmove_t *pmove ) {
+	gs.api.PMoveTouchTriggers( pmove, ps, prevOrigin->v );
 }
 
 static asvec3_t objectPMove_GetOrigin( pmove_t *pmove) {
@@ -1656,15 +1649,13 @@ static void objectPMove_SetVelocity( asvec3_t *vec, pmove_t *pmove ) {
 
 static const gs_asMethod_t asPMove_Methods[] =
 {
-	{ ASLIB_FUNCTION_DECL( PlayerState @, get_playerState, () const ), asFUNCTION( objectPMove_GetPlayerState ), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL( UserCmd &, get_cmd, () const ), asFUNCTION( objectPMove_GetCmd ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, getSize, ( Vec3 & out, Vec3 & out ) ), asFUNCTION( objectPMove_GetSize ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, setSize, ( const Vec3 &in, const Vec3 &in ) ), asFUNCTION( objectPMove_SetSize ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( Vec3, get_groundPlaneNormal, () const ), asFUNCTION( objectPMove_GetGroundPlaneNormal ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, set_groundPlaneNormal, ( const Vec3 &in ) ), asFUNCTION( objectPMove_SetGroundPlaneNormal ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( int, get_touchEnts, ( uint index ) const ), asFUNCTION( objectPMove_GetTouchEnt ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, set_touchEnts, ( uint index, int entNum ) ), asFUNCTION( objectPMove_SetTouchEnt ), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL( void, touchTriggers, ( const Vec3 &in prevOrigin ) ), asFUNCTION( objectPMove_TouchTriggers ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( void, touchTriggers, ( PlayerState @, const Vec3 &in prevOrigin ) ), asFUNCTION( objectPMove_TouchTriggers ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, addTouchEnt, ( int entNum ) ), asFUNCTION( objectPMove_AddTouchEnt ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( int, slideMove, () ), asFUNCTION( PM_SlideMove ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( Vec3, get_origin, () const ), asFUNCTION( objectPMove_GetOrigin ), asCALL_CDECL_OBJLAST },
@@ -1692,6 +1683,7 @@ static const gs_asProperty_t asPMove_Properties[] =
 	{ ASLIB_PROPERTY_DECL( int16, groundPlaneSignBits ), ASLIB_FOFFSET( pmove_t, groundplane.signbits ) },
 	{ ASLIB_PROPERTY_DECL( float, remainingTime ), ASLIB_FOFFSET( pmove_t, remainingTime ) },
 	{ ASLIB_PROPERTY_DECL( float, slideBounce ), ASLIB_FOFFSET( pmove_t, slideBounce ) },
+	{ ASLIB_PROPERTY_DECL( int, passEnt ), ASLIB_FOFFSET( pmove_t, passEnt ) },
 
 	ASLIB_PROPERTY_NULL
 };

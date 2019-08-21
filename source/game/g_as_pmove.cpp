@@ -37,7 +37,7 @@ static bool G_asInitializePMoveScript( asIScriptModule *asModule ) {
 	fdeclstr = "void PM::Load()";
 	game.pmovescript.loadFunc = asModule->GetFunctionByDecl( fdeclstr );
 	
-	fdeclstr = "void PM::PMove( PMove @ )";
+	fdeclstr = "void PM::PMove( PMove @, PlayerState @ps, UserCmd cmd )";
 	game.pmovescript.pmoveFunc = asModule->GetFunctionByDecl( fdeclstr );
 
 	return true;
@@ -70,7 +70,7 @@ static void G_asCallPMoveLoadFunction( void ) {
 /*
  * G_asCallPMovePMoveFunction
  */
-void G_asCallPMovePMoveFunction( pmove_t *pmove ) {
+void G_asCallPMovePMoveFunction( pmove_t *pmove, player_state_t *ps, usercmd_t *cmd ) {
 	int error;
 	asIScriptContext *ctx;
 	
@@ -86,7 +86,9 @@ void G_asCallPMovePMoveFunction( pmove_t *pmove ) {
 	}
 	
 	ctx->SetArgObject( 0, pmove );
-	
+	ctx->SetArgObject( 1, ps );
+	ctx->SetArgObject( 2, cmd );
+
 	error = ctx->Execute();
 	if( G_ExecutionErrorReport( error ) ) {
 		G_asShutdownPMoveScript();

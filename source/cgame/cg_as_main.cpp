@@ -297,7 +297,7 @@ void CG_asUnloadGameScript( void ) {
 
 static cg_asApiFuncPtr_t cg_asPmoveAPI[] = {
 	{ "void PM::Load()", &cgs.asMain.load, false },
-	{ "void PM::PMove( PMove @pm )", &cgs.asPMove.pmove, true },
+	{ "void PM::PMove( PMove @pm, PlayerState @playerState, UserCmd cmd )", &cgs.asPMove.pmove, true },
 
 	{ nullptr, nullptr, false },
 };
@@ -319,11 +319,13 @@ void CG_asUnloadPMoveScript( void ) {
 /*
  * CG_asPMove
  */
-void CG_asPMove( pmove_t *pm ) {
+void CG_asPMove( pmove_t *pm, player_state_t *ps, usercmd_t *cmd ) {
 	CG_asCallScriptFunc( cgs.asPMove.pmove,
-		[pm](asIScriptContext *ctx)
+		[pm, ps, cmd](asIScriptContext *ctx)
 		{
 			ctx->SetArgObject( 0, pm );
+			ctx->SetArgObject( 1, ps );
+			ctx->SetArgObject( 2, cmd );
 		},
 		cg_empty_as_cb
 	);

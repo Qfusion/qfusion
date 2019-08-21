@@ -317,7 +317,7 @@ int PM_SlideMove( pmove_t *pmove ) {
 
 	for (moves = 0; moves < maxmoves; moves++) {
 		VectorMA(pml_origin, remainingTime, pml_velocity, end);
-		gs.api.Trace(&trace, pml_origin, pmove->mins, pmove->maxs, end, pmove->playerState->POVnum, pmove->contentmask, 0);
+		gs.api.Trace(&trace, pml_origin, pmove->mins, pmove->maxs, end, pmove->passEnt, pmove->contentmask, 0);
 		if (trace.allsolid) { // trapped into a solid
 			VectorCopy(last_valid_origin, pml_origin);
 			return SLIDEMOVEFLAG_TRAPPED;
@@ -434,6 +434,7 @@ static int PM_SlideMove_( void ) {
 	VectorCopy( pml.origin, pm->origin );
 	pm->remainingTime = pml.frametime;
 	pm->slideBounce = PM_OVERBOUNCE;
+	pm->passEnt = (int)pm->playerState->POVnum;
 
 	blockedmask = PM_SlideMove( pm );
 
@@ -1718,24 +1719,24 @@ void PM_AdjustViewheight( void ) {
 #pragma warning( push )
 #pragma warning( disable : 4310 )   // cast truncates constant value
 #endif
-static void PM_ClampAngles( pmove_t *pmove ) {
+static void PM_ClampAngles( player_state_t *ps, usercmd_t *cmd ) {
 	int i;
 	short temp;
 
 	for( i = 0; i < 3; i++ ) {
-		temp = pmove->cmd.angles[i] + pmove->playerState->pmove.delta_angles[i];
+		temp = cmd->angles[i] + ps->pmove.delta_angles[i];
 		if( i == PITCH ) {
 			// don't let the player look up or down more than 90 degrees
 			if( temp > (short)ANGLE2SHORT( 90 ) - 1 ) {
-				pmove->playerState->pmove.delta_angles[i] = ( ANGLE2SHORT( 90 ) - 1 ) - pmove->cmd.angles[i];
+				ps->pmove.delta_angles[i] = ( ANGLE2SHORT( 90 ) - 1 ) - cmd->angles[i];
 				temp = (short)ANGLE2SHORT( 90 ) - 1;
 			} else if( temp < (short)ANGLE2SHORT( -90 ) + 1 ) {
-				pmove->playerState->pmove.delta_angles[i] = ( ANGLE2SHORT( -90 ) + 1 ) - pmove->cmd.angles[i];
+				ps->pmove.delta_angles[i] = ( ANGLE2SHORT( -90 ) + 1 ) - cmd->angles[i];
 				temp = (short)ANGLE2SHORT( -90 ) + 1;
 			}
 		}
 
-		pmove->playerState->viewangles[i] = SHORT2ANGLE( (short)temp );
+		ps->viewangles[i] = SHORT2ANGLE( (short)temp );
 	}
 }
 #if defined ( _WIN32 ) && ( _MSC_VER >= 1400 )
@@ -1773,6 +1774,9 @@ static void PM_BeginMove( void ) {
 * PM_EndMove
 */
 static void PM_EndMove( void ) {
+	VectorCopy( pml.origin, pm->origin );
+	VectorCopy( pml.velocity, pm->velocity );
+
 	VectorCopy( pml.origin, pm->playerState->pmove.origin );
 	VectorCopy( pml.velocity, pm->playerState->pmove.velocity );
 }
@@ -2060,7 +2064,7 @@ static void _Pmove( pmove_t *pmove ) {
 	// We check the entire path between the origin before the pmove and the
 	// current origin to ensure no triggers are missed at high velocity.
 	// Note that this method assumes the movement has been linear.
-	gs.api.PMoveTouchTriggers( pm, pml.previous_origin );
+	gs.api.PMoveTouchTriggers( pm, pm->playerState, pml.previous_origin );
 
 	// touching triggers may force groundentity off
 	if( !( pm->playerState->pmove.pm_flags & PMF_ON_GROUND ) && pm->groundentity != -1 ) {
@@ -2113,12 +2117,14 @@ static void _Pmove( pmove_t *pmove ) {
  *
  * Can be called by either the server or the client
  */
-void Pmove( pmove_t *pmove ) {
-	if( !pmove->playerState ) {
+void Pmove( pmove_t *pmove, player_state_t *ps, usercmd_t *cmd ) {
+	if( !pmove || !ps || !cmd ) {
 		return;
 	}
 
-	PM_ClampAngles( pmove );
+	pmove->playerState = ps;
+
+	pmove->cmd = *cmd;
 
 	_Pmove( pmove );
 }
@@ -2126,12 +2132,12 @@ void Pmove( pmove_t *pmove ) {
 /*
  * PmoveExt
  */
-void PmoveExt( pmove_t *pmove, void (*PmoveFn)( pmove_t * ) ) {
-	if( !pmove->playerState ) {
+void PmoveExt( pmove_t *pmove, player_state_t *ps, usercmd_t *cmd, void (*PmoveFn)( pmove_t *, player_state_t *, usercmd_t * ) ) {
+	if( !pmove || !ps || !cmd ) {
 		return;
 	}
 
-	PM_ClampAngles( pmove );
+	PM_ClampAngles( ps, cmd );
 
-	PmoveFn( pmove );
+	PmoveFn( pmove, ps, cmd );
 }

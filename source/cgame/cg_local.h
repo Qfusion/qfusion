@@ -762,7 +762,7 @@ void CG_CheckPredictionError( void );
 void CG_BuildSolidList( void );
 void CG_Trace( trace_t *t, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int ignore, int contentmask );
 int CG_PointContents( const vec3_t point );
-void CG_Predict_TouchTriggers( pmove_t *pm, vec3_t previous_origin );
+void CG_Predict_TouchTriggers( pmove_t *pm, player_state_t *ps, vec3_t previous_origin );
 
 //
 // cg_screen.c
@@ -1216,7 +1216,7 @@ void CG_asUnloadGameScript( void );
 
 bool CG_asLoadPMoveScript( void );
 void CG_asUnloadPMoveScript( void );
-void CG_asPMove( pmove_t *pm );
+void CG_asPMove( pmove_t *pm, player_state_t *ps, usercmd_t *cmd );
 
 void CG_asInputInit( void );
 void CG_asInputShutdown( void );

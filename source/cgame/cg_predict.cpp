@@ -200,12 +200,12 @@ static bool CG_ClipEntityContact( const vec3_t origin, const vec3_t mins, const 
 /*
 * CG_Predict_TouchTriggers
 */
-void CG_Predict_TouchTriggers( pmove_t *pm, vec3_t previous_origin ) {
+void CG_Predict_TouchTriggers( pmove_t *pm, player_state_t *ps, vec3_t previous_origin ) {
 	int i;
 	entity_state_t *state;
 
 	// fixme: more accurate check for being able to touch or not
-	if( pm->playerState->pmove.pm_type != PM_NORMAL ) {
+	if( ps->pmove.pm_type != PM_NORMAL ) {
 		return;
 	}
 
@@ -214,13 +214,16 @@ void CG_Predict_TouchTriggers( pmove_t *pm, vec3_t previous_origin ) {
 
 		if( state->type == ET_PUSH_TRIGGER ) {
 			if( !cg_triggersListTriggered[i] ) {
-				if( CG_ClipEntityContact( pm->playerState->pmove.origin, pm->mins, pm->maxs, state->number ) ) {
-					GS_TouchPushTrigger( pm->playerState, state );
+				if( CG_ClipEntityContact( ps->pmove.origin, pm->mins, pm->maxs, state->number ) ) {
+					GS_TouchPushTrigger( ps, state );
 					cg_triggersListTriggered[i] = true;
 				}
 			}
 		}
 	}
+
+	VectorCopy( ps->pmove.origin, pm->origin );
+	VectorCopy( ps->pmove.velocity, pm->velocity );
 }
 
 /*
@@ -404,7 +407,8 @@ void CG_PredictMovement( void ) {
 	int64_t ucmdExecuted, ucmdHead;
 	int64_t frame;
 	pmove_t pm;
-	void (*pmoveFn)( pmove_t * ) = cgs.asPMove.pmove != nullptr ? &CG_asPMove : &Pmove;
+	usercmd_t ucmd;
+	void (*pmoveFn)( pmove_t *, player_state_t *, usercmd_t * ) = cgs.asPMove.pmove != nullptr ? &CG_asPMove : &Pmove;
 
 	trap_NET_GetCurrentState( NULL, &ucmdHead, NULL );
 	ucmdExecuted = cg.frame.ucmdExecuted;
@@ -435,7 +439,6 @@ void CG_PredictMovement( void ) {
 
 	// copy current state to pmove
 	memset( &pm, 0, sizeof( pm ) );
-	pm.playerState = &cg.predictedPlayerState;
 
 	// clear the triggered toggles for this prediction round
 	memset( &cg_triggersListTriggered, false, sizeof( cg_triggersListTriggered ) );
@@ -443,24 +446,24 @@ void CG_PredictMovement( void ) {
 	// run frames
 	while( ++ucmdExecuted <= ucmdHead ) {
 		frame = ucmdExecuted & CMD_MASK;
-		trap_NET_GetUserCmd( frame, &pm.cmd );
+		trap_NET_GetUserCmd( frame, &ucmd );
 
-		ucmdReady = ( pm.cmd.serverTimeStamp != 0 );
+		ucmdReady = ( ucmd.serverTimeStamp != 0 );
 		if( ucmdReady ) {
-			cg.predictingTimeStamp = pm.cmd.serverTimeStamp;
+			cg.predictingTimeStamp = ucmd.serverTimeStamp;
 		}
 
-		PmoveExt( &pm, pmoveFn );
+		PmoveExt( &pm, &cg.predictedPlayerState, &ucmd, pmoveFn );
 
 		// copy for stair smoothing
 		predictedSteps[frame] = pm.step;
 
 		if( ucmdReady ) { // hmm fixme: the wip command may not be run enough time to get proper key presses
 			if( ucmdExecuted >= ucmdHead - 1 ) {
-				GS_AddLaserbeamPoint( &cg.weaklaserTrail, &cg.predictedPlayerState, pm.cmd.serverTimeStamp );
+				GS_AddLaserbeamPoint( &cg.weaklaserTrail, &cg.predictedPlayerState, ucmd.serverTimeStamp );
 			}
 
-			cg_entities[cg.predictedPlayerState.POVnum].current.weapon = GS_ThinkPlayerWeapon( &cg.predictedPlayerState, pm.cmd.buttons, pm.cmd.msec, 0 );
+			cg_entities[cg.predictedPlayerState.POVnum].current.weapon = GS_ThinkPlayerWeapon( &cg.predictedPlayerState, ucmd.buttons, ucmd.msec, 0 );
 		}
 
 		// save for debug checking

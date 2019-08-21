@@ -456,16 +456,18 @@ typedef struct {
 
 	// A hint (in)
 	bool skipCollision;
+	int passEnt;
+	vec3_t mins, maxs;          // bounding box size
+	float remainingTime;
+	float slideBounce;
+
+	// in / out
+	vec3_t origin, velocity;
 
 	// results (out)
 	int numtouch;
 	int touchents[MAXTOUCH];
 	float step;                 // used for smoothing the player view
-
-	vec3_t origin, velocity;
-	vec3_t mins, maxs;          // bounding box size
-	float remainingTime;
-	float slideBounce;
 
 	int groundentity;
 	cplane_t groundplane;       // valid if groundentity >= 0
