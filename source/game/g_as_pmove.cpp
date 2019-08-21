@@ -34,8 +34,8 @@ static void G_ResetPMoveScriptData( void ) {
 static bool G_asInitializePMoveScript( asIScriptModule *asModule ) {
 	const char *fdeclstr;
 	
-	fdeclstr = "void PM::Init()";
-	game.pmovescript.initFunc = asModule->GetFunctionByDecl( fdeclstr );
+	fdeclstr = "void PM::Load()";
+	game.pmovescript.loadFunc = asModule->GetFunctionByDecl( fdeclstr );
 	
 	fdeclstr = "void PM::PMove( PMove @ )";
 	game.pmovescript.pmoveFunc = asModule->GetFunctionByDecl( fdeclstr );
@@ -44,19 +44,19 @@ static bool G_asInitializePMoveScript( asIScriptModule *asModule ) {
 }
 
 /*
- * G_asCallPMoveInitFunction
+ * G_asCallPMoveLoadFunction
  */
-static void G_asCallPMoveInitFunction( void ) {
+static void G_asCallPMoveLoadFunction( void ) {
 	int error;
 	asIScriptContext *ctx;
 	
-	if( !game.pmovescript.initFunc || !game.asExport ) {
+	if( !game.pmovescript.loadFunc || !game.asExport ) {
 		return;
 	}
 	
 	ctx = game.asExport->asAcquireContext( GAME_AS_ENGINE() );
 	
-	error = ctx->Prepare( static_cast<asIScriptFunction *>( game.pmovescript.initFunc ) );
+	error = ctx->Prepare( static_cast<asIScriptFunction *>( game.pmovescript.loadFunc ) );
 	if( error < 0 ) {
 		return;
 	}
@@ -114,7 +114,7 @@ bool G_asLoadPMoveScript( void ) {
 		return false;
 	}
 
-	G_asCallPMoveInitFunction();
+	G_asCallPMoveLoadFunction();
 
 	return true;
 }

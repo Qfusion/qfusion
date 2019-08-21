@@ -172,7 +172,7 @@ typedef struct {
 	void *asEngine;
 
 	struct {
-		void *initFunc;
+		void *loadFunc;
 		void *pmoveFunc;
 	} pmovescript;
 
