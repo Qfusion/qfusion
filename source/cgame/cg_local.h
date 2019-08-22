@@ -456,6 +456,7 @@ typedef struct {
 	// AS player movement API
 	struct {
 		void *pmove;
+		void *vaClamp;
 	} asPMove;
 
 	// fonts
@@ -1217,6 +1218,7 @@ void CG_asUnloadGameScript( void );
 bool CG_asLoadPMoveScript( void );
 void CG_asUnloadPMoveScript( void );
 void CG_asPMove( pmove_t *pm, player_state_t *ps, usercmd_t *cmd );
+void CG_asGetViewAnglesClamp( const player_state_t *ps, vec3_t clamp );
 
 void CG_asInputInit( void );
 void CG_asInputShutdown( void );

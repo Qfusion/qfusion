@@ -277,8 +277,8 @@ enum {
 };
 
 int PM_SlideMove( pmove_t *pmove );
-void Pmove( pmove_t *pmove, player_state_t *ps, usercmd_t *cmd );
-void PmoveExt( pmove_t *pmove, player_state_t *ps, usercmd_t *cmd, void (*PmoveFn)( pmove_t *, player_state_t *, usercmd_t * ) );
+void PmoveInt( pmove_t *pmove, player_state_t *ps, usercmd_t *cmd );
+void PmoveExt( pmove_t *pmove, player_state_t *ps, usercmd_t *cmd, void (*vaClampFn)( const player_state_t *, vec3_t ), void (*PmoveFn)( pmove_t *, player_state_t *, usercmd_t * ) );
 
 //===============================================================
 

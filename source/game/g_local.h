@@ -174,6 +174,7 @@ typedef struct {
 	struct {
 		void *loadFunc;
 		void *pmoveFunc;
+		void *vaClampFunc;
 	} pmovescript;
 
 	unsigned int frametime;         // in milliseconds
@@ -537,7 +538,8 @@ bool G_asCallMapEntitySpawnScript( const char *classname, edict_t *ent );
 
 bool G_asLoadPMoveScript( void );
 void G_asShutdownPMoveScript( void );
-void G_asCallPMovePMoveFunction( pmove_t *pmove, player_state_t *ps, usercmd_t *cmd );
+void G_asCallPMovePMove( pmove_t *pmove, player_state_t *ps, usercmd_t *cmd );
+void G_asCallPMoveGetViewAnglesClamp( const player_state_t *ps, vec3_t vaclamp );
 
 void G_asInitGameModuleEngine( void );
 void G_asShutdownGameModuleEngine( void );

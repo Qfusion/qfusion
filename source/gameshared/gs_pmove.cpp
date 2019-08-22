@@ -54,7 +54,6 @@ int playerbox_gib_viewheight = 8;
 #define PM_CROUCHSLIDE_TIMEDELAY 700
 #define PM_CROUCHSLIDE_CONTROL 3
 #define PM_FORWARD_ACCEL_TIMEDELAY 0 // delay before the forward acceleration kicks in
-#define PM_SKIM_TIME 230
 
 #define PM_CROUCHSLIDE 1500
 #define PM_CROUCHSLIDE_FADE 500
@@ -1176,9 +1175,6 @@ static void PM_CheckJump( void ) {
 		GS_ClipVelocity( pml.velocity, pml.groundplane.normal, pml.velocity, PM_OVERBOUNCE );
 	}
 
-	pm->playerState->pmove.skim_time = PM_SKIM_TIME;
-
-	//if( gs.module == GS_MODULE_GAME ) GS_Printf( "upvel %f\n", pml.velocity[2] );
 	if( pml.velocity[2] > 100 ) {
 		gs.api.PredictedEvent( pm->playerState->POVnum, EV_DOUBLEJUMP, 0 );
 		pml.velocity[2] += pml.jumpPlayerSpeed;
@@ -1266,8 +1262,6 @@ static void PM_CheckDash( void ) {
 		pml.velocity[2] = upspeed;
 
 		pm->playerState->pmove.stats[PM_STAT_DASHTIME] = PM_DASHJUMP_TIMEDELAY;
-
-		pm->playerState->pmove.skim_time = PM_SKIM_TIME;
 
 		// return sound events
 		if( fabs( pml.sidePush ) > 10 && fabs( pml.sidePush ) >= fabs( pml.forwardPush ) ) {
@@ -1396,7 +1390,6 @@ static void PM_CheckWallJump( void ) {
 					gs.api.PredictedEvent( pm->playerState->POVnum, EV_WALLJUMP_FAILED, DirToByte( normal ) );
 				} else {
 					pm->playerState->pmove.stats[PM_STAT_WJTIME] = PM_WALLJUMP_TIMEDELAY;
-					pm->playerState->pmove.skim_time = PM_SKIM_TIME;
 
 					// Create the event
 					gs.api.PredictedEvent( pm->playerState->POVnum, EV_WALLJUMP, DirToByte( normal ) );
@@ -1715,33 +1708,34 @@ void PM_AdjustViewheight( void ) {
 * PM_ClampAngles
 *
 */
-#if defined ( _WIN32 ) && ( _MSC_VER >= 1400 )
-#pragma warning( push )
-#pragma warning( disable : 4310 )   // cast truncates constant value
-#endif
-static void PM_ClampAngles( player_state_t *ps, usercmd_t *cmd ) {
+static void PM_ClampAngles( player_state_t *ps, usercmd_t *cmd, vec3_t vaClamp ) {
 	int i;
 	short temp;
 
+	// don't let the player look up or down more than 'vaClamp' degrees on each axis
+
 	for( i = 0; i < 3; i++ ) {
 		temp = cmd->angles[i] + ps->pmove.delta_angles[i];
-		if( i == PITCH ) {
-			// don't let the player look up or down more than 90 degrees
-			if( temp > (short)ANGLE2SHORT( 90 ) - 1 ) {
-				ps->pmove.delta_angles[i] = ( ANGLE2SHORT( 90 ) - 1 ) - cmd->angles[i];
-				temp = (short)ANGLE2SHORT( 90 ) - 1;
-			} else if( temp < (short)ANGLE2SHORT( -90 ) + 1 ) {
-				ps->pmove.delta_angles[i] = ( ANGLE2SHORT( -90 ) + 1 ) - cmd->angles[i];
-				temp = (short)ANGLE2SHORT( -90 ) + 1;
+
+		float c = fabs( vaClamp[i] );
+		if( c >= 1.0f ) {
+			clamp( c, 1, 90 );
+
+			int clampPos = ANGLE2SHORT( c );
+			int clampNeg = ANGLE2SHORT( c * -1.0f );
+
+			if( temp > (short)clampPos - 1 ) {
+				ps->pmove.delta_angles[i] = ( clampPos - 1 ) - cmd->angles[i];
+				temp = ( short )clampPos - 1;
+			} else if( temp < (short)clampNeg + 1 ) {
+				ps->pmove.delta_angles[i] = ( clampNeg + 1 ) - cmd->angles[i];
+				temp = ( short )clampNeg + 1;
 			}
 		}
 
-		ps->viewangles[i] = SHORT2ANGLE( (short)temp );
+		ps->viewangles[i] = SHORT2ANGLE( temp );
 	}
 }
-#if defined ( _WIN32 ) && ( _MSC_VER >= 1400 )
-#pragma warning( pop )
-#endif
 
 /*
 * PM_BeginMove
@@ -2113,11 +2107,11 @@ static void _Pmove( pmove_t *pmove ) {
 }
 
 /*
- * Pmove
+ * PmoveInt
  *
  * Can be called by either the server or the client
  */
-void Pmove( pmove_t *pmove, player_state_t *ps, usercmd_t *cmd ) {
+void PmoveInt( pmove_t *pmove, player_state_t *ps, usercmd_t *cmd ) {
 	if( !pmove || !ps || !cmd ) {
 		return;
 	}
@@ -2132,12 +2126,19 @@ void Pmove( pmove_t *pmove, player_state_t *ps, usercmd_t *cmd ) {
 /*
  * PmoveExt
  */
-void PmoveExt( pmove_t *pmove, player_state_t *ps, usercmd_t *cmd, void (*PmoveFn)( pmove_t *, player_state_t *, usercmd_t * ) ) {
+void PmoveExt( pmove_t *pmove, player_state_t *ps, usercmd_t *cmd, void (*vaClampFn)( const player_state_t *, vec3_t ), void (*PmoveFn)( pmove_t *, player_state_t *, usercmd_t * ) ) {
+	vec3_t vaClamp = { 0, 0, 0 };
+
 	if( !pmove || !ps || !cmd ) {
 		return;
 	}
 
-	PM_ClampAngles( ps, cmd );
+	vaClamp[PITCH] = 90;
+	if( vaClampFn != nullptr ) {
+		vaClampFn( ps, vaClamp );
+	}
+
+	PM_ClampAngles( ps, cmd, vaClamp );
 
 	PmoveFn( pmove, ps, cmd );
 }

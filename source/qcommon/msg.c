@@ -1125,7 +1125,6 @@ static const msg_field_t player_state_msg_fields[] = {
 	{ PSOFS( pmove.velocity[2] ), 0, 1, WIRE_FLOAT },
 
 	{ PSOFS( pmove.pm_time ), 32, 1, WIRE_UBASE128 },
-	{ PSOFS( pmove.skim_time ), 32, 1, WIRE_UBASE128 },
 
 	{ PSOFS( pmove.pm_flags ), 32, 1, WIRE_UBASE128 },
 

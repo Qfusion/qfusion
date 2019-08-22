@@ -1228,25 +1228,8 @@ static const gs_asBehavior_t asUserCmd_ObjectBehaviors[] =
 	ASLIB_BEHAVIOR_NULL
 };
 
-static int16_t objectPMoveState_GetAngles( unsigned int idx, usercmd_t *cmd ) {
-	if( idx > 2 ) {
-		return 0;
-	}
-	return cmd->angles[idx];
-}
-
-static void objectPMoveState_SetAngles( unsigned int idx, int16_t value, usercmd_t *cmd ) {
-	if( idx > 2 ) {
-		return;
-	}
-	cmd->angles[idx] = value;
-}
-
 static const gs_asMethod_t asUserCmd_Methods[] =
 {
-	{ ASLIB_FUNCTION_DECL( int16, get_angles, ( uint index ) const ), asFUNCTION( objectPMoveState_GetAngles ), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL( void, set_angles, ( uint index, int16 value ) ), asFUNCTION( objectPMoveState_SetAngles ), asCALL_CDECL_OBJLAST },
-
 	ASLIB_METHOD_NULL
 };
 
@@ -1358,20 +1341,6 @@ static void objectPMoveState_SetStat( unsigned int idx, int16_t value, pmove_sta
 	state->stats[idx] = value;
 }
 
-static int16_t objectPMoveState_GetDeltaAngles( unsigned int idx, pmove_state_t *state ) {
-	if( idx > 2 ) {
-		return 0;
-	}
-	return state->delta_angles[idx];
-}
-
-static void objectPMoveState_SetDeltaAngles( unsigned int idx, int16_t value, pmove_state_t *state ) {
-	if( idx > 2 ) {
-		return;
-	}
-	state->delta_angles[idx] = value;
-}
-
 static int objectPMoveState_GetPmFlags( pmove_state_t *state ) {
 	return state->pm_flags;
 }
@@ -1398,8 +1367,6 @@ static const gs_asMethod_t asPMoveState_Methods[] =
 	{ ASLIB_FUNCTION_DECL( void, set_velocity, ( const Vec3 &in ) ), asFUNCTION( objectPMoveState_SetVelocity ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( int16, get_stats, ( uint index ) const ), asFUNCTION( objectPMoveState_GetStat ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, set_stats, ( uint index, int16 value ) ), asFUNCTION( objectPMoveState_SetStat ), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL( int16, get_deltaAngles, ( uint index ) const ), asFUNCTION( objectPMoveState_GetDeltaAngles ), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL( void, set_deltaAngles, ( uint index, int16 value ) ), asFUNCTION( objectPMoveState_SetDeltaAngles ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( int, get_pm_flags, () const ), asFUNCTION( objectPMoveState_GetPmFlags ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, set_pm_flags, ( int value ) ), asFUNCTION( objectPMoveState_SetPmFlags ), asCALL_CDECL_OBJLAST },
 
@@ -1410,7 +1377,6 @@ static const gs_asProperty_t asPMoveState_Properties[] =
 {
 	{ ASLIB_PROPERTY_DECL( int, pm_type ), ASLIB_FOFFSET( pmove_state_t, pm_type ) },
 	{ ASLIB_PROPERTY_DECL( int, pm_time ), ASLIB_FOFFSET( pmove_state_t, pm_time ) },
-	{ ASLIB_PROPERTY_DECL( int, skim_time ), ASLIB_FOFFSET( pmove_state_t, skim_time ) },
 	{ ASLIB_PROPERTY_DECL( int, gravity ), ASLIB_FOFFSET( pmove_state_t, gravity ) },
 
 	ASLIB_PROPERTY_NULL
@@ -1443,74 +1409,74 @@ static const gs_asBehavior_t asPlayerState_ObjectBehaviors[] =
 	ASLIB_BEHAVIOR_NULL
 };
 
-static asvec3_t objectPlayerState_GetViewAngles( player_state_t *state ) {
+static asvec3_t objectPlayerState_GetViewAngles( player_state_t *ps ) {
 	asvec3_t angles;
-	VectorCopy( state->viewangles, angles.v );
+	VectorCopy( ps->viewangles, angles.v );
 	return angles;
 }
 
-static void objectPlayerState_SetViewAngles( asvec3_t *vec, player_state_t *state ) {
-	VectorCopy( vec->v, state->viewangles );
+static void objectPlayerState_SetViewAngles( asvec3_t *vec, player_state_t *ps ) {
+	VectorCopy( vec->v, ps->viewangles );
 }
 
-static int objectPlayerState_GetEvent( unsigned int idx, player_state_t *state ) {
-	if( idx >= sizeof(state->event)/sizeof(state->event[0]) ) {
+static int objectPlayerState_GetEvent( unsigned int idx, player_state_t *ps ) {
+	if( idx >= sizeof(ps->event)/sizeof(ps->event[0]) ) {
 		return -1;
 	}
-	return state->event[idx];
+	return ps->event[idx];
 }
 
-static void objectPlayerState_SetEvent( unsigned int idx, int value, player_state_t *state ) {
-	if( idx >= sizeof(state->event)/sizeof(state->event[0]) ) {
+static void objectPlayerState_SetEvent( unsigned int idx, int value, player_state_t *ps ) {
+	if( idx >= sizeof(ps->event)/sizeof(ps->event[0]) ) {
 		return;
 	}
-	state->event[idx] = value;
+	ps->event[idx] = value;
 }
 
-static int objectPlayerState_GetEventParm( unsigned int idx, player_state_t *state ) {
-	if( idx >= sizeof(state->eventParm)/sizeof(state->eventParm[0]) ) {
+static int objectPlayerState_GetEventParm( unsigned int idx, player_state_t *ps ) {
+	if( idx >= sizeof(ps->eventParm)/sizeof(ps->eventParm[0]) ) {
 		return -1;
 	}
-	return state->eventParm[idx];
+	return ps->eventParm[idx];
 }
 
-static void objectPlayerState_SetEventParm( unsigned int idx, int value, player_state_t *state ) {
-	if( idx >= sizeof(state->eventParm)/sizeof(state->eventParm[0]) ) {
+static void objectPlayerState_SetEventParm( unsigned int idx, int value, player_state_t *ps ) {
+	if( idx >= sizeof(ps->eventParm)/sizeof(ps->eventParm[0]) ) {
 		return;
 	}
-	state->eventParm[idx] = value;
+	ps->eventParm[idx] = value;
 }
 
-static pmove_state_t *objectPlayerState_GetPMove( player_state_t *state ) {
-	return &state->pmove;
+static pmove_state_t *objectPlayerState_GetPMove( player_state_t *ps ) {
+	return &ps->pmove;
 }
 
-static int objectPlayerState_GetInventory( unsigned int idx, player_state_t *state ) {
+static int objectPlayerState_GetInventory( unsigned int idx, player_state_t *ps ) {
 	if( idx >= MAX_ITEMS ) {
 		return 0;
 	}
-	return state->inventory[idx];
+	return ps->inventory[idx];
 }
 
-static void objectPlayerState_SetInventory( unsigned int idx, int value, player_state_t *state ) {
+static void objectPlayerState_SetInventory( unsigned int idx, int value, player_state_t *ps ) {
 	if( idx >= MAX_ITEMS ) {
 		return;
 	}
-	state->inventory[idx] = value;
+	ps->inventory[idx] = value;
 }
 
-static int16_t objectPlayerState_GetStat( unsigned int idx, player_state_t *state ) {
+static int16_t objectPlayerState_GetStat( unsigned int idx, player_state_t *ps ) {
 	if( idx >= PS_MAX_STATS ) {
 		return 0;
 	}
-	return state->stats[idx];
+	return ps->stats[idx];
 }
 
-static void objectPlayerState_SetStat( unsigned int idx, int16_t value, player_state_t *state ) {
+static void objectPlayerState_SetStat( unsigned int idx, int16_t value, player_state_t *ps ) {
 	if( idx >= PS_MAX_STATS ) {
 		return;
 	}
-	state->stats[idx] = value;
+	ps->stats[idx] = value;
 }
 
 static const gs_asMethod_t asPlayerState_Methods[] =

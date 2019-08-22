@@ -298,6 +298,7 @@ void CG_asUnloadGameScript( void ) {
 static cg_asApiFuncPtr_t cg_asPmoveAPI[] = {
 	{ "void PM::Load()", &cgs.asMain.load, false },
 	{ "void PM::PMove( PMove @pm, PlayerState @playerState, UserCmd cmd )", &cgs.asPMove.pmove, true },
+	{ "Vec3 PM::GetViewAnglesClamp( const PlayerState @playerState )", &cgs.asPMove.vaClamp, false },
 
 	{ nullptr, nullptr, false },
 };
@@ -328,5 +329,22 @@ void CG_asPMove( pmove_t *pm, player_state_t *ps, usercmd_t *cmd ) {
 			ctx->SetArgObject( 2, cmd );
 		},
 		cg_empty_as_cb
+	);
+}
+
+/*
+ * CG_asGetViewAnglesClamp
+ */
+void CG_asGetViewAnglesClamp( const player_state_t *ps, vec3_t vaclamp ) {
+	CG_asCallScriptFunc( cgs.asPMove.vaClamp,
+		[ps](asIScriptContext *ctx)
+		{
+			ctx->SetArgObject( 0, const_cast<player_state_t *>(ps) );
+		},
+		[vaclamp](asIScriptContext *ctx)
+		{
+			const asvec3_t *va = ( const asvec3_t * )ctx->GetReturnAddress();
+			VectorCopy( va->v, vaclamp );
+		}
 	);
 }

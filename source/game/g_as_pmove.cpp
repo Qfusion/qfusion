@@ -40,13 +40,16 @@ static bool G_asInitializePMoveScript( asIScriptModule *asModule ) {
 	fdeclstr = "void PM::PMove( PMove @, PlayerState @ps, UserCmd cmd )";
 	game.pmovescript.pmoveFunc = asModule->GetFunctionByDecl( fdeclstr );
 
+	fdeclstr = "Vec3 PM::GetViewAnglesClamp( const PlayerState @ps )";
+	game.pmovescript.vaClampFunc = asModule->GetFunctionByDecl( fdeclstr );
+
 	return true;
 }
 
 /*
- * G_asCallPMoveLoadFunction
+ * G_asCallPMoveLoad
  */
-static void G_asCallPMoveLoadFunction( void ) {
+static void G_asCallPMoveLoad( void ) {
 	int error;
 	asIScriptContext *ctx;
 	
@@ -68,9 +71,9 @@ static void G_asCallPMoveLoadFunction( void ) {
 }
 
 /*
- * G_asCallPMovePMoveFunction
+ * G_asCallPMovePMove
  */
-void G_asCallPMovePMoveFunction( pmove_t *pmove, player_state_t *ps, usercmd_t *cmd ) {
+void G_asCallPMovePMove( pmove_t *pmove, player_state_t *ps, usercmd_t *cmd ) {
 	int error;
 	asIScriptContext *ctx;
 	
@@ -96,27 +99,57 @@ void G_asCallPMovePMoveFunction( pmove_t *pmove, player_state_t *ps, usercmd_t *
 }
 
 /*
+ * G_asCallPMoveGetViewAnglesClamp
+ */
+void G_asCallPMoveGetViewAnglesClamp( const player_state_t *ps, vec3_t vaclamp ) {
+	int error;
+	asIScriptContext *ctx;
+
+	if( !game.pmovescript.vaClampFunc || !game.asExport ) {
+		return;
+	}
+
+	ctx = game.asExport->asAcquireContext( GAME_AS_ENGINE() );
+
+	error = ctx->Prepare( static_cast<asIScriptFunction *>( game.pmovescript.vaClampFunc ) );
+	if( error < 0 ) {
+		return;
+	}
+
+	ctx->SetArgObject( 0, const_cast<player_state_t *>(ps) );
+
+	error = ctx->Execute();
+	if( G_ExecutionErrorReport( error ) ) {
+		G_asShutdownPMoveScript();
+		return;
+	}
+
+	const asvec3_t *va = ( const asvec3_t * )ctx->GetReturnAddress();
+	VectorCopy( va->v, vaclamp );
+}
+
+/*
  * G_asLoadPMoveScript
  */
 bool G_asLoadPMoveScript( void ) {
 	const char *moduleName = PMOVE_SCRIPTS_MODULE_NAME;
 	asIScriptModule *asModule;
-	
+
 	G_ResetPMoveScriptData();
-	
+
 	// Load the script
 	asModule = G_LoadGameScript( moduleName, PMOVE_SCRIPTS_DIRECTORY, "pmove", PMOVE_SCRIPTS_PROJECT_EXTENSION );
 	if( !asModule ) {
 		return false;
 	}
-	
+
 	// Initialize the script
 	if( !G_asInitializePMoveScript( asModule ) ) {
 		G_asShutdownPMoveScript();
 		return false;
 	}
 
-	G_asCallPMoveLoadFunction();
+	G_asCallPMoveLoad();
 
 	return true;
 }
