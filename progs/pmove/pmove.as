@@ -56,45 +56,44 @@ class PMoveLocal {
 	float dashPlayerSpeed;
 
 	void BeginMove( PMove @pm, PlayerState @ps, UserCmd cmd ) {
-		auto @pml = @this;
 		auto @pmoveState = @ps.pmove;
 
-		@pml.pm = pm;
-		@pml.playerState = ps;
-		pml.cmd = cmd;
-		pml.origin = pmoveState.origin;
-		pml.velocity = pmoveState.velocity;
+		@pm = pm;
+		@playerState = ps;
+		cmd = cmd;
+		origin = pmoveState.origin;
+		velocity = pmoveState.velocity;
 
 		// save old org in case we get stuck
-		pml.previousOrigin = pml.origin;
+		previousOrigin = origin;
 
-		ps.viewAngles.angleVectors( pml.forward, pml.right, pml.up );
+		ps.viewAngles.angleVectors( forward, right, up );
 
-		pml.flatforward = pml.forward;
-		pml.flatforward.z = 0.0f;
-		pml.flatforward.normalize();
+		flatforward = forward;
+		flatforward.z = 0.0f;
+		flatforward.normalize();
 
-		pml.frametime = cmd.msec * 0.001;
+		frametime = cmd.msec * 0.001;
 
-		pml.maxPlayerSpeed = pmoveState.stats[PM_STAT_MAXSPEED];
-		pml.jumpPlayerSpeed = float( pmoveState.stats[PM_STAT_JUMPSPEED] ) * GRAVITY_COMPENSATE;
-		pml.dashPlayerSpeed = pmoveState.stats[PM_STAT_DASHSPEED];
+		maxPlayerSpeed = pmoveState.stats[PM_STAT_MAXSPEED];
+		jumpPlayerSpeed = float( pmoveState.stats[PM_STAT_JUMPSPEED] ) * GRAVITY_COMPENSATE;
+		dashPlayerSpeed = pmoveState.stats[PM_STAT_DASHSPEED];
 
-		pml.maxWalkSpeed = DEFAULT_WALKSPEED;
-		if( pml.maxWalkSpeed > pml.maxPlayerSpeed * 0.66f ) {
-			pml.maxWalkSpeed = pml.maxPlayerSpeed * 0.66f;
+		maxWalkSpeed = DEFAULT_WALKSPEED;
+		if( maxWalkSpeed > maxPlayerSpeed * 0.66f ) {
+			maxWalkSpeed = maxPlayerSpeed * 0.66f;
 		}
 
-		pml.maxCrouchedSpeed = DEFAULT_CROUCHEDSPEED;
-		if( pml.maxCrouchedSpeed > pml.maxPlayerSpeed * 0.5f ) {
-			pml.maxCrouchedSpeed = pml.maxPlayerSpeed * 0.5f;
+		maxCrouchedSpeed = DEFAULT_CROUCHEDSPEED;
+		if( maxCrouchedSpeed > maxPlayerSpeed * 0.5f ) {
+			maxCrouchedSpeed = maxPlayerSpeed * 0.5f;
 		}
 
-		pml.forwardPush = float( cmd.forwardmove ) * SPEEDKEY / 127.0f;
-		pml.sidePush = float( cmd.sidemove ) * SPEEDKEY / 127.0f;
-		pml.upPush = float( cmd.upmove ) * SPEEDKEY / 127.0f;
+		forwardPush = float( cmd.forwardmove ) * SPEEDKEY / 127.0f;
+		sidePush = float( cmd.sidemove ) * SPEEDKEY / 127.0f;
+		upPush = float( cmd.upmove ) * SPEEDKEY / 127.0f;
 
-		pml.pm_flags = pmoveState.pm_flags;
+		pm_flags = pmoveState.pm_flags;
 	}
 
 	float Speed() {
@@ -117,30 +116,28 @@ class PMoveLocal {
 	}
 
 	void SetSize( const Vec3 &in mins, const Vec3 &in maxs ) {
-		this.pm_mins = mins;
-		this.pm_maxs = maxs;
+		pm_mins = mins;
+		pm_maxs = maxs;
 		pm.setSize( mins, maxs );
 	}
 
 	int SlideMove() {
-		auto @pml = @this;
-
 		if( pm.groundEntity != -1 ) { // clip velocity to ground, no need to wait
 			// if the ground is not horizontal (a ramp) clipping will slow the player down
-			if( pml.groundPlaneNormal.z == 1.0f && pml.velocity.z < 0.0f ) {
-				pml.velocity.z = 0.0f;
+			if( groundPlaneNormal.z == 1.0f && velocity.z < 0.0f ) {
+				velocity.z = 0.0f;
 			}
 		}
 
-		pm.velocity = pml.velocity;
-		pm.origin = pml.origin;
-		pm.remainingTime = pml.frametime;
+		pm.velocity = velocity;
+		pm.origin = origin;
+		pm.remainingTime = frametime;
 		pm.slideBounce = PM_OVERBOUNCE;
 
 		int blockedmask = pm.slideMove();
 
-		pml.velocity = pm.velocity;
-		pml.origin = pm.origin;
+		velocity = pm.velocity;
+		origin = pm.origin;
 
 		return blockedmask;
 	}
@@ -152,7 +149,6 @@ class PMoveLocal {
 	* sliding along it.
 	*/
 	void StepSlideMove() {
-		auto @pml = @this;
 		Vec3 start_o, start_v;
 		Vec3 down_o, down_v;
 		Trace trace;
@@ -161,8 +157,8 @@ class PMoveLocal {
 		Vec3 up, down;
 		int blocked;
 
-		start_o = pml.origin;
-		start_v = pml.velocity;
+		start_o = origin;
+		start_v = velocity;
 
 		blocked = SlideMove();
 
@@ -172,8 +168,8 @@ class PMoveLocal {
 			return;
 		}
 
-		down_o = pml.origin;
-		down_v = pml.velocity;
+		down_o = origin;
+		down_v = velocity;
 
 		up = start_o;
 		up.z += STEPSIZE;
@@ -184,20 +180,20 @@ class PMoveLocal {
 
 		}
 		// try sliding above
-		pml.origin = up;
-		pml.velocity = start_v;
+		origin = up;
+		velocity = start_v;
 
 		SlideMove();
 
 		// push down the final amount
-		down = pml.origin;
+		down = origin;
 		down.z -= STEPSIZE;
-		trace.doTrace( pml.origin, pm_mins, pm_maxs, down, playerState.POVnum, pm.contentMask );
+		trace.doTrace( origin, pm_mins, pm_maxs, down, playerState.POVnum, pm.contentMask );
 		if( !trace.allSolid ) {
-			pml.origin = trace.endPos;
+			origin = trace.endPos;
 		}
 
-		up = pml.origin;
+		up = origin;
 
 		// decide which one went farther
 		down_dist = ( down_o.x - start_o.x ) * ( down_o.x - start_o.x )
@@ -206,21 +202,21 @@ class PMoveLocal {
 				  + ( up.y - start_o.y ) * ( up.y - start_o.y );
 
 		if( down_dist >= up_dist || trace.allSolid || ( trace.fraction != 1.0 && !IsWalkablePlane( trace.planeNormal ) ) ) {
-			pml.origin = down_o;
-			pml.velocity = down_v;
+			origin = down_o;
+			velocity = down_v;
 			return;
 		}
 
 		// only add the stepping output when it was a vertical step
 		if( ( blocked & SLIDEMOVEFLAG_WALL_BLOCKED ) != 0 ){
-			pm.step = ( pml.origin.z - pml.previousOrigin.z );
+			pm.step = ( origin.z - previousOrigin.z );
 		}
 
 		// Preserve speed when sliding up ramps
 		hspeed = HorizontalLength( start_v );
 		if( hspeed > 0.0f && IsWalkablePlane( trace.planeNormal ) ) {
 			if( trace.planeNormal.z >= 1.0f - SLIDEMOVE_PLANEINTERACT_EPSILON ) {
-				pml.velocity = start_v;
+				velocity = start_v;
 			} else {
 				SetHorizontalSpeed( hspeed );
 			}
@@ -230,7 +226,7 @@ class PMoveLocal {
 
 		//!! Special case
 		// if we were walking along a plane, then we need to copy the Z over
-		pml.velocity.z = down_v.z;
+		velocity.z = down_v.z;
 	}
 
 	/*
@@ -242,45 +238,44 @@ class PMoveLocal {
 		float speed, newspeed, control;
 		float friction;
 		float drop;
-		auto @pml = @this;
 		auto @pmoveState = @playerState.pmove;
 
 		drop = 0.0f;
 		speed = Speed();
 		if( speed < 1 ) {
-			pml.velocity.x = pml.velocity.y = 0;
+			velocity.x = velocity.y = 0;
 			return;
 		}
 
 		// apply ground friction
-		if( ( ( ( ( pm.groundEntity != -1 ) && ( pml.groundSurfFlags & SURF_SLICK ) == 0 ) )
-			  && ( pm.waterLevel < 2 ) ) || pml.ladder ) {
+		if( ( ( ( ( pm.groundEntity != -1 ) && ( groundSurfFlags & SURF_SLICK ) == 0 ) )
+			  && ( pm.waterLevel < 2 ) ) || ladder ) {
 			if( pmoveState.stats[PM_STAT_KNOCKBACK] <= 0 ) {
 				friction = pm_friction;
 				control = speed < pm_decelerate ? pm_decelerate : speed;
-				if( ( pml.pm_flags & PMF_CROUCH_SLIDING ) != 0 ) {
+				if( ( pm_flags & PMF_CROUCH_SLIDING ) != 0 ) {
 					if( pmoveState.stats[PM_STAT_CROUCHSLIDETIME] < PM_CROUCHSLIDE_FADE ) {
 						friction *= 1 - sqrt( float( pmoveState.stats[PM_STAT_CROUCHSLIDETIME] ) / PM_CROUCHSLIDE_FADE );
 					} else {
 						friction = 0;
 					}
 				}
-				drop += control * friction * pml.frametime;
+				drop += control * friction * frametime;
 			}
 		}
 
 		// apply water friction
-		if( ( pm.waterLevel >= 2 ) && !pml.ladder ) {
-			drop += speed * pm_waterfriction * pm.waterLevel * pml.frametime;
+		if( ( pm.waterLevel >= 2 ) && !ladder ) {
+			drop += speed * pm_waterfriction * pm.waterLevel * frametime;
 		}
 
 		// scale the velocity
 		newspeed = speed - drop;
 		if( newspeed <= 0 ) {
-			pml.velocity.clear();
+			velocity.clear();
 		} else {
 			newspeed /= speed;
-			pml.velocity *= newspeed;
+			velocity *= newspeed;
 		}
 	}
 
@@ -292,34 +287,33 @@ class PMoveLocal {
 	void Accelerate( const Vec3 &in wishdir, float wishspeed, float accel ) {
 		float addspeed, accelspeed, currentspeed, realspeed, newspeed;
 		bool crouchslide;
-		auto @pml = @this;
 		auto @pmoveState = @playerState.pmove;
 
 		realspeed = Speed();
 
-		currentspeed = pml.velocity * wishdir;
+		currentspeed = velocity * wishdir;
 		addspeed = wishspeed - currentspeed;
 		if( addspeed <= 0 ) {
 			return;
 		}
 
-		accelspeed = accel * pml.frametime * wishspeed;
+		accelspeed = accel * frametime * wishspeed;
 		if( accelspeed > addspeed ) {
 			accelspeed = addspeed;
 		}
 
-		crouchslide = ( pml.pm_flags & PMF_CROUCH_SLIDING ) != 0 && pm.groundEntity != -1 && ( pml.groundSurfFlags & SURF_SLICK ) == 0;
+		crouchslide = ( pm_flags & PMF_CROUCH_SLIDING ) != 0 && pm.groundEntity != -1 && ( groundSurfFlags & SURF_SLICK ) == 0;
 
 		if( crouchslide ) {
 			accelspeed *= PM_CROUCHSLIDE_CONTROL;
 		}
 
-		pml.velocity += accelspeed * wishdir;
+		velocity += accelspeed * wishdir;
 
 		if( crouchslide ) { // disable overacceleration while crouch sliding
 			newspeed = Speed();
 			if( newspeed > wishspeed && newspeed != 0 ) {
-				pml.velocity *= max( wishspeed, realspeed ) / newspeed;
+				velocity *= max( wishspeed, realspeed ) / newspeed;
 			}
 		}
 	}
@@ -327,12 +321,11 @@ class PMoveLocal {
 	void AirAccelerate( const Vec3 &in wishdir, float wishspeed ) {
 		Vec3 heading( velocity.x, velocity.y, 0 );
 		float speed = heading.normalize();
-		auto @pml = @this;
 
 		// Speed is below player walk speed
-		if( speed <= pml.maxPlayerSpeed ) {
+		if( speed <= maxPlayerSpeed ) {
 			// Apply acceleration
-			pml.velocity += ( pml.maxPlayerSpeed * pml.frametime ) * wishdir;
+			velocity += ( maxPlayerSpeed * frametime ) * wishdir;
 			return;
 		}
 
@@ -341,10 +334,10 @@ class PMoveLocal {
 		float dot = Boundf( 0.0f, 50 * ( heading * wishdir - 0.98 ), 1.0f );
 
 		// Calculate resulting acceleration
-		float accel = dot * pml.maxPlayerSpeed * pml.maxPlayerSpeed * pml.maxPlayerSpeed / ( speed * speed );
+		float accel = dot * maxPlayerSpeed * maxPlayerSpeed * maxPlayerSpeed / ( speed * speed );
 
 		// Apply acceleration
-		pml.velocity += accel * pml.frametime * heading;
+		velocity += accel * frametime * heading;
 	}
 
 	// when using +strafe convert the inertia to forward speed.
@@ -352,53 +345,51 @@ class PMoveLocal {
 		int i;
 		float zspeed, speed, dot, k;
 		float smove;
-		auto @pml = @this;
 
 		if( pm_aircontrol == 0 ) {
 			return;
 		}
 
 		// accelerate
-		smove = pml.sidePush;
+		smove = sidePush;
 
 		if( ( smove > 0 || smove < 0 ) || ( wishspeed == 0.0 ) ) {
 			return; // can't control movement if not moving forward or backward
 		}
 
-		zspeed = pml.velocity.z;
-		pml.velocity.z = 0;
-		speed = pml.velocity.normalize();
+		zspeed = velocity.z;
+		velocity.z = 0;
+		speed = velocity.normalize();
 
-		dot = pml.velocity * wishdir;
-		k = 32.0f * pm_aircontrol * dot * dot * pml.frametime;
+		dot = velocity * wishdir;
+		k = 32.0f * pm_aircontrol * dot * dot * frametime;
 
 		if( dot > 0 ) {
 			// we can't change direction while slowing down
-			pml.velocity = pml.velocity * speed + wishdir * k;
-			pml.velocity.normalize();
+			velocity = velocity * speed + wishdir * k;
+			velocity.normalize();
 		}
 
-		pml.velocity.x *= speed;
-		pml.velocity.y *= speed;
-		pml.velocity.z = zspeed;
+		velocity.x *= speed;
+		velocity.y *= speed;
+		velocity.z = zspeed;
 	}
 
 	Vec3 AddCurrents( Vec3 wishvel ) {
-		auto @pml = @this;
 		auto @pmoveState = @playerState.pmove;
 
 		//
 		// account for ladders
 		//
 
-		if( pml.ladder && abs( pml.velocity[2] ) <= DEFAULT_LADDERSPEED ) {
-			if( ( playerState.viewAngles[PITCH] <= -15 ) && ( pml.forwardPush > 0 ) ) {
+		if( ladder && abs( velocity[2] ) <= DEFAULT_LADDERSPEED ) {
+			if( ( playerState.viewAngles[PITCH] <= -15 ) && ( forwardPush > 0 ) ) {
 				wishvel.z = DEFAULT_LADDERSPEED;
-			} else if( ( playerState.viewAngles[PITCH] >= 15 ) && ( pml.forwardPush > 0 ) ) {
+			} else if( ( playerState.viewAngles[PITCH] >= 15 ) && ( forwardPush > 0 ) ) {
 				wishvel.z = -DEFAULT_LADDERSPEED;
-			} else if( pml.upPush > 0 ) {
+			} else if( upPush > 0 ) {
 				wishvel.z = DEFAULT_LADDERSPEED;
-			} else if( pml.upPush < 0 ) {
+			} else if( upPush < 0 ) {
 				wishvel.z = -DEFAULT_LADDERSPEED;
 			} else {
 				wishvel.z = 0;
@@ -420,26 +411,25 @@ class PMoveLocal {
 		Vec3 wishvel;
 		float wishspeed;
 		Vec3 wishdir;
-		auto @pml = @this;
 		auto @pmoveState = @playerState.pmove;
 
 		// user intentions
-		wishvel = pml.forward * pml.forwardPush + pml.right * pml.sidePush;
+		wishvel = forward * forwardPush + right * sidePush;
 
-		if( pml.forwardPush == 0 && pml.sidePush == 0 && pml.upPush == 0 ) {
+		if( forwardPush == 0 && sidePush == 0 && upPush == 0 ) {
 			wishvel.z -= 60; // drift towards bottom
 		} else {
-			wishvel.z += pml.upPush;
+			wishvel.z += upPush;
 		}
 
 		wishvel = AddCurrents( wishvel );
 		wishdir = wishvel;
 		wishspeed = wishdir.normalize();
 
-		if( wishspeed > pml.maxPlayerSpeed ) {
-			wishspeed = pml.maxPlayerSpeed / wishspeed;
+		if( wishspeed > maxPlayerSpeed ) {
+			wishspeed = maxPlayerSpeed / wishspeed;
 			wishvel *= wishspeed;
-			wishspeed = pml.maxPlayerSpeed;
+			wishspeed = maxPlayerSpeed;
 		}
 		wishspeed *= 0.5;
 
@@ -459,13 +449,12 @@ class PMoveLocal {
 		float maxspeed;
 		float accel;
 		float wishspeed2;
-		auto @pml = @this;
 		auto @pmoveState = @playerState.pmove;
 
-		fmove = pml.forwardPush;
-		smove = pml.sidePush;
+		fmove = forwardPush;
+		smove = sidePush;
 
-		wishvel = pml.forward * fmove + pml.right * smove;
+		wishvel = forward * fmove + right * smove;
 		wishvel.z = 0;
 		wishvel = AddCurrents( wishvel );
 
@@ -475,11 +464,11 @@ class PMoveLocal {
 		// clamp to server defined max speed
 
 		if( pmoveState.stats[PM_STAT_CROUCHTIME] != 0 ) {
-			maxspeed = pml.maxCrouchedSpeed;
-		} else if( ( pml.cmd.buttons & BUTTON_WALK ) != 0 && ( pmoveState.stats[PM_STAT_FEATURES] & PMFEAT_WALK ) != 0 ) {
-			maxspeed = pml.maxWalkSpeed;
+			maxspeed = maxCrouchedSpeed;
+		} else if( ( cmd.buttons & BUTTON_WALK ) != 0 && ( pmoveState.stats[PM_STAT_FEATURES] & PMFEAT_WALK ) != 0 ) {
+			maxspeed = maxWalkSpeed;
 		} else {
-			maxspeed = pml.maxPlayerSpeed;
+			maxspeed = maxPlayerSpeed;
 		}
 
 		if( wishspeed > maxspeed ) {
@@ -488,19 +477,19 @@ class PMoveLocal {
 			wishspeed = maxspeed;
 		}
 
-		if( pml.ladder ) {
+		if( ladder ) {
 			Accelerate( wishdir, wishspeed, pm_accelerate );
 
 			if( wishvel.z == 0.0f ) {
-				if( pml.velocity.z > 0 ) {
-					pml.velocity.z -= pmoveState.gravity * pml.frametime;
-					if( pml.velocity.z < 0 ) {
-						pml.velocity.z = 0;
+				if( velocity.z > 0 ) {
+					velocity.z -= pmoveState.gravity * frametime;
+					if( velocity.z < 0 ) {
+						velocity.z = 0;
 					}
 				} else {
-					pml.velocity.z += pmoveState.gravity * pml.frametime;
-					if( pml.velocity.z > 0 ) {
-						pml.velocity.z  = 0;
+					velocity.z += pmoveState.gravity * frametime;
+					if( velocity.z > 0 ) {
+						velocity.z  = 0;
 					}
 				}
 			}
@@ -508,22 +497,22 @@ class PMoveLocal {
 			StepSlideMove();
 		} else if( pm.groundEntity != -1 ) {
 			// walking on ground
-			if( pml.velocity.z > 0 ) {
-				pml.velocity.z = 0; //!!! this is before the accel
+			if( velocity.z > 0 ) {
+				velocity.z = 0; //!!! this is before the accel
 			}
 
 			Accelerate( wishdir, wishspeed, pm_accelerate );
 
 			// fix for negative trigger_gravity fields
 			if( pmoveState.gravity > 0 ) {
-				if( pml.velocity.z > 0 ) {
-					pml.velocity.z = 0;
+				if( velocity.z > 0 ) {
+					velocity.z = 0;
 				}
 			} else {
-				pml.velocity.z -= pmoveState.gravity * pml.frametime;
+				velocity.z -= pmoveState.gravity * frametime;
 			}
 
-			if( pml.velocity.x == 0.0f && pml.velocity.y == 0.0f ) {
+			if( velocity.x == 0.0f && velocity.y == 0.0f ) {
 				return;
 			}
 
@@ -532,8 +521,8 @@ class PMoveLocal {
 				   && ( pmoveState.stats[PM_STAT_FEATURES] & PMFEAT_FWDBUNNY ) == 0 ) {
 			// Air Control
 			wishspeed2 = wishspeed;
-			if( pml.velocity * wishdir < 0
-				&& ( pml.pm_flags & PMF_WALLJUMPING ) == 0
+			if( velocity * wishdir < 0
+				&& ( pm_flags & PMF_WALLJUMPING ) == 0
 				&& ( pmoveState.stats[PM_STAT_KNOCKBACK] <= 0 ) ) {
 				accel = pm_airdecelerate;
 			} else {
@@ -541,7 +530,7 @@ class PMoveLocal {
 			}
 
 			// ch : remove knockback test here
-			if( ( pml.pm_flags & PMF_WALLJUMPING ) != 0
+			if( ( pm_flags & PMF_WALLJUMPING ) != 0
 				/* || ( pmoveState.stats[PM_STAT_KNOCKBACK] > 0 ) */ ) {
 				accel = 0; // no stopmove while walljumping
 			}
@@ -555,26 +544,26 @@ class PMoveLocal {
 
 			// Air control
 			Accelerate( wishdir, wishspeed, accel );
-			if( pm_aircontrol > 0 && ( pml.pm_flags & PMF_WALLJUMPING ) == 0 && ( pmoveState.stats[PM_STAT_KNOCKBACK] <= 0 ) ) { // no air ctrl while wjing
+			if( pm_aircontrol > 0 && ( pm_flags & PMF_WALLJUMPING ) == 0 && ( pmoveState.stats[PM_STAT_KNOCKBACK] <= 0 ) ) { // no air ctrl while wjing
 				Aircontrol( wishdir, wishspeed2 );
 			}
 
 			// add gravity
-			pml.velocity.z -= pmoveState.gravity * pml.frametime;
+			velocity.z -= pmoveState.gravity * frametime;
 			StepSlideMove();
 		} else {   // air movement (old school)
 			bool inhibit = false;
 			bool accelerating, decelerating;
 
-			accelerating = ( pml.velocity * wishdir ) > 0.0f ? true : false;
-			decelerating = ( pml.velocity * wishdir ) < -0.0f ? true : false;
+			accelerating = ( velocity * wishdir ) > 0.0f ? true : false;
+			decelerating = ( velocity * wishdir ) < -0.0f ? true : false;
 
-			if( ( pml.pm_flags & PMF_WALLJUMPING ) != 0 &&
+			if( ( pm_flags & PMF_WALLJUMPING ) != 0 &&
 				( pmoveState.stats[PM_STAT_WJTIME] >= ( PM_WALLJUMP_TIMEDELAY - PM_AIRCONTROL_BOUNCE_DELAY ) ) ) {
 				inhibit = true;
 			}
 
-			if( ( pml.pm_flags & PMF_DASHING ) != 0 &&
+			if( ( pm_flags & PMF_DASHING ) != 0 &&
 				( pmoveState.stats[PM_STAT_DASHTIME] >= ( PM_DASHJUMP_TIMEDELAY - PM_AIRCONTROL_BOUNCE_DELAY ) ) ) {
 				inhibit = true;
 			}
@@ -599,20 +588,20 @@ class PMoveLocal {
 
 				wishspeed2 = wishspeed;
 				if( decelerating &&
-					( pml.pm_flags & PMF_WALLJUMPING ) == 0 ) {
+					( pm_flags & PMF_WALLJUMPING ) == 0 ) {
 					accel = pm_airdecelerate;
 				} else {
 					accel = pm_airaccelerate;
 				}
 
 				// ch : knockback out
-				if( ( pml.pm_flags & PMF_WALLJUMPING ) != 0
+				if( ( pm_flags & PMF_WALLJUMPING ) != 0
 					/*	|| ( pmoveState.stats[PM_STAT_KNOCKBACK] > 0 ) */) {
 					accel = 0; // no stop-move while wall-jumping
 					aircontrol = false;
 				}
 
-				if( ( pml.pm_flags & PMF_DASHING ) != 0 &&
+				if( ( pm_flags & PMF_DASHING ) != 0 &&
 					( pmoveState.stats[PM_STAT_DASHTIME] >= ( PM_DASHJUMP_TIMEDELAY - PM_AIRCONTROL_BOUNCE_DELAY ) ) ) {
 					aircontrol = false;
 				}
@@ -635,7 +624,7 @@ class PMoveLocal {
 			}
 
 			// add gravity
-			pml.velocity.z -= pmoveState.gravity * pml.frametime;
+			velocity.z -= pmoveState.gravity * frametime;
 			StepSlideMove();
 		}
 	}
@@ -645,22 +634,20 @@ class PMoveLocal {
 	*/
 	void GroundTrace( Trace &out trace ) {
 		Vec3 mins, maxs;
-		auto @pml = @this;
 
 		if( pm.skipCollision ) {
 			return;
 		}
 
 		// see if standing on something solid
-		Vec3 point( pml.origin.x, pml.origin.y, pml.origin.z - 0.25 );
+		Vec3 point( origin.x, origin.y, origin.z - 0.25 );
 
-		trace.doTrace( pml.origin, pm_mins, pm_maxs, point, playerState.POVnum, pm.contentMask );
+		trace.doTrace( origin, pm_mins, pm_maxs, point, playerState.POVnum, pm.contentMask );
 	}
 
 	void UnstickPosition( Trace &out trace ) {
 		int j;
 		Vec3 origin;
-		auto @pml = @this;
 		auto @pmoveState = @playerState.pmove;
 
 		if( pm.skipCollision ) {
@@ -670,11 +657,11 @@ class PMoveLocal {
 			return;
 		}
 
-		origin = pml.origin;
+		origin = origin;
 
 		// try all combinations
 		for( j = 0; j < 8; j++ ) {
-			origin = pml.origin;
+			origin = origin;
 
 			origin.x += ( j & 1 ) != 0 ? -1.0f : 1.0f;
 			origin.y += ( j & 2 ) != 0 ? -1.0f : 1.0f;
@@ -683,23 +670,21 @@ class PMoveLocal {
 			trace.doTrace( origin, pm_mins, pm_maxs, origin, playerState.POVnum, pm.contentMask );
 
 			if( !trace.allSolid ) {
-				pml.origin = origin;
+				origin = origin;
 				GroundTrace( trace );
 				return;
 			}
 		}
 
 		// go back to the last position
-		pml.origin = pml.previousOrigin;
+		origin = previousOrigin;
 	}
 
 	void CategorizePosition() {
-		auto @pml = @this;
-		auto @playerState = @pml.playerState;
 		auto @pmoveState = @playerState.pmove;
 
-		if( pml.velocity.z > 180 ) { // !!ZOID changed from 100 to 180 (ramp accel)
-			pml.pm_flags &= ~PMF_ON_GROUND;
+		if( velocity.z > 180 ) { // !!ZOID changed from 100 to 180 (ramp accel)
+			pm_flags &= ~PMF_ON_GROUND;
 			pm.groundEntity = -1;
 		} else {
 			Trace trace;
@@ -712,14 +697,14 @@ class PMoveLocal {
 				UnstickPosition( trace );
 			}
 
-			pml.groundPlaneNormal = trace.planeNormal;
-			pml.groundPlaneDist = trace.planeDist;
-			pml.groundSurfFlags = trace.surfFlags;
-			pml.groundContents = trace.contents;
+			groundPlaneNormal = trace.planeNormal;
+			groundPlaneDist = trace.planeDist;
+			groundSurfFlags = trace.surfFlags;
+			groundContents = trace.contents;
 
 			if( ( trace.fraction == 1.0f ) || ( !IsWalkablePlane( trace.planeNormal ) && !trace.startSolid ) ) {
 				pm.groundEntity = -1;
-				pml.pm_flags &= ~PMF_ON_GROUND;
+				pm_flags &= ~PMF_ON_GROUND;
 			} else {
 				pm.groundEntity = trace.entNum;
 				pm.groundPlaneNormal = trace.planeNormal;
@@ -728,13 +713,13 @@ class PMoveLocal {
 				pm.groundContents = trace.contents;
 
 				// hitting solid ground will end a waterjump
-				if( ( pml.pm_flags & PMF_TIME_WATERJUMP ) != 0 ) {
-					pml.pm_flags &= ~( PMF_TIME_WATERJUMP | PMF_TIME_LAND | PMF_TIME_TELEPORT );
+				if( ( pm_flags & PMF_TIME_WATERJUMP ) != 0 ) {
+					pm_flags &= ~( PMF_TIME_WATERJUMP | PMF_TIME_LAND | PMF_TIME_TELEPORT );
 					pmoveState.pm_time = 0;
 				}
 
-				if( ( pml.pm_flags & PMF_ON_GROUND ) == 0 ) { // just hit the ground
-					pml.pm_flags |= PMF_ON_GROUND;
+				if( ( pm_flags & PMF_ON_GROUND ) == 0 ) { // just hit the ground
+					pm_flags |= PMF_ON_GROUND;
 				}
 			}
 
@@ -752,18 +737,18 @@ class PMoveLocal {
 		float sample2 = playerState.viewHeight - pm_mins.z;
 		float sample1 = sample2 / 2.0f;
 
-		Vec3 point = pml.origin;
-		point.z = pml.origin.z + pm_mins.z + 1.0f;
+		Vec3 point = origin;
+		point.z = origin.z + pm_mins.z + 1.0f;
 		int cont = GS::PointContents( point );
 
 		if( ( cont & MASK_WATER ) != 0 ) {
 			pm.waterType = cont;
 			pm.waterLevel = 1;
-			point.z = pml.origin.z + pm_mins.z + sample1;
+			point.z = origin.z + pm_mins.z + sample1;
 			cont = GS::PointContents( point );
 			if( ( cont & MASK_WATER ) != 0 ) {
 				pm.waterLevel = 2;
-				point.z = pml.origin.z + pm_mins.z + sample2;
+				point.z = origin.z + pm_mins.z + sample2;
 				cont = GS::PointContents( point );
 				if( ( cont & MASK_WATER ) != 0 ) {
 					pm.waterLevel = 3;
@@ -774,13 +759,13 @@ class PMoveLocal {
 
 	void ClearDash() {
 		auto @pmoveState = @playerState.pmove;
-		pml.pm_flags &= ~PMF_DASHING;
+		pm_flags &= ~PMF_DASHING;
 		pmoveState.stats[PM_STAT_DASHTIME] = 0;
 	}
 
 	void ClearWallJump() {
 		auto @pmoveState = @playerState.pmove;
-		pml.pm_flags &= ~(PMF_WALLJUMPING|PMF_WALLJUMPCOUNT);
+		pm_flags &= ~(PMF_WALLJUMPING|PMF_WALLJUMPCOUNT);
 		pmoveState.stats[PM_STAT_WJTIME] = 0;
 	}
 
@@ -790,14 +775,12 @@ class PMoveLocal {
 	}
 
 	void ClipVelocityAgainstGround( void ) {
-		auto @pml = @this;
-		
 		// clip against the ground when jumping if moving that direction
-		if( pml.groundPlaneNormal.z > 0 && pml.velocity.z < 0 ) {
-			Vec3 n2( pml.groundPlaneNormal.x, pml.groundPlaneNormal.y, 0.0f );
-			Vec3 v2( pml.velocity.x, pml.velocity.y, 0.0f );
+		if( groundPlaneNormal.z > 0 && velocity.z < 0 ) {
+			Vec3 n2( groundPlaneNormal.x, groundPlaneNormal.y, 0.0f );
+			Vec3 v2( velocity.x, velocity.y, 0.0f );
 			if( n2 * v2 > 0.0f ) {
-				pml.velocity = GS::ClipVelocity( pml.velocity, pml.groundPlaneNormal, PM_OVERBOUNCE );
+				velocity = GS::ClipVelocity( velocity, groundPlaneNormal, PM_OVERBOUNCE );
 			}
 		}
 	}
@@ -812,7 +795,6 @@ class PMoveLocal {
 		Vec3 zero, dir, mins, maxs;
 		bool alternate;
 		float r, d, dx, dy, m;
-		auto @pml = @this;
 		auto @pmoveState = @playerState.pmove;
 
 		// if there is nothing at all within the checked area, we can skip the individual checks
@@ -821,33 +803,33 @@ class PMoveLocal {
 		mins.y = pm_mins.y - pm_maxs.y;
 		maxs.x = pm_maxs.x + pm_maxs.x;
 		maxs.y = pm_maxs.y + pm_maxs.y;
-		if( pml.velocity[0] > 0 ) {
-			maxs.x += pml.velocity.x * 0.015f;
+		if( velocity[0] > 0 ) {
+			maxs.x += velocity.x * 0.015f;
 		} else {
-			mins.x += pml.velocity.x * 0.015f;
+			mins.x += velocity.x * 0.015f;
 		}
-		if( pml.velocity[1] > 0 ) {
-			maxs.y += pml.velocity.y * 0.015f;
+		if( velocity[1] > 0 ) {
+			maxs.y += velocity.y * 0.015f;
 		} else {
-			mins.y += pml.velocity.y * 0.015f;
+			mins.y += velocity.y * 0.015f;
 		}
 		mins.z = maxs.z = 0;
-		trace.doTrace( pml.origin, mins, maxs, pml.origin, playerState.POVnum, pm.contentMask );
+		trace.doTrace( origin, mins, maxs, origin, playerState.POVnum, pm.contentMask );
 		if( !trace.allSolid && trace.fraction == 1.0f ) {
 			return Vec3( 0.0f );
 		}
 
 		// determine the primary direction
-		if( pml.sidePush > 0 ) {
+		if( sidePush > 0 ) {
 			r = -180.0f / 2.0f;
-		} else if( pml.sidePush < 0 ) {
+		} else if( sidePush < 0 ) {
 			r = 180.0f / 2.0f;
-		} else if( pml.forwardPush > 0 ) {
+		} else if( forwardPush > 0 ) {
 			r = 0.0f;
 		} else {
 			r = 180.0f;
 		}
-		alternate = pml.sidePush == 0 || pml.forwardPush == 0;
+		alternate = sidePush == 0 || forwardPush == 0;
 
 		d = 0.0f; // current distance from the primary direction
 
@@ -883,11 +865,11 @@ class PMoveLocal {
 			// allow a gap between the player and the wall
 			m += pm_maxs.x;
 
-			dir.x = pml.origin.x + dx * m + pml.velocity.x * 0.015f;
-			dir.y = pml.origin.y + dy * m + pml.velocity.y * 0.015f;
-			dir.z = pml.origin.z;
+			dir.x = origin.x + dx * m + velocity.x * 0.015f;
+			dir.y = origin.y + dy * m + velocity.y * 0.015f;
+			dir.z = origin.z;
 
-			trace.doTrace( pml.origin, zero, zero, dir, playerState.POVnum, pm.contentMask );
+			trace.doTrace( origin, zero, zero, dir, playerState.POVnum, pm.contentMask );
 
 			if( trace.allSolid ) {
 				return Vec3( 0.0f );
@@ -917,20 +899,19 @@ class PMoveLocal {
 	* CheckJump
 	*/
 	void CheckJump() {
-		auto @pml = @this;
 		auto @pmoveState = @playerState.pmove;
 
-		if( pml.upPush < 10 ) {
+		if( upPush < 10 ) {
 			// not holding jump
 			if( ( pmoveState.stats[PM_STAT_FEATURES] & PMFEAT_CONTINOUSJUMP ) == 0 ) {
-				pml.pm_flags &= ~PMF_JUMP_HELD;
+				pm_flags &= ~PMF_JUMP_HELD;
 			}
 			return;
 		}
 
 		if( ( pmoveState.stats[PM_STAT_FEATURES] & PMFEAT_CONTINOUSJUMP ) == 0 ) {
 			// must wait for jump to be released
-			if( ( pml.pm_flags & PMF_JUMP_HELD ) != 0 ) {
+			if( ( pm_flags & PMF_JUMP_HELD ) != 0 ) {
 				return;
 			}
 		}
@@ -953,39 +934,38 @@ class PMoveLocal {
 		}
 
 		if( ( pmoveState.stats[PM_STAT_FEATURES] & PMFEAT_CONTINOUSJUMP ) == 0 ) {
-			pml.pm_flags |= PMF_JUMP_HELD;
+			pm_flags |= PMF_JUMP_HELD;
 		}
 
 		pm.groundEntity = -1;
 
 		ClipVelocityAgainstGround();
 
-		if( pml.velocity.z > 100 ) {
+		if( velocity.z > 100 ) {
 			GS::PredictedEvent( playerState.POVnum, EV_DOUBLEJUMP, 0 );
-			pml.velocity.z += pml.jumpPlayerSpeed;
-		} else if( pml.velocity[2] > 0 ) {
+			velocity.z += jumpPlayerSpeed;
+		} else if( velocity[2] > 0 ) {
 			GS::PredictedEvent( playerState.POVnum, EV_JUMP, 0 );
-			pml.velocity.z += pml.jumpPlayerSpeed;
+			velocity.z += jumpPlayerSpeed;
 		} else {
 			GS::PredictedEvent( playerState.POVnum, EV_JUMP, 0 );
-			pml.velocity.z = pml.jumpPlayerSpeed;
+			velocity.z = jumpPlayerSpeed;
 		}
 
 		// remove wj count
-		pml.pm_flags &= ~PMF_JUMPPAD_TIME;
+		pm_flags &= ~PMF_JUMPPAD_TIME;
 
 		ClearDash();
 		ClearWallJump();
 	}
 
 	void CheckDash() {
-		auto @pml = @this;
 		auto @pmoveState = @playerState.pmove;
 		float upspeed;
 		Vec3 dashdir;
 
-		if( ( pml.cmd.buttons & BUTTON_SPECIAL ) == 0 ) {
-			pml.pm_flags &= ~PMF_SPECIAL_HELD;
+		if( ( cmd.buttons & BUTTON_SPECIAL ) == 0 ) {
+			pm_flags &= ~PMF_SPECIAL_HELD;
 		}
 
 		if( pmoveState.pm_type != PM_NORMAL ) {
@@ -1000,62 +980,62 @@ class PMoveLocal {
 			return;
 		}
 
-		if( ( pml.cmd.buttons & BUTTON_SPECIAL ) != 0 && pm.groundEntity != -1
+		if( ( cmd.buttons & BUTTON_SPECIAL ) != 0 && pm.groundEntity != -1
 			&& ( pmoveState.stats[PM_STAT_FEATURES] & PMFEAT_DASH ) != 0 ) {
-			if( ( pml.pm_flags & PMF_SPECIAL_HELD ) != 0 ) {
+			if( ( pm_flags & PMF_SPECIAL_HELD ) != 0 ) {
 				return;
 			}
 
-			pml.pm_flags &= ~PMF_JUMPPAD_TIME;
+			pm_flags &= ~PMF_JUMPPAD_TIME;
 			ClearWallJump();
 
-			pml.pm_flags |= PMF_DASHING | PMF_SPECIAL_HELD;
+			pm_flags |= PMF_DASHING | PMF_SPECIAL_HELD;
 			pm.groundEntity = -1;
 
 			ClipVelocityAgainstGround();
 
-			if( pml.velocity.z <= 0.0f ) {
+			if( velocity.z <= 0.0f ) {
 				upspeed = pm_dashupspeed;
 			} else {
-				upspeed = pm_dashupspeed + pml.velocity.z;
+				upspeed = pm_dashupspeed + velocity.z;
 			}
 
 			// ch : we should do explicit forwardPush here, and ignore sidePush ?
-			dashdir = pml.flatforward * pml.forwardPush + pml.sidePush * pml.right;
+			dashdir = flatforward * forwardPush + sidePush * right;
 			dashdir.z = 0.0;
 
 			if( dashdir.length() < 0.01f ) { // if not moving, dash like a "forward dash"
-				dashdir = pml.flatforward;
+				dashdir = flatforward;
 			} else {
 				dashdir.normalize();
 			}
 
 			float actual_velocity = HorizontalSpeed();
-			if( actual_velocity <= pml.dashPlayerSpeed ) {
-				dashdir *= pml.dashPlayerSpeed;
+			if( actual_velocity <= dashPlayerSpeed ) {
+				dashdir *= dashPlayerSpeed;
 			} else {
 				dashdir *= actual_velocity;
 			}
 
-			pml.velocity = dashdir;
-			pml.velocity.z = upspeed;
+			velocity = dashdir;
+			velocity.z = upspeed;
 
 			pmoveState.stats[PM_STAT_DASHTIME] = PM_DASHJUMP_TIMEDELAY;
 
 			// return sound events
-			if( abs( pml.sidePush ) > 10 && abs( pml.sidePush ) >= abs( pml.forwardPush ) ) {
-				if( pml.sidePush > 0 ) {
+			if( abs( sidePush ) > 10 && abs( sidePush ) >= abs( forwardPush ) ) {
+				if( sidePush > 0 ) {
 					GS::PredictedEvent( playerState.POVnum, EV_DASH, 2 );
 				} else {
 					GS::PredictedEvent( playerState.POVnum, EV_DASH, 1 );
 				}
-			} else if( pml.forwardPush < -10 ) {
+			} else if( forwardPush < -10 ) {
 				GS::PredictedEvent( playerState.POVnum, EV_DASH, 3 );
 			} else {
 				GS::PredictedEvent( playerState.POVnum, EV_DASH, 0 );
 			}
 		} else if( pm.groundEntity == -1 ) {
-			pml.pm_flags &= ~PMF_DASHING;
+			pm_flags &= ~PMF_DASHING;
 		}
 	}
 
@@ -1063,27 +1043,26 @@ class PMoveLocal {
 	* CheckWallJump -- By Kurim
 	*/
 	void CheckWallJump() {
-		auto @pml = @this;
 		auto @pmoveState = @playerState.pmove;
 		Vec3 normal;
 		float hspeed;
 		Vec3 pm_mins, pm_maxs;
-		const float pm_wjminspeed = ( ( pml.maxWalkSpeed + pml.maxPlayerSpeed ) * 0.5f );
+		const float pm_wjminspeed = ( ( maxWalkSpeed + maxPlayerSpeed ) * 0.5f );
 
-		if( ( pml.cmd.buttons & BUTTON_SPECIAL ) == 0 ) {
-			pml.pm_flags &= ~PMF_SPECIAL_HELD;
+		if( ( cmd.buttons & BUTTON_SPECIAL ) == 0 ) {
+			pm_flags &= ~PMF_SPECIAL_HELD;
 		}
 
 		if( pm.groundEntity != -1 ) {
-			pml.pm_flags &= ~(PMF_WALLJUMPING | PMF_WALLJUMPCOUNT);
+			pm_flags &= ~(PMF_WALLJUMPING | PMF_WALLJUMPCOUNT);
 		}
 
-		if( ( pmoveState.pm_flags & PMF_WALLJUMPING ) != 0 && pml.velocity.z < 0.0 ) {
-			pml.pm_flags &= ~PMF_WALLJUMPING;
+		if( ( pmoveState.pm_flags & PMF_WALLJUMPING ) != 0 && velocity.z < 0.0 ) {
+			pm_flags &= ~PMF_WALLJUMPING;
 		}
 
 		if( pmoveState.stats[PM_STAT_WJTIME] <= 0 ) { // reset the wj count after wj delay
-			pml.pm_flags &= ~PMF_WALLJUMPCOUNT;
+			pm_flags &= ~PMF_WALLJUMPCOUNT;
 		}
 
 		if( pmoveState.pm_type != PM_NORMAL ) {
@@ -1091,71 +1070,71 @@ class PMoveLocal {
 		}
 
 		// don't walljump in the first 100 milliseconds of a dash jump
-		if( ( pml.pm_flags & PMF_DASHING ) != 0
+		if( ( pm_flags & PMF_DASHING ) != 0
 			&& ( pmoveState.stats[PM_STAT_DASHTIME] > ( PM_DASHJUMP_TIMEDELAY - 100 ) ) ) {
 			return;
 		}
 
 		// markthis
 
-		if( pm.groundEntity == -1 && ( pml.cmd.buttons & BUTTON_SPECIAL ) != 0
+		if( pm.groundEntity == -1 && ( cmd.buttons & BUTTON_SPECIAL ) != 0
 			&& ( pmoveState.stats[PM_STAT_FEATURES] & PMFEAT_WALLJUMP ) != 0 &&
-			( ( pml.pm_flags & PMF_WALLJUMPCOUNT ) == 0 )
+			( ( pm_flags & PMF_WALLJUMPCOUNT ) == 0 )
 			&& pmoveState.stats[PM_STAT_WJTIME] <= 0
 			&& !pm.skipCollision
 			) {
 			Trace trace;
-			Vec3 point = pml.origin;
+			Vec3 point = origin;
 			point.z -= STEPSIZE;
 
 			// don't walljump if our height is smaller than a step
 			// unless jump is pressed or the player is moving faster than dash speed and upwards
 			hspeed = HorizontalSpeed();
-			trace.doTrace( pml.origin, pm_mins, pm_maxs, point, playerState.POVnum, pm.contentMask );
+			trace.doTrace( origin, pm_mins, pm_maxs, point, playerState.POVnum, pm.contentMask );
 
-			if( pml.upPush >= 10
-				|| ( hspeed > pmoveState.stats[PM_STAT_DASHSPEED] && pml.velocity[2] > 8 )
+			if( upPush >= 10
+				|| ( hspeed > pmoveState.stats[PM_STAT_DASHSPEED] && velocity[2] > 8 )
 				|| ( trace.fraction == 1.0f ) || ( !IsWalkablePlane( trace.planeNormal ) && !trace.startSolid ) ) {
 				normal = PlayerTouchWall( 20, 0.3f );
 				if( normal.length() == 0.0f ) {
 					return;
 				}
 
-				if( ( pml.pm_flags & PMF_SPECIAL_HELD ) == 0
-					&& ( pml.pm_flags & PMF_WALLJUMPING ) == 0 ) {
-					float oldupvelocity = pml.velocity.z;
-					pml.velocity.z = 0.0;
+				if( ( pm_flags & PMF_SPECIAL_HELD ) == 0
+					&& ( pm_flags & PMF_WALLJUMPING ) == 0 ) {
+					float oldupvelocity = velocity.z;
+					velocity.z = 0.0;
 
-					hspeed = pml.velocity.normalize();
+					hspeed = velocity.normalize();
 
 					// if stunned almost do nothing
 					if( pmoveState.stats[PM_STAT_STUN] > 0 ) {
-						pml.velocity = GS::ClipVelocity( pml.velocity, normal, 1.0f );
-						pml.velocity += pm_failedwjbouncefactor * normal;
+						velocity = GS::ClipVelocity( velocity, normal, 1.0f );
+						velocity += pm_failedwjbouncefactor * normal;
 
-						pml.velocity.normalize();
+						velocity.normalize();
 
-						pml.velocity *= hspeed;
-						pml.velocity.z = ( oldupvelocity + pm_failedwjupspeed > pm_failedwjupspeed ) ? oldupvelocity : oldupvelocity + pm_failedwjupspeed;
+						velocity *= hspeed;
+						velocity.z = ( oldupvelocity + pm_failedwjupspeed > pm_failedwjupspeed ) ? oldupvelocity : oldupvelocity + pm_failedwjupspeed;
 					} else {
-						pml.velocity = GS::ClipVelocity( pml.velocity, normal, 1.0005f );
-						pml.velocity += pm_wjbouncefactor * normal;
+						velocity = GS::ClipVelocity( velocity, normal, 1.0005f );
+						velocity += pm_wjbouncefactor * normal;
 
 						if( hspeed < pm_wjminspeed ) {
 							hspeed = pm_wjminspeed;
 						}
 
-						pml.velocity.normalize();
+						velocity.normalize();
 
-						pml.velocity *= hspeed;
-						pml.velocity.z = ( oldupvelocity > pm_wjupspeed ) ? oldupvelocity : pm_wjupspeed; // jal: if we had a faster upwards speed, keep it
+						velocity *= hspeed;
+						velocity.z = ( oldupvelocity > pm_wjupspeed ) ? oldupvelocity : pm_wjupspeed; // jal: if we had a faster upwards speed, keep it
 					}
 
 					// set the walljumping state
-					pml.ClearDash();
+					ClearDash();
 
-					pml.pm_flags &= ~PMF_JUMPPAD_TIME;
-					pml.pm_flags |= PMF_WALLJUMPING | PMF_SPECIAL_HELD | PMF_WALLJUMPCOUNT;
+					pm_flags &= ~PMF_JUMPPAD_TIME;
+					pm_flags |= PMF_WALLJUMPING | PMF_SPECIAL_HELD | PMF_WALLJUMPCOUNT;
 
 					if( pmoveState.stats[PM_STAT_STUN] > 0 ) {
 						pmoveState.stats[PM_STAT_WJTIME] = PM_WALLJUMP_FAILED_TIMEDELAY;
@@ -1171,17 +1150,16 @@ class PMoveLocal {
 				}
 			}
 		} else {
-			pml.pm_flags &= ~PMF_WALLJUMPING;
+			pm_flags &= ~PMF_WALLJUMPING;
 		}
 	}
 
 	void DecreasePMoveStat( int stat ) {
-		auto @pml = @this;
 		auto @pmoveState = @playerState.pmove;
 
 		int value = pmoveState.stats[stat];
 		if( value > 0 ) {
-			value -= pml.cmd.msec;
+			value -= cmd.msec;
 		} else if( value < 0 ) {
 			value = 0;
 		}
@@ -1190,7 +1168,6 @@ class PMoveLocal {
 	}
 
 	void PostBeginMove() {
-		auto @pml = @this;
 		auto @pmoveState = @playerState.pmove;
 
 		// clear results
@@ -1204,23 +1181,23 @@ class PMoveLocal {
 		switch( pmoveState.pm_type ) {
 			case PM_FREEZE:
 			case PM_CHASECAM:
-				pml.pm_flags |= PMF_NO_PREDICTION;
+				pm_flags |= PMF_NO_PREDICTION;
 				pm.contentMask = 0;
 				break;
 
 			case PM_GIB:
-				pml.pm_flags |= PMF_NO_PREDICTION;
+				pm_flags |= PMF_NO_PREDICTION;
 				pm.contentMask = MASK_DEADSOLID;
 				break;
 
 			case PM_SPECTATOR:
-				pml.pm_flags &= ~PMF_NO_PREDICTION;
+				pm_flags &= ~PMF_NO_PREDICTION;
 				pm.contentMask = MASK_DEADSOLID;
 				break;
 
 			case PM_NORMAL:
 			default:
-				pml.pm_flags &= ~PMF_NO_PREDICTION;
+				pm_flags &= ~PMF_NO_PREDICTION;
 
 				if( ( pmoveState.stats[PM_STAT_FEATURES] & PMFEAT_GHOSTMOVE ) != 0 ) {
 					pm.contentMask = MASK_DEADSOLID;
@@ -1237,13 +1214,13 @@ class PMoveLocal {
 			if( pmoveState.pm_time != 0 ) {
 				int msec;
 
-				msec = pml.cmd.msec / 8;
+				msec = cmd.msec / 8;
 				if( msec < 0 ) {
 					msec = 1;
 				}
 
 				if( msec >= pmoveState.pm_time ) {
-					pml.pm_flags &= ~( PMF_TIME_WATERJUMP | PMF_TIME_LAND | PMF_TIME_TELEPORT );
+					pm_flags &= ~( PMF_TIME_WATERJUMP | PMF_TIME_LAND | PMF_TIME_TELEPORT );
 					pmoveState.pm_time = 0;
 				} else {
 					pmoveState.pm_time -= msec;
@@ -1264,15 +1241,15 @@ class PMoveLocal {
 		}
 
 		if( pmoveState.stats[PM_STAT_NOUSERCONTROL] > 0 ) {
-			pml.forwardPush = 0.0f;
-			pml.sidePush = 0.0f;
-			pml.upPush = 0.0f;
-			pml.cmd.buttons = 0;
+			forwardPush = 0.0f;
+			sidePush = 0.0f;
+			upPush = 0.0f;
+			cmd.buttons = 0;
 		}
 
 		// in order the forward accelt to kick in, one has to keep +fwd pressed
 		// for some time without strafing
-		if( pml.forwardPush <= 0.0f || pml.sidePush != 0.0f ) {
+		if( forwardPush <= 0.0f || sidePush != 0.0f ) {
 			pmoveState.stats[PM_STAT_FWDTIME] = PM_FORWARD_ACCEL_TIMEDELAY;
 		}
 
@@ -1280,7 +1257,6 @@ class PMoveLocal {
 	}
 
 	void CheckZoom() {
-		auto @pml = @this;
 		auto @pmoveState = @playerState.pmove;
 
 		if( pmoveState.pm_type != PM_NORMAL ) {
@@ -1289,10 +1265,10 @@ class PMoveLocal {
 		}
 
 		int zoom = pmoveState.stats[PM_STAT_ZOOMTIME];
-		if( ( pml.cmd.buttons & BUTTON_ZOOM ) != 0 && ( pmoveState.stats[PM_STAT_FEATURES] & PMFEAT_ZOOM ) != 0 ) {
-			zoom += pml.cmd.msec;
+		if( ( cmd.buttons & BUTTON_ZOOM ) != 0 && ( pmoveState.stats[PM_STAT_FEATURES] & PMFEAT_ZOOM ) != 0 ) {
+			zoom += cmd.msec;
 		} else if( zoom > 0 ) {
-			zoom -= pml.cmd.msec;
+			zoom -= cmd.msec;
 		}
 
 		if( zoom < 0 ) {
@@ -1310,7 +1286,6 @@ class PMoveLocal {
 	* Sets mins, maxs, and pm->viewheight
 	*/
 	void AdjustBBox() {
-		auto @pml = @this;
 		auto @pmoveState = @playerState.pmove;
 		float crouchFrac;
 		Trace trace;
@@ -1333,13 +1308,13 @@ class PMoveLocal {
 			playerState.viewHeight = playerboxStandViewheight;
 		}
 
-		if( pml.upPush < 0.0f && ( pmoveState.stats[PM_STAT_FEATURES] & PMFEAT_CROUCH ) != 0 &&
+		if( upPush < 0.0f && ( pmoveState.stats[PM_STAT_FEATURES] & PMFEAT_CROUCH ) != 0 &&
 			pmoveState.stats[PM_STAT_WJTIME] < ( PM_WALLJUMP_TIMEDELAY - PM_SPECIAL_CROUCH_INHIBIT ) &&
 			pmoveState.stats[PM_STAT_DASHTIME] < ( PM_DASHJUMP_TIMEDELAY - PM_SPECIAL_CROUCH_INHIBIT ) ) {
 			Vec3 curmins, curmaxs;
 			float curviewheight;
 
-			int newcrouchtime = pmoveState.stats[PM_STAT_CROUCHTIME] + pml.cmd.msec;
+			int newcrouchtime = pmoveState.stats[PM_STAT_CROUCHTIME] + cmd.msec;
 			newcrouchtime = CrouchLerpPlayerSize( newcrouchtime, curmins, curmaxs, curviewheight );
 
 			// it's going down, so, no need of checking for head-chomping
@@ -1357,18 +1332,18 @@ class PMoveLocal {
 			// find the current size
 			CrouchLerpPlayerSize( pmoveState.stats[PM_STAT_CROUCHTIME], curmins, curmaxs, curviewheight );
 
-			if( pml.cmd.msec == 0 ) { // no need to continue
+			if( cmd.msec == 0 ) { // no need to continue
 				SetSize( curmins, curmaxs );
 				playerState.viewHeight = curviewheight;
 				return;
 			}
 
 			// find the desired size
-			int newcrouchtime = pmoveState.stats[PM_STAT_CROUCHTIME] - pml.cmd.msec;
+			int newcrouchtime = pmoveState.stats[PM_STAT_CROUCHTIME] - cmd.msec;
 			newcrouchtime = CrouchLerpPlayerSize( newcrouchtime, wishmins, wishmaxs, wishviewheight );
 
 			// check that the head is not blocked
-			trace.doTrace( pml.origin, wishmins, wishmaxs, pml.origin, playerState.POVnum, pm.contentMask );
+			trace.doTrace( origin, wishmins, wishmaxs, origin, playerState.POVnum, pm.contentMask );
 			if( trace.allSolid || trace.startSolid ) {
 				// can't do the uncrouching, let the time alone and use old position
 				SetSize( curmins, curmaxs );
@@ -1413,14 +1388,13 @@ class PMoveLocal {
 	* CheckCrouchSlide
 	*/
 	void CheckCrouchSlide() {
-		auto @pml = @this;
 		auto @pmoveState = @playerState.pmove;
 
 		if( ( pmoveState.stats[PM_STAT_FEATURES] & PMFEAT_CROUCHSLIDING ) == 0 ) {
 			return;
 		}
 
-		if( pml.upPush < 0 && HorizontalSpeed() > pml.maxWalkSpeed ) {
+		if( upPush < 0 && HorizontalSpeed() > maxWalkSpeed ) {
 			if( pmoveState.stats[PM_STAT_CROUCHSLIDETIME] > 0 ) {
 				return; // cooldown or already sliding
 			}
@@ -1430,9 +1404,9 @@ class PMoveLocal {
 			}
 
 			// start sliding when we land
-			pml.pm_flags |= PMF_CROUCH_SLIDING;
+			pm_flags |= PMF_CROUCH_SLIDING;
 			pmoveState.stats[PM_STAT_CROUCHSLIDETIME] = PM_CROUCHSLIDE + PM_CROUCHSLIDE_FADE;
-		} else if( ( pml.pm_flags & PMF_CROUCH_SLIDING ) != 0 ) {
+		} else if( ( pm_flags & PMF_CROUCH_SLIDING ) != 0 ) {
 			if( pmoveState.stats[PM_STAT_CROUCHSLIDETIME] > PM_CROUCHSLIDE_FADE ) {
 				pmoveState.stats[PM_STAT_CROUCHSLIDETIME] = PM_CROUCHSLIDE_FADE;
 			}
@@ -1443,7 +1417,6 @@ class PMoveLocal {
 		Vec3 spot;
 		int cont;
 		Trace trace;
-		auto @pml = @this;
 		auto @pmoveState = @playerState.pmove;
 		Vec3 mins, maxs;
 
@@ -1453,15 +1426,15 @@ class PMoveLocal {
 			return;
 		}
 
-		pml.ladder = false;
+		ladder = false;
 
 		// check for ladder
 		if( !pm.skipCollision ) {
-			spot = pml.origin + pml.flatforward;
+			spot = origin + flatforward;
 
-			trace.doTrace( pml.origin, pm_mins, pm_maxs, spot, playerState.POVnum, pm.contentMask );
+			trace.doTrace( origin, pm_mins, pm_maxs, spot, playerState.POVnum, pm.contentMask );
 			if( ( trace.fraction < 1.0f ) && ( trace.surfFlags & SURF_LADDER ) != 0 ) {
-				pml.ladder = true;
+				ladder = true;
 				pm.ladder = true;
 			}
 		}
@@ -1471,7 +1444,7 @@ class PMoveLocal {
 			return;
 		}
 
-		spot = pml.origin + 30.0f * pml.flatforward;
+		spot = origin + 30.0f * flatforward;
 		spot.z += 4;
 		cont = GS::PointContents( spot );
 		if( ( cont & CONTENTS_SOLID ) == 0 ) {
@@ -1485,15 +1458,14 @@ class PMoveLocal {
 		}
 
 		// jump out of water
-		pml.velocity = pml.flatforward * 50.0f;
-		pml.velocity.z = 350.0f;
+		velocity = flatforward * 50.0f;
+		velocity.z = 350.0f;
 
-		pml.pm_flags |= PMF_TIME_WATERJUMP;
+		pm_flags |= PMF_TIME_WATERJUMP;
 		pmoveState.pm_time = 255;
 	}
 
 	void FlyMove( bool doClip ) {
-		auto @pml = @this;
 		int i;
 		float speed, drop, friction, control, newspeed;
 		float currentspeed, addspeed, accelspeed, maxspeed;
@@ -1504,22 +1476,22 @@ class PMoveLocal {
 		Vec3 end;
 		Trace trace;
 
-		maxspeed = pml.maxPlayerSpeed * 1.5;
+		maxspeed = maxPlayerSpeed * 1.5;
 
-		if( ( pml.cmd.buttons & BUTTON_SPECIAL ) != 0 ) {
+		if( ( cmd.buttons & BUTTON_SPECIAL ) != 0 ) {
 			maxspeed *= 2.0;
 		}
 
 		// friction
 		speed = Speed();
 		if( speed < 1 ) {
-			pml.velocity.clear();
+			velocity.clear();
 		} else {
 			drop = 0;
 
 			friction = pm_friction * 1.5; // extra friction
 			control = speed < pm_decelerate ? pm_decelerate : speed;
-			drop += control * friction * pml.frametime;
+			drop += control * friction * frametime;
 
 			// scale the velocity
 			newspeed = speed - drop;
@@ -1527,23 +1499,23 @@ class PMoveLocal {
 				newspeed = 0;
 			}
 			newspeed /= speed;
-			pml.velocity *= newspeed;
+			velocity *= newspeed;
 		}
 
 		// accelerate
-		fmove = pml.forwardPush;
-		smove = pml.sidePush;
+		fmove = forwardPush;
+		smove = sidePush;
 
-		if( ( pml.cmd.buttons & BUTTON_SPECIAL ) != 0 ) {
+		if( ( cmd.buttons & BUTTON_SPECIAL ) != 0 ) {
 			fmove *= 2.0f;
 			smove *= 2.0f;
 		}
 
-		pml.forward.normalize();
-		pml.right.normalize();
+		forward.normalize();
+		right.normalize();
 
-		wishvel = pml.forward * fmove + pml.right * smove;
-		wishvel.z += pml.upPush;
+		wishvel = forward * fmove + right * smove;
+		wishvel.z += upPush;
 
 		wishdir = wishvel;
 		wishspeed = wishdir.normalize();
@@ -1556,37 +1528,35 @@ class PMoveLocal {
 			wishspeed = maxspeed;
 		}
 
-		currentspeed = pml.velocity * wishdir;
+		currentspeed = velocity * wishdir;
 		addspeed = wishspeed - currentspeed;
 		if( addspeed > 0 ) {
-			accelspeed = pm_accelerate * pml.frametime * wishspeed;
+			accelspeed = pm_accelerate * frametime * wishspeed;
 			if( accelspeed > addspeed ) {
 				accelspeed = addspeed;
 			}
 
-			pml.velocity += wishdir * accelspeed;
+			velocity += wishdir * accelspeed;
 		}
 
 		// move
-		end = pml.origin + pml.velocity * pml.frametime;
+		end = origin + velocity * frametime;
 
 		if( doClip ) {
-			trace.doTrace( pml.origin, pm_mins, pm_maxs, end, playerState.POVnum, pm.contentMask );
+			trace.doTrace( origin, pm_mins, pm_maxs, end, playerState.POVnum, pm.contentMask );
 			end = trace.endPos;
 		}
 
-		pml.origin = end;
+		origin = end;
 	}
 
 	void EndMove() {
-		auto @pml = this;
+		pm.origin = origin;
+		pm.velocity = velocity;
 
-		pm.origin = pml.origin;
-		pm.velocity = pml.velocity;
-
-		pml.playerState.pmove.origin = pml.origin;
-		pml.playerState.pmove.velocity = pml.velocity;
-		pml.playerState.pm_flags = pml.pm_flags;
+		playerState.pmove.origin = origin;
+		playerState.pmove.velocity = velocity;
+		playerState.pm_flags = pm_flags;
 	}
 };
 
