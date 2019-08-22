@@ -56,11 +56,11 @@ class PMoveLocal {
 	float jumpPlayerSpeed;
 	float dashPlayerSpeed;
 
-	void BeginMove( PMove @pm, PlayerState @ps, UserCmd cmd ) {
-		@pm = pm;
-		@playerState = ps;
-		@pmoveState = ps.pmove;
-		cmd = cmd;
+	void BeginMove( PMove @pm_, PlayerState @ps, UserCmd cmd_ ) {
+		@pm = pm_;
+		@playerState = @ps;
+		@pmoveState = @ps.pmove;
+		cmd = cmd_;
 
 		origin = pmoveState.origin;
 		velocity = pmoveState.velocity;
@@ -1527,9 +1527,9 @@ class PMoveLocal {
 		pm.origin = origin;
 		pm.velocity = velocity;
 
-		playerState.pmove.origin = origin;
-		playerState.pmove.velocity = velocity;
-		playerState.pm_flags = pm_flags;
+		pmoveState.origin = origin;
+		pmoveState.velocity = velocity;
+		pmoveState.pm_flags = pm_flags;
 	}
 };
 
