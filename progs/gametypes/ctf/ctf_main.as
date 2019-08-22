@@ -308,85 +308,6 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
     return false;
 }
 
-void CTF_UpdateBotsExtraGoals()
-{
-    Entity @ent;
-    for ( int i = 1; i <= maxClients; ++i )
-    {
-        @ent = @G_GetEntity( i );
-        CTF_UpdateBotExtraGoals( ent );
-    }
-}
-
-
-void CTF_UpdateBotExtraGoals( Entity @ent )
-{
-    Bot @bot = @ent.client.getBot();
-    if ( @bot == null )
-        return;
-
-    int enemyTeam;
-    if ( ent.team == TEAM_ALPHA )
-        enemyTeam = TEAM_BETA;
-    else if ( ent.team == TEAM_BETA )
-        enemyTeam = TEAM_ALPHA;
-    else 
-        return;
-    
-    // Flags defence/offence/carrier support is managed by native code
-    // using provided status of defence/offence spots.
-
-    // The only thing should be managed in scripts is returning to a base.
-    // (Carrier behaviour differs for custom gametypes).
-
-    // Also dropped flags are managed here too.
-
-    cFlagBase @teamBase = @CTF_getBaseForTeam( ent.team );
-
-    if ( @teamBase != null )
-    {
-        // The bot is a carrier, so it should return to the team base
-        if ( ( ent.effects & EF_CARRIER ) != 0 )
-        {
-            if ( @teamBase.owner != null )
-            {
-                // the flag is at our base, return to the base
-                if ( ( teamBase.owner.effects & EF_CARRIER ) != 0 )
-                {
-                    bot.overrideEntityWeight( teamBase.owner, 9.0f );
-                }
-                // our flag is stolen    
-                else
-                {
-                    float botToHomeBaseDist = teamBase.owner.origin.distance( ent.origin );
-                    // return to our base
-                    if ( botToHomeBaseDist > 768.0f )
-                    {
-                        bot.overrideEntityWeight( teamBase.owner, 9.0f );
-                    }
-                    // do not camp at our flag spot, hide somewhere else
-                    else 
-                    {      
-                        bot.overrideEntityWeight( teamBase.owner, 9.0f * ( botToHomeBaseDist / 768.0f ) );
-                    }
-                }
-            }
-        }
-
-        // it's team flag, dropped somewhere
-        if ( @teamBase.carrier != @teamBase.owner && @teamBase.carrier.client == null )
-            bot.overrideEntityWeight( teamBase.carrier, 9.0f );
-    } 
-
-    cFlagBase @enemyBase = @CTF_getBaseForTeam( enemyTeam );
-    if ( @enemyBase != null )
-    {
-        // it's team flag, dropped somewhere
-        if ( @enemyBase.carrier != @enemyBase.owner && @enemyBase.carrier.client == null )
-            bot.overrideEntityWeight( enemyBase.carrier, 9.0f );
-    }
-}
-
 // select a spawning point for a player
 Entity @GT_SelectSpawnPoint( Entity @self )
 {
@@ -776,8 +697,6 @@ void GT_ThinkRules()
                 ent.client.setHUDStat( STAT_PROGRESS_BETA, betaStatCap );
         }
     }
-
-    CTF_UpdateBotsExtraGoals();
 }
 
 // The game has detected the end of the match state, but it

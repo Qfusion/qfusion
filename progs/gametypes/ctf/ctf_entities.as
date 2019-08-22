@@ -125,10 +125,6 @@ class cFlagBase
     {
         if ( @this.carrier != @this.owner )
             return;
-        
-        AI::RemoveDefenceSpot( this.team, this.aiSpotId );
-        AI::RemoveOffenseSpot( this.enemyTeam, this.aiSpotId );
-        // ( AI::RemoveNavEntity will be called automatically in G_Free() )
     }
 
     void setupAIGoalProperties( Entity @spawner )
@@ -136,28 +132,6 @@ class cFlagBase
         this.team = spawner.team;
         this.enemyTeam = spawner.team == TEAM_ALPHA ? TEAM_BETA : TEAM_ALPHA;
         this.aiSpotId = spawner.team;
-
-        AI::AddNavEntity( spawner, AI_NAV_REACH_ON_EVENT | AI_NAV_REACH_IN_GROUP );
-        AI::AddDefenceSpot( this.team, AIDefenceSpot( this.aiSpotId, spawner, 768.0f ) );
-        AI::AddOffenseSpot( this.enemyTeam, AIOffenseSpot( this.aiSpotId, spawner ) ); 
-    }
-
-    void notifyAIOfNewCarrier( Entity @oldCarrier, Entity @newCarrier )
-    {
-        // The flag is returned to the base
-        if ( @newCarrier == @this.owner )
-        {
-            AI::AddDefenceSpot( this.team, AIDefenceSpot( this.aiSpotId, this.owner, 768.0f ) );
-            AI::AddOffenseSpot( this.enemyTeam, AIOffenseSpot( this.aiSpotId, this.owner ) );
-        }
-        // The flag is stolen from a base by a player
-        else if ( @newCarrier.client != null && @oldCarrier == @this.owner ) 
-        {
-            AI::RemoveDefenceSpot( this.team, this.aiSpotId );
-            AI::RemoveOffenseSpot( this.enemyTeam, this.aiSpotId );
-        }
-        
-        // Dropping a flag and picking up a dropped flag do not affect AI order spots status       
     }
 
     void setCarrier( Entity @ent )
@@ -165,7 +139,6 @@ class cFlagBase
         if ( @this.carrier != @ent )
         {
             this.carrier.effects &= ~uint( EF_CARRIER|EF_FLAG_TRAIL );
-            notifyAIOfNewCarrier( this.carrier, ent );
         }
 
         @this.carrier = @ent;
@@ -312,9 +285,6 @@ class cFlagBase
                         this.unlockTime = int( CTF_UNLOCK_TIME * 1000 );
 
                     this.enemyInfluence = true;
-                    // Sometimes there are no bots in flagroom, so autoalert fails.
-                    // A human is notified via indicator on screen about enemy influence. Notify bots too.
-                    AI::DefenceSpotAlert( this.team, this.team, 1.0f, uint(1500) );
                     break;
                 }
             }

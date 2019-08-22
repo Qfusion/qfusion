@@ -347,9 +347,6 @@ class EnduranceMatch
 		if ( new_team == TEAM_ALPHA )
 		{
 		}		
-		else if( !client.isBot() )
-		{
-		}
 		else
 		{
 			client.getEnt().health = 0;
@@ -361,7 +358,7 @@ class EnduranceMatch
 	{
 		if( @target.client == null )
 			return;
-			
+/*
 		if( target.client.isBot() ) {
 			this.humans.stats.addScore( 1 );
 			this.bots.stats.addScore( -1 );
@@ -383,6 +380,7 @@ class EnduranceMatch
 				temp.freeEntity();
 			}
 		}
+*/
 	}
 	
 	void playerRespawn( Entity @ent, int old_team, int new_team )

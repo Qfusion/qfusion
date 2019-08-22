@@ -368,75 +368,6 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
     return false;
 }
 
-void HEADHUNT_UpdateBotsExtraGoals()
-{
-    Entity @ent;
-    for ( int i = 1; i <= maxClients; ++i )
-    {
-        @ent = @G_GetEntity( i );
-        if ( @ent != null )
-            HEADHUNT_UpdateBotExtraGoals( @ent );
-    }
-}
-
-void HEADHUNT_UpdateBotExtraGoals( Entity @ent )
-{
-    Entity @goal;
-    Bot @bot;
-
-    @bot = @ent.client.getBot();
-
-    if ( @bot == null )
-        return;
-
-    // Note: Setting any attitude to itself has no effect.
-
-    // If bot is tagged itself, it needs special rules
-    if ( ent.client.playerNum == hhTaggedPlayer )
-    {
-        for ( int i = 1; i <= maxClients; ++i )
-        {
-            @goal = @G_GetEntity( i );
-            
-            if ( @goal.client != null ) 
-            {
-                // Attack any player
-                bot.setAttitude( @goal, -1 );
-            }
-        }
-        return;
-    }
-
-
-    for ( int i = 1; i <= maxClients; ++i )
-    {
-        @goal = @G_GetEntity( i );
-
-        if ( @goal.client != null )
-        {
-            // Someone is tag so assign him as priority
-            if ( hhTaggedPlayer != 999 )
-            {
-                if ( goal.client.playerNum == hhTaggedPlayer )
-                {
-                    // Attack the tagged player
-                    bot.setAttitude( @goal, -1 );
-                }
-                else
-                {
-                    // Ignore all other players
-                    bot.setAttitude( @goal, 0 );
-                }
-            }
-            else
-            {
-                // Attack any player
-                bot.setAttitude( @goal, -1 );
-            }
-        }
-    }
-}
-
 // select a spawning point for a player
 Entity @GT_SelectSpawnPoint( Entity @self )
 {
@@ -677,8 +608,6 @@ void GT_ThinkRules()
     {
         HEADHUNT_clearState();
     }
-
-    HEADHUNT_UpdateBotsExtraGoals();
 }
 
 // The game has detected the end of the match state, but it

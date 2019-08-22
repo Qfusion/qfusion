@@ -600,10 +600,7 @@ void GT_PlayerRespawn( Entity @ent, int old_team, int new_team )
 
 		if ( !gametype.isInstagib )
 		{
-			if ( @client.getBot() == null )
-                player.showPrimarySelection();
-            else 
-                player.selectRandomBotWeapons();
+			player.showPrimarySelection();
 		}
 
 		if ( matchState == MATCH_STATE_PLAYTIME )

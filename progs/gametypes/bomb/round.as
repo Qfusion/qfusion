@@ -367,9 +367,6 @@ void roundNewState( uint state )
 			respawnAllPlayers();
 			disableMovement();
 
-            // This call clears site weights, so it should be done before bombGiveToRandom()/botSetCarrier()
-            BOMB_SetupNewBotsRound();
-
 			bombGiveToRandom();
 
 			break;
