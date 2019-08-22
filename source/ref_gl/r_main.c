@@ -537,10 +537,10 @@ void R_DrawRotatedStretchPic( int x, int y, int w, int h, float s1, float t1, fl
 	Vector2Set( pic_xyz[0], x, y );
 	Vector2Set( pic_st[0], s1, t1 );
 	Vector4Set( pic_colors[0],
-				bound( 0, ( int )( color[0] * 255.0f ), 255 ),
-				bound( 0, ( int )( color[1] * 255.0f ), 255 ),
-				bound( 0, ( int )( color[2] * 255.0f ), 255 ),
-				bound( 0, ( int )( color[3] * 255.0f ), 255 ) );
+				Q_bound( 0, ( int )( color[0] * 255.0f ), 255 ),
+				Q_bound( 0, ( int )( color[1] * 255.0f ), 255 ),
+				Q_bound( 0, ( int )( color[2] * 255.0f ), 255 ),
+				Q_bound( 0, ( int )( color[3] * 255.0f ), 255 ) );
 	bcolor = *(int *)pic_colors[0];
 
 	// lower-right
@@ -1583,12 +1583,12 @@ void R_SetGamma( float gamma ) {
 		return;
 	}
 
-	invGamma = 1.0 / bound( 0.5, gamma, 3.0 );
+	invGamma = 1.0 / Q_bound( 0.5, gamma, 3.0 );
 	div = (double)( 1 << 0 ) / ( glConfig.gammaRampSize - 0.5 );
 
 	for( i = 0; i < glConfig.gammaRampSize; i++ ) {
 		v = ( int )( 65535.0 * pow( ( (double)i + 0.5 ) * div, invGamma ) + 0.5 );
-		gammaRamp[i] = gammaRamp[i + GAMMARAMP_STRIDE] = gammaRamp[i + 2 * GAMMARAMP_STRIDE] = ( ( unsigned short )bound( 0, v, 65535 ) );
+		gammaRamp[i] = gammaRamp[i + GAMMARAMP_STRIDE] = gammaRamp[i + 2 * GAMMARAMP_STRIDE] = ( ( unsigned short )Q_bound( 0, v, 65535 ) );
 	}
 
 	GLimp_SetGammaRamp( GAMMARAMP_STRIDE, glConfig.gammaRampSize, gammaRamp );
@@ -1600,8 +1600,8 @@ void R_SetGamma( float gamma ) {
 void R_SetWallFloorColors( const vec3_t wallColor, const vec3_t floorColor ) {
 	int i;
 	for( i = 0; i < 3; i++ ) {
-		rsh.wallColor[i] = bound( 0, floor( wallColor[i] ) / 255.0, 1.0 );
-		rsh.floorColor[i] = bound( 0, floor( floorColor[i] ) / 255.0, 1.0 );
+		rsh.wallColor[i] = Q_bound( 0, floor( wallColor[i] ) / 255.0, 1.0 );
+		rsh.floorColor[i] = Q_bound( 0, floor( floorColor[i] ) / 255.0, 1.0 );
 	}
 }
 
@@ -1629,7 +1629,7 @@ int R_MultisampleSamples( int samples ) {
 	if( !glConfig.ext.framebuffer_multisample || samples <= 1 ) {
 		return 0;
 	}
-	return bound( 2, samples, glConfig.maxFramebufferSamples );
+	return Q_bound( 2, samples, glConfig.maxFramebufferSamples );
 }
 
 /*

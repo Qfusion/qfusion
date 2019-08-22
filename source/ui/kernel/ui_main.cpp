@@ -530,10 +530,10 @@ void UI_Main::gamepadStickCursorMove( int frameTimeMsec ) {
 
 	float sx = sticks[0] * ( ( float )( fabsf( sticks[0] ) > threshold ) );
 	sx += sticks[2] * ( ( float )( fabsf( sticks[2] ) > threshold ) );
-	clamp( sx, -1.0f, 1.0f );
+	Q_clamp( sx, -1.0f, 1.0f );
 	float sy = sticks[1] * ( ( float )( fabsf( sticks[1] ) > threshold ) );
 	sy += sticks[3] * ( ( float )( fabsf( sticks[3] ) > threshold ) );
-	clamp( sy, -1.0f, 1.0f );
+	Q_clamp( sy, -1.0f, 1.0f );
 
 	static float x, y;
 	if( !sx && !sy ) {
@@ -567,7 +567,7 @@ void UI_Main::gamepadDpadCursorMove( int frameTimeMsec ) {
 	}
 
 	// Goes from half minimum screen height to double minimum screen height.
-	float speed = ( 600.0f * 0.5f ) + bound( 0.0f, holdTime - 0.25f, 1.5f ) * 600.0f;
+	float speed = ( 600.0f * 0.5f ) + Q_bound( 0.0f, holdTime - 0.25f, 1.5f ) * 600.0f;
 	if( dx && dy ) {
 		speed *= 0.707106f;
 	}

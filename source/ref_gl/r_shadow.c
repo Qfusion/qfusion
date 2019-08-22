@@ -897,10 +897,10 @@ void R_DrawShadows( void ) {
 		}
 
 		clamp_low( minsize, SHADOWMAP_MIN_SIZE );
-		clamp( maxsize, minsize + 2, atlas->width );
+		Q_clamp( maxsize, minsize + 2, atlas->width );
 
 		size = l->radius * r_shadows_precision->value / (lod + 1.0);
-		size = bound( minsize, size, maxsize );
+		size = Q_bound( minsize, size, maxsize );
 		
 		x = y = 0;
 		haveBlock = false;

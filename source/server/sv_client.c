@@ -962,7 +962,7 @@ void SV_ExecuteClientThinks( int clientNum ) {
 
 	while( ( ucmd = SV_FindNextUserCommand( client ) ) != NULL ) {
 		msec = ucmd->serverTimeStamp - client->UcmdTime;
-		clamp( msec, 1, 200 );
+		Q_clamp( msec, 1, 200 );
 		ucmd->msec = msec;
 		timeDelta = 0;
 		if( client->lastframe > 0 ) {

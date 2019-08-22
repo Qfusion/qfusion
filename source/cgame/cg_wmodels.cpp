@@ -765,7 +765,7 @@ static void CG_AddPolyOnTag( const entity_t *weapon, const orientation_t *tag, f
 	Vector2Set( texcoords[0], s1, t1 );
 
 	for( i = 0; i < 3; i++ )
-		colors[0][i] = ( uint8_t )bound( 0, color[i] * 255, 255 );
+		colors[0][i] = ( uint8_t )Q_bound( 0, color[i] * 255, 255 );
 	colors[0][3] = ( uint8_t )(alpha * (float)weapon->shaderRGBA[3]);
 
 	Vector4Set( verts[1], 0, width, 0, 1 );

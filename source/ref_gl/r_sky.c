@@ -193,8 +193,8 @@ static void Gen_BoxSide( skydome_t *skydome, int side, vec3_t orig, vec3_t drow,
 				st[1] = -w[1] * q[1];
 
 				// avoid bilerp seam
-				st[0] = ( bound( -1, st[0], 1 ) + 1.0 ) * 0.5;
-				st[1] = ( bound( -1, st[1], 1 ) + 1.0 ) * 0.5;
+				st[0] = ( Q_bound( -1, st[0], 1 ) + 1.0 ) * 0.5;
+				st[1] = ( Q_bound( -1, st[1], 1 ) + 1.0 ) * 0.5;
 			}
 
 			st2[0] = c * s;
@@ -337,10 +337,10 @@ void R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog
 		vmin = (int)( ( drawSurf->skyMins[1][i] + 1.0f ) * 0.5f * (float)( SIDE_SIZE - 1 ) );
 		vmax = (int)( ( drawSurf->skyMaxs[1][i] + 1.0f ) * 0.5f * (float)( SIDE_SIZE - 1 ) ) + 1;
 
-		clamp( umin, 0, SIDE_SIZE - 1 );
-		clamp( umax, 0, SIDE_SIZE - 1 );
-		clamp( vmin, 0, SIDE_SIZE - 1 );
-		clamp( vmax, 0, SIDE_SIZE - 1 );
+		Q_clamp( umin, 0, SIDE_SIZE - 1 );
+		Q_clamp( umax, 0, SIDE_SIZE - 1 );
+		Q_clamp( vmin, 0, SIDE_SIZE - 1 );
+		Q_clamp( vmax, 0, SIDE_SIZE - 1 );
 
 		visSkySides[i].index = i;
 		visSkySides[i].firstVert = vmin * SIDE_SIZE + umin;
@@ -348,11 +348,11 @@ void R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog
 		visSkySides[i].firstElem = ( vmin * ( SIDE_SIZE - 2 ) + umin ) * 6;
 		visSkySides[i].numElems = ( ( vmax - vmin ) * ( SIDE_SIZE - 2 ) + ( umax - umin ) ) * 6;
 
-		clamp( visSkySides[i].firstVert, 0, POINTS_LEN - 1 );
-		clamp( visSkySides[i].numVerts, 0, POINTS_LEN );
+		Q_clamp( visSkySides[i].firstVert, 0, POINTS_LEN - 1 );
+		Q_clamp( visSkySides[i].numVerts, 0, POINTS_LEN );
 
-		clamp( visSkySides[i].firstElem, 0, ELEM_LEN - 1 );
-		clamp( visSkySides[i].numElems, 0, ELEM_LEN );
+		Q_clamp( visSkySides[i].firstElem, 0, ELEM_LEN - 1 );
+		Q_clamp( visSkySides[i].numElems, 0, ELEM_LEN );
 
 		skydome->meshes[i].numElems = visSkySides[i].numElems;
 	}

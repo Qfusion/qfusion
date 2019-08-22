@@ -56,7 +56,7 @@ void ThrowSmallPileOfGibs( edict_t *self, int damage ) {
 	self->s.origin[2] += 4;
 
 	// clamp the damage value since events do bitwise & 0xFF on the passed param
-	damage = bound( 0, damage, 255 );
+	damage = Q_bound( 0, damage, 255 );
 
 	event = G_SpawnEvent( EV_SPOG, damage, origin );
 	event->s.team = self->s.team;
@@ -84,7 +84,7 @@ void ThrowClientHead( edict_t *self, int damage ) {
 	self->flags |= FL_NO_KNOCKBACK;
 
 	self->movetype = MOVETYPE_BOUNCE;
-	VelocityForDamage( max( damage, 50 ), vd );
+	VelocityForDamage( fmax( damage, 50 ), vd );
 	VectorAdd( self->velocity, vd, self->velocity );
 
 	G_AddEvent( self, EV_GIB, 0, false );
@@ -628,8 +628,8 @@ static void func_explosive_spawn( edict_t *self, edict_t *other, edict_t *activa
 void SP_func_explosive( edict_t *self ) {
 	G_InitMover( self );
 
-	self->projectileInfo.maxDamage = max( self->dmg, 1 );
-	self->projectileInfo.minDamage = min( self->dmg, 1 );
+	self->projectileInfo.maxDamage = fmax( self->dmg, 1 );
+	self->projectileInfo.minDamage = fmin( self->dmg, 1 );
 	self->projectileInfo.maxKnockback = self->projectileInfo.maxDamage;
 	self->projectileInfo.minKnockback = self->projectileInfo.minDamage;
 	self->projectileInfo.stun = self->projectileInfo.maxDamage * 100;
@@ -960,7 +960,7 @@ void SP_misc_particles( edict_t *ent ) {
 
 	if( st.radius > 0 ) {
 		ent->particlesInfo.spread = st.radius;
-		clamp( ent->particlesInfo.spread, 0, 255 );
+		Q_clamp( ent->particlesInfo.spread, 0, 255 );
 	}
 
 	ent->think = SP_misc_particles_finish;

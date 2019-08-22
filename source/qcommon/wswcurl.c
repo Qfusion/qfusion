@@ -983,7 +983,7 @@ static size_t wswcurl_write( void *ptr, size_t size, size_t nmemb, void *stream 
 	req->last_action = wswcurl_now();
 
 	progress = !req->rx_expsize ? 0.0 : (float)( ( (double)req->rxreceived / (double)req->rx_expsize ) * 100.0 );
-	clamp( progress, 0, 100 );
+	Q_clamp( progress, 0, 100 );
 
 	if( req->callback_read ) {
 		return req->callback_read( req, ptr, numb, progress, req->customp );

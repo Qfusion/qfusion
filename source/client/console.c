@@ -1800,7 +1800,7 @@ void Con_KeyDown( int key ) {
 	if( key == K_HOME || key == KP_HOME ) {
 		if( ctrl_is_down ) {
 			int smallCharHeight = SCR_FontHeight( cls.consoleFont );
-			int vislines = (int)( viddef.height * bound( 0.0, scr_con_current, 1.0 ) );
+			int vislines = (int)( viddef.height * Q_bound( 0.0, scr_con_current, 1.0 ) );
 			int rows = ( vislines - smallCharHeight - (int)( 14 * Con_GetPixelRatio() ) ) / smallCharHeight;  // rows of text to draw
 			con.display = con.numlines - rows + 1;
 			clamp_low( con.display, 0 );

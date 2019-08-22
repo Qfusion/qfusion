@@ -419,9 +419,9 @@ static void CG_ExpandTemporaryBoneposesCache( int num ) {
 
 	temp = TBC;
 
-	TBC = ( bonepose_t * )CG_Malloc( sizeof( bonepose_t ) * ( TBC_Size + max( num, TBC_Block_Size ) ) );
+	TBC = ( bonepose_t * )CG_Malloc( sizeof( bonepose_t ) * ( TBC_Size + fmax( num, TBC_Block_Size ) ) );
 	memcpy( TBC, temp, sizeof( bonepose_t ) * TBC_Size );
-	TBC_Size += max( num, TBC_Block_Size );
+	TBC_Size += fmax( num, TBC_Block_Size );
 
 	CG_Free( temp );
 }

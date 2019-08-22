@@ -81,11 +81,11 @@ void R_BatchCoronaSurf( const entity_t *e, const shader_t *shader, const mfog_t 
 	VectorMA( point, radius, v_left, xyz[1] );
 	VectorMA( point, -radius, v_left, xyz[2] );
 
-	colorscale = 255.0 * bound( 0, r_coronascale->value, 1.0 );
+	colorscale = 255.0 * Q_bound( 0, r_coronascale->value, 1.0 );
 	Vector4Set( colors[0],
-				bound( 0, light->color[0] * colorscale, 255 ),
-				bound( 0, light->color[1] * colorscale, 255 ),
-				bound( 0, light->color[2] * colorscale, 255 ),
+				Q_bound( 0, light->color[0] * colorscale, 255 ),
+				Q_bound( 0, light->color[1] * colorscale, 255 ),
+				Q_bound( 0, light->color[2] * colorscale, 255 ),
 				255 );
 	for( i = 1; i < 4; i++ )
 		Vector4Copy( colors[0], colors[i] );
@@ -191,9 +191,9 @@ void R_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t d
 	elem[3] = elem[2] + gridBounds[0];
 
 	for( i = 0; i < 4; i++ ) {
-		lightarray[i * 2 + 0] = rsh.worldBrushModel->lightgrid[rsh.worldBrushModel->lightarray[bound( 0, elem[i] + 0,
+		lightarray[i * 2 + 0] = rsh.worldBrushModel->lightgrid[rsh.worldBrushModel->lightarray[Q_bound( 0, elem[i] + 0,
 			(int)rsh.worldBrushModel->numlightarrayelems - 1 )]];
-		lightarray[i * 2 + 1] = rsh.worldBrushModel->lightgrid[rsh.worldBrushModel->lightarray[bound( 1, elem[i] + 1,
+		lightarray[i * 2 + 1] = rsh.worldBrushModel->lightgrid[rsh.worldBrushModel->lightarray[Q_bound( 1, elem[i] + 1,
 			(int)rsh.worldBrushModel->numlightarrayelems - 1 )]];
 	}
 
@@ -259,12 +259,12 @@ void R_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t d
 
 		if( ambient ) {
 			grey = ColorGrayscale( ambientLocal );
-			ambientLocal[0] = ambientLocal[1] = ambientLocal[2] = bound( 0, grey, 255 );
+			ambientLocal[0] = ambientLocal[1] = ambientLocal[2] = Q_bound( 0, grey, 255 );
 		}
 
 		if( diffuse || radius ) {
 			grey = ColorGrayscale( diffuseLocal );
-			diffuseLocal[0] = diffuseLocal[1] = diffuseLocal[2] = bound( 0, grey, 255 );
+			diffuseLocal[0] = diffuseLocal[1] = diffuseLocal[2] = Q_bound( 0, grey, 255 );
 		}
 	}
 
@@ -315,11 +315,11 @@ dynamic:
 		float scale = ( 1 << mapConfig.overbrightBits ) / 255.0f;
 
 		for( i = 0; i < 3; i++ )
-			ambientLocal[i] = ambientLocal[i] * scale * bound( 0.0f, r_lighting_ambientscale->value, 1.0f );
+			ambientLocal[i] = ambientLocal[i] * scale * Q_bound( 0.0f, r_lighting_ambientscale->value, 1.0f );
 		ColorNormalize( ambientLocal, ambientLocal );
 
 		for( i = 0; i < 3; i++ )
-			diffuseLocal[i] = diffuseLocal[i] * scale * bound( 0.0f, r_lighting_directedscale->value, 1.0f );
+			diffuseLocal[i] = diffuseLocal[i] * scale * Q_bound( 0.0f, r_lighting_directedscale->value, 1.0f );
 		ColorNormalize( diffuseLocal, diffuseLocal );
 	}
 
@@ -399,7 +399,7 @@ static void R_BuildLightmap( int w, int h, bool deluxe, const uint8_t *data, uin
 	if( r_lighting_grayscale->integer ) {
 		for( y = 0; y < h; y++ ) {
 			for( x = 0, rgba = dest + y * blockWidth; x < w; x++, data += LIGHTMAP_BYTES, rgba += samples ) {
-				rgba[0] = bound( 0, ColorGrayscale( data ), 255 );
+				rgba[0] = Q_bound( 0, ColorGrayscale( data ), 255 );
 				if( samples > 1 ) {
 					rgba[1] = rgba[0];
 					rgba[2] = rgba[0];

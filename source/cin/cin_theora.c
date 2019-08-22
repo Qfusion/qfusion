@@ -431,7 +431,7 @@ read_samples:
 				left = right = pcm[0];
 				for( i = 0; i < samplesNeeded; i++ ) {
 					val = ( left[i] * 32767.f + 0.5f );
-					ptr[0] = bound( -32768, val, 32767 );
+					ptr[0] = Q_bound( -32768, val, 32767 );
 
 					ptr += 1;
 				}
@@ -440,10 +440,10 @@ read_samples:
 				right = pcm[1];
 				for( i = 0; i < samplesNeeded; i++ ) {
 					val = ( left[i] * 32767.f + 0.5f );
-					ptr[0] = bound( -32768, val, 32767 );
+					ptr[0] = Q_bound( -32768, val, 32767 );
 
 					val = ( right[i] * 32767.f + 0.5f );
-					ptr[1] = bound( -32768, val, 32767 );
+					ptr[1] = Q_bound( -32768, val, 32767 );
 
 					ptr += cin->s_channels;
 				}

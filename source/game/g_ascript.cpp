@@ -2207,7 +2207,7 @@ static void asFunc_FireInstaShot( asvec3_t *origin, asvec3_t *dir, int range, in
 }
 
 static edict_t *asFunc_FireWeakBolt( asvec3_t *origin, asvec3_t *dir, int speed, int damage, int knockback, int stun, edict_t *owner ) {
-	return W_Fire_Electrobolt_Weak( owner, origin->v, dir->v, speed, damage, min( 1, knockback ), knockback, stun, 5000, MOD_ELECTROBOLT_W, 0 );
+	return W_Fire_Electrobolt_Weak( owner, origin->v, dir->v, speed, damage, fmin( 1, knockback ), knockback, stun, 5000, MOD_ELECTROBOLT_W, 0 );
 }
 
 static void asFunc_FireStrongBolt( asvec3_t *origin, asvec3_t *dir, int range, int damage, int knockback, int stun, edict_t *owner ) {
@@ -2215,15 +2215,15 @@ static void asFunc_FireStrongBolt( asvec3_t *origin, asvec3_t *dir, int range, i
 }
 
 static edict_t *asFunc_FirePlasma( asvec3_t *origin, asvec3_t *dir, int speed, int radius, int damage, int knockback, int stun, edict_t *owner ) {
-	return W_Fire_Plasma( owner, origin->v, dir->v, damage, min( 1, knockback ), knockback, stun, min( 1, damage ), radius, speed, 5000, MOD_PLASMA_S, 0 );
+	return W_Fire_Plasma( owner, origin->v, dir->v, damage, fmin( 1, knockback ), knockback, stun, fmin( 1, damage ), radius, speed, 5000, MOD_PLASMA_S, 0 );
 }
 
 static edict_t *asFunc_FireRocket( asvec3_t *origin, asvec3_t *dir, int speed, int radius, int damage, int knockback, int stun, edict_t *owner ) {
-	return W_Fire_Rocket( owner, origin->v, dir->v, speed, damage, min( 1, knockback ), knockback, stun, min( 1, damage ), radius, 5000, MOD_ROCKET_S, 0 );
+	return W_Fire_Rocket( owner, origin->v, dir->v, speed, damage, fmin( 1, knockback ), knockback, stun, fmin( 1, damage ), radius, 5000, MOD_ROCKET_S, 0 );
 }
 
 static edict_t *asFunc_FireGrenade( asvec3_t *origin, asvec3_t *dir, int speed, int radius, int damage, int knockback, int stun, edict_t *owner ) {
-	return W_Fire_Grenade( owner, origin->v, dir->v, speed, damage, min( 1, knockback ), knockback, stun, min( 1, damage ), radius, 5000, MOD_GRENADE_S, 0 );
+	return W_Fire_Grenade( owner, origin->v, dir->v, speed, damage, fmin( 1, knockback ), knockback, stun, fmin( 1, damage ), radius, 5000, MOD_GRENADE_S, 0 );
 }
 
 static void asFunc_FireRiotgun( asvec3_t *origin, asvec3_t *dir, int range, int spread, int count, int damage, int knockback, int stun, edict_t *owner ) {
@@ -2245,7 +2245,7 @@ static void asFunc_FireBullet( asvec3_t *origin, asvec3_t *dir, int range, int s
 }
 
 static edict_t *asFunc_FireBlast( asvec3_t *origin, asvec3_t *dir, int speed, int radius, int damage, int knockback, int stun, edict_t *owner ) {
-	return W_Fire_GunbladeBlast( owner, origin->v, dir->v, damage, min( 1, knockback ), knockback, stun, min( 1, damage ), radius, speed, 5000, MOD_SPLASH, 0 );
+	return W_Fire_GunbladeBlast( owner, origin->v, dir->v, damage, fmin( 1, knockback ), knockback, stun, fmin( 1, damage ), radius, speed, 5000, MOD_SPLASH, 0 );
 }
 
 static unsigned asFunc_G_RegisterHelpMessage( asstring_t *str ) {

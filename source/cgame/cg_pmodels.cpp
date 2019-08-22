@@ -366,8 +366,8 @@ static bool CG_ParseAnimationScript( pmodelinfo_t *pmodelinfo, char *filename ) 
 		cgs_skeleton_t *skel;
 		skel = CG_SkeletonForModel( pmodelinfo->model );
 		for( i = 0; i < counter; ++i ) {
-			clamp( pmodelinfo->animSet.firstframe[i], 0, skel->numFrames - 1 );
-			clamp( pmodelinfo->animSet.lastframe[i], 0, skel->numFrames - 1 );
+			Q_clamp( pmodelinfo->animSet.firstframe[i], 0, skel->numFrames - 1 );
+			Q_clamp( pmodelinfo->animSet.lastframe[i], 0, skel->numFrames - 1 );
 		}
 	}
 
@@ -591,7 +591,7 @@ static void CG_AddRaceGhostShell( entity_t *ent ) {
 	entity_t shell;
 	float alpha = cg_raceGhostsAlpha->value;
 
-	clamp( alpha, 0, 1.0 );
+	Q_clamp( alpha, 0, 1.0 );
 
 	shell = *ent;
 	shell.customSkin = NULL;
@@ -936,14 +936,14 @@ void CG_PModel_LeanAngles( centity_t *cent, pmodel_t *pmodel ) {
 			leanAngles[HEAD][ROLL] += side * 0.25;
 		}
 
-		clamp( leanAngles[LOWER][PITCH], -45, 45 );
-		clamp( leanAngles[LOWER][ROLL], -15, 15 );
+		Q_clamp( leanAngles[LOWER][PITCH], -45, 45 );
+		Q_clamp( leanAngles[LOWER][ROLL], -15, 15 );
 
-		clamp( leanAngles[UPPER][PITCH], -45, 45 );
-		clamp( leanAngles[UPPER][ROLL], -20, 20 );
+		Q_clamp( leanAngles[UPPER][PITCH], -45, 45 );
+		Q_clamp( leanAngles[UPPER][ROLL], -20, 20 );
 
-		clamp( leanAngles[HEAD][PITCH], -45, 45 );
-		clamp( leanAngles[HEAD][ROLL], -20, 20 );
+		Q_clamp( leanAngles[HEAD][PITCH], -45, 45 );
+		Q_clamp( leanAngles[HEAD][ROLL], -20, 20 );
 	}
 
 	for( j = LOWER; j < PMODEL_PARTS; j++ ) {
@@ -1050,7 +1050,7 @@ void CG_UpdatePlayerModelEnt( centity_t *cent ) {
 
 		// rotational yaw velocity
 		adelta = AngleDelta( cent->current.angles[YAW], cent->prev.angles[YAW] );
-		clamp( adelta, -35, 35 );
+		Q_clamp( adelta, -35, 35 );
 
 		// smooth a velocity vector between the last snaps
 		cent->lastVelocities[cg.frame.serverFrame & 3][0] = cent->velocity[0];

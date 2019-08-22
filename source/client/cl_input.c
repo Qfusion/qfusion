@@ -213,9 +213,9 @@ static void CL_SetUcmdMovement( usercmd_t *ucmd ) {
 		CL_GameModule_AddMovement( movement );
 	}
 
-	ucmd->sidemove = bound( -127, (int)(movement[0] * 127.0f), 127 );
-	ucmd->forwardmove = bound( -127, (int)(movement[1] * 127.0f), 127 );
-	ucmd->upmove = bound( -127, (int)(movement[2] * 127.0f), 127 );
+	ucmd->sidemove = Q_bound( -127, (int)(movement[0] * 127.0f), 127 );
+	ucmd->forwardmove = Q_bound( -127, (int)(movement[1] * 127.0f), 127 );
+	ucmd->upmove = Q_bound( -127, (int)(movement[2] * 127.0f), 127 );
 }
 
 /*

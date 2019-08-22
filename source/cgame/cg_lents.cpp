@@ -797,7 +797,7 @@ static void CG_ProjectileFireTrail( centity_t *cent ) {
 	if( cent->localEffects[LOCALEFFECT_ROCKETFIRE_LAST_DROP] + trailTime < cg.time ) {
 		cent->localEffects[LOCALEFFECT_ROCKETFIRE_LAST_DROP] = cg.time;
 
-		clamp( alpha, 0.0f, 1.0f );
+		Q_clamp( alpha, 0.0f, 1.0f );
 		le = CG_AllocSprite( LE_INVERSESCALE_ALPHA_FADE, cent->trailOrigin, radius, 4,
 							 1.0f, 1.0f, 1.0f, alpha,
 							 0, 0, 0, 0,
@@ -853,7 +853,7 @@ void CG_ProjectileTrail( centity_t *cent ) {
 			alpha = 1.0f;
 		}
 
-		clamp( alpha, 0.0f, 1.0f );
+		Q_clamp( alpha, 0.0f, 1.0f );
 		le = CG_AllocSprite( LE_PUFF_SHRINK, cent->trailOrigin, radius, 20,
 							 1.0f, 1.0f, 1.0f, alpha,
 							 0, 0, 0, 0,
@@ -908,7 +908,7 @@ void CG_NewBloodTrail( centity_t *cent ) {
 			alpha = 0.5f * cg_bloodTrailAlpha->value;
 		}
 
-		clamp( alpha, 0.0f, 1.0f );
+		Q_clamp( alpha, 0.0f, 1.0f );
 		le = CG_AllocSprite( LE_SCALE_ALPHA_FADE, cent->trailOrigin, radius, 8,
 							 1.0f, 1.0f, 1.0f, alpha,
 							 0, 0, 0, 0,
@@ -938,7 +938,7 @@ void CG_BloodDamageEffect( const vec3_t origin, const vec3_t dir, int damage ) {
 	}
 
 	count = (int)( damage * 0.25f );
-	clamp( count, 1, 10 );
+	Q_clamp( count, 1, 10 );
 
 	if( CG_PointContents( origin ) & MASK_WATER ) {
 		shader = CG_MediaShader( cgs.media.shaderBloodTrailLiquidPuff );
@@ -963,7 +963,7 @@ void CG_BloodDamageEffect( const vec3_t origin, const vec3_t dir, int damage ) {
 				   -local_dir[0] * 5 + crandom() * 5,
 				   -local_dir[1] * 5 + crandom() * 5,
 				   -local_dir[2] * 5 + crandom() * 5 + 3 );
-		VectorMA( local_dir, min( 6, count ), le->velocity, le->velocity );
+		VectorMA( local_dir, fmin( 6, count ), le->velocity, le->velocity );
 	}
 }
 
@@ -1421,7 +1421,7 @@ void CG_SmallPileOfGibs( const vec3_t origin, int damage, const vec3_t initialVe
 
 	time = 50;
 	count = 14 + cg_gibs->integer; // 15 models minimum
-	clamp( count, 15, 128 );
+	Q_clamp( count, 15, 128 );
 
 	for( i = 0; i < count; i++ ) {
 		vec4_t color;
@@ -1444,7 +1444,7 @@ void CG_SmallPileOfGibs( const vec3_t origin, int damage, const vec3_t initialVe
 					// team
 					CG_TeamColor( team, color );
 					for( j = 0; j < 3; j++ ) {
-						color[j] = bound( 60.0f / 255.0f, color[j], 1.0f );
+						color[j] = Q_bound( 60.0f / 255.0f, color[j], 1.0f );
 					}
 				} else {
 					// grey
@@ -1469,11 +1469,11 @@ void CG_SmallPileOfGibs( const vec3_t origin, int damage, const vec3_t initialVe
 		velocity[1] = crandom() * 0.5;
 		velocity[2] = 0.5 + random() * 0.5; // always have upwards
 		VectorNormalize( velocity );
-		VectorScale( velocity, min( damage * 10, 300 ), velocity );
+		VectorScale( velocity, fmin( damage * 10, 300 ), velocity );
 
-		velocity[0] += crandom() * bound( 0, damage, 150 );
-		velocity[1] += crandom() * bound( 0, damage, 150 );
-		velocity[2] += random() * bound( 0, damage, 250 );
+		velocity[0] += crandom() * Q_bound( 0, damage, 150 );
+		velocity[1] += crandom() * Q_bound( 0, damage, 150 );
+		velocity[2] += random() * Q_bound( 0, damage, 250 );
 
 		VectorAdd( initialVelocity, velocity, le->velocity );
 
@@ -1520,13 +1520,13 @@ void CG_AddLocalEntities( void ) {
 
 		if( le->frames > 1 ) {
 			scale = 1.0f - frac / ( le->frames - 1 );
-			scale = bound( 0.0f, scale, 1.0f );
+			scale = Q_bound( 0.0f, scale, 1.0f );
 			fade = scale * 255.0f;
 
 			// quick fade in, if time enough
 			if( le->frames > FADEINFRAMES * 2 ) {
 				scaleIn = frac / (float)FADEINFRAMES;
-				clamp( scaleIn, 0.0f, 1.0f );
+				Q_clamp( scaleIn, 0.0f, 1.0f );
 				fadeIn = scaleIn * 255.0f;
 			} else {
 				fadeIn = 255.0f;
@@ -1592,25 +1592,25 @@ void CG_AddLocalEntities( void ) {
 			case LE_NO_FADE:
 				break;
 			case LE_RGB_FADE:
-				fade = min( fade, fadeIn );
+				fade = fminf( fade, fadeIn );
 				ent->shaderRGBA[0] = ( uint8_t )( fade * le->color[0] );
 				ent->shaderRGBA[1] = ( uint8_t )( fade * le->color[1] );
 				ent->shaderRGBA[2] = ( uint8_t )( fade * le->color[2] );
 				break;
 			case LE_SCALE_ALPHA_FADE:
-				fade = min( fade, fadeIn );
+				fade = fminf( fade, fadeIn );
 				ent->scale = 1.0f + 1.0f / scale;
-				ent->scale = min( ent->scale, 5.0f );
+				ent->scale = fminf( ent->scale, 5.0f );
 				ent->shaderRGBA[3] = ( uint8_t )( fade * le->color[3] );
 				break;
 			case LE_INVERSESCALE_ALPHA_FADE:
-				fade = min( fade, fadeIn );
+				fade = fminf( fade, fadeIn );
 				ent->scale = scale + 0.1f;
-				clamp( ent->scale, 0.1f, 1.0f );
+				Q_clamp( ent->scale, 0.1f, 1.0f );
 				ent->shaderRGBA[3] = ( uint8_t )( fade * le->color[3] );
 				break;
 			case LE_ALPHA_FADE:
-				fade = min( fade, fadeIn );
+				fade = fminf( fade, fadeIn );
 				ent->shaderRGBA[3] = ( uint8_t )( fade * le->color[3] );
 				break;
 			default:

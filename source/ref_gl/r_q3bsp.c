@@ -405,7 +405,7 @@ static void Mod_LoadVertexes( const lump_t *l ) {
 			out_colors[3] = in->color[3];
 		} else if( r_lighting_grayscale->integer ) {
 			vec_t grey = ColorGrayscale( in->color );
-			out_colors[0] = out_colors[1] = out_colors[2] = bound( 0, grey, 255 );
+			out_colors[0] = out_colors[1] = out_colors[2] = Q_bound( 0, grey, 255 );
 			out_colors[3] = in->color[3];
 		} else {
 			out_colors[0] = in->color[0];
@@ -473,7 +473,7 @@ static void Mod_LoadVertexes_RBSP( const lump_t *l ) {
 				out_colors[j][3] = in->color[j][3];
 			} else if( r_lighting_grayscale->integer ) {
 				vec_t grey = ColorGrayscale( in->color[j] );
-				out_colors[j][0] = out_colors[j][1] = out_colors[j][2] = bound( 0, grey, 255 );
+				out_colors[j][0] = out_colors[j][1] = out_colors[j][2] = Q_bound( 0, grey, 255 );
 				out_colors[j][3] = in->color[j][3];
 			} else {
 				out_colors[j][0] = in->color[j][0];
@@ -597,7 +597,7 @@ static int Mod_AddUpdatePatchGroup( const rdface_t *in ) {
 		lodMaxs[i] = in->maxs[i];
 	}
 
-	subdivLevel = bound( SUBDIVISIONS_MIN, r_subdivisions->value, SUBDIVISIONS_MAX );
+	subdivLevel = Q_bound( SUBDIVISIONS_MIN, r_subdivisions->value, SUBDIVISIONS_MAX );
 	inFirstVert = LittleLong( in->firstvert );
 
 	// find the degree of subdivision in the u and v directions
@@ -1623,7 +1623,7 @@ static void Mod_Finish( const lump_t *faces, const lump_t *light, vec3_t gridSiz
 		}
 		mapConfig.averageLightingIntensity /= (float)loadbmodel->numlightgridelems;
 		mapConfig.averageLightingIntensity *= 1.5f;
-		clamp( mapConfig.averageLightingIntensity, 0.0f, 1.0f );
+		Q_clamp( mapConfig.averageLightingIntensity, 0.0f, 1.0f );
 	}
 
 	for( i = 0, testFog = loadbmodel->fogs; i < loadbmodel->numfogs; testFog++, i++ ) {

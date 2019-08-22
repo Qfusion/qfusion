@@ -1051,10 +1051,10 @@ void CG_AddParticles( void ) {
 		org[1] = p->org[1] + p->vel[1] * time + p->accel[1] * time2;
 		org[2] = p->org[2] + p->vel[2] * time + p->accel[2] * time2;
 
-		color[0] = (uint8_t)( bound( 0, p->color[0], 1.0f ) * 255 );
-		color[1] = (uint8_t)( bound( 0, p->color[1], 1.0f ) * 255 );
-		color[2] = (uint8_t)( bound( 0, p->color[2], 1.0f ) * 255 );
-		color[3] = (uint8_t)( bound( 0, alpha, 1.0f ) * 255 );
+		color[0] = (uint8_t)( Q_bound( 0, p->color[0], 1.0f ) * 255 );
+		color[1] = (uint8_t)( Q_bound( 0, p->color[1], 1.0f ) * 255 );
+		color[2] = (uint8_t)( Q_bound( 0, p->color[2], 1.0f ) * 255 );
+		color[3] = (uint8_t)( Q_bound( 0, alpha, 1.0f ) * 255 );
 
 		corner[0] = org[0];
 		corner[1] = org[1] - 0.5f * p->scale;

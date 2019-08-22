@@ -282,8 +282,8 @@ void CL_SoundModule_Init( bool verbose ) {
 	import.BufPipe_ReadCmds = QBufPipe_ReadCmds;
 	import.BufPipe_Wait = QBufPipe_Wait;
 
-	sm = bound( 1, s_module->integer, num_sound_modules );
-	smfb = bound( 0, s_module_fallback->integer, num_sound_modules );
+	sm = Q_bound( 1, s_module->integer, num_sound_modules );
+	smfb = Q_bound( 0, s_module_fallback->integer, num_sound_modules );
 
 	if( !CL_SoundModule_Load( sound_modules[sm - 1], &import, verbose ) ) {
 		if( s_module->integer == smfb || !smfb ||

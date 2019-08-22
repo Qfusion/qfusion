@@ -180,7 +180,7 @@ bool SCR_DrawCinematic( void ) {
 			w = viddef.width;
 			h = ( (int)( (float)viddef.width / aspect ) + 1 ) & ~1;
 
-			clamp( h, 0, (int)viddef.height );
+			Q_clamp( h, 0, (int)viddef.height );
 
 			x = 0;
 			y = Q_rint( ( viddef.height - h ) * 0.5 );
@@ -190,7 +190,7 @@ bool SCR_DrawCinematic( void ) {
 			w = ( (int)( (float)viddef.height * aspect ) + 1 ) & ~1;
 			h = viddef.height;
 
-			clamp( w, 0, (int)viddef.width );
+			Q_clamp( w, 0, (int)viddef.width );
 
 			x = Q_rint( ( viddef.width  - w ) * 0.5 );
 			y = 0;

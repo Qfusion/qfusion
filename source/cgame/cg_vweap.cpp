@@ -91,7 +91,7 @@ static void CG_ViewWeapon_AddAngleEffects( vec3_t angles ) {
 			if( delta < -180 ) {
 				delta += 360;
 			}
-			clamp( delta, -45, 45 );
+			Q_clamp( delta, -45, 45 );
 
 
 			if( i == YAW ) {
@@ -225,7 +225,7 @@ setupframe:
 		framefrac = 0;
 		viewweapon->ent.oldframe = curframe;
 	} else {
-		clamp( framefrac, 0, 1 );
+		Q_clamp( framefrac, 0, 1 );
 		if( curframe != viewweapon->ent.frame ) {
 			viewweapon->ent.oldframe = viewweapon->ent.frame;
 		}
@@ -276,7 +276,7 @@ void CG_CalcViewWeapon( cg_viewweapon_t *viewweapon ) {
 
 	if( cg_gun_alpha->value < 1.0f ) {
 		viewweapon->ent.renderfx |= RF_ALPHAHACK;
-		viewweapon->ent.shaderRGBA[3] = bound( 0, cg_gun_alpha->value, 1 ) * 255.0f;
+		viewweapon->ent.shaderRGBA[3] = Q_bound( 0, cg_gun_alpha->value, 1 ) * 255.0f;
 	}
 
 	// calculate the entity position
@@ -345,7 +345,7 @@ void CG_CalcViewWeapon( cg_viewweapon_t *viewweapon ) {
 
 	if( cg_gun_fov->integer && !cg.predictedPlayerState.pmove.stats[PM_STAT_ZOOMTIME] ) {
 		float fracWeapFOV;
-		float gun_fov_y = WidescreenFov( bound( 20, cg_gun_fov->value, 160 ) );
+		float gun_fov_y = WidescreenFov( Q_bound( 20, cg_gun_fov->value, 160 ) );
 		float gun_fov_x = CalcHorizontalFov( gun_fov_y, scr_vrect.width, scr_vrect.height );
 
 		fracWeapFOV = tan( DEG2RAD( gun_fov_x ) * 0.5f ) / cg.view.fracDistFOV;

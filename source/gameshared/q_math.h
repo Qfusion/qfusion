@@ -124,8 +124,7 @@ extern vec4_t color_table[MAX_S_COLORS];
 #define ANGLE2BYTE( x )     ( (int)( ( x ) * 256 / 360 ) & 255 )
 #define BYTE2ANGLE( x )     ( ( x ) * ( 360.0 / 256 ) )
 
-// returns b clamped to [a..c] range
-//#define bound(a,b,c) (max((a), min((b), (c))))
+#ifndef __cplusplus
 
 #ifndef max
 #define max( a, b ) ( ( a ) > ( b ) ? ( a ) : ( b ) )
@@ -135,10 +134,12 @@ extern vec4_t color_table[MAX_S_COLORS];
 #define min( a, b ) ( ( a ) < ( b ) ? ( a ) : ( b ) )
 #endif
 
-#define bound( a, b, c ) ( ( a ) >= ( c ) ? ( a ) : ( b ) < ( a ) ? ( a ) : ( b ) > ( c ) ? ( c ) : ( b ) )
+#endif
 
 // clamps a (must be lvalue) to [b..c] range
-#define clamp( a, b, c ) ( ( b ) >= ( c ) ? ( a ) = ( b ) : ( a ) < ( b ) ? ( a ) = ( b ) : ( a ) > ( c ) ? ( a ) = ( c ) : ( a ) )
+#define Q_clamp( a, b, c ) ( ( b ) >= ( c ) ? ( a ) = ( b ) : ( a ) < ( b ) ? ( a ) = ( b ) : ( a ) > ( c ) ? ( a ) = ( c ) : ( a ) )
+
+#define Q_bound( a, b, c ) ( ( a ) >= ( c ) ? ( a ) : ( b ) < ( a ) ? ( a ) : ( b ) > ( c ) ? ( c ) : ( b ) )
 
 #define clamp_low( a, low ) ( ( a ) = ( a ) < ( low ) ? ( low ) : ( a ) )
 #define clamp_high( a, high ) ( ( a ) = ( a ) > ( high ) ? ( high ) : ( a ) )

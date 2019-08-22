@@ -197,8 +197,8 @@ int CG_SpawnDecal( const vec3_t origin, const vec3_t dir, float orient, float ra
 	VectorScale( axis[2], radius, axis[2] );
 
 	dietime = cg.time + die * 1000;
-	fadefreq = 0.001f / min( fadetime, die );
-	fadetime = cg.time + ( die - min( fadetime, die ) ) * 1000;
+	fadefreq = 0.001f / fminf( fadetime, die );
+	fadetime = cg.time + ( die - fminf( fadetime, die ) ) * 1000;
 
 	for( i = 0, fr = fragments; i < numfragments; i++, fr++ ) {
 		if( fr->numverts > MAX_DECAL_VERTS ) {

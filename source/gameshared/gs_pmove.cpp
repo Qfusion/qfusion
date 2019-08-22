@@ -220,7 +220,7 @@ static void PM_ClampAngles( player_state_t *ps, usercmd_t *cmd, vec3_t vaClamp )
 
 		float c = fabs( vaClamp[i] );
 		if( c >= 1.0f ) {
-			clamp( c, 1, 90 );
+			Q_clamp( c, 1, 90 );
 
 			int clampPos = ANGLE2SHORT( c );
 			int clampNeg = ANGLE2SHORT( c * -1.0f );

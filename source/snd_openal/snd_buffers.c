@@ -38,7 +38,7 @@ void * stereo_mono( void *data, snd_info_t *info ) {
 	outdata = S_Malloc( info->samples * info->width );
 	interleave = info->channels * info->width;
 	gain = s_stereo2mono->integer;
-	clamp( gain, -1, 1 );
+	Q_clamp( gain, -1, 1 );
 
 	if( info->width == 2 ) {
 		short *pin, *pout;

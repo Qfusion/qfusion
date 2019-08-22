@@ -160,7 +160,7 @@ public:
 					fov_x = 0.0f;
 				} else {
 					fov_x = prop->Get<float>();
-					clamp( fov_x, 1.0f, 179.0f );
+					Q_clamp( fov_x, 1.0f, 179.0f );
 				}
 				RecomputePosition = true;
 			} else if( *it == "model-fov-y" ) {
@@ -169,7 +169,7 @@ public:
 					fov_y = 0.0f;
 				} else {
 					fov_y = prop->Get<float>();
-					clamp( fov_y, 1.0f, 179.0f );
+					Q_clamp( fov_y, 1.0f, 179.0f );
 				}
 				RecomputePosition = true;
 			} else if( *it == "model-rotation-pitch" ) {

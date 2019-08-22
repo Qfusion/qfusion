@@ -266,9 +266,9 @@ static void GClip_Init_AreaGrid( areagrid_t *areagrid, const vec3_t world_mins, 
 	}
 
 	// choose either the world box size, or a larger box to ensure the grid isn't too fine
-	areagrid->size[0] = max( world_maxs[0] - world_mins[0], AREA_GRID * AREA_GRIDMINSIZE );
-	areagrid->size[1] = max( world_maxs[1] - world_mins[1], AREA_GRID * AREA_GRIDMINSIZE );
-	areagrid->size[2] = max( world_maxs[2] - world_mins[2], AREA_GRID * AREA_GRIDMINSIZE );
+	areagrid->size[0] = fmax( world_maxs[0] - world_mins[0], AREA_GRID * AREA_GRIDMINSIZE );
+	areagrid->size[1] = fmax( world_maxs[1] - world_mins[1], AREA_GRID * AREA_GRIDMINSIZE );
+	areagrid->size[2] = fmax( world_maxs[2] - world_mins[2], AREA_GRID * AREA_GRIDMINSIZE );
 
 	// figure out the corners of such a box, centered at the center of the world box
 	areagrid->mins[0] = ( world_mins[0] + world_maxs[0] - areagrid->size[0] ) * 0.5f;
@@ -386,12 +386,12 @@ static int GClip_EntitiesInBox_AreaGrid( areagrid_t *areagrid, const vec3_t mins
 	igridmaxs[1] = (int) floor( ( paddedmaxs[1] + areagrid->bias[1] ) * areagrid->scale[1] ) + 1;
 
 	//igridmaxs[2] = (int) ( (paddedmaxs[2] + areagrid->bias[2]) * areagrid->scale[2] ) + 1;
-	igridmins[0] = max( 0, igridmins[0] );
-	igridmins[1] = max( 0, igridmins[1] );
+	igridmins[0] = fmax( 0, igridmins[0] );
+	igridmins[1] = fmax( 0, igridmins[1] );
 
 	//igridmins[2] = max( 0, igridmins[2] );
-	igridmaxs[0] = min( AREA_GRID, igridmaxs[0] );
-	igridmaxs[1] = min( AREA_GRID, igridmaxs[1] );
+	igridmaxs[0] = fmin( AREA_GRID, igridmaxs[0] );
+	igridmaxs[1] = fmin( AREA_GRID, igridmaxs[1] );
 
 	//igridmaxs[2] = min( AREA_GRID, igridmaxs[2] );
 
@@ -546,15 +546,15 @@ void GClip_LinkEntity( edict_t *ent ) {
 		} else {
 			// assume that x/y are equal and symetric
 			i = ent->r.maxs[0] / 8;
-			clamp( i, 1, 31 );
+			Q_clamp( i, 1, 31 );
 
 			// z is not symetric
 			j = ( -ent->r.mins[2] ) / 8;
-			clamp( j, 1, 31 );
+			Q_clamp( j, 1, 31 );
 
 			// and z maxs can be negative...
 			k = ( ent->r.maxs[2] + 32 ) / 8;
-			clamp( k, 1, 63 );
+			Q_clamp( k, 1, 63 );
 
 			ent->s.solid = ( k << 10 ) | ( j << 5 ) | i;
 		}
@@ -688,7 +688,7 @@ int GClip_AreaEdicts( const vec3_t mins, const vec3_t maxs,
 	count = GClip_EntitiesInBox_AreaGrid( &g_areagrid, mins, maxs,
 										  list, maxcount, areatype, timeDelta );
 
-	return min( count, maxcount );
+	return fmin( count, maxcount );
 }
 
 /*

@@ -312,7 +312,7 @@ static size_t CL_WebDownloadReadCb( const void *buf, size_t numb, float percenta
 	// of resumed downloads
 	cls.download.offset += write;
 	cls.download.percent = (double)cls.download.offset / (double)cls.download.size;
-	clamp( cls.download.percent, 0, 1 );
+	Q_clamp( cls.download.percent, 0, 1 );
 
 	Cvar_ForceSet( "cl_download_percent", va( "%.1f", cls.download.percent * 100 ) );
 
@@ -770,7 +770,7 @@ static void CL_ParseDownload( msg_t *msg ) {
 	msg->readcount += size;
 	cls.download.offset += size;
 	cls.download.percent = (double)cls.download.offset / (double)cls.download.size;
-	clamp( cls.download.percent, 0, 1 );
+	Q_clamp( cls.download.percent, 0, 1 );
 
 	Cvar_ForceSet( "cl_download_percent", va( "%.1f", cls.download.percent * 100 ) );
 
@@ -1012,7 +1012,7 @@ static void CL_ParseFrame( msg_t *msg ) {
 				}
 			}
 
-			clamp( delta, cl.newServerTimeDelta - (int)cl.snapFrameTime, cl.newServerTimeDelta + (int)cl.snapFrameTime );
+			Q_clamp( delta, cl.newServerTimeDelta - (int)cl.snapFrameTime, cl.newServerTimeDelta + (int)cl.snapFrameTime );
 
 			cl.serverTimeDeltas[cl.receivedSnapNum & MASK_TIMEDELTAS_BACKUP] = delta;
 		}

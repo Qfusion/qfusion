@@ -41,7 +41,7 @@ static void CG_SC_Print( void ) {
 static void CG_SC_ChatPrint( void ) {
 	const bool teamonly = ( !Q_stricmp( trap_Cmd_Argv( 0 ), "tch" ) ? true : false );
 	const int who = atoi( trap_Cmd_Argv( 1 ) );
-	const char *name = ( who && who == bound( 1, who, MAX_CLIENTS ) ? cgs.clientInfo[who - 1].name : NULL );
+	const char *name = ( who && who == Q_bound( 1, who, MAX_CLIENTS ) ? cgs.clientInfo[who - 1].name : NULL );
 	const char *text = trap_Cmd_Argv( 2 );
 	const cvar_t *filter = ( cgs.tv ? cg_chatFilterTV : cg_chatFilter );
 

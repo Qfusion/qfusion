@@ -72,9 +72,9 @@ public:
 						vec_t *c = color_table[colorindex];
 						formatted_data += Rocket::Core::String( 64,
 																"<span style=\"color:rgb(%i%%,%i%%,%i%%);\">",
-																bound( 0,(int)( c[0] * 100.0f ),100 ),
-																bound( 0,(int)( c[1] * 100.0f ),100 ),
-																bound( 0,(int)( c[2] * 100.0f ),100 )
+																Q_bound( 0,(int)( c[0] * 100.0f ),100 ),
+																Q_bound( 0,(int)( c[1] * 100.0f ),100 ),
+																Q_bound( 0,(int)( c[2] * 100.0f ),100 )
 																);
 					}
 

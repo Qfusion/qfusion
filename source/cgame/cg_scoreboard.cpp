@@ -89,7 +89,7 @@ static void SCB_ParsePlayerStats( const char **s ) {
 	memset( scb_player_stats, -1, sizeof( scb_player_stats ) );
 	j = 0;
 
-#define STATS_PERCENT( hit,total ) ( ( hit ) > 0 && ( total > 0 ) ? ( ( hit ) == ( total ) ? 100 : ( min( (int)( floor( ( 100.0f * ( hit ) ) / ( (float)( total ) ) + 0.5f ) ), 99 ) ) ) : -1 )
+#define STATS_PERCENT( hit,total ) ( ( hit ) > 0 && ( total > 0 ) ? ( ( hit ) == ( total ) ? 100 : ( (int)fmin( (int)( floor( ( 100.0f * ( hit ) ) / ( (float)( total ) ) + 0.5f ) ), 99 ) ) ) : -1 )
 
 	for( i = WEAP_GUNBLADE; i < WEAP_TOTAL; i++ ) {
 		weak = j++;

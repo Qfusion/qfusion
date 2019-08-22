@@ -878,7 +878,7 @@ vec_t BoundsNearestDistance( const vec3_t point, const vec3_t mins, const vec3_t
 	vec3_t nearestpoint;
 
 	for( i = 0; i < 3; i++ )
-		nearestpoint[i] = bound( mins[i], point[i], maxs[i] );
+		nearestpoint[i] = Q_bound( mins[i], point[i], maxs[i] );
 	return DistanceFast( nearestpoint, point );
 }
 

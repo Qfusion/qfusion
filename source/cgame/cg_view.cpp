@@ -374,11 +374,11 @@ void CG_StartKickAnglesEffect( vec3_t source, float knockback, float radius, int
 
 		side = DotProduct( v, right );
 		cg.kickangles[kicknum].v_roll = kick * side * 0.3;
-		clamp( cg.kickangles[kicknum].v_roll, -20, 20 );
+		Q_clamp( cg.kickangles[kicknum].v_roll, -20, 20 );
 
 		side = -DotProduct( v, forward );
 		cg.kickangles[kicknum].v_pitch = kick * side * 0.3;
-		clamp( cg.kickangles[kicknum].v_pitch, -20, 20 );
+		Q_clamp( cg.kickangles[kicknum].v_pitch, -20, 20 );
 
 		cg.kickangles[kicknum].timestamp = cg.time;
 		ftime = (float)time * delta;
@@ -996,10 +996,10 @@ void CG_RenderView( int frameTime, int realFrameTime, int64_t realTime, int64_t 
 
 			if( cg.time >= cg.frame.serverTime ) {
 				cg.xerpSmoothFrac = (double)( cg.time - cg.frame.serverTime ) / (double)( cgs.extrapolationTime );
-				clamp( cg.xerpSmoothFrac, 0.0f, 1.0f );
+				Q_clamp( cg.xerpSmoothFrac, 0.0f, 1.0f );
 			} else {
 				cg.xerpSmoothFrac = (double)( cg.frame.serverTime - cg.time ) / (double)( cgs.extrapolationTime );
-				clamp( cg.xerpSmoothFrac, -1.0f, 0.0f );
+				Q_clamp( cg.xerpSmoothFrac, -1.0f, 0.0f );
 				cg.xerpSmoothFrac = 1.0f - cg.xerpSmoothFrac;
 			}
 
@@ -1021,7 +1021,7 @@ void CG_RenderView( int frameTime, int realFrameTime, int64_t realTime, int64_t 
 		}
 	}
 
-	clamp( cg.lerpfrac, 0.0f, 1.0f );
+	Q_clamp( cg.lerpfrac, 0.0f, 1.0f );
 
 	if( !cgs.configStrings[CS_WORLDMODEL][0] ) {
 		CG_AddLocalSounds();

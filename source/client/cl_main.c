@@ -2513,14 +2513,14 @@ void CL_Frame( int realMsec, int gameMsec ) {
 #if 1
 	if( allRealMsec < minMsec ) { // is compensating for a too slow frame
 		extraMsec -= ( minMsec - allRealMsec );
-		clamp( extraMsec, 0, 100 );
+		Q_clamp( extraMsec, 0, 100 );
 	} else {   // too slow, or exact frame
 		extraMsec = allRealMsec - minMsec;
-		clamp( extraMsec, 0, 100 );
+		Q_clamp( extraMsec, 0, 100 );
 	}
 #else
 	extraMsec = allRealMsec - minMsec;
-	clamp( extraMsec, 0, minMsec );
+	Q_clamp( extraMsec, 0, minMsec );
 #endif
 
 	CL_TimedemoStats();

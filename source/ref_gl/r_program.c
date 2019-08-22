@@ -2245,7 +2245,7 @@ void RP_UpdateRealtimeLightsUniforms( int elem, const vec3_t lightVec, const mat
 
 			if( program->loc.ShadowmapCascadesBlendArea >= 0 ) {
 				if( r_shadows_cascades_blendarea->integer > 0 ) {
-					qglUniform1fARB( program->loc.ShadowmapCascadesBlendArea, bound( 1, r_shadows_cascades_blendarea->value, 100 ) * 0.01f );
+					qglUniform1fARB( program->loc.ShadowmapCascadesBlendArea, Q_bound( 1, r_shadows_cascades_blendarea->value, 100 ) * 0.01f );
 				} else {
 					qglUniform1fARB( program->loc.ShadowmapCascadesBlendArea, 0.0 );
 				}

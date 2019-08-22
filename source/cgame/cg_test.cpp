@@ -331,7 +331,7 @@ static void CG_TestLights( void ) {
 	int i, j;
 	vec3_t origin;
 
-	for( i = 0; i < min( cg_testLights->integer, 32 ); i++ ) {
+	for( i = 0; i < fmin( cg_testLights->integer, 32 ); i++ ) {
 		/*float r = 64 * ( ( i%4 ) - 1.5 );
 		float f = 64 * ( i/4 ) + 128;*/
 

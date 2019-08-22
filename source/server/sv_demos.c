@@ -492,7 +492,7 @@ void SV_DemoGet_f( client_t *client ) {
 		} else {
 			num = atoi( Cmd_Argv( 1 ) ) - 1;
 		}
-		clamp( num, 0, numdemos - 1 );
+		Q_clamp( num, 0, numdemos - 1 );
 
 		numdemos = FS_GetFileList( SV_DEMO_DIR, APP_DEMO_EXTENSION_STR, buffer, sizeof( buffer ), num, num + 1 );
 		if( numdemos ) {

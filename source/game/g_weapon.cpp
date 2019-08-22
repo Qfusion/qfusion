@@ -273,9 +273,9 @@ static edict_t *W_Fire_LinearProjectile( edict_t *self, vec3_t start, vec3_t dir
 	projectile->timeStamp = level.time;
 	projectile->timeDelta = timeDelta;
 
-	projectile->projectileInfo.minDamage = min( minDamage, damage );
+	projectile->projectileInfo.minDamage = fmin( minDamage, damage );
 	projectile->projectileInfo.maxDamage = damage;
-	projectile->projectileInfo.minKnockback = min( minKnockback, maxKnockback );
+	projectile->projectileInfo.minKnockback = fmin( minKnockback, maxKnockback );
 	projectile->projectileInfo.maxKnockback = maxKnockback;
 	projectile->projectileInfo.stun = stun;
 	projectile->projectileInfo.radius = radius;
@@ -335,9 +335,9 @@ static edict_t *W_Fire_TossProjectile( edict_t *self, vec3_t start, vec3_t dir, 
 	projectile->timeDelta = timeDelta;
 	projectile->s.team = self->s.team;
 
-	projectile->projectileInfo.minDamage = min( minDamage, damage );
+	projectile->projectileInfo.minDamage = fmin( minDamage, damage );
 	projectile->projectileInfo.maxDamage = damage;
-	projectile->projectileInfo.minKnockback = min( minKnockback, maxKnockback );
+	projectile->projectileInfo.minKnockback = fmin( minKnockback, maxKnockback );
 	projectile->projectileInfo.maxKnockback = maxKnockback;
 	projectile->projectileInfo.stun = stun;
 	projectile->projectileInfo.radius = radius;
@@ -1038,7 +1038,7 @@ void W_Fire_Electrobolt_Combined( edict_t *self, vec3_t start, vec3_t dir, float
 			float frac, damage, knockback;
 
 			frac = DistanceFast( tr.endpos, start ) / (float)range;
-			clamp( frac, 0.0f, 1.0f );
+			Q_clamp( frac, 0.0f, 1.0f );
 
 			damage = maxdamage - ( ( maxdamage - mindamage ) * frac );
 			knockback = maxknockback - ( ( maxknockback - minknockback ) * frac );
@@ -1149,7 +1149,7 @@ void W_Fire_Electrobolt_FullInstant( edict_t *self, vec3_t start, vec3_t dir, fl
 				frac = 0.0f;
 			} else {
 				frac = ( dist - FULL_DAMAGE_RANGE ) / (float)( minDamageRange - FULL_DAMAGE_RANGE );
-				clamp( frac, 0.0f, 1.0f );
+				Q_clamp( frac, 0.0f, 1.0f );
 			}
 
 			damage = maxdamage - ( ( maxdamage - mindamage ) * frac );

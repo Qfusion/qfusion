@@ -546,7 +546,7 @@ static void CG_EntAddTeamColorTransitionEffect( centity_t *cent ) {
 	const vec4_t neutralcolor = { 1.0f, 1.0f, 1.0f, 1.0f };
 
 	f = (float)cent->current.counterNum / 255.0f;
-	clamp( f, 0.0f, 1.0f );
+	Q_clamp( f, 0.0f, 1.0f );
 
 	if( cent->current.type == ET_PLAYER || cent->current.type == ET_CORPSE ) {
 		currentcolor = CG_PlayerColorForEntity( cent->current.number, cent->ent.shaderRGBA );
@@ -723,7 +723,7 @@ void CG_LerpGenericEnt( centity_t *cent ) {
 			vec3_t origin, xorigin1, xorigin2;
 
 			float lerpfrac = cg.lerpfrac;
-			clamp( lerpfrac, 0.0f, 1.0f );
+			Q_clamp( lerpfrac, 0.0f, 1.0f );
 
 			// extrapolation with half-snapshot smoothing
 			if( cg.xerpTime >= 0 || !cent->canExtrapolatePrev ) {

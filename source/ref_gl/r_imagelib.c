@@ -1417,13 +1417,13 @@ static void q_etc1_subblock( uint8_t *out, int stride, bool bgr, int r, int g, i
 		delta = table[( ( low >> k ) & 1 ) | ( ( low >> ( k + 15 ) ) & 2 )];
 		q = out + 3 * x + stride * y;
 		if( bgr ) {
-			*( q++ ) = bound( 0, b + delta, 255 );
-			*( q++ ) = bound( 0, g + delta, 255 );
-			*( q++ ) = bound( 0, r + delta, 255 );
+			*( q++ ) = Q_bound( 0, b + delta, 255 );
+			*( q++ ) = Q_bound( 0, g + delta, 255 );
+			*( q++ ) = Q_bound( 0, r + delta, 255 );
 		} else {
-			*( q++ ) = bound( 0, r + delta, 255 );
-			*( q++ ) = bound( 0, g + delta, 255 );
-			*( q++ ) = bound( 0, b + delta, 255 );
+			*( q++ ) = Q_bound( 0, r + delta, 255 );
+			*( q++ ) = Q_bound( 0, g + delta, 255 );
+			*( q++ ) = Q_bound( 0, b + delta, 255 );
 		}
 	}
 }

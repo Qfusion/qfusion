@@ -866,7 +866,7 @@ static void R_FinalizeGLExtensions( void ) {
 	/* GL_ARB_multitexture */
 	glConfig.maxTextureUnits = 1;
 	qglGetIntegerv( GL_MAX_TEXTURE_IMAGE_UNITS_ARB, &glConfig.maxTextureUnits );
-	clamp( glConfig.maxTextureUnits, 1, MAX_TEXTURE_UNITS );
+	Q_clamp( glConfig.maxTextureUnits, 1, MAX_TEXTURE_UNITS );
 
 	/* GL_EXT_framebuffer_object */
 	glConfig.maxRenderbufferSize = 0;
@@ -987,7 +987,7 @@ static void R_FinalizeGLExtensions( void ) {
 	// require GLSL 1.20+ for GPU skinning
 	if( glConfig.shadingLanguageVersion >= 120 ) {
 		// the maximum amount of bones we can handle in a vertex shader (2 vec4 uniforms per vertex)
-		glConfig.maxGLSLBones = bound( 0, glConfig.maxVertexUniformComponents / 8 - 19, r_maxglslbones->integer );
+		glConfig.maxGLSLBones = Q_bound( 0, glConfig.maxVertexUniformComponents / 8 - 19, r_maxglslbones->integer );
 	} else {
 		glConfig.maxGLSLBones = 0;
 	}

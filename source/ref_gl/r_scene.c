@@ -211,7 +211,7 @@ void R_AddLightToScene( const vec3_t org, float intensity, float r, float g, flo
 	VectorSet( color, r, g, b );
 	if( r_lighting_grayscale->integer ) {
 		vec_t grey = ColorGrayscale( color );
-		color[0] = color[1] = color[2] = bound( 0, grey, 1 );
+		color[0] = color[1] = color[2] = Q_bound( 0, grey, 1 );
 	} else {
 		VectorScale( color, 1.0 / DLIGHT_SCALE, color );
 	}

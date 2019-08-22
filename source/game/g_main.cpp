@@ -632,7 +632,7 @@ void G_ExitLevel( void ) {
 	level.exitNow = false;
 
 	nextmapname = G_SelectNextMapName();
-	timeLimit = g_timelimit->integer > 0 ? max( g_timelimit->integer, 60 ) : 60;
+	timeLimit = g_timelimit->integer > 0 ? fmax( g_timelimit->integer, 60 ) : 60;
 	timeLimit *= 60 * 1000;
 
 	// if it's the same map see if we can restart without loading

@@ -410,7 +410,7 @@ void RB_GetShaderpassColor( const shaderpass_t *pass, byte_vec4_t rgba_, float *
 	}
 
 	for( c = 0; c < 4; c++ ) {
-		rgba_[c] = bound( 0, rgba[c], 255 );
+		rgba_[c] = Q_bound( 0, rgba[c], 255 );
 	}
 }
 

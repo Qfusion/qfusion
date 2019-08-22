@@ -823,7 +823,7 @@ static stat_query_t *G_Match_GenerateReport( void ) {
 				shots = stats->accuracy_shots[j];
 
 				// copied from cg_scoreboard.c, but changed the last -1 to 0 (no hits is zero acc, right??)
-				acc = (double) ( hits > 0 ? ( ( hits ) == ( shots ) ? 100 : ( min( (int)( floor( ( 100.0f * ( hits ) ) / ( (float)( shots ) ) + 0.5f ) ), 99 ) ) ) : 0 );
+				acc = (double) ( hits > 0 ? ( ( hits ) == ( shots ) ? 100 : ( fmin( (int)( floor( ( 100.0f * ( hits ) ) / ( (float)( shots ) ) + 0.5f ) ), 99 ) ) ) : 0 );
 
 				sq_api->SetNumber( weapsection, "strong_hits", hits );
 				sq_api->SetNumber( weapsection, "strong_shots", shots );
@@ -836,7 +836,7 @@ static stat_query_t *G_Match_GenerateReport( void ) {
 				shots = stats->accuracy_shots[weak];
 
 				// copied from cg_scoreboard.c, but changed the last -1 to 0 (no hits is zero acc, right??)
-				acc = (double) ( hits > 0 ? ( ( hits ) == ( shots ) ? 100 : ( min( (int)( floor( ( 100.0f * ( hits ) ) / ( (float)( shots ) ) + 0.5f ) ), 99 ) ) ) : 0 );
+				acc = (double) ( hits > 0 ? ( ( hits ) == ( shots ) ? 100 : ( fmin( (int)( floor( ( 100.0f * ( hits ) ) / ( (float)( shots ) ) + 0.5f ) ), 99 ) ) ) : 0 );
 
 				sq_api->SetNumber( weapsection, "weak_hits", hits );
 				sq_api->SetNumber( weapsection, "weak_shots", shots );

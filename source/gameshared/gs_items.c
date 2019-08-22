@@ -1232,7 +1232,7 @@ static gsitem_t *GS_Cmd_UseWeaponStep_f( player_state_t *playerState, int step, 
 		curSlot = playerState->stats[STAT_PENDING_WEAPON];
 	}
 
-	clamp( curSlot, 0, WEAP_TOTAL - 1 );
+	Q_clamp( curSlot, 0, WEAP_TOTAL - 1 );
 	newSlot = curSlot;
 	do {
 		newSlot += step;

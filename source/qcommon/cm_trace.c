@@ -936,14 +936,14 @@ loc0:
 	}
 
 	// move up to the node
-	clamp( frac, 0, 1 );
+	Q_clamp( frac, 0, 1 );
 	midf = p1f + ( p2f - p1f ) * frac;
 	VectorLerp( p1, frac, p2, mid );
 
 	CM_RecursiveHullCheck( cms, tw, node->children[side], p1f, midf, p1, mid );
 
 	// go past the node
-	clamp( frac2, 0, 1 );
+	Q_clamp( frac2, 0, 1 );
 	midf = p1f + ( p2f - p1f ) * frac2;
 	VectorLerp( p1, frac2, p2, mid );
 

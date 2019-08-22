@@ -248,7 +248,7 @@ start:
 
 	// find the intersection point
 	frac = t1 / ( t1 - t2 );
-	frac = bound( 0, frac, 1 );
+	frac = Q_bound( 0, frac, 1 );
 	midf = p1f + ( p2f - p1f ) * frac;
 	VectorLerp( p1, frac, p2, mid );
 	side = t1 < 0;
@@ -282,9 +282,9 @@ start:
 	} else {
 		frac = ( t1 - DIST_EPSILON ) / ( t1 - t2 );
 	}
-	midf = p1f + ( p2f - p1f ) * bound( 0, frac, 1 );
+	midf = p1f + ( p2f - p1f ) * Q_bound( 0, frac, 1 );
 
-	trace_trace->fraction = bound( 0, midf, 1 );
+	trace_trace->fraction = Q_bound( 0, midf, 1 );
 	VectorLerp( p1, frac, p2, trace_trace->endpos );
 
 	return HULLCHECKSTATE_DONE;

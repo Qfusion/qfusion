@@ -537,7 +537,7 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size ) {
 		maxAdvanceY = ( ( ( q_FT_MulFix( ftface->max_advance_height, ftsize->metrics.y_scale ) + 63 ) & ~63 ) >> 6 ) + 2;
 
 		numCols = maxShaderWidth / maxAdvanceX;
-		clamp( numCols, 1, ftface->num_glyphs );
+		Q_clamp( numCols, 1, ftface->num_glyphs );
 
 		numRows = ftface->num_glyphs / numCols;
 

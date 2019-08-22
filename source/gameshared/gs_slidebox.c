@@ -91,7 +91,7 @@ int GS_LinearMovement( const entity_state_t *ent, int64_t time, vec3_t dest ) {
 
 		VectorSubtract( ent->linearMovementEnd, ent->linearMovementBegin, dist );
 		moveFrac = (float)moveTime / (float)ent->linearMovementDuration;
-		clamp( moveFrac, 0, 1 );
+		Q_clamp( moveFrac, 0, 1 );
 		VectorMA( ent->linearMovementBegin, moveFrac, dist, dest );
 	} else {
 		moveFrac = moveTime * 0.001f;

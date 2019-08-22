@@ -863,7 +863,7 @@ static void G_SetName( edict_t *ent, const char *original_name ) {
 
 	maxchars = MAX_NAME_CHARS;
 	if( ent->r.client->isTV ) {
-		maxchars = min( maxchars + 10, MAX_NAME_BYTES - 1 );
+		maxchars = fmin( maxchars + 10, MAX_NAME_BYTES - 1 );
 	}
 
 	// Limit the name to MAX_NAME_CHARS printable characters
@@ -1116,7 +1116,7 @@ void ClientUserinfoChanged( edict_t *ent, char *userinfo ) {
 	if( !s ) {
 		cl->hand = 2;
 	} else {
-		cl->hand = bound( atoi( s ), 0, 2 );
+		cl->hand = Q_bound( atoi( s ), 0, 2 );
 	}
 
 	// handicap
@@ -1134,7 +1134,7 @@ void ClientUserinfoChanged( edict_t *ent, char *userinfo ) {
 
 	s = Info_ValueForKey( userinfo, "cg_movementStyle" );
 	if( s ) {
-		i = bound( atoi( s ), 0, GS_MAXBUNNIES - 1 );
+		i = Q_bound( atoi( s ), 0, GS_MAXBUNNIES - 1 );
 		if( trap_GetClientState( PLAYERNUM( ent ) ) < CS_SPAWNED ) {
 			if( i != cl->movestyle ) {
 				cl->movestyle = cl->movestyle_latched = i;
@@ -1559,7 +1559,7 @@ void ClientThink( edict_t *ent, usercmd_t *ucmd, int timeDelta ) {
 		// add smoothing to timeDelta between the last few ucmds and a small fine-tuning nudge.
 		nudge = fixedNudge + g_antilag_timenudge->integer;
 		timeDelta += nudge;
-		clamp( timeDelta, -g_antilag_maxtimedelta->integer, 0 );
+		Q_clamp( timeDelta, -g_antilag_maxtimedelta->integer, 0 );
 
 		// smooth using last valid deltas
 		i = client->timeDeltasHead - 6;
@@ -1588,7 +1588,7 @@ void ClientThink( edict_t *ent, usercmd_t *ucmd, int timeDelta ) {
 #endif
 	}
 
-	clamp( client->timeDelta, -g_antilag_maxtimedelta->integer, 0 );
+	Q_clamp( client->timeDelta, -g_antilag_maxtimedelta->integer, 0 );
 
 	// update activity if he touched any controls
 	if( ucmd->forwardmove != 0 || ucmd->sidemove != 0 || ucmd->upmove != 0 || ( ucmd->buttons & ~BUTTON_BUSYICON ) != 0
@@ -1738,13 +1738,13 @@ void G_ClientThink( edict_t *ent ) {
 		if( ent->s.team >= TEAM_PLAYERS && ent->s.team < GS_MAX_TEAMS ) {
 			if( ent->r.client->ps.inventory[POWERUP_SHELL] > 0 ) {
 				ent->r.client->resp.instashieldCharge -= ( game.frametime * 0.001f ) * 60.0f;
-				clamp( ent->r.client->resp.instashieldCharge, 0, INSTA_SHIELD_MAX );
+				Q_clamp( ent->r.client->resp.instashieldCharge, 0, INSTA_SHIELD_MAX );
 				if( ent->r.client->resp.instashieldCharge == 0 ) {
 					ent->r.client->ps.inventory[POWERUP_SHELL] = 0;
 				}
 			} else {
 				ent->r.client->resp.instashieldCharge += ( game.frametime * 0.001f ) * 20.0f;
-				clamp( ent->r.client->resp.instashieldCharge, 0, INSTA_SHIELD_MAX );
+				Q_clamp( ent->r.client->resp.instashieldCharge, 0, INSTA_SHIELD_MAX );
 			}
 		}
 	}
