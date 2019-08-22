@@ -397,7 +397,6 @@ extern cvar_t *r_lightmap;
 extern cvar_t *r_novis;
 extern cvar_t *r_nocull;
 extern cvar_t *r_lerpmodels;
-extern cvar_t *r_brightness;
 extern cvar_t *r_sRGB;
 
 extern cvar_t *r_dynamiclight;

@@ -797,26 +797,6 @@ static void R_PolyBlend( void ) {
 }
 
 /*
-* R_ApplyBrightness
-*/
-static void R_ApplyBrightness( void ) {
-	float c;
-	vec4_t color;
-
-	c = r_brightness->value;
-	if( c < 0.005 ) {
-		return;
-	} else if( c > 1.0 ) {
-		c = 1.0;
-	}
-
-	color[0] = color[1] = color[2] = c, color[3] = 1;
-
-	R_DrawStretchQuick( 0, 0, rf.frameBufferWidth, rf.frameBufferHeight, 0, 0, 1, 1,
-						color, GLSL_PROGRAM_TYPE_NONE, rsh.whiteTexture, GLSTATE_SRCBLEND_ONE | GLSTATE_DSTBLEND_ONE );
-}
-
-/*
 * R_InitPostProcessingVBO
 */
 mesh_vbo_t *R_InitPostProcessingVBO( void ) {
@@ -2003,8 +1983,6 @@ void R_EndFrame( void ) {
 	}
 
 	R_PolyBlend();
-
-	R_ApplyBrightness();
 
 	if( 0 )
 	{

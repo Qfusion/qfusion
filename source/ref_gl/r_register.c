@@ -38,7 +38,6 @@ cvar_t *r_lightmap;
 cvar_t *r_novis;
 cvar_t *r_nocull;
 cvar_t *r_lerpmodels;
-cvar_t *r_brightness;
 cvar_t *r_sRGB;
 
 cvar_t *r_dynamiclight;
@@ -1099,7 +1098,6 @@ static void R_Register( const char *screenshotsPrefix ) {
 	r_skymip = ri.Cvar_Get( "r_skymip", "0", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
 	r_polyblend = ri.Cvar_Get( "r_polyblend", "1", 0 );
 
-	r_brightness = ri.Cvar_Get( "r_brightness", "0", CVAR_ARCHIVE );
 	r_sRGB = ri.Cvar_Get( "r_sRGB", "1", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
 
 	r_detailtextures = ri.Cvar_Get( "r_detailtextures", "1", CVAR_ARCHIVE );
