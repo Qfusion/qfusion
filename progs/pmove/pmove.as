@@ -31,6 +31,7 @@ class PMoveLocal {
 	Vec3 velocity;        // full float precision
 
 	Vec3 pm_mins, pm_maxs;
+	int pm_flags;
 
 	Vec3 forward, right, up;
 	Vec3 flatforward;     // normalized forward without z component, saved here because it needs
@@ -92,6 +93,8 @@ class PMoveLocal {
 		pml.forwardPush = float( cmd.forwardmove ) * SPEEDKEY / 127.0f;
 		pml.sidePush = float( cmd.sidemove ) * SPEEDKEY / 127.0f;
 		pml.upPush = float( cmd.upmove ) * SPEEDKEY / 127.0f;
+
+		pml.pm_flags = pmoveState.pm_flags;
 	}
 
 	float Speed() {
@@ -255,7 +258,7 @@ class PMoveLocal {
 			if( pmoveState.stats[PM_STAT_KNOCKBACK] <= 0 ) {
 				friction = pm_friction;
 				control = speed < pm_decelerate ? pm_decelerate : speed;
-				if( ( pmoveState.pm_flags & PMF_CROUCH_SLIDING ) != 0 ) {
+				if( ( pml.pm_flags & PMF_CROUCH_SLIDING ) != 0 ) {
 					if( pmoveState.stats[PM_STAT_CROUCHSLIDETIME] < PM_CROUCHSLIDE_FADE ) {
 						friction *= 1 - sqrt( float( pmoveState.stats[PM_STAT_CROUCHSLIDETIME] ) / PM_CROUCHSLIDE_FADE );
 					} else {
@@ -305,7 +308,7 @@ class PMoveLocal {
 			accelspeed = addspeed;
 		}
 
-		crouchslide = ( pmoveState.pm_flags & PMF_CROUCH_SLIDING ) != 0 && pm.groundEntity != -1 && ( pml.groundSurfFlags & SURF_SLICK ) == 0;
+		crouchslide = ( pml.pm_flags & PMF_CROUCH_SLIDING ) != 0 && pm.groundEntity != -1 && ( pml.groundSurfFlags & SURF_SLICK ) == 0;
 
 		if( crouchslide ) {
 			accelspeed *= PM_CROUCHSLIDE_CONTROL;
@@ -530,7 +533,7 @@ class PMoveLocal {
 			// Air Control
 			wishspeed2 = wishspeed;
 			if( pml.velocity * wishdir < 0
-				&& ( pmoveState.pm_flags & PMF_WALLJUMPING ) == 0
+				&& ( pml.pm_flags & PMF_WALLJUMPING ) == 0
 				&& ( pmoveState.stats[PM_STAT_KNOCKBACK] <= 0 ) ) {
 				accel = pm_airdecelerate;
 			} else {
@@ -538,7 +541,7 @@ class PMoveLocal {
 			}
 
 			// ch : remove knockback test here
-			if( ( pmoveState.pm_flags & PMF_WALLJUMPING ) != 0
+			if( ( pml.pm_flags & PMF_WALLJUMPING ) != 0
 				/* || ( pmoveState.stats[PM_STAT_KNOCKBACK] > 0 ) */ ) {
 				accel = 0; // no stopmove while walljumping
 			}
@@ -552,7 +555,7 @@ class PMoveLocal {
 
 			// Air control
 			Accelerate( wishdir, wishspeed, accel );
-			if( pm_aircontrol > 0 && ( pmoveState.pm_flags & PMF_WALLJUMPING ) == 0 && ( pmoveState.stats[PM_STAT_KNOCKBACK] <= 0 ) ) { // no air ctrl while wjing
+			if( pm_aircontrol > 0 && ( pml.pm_flags & PMF_WALLJUMPING ) == 0 && ( pmoveState.stats[PM_STAT_KNOCKBACK] <= 0 ) ) { // no air ctrl while wjing
 				Aircontrol( wishdir, wishspeed2 );
 			}
 
@@ -566,12 +569,12 @@ class PMoveLocal {
 			accelerating = ( pml.velocity * wishdir ) > 0.0f ? true : false;
 			decelerating = ( pml.velocity * wishdir ) < -0.0f ? true : false;
 
-			if( ( pmoveState.pm_flags & PMF_WALLJUMPING ) != 0 &&
+			if( ( pml.pm_flags & PMF_WALLJUMPING ) != 0 &&
 				( pmoveState.stats[PM_STAT_WJTIME] >= ( PM_WALLJUMP_TIMEDELAY - PM_AIRCONTROL_BOUNCE_DELAY ) ) ) {
 				inhibit = true;
 			}
 
-			if( ( pmoveState.pm_flags & PMF_DASHING ) != 0 &&
+			if( ( pml.pm_flags & PMF_DASHING ) != 0 &&
 				( pmoveState.stats[PM_STAT_DASHTIME] >= ( PM_DASHJUMP_TIMEDELAY - PM_AIRCONTROL_BOUNCE_DELAY ) ) ) {
 				inhibit = true;
 			}
@@ -596,20 +599,20 @@ class PMoveLocal {
 
 				wishspeed2 = wishspeed;
 				if( decelerating &&
-					( pmoveState.pm_flags & PMF_WALLJUMPING ) == 0 ) {
+					( pml.pm_flags & PMF_WALLJUMPING ) == 0 ) {
 					accel = pm_airdecelerate;
 				} else {
 					accel = pm_airaccelerate;
 				}
 
 				// ch : knockback out
-				if( ( pmoveState.pm_flags & PMF_WALLJUMPING ) != 0
+				if( ( pml.pm_flags & PMF_WALLJUMPING ) != 0
 					/*	|| ( pmoveState.stats[PM_STAT_KNOCKBACK] > 0 ) */) {
 					accel = 0; // no stop-move while wall-jumping
 					aircontrol = false;
 				}
 
-				if( ( pmoveState.pm_flags & PMF_DASHING ) != 0 &&
+				if( ( pml.pm_flags & PMF_DASHING ) != 0 &&
 					( pmoveState.stats[PM_STAT_DASHTIME] >= ( PM_DASHJUMP_TIMEDELAY - PM_AIRCONTROL_BOUNCE_DELAY ) ) ) {
 					aircontrol = false;
 				}
@@ -696,7 +699,7 @@ class PMoveLocal {
 		auto @pmoveState = @playerState.pmove;
 
 		if( pml.velocity.z > 180 ) { // !!ZOID changed from 100 to 180 (ramp accel)
-			pmoveState.pm_flags = pmoveState.pm_flags & ~PMF_ON_GROUND;
+			pml.pm_flags &= ~PMF_ON_GROUND;
 			pm.groundEntity = -1;
 		} else {
 			Trace trace;
@@ -716,7 +719,7 @@ class PMoveLocal {
 
 			if( ( trace.fraction == 1.0f ) || ( !IsWalkablePlane( trace.planeNormal ) && !trace.startSolid ) ) {
 				pm.groundEntity = -1;
-				pmoveState.pm_flags = pmoveState.pm_flags & ~PMF_ON_GROUND;
+				pml.pm_flags &= ~PMF_ON_GROUND;
 			} else {
 				pm.groundEntity = trace.entNum;
 				pm.groundPlaneNormal = trace.planeNormal;
@@ -725,13 +728,13 @@ class PMoveLocal {
 				pm.groundContents = trace.contents;
 
 				// hitting solid ground will end a waterjump
-				if( ( pmoveState.pm_flags & PMF_TIME_WATERJUMP ) != 0 ) {
-					pmoveState.pm_flags = pmoveState.pm_flags & int( ~( PMF_TIME_WATERJUMP | PMF_TIME_LAND | PMF_TIME_TELEPORT ) );
+				if( ( pml.pm_flags & PMF_TIME_WATERJUMP ) != 0 ) {
+					pml.pm_flags &= ~( PMF_TIME_WATERJUMP | PMF_TIME_LAND | PMF_TIME_TELEPORT );
 					pmoveState.pm_time = 0;
 				}
 
-				if( ( pmoveState.pm_flags & PMF_ON_GROUND ) == 0 ) { // just hit the ground
-					pmoveState.pm_flags = pmoveState.pm_flags | PMF_ON_GROUND;
+				if( ( pml.pm_flags & PMF_ON_GROUND ) == 0 ) { // just hit the ground
+					pml.pm_flags |= PMF_ON_GROUND;
 				}
 			}
 
@@ -771,13 +774,13 @@ class PMoveLocal {
 
 	void ClearDash() {
 		auto @pmoveState = @playerState.pmove;
-		pmoveState.pm_flags = pmoveState.pm_flags & int( ~PMF_DASHING );
+		pml.pm_flags &= ~PMF_DASHING;
 		pmoveState.stats[PM_STAT_DASHTIME] = 0;
 	}
 
 	void ClearWallJump() {
 		auto @pmoveState = @playerState.pmove;
-		pmoveState.pm_flags = pmoveState.pm_flags & int( ~(PMF_WALLJUMPING|PMF_WALLJUMPCOUNT) );
+		pml.pm_flags &= ~(PMF_WALLJUMPING|PMF_WALLJUMPCOUNT);
 		pmoveState.stats[PM_STAT_WJTIME] = 0;
 	}
 
@@ -920,14 +923,14 @@ class PMoveLocal {
 		if( pml.upPush < 10 ) {
 			// not holding jump
 			if( ( pmoveState.stats[PM_STAT_FEATURES] & PMFEAT_CONTINOUSJUMP ) == 0 ) {
-				pmoveState.pm_flags = pmoveState.pm_flags & ~PMF_JUMP_HELD;
+				pml.pm_flags &= ~PMF_JUMP_HELD;
 			}
 			return;
 		}
 
 		if( ( pmoveState.stats[PM_STAT_FEATURES] & PMFEAT_CONTINOUSJUMP ) == 0 ) {
 			// must wait for jump to be released
-			if( ( pmoveState.pm_flags & PMF_JUMP_HELD ) != 0 ) {
+			if( ( pml.pm_flags & PMF_JUMP_HELD ) != 0 ) {
 				return;
 			}
 		}
@@ -950,7 +953,7 @@ class PMoveLocal {
 		}
 
 		if( ( pmoveState.stats[PM_STAT_FEATURES] & PMFEAT_CONTINOUSJUMP ) == 0 ) {
-			pmoveState.pm_flags = pmoveState.pm_flags | PMF_JUMP_HELD;
+			pml.pm_flags |= PMF_JUMP_HELD;
 		}
 
 		pm.groundEntity = -1;
@@ -969,7 +972,7 @@ class PMoveLocal {
 		}
 
 		// remove wj count
-		pmoveState.pm_flags = pmoveState.pm_flags & ~PMF_JUMPPAD_TIME;
+		pml.pm_flags &= ~PMF_JUMPPAD_TIME;
 
 		ClearDash();
 		ClearWallJump();
@@ -982,7 +985,7 @@ class PMoveLocal {
 		Vec3 dashdir;
 
 		if( ( pml.cmd.buttons & BUTTON_SPECIAL ) == 0 ) {
-			pmoveState.pm_flags = pmoveState.pm_flags & ~PMF_SPECIAL_HELD;
+			pml.pm_flags &= ~PMF_SPECIAL_HELD;
 		}
 
 		if( pmoveState.pm_type != PM_NORMAL ) {
@@ -999,14 +1002,14 @@ class PMoveLocal {
 
 		if( ( pml.cmd.buttons & BUTTON_SPECIAL ) != 0 && pm.groundEntity != -1
 			&& ( pmoveState.stats[PM_STAT_FEATURES] & PMFEAT_DASH ) != 0 ) {
-			if( ( pmoveState.pm_flags & PMF_SPECIAL_HELD ) != 0 ) {
+			if( ( pml.pm_flags & PMF_SPECIAL_HELD ) != 0 ) {
 				return;
 			}
 
-			pmoveState.pm_flags = pmoveState.pm_flags & ~PMF_JUMPPAD_TIME;
+			pml.pm_flags &= ~PMF_JUMPPAD_TIME;
 			ClearWallJump();
 
-			pmoveState.pm_flags = pmoveState.pm_flags | (PMF_DASHING | PMF_SPECIAL_HELD);
+			pml.pm_flags |= PMF_DASHING | PMF_SPECIAL_HELD;
 			pm.groundEntity = -1;
 
 			ClipVelocityAgainstGround();
@@ -1052,7 +1055,7 @@ class PMoveLocal {
 				GS::PredictedEvent( playerState.POVnum, EV_DASH, 0 );
 			}
 		} else if( pm.groundEntity == -1 ) {
-			pmoveState.pm_flags = pmoveState.pm_flags & ~PMF_DASHING;
+			pml.pm_flags &= ~PMF_DASHING;
 		}
 	}
 
@@ -1068,19 +1071,19 @@ class PMoveLocal {
 		const float pm_wjminspeed = ( ( pml.maxWalkSpeed + pml.maxPlayerSpeed ) * 0.5f );
 
 		if( ( pml.cmd.buttons & BUTTON_SPECIAL ) == 0 ) {
-			pmoveState.pm_flags = pmoveState.pm_flags & ~PMF_SPECIAL_HELD;
+			pml.pm_flags &= ~PMF_SPECIAL_HELD;
 		}
 
 		if( pm.groundEntity != -1 ) {
-			pmoveState.pm_flags = pmoveState.pm_flags & ~(PMF_WALLJUMPING | PMF_WALLJUMPCOUNT);
+			pml.pm_flags &= ~(PMF_WALLJUMPING | PMF_WALLJUMPCOUNT);
 		}
 
 		if( ( pmoveState.pm_flags & PMF_WALLJUMPING ) != 0 && pml.velocity.z < 0.0 ) {
-			pmoveState.pm_flags = pmoveState.pm_flags & ~PMF_WALLJUMPING;
+			pml.pm_flags &= ~PMF_WALLJUMPING;
 		}
 
 		if( pmoveState.stats[PM_STAT_WJTIME] <= 0 ) { // reset the wj count after wj delay
-			pmoveState.pm_flags = pmoveState.pm_flags & ~PMF_WALLJUMPCOUNT;
+			pml.pm_flags &= ~PMF_WALLJUMPCOUNT;
 		}
 
 		if( pmoveState.pm_type != PM_NORMAL ) {
@@ -1088,7 +1091,7 @@ class PMoveLocal {
 		}
 
 		// don't walljump in the first 100 milliseconds of a dash jump
-		if( ( pmoveState.pm_flags & PMF_DASHING ) != 0
+		if( ( pml.pm_flags & PMF_DASHING ) != 0
 			&& ( pmoveState.stats[PM_STAT_DASHTIME] > ( PM_DASHJUMP_TIMEDELAY - 100 ) ) ) {
 			return;
 		}
@@ -1097,7 +1100,7 @@ class PMoveLocal {
 
 		if( pm.groundEntity == -1 && ( pml.cmd.buttons & BUTTON_SPECIAL ) != 0
 			&& ( pmoveState.stats[PM_STAT_FEATURES] & PMFEAT_WALLJUMP ) != 0 &&
-			( ( pmoveState.pm_flags & PMF_WALLJUMPCOUNT ) == 0 )
+			( ( pml.pm_flags & PMF_WALLJUMPCOUNT ) == 0 )
 			&& pmoveState.stats[PM_STAT_WJTIME] <= 0
 			&& !pm.skipCollision
 			) {
@@ -1118,8 +1121,8 @@ class PMoveLocal {
 					return;
 				}
 
-				if( ( pmoveState.pm_flags & PMF_SPECIAL_HELD ) == 0
-					&& ( pmoveState.pm_flags & PMF_WALLJUMPING ) == 0 ) {
+				if( ( pml.pm_flags & PMF_SPECIAL_HELD ) == 0
+					&& ( pml.pm_flags & PMF_WALLJUMPING ) == 0 ) {
 					float oldupvelocity = pml.velocity.z;
 					pml.velocity.z = 0.0;
 
@@ -1151,7 +1154,8 @@ class PMoveLocal {
 					// set the walljumping state
 					pml.ClearDash();
 
-					pmoveState.pm_flags = (pmoveState.pm_flags & ~PMF_JUMPPAD_TIME) | PMF_WALLJUMPING | PMF_SPECIAL_HELD | PMF_WALLJUMPCOUNT;
+					pml.pm_flags &= ~PMF_JUMPPAD_TIME;
+					pml.pm_flags |= PMF_WALLJUMPING | PMF_SPECIAL_HELD | PMF_WALLJUMPCOUNT;
 
 					if( pmoveState.stats[PM_STAT_STUN] > 0 ) {
 						pmoveState.stats[PM_STAT_WJTIME] = PM_WALLJUMP_FAILED_TIMEDELAY;
@@ -1167,7 +1171,7 @@ class PMoveLocal {
 				}
 			}
 		} else {
-			pmoveState.pm_flags = pmoveState.pm_flags & ~PMF_WALLJUMPING;
+			pml.pm_flags &= ~PMF_WALLJUMPING;
 		}
 	}
 
@@ -1200,23 +1204,23 @@ class PMoveLocal {
 		switch( pmoveState.pm_type ) {
 			case PM_FREEZE:
 			case PM_CHASECAM:
-				pmoveState.pm_flags = pmoveState.pm_flags | PMF_NO_PREDICTION;
+				pml.pm_flags |= PMF_NO_PREDICTION;
 				pm.contentMask = 0;
 				break;
 
 			case PM_GIB:
-				pmoveState.pm_flags = pmoveState.pm_flags | PMF_NO_PREDICTION;
+				pml.pm_flags |= PMF_NO_PREDICTION;
 				pm.contentMask = MASK_DEADSOLID;
 				break;
 
 			case PM_SPECTATOR:
-				pmoveState.pm_flags = pmoveState.pm_flags & ~PMF_NO_PREDICTION;
+				pml.pm_flags &= ~PMF_NO_PREDICTION;
 				pm.contentMask = MASK_DEADSOLID;
 				break;
 
 			case PM_NORMAL:
 			default:
-				pmoveState.pm_flags = pmoveState.pm_flags & ~PMF_NO_PREDICTION;
+				pml.pm_flags &= ~PMF_NO_PREDICTION;
 
 				if( ( pmoveState.stats[PM_STAT_FEATURES] & PMFEAT_GHOSTMOVE ) != 0 ) {
 					pm.contentMask = MASK_DEADSOLID;
@@ -1239,7 +1243,7 @@ class PMoveLocal {
 				}
 
 				if( msec >= pmoveState.pm_time ) {
-					pmoveState.pm_flags = pmoveState.pm_flags & int( ~( PMF_TIME_WATERJUMP | PMF_TIME_LAND | PMF_TIME_TELEPORT ) );
+					pml.pm_flags &= ~( PMF_TIME_WATERJUMP | PMF_TIME_LAND | PMF_TIME_TELEPORT );
 					pmoveState.pm_time = 0;
 				} else {
 					pmoveState.pm_time -= msec;
@@ -1426,9 +1430,9 @@ class PMoveLocal {
 			}
 
 			// start sliding when we land
-			pmoveState.pm_flags = pmoveState.pm_flags | PMF_CROUCH_SLIDING;
+			pml.pm_flags |= PMF_CROUCH_SLIDING;
 			pmoveState.stats[PM_STAT_CROUCHSLIDETIME] = PM_CROUCHSLIDE + PM_CROUCHSLIDE_FADE;
-		} else if( ( pmoveState.pm_flags & PMF_CROUCH_SLIDING ) != 0 ) {
+		} else if( ( pml.pm_flags & PMF_CROUCH_SLIDING ) != 0 ) {
 			if( pmoveState.stats[PM_STAT_CROUCHSLIDETIME] > PM_CROUCHSLIDE_FADE ) {
 				pmoveState.stats[PM_STAT_CROUCHSLIDETIME] = PM_CROUCHSLIDE_FADE;
 			}
@@ -1484,7 +1488,7 @@ class PMoveLocal {
 		pml.velocity = pml.flatforward * 50.0f;
 		pml.velocity.z = 350.0f;
 
-		pmoveState.pm_flags = pmoveState.pm_flags | PMF_TIME_WATERJUMP;
+		pml.pm_flags |= PMF_TIME_WATERJUMP;
 		pmoveState.pm_time = 255;
 	}
 
@@ -1582,6 +1586,7 @@ class PMoveLocal {
 
 		pml.playerState.pmove.origin = pml.origin;
 		pml.playerState.pmove.velocity = pml.velocity;
+		pml.playerState.pm_flags = pml.pm_flags;
 	}
 };
 
