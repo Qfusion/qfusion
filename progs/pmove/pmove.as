@@ -25,6 +25,7 @@ namespace PM {
 class PMoveLocal {
 	PMove @pm;
 	PlayerState @playerState;
+	PMoveState @pmoveState;
 	UserCmd cmd;
 
 	Vec3 origin;          // full float precision
@@ -56,11 +57,11 @@ class PMoveLocal {
 	float dashPlayerSpeed;
 
 	void BeginMove( PMove @pm, PlayerState @ps, UserCmd cmd ) {
-		auto @pmoveState = @ps.pmove;
-
 		@pm = pm;
 		@playerState = ps;
+		@pmoveState = ps.pmove;
 		cmd = cmd;
+
 		origin = pmoveState.origin;
 		velocity = pmoveState.velocity;
 
@@ -238,7 +239,6 @@ class PMoveLocal {
 		float speed, newspeed, control;
 		float friction;
 		float drop;
-		auto @pmoveState = @playerState.pmove;
 
 		drop = 0.0f;
 		speed = Speed();
@@ -287,7 +287,6 @@ class PMoveLocal {
 	void Accelerate( const Vec3 &in wishdir, float wishspeed, float accel ) {
 		float addspeed, accelspeed, currentspeed, realspeed, newspeed;
 		bool crouchslide;
-		auto @pmoveState = @playerState.pmove;
 
 		realspeed = Speed();
 
@@ -376,8 +375,6 @@ class PMoveLocal {
 	}
 
 	Vec3 AddCurrents( Vec3 wishvel ) {
-		auto @pmoveState = @playerState.pmove;
-
 		//
 		// account for ladders
 		//
@@ -411,7 +408,6 @@ class PMoveLocal {
 		Vec3 wishvel;
 		float wishspeed;
 		Vec3 wishdir;
-		auto @pmoveState = @playerState.pmove;
 
 		// user intentions
 		wishvel = forward * forwardPush + right * sidePush;
@@ -449,7 +445,6 @@ class PMoveLocal {
 		float maxspeed;
 		float accel;
 		float wishspeed2;
-		auto @pmoveState = @playerState.pmove;
 
 		fmove = forwardPush;
 		smove = sidePush;
@@ -648,7 +643,6 @@ class PMoveLocal {
 	void UnstickPosition( Trace &out trace ) {
 		int j;
 		Vec3 origin;
-		auto @pmoveState = @playerState.pmove;
 
 		if( pm.skipCollision ) {
 			return;
@@ -681,8 +675,6 @@ class PMoveLocal {
 	}
 
 	void CategorizePosition() {
-		auto @pmoveState = @playerState.pmove;
-
 		if( velocity.z > 180 ) { // !!ZOID changed from 100 to 180 (ramp accel)
 			pm_flags &= ~PMF_ON_GROUND;
 			pm.groundEntity = -1;
@@ -758,19 +750,16 @@ class PMoveLocal {
 	}
 
 	void ClearDash() {
-		auto @pmoveState = @playerState.pmove;
 		pm_flags &= ~PMF_DASHING;
 		pmoveState.stats[PM_STAT_DASHTIME] = 0;
 	}
 
 	void ClearWallJump() {
-		auto @pmoveState = @playerState.pmove;
 		pm_flags &= ~(PMF_WALLJUMPING|PMF_WALLJUMPCOUNT);
 		pmoveState.stats[PM_STAT_WJTIME] = 0;
 	}
 
 	void ClearStun() {
-		auto @pmoveState = @playerState.pmove;
 		pmoveState.stats[PM_STAT_STUN] = 0;
 	}
 
@@ -795,7 +784,6 @@ class PMoveLocal {
 		Vec3 zero, dir, mins, maxs;
 		bool alternate;
 		float r, d, dx, dy, m;
-		auto @pmoveState = @playerState.pmove;
 
 		// if there is nothing at all within the checked area, we can skip the individual checks
 		// this optimization must always overapproximate the combination of those checks
@@ -899,8 +887,6 @@ class PMoveLocal {
 	* CheckJump
 	*/
 	void CheckJump() {
-		auto @pmoveState = @playerState.pmove;
-
 		if( upPush < 10 ) {
 			// not holding jump
 			if( ( pmoveState.stats[PM_STAT_FEATURES] & PMFEAT_CONTINOUSJUMP ) == 0 ) {
@@ -960,7 +946,6 @@ class PMoveLocal {
 	}
 
 	void CheckDash() {
-		auto @pmoveState = @playerState.pmove;
 		float upspeed;
 		Vec3 dashdir;
 
@@ -1043,7 +1028,6 @@ class PMoveLocal {
 	* CheckWallJump -- By Kurim
 	*/
 	void CheckWallJump() {
-		auto @pmoveState = @playerState.pmove;
 		Vec3 normal;
 		float hspeed;
 		Vec3 pm_mins, pm_maxs;
@@ -1155,8 +1139,6 @@ class PMoveLocal {
 	}
 
 	void DecreasePMoveStat( int stat ) {
-		auto @pmoveState = @playerState.pmove;
-
 		int value = pmoveState.stats[stat];
 		if( value > 0 ) {
 			value -= cmd.msec;
@@ -1168,8 +1150,6 @@ class PMoveLocal {
 	}
 
 	void PostBeginMove() {
-		auto @pmoveState = @playerState.pmove;
-
 		// clear results
 		pm.numTouchEnts = 0;
 		pm.groundEntity = -1;
@@ -1257,8 +1237,6 @@ class PMoveLocal {
 	}
 
 	void CheckZoom() {
-		auto @pmoveState = @playerState.pmove;
-
 		if( pmoveState.pm_type != PM_NORMAL ) {
 			pmoveState.stats[PM_STAT_ZOOMTIME] = 0;
 			return;
@@ -1286,7 +1264,6 @@ class PMoveLocal {
 	* Sets mins, maxs, and pm->viewheight
 	*/
 	void AdjustBBox() {
-		auto @pmoveState = @playerState.pmove;
 		float crouchFrac;
 		Trace trace;
 
@@ -1366,7 +1343,6 @@ class PMoveLocal {
 	void AdjustViewheight() {
 		float height;
 		Vec3 pm_mins_, pm_maxs_, mins, maxs;
-		auto @pmoveState = @playerState.pmove;
 
 		pm_mins_ = pm_mins;
 		pm_maxs_ = pm_maxs;
@@ -1388,8 +1364,6 @@ class PMoveLocal {
 	* CheckCrouchSlide
 	*/
 	void CheckCrouchSlide() {
-		auto @pmoveState = @playerState.pmove;
-
 		if( ( pmoveState.stats[PM_STAT_FEATURES] & PMFEAT_CROUCHSLIDING ) == 0 ) {
 			return;
 		}
@@ -1417,7 +1391,6 @@ class PMoveLocal {
 		Vec3 spot;
 		int cont;
 		Trace trace;
-		auto @pmoveState = @playerState.pmove;
 		Vec3 mins, maxs;
 
 		pm.ladder = false;
