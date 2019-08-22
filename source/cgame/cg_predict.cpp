@@ -408,8 +408,6 @@ void CG_PredictMovement( void ) {
 	int64_t frame;
 	pmove_t pm;
 	usercmd_t ucmd;
-	void (*pmoveFn)( pmove_t *, player_state_t *, usercmd_t * ) = cgs.asPMove.pmove != nullptr ? &CG_asPMove : &PmoveInt;
-	void (*vaClampFn)( const player_state_t *, vec3_t ) = cgs.asPMove.vaClamp != nullptr ? &CG_asGetViewAnglesClamp : nullptr;
 
 	trap_NET_GetCurrentState( NULL, &ucmdHead, NULL );
 	ucmdExecuted = cg.frame.ucmdExecuted;
@@ -454,7 +452,7 @@ void CG_PredictMovement( void ) {
 			cg.predictingTimeStamp = ucmd.serverTimeStamp;
 		}
 
-		PmoveExt( &pm, &cg.predictedPlayerState, &ucmd, vaClampFn, pmoveFn );
+		PM_Pmove( &pm, &cg.predictedPlayerState, &ucmd, &CG_asGetViewAnglesClamp, &CG_asPMove );
 
 		// copy for stair smoothing
 		predictedSteps[frame] = pm.step;

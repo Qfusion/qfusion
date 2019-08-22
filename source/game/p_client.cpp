@@ -1543,8 +1543,6 @@ void ClientThink( edict_t *ent, usercmd_t *ucmd, int timeDelta ) {
 	int i, j;
 	static pmove_t pm;
 	int delta, count;
-	void (*pmoveFn)( pmove_t *, player_state_t *, usercmd_t * ) = game.pmovescript.pmoveFunc != nullptr ? &G_asCallPMovePMove : &PmoveInt;
-	void (*vaClampFn)( const player_state_t *, vec3_t ) = game.pmovescript.vaClampFunc != nullptr ? &G_asCallPMoveGetViewAnglesClamp : nullptr;
 
 	client = ent->r.client;
 
@@ -1628,7 +1626,7 @@ void ClientThink( edict_t *ent, usercmd_t *ucmd, int timeDelta ) {
 	memset( &pm, 0, sizeof( pmove_t ) );
 
 	// perform a pmove
-	PmoveExt( &pm, &client->ps, ucmd, vaClampFn, pmoveFn );
+	PM_Pmove( &pm, &client->ps, ucmd, &G_asCallPMoveGetViewAnglesClamp, &G_asCallPMovePMove );
 
 	// in case some trigger action has moved the view angles (like teleporter)
 	for( i = 0; i < 3; i++ )
