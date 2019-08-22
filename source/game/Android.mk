@@ -12,7 +12,7 @@ LOCAL_SRC_FILES := \
   ../gameshared/gs_items.c \
   ../gameshared/gs_misc.c \
   ../gameshared/gs_players.c \
-  ../gameshared/gs_pmove.c \
+  ../gameshared/gs_pmove.cpp \
   ../gameshared/gs_slidebox.c \
   ../gameshared/gs_weapondefs.c \
   ../gameshared/gs_weapons.c \

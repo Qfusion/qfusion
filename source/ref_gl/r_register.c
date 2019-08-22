@@ -982,7 +982,7 @@ static void R_FinalizeGLExtensions( void ) {
 	}
 
 #ifdef GL_ES_VERSION_2_0
-	glConfig.maxGLSLBones = bound( 0, glConfig.maxVertexUniformComponents / 8 - 19, r_maxglslbones->integer );
+	glConfig.maxGLSLBones = Q_bound( 0, glConfig.maxVertexUniformComponents / 8 - 19, r_maxglslbones->integer );
 #else
 	// require GLSL 1.20+ for GPU skinning
 	if( glConfig.shadingLanguageVersion >= 120 ) {

@@ -115,7 +115,7 @@ static const char *SNDDMA_Android_Init( void ) {
 	sourceLocator.locatorType = SL_DATALOCATOR_BUFFERQUEUE;
 	sourceLocator.numBuffers = 2;
 	sourceFormat.formatType = SL_DATAFORMAT_PCM;
-	sourceFormat.numChannels = bound( 1, s_channels->integer, 2 );
+	sourceFormat.numChannels = Q_bound( 1, s_channels->integer, 2 );
 	sourceFormat.samplesPerSec = freq * 1000;
 	sourceFormat.bitsPerSample = ( ( s_bits->integer >= 16 ) ? 16 : 8 );
 	sourceFormat.containerSize = sourceFormat.bitsPerSample;
