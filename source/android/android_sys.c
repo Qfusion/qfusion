@@ -115,9 +115,6 @@ const char *Sys_GetPreferredLanguage( void ) {
 void Sys_Init( void ) {
 }
 
-void Sys_InitDynvars( void ) {
-}
-
 static bool sys_android_browserAvailable;
 
 static bool Sys_Android_CheckBrowserAvailability( void ) {

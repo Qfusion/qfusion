@@ -39,12 +39,6 @@ void Sys_Init( void ) {
 }
 
 /*
-* Sys_InitDynvars
-*/
-void Sys_InitDynvars( void ) {
-}
-
-/*
 * Sys_Quit
 */
 void Sys_Quit( void ) {

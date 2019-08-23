@@ -27,7 +27,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../gameshared/q_math.h"
 #include "../gameshared/q_shared.h"
 #include "../gameshared/q_cvar.h"
-#include "../gameshared/q_dynvar.h"
 #include "../gameshared/q_comref.h"
 #include "../gameshared/q_collision.h"
 
@@ -381,16 +380,6 @@ CVAR
 */
 
 #include "cvar.h"
-
-/*
-==========================================================
-
-DYNVAR
-
-==========================================================
-*/
-
-#include "dynvar.h"
 
 /*
 ==============================================================
@@ -856,7 +845,6 @@ NON-PORTABLE SYSTEM SERVICES
 #define SFF_SYSTEM  0x10
 
 void    Sys_Init( void );
-void    Sys_InitDynvars( void );
 
 void    Sys_AppActivate( void );
 

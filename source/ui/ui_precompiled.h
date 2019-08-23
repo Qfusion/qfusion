@@ -3,7 +3,6 @@
 #include "../gameshared/q_shared.h"
 #include "../gameshared/q_math.h"
 #include "../gameshared/q_cvar.h"
-#include "../gameshared/q_dynvar.h"
 #include "../gameshared/gs_ref.h"
 
 // few fixes regarding Quake and std compatibility

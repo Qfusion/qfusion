@@ -116,13 +116,6 @@ void Sys_Init( void ) {
 }
 
 /*
-* Sys_InitDynvars
-*/
-void Sys_InitDynvars( void ) {
-
-}
-
-/*
 * myTranslateMessage
 * A wrapper around TranslateMessage to avoid garbage if the toggleconsole
 * key happens to be a dead key (like in the German layout)
