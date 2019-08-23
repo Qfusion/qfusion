@@ -2,9 +2,8 @@
 #include <windows.h>
 
 static bool hwtimer;
-static dynvar_t *hwtimer_var;
 static uint64_t hwtimer_freq;
-static int milli_offset = 0;
+static int64_t milli_offset = 0;
 static int64_t micro_offset = 0;
 
 static int64_t Sys_Milliseconds_TGT( void );
@@ -13,96 +12,34 @@ static uint64_t Sys_Microseconds_QPC( void );
 // wsw: pb adapted High Res Performance Counter code from ezquake
 
 /*
-* Sys_GetHwTimer_f
+* Sys_SynchronizeTimers
 */
-static dynvar_get_status_t Sys_GetHwTimer_f( void **val ) {
-	static char hwtimerStr[2] = { '\0', '\0' };
-	hwtimerStr[0] = '0' + hwtimer;
-	assert( val );
-	*val = hwtimerStr;
-	return DYNVAR_GET_OK;
-}
-
-/*
-* Sys_SetHwTimer_f
-*/
-static dynvar_set_status_t Sys_SetHwTimer_f( void *val ) {
-	assert( val );
-	switch( *( (char *) val ) ) {
-		case '0':
-			hwtimer = 0;
-			return DYNVAR_SET_OK;
-		case '1':
-			if( hwtimer_freq ) {
-				hwtimer = 1;
-				return DYNVAR_SET_OK;
-			} else {
-				return DYNVAR_SET_TRANSIENT;
-			}
-		default:
-			return DYNVAR_SET_INVALID;
-	}
-}
-
-/*
-* Sys_SynchronizeTimers_f
-*/
-static void Sys_SynchronizeTimers_f( void *val ) {
-	static int hwtimer_old = -1;
-
+static void Sys_SynchronizeTimers() {
 	const int64_t millis = Sys_Milliseconds_TGT();
 	const int64_t micros = Sys_Microseconds_QPC();
 	const int64_t drift = micros - millis * 1000;
 
-	const int hwtimer_new = ( *(char *) val ) - '0';
-
-	if( hwtimer_new != hwtimer_old ) {
-		switch( hwtimer_new ) {
-			case 0:
-				// switched from micro to milli precision
-				milli_offset = max( milli_offset, drift / 1000 );
-				break;
-			case 1:
-				// switched from milli to micro precision
-				micro_offset = max( micro_offset, -drift );
-				break;
-			default:
-				assert( 0 );
-		}
-		hwtimer_old = hwtimer_new;
+	if( hwtimer ) {
+		micro_offset = max( micro_offset, -drift );
+	} else {
+		milli_offset = max( milli_offset, drift / 1000 );
 	}
-}
-
-/*
-* Sys_InitTimeDynvar
-*/
-void Sys_InitTimeDynvar( void ) {
-	QueryPerformanceFrequency( (LARGE_INTEGER *) &hwtimer_freq );
-
-	hwtimer_var = Dynvar_Create( "sys_hwtimer", 1, Sys_GetHwTimer_f, Sys_SetHwTimer_f );
-	assert( hwtimer_var );
-	Dynvar_AddListener( hwtimer_var, Sys_SynchronizeTimers_f );
-	Dynvar_SetValue( hwtimer_var, "0" );
 }
 
 /*
 * Sys_InitTime
 */
 void Sys_InitTime( void ) {
-	char *hwtimerStr;
-	assert( hwtimer_var );
-	Dynvar_GetValue( hwtimer_var, (void **)&hwtimerStr );
-	assert( hwtimerStr );
-	if( hwtimerStr[0] == '0' && COM_CheckParm( "-hwtimer" ) ) {
-		// hwtimer set by command line parameter (deprecated)
-		Dynvar_SetValue( hwtimer_var, "1" );
-	}
-	// finally check whether hwtimer is activated
+	hwtimer = QueryPerformanceFrequency( (LARGE_INTEGER *)&hwtimer_freq ) == TRUE;
+
 	if( hwtimer ) {
 		Com_Printf( "Using High Resolution Performance Counter\n" );
-	} else {
+	}
+	else {
 		Com_Printf( "Using timeGetTime\n" );
 	}
+
+	Sys_SynchronizeTimers();
 }
 
 /*
