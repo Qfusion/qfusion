@@ -146,7 +146,7 @@ typedef struct {
 // Each config string can be at most MAX_QPATH characters.
 //
 #define CS_HOSTNAME         0
-#define CS_TVSERVER         1
+#define CS_UNUSED           1
 #define CS_MAXCLIENTS       2
 #define CS_MODMANIFEST      3
 

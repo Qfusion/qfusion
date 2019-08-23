@@ -25,7 +25,6 @@
 #include "datasources/ui_models_datasource.h"
 #include "datasources/ui_profiles_datasource.h"
 #include "datasources/ui_serverbrowser_datasource.h"
-#include "datasources/ui_tvchannels_datasource.h"
 #include "datasources/ui_gameajax_datasource.h"
 
 #include "formatters/ui_levelshot_formatter.h"
@@ -52,7 +51,7 @@ UI_Main::UI_Main( int vidWidth, int vidHeight, float pixelRatio,
 	empty_fmt( 0 ), serverflags_fmt( 0 ),
 	serverBrowser( 0 ), gameTypes( 0 ), maps( 0 ), vidProfiles( 0 ), huds( 0 ), videoModes( 0 ),
 	demos( 0 ), mods( 0 ),
-	playerModels( 0 ), tvchannels( 0 ), gameajax( 0 ),
+	playerModels( 0 ), gameajax( 0 ),
 
 	// other members
 	overlayMenuURL( "" ),
@@ -128,9 +127,6 @@ UI_Main::UI_Main( int vidWidth, int vidHeight, float pixelRatio,
 	trap::Cmd_AddCommand( "menu_modal", M_Menu_Modal_f );
 	trap::Cmd_AddCommand( "menu_close", M_Menu_Close_f );
 	trap::Cmd_AddCommand( "menu_quick", M_Menu_Quick_f );
-
-	trap::Cmd_AddCommand( "menu_tvchannel_add", &M_Menu_AddTVChannel_f );
-	trap::Cmd_AddCommand( "menu_tvchannel_remove", &M_Menu_RemoveTVChannel_f );
 }
 
 UI_Main::~UI_Main() {
@@ -138,9 +134,6 @@ UI_Main::~UI_Main() {
 	trap::Cmd_RemoveCommand( "ui_reload" );
 	trap::Cmd_RemoveCommand( "ui_dumpapi" );
 	trap::Cmd_RemoveCommand( "ui_printdocs" );
-
-	trap::Cmd_RemoveCommand( "menu_tvchannel_add" );
-	trap::Cmd_RemoveCommand( "menu_tvchannel_remove" );
 
 	trap::Cmd_RemoveCommand( "menu_force" );
 	trap::Cmd_RemoveCommand( "menu_open" );
@@ -384,7 +377,6 @@ void UI_Main::createDataSources( void ) {
 	videoModes = __new__( VideoDataSource )();
 	demos = __new__( DemosDataSource )( demoExtension );
 	mods = __new__( ModsDataSource )();
-	tvchannels = __new__( TVChannelsDataSource )();
 	gameajax = __new__( GameAjaxDataSource )();
 	playerModels = __new__( ModelsDataSource )();
 	vidProfiles = __new__( ProfilesDataSource )();
@@ -398,7 +390,6 @@ void UI_Main::destroyDataSources( void ) {
 	__SAFE_DELETE_NULLIFY( videoModes );
 	__SAFE_DELETE_NULLIFY( demos );
 	__SAFE_DELETE_NULLIFY( mods );
-	__SAFE_DELETE_NULLIFY( tvchannels );
 	__SAFE_DELETE_NULLIFY( gameajax );
 	__SAFE_DELETE_NULLIFY( playerModels );
 	__SAFE_DELETE_NULLIFY( vidProfiles );
@@ -979,56 +970,6 @@ void UI_Main::M_Menu_Close_f( void ) {
 		return;
 	}
 	self->showUI( false );
-}
-
-
-void UI_Main::M_Menu_AddTVChannel_f( void ) {
-	int id;
-
-	if( !self || !self->tvchannels ) {
-		return;
-	}
-	if( trap::Cmd_Argc() < 5 ) {
-		return;
-	}
-
-	id = atoi( trap::Cmd_Argv( 1 ) );
-	if( id <= 0 ) {
-		return;
-	}
-
-	TVChannel chan;
-	chan.name = trap::Cmd_Argv( 2 );
-	chan.realname = trap::Cmd_Argv( 3 );
-	chan.address = trap::Cmd_Argv( 4 );
-	chan.numPlayers = atoi( trap::Cmd_Argv( 5 ) );
-	chan.numSpecs = atoi( trap::Cmd_Argv( 6 ) );
-	chan.gametype = trap::Cmd_Argv( 7 );
-	chan.mapname = trap::Cmd_Argv( 8 );
-	chan.matchname = trap::Cmd_Argv( 9 );
-	if( chan.name.empty() ) {
-		return;
-	}
-
-	self->tvchannels->AddChannel( id, chan );
-}
-
-void UI_Main::M_Menu_RemoveTVChannel_f( void ) {
-	int id;
-
-	if( !self || !self->tvchannels ) {
-		return;
-	}
-	if( trap::Cmd_Argc() != 2 ) {
-		return;
-	}
-
-	id = atoi( trap::Cmd_Argv( 1 ) );
-	if( id <= 0 ) {
-		return;
-	}
-
-	self->tvchannels->RemoveChannel( id );
 }
 
 // DEBUG

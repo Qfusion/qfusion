@@ -72,3 +72,4 @@ void IN_GetInputLanguage( char *dest, size_t size )
 	if( size )
 		dest[0] = '\0';
 }
+

@@ -933,12 +933,10 @@ void G_Client_InactivityRemove( gclient_t *client );
 void G_ClientRespawn( edict_t *self, bool ghost );
 void G_ClientClearStats( edict_t *ent );
 void G_GhostClient( edict_t *self );
-void G_MoveClientToTV( edict_t *ent );
-bool ClientMultiviewChanged( edict_t *ent, bool multiview );
 void ClientThink( edict_t *ent, usercmd_t *cmd, int timeDelta );
 void G_ClientThink( edict_t *ent );
 void G_CheckClientRespawnClick( edict_t *ent );
-bool ClientConnect( edict_t *ent, char *userinfo, bool fakeClient, bool tvClient );
+bool ClientConnect( edict_t *ent, char *userinfo, bool fakeClient );
 void ClientDisconnect( edict_t *ent, const char *reason );
 void ClientBegin( edict_t *ent );
 void ClientCommand( edict_t *ent );
@@ -1350,21 +1348,10 @@ struct gclient_s {
 	char ip[MAX_INFO_VALUE];
 	char socket[MAX_INFO_VALUE];
 
-	// port numbers reported by connected TV as part of userinfo
-	struct {
-		int port;
-		int port6;
-		int maxclients;
-		int numclients;
-		int channel;
-	} tv;
-
 	int mm_session;                 // 0 - invalid session, < 0 - local session, > 0 authenticated account
 	clientRating_t *ratings;        // list of ratings for gametypes
 
 	bool connecting;
-	bool multiview;
-	bool isTV;
 
 	byte_vec4_t color;
 	int team;

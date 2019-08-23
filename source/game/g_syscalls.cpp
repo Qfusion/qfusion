@@ -43,7 +43,6 @@ extern "C" QF_DLL_EXPORT game_export_t * GetGameAPI( game_import_t * import )
 	globals.ClientThink = ClientThink;
 	globals.ClientConnect = ClientConnect;
 	globals.ClientUserinfoChanged = ClientUserinfoChanged;
-	globals.ClientMultiviewChanged = ClientMultiviewChanged;
 	globals.ClientDisconnect = ClientDisconnect;
 	globals.ClientBegin = ClientBegin;
 	globals.ClientCommand = ClientCommand;

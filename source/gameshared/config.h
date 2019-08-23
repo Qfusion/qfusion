@@ -39,18 +39,9 @@ break
 //#define AUTHED_SAY
 
 //#define TCP_ALLOW_CONNECT
-#define TCP_ALLOW_TVCONNECT
 
 #if defined( TCP_ALLOW_CONNECT ) && !defined( TCP_SUPPORT )
 #undef TCP_ALLOW_CONNECT
-#endif
-
-#if defined( TCP_ALLOW_CONNECT ) && !defined( TCP_ALLOW_TVCONNECT )
-#define TCP_ALLOW_TVCONNECT
-#endif
-
-#if defined( TCP_ALLOW_TVCONNECT ) && !defined( TCP_SUPPORT )
-#undef TCP_ALLOW_TVCONNECT
 #endif
 
 #define HTTP_SUPPORT

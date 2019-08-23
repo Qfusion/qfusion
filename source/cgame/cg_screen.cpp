@@ -1157,11 +1157,6 @@ void CG_GameMenu_f( void ) {
 		return;
 	}
 
-	if( cgs.tv ) {
-		trap_Cmd_ExecuteText( EXEC_NOW, "menu_open tv\n" );
-		return;
-	}
-
 	// if the menu is up, close it
 	if( CG_IsScoreboardShown() ) {
 		trap_Cmd_ExecuteText( EXEC_NOW, "cmd putaway\n" );

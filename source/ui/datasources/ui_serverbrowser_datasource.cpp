@@ -13,7 +13,6 @@ namespace WSWUI
 // TODO: constify
 #define TABLE_NAME_NORMAL   "normal"
 #define TABLE_NAME_INSTA    "instagib"
-#define TABLE_NAME_TV       "tv"
 #define TABLE_NAME_RACE     "race"
 #define TABLE_NAME_FAVORITES "favorites"
 
@@ -26,7 +25,7 @@ ServerInfo::ServerInfo( const char *adr, const char *info )
 	:   has_changed( false ), ping_updated( false ), has_ping( false ), address( adr ),
 	iaddress( addr_to_int( adr ) ), hostname( "" ), cleanname( "" ), map( "" ), curuser( 0 ),
 	maxuser( 0 ), bots( 0 ), gametype( "" ), modname( "" ), instagib( false ), race( false ), skilllevel( 0 ),
-	password( false ), mm( false ), tv( false ), ping( 0 ), ping_retries( 0 ), favorite( false ) {
+	password( false ), mm( false ), ping( 0 ), ping_retries( 0 ), favorite( false ) {
 	if( info ) {
 		fromInfo( info );
 	}
@@ -61,7 +60,6 @@ void ServerInfo::fromOther( const ServerInfo &other ) {
 	skilllevel = other.skilllevel;
 	password = other.password;
 	mm = other.mm;
-	tv = other.tv;
 	ping = other.ping;
 	ping_retries = other.ping_retries;
 	favorite = other.favorite;
@@ -191,14 +189,6 @@ void ServerInfo::fromInfo( const char *info ) {
 			if( !trim.fail() && tmpmod != modname ) {
 				has_changed = true;
 				modname = tmpmod;
-			}
-		} else if( cmd == "tv" ) {   // TV SERVER
-			int tmptv;
-			std::stringstream toint( value );
-			toint >> tmptv;
-			if( !toint.fail() && ( tmptv != 0 ) != tv ) {
-				has_changed = true;
-				tv = tmptv != 0;
 			}
 		} else if( cmd == "r" ) {   // RACE
 			int tmprace;
@@ -454,7 +444,7 @@ void ServerBrowserDataSource::GetRow( StringList &row, const String &table, int 
 		} else if( *it == "bots" ) {
 			row.push_back( va( "%d", info.bots ) );
 		} else if( *it == "gametype" ) {
-			row.push_back( info.tv ? "TV" : info.gametype.c_str() );
+			row.push_back( info.gametype.c_str() );
 		} else if( *it == "instagib" ) {
 			row.push_back( info.instagib ? "yes" : "no" );
 		} else if( *it == "skilllevel" ) {
@@ -467,8 +457,6 @@ void ServerBrowserDataSource::GetRow( StringList &row, const String &table, int 
 			row.push_back( va( "%d", info.ping ) );
 		} else if( *it == "address" ) {
 			row.push_back( info.address.c_str() );
-		} else if( *it == "tv" ) {
-			row.push_back( info.tv ? "yes" : "no" );
 		} else if( *it == "favorite" ) {
 			row.push_back( info.favorite ? "yes" : "no" );
 		} else if( *it == "flags" ) {
@@ -495,9 +483,7 @@ int ServerBrowserDataSource::GetNumRows( const String &table ) {
 }
 
 void ServerBrowserDataSource::tableNameForServerInfo( const ServerInfo &info, String &table ) const {
-	if( info.tv ) {
-		table = TABLE_NAME_TV;
-	} else if( info.instagib ) {
+	if( info.instagib ) {
 		table = TABLE_NAME_INSTA;
 	} else if( info.race ) {
 		table = TABLE_NAME_RACE;
