@@ -658,7 +658,15 @@ load_refresh:
 	** update our window position
 	*/
 	if( vid_xpos->modified || vid_ypos->modified ) {
-		if( !vid_fullscreen->integer && !vid_borderless->integer ) {
+		// make sure the titlebar is not completely hidden away
+		if( vid_xpos->integer < 8 ) {
+			Cvar_ForceSet( vid_xpos->name, "8" );
+		}
+		if( vid_ypos->integer < 8 ) {
+			Cvar_ForceSet( vid_ypos->name, "8" );
+		}
+
+		if( !vid_fullscreen->integer ) {
 			VID_UpdateWindowPosAndSize( vid_xpos->integer, vid_ypos->integer );
 		}
 		vid_xpos->modified = false;
@@ -717,7 +725,7 @@ void VID_Init( void ) {
 
 	VID_InitModes();
 
-	/* Create the video variables so we know how to start the graphics drivers */
+	// Create the video variables so we know how to start the graphics drivers
 	vid_ref = Cvar_Get( "vid_ref", VID_DEFAULTREF, CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
 	vid_width = Cvar_Get( "vid_width", "0", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
 	vid_height = Cvar_Get( "vid_height", "0", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
@@ -732,11 +740,21 @@ void VID_Init( void ) {
 	win_noalttab = Cvar_Get( "win_noalttab", "0", CVAR_ARCHIVE );
 	win_nowinkeys = Cvar_Get( "win_nowinkeys", "0", CVAR_ARCHIVE );
 
-	/* Add some console commands that we want to handle */
+	// Add some console commands that we want to handle
 	Cmd_AddCommand( "vid_restart", VID_Restart_f );
 	Cmd_AddCommand( "vid_modelist", VID_ModeList_f );
 
-	/* Start the graphics mode and load refresh DLL */
+	// make sure the titlebar is not completely hidden away
+	if( vid_xpos->integer < 8 ) {
+		Cvar_ForceSet( vid_xpos->name, "8" );
+		vid_xpos->modified = false;
+	}
+	if( vid_ypos->integer < 8 ) {
+		Cvar_ForceSet( vid_ypos->name, "8" );
+		vid_ypos->modified = false;
+	}
+
+	// Start the graphics mode and load refresh DLL
 	vid_ref_modified = true;
 	vid_ref_active = false;
 	vid_ref_verbose = true;
