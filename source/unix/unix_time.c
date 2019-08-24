@@ -1,13 +1,29 @@
 #include <sys/time.h>
 #include "../qcommon/qcommon.h"
 
+#if defined(_POSIX_TIMERS) && _POSIX_TIMERS > 0 && defined(CLOCK_MONOTONIC)
+# define HAVE_CLOCKGETTIME 1
+#endif
+
 /*
 * Sys_Microseconds
 */
-static unsigned long sys_secbase;
 uint64_t Sys_Microseconds( void ) {
-	struct timeval tp;
+	static time_t sys_secbase;
 
+#ifdef HAVE_CLOCKGETTIME
+	struct timespec ts;
+	clock_gettime( CLOCK_MONOTONIC, &ts );
+
+	if( !sys_secbase ) {
+		sys_secbase = ts.tv_sec;
+		return ts.tv_nsec / 1000;
+	}
+
+	// TODO handle the wrap
+	return (uint64_t)( ts.tv_sec - sys_secbase ) * 1000000 + ts.ts_nsec / 1000;
+#else
+	struct timeval tp;
 	gettimeofday( &tp, NULL );
 
 	if( !sys_secbase ) {
@@ -17,6 +33,7 @@ uint64_t Sys_Microseconds( void ) {
 
 	// TODO handle the wrap
 	return (uint64_t)( tp.tv_sec - sys_secbase ) * 1000000 + tp.tv_usec;
+#endif
 }
 
 /*
