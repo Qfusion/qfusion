@@ -216,7 +216,7 @@ static void W_Touch_Projectile( edict_t *ent, edict_t *other, cplane_t *plane, i
 		VectorNormalize2( ent->velocity, dir );
 
 		if( hitType == PROJECTILE_TOUCH_DIRECTSPLASH ) { // use hybrid direction from splash and projectile
-			G_SplashFrac4D( ENTNUM( other ), ent->s.origin, ent->projectileInfo.radius, dir, NULL, NULL, ent->timeDelta );
+			G_SplashFrac4D( ENTNUM( other ), ent->s.origin, ent->projectileInfo.radius, dir, ent->timeDelta );
 		} else {
 			VectorNormalize2( ent->velocity, dir );
 		}
@@ -239,7 +239,7 @@ static void W_Touch_Projectile( edict_t *ent, edict_t *other, cplane_t *plane, i
 * W_Fire_LinearProjectile - Spawn a generic linear projectile without a model, touch func, sound nor mod
 */
 static edict_t *W_Fire_LinearProjectile( edict_t *self, vec3_t start, vec3_t dir, int speed,
-										 float damage, int minKnockback, int maxKnockback, int stun, int minDamage, int radius, int timeout, int timeDelta ) {
+	float damage, float selfDamage, int minKnockback, int maxKnockback, int stun, int minDamage, int radius, int timeout, int timeDelta ) {
 	edict_t *projectile;
 	vec3_t angles;
 
@@ -279,6 +279,7 @@ static edict_t *W_Fire_LinearProjectile( edict_t *self, vec3_t start, vec3_t dir
 	projectile->projectileInfo.maxKnockback = maxKnockback;
 	projectile->projectileInfo.stun = stun;
 	projectile->projectileInfo.radius = radius;
+	projectile->projectileInfo.selfDamage = selfDamage == 0 ? 1.0f : selfDamage;
 
 	GClip_LinkEntity( projectile );
 
@@ -296,7 +297,7 @@ static edict_t *W_Fire_LinearProjectile( edict_t *self, vec3_t start, vec3_t dir
 * W_Fire_TossProjectile - Spawn a generic projectile without a model, touch func, sound nor mod
 */
 static edict_t *W_Fire_TossProjectile( edict_t *self, vec3_t start, vec3_t dir, int speed,
-									   float damage, int minKnockback, int maxKnockback, int stun, int minDamage, int radius, int timeout, int timeDelta ) {
+	float damage, float selfDamage, int minKnockback, int maxKnockback, int stun, int minDamage, int radius, int timeout, int timeDelta ) {
 	edict_t *projectile;
 	vec3_t angles;
 
@@ -322,7 +323,6 @@ static edict_t *W_Fire_TossProjectile( edict_t *self, vec3_t start, vec3_t dir, 
 	VectorClear( projectile->r.mins );
 	VectorClear( projectile->r.maxs );
 
-	//projectile->s.modelindex = trap_ModelIndex ("models/objects/projectile/plasmagun/proj_plasmagun2.md3");
 	projectile->s.modelindex = 0;
 	projectile->r.owner = self;
 	projectile->touch = W_Touch_Projectile; //generic one. Should be replaced after calling this func
@@ -341,6 +341,7 @@ static edict_t *W_Fire_TossProjectile( edict_t *self, vec3_t start, vec3_t dir, 
 	projectile->projectileInfo.maxKnockback = maxKnockback;
 	projectile->projectileInfo.stun = stun;
 	projectile->projectileInfo.radius = radius;
+	projectile->projectileInfo.selfDamage = selfDamage == 0 ? 1.0f : selfDamage;
 
 	GClip_LinkEntity( projectile );
 
@@ -412,7 +413,7 @@ static void W_Touch_GunbladeBlast( edict_t *ent, edict_t *other, cplane_t *plane
 		VectorNormalize2( ent->velocity, dir );
 
 		if( hitType == PROJECTILE_TOUCH_DIRECTSPLASH ) { // use hybrid direction from splash and projectile
-			G_SplashFrac4D( ENTNUM( other ), ent->s.origin, ent->projectileInfo.radius, dir, NULL, NULL, ent->timeDelta );
+			G_SplashFrac4D( ENTNUM( other ), ent->s.origin, ent->projectileInfo.radius, dir, ent->timeDelta );
 		} else {
 			VectorNormalize2( ent->velocity, dir );
 		}
@@ -438,14 +439,15 @@ static void W_Touch_GunbladeBlast( edict_t *ent, edict_t *other, cplane_t *plane
 /*
 * W_Fire_GunbladeBlast
 */
-edict_t *W_Fire_GunbladeBlast( edict_t *self, vec3_t start, vec3_t dir, float damage, int minKnockback, int maxKnockback, int stun, int minDamage, int radius, int speed, int timeout, int mod, int timeDelta ) {
+edict_t *W_Fire_GunbladeBlast( edict_t *self, vec3_t start, vec3_t dir, float damage, float selfDamage, 
+	int minKnockback, int maxKnockback, int stun, int minDamage, int radius, int speed, int timeout, int mod, int timeDelta ) {
 	edict_t	*blast;
 
 	if( GS_Instagib() ) {
 		damage = 9999;
 	}
 
-	blast = W_Fire_LinearProjectile( self, start, dir, speed, damage, minKnockback, maxKnockback, stun, minDamage, radius, timeout, timeDelta );
+	blast = W_Fire_LinearProjectile( self, start, dir, speed, damage, selfDamage, minKnockback, maxKnockback, stun, minDamage, radius, timeout, timeDelta );
 	blast->s.modelindex = trap_ModelIndex( PATH_GUNBLADEBLAST_STRONG_MODEL );
 	blast->s.type = ET_BLASTER;
 	blast->s.effects |= EF_STRONG_WEAPON;
@@ -632,7 +634,7 @@ static void W_Touch_Grenade( edict_t *ent, edict_t *other, cplane_t *plane, int 
 		VectorNormalize2( ent->velocity, dir );
 
 		if( hitType == PROJECTILE_TOUCH_DIRECTSPLASH ) { // use hybrid direction from splash and projectile
-			G_SplashFrac4D( ENTNUM( other ), ent->s.origin, ent->projectileInfo.radius, dir, NULL, NULL, ent->timeDelta );
+			G_SplashFrac4D( ENTNUM( other ), ent->s.origin, ent->projectileInfo.radius, dir, ent->timeDelta );
 		} else {
 			VectorNormalize2( ent->velocity, dir );
 
@@ -655,7 +657,7 @@ static void W_Touch_Grenade( edict_t *ent, edict_t *other, cplane_t *plane, int 
 /*
 * W_Fire_Grenade
 */
-edict_t *W_Fire_Grenade( edict_t *self, vec3_t start, vec3_t dir, int speed, float damage,
+edict_t *W_Fire_Grenade( edict_t *self, vec3_t start, vec3_t dir, int speed, float damage, float selfDamage,
 						 int minKnockback, int maxKnockback, int stun, int minDamage, float radius,
 						 int timeout, int mod, int timeDelta ) {
 	edict_t *grenade;
@@ -664,7 +666,7 @@ edict_t *W_Fire_Grenade( edict_t *self, vec3_t start, vec3_t dir, int speed, flo
 		damage = 9999;
 	}
 
-	grenade = W_Fire_TossProjectile( self, start, dir, speed, damage, minKnockback, maxKnockback, stun, minDamage, radius, timeout, timeDelta );
+	grenade = W_Fire_TossProjectile( self, start, dir, speed, damage, selfDamage, minKnockback, maxKnockback, stun, minDamage, radius, timeout, timeDelta );
 	VectorClear( grenade->s.angles );
 	grenade->style = mod;
 	grenade->s.type = ET_GRENADE;
@@ -714,7 +716,7 @@ static void W_Touch_Rocket( edict_t *ent, edict_t *other, cplane_t *plane, int s
 
 		if( hitType == PROJECTILE_TOUCH_DIRECTSPLASH ) { // use hybrid direction from splash and projectile
 
-			G_SplashFrac4D( ENTNUM( other ), ent->s.origin, ent->projectileInfo.radius, dir, NULL, NULL, ent->timeDelta );
+			G_SplashFrac4D( ENTNUM( other ), ent->s.origin, ent->projectileInfo.radius, dir, ent->timeDelta );
 		} else {
 			VectorNormalize2( ent->velocity, dir );
 
@@ -754,14 +756,15 @@ static void W_Touch_Rocket( edict_t *ent, edict_t *other, cplane_t *plane, int s
 /*
 * W_Fire_Rocket
 */
-edict_t *W_Fire_Rocket( edict_t *self, vec3_t start, vec3_t dir, int speed, float damage, int minKnockback, int maxKnockback, int stun, int minDamage, int radius, int timeout, int mod, int timeDelta ) {
+edict_t *W_Fire_Rocket( edict_t *self, vec3_t start, vec3_t dir, int speed, float damage, float selfDamage, 
+	int minKnockback, int maxKnockback, int stun, int minDamage, int radius, int timeout, int mod, int timeDelta ) {
 	edict_t	*rocket;
 
 	if( GS_Instagib() ) {
 		damage = 9999;
 	}
 
-	rocket = W_Fire_LinearProjectile( self, start, dir, speed, damage, minKnockback, maxKnockback, stun, minDamage, radius, timeout, timeDelta );
+	rocket = W_Fire_LinearProjectile( self, start, dir, speed, damage, selfDamage, minKnockback, maxKnockback, stun, minDamage, radius, timeout, timeDelta );
 
 	rocket->s.type = ET_ROCKET; //rocket trail sfx
 	if( mod == MOD_ROCKET_S ) {
@@ -816,7 +819,7 @@ static void W_Touch_Plasma( edict_t *ent, edict_t *other, cplane_t *plane, int s
 		VectorNormalize2( ent->velocity, dir );
 
 		if( hitType == PROJECTILE_TOUCH_DIRECTSPLASH ) { // use hybrid direction from splash and projectile
-			G_SplashFrac4D( ENTNUM( other ), ent->s.origin, ent->projectileInfo.radius, dir, NULL, NULL, ent->timeDelta );
+			G_SplashFrac4D( ENTNUM( other ), ent->s.origin, ent->projectileInfo.radius, dir, ent->timeDelta );
 		} else {
 			VectorNormalize2( ent->velocity, dir );
 		}
@@ -899,14 +902,15 @@ static void W_AutoTouch_Plasma( edict_t *ent, edict_t *other, cplane_t *plane, i
 /*
 * W_Fire_Plasma
 */
-edict_t *W_Fire_Plasma( edict_t *self, vec3_t start, vec3_t dir, float damage, int minKnockback, int maxKnockback, int stun, int minDamage, int radius, int speed, int timeout, int mod, int timeDelta ) {
+edict_t *W_Fire_Plasma( edict_t *self, vec3_t start, vec3_t dir, float damage, float selfDamage, 
+	int minKnockback, int maxKnockback, int stun, int minDamage, int radius, int speed, int timeout, int mod, int timeDelta ) {
 	edict_t	*plasma;
 
 	if( GS_Instagib() ) {
 		damage = 9999;
 	}
 
-	plasma = W_Fire_LinearProjectile( self, start, dir, speed, damage, minKnockback, maxKnockback, stun, minDamage, radius, timeout, timeDelta );
+	plasma = W_Fire_LinearProjectile( self, start, dir, speed, damage, selfDamage, minKnockback, maxKnockback, stun, minDamage, radius, timeout, timeDelta );
 	plasma->s.type = ET_PLASMA;
 	plasma->classname = "plasma";
 	plasma->style = mod;
@@ -1193,7 +1197,7 @@ edict_t *W_Fire_Electrobolt_Weak( edict_t *self, vec3_t start, vec3_t dir, float
 	}
 
 	// projectile, weak mode
-	bolt = W_Fire_LinearProjectile( self, start, dir, speed, damage, minKnockback, maxKnockback, stun, 0, 0, timeout, timeDelta );
+	bolt = W_Fire_LinearProjectile( self, start, dir, speed, damage, 0, minKnockback, maxKnockback, stun, 0, 0, timeout, timeDelta );
 	bolt->s.modelindex = trap_ModelIndex( PATH_ELECTROBOLT_WEAK_MODEL );
 	bolt->s.type = ET_ELECTRO_WEAK; //add particle trail and light
 	bolt->s.ownerNum = ENTNUM( self );

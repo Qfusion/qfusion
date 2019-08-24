@@ -1172,13 +1172,13 @@ int GClip_FindInRadius( vec3_t org, float rad, int *list, int maxcount ) {
 	return GClip_FindInRadius4D( org, rad, list, maxcount, 0 );
 }
 
-void G_SplashFrac4D( int entNum, vec3_t hitpoint, float maxradius, vec3_t pushdir,
-					 float *kickFrac, float *dmgFrac, int timeDelta ) {
+float G_SplashFrac4D( int entNum, vec3_t hitpoint, float maxradius, vec3_t pushdir,
+					 int timeDelta ) {
 	c4clipedict_t *clipEnt;
 
 	clipEnt = GClip_GetClipEdictForDeltaTime( entNum, timeDelta );
-	G_SplashFrac( clipEnt->s.origin, clipEnt->r.mins, clipEnt->r.maxs, hitpoint,
-				  maxradius, pushdir, kickFrac, dmgFrac );
+	return G_SplashFrac( clipEnt->s.origin, clipEnt->r.mins, clipEnt->r.maxs, hitpoint,
+				  maxradius, pushdir );
 }
 
 entity_state_t *G_GetEntityStateForDeltaTime( int entNum, int deltaTime ) {

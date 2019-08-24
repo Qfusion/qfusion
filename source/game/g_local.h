@@ -785,7 +785,7 @@ int G_PointContents4D( vec3_t p, int timeDelta );
 void G_Trace4D( trace_t *tr, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, edict_t *passedict, int contentmask, int timeDelta );
 void GClip_BackUpCollisionFrame( void );
 int GClip_FindInRadius4D( vec3_t org, float rad, int *list, int maxcount, int timeDelta );
-void G_SplashFrac4D( int entNum, vec3_t hitpoint, float maxradius, vec3_t pushdir, float *kickFrac, float *dmgFrac, int timeDelta );
+float G_SplashFrac4D( int entNum, vec3_t hitpoint, float maxradius, vec3_t pushdir, int timeDelta );
 void GClip_ClearWorld( void );
 void GClip_SetBrushModel( edict_t *ent, const char *name );
 void GClip_SetAreaPortalState( edict_t *ent, bool open );
@@ -810,7 +810,7 @@ bool GClip_EntityContact( vec3_t mins, vec3_t maxs, edict_t *ent );
 void G_Killed( edict_t *targ, edict_t *inflictor, edict_t *attacker, int damage, const vec3_t point, int mod );
 int G_ModToAmmo( int mod );
 bool CheckTeamDamage( edict_t *targ, edict_t *attacker );
-void G_SplashFrac( const vec3_t origin, const vec3_t mins, const vec3_t maxs, const vec3_t point, float maxradius, vec3_t pushdir, float *kickFrac, float *dmgFrac );
+float G_SplashFrac( const vec3_t origin, const vec3_t mins, const vec3_t maxs, const vec3_t point, float maxradius, vec3_t pushdir );
 void G_Damage( edict_t *targ, edict_t *inflictor, edict_t *attacker, const vec3_t pushdir, const vec3_t dmgdir, const vec3_t point, float damage, float knockback, float stun, int dflags, int mod );
 void G_RadiusDamage( edict_t *inflictor, edict_t *attacker, cplane_t *plane, edict_t *ignore, int mod );
 
@@ -883,18 +883,17 @@ bool FacingIdeal(edict_t *self);
 // g_weapon.c
 //
 void ThrowDebris( edict_t *self, int modelindex, float speed, vec3_t origin );
-bool fire_hit( edict_t *self, vec3_t aim, int damage, int kick );
 void G_HideLaser( edict_t *ent );
 
 void W_Fire_Blade( edict_t *self, int range, vec3_t start, vec3_t dir, float damage, int knockback, int stun, int mod, int timeDelta );
 void W_Fire_Bullet( edict_t *self, vec3_t start, vec3_t fv, vec3_t rv, vec3_t uv, int seed, int range, int hspread, int vspread, float damage, int knockback, int stun, int mod, int timeDelta );
-edict_t *W_Fire_GunbladeBlast( edict_t *self, vec3_t start, vec3_t dir, float damage, int minKnockback, int maxKnockback, int stun, int minDamage, int radius, int speed, int timeout, int mod, int timeDelta );
+edict_t *W_Fire_GunbladeBlast( edict_t *self, vec3_t start, vec3_t dir, float damage, float selfDamage, int minKnockback, int maxKnockback, int stun, int minDamage, int radius, int speed, int timeout, int mod, int timeDelta );
 void W_Fire_SunflowerBucket( edict_t *self, vec3_t start, vec3_t fv, vec3_t rv, vec3_t uv, int *seed, int count, int hspread, int vspread, int range, float damage, int kick, int stun, int dflags, int mod, int timeDelta );
 void W_Fire_RandomBucket( edict_t *self, vec3_t start, vec3_t fv, vec3_t rv, vec3_t uv, int *seed, int count, int hspread, int vspread, int range, float damage, int kick, int stun, int dflags, int mod, int timeDelta );
 void W_Fire_Riotgun( edict_t *self, vec3_t start, vec3_t fv, vec3_t rv, vec3_t uv, int seed, int range, int hspread, int vspread, int count, float damage, int knockback, int stun, int mod, int timeDelta );
-edict_t *W_Fire_Grenade( edict_t *self, vec3_t start, vec3_t dir, int speed, float damage, int minKnockback, int maxKnockback, int stun, int minDamage, float radius, int timeout, int mod, int timeDelta );
-edict_t *W_Fire_Rocket( edict_t *self, vec3_t start, vec3_t dir, int speed, float damage, int minKnockback, int maxKnockback, int stun, int minDamage, int radius, int timeout, int mod, int timeDelta );
-edict_t *W_Fire_Plasma( edict_t *self, vec3_t start, vec3_t dir, float damage, int minKnockback, int maxKnockback, int stun, int minDamage, int radius, int speed, int timeout, int mod, int timeDelta );
+edict_t *W_Fire_Grenade( edict_t *self, vec3_t start, vec3_t dir, int speed, float damage, float selfDamage, int minKnockback, int maxKnockback, int stun, int minDamage, float radius, int timeout, int mod, int timeDelta );
+edict_t *W_Fire_Rocket( edict_t *self, vec3_t start, vec3_t dir, int speed, float damage, float selfDamage, int minKnockback, int maxKnockback, int stun, int minDamage, int radius, int timeout, int mod, int timeDelta );
+edict_t *W_Fire_Plasma( edict_t *self, vec3_t start, vec3_t dir, float damage, float selfDamage, int minKnockback, int maxKnockback, int stun, int minDamage, int radius, int speed, int timeout, int mod, int timeDelta );
 void W_Fire_Electrobolt_FullInstant( edict_t *self, vec3_t start, vec3_t dir, float maxdamage, float mindamage, int maxknockback, int minknockback, int stun, int range, int minDamageRange, int mod, int timeDelta );
 void W_Fire_Electrobolt_Combined( edict_t *self, vec3_t start, vec3_t dir, float maxdamage, float mindamage, float maxknockback, float minknockback, int stun, int range, int mod, int timeDelta );
 edict_t *W_Fire_Electrobolt_Weak( edict_t *self, vec3_t start, vec3_t dir, float speed, float damage, int minKnockback, int maxKnockback, int stun, int timeout, int mod, int timeDelta );
@@ -1112,6 +1111,7 @@ typedef struct {
 	float maxDamage;
 	float minKnockback;
 	float maxKnockback;
+	float selfDamage;
 	int stun;
 } projectileinfo_t;
 

@@ -286,7 +286,7 @@ static void G_LocalSpread( vec3_t angles, int spread, int seed ) {
 */
 static edict_t *G_Fire_Gunblade_Blast( vec3_t origin, vec3_t angles, firedef_t *firedef, edict_t *owner, int seed ) {
 	int speed, knockback, stun, minDamage, minKnockback, radius, mod;
-	float damage;
+	float damage, selfDamage;
 	int timeDelta;
 	vec3_t dir;
 
@@ -307,6 +307,7 @@ static edict_t *G_Fire_Gunblade_Blast( vec3_t origin, vec3_t angles, firedef_t *
 	minDamage = firedef->mindamage;
 	minKnockback = firedef->minknockback;
 	radius = firedef->splash_radius;
+	selfDamage = firedef->selfdamage;
 
 	if( is_quad ) {
 		damage *= QUAD_DAMAGE_SCALE;
@@ -314,7 +315,7 @@ static edict_t *G_Fire_Gunblade_Blast( vec3_t origin, vec3_t angles, firedef_t *
 	}
 
 	AngleVectors( angles, dir, NULL, NULL );
-	return W_Fire_GunbladeBlast( owner, origin, dir, damage, minKnockback, knockback, stun, minDamage,
+	return W_Fire_GunbladeBlast( owner, origin, dir, damage, selfDamage, minKnockback, knockback, stun, minDamage,
 								 radius, speed, firedef->timeout, mod, timeDelta );
 }
 
@@ -323,7 +324,7 @@ static edict_t *G_Fire_Gunblade_Blast( vec3_t origin, vec3_t angles, firedef_t *
 */
 static edict_t *G_Fire_Rocket( vec3_t origin, vec3_t angles, firedef_t *firedef, edict_t *owner, int seed ) {
 	int speed, knockback, stun, minDamage, minKnockback, radius, mod;
-	float damage;
+	float damage, selfDamage;
 	int timeDelta;
 	vec3_t dir;
 
@@ -346,6 +347,7 @@ static edict_t *G_Fire_Rocket( vec3_t origin, vec3_t angles, firedef_t *firedef,
 	minDamage = firedef->mindamage;
 	minKnockback = firedef->minknockback;
 	radius = firedef->splash_radius;
+	selfDamage = firedef->selfdamage;
 
 	if( is_quad ) {
 		damage *= QUAD_DAMAGE_SCALE;
@@ -353,7 +355,7 @@ static edict_t *G_Fire_Rocket( vec3_t origin, vec3_t angles, firedef_t *firedef,
 	}
 
 	AngleVectors( angles, dir, NULL, NULL );
-	return W_Fire_Rocket( owner, origin, dir, speed, damage, minKnockback, knockback, stun, minDamage,
+	return W_Fire_Rocket( owner, origin, dir, speed, damage, selfDamage, minKnockback, knockback, stun, minDamage,
 						  radius, firedef->timeout, mod, timeDelta );
 }
 
@@ -428,7 +430,7 @@ static edict_t *G_Fire_Riotgun( vec3_t origin, vec3_t angles, firedef_t *firedef
 */
 static edict_t *G_Fire_Grenade( vec3_t origin, vec3_t angles, firedef_t *firedef, edict_t *owner, int seed ) {
 	int speed, minKnockback, knockback, stun, minDamage, radius, mod;
-	float damage;
+	float damage, selfDamage;
 	int timeDelta;
 	vec3_t angles_, dir;
 
@@ -451,6 +453,7 @@ static edict_t *G_Fire_Grenade( vec3_t origin, vec3_t angles, firedef_t *firedef
 	minDamage = firedef->mindamage;
 	minKnockback = firedef->minknockback;
 	radius = firedef->splash_radius;
+	selfDamage = firedef->selfdamage;
 
 	if( is_quad ) {
 		damage *= QUAD_DAMAGE_SCALE;
@@ -462,7 +465,7 @@ static edict_t *G_Fire_Grenade( vec3_t origin, vec3_t angles, firedef_t *firedef
 	angles_[PITCH] -= 5.0f * cos( DEG2RAD( angles_[PITCH] ) ); // aim some degrees upwards from view dir
 
 	AngleVectors( angles_, dir, NULL, NULL );
-	return W_Fire_Grenade( owner, origin, dir, speed, damage, minKnockback, knockback, stun,
+	return W_Fire_Grenade( owner, origin, dir, speed, damage, selfDamage, minKnockback, knockback, stun,
 		minDamage, radius, firedef->timeout, mod, timeDelta );
 }
 
@@ -471,7 +474,7 @@ static edict_t *G_Fire_Grenade( vec3_t origin, vec3_t angles, firedef_t *firedef
 */
 static edict_t *G_Fire_Plasma( vec3_t origin, vec3_t angles, firedef_t *firedef, edict_t *owner, int seed ) {
 	int speed, knockback, stun, minDamage, minKnockback, radius, mod;
-	float damage;
+	float damage, selfDamage;
 	int timeDelta;
 	vec3_t dir;
 
@@ -494,6 +497,7 @@ static edict_t *G_Fire_Plasma( vec3_t origin, vec3_t angles, firedef_t *firedef,
 	minDamage = firedef->mindamage;
 	minKnockback = firedef->minknockback;
 	radius = firedef->splash_radius;
+	selfDamage = firedef->selfdamage;
 
 	if( is_quad ) {
 		damage *= QUAD_DAMAGE_SCALE;
@@ -501,7 +505,7 @@ static edict_t *G_Fire_Plasma( vec3_t origin, vec3_t angles, firedef_t *firedef,
 	}
 
 	AngleVectors( angles, dir, NULL, NULL );
-	return W_Fire_Plasma( owner, origin, dir, damage, minKnockback, knockback, stun, minDamage, radius,
+	return W_Fire_Plasma( owner, origin, dir, damage, selfDamage, minKnockback, knockback, stun, minDamage, radius,
 						  speed, firedef->timeout, mod, timeDelta );
 }
 
