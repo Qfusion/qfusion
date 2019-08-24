@@ -159,7 +159,7 @@ void SP_monster_soldier( edict_t *self )
 	self->health = 30;
 	self->gib_health = -40;
 	self->mass = 250;
-	self->yaw_speed = 25;
+	self->yaw_speed = 45;
 
 	self->pain = soldier_pain;
 	self->die = soldier_die;
