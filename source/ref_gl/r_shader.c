@@ -1771,9 +1771,9 @@ static unsigned int Shader_GetCache( const char *name, shadercache_t **cache ) {
 }
 
 /*
-* R_PrecacheShaders
+* R_InitShaderCache
 */
-static void R_InitShadersCache( void ) {
+static void R_InitShaderCache( void ) {
 	int d;
 	int i, j, k, numfiles;
 	int numfiles_total;
@@ -1828,12 +1828,55 @@ static void R_InitShadersCache( void ) {
 }
 
 /*
+ * R_ShutdownShaderCache
+ */
+static void R_ShutdownShaderCache( void ) {
+	R_Free( r_shaderTemplateBuf );
+
+	r_shaderTemplateBuf = NULL;
+
+	memset( shadercache_hash, 0, sizeof( shadercache_hash ) );
+}
+
+/*
+* R_ReloadShaderCache
+*/
+static void R_ReloadShaderCache( void )
+{
+	int i;
+	shader_t *s;
+	bool forceDefaultOnly = true;
+
+	for( i = 0, s = r_shaders; i < MAX_SHADERS; i++, s++ ) {
+		if( !s->name ) {
+			// free shader
+			continue;
+		}
+		if( s->registrationSequence != rsh.registrationSequence ) {
+			continue;
+		}
+		if( !s->forceDefault ) {
+			forceDefaultOnly = false;
+			break;
+		}
+	}
+
+	if( !forceDefaultOnly ) {
+		return;
+	}
+
+	R_ShutdownShaderCache();
+
+	R_InitShaderCache();
+}
+
+/*
 * R_InitShaders
 */
 void R_InitShaders( void ) {
 	int i;
 
-	R_InitShadersCache();
+	R_InitShaderCache();
 
 	memset( r_shaders, 0, sizeof( r_shaders ) );
 
@@ -1971,8 +2014,11 @@ void R_FreeUnusedShadersByType( const shaderType_e *types, unsigned int numTypes
 /*
 * R_FreeUnusedShaders
 */
-void R_FreeUnusedShaders( void ) {
+void R_FreeUnusedShaders( void )
+{
 	R_FreeUnusedShadersByType( NULL, 0 );
+
+	R_ReloadShaderCache();
 }
 
 /*
@@ -1990,14 +2036,11 @@ void R_ShutdownShaders( void ) {
 		R_FreeShader( s );
 	}
 
-	R_Free( r_shaderTemplateBuf );
-	R_Free( r_shortShaderName );
+	R_ShutdownShaderCache();
 
-	r_shaderTemplateBuf = NULL;
+	R_Free( r_shortShaderName );
 	r_shortShaderName = NULL;
 	r_shortShaderNameSize = 0;
-
-	memset( shadercache_hash, 0, sizeof( shadercache_hash ) );
 }
 
 static void Shader_Readpass( shader_t *shader, const char **ptr ) {
@@ -2877,6 +2920,7 @@ shader_t *R_LoadShader( const char *name, shaderType_e type, bool forceDefault, 
 	s->next = next;
 	s->prev = prev;
 	s->id = s - r_shaders;
+	s->forceDefault = forceDefault;
 	R_LoadShaderReal( s, shortname, nameLength, name, type, text );
 
 	// add to linked lists

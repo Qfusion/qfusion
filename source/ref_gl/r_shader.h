@@ -271,6 +271,8 @@ typedef struct shader_s {
 
 	shaderskyparms_t skyParms;
 
+	bool forceDefault;
+
 	struct shader_s     *prev, *next;
 } shader_t;
 
