@@ -674,8 +674,6 @@ static void CL_EndRegistration( void ) {
 
 	cls.registrationOpen = false;
 
-	FTLIB_TouchAllFonts();
-	CL_UIModule_TouchAllAssets();
 	re.EndRegistration();
 	CL_SoundModule_EndRegistration();
 }
@@ -1553,19 +1551,20 @@ void CL_RequestNextDownload( void ) {
 
 	if( precache_check == ENV_CNT ) {
 		bool restart = false;
-		bool vid_restart = false;
+		bool full_restart = false;
 		const char *restart_msg = "";
 		unsigned map_checksum;
 
 		// we're done with the download phase, so clear the list
 		CL_FreeDownloadList();
+		restart_msg = "Pure server. Restarting media...";
 		if( cls.pure_restart ) {
 			restart = true;
 			restart_msg = "Pure server. Restarting media...";
 		}
 		if( cls.download.successCount ) {
 			restart = true;
-			vid_restart = true;
+			full_restart = true;
 			restart_msg = "Files downloaded. Restarting media...";
 		}
 
@@ -1574,9 +1573,19 @@ void CL_RequestNextDownload( void ) {
 		if( restart ) {
 			Com_Printf( "%s\n", restart_msg );
 
-			if( vid_restart ) {
+			if( full_restart ) {
 				// no media is going to survive a vid_restart...
-				Cbuf_ExecuteText( EXEC_NOW, "s_restart 1\n" );
+				CL_ShutdownMedia();
+				CL_EndRegistration();
+
+				FTLIB_UnloadLibrary( false );
+
+				FTLIB_LoadLibrary( false );
+
+				CL_BeginRegistration();
+				FTLIB_PrecacheFonts( false );
+
+				CL_InitMedia();
 			} else {
 				// make sure all media assets will be freed
 				CL_EndRegistration();
@@ -1584,7 +1593,7 @@ void CL_RequestNextDownload( void ) {
 			}
 		}
 
-		if( !vid_restart ) {
+		if( !full_restart ) {
 			CL_RestartMedia();
 		}
 
