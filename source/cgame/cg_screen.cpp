@@ -310,9 +310,6 @@ void CG_ScreenShutdown( void ) {
 	trap_Cmd_RemoveCommand( "sizeup" );
 	trap_Cmd_RemoveCommand( "sizedown" );
 	trap_Cmd_RemoveCommand( "help_hud" );
-
-	trap_Cmd_RemoveCommand( "+overlayMenu" );
-	trap_Cmd_RemoveCommand( "-overlayMenu" );
 }
 
 
