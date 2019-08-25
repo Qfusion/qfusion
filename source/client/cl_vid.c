@@ -657,20 +657,21 @@ load_refresh:
 	/*
 	** update our window position
 	*/
-	if( vid_xpos->modified || vid_ypos->modified ) {
-		// make sure the titlebar is not completely hidden away
-		if( vid_xpos->integer < 8 ) {
-			Cvar_ForceSet( vid_xpos->name, "8" );
-		}
-		if( vid_ypos->integer < 8 ) {
-			Cvar_ForceSet( vid_ypos->name, "8" );
-		}
+	if( !vid_fullscreen->integer ) {
+		if( vid_xpos->modified || vid_ypos->modified ) {
+			// make sure the titlebar is not completely hidden away
+			if( vid_xpos->integer < 8 ) {
+				Cvar_ForceSet( vid_xpos->name, "8" );
+			}
+			if( vid_ypos->integer < 8 ) {
+				Cvar_ForceSet( vid_ypos->name, "8" );
+			}
 
-		if( !vid_fullscreen->integer ) {
 			VID_UpdateWindowPosAndSize( vid_xpos->integer, vid_ypos->integer );
+	
+			vid_xpos->modified = false;
+			vid_ypos->modified = false;
 		}
-		vid_xpos->modified = false;
-		vid_ypos->modified = false;
 	}
 }
 
@@ -747,11 +748,9 @@ void VID_Init( void ) {
 	// make sure the titlebar is not completely hidden away
 	if( vid_xpos->integer < 8 ) {
 		Cvar_ForceSet( vid_xpos->name, "8" );
-		vid_xpos->modified = false;
 	}
 	if( vid_ypos->integer < 8 ) {
 		Cvar_ForceSet( vid_ypos->name, "8" );
-		vid_ypos->modified = false;
 	}
 
 	// Start the graphics mode and load refresh DLL
@@ -762,6 +761,8 @@ void VID_Init( void ) {
 	vid_ref_sound_restart = false;
 	vid_fullscreen->modified = false;
 	vid_borderless->modified = false;
+	vid_xpos->modified = true;
+	vid_ypos->modified = true;
 	vid_ref_prevwidth = vid_modes[0].width; // the smallest mode is the "safe mode"
 	vid_ref_prevheight = vid_modes[0].height;
 

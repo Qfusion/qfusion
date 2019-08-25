@@ -371,10 +371,12 @@ static void IN_HandleEvents( void ) {
 						break;
 					case SDL_WINDOWEVENT_MOVED:
 						// FIXME: move this somewhere else
-						Cvar_SetValue( "vid_xpos", event.window.data1 );
-						Cvar_SetValue( "vid_ypos", event.window.data2 );
-						vid_xpos->modified = false;
-						vid_ypos->modified = false;
+						if( !Cvar_Value( "vid_fullscreen" ) ) {
+							Cvar_SetValue( "vid_xpos", event.window.data1 );
+							Cvar_SetValue( "vid_ypos", event.window.data2 );
+							vid_xpos->modified = false;
+							vid_ypos->modified = false;
+						}
 						break;
 				}
 				break;
