@@ -583,7 +583,7 @@ void Key_Event( int key, bool down, int64_t time ) {
 		key_repeats[key] = 0;
 	}
 
-#if !defined( WIN32 ) && !defined( __ANDROID__ )
+#if defined( USE_SDL2 ) && !defined( __ANDROID__ )
 	// switch between fullscreen/windowed when ALT+ENTER is pressed
 	if( key == K_ENTER && down && ( keydown[K_LALT] || keydown[K_RALT] ) ) {
 		Cbuf_ExecuteText( EXEC_APPEND, "toggle vid_fullscreen\n" );
