@@ -642,7 +642,7 @@ class PMoveLocal {
 
 	void UnstickPosition( Trace &out trace ) {
 		int j;
-		Vec3 origin;
+		Vec3 testOrigin;
 
 		if( pm.skipCollision ) {
 			return;
@@ -651,20 +651,18 @@ class PMoveLocal {
 			return;
 		}
 
-		origin = origin;
-
 		// try all combinations
 		for( j = 0; j < 8; j++ ) {
-			origin = origin;
+			testOrigin = origin;
 
-			origin.x += ( j & 1 ) != 0 ? -1.0f : 1.0f;
-			origin.y += ( j & 2 ) != 0 ? -1.0f : 1.0f;
-			origin.z += ( j & 4 ) != 0 ? -1.0f : 1.0f;
+			testOrigin.x += ( j & 1 ) != 0 ? -1.0f : 1.0f;
+			testOrigin.y += ( j & 2 ) != 0 ? -1.0f : 1.0f;
+			testOrigin.z += ( j & 4 ) != 0 ? -1.0f : 1.0f;
 
-			trace.doTrace( origin, pm_mins, pm_maxs, origin, playerState.POVnum, pm.contentMask );
+			trace.doTrace( testOrigin, pm_mins, pm_maxs, testOrigin, playerState.POVnum, pm.contentMask );
 
 			if( !trace.allSolid ) {
-				origin = origin;
+				origin = testOrigin;
 				GroundTrace( trace );
 				return;
 			}
