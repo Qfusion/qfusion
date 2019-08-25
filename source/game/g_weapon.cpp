@@ -113,7 +113,6 @@ enum {
 	PROJECTILE_TOUCH_NOT = 0,
 	PROJECTILE_TOUCH_DIRECTHIT,
 	PROJECTILE_TOUCH_DIRECTAIRHIT,
-	PROJECTILE_TOUCH_DIRECTSPLASH // treat direct hits as pseudo-splash impacts
 };
 
 /*
@@ -158,30 +157,23 @@ int G_Projectile_HitStyle( edict_t *projectile, edict_t *target ) {
 		}
 	}
 
-	if( atGround ) {
-		// when the player is at ground we will consider a direct hit only when
-		// the hit is 16 units above the feet
-		if( projectile->s.origin[2] <= 16 + target->s.origin[2] + target->r.mins[2] ) {
-			return PROJECTILE_TOUCH_DIRECTSPLASH;
+
+	// it's direct hit, but let's see if it's airhit
+	VectorCopy( target->s.origin, end );
+	end[2] -= AIRHIT_MINHEIGHT;
+
+	G_Trace4D( &trace, target->s.origin, target->r.mins, target->r.maxs, end, target, MASK_DEADSOLID, 0 );
+	if( ( trace.ent != -1 || trace.startsolid ) && ISWALKABLEPLANE( &trace.plane ) ) {
+		// add directhit and airhit to awards counter
+		if( attacker && !GS_IsTeamDamage( &attacker->s, &target->s ) && G_ModToAmmo( projectile->style ) != AMMO_NONE ) {
+			projectile->r.owner->r.client->level.stats.accuracy_hits_direct[G_ModToAmmo( projectile->style ) - AMMO_GUNBLADE]++;
+			teamlist[projectile->r.owner->s.team].stats.accuracy_hits_direct[G_ModToAmmo( projectile->style ) - AMMO_GUNBLADE]++;
+
+			projectile->r.owner->r.client->level.stats.accuracy_hits_air[G_ModToAmmo( projectile->style ) - AMMO_GUNBLADE]++;
+			teamlist[projectile->r.owner->s.team].stats.accuracy_hits_air[G_ModToAmmo( projectile->style ) - AMMO_GUNBLADE]++;
 		}
-	} else {
-		// it's direct hit, but let's see if it's airhit
-		VectorCopy( target->s.origin, end );
-		end[2] -= AIRHIT_MINHEIGHT;
 
-		G_Trace4D( &trace, target->s.origin, target->r.mins, target->r.maxs, end, target, MASK_DEADSOLID, 0 );
-		if( ( trace.ent != -1 || trace.startsolid ) && ISWALKABLEPLANE( &trace.plane ) ) {
-			// add directhit and airhit to awards counter
-			if( attacker && !GS_IsTeamDamage( &attacker->s, &target->s ) && G_ModToAmmo( projectile->style ) != AMMO_NONE ) {
-				projectile->r.owner->r.client->level.stats.accuracy_hits_direct[G_ModToAmmo( projectile->style ) - AMMO_GUNBLADE]++;
-				teamlist[projectile->r.owner->s.team].stats.accuracy_hits_direct[G_ModToAmmo( projectile->style ) - AMMO_GUNBLADE]++;
-
-				projectile->r.owner->r.client->level.stats.accuracy_hits_air[G_ModToAmmo( projectile->style ) - AMMO_GUNBLADE]++;
-				teamlist[projectile->r.owner->s.team].stats.accuracy_hits_air[G_ModToAmmo( projectile->style ) - AMMO_GUNBLADE]++;
-			}
-
-			return PROJECTILE_TOUCH_DIRECTAIRHIT;
-		}
+		return PROJECTILE_TOUCH_DIRECTAIRHIT;
 	}
 
 	// add directhit to awards counter
@@ -214,13 +206,6 @@ static void W_Touch_Projectile( edict_t *ent, edict_t *other, cplane_t *plane, i
 
 	if( other->takedamage ) {
 		VectorNormalize2( ent->velocity, dir );
-
-		if( hitType == PROJECTILE_TOUCH_DIRECTSPLASH ) { // use hybrid direction from splash and projectile
-			G_SplashFrac4D( ENTNUM( other ), ent->s.origin, ent->projectileInfo.radius, dir, ent->timeDelta );
-		} else {
-			VectorNormalize2( ent->velocity, dir );
-		}
-
 		G_Damage( other, ent, ent->r.owner, dir, ent->velocity, ent->s.origin, ent->projectileInfo.maxDamage, ent->projectileInfo.maxKnockback, ent->projectileInfo.stun, 0, ent->style );
 	}
 
@@ -411,20 +396,13 @@ static void W_Touch_GunbladeBlast( edict_t *ent, edict_t *other, cplane_t *plane
 
 	if( other->takedamage ) {
 		VectorNormalize2( ent->velocity, dir );
-
-		if( hitType == PROJECTILE_TOUCH_DIRECTSPLASH ) { // use hybrid direction from splash and projectile
-			G_SplashFrac4D( ENTNUM( other ), ent->s.origin, ent->projectileInfo.radius, dir, ent->timeDelta );
-		} else {
-			VectorNormalize2( ent->velocity, dir );
-		}
-
 		G_Damage( other, ent, ent->r.owner, dir, ent->velocity, ent->s.origin, ent->projectileInfo.maxDamage, ent->projectileInfo.maxKnockback, ent->projectileInfo.stun, 0, ent->style );
 	}
 
 	G_RadiusDamage( ent, ent->r.owner, plane, other, MOD_GUNBLADE_S );
 
 	// add explosion event
-	if( ( !other->takedamage || ISBRUSHMODEL( other->s.modelindex ) ) ) {
+	if( !other->takedamage || ISBRUSHMODEL( other->s.modelindex ) ) {
 		edict_t *event;
 
 		event = G_SpawnEvent( EV_GUNBLADEBLAST_IMPACT, DirToByte( plane ? plane->normal : NULL ), ent->s.origin );
@@ -629,25 +607,8 @@ static void W_Touch_Grenade( edict_t *ent, edict_t *other, cplane_t *plane, int 
 	}
 
 	if( other->takedamage ) {
-		int directHitDamage = ent->projectileInfo.maxDamage;
-
 		VectorNormalize2( ent->velocity, dir );
-
-		if( hitType == PROJECTILE_TOUCH_DIRECTSPLASH ) { // use hybrid direction from splash and projectile
-			G_SplashFrac4D( ENTNUM( other ), ent->s.origin, ent->projectileInfo.radius, dir, ent->timeDelta );
-		} else {
-			VectorNormalize2( ent->velocity, dir );
-
-			// no direct hit bonuses for grenades
-			/*
-			if( hitType == PROJECTILE_TOUCH_DIRECTAIRHIT )
-			    directHitDamage += DIRECTAIRTHIT_DAMAGE_BONUS;
-			else if( hitType == PROJECTILE_TOUCH_DIRECTHIT )
-			    directHitDamage += DIRECTHIT_DAMAGE_BONUS;
-			*/
-		}
-
-		G_Damage( other, ent, ent->r.owner, dir, ent->velocity, ent->s.origin, directHitDamage, ent->projectileInfo.maxKnockback, ent->projectileInfo.stun, 0, ent->style );
+		G_Damage( other, ent, ent->r.owner, dir, ent->velocity, ent->s.origin, ent->projectileInfo.maxDamage, ent->projectileInfo.maxKnockback, ent->projectileInfo.stun, 0, ent->style );
 	}
 
 	ent->enemy = other;
@@ -714,17 +675,10 @@ static void W_Touch_Rocket( edict_t *ent, edict_t *other, cplane_t *plane, int s
 
 		VectorNormalize2( ent->velocity, dir );
 
-		if( hitType == PROJECTILE_TOUCH_DIRECTSPLASH ) { // use hybrid direction from splash and projectile
-
-			G_SplashFrac4D( ENTNUM( other ), ent->s.origin, ent->projectileInfo.radius, dir, ent->timeDelta );
-		} else {
-			VectorNormalize2( ent->velocity, dir );
-
-			if( hitType == PROJECTILE_TOUCH_DIRECTAIRHIT ) {
-				directHitDamage += DIRECTAIRTHIT_DAMAGE_BONUS;
-			} else if( hitType == PROJECTILE_TOUCH_DIRECTHIT ) {
-				directHitDamage += DIRECTHIT_DAMAGE_BONUS;
-			}
+		if( hitType == PROJECTILE_TOUCH_DIRECTAIRHIT ) {
+			directHitDamage += DIRECTAIRTHIT_DAMAGE_BONUS;
+		} else if( hitType == PROJECTILE_TOUCH_DIRECTHIT ) {
+			directHitDamage += DIRECTHIT_DAMAGE_BONUS;
 		}
 
 		G_Damage( other, ent, ent->r.owner, dir, ent->velocity, ent->s.origin, directHitDamage, ent->projectileInfo.maxKnockback, ent->projectileInfo.stun, 0, ent->style );
@@ -817,13 +771,6 @@ static void W_Touch_Plasma( edict_t *ent, edict_t *other, cplane_t *plane, int s
 
 	if( other->takedamage ) {
 		VectorNormalize2( ent->velocity, dir );
-
-		if( hitType == PROJECTILE_TOUCH_DIRECTSPLASH ) { // use hybrid direction from splash and projectile
-			G_SplashFrac4D( ENTNUM( other ), ent->s.origin, ent->projectileInfo.radius, dir, ent->timeDelta );
-		} else {
-			VectorNormalize2( ent->velocity, dir );
-		}
-
 		G_Damage( other, ent, ent->r.owner, dir, ent->velocity, ent->s.origin, ent->projectileInfo.maxDamage, ent->projectileInfo.maxKnockback, ent->projectileInfo.stun, DAMAGE_KNOCKBACK_SOFT, ent->style );
 	}
 
