@@ -785,7 +785,7 @@ int G_PointContents4D( vec3_t p, int timeDelta );
 void G_Trace4D( trace_t *tr, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, edict_t *passedict, int contentmask, int timeDelta );
 void GClip_BackUpCollisionFrame( void );
 int GClip_FindInRadius4D( vec3_t org, float rad, int *list, int maxcount, int timeDelta );
-float G_SplashFrac4D( int entNum, vec3_t hitpoint, float maxradius, vec3_t pushdir, int timeDelta );
+float G_SplashFrac4D( int entNum, vec3_t hitpoint, float maxradius, vec3_t pushdir, bool viewPointForCenter, int timeDelta );
 void GClip_ClearWorld( void );
 void GClip_SetBrushModel( edict_t *ent, const char *name );
 void GClip_SetAreaPortalState( edict_t *ent, bool open );
@@ -809,8 +809,7 @@ bool GClip_EntityContact( vec3_t mins, vec3_t maxs, edict_t *ent );
 //
 void G_Killed( edict_t *targ, edict_t *inflictor, edict_t *attacker, int damage, const vec3_t point, int mod );
 int G_ModToAmmo( int mod );
-bool CheckTeamDamage( edict_t *targ, edict_t *attacker );
-float G_SplashFrac( const vec3_t origin, const vec3_t mins, const vec3_t maxs, const vec3_t point, float maxradius, vec3_t pushdir );
+float G_SplashFrac( const vec3_t origin, const vec3_t mins, const vec3_t maxs, const vec3_t center, const vec3_t point, float maxradius, vec3_t pushdir );
 void G_Damage( edict_t *targ, edict_t *inflictor, edict_t *attacker, const vec3_t pushdir, const vec3_t dmgdir, const vec3_t point, float damage, float knockback, float stun, int dflags, int mod );
 void G_RadiusDamage( edict_t *inflictor, edict_t *attacker, cplane_t *plane, edict_t *ignore, int mod );
 

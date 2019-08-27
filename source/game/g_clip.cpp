@@ -65,6 +65,8 @@ extern cvar_t *g_antilag_maxtimedelta;
 #define CFRAME_UPDATE_MASK  ( CFRAME_UPDATE_BACKUP - 1 )
 
 typedef struct c4clipedict_s {
+	vec3_t center;
+	vec3_t viewpoint;
 	entity_state_t s;
 	entity_shared_t r;
 } c4clipedict_t;
@@ -80,6 +82,17 @@ typedef struct c4frame_s {
 
 c4frame_t sv_collisionframes[CFRAME_UPDATE_BACKUP];
 static int64_t sv_collisionFrameNum = 0;
+
+static void GClip_ClipEntFromEdict( const edict_t *svedict, c4clipedict_t *clipent ) {
+	clipent->r = svedict->r;
+	clipent->s = svedict->s;
+
+	VectorAvg( svedict->r.mins, svedict->r.maxs, clipent->center );
+	VectorAdd( clipent->center, svedict->s.origin, clipent->center );
+
+	VectorCopy( clipent->center, clipent->viewpoint );
+	clipent->viewpoint[2] = clipent->s.origin[2] + svedict->viewheight;
+}
 
 void GClip_BackUpCollisionFrame( void ) {
 	c4frame_t *cframe;
@@ -102,16 +115,16 @@ void GClip_BackUpCollisionFrame( void ) {
 	//backup edicts
 	for( i = 0; i < game.numentities; i++ ) {
 		svedict = &game.edicts[i];
+		c4clipedict_t *clipent = &cframe->clipEdicts[i];
 
-		cframe->clipEdicts[i].r.inuse = svedict->r.inuse;
-		cframe->clipEdicts[i].r.solid = svedict->r.solid;
+		clipent->r.inuse = svedict->r.inuse;
+		clipent->r.solid = svedict->r.solid;
 		if( !svedict->r.inuse || svedict->r.solid == SOLID_NOT
 			|| ( svedict->r.solid == SOLID_TRIGGER && !( i >= 1 && i <= gs.maxclients ) ) ) {
 			continue;
 		}
 
-		cframe->clipEdicts[i].r = svedict->r;
-		cframe->clipEdicts[i].s = svedict->s;
+		GClip_ClipEntFromEdict( svedict, clipent );
 	}
 	cframe->numedicts = game.numentities;
 }
@@ -131,22 +144,19 @@ static c4clipedict_t *GClip_GetClipEdictForDeltaTime( int entNum, int deltaTime 
 	index = ( index + 1 ) & 7;
 
 	if( !entNum || deltaTime >= 0 || !g_antilag->integer ) { // current time entity
-		clipent->r = ent->r;
-		clipent->s = ent->s;
+		GClip_ClipEntFromEdict( ent, clipent );
 		return clipent;
 	}
 
 	if( !ent->r.inuse || ent->r.solid == SOLID_NOT
 		|| ( ent->r.solid == SOLID_TRIGGER && !( entNum >= 1 && entNum <= gs.maxclients ) ) ) {
-		clipent->r = ent->r;
-		clipent->s = ent->s;
+		GClip_ClipEntFromEdict( ent, clipent );
 		return clipent;
 	}
 
 	// always use the latest information about moving world brushes
 	if( ent->movetype == MOVETYPE_PUSH ) {
-		clipent->r = ent->r;
-		clipent->s = ent->s;
+		GClip_ClipEntFromEdict( ent, clipent );
 		return clipent;
 	}
 
@@ -186,8 +196,7 @@ static c4clipedict_t *GClip_GetClipEdictForDeltaTime( int entNum, int deltaTime 
 
 	if( !cframe ) {
 		// current time entity
-		clipent->r = ent->r;
-		clipent->s = ent->s;
+		GClip_ClipEntFromEdict( ent, clipent );
 		return clipent;
 	}
 
@@ -202,8 +211,7 @@ static c4clipedict_t *GClip_GetClipEdictForDeltaTime( int entNum, int deltaTime 
 			// interpolate from 1st backed up to current
 			lerpFrac = (float)( ( game.serverTime - backTime ) - cframe->timestamp )
 					   / (float)( game.serverTime - cframe->timestamp );
-			clipentNewer.r = ent->r;
-			clipentNewer.s = ent->s;
+			GClip_ClipEntFromEdict( ent, &clipentNewer );
 		} else {
 			// interpolate between 2 backed up
 			c4frame_t *cframeNewer = &sv_collisionframes[( cframenum - ( bf - 1 ) ) & CFRAME_UPDATE_MASK];
@@ -223,6 +231,8 @@ static c4clipedict_t *GClip_GetClipEdictForDeltaTime( int entNum, int deltaTime 
 		VectorLerp( clipent->r.maxs, lerpFrac, clipentNewer.r.maxs, clipent->r.maxs );
 		for( i = 0; i < 3; i++ )
 			clipent->s.angles[i] = LerpAngle( clipent->s.angles[i], clipentNewer.s.angles[i], lerpFrac );
+		VectorLerp( clipent->center, lerpFrac, clipentNewer.center, clipent->center );
+		VectorLerp( clipent->viewpoint, lerpFrac, clipentNewer.viewpoint, clipent->viewpoint );
 	}
 
 #if 0
@@ -1173,12 +1183,12 @@ int GClip_FindInRadius( vec3_t org, float rad, int *list, int maxcount ) {
 }
 
 float G_SplashFrac4D( int entNum, vec3_t hitpoint, float maxradius, vec3_t pushdir,
-					 int timeDelta ) {
+	bool viewPointForCenter, int timeDelta ) {
 	c4clipedict_t *clipEnt;
 
 	clipEnt = GClip_GetClipEdictForDeltaTime( entNum, timeDelta );
-	return G_SplashFrac( clipEnt->s.origin, clipEnt->r.mins, clipEnt->r.maxs, hitpoint,
-				  maxradius, pushdir );
+	return G_SplashFrac( clipEnt->s.origin, clipEnt->r.mins, clipEnt->r.maxs, 
+		viewPointForCenter ? clipEnt->viewpoint : clipEnt->center, hitpoint, maxradius, pushdir );
 }
 
 entity_state_t *G_GetEntityStateForDeltaTime( int entNum, int deltaTime ) {

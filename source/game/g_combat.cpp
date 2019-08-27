@@ -546,47 +546,37 @@ void G_Damage( edict_t *targ, edict_t *inflictor, edict_t *attacker, const vec3_
 /*
 * G_SplashFrac
 */
-float G_SplashFrac( const vec3_t origin, const vec3_t mins, const vec3_t maxs, const vec3_t point, float maxradius, vec3_t pushdir ) {
-	vec3_t boxcenter = { 0, 0, 0 };
-	vec3_t hitpoint;
+float G_SplashFrac( const vec3_t origin, const vec3_t mins, const vec3_t maxs, const vec3_t center, const vec3_t point, float maxradius,vec3_t pushdir ) {
+	vec3_t boxcenter;
 	float distance;
-	int i;
 	float innerradius;
 	float refdistance;
-	float frac = 0;
+	float frac;
 
-	if( maxradius <= 0 ) {
-		if( pushdir ) {
-			VectorClear( pushdir );
-		}
-		return 0;
+	if( pushdir ) {
+		VectorClear( pushdir );
 	}
 
-	VectorCopy( point, hitpoint );
+	if( maxradius <= 0 ) {
+		return 0;
+	}
 
 	innerradius = ( maxs[0] + maxs[1] - mins[0] - mins[1] ) * 0.25;
 
 	// Find the distance to the closest point in the capsule contained in the player bbox
 	// modify the origin so the inner sphere acts as a capsule
 	VectorCopy( origin, boxcenter );
-	boxcenter[2] = hitpoint[2];
+	boxcenter[2] = point[2];
 	Q_clamp( boxcenter[2], ( origin[2] + mins[2] ) + innerradius, ( origin[2] + maxs[2] ) - innerradius );
 
 	// find push intensity
-	distance = Distance( boxcenter, hitpoint );
-
+	distance = Distance( boxcenter, point );
 	if( distance >= maxradius ) {
-		if( pushdir ) {
-			VectorClear( pushdir );
-		}
 		return 0;
 	}
 
 	refdistance = innerradius;
 	if( refdistance >= maxradius ) {
-		if( pushdir ) {
-			VectorClear( pushdir );
-		}
 		return 0;
 	}
 
@@ -601,16 +591,14 @@ float G_SplashFrac( const vec3_t origin, const vec3_t mins, const vec3_t maxs, c
 
 	// soft sin curve
 	frac = sin( DEG2RAD( ( distance / maxradius ) * 80 ) );
-	Q_clamp(frac, 0.0f, 1.0f );
+	Q_clamp( frac, 0.0f, 1.0f );
 
 	// find push direction
 
 	if( pushdir ) {
-		// find real center of the box again
-		for( i = 0; i < 3; i++ )
-			boxcenter[i] = origin[i] + ( 0.5f * ( maxs[i] + mins[i] ) );
-
-		VectorSubtract( boxcenter, hitpoint, pushdir );
+		// use center of mass, which isn't necessary located at box center
+		// for players, this is the viewpoint
+		VectorSubtract( center, point, pushdir );
 		VectorNormalize( pushdir );
 	}
 	
@@ -628,17 +616,15 @@ void G_RadiusDamage( edict_t *inflictor, edict_t *attacker, cplane_t *plane, edi
 	vec3_t pushDir;
 	int timeDelta;
 
-	float maxdamage, mindamage, maxknockback, minknockback, maxstun, minstun, radius;
+	assert( inflictor != NULL );
 
-	assert( inflictor );
-
-	maxdamage = inflictor->projectileInfo.maxDamage;
-	mindamage = inflictor->projectileInfo.minDamage;
-	maxknockback = inflictor->projectileInfo.maxKnockback;
-	minknockback = inflictor->projectileInfo.minKnockback;
-	maxstun = inflictor->projectileInfo.stun;
-	minstun = 1;
-	radius = inflictor->projectileInfo.radius;
+	float maxdamage = inflictor->projectileInfo.maxDamage;
+	float mindamage = inflictor->projectileInfo.minDamage;
+	float maxknockback = inflictor->projectileInfo.maxKnockback;
+	float minknockback = inflictor->projectileInfo.minKnockback;
+	float maxstun = inflictor->projectileInfo.stun;
+	float minstun = 1;
+	float radius = inflictor->projectileInfo.radius;
 
 	if( radius <= 1.0f || ( maxdamage <= 0.0f && maxknockback <= 0.0f ) ) {
 		return;
@@ -661,7 +647,7 @@ void G_RadiusDamage( edict_t *inflictor, edict_t *attacker, cplane_t *plane, edi
 			timeDelta = inflictor->timeDelta;
 		}
 
-		dmgFrac = G_SplashFrac4D( ENTNUM( ent ), inflictor->s.origin, radius, pushDir, timeDelta );
+		dmgFrac = G_SplashFrac4D( ENTNUM( ent ), inflictor->s.origin, radius, pushDir, attacker == ent && attacker->r.client, timeDelta );
 
 		damage = fmax( 0, mindamage + ( ( maxdamage - mindamage ) * dmgFrac ) );
 		stun = fmax( 0, minstun + ( ( maxstun - minstun ) * dmgFrac ) );
