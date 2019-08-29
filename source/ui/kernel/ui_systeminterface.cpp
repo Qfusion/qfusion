@@ -9,7 +9,7 @@
 #include "kernel/ui_common.h"
 #include "kernel/ui_systeminterface.h"
 
-using namespace Rocket::Core;
+using namespace Rml::Core;
 
 namespace WSWUI
 {
@@ -36,17 +36,17 @@ bool UI_SystemInterface::LogMessage( Log::Type type, const String& message ) {
 		case Log::LT_ERROR:
 		case Log::LT_ASSERT:
 			console_msg = String( S_COLOR_RED ) + "LibRocket: ERROR: " + message + "\n";
-			trap::Print( console_msg.CString() );
+			trap::Print( console_msg.c_str() );
 			break;
 		case Log::LT_WARNING:
 			console_msg = String( S_COLOR_YELLOW ) + "LibRocket: WARNING: " + message + "\n";
-			trap::Print( console_msg.CString() );
+			trap::Print( console_msg.c_str() );
 			break;
 		case Log::LT_INFO:
 
 			//if( trap::Cvar_Value( "developer" ) ) {
 			console_msg = "LibRocket: " + message + "\n";
-			trap::Print( console_msg.CString() );
+			trap::Print( console_msg.c_str() );
 
 			//}
 			break;
@@ -54,19 +54,19 @@ bool UI_SystemInterface::LogMessage( Log::Type type, const String& message ) {
 		case Log::LT_MAX:
 			if( trap::Cvar_Value( "developer" ) ) {
 				console_msg = String( S_COLOR_CYAN ) + "LibRocket: DEBUG: " + message + "\n";
-				trap::Print( console_msg.CString() );
+				trap::Print( console_msg.c_str() );
 			}
 			break;
 	}
 	return true;
 }
 
-int UI_SystemInterface::TranslateString( Rocket::Core::String& translated, const Rocket::Core::String& input ) {
+int UI_SystemInterface::TranslateString( Rml::Core::String& translated, const Rml::Core::String& input ) {
 	const char *l10ned;
 
-	l10ned = trap::L10n_TranslateString( input.CString() );
+	l10ned = trap::L10n_TranslateString( input.c_str() );
 	if( l10ned ) {
-		if( !strcmp( input.CString(), l10ned ) ) {
+		if( !strcmp( input.c_str(), l10ned ) ) {
 			// handle cases when translation matches the input
 			// to prevent libRocket from going into endless loop,
 			// trying to translate the same string over and over
@@ -81,23 +81,23 @@ int UI_SystemInterface::TranslateString( Rocket::Core::String& translated, const
 	return 0;
 }
 
-void UI_SystemInterface::GetClipboardText( Rocket::Core::WString &text ) {
-	Rocket::Core::WString clipboard_content;
+void UI_SystemInterface::GetClipboardText( Rml::Core::WString &text ) {
+	Rml::Core::WString clipboard_content;
 
 	char *data = trap::CL_GetClipboardData();
 	if( data == NULL ) {
-		text = "";
+		text.clear();
 		return;
 	}
 
-	text = data;
+	text = Rml::Core::StringUtilities::ToUCS2( data );
 	trap::CL_FreeClipboardData( data );
 }
 
-void UI_SystemInterface::SetClipboardText( const Rocket::Core::WString &text ) {
-	Rocket::Core::String utf8_text;
-	text.ToUTF8( utf8_text );
-	trap::CL_SetClipboardData( utf8_text.CString() );
+void UI_SystemInterface::SetClipboardText( const Rml::Core::WString &text ) {
+	Rml::Core::String utf8_text;
+	utf8_text = Rml::Core::StringUtilities::ToUTF8( text );
+	trap::CL_SetClipboardData( utf8_text.c_str() );
 }
 
 }

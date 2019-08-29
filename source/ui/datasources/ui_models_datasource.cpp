@@ -11,7 +11,7 @@ namespace WSWUI
 {
 
 ModelsDataSource::ModelsDataSource( void ) :
-	Rocket::Controls::DataSource( MODELS_SOURCE ) {
+	Rml::Controls::DataSource( MODELS_SOURCE ) {
 	UpdateModelsList();
 }
 
@@ -52,7 +52,7 @@ void ModelsDataSource::UpdateModelsList( void ) {
 	NotifyRowAdd( TABLE_NAME, 0, modelsList.size() );
 }
 
-void ModelsDataSource::GetRow( StringList &row, const String &table, int row_index, const StringList &columns ) {
+void ModelsDataSource::GetRow( Rml::Core::StringList &row, const std::string &table, int row_index, const Rml::Core::StringList &columns ) {
 	if( row_index < 0 || (size_t)row_index >= modelsList.size() ) {
 		return;
 	}
@@ -62,14 +62,14 @@ void ModelsDataSource::GetRow( StringList &row, const String &table, int row_ind
 	}
 
 	// there should be only 1 column, but we watch ahead in the future
-	for( StringList::const_iterator it = columns.begin(); it != columns.end(); ++it ) {
+	for( Rml::Core::StringList::const_iterator it = columns.begin(); it != columns.end(); ++it ) {
 		if( *it == FIELDS ) {
 			row.push_back( modelsList[row_index].c_str() );
 		}
 	}
 }
 
-int ModelsDataSource::GetNumRows( const String &table ) {
+int ModelsDataSource::GetNumRows( const std::string &table ) {
 	return modelsList.size();
 }
 }

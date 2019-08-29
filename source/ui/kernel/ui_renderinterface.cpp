@@ -14,11 +14,11 @@ namespace WSWUI
 {
 
 // shortcuts
-typedef Rocket::Core::TextureHandle TextureHandle;
-typedef Rocket::Core::Vertex Vertex;
-typedef Rocket::Core::Vector2f Vector2f;
-typedef Rocket::Core::Colourb Colourb;
-typedef Rocket::Core::CompiledGeometryHandle CompiledGeometryHandle;
+typedef Rml::Core::TextureHandle TextureHandle;
+typedef Rml::Core::Vertex Vertex;
+typedef Rml::Core::Vector2f Vector2f;
+typedef Rml::Core::Colourb Colourb;
+typedef Rml::Core::CompiledGeometryHandle CompiledGeometryHandle;
 
 typedef struct shader_s shader_t;
 
@@ -38,18 +38,17 @@ UI_RenderInterface::UI_RenderInterface( int vidWidth, int vidHeight, float pixel
 }
 
 UI_RenderInterface::~UI_RenderInterface() {
-	this->RemoveReference();
 }
 
-Rocket::Core::CompiledGeometryHandle UI_RenderInterface::CompileGeometry( Rocket::Core::Vertex *vertices, int num_vertices, int *indices, int num_indices, Rocket::Core::TextureHandle texture ) {
+Rml::Core::CompiledGeometryHandle UI_RenderInterface::CompileGeometry( Rml::Core::Vertex *vertices, int num_vertices, int *indices, int num_indices, Rml::Core::TextureHandle texture ) {
 	poly_t *poly;
 
-	poly = RocketGeometry2Poly( false, vertices, num_vertices, indices, num_indices, texture );
+	poly = RmlUiGeometry2Poly( false, vertices, num_vertices, indices, num_indices, texture );
 
-	return Rocket::Core::CompiledGeometryHandle( poly );
+	return Rml::Core::CompiledGeometryHandle( poly );
 }
 
-void UI_RenderInterface::ReleaseCompiledGeometry( Rocket::Core::CompiledGeometryHandle geometry ) {
+void UI_RenderInterface::ReleaseCompiledGeometry( Rml::Core::CompiledGeometryHandle geometry ) {
 	if( geometry == 0 ) {
 		return;
 	}
@@ -58,7 +57,7 @@ void UI_RenderInterface::ReleaseCompiledGeometry( Rocket::Core::CompiledGeometry
 	polyAlloc.free( poly );
 }
 
-void UI_RenderInterface::RenderCompiledGeometry( Rocket::Core::CompiledGeometryHandle geometry, const Rocket::Core::Vector2f & translation ) {
+void UI_RenderInterface::RenderCompiledGeometry( Rml::Core::CompiledGeometryHandle geometry, const Rml::Core::Vector2f & translation ) {
 	if( geometry == 0 ) {
 		return;
 	}
@@ -68,10 +67,10 @@ void UI_RenderInterface::RenderCompiledGeometry( Rocket::Core::CompiledGeometryH
 	trap::R_DrawStretchPoly( poly, translation.x, translation.y );
 }
 
-void UI_RenderInterface::RenderGeometry( Rocket::Core::Vertex *vertices, int num_vertices, int *indices, int num_indices, Rocket::Core::TextureHandle texture, const Rocket::Core::Vector2f & translation ) {
+void UI_RenderInterface::RenderGeometry( Rml::Core::Vertex *vertices, int num_vertices, int *indices, int num_indices, Rml::Core::TextureHandle texture, const Rml::Core::Vector2f & translation ) {
 	poly_t *poly;
 
-	poly = RocketGeometry2Poly( true, vertices, num_vertices, indices, num_indices, texture );
+	poly = RmlUiGeometry2Poly( true, vertices, num_vertices, indices, num_indices, texture );
 
 	trap::R_DrawStretchPoly( poly, translation.x, translation.y );
 }
@@ -97,22 +96,19 @@ void UI_RenderInterface::EnableScissorRegion( bool enable ) {
 	scissorEnabled = enable;
 }
 
-void UI_RenderInterface::ReleaseTexture( Rocket::Core::TextureHandle texture_handle ) {
+void UI_RenderInterface::ReleaseTexture( Rml::Core::TextureHandle texture_handle ) {
 
 }
 
-bool UI_RenderInterface::GenerateTexture( Rocket::Core::TextureHandle & texture_handle, const Rocket::Core::byte *source, const Rocket::Core::Vector2i & source_dimensions, int source_samples ) {
+bool UI_RenderInterface::GenerateTexture( Rml::Core::TextureHandle & texture_handle, const Rml::Core::byte *source, const Rml::Core::Vector2i & source_dimensions/*, int source_samples*/ ) {
 	shader_t *shader;
-	Rocket::Core::String name( MAX_QPATH, "ui_raw_%d", texCounter++ );
+	auto name = Rml::Core::CreateString( MAX_QPATH, "ui_raw_%d", texCounter++ );
 
-	// Com_Printf("RenderInterface::GenerateTexture: going to register %s %dx%d\n", name.CString(), source_dimensions.x, source_dimensions.y );
-	shader = trap::R_RegisterRawPic( name.CString(), source_dimensions.x, source_dimensions.y, (uint8_t*)source, source_samples );
+	shader = trap::R_RegisterRawPic( name.c_str(), source_dimensions.x, source_dimensions.y, (uint8_t*)source, /*source_samples*/4 );
 	if( !shader ) {
-		Com_Printf( S_COLOR_RED "Warning: RenderInterface couldnt register raw pic %s!\n", name.CString() );
+		Com_Printf( S_COLOR_RED "Warning: RenderInterface couldnt register raw pic %s!\n", name.c_str() );
 		return false;
 	}
-
-	// Com_Printf( "RenderInterface::GenerateTexture %s successful\n", name.CString() );
 
 	AddShaderToCache( name );
 
@@ -120,28 +116,28 @@ bool UI_RenderInterface::GenerateTexture( Rocket::Core::TextureHandle & texture_
 	return true;
 }
 
-bool UI_RenderInterface::LoadTexture( Rocket::Core::TextureHandle & texture_handle, Rocket::Core::Vector2i & texture_dimensions, const Rocket::Core::String & source ) {
+bool UI_RenderInterface::LoadTexture( Rml::Core::TextureHandle & texture_handle, Rml::Core::Vector2i & texture_dimensions, const Rml::Core::String & source ) {
 	shader_t *shader = NULL;
-	Rocket::Core::String source2( source );
+	Rml::Core::String source2( source );
 
 	if( source2[0] == '/' ) {
-		source2.Erase( 0, 1 );
+		source2.erase( 0, 1 );
 	} else if( source2[0] == '?' ) {
-		String protocol = source2.Substring( 1, source2.Find( "::" ) - 1 );
+		std::string protocol = source2.substr( 1, source2.find( "::" ) - 1 );
 		if( protocol == "fonthandle" ) {
-			if( sscanf( source2.CString(), "?fonthandle::%p", (void **)&shader ) != 1 ) {
-				Com_Printf( S_COLOR_RED "Warning: RenderInterface couldnt load pic %s!\n", source.CString() );
+			if( sscanf( source2.c_str(), "?fonthandle::%p", (void **)&shader ) != 1 ) {
+				Com_Printf( S_COLOR_RED "Warning: RenderInterface couldnt load pic %s!\n", source.c_str() );
 				return false;
 			}
 		}
 	}
 
 	if( !shader ) {
-		shader = trap::R_RegisterPic( source2.CString() );
+		shader = trap::R_RegisterPic( source2.c_str() );
 	}
 
 	if( !shader ) {
-		Com_Printf( S_COLOR_RED "Warning: RenderInterface couldnt load pic %s!\n", source.CString() );
+		Com_Printf( S_COLOR_RED "Warning: RenderInterface couldnt load pic %s!\n", source.c_str() );
 		return false;
 	}
 
@@ -158,24 +154,24 @@ bool UI_RenderInterface::LoadTexture( Rocket::Core::TextureHandle & texture_hand
 	return true;
 }
 
-void UI_RenderInterface::PushTransform( bool projection, const Rocket::Core::RowMajorMatrix4f& transform ) {
-	trap::R_PushTransformMatrix( projection, (const float *)transform.Transpose().data() );
-}
+//void UI_RenderInterface::PushTransform( bool projection, const Rml::Core::RowMajorMatrix4f& transform ) {
+//	trap::R_PushTransformMatrix( projection, (const float *)transform.Transpose().data() );
+//}
 
-void UI_RenderInterface::PushTransform( bool projection, const Rocket::Core::ColumnMajorMatrix4f& transform ) {
-	trap::R_PushTransformMatrix( projection, (const float *)transform.data() );
-}
+//void UI_RenderInterface::PushTransform( bool projection, const Rml::Core::ColumnMajorMatrix4f& transform ) {
+//	trap::R_PushTransformMatrix( projection, (const float *)transform.data() );
+//}
 
-void UI_RenderInterface::PopTransform( bool projection, const Rocket::Core::Matrix4f& ROCKET_UNUSED_PARAMETER( transform ) ) {
-	ROCKET_UNUSED( transform );
-	trap::R_PopTransformMatrix( projection );
-}
+//void UI_RenderInterface::PopTransform( bool projection, const Rml::Core::Matrix4f& ROCKET_UNUSED_PARAMETER( transform ) ) {
+//	ROCKET_UNUSED( transform );
+//	trap::R_PopTransformMatrix( projection );
+//}
 
 float UI_RenderInterface::GetPixelsPerInch( void ) {
 	return this->pixelsPerInch;
 }
 
-poly_t *UI_RenderInterface::RocketGeometry2Poly( bool temp, Rocket::Core::Vertex* vertices, int num_vertices, int* indices, int num_indices, Rocket::Core::TextureHandle texture ) {
+poly_t *UI_RenderInterface::RmlUiGeometry2Poly( bool temp, Rml::Core::Vertex* vertices, int num_vertices, int* indices, int num_indices, Rml::Core::TextureHandle texture ) {
 	poly_t *poly;
 	int i;
 
@@ -214,7 +210,7 @@ poly_t *UI_RenderInterface::RocketGeometry2Poly( bool temp, Rocket::Core::Vertex
 	return poly;
 }
 
-void UI_RenderInterface::AddShaderToCache( const Rocket::Core::String &shader ) {
+void UI_RenderInterface::AddShaderToCache( const Rml::Core::String &shader ) {
 	ShaderMap::const_iterator it;
 
 	it = shaderMap.find( shader );
@@ -231,7 +227,7 @@ void UI_RenderInterface::TouchAllCachedShaders( void ) {
 	ShaderMap::const_iterator it;
 
 	for( it = shaderMap.begin(); it != shaderMap.end(); ++it ) {
-		trap::R_RegisterPic( it->first.CString() );
+		trap::R_RegisterPic( it->first.c_str() );
 	}
 }
 

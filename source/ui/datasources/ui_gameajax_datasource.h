@@ -21,21 +21,21 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __UI_CALLVOTES_DATASOURCE_H__
 #define __UI_CALLVOTES_DATASOURCE_H__
 
-#include <Rocket/Controls/DataSource.h>
+#include <RmlUi/Controls/DataSource.h>
 
 namespace WSWUI
 {
 
 class DynTable;
 
-class GameAjaxDataSource : public Rocket::Controls::DataSource
+class GameAjaxDataSource : public Rml::Controls::DataSource
 {
 public:
 	GameAjaxDataSource( void );
 	~GameAjaxDataSource( void );
 
-	void GetRow( StringList& row, const String& table, int row_index, const StringList& columns );
-	int GetNumRows( const String& table );
+	void GetRow( Rml::Core::StringList& row, const std::string& table, int row_index, const Rml::Core::StringList& columns );
+	int GetNumRows( const std::string& table );
 
 	// forces HTTP request on the next update
 	void FlushCache( void );
@@ -60,8 +60,8 @@ public:
 	static void StreamDone( int status, const char *contentType, void *privatep );
 };
 
-Rocket::Controls::DataSource *GetCallvotesDataSourceInstance();
-void DestroyCallvotesDataSourceInstance( Rocket::Controls::DataSource *instance );
+Rml::Controls::DataSource *GetCallvotesDataSourceInstance();
+void DestroyCallvotesDataSourceInstance( Rml::Controls::DataSource *instance );
 
 }
 #endif

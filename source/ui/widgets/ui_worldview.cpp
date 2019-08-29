@@ -28,7 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 namespace WSWUI
 {
 
-using namespace Rocket::Core;
+using namespace Rml::Core;
 
 // forward-declare the instancer for keyselects
 class UI_WorldviewWidgetInstancer;
@@ -77,7 +77,7 @@ public:
 
 	virtual void OnRender() {
 		bool firstRender = false;
-		Rocket::Core::Dictionary parameters;
+		Rml::Core::Dictionary parameters;
 		auto *ui_main = UI_Main::Get();
 		int mousedx, mousedy;
 		vec3_t viewAngles;
@@ -86,7 +86,7 @@ public:
 
 		if( !Initialized ) {
 			// lazily register the world model
-			if( mapName.Empty() ) {
+			if( mapName.empty() ) {
 				return;
 			}
 
@@ -94,11 +94,11 @@ public:
 			firstRender = true;
 			Initialized = true;
 
-			if( !colorCorrection.Empty() ) {
-				colorCorrectionShader = trap::R_RegisterLinearPic( colorCorrection.CString() );
+			if( !colorCorrection.empty() ) {
+				colorCorrectionShader = trap::R_RegisterLinearPic( colorCorrection.c_str() );
 			}
 
-			trap::R_RegisterWorldModel( mapName.CString() );
+			trap::R_RegisterWorldModel( mapName.c_str() );
 
 			this->DispatchEvent( "registerworldmodel", parameters, false );
 		}
@@ -106,7 +106,7 @@ public:
 		ui_main->getMouseMoveDelta( &mousedx, &mousedy );
 
 		// refdef setup
-		Rocket::Core::Vector2f box = GetBox().GetSize( Rocket::Core::Box::CONTENT );
+		Rml::Core::Vector2f box = GetBox().GetSize( Rml::Core::Box::CONTENT );
 		refdef.width = box.x;
 		refdef.height = box.y;
 		refdef.fov_y = WidescreenFov( fovY );
@@ -132,7 +132,7 @@ public:
 
 		AnglesToAxis( viewAngles, refdef.viewaxis );
 
-		Rocket::Core::Vector2f offset = GetAbsoluteOffset( Rocket::Core::Box::CONTENT );
+		Rml::Core::Vector2f offset = GetAbsoluteOffset( Rml::Core::Box::CONTENT );
 		refdef.x = offset.x;
 		refdef.y = offset.y;
 
@@ -158,10 +158,12 @@ public:
 		}
 	}
 
-	virtual void OnPropertyChange( const Rocket::Core::PropertyNameList& changed_properties ) {
+	virtual void OnPropertyChange( const Rml::Core::PropertyIdSet& changed_properties ) {
 		Element::OnPropertyChange( changed_properties );
-
-		for( Rocket::Core::PropertyNameList::const_iterator it = changed_properties.begin(); it != changed_properties.end(); ++it ) {
+		
+		// LATER
+#if 0
+		for( Rml::Core::PropertyNameList::const_iterator it = changed_properties.begin(); it != changed_properties.end(); ++it ) {
 			if( *it == "worldmodel" ) {
 				mapName = GetProperty( *it )->Get<String>();
 			} else if( *it == "vieworigin-x" || *it == "vieworigin-y" || *it == "vieworigin-z" ) {
@@ -212,6 +214,7 @@ public:
 				}
 			}
 		}
+#endif
 	}
 
 	// Called when the element is added into a hierarchy.
@@ -241,7 +244,7 @@ public:
 	}
 
 	// Called for every event sent to this element or one of its descendants.
-	void ProcessEvent( Rocket::Core::Event& evt ) {
+	void ProcessEvent( Rml::Core::Event& evt ) {
 		if( evt == "invalidate" ) {
 			Initialized = false;
 		}
@@ -283,7 +286,7 @@ public:
 		for( int i = 0; i < MAX_LIGHTSTYLES; i++ ) {
 			const String &ls = lightStyles[i];
 
-			auto len = ls.Length();
+			auto len = ls.size();
 			if( len == 0 ) {
 				trap::R_AddLightStyleToScene( i, 0, 0, 0 );
 				continue;
@@ -314,33 +317,33 @@ public:
 		StyleSheetSpecification::RegisterProperty( "vieworigin-x", "0", false ).AddParser( "number" );
 		StyleSheetSpecification::RegisterProperty( "vieworigin-y", "0", false ).AddParser( "number" );
 		StyleSheetSpecification::RegisterProperty( "vieworigin-z", "0", false ).AddParser( "number" );
-		StyleSheetSpecification::RegisterShorthand( "vieworigin", "vieworigin-x, vieworigin-y, vieworigin-z" );
+		StyleSheetSpecification::RegisterShorthand( "vieworigin", "vieworigin-x, vieworigin-y, vieworigin-z", Rml::Core::ShorthandType::FallThrough );
 
 		StyleSheetSpecification::RegisterProperty( "viewangle-pitch", "0", false ).AddParser( "number" );
 		StyleSheetSpecification::RegisterProperty( "viewangle-yaw", "0", false ).AddParser( "number" );
 		StyleSheetSpecification::RegisterProperty( "viewangle-roll", "0", false ).AddParser( "number" );
-		StyleSheetSpecification::RegisterShorthand( "viewangles", "viewangle-pitch, viewangle-yaw, viewangle-roll" );
+		StyleSheetSpecification::RegisterShorthand( "viewangles", "viewangle-pitch, viewangle-yaw, viewangle-roll", Rml::Core::ShorthandType::FallThrough );
 
 		StyleSheetSpecification::RegisterProperty( "wave-pitch-amplitude", "0", false ).AddParser( "number" );
 		StyleSheetSpecification::RegisterProperty( "wave-pitch-phase", "0", false ).AddParser( "number" );
 		StyleSheetSpecification::RegisterProperty( "wave-pitch-frequency", "0", false ).AddParser( "number" );
-		StyleSheetSpecification::RegisterShorthand( "wave-pitch", "wave-pitch-amplitude, wave-pitch-phase, wave-pitch-frequency" );
+		StyleSheetSpecification::RegisterShorthand( "wave-pitch", "wave-pitch-amplitude, wave-pitch-phase, wave-pitch-frequency", Rml::Core::ShorthandType::FallThrough );
 
 		StyleSheetSpecification::RegisterProperty( "wave-yaw-amplitude", "0", false ).AddParser( "number" );
 		StyleSheetSpecification::RegisterProperty( "wave-yaw-phase", "0", false ).AddParser( "number" );
 		StyleSheetSpecification::RegisterProperty( "wave-yaw-frequency", "0", false ).AddParser( "number" );
-		StyleSheetSpecification::RegisterShorthand( "wave-yaw", "wave-yaw-amplitude, wave-yaw-phase, wave-yaw-frequency" );
+		StyleSheetSpecification::RegisterShorthand( "wave-yaw", "wave-yaw-amplitude, wave-yaw-phase, wave-yaw-frequency", Rml::Core::ShorthandType::FallThrough );
 
 		StyleSheetSpecification::RegisterProperty( "wave-roll-amplitude", "0", false ).AddParser( "number" );
 		StyleSheetSpecification::RegisterProperty( "wave-roll-phase", "0", false ).AddParser( "number" );
 		StyleSheetSpecification::RegisterProperty( "wave-roll-frequency", "0", false ).AddParser( "number" );
-		StyleSheetSpecification::RegisterShorthand( "wave-roll", "wave-roll-amplitude, wave-roll-phase, wave-roll-frequency" );
+		StyleSheetSpecification::RegisterShorthand( "wave-roll", "wave-roll-amplitude, wave-roll-phase, wave-roll-frequency", Rml::Core::ShorthandType::FallThrough );
 
 		StyleSheetSpecification::RegisterProperty( "mouse-sensitivity", "0", false ).AddParser( "number" );
 		StyleSheetSpecification::RegisterProperty( "viewangle-pitch-clamp", "0", false ).AddParser( "number" );
 		StyleSheetSpecification::RegisterProperty( "viewangle-yaw-clamp", "0", false ).AddParser( "number" );
 		StyleSheetSpecification::RegisterProperty( "viewangle-roll-clamp", "0", false ).AddParser( "number" );
-		StyleSheetSpecification::RegisterShorthand( "viewangle-clamp", "viewangle-pitch-clamp, viewangle-yaw-clamp, viewangle-roll-clamp" );
+		StyleSheetSpecification::RegisterShorthand( "viewangle-clamp", "viewangle-pitch-clamp, viewangle-yaw-clamp, viewangle-roll-clamp", Rml::Core::ShorthandType::FallThrough );
 
 		StyleSheetSpecification::RegisterProperty( "fov", "100", false ).AddParser( "number" );
 
@@ -351,19 +354,15 @@ public:
 	}
 
 	// Rocket overrides
-	virtual Element *InstanceElement( Element *parent, const String &tag, const XMLAttributes &attr ) {
+	virtual ElementPtr InstanceElement( Element *parent, const String &tag, const XMLAttributes &attr ) override {
 		UI_WorldviewWidget *worldview = __new__( UI_WorldviewWidget )( tag );
 		UI_Main::Get()->getRocket()->registerElementDefaults( worldview );
-		return worldview;
+		return ElementPtr(worldview);
 	}
 
-	virtual void ReleaseElement( Element *element ) {
+	virtual void ReleaseElement( Element *element ) override {
 		// then delete
 		__delete__( element );
-	}
-
-	virtual void Release() {
-		__delete__( this );
 	}
 
 private:

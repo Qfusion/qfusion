@@ -5,18 +5,19 @@
 
 namespace WSWUI
 {
-Video::Video( const Rocket::Core::String& tag ) : ElementImage( tag ) {
+Video::Video( const Rml::Core::String& tag ) : ElementImage( tag ) {
 
 }
 
-void Video::OnAttributeChange( const Rocket::Core::AttributeNameList& anl ) {
-	if( anl.find( "src" ) != anl.end() ) {
-		trap::R_RegisterVideo( GetAttribute<Rocket::Core::String>( "src", "" ).CString() );   // register a default video-shader, so R_RegisterPic will return this shader
+void Video::OnAttributeChange( const Rml::Core::ElementAttributes& anl ) {
+	auto it = anl.find( "src" );
+	if( it != anl.end() ) {
+		trap::R_RegisterVideo( it->second.Get<std::string>().c_str() );   // register a default video-shader, so R_RegisterPic will return this shader
 	}
 	ElementImage::OnAttributeChange( anl );
 }
 
-Rocket::Core::ElementInstancer *GetVideoInstancer( void ) {
+Rml::Core::ElementInstancer *GetVideoInstancer( void ) {
 	return __new__( GenericElementInstancer<Video> )();
 }
 

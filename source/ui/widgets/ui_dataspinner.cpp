@@ -23,13 +23,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "widgets/ui_widgets.h"
 #include "kernel/ui_main.h"
 
-#include <Rocket/Controls.h>
-#include <Rocket/Controls/DataSource.h>
+#include <RmlUi/Controls.h>
+#include <RmlUi/Controls/DataSource.h>
 
 namespace WSWUI
 {
-using namespace Rocket::Core;
-using namespace Rocket::Controls;
+using namespace Rml::Core;
+using namespace Rml::Controls;
 
 class UI_DataSpinner : public ElementFormControl
 {
@@ -45,8 +45,8 @@ public:
 
 	/// Called for every event sent to this element or one of its descendants.
 	/// @param[in] event The event to process.
-	void ProcessEvent( Event& evt ) {
-		Element::ProcessEvent( evt );
+	void ProcessDefaultAction( Event& evt ) {
+		Element::ProcessDefaultAction( evt );
 
 		if( evt.GetType() == "mousedown" ) {
 			int button = evt.GetParameter<int>( "button", 0 );
@@ -62,11 +62,11 @@ public:
 	/// Sets the current value of the form control.
 	/// @param[in] value The new value of the form control.
 	void SetValue( const String &value ) {
-		SetAttribute( "value", value.CString() );
+		SetAttribute( "value", value.c_str() );
 
 		// this calls out onchange event
-		Rocket::Core::Dictionary parameters;
-		parameters.Set( "value", value );
+		Rml::Core::Dictionary parameters;
+		parameters["value"] = value;
 		DispatchEvent( "change", parameters );
 	}
 
@@ -79,7 +79,7 @@ public:
 			return "";
 		}
 
-		return items[currentItem].CString();
+		return items[currentItem].c_str();
 	}
 
 	/// Returns if this value should be submitted with the form.
@@ -89,7 +89,7 @@ public:
 	}
 
 	// Called when attributes on the element are changed.
-	void OnAttributeChange( const Rocket::Core::AttributeNameList& changed_attributes ) {
+	void OnAttributeChange( const Rml::Core::ElementAttributes& changed_attributes ) {
 		Element::OnAttributeChange( changed_attributes );
 
 		bool reloadData = false;
@@ -116,16 +116,16 @@ public:
 private:
 	// koochi: taken from libR's DataSourceListener
 	bool parseDataSource( DataSource*& data_source, String& table_name, const String& data_source_name ) {
-		if( data_source_name.Length() == 0 ) {
+		if( data_source_name.empty() ) {
 			data_source = NULL;
 			table_name = "";
 			return false;
 		}
 
 		StringList data_source_parts;
-		Rocket::Core::StringUtilities::ExpandString( data_source_parts, data_source_name, '.' );
+		Rml::Core::StringUtilities::ExpandString( data_source_parts, data_source_name, '.' );
 
-		Rocket::Controls::DataSource* new_data_source = Rocket::Controls::DataSource::GetDataSource( data_source_parts[0].CString() );
+		Rml::Controls::DataSource* new_data_source = Rml::Controls::DataSource::GetDataSource( data_source_parts[0].c_str() );
 
 		if( data_source_parts.size() != 2 || !new_data_source ) {
 			data_source = NULL;
@@ -159,15 +159,15 @@ private:
 		DataFormatter* data_formatter = NULL;
 
 		// Process the attributes.
-		if( fields_attribute.Empty() ) {
+		if( fields_attribute.empty() ) {
 			return;
 		}
 
-		if( valuefield_attribute.Empty() ) {
-			valuefield_attribute = fields_attribute.Substring( 0, fields_attribute.Find( "," ) );
+		if( valuefield_attribute.empty() ) {
+			valuefield_attribute = fields_attribute.substr( 0, fields_attribute.find( ',' ) );
 		}
 
-		if( !data_formatter_attribute.Empty() ) {
+		if( !data_formatter_attribute.empty() ) {
 			data_formatter = DataFormatter::GetDataFormatter( data_formatter_attribute );
 		}
 
@@ -203,8 +203,8 @@ private:
 
 	void readValueFromCvar() {
 		String cvarName = GetAttribute< String >( "cvar", "" );
-		if( !cvarName.Empty() ) {
-			cvar_t* cvar = trap::Cvar_Get( cvarName.CString(), "", 0 );
+		if( !cvarName.empty() ) {
+			cvar_t* cvar = trap::Cvar_Get( cvarName.c_str(), "", 0 );
 			SetValue( cvar->string );
 
 			if( items.empty() ) {
@@ -215,7 +215,7 @@ private:
 			for( size_t i = 0; i < items.size(); i++ ) {
 				if( items[i] == cvar->string ) {
 					currentItem = i;
-					this->SetInnerRML( formatted_items[i].CString() );
+					this->SetInnerRML( formatted_items[i].c_str() );
 					break;
 				}
 			}
@@ -239,9 +239,9 @@ private:
 			currentItem = 0;
 		}
 
-		this->SetInnerRML( formatted_items[currentItem].CString() );
+		this->SetInnerRML( formatted_items[currentItem].c_str() );
 
-		SetValue( items[currentItem].CString() );
+		SetValue( items[currentItem].c_str() );
 	}
 
 	// select the previous formatted item
@@ -261,9 +261,9 @@ private:
 			currentItem = formatted_items.size() - 1;
 		}
 
-		this->SetInnerRML( formatted_items[currentItem].CString() );
+		this->SetInnerRML( formatted_items[currentItem].c_str() );
 
-		SetValue( items[currentItem].CString() );
+		SetValue( items[currentItem].c_str() );
 	}
 
 	// attributes
@@ -286,19 +286,14 @@ public:
 	/// @param[in] parent The element the new element is destined to be parented to.
 	/// @param[in] tag The tag of the element to instance.
 	/// @param[in] attributes Dictionary of attributes.
-	Rocket::Core::Element *InstanceElement( Rocket::Core::Element *parent, const String &tag, const XMLAttributes &attr ) {
-		return __new__( UI_DataSpinner )( tag, attr );
+	Rml::Core::ElementPtr InstanceElement( Rml::Core::Element *parent, const String &tag, const XMLAttributes &attr ) override {
+		return ElementPtr(__new__( UI_DataSpinner )( tag, attr ));
 	}
 
 	/// Releases an element instanced by this instancer.
 	/// @param[in] element The element to release.
-	void ReleaseElement( Rocket::Core::Element *element ) {
+	void ReleaseElement( Rml::Core::Element *element ) override {
 		__delete__( element );
-	}
-
-	/// Release the instancer.
-	void Release() {
-		__delete__( this );
 	}
 };
 

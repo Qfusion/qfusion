@@ -212,10 +212,10 @@ void UI_Main::preloadUI( void ) {
 
 	navigator = navigations[UI_CONTEXT_MAIN].front();
 
-	String l10nLocalPath( navigator->getDefaultPath().c_str() );
+	std::string l10nLocalPath( navigator->getDefaultPath().c_str() );
 	l10nLocalPath += "l10n";
-	l10nLocalPath.Erase( 0, 1 );
-	trap::L10n_LoadLangPOFile( l10nLocalPath.CString() );
+	l10nLocalPath.erase( 0, 1 );
+	trap::L10n_LoadLangPOFile( l10nLocalPath.c_str() );
 
 	// postpone displaying the document until the first valid refresh state
 	navigator->pushDocument( ui_index, false, false );
@@ -228,9 +228,9 @@ void UI_Main::preloadUI( void ) {
 		mouseMove( UI_CONTEXT_MAIN, 0, refreshState.width >> 1, refreshState.height >> 1, true, true );
 	}
 
-	if( !overlayMenuURL.Empty() ) {
+	if( !overlayMenuURL.empty() ) {
 		navigator = navigations[UI_CONTEXT_OVERLAY].front();
-		navigator->pushDocument( overlayMenuURL.CString(), false );
+		navigator->pushDocument( overlayMenuURL.c_str(), false );
 	}
 
 	rocketModule->update();
@@ -890,7 +890,7 @@ void UI_Main::M_Menu_Open_Cmd_f_( bool modal ) {
 		return;
 	}
 
-	Rocket::Core::URL url;
+	Rml::Core::URL url;
 
 	url.SetFileName( trap::Cmd_Argv( 1 ) );
 	url.SetExtension( "rml" );
@@ -899,7 +899,7 @@ void UI_Main::M_Menu_Open_Cmd_f_( bool modal ) {
 		url.SetParameter( trap::Cmd_Argv( i ), trap::Cmd_Argv( i + 1 ) );
 	}
 
-	Rocket::Core::String urlString = url.GetURL();
+	Rml::Core::String urlString = url.GetURL();
 
 	//Com_Printf( "UI_Main::M_Menu_Open_f %s\n", urlString.CString() );
 
@@ -908,7 +908,7 @@ void UI_Main::M_Menu_Open_Cmd_f_( bool modal ) {
 		return;
 	}
 
-	nav->pushDocument( urlString.CString(), modal );
+	nav->pushDocument( urlString.c_str(), modal );
 	self->showUI( true );
 }
 
@@ -942,7 +942,7 @@ void UI_Main::M_Menu_Quick_f( void ) {
 		return;
 	}
 
-	Rocket::Core::URL url;
+	Rml::Core::URL url;
 
 	url.SetFileName( trap::Cmd_Argv( 1 ) );
 	url.SetExtension( "rml" );
@@ -951,7 +951,7 @@ void UI_Main::M_Menu_Quick_f( void ) {
 		url.SetParameter( trap::Cmd_Argv( i ), trap::Cmd_Argv( i + 1 ) );
 	}
 
-	Rocket::Core::String urlString = url.GetURL();
+	Rml::Core::String urlString = url.GetURL();
 	if( urlString == self->overlayMenuURL ) {
 		return;
 	}
@@ -960,7 +960,7 @@ void UI_Main::M_Menu_Quick_f( void ) {
 		nav->popAllDocuments();
 	}
 
-	nav->pushDocument( urlString.CString(), false );
+	nav->pushDocument( urlString.c_str(), false );
 
 	self->overlayMenuURL = urlString;
 }

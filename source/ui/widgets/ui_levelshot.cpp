@@ -7,17 +7,17 @@ namespace WSWUI
 {
 struct shader_s *LevelShot::fallbackShader = NULL;
 
-LevelShot::LevelShot( const Rocket::Core::String& tag ) : ElementImage( tag ), srcProcessed( false ) {
+LevelShot::LevelShot( const Rml::Core::String& tag ) : ElementImage( tag ), srcProcessed( false ) {
 }
 
-void LevelShot::OnAttributeChange( const Rocket::Core::AttributeNameList& anl ) {
+void LevelShot::OnAttributeChange( const Rml::Core::ElementAttributes & anl ) {
 	ElementImage::OnAttributeChange( anl );
 
 	if( anl.find( "src" ) != anl.end() ) {
 		if( !srcProcessed ) {
-			Rocket::Core::String fullPath = getImagePath( GetAttribute<Rocket::Core::String>( "src", "" ) );
+			Rml::Core::String fullPath = getImagePath( GetAttribute<Rml::Core::String>( "src", "" ) );
 
-			if( !fullPath.Empty() ) {
+			if( !fullPath.empty() ) {
 				// precache fallback shader
 				if( !fallbackShader ) {
 					fallbackShader = trap::R_RegisterPic( PATH_UKNOWN_MAP_PIC );
@@ -35,7 +35,7 @@ void LevelShot::OnAttributeChange( const Rocket::Core::AttributeNameList& anl ) 
 				// precache the levelshot shader here, so that
 				// the subsequent trap::R_RegisterPic call in UI_RenderInterface::LoadTexture
 				// will return proper shader (with fallback image, etc)
-				trap::R_RegisterLevelshot( fullPath.CString(), fallbackShader, NULL );
+				trap::R_RegisterLevelshot( fullPath.c_str(), fallbackShader, NULL );
 				return;
 			}
 		} else {
@@ -44,14 +44,14 @@ void LevelShot::OnAttributeChange( const Rocket::Core::AttributeNameList& anl ) 
 	}
 }
 
-Rocket::Core::String LevelShot::getImagePath( const Rocket::Core::String& mapname ) {
-	if( mapname.Empty() ) {
+Rml::Core::String LevelShot::getImagePath( const Rml::Core::String& mapname ) {
+	if( mapname.empty() ) {
 		return "";
 	}
 	return "/levelshots/" + mapname + ".jpg";
 }
 
-Rocket::Core::ElementInstancer *GetLevelShotInstancer( void ) {
+Rml::Core::ElementInstancer *GetLevelShotInstancer( void ) {
 	return __new__( GenericElementInstancer<LevelShot> )();
 }
 }

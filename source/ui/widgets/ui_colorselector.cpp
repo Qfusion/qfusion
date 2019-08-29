@@ -8,7 +8,7 @@
 #include <string>
 #include <sstream>
 
-#include <Rocket/Controls/ElementFormControl.h>
+#include <RmlUi/Controls/ElementFormControl.h>
 
 /*
     <colorselector name="color" cvar="cg_teamALPHAcolor">
@@ -51,7 +51,7 @@
 namespace WSWUI
 {
 
-using namespace Rocket::Core;
+using namespace Rml::Core;
 
 // forward decl
 class ColorBlock;
@@ -73,21 +73,26 @@ class ColorBlock : public Element
 public:
 	ColorBlock( const String &tag, const XMLAttributes &attr ) : Element( tag ), 
 		selector( nullptr ), cvar( nullptr ), color(), hasRGB( false ) {
-		// grab the rgb attribute,
-		String attrRgb = attr.Get<String>( "rgb", "" );
-		if( !attrRgb.Empty() ) {
+		setColor( "" );
+		hasRGB = false;
+			
+		// grab the rgb attribute
+		auto attrRgbIt = attr.find( "rgb" );
+		if( attrRgbIt == attr.end() ) {
+			return;
+		}
+
+		auto attrRgb = attrRgbIt->second.Get<std::string>();
+		if( !attrRgb.empty() ) {
 			setColor( attrRgb );
 			hasRGB = true;
-		} else {
-			setColor( "" );
-			hasRGB = false;
 		}
 	}
 
 	virtual ~ColorBlock();
 
 	// Element methods
-	virtual void ProcessEvent( Event &event );
+	virtual void ProcessDefaultAction( Event &event ) override;
 
 	// Custom methods
 	void setSelector( ColorSelector *_selector );
@@ -95,9 +100,9 @@ public:
 	const String &getColor( void ) { return color; }
 
 	// value can be "r g b" or #hex
-	void setColor( const String &c ) {
+	void setColor( const std::string &c ) {
 		// this is the ultimate end case when we dont even have cvar associated
-		if( !c.Length() ) {
+		if( c.empty() ) {
 			color = DEFAULT_COLOR;
 			SetProperty( "background", rgb2hex( DEFAULT_COLOR ).c_str() );
 			return;
@@ -105,8 +110,8 @@ public:
 
 		// we want to pass #hex as background property and
 		// r g b as the value passed to warsow
-		String hex = ( c[0] == '#' ? c : rgb2hex( c.CString() ).c_str() );
-		color = ( c[0] == '#' ? hex2rgb( c.CString() ).c_str() : c );
+		String hex = ( c[0] == '#' ? c : rgb2hex( c.c_str() ).c_str() );
+		color = ( c[0] == '#' ? hex2rgb( c.c_str() ).c_str() : c );
 
 		SetProperty( "background", hex );
 	}
@@ -125,13 +130,18 @@ const char *ColorBlock::DEFAULT_COLOR = "85 86 102";
 //===================================================
 
 // Main colorselector widget
-class ColorSelector : public Rocket::Controls::ElementFormControl
+class ColorSelector : public Rml::Controls::ElementFormControl
 {
 public:
 	ColorSelector( const String &tag, const XMLAttributes &attr ) : ElementFormControl( tag ), cvar( 0 ) {
-		String cvarName = attr.Get<String>( "cvar", "" );
-		if( cvarName.Length() ) {
-			cvar = trap::Cvar_Get( cvarName.CString(), "", 0 );
+		auto cvarNameIt = attr.find( "cvar" );
+		if( cvarNameIt == attr.end() ) {
+			return;
+		}
+		
+		auto cvarName = cvarNameIt->second.Get<std::string>();
+		if( !cvarName.empty() ) {
+			cvar = trap::Cvar_Get( cvarName.c_str(), "", 0 );
 		}
 	}
 
@@ -209,7 +219,7 @@ public:
 
 	// Element method
 	virtual void OnChildAdd( Element* child ) {
-		Rocket::Controls::ElementFormControl::OnChildAdd( child );
+		Rml::Controls::ElementFormControl::OnChildAdd( child );
 
 		ColorBlock *cb = dynamic_cast<ColorBlock*>( child );
 		if( cb ) {
@@ -252,42 +262,32 @@ private:
 
 // ColorBlock implementation after ColorSelector
 ColorBlock::~ColorBlock() {
-	if( selector ) {
-		selector->RemoveReference();
-	}
 	selector = nullptr;
 }
 
 // Element methods
-void ColorBlock::ProcessEvent( Event &event ) {
+void ColorBlock::ProcessDefaultAction( Event &event ) {
 	// TODO: allow selection via tab/arrows/enter/space
 
 	// FIXME: if there happens to be more colorblocks with the
 	// same color, doing this on the latter ones will just select
 	// the first one with matching color..
-	if( event.GetType() == "click" && selector ) {
-		// selector->SetValue( color );
+	if( event.GetType() == "click" && selector != nullptr ) {
 		selector->selectColorBlock( this );
 		selector->setValueDirect( color );
 	}
 
-	Element::ProcessEvent( event );
+	Element::ProcessDefaultAction( event );
 }
 
 void ColorBlock::setSelector( ColorSelector *_selector ) {
-	if( selector ) {
-		selector->RemoveReference();
-	}
 	selector = _selector;
-	if( selector ) {
-		selector->AddReference();
-	}
 
 	// if attributes didnt specify color, see if we can fetch the
 	// associated cvar from the parent
 	if( !hasRGB ) {
 		const char *value;
-		cvar = selector ? selector->getCvar() : 0;
+		cvar = selector ? _selector->getCvar() : 0;
 		value = ( cvar && cvar->string ) ? cvar->string : "";
 		setColor( value );
 	}

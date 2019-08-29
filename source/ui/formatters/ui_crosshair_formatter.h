@@ -21,21 +21,21 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __UI_CROSSHAIR_FORMATTER_H__
 #define __UI_CROSSHAIR_FORMATTER_H__
 
-#include <Rocket/Controls/DataFormatter.h>
+#include <RmlUi/Controls/DataFormatter.h>
 
 namespace WSWUI
 {
 
-class CrosshairFormatter : public Rocket::Controls::DataFormatter
+class CrosshairFormatter : public Rml::Controls::DataFormatter
 {
 public:
-	CrosshairFormatter() : Rocket::Controls::DataFormatter( "crosshair" ) {}
+	CrosshairFormatter() : Rml::Controls::DataFormatter( "crosshair" ) {}
 
 	// CrosshairDataSource contains the reference to the .tga crosshair images
 	// this formatter shows them into an <img> html tag
-	void FormatData( String& formatted_data, const StringList& raw_data ) {
+	void FormatData( String& formatted_data, const Rml::Core::StringList& raw_data ) {
 		formatted_data = "";
-		for( StringList::const_iterator it = raw_data.begin(); it != raw_data.end(); ++it )
+		for( Rml::Core::StringList::const_iterator it = raw_data.begin(); it != raw_data.end(); ++it )
 			formatted_data += " <img src=\"" + ( *it ) + "\" width=\"32\" height=\"32\" />";
 	}
 };

@@ -6,14 +6,14 @@
 #include "widgets/ui_widgets.h"
 #include "widgets/ui_optionsform.h"
 
-#include <Rocket/Controls.h>
+#include <RmlUi/Controls.h>
 
 namespace WSWUI
 {
 
 // we use this alot
-typedef Rocket::Core::Element Element;
-typedef Rocket::Controls::ElementFormControl ElementFormControl;
+typedef Rml::Core::Element Element;
+typedef Rml::Controls::ElementFormControl ElementFormControl;
 
 //===================================
 
@@ -52,39 +52,39 @@ const CvarStorage::CvarMap &CvarStorage::getMap() {
 //================================================
 
 // Event listener for controls, sets the corresponding cvar to controls new value
-class CvarChangeListener : public Rocket::Core::EventListener
+class CvarChangeListener : public Rml::Core::EventListener
 {
 public:
-	CvarChangeListener() : Rocket::Core::EventListener() {}
+	CvarChangeListener() : Rml::Core::EventListener() {}
 
 	// helper to set cvar value from element, TODO: refactor out of this class
 	static void setCvar( Element *elem ) {
 		ElementFormControl *target = dynamic_cast<ElementFormControl*>( elem );
 		if( target != 0 ) {
-			String cvar = target->GetAttribute<String>( "cvar", "" );
-			String type = target->GetAttribute<String>( "type", "" );
+			std::string cvar = target->GetAttribute<std::string>( "cvar", "" );
+			std::string type = target->GetAttribute<std::string>( "type", "" );
 
 			// TODO: add support for <select> widgets
 			if( type == "checkbox" || type == "radio" ) {
 				float fvalue = target->HasAttribute( "checked" ) ? 1.0 : 0.0;
-				trap::Cvar_SetValue( cvar.CString(), fvalue );
+				trap::Cvar_SetValue( cvar.c_str(), fvalue );
 
 				//Com_Printf("onChange: Cvar_Set \"%s\" \"%g\"\n", cvar.CString(), fvalue );
 			} else if( type == "range" ) {
-				float fvalue = atof( target->GetValue().CString() );
-				trap::Cvar_SetValue( cvar.CString(), fvalue );
+				float fvalue = atof( target->GetValue().c_str() );
+				trap::Cvar_SetValue( cvar.c_str(), fvalue );
 
 				//Com_Printf("onChange: Cvar_Set \"%s\" \"%g\"\n", cvar.CString(), fvalue );
 			} else {
-				String value = target->GetValue();
-				trap::Cvar_Set( cvar.CString(), value.CString() );
+				std::string value = target->GetValue();
+				trap::Cvar_Set( cvar.c_str(), value.c_str() );
 
 				//Com_Printf("onChange: Cvar_Set \"%s\" \"%s\"\n", cvar.CString(), value.CString() );
 			}
 		}
 	}
 
-	void ProcessEvent( Rocket::Core::Event &ev ) {
+	void ProcessEvent( Rml::Core::Event &ev ) {
 		if( ev.GetType() == "change" ) {
 			setCvar( ev.GetTargetElement() );
 		}
@@ -94,7 +94,7 @@ public:
 //================================================
 
 /*
-    OptionsForm is derived from regular Rocket::Controls::Form and it has the addition of
+    OptionsForm is derived from regular Rml::Controls::Form and it has the addition of
     scanning its children for elements that have attribute called "cvar", which ties
     the control's value to the cvars value.
 
@@ -123,8 +123,8 @@ public:
 */
 
 // Ctor
-OptionsForm::OptionsForm( const String &tag )
-	: Rocket::Controls::ElementForm( tag ), cvarListener( __new__( CvarChangeListener ) )
+OptionsForm::OptionsForm( const std::string &tag )
+	: Rml::Controls::ElementForm( tag ), cvarListener( __new__( CvarChangeListener ) )
 {}
 
 // Dtor
@@ -135,18 +135,18 @@ OptionsForm::~OptionsForm() {
 }
 
 // Rocket Form
-void OptionsForm::ProcessEvent( Rocket::Core::Event &ev ) {
+void OptionsForm::ProcessDefaultAction( Rml::Core::Event &ev ) {
 	// we want to handle onsubmit
 	// Com_Printf("OptionsForm::ProcessEvent %s\n", ev.GetType().CString() );
 
-	Rocket::Controls::ElementForm::ProcessEvent( ev );
+	Rml::Controls::ElementForm::ProcessDefaultAction( ev );
 }
 
 // predicate for foreachChildren
 namespace
 {
 
-bool is_realtime_control( Rocket::Core::Element *elem ) {
+bool is_realtime_control( Rml::Core::Element *elem ) {
 	return ( elem->GetAttribute<int>( "realtime", 0 ) != 0 );
 }
 
@@ -155,22 +155,22 @@ struct fetch_cvar_value {
 	inline void operator()( Element *elem ) {
 		ElementFormControl *control = dynamic_cast<ElementFormControl*>( elem );
 		if( control != 0 && elem->HasAttribute( "cvar" ) ) {
-			String cvar = elem->GetAttribute<String>( "cvar", "" );
-			if( cvar.Length() ) {
+			std::string cvar = elem->GetAttribute<std::string>( "cvar", "" );
+			if( !cvar.empty() ) {
 				// if this is checkbox/radio, we need to set/reset the checked attribute
-				String type = control->GetAttribute<String>( "type", "" );
+				std::string type = control->GetAttribute<std::string>( "type", "" );
 				if( type == "checkbox" || type == "radio" ) {
-					bool checked = trap::Cvar_Value( cvar.CString() ) == 1 ? true : false;
+					bool checked = trap::Cvar_Value( cvar.c_str() ) == 1 ? true : false;
 					if( checked ) {
 						control->RemoveAttribute( "checked" );
-						control->SetAttribute<String>( "checked", "1" );
+						control->SetAttribute<std::string>( "checked", "1" );
 					} else {
 						control->RemoveAttribute( "checked" );
 					}
 
 					//Com_Printf( "Restored %s to %d\n", cvar.CString(), checked ? 1 : 0 );
 				} else {
-					control->SetValue( trap::Cvar_String( cvar.CString() ) );
+					control->SetValue( trap::Cvar_String( cvar.c_str() ) );
 
 					//Com_Printf("Restored %s to %s\n", cvar.CString(), control->GetValue().CString() );
 				}
@@ -192,14 +192,14 @@ struct set_cvar_value {
 // attach cvar listener to element (if realtime) and add to storage
 // used in storeOptions (initial loading of form)
 struct attach_and_add {
-	Rocket::Core::EventListener *listener;
+	Rml::Core::EventListener *listener;
 	CvarStorage &cvars;
 
-	attach_and_add( Rocket::Core::EventListener *_listener, CvarStorage &_cvars )
+	attach_and_add( Rml::Core::EventListener *_listener, CvarStorage &_cvars )
 		: listener( _listener ), cvars( _cvars )
 	{}
 
-	inline void operator()( Rocket::Core::Element *elem ) {
+	inline void operator()( Rml::Core::Element *elem ) {
 		ElementFormControl *control = dynamic_cast<ElementFormControl*>( elem );
 		if( control != 0 && control->HasAttribute( "cvar" ) ) {
 			if( is_realtime_control( control ) ) {
@@ -209,21 +209,21 @@ struct attach_and_add {
 			}
 
 			// add the elements to storage and set the elements value
-			String cvar = control->GetAttribute<String>( "cvar", "" );
-			cvars.addCvar( cvar.CString() );
+			std::string cvar = control->GetAttribute<std::string>( "cvar", "" );
+			cvars.addCvar( cvar.c_str() );
 
 			// checkbox / radio type setup
-			String type = control->GetAttribute<String>( "type", "" );
+			std::string type = control->GetAttribute<std::string>( "type", "" );
 			if( type == "checkbox" || type == "radio" ) {
-				bool checked = trap::Cvar_Value( cvar.CString() ) == 1 ? true : false;
+				bool checked = trap::Cvar_Value( cvar.c_str() ) == 1 ? true : false;
 				if( checked ) {
 					control->RemoveAttribute( "checked" );
-					control->SetAttribute<String>( "checked", "1" );
+					control->SetAttribute<std::string>( "checked", "1" );
 				} else {
 					control->RemoveAttribute( "checked" );
 				}
 			} else {
-				control->SetValue( trap::Cvar_String( cvar.CString() ) );
+				control->SetValue( trap::Cvar_String( cvar.c_str() ) );
 			}
 
 			// Com_Printf("attach_and_add %s\n", elem->GetTagName().CString() );
@@ -263,7 +263,7 @@ void OptionsForm::applyOptions() {
 
 //====================================================
 
-Rocket::Core::ElementInstancer *GetOptionsFormInstancer( void ) {
+Rml::Core::ElementInstancer *GetOptionsFormInstancer( void ) {
 	return __new__( GenericElementInstancer<OptionsForm> )();
 }
 

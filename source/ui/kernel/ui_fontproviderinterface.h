@@ -6,48 +6,48 @@
 #ifndef UI_FONTPROVIDERINTERFACE_H_
 #define UI_FONTPROVIDERINTERFACE_H_
 
-#include <Rocket/Core/FontProviderInterface.h>
+#include <RmlUi/Core/FontSubsystemInterface.h>
 #include "kernel/ui_polyallocator.h"
 
 namespace WSWUI
 {
 
-class UI_FontProviderInterface : public Rocket::Core::FontProviderInterface
+class UI_FontProviderInterface : public Rml::Core::FontSubsystemInterface
 {
 public:
-	UI_FontProviderInterface( Rocket::Core::RenderInterface *render_interface );
+	UI_FontProviderInterface( Rml::Core::RenderInterface *render_interface );
 	virtual ~UI_FontProviderInterface();
 
-	virtual Rocket::Core::FontHandle GetFontFaceHandle( const String& family, const String& charset, Rocket::Core::Font::Style style, Rocket::Core::Font::Weight weight, int size );
+	virtual Rml::Core::FontFaceHandle GetFontFaceHandle( const std::string& family, const std::string& charset, Rml::Core::Style::FontStyle style, Rml::Core::Style::FontWeight weight, int size ) override;
 
-	virtual int GetCharacterWidth( Rocket::Core::FontHandle ) const;
+	virtual int GetCharacterWidth( Rml::Core::FontFaceHandle ) const override;
 
-	virtual int GetSize( Rocket::Core::FontHandle ) const;
+	virtual int GetSize( Rml::Core::FontFaceHandle ) const override;
 
-	virtual int GetXHeight( Rocket::Core::FontHandle ) const;
+	virtual int GetXHeight( Rml::Core::FontFaceHandle ) const override;
 
-	virtual int GetLineHeight( Rocket::Core::FontHandle ) const;
+	virtual int GetLineHeight( Rml::Core::FontFaceHandle ) const override;
 
-	virtual int GetBaseline( Rocket::Core::FontHandle ) const;
+	virtual int GetBaseline( Rml::Core::FontFaceHandle ) const override;
 
-	virtual int GetUnderline( Rocket::Core::FontHandle, int *thickness ) const;
+	virtual float GetUnderline( Rml::Core::FontFaceHandle, float *thickness ) const override;
 
-	virtual int GetStringWidth( Rocket::Core::FontHandle, const Rocket::Core::WString & string, Rocket::Core::word prior_character = 0 );
+	virtual int GetStringWidth( Rml::Core::FontFaceHandle, const Rml::Core::WString & string, Rml::Core::word prior_character = 0 ) override;
 
-	virtual int GenerateString( Rocket::Core::FontHandle, Rocket::Core::GeometryList & geometry, const Rocket::Core::WString & string, const Rocket::Core::Vector2f & position, const Rocket::Core::Colourb & colour ) const;
+	virtual int GenerateString( Rml::Core::FontFaceHandle, Rml::Core::GeometryList & geometry, const Rml::Core::WString & string, const Rml::Core::Vector2f & position, const Rml::Core::Colourb & colour, int layer_configuration ) const override;
 
-	Rocket::Core::RenderInterface *GetRenderInterface() { return render_interface; }
+	Rml::Core::RenderInterface *GetRenderInterface() { return render_interface; }
 
 	static void DrawCharCallback( int x, int y, int w, int h, float s1, float t1, float s2, float t2, const vec4_t color, const struct shader_s *shader );
 
 private:
-	Rocket::Core::RenderInterface *render_interface;
+	Rml::Core::RenderInterface *render_interface;
 
-	typedef std::map< Rocket::Core::String, Rocket::Core::Texture * > TextureMap;
+	typedef std::map< std::string, Rml::Core::Texture * > TextureMap;
 
 	const struct shader_s *capture_shader_last;
-	Rocket::Core::GeometryList *capture_geometry;
-	Rocket::Core::Texture *capture_texture_last;
+	Rml::Core::GeometryList *capture_geometry;
+	Rml::Core::Texture *capture_texture_last;
 
 	TextureMap textures;
 };

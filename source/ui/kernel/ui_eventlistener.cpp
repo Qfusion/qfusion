@@ -9,16 +9,16 @@
 #include "kernel/ui_common.h"
 #include "kernel/ui_main.h"
 #include "kernel/ui_eventlistener.h"
-#include <Rocket/Core/Input.h>
-#include <Rocket/Controls.h>
+#include <RmlUi/Core/Input.h>
+#include <RmlUi/Controls.h>
 
 namespace WSWUI
 {
 
-static const String SOUND_HOVER = "sound-hover";
-static const String SOUND_CLICK = "sound-click";
+static const std::string SOUND_HOVER = "sound-hover";
+static const std::string SOUND_CLICK = "sound-click";
 
-using namespace Rocket::Core;
+using namespace Rml::Core;
 
 BaseEventListener::BaseEventListener() {
 }
@@ -27,7 +27,7 @@ BaseEventListener::~BaseEventListener() {
 }
 
 void BaseEventListener::ProcessEvent( Event &event ) {
-	if( event.GetPhase() != Rocket::Core::Event::PHASE_TARGET ) {
+	if( event.GetPhase() != Rml::Core::EventPhase::Target ) {
 		return;
 	}
 
@@ -43,7 +43,7 @@ void BaseEventListener::ProcessEvent( Event &event ) {
 
 void BaseEventListener::StartTargetPropertySound( Element *target, const String &property ) {
 	String sound = target->GetProperty<String>( property );
-	if( sound.Empty() ) {
+	if( sound.empty() ) {
 		return;
 	}
 
@@ -60,12 +60,12 @@ void BaseEventListener::StartTargetPropertySound( Element *target, const String 
 		}
 	}
 
-	trap::S_StartLocalSound( trap::S_RegisterSound( sound.CString() + 1 ), 0, 1.0 );
+	trap::S_StartLocalSound( trap::S_RegisterSound( sound.c_str() + 1 ), 0, 1.0 );
 }
 
 static BaseEventListener ui_baseEventListener;
 
-Rocket::Core::EventListener * GetBaseEventListener( void ) {
+Rml::Core::EventListener * GetBaseEventListener( void ) {
 	return &ui_baseEventListener;
 }
 
@@ -77,13 +77,13 @@ public:
 	virtual void ProcessEvent( Event &event ) {
 		if( UI_Main::Get()->debugOn() ) {
 			Com_Printf( "EventListener: Event %s, target %s, phase %i\n",
-						event.GetType().CString(),
-						event.GetTargetElement()->GetTagName().CString(),
+						event.GetType().c_str(),
+						event.GetTargetElement()->GetTagName().c_str(),
 						event.GetPhase() );
 		}
 
 		if( event.GetType() == "keydown" &&
-			( event.GetPhase() == Rocket::Core::Event::PHASE_TARGET || event.GetPhase() == Rocket::Core::Event::PHASE_BUBBLE ) ) {
+			( event.GetPhase() ==Rml::Core::EventPhase::Target || event.GetPhase() == Rml::Core::EventPhase::Bubble ) ) {
 			int key = event.GetParameter<int>( "key_identifier", 0 );
 			ElementDocument *document = event.GetTargetElement()->GetOwnerDocument();
 			WSWUI::Document *ui_document = static_cast<WSWUI::Document *>( document->GetScriptObject() );
@@ -100,22 +100,22 @@ public:
 					}
 				}
 				event.StopPropagation();
-			} else if( key == Rocket::Core::Input::KI_BROWSER_BACK || key == Rocket::Core::Input::KI_BACK ) {
+			} else if( key == Rml::Core::Input::KI_BROWSER_BACK || key == Rml::Core::Input::KI_BACK ) {
 				// act as history.back()
 				if( stack && stack->hasAtLeastTwoDocuments() ) {
 					stack->popDocument();
 					event.StopPropagation();
 				}
 			}
-		} else if( event.GetType() == "change" && ( event.GetPhase() == Rocket::Core::Event::PHASE_BUBBLE ) ) {
+		} else if( event.GetType() == "change" && ( event.GetPhase() == Rml::Core::EventPhase::Bubble ) ) {
 			bool linebreak = event.GetParameter<int>( "linebreak", 0 ) != 0;
 			if( linebreak ) {
 				// form submission
 				String inputType;
 				Element *target = event.GetTargetElement();
-				Rocket::Controls::ElementFormControl *input = dynamic_cast<Rocket::Controls::ElementFormControl *>( target );
+				Rml::Controls::ElementFormControl *input = dynamic_cast<Rml::Controls::ElementFormControl *>( target );
 
-				if( event.GetPhase() != Rocket::Core::Event::PHASE_BUBBLE ) {
+				if( event.GetPhase() != Rml::Core::EventPhase::Bubble ) {
 					return;
 				}
 				if( input == NULL ) {
@@ -139,9 +139,9 @@ public:
 
 				// find the parent form element
 				Element *parent = target->GetParentNode();
-				Rocket::Controls::ElementForm *form = NULL;
+				Rml::Controls::ElementForm *form = NULL;
 				while( parent ) {
-					form = dynamic_cast<Rocket::Controls::ElementForm *>( parent );
+					form = dynamic_cast<Rml::Controls::ElementForm *>( parent );
 					if( form != NULL ) {
 						// not a form, go up the tree
 						break;
@@ -162,8 +162,8 @@ public:
 				ElementList controls;
 				parent->GetElementsByTagName( controls, "input" );
 				for( size_t i = 0; i < controls.size(); i++ ) {
-					Rocket::Controls::ElementFormControl *control =
-						dynamic_cast< Rocket::Controls::ElementFormControl* >( controls[i] );
+					Rml::Controls::ElementFormControl *control =
+						dynamic_cast< Rml::Controls::ElementFormControl* >( controls[i] );
 
 					if( !control ) {
 						continue;
@@ -191,7 +191,7 @@ public:
 				}
 
 				// finally submit the form
-				form->Submit( submit->GetAttribute< Rocket::Core::String >( "name", "" ), submit->GetAttribute< Rocket::Core::String >( "value", "" ) );
+				form->Submit( submit->GetAttribute< Rml::Core::String >( "name", "" ), submit->GetAttribute< Rml::Core::String >( "value", "" ) );
 			}
 		}
 	}
@@ -209,19 +209,19 @@ class UI_SoftKeyboardListener : public EventListener
 {
 public:
 	virtual void ProcessEvent( Event &event ) {
-		if( event.GetPhase() != Rocket::Core::Event::PHASE_TARGET ) {
+		if( event.GetPhase() != Rml::Core::EventPhase::Target ) {
 			return;
 		}
 
-		Rocket::Controls::ElementFormControl *input =
-			dynamic_cast< Rocket::Controls::ElementFormControl * >( event.GetTargetElement() );
+		Rml::Controls::ElementFormControl *input =
+			dynamic_cast< Rml::Controls::ElementFormControl * >( event.GetTargetElement() );
 		if( !input || input->IsDisabled() ) {
 			return;
 		}
 
 		String inputType = input->GetAttribute< String >( "type", "" );
 		if( ( inputType != "text" ) && ( inputType != "password" ) &&
-			!dynamic_cast< Rocket::Controls::ElementFormControlTextArea * >( input ) ) {
+			!dynamic_cast< Rml::Controls::ElementFormControlTextArea * >( input ) ) {
 			return;
 		}
 

@@ -173,7 +173,7 @@ void DemosDataSource::UpdateFrame( void ) {
 	}
 }
 
-void DemosDataSource::GetRow( StringList& row, const String& table, int row_index, const StringList& columns ) {
+void DemosDataSource::GetRow( Rml::Core::StringList& row, const std::string& table, int row_index, const Rml::Core::StringList& columns ) {
 	if( demoPaths.find( table ) == demoPaths.end() ) {
 		return;
 	}
@@ -185,8 +185,8 @@ void DemosDataSource::GetRow( StringList& row, const String& table, int row_inde
 		return;
 	}
 
-	for( StringList::const_iterator it = columns.begin(); it != columns.end(); ++it ) {
-		const Rocket::Core::String &col = *it;
+	for( Rml::Core::StringList::const_iterator it = columns.begin(); it != columns.end(); ++it ) {
+		const std::string &col = *it;
 
 		if( col == FIELD_NAME ) {
 			row.push_back( demoPath.GetItemName( row_index ).c_str() );
@@ -198,14 +198,14 @@ void DemosDataSource::GetRow( StringList& row, const String& table, int row_inde
 	}
 }
 
-int DemosDataSource::GetNumRows( const String& table ) {
+int DemosDataSource::GetNumRows( const std::string& table ) {
 	// table name represents a relative demo path with a trailing "/":
 	// "/" represents the root path inside the demo directory
 	// "tutorials/" represents tutorials subdirectory, etc
 
 	// if we haven't yet traversed the queried path, do it now
 	if( demoPaths.find( table ) == demoPaths.end() ) {
-		std::string pathStr( table.CString() );
+		std::string pathStr( table.c_str() );
 
 		// chop off the trailing "/"
 		if( pathStr.find_last_of( "/" ) + 1 == pathStr.length() ) {
@@ -216,7 +216,7 @@ int DemosDataSource::GetNumRows( const String& table ) {
 		demoPaths[table] = DemosDataSourceHelper( pathStr, demoExtension );
 	}
 
-	if( !lastQueryTable.Empty() ) {
+	if( !lastQueryTable.empty() ) {
 		// reset cache on directory change
 		if( lastQueryTable != table ) {
 			demoPaths.erase( demoPaths.find( lastQueryTable ) );

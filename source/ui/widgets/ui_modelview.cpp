@@ -17,7 +17,7 @@
 namespace WSWUI
 {
 
-using namespace Rocket::Core;
+using namespace Rml::Core;
 
 // forward-declare the instancer for keyselects
 class UI_ModelviewWidgetInstancer;
@@ -108,7 +108,7 @@ public:
 			entity.origin[0] = xoffset;
 		}
 
-		Rocket::Core::Vector2f offset = GetAbsoluteOffset( Rocket::Core::Box::CONTENT );
+		Rml::Core::Vector2f offset = GetAbsoluteOffset( Rml::Core::Box::CONTENT );
 		refdef.x = offset.x;
 		refdef.y = offset.y;
 
@@ -133,25 +133,27 @@ public:
 		time = curtime;
 	}
 
-	virtual void OnPropertyChange( const Rocket::Core::PropertyNameList& changed_properties ) {
+	virtual void OnPropertyChange( const Rml::Core::PropertyIdSet& changed_properties ) {
 		Element::OnPropertyChange( changed_properties );
 
-		for( Rocket::Core::PropertyNameList::const_iterator it = changed_properties.begin(); it != changed_properties.end(); ++it ) {
+		// LATER
+#if 0
+		for( auto it = changed_properties.begin(); it != changed_properties.end(); ++it ) {
 			if( *it == "model-modelpath" ) {
-				modelName = GetProperty( *it )->Get<Rocket::Core::String>();
+				modelName = GetProperty( *it )->Get<Rml::Core::String>();
 				Initialized = false;
-			} else if( *it == "model-skinpath" && GetProperty( *it )->Get<Rocket::Core::String>().Length() > 0 ) {
-				skinName = GetProperty( *it )->Get<Rocket::Core::String>();
+			} else if( *it == "model-skinpath" && GetProperty( *it )->Get<Rml::Core::String>().Length() > 0 ) {
+				skinName = GetProperty( *it )->Get<Rml::Core::String>();
 				Initialized = false;
 			} else if( *it == "model-scale" ) {
 				entity.scale = GetProperty( *it )->Get<float>();
 			} else if( *it == "model-outline-height" ) {
 				entity.outlineHeight = GetProperty( *it )->Get<float>();
 			} else if( *it == "model-outline-color" ) {
-				Rocket::Core::Colourb color = GetProperty( *it )->Get<Rocket::Core::Colourb>();
+				Rml::Core::Colourb color = GetProperty( *it )->Get<Rml::Core::Colourb>();
 				Vector4Set( entity.outlineRGBA, color.red, color.green, color.blue, color.alpha );
 			} else if( *it == "model-shader-color" ) {
-				Rocket::Core::Colourb color = GetProperty( *it )->Get<Rocket::Core::Colourb>();
+				Rml::Core::Colourb color = GetProperty( *it )->Get<Rml::Core::Colourb>();
 				int shaderColor = COM_ValidatePlayerColor( COLOR_RGB( color.red, color.green, color.blue ) );
 				Vector4Set( entity.shaderRGBA, COLOR_R( shaderColor ), COLOR_G( shaderColor ), COLOR_B( shaderColor ), color.alpha );
 			} else if( *it == "model-fov-x" ) {
@@ -188,9 +190,10 @@ public:
 			} else if( *it == "model-rotation-speed-roll" ) {
 				anglespeed[2] = GetProperty( *it )->Get<float>();
 			} else if( *it == "model-rotation-autocenter" ) {
-				AutoRotationCenter = ( GetProperty( *it )->Get<Rocket::Core::String>().ToLower() == "true" );
+				AutoRotationCenter = ( GetProperty( *it )->Get<Rml::Core::String>().ToLower() == "true" );
 			}
 		}
+#endif
 
 		if( std::fabs( refdef.width - GetClientWidth() ) >= MODELVIEW_EPSILON || std::fabs( refdef.height - GetClientHeight() ) >= MODELVIEW_EPSILON ) {
 			RecomputePosition = true;
@@ -228,7 +231,7 @@ public:
 	}
 
 	// Called for every event sent to this element or one of its descendants.
-	void ProcessEvent( Rocket::Core::Event& evt ) {
+	void ProcessEvent( Rml::Core::Event& evt ) {
 		if( evt == "invalidate" ) {
 			Initialized = false;
 			if( BonePoses ) {
@@ -249,13 +252,13 @@ private:
 		BonePoses = __new__( UI_BonePoses )();
 		RecomputePosition = true;
 
-		if( modelName.Empty() ) {
+		if( modelName.empty() ) {
 			entity.model = NULL;
 			return;
 		}
 
-		entity.model = trap::R_RegisterModel( modelName.CString() );
-		entity.customSkin = trap::R_RegisterSkinFile( skinName.CString() );
+		entity.model = trap::R_RegisterModel( modelName.c_str() );
+		entity.customSkin = trap::R_RegisterSkinFile( skinName.c_str() );
 	}
 
 	void ComputePosition() {
@@ -264,7 +267,7 @@ private:
 		}
 
 		// refdef setup
-		Rocket::Core::Vector2f box = GetBox().GetSize( Rocket::Core::Box::CONTENT );
+		Rml::Core::Vector2f box = GetBox().GetSize( Rml::Core::Box::CONTENT );
 		refdef.x = 0;
 		refdef.y = 0;
 		refdef.width = box.x;
@@ -327,19 +330,15 @@ public:
 	}
 
 	// Rocket overrides
-	virtual Element *InstanceElement( Element *parent, const String &tag, const XMLAttributes &attr ) {
+	virtual ElementPtr InstanceElement( Element *parent, const String &tag, const XMLAttributes &attr ) override {
 		UI_ModelviewWidget *modelview = __new__( UI_ModelviewWidget )( tag );
 		UI_Main::Get()->getRocket()->registerElementDefaults( modelview );
-		return modelview;
+		return ElementPtr( modelview );
 	}
 
-	virtual void ReleaseElement( Element *element ) {
+	virtual void ReleaseElement( Element *element ) override {
 		// then delete
 		__delete__( element );
-	}
-
-	virtual void Release() {
-		__delete__( this );
 	}
 
 private:

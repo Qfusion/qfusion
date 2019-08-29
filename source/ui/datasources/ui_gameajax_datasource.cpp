@@ -24,8 +24,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define GAMEAJAX_SOURCE "gameajax"
 
-using namespace Rocket::Core;
-using namespace Rocket::Controls;
+using namespace Rml::Core;
+using namespace Rml::Controls;
 
 namespace WSWUI
 {
@@ -54,7 +54,7 @@ public:
 		rows.push_back( row );
 	}
 
-	void GetRocketRow( StringList &rocketRow, int row_index, const StringList& cols ) const {
+	void GetRocketRow( Rml::Core::StringList &rocketRow, int row_index, const Rml::Core::StringList& cols ) const {
 		RowsList::const_iterator r_it = rows.begin();
 		std::advance( r_it, row_index );
 		if( r_it == rows.end() ) {
@@ -63,8 +63,8 @@ public:
 		}
 
 		const Row &row = *r_it;
-		for( StringList::const_iterator it = cols.begin(); it != cols.end(); ++it ) {
-			Row::const_iterator v = row.find( ( *it ).CString() );
+		for( Rml::Core::StringList::const_iterator it = cols.begin(); it != cols.end(); ++it ) {
+			Row::const_iterator v = row.find( ( *it ).c_str() );
 			rocketRow.push_back( v == row.end() ? "" : v->second.c_str() );
 		}
 	}
@@ -107,8 +107,8 @@ GameAjaxDataSource::~GameAjaxDataSource( void ) {
 	}
 }
 
-void GameAjaxDataSource::GetRow( StringList &row, const String &table, int row_index, const StringList& cols ) {
-	DynTableList::const_iterator it = tableList.find( table.CString() );
+void GameAjaxDataSource::GetRow( Rml::Core::StringList &row, const String &table, int row_index, const Rml::Core::StringList& cols ) {
+	DynTableList::const_iterator it = tableList.find( table.c_str() );
 	if( it == tableList.end() ) {
 		return;
 	}
@@ -122,7 +122,7 @@ int GameAjaxDataSource::GetNumRows( const String &tableName ) {
 	trap::GetBaseServerURL( baseURL, sizeof( baseURL ) );
 
 	DynTable *table, *oldTable = NULL;
-	DynTableList::iterator t_it = tableList.find( tableName.CString() );
+	DynTableList::iterator t_it = tableList.find( tableName.c_str() );
 
 	if( t_it != tableList.end() ) {
 		oldTable = t_it->second->table;
@@ -139,7 +139,7 @@ int GameAjaxDataSource::GetNumRows( const String &tableName ) {
 
 	// trigger AJAX-style query to server
 
-	std::string stdTableName = tableName.CString();
+	std::string stdTableName = tableName.c_str();
 	table = __new__( DynTable )( stdTableName, now, baseURL );
 
 	// fetch list now and notify listeners when we get the reply in async manner

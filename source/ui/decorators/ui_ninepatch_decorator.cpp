@@ -24,7 +24,7 @@
 
 namespace WSWUI
 {
-using namespace Rocket::Core;
+using namespace Rml::Core;
 
 class NinePatchDecorator : public Decorator
 {
@@ -37,7 +37,8 @@ class NinePatchDecorator : public Decorator
 public:
 	NinePatchDecorator() : Decorator(), texture_index( -1 ) {}
 
-	static float ResolveProperty( const PropertyDictionary &properties, const String &name, float base_value ) {
+	static float ResolveProperty( const PropertyDictionary &properties, const std::string &name, float base_value ) {
+#if 0
 		const Property *property = properties.GetProperty( name );
 		if( property == NULL ) {
 			ROCKET_ERROR;
@@ -53,7 +54,7 @@ public:
 
 		// Values based on pixels-per-inch.
 		if( property->unit & Property::PPI_UNIT ) {
-			Rocket::Core::RenderInterface *renderInterface = GetRenderInterface();
+			Rml::Core::RenderInterface *renderInterface = GetRenderInterface();
 			float inch = property->value.Get<float>() * renderInterface->GetPixelsPerInch();
 
 			if( property->unit & Property::INCH ) // inch
@@ -69,12 +70,14 @@ public:
 		}
 
 		ROCKET_ERROR;
+#endif
 		return 0;
 	}
 
 	bool Initialise( const PropertyDictionary &_properties ) {
-		const Property *property = _properties.GetProperty( "src" );
-		texture_index = LoadTexture( property->Get< String >(), property->source );
+#if 0
+		const Property *property = _properties.GetProperty(  "src" );
+		texture_index = LoadTexture( property->Get< std::string >(), property->source );
 		if( texture_index < 0 ) {
 			return false;
 		}
@@ -102,11 +105,11 @@ public:
 		size_auto[1][0] = property->unit == Property::KEYWORD;
 		property = properties.GetProperty( "size-bottom" );
 		size_auto[1][1] = property->unit == Property::KEYWORD;
-
+#endif
 		return true;
 	}
 
-	virtual DecoratorDataHandle GenerateElementData( Element *element ) {
+	virtual DecoratorDataHandle GenerateElementData( Element *element ) const override {
 		int i, j;
 		const Texture *texture = GetTexture( texture_index );
 
@@ -309,11 +312,11 @@ public:
 		return reinterpret_cast< DecoratorDataHandle >( data );
 	}
 
-	virtual void ReleaseElementData( DecoratorDataHandle element_data ) {
+	virtual void ReleaseElementData( DecoratorDataHandle element_data ) const override {
 		__delete__( reinterpret_cast< Geometry * >( element_data ) );
 	}
 
-	virtual void RenderElement( Element *element, DecoratorDataHandle element_data ) {
+	virtual void RenderElement( Element *element, DecoratorDataHandle element_data ) const override {
 		reinterpret_cast< Geometry * >( element_data )->Render( element->GetAbsoluteOffset( Box::PADDING ) );
 	}
 };
@@ -324,6 +327,7 @@ class NinePatchDecoratorInstancer : public DecoratorInstancer
 {
 public:
 	NinePatchDecoratorInstancer( void ) {
+#if 0
 		RegisterProperty( "src", "" ).AddParser( "string" );
 
 		RegisterProperty( "coords-top", "0" ).AddParser( "number" );
@@ -345,25 +349,16 @@ public:
 		.AddParser( "keyword", "auto" )
 		.AddParser( "number" );
 		RegisterShorthand( "size", "size-top, size-right, size-bottom, size-left" );
+#endif
 	}
 
-	virtual Decorator *InstanceDecorator( const String &name, const PropertyDictionary &_properties ) {
-		NinePatchDecorator *decorator = __new__( NinePatchDecorator );
+	std::shared_ptr<Rml::Core::Decorator> InstanceDecorator( const String &name, const PropertyDictionary &_properties, const Rml::Core::DecoratorInstancerInterface& interface ) {
+		auto decorator = std::make_shared<NinePatchDecorator>();
 		if( decorator->Initialise( _properties ) ) {
 			return decorator;
 		}
 
-		decorator->RemoveReference();
-		ReleaseDecorator( decorator );
-		return NULL;
-	}
-
-	virtual void ReleaseDecorator( Decorator *decorator ) {
-		__delete__( decorator );
-	}
-
-	virtual void Release( void ) {
-		__delete__( this );
+		return nullptr;
 	}
 };
 

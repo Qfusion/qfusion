@@ -4,18 +4,18 @@
  *  Created on: 25.6.2011
  *      Author: hc
  *
- * Implements the SystemInterface and FileInterface for libRocket
+ * Implements the SystemInterface and FileInterface for libRmlUi
  */
 
 #ifndef UI_SYSTEMINTERFACE_H_
 #define UI_SYSTEMINTERFACE_H_
 
-#include <Rocket/Core/SystemInterface.h>
+#include <RmlUi/Core/SystemInterface.h>
 
 namespace WSWUI
 {
 
-class UI_SystemInterface : public Rocket::Core::SystemInterface
+class UI_SystemInterface : public Rml::Core::SystemInterface
 {
 public:
 	UI_SystemInterface();
@@ -31,19 +31,21 @@ public:
 	/// @param[in] type Type of log message, ERROR, WARNING, etc.
 	/// @param[in] message Message to log.
 	/// @return True to continue execution, false to break into the debugger.
-	virtual bool LogMessage( Rocket::Core::Log::Type type, const String& message );
+	virtual bool LogMessage( Rml::Core::Log::Type type, const std::string& message );
 
 	/// Translate the input string into the translated string.
 	/// @param[out] translated Translated string ready for display.
 	/// @param[in] input String as received from XML.
 	/// @return Number of translations that occured.
-	virtual int TranslateString( Rocket::Core::String& translated, const Rocket::Core::String& input );
+	virtual int TranslateString( std::string& translated, const std::string& input );
 
-	///
-	virtual void GetClipboardText( Rocket::Core::WString &text );
-
-	///
-	virtual void SetClipboardText( const Rocket::Core::WString &text );
+	/// Set clipboard text.
+	/// @param[in] text Text to apply to clipboard.
+	virtual void SetClipboardText(const std::wstring& text);
+	
+	/// Get clipboard text.
+	/// @param[out] text Retrieved text from clipboard.
+	virtual void GetClipboardText(std::wstring& text);
 };
 
 }

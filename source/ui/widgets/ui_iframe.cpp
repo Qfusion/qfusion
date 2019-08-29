@@ -28,7 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 namespace WSWUI
 {
 
-using namespace Rocket::Core;
+using namespace Rml::Core;
 
 class IFrameWidget : public Element, EventListener
 {
@@ -43,14 +43,12 @@ public:
 	}
 
 	// Called when attributes on the element are changed.
-	void OnAttributeChange( const Rocket::Core::AttributeNameList& changed_attributes ) {
+	void OnAttributeChange( const Rml::Core::ElementAttributes& changed_attributes ) {
 		Element::OnAttributeChange( changed_attributes );
-
-		AttributeNameList::const_iterator it;
 
 		// Check for a changed 'src' attribute. If this changes, we need to reload
 		// contents of the element.
-		it = changed_attributes.find( "src" );
+		auto it = changed_attributes.find( "src" );
 		if( it != changed_attributes.end() && GetOwnerDocument() != NULL ) {
 			LoadSource();
 		}
@@ -86,13 +84,11 @@ private:
 
 		WSWUI::NavigationStack *stack = NULL;
 
-		if( source.Empty() ) {
+		if( source.empty() ) {
 			SetInnerRML( "" );
 
 			if( framed_document ) {
 				stack = framed_document->getStack();
-
-				//framed_document->RemoveReference();
 				if( stack ) {
 					stack->popAllDocuments();
 				}
@@ -107,16 +103,19 @@ private:
 			return;
 		}
 
-		framed_document = stack->pushDocument( source.CString() );
+		framed_document = stack->pushDocument( source.c_str() );
 		if( !framed_document ) {
 			return;
 		}
 
 		ElementDocument *rocket_document = framed_document->getRocketDocument();
 
-		AppendChild( rocket_document );
-		rocket_document->SetProperty( "overflow", "auto" );
-		rocket_document->PullToFront();
+		assert( rocket_document->GetParentNode() != nullptr );
+		AppendChild( rocket_document->GetParentNode()->RemoveChild( rocket_document ) );
+
+		//rocket_document->SetProperty( Rml::Core::PropertyId::OverflowX, Rml::Core::Property( Rml::Core::Style::Overflow::Auto ) );
+		//rocket_document->SetProperty( Rml::Core::PropertyId::OverflowX, Rml::Core::Property( Rml::Core::Style::Overflow::Auto ) );
+		//rocket_document->PullToFront();
 
 		AttachToOwnerDocument();
 	}

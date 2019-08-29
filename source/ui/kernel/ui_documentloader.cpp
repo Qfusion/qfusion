@@ -7,78 +7,67 @@
 namespace WSWUI
 {
 
-namespace Core = Rocket::Core;
+namespace Core = Rml::Core;
 
 //==========================================
 
 // Document
 
 Document::Document( const std::string &name, NavigationStack *stack )
-	: documentName( name ), rocketDocument( NULL ), stack( stack ), viewed( false )
+	: documentName( name ), rocketDocument(), stack( stack ), viewed( false )
 {}
 
 Document::~Document() {
 	// well.. we dont remove references here or purge the document?
 }
 
-int Document::addReference() {
-	if( rocketDocument ) {
-		rocketDocument->AddReference();
-		return rocketDocument->GetReferenceCount();
-	}
-	return 0;
-}
-
-int Document::removeReference() {
-	if( rocketDocument ) {
-		rocketDocument->RemoveReference();
-		return rocketDocument->GetReferenceCount();
-	}
-	return 0;
-}
-
-int Document::getReference() {
-	if( rocketDocument ) {
-		return rocketDocument->GetReferenceCount();
-	}
-	return 0;
-}
-
 void Document::Show( bool show, bool modal ) {
-	if( rocketDocument ) {
-		if( show ) {
-			rocketDocument->Show( modal ? Rocket::Core::ElementDocument::MODAL : 0 );
-		} else {
-			rocketDocument->Hide();
-		}
+	auto *doc = rocketDocument;
+	if( doc == nullptr ) {
+		return;
+	}
+
+	if( show ) {
+		doc->Show( modal ? Rml::Core::ElementDocument::MODAL : 0 );
+	} else {
+		doc->Hide();
 	}
 }
 
 void Document::Hide() {
-	if( rocketDocument ) {
-		rocketDocument->Hide();
+	auto *doc = rocketDocument;
+	if( doc == nullptr ) {
+		return;
 	}
+	doc->Hide();
 }
 
 void Document::Focus() {
-	if( rocketDocument ) {
-		rocketDocument->Focus();
+	auto *doc = rocketDocument;
+	if( doc == nullptr ) {
+		return;
 	}
+
+	doc->Focus();
 }
 
 void Document::FocusFirstTabElement() {
-	if( rocketDocument ) {
-		if( !rocketDocument->FocusFirstTabElement() ) {
-			rocketDocument->Focus();
-		}
+	auto *doc = rocketDocument;
+	if( doc == nullptr ) {
+		return;
 	}
+
+		//if( !rocketDocument->FocusFirstTabElement() ) {
+			doc->Focus();
+		//}
 }
 
 bool Document::IsModal() {
-	if( rocketDocument ) {
-		return rocketDocument->IsModal();
+	auto *doc = rocketDocument;
+	if( doc == nullptr ) {
+		return false;
 	}
-	return false;
+	return doc->IsModal();
 }
 
 //==========================================
@@ -99,7 +88,7 @@ Document *DocumentLoader::loadDocument( const char *path, NavigationStack *stack
 	loadedDocument = __new__( Document )( path, stack );
 
 	// load the .rml
-	Rocket::Core::ElementDocument *rocketDocument = rm->loadDocument( contextId, path, /* true */ false, loadedDocument );
+	Rml::Core::ElementDocument *rocketDocument = rm->loadDocument( contextId, path, /* true */ false, loadedDocument );
 	loadedDocument->setRocketDocument( rocketDocument );
 
 	if( !rocketDocument ) {
@@ -108,11 +97,6 @@ Document *DocumentLoader::loadDocument( const char *path, NavigationStack *stack
 		return NULL;
 	}
 
-	// handle postponed onload events (HOWTO handle these in cached documents?)
-	Rocket::Core::Dictionary ev_parms;
-	ev_parms.Set( "owner", loadedDocument );
-	rocketDocument->DispatchEvent( "afterLoad", ev_parms );
-
 	return loadedDocument;
 }
 
@@ -120,11 +104,7 @@ Document *DocumentLoader::loadDocument( const char *path, NavigationStack *stack
 void DocumentLoader::closeDocument( Document *document ) {
 	UI_Main *ui = UI_Main::Get();
 	RocketModule *rm = ui->getRocket();
-	Rocket::Core::ElementDocument *rocketDocument = document->getRocketDocument();
-
-	// handle postponed onload events (HOWTO handle these in cached documents?)
-	Rocket::Core::Dictionary ev_parms;
-	rocketDocument->DispatchEvent( "beforeUnload", ev_parms );
+	Rml::Core::ElementDocument *rocketDocument = document->getRocketDocument();
 
 	rm->closeDocument( rocketDocument );
 }

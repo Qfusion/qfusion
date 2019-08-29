@@ -11,9 +11,9 @@ class Video : public ElementImage
 {
 public:
 	/// Initializes the video element
-	explicit Video( const Rocket::Core::String& );
+	explicit Video( const Rml::Core::String& );
 
-	virtual void OnAttributeChange( const Rocket::Core::AttributeNameList& );
+	virtual void OnAttributeChange( const Rml::Core::ElementAttributes& );
 
 private:
 };

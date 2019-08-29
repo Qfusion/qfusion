@@ -56,15 +56,8 @@ public:
 
 	const std::string &getName() const { return documentName; }
 	// addref? nah.. make sure you dont leave a pointer hanging and also check for NULL
-	void setRocketDocument( Rocket::Core::ElementDocument *elem ) { rocketDocument = elem; }
-	Rocket::Core::ElementDocument *getRocketDocument() { return rocketDocument; }
-
-	// refcount wrappers for rocket's element,
-	// USE THESE! instead of direct Add/RemoveReference
-	// these will return the refcount after the operation
-	int addReference();
-	int removeReference();
-	int getReference();
+	void setRocketDocument( Rml::Core::ElementDocument *elem ) { rocketDocument = elem; }
+	Rml::Core::ElementDocument *getRocketDocument() { return rocketDocument; }
 
 	// other rocket wrappers
 	void Show( bool show = true, bool modal = false );
@@ -80,7 +73,7 @@ public:
 private:
 	// this will also be the name for the asmodule!
 	std::string documentName;
-	Rocket::Core::ElementDocument *rocketDocument;
+	Rml::Core::ElementDocument *rocketDocument;
 	NavigationStack *stack;
 	bool viewed;
 };
@@ -105,7 +98,7 @@ private:
 	// TODO: proper PostponedEvent that handles reference counting and event instancing!
 
 	// mechanism that calls onload events after all of AS scripts are built
-	typedef std::pair<Rocket::Core::EventListener*, Rocket::Core::Event*>
+	typedef std::pair<Rml::Core::EventListener*, Rml::Core::Event*>
 		PostponedEvent;
 	typedef std::list<PostponedEvent> PostponedList;
 

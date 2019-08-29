@@ -9,12 +9,12 @@
 #include "kernel/ui_common.h"
 #include "../gameshared/q_keycodes.h"
 #include "kernel/ui_keyconverter.h"
-#include <Rocket/Core/Input.h>
+#include <RmlUi/Core/Input.h>
 
 namespace WSWUI
 {
 
-using namespace Rocket::Core::Input;
+using namespace Rml::Core::Input;
 
 /* Special punctuation characters */
 const char * KeyConverter::oem_keys = ";=,-./`[\\]'";

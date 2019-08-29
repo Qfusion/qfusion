@@ -9,7 +9,7 @@
 
 namespace WSWUI
 {
-MapsDataSource::MapsDataSource() : Rocket::Controls::DataSource( MAPS_SOURCE ) {
+MapsDataSource::MapsDataSource() : Rml::Controls::DataSource( MAPS_SOURCE ) {
 	getMapsList( mapList );
 
 	// notify the changes
@@ -28,12 +28,12 @@ void MapsDataSource::getMapsList( C& maps_list ) {
 	}
 }
 
-void MapsDataSource::GetRow( Rocket::Core::StringList &row, const Rocket::Core::String&, int row_index, const Rocket::Core::StringList& cols ) {
+void MapsDataSource::GetRow( Rml::Core::StringList &row, const Rml::Core::String&, int row_index, const Rml::Core::StringList& cols ) {
 	if( row_index < 0 || (size_t)row_index > mapList.size() ) {
 		return;
 	}
 
-	for( Rocket::Core::StringList::const_iterator it = cols.begin(); it != cols.end(); ++it ) {
+	for( Rml::Core::StringList::const_iterator it = cols.begin(); it != cols.end(); ++it ) {
 		if( *it == MAP_TITLE ) {
 			row.push_back( mapList[row_index].second.empty() ? mapList[row_index].first.c_str() : mapList[row_index].second.c_str() );
 		} else if( *it == MAP_FILE ) {
@@ -44,7 +44,7 @@ void MapsDataSource::GetRow( Rocket::Core::StringList &row, const Rocket::Core::
 	}
 }
 
-int MapsDataSource::GetNumRows( const Rocket::Core::String& ) {
+int MapsDataSource::GetNumRows( const Rml::Core::String& ) {
 	return mapList.size();
 }
 }

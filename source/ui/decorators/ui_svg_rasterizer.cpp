@@ -26,7 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 namespace WSWUI
 {
-	using namespace Rocket::Core;
+	using namespace Rml::Core;
 
 	SVGRasterizer::SVGRasterizer() : rast( NULL ) {
 	}
@@ -46,9 +46,9 @@ namespace WSWUI
 		return instance;
 	}
 
-	void SVGRasterizer::Rasterize( String &path, NSVGimage *image, float scale, int width, int height ) {
-		auto dot = path.Find( "." );
-		path = path.Substring( 0, dot ) + va( "_%i_%i", width, height ) + path.Substring( dot );
+	void SVGRasterizer::Rasterize( std::string &path, NSVGimage *image, float scale, int width, int height ) {
+		auto dot = path.find( '.' );
+		path = path.substr( 0, dot ) + va( "_%i_%i", width, height ) + path.substr( dot );
 
 		if( rasterCache.find( path ) == rasterCache.end() ) {
 			if( width > 0 && height > 0 ) {
@@ -57,7 +57,7 @@ namespace WSWUI
 
 				nsvgRasterize( rast, image, 0, 0, scale, data, width, height, width * 4 );
 
-				trap::R_RegisterRawPic( path.CString(), width, height, data, 4 );
+				trap::R_RegisterRawPic( path.c_str(), width, height, data, 4 );
 
 				__delete__( data );
 			}

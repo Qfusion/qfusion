@@ -28,15 +28,15 @@ PropertyParserSound::~PropertyParserSound() {
 }
 
 // Called to parse a RCSS string declaration.
-bool PropertyParserSound::ParseValue( Rocket::Core::Property& property,
-									  const Rocket::Core::String& value,
-									  const Rocket::Core::ParameterMap& ROCKET_UNUSED_PARAMETER( parameters ) ) const {
-	property.value = Rocket::Core::Variant( value );
-	property.unit = Rocket::Core::Property::STRING;
+bool PropertyParserSound::ParseValue( Rml::Core::Property& property,
+									 const std::string& value,
+									  const Rml::Core::ParameterMap& parameters ) const {
+	property.value = Rml::Core::Variant( value );
+	property.unit = Rml::Core::Property::STRING;
 
-	if( !value.Empty() ) {
+	if( !value.empty() ) {
 		// skip the '/' at the start of the path
-		trap::S_RegisterSound( value.CString() + 1 );
+		trap::S_RegisterSound( value.c_str() + 1 );
 	}
 
 	return true;

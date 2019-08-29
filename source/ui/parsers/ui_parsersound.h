@@ -18,9 +18,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#include <Rocket/Core/PropertyParser.h>
+#include <RmlUi/Core/PropertyParser.h>
 
-class PropertyParserSound : public Rocket::Core::PropertyParser
+class PropertyParserSound : public Rml::Core::PropertyParser
 {
 public:
 	PropertyParserSound();
@@ -31,9 +31,9 @@ public:
 	/// @param[in] value The raw value defined for this property.
 	/// @param[in] parameters The parameters defined for this property; not used for this parser.
 	/// @return True if the value was validated successfully, false otherwise.
-	virtual bool ParseValue( Rocket::Core::Property& property,
-							 const Rocket::Core::String& value,
-							 const Rocket::Core::ParameterMap& parameters ) const;
+	virtual bool ParseValue( Rml::Core::Property& property,
+							 const std::string& value,
+							 const Rml::Core::ParameterMap& parameters ) const;
 
 	// Destroys the parser.
 	void Release();

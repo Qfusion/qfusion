@@ -23,14 +23,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "kernel/ui_utils.h"
 #include "kernel/ui_common.h"
-#include <Rocket/Core/Element.h>
+#include <RmlUi/Core/Element.h>
 
 namespace WSWUI
 {
-class ElementBlur : public Rocket::Core::Element
+class ElementBlur : public Rml::Core::Element
 {
 public:
-	ElementBlur( const Rocket::Core::String& tag );
+	ElementBlur( const Rml::Core::String& tag );
 	virtual ~ElementBlur() {}
 	virtual void OnRender();
 };

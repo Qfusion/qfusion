@@ -15,15 +15,12 @@
 namespace ASUI
 {
 // Shortcuts
-using namespace Rocket::Core;
+using namespace Rml::Core;
 
 typedef WSWUI::UI_Main UI_Main;
 
 // string -> string helpers
 // we use asstring_t* explicitly in AS API so we have to convert all String's to that
-
-// asstring_t <-> Rocket::Core::String
-inline asstring_t *ASSTR( const Rocket::Core::String &str ) { return UI_Main::Get()->getAS()->createString( str.CString(), str.Length() ); }
 
 // asstring_t <-> std::string
 inline asstring_t *ASSTR( const std::string &str ) { return UI_Main::Get()->getAS()->createString( str.c_str(), str.length() ); }
@@ -114,11 +111,11 @@ ASBIND_TYPE( asstring_t, String );      // Still required by ASBind
 ASBIND_TYPE( CScriptDictionaryInterface, Dictionary );
 ASBIND_TYPE( CScriptAnyInterface, any );
 
-ASBIND_TYPE( Rocket::Core::Element, Element );
-ASBIND_TYPE( Rocket::Core::ElementDocument, ElementDocument );
+ASBIND_TYPE( Rml::Core::Element, Element );
+ASBIND_TYPE( Rml::Core::ElementDocument, ElementDocument );
 
-ASBIND_TYPE( Rocket::Core::Event, Event );
-ASBIND_TYPE( Rocket::Core::EventListener, EventListener );
+ASBIND_TYPE( Rml::Core::Event, Event );
+ASBIND_TYPE( Rml::Core::EventListener, EventListener );
 
 ASBIND_TYPE( WSWUI::DemoInfo, DemoInfo );
 

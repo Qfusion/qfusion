@@ -27,7 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 namespace WSWUI
 {
 
-using namespace Rocket::Core;
+using namespace Rml::Core;
 
 InlineDiv::InlineDiv( const String &tag ) : Element( tag ), timeout( WSW_UI_STREAMCACHE_TIMEOUT ), onAddLoad( false ), loading( false ) {
 }
@@ -60,12 +60,12 @@ void InlineDiv::ReadFromFile( const char *fileName ) {
 }
 
 void InlineDiv::CacheRead( const char *fileName, void *privatep ) {
-	InlineDiv *element = ( InlineDiv * )privatep;
+	ElementOwner *eo = ( ElementOwner *)privatep;
+	InlineDiv *element = static_cast< InlineDiv * >(eo->elem.get());
 
 	element->ReadFromFile( fileName );
 
-	// remove reference by stream cache object
-	element->RemoveReference();
+	__delete__( eo );
 }
 
 void InlineDiv::OnChildAdd( Element* element ) {
@@ -96,7 +96,7 @@ void InlineDiv::LoadSource() {
 	onAddLoad = false;
 	loading = true;
 
-	if( source.Empty() ) {
+	if( source.empty() ) {
 		SetInnerRML( "" );
 		SetPseudoClass( "loading", false );
 		DispatchEvent( "load", Dictionary(), false );
@@ -106,21 +106,21 @@ void InlineDiv::LoadSource() {
 
 	SetPseudoClass( "loading", true );
 
-	if( trap::FS_IsUrl( source.CString() ) ) {
+	if( trap::FS_IsUrl( source.c_str() ) ) {
 		// the stream cache object references this element
 		// (passed as the void * pointer below)
-		AddReference();
+		auto *eo = __new__( ElementOwner )( this );
 
 		UI_Main::Get()->getStreamCache()->PerformRequest(
-			source.CString(), "GET", NULL,
-			NULL, NULL, &CacheRead, ( void * )this, timeout, nocache ? 0 : expires
+			source.c_str(), "GET", NULL,
+			NULL, NULL, &CacheRead, ( void * )eo, timeout, nocache ? 0 : expires
 			);
 	} else {
 		// get full path to the source.
 		// without the leading "/", path is considered to be relative to the document
-		Rocket::Core::ElementDocument* document = GetOwnerDocument();
+		Rml::Core::ElementDocument* document = GetOwnerDocument();
 
-		if( !document && source.Substring( 0, 1 ) != "/" ) {
+		if( !document && source.front() != '/' ) {
 			onAddLoad = true;
 			loading = false;
 			return;
@@ -130,13 +130,13 @@ void InlineDiv::LoadSource() {
 		String source_directory = source_url.GetPath();
 
 		String path;
-		if( source.Substring( 0, 1 ) == "?" ) {
+		if( source.front() == '?' ) {
 			path = source;
 		} else {
-			GetSystemInterface()->JoinPath( path, source_directory.Replace( "|", ":" ), source );
+			GetSystemInterface()->JoinPath( path, Rml::Core::StringUtilities::Replace( source_directory, "|", ":" ), source );
 		}
 
-		ReadFromFile( path.CString() );
+		ReadFromFile( path.c_str() );
 
 		SetPseudoClass( "loading", false );
 	}
@@ -145,14 +145,12 @@ void InlineDiv::LoadSource() {
 }
 
 // Called when attributes on the element are changed.
-void InlineDiv::OnAttributeChange( const Rocket::Core::AttributeNameList& changed_attributes ) {
+void InlineDiv::OnAttributeChange( const Rml::Core::ElementAttributes& changed_attributes ) {
 	Element::OnAttributeChange( changed_attributes );
-
-	AttributeNameList::const_iterator it;
 
 	// Check for a changed 'src' attribute. If this changes, we need to reload
 	// contents of the element.
-	it = changed_attributes.find( "src" );
+	auto it = changed_attributes.find( "src" );
 	if( it != changed_attributes.end() ) {
 		LoadSource();
 	}
@@ -160,7 +158,7 @@ void InlineDiv::OnAttributeChange( const Rocket::Core::AttributeNameList& change
 	// timeout for remote URL's
 	it = changed_attributes.find( "timeout" );
 	if( it != changed_attributes.end() ) {
-		timeout = atoi( GetAttribute< String >( "src", "" ).CString() );
+		timeout = atoi( GetAttribute< String >( "src", "" ).c_str() );
 	}
 }
 

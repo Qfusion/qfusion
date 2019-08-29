@@ -16,13 +16,13 @@ class LevelShot : public ElementImage
 {
 public:
 	/// Initializes the levelshot element
-	explicit LevelShot( const Rocket::Core::String& );
+	explicit LevelShot( const Rml::Core::String& );
 
-	virtual void OnAttributeChange( const Rocket::Core::AttributeNameList& );
+	virtual void OnAttributeChange( const Rml::Core::ElementAttributes& );
 
 private:
 	/// Generates the path to the preview image from the given map name
-	static Rocket::Core::String getImagePath( const Rocket::Core::String& );
+	static Rml::Core::String getImagePath( const Rml::Core::String& );
 
 	static shader_s *fallbackShader;
 

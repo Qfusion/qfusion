@@ -22,17 +22,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define __UI_EMPTY_FORMATTER_H__
 
 #include <time.h>
-#include <Rocket/Controls/DataFormatter.h>
+#include <RmlUi/Controls/DataFormatter.h>
 
 namespace WSWUI
 {
 
-class EmptyFormatter : public Rocket::Controls::DataFormatter
+class EmptyFormatter : public Rml::Controls::DataFormatter
 {
 public:
-	EmptyFormatter() : Rocket::Controls::DataFormatter( "empty" ) {}
+	EmptyFormatter() : Rml::Controls::DataFormatter( "empty" ) {}
 
-	void FormatData( Rocket::Core::String& formatted_data, const Rocket::Core::StringList& raw_data ) {
+	void FormatData( Rml::Core::String& formatted_data, const Rml::Core::StringList& raw_data ) {
 		formatted_data = "&nbsp;";
 	}
 };

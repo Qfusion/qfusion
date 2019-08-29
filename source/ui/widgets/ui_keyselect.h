@@ -18,14 +18,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#include <Rocket/Core/Element.h>
-#include <Rocket/Core/EventListener.h>
+#include <RmlUi/Core/Element.h>
+#include <RmlUi/Core/EventListener.h>
 
 #include "kernel/ui_main.h"
 
 namespace WSWUI
 {
-using namespace Rocket::Core;
+using namespace Rml::Core;
 
 // forward-declare the instancer for keyselects
 class UI_KeySelectInstancer;
@@ -42,7 +42,7 @@ public:
 
 	/// Called for every event sent to this element or one of its descendants.
 	/// @param[in] event The event to process.
-	virtual void ProcessEvent( Event& event );
+	virtual void ProcessEvent( Event &event );
 
 	// index can be 0 or 1
 	int GetKey( int index );
@@ -123,12 +123,10 @@ public:
 	/// @param[in] parent The element the new element is destined to be parented to.
 	/// @param[in] tag The tag of the element to instance.
 	/// @param[in] attributes Dictionary of attributes.
-	virtual Element *InstanceElement( Element *parent, const String &tag, const XMLAttributes &attr );
+	virtual ElementPtr InstanceElement( Element *parent, const String &tag, const XMLAttributes &attr );
 	/// Releases an element instanced by this instancer.
 	/// @param[in] element The element to release.
 	virtual void ReleaseElement( Element *element );
-	/// Release the instancer.
-	virtual void Release();
 
 	// Returns a keyselect which has the same bound key of the excluded one
 	UI_KeySelect *getKeySelectByKey( int key, const UI_KeySelect *exclude );

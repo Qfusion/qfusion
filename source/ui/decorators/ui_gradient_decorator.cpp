@@ -16,12 +16,12 @@
 
 namespace WSWUI
 {
-typedef Rocket::Core::Element Element;
-typedef Rocket::Core::Decorator Decorator;
-typedef Rocket::Core::DecoratorDataHandle DecoratorDataHandle;
-typedef Rocket::Core::DecoratorInstancer DecoratorInstancer;
-typedef Rocket::Core::PropertyDictionary PropertyDictionary;
-typedef Rocket::Core::Colourb Colourb;
+typedef Rml::Core::Element Element;
+typedef Rml::Core::Decorator Decorator;
+typedef Rml::Core::DecoratorDataHandle DecoratorDataHandle;
+typedef Rml::Core::DecoratorInstancer DecoratorInstancer;
+typedef Rml::Core::PropertyDictionary PropertyDictionary;
+typedef Rml::Core::Colourb Colourb;
 
 //=======================================================
 
@@ -37,30 +37,33 @@ class GradientDecorator : public Decorator
 	Colourb end;
 
 public:
-	GradientDecorator( const PropertyDictionary& properties ) {
+	bool Initialise( const PropertyDictionary& properties ) {
+#if 0
 		// fetch the properties from the dict
-		String prop_dir = properties.GetProperty( "dir" )->Get<String>();
+		std::string prop_dir = properties.GetProperty( "dir" )->Get<std::string>();
 		start = properties.GetProperty( "start" )->Get<Colourb>();
 		end = properties.GetProperty( "end" )->Get<Colourb>();
 
 		// enumerate direction property
 		dir = ( prop_dir == "horizontal" ? HORIZONTAL : VERTICAL );
+#endif
+		return true;
 	}
 
 	// decorator implementation
-	virtual DecoratorDataHandle GenerateElementData( Element* element ) {
+	virtual DecoratorDataHandle GenerateElementData( Element* element ) const override {
 		// nada
 		return 0;
 	}
 
-	virtual void ReleaseElementData( DecoratorDataHandle element_data ) {
+	virtual void ReleaseElementData( DecoratorDataHandle element_data ) const override {
 		// nada
 	}
 
-	virtual void RenderElement( Element* element, DecoratorDataHandle element_data ) {
+	virtual void RenderElement( Element* element, DecoratorDataHandle element_data ) const override {
 		// just testing here, so lets use renderinterface directly
-		typedef Rocket::Core::Vertex Vertex;
-		typedef Rocket::Core::Vector2f Vector2f;
+		typedef Rml::Core::Vertex Vertex;
+		typedef Rml::Core::Vector2f Vector2f;
 
 		// fetch the corners (WIP add some borders to debug the drawing area)
 		Vector2f topleft = Vector2f( element->GetAbsoluteLeft() + element->GetClientLeft(),
@@ -90,7 +93,7 @@ public:
 		int indices[6] = { 0, 1, 2, 0, 2, 3 };
 
 		// bang
-		Rocket::Core::RenderInterface *renderer = element->GetRenderInterface();
+		Rml::Core::RenderInterface *renderer = element->GetRenderInterface();
 		renderer->RenderGeometry( vertex, 4, indices, 6, 0, Vector2f( 0.0, 0.0 ) );
 
 		// C'MON! you say GetRenderInterface wont give a reference to refcounted object??
@@ -105,29 +108,24 @@ class GradientDecoratorInstancer : public DecoratorInstancer
 
 public:
 	GradientDecoratorInstancer( void ) : DecoratorInstancer() {
+#if 0
 		// register properties for the decorator
 		RegisterProperty( "dir", "" ).AddParser( "string" ).AddParser( "keyword", "horizontal, vertical" );
 		RegisterProperty( "start", "#ffff" ).AddParser( "color" );
 		RegisterProperty( "end", "#ffff" ).AddParser( "color" );
 		RegisterShorthand( "gradient", "dir, start, end" );
-
+#endif
 		// Com_Printf("decorator instancer created\n");
 	}
 
 	// decorator instancer implementation
-	virtual Decorator* InstanceDecorator( const String& name, const PropertyDictionary& _properties ) {
-		// Com_Printf("decorator instancer decorator instanced %s\n", name.CString() );
-		return __new__( GradientDecorator )( _properties );
-	}
-
-	virtual void ReleaseDecorator( Decorator* decorator ) {
-		// Com_Printf("decorator instancer decorator released\n");
-		__delete__( decorator );
-	}
-
-	virtual void Release() {
-		// Com_Printf("decorator instancer destroyed\n");
-		__delete__( this );
+	std::shared_ptr<Rml::Core::Decorator> InstanceDecorator( const std::string& name, const PropertyDictionary& _properties, const Rml::Core::DecoratorInstancerInterface& interface ) {
+		auto decorator = std::make_shared<GradientDecorator>();
+		if( decorator->Initialise( _properties ) ) {
+			return decorator;
+		}
+		
+		return nullptr;
 	}
 };
 

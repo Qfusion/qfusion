@@ -22,25 +22,25 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define __UI_DURATION_FORMATTER_H__
 
 #include <time.h>
-#include <Rocket/Controls/DataFormatter.h>
+#include <RmlUi/Controls/DataFormatter.h>
 
 namespace WSWUI
 {
 
-class DurationFormatter : public Rocket::Controls::DataFormatter
+class DurationFormatter : public Rml::Controls::DataFormatter
 {
 public:
-	DurationFormatter() : Rocket::Controls::DataFormatter( "duration" ) {}
+	DurationFormatter() : Rml::Controls::DataFormatter( "duration" ) {}
 
 	// Expects number of seconds as input. Formats input as "hh:mm:ss"
-	void FormatData( Rocket::Core::String& formatted_data, const Rocket::Core::StringList& raw_data ) {
-		if( raw_data[0].Empty() ) {
+	void FormatData( std::string & formatted_data, const Rml::Core::StringList& raw_data ) {
+		if( raw_data[0].empty() ) {
 			formatted_data = "";
 			return;
 		}
 
-		int i_value = ::atoi( raw_data[0].CString() );
-		formatted_data = Rocket::Core::String( 32,
+		int i_value = ::atoi( raw_data[0].c_str() );
+		formatted_data = Rml::Core::CreateString( 32,
 											   "%02d:%02d:%02d", i_value / 3600, i_value / 60, i_value % 60
 											   );
 	}

@@ -28,15 +28,15 @@
 #ifndef ROCKETCOREELEMENTIMAGE_H
 #define ROCKETCOREELEMENTIMAGE_H
 
-#include <Rocket/Core/Header.h>
-#include <Rocket/Core/Element.h>
-#include <Rocket/Core/Geometry.h>
-#include <Rocket/Core/Texture.h>
+#include <RmlUi/Core/Header.h>
+#include <RmlUi/Core/Element.h>
+#include <RmlUi/Core/Geometry.h>
+#include <RmlUi/Core/Texture.h>
 
 namespace WSWUI
 {
 
-using namespace Rocket::Core;
+using namespace Rml::Core;
 
 #define WSW_UI_IMAGES_CACHE_TTL     60 * 24           // TTL of one day (in minutes)
 
@@ -89,11 +89,11 @@ protected:
 
 	/// Checks for changes to the image's source or dimensions.
 	/// @param[in] changed_attributes A list of attributes changed on the element.
-	virtual void OnAttributeChange( const AttributeNameList& changed_attributes );
+	virtual void OnAttributeChange( const ElementAttributes& changed_attributes );
 
 	/// Regenerates the element's geometry on a resize event.
 	/// @param[in] event The event to process.
-	virtual void ProcessEvent( Event& event );
+	virtual void ProcessDefaultAction( Event& event );
 
 	// Loads the element's texture, as specified by the 'src' attribute.
 	virtual bool LoadDiskTexture();

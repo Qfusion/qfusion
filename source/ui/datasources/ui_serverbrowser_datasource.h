@@ -1,7 +1,7 @@
 #ifndef __UI_SERVERBROWSER_H__
 #define __UI_SERVERBROWSER_H__
 
-#include <Rocket/Controls/DataSource.h>
+#include <RmlUi/Controls/DataSource.h>
 
 #include <string>
 #include <vector>
@@ -189,7 +189,7 @@ public:
 	VisibilityState password;
 	VisibilityState ranked;
 	VisibilityState registered;
-	String gametype;
+	std::string gametype;
 };
 
 // Module that will queue server pings
@@ -246,13 +246,13 @@ private:
 
 //================================================
 
-class ServerBrowserDataSource : public Rocket::Controls::DataSource
+class ServerBrowserDataSource : public Rml::Controls::DataSource
 {
 	// typedefs
 	// use set for serverinfo list to keep unique elements
 	typedef std::set<ServerInfo, ServerInfo::_LessBinary<uint64_t, &ServerInfo::iaddress> > ServerInfoList;
 	typedef std::list<ServerInfo*> ReferenceList;
-	typedef std::map<String, ReferenceList> ReferenceListMap;
+	typedef std::map<std::string, ReferenceList> ReferenceListMap;
 	typedef std::set<uint64_t> FavoritesList;
 
 	// shortcut for the set insert
@@ -296,62 +296,17 @@ class ServerBrowserDataSource : public Rocket::Controls::DataSource
 	int numNotifies;
 
 public:
-	ServerBrowserDataSource();     // : Rocket::Core::DataSource("serverbrowser_source")
+	ServerBrowserDataSource();     // : Rml::Core::DataSource("serverbrowser_source")
 	virtual ~ServerBrowserDataSource();
 
 	//
 	// functions overriding DataSource ones to provide our functionality
 
 	// this should returns the asked 'columns' on row with 'row_index' from 'table' into 'row'
-	virtual void GetRow( StringList &row, const String &table, int row_index, const StringList &columns );
+	virtual void GetRow( Rml::Core::StringList &row, const std::string &table, int row_index, const Rml::Core::StringList &columns );
 
 	// this should return the number of rows in 'table'
-	virtual int GetNumRows( const String &table );
-
-	//
-	// functions available to call when our data changes (e.g. AddToServerList is called)
-	// these inform listeners attached (like datagrid)
-
-	// we have new row
-	// void NotifyRowAdd(const String &table, int first_row_added, int num_rows_added);
-
-	#if 0
-	// benchmarking edition ltd
-	void NotifyRowAdd( const Rocket::Core::String &table, int first_row_added, int num_rows_added ) {
-		BenchmarkTimer bt;
-		Rocket::Controls::DataSource::NotifyRowAdd( table, first_row_added, num_rows_added );
-		//Com_Printf("NotifyRowAdd %u\n", bt() );
-
-		numNotifies++;
-	}
-
-	// we removed a row
-	// void NotifyRowRemove(const String &table, int first_row_removed, int num_rows_removed);
-	void NotifyRowRemove( const String &table, int first_row_removed, int num_rows_removed ) {
-		BenchmarkTimer bt;
-		Rocket::Controls::DataSource::NotifyRowRemove( table, first_row_removed, num_rows_removed );
-		//Com_Printf("NotifyRowRemove %u\n", bt() );
-		numNotifies++;
-	}
-
-	// change of data in said rows
-	// void NotifyRowChange(const String &table, int first_row_changed, int num_rows_changed);
-	void NotifyRowChange( const String &table, int first_row_changed, int num_rows_changed ) {
-		BenchmarkTimer bt;
-		Rocket::Controls::DataSource::NotifyRowChange( table, first_row_changed, num_rows_changed );
-		//Com_Printf("NotifyRowChange %u\n", bt() );
-		numNotifies++;
-	}
-
-	// notify full refresh of table
-	// void NotifyRowChange(const String &table);
-	void NotifyRowChange( const String &table ) {
-		BenchmarkTimer bt;
-		Rocket::Controls::DataSource::NotifyRowChange( table );
-		//Com_Printf("NotifyRowChange(full) %u\n", bt() );
-		numNotifies++;
-	}
-	#endif
+	virtual int GetNumRows( const std::string &table );
 
 	//
 	// wsw functions
@@ -396,9 +351,9 @@ public:
 private:
 	int64_t lastUpdateTime;
 
-	void tableNameForServerInfo( const ServerInfo &, String &table ) const;
-	void addServerToTable( ServerInfo &info, const String &tableName );
-	void removeServerFromTable( ServerInfo &info, const String &tableName );
+	void tableNameForServerInfo( const ServerInfo &, std::string &table ) const;
+	void addServerToTable( ServerInfo &info, const std::string &tableName );
+	void removeServerFromTable( ServerInfo &info, const std::string &tableName );
 	void notifyOfFavoriteChange( uint64_t iaddr, bool add );
 };
 

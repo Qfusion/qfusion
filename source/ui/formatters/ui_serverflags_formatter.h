@@ -22,25 +22,25 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define __UI_SERVERFLAGS_FORMATTER_H__
 
 #include <time.h>
-#include <Rocket/Controls/DataFormatter.h>
+#include <RmlUi/Controls/DataFormatter.h>
 
 namespace WSWUI
 {
 
-class ServerFlagsFormatter : public Rocket::Controls::DataFormatter
+class ServerFlagsFormatter : public Rml::Controls::DataFormatter
 {
 public:
-	ServerFlagsFormatter() : Rocket::Controls::DataFormatter( "serverflags" ) {}
+	ServerFlagsFormatter() : Rml::Controls::DataFormatter( "serverflags" ) {}
 
-	void FormatData( Rocket::Core::String& formatted_data, const Rocket::Core::StringList& raw_data ) {
+	void FormatData( std::string& formatted_data, const Rml::Core::StringList& raw_data ) {
 		formatted_data = "";
 
-		const String &flags = raw_data[0];
-		if( flags.Empty() ) {
+		const std::string &flags = raw_data[0];
+		if( flags.empty() ) {
 			return;
 		}
 
-		size_t len = flags.Length();
+		size_t len = flags.size();
 		for( size_t i = 0; i < len; i++ ) {
 			switch( flags[i] ) {
 				case ' ':

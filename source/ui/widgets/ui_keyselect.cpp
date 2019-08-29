@@ -25,12 +25,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "widgets/ui_keyselect.h"
 #include "kernel/ui_utils.h"
 #include "../gameshared/q_keycodes.h"
-#include <Rocket/Core/Input.h>
+#include <RmlUi/Core/Input.h>
 
 namespace WSWUI
 {
 
-using namespace Rocket::Core;
+using namespace Rml::Core;
 
 UI_KeySelect::UI_KeySelect( const String &tag, const String &bind, UI_KeySelectInstancer *instancer )
 	: Element( tag ), cmd( bind ) {
@@ -56,7 +56,7 @@ void UI_KeySelect::InitializeBinds( void ) {
 		if( !b ) {
 			continue;
 		}
-		if( !Q_stricmp( b, this->cmd.CString() ) ) {
+		if( !Q_stricmp( b, this->cmd.c_str() ) ) {
 			boundKey[count] = j;
 			count++;
 			if( count == 2 ) {
@@ -193,7 +193,7 @@ void UI_KeySelect::SetKeybind( int key ) {
 
 	// apply the bind
 	char bindCmd[1024];
-	Q_snprintfz( bindCmd, sizeof( bindCmd ), "bind \"%s\" \"%s\"\n", trap::Key_KeynumToString( key ), cmd.CString() );
+	Q_snprintfz( bindCmd, sizeof( bindCmd ), "bind \"%s\" \"%s\"\n", trap::Key_KeynumToString( key ), cmd.c_str() );
 	trap::Cmd_ExecuteText( EXEC_INSERT, bindCmd );
 
 	Blur();
@@ -244,18 +244,24 @@ void UI_KeySelect::ProcessEvent( Event& event ) {
 		}
 	}
 
-	Element::ProcessEvent( event );
+	Element::ProcessDefaultAction( event );
 }
 
 /// Instances an element given the tag name and attributes.
 /// @param[in] parent The element the new element is destined to be parented to.
 /// @param[in] tag The tag of the element to instance.
 /// @param[in] attributes Dictionary of attributes.
-Element* UI_KeySelectInstancer::InstanceElement( Element *parent, const String &tag, const XMLAttributes &attr ) {
-	UI_KeySelect *keyselect = __new__( UI_KeySelect )( tag, attr.Get<String>( "bind", "" ), this );
+ElementPtr UI_KeySelectInstancer::InstanceElement( Element *parent, const String &tag, const XMLAttributes &attr ) {
+	std::string bind;
+	auto it = attr.find("bind");
+	if (it != attr.end()) {
+		bind = it->second.Get<std::string>();
+	}
+
+	UI_KeySelect *keyselect = __new__( UI_KeySelect )( tag, bind, this );
 	keyselect_widgets.push_back( keyselect );
 	UI_Main::Get()->getRocket()->registerElementDefaults( keyselect );
-	return keyselect;
+	return ElementPtr(keyselect);
 }
 
 /// Releases an element instanced by this instancer.
@@ -268,9 +274,6 @@ void UI_KeySelectInstancer::ReleaseElement( Element *element ) {
 	// then delete
 	__delete__( element );
 }
-
-/// Release the instancer.
-void UI_KeySelectInstancer::Release() { __delete__( this ); }
 
 // Returns a keyselect which has the same bound key of the excluded one
 UI_KeySelect* UI_KeySelectInstancer::getKeySelectByKey( int key, const UI_KeySelect *exclude ) {

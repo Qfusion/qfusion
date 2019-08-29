@@ -18,7 +18,7 @@
 namespace ASUI
 {
 
-using namespace Rocket::Core;
+using namespace Rml::Core;
 
 //===================================================
 
@@ -33,15 +33,15 @@ class ScriptEventListener : public EventListener
 	ASInterface *asmodule;
 
 	// We have to make Event const, cause we cant use &inout with value-types
-	ASBind::FunctionPtr<void( Rocket::Core::Element*, Rocket::Core::Event* )> funcPtr;
+	ASBind::FunctionPtr<void( Rml::Core::Element*, Rml::Core::Event* )> funcPtr;
 	String funcName;
 	String script;
 	bool loaded;
 	bool released;
 	int uniqueId;
-	Rocket::Core::Element *target;
+	Rml::Core::Element *target;
 
-	/** DAMN MIXTURE OF Rocket::String, std::string and std::ostringstream!! **/
+	/** DAMN MIXTURE OF Rml::String, std::string and std::ostringstream!! **/
 
 	String createFunctionName( void ) {
 		std::ostringstream os;
@@ -53,7 +53,7 @@ class ScriptEventListener : public EventListener
 		std::ostringstream os;
 
 		// TODO: grab the typenames from ASBind::TypeString
-		os << "void __eventfunc_" << uniqueId << "( Element @self, Event @event){" << code.CString() << "}";
+		os << "void __eventfunc_" << uniqueId << "( Element @self, Event @event){" << code.c_str() << "}";
 		return String( os.str().c_str() );
 	}
 
@@ -71,7 +71,7 @@ class ScriptEventListener : public EventListener
 
 		// check direct function-name
 		if( script[0] == '$' ) {
-			funcName = script.Substring( 1 );
+			funcName = script.substr( 1 );
 		} else {
 			// compile inline code
 			funcName = createFunctionName();
@@ -79,9 +79,9 @@ class ScriptEventListener : public EventListener
 			script = funcCode;
 			asIScriptFunction *scriptFunc = NULL;
 
-			if( !asmodule->addFunction( module, funcName.CString(), funcCode.CString(), &scriptFunc ) ) {
+			if( !asmodule->addFunction( module, funcName.c_str(), funcCode.c_str(), &scriptFunc ) ) {
 				Com_Printf( S_COLOR_YELLOW "WARNING: ScriptEventListener addFunction failed with %s %s\n",
-							funcName.CString(), funcCode.CString() );
+							funcName.c_str(), funcCode.c_str() );
 			} else if( scriptFunc ) {
 				// I think we only hit this scenario when we do smth like
 				// elem.setInnerRML( '<button onclick="window.close();" />' );
@@ -92,9 +92,9 @@ class ScriptEventListener : public EventListener
 			return;
 		}
 
-		funcPtr = ASBind::CreateFunctionPtr( funcName.CString(), module, funcPtr );
+		funcPtr = ASBind::CreateFunctionPtr( funcName.c_str(), module, funcPtr );
 		if( !funcPtr.isValid() ) {
-			Com_Printf( S_COLOR_YELLOW "WARNING: ScriptEventListener::fetchFunctionPtr failed with %s\n", funcName.CString() );
+			Com_Printf( S_COLOR_YELLOW "WARNING: ScriptEventListener::fetchFunctionPtr failed with %s\n", funcName.c_str() );
 			return;
 		}
 		funcPtr.addref();
@@ -105,7 +105,7 @@ public:
 		loaded( false ), released( false ),  uniqueId( uniqueId ), target( target ) {
 		asmodule = UI_Main::Get()->getAS();
 		if( target ) {
-			target->AddReference();
+			//target->AddReference();
 		}
 	}
 
@@ -147,14 +147,12 @@ public:
 
 		if( UI_Main::Get()->debugOn() ) {
 			Com_Printf( "ScriptEventListener: Event %s, target %s, script %s\n",
-						event.GetType().CString(),
-						event.GetTargetElement()->GetTagName().CString(),
-						script.CString() );
+						event.GetType().c_str(),
+						event.GetTargetElement()->GetTagName().c_str(),
+						script.c_str() );
 		}
 
 		if( funcPtr.isValid() ) {
-			target->AddReference();
-			event.AddReference();
 			try {
 				asIScriptContext *context = asmodule->getContext();
 
@@ -164,10 +162,10 @@ public:
 					funcPtr( target, &event );
 				}
 			} catch( ASBind::Exception & ) {
-				Com_Printf( S_COLOR_RED "ScriptEventListener: Failed to call function %s %s\n", funcName.CString(), script.CString() );
+				Com_Printf( S_COLOR_RED "ScriptEventListener: Failed to call function %s %s\n", funcName.c_str(), script.c_str() );
 			}
 		} else {
-			Com_Printf( S_COLOR_RED "ScriptEventListener: Not gonna call invalid function %s %s\n", funcName.CString(), script.CString() );
+			Com_Printf( S_COLOR_RED "ScriptEventListener: Not gonna call invalid function %s %s\n", funcName.c_str(), script.c_str() );
 		}
 	}
 
@@ -180,7 +178,7 @@ public:
 		funcPtr.release();
 
 		if( target ) {
-			target->RemoveReference();
+			//target->RemoveReference();
 			target = NULL;
 		}
 	}
@@ -229,19 +227,19 @@ public:
 		Element *elem = event.GetTargetElement();
 
 		UI_ScriptDocument *document = dynamic_cast<UI_ScriptDocument *>( elem->GetOwnerDocument() );
-		if( !document || document->IsLoading() ) {
+		if( !document ) {
 			return;
 		}
 
 		if( UI_Main::Get()->debugOn() ) {
 			Com_Printf( "ScriptEventCaller: Event %s, target %s, func %s\n",
-						event.GetType().CString(),
-						event.GetTargetElement()->GetTagName().CString(),
+						event.GetType().c_str(),
+						event.GetTargetElement()->GetTagName().c_str(),
 						funcPtr.getName() );
 		}
 
 		if( funcPtr.isValid() ) {
-			event.AddReference();
+			//event.AddReference();
 			try {
 				asIScriptContext *context = as->getContext();
 
@@ -282,8 +280,8 @@ public:
 	virtual ~ScriptEventListenerInstancer() {
 	}
 
-	virtual Rocket::Core::EventListener* InstanceEventListener( const String& value, Element *elem ) {
-		if( !value.Length() ) {
+	virtual Rml::Core::EventListener* InstanceEventListener( const String& value, Element *elem ) {
+		if( value.empty() ) {
 			return 0;
 		}
 

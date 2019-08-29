@@ -22,29 +22,29 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define __UI_DATETIME_FORMATTER_H__
 
 #include <time.h>
-#include <Rocket/Controls/DataFormatter.h>
+#include <RmlUi/Controls/DataFormatter.h>
 
 namespace WSWUI
 {
 
-class DatetimeFormatter : public Rocket::Controls::DataFormatter
+class DatetimeFormatter : public Rml::Controls::DataFormatter
 {
 public:
-	DatetimeFormatter() : Rocket::Controls::DataFormatter( "datetime" ) {}
+	DatetimeFormatter() : Rml::Controls::DataFormatter( "datetime" ) {}
 
 	// Expects unix time as input. Formats input as "YY/MM/DD hh:mm"
-	void FormatData( Rocket::Core::String& formatted_data, const Rocket::Core::StringList& raw_data ) {
-		if( raw_data[0].Empty() ) {
+	void FormatData( std::string& formatted_data, const Rml::Core::StringList& raw_data ) {
+		if( raw_data[0].empty() ) {
 			formatted_data = "";
 			return;
 		}
 
 		// convert unix time to human-readable date + time
-		time_t time = ::atoi( raw_data[0].CString() );
+		time_t time = ::atoi( raw_data[0].c_str() );
 		struct tm *nt = ::localtime( &time );
 
 		if( nt ) {
-			formatted_data = Rocket::Core::String( 32,
+			formatted_data = Rml::Core::CreateString( 32,
 												   "%02d/%02d/%02d %02d:%02d",
 												   nt->tm_year + 1900, nt->tm_mon + 1, nt->tm_mday, nt->tm_hour, nt->tm_min
 												   );

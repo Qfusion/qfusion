@@ -202,7 +202,7 @@ private:
 	GameAjaxDataSource *gameajax;
 
 	UI_Navigation navigations[UI_NUM_CONTEXTS];
-	Rocket::Core::String overlayMenuURL;
+	std::string overlayMenuURL;
 
 	StreamCache *streamCache;
 

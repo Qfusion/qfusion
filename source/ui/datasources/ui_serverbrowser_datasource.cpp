@@ -391,7 +391,7 @@ void ServerInfoFetcher::startQuery( const std::string &adr ) {
 // ServerBrowserDataSource
 
 ServerBrowserDataSource::ServerBrowserDataSource() :
-	Rocket::Controls::DataSource( "serverbrowser_source" ),
+	Rml::Controls::DataSource( "serverbrowser_source" ),
 	serverList(),
 	fetcher(), active( false ), updateId( 0 ), lastActiveTime( 0 ),
 	lastUpdateTime( 0 ) {
@@ -411,7 +411,7 @@ ServerBrowserDataSource::~ServerBrowserDataSource() {
 }
 
 // override rocket methods
-void ServerBrowserDataSource::GetRow( StringList &row, const String &table, int row_index, const StringList &columns ) {
+void ServerBrowserDataSource::GetRow( Rml::Core::StringList &row, const std::string &table, int row_index, const Rml::Core::StringList &columns ) {
 	if( referenceListMap.find( table ) == referenceListMap.end() ) {
 		return;
 	}
@@ -431,7 +431,7 @@ void ServerBrowserDataSource::GetRow( StringList &row, const String &table, int 
 	}
 
 	const ServerInfo &info = *( *it_info );
-	for( StringList::const_iterator it = columns.begin(); it != columns.end(); ++it ) {
+	for( Rml::Core::StringList::const_iterator it = columns.begin(); it != columns.end(); ++it ) {
 		// TODO: htmlencode here! "<>& etc..
 		if( *it == "hostname" ) {
 			row.push_back( info.hostname.c_str() );
@@ -475,14 +475,14 @@ void ServerBrowserDataSource::GetRow( StringList &row, const String &table, int 
 }
 
 // this should return the number of rows in 'table'
-int ServerBrowserDataSource::GetNumRows( const String &table ) {
+int ServerBrowserDataSource::GetNumRows( const std::string &table ) {
 	if( referenceListMap.find( table ) == referenceListMap.end() ) {
 		return 0;
 	}
 	return referenceListMap[table].size();
 }
 
-void ServerBrowserDataSource::tableNameForServerInfo( const ServerInfo &info, String &table ) const {
+void ServerBrowserDataSource::tableNameForServerInfo( const ServerInfo &info, std::string &table ) const {
 	if( info.instagib ) {
 		table = TABLE_NAME_INSTA;
 	} else if( info.race ) {
@@ -492,7 +492,7 @@ void ServerBrowserDataSource::tableNameForServerInfo( const ServerInfo &info, St
 	}
 }
 
-void ServerBrowserDataSource::addServerToTable( ServerInfo &info, const String &tableName ) {
+void ServerBrowserDataSource::addServerToTable( ServerInfo &info, const std::string &tableName ) {
 	ReferenceList &referenceList = referenceListMap[tableName];
 
 	// Show/sort with referenceList
@@ -517,7 +517,7 @@ void ServerBrowserDataSource::addServerToTable( ServerInfo &info, const String &
 	}
 }
 
-void ServerBrowserDataSource::removeServerFromTable( ServerInfo &info, const String &tableName ) {
+void ServerBrowserDataSource::removeServerFromTable( ServerInfo &info, const std::string &tableName ) {
 	ReferenceList &referenceList = referenceListMap[tableName];
 
 	// notify rocket + remove from referenceList
@@ -551,7 +551,7 @@ void ServerBrowserDataSource::updateFrame() {
 
 			// put to the visible list if it passes the filters
 			if( filter.filterServer( serverInfo ) ) {
-				String tableName;
+				std::string tableName;
 
 				tableNameForServerInfo( serverInfo, tableName );
 				addServerToTable( serverInfo, tableName );
@@ -636,7 +636,7 @@ void ServerBrowserDataSource::addToServerList( const char *adr, const char *info
 	if( !newInfo.hasPing() && ( it_inserted.second || !serverInfo.isChanged() ) ) {
 		// check if we want to drop this
 		if( serverInfo.ping_retries++ >= MAX_RETRIES ) {
-			String tableName;
+			std::string tableName;
 
 			tableNameForServerInfo( serverInfo, tableName );
 
@@ -701,7 +701,7 @@ void ServerBrowserDataSource::stopUpdate( void ) {
 }
 
 void ServerBrowserDataSource::compileSuggestionsList( void ) {
-	std::map<String, ReferenceListMap> suggestedServers;
+	std::map<std::string, ReferenceListMap> suggestedServers;
 
 	// for each table, compile the list of suggested servers,
 	// ignoring full and passworded servers
@@ -712,7 +712,7 @@ void ServerBrowserDataSource::compileSuggestionsList( void ) {
 		ReferenceList &referenceList = it->second;
 		for( ReferenceList::iterator it_ = referenceList.begin(); it_ != referenceList.end(); ++it_ ) {
 			ServerInfo *info = *it_;
-			String gametype = info->gametype.c_str();
+			std::string gametype = info->gametype.c_str();
 
 			if( info->password ) {
 				continue;
@@ -751,7 +751,7 @@ void ServerBrowserDataSource::compileSuggestionsList( void ) {
 	}
 
 	// compile the final list sorted by player count in descending order
-	for( std::map<String, ReferenceListMap>::iterator it = suggestedServers.begin(); it != suggestedServers.end(); ++it ) {
+	for( std::map<std::string, ReferenceListMap>::iterator it = suggestedServers.begin(); it != suggestedServers.end(); ++it ) {
 		ReferenceListMap &gtServers = it->second;
 
 		if( gtServers.empty() ) {
@@ -858,7 +858,7 @@ void ServerBrowserDataSource::notifyOfFavoriteChange( uint64_t iaddr, bool add )
 	info->favorite = add;
 
 	// tell libRocket we've updated the table row
-	String tableName;
+	std::string tableName;
 	tableNameForServerInfo( *it_s, tableName );
 	ReferenceList &referenceList = referenceListMap[tableName];
 

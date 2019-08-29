@@ -85,13 +85,13 @@ void ElementImage::OnRender() {
 	}
 
 	// Render the geometry beginning at this element's content region.
-	geometry.Render( GetAbsoluteOffset( Rocket::Core::Box::CONTENT ) );
+	geometry.Render( GetAbsoluteOffset( Rml::Core::Box::CONTENT ) );
 }
 
 // Called when attributes on the element are changed.
-void ElementImage::OnAttributeChange( const Rocket::Core::AttributeNameList& changed_attributes ) {
+void ElementImage::OnAttributeChange( const Rml::Core::ElementAttributes& changed_attributes ) {
 	// Call through to the base element's OnAttributeChange().
-	Rocket::Core::Element::OnAttributeChange( changed_attributes );
+	Rml::Core::Element::OnAttributeChange( changed_attributes );
 
 	float dirty_layout = false;
 
@@ -117,16 +117,16 @@ void ElementImage::OnAttributeChange( const Rocket::Core::AttributeNameList& cha
 			StringUtilities::ExpandString( coords_list, GetAttribute< String >( "coords", "" ) );
 
 			if( coords_list.size() != 4 ) {
-				Rocket::Core::Log::Message( Log::LT_WARNING, "Element '%s' has an invalid 'coords' attribute; coords requires 4 values, found %d.", GetAddress().CString(), coords_list.size() );
+				Rml::Core::Log::Message( Log::LT_WARNING, "Element '%s' has an invalid 'coords' attribute; coords requires 4 values, found %d.", GetAddress().c_str(), coords_list.size() );
 				ResetCoords();
 			} else {
 				for( size_t i = 0; i < 4; ++i )
-					coords[i] = atoi( coords_list[i].CString() );
+					coords[i] = atoi( coords_list[i].c_str() );
 
 				// Check for the validity of the coordinates.
 				if( coords[0] < 0 || coords[2] < coords[0] ||
 					coords[1] < 0 || coords[3] < coords[1] ) {
-					Rocket::Core::Log::Message( Log::LT_WARNING, "Element '%s' has an invalid 'coords' attribute; invalid coordinate values specified.", GetAddress().CString() );
+					Rml::Core::Log::Message( Log::LT_WARNING, "Element '%s' has an invalid 'coords' attribute; invalid coordinate values specified.", GetAddress().c_str() );
 					ResetCoords();
 				} else {
 					// We have new, valid coordinates; force the geometry to be regenerated.
@@ -148,8 +148,8 @@ void ElementImage::OnAttributeChange( const Rocket::Core::AttributeNameList& cha
 }
 
 // Regenerates the element's geometry.
-void ElementImage::ProcessEvent( Rocket::Core::Event& event ) {
-	Element::ProcessEvent( event );
+void ElementImage::ProcessDefaultAction( Rml::Core::Event& event ) {
+	Element::ProcessDefaultAction( event );
 
 	if( event.GetTargetElement() == this &&
 		event == "resize" ) {
@@ -161,7 +161,7 @@ void ElementImage::GenerateGeometry() {
 	// Release the old geometry before specifying the new vertices.
 	geometry.Release( true );
 
-	std::vector< Rocket::Core::Vertex >& vertices = geometry.GetVertices();
+	std::vector< Rml::Core::Vertex >& vertices = geometry.GetVertices();
 	std::vector< int >& indices = geometry.GetIndices();
 
 	vertices.resize( 4 );
@@ -188,10 +188,10 @@ void ElementImage::GenerateGeometry() {
 		texcoords[1] = Vector2f( 1, 1 );
 	}
 
-	Rocket::Core::GeometryUtilities::GenerateQuad( &vertices[0],                                 // vertices to write to
+	Rml::Core::GeometryUtilities::GenerateQuad( &vertices[0],                                 // vertices to write to
 												   &indices[0],                                 // indices to write to
 												   Vector2f( 0, 0 ),                // origin of the quad
-												   GetBox().GetSize( Rocket::Core::Box::CONTENT ), // size of the quad
+												   GetBox().GetSize( Rml::Core::Box::CONTENT ), // size of the quad
 												   Colourb( 255, 255, 255, 255 ),   // colour of the vertices
 												   texcoords[0],                                // top-left texture coordinate
 												   texcoords[1] );                              // top-right texture coordinate
@@ -204,7 +204,7 @@ bool ElementImage::LoadCachedTexture() {
 
 	// Get the source URL for the image.
 	String image_source = GetAttribute< String >( "_cached_src", "" );
-	if( image_source.Empty() ) {
+	if( image_source.empty() ) {
 		SetPseudoClass( "loading", false );
 		return false;
 	}
@@ -234,13 +234,13 @@ bool ElementImage::LoadDiskTexture() {
 
 	// Get the source URL for the image.
 	String image_source = GetAttribute< String >( "src", "" );
-	if( image_source.Empty() ) {
+	if( image_source.empty() ) {
 		return false;
 	}
 
 	geometry_dirty = true;
 
-	Rocket::Core::ElementDocument* document = GetOwnerDocument();
+	Rml::Core::ElementDocument* document = GetOwnerDocument();
 	URL source_url( document == NULL ? "" : document->GetSourceURL() );
 
 	if( !texture.Load( image_source, source_url.GetPath() ) ) {
@@ -261,17 +261,17 @@ bool ElementImage::LoadTexture() {
 
 	SetPseudoClass( "loading", true );
 
-	if( !source.Empty() ) {
-		if( trap::FS_IsUrl( source.CString() ) ) {
+	if( !source.empty() ) {
+		if( trap::FS_IsUrl( source.c_str() ) ) {
 			texture_dirty = false;
 
 			// the stream cache object references this element
 			// (passed as the void * pointer below)
-			AddReference();
+			auto *eo = __new__(ElementOwner)( this );
 
 			UI_Main::Get()->getStreamCache()->PerformRequest(
-				source.CString(), "GET", NULL,
-				NULL, NULL, &CacheRead, (void *)this,
+				source.c_str(), "GET", NULL,
+				NULL, NULL, &CacheRead, (void *)eo,
 				WSW_UI_STREAMCACHE_TIMEOUT, nocache ? 0 : WSW_UI_IMAGES_CACHE_TTL
 				);
 
@@ -287,7 +287,8 @@ bool ElementImage::LoadTexture() {
 }
 
 void ElementImage::CacheRead( const char *fileName, void *privatep ) {
-	ElementImage *element = static_cast< ElementImage * >( privatep );
+	ElementOwner *eo = static_cast<ElementOwner *>( privatep );
+	ElementImage *element = static_cast< ElementImage * >( eo->elem.get() );
 
 	String image_source = element->GetAttribute< String >( "_cached_src", "" );
 	if( image_source != fileName ) {
@@ -296,7 +297,7 @@ void ElementImage::CacheRead( const char *fileName, void *privatep ) {
 	}
 
 	// remove reference by stream cache object
-	element->RemoveReference();
+	__delete__(eo);
 }
 
 void ElementImage::ResetCoords() {

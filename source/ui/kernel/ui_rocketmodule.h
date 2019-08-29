@@ -10,11 +10,11 @@
 namespace WSWUI
 {
 // RocketModule contains details and interface to libRocket
-class RocketModule
+class RocketModule : public Rml::Core::Plugin
 {
 	// some typical Rocket shortcuts
-	typedef Rocket::Core::Element Element;
-	typedef Rocket::Core::Event Event;
+	typedef Rml::Core::Element Element;
+	typedef Rml::Core::Event Event;
 
 public:
 	RocketModule( int vidWidth, int vidHeight, float pixelRatio );
@@ -33,7 +33,7 @@ public:
 		HIDECURSOR_ELEMENT  = 1 << 2,     // hidden by an element
 		HIDECURSOR_ALL      = ( 1 << 3 ) - 1
 	};
-	void loadCursor( int contextId, const String& rmlCursor );
+	void loadCursor( int contextId, const std::string& rmlCursor );
 	void hideCursor( int contextId, unsigned int addBits, unsigned int clearBits );
 
 	// system events
@@ -48,12 +48,12 @@ public:
 	void update( void );
 	void render( int contextId );
 
-	Rocket::Core::ElementDocument *loadDocument( int contextId, const char *filename, bool show = false, void *user_data = NULL );
-	void closeDocument( Rocket::Core::ElementDocument *doc );
+	Rml::Core::ElementDocument *loadDocument( int contextId, const char *filename, bool show = false, void *script_object = NULL );
+	void closeDocument( Rml::Core::ElementDocument *doc );
 
 	// called from ElementInstancer after it instances an element, set up default
 	// attributes, properties, events etc..
-	void registerElementDefaults( Rocket::Core::Element * );
+	void registerElementDefaults( Rml::Core::Element * );
 
 	// GET/SET Submodules
 	UI_SystemInterface *getSystemInterface() { return systemInterface; }
@@ -63,24 +63,34 @@ public:
 	void clearShaderCache( void );
 	void touchAllCachedShaders( void );
 
-	int idForContext( Rocket::Core::Context *context );
+	int idForContext( Rml::Core::Context *context );
 
-private:
-	void registerElement( const char *tag, Rocket::Core::ElementInstancer* );
-	void registerFontEffect( const char *name, Rocket::Core::FontEffectInstancer * );
-	void registerDecorator( const char *name, Rocket::Core::DecoratorInstancer * );
-	void registerEventInstancer( Rocket::Core::EventInstancer * );
-	void registerEventListener( Rocket::Core::EventListenerInstancer * );
+	/// Called when the plugin is registered to determine
+	/// which of the above event types the plugin is interested in
+	virtual int GetEventClasses() override;
+	/// Called when a document is successfully loaded from file or instanced, initialised and added
+	/// to its context. This is called before the document's 'load' event.
+	virtual void OnDocumentLoad( Rml::Core::ElementDocument *document ) override;
+	/// Called when a document is unloaded from its context. This is called after the document's
+	/// 'unload' event.
+	virtual void OnDocumentUnload( Rml::Core::ElementDocument *document ) override;
+
+   private:
+	void registerElement( const char *tag, Rml::Core::ElementInstancer* );
+	void registerFontEffect( const char *name, Rml::Core::FontEffectInstancer * );
+	void registerDecorator( const char *name, Rml::Core::DecoratorInstancer * );
+	void registerEventInstancer( Rml::Core::EventInstancer * );
+	void registerEventListener( Rml::Core::EventListenerInstancer * );
 
 	// translates UI_CONTEXT_ constants to rocket contexts and vise versa
-	Rocket::Core::Context *contextForId( int contextId );
+	Rml::Core::Context *contextForId( int contextId );
 
 	bool rocketInitialized;
 	unsigned int hideCursorBits[UI_NUM_CONTEXTS];
 
 	struct contextTouch {
 		int id;
-		Rocket::Core::Vector2f origin;
+		Rml::Core::Vector2f origin;
 		int y;
 		bool scroll;
 	};
@@ -91,12 +101,12 @@ private:
 	UI_RenderInterface *renderInterface;
 	UI_FontProviderInterface *fontProviderInterface;
 
-	Rocket::Core::Context *contextMain;
-	Rocket::Core::Context *contextQuick;
+	Rml::Core::Context *contextMain;
+	Rml::Core::Context *contextQuick;
 
 	// hold this so we can unref these in the end
-	std::list<Rocket::Core::ElementInstancer*> elementInstancers;
-	Rocket::Core::EventListenerInstancer *scriptEventListenerInstancer;
+	std::list<Rml::Core::ElementInstancer*> elementInstancers;
+	Rml::Core::EventListenerInstancer *scriptEventListenerInstancer;
 };
 }
 

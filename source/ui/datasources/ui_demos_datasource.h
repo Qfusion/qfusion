@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __UI_DEMOS_DATASOURCE_H__
 #define __UI_DEMOS_DATASOURCE_H__
 
-#include <Rocket/Controls/DataSource.h>
+#include <RmlUi/Controls/DataSource.h>
 #include "kernel/ui_demoinfo.h"
 
 namespace WSWUI
@@ -88,15 +88,15 @@ private:
 	DemoList::size_type updateIndex;
 };
 
-class DemosDataSource : public Rocket::Controls::DataSource
+class DemosDataSource : public Rml::Controls::DataSource
 {
 public:
 	DemosDataSource( const std::string &demoExtension );
 	~DemosDataSource( void );
 
 	// methods which must be overridden
-	void GetRow( StringList& row, const String& table, int row_index, const StringList& columns );
-	int GetNumRows( const String& table );
+	void GetRow( Rml::Core::StringList& row, const std::string& table, int row_index, const Rml::Core::StringList& columns );
+	int GetNumRows( const std::string& table );
 
 	// fetches meta data and notifies of the updates
 	void UpdateFrame( void );
@@ -105,9 +105,9 @@ public:
 	void Reset( void );
 
 private:
-	typedef std::map<String, DemosDataSourceHelper> DemoPathList;
+	typedef std::map<std::string, DemosDataSourceHelper> DemoPathList;
 	DemoPathList demoPaths;
-	String lastQueryTable;
+	std::string lastQueryTable;
 
 	const std::string demoExtension;
 };

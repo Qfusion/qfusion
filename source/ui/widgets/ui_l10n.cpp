@@ -24,37 +24,35 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "widgets/ui_widgets.h"
 #include "widgets/ui_l10n.h"
 
-#include <Rocket/Controls.h>
-#include <Rocket/Controls/DataFormatter.h>
+#include <RmlUi/Controls.h>
+#include <RmlUi/Controls/DataFormatter.h>
 
 namespace WSWUI
 {
 
-using namespace Rocket::Core;
+using namespace Rml::Core;
 
 ElementL10n::ElementL10n( const String &tag ) : Element( tag ), data_formatter( NULL ), num_args( 0 ) {
 }
 
 // Called when attributes on the element are changed.
-void ElementL10n::OnAttributeChange( const Rocket::Core::AttributeNameList& changed_attributes ) {
+void ElementL10n::OnAttributeChange( const Rml::Core::ElementAttributes& changed_attributes ) {
 	Element::OnAttributeChange( changed_attributes );
-
-	AttributeNameList::const_iterator it;
 
 	bool updateRML = false;
 
 	// Check for formatter change.
-	it = changed_attributes.find( "formatter" );
+	auto it = changed_attributes.find( "formatter" );
 	if( it != changed_attributes.end() ) {
 		String formatter = GetAttribute< String >( "formatter", "" );
 
-		if( formatter.Empty() ) {
+		if( formatter.empty() ) {
 			data_formatter = NULL;
 			updateRML = true;
 		} else {
-			data_formatter = Rocket::Controls::DataFormatter::GetDataFormatter( formatter );
+			data_formatter = Rml::Controls::DataFormatter::GetDataFormatter( formatter );
 			if( !data_formatter ) {
-				Com_Printf( S_COLOR_YELLOW "WARNING: Unable to find data formatter named '%s', formatting skipped.", formatter.CString() );
+				Com_Printf( S_COLOR_YELLOW "WARNING: Unable to find data formatter named '%s', formatting skipped.", formatter.c_str() );
 			} else {
 				updateRML = true;
 			}
@@ -66,14 +64,14 @@ void ElementL10n::OnAttributeChange( const Rocket::Core::AttributeNameList& chan
 		num_args = 0;
 		format = GetAttribute< String >( "format", "" );
 
-		const char *l10n = trap::L10n_TranslateString( format.CString() );
+		const char *l10n = trap::L10n_TranslateString( format.c_str() );
 		if( l10n ) {
 			format = l10n;
 		}
 
 		String::size_type n = 0;
 		while( true ) {
-			n = format.Find( "%s", n );
+			n = format.find( "%s", n );
 			if( n == String::npos ) {
 				break;
 			}
@@ -84,60 +82,63 @@ void ElementL10n::OnAttributeChange( const Rocket::Core::AttributeNameList& chan
 		updateRML = true;
 	}
 
+	std::string argN;
 	for( unsigned i = 0; !updateRML && i < num_args; i++ ) {
-		it = changed_attributes.find( String( 20, "arg%d", i + 1 ) );
-		if( it != changed_attributes.end() ) {
+		Rml::Core::FormatString( argN, 20, "arg%d", i + 1 );
+
+		if( changed_attributes.find( argN ) != changed_attributes.end() ) {
 			updateRML = true;
+			break;
 		}
 	}
 
 	if( updateRML ) {
-		String localized = format;
+		std::string localized = format;
 
 		switch( num_args ) {
 			case 0:
 				localized = format;
 				break;
 			case 1:
-				localized.FormatString( 1024, format.CString(), GetAttribute< String >( "arg1", "" ).CString() );
+				Rml::Core::FormatString( localized, 1024, format.c_str(), GetAttribute< String >( "arg1", "" ).c_str() );
 				break;
 			case 2:
-				localized.FormatString( 1024, format.CString(), GetAttribute< String >( "arg1", "" ).CString(),
-										GetAttribute< String >( "arg2", "" ).CString() );
+				Rml::Core::FormatString( localized, 1024, format.c_str(), GetAttribute< String >( "arg1", "" ).c_str(),
+										GetAttribute< String >( "arg2", "" ).c_str() );
 				break;
 			case 3:
-				localized.FormatString( 1024, format.CString(), GetAttribute< String >( "arg1", "" ).CString(),
-										GetAttribute< String >( "arg2", "" ).CString(), GetAttribute< String >( "arg3", "" ).CString() );
+				Rml::Core::FormatString( localized, 1024, format.c_str(), GetAttribute< String >( "arg1", "" ).c_str(),
+										GetAttribute< String >( "arg2", "" ).c_str(), GetAttribute< String >( "arg3", "" ).c_str() );
 				break;
 			case 4:
-				localized.FormatString( 1024, format.CString(), GetAttribute< String >( "arg1", "" ).CString(),
-										GetAttribute< String >( "arg2", "" ).CString(), GetAttribute< String >( "arg3", "" ).CString(),
-										GetAttribute< String >( "arg4", "" ).CString() );
+				Rml::Core::FormatString( localized, 1024, format.c_str(), GetAttribute< String >( "arg1", "" ).c_str(),
+										GetAttribute< String >( "arg2", "" ).c_str(), GetAttribute< String >( "arg3", "" ).c_str(),
+										GetAttribute< String >( "arg4", "" ).c_str() );
 				break;
 			case 5:
-				localized.FormatString( 1024, format.CString(), GetAttribute< String >( "arg1", "" ).CString(),
-										GetAttribute< String >( "arg2", "" ).CString(), GetAttribute< String >( "arg3", "" ).CString(),
-										GetAttribute< String >( "arg4", "" ).CString(), GetAttribute< String >( "arg5", "" ).CString() );
+				Rml::Core::FormatString( localized, 1024, format.c_str(), GetAttribute< String >( "arg1", "" ).c_str(),
+										GetAttribute< String >( "arg2", "" ).c_str(), GetAttribute< String >( "arg3", "" ).c_str(),
+										GetAttribute< String >( "arg4", "" ).c_str(), GetAttribute< String >( "arg5", "" ).c_str() );
 				break;
 			case 6:
-				localized.FormatString( 1024, format.CString(), GetAttribute< String >( "arg1", "" ).CString(),
-										GetAttribute< String >( "arg2", "" ).CString(), GetAttribute< String >( "arg3", "" ).CString(),
-										GetAttribute< String >( "arg4", "" ).CString(), GetAttribute< String >( "arg5", "" ).CString(),
-										GetAttribute< String >( "arg6", "" ).CString() );
+				Rml::Core::FormatString( localized, 1024, format.c_str(), GetAttribute< String >( "arg1", "" ).c_str(),
+										GetAttribute< String >( "arg2", "" ).c_str(), GetAttribute< String >( "arg3", "" ).c_str(),
+										GetAttribute< String >( "arg4", "" ).c_str(), GetAttribute< String >( "arg5", "" ).c_str(),
+										GetAttribute< String >( "arg6", "" ).c_str() );
 				break;
 			case 7:
-				localized.FormatString( 1024, format.CString(), GetAttribute< String >( "arg1", "" ).CString(),
-										GetAttribute< String >( "arg2", "" ).CString(), GetAttribute< String >( "arg3", "" ).CString(),
-										GetAttribute< String >( "arg4", "" ).CString(), GetAttribute< String >( "arg5", "" ).CString(),
-										GetAttribute< String >( "arg6", "" ).CString(), GetAttribute< String >( "arg7", "" ).CString() );
+				Rml::Core::FormatString( localized, 1024, format.c_str(), GetAttribute< String >( "arg1", "" ).c_str(),
+										GetAttribute< String >( "arg2", "" ).c_str(), GetAttribute< String >( "arg3", "" ).c_str(),
+										GetAttribute< String >( "arg4", "" ).c_str(), GetAttribute< String >( "arg5", "" ).c_str(),
+										GetAttribute< String >( "arg6", "" ).c_str(), GetAttribute< String >( "arg7", "" ).c_str() );
 				break;
 			default:
 			case 8:
-				localized.FormatString( 1024, format.CString(), GetAttribute< String >( "arg1", "" ).CString(),
-										GetAttribute< String >( "arg2", "" ).CString(), GetAttribute< String >( "arg3", "" ).CString(),
-										GetAttribute< String >( "arg4", "" ).CString(), GetAttribute< String >( "arg5", "" ).CString(),
-										GetAttribute< String >( "arg6", "" ).CString(), GetAttribute< String >( "arg7", "" ).CString(),
-										GetAttribute< String >( "arg8", "" ).CString() );
+				Rml::Core::FormatString( localized, 1024, format.c_str(), GetAttribute< String >( "arg1", "" ).c_str(),
+										GetAttribute< String >( "arg2", "" ).c_str(), GetAttribute< String >( "arg3", "" ).c_str(),
+										GetAttribute< String >( "arg4", "" ).c_str(), GetAttribute< String >( "arg5", "" ).c_str(),
+										GetAttribute< String >( "arg6", "" ).c_str(), GetAttribute< String >( "arg7", "" ).c_str(),
+										GetAttribute< String >( "arg8", "" ).c_str() );
 				break;
 		}
 

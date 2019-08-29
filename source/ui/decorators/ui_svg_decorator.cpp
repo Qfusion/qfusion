@@ -28,7 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 namespace WSWUI
 {
-using namespace Rocket::Core;
+using namespace Rml::Core;
 
 class SVGDecorator : public Decorator
 {
@@ -48,6 +48,7 @@ public:
 	}
 
 	bool Initialise( const PropertyDictionary &_properties ) {
+#if 0
 		char *buffer = NULL;
 		size_t buffer_size = 0;
 
@@ -99,13 +100,15 @@ public:
 		
 		rasterizer = SVGRasterizer::GetInstance();
 		rasterizer->Initialise();
-
+#endif
 		return true;
 	}
 
-	virtual DecoratorDataHandle GenerateElementData( Element *element ) {
-		Geometry *geom;
+	virtual DecoratorDataHandle GenerateElementData( Element *element ) const override {
+		Vector2f size = element->GetBox().GetSize( Box::CONTENT );
 
+		Geometry *geom;
+#if 0
 		const Property* width_property, *height_property;
 		element->GetDimensionProperties( &width_property, &height_property );
 
@@ -114,7 +117,6 @@ public:
 		bool auto_width = width_property->unit == Property::KEYWORD;
 		bool auto_height = height_property->unit == Property::KEYWORD;
 
-		Vector2f size = element->GetBox().GetSize( Box::CONTENT );
 		scale_x = size[0] / image->width;
 		scale_y = size[1] / image->height;
 
@@ -139,8 +141,9 @@ public:
 
 		String rasterPath( path );
 		rasterizer->Rasterize( rasterPath, image, std::min( scale_x, scale_y ), width, height );
-
-		int textureIndex = LoadTexture( rasterPath, "" );
+#endif
+		//int textureIndex = LoadTexture( rasterPath, "" );
+		int textureIndex =  -1;
 
 		geom = __new__( Geometry )();
 		geom->SetTexture( GetTexture( textureIndex ) );
@@ -151,17 +154,17 @@ public:
 		std::vector< int > &geom_indices = geom->GetIndices();
 		geom_indices.resize( 6 );
 
-		GeometryUtilities::GenerateQuad( &geom_vertices[0], &geom_indices[0], Rocket::Core::Vector2f( 0, 0 ), 
+		GeometryUtilities::GenerateQuad( &geom_vertices[0], &geom_indices[0], Rml::Core::Vector2f( 0, 0 ), 
 			size, Colourb( 255, 255, 255, 255 ), 0 );
 
 		return reinterpret_cast< DecoratorDataHandle >( geom );
 	}
 
-	virtual void ReleaseElementData( DecoratorDataHandle element_data ) {
+	virtual void ReleaseElementData( DecoratorDataHandle element_data ) const override {
 		__delete__( reinterpret_cast< Geometry * >( element_data ) );
 	}
 
-	virtual void RenderElement( Element *element, DecoratorDataHandle element_data ) {
+	virtual void RenderElement( Element *element, DecoratorDataHandle element_data ) const override {
 		reinterpret_cast< Geometry * >( element_data )->Render( element->GetAbsoluteOffset( Box::PADDING ) );
 	}
 };
@@ -175,23 +178,13 @@ public:
 		RegisterProperty( "src", "" ).AddParser( "string" );
 	}
 
-	virtual Decorator *InstanceDecorator( const String &name, const PropertyDictionary &_properties ) {
-		SVGDecorator *decorator = __new__( SVGDecorator );
+	std::shared_ptr<Rml::Core::Decorator> InstanceDecorator( const String &name, const PropertyDictionary &_properties, const Rml::Core::DecoratorInstancerInterface& interface ) {
+		auto decorator = std::make_shared<SVGDecorator>();
 		if( decorator->Initialise( _properties ) ) {
 			return decorator;
 		}
-
-		decorator->RemoveReference();
-		ReleaseDecorator( decorator );
-		return NULL;
-	}
-
-	virtual void ReleaseDecorator( Decorator *decorator ) {
-		__delete__( decorator );
-	}
-
-	virtual void Release( void ) {
-		__delete__( this );
+		
+		return nullptr;
 	}
 };
 

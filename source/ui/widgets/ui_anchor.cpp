@@ -7,7 +7,7 @@
 namespace WSWUI
 {
 
-using namespace Rocket::Core;
+using namespace Rml::Core;
 
 class AnchorWidget : public Element /* , public EventListener */
 {
@@ -25,13 +25,13 @@ public:
 
 		// allow targeting specific idiv's via the "target" attribute
 		// this is similar to targetting specific frames in real browsers
-		if( !target.Empty() && target[0] != '_' ) {
+		if( !target.empty() && target.front() != '_' ) {
 			Element *_target = element->GetOwnerDocument()->GetElementById( target );
 			if( _target && _target->GetTagName() == "idiv" ) {
 				idiv = ( InlineDiv * )_target;
 			}
 			if( !idiv ) {
-				Com_Printf( "AnchorWidget::CacheRead: target idiv '%s' was not found\n", target.CString() );
+				Com_Printf( "AnchorWidget::CacheRead: target idiv '%s' was not found\n", target.c_str() );
 				return;
 			}
 		} else {
@@ -50,18 +50,16 @@ public:
 				}
 			}
 		}
-
-		element->RemoveReference();
 	}
 
-	virtual void ProcessEvent( Event &event ) {
+	virtual void ProcessDefaultAction( Event &event ) override {
 		if( event == "click" ) {
 			// TODO: wrap this to UI_Main that will catch errors and the
 			// new rootdocument (along with populating href with correct
 			// path)
 			String href = GetAttribute<String>( "href", "" );
-			if( href.Empty() ) {
-				Com_Printf( "AnchorWidget::ProcessEvent: empty href\n" );
+			if( href.empty() ) {
+				Com_Printf( "AnchorWidget::ProcessDefaultAction: empty href\n" );
 				return;
 			}
 
@@ -71,28 +69,25 @@ public:
 			}
 
 			// check for warsow:// and warsow{protocol}:// href's
-			String
-				gameProtocol( trap::Cvar_String( "gamename" ) ),
-			gameProtocolSchema( 32,  "%s%i", trap::Cvar_String( "gamename" ), UI_Main::Get()->getGameProtocol() );
+			std::string gameProtocol( trap::Cvar_String( "gamename" ) );
+			std::string gameProtocolSchema = Rml::Core::CreateString( 32,  "%s%i", trap::Cvar_String( "gamename" ), UI_Main::Get()->getGameProtocol() );
 
 			URL url( href );
-			String urlProtocol = url.GetProtocol().ToLower();
+			String urlProtocol = Rml::Core::StringUtilities::ToLower( url.GetProtocol() );
 
-			if( urlProtocol == gameProtocol.ToLower() || urlProtocol == gameProtocolSchema.ToLower() ) {
+			if( urlProtocol == Rml::Core::StringUtilities::ToLower( gameProtocol ) || urlProtocol == Rml::Core::StringUtilities::ToLower( gameProtocolSchema ) ) {
 				// connect to game server
-				trap::Cmd_ExecuteText( EXEC_APPEND, va( "connect \"%s\"\n", href.CString() ) );
+				trap::Cmd_ExecuteText( EXEC_APPEND, va( "connect \"%s\"\n", href.c_str() ) );
 				return;
-			} else if( trap::FS_IsUrl( href.CString() ) ) {
+			} else if( trap::FS_IsUrl( href.c_str() ) ) {
 				String target = GetAttribute<String>( "target", "" );
 
 				if( target == "_browser" ) {
 					// open the link in OS browser
-					trap::CL_OpenURLInBrowser( href.CString() );
+					trap::CL_OpenURLInBrowser( href.c_str() );
 				} else {
-					AddReference();
-
 					UI_Main::Get()->getStreamCache()->PerformRequest(
-						href.CString(), "GET", NULL,
+						href.c_str(), "GET", NULL,
 						NULL, NULL, &CacheRead, ( void * )this
 						);
 				}
@@ -101,10 +96,10 @@ public:
 
 			WSWUI::Document *ui_document = static_cast<WSWUI::Document *>( GetOwnerDocument()->GetScriptObject() );
 			if( ui_document ) {
-				ui_document->getStack()->pushDocument( href.CString() );
+				ui_document->getStack()->pushDocument( href.c_str() );
 			}
 		} else {
-			Element::ProcessEvent( event );
+			Element::ProcessDefaultAction( event );
 		}
 	}
 

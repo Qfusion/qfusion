@@ -1,19 +1,19 @@
 #ifndef __UI_MAPS_DATASOURCE_H__
 #define __UI_MAPS_DATASOURCE_H__
 
-#include <Rocket/Controls/DataSource.h>
+#include <RmlUi/Controls/DataSource.h>
 
 namespace WSWUI
 {
 /// Provides a list of available maps, with their full names, short
 /// names and pictures
-class MapsDataSource : public Rocket::Controls::DataSource
+class MapsDataSource : public Rml::Controls::DataSource
 {
 public:
 	MapsDataSource();
 
-	virtual void GetRow( Rocket::Core::StringList &row, const Rocket::Core::String&, int row_index, const Rocket::Core::StringList& cols );
-	virtual int GetNumRows( const Rocket::Core::String &table );
+	virtual void GetRow( Rml::Core::StringList &row, const Rml::Core::String&, int row_index, const Rml::Core::StringList& cols );
+	virtual int GetNumRows( const Rml::Core::String &table );
 
 private:
 	typedef std::pair<std::string, std::string> MapInfo;

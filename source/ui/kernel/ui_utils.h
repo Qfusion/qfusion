@@ -19,12 +19,11 @@ namespace WSWUI
 // predicate looks like bool(Element*) and should return true if it wants
 // the element given as parameter to be included on the list
 template<typename T, typename Function>
-void collectChildren( Rocket::Core::Element *elem, T &container, Function predicate = unary_true<Rocket::Core::Element*> ) {
+void collectChildren( Rml::Core::Element *elem, T &container, Function predicate = unary_true<Rml::Core::Element*> ) {
 	// insert top-first
-	Rocket::Core::Element *child = elem->GetFirstChild();
+	Rml::Core::Element *child = elem->GetFirstChild();
 	while( child ) {
 		if( predicate( child ) ) {
-			child->AddReference();
 			container.push_back( child );
 		}
 		// recurse
@@ -36,33 +35,24 @@ void collectChildren( Rocket::Core::Element *elem, T &container, Function predic
 
 // as above but start collecting from the given element
 template<typename T, typename Function>
-void collectElements( Rocket::Core::Element *elem, T &container, Function predicate = unary_true<Rocket::Core::Element*> ) {
+void collectElements( Rml::Core::Element *elem, T &container, Function predicate = unary_true<Rml::Core::Element*> ) {
 	// insert bottom-first
-	Rocket::Core::Element *child = elem->GetFirstChild();
+	Rml::Core::Element *child = elem->GetFirstChild();
 	while( child ) {
 		collectElements( child, container, predicate );
 		child = child->GetNextSibling();
 	}
-
-	elem->AddReference();
 	container.push_back( elem );
-}
-
-// and function to release the references from collected children
-template<typename T>
-void releaseCollectedElements( T &container ) {
-	std::for_each( container.begin(), container.end(), std::mem_fn( &Rocket::Core::Element::RemoveReference ) );
-	container.clear();
 }
 
 // inline action for elements, Function should take 1 parameter, the element itself
 template<typename Function>
-void foreachElem( Rocket::Core::Element *elem, Function function, bool doRoot = true ) {
+void foreachElem( Rml::Core::Element *elem, Function function, bool doRoot = true ) {
 	if( doRoot ) {
 		function( elem );
 	}
 
-	Rocket::Core::Element *child = elem->GetFirstChild();
+	Rml::Core::Element *child = elem->GetFirstChild();
 	while( child ) {
 		function( child );
 		foreachElem( child, function, false );
@@ -192,6 +182,11 @@ template<typename T>
 mapper_type<T> mapper( T &container ) {
 	return mapper_type<T>( container );
 }
+	
+struct ElementOwner {
+	Rml::Core::ElementPtr elem;
+	ElementOwner(Rml::Core::Element *elem_) : elem(Rml::Core::ElementPtr(elem_)) { }
+};
 
 //======================================
 

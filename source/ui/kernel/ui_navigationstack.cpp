@@ -7,7 +7,7 @@
 namespace WSWUI
 {
 
-namespace Core = Rocket::Core;
+namespace Core = Rml::Core;
 
 //==========================================
 
@@ -39,13 +39,13 @@ Document *DocumentCache::getDocument( const std::string &name, NavigationStack *
 		documentSet.insert( document );
 
 		if( UI_Main::Get()->debugOn() ) {
-			Com_Printf( "DocumentCache::getDocument, fully loaded document %s (refcount %d)\n", name.c_str(), document->getReference() );
+			Com_Printf( "DocumentCache::getDocument, fully loaded document %s\n", name.c_str());
 		}
 	} else {
 		document = *it;
 
 		if( UI_Main::Get()->debugOn() ) {
-			Com_Printf( "DocumentCache::getDocument, found document %s from cache (refcount %d)\n", name.c_str(), document->getReference() );
+			Com_Printf( "DocumentCache::getDocument, found document %s from cache\n", name.c_str());
 		}
 	}
 
@@ -66,7 +66,7 @@ DocumentCache::DocumentSet::iterator DocumentCache::purgeDocument( DocumentSet::
 	if( doc->IsModal() ) {
 		loader.closeDocument( doc );
 		documentSet.erase( it );
-		doc->removeReference();
+		doc->setRocketDocument( nullptr );
 	}
 
 	return next;
@@ -100,7 +100,7 @@ void DocumentCache::purgeAllDocuments() {
 		if( !documentSet.empty() ) {
 			Com_Printf( "Warning: DocumentCache::purgeAllDocuments: still have %d documents in the cache\n", (int)documentSet.size() );
 			for( DocumentSet::iterator it = documentSet.begin(); it != documentSet.end(); ++it )
-				Com_Printf( "    %s (refcount %d)\n", ( *it )->getName().c_str(), ( *it )->getReference() );
+				Com_Printf( "    %s\n", ( *it )->getName().c_str() );
 		}
 	}
 }
@@ -116,16 +116,16 @@ void DocumentCache::clearCaches() {
 
 	for( DocumentSet::iterator it = documentSet.begin(); it != documentSet.end(); ++it ) {
 		if( ( *it )->getRocketDocument() ) {
-			( *it )->removeReference();
 			loader.closeDocument( ( *it ) );
+			( *it )->setRocketDocument( nullptr );
 		}
 	}
 
 	documentSet.clear();
 
 	// here we also do this
-	Rocket::Core::Factory::ClearStyleSheetCache();
-	Rocket::Core::Factory::ClearTemplateCache();
+	Rml::Core::Factory::ClearStyleSheetCache();
+	Rml::Core::Factory::ClearTemplateCache();
 
 	// and if in the future Rocket offers more cache-cleaning functions, call 'em
 }
@@ -133,7 +133,7 @@ void DocumentCache::clearCaches() {
 // DEBUG
 void DocumentCache::printCache() {
 	for( DocumentSet::iterator it = documentSet.begin(); it != documentSet.end(); ++it )
-		Com_Printf( "  %s (%d references)\n", ( *it )->getName().c_str(), ( *it )->getReference() );
+		Com_Printf( "  %s\n", ( *it )->getName().c_str() );
 }
 
 // send "invalidate" event to all documents
@@ -141,7 +141,7 @@ void DocumentCache::printCache() {
 // must attach themselves to the event as listeneres to either touch
 // the assets or invalidate them
 void DocumentCache::invalidateAssets( void ) {
-	Rocket::Core::Dictionary parameters;
+	Rml::Core::Dictionary parameters;
 	for( DocumentSet::iterator it = documentSet.begin(); it != documentSet.end(); ++it ) {
 		( *it )->getRocketDocument()->DispatchEvent( "invalidate", parameters, true );
 	}
@@ -225,8 +225,8 @@ Document *NavigationStack::pushDocument( const std::string &name, bool modal, bo
 		doc->FocusFirstTabElement();
 
 		if( UI_Main::Get()->debugOn() ) {
-			Com_Printf( "NavigationStack::pushDocument returning %s with refcount %d\n",
-						documentRealname.c_str(), doc->getReference() );
+			Com_Printf( "NavigationStack::pushDocument returning %s\n",
+						documentRealname.c_str() );
 		}
 	}
 
@@ -255,8 +255,8 @@ void NavigationStack::_popDocument( bool focusOnNext ) {
 	doc->Hide();
 
 	if( UI_Main::Get()->debugOn() ) {
-		Com_Printf( "NavigationStack::popDocument popping %s with refcount %d\n",
-					doc->getName().c_str(), doc->getReference() );
+		Com_Printf( "NavigationStack::popDocument popping %s\n",
+					doc->getName().c_str() );
 	}
 
 	// attach to the next document on stack
@@ -317,7 +317,7 @@ void NavigationStack::attachMainEventListenerToTop( Document *prev ) {
 	// global event listeners, TODO: if we ever change eventlistener to be
 	// dynamically instanced, then we cant call GetMainListener every time?
 	// only for UI documents!
-	Rocket::Core::EventListener *listener = UI_GetMainListener();
+	Rml::Core::EventListener *listener = UI_GetMainListener();
 
 	if( prev && prev->getRocketDocument() ) {
 		top->getRocketDocument()->RemoveEventListener( "keydown", listener );

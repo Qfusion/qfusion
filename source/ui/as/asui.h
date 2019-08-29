@@ -14,42 +14,36 @@ void BindFrame( ASInterface *as );
 void BindShutdown( ASInterface *as );
 
 // asui_scriptdocument.cpp
-Rocket::Core::ElementInstancer *GetScriptDocumentInstancer( void );
+Rml::Core::ElementInstancer *GetScriptDocumentInstancer( void );
 
 // asui_scriptevent.cpp
-Rocket::Core::EventListenerInstancer *GetScriptEventListenerInstancer( void );
+Rml::Core::EventListenerInstancer *GetScriptEventListenerInstancer( void );
 /// Releases Angelscript function pointers held by event listeners
-void ReleaseScriptEventListenersFunctions( Rocket::Core::EventListenerInstancer * );
-void GarbageCollectEventListenersFunctions( Rocket::Core::EventListenerInstancer *instancer );
+void ReleaseScriptEventListenersFunctions( Rml::Core::EventListenerInstancer * );
+void GarbageCollectEventListenersFunctions( Rml::Core::EventListenerInstancer *instancer );
 
-class UI_ScriptDocument : public Rocket::Core::ElementDocument
+class UI_ScriptDocument : public Rml::Core::ElementDocument
 {
 private:
-	int numScriptsAdded;
 	ASInterface *as;
 	asIScriptModule *module;
 	bool isLoading;
 	unsigned numScripts;
-
-	// TODO: proper PostponedEvent that handles reference counting and event instancing!
-
-	// mechanism that calls onload events after all of AS scripts are built
-	typedef std::list<Rocket::Core::Event*> PostponedList;
-	PostponedList onloads;
-
-	Rocket::Core::ScriptObject owner;
+	Rml::Core::ScriptObject script_object;
 
 public:
-	UI_ScriptDocument( const Rocket::Core::String &tag = "body" );
+	UI_ScriptDocument( const std::string &tag );
 	virtual ~UI_ScriptDocument( void );
 
 	asIScriptModule *GetModule( void ) const;
 
-	virtual void LoadScript( Rocket::Core::Stream *stream, const Rocket::Core::String &source_name );
+	virtual void LoadScript( Rml::Core::Stream *stream, const std::string &source_name ) override;
 
-	virtual void ProcessEvent( Rocket::Core::Event& event );
+	void SetScriptObject( Rml::Core::ScriptObject script_object_ ) { script_object = script_object_; }
+	virtual Rml::Core::ScriptObject GetScriptObject( void ) const override { return script_object; }
 
-	virtual Rocket::Core::ScriptObject GetScriptObject( void ) const;
+	void BuildScripts( void );
+	void DestroyScripts( void );
 
 	bool IsLoading( void ) const { return isLoading; }
 };
