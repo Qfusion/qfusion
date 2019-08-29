@@ -50,7 +50,7 @@ static int Patch_FlatnessTest( float maxflat2, const float *point0, const float 
 	ft0 = Patch_FlatnessTest( maxflat2, point0, v1, v3 );
 	ft1 = Patch_FlatnessTest( maxflat2, v3, v2, point2 );
 
-	return 1 + (int)( floor( max( ft0, ft1 ) ) + 0.5f );
+	return 1 + max( ft0, ft1 );
 }
 
 /*
