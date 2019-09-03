@@ -25,6 +25,7 @@ void IN_Restart( void );
 
 void IN_Commands( void ); // opportunity for devices to stick commands on the script buffer
 void IN_GetMouseMovement( int *dx, int *dy );
+void IN_GetMousePosition( int *x, int *y );
 void IN_GetThumbsticks( vec4_t sticks );
 
 void IN_Frame( void );

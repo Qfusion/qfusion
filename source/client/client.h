@@ -299,6 +299,7 @@ typedef struct {
 	char session[MAX_INFO_VALUE];
 
 	void *wakelock;
+	bool show_cursor;
 } client_static_t;
 
 extern client_static_t cls;

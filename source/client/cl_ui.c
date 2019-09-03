@@ -383,6 +383,7 @@ void CL_UIModule_Refresh( bool backGround, bool showCursor ) {
 					  cls.demo.playing, cls.demo.name, cls.demo.paused, Q_rint( cls.demo.time / 1000.0f ),
 					  backGround, showCursor );
 	}
+	cls.show_cursor = showCursor;
 }
 
 /*

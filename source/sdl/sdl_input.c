@@ -12,7 +12,6 @@ extern cvar_t *vid_ypos;
 extern SDL_Window *sdl_window;
 
 static bool input_inited = false;
-static bool mouse_active = false;
 static bool input_active = false;
 static bool input_focus = false;
 static bool mouse_relative = false;
@@ -37,10 +36,6 @@ void IN_Commands( void ) {
  * @param ev the SDL event object containing the mouse position et all
  */
 static void mouse_motion_event( SDL_MouseMotionEvent *event ) {
-	if( !mouse_active ) {
-		return;
-	}
-
 	// See:
 	// https://bugzilla.libsdl.org/show_bug.cgi?id=2963
 	// https://bugs.freedesktop.org/show_bug.cgi?id=71609
@@ -71,10 +66,6 @@ static void mouse_motion_event( SDL_MouseMotionEvent *event ) {
  */
 static void mouse_button_event( SDL_MouseButtonEvent *event, bool state ) {
 	Uint8 button = event->button;
-
-	if( !mouse_active ) {
-		return;
-	}
 
 	if( button <= 10 ) {
 		// The engine only supports up to 8 buttons plus the mousewheel.
@@ -123,10 +114,6 @@ static void mouse_button_event( SDL_MouseButtonEvent *event, bool state ) {
 static void mouse_wheel_event( SDL_MouseWheelEvent *event ) {
 	int key = event->y > 0 ? K_MWHEELUP : K_MWHEELDOWN;
 	int64_t sys_msg_time = Sys_Milliseconds();
-
-	if( !mouse_active ) {
-		return;
-	}
 
 	Key_Event( key, true, sys_msg_time );
 	Key_Event( key, false, sys_msg_time );
@@ -415,27 +402,27 @@ static void IN_WarpMouseToCenter( int *pcenter_x, int *pcenter_y ) {
 }
 
 void IN_GetMouseMovement( int *dx, int *dy ) {
-	*dx = *dy = 0;
-	
-	if( mouse_active ) {
-		if( !mouse_relative ) {
-			if( mx || my ) {
-				int center_x, center_y;
+	if( !mouse_relative && cls.key_dest == key_game ) {
+		if( mx || my ) {
+			int center_x, center_y;
 
-				SDL_GetMouseState( &mx, &my );
+			SDL_GetMouseState( &mx, &my );
 
-				IN_WarpMouseToCenter( &center_x, &center_y );
+			IN_WarpMouseToCenter( &center_x, &center_y );
 
-				mx -= center_x;
-				my -= center_y;
-			}
+			mx -= center_x;
+			my -= center_y;
 		}
-
-		*dx = mx;
-		*dy = my;
 	}
 
+	*dx = mx;
+	*dy = my;
+
 	mx = my = 0;
+}
+
+void IN_GetMousePosition( int *x, int *y ) {
+	SDL_GetMouseState( x, y );
 }
 
 void IN_Init() {
@@ -451,8 +438,6 @@ void IN_Init() {
 
 	SDL_GetVersion( &linked );
 
-	SDL_ShowCursor( SDL_DISABLE );
-
 #if SDL_VERSION_ATLEAST( 2, 0, 2 )
 
 	{
@@ -461,27 +446,14 @@ void IN_Init() {
 	}
 #endif
 
-	mouse_relative = SDL_SetRelativeMouseMode( SDL_TRUE ) == 0;
-	if( mouse_relative ) {
-		IN_SetMouseScalingEnabled( false );
-	} else {
-		IN_WarpMouseToCenter( NULL, NULL );
-	}
-
 	IN_SDL_JoyInit( true );
 
 	input_focus = true;
 	input_inited = true;
 	input_active = true; // will be activated by IN_Frame if necessary
-	mouse_active = true;
 	bugged_rawXevents = linked.major == 2 && linked.minor == 0 && linked.patch < 4;
-
-	IN_SkipRelativeMouseMove();
 }
 
-/**
- * Shutdown input subsystem.
- */
 void IN_Shutdown() {
 	if( !input_inited ) {
 		return;
@@ -493,52 +465,70 @@ void IN_Shutdown() {
 	IN_SDL_JoyShutdown();
 }
 
-/**
- * Restart the input subsystem.
- */
 void IN_Restart( void ) {
 	IN_Shutdown();
 	IN_Init();
+}
+
+static void IN_SetMouseState()
+{
+	bool show_cursor;
+	bool want_active;
+	bool want_relative;
+	bool was_relative;
+
+	if( !input_inited ) {
+		return;
+	}
+
+	show_cursor = !input_focus;
+	show_cursor = show_cursor || ( !Cvar_Value( "vid_fullscreen" ) && cls.key_dest == key_console && !in_grabinconsole->integer );
+	show_cursor = show_cursor || ( cls.key_dest == key_menu && cls.show_cursor );
+
+	want_active = input_focus && ( show_cursor || cls.key_dest == key_game );
+	want_relative = input_focus && ( cls.key_dest == key_game );
+
+	mouse_relative = SDL_GetRelativeMouseMode() == SDL_TRUE;
+	was_relative = mouse_relative;
+
+	if( want_relative != mouse_relative ) {
+		bool success = SDL_SetRelativeMouseMode( want_relative ) == 0;
+		mouse_relative = want_relative == success;
+
+		if( success ) {
+			IN_SetMouseScalingEnabled( !mouse_relative );
+
+			if( mouse_relative ) {
+				// skip the first relative mouse movement, which may be
+				// an artifact from centering the cursor
+				IN_SkipRelativeMouseMove();
+			}
+		}
+	}
+
+	if( !mouse_relative ) {
+		bool cur_show_cursor = SDL_ShowCursor( -1 ) == 1 && !was_relative;
+		if( show_cursor != cur_show_cursor ) {
+			SDL_ShowCursor( show_cursor ? 1 : 0 );
+
+			IN_WarpMouseToCenter( NULL, NULL );
+		}
+	}
 }
 
 /**
  * This function is called for every frame and gives us some time to poll
  * for events that occured at our input devices.
  */
-void IN_Frame() {
-	if( !input_inited ) {
-		return;
-	}
-
-	if( !input_focus || ( !Cvar_Value( "vid_fullscreen" ) && cls.key_dest == key_console && !in_grabinconsole->integer ) ) {
-		if( mouse_active ) {
-			if( mouse_relative ) {
-				mouse_relative = !( SDL_SetRelativeMouseMode( SDL_FALSE ) == 0 );
-				if( !mouse_relative ) {
-					IN_SetMouseScalingEnabled( true );
-				}
-			}
-			SDL_ShowCursor( SDL_ENABLE );
-		}
-		mouse_active = false;
-		input_active = true;
-	} else {
-		if( !mouse_active ) {
-			SDL_ShowCursor( SDL_DISABLE );
-
-			mouse_relative = SDL_SetRelativeMouseMode( SDL_TRUE ) == 0;
-			if( mouse_relative ) {
-				IN_SetMouseScalingEnabled( false );
-			} else {
-				IN_WarpMouseToCenter( NULL, NULL );
-			}
-			IN_SkipRelativeMouseMove();
-		}
-		mouse_active = true;
-		input_active = true;
-	}
+void IN_Frame()
+{
+	// update the cursor/mouse state
+	IN_SetMouseState();
 
 	IN_HandleEvents();
+
+	// update the state again, as IN_HandleEvents might have changed cls.key_dest
+	IN_SetMouseState();
 }
 
 /**
