@@ -290,32 +290,6 @@ static Element *Element_GetChild( Element *self, unsigned int index ) {
 	return e;
 }
 
-static void Element_AppendChild( Element *self, Element *child, bool dom_element ) {
-	if( child ) {
-		self->AppendChild( ElementPtr(child), dom_element );
-	}
-}
-
-static void Element_InsertBefore( Element *self, Element *a, Element *b ) {
-	if( a && b ) {
-		self->InsertBefore( ElementPtr(a), b );
-	}
-}
-
-static void Element_RemoveChild( Element *self, Element *a ) {
-	if( a ) {
-		self->RemoveChild( a );
-	}
-}
-
-static Element *Element_Clone( Element *self ) {
-	if( self ) {
-		ElementPtr e = self->Clone();
-		return e.get();
-	}
-	return NULL;
-}
-
 // CONTENTS
 
 static asstring_t *Element_GetInnerRML( Element *elem ) {
@@ -521,26 +495,6 @@ static Element *ElementTabSet_CastToElement( ElementTabSet *self ) {
 	return e;
 }
 
-/// Sets the specifed tab index's tab title RML.
-static void ElementTabSet_SetTab( ElementTabSet *self, int tabIndex, const asstring_t & rml ) {
-	self->SetTab( tabIndex, ASSTR( rml ) );
-}
-
-/// Sets the specifed tab index's tab panel RML.
-static void ElementTabSet_SetPanel( ElementTabSet *self, int tabIndex, const asstring_t & rml ) {
-	self->SetPanel( tabIndex, ASSTR( rml ) );
-}
-
-/// Set the specifed tab index's title element.
-static void ElementTabSet_SetTab( ElementTabSet *self, int tabIndex, Element *e ) {
-	self->SetTab( tabIndex, ElementPtr(e) );
-}
-
-/// Set the specified tab index's body element.
-static void ElementTabSet_SetPanel( ElementTabSet *self, int tabIndex, Element *e ) {
-	self->SetPanel( tabIndex, ElementPtr(e) );
-}
-
 /// Remove one of the tab set's panels and its corresponding tab.
 static void ElementTabSet_RemoveTab( ElementTabSet *self, int tabIndex ) {
 	self->RemoveTab( tabIndex );
@@ -570,10 +524,7 @@ static void BindElementTabSet( ASInterface *as ) {
 
 	ASBind::GetClass<ElementTabSet>( engine )
 
-	.method<void ( ElementTabSet *, int, const asstring_t & )>( &ElementTabSet_SetTab, "setTab", true )
-	.method<void ( ElementTabSet *, int, Element * )>( &ElementTabSet_SetTab, "setTab", true )
-	.method<void ( ElementTabSet *, int, const asstring_t & )>( &ElementTabSet_SetPanel, "setPanel", true )
-	.method<void ( ElementTabSet *, int, Element * )>( &ElementTabSet_SetPanel, "setPanel", true )
+
 	.method( &ElementTabSet_RemoveTab, "removeTab", true )
 	.constmethod( &ElementTabSet_GetNumTabs, "getNumTabs", true )
 	.method( &ElementTabSet_SetActiveTab, "setActiveTab", true )
@@ -1072,11 +1023,7 @@ void BindElement( ASInterface *as ) {
 	.method( &Element::Focus, "focus" )
 	.method( &Element::Blur, "unfocus" )
 	.method( &Element::Click, "click" )
-	.method2( &Element_AppendChild, "void addChild( Element @el, bool dom_element = true )", true )
-	.method( &Element_InsertBefore, "insertChild", true )
-	.method( &Element_RemoveChild, "removeChild", true )
 	.method( &Element::HasChildNodes, "hasChildren" )
-	.method( Element_Clone, "clone", true )
 
 	.method( Element_GetElementById, "getElementById", true )
 	.method( Element_GetElementsByTagName, "getElementsByTagName", true )
