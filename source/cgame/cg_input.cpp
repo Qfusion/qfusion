@@ -383,8 +383,8 @@ void CG_GetMovement( vec3_t movement ) {
 /*
 * CG_InputFrame
 */
-void CG_InputFrame( int frameTime ) {
-	CG_asInputFrame( frameTime );
+void CG_InputFrame( int64_t inputTime ) {
+	CG_asInputFrame( inputTime );
 
 	CG_TouchFrame();
 }

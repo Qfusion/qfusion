@@ -187,8 +187,6 @@ void Sys_AppActivate( void ) {
 * Sys_SendKeyEvents
 */
 void Sys_SendKeyEvents( void ) {
-	// grab frame time
-	sys_frame_time = Sys_Milliseconds();
 }
 
 #endif // !defined(USE_SDL2) || defined(DEDICATED_ONLY)

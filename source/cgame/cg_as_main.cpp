@@ -27,7 +27,7 @@ static cg_asApiFuncPtr_t cg_asCGameAPI[] = {
 
 	{ "void CGame::Input::Init()", &cgs.asInput.init, true },
 	{ "void CGame::Input::Shutdown()", &cgs.asInput.shutdown, true },
-	{ "void CGame::Input::Frame( int64 curTime, int frameTime )", &cgs.asInput.frame, true },
+	{ "void CGame::Input::Frame( int64 inputTime )", &cgs.asInput.frame, true },
 	{ "void CGame::Input::ClearState()", &cgs.asInput.clearState, true },
 	{ "bool CGame::Input::KeyEvent( int key, bool down )", &cgs.asInput.keyEvent, false },
 	{ "void CGame::Input::MouseMove( int mx, int my )", &cgs.asInput.mouseMove, true },

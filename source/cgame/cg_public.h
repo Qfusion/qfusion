@@ -307,9 +307,9 @@ typedef struct {
 	/**
 	 * Updates input-related parts of cgame every frame.
 	 *
-	 * @param frametime real frame time
+	 * @param inputTime system timer value when input events for this frame occured.
 	 */
-	void ( *InputFrame )( int frameTime );
+	void ( *InputFrame )( int64_t inputTime );
 
 	/**
 	* Transmits accumulated mouse movement event for the current frame.

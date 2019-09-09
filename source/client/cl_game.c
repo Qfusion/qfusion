@@ -648,9 +648,9 @@ void CL_GameModule_RenderView( float stereo_separation ) {
 /*
 * CL_GameModule_InputFrame
 */
-void CL_GameModule_InputFrame( int frameTime ) {
+void CL_GameModule_InputFrame( int64_t inputTime ) {
 	if( cge ) {
-		cge->InputFrame( frameTime );
+		cge->InputFrame( inputTime );
 	}
 }
 

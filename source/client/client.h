@@ -406,7 +406,7 @@ void CL_GameModule_EscapeKey( void );
 bool CL_GameModule_NewSnapshot( int pendingSnapshot );
 void CL_GameModule_RenderView( float stereo_separation );
 void CL_GameModule_GetEntitySpatilization( int entnum, vec3_t origin, vec3_t velocity );
-void CL_GameModule_InputFrame( int frameTime );
+void CL_GameModule_InputFrame( int64_t inputTime );
 void CL_GameModule_ClearInputState( void );
 unsigned CL_GameModule_GetButtonBits( void );
 void CL_GameModule_AddViewAngles( vec3_t viewAngles );

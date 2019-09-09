@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "client.h"
 
 static bool in_initialized = false;
+static int64_t sys_frame_time;
 
 cvar_t *cl_ucmdMaxResend;
 
@@ -117,7 +118,7 @@ static void CL_UpdateGameInput( int frameTime ) {
 	IN_GetMouseMovement( &mx, &my );
 
 	// refresh input in cgame
-	CL_GameModule_InputFrame( frameTime );
+	CL_GameModule_InputFrame( sys_frame_time );
 
 	if( cls.key_dest == key_menu ) {
 		CL_UIModule_MouseMove( true, frameTime, mx, my );
@@ -140,11 +141,11 @@ void CL_UserInputFrame( int realMsec ) {
 	// get new key events
 	Sys_SendKeyEvents();
 
+	// grab frame time
+	sys_frame_time = Sys_Milliseconds();
+
 	// get new key events from mice or external controllers
 	IN_Commands();
-
-	// refresh mouse angles and movement velocity
-	CL_UpdateGameInput( realMsec );
 
 	// create a new usercmd_t structure for this frame
 	CL_CreateNewUserCommand( realMsec );
@@ -240,9 +241,16 @@ static void CL_SetUcmdButtons( usercmd_t *ucmd ) {
 * Updates ucmd to use the most recent viewangles.
 */
 static void CL_RefreshUcmd( usercmd_t *ucmd, int msec, bool ready ) {
-	ucmd->msec += msec;
+	static int64_t old_ucmd_frame_time;
+	int ucmd_frame_time = sys_frame_time - old_ucmd_frame_time;
+	old_ucmd_frame_time = sys_frame_time;
 
-	if( ucmd->msec ) {
+	// refresh mouse angles and movement velocity
+	if( ucmd_frame_time > 0 ) {
+		ucmd->msec += ucmd_frame_time;
+
+		CL_UpdateGameInput( ucmd_frame_time );
+
 		CL_SetUcmdMovement( ucmd );
 
 		CL_SetUcmdButtons( ucmd );

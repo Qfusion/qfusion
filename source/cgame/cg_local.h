@@ -1218,7 +1218,7 @@ void CG_asGetViewAnglesClamp( const player_state_t *ps, vec3_t clamp );
 
 void CG_asInputInit( void );
 void CG_asInputShutdown( void );
-void CG_asInputFrame( int frameTime );
+void CG_asInputFrame( int64_t inputTime );
 void CG_asInputClearState( void );
 bool CG_asInputKeyEvent( int key, bool down );
 void CG_asInputMouseMove( int mx, int my );
@@ -1267,7 +1267,7 @@ typedef struct {
 
 void CG_InitInput( void );
 void CG_ShutdownInput( void );
-void CG_InputFrame( int frameTime );
+void CG_InputFrame( int64_t inputTime );
 void CG_ClearInputState( void );
 void CG_MouseMove( int mx, int my );
 float CG_GetSensitivityScale( float sens, float zoomSens );

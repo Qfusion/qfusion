@@ -173,11 +173,10 @@ void CG_asInputShutdown( void ) {
 /*
 * CG_asInputFrame
 */
-void CG_asInputFrame( int frameTime ) {
-	CG_asCallScriptFunc( cgs.asInput.frame, [frameTime](asIScriptContext *ctx)
+void CG_asInputFrame( int64_t inputTime ) {
+	CG_asCallScriptFunc( cgs.asInput.frame, [inputTime](asIScriptContext *ctx)
 		{
-			ctx->SetArgQWord( 0, trap_Milliseconds() );
-			ctx->SetArgDWord( 1, frameTime );
+			ctx->SetArgQWord( 0, inputTime );
 		},
 		cg_empty_as_cb
 	);
