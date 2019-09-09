@@ -285,7 +285,7 @@ static void IN_DeactivateMouse( void ) {
 		return;
 	}
 
-	if( rawinput_initialized > 0 ) {
+	if( rawinput_initialized ) {
 		IN_RawInput_DeRegister();
 	}
 
@@ -595,6 +595,8 @@ bool IN_RawInput_Init( void ) {
 * IN_RawInput_Shutdown
 */
 static void IN_RawInput_Shutdown( void ) {
+	rawinput_initialized = false;
+
 	if( rawmicecount < 1 ) {
 		return;
 	}
@@ -754,10 +756,10 @@ static void IN_StartupMouse( void ) {
 		Com_Printf( "DirectInput initialized\n" );
 	} else {
 		Com_Printf( "DirectInput not initialized, using standard input\n" );
+		mouseparmsvalid = SystemParametersInfo( SPI_GETMOUSE, 0, originalmouseparms, 0 );
 	}
 
 	mouseinitialized = true;
-	mouseparmsvalid = SystemParametersInfo( SPI_GETMOUSE, 0, originalmouseparms, 0 );
 	mouse_buttons = 8;
 	mouse_wheel_type = MWHEEL_UNKNOWN;
 }
