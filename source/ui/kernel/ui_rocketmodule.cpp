@@ -16,6 +16,7 @@
 
 #include <RmlUi/Core/FontEffectInstancer.h>
 #include <RmlUi/Controls.h>
+#include <RmlUi/Debugger/Debugger.h>
 
 namespace WSWUI
 {
@@ -88,6 +89,8 @@ RocketModule::RocketModule( int vidWidth, int vidHeight, float pixelRatio )
 
 	memset( hideCursorBits, 0, sizeof( *hideCursorBits ) * UI_NUM_CONTEXTS );
 	memset( contextsTouch, -1, sizeof( *contextsTouch ) * UI_NUM_CONTEXTS );
+
+	Rml::Debugger::Initialise( contextMain );
 }
 
 RocketModule::~RocketModule() {
@@ -168,6 +171,10 @@ void RocketModule::keyEvent( int contextId, int key, bool pressed ) {
 		context->ProcessMouseWheel( 1, mod );
 	} else if( key == K_MWHEELUP ) {
 		context->ProcessMouseWheel( -1, mod );
+	} else if( key == K_F11 ) {
+		if( pressed ) {
+			Rml::Debugger::SetVisible( !Rml::Debugger::IsVisible() );
+		}
 	} else {
 		if( ( key == K_A_BUTTON ) || ( key == K_DPAD_CENTER ) ) {
 			if( pressed ) {
@@ -326,12 +333,17 @@ int RocketModule::GetEventClasses() {
 
 void RocketModule::OnDocumentLoad( Rml::Core::ElementDocument *document ) {
 	ASUI::UI_ScriptDocument *ui_document = dynamic_cast<ASUI::UI_ScriptDocument *>( document );
-	ui_document->BuildScripts();
+	if( ui_document != nullptr ) {
+		ui_document->BuildScripts();
+		ui_document->UpdateDocument();
+	}
 }
 
 void RocketModule::OnDocumentUnload( Rml::Core::ElementDocument *document ) {
 	ASUI::UI_ScriptDocument *ui_document = dynamic_cast<ASUI::UI_ScriptDocument *>( document );
-	ui_document->DestroyScripts();
+	if( ui_document != nullptr ) {
+		ui_document->DestroyScripts();
+	}
 }
 
 //==================================================

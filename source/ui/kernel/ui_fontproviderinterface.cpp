@@ -13,6 +13,9 @@ using namespace Rml::Core;
 
 static UI_FontProviderInterface *instance = nullptr;
 
+const std::string UI_FontProviderInterface::debugger_font_family = "rmlui-debugger-font";
+const std::string UI_FontProviderInterface::debugger_font_family_alias = DEFAULT_SYSTEM_FONT_FAMILY;
+
 UI_FontProviderInterface::UI_FontProviderInterface( RenderInterface *render_interface ) :
 	render_interface( render_interface ), capture_shader_last( nullptr ), capture_geometry( nullptr ), capture_texture_last( nullptr ) {
 	instance = this;
@@ -43,10 +46,15 @@ FontFaceHandle UI_FontProviderInterface::GetFontFaceHandle( const String& family
 			break;
 	}
 
-	if( family.empty() ) {
+	const std::string *aliased_family = &family;
+	if( family == debugger_font_family ) {
+		aliased_family = &debugger_font_family_alias;
+	}
+
+	if( aliased_family->empty() ) {
 		return FontFaceHandle( 0 );
 	}
-	return FontFaceHandle( trap::SCR_RegisterFont( family.c_str(), (qfontstyle_t)qstyle, (unsigned)size ) );
+	return FontFaceHandle( trap::SCR_RegisterFont( aliased_family->c_str(), (qfontstyle_t)qstyle, (unsigned)size ) );
 }
 
 int UI_FontProviderInterface::GetCharacterWidth( FontFaceHandle handle ) const {

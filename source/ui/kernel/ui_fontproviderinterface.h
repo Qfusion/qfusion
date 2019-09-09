@@ -49,6 +49,8 @@ private:
 	Rml::Core::GeometryList *capture_geometry;
 	Rml::Core::Texture *capture_texture_last;
 
+	static const std::string debugger_font_family, debugger_font_family_alias;
+
 	TextureMap textures;
 };
 

@@ -68,18 +68,12 @@ public:
 			if( type == "checkbox" || type == "radio" ) {
 				float fvalue = target->HasAttribute( "checked" ) ? 1.0 : 0.0;
 				trap::Cvar_SetValue( cvar.c_str(), fvalue );
-
-				//Com_Printf("onChange: Cvar_Set \"%s\" \"%g\"\n", cvar.CString(), fvalue );
 			} else if( type == "range" ) {
 				float fvalue = atof( target->GetValue().c_str() );
 				trap::Cvar_SetValue( cvar.c_str(), fvalue );
-
-				//Com_Printf("onChange: Cvar_Set \"%s\" \"%g\"\n", cvar.CString(), fvalue );
 			} else {
 				std::string value = target->GetValue();
 				trap::Cvar_Set( cvar.c_str(), value.c_str() );
-
-				//Com_Printf("onChange: Cvar_Set \"%s\" \"%s\"\n", cvar.CString(), value.CString() );
 			}
 		}
 	}

@@ -36,7 +36,7 @@ include_directories(${ANGELSCRIPT_INCLUDE_DIR} ${LIBROCKET_INCLUDE_DIR} ${NANOSV
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}) # for ui_precompiled.h
 
 add_library(ui SHARED ${NANOSVG_HEADERS} ${UI_SOURCES} ${UI_HEADERS})
-target_link_libraries(ui PRIVATE RmlCore RmlControls)
+target_link_libraries(ui PRIVATE RmlCore RmlControls RmlDebugger)
 set_target_properties(ui PROPERTIES COMPILE_DEFINITIONS "RMLUI_STATIC_LIB;RMLUI_NO_FONT_INTERFACE_DEFAULT;RMLUI_NO_THIRDPARTY_CONTAINERS")
 add_dependencies(ui angelwrap)
 
