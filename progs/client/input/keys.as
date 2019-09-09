@@ -141,7 +141,7 @@ void KeyDown( Kbutton @b ) {
 	@c = CGame::Cmd::Argv( 2 );
 	b.downtime = c.toInt();
 	if( b.downtime == 0 ) {
-		b.downtime = curTime - 100;
+		b.downtime = inputTime - 100;
 	}
 
 	b.state |= 1 + 2; // down + impulse down
@@ -241,8 +241,8 @@ float KeyState( Kbutton @key ) {
 
 	if( key.state != 0 ) {
 		// still down
-		msec += curTime - key.downtime;
-		key.downtime = curTime;
+		msec += inputTime - key.downtime;
+		key.downtime = inputTime;
 	}
 
 	if( frameTime == 0 ) {

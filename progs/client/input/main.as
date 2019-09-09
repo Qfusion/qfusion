@@ -22,8 +22,8 @@ namespace CGame {
 
 namespace Input {
 
-int64 curTime;
-int frameTime;
+int64 inputTime, oldInputTime;
+int64 frameTime;
 float pixelRatio;
 
 void Init()
@@ -37,10 +37,11 @@ void Shutdown()
 {
 }
 
-void Frame( int64 curTime_, int frameTime_ )
+void Frame( int64 inputTime_ )
 {
-	curTime = curTime_;
-	frameTime = frameTime_;
+	oldInputTime = inputTime;
+	inputTime = inputTime_;
+	frameTime = inputTime - oldInputTime;
 
 	CGame::Input::Gamepad::Frame();
 	CGame::Input::Touch::Frame();
@@ -48,8 +49,6 @@ void Frame( int64 curTime_, int frameTime_ )
 
 void ClearState()
 {
-	frameTime = 0;
-
 	CGame::Input::Gamepad::ClearState();
 }
 
