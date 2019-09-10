@@ -744,7 +744,7 @@ static void IN_StartupMouse( void ) {
 	}
 
 	if( !rawinput_initialized ) {
-		cv = Cvar_Get( "in_dinput", "0", CVAR_ARCHIVE );
+		cv = Cvar_Get( "in_dinput", "1", CVAR_ARCHIVE );
 		if( cv->integer ) {
 			dinput_initialized = IN_InitDInput();
 		}
