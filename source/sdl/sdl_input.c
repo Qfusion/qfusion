@@ -158,7 +158,7 @@ static wchar_t TranslateSDLScancode( SDL_Scancode scancode ) {
 		case SDL_SCANCODE_LCTRL:        charkey = K_LCTRL;      break;
 		case SDL_SCANCODE_RCTRL:        charkey = K_RCTRL;      break;
 		case SDL_SCANCODE_LSHIFT:       charkey = K_LSHIFT;     break;
-		case SDL_SCANCODE_RSHIFT:       charkey = K_LSHIFT;     break;
+		case SDL_SCANCODE_RSHIFT:       charkey = K_RSHIFT;     break;
 		case SDL_SCANCODE_F1:           charkey = K_F1;         break;
 		case SDL_SCANCODE_F2:           charkey = K_F2;         break;
 		case SDL_SCANCODE_F3:           charkey = K_F3;         break;
