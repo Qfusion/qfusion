@@ -35,12 +35,10 @@ public:
 
 	// rocket overrides
 	virtual Rml::Core::EventPtr InstanceEvent( Element *target, Rml::Core::EventId id, const std::string & type, const Dictionary &parameters, bool interruptible ) override {
-		// Com_Printf("MyEventInstancer: instancing %s %s\n", name.CString(), target->GetTagName().CString() );
 		return Rml::Core::EventPtr(__new__( Rml::Core::Event )( target, id, type, parameters, interruptible ));
 	}
 
 	virtual void ReleaseEvent( Event *event ) override {
-		// Com_Printf("MyEventInstancer: releasing %s %s\n", event->GetType().CString(), event->GetTargetElement()->GetTagName().CString() );
 		__delete__( event );
 	}
 
@@ -87,7 +85,6 @@ RocketModule::RocketModule( int vidWidth, int vidHeight, float pixelRatio )
 	contextQuick = Rml::Core::CreateContext( contextName + "_quick", Vector2i( vidWidth, vidHeight ) );
 	contextQuick->SetDensityIndependentPixelRatio( pixelRatio );
 
-	memset( hideCursorBits, 0, sizeof( *hideCursorBits ) * UI_NUM_CONTEXTS );
 	memset( contextsTouch, -1, sizeof( *contextsTouch ) * UI_NUM_CONTEXTS );
 
 	Rml::Debugger::Initialise( contextMain );
@@ -309,8 +306,7 @@ Rml::Core::ElementDocument *RocketModule::loadDocument( int contextId, const cha
 
 	if( show ) {
 		// load documents with autofocus disabled
-		document->Show( Rml::Core::ElementDocument::NONE );
-		document->Focus();
+		document->Show( Rml::Core::FocusFlag::FocusDocument );
 
 		// optional element specific eventlisteners here
 
@@ -397,22 +393,6 @@ int RocketModule::idForContext( Rml::Core::Context *context ) {
 	return UI_NUM_CONTEXTS;
 }
 
-// Load the mouse cursor and release the caller's reference:
-// NOTE: be sure to use it before initRocket( .. ) function
-void RocketModule::loadCursor( int contextId, const std::string& rmlCursor ) {
-	//Rml::Core::ElementDocument* cursor = contextForId( contextId )->LoadMouseCursor( rmlCursor );
-
-	//if( cursor ) {
-		//cursor->RemoveReference();
-	//}
-}
-
-void RocketModule::hideCursor( int contextId, unsigned int addBits, unsigned int clearBits ) {
-	hideCursorBits[contextId] = ( hideCursorBits[contextId] & ~clearBits ) | addBits;
-	// LATER
-	//contextForId( contextId )->ShowMouseCursor( hideCursorBits[contextId] == 0 );
-}
-
 void RocketModule::update( void ) {
 	ASUI::GarbageCollectEventListenersFunctions( scriptEventListenerInstancer );
 
@@ -475,7 +455,6 @@ void RocketModule::registerCustoms() {
 	//
 	// DECORATORS
 	registerDecorator( "gradient", GetGradientDecoratorInstancer() );
-	registerDecorator( "ninepatch", GetNinePatchDecoratorInstancer() );
 	registerDecorator( "svg", GetSVGDecoratorInstancer() );
 
 	//

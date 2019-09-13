@@ -207,11 +207,9 @@ void UI_KeySelect::ProcessEvent( Event& event ) {
 
 	if( event == "blur" ) {
 		focusMode = false;
-		rocketModule->hideCursor( contextId, 0, RocketModule::HIDECURSOR_ELEMENT );
 		WriteText();
 	} else if( event == "focus" ) {
 		focusMode = true;
-		rocketModule->hideCursor( contextId, RocketModule::HIDECURSOR_ELEMENT, 0 );
 
 		// old C ui functionality
 		if( KeysAreBound() ) {

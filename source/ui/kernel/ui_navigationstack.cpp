@@ -395,7 +395,7 @@ const std::string &NavigationStack::getDefaultPath( void ) {
 
 std::string NavigationStack::getFullpath( const std::string &name ) {
 	// if name is absolute, return name
-	if( !name.length() || name[0] == '/' ) {
+	if( name.empty() || name[0] == '/' ) {
 		return name;
 	}
 
@@ -406,9 +406,9 @@ std::string NavigationStack::getFullpath( const std::string &name ) {
 // TEMP TEMP
 void NavigationStack::showStack( bool show ) {
 	if( documentStack.empty() ) {
-		return;     // Warn?
-
+		return;
 	}
+
 #if 0
 	if( modalTop ) {
 		// also show the one below the top
@@ -421,7 +421,7 @@ void NavigationStack::showStack( bool show ) {
 	}
 #endif
 
-	documentStack.back()->Show( show, modalTop );
+	documentStack.back()->Show( modalTop );
 }
 
 // TEMP TEMP

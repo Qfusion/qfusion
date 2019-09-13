@@ -113,10 +113,6 @@ private:
 		assert( rocket_document->GetParentNode() != nullptr );
 		AppendChild( rocket_document->GetParentNode()->RemoveChild( rocket_document ) );
 
-		//rocket_document->SetProperty( Rml::Core::PropertyId::OverflowX, Rml::Core::Property( Rml::Core::Style::Overflow::Auto ) );
-		//rocket_document->SetProperty( Rml::Core::PropertyId::OverflowX, Rml::Core::Property( Rml::Core::Style::Overflow::Auto ) );
-		//rocket_document->PullToFront();
-
 		AttachToOwnerDocument();
 	}
 

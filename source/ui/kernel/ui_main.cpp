@@ -58,13 +58,12 @@ UI_Main::UI_Main( int vidWidth, int vidHeight, float pixelRatio,
 	mousex( 0 ), mousey( 0 ), gameProtocol( protocol ),
 	menuVisible( false ), overlayMenuVisible( false ), forceMenu( false ), showNavigationStack( false ),
 	demoExtension( demoExtension ), invalidateAjaxCache( false ),
-	ui_basepath( nullptr ), ui_cursor( nullptr ), ui_developer( nullptr ), ui_preload( nullptr ) {
+	ui_basepath( nullptr ), ui_developer( nullptr ), ui_preload( nullptr ) {
 	// instance
 	self = this;
 
 	Vector4Set( colorWhite, 1, 1, 1, 1 );
 	ui_basepath = trap::Cvar_Get( "ui_basepath", basePath, CVAR_ARCHIVE );
-	ui_cursor = trap::Cvar_Get( "ui_cursor", "cursors/default.rml", CVAR_DEVELOPER );
 	ui_developer = trap::Cvar_Get( "developer", "0", 0 );
 	ui_preload = trap::Cvar_Get( "ui_preload", "1", CVAR_ARCHIVE );
 
@@ -110,9 +109,6 @@ UI_Main::UI_Main( int vidWidth, int vidHeight, float pixelRatio,
 
 	// this after instantiation
 	ASUI::BindGlobals( self->getAS() );
-
-	// load cursor document
-	loadCursor();
 
 	// this has to be called after AS API is fully loaded
 	preloadUI();
@@ -221,13 +217,6 @@ void UI_Main::preloadUI( void ) {
 	navigator->pushDocument( ui_index, false, false );
 	showNavigationStack = navigator->hasDocuments();
 
-	// initial cursor setup
-	if( trap::IN_SupportedDevices() & IN_DEVICE_TOUCHSCREEN ) {
-		mouseMove( UI_CONTEXT_MAIN, 0, 0, 0, true, false );
-	} else {
-		mouseMove( UI_CONTEXT_MAIN, 0, refreshState.width >> 1, refreshState.height >> 1, true, true );
-	}
-
 	if( !overlayMenuURL.empty() ) {
 		navigator = navigations[UI_CONTEXT_OVERLAY].front();
 		navigator->pushDocument( overlayMenuURL.c_str(), false );
@@ -272,20 +261,6 @@ void UI_Main::reloadUI( void ) {
 	preloadUI();
 
 	showUI( true );
-}
-
-void UI_Main::loadCursor( void ) {
-	assert( rocketModule != NULL );
-
-	// setup cursor
-	std::string basecursor( ui_basepath->string );
-
-	basecursor += "/";
-	basecursor += ui_cursor->string;
-
-	rocketModule->loadCursor( UI_CONTEXT_MAIN, basecursor.c_str() );
-
-	rocketModule->loadCursor( UI_CONTEXT_OVERLAY, basecursor.c_str() );
 }
 
 bool UI_Main::initRocket( void ) {
@@ -444,8 +419,6 @@ void UI_Main::showUI( bool show ) {
 				stack->popAllDocuments();
 			}
 		}
-
-		rocketModule->hideCursor( UI_CONTEXT_MAIN, RocketModule::HIDECURSOR_REFRESH, 0 );
 	}
 }
 
@@ -454,12 +427,6 @@ void UI_Main::showOverlayMenu( bool show, bool showCursor ) {
 
 	if( !show ) {
 		cancelTouches( UI_CONTEXT_OVERLAY );
-	}
-
-	if( showCursor ) {
-		rocketModule->hideCursor( UI_CONTEXT_OVERLAY, 0, RocketModule::HIDECURSOR_INPUT );
-	} else {
-		rocketModule->hideCursor( UI_CONTEXT_OVERLAY, RocketModule::HIDECURSOR_INPUT, 0 );
 	}
 }
 
@@ -642,12 +609,6 @@ void UI_Main::mouseMove( int contextId, int frameTime, int x, int y, bool absolu
 	}
 
 	rocketModule->mouseMove( contextId, mousex, mousey );
-
-	if( showCursor ) {
-		rocketModule->hideCursor( contextId, 0, RocketModule::HIDECURSOR_INPUT );
-	} else {
-		rocketModule->hideCursor( contextId, RocketModule::HIDECURSOR_INPUT, 0 );
-	}
 }
 
 bool UI_Main::mouseHover( int contextId ) {
@@ -771,10 +732,7 @@ void UI_Main::refreshScreen( unsigned int time, int clientState, int serverState
 			showUI( false );
 		} else {
 			if( showCursor ) {
-				rocketModule->hideCursor( UI_CONTEXT_MAIN, 0, RocketModule::HIDECURSOR_REFRESH );
 				gamepadCursorMove();
-			} else {
-				rocketModule->hideCursor( UI_CONTEXT_MAIN, RocketModule::HIDECURSOR_REFRESH, 0 );
 			}
 		}
 	}

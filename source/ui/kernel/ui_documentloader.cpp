@@ -21,17 +21,12 @@ Document::~Document() {
 	// well.. we dont remove references here or purge the document?
 }
 
-void Document::Show( bool show, bool modal ) {
+void Document::Show( bool modal ) {
 	auto *doc = rocketDocument;
 	if( doc == nullptr ) {
 		return;
 	}
-
-	if( show ) {
-		doc->Show( modal ? Rml::Core::ElementDocument::MODAL : 0 );
-	} else {
-		doc->Hide();
-	}
+	doc->Show( modal ? Rml::Core::FocusFlag::ModalDocument : Rml::Core::FocusFlag::FocusDocument );
 }
 
 void Document::Hide() {
@@ -47,8 +42,7 @@ void Document::Focus() {
 	if( doc == nullptr ) {
 		return;
 	}
-
-	doc->Focus();
+	doc->Show( Rml::Core::FocusFlag::FocusDocument );
 }
 
 void Document::FocusFirstTabElement() {
@@ -56,10 +50,7 @@ void Document::FocusFirstTabElement() {
 	if( doc == nullptr ) {
 		return;
 	}
-
-		//if( !rocketDocument->FocusFirstTabElement() ) {
-			doc->Focus();
-		//}
+	doc->Show( Rml::Core::FocusFlag::Focus );
 }
 
 bool Document::IsModal() {

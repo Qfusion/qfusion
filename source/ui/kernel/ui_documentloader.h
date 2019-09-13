@@ -60,7 +60,7 @@ public:
 	Rml::Core::ElementDocument *getRocketDocument() { return rocketDocument; }
 
 	// other rocket wrappers
-	void Show( bool show = true, bool modal = false );
+	void Show( bool modal = false );
 	void Hide();
 	void Focus();
 	void FocusFirstTabElement();

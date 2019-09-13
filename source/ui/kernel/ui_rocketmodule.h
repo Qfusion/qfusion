@@ -26,16 +26,6 @@ public:
 	// pre-shutdown
 	void unregisterCustoms();
 
-	// cursor functions
-	enum HideCursorBits {
-		HIDECURSOR_REFRESH  = 1 << 0,     // hidden by UI_Main::refreshScreen
-		HIDECURSOR_INPUT    = 1 << 1,     // hidden by an input source such as touchscreen
-		HIDECURSOR_ELEMENT  = 1 << 2,     // hidden by an element
-		HIDECURSOR_ALL      = ( 1 << 3 ) - 1
-	};
-	void loadCursor( int contextId, const std::string& rmlCursor );
-	void hideCursor( int contextId, unsigned int addBits, unsigned int clearBits );
-
 	// system events
 	void mouseMove( int contextId, int mousex, int mousey );
 	bool mouseHover( int contextId );
@@ -86,7 +76,6 @@ public:
 	Rml::Core::Context *contextForId( int contextId );
 
 	bool rocketInitialized;
-	unsigned int hideCursorBits[UI_NUM_CONTEXTS];
 
 	struct contextTouch {
 		int id;

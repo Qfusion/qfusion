@@ -150,8 +150,6 @@ private:
 	void createFormatters( void );
 	void destroyFormatters( void );
 
-	void loadCursor( void );
-
 
 	/**
 	 * Adds cursor movement from the gamepad sticks.
@@ -236,7 +234,6 @@ private:
 	static const std::string ui_connectscreen;
 
 	cvar_t *ui_basepath;
-	cvar_t *ui_cursor;
 	cvar_t *ui_developer;
 	cvar_t *ui_preload;
 };
