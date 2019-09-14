@@ -442,6 +442,14 @@ static void Element_SetId( Element *elem, const asstring_t &a ) {
 	elem->SetId( ASSTR( a ) );
 }
 
+static float Element_GetContainingBlockWidth( Element *self ) {
+	return self->GetContainingBlock().x;
+}
+
+static float Element_GetContainingBlockHeight( Element *self ) {
+	return self->GetContainingBlock().y;
+}
+
 //==============================================================
 
 //
@@ -1053,6 +1061,9 @@ void BindElement( ASInterface *as ) {
 
 	.method( &Element::GetAbsoluteLeft, "absLeft" )
 	.method( &Element::GetAbsoluteTop, "absTop" )
+
+	.method( &Element_GetContainingBlockWidth, "containingBlockWith", true )
+	.method( &Element_GetContainingBlockHeight, "containingBlockHeight", true )
 	;
 
 	// cache type id for array<Element @>
