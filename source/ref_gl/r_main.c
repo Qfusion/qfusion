@@ -854,7 +854,7 @@ void R_SetupPVSFromCluster( int cluster, int area ) {
 	uint8_t *areabits = NULL;
 	int arearowbytes, areabytes;
 
-	if( !rsh.worldBrushModel->pvs ) {
+	if( !rsh.worldBrushModel || !rsh.worldBrushModel->pvs ) {
 		rn.viewcluster = CLUSTER_INVALID;
 		rn.viewarea = -1;
 		rn.pvs = NULL;
