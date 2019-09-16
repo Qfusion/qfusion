@@ -38,7 +38,7 @@ public:
 	void update( void );
 	void render( int contextId );
 
-	Rml::Core::ElementDocument *loadDocument( int contextId, const char *filename, bool show = false, void *script_object = NULL );
+	Rml::Core::ElementDocument *loadDocument( int contextId, const char *filename, void *script_object = NULL );
 	void closeDocument( Rml::Core::ElementDocument *doc );
 
 	// called from ElementInstancer after it instances an element, set up default

@@ -18,7 +18,9 @@ public:
 	UI_FontProviderInterface( Rml::Core::RenderInterface *render_interface );
 	virtual ~UI_FontProviderInterface();
 
-	virtual Rml::Core::FontFaceHandle GetFontFaceHandle( const std::string& family, const std::string& charset, Rml::Core::Style::FontStyle style, Rml::Core::Style::FontWeight weight, int size ) override;
+	virtual Rml::Core::FontFaceHandle GetFontFaceHandle(const Rml::Core:: String& family, const Rml::Core::String& charset, Rml::Core::Style::FontStyle style, Rml::Core::Style::FontWeight weight, int size) override;
+
+	virtual int GenerateLayerConfiguration( Rml::Core::FontFaceHandle, const Rml::Core::FontEffectList &font_effects ) const override;
 
 	virtual int GetCharacterWidth( Rml::Core::FontFaceHandle ) const override;
 

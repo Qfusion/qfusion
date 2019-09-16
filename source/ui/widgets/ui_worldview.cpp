@@ -86,16 +86,16 @@ public:
 
 		if( !Initialized ) {
 			// lazily register the world model
-			if( mapName.empty() ) {
-				return;
-			}
-
 			colorCorrectionShader = NULL;
 			firstRender = true;
 			Initialized = true;
 
 			if( !colorCorrection.empty() ) {
 				colorCorrectionShader = trap::R_RegisterLinearPic( colorCorrection.c_str() );
+			}
+
+			if( mapName.empty() ) {
+				return;
 			}
 
 			trap::R_RegisterWorldModel( mapName.c_str() );

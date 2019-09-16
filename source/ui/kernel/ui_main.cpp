@@ -682,7 +682,7 @@ void UI_Main::refreshScreen( unsigned int time, int clientState, int serverState
 	if( showNavigationStack ) {
 		UI_Navigation &navigation = navigations[UI_CONTEXT_MAIN];
 		NavigationStack *navigator = navigation.front();
-		navigator->showStack( true );
+		navigator->showStack();
 		showNavigationStack = false;
 	}
 

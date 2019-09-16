@@ -90,9 +90,7 @@ public:
 	void setDefaultPath( const std::string &path );
 	const std::string &getDefaultPath( void );
 
-	// this is here for testing, in the future use proper mechanics outside
-	// that will push/pop the stack when the UI is hidden
-	void showStack( bool show = true );
+	void showStack( bool autofocus = false );
 	void hideStack();
 	size_t getStackSize( void ) const;
 

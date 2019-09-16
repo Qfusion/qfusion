@@ -21,12 +21,16 @@ Document::~Document() {
 	// well.. we dont remove references here or purge the document?
 }
 
-void Document::Show( bool modal ) {
+void Document::Show( bool modal, bool autofocus ) {
 	auto *doc = rocketDocument;
 	if( doc == nullptr ) {
 		return;
 	}
-	doc->Show( modal ? Rml::Core::FocusFlag::ModalDocument : Rml::Core::FocusFlag::FocusDocument );
+
+	Rml::Core::ModalFlag modal_flag = modal ? Rml::Core::ModalFlag::Modal : Rml::Core::ModalFlag::None;
+	Rml::Core::FocusFlag focus_flag = autofocus ? Rml::Core::FocusFlag::Auto : Rml::Core::FocusFlag::Document;
+
+	doc->Show( modal_flag, focus_flag );
 }
 
 void Document::Hide() {
@@ -35,22 +39,6 @@ void Document::Hide() {
 		return;
 	}
 	doc->Hide();
-}
-
-void Document::Focus() {
-	auto *doc = rocketDocument;
-	if( doc == nullptr ) {
-		return;
-	}
-	doc->Show( Rml::Core::FocusFlag::FocusDocument );
-}
-
-void Document::FocusFirstTabElement() {
-	auto *doc = rocketDocument;
-	if( doc == nullptr ) {
-		return;
-	}
-	doc->Show( Rml::Core::FocusFlag::Focus );
 }
 
 bool Document::IsModal() {
@@ -79,7 +67,7 @@ Document *DocumentLoader::loadDocument( const char *path, NavigationStack *stack
 	loadedDocument = __new__( Document )( path, stack );
 
 	// load the .rml
-	Rml::Core::ElementDocument *rocketDocument = rm->loadDocument( contextId, path, /* true */ false, loadedDocument );
+	Rml::Core::ElementDocument *rocketDocument = rm->loadDocument( contextId, path, loadedDocument );
 	loadedDocument->setRocketDocument( rocketDocument );
 
 	if( !rocketDocument ) {

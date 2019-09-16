@@ -295,7 +295,7 @@ void RocketModule::cancelTouches( int contextId ) {
 
 //==================================================
 
-Rml::Core::ElementDocument *RocketModule::loadDocument( int contextId, const char *filename, bool show, void *script_object ) {
+Rml::Core::ElementDocument *RocketModule::loadDocument( int contextId, const char *filename, void *script_object ) {
 	auto *context = contextForId( contextId );
 	ASUI::UI_ScriptDocument *document = dynamic_cast<ASUI::UI_ScriptDocument *>( context->LoadDocument( filename ) );
 	if( !document ) {
@@ -303,18 +303,6 @@ Rml::Core::ElementDocument *RocketModule::loadDocument( int contextId, const cha
 	}
 
 	document->SetScriptObject( script_object );
-
-	if( show ) {
-		// load documents with autofocus disabled
-		document->Show( Rml::Core::FocusFlag::FocusDocument );
-
-		// optional element specific eventlisteners here
-
-		// only for UI documents! FIXME: we are already doing this in NavigationStack
-		Rml::Core::EventListener *listener = UI_GetMainListener();
-		document->AddEventListener( "keydown", listener );
-		document->AddEventListener( "change", listener );
-	}
 
 	return document;
 }

@@ -57,6 +57,10 @@ FontFaceHandle UI_FontProviderInterface::GetFontFaceHandle( const String& family
 	return FontFaceHandle( trap::SCR_RegisterFont( aliased_family->c_str(), (qfontstyle_t)qstyle, (unsigned)size ) );
 }
 
+int UI_FontProviderInterface::GenerateLayerConfiguration( FontFaceHandle handle, const FontEffectList &font_effects ) const {
+	return 0;
+}
+
 int UI_FontProviderInterface::GetCharacterWidth( FontFaceHandle handle ) const {
 	return trap::SCR_FontAdvance( (qfontface_s *)( handle ) );
 }
