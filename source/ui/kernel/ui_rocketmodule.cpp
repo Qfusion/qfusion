@@ -65,8 +65,8 @@ RocketModule::RocketModule( int vidWidth, int vidHeight, float pixelRatio )
 	fsInterface = __new__( UI_FileInterface )();
 	Rml::Core::SetFileInterface( fsInterface );
 
-	fontProviderInterface = __new__( UI_FontProviderInterface )( renderInterface );
-	Rml::Core::SetFontSubsystemInterface( fontProviderInterface );
+	fontEngineInterface = __new__( UI_FontEngineInterface )( renderInterface );
+	Rml::Core::SetFontEngineInterface( fontEngineInterface );
 
 	rocketInitialized = Rml::Core::Initialise();
 	if( !rocketInitialized ) {
@@ -99,7 +99,7 @@ RocketModule::~RocketModule() {
 		Rml::Core::Shutdown();
 	}
 
-	__SAFE_DELETE_NULLIFY( fontProviderInterface );
+	__SAFE_DELETE_NULLIFY( fontEngineInterface );
 	__SAFE_DELETE_NULLIFY( fsInterface );
 	__SAFE_DELETE_NULLIFY( systemInterface );
 	__SAFE_DELETE_NULLIFY( renderInterface );

@@ -81,8 +81,8 @@ int UI_SystemInterface::TranslateString( Rml::Core::String& translated, const Rm
 	return 0;
 }
 
-void UI_SystemInterface::GetClipboardText( Rml::Core::WString &text ) {
-	Rml::Core::WString clipboard_content;
+void UI_SystemInterface::GetClipboardText( Rml::Core::String &text ) {
+	Rml::Core::String clipboard_content;
 
 	char *data = trap::CL_GetClipboardData();
 	if( data == NULL ) {
@@ -90,14 +90,12 @@ void UI_SystemInterface::GetClipboardText( Rml::Core::WString &text ) {
 		return;
 	}
 
-	text = Rml::Core::StringUtilities::ToUCS2( data );
+	text = data;
 	trap::CL_FreeClipboardData( data );
 }
 
-void UI_SystemInterface::SetClipboardText( const Rml::Core::WString &text ) {
-	Rml::Core::String utf8_text;
-	utf8_text = Rml::Core::StringUtilities::ToUTF8( text );
-	trap::CL_SetClipboardData( utf8_text.c_str() );
+void UI_SystemInterface::SetClipboardText( const Rml::Core::String &text ) {
+	trap::CL_SetClipboardData( text.c_str() );
 }
 
 }

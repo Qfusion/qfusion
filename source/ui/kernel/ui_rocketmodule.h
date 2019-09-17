@@ -5,7 +5,7 @@
 #include "kernel/ui_fileinterface.h"
 #include "kernel/ui_renderinterface.h"
 #include "kernel/ui_keyconverter.h"
-#include "kernel/ui_fontproviderinterface.h"
+#include "kernel/ui_fontengineinterface.h"
 
 namespace WSWUI
 {
@@ -88,7 +88,7 @@ public:
 	UI_SystemInterface *systemInterface;
 	UI_FileInterface *fsInterface;
 	UI_RenderInterface *renderInterface;
-	UI_FontProviderInterface *fontProviderInterface;
+	UI_FontEngineInterface *fontEngineInterface;
 
 	Rml::Core::Context *contextMain;
 	Rml::Core::Context *contextQuick;

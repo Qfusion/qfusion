@@ -1,33 +1,33 @@
 /*
- * UI_FontProviderInterface.cpp
+ * UI_FontEngineInterface.cpp
  */
 
 #include "ui_precompiled.h"
 #include "kernel/ui_common.h"
-#include "kernel/ui_fontproviderinterface.h"
+#include "kernel/ui_fontengineinterface.h"
 
 namespace WSWUI
 {
 
 using namespace Rml::Core;
 
-static UI_FontProviderInterface *instance = nullptr;
+static UI_FontEngineInterface *instance = nullptr;
 
-const std::string UI_FontProviderInterface::debugger_font_family = "rmlui-debugger-font";
-const std::string UI_FontProviderInterface::debugger_font_family_alias = DEFAULT_SYSTEM_FONT_FAMILY;
+const std::string UI_FontEngineInterface::debugger_font_family = "rmlui-debugger-font";
+const std::string UI_FontEngineInterface::debugger_font_family_alias = DEFAULT_SYSTEM_FONT_FAMILY;
 
-UI_FontProviderInterface::UI_FontProviderInterface( RenderInterface *render_interface ) :
+UI_FontEngineInterface::UI_FontEngineInterface( RenderInterface *render_interface ) :
 	render_interface( render_interface ), capture_shader_last( nullptr ), capture_geometry( nullptr ), capture_texture_last( nullptr ) {
 	instance = this;
 }
 
-UI_FontProviderInterface::~UI_FontProviderInterface() {
+UI_FontEngineInterface::~UI_FontEngineInterface() {
 	if( instance == this ) {
 		instance = nullptr;
 	}
 }
 
-FontFaceHandle UI_FontProviderInterface::GetFontFaceHandle( const String& family, const String& charset, Style::FontStyle style, Style::FontWeight weight, int size ) {
+FontFaceHandle UI_FontEngineInterface::GetFontFaceHandle( const String& family, Style::FontStyle style, Style::FontWeight weight, int size ) {
 	int qstyle = QFONT_STYLE_NONE;
 
 	switch( style ) {
@@ -57,44 +57,41 @@ FontFaceHandle UI_FontProviderInterface::GetFontFaceHandle( const String& family
 	return FontFaceHandle( trap::SCR_RegisterFont( aliased_family->c_str(), (qfontstyle_t)qstyle, (unsigned)size ) );
 }
 
-int UI_FontProviderInterface::GenerateLayerConfiguration( FontFaceHandle handle, const FontEffectList &font_effects ) const {
-	return 0;
+bool UI_FontEngineInterface::LoadFontFace( const byte* data, int data_size, const String& family, Style::FontStyle style, Style::FontWeight weight, bool fallback_face ) {
+	if( family == debugger_font_family ) {
+		return true;
+	}
+	return false;
 }
 
-int UI_FontProviderInterface::GetCharacterWidth( FontFaceHandle handle ) const {
-	return trap::SCR_FontAdvance( (qfontface_s *)( handle ) );
-}
-
-int UI_FontProviderInterface::GetSize( FontFaceHandle handle ) const {
+int UI_FontEngineInterface::GetSize( FontFaceHandle handle ) {
 	return trap::SCR_FontSize( (qfontface_s *)( handle ) );
 }
 
-int UI_FontProviderInterface::GetXHeight( FontFaceHandle handle ) const {
+int UI_FontEngineInterface::GetXHeight( FontFaceHandle handle ) {
 	return trap::SCR_FontXHeight( (qfontface_s *)( handle ) );
 }
 
-int UI_FontProviderInterface::GetLineHeight( FontFaceHandle handle ) const {
+int UI_FontEngineInterface::GetLineHeight( FontFaceHandle handle ) {
 	return trap::SCR_FontHeight( (qfontface_s *)( handle ) );
 }
 
-int UI_FontProviderInterface::GetBaseline( FontFaceHandle handle ) const {
+int UI_FontEngineInterface::GetBaseline( FontFaceHandle handle ) {
 	return trap::SCR_FontHeight( (qfontface_s *)( handle ) );
 }
 
-float UI_FontProviderInterface::GetUnderline( FontFaceHandle handle, float *thickness ) const {
+float UI_FontEngineInterface::GetUnderline( FontFaceHandle handle, float &thickness ) {
 	int ithickness;
 	float pos = -trap::SCR_FontUnderline( (qfontface_s *)( handle ), &ithickness );
-	if (thickness != nullptr)
-		*thickness = (float)ithickness;
+	thickness = (float)ithickness;
 	return pos;
 }
 
-int UI_FontProviderInterface::GetStringWidth( FontFaceHandle handle, const WString& string, word prior_character ) {
-	String utf8str = Rml::Core::StringUtilities::ToUTF8( string );
-	return trap::SCR_strWidth( utf8str.c_str(), (qfontface_s *)( handle ), 0 );
+int UI_FontEngineInterface::GetStringWidth( FontFaceHandle handle, const String& string, Rml::Core::Character prior_character) {
+	return trap::SCR_strWidth( string.c_str(), (qfontface_s *)( handle ), 0 );
 }
 
-void UI_FontProviderInterface::DrawCharCallback( int x, int y, int w, int h, float s1, float t1, float s2, float t2, const vec4_t color, const struct shader_s *shader ) {
+void UI_FontEngineInterface::DrawCharCallback( int x, int y, int w, int h, float s1, float t1, float s2, float t2, const vec4_t color, const struct shader_s *shader ) {
 	if( instance == nullptr ) {
 		return;
 	}
@@ -119,7 +116,7 @@ void UI_FontProviderInterface::DrawCharCallback( int x, int y, int w, int h, flo
 			String texture_name = "?fonthandle::" + key;
 
 			t = new Texture();
-			t->Load( texture_name );
+			t->Set( texture_name );
 			t->GetDimensions( render_interface );
 			instance->textures[key] = t;
 		}
@@ -166,7 +163,7 @@ void UI_FontProviderInterface::DrawCharCallback( int x, int y, int w, int h, flo
 	}
 }
 
-int UI_FontProviderInterface::GenerateString( FontFaceHandle handle, GeometryList& geometry, const WString& string, const Vector2f& position, const Colourb& colour, int layer_configuration ) const {
+int UI_FontEngineInterface::GenerateString( FontFaceHandle handle, FontEffectsHandle font_effects_handle, const String& string, const Vector2f& position, const Colourb& colour, GeometryList& geometry ) {
 	vec4_t colorf;
 
 	if( instance == nullptr ) {
@@ -177,13 +174,11 @@ int UI_FontProviderInterface::GenerateString( FontFaceHandle handle, GeometryLis
 		colorf[i] = colour[i] * ( 1.0 / 255.0 );
 	}
 
-	String utf8str = Rml::Core::StringUtilities::ToUTF8( string );
-
 	instance->capture_geometry = &geometry;
 
-	ui_fdrawchar_t pop = trap::SCR_SetDrawCharIntercept( (ui_fdrawchar_t)&UI_FontProviderInterface::DrawCharCallback );
+	ui_fdrawchar_t pop = trap::SCR_SetDrawCharIntercept( (ui_fdrawchar_t)&UI_FontEngineInterface::DrawCharCallback );
 
-	int string_width = trap::SCR_DrawString( position.x, position.y, 0, utf8str.c_str(), (qfontface_s *)( handle ), colorf );
+	int string_width = trap::SCR_DrawString( position.x, position.y, 0, string.c_str(), (qfontface_s *)( handle ), colorf );
 
 	trap::SCR_SetDrawCharIntercept( pop );
 

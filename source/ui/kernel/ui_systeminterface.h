@@ -31,21 +31,21 @@ public:
 	/// @param[in] type Type of log message, ERROR, WARNING, etc.
 	/// @param[in] message Message to log.
 	/// @return True to continue execution, false to break into the debugger.
-	virtual bool LogMessage( Rml::Core::Log::Type type, const std::string& message );
+	virtual bool LogMessage( Rml::Core::Log::Type type, const Rml::Core::String & message );
 
 	/// Translate the input string into the translated string.
 	/// @param[out] translated Translated string ready for display.
 	/// @param[in] input String as received from XML.
 	/// @return Number of translations that occured.
-	virtual int TranslateString( std::string& translated, const std::string& input );
+	virtual int TranslateString( Rml::Core::String & translated, const Rml::Core::String & input );
 
 	/// Set clipboard text.
 	/// @param[in] text Text to apply to clipboard.
-	virtual void SetClipboardText(const std::wstring& text);
+	virtual void SetClipboardText( const Rml::Core::String& text );
 	
 	/// Get clipboard text.
 	/// @param[out] text Retrieved text from clipboard.
-	virtual void GetClipboardText(std::wstring& text);
+	virtual void GetClipboardText( Rml::Core::String & text );
 };
 
 }
