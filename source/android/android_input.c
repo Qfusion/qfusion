@@ -375,6 +375,12 @@ void IN_GetMouseMovement( int *dx, int *dy ) {
 }
 
 /*
+* IN_GetMousePosition
+*/
+void IN_GetMousePosition( int *x, int *y ) {
+}
+
+/*
 * IN_Android_TouchscreenAvailable
 */
 static bool IN_Android_TouchscreenAvailable( void ) {

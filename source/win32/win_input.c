@@ -85,10 +85,7 @@ static void     IN_RawInput_DeRegister( void );
 
 extern int64_t sys_msg_time;
 
-cvar_t *in_mouse;
-cvar_t *in_grabinconsole;
-
-bool in_appactive;
+bool in_appactive, in_showcursor;
 
 // forward-referenced functions
 static void IN_XInput_Init( void );
@@ -175,6 +172,14 @@ static DIDATAFORMAT df = {
 	rgodf,                  // and here they are
 };
 
+static void IN_ShowCursor( void ) {
+	if( in_showcursor ) {
+		while( ShowCursor( TRUE ) < 0 ) ;
+	} else {
+		while( ShowCursor( FALSE ) >= 0 ) ;
+	}
+}
+
 /*
 * IN_ActivateMouse
 *
@@ -184,10 +189,6 @@ static void IN_ActivateMouse( void ) {
 	int width, height;
 
 	if( !mouseinitialized ) {
-		return;
-	}
-	if( !in_mouse->integer ) {
-		mouseactive = false;
 		return;
 	}
 	if( mouseactive ) {
@@ -250,7 +251,6 @@ static void IN_ActivateMouse( void ) {
 
 	SetCapture( cl_hwnd );
 	ClipCursor( &window_rect );
-	while( ShowCursor( FALSE ) >= 0 ) ;
 }
 
 
@@ -295,7 +295,6 @@ static void IN_DeactivateMouse( void ) {
 
 	ClipCursor( NULL );
 	ReleaseCapture();
-	while( ShowCursor( TRUE ) < 0 ) ;
 }
 
 
@@ -735,6 +734,7 @@ static void IN_StartupMouse( void ) {
 		return;
 	}
 
+	in_showcursor = true;
 	dinput_initialized = false;
 	rawinput_initialized = false;
 
@@ -773,7 +773,10 @@ void IN_MouseEvent( int mstate ) {
 	if( !mouseinitialized || dinput_initialized ) {
 		return;
 	}
-	if( ( cls.key_dest == key_console ) && !in_grabinconsole->integer ) {
+	if( cls.key_dest == key_console ) {
+		return;
+	}
+	if( cls.key_dest == key_menu && !cls.show_cursor ) {
 		return;
 	}
 
@@ -909,10 +912,6 @@ void IN_GetMouseMovement( int *dx, int *dy ) {
 void IN_Init( void ) {
 	Com_Printf( "\n------- input initialization -------\n" );
 
-	// mouse variables
-	in_mouse        = Cvar_Get( "in_mouse", "1", CVAR_ARCHIVE );
-	in_grabinconsole    = Cvar_Get( "in_grabinconsole", "0", CVAR_ARCHIVE );
-
 	IN_StartupMouse();
 	IN_XInput_Init();
 
@@ -924,6 +923,9 @@ void IN_Init( void ) {
 */
 void IN_Shutdown( void ) {
 	IN_DeactivateMouse();
+
+	in_showcursor = true;
+	IN_ShowCursor();
 
 	if( rawinput_initialized ) {
 		IN_RawInput_Shutdown();
@@ -960,30 +962,26 @@ void IN_Activate( bool active ) {
 	}
 }
 
-
 /*
 * IN_Frame
 *
 * Called every frame, even if not generating commands
 */
 void IN_Frame( void ) {
+	bool showcursor;
+	bool console = cls.key_dest == key_console;
+	bool menu = cls.key_dest == key_menu;
+
 	extern cvar_t *vid_fullscreen;
 
 	if( !mouseinitialized ) {
 		return;
 	}
 
+	// TODO: clean up this mess
 	if( vid_fullscreen ) {
-		if( !vid_fullscreen->integer || cl_parent_hwnd ) {
-			extern cvar_t *in_grabinconsole;
-
-			// if we have a parent window (say, a browser plugin window) and
-			// the window is not focused, deactivate the input
-			if( cl_parent_hwnd && !AppFocused ) {
-				if( in_appactive ) {
-					IN_Activate( false );
-				}
-			} else if( in_grabinconsole->integer || cls.key_dest != key_console ) {
+		if( !vid_fullscreen->integer ) {
+			 if( !console && !menu ) {
 				if( !in_appactive && ActiveApp ) {
 					IN_Activate( true );
 				}
@@ -993,20 +991,48 @@ void IN_Frame( void ) {
 				}
 			}
 		} else {
-			if( !ActiveApp && in_appactive ) {
+			if( ( !ActiveApp || menu ) && in_appactive ) {
 				IN_Activate( false );
-			} else if( ActiveApp && !in_appactive ) {
+			} else if( ActiveApp && !menu && !in_appactive ) {
 				IN_Activate( true );
 			}
 		}
 	}
 
-	if( !in_mouse || !in_appactive ) {
+	showcursor = !in_appactive;
+	if( cls.key_dest == key_menu && !cls.show_cursor ) {
+		showcursor = false;
+	}
+
+	if( !in_appactive ) {
 		IN_DeactivateMouse();
+	} else {
+		IN_ActivateMouse();
+	}
+
+	if( showcursor != in_showcursor ) {
+		in_showcursor = showcursor;
+		IN_ShowCursor();
+	}
+}
+
+/*
+* IN_GetMousePosition
+*/
+void IN_GetMousePosition( int *x, int *y ) {
+	POINT p;
+
+	if( !mouseinitialized ) {
 		return;
 	}
 
-	IN_ActivateMouse();
+	if( !GetCursorPos( &p ) ) {
+		return;
+	}
+	if( ScreenToClient( cl_hwnd, &p ) ) {
+		*x = p.x;
+		*y = p.y;
+	}
 }
 
 /*

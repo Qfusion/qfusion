@@ -39,5 +39,5 @@ enum {
 
 extern HINSTANCE global_hInstance;
 
-extern HWND cl_hwnd, cl_parent_hwnd;
+extern HWND cl_hwnd;
 extern int ActiveApp, Minimized, AppFocused;

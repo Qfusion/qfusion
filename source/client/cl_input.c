@@ -126,7 +126,7 @@ static void CL_UpdateGameInput( int frameTime ) {
 		CL_GameModule_MouseMove( mx, my );
 	}
 
-	if( cls.key_dest == key_game || ( ( cls.key_dest == key_console ) && Cvar_Value( "in_grabinconsole" ) != 0 ) ) {
+	if( cls.key_dest == key_game ) {
 		CL_GameModule_AddViewAngles( cl.viewangles );
 	}
 }

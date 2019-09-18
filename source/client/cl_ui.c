@@ -460,6 +460,14 @@ void CL_UIModule_UpdateConnectScreen( bool backGround ) {
 * CL_UIModule_KeyEvent
 */
 void CL_UIModule_KeyEvent( bool mainContext, int key, bool down ) {
+	if( !cls.show_cursor ) {
+		if( ( key >= K_MOUSE1 && key <= K_MOUSE8 ) ||
+			( key >= K_MWHEELUP && key <= K_MWHEELDOWN ) ||
+			( key == K_MOUSE1DBLCLK ) ) {
+			return;
+		}
+	}
+
 	if( uie ) {
 		uie->KeyEvent( mainContext ? UI_CONTEXT_MAIN : UI_CONTEXT_OVERLAY, key, down );
 	}
@@ -596,6 +604,9 @@ void CL_UIModule_MouseMove( bool mainContext, int frameTime, int dx, int dy ) {
 * CL_UIModule_MouseSet
 */
 void CL_UIModule_MouseSet( bool mainContext, int mx, int my, bool showCursor ) {
+	if( !cls.show_cursor ) {
+		return;
+	}
 	if( uie ) {
 		uie->MouseSet( mainContext ? UI_CONTEXT_MAIN : UI_CONTEXT_OVERLAY, mx, my, showCursor );
 	}
@@ -605,6 +616,9 @@ void CL_UIModule_MouseSet( bool mainContext, int mx, int my, bool showCursor ) {
 * CL_UIModule_MouseHover
 */
 bool CL_UIModule_MouseHover( bool mainContext ) {
+	if( !cls.show_cursor ) {
+		return false;
+	}
 	if( uie ) {
 		return uie->MouseHover( mainContext ? UI_CONTEXT_MAIN : UI_CONTEXT_OVERLAY );
 	}

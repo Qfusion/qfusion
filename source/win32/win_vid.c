@@ -74,7 +74,6 @@ extern cvar_t *win_nowinkeys;
 
 // Global variables used internally by this module
 HWND cl_hwnd;           // Main window handle for life of program
-HWND cl_parent_hwnd;    // pointer to parent window handle
 
 static HHOOK WinKeyHook;
 static bool s_winkeys_hooked;
@@ -326,7 +325,6 @@ LONG WINAPI MainWndProc(
 
 		case WM_CREATE:
 			cl_hwnd = hWnd;
-			cl_parent_hwnd = GetParent( hWnd );
 			IN_WinIME_AssociateContext();
 			AppActivate( TRUE, FALSE, FALSE );
 			MSH_MOUSEWHEEL = RegisterWindowMessage( "MSWHEEL_ROLLMSG" );
@@ -338,7 +336,6 @@ LONG WINAPI MainWndProc(
 		case WM_DESTROY:
 			// let sound and input know about this?
 			cl_hwnd = NULL;
-			cl_parent_hwnd = NULL;
 			IN_WinIME_AssociateContext();
 			AppActivate( FALSE, FALSE, TRUE );
 			break;

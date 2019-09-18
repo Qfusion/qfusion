@@ -2,7 +2,6 @@
 #include "../client/client.h"
 #include "sdl_input_joy.h"
 
-cvar_t *in_grabinconsole;
 cvar_t *in_disablemacosxmouseaccel;
 cvar_t *in_mousehack;
 
@@ -432,7 +431,6 @@ void IN_Init() {
 		return;
 	}
 
-	in_grabinconsole = Cvar_Get( "in_grabinconsole", "0", CVAR_ARCHIVE );
 	in_disablemacosxmouseaccel = Cvar_Get( "in_disablemacosxmouseaccel", "1", CVAR_ARCHIVE );
 	in_mousehack = Cvar_Get( "in_mousehack", "0", CVAR_ARCHIVE );
 
@@ -482,7 +480,7 @@ static void IN_SetMouseState()
 	}
 
 	show_cursor = !input_focus;
-	show_cursor = show_cursor || ( !Cvar_Value( "vid_fullscreen" ) && cls.key_dest == key_console && !in_grabinconsole->integer );
+	show_cursor = show_cursor || ( !Cvar_Value( "vid_fullscreen" ) && cls.key_dest == key_console );
 	show_cursor = show_cursor || ( cls.key_dest == key_menu && cls.show_cursor );
 
 	want_active = input_focus && ( show_cursor || cls.key_dest == key_game );
