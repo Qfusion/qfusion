@@ -43,6 +43,10 @@ UI_KeySelect::UI_KeySelect( const String &tag, const String &bind, UI_KeySelectI
 
 	InitializeBinds();
 	WriteText();
+
+	this->AddEventListener(Rml::Core::EventId::Blur, this);
+	this->AddEventListener(Rml::Core::EventId::Focus, this);
+	this->AddEventListener("keyselect", this, true);
 }
 
 UI_KeySelect::~UI_KeySelect() {}
@@ -70,9 +74,8 @@ void UI_KeySelect::InitializeBinds( void ) {
 int UI_KeySelect::GetKey( int index ) {
 	if( !index ) {
 		return boundKey[0];
-	} else {
-		return boundKey[1];
 	}
+	return boundKey[1];
 }
 
 // release key with index 0 or 1
@@ -202,9 +205,6 @@ void UI_KeySelect::SetKeybind( int key ) {
 /// Called for every event sent to this element or one of its descendants.
 /// @param[in] event The event to process.
 void UI_KeySelect::ProcessEvent( Event& event ) {
-	RocketModule *rocketModule = GetRocketModule();
-	int contextId = rocketModule->idForContext( GetContext() );
-
 	if( event == "blur" ) {
 		focusMode = false;
 		WriteText();
@@ -226,17 +226,6 @@ void UI_KeySelect::ProcessEvent( Event& event ) {
 		if( event == "keyselect" ) {
 			key = event.GetParameter< int >( "key", 0 );
 			this->SetKeybind( key );
-			event.StopPropagation();
-			return;
-		} else if( event == "textinput" ) {
-			// not supported yet
-		} else if( event == "mousedown" ) {
-			// fix mouse position inside the widget
-			mouse_x = event.GetParameter<int>( "mouse_x", 0 );
-			mouse_y = event.GetParameter<int>( "mouse_y", 0 );
-			return;
-		} else if( event == "mousemove" || event == "mouseout" ) {
-			rocketModule->mouseMove( contextId, mouse_x, mouse_y );
 			event.StopPropagation();
 			return;
 		}
@@ -304,8 +293,6 @@ UI_KeySelect* UI_KeySelectInstancer::getKeySelectByCmd( const String &cmd, const
 
 ElementInstancer *GetKeySelectInstancer( void ) {
 	ElementInstancer *instancer = __new__( UI_KeySelectInstancer )();
-
-	// instancer->RemoveReference();
 	return instancer;
 }
 }
