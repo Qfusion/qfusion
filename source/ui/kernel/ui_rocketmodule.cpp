@@ -442,7 +442,6 @@ void RocketModule::registerCustoms() {
 
 	//
 	// DECORATORS
-	registerDecorator( "gradient", GetGradientDecoratorInstancer() );
 	registerDecorator( "svg", GetSVGDecoratorInstancer() );
 
 	//

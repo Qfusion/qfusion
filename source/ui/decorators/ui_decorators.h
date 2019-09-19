@@ -7,7 +7,6 @@
 namespace WSWUI
 {
 
-Rml::Core::DecoratorInstancer *GetGradientDecoratorInstancer( void );
 Rml::Core::DecoratorInstancer *GetSVGDecoratorInstancer( void );
 
 }
