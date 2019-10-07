@@ -307,9 +307,9 @@ static bool GLimp_InitGL( void ) {
 }
 
 /*
-** GLimp_SetFullscreenMode
+** GLimp_SetFullscreen
 */
-rserr_t GLimp_SetFullscreenMode( int displayFrequency, bool fullscreen ) {
+rserr_t GLimp_SetFullscreen( bool fullscreen, int xpos, int ypos ) {
 	glConfig.fullScreen = fullscreen;
 	return rserr_ok;
 }
@@ -317,7 +317,7 @@ rserr_t GLimp_SetFullscreenMode( int displayFrequency, bool fullscreen ) {
 /*
 ** GLimp_SetMode
 */
-rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullscreen, bool stereo, bool borderless ) {
+rserr_t GLimp_SetMode( int x, int y, int width, int height, bool fullscreen, bool stereo, bool borderless ) {
 	if( width == glConfig.width && height == glConfig.height && glConfig.fullScreen != fullscreen ) {
 #ifdef __ANDROID__
 		return rserr_ok; // The window is always fullscreen on Android

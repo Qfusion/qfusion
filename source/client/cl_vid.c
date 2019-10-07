@@ -32,7 +32,6 @@ cvar_t *vid_xpos;          // X coordinate of window position
 cvar_t *vid_ypos;          // Y coordinate of window position
 cvar_t *vid_fullscreen;
 cvar_t *vid_borderless;
-cvar_t *vid_displayfrequency;
 cvar_t *vid_multiscreen_head;
 cvar_t *vid_parentwid;      // parent window identifier
 cvar_t *win_noalttab;
@@ -55,6 +54,8 @@ static bool vid_ref_active;
 static bool vid_initialized;
 static bool vid_app_active;
 static bool vid_app_minimized;
+static bool vid_ref_changing;
+static int  vid_ref_req_width, vid_ref_req_height;
 
 static void     *vid_ref_libhandle = NULL;
 static mempool_t *vid_ref_mempool = NULL;
@@ -75,6 +76,7 @@ void VID_EnableWinKeys( bool enable );
 * cause the entire video mode and refresh DLL to be reset on the next frame.
 */
 void VID_Restart( bool verbose, bool soundRestart ) {
+	vid_ref_changing = false;
 	vid_ref_modified = true;
 	vid_ref_verbose = verbose;
 	vid_ref_sound_restart = soundRestart;
@@ -167,23 +169,22 @@ bool VID_RefreshIsActive( void ) {
 ** VID_GetWindowWidth
 */
 int VID_GetWindowWidth( void ) {
-	return viddef.width;
+	return vid_ref_changing ? vid_ref_req_width : viddef.width;
 }
 
 /*
 ** VID_GetWindowHeight
 */
 int VID_GetWindowHeight( void ) {
-	return viddef.height;
+	return vid_ref_changing ? vid_ref_req_height : viddef.height;
 }
 
 /*
-** VID_ChangeMode
+** VID_ChangeMode_
 */
-static rserr_t VID_ChangeMode( void ) {
+static rserr_t VID_ChangeMode_( void ) {
 	int x, y;
 	int w, h;
-	int disp_freq;
 	bool fs;
 	bool borderless;
 	rserr_t err;
@@ -191,7 +192,6 @@ static rserr_t VID_ChangeMode( void ) {
 
 	vid_fullscreen->modified = false;
 
-	disp_freq = vid_displayfrequency->integer;
 	borderless = vid_borderless->integer != 0;
 	stereo = Cvar_Value( "cl_stereo" ) != 0;
 	fs = vid_fullscreen->integer != 0;
@@ -209,11 +209,14 @@ static rserr_t VID_ChangeMode( void ) {
 		h = vid_height->integer;
 	}
 
+	vid_ref_req_width = w;
+	vid_ref_req_height = h;
+
 	if( vid_ref_active && ( w != (int)viddef.width || h != (int)viddef.height ) ) {
 		return rserr_restart_required;
 	}
 
-	err = re.SetMode( x, y, w, h, disp_freq, fs, stereo, borderless );
+	err = re.SetMode( x, y, w, h, fs, stereo, borderless );
 
 	if( err == rserr_ok ) {
 		// store fallback mode
@@ -242,7 +245,7 @@ static rserr_t VID_ChangeMode( void ) {
 			vid_fullscreen->modified = false;
 			fs = false;
 
-			err = re.SetMode( x, y, w, h, disp_freq, false, stereo, borderless );
+			err = re.SetMode( x, y, w, h, false, stereo, borderless );
 		}
 
 		if( err == rserr_invalid_mode ) {
@@ -254,7 +257,7 @@ static rserr_t VID_ChangeMode( void ) {
 			Cvar_ForceSet( vid_height->name, va( "%i", h ) );
 
 			// try setting it back to something safe
-			err = re.SetMode( x, y, w, h, disp_freq, fs, stereo, borderless );
+			err = re.SetMode( x, y, w, h, fs, stereo, borderless );
 			if( err == rserr_invalid_fullscreen ) {
 				Com_Printf( "VID_ChangeMode() - could not revert to safe fullscreen mode\n" );
 
@@ -262,7 +265,7 @@ static rserr_t VID_ChangeMode( void ) {
 				vid_fullscreen->modified = false;
 				fs = false;
 
-				err = re.SetMode( x, y, w, h, disp_freq, false, stereo, borderless );
+				err = re.SetMode( x, y, w, h, false, stereo, borderless );
 			}
 			if( err != rserr_ok ) {
 				Com_Printf( "VID_ChangeMode() - could not revert to safe mode\n" );
@@ -275,6 +278,18 @@ static rserr_t VID_ChangeMode( void ) {
 		VID_NewWindow( w, h );
 	}
 
+	return err;
+}
+
+/*
+** VID_ChangeMode
+*/
+static rserr_t VID_ChangeMode( void ) {
+	rserr_t err;
+
+	vid_ref_changing = true;
+	err = VID_ChangeMode_();
+	vid_ref_changing = false;
 	return err;
 }
 
@@ -734,7 +749,6 @@ void VID_Init( void ) {
 	vid_ypos = Cvar_Get( "vid_ypos", "0", CVAR_ARCHIVE );
 	vid_fullscreen = Cvar_Get( "vid_fullscreen", "1", CVAR_ARCHIVE );
 	vid_borderless = Cvar_Get( "vid_borderless", "1", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
-	vid_displayfrequency = Cvar_Get( "vid_displayfrequency", "0", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
 	vid_multiscreen_head = Cvar_Get( "vid_multiscreen_head", "-1", CVAR_ARCHIVE );
 	vid_parentwid = Cvar_Get( "vid_parentwid", "0", CVAR_NOSET );
 

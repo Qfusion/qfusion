@@ -34,7 +34,6 @@ typedef struct {
 	WCHAR *applicationNameW;
 	HDC hDC;                    // handle to device context
 	HWND hWnd;                  // handle to window
-	HWND parenthWnd;            // handle to parent window
 	HGLRC hGLRC;                // handle to GL rendering context
 	int applicationIconResourceID;
 

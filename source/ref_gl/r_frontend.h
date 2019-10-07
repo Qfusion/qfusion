@@ -56,7 +56,7 @@ typedef struct {
 // public API
 rserr_t RF_Init( const char *applicationName, const char *screenshotPrefix, int startupColor,
 				 int iconResource, const int *iconXPM, void *hinstance, void *wndproc, void *parenthWnd,  bool verbose );
-rserr_t RF_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullScreen, bool stereo, bool borderless );
+rserr_t RF_SetMode( int x, int y, int width, int height, bool fullScreen, bool stereo, bool borderless );
 void RF_AppActivate( bool active, bool minimize, bool destroy );
 rserr_t RF_SetWindow( void *hinstance, void *wndproc, void *parenthWnd );
 void RF_Shutdown( bool verbose );

@@ -512,7 +512,6 @@ extern cvar_t *r_multithreading;
 
 extern cvar_t *gl_cull;
 
-extern cvar_t *vid_displayfrequency;
 extern cvar_t *vid_multiscreen_head;
 
 //====================================================================
@@ -796,7 +795,7 @@ rserr_t     R_Init( const char *applicationName, const char *screenshotPrefix, i
 void        R_BeginRegistration( void );
 void        R_EndRegistration( void );
 void        R_Shutdown( bool verbose );
-rserr_t     R_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullScreen, bool stereo, bool borderless );
+rserr_t     R_SetMode( int x, int y, int width, int height, bool fullScreen, bool stereo, bool borderless );
 
 //
 // r_scene.c

@@ -49,11 +49,12 @@ void GLimp_SetWindowIcon( void ) {
 #endif
 }
 
-rserr_t GLimp_SetFullscreenMode( int displayFrequency, bool fullscreen ) {
+rserr_t GLimp_SetFullscreen( bool fullscreen, int xpos, int ypos ) {
 	Uint32 flags = 0;
 	bool borderless = glConfig.borderless;
 
 	if( fullscreen ) {
+		xpos = ypos = 0;
 		flags = SDL_WINDOW_FULLSCREEN;
 
 		if( borderless ) {
@@ -63,6 +64,7 @@ rserr_t GLimp_SetFullscreenMode( int displayFrequency, bool fullscreen ) {
 	}
 
 	if( SDL_SetWindowFullscreen( glw_state.sdl_window, flags ) == 0 ) {
+		SDL_SetWindowPosition( glw_state.sdl_window, xpos, ypos );
 		glConfig.fullScreen = fullscreen;
 		return rserr_ok;
 	}
@@ -95,7 +97,7 @@ static void GLimp_CreateWindow( int x, int y, int width, int height ) {
  * @param fullscreen <code>true</code> for a fullscreen mode,
  *     <code>false</code> otherwise
  */
-rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullscreen, bool stereo, bool borderless ) {
+rserr_t GLimp_SetMode( int x, int y, int width, int height, bool fullscreen, bool stereo, bool borderless ) {
 	const char *win_fs[] = {"W", "FS"};
 
 #ifdef __APPLE__
@@ -127,7 +129,7 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency
 	glConfig.height = height;
 	glConfig.borderless = borderless;
 	glConfig.fullScreen = false;
-	return GLimp_SetFullscreenMode( displayFrequency, fullscreen );
+	return GLimp_SetFullscreen( fullscreen, x, y );
 }
 
 /**
