@@ -410,7 +410,7 @@ LONG WINAPI MainWndProc(
 			// the default handler won't allow the window size to exceed desktop size
 			// this also includes the title bar and edges, but we want the client area to
 			// match the requested video mode, thus the handler override
-			if( !vid_fullscreen->integer ) {
+			{
 				int style;
 				int x, y, w, h;
 				MINMAXINFO *info = (MINMAXINFO *)lParam;

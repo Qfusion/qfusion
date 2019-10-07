@@ -33,6 +33,8 @@
 #include "../ref_gl/r_local.h"
 #include "win_glw.h"
 
+#define BORDERLESS_CLIENT_AREA_HACK
+
 #define WINDOW_STYLE    ( WS_OVERLAPPED | WS_BORDER | WS_CAPTION | WS_VISIBLE | WS_SYSMENU | WS_MINIMIZEBOX )
 
 static bool GLimp_InitGL( void );
@@ -46,13 +48,22 @@ glwstate_t glw_state;
 
 #pragma warning( disable : 4055 )
 
-static int GLimp_GetWindowStyle( bool fullscreen, int *pexstyle ) {
+static int GLimp_GetWindowStyle( bool fullscreen, bool borderless, int *pexstyle ) {
 	int stylebits;
 	int exstyle;
 
 	if( fullscreen ) {
 		exstyle = WS_EX_TOPMOST;
 		stylebits = ( WS_POPUP | WS_VISIBLE );
+
+#ifdef BORDERLESS_CLIENT_AREA_HACK
+		// create a "borderless" fullscreen window with caption and borders due 
+		// to a Windows bug which messes up the OpenGL viewport on Alt+Enter when 
+		// entering windowed mode if the app started in borderless fullscreen
+		if( borderless ) {
+			stylebits |= WS_BORDER | WS_CAPTION;
+		}
+#endif
 	} else {
 		exstyle = 0;
 		stylebits = WINDOW_STYLE;
@@ -78,7 +89,7 @@ static void GLimp_AdjustWindowPosAndSize( int stylebits, int exstyle, int *x, in
 	*height = r.bottom - r.top;
 }
 
-static void GLimp_SetWindowStyleAndPos( int x, int y, int width, int height, bool fullscreen ) {
+static void GLimp_SetWindowStyleAndPos( int x, int y, int width, int height, bool fullscreen, bool borderless ) {
 	int stylebits;
 	int exstyle;
 
@@ -86,21 +97,26 @@ static void GLimp_SetWindowStyleAndPos( int x, int y, int width, int height, boo
 		return;
 	}
 
-	stylebits = GLimp_GetWindowStyle( fullscreen, &exstyle );
+	stylebits = GLimp_GetWindowStyle( fullscreen, borderless, &exstyle );
 
 	if( fullscreen ) {
 		x = y = 0;
-	} else {
+	}
+
+#ifdef BORDERLESS_CLIENT_AREA_HACK
+	if( !fullscreen || borderless ) {
+#else
+	else {
+#endif
 		GLimp_AdjustWindowPosAndSize( stylebits, exstyle, &x, &y, &width, &height );
 	}
 
 	SetWindowLong( glw_state.hWnd, GWL_EXSTYLE, exstyle );
 	SetWindowLong( glw_state.hWnd, GWL_STYLE, stylebits );
-	
-	SetWindowPos( glw_state.hWnd, HWND_NOTOPMOST, x, y, width, height, SWP_FRAMECHANGED | SWP_NOZORDER | SWP_SHOWWINDOW );
+	SetWindowPos( glw_state.hWnd, NULL, x, y, width, height, SWP_FRAMECHANGED | SWP_NOZORDER | SWP_SHOWWINDOW );
 }
 
-static void GLimp_CreateWindow( bool dummy, int x, int y, int width, int height ) {
+static void GLimp_CreateWindow( bool dummy, int x, int y, int width, int height, bool borderless ) {
 #ifdef WITH_UTF8
 	WNDCLASSW wc;
 #else
@@ -158,7 +174,7 @@ static void GLimp_CreateWindow( bool dummy, int x, int y, int width, int height 
 	}
 
 	if( !dummy ) {
-		GLimp_SetWindowStyleAndPos( x, y, width, height, false );
+		GLimp_SetWindowStyleAndPos( x, y, width, height, false, borderless );
 	}
 }
 
@@ -186,7 +202,7 @@ rserr_t GLimp_SetFullscreen( bool fullscreen, int xpos, int ypos ) {
 		if( a == DISP_CHANGE_SUCCESSFUL ) {
 			ri.Com_Printf( "ok\n" );
 			glConfig.fullScreen = true;
-			GLimp_SetWindowStyleAndPos( xpos, ypos, glConfig.width, glConfig.height, true );
+			GLimp_SetWindowStyleAndPos( xpos, ypos, glConfig.width, glConfig.height, true, false );
 			return rserr_ok;
 		}
 
@@ -196,7 +212,7 @@ rserr_t GLimp_SetFullscreen( bool fullscreen, int xpos, int ypos ) {
 	}
 
 	ChangeDisplaySettings( 0, 0 );
-	GLimp_SetWindowStyleAndPos( xpos, ypos, glConfig.width, glConfig.height, fullscreen );
+	GLimp_SetWindowStyleAndPos( xpos, ypos, glConfig.width, glConfig.height, fullscreen, glConfig.borderless );
 	glConfig.fullScreen = fullscreen;
 
 	return rserr_ok;
@@ -230,7 +246,7 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, bool fullscreen, boo
 		glConfig.stencilBits = 0;
 	}
 
-	GLimp_CreateWindow( false, x, y, width, height );
+	GLimp_CreateWindow( false, x, y, width, height, borderless );
 
 	// init all the gl stuff for the window
 	if( !GLimp_InitGL() ) {
@@ -329,7 +345,7 @@ static int GLimp_Init_( const char *applicationName, void *hinstance, void *wndp
 	if( needPixelFormatARB ) {
 		const char *wglExtensions;
 
-		GLimp_CreateWindow( true, 0, 0, 0, 0 );
+		GLimp_CreateWindow( true, 0, 0, 0, 0, true );
 
 		if( !GLimp_InitGL() ) {
 			return false;
