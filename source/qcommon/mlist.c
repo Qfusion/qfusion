@@ -63,9 +63,11 @@ static void ML_AddMap( const char *filename, const char *fullname ) {
 		return;
 	}
 
+#ifdef PUBLIC_BUILD
 	if( !strcmp( filename, "ui" ) ) {
 		return;
 	}
+#endif
 
 	if( !fullname ) {
 		ML_GetFullnameFromMap( filename, fullname_, sizeof( fullname_ ) );
@@ -76,9 +78,11 @@ static void ML_AddMap( const char *filename, const char *fullname ) {
 		return;
 	}
 
+#ifdef PUBLIC_BUILD
 	if( !strcmp( fullname, "ui" ) ) {
 		return;
 	}
+#endif
 
 	ml_flush = true;    // tell everyone that maplist has changed
 	buffer = ( char* )Mem_ZoneMalloc( sizeof( mapinfo_t ) + strlen( filename ) + 1 + strlen( fullname ) + 1 );
