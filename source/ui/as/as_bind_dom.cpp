@@ -414,11 +414,11 @@ static int Element_GetAttributeI( Element *elem, const asstring_t &a, const int 
 	return elem->GetAttribute<int>( ASSTR( a ), b );
 }
 
-static int Element_GetAttributeU( Element *elem, const asstring_t &a, const unsigned b ) {
+static unsigned Element_GetAttributeU( Element *elem, const asstring_t &a, const unsigned b ) {
 	return elem->GetAttribute<unsigned>( ASSTR( a ), b );
 }
 
-static int Element_GetAttributeF( Element *elem, const asstring_t &a, const float b ) {
+static float Element_GetAttributeF( Element *elem, const asstring_t &a, const float b ) {
 	return elem->GetAttribute<float>( ASSTR( a ), b );
 }
 
