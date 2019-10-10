@@ -46,5 +46,6 @@ option(NO_THIRDPARTY_CONTAINERS "Only use standard library containers." ON)
 add_subdirectory(${LIBROCKET_DIR} ${CMAKE_HOME_DIRECTORY}/build/ui/rmlui/)
 set_property(TARGET RmlCore PROPERTY POSITION_INDEPENDENT_CODE ON)
 set_property(TARGET RmlControls PROPERTY POSITION_INDEPENDENT_CODE ON)
+set_property(TARGET RmlDebugger PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 qf_set_output_dir(ui libs)
