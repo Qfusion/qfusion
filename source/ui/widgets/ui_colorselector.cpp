@@ -104,15 +104,18 @@ public:
 		// this is the ultimate end case when we dont even have cvar associated
 		if( c.empty() ) {
 			color = DEFAULT_COLOR;
-			SetProperty( "background", rgb2hex( DEFAULT_COLOR ).c_str() );
-			return;
+		} else {
+			color = ( c[0] == '#' ? hex2rgb( c.c_str() ).c_str() : c );
 		}
 
-		// we want to pass #hex as background property and
-		// r g b as the value passed to warsow
-		String hex = ( c[0] == '#' ? c : rgb2hex( c.c_str() ).c_str() );
-		color = ( c[0] == '#' ? hex2rgb( c.c_str() ).c_str() : c );
+		int rgb;
+		rgb = COM_ReadColorRGBString( color.c_str() );
+		rgb = COM_ValidatePlayerColor( rgb );
+		color = va( "%i %i %i", COLOR_R( rgb ), COLOR_G( rgb ), COLOR_B( rgb ) );
 
+		// we want to pass #hex as background property and
+		// r g b as the value passed to the game
+		String hex = rgb2hex( color.c_str() ).c_str();
 		SetProperty( "background", hex );
 	}
 
