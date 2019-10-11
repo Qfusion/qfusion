@@ -45,7 +45,7 @@ public:
 		: Element( tag ),
 		time( 0 ), AutoRotationCenter( false ), Initialized( false ), RecomputePosition( false ),
 		BonePoses( NULL ), skel( NULL ), modelName( "" ), skinName( "" ),
-		fov_x( 30.0f ), fov_y( 0.0f ) {
+		fov_x( 0.0f ), fov_y( 0.0f ) {
 		memset( &entity, 0, sizeof( entity ) );
 		memset( &refdef, 0, sizeof( refdef ) );
 		entity.renderfx = RF_NOSHADOW | RF_FORCENOLOD | RF_MINLIGHT;
@@ -133,67 +133,56 @@ public:
 		time = curtime;
 	}
 
-	virtual void OnPropertyChange( const Rml::Core::PropertyIdSet& changed_properties ) {
-		Element::OnPropertyChange( changed_properties );
+	virtual void OnAttributeChange( const Rml::Core::ElementAttributes& changed_attributes ) {
+		Element::OnAttributeChange( changed_attributes );
 
 		// LATER
-#if 0
-		for( auto it = changed_properties.begin(); it != changed_properties.end(); ++it ) {
-			if( *it == "model-modelpath" ) {
-				modelName = GetProperty( *it )->Get<Rml::Core::String>();
+		for( auto it = changed_attributes.begin(); it != changed_attributes.end(); ++it ) {
+			if( it->first == "model-modelpath" ) {
+				modelName = GetAttribute< Rml::Core::String >( it->first, "" );
 				Initialized = false;
-			} else if( *it == "model-skinpath" && GetProperty( *it )->Get<Rml::Core::String>().Length() > 0 ) {
-				skinName = GetProperty( *it )->Get<Rml::Core::String>();
+			} else if( it->first == "model-skinpath" ) {
+				skinName = GetAttribute< Rml::Core::String >( it->first, "" );
 				Initialized = false;
-			} else if( *it == "model-scale" ) {
-				entity.scale = GetProperty( *it )->Get<float>();
-			} else if( *it == "model-outline-height" ) {
-				entity.outlineHeight = GetProperty( *it )->Get<float>();
-			} else if( *it == "model-outline-color" ) {
-				Rml::Core::Colourb color = GetProperty( *it )->Get<Rml::Core::Colourb>();
-				Vector4Set( entity.outlineRGBA, color.red, color.green, color.blue, color.alpha );
-			} else if( *it == "model-shader-color" ) {
-				Rml::Core::Colourb color = GetProperty( *it )->Get<Rml::Core::Colourb>();
-				int shaderColor = COM_ValidatePlayerColor( COLOR_RGB( color.red, color.green, color.blue ) );
-				Vector4Set( entity.shaderRGBA, COLOR_R( shaderColor ), COLOR_G( shaderColor ), COLOR_B( shaderColor ), color.alpha );
-			} else if( *it == "model-fov-x" ) {
-				const Property *prop = GetProperty( *it );
-				if( prop->unit == Property::KEYWORD ) {
-					fov_x = 0.0f;
-				} else {
-					fov_x = prop->Get<float>();
+			} else if( it->first == "model-scale" ) {
+				entity.scale = GetAttribute< float >( it->first, 0.0 );
+			} else if( it->first == "model-outline-height" ) {
+				entity.outlineHeight = GetAttribute< float >( it->first, 0.0 );
+			} else if( it->first == "model-shader-color" ) {
+				int color = COM_ReadColorRGBString( GetAttribute< Rml::Core::String >( it->first, "" ).c_str() );
+				int shaderColor = COM_ValidatePlayerColor( color );
+				Vector4Set( entity.shaderRGBA, COLOR_R( shaderColor ), COLOR_G( shaderColor ), COLOR_B( shaderColor ), 255 );
+			} else if( it->first == "model-fov-x" ) {
+				fov_x = GetAttribute< float >( it->first, 0.0 );
+				if( fov_x != 0.0f ) {
 					Q_clamp( fov_x, 1.0f, 179.0f );
 				}
 				RecomputePosition = true;
-			} else if( *it == "model-fov-y" ) {
-				const Property *prop = GetProperty( *it );
-				if( prop->unit == Property::KEYWORD ) {
-					fov_y = 0.0f;
-				} else {
-					fov_y = prop->Get<float>();
+			} else if( it->first == "model-fov-y" ) {
+				fov_y = GetAttribute< float >( it->first, 0.0 );
+				if( fov_y != 0.0f ) {
 					Q_clamp( fov_y, 1.0f, 179.0f );
 				}
 				RecomputePosition = true;
-			} else if( *it == "model-rotation-pitch" ) {
-				baseangles[0] = GetProperty( *it )->Get<float>();
+			} else if( it->first == "model-rotation-pitch" ) {
+				baseangles[0] = GetAttribute< float >( it->first, 0.0 );
 				RecomputePosition = true;
-			} else if( *it == "model-rotation-yaw" ) {
-				baseangles[1] = GetProperty( *it )->Get<float>();
+			} else if( it->first == "model-rotation-yaw" ) {
+				baseangles[1] = GetAttribute< float >( it->first, 0.0 );
 				RecomputePosition = true;
-			} else if( *it == "model-rotation-roll" ) {
-				baseangles[2] = GetProperty( *it )->Get<float>();
+			} else if( it->first == "model-rotation-roll" ) {
+				baseangles[2] = GetAttribute< float >( it->first, 0.0 );
 				RecomputePosition = true;
-			} else if( *it == "model-rotation-speed-pitch" ) {
-				anglespeed[0] = GetProperty( *it )->Get<float>();
-			} else if( *it == "model-rotation-speed-yaw" ) {
-				anglespeed[1] = GetProperty( *it )->Get<float>();
-			} else if( *it == "model-rotation-speed-roll" ) {
-				anglespeed[2] = GetProperty( *it )->Get<float>();
-			} else if( *it == "model-rotation-autocenter" ) {
-				AutoRotationCenter = ( GetProperty( *it )->Get<Rml::Core::String>().ToLower() == "true" );
+			} else if( it->first == "model-rotation-speed-pitch" ) {
+				anglespeed[0] = GetAttribute< float >( it->first, 0.0 );
+			} else if( it->first == "model-rotation-speed-yaw" ) {
+				anglespeed[1] = GetAttribute< float >( it->first, 0.0 );
+			} else if( it->first == "model-rotation-speed-roll" ) {
+				anglespeed[2] = GetAttribute< float >( it->first, 0.0 );
+			} else if( it->first == "model-rotation-autocenter" ) {
+				AutoRotationCenter = HasAttribute( it->first );
 			}
 		}
-#endif
 
 		if( std::fabs( refdef.width - GetClientWidth() ) >= MODELVIEW_EPSILON || std::fabs( refdef.height - GetClientHeight() ) >= MODELVIEW_EPSILON ) {
 			RecomputePosition = true;
@@ -313,20 +302,6 @@ class UI_ModelviewWidgetInstancer : public ElementInstancer
 {
 public:
 	UI_ModelviewWidgetInstancer() : ElementInstancer() {
-		StyleSheetSpecification::RegisterProperty( "model-modelpath", "", false ).AddParser( "string" );
-		StyleSheetSpecification::RegisterProperty( "model-skinpath", "", false ).AddParser( "string" );
-		StyleSheetSpecification::RegisterProperty( "model-fov-x", "30", false ).AddParser( "keyword", "auto" ).AddParser( "number" );
-		StyleSheetSpecification::RegisterProperty( "model-fov-y", "auto", false ).AddParser( "keyword", "auto" ).AddParser( "number" );
-		StyleSheetSpecification::RegisterProperty( "model-scale", "1", false ).AddParser( "number" );
-		StyleSheetSpecification::RegisterProperty( "model-outline-height", "0.3", false ).AddParser( "number" ); // DEFAULT_OUTLINE_HEIGHT
-		StyleSheetSpecification::RegisterProperty( "model-outline-color", "#404040FF", false ).AddParser( "color" );
-		StyleSheetSpecification::RegisterProperty( "model-shader-color", "#FFFFFFFF", false ).AddParser( "color" );
-		StyleSheetSpecification::RegisterProperty( "model-rotation-pitch", "0", false ).AddParser( "number" );
-		StyleSheetSpecification::RegisterProperty( "model-rotation-yaw", "0", false ).AddParser( "number" );
-		StyleSheetSpecification::RegisterProperty( "model-rotation-roll", "0", false ).AddParser( "number" );
-		StyleSheetSpecification::RegisterProperty( "model-rotation-speed-pitch", "0", false ).AddParser( "number" );
-		StyleSheetSpecification::RegisterProperty( "model-rotation-speed-yaw", "0", false ).AddParser( "number" );
-		StyleSheetSpecification::RegisterProperty( "model-rotation-speed-roll", "0", false ).AddParser( "number" );
 	}
 
 	// Rocket overrides
@@ -348,8 +323,6 @@ private:
 
 ElementInstancer *GetModelviewInstancer( void ) {
 	ElementInstancer *instancer = __new__( UI_ModelviewWidgetInstancer )();
-
-	// instancer->RemoveReference();
 	return instancer;
 }
 
