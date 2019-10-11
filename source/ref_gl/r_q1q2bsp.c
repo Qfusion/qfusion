@@ -1896,9 +1896,6 @@ void Mod_LoadQ2BrushModel( model_t *mod, model_t *parent, void *buffer, bspForma
 
 	mod->type = mod_brush;
 	mod->registrationSequence = rsh.registrationSequence;
-	if( rsh.worldModel != NULL ) {
-		ri.Com_Error( ERR_DROP, "Loaded a brush model after the world" );
-	}
 
 	loadmodel = mod;
 	loadmodel_skyshader = NULL;
@@ -2809,9 +2806,6 @@ void Mod_LoadQ1BrushModel( model_t *mod, model_t *parent, void *buffer, bspForma
 
 	mod->type = mod_brush;
 	mod->registrationSequence = rsh.registrationSequence;
-	if( rsh.worldModel != NULL ) {
-		ri.Com_Error( ERR_DROP, "Loaded a brush model after the world" );
-	}
 
 	loadmodel = mod;
 

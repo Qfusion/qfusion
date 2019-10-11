@@ -721,7 +721,7 @@ void R_DrawSurfaces( drawList_t *list ) {
 			R_DrawLightSurfaces( list );
 		} else if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
 			R_DrawShadowSurfaces( list );
-		} else if( r_lighting_realtime_world->integer || r_lighting_realtime_dlight->integer ) {
+		} else if( ( r_lighting_realtime_world->integer || r_lighting_realtime_dlight->integer ) && !( rn.refdef.rdflags & RDF_NOWORLDMODEL ) ) {
 			R_DrawForwardRtLightSurfaces( list );
 		} else {
 			_R_DrawSurfaces( list, &depthCopied, RB_MODE_NORMAL, ST_NONE, ST_NONE, SHADER_SORT_NONE, SHADER_SORT_MAX );

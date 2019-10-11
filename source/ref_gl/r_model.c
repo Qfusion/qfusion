@@ -971,7 +971,7 @@ model_t *Mod_ForName( const char *name, bool crash ) {
 	//
 	if( name[0] == '*' ) {
 		int modnum = atoi( name + 1 );
-		if( modnum < 1 || !rsh.worldModel || (unsigned)modnum >= rsh.worldBrushModel->numsubmodels ) {
+		if( modnum < 1 || !rsh.worldBrushModel || (unsigned)modnum >= rsh.worldBrushModel->numsubmodels ) {
 			ri.Com_Error( ERR_DROP, "bad inline model number" );
 		}
 		return &rsh.worldBrushModel->inlines[modnum];
@@ -1022,6 +1022,10 @@ model_t *Mod_ForName( const char *name, bool crash ) {
 	if( mod_isworldmodel ) {
 		// we only init map config when loading the map from disk
 		R_InitMapConfig( name );
+	} else if( rsh.worldModel != NULL ) {
+		if( bspFormat != NULL ) {
+			ri.Com_Error( ERR_DROP, "Loaded a brush model after the world" );
+		}
 	}
 
 	descr->loader( mod, NULL, buf, bspFormat );
@@ -1181,26 +1185,33 @@ static void R_FinishMapConfig( const model_t *mod ) {
 * Specifies the model that will be used as the world
 */
 void R_RegisterWorldModel( const char *model ) {
+	model_t *newworldmodel;
+
 	r_prevworldmodel = rsh.worldModel;
+	mod_isworldmodel = true;
+	newworldmodel = Mod_ForName( model, true );
+	mod_isworldmodel = false;
+
+	if( newworldmodel && newworldmodel == rsh.worldModel ) {
+		R_TouchModel( rsh.worldModel );
+		return;
+	}
+
 	rsh.worldModel = NULL;
 	rsh.worldBrushModel = NULL;
 	rsh.worldModelSequence++;
 
-	mod_isworldmodel = true;
-
-	rsh.worldModel = Mod_ForName( model, true );
-
-	mod_isworldmodel = false;
-
-	if( !rsh.worldModel ) {
+	if( !newworldmodel ) {
 		return;
 	}
+
+	rsh.worldModel = newworldmodel;
+	rsh.worldBrushModel = (mbrushmodel_t *)rsh.worldModel->extradata;
 
 	// FIXME: this is ugly...
 	mapConfig = mod_mapConfigs[rsh.worldModel - mod_known];
 
 	R_TouchModel( rsh.worldModel );
-	rsh.worldBrushModel = ( mbrushmodel_t * )rsh.worldModel->extradata;
 
 	// lazy-compile realtime light shadows
 	r_lighting_realtime_world_shadows->modified = true;
