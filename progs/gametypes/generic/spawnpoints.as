@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // CPM-style spawn indicators for warmup. 
 // Add from gametype scripts with:
 // CreateSpawnIndicators(<spawn entity>,TEAM_PLAYERS/TEAM_ALPHA/TEAM_BETA)
-// And remember to remove indicators after warmup: SpawnIndicators::Delete()
+// And remember to remove indicators after warmup: SpawnIndicators::DeleteAll()
 
 class Spawnpoint
 {
@@ -95,7 +95,7 @@ class Spawnpoint
 namespace SpawnIndicators
 {
 
-const int MAX_INDICATORS = 32;
+const uint MAX_INDICATORS = 64;
 array<Spawnpoint @> indicators(MAX_INDICATORS);
 uint numIndicators = 0;
 
@@ -112,8 +112,8 @@ void Create( const String &className, int team )
 	array<Entity @> @ents = G_FindByClassname( className );
 
 	uint maxIndicators = ents.size();
-	if( maxIndicators > MAX_INDICATORS )
-		maxIndicators = MAX_INDICATORS;
+	if( numIndicators + maxIndicators > MAX_INDICATORS )
+		maxIndicators = MAX_INDICATORS - numIndicators;
 
 	for( uint i = 0; i < maxIndicators; i++ )
     {
@@ -123,7 +123,7 @@ void Create( const String &className, int team )
    }	
 }
 
-void Delete()
+void DeleteAll()
 {
 	for( uint i = 0; i < numIndicators; i++ ) {
 		@indicators[i] = null;

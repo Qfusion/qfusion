@@ -412,7 +412,7 @@ void GT_MatchStateStarted()
         gametype.pickableItemsMask = 0; // disallow item pickup
         gametype.dropableItemsMask = 0; // disallow item drop
         GENERIC_SetUpCountdown();
-		SpawnIndicators::Delete();
+		SpawnIndicators::DeleteAll();
         break;
 
     case MATCH_STATE_PLAYTIME:
