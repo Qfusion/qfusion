@@ -186,8 +186,6 @@ static void IN_ShowCursor( void ) {
 * Called when the window gains focus or changes in some way
 */
 static void IN_ActivateMouse( void ) {
-	int width, height;
-
 	if( !mouseinitialized ) {
 		return;
 	}
@@ -226,26 +224,6 @@ static void IN_ActivateMouse( void ) {
 	if( mouseparmsvalid ) {
 		restore_spi = SystemParametersInfo( SPI_SETMOUSE, 0, newmouseparms, 0 );
 	}
-
-	width = GetSystemMetrics( SM_CXSCREEN );
-	height = GetSystemMetrics( SM_CYSCREEN );
-
-	GetWindowRect( cl_hwnd, &window_rect );
-	if( window_rect.left < 0 ) {
-		window_rect.left = 0;
-	}
-	if( window_rect.top < 0 ) {
-		window_rect.top = 0;
-	}
-	if( window_rect.right >= width ) {
-		window_rect.right = width - 1;
-	}
-	if( window_rect.bottom >= height - 1 ) {
-		window_rect.bottom = height - 1;
-	}
-
-	window_center_x = ( window_rect.right + window_rect.left ) / 2;
-	window_center_y = ( window_rect.top + window_rect.bottom ) / 2;
 
 	SetCursorPos( window_center_x, window_center_y );
 
@@ -292,6 +270,8 @@ static void IN_DeactivateMouse( void ) {
 	if( restore_spi ) {
 		SystemParametersInfo( SPI_SETMOUSE, 0, originalmouseparms, 0 );
 	}
+
+	SetCursorPos( window_center_x, window_center_y );
 
 	ClipCursor( NULL );
 	ReleaseCapture();
@@ -728,6 +708,7 @@ void IN_RawInput_MouseRead( HANDLE in_device_handle ) {
 */
 static void IN_StartupMouse( void ) {
 	cvar_t *cv;
+	int width, height;
 
 	cv = Cvar_Get( "in_initmouse", "1", CVAR_NOSET );
 	if( !cv->integer ) {
@@ -762,6 +743,26 @@ static void IN_StartupMouse( void ) {
 	mouseinitialized = true;
 	mouse_buttons = 8;
 	mouse_wheel_type = MWHEEL_UNKNOWN;
+
+	width = GetSystemMetrics( SM_CXSCREEN );
+	height = GetSystemMetrics( SM_CYSCREEN );
+
+	GetWindowRect( cl_hwnd, &window_rect );
+	if( window_rect.left < 0 ) {
+		window_rect.left = 0;
+	}
+	if( window_rect.top < 0 ) {
+		window_rect.top = 0;
+	}
+	if( window_rect.right >= width ) {
+		window_rect.right = width - 1;
+	}
+	if( window_rect.bottom >= height - 1 ) {
+		window_rect.bottom = height - 1;
+	}
+
+	window_center_x = ( window_rect.right + window_rect.left ) / 2;
+	window_center_y = ( window_rect.top + window_rect.bottom ) / 2;
 }
 
 /*
