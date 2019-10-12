@@ -113,9 +113,8 @@ static CScriptDictionaryInterface *Event_GetParameters( Event *self ) {
 	Rml::Core::String name;
 	Rml::Core::String value;
 	for ( Rml::Core::Dictionary::const_iterator it = parameters.begin(); it != parameters.end(); ++it ) {
-	//while( parameters->Iterate( index, name, value ) ) {
-		const std::string &value = it->second.Get<std::string>();
-		dict->Set( *( ASSTR( it->first ) ), ASSTR( value ), stringObjectTypeId );
+		const std::string &val = it->second.Get<std::string>();
+		dict->Set( *( ASSTR( it->first ) ), ASSTR( val ), stringObjectTypeId );
 	}
 
 	return dict;
@@ -448,6 +447,10 @@ static float Element_GetContainingBlockWidth( Element *self ) {
 
 static float Element_GetContainingBlockHeight( Element *self ) {
 	return self->GetContainingBlock().y;
+}
+
+static float Element_ResolveNumericProperty( Element *self, const asstring_t &p ) {
+	return self->ResolveNumericProperty( ASSTR( p ) );
 }
 
 //==============================================================
@@ -1064,6 +1067,8 @@ void BindElement( ASInterface *as ) {
 
 	.method( &Element_GetContainingBlockWidth, "containingBlockWith", true )
 	.method( &Element_GetContainingBlockHeight, "containingBlockHeight", true )
+
+	.method( &Element_ResolveNumericProperty, "resolveNumericProperty", true )
 	;
 
 	// cache type id for array<Element @>
