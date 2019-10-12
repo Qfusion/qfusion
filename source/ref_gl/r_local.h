@@ -319,7 +319,6 @@ typedef struct {
 
 // global frontend variables are stored here
 // the backend should never attempt reading or modifying them
-#define MAX_PROJMATRIX_STACK_SIZE 16
 
 typedef struct {
 	struct {
@@ -370,9 +369,6 @@ typedef struct {
 
 	char drawBuffer[32];
 	bool newDrawBuffer;
-
-	int transformMatrixStackSize[2];
-	/*ATTRIBUTE_ALIGNED( 16 ) */mat4_t transformMatricesStack[2][MAX_PROJMATRIX_STACK_SIZE];
 } r_globals_t;
 
 extern ref_import_t ri;
@@ -733,8 +729,7 @@ void        R_Scissor( int x, int y, int w, int h );
 void        R_GetScissor( int *x, int *y, int *w, int *h );
 void        R_ResetScissor( void );
 
-void		R_PushTransformMatrix( bool projection, const float *pm );
-void		R_PopTransformMatrix( bool projection );
+void		R_SetTransformMatrix( const float *pm );
 
 void		R_FrameCache_Free( void );
 void		R_FrameCache_Clear( void );

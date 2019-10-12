@@ -47,8 +47,7 @@ typedef struct ref_cmdbuf_s {
 	void ( *ResetScissor )( struct ref_cmdbuf_s *cmdbuf );
 	void ( *DrawStretchRaw )( struct ref_cmdbuf_s *cmdbuf, int x, int y, int w, int h, float s1, float t1, float s2, float t2 );
 	void ( *DrawStretchRawYUV )( struct ref_cmdbuf_s *cmdbuf, int x, int y, int w, int h, float s1, float t1, float s2, float t2 );
-	void ( *PushTransformMatrix )( struct ref_cmdbuf_s *cmdbuf, bool projection, const float *m );
-	void ( *PopTransformMatrix )( struct ref_cmdbuf_s *cmdbuf, bool projection );
+	void ( *SetTransformMatrix )( struct ref_cmdbuf_s *cmdbuf, const float *m );
 
 	// execution proc
 	void ( *Clear )( struct ref_cmdbuf_s *cmdbuf );

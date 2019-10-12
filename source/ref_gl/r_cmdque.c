@@ -148,9 +148,9 @@ typedef struct {
 
 typedef struct {
 	int id;
-	int proj;
+	bool identity;
 	float m[16];
-} refCmdPushProjectionMatrix_t;
+} refCmdSetProjectionMatrix_t;
 
 typedef struct {
 	int id;
@@ -174,8 +174,7 @@ static unsigned R_HandleSetScissorCmd( uint8_t *cmdbuf );
 static unsigned R_HandleResetScissorCmd( uint8_t *cmdbuf );
 static unsigned R_HandleDrawStretchRawCmd( uint8_t *cmdbuf );
 static unsigned R_HandleDrawStretchRawYUVCmd( uint8_t *cmdbuf );
-static unsigned R_HandlePushProjectionMatrixCmd( uint8_t *cmdbuf );
-static unsigned R_HandlePopProjectionMatrixCmd( uint8_t *cmdbuf );
+static unsigned R_HandleSetTransformMatrixCmd( uint8_t *cmdbuf );
 
 // must match the corresponding REF_CMD_ enums!
 static const refCmdHandler_t refCmdHandlers[NUM_REF_CMDS] =
@@ -195,8 +194,7 @@ static const refCmdHandler_t refCmdHandlers[NUM_REF_CMDS] =
 	(refCmdHandler_t)R_HandleResetScissorCmd,
 	(refCmdHandler_t)R_HandleDrawStretchRawCmd,
 	(refCmdHandler_t)R_HandleDrawStretchRawYUVCmd,
-	(refCmdHandler_t)R_HandlePushProjectionMatrixCmd,
-	(refCmdHandler_t)R_HandlePopProjectionMatrixCmd,
+	(refCmdHandler_t)R_HandleSetTransformMatrixCmd,
 };
 
 static unsigned R_HandleBeginFrameCmd( uint8_t *pcmd ) {
@@ -303,15 +301,9 @@ static unsigned R_HandleDrawStretchRawYUVCmd( uint8_t *pcmd ) {
 	return sizeof( *cmd );
 }
 
-static unsigned R_HandlePushProjectionMatrixCmd( uint8_t *pcmd ) {
-	refCmdPushProjectionMatrix_t *cmd = (void *)pcmd;
-	R_PushTransformMatrix( cmd->proj != 0, cmd->m );
-	return sizeof( *cmd );
-}
-
-static unsigned R_HandlePopProjectionMatrixCmd( uint8_t *pcmd ) {
-	refCmdPopProjectionMatrix_t *cmd = (void *)pcmd;
-	R_PopTransformMatrix( cmd->proj != 0 );
+static unsigned R_HandleSetTransformMatrixCmd( uint8_t *pcmd ) {
+	refCmdSetProjectionMatrix_t *cmd = (void *)pcmd;
+	R_SetTransformMatrix( cmd->identity ? NULL : cmd->m );
 	return sizeof( *cmd );
 }
 
@@ -601,21 +593,14 @@ static void RF_IssueDrawStretchRawYUVCmd( ref_cmdbuf_t *cmdbuf, int x, int y, in
 	RF_IssueDrawStretchRawOrRawYUVCmd( cmdbuf, REF_CMD_DRAW_STRETCH_RAW_YUV, x, y, w, h, s1, t1, s2, t2 );
 }
 
-void RF_IssuePushProjectionMatrixCmd( struct ref_cmdbuf_s *cmdbuf, bool projection, const float *m ) {
-	refCmdPushProjectionMatrix_t cmd;
+void RF_IssueSetProjectionMatrixCmd( struct ref_cmdbuf_s *cmdbuf, const float *m ) {
+	refCmdSetProjectionMatrix_t cmd;
 
 	cmd.id = REF_CMD_PUSH_TRANSFORM_MATRIX;
-	cmd.proj = projection ? 1 : 0;
-	memcpy( cmd.m, m, sizeof( float ) * 16 );
-
-	RF_IssueAbstractCmd( cmdbuf, &cmd, sizeof( cmd ), sizeof( cmd ) );
-}
-
-void RF_IssuePopProjectionMatrixCmd( struct ref_cmdbuf_s *cmdbuf, bool projection ) {
-	refCmdPopProjectionMatrix_t cmd;
-
-	cmd.id = REF_CMD_POP_TRANSFORM_MATRIX;
-	cmd.proj = projection ? 1 : 0;
+	cmd.identity = ( m == NULL );
+	if( m ) {
+		memcpy( cmd.m, m, sizeof( float ) * 16 );
+	}
 
 	RF_IssueAbstractCmd( cmdbuf, &cmd, sizeof( cmd ), sizeof( cmd ) );
 }
@@ -680,8 +665,7 @@ ref_cmdbuf_t *RF_CreateCmdBuf( bool sync ) {
 	cmdbuf->ResetScissor = &RF_IssueResetScissorCmd;
 	cmdbuf->DrawStretchRaw = &RF_IssueDrawStretchRawCmd;
 	cmdbuf->DrawStretchRawYUV = &RF_IssueDrawStretchRawYUVCmd;
-	cmdbuf->PushTransformMatrix = &RF_IssuePushProjectionMatrixCmd;
-	cmdbuf->PopTransformMatrix = &RF_IssuePopProjectionMatrixCmd;
+	cmdbuf->SetTransformMatrix = &RF_IssueSetProjectionMatrixCmd;
 
 	cmdbuf->Clear = &RF_ClearCmdBuf;
 	cmdbuf->RunCmds = &RF_RunCmdBufProc;

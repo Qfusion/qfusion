@@ -50,10 +50,7 @@ public:
 	virtual float GetPixelsPerInch( void );
 
 	/// Called by RmlUi when it wants to set the current transform matrix to a new matrix.
-	//virtual void PushTransform( bool projection, const Rml::Core::RowMajorMatrix4f &transform );
-	//virtual void PushTransform( bool projection, const Rml::Core::ColumnMajorMatrix4f &transform );
-	/// Called by RmlUi when it wants to revert the latest transform change.
-	//virtual void PopTransform( bool projection, const Rml::Core::Matrix4f &transform );
+	virtual void SetTransform( const Rml::Core::Matrix4f* transform );
 
 	//// Methods
 	int GetWidth( void ) const { return this->vid_width; }

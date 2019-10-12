@@ -632,10 +632,6 @@ struct cinematics_s *RF_GetShaderCinematic( shader_t *shader ) {
 	return R_GetCinematicById( shader->cin );
 }
 
-void RF_PushTransformMatrix( bool projection, const float *m ) {
-	rrf.frame->PushTransformMatrix( rrf.frame, projection, m );
-}
-
-void RF_PopTransformMatrix( bool projection ) {
-	rrf.frame->PopTransformMatrix( rrf.frame, projection );
+void RF_SetTransformMatrix( const float *m ) {
+	rrf.frame->SetTransformMatrix( rrf.frame, m );
 }

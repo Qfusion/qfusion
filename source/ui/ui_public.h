@@ -104,16 +104,12 @@ typedef struct {
 	struct cinematics_s *( *R_GetShaderCinematic )( struct shader_s *shader );
 
 	/**
-	* R_PushTransformMatrix
-	* Called by UI when it wants to set the current transform matrix to a new matrix
+	* SetTransformMatrix
+	*
+	* Called by UI when it wants to set the current transform matrix to a new matrix.
+	* Passing a NULL pointer will set the transform maix to identity.
 	*/
-	void ( *R_PushTransformMatrix )( bool projection, const float *m );
-
-	/**
-	* R_PopTransformMatrix
-	* Called by UI when it wants to revert the latest transform matrix change
-	*/
-	void ( *R_PopTransformMatrix )( bool projection );
+	void ( *R_SetTransformMatrix )( const float *m );
 
 	struct sfx_s *( *S_RegisterSound )( const char *name );
 	void ( *S_StartLocalSound )( struct sfx_s *sfx, int channel, float fvol );

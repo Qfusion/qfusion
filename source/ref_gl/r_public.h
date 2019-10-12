@@ -228,16 +228,12 @@ typedef struct {
 	void ( *AppActivate )( bool active, bool minimize, bool destroy );
 
 	/**
-	* PushTransformMatrix
-	* Called by UI when it wants to set the current transform matrix to a new matrix
+	* SetTransformMatrix
+	*
+	* Called by UI when it wants to set the current transform matrix to a new matrix.
+	* Passing a NULL pointer will set the transform matrix to identity.
 	*/
-	void ( *PushTransformMatrix )( bool projection, const float *m );
-
-	/**
-	* PopTransformMatrix
-	* Called by UI when it wants to revert the latest transform matrix change
-	*/
-	void ( *PopTransformMatrix )( bool projection );
+	void ( *SetTransformMatrix )( const float *m );
 } ref_export_t;
 
 typedef ref_export_t *(*GetRefAPI_t)( const ref_import_t *imports );

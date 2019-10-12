@@ -481,15 +481,9 @@ void R_SetupGL2D( void ) {
 
 	RB_LoadCameraMatrix( mat4x4_identity );
 
-	if( rf.transformMatrixStackSize[0] > 0 )
-		RB_LoadObjectMatrix( rf.transformMatricesStack[0][rf.transformMatrixStackSize[0] - 1] );
-	else
-		RB_LoadObjectMatrix( mat4x4_identity );
+	RB_LoadObjectMatrix( mat4x4_identity );
 
-	if( rf.transformMatrixStackSize[1] > 0 )
-		RB_LoadProjectionMatrix( rf.transformMatricesStack[1][rf.transformMatrixStackSize[1] - 1] );
-	else
-		RB_LoadProjectionMatrix( projectionMatrix );
+	RB_LoadProjectionMatrix( projectionMatrix );
 
 	RB_SetShaderStateMask( ~0, GLSTATE_NO_DEPTH_TEST );
 
@@ -1461,49 +1455,12 @@ void R_PopRefInst( void ) {
 //=======================================================================
 
 /*
-* R_PushTransformMatrix
+* R_SetTransformMatrix
 */
-void R_PushTransformMatrix( bool projection, const float *pm ) {
-	int i;
-	int p;
-	int l = projection ? 1 : 0;
-
-	p = rf.transformMatrixStackSize[l];
-	if( p == MAX_PROJMATRIX_STACK_SIZE ) {
-		return;
-	}
-	for( i = 0; i < 16; i++ ) {
-		rf.transformMatricesStack[l][p][i] = pm[i];
-	}
-
+void R_SetTransformMatrix( const float *pm ) {
 	RB_FlushDynamicMeshes();
 
-	RB_LoadObjectMatrix( rf.transformMatricesStack[l][p] );
-	rf.transformMatrixStackSize[l]++;
-}
-
-/*
-* R_PopTransformMatrix
-*/
-void R_PopTransformMatrix( bool projection ) {
-	int p;
-	int l = projection ? 1 : 0;
-
-	p = rf.transformMatrixStackSize[l];
-	if( p == 0 ) {
-		return;
-	}
-
-	RB_FlushDynamicMeshes();
-
-	if( p == 1 ) {
-		rf.transformMatrixStackSize[l] = 0;
-		RB_LoadObjectMatrix( mat4x4_identity );
-		return;
-	}
-
-	RB_LoadObjectMatrix( rf.transformMatricesStack[l][p - 1] );
-	rf.transformMatrixStackSize[l]--;
+	RB_LoadObjectMatrix( pm != NULL ? pm : mat4x4_identity );
 }
 
 //=======================================================================
@@ -2015,9 +1972,6 @@ void R_EndFrame( void ) {
 	RB_EndFrame();
 
 	GLimp_EndFrame();
-
-	rf.transformMatrixStackSize[0] = 0;
-	rf.transformMatrixStackSize[1] = 0;
 
 	assert( qglGetError() == GL_NO_ERROR );
 }

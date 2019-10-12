@@ -171,12 +171,8 @@ inline void R_SkeletalGetBonePose( struct model_s *mod, int bone, int frame, bon
 	UI_IMPORT.R_SkeletalGetBonePose( mod, bone, frame, bonepose );
 }
 
-inline void R_PushTransformMatrix( bool projection, const float *m ) {
-	UI_IMPORT.R_PushTransformMatrix( projection, m );
-}
-
-inline void R_PopTransformMatrix( bool projection ) {
-	UI_IMPORT.R_PopTransformMatrix( projection );
+inline void R_SetTransformMatrix( const float *m ) {
+	UI_IMPORT.R_SetTransformMatrix( m );
 }
 
 inline const char *ML_GetFullname( const char *name ) {

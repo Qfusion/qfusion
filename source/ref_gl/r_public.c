@@ -115,8 +115,7 @@ QF_DLL_EXPORT ref_export_t *GetRefAPI( ref_import_t *import ) {
 	globals.ModelBounds = R_ModelBounds;
 	globals.ModelFrameBounds = R_ModelFrameBounds;
 
-	globals.PushTransformMatrix = RF_PushTransformMatrix;
-	globals.PopTransformMatrix = RF_PopTransformMatrix;
+	globals.SetTransformMatrix = RF_SetTransformMatrix;
 
 	return &globals;
 }

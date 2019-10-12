@@ -102,13 +102,9 @@ struct cinematics_s *RF_GetShaderCinematic( shader_t *shader );
 void RF_Finish( void );
 
 /**
-* Called by UI when it wants to set the current transform matrix to a new matrix
+* Called by UI when it wants to set the current transform matrix to a new matrix.
+* Passing a NULL pointer will set the transform matrix to identity.
 */
-void RF_PushTransformMatrix( bool projection, const float *m );
-
-/**
-* Called by UI when it wants to revert the latest transform matrix change
-*/
-void RF_PopTransformMatrix( bool projection );
+void RF_SetTransformMatrix( const float *m );
 
 #endif // R_FRONTEND_H

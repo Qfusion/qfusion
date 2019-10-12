@@ -154,18 +154,18 @@ bool UI_RenderInterface::LoadTexture( Rml::Core::TextureHandle & texture_handle,
 	return true;
 }
 
-//void UI_RenderInterface::PushTransform( bool projection, const Rml::Core::RowMajorMatrix4f& transform ) {
-//	trap::R_PushTransformMatrix( projection, (const float *)transform.Transpose().data() );
-//}
+void UI_RenderInterface::SetTransform( const Rml::Core::Matrix4f* transform ) {
+	if( transform == nullptr ) {
+		trap::R_SetTransformMatrix( NULL );
+		return;
+	}
 
-//void UI_RenderInterface::PushTransform( bool projection, const Rml::Core::ColumnMajorMatrix4f& transform ) {
-//	trap::R_PushTransformMatrix( projection, (const float *)transform.data() );
-//}
-
-//void UI_RenderInterface::PopTransform( bool projection, const Rml::Core::Matrix4f& ROCKET_UNUSED_PARAMETER( transform ) ) {
-//	ROCKET_UNUSED( transform );
-//	trap::R_PopTransformMatrix( projection );
-//}
+	if( std::is_same<Rml::Core::Matrix4f, Rml::Core::ColumnMajorMatrix4f>::value ) {
+		trap::R_SetTransformMatrix( (const float *)transform->data() );
+	} else if( std::is_same<Rml::Core::Matrix4f, Rml::Core::RowMajorMatrix4f>::value ) {
+		trap::R_SetTransformMatrix( (const float *)transform->Transpose().data() );
+	}
+}
 
 float UI_RenderInterface::GetPixelsPerInch( void ) {
 	return this->pixelsPerInch;
