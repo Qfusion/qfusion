@@ -35,7 +35,7 @@ class SelectableDataGrid : public ElementDataGrid
 public:
 	SelectableDataGrid( const String& tag ) :
 		ElementDataGrid( tag ), lastSelectedRow(), lastSelectedRowIndex( -1 ) {
-		SetProperty( "selected-row", "-1" );
+		SetAttribute( "selected-row", -1 );
 	}
 
 	~SelectableDataGrid() {
@@ -99,7 +99,7 @@ public:
 					lastSelectedRow = row;
 					lastSelectedRowIndex = index;
 
-					this->SetProperty( "selected-row", indexStr );
+					this->SetAttribute( "selected-row", index );
 
 					row->SetPseudoClass( "selected", true );
 				}
@@ -126,8 +126,7 @@ public:
 			int firstRowAdded = evt.GetParameter< int >( "first_row_added", 0 );
 			if( lastSelectedRowIndex >= firstRowAdded ) {
 				lastSelectedRowIndex += numRowsAdded;
-				Rml::Core::String indexStr( toString( lastSelectedRowIndex ).c_str() );
-				this->SetProperty( "selected-row", indexStr );
+				this->SetAttribute( "selected-row", lastSelectedRowIndex );
 			}
 		} else if( evt == "rowremove" ) {
 			if( lastSelectedRowIndex < 0 ) {
@@ -144,7 +143,7 @@ public:
 				lastSelectedRow = nullptr;
 
 				lastSelectedRowIndex = -1;
-				this->SetProperty( "selected-row", "-1" );
+				this->SetAttribute( "selected-row", -1 );
 			}
 		}
 	}
