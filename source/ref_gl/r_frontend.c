@@ -195,7 +195,7 @@ rserr_t RF_SetMode( int x, int y, int width, int height, int displayFrequency, b
 	}
 
 	rrf.frame->Clear( rrf.frame );
-	memset( rrf.customColors, 255, sizeof( rrf.customColors ) );
+	memset( rrf.customColors, 0, sizeof( rrf.customColors ) );
 
 	rrf.adapter.owner = (void *)&rrf;
 	if( RF_AdapterInit( &rrf.adapter ) != true ) {
@@ -337,6 +337,9 @@ void RF_EndRegistration( void ) {
 	R_EndRegistration();
 	rrf.adapter.cmdPipe->EndRegistration( rrf.adapter.cmdPipe );
 	RF_AdapterWait( &rrf.adapter );
+
+	// reset the cache of custom colors, otherwise RF_SetCustomColor might fail to do anything
+	memset( rrf.customColors, 0, sizeof( rrf.customColors ) );
 }
 
 void RF_RegisterWorldModel( const char *model ) {
