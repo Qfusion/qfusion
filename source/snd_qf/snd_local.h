@@ -40,7 +40,6 @@ typedef struct {
 
 typedef struct {
 	unsigned int length;
-	unsigned int loopstart;
 	unsigned int speed;              // not needed, because converted on load?
 	unsigned short channels;
 	unsigned short width;
@@ -121,7 +120,6 @@ typedef struct {
 	int rate;
 	short width;
 	short channels;
-	int loopstart;
 	int samples;
 	int dataofs;            // chunk starts this many bytes from file start
 } wavinfo_t;

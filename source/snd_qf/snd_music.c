@@ -123,8 +123,6 @@ static int S_BackgroundTrack_GetWavinfo( const char *name, wavinfo_t *info ) {
 	trap_FS_Read( &t, sizeof( t ), file );
 	info->width = LittleShort( t ) / 8;
 
-	info->loopstart = 0;
-
 	// find data chunk
 	last_chunk = iff_data;
 	if( !S_BackgroundTrack_FindNextChunk( "data", &last_chunk, file ) ) {

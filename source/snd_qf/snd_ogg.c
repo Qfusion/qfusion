@@ -202,7 +202,6 @@ sfxcache_t *SNDOGG_Load( sfx_t *s ) {
 
 	sc = s->cache = S_Malloc( len + sizeof( sfxcache_t ) );
 	sc->length = samples;
-	sc->loopstart = sc->length;
 	sc->speed = vi->rate;
 	sc->channels = vi->channels;
 	sc->width = 2;
@@ -241,7 +240,6 @@ sfxcache_t *SNDOGG_Load( sfx_t *s ) {
 
 	if( sc->speed != dma.speed ) {
 		sc->length = ResampleSfx( samples, sc->speed, sc->channels, 2, (uint8_t *)buffer, sc->data, s->name );
-		sc->loopstart = sc->length;
 		sc->speed = dma.speed;
 	}
 
@@ -333,7 +331,6 @@ bool SNDOGG_OpenTrack( bgTrack_t *track, bool *delay ) {
 	track->info.width = 2;
 	track->info.dataofs = 0;
 	track->info.samples = (int)qov_pcm_total( vf, -1 );
-	track->info.loopstart = track->info.samples;
 
 	return true;
 

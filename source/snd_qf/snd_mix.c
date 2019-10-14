@@ -458,9 +458,6 @@ int S_PaintChannels( unsigned int endtime, int dumpfile, float gain ) {
 					if( ch->autosound ) { // autolooping sounds always go back to start
 						ch->pos = 0;
 						ch->end = ltime + sc->length;
-					} else if( sc->loopstart < sc->length ) {
-						ch->pos = sc->loopstart;
-						ch->end = ltime + sc->length - ch->pos;
 					} else {   // channel just stopped
 						ch->sfx = NULL;
 					}

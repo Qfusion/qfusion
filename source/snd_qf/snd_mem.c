@@ -234,7 +234,6 @@ sfxcache_t *S_LoadSound_Wav( sfx_t *s ) {
 	sc->channels = info.channels;
 	sc->width = info.width;
 	sc->speed = dma.speed;
-	sc->loopstart = info.loopstart < 0 ? sc->length : info.loopstart * ( (double)sc->length / (double)info.samples );
 	s->cache = sc;
 
 	S_Free( data );
@@ -345,7 +344,6 @@ wavinfo_t GetWavinfo( const char *name, uint8_t *wav, int wavlength ) {
 	wavinfo_t info;
 	int i;
 	int format;
-	int samples;
 
 	memset( &info, 0, sizeof( info ) );
 
@@ -384,25 +382,6 @@ wavinfo_t GetWavinfo( const char *name, uint8_t *wav, int wavlength ) {
 	data_p += 4 + 2;
 	info.width = GetLittleShort() / 8;
 
-	// get cue chunk
-	FindChunk( "cue " );
-	if( data_p ) {
-		data_p += 32;
-		info.loopstart = GetLittleLong();
-
-		// if the next chunk is a LIST chunk, look for a cue length marker
-		FindNextChunk( "LIST" );
-		if( data_p ) {
-			if( !strncmp( (char *) data_p + 28, "mark", 4 ) ) { // this is not a proper parse, but it works with cooledit...
-				data_p += 24;
-				i = GetLittleLong(); // samples in loop
-				info.samples = info.loopstart + i;
-			}
-		}
-	} else {
-		info.loopstart = -1;
-	}
-
 	// find data chunk
 	FindChunk( "data" );
 	if( !data_p ) {
@@ -411,15 +390,7 @@ wavinfo_t GetWavinfo( const char *name, uint8_t *wav, int wavlength ) {
 	}
 
 	data_p += 4;
-	samples = GetLittleLong() / info.width / info.channels;
-
-	if( info.samples ) {
-		if( samples < info.samples ) {
-			S_Error( "Sound %s has a bad loop length", name ); // FIXME: Medar: Should be ERR_DROP?
-		}
-	} else {
-		info.samples = samples;
-	}
+	info.samples = GetLittleLong() / info.width / info.channels;
 
 	info.dataofs = data_p - wav;
 
