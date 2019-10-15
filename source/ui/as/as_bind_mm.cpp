@@ -29,7 +29,7 @@ namespace ASUI
 {
 
 // dummy funcdef
-static void ASMatchMaker_EventListenerCallback( Event *event ) {
+static void ASMatchMaker_EventListenerCallback( int oldState, int newState ) {
 }
 
 class ASMatchMaker
@@ -79,21 +79,17 @@ public:
 		const int pstate = state;
 		state = trap::MM_GetLoginState();
 
-		Rml::Core::Dictionary ev_parms;
-
 		if( pstate != state ) {
-			ev_parms["state"] = pstate;
-			ev_parms["old_state"] = pstate;
-			dispatchEvent( "stateChange", ev_parms );
+			dispatchStateChangeEvent( pstate, state );
 		}
 	}
 
-	void addEventListener( const asstring_t &event, asIScriptFunction *func ) {
-		EventCallback cb;
+	void addEventListener( asIScriptFunction *func ) {
+		StateChangeCallback cb;
 
 		cb = ASBind::CreateFunctionPtr( func, cb );
 
-		Listener l( ASSTR( event ), cb );
+		Listener l( func->GetModuleName(), cb );
 		listeners.push_back( l );
 	}
 
@@ -115,15 +111,9 @@ private:
 	int state;
 	ASInterface *asmodule;
 
-	void dispatchEvent( const char *event, const Rml::Core::Dictionary &parms ) {
-/*
- 		const Rml::Core::EventSpecification& spec = Rml::Core::EventSpecification::GetOrInsert( event );
-		Rml::Core::Event *ev = Rml::Core::Factory::InstanceEvent( NULL, spec.id, spec.type, parms, false );
-
-		ev->SetPhase( Rml::Core::Event::PHASE_BUBBLE ); // FIXME?
-
+	void dispatchStateChangeEvent( int oldState, int newState ) {
 		for( ListenersList::iterator it = listeners.begin(); it != listeners.end(); ) {
-			EventCallback func = it->second;
+			StateChangeCallback func = it->second;
 
 			if( !func.isValid() || !func.getModule() ) {
 erase:
@@ -132,21 +122,17 @@ erase:
 				continue;
 			}
 
-			if( it->first == event ) {
-				ev->AddReference();
-
-				try {
-					func.setContext( asmodule->getContext() );
-					func( ev );
-				} catch( ASBind::Exception & ) {
-					Com_Printf( S_COLOR_RED "ASMatchMaker: Failed to call function %s\n", func.getName() );
-					goto erase;
-				}
+			try {
+				func.setContext( asmodule->getContext() );
+				func( oldState, newState );
+			} catch( ASBind::Exception & ) {
+				Com_Printf( S_COLOR_RED "ASMatchMaker: Failed to call function %s\n", func.getName() );
+				goto erase;
 			}
 
 			++it;
 		}
-*/
+
 	}
 
 	void clearEventListeners( void ) {
@@ -155,8 +141,8 @@ erase:
 		listeners.clear();
 	}
 
-	typedef ASBind::FunctionPtr<void ( Rml::Core::Event* )> EventCallback;
-	typedef std::pair<std::string, EventCallback> Listener;
+	typedef ASBind::FunctionPtr<void ( int, int )> StateChangeCallback;
+	typedef std::pair<std::string, StateChangeCallback> Listener;
 	typedef std::vector<Listener> ListenersList;
 	ListenersList listeners;
 };
@@ -180,7 +166,6 @@ void PrebindMatchMaker( ASInterface *as ) {
 void BindMatchMaker( ASInterface *as ) {
 	ASBind::Global( as->getEngine() )
 
-	// setTimeout and setInterval callback funcdefs
 	.funcdef( &ASMatchMaker_EventListenerCallback, "MMEventListenerCallback" )
 	;
 
@@ -199,8 +184,8 @@ void BindMatchMaker( ASInterface *as ) {
 	.method( &ASMatchMaker::getProfileURL, "profileURL" )
 	.method( &ASMatchMaker::getBaseWebURL, "baseWebURL" )
 
-	.method2( &ASMatchMaker::addEventListener, "void addEventListener( const String &event, MMEventListenerCallback @callback )" )
-	.method2( &ASMatchMaker::removeEventListener, "void removeEventListener( const String &event, MMEventListenerCallback @callback )" )
+	.method2( &ASMatchMaker::addEventListener, "void addStateChangeCallback( MMEventListenerCallback @callback )" )
+	.method2( &ASMatchMaker::removeEventListener, "void removeStateChangeCallback( MMEventListenerCallback @callback )" )
 	;
 }
 
