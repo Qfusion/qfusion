@@ -69,7 +69,6 @@ Rml::Core::ElementInstancer *GetColorSelectorInstancer( void );
 Rml::Core::ElementInstancer *GetInlineDivInstancer( void );
 Rml::Core::ElementInstancer *GetImageWidgetInstancer( void );
 Rml::Core::ElementInstancer *GetElementFieldInstancer( void );
-Rml::Core::ElementInstancer *GetVideoInstancer( void );
 Rml::Core::ElementInstancer *GetIFrameWidgetInstancer( void );
 Rml::Core::ElementInstancer *GetElementL10nInstancer( void );
 Rml::Core::ElementInstancer *GetElementBlurInstancer( void );
