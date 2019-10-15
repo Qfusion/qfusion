@@ -17,8 +17,9 @@ include $(QFUSION_PATH)/source/android/libs/png.mk
 include $(QFUSION_PATH)/source/android/libs/theora.mk
 include $(QFUSION_PATH)/source/android/libs/vorbis.mk
 
-include $(QFUSION_PATH)/third-party/libRocket/Build/android/Controls.mk
-include $(QFUSION_PATH)/third-party/libRocket/Build/android/Core.mk
+include $(QFUSION_PATH)/source/android/libs/RmlUiControls.mk
+include $(QFUSION_PATH)/source/android/libs/RmlUiCore.mk
+include $(QFUSION_PATH)/source/android/libs/RmlUiDebugger.mk
 
 include $(QFUSION_PATH)/source/angelwrap/Android.mk
 include $(QFUSION_PATH)/source/cin/Android.mk

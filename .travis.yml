@@ -52,7 +52,15 @@ matrix:
           branch_pattern: ci
     - dist: precise
       language: android
-      env: QF_ARCH=android
+      env: QF_ARCH=android QF_ANDROID_ABI=armeabi-v7a
+      jdk: oraclejdk7
+      android:
+        components:
+          - build-tools-21.0.2
+          - android-18
+    - dist: precise
+      language: android
+      env: QF_ARCH=android QF_ANDROID_ABI=x86
       jdk: oraclejdk7
       android:
         components:
@@ -73,7 +81,7 @@ script:
   - cd source
   - if [[ "$QF_ARCH" == "x86_64" ]]; then make -j8; fi
   - if [[ "$QF_ARCH" == "OSX" ]]; then xcodebuild -project qfusion.xcodeproj/ -jobs 4 -configuration Release -scheme ALL_BUILD | xcpretty; fi
-  - if [[ "$QF_ARCH" == "android" ]]; then cd ../platforms/android/projects/qfusion/jni && ndk-build -j8 && cd "$TRAVIS_BUILD_DIR/source" && cp -Rd ../platforms/android/projects/qfusion/libs/* build/; fi
+  - if [[ "$QF_ARCH" == "android" ]]; then cd ../platforms/android/projects/qfusion/jni && ndk-build APP_ABI=$QF_ANDROID_ABI -j8 && cd "$TRAVIS_BUILD_DIR/source" && cp -Rd ../platforms/android/projects/qfusion/libs/* build/; fi
 
 before_deploy:
   - cd build
