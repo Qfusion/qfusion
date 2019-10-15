@@ -129,19 +129,10 @@ void RocketModule::textInput( int contextId, wchar_t c ) {
 }
 
 void RocketModule::keyEvent( int contextId, int key, bool pressed ) {
-	// DEBUG
-#if 0
-	if( key >= 32 && key <= 126 ) {
-		Com_Printf( "**KEYEVENT CHAR %c\n", key & 0xff );
-	} else {
-		Com_Printf( "**KEYEVENT KEY %d\n", key );
-	}
-#endif
-
 	if( key == K_MOUSE1DBLCLK ) {
 		return; // Rocket handles double click internally
-
 	}
+
 	auto *context = contextForId( contextId );
 	Element *element = context->GetFocusElement();
 
@@ -201,7 +192,6 @@ void RocketModule::keyEvent( int contextId, int key, bool pressed ) {
 }
 
 bool RocketModule::touchEvent( int contextId, int id, touchevent_t type, int x, int y ) {
-#if 0
 	auto &contextTouch = contextsTouch[contextId];
 	auto *context = contextForId( contextId );
 
@@ -250,8 +240,8 @@ bool RocketModule::touchEvent( int contextId, int id, touchevent_t type, int x, 
 							break;
 						}
 
-						int overflow = element->GetProperty< int >( "overflow-y" );
-						if( ( overflow != Rml::Core::OVERFLOW_AUTO ) && ( overflow != Rml::Core::OVERFLOW_SCROLL ) ) {
+						auto overflow = (Rml::Core::Style::Overflow)element->GetProperty< int >( "overflow-y" );
+						if( ( overflow != Rml::Core::Style::Overflow::Auto ) && ( overflow != Rml::Core::Style::Overflow::Scroll ) ) {
 							continue;
 						}
 
@@ -271,7 +261,7 @@ bool RocketModule::touchEvent( int contextId, int id, touchevent_t type, int x, 
 			cancelTouches( contextId );
 		}
 	}
-#endif
+
 	return true;
 }
 
@@ -446,8 +436,6 @@ void RocketModule::registerCustoms() {
 
 	//
 	// GLOBAL CUSTOM PROPERTIES
-
-	Rml::Core::StyleSheetSpecification::RegisterProperty( "background-music", "", false ).AddParser( "string" );
 
 	Rml::Core::StyleSheetSpecification::RegisterParser( "sound", new PropertyParserSound() );
 
