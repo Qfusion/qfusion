@@ -58,14 +58,6 @@ matrix:
         components:
           - build-tools-21.0.2
           - android-18
-    - dist: precise
-      language: android
-      env: QF_ARCH=android QF_ANDROID_ABI=x86
-      jdk: oraclejdk7
-      android:
-        components:
-          - build-tools-21.0.2
-          - android-18
 
 install:
   - if [[ "$QF_ARCH" == "android" ]] && [ ! -e "$HOME/.deps/android-ndk-r11c" ]; then curl -L http://dl.google.com/android/repository/android-ndk-r11c-linux-x86_64.zip >ndk.zip && unzip ndk.zip -d $HOME/.deps &> /dev/null && rm ndk.zip; fi
