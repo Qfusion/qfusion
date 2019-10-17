@@ -335,7 +335,7 @@ void RB_GetShaderpassColor( const shaderpass_t *pass, byte_vec4_t rgba_, float *
 					temp = rb.currentShaderTime * rgbgenfunc->args[3] + rgbgenfunc->args[2];
 					temp = FTABLE_EVALUATE( table, temp ) * rgbgenfunc->args[1] + rgbgenfunc->args[0];
 				}
-				temp = temp * rgbgenfunc->args[1] + rgbgenfunc->args[0];
+				temp = temp * ((rgbgenfunc->args[1] + rgbgenfunc->args[0])-0.5)*2;
 			}
 
 			if( pass->rgbgen.type == RGB_GEN_ENTITYWAVE ) {
