@@ -74,6 +74,7 @@ LOCAL_SRC_FILES := \
   Source/Core/LayoutLineBox.cpp \
   Source/Core/Log.cpp \
   Source/Core/Math.cpp \
+  Source/Core/ObserverPtr.cpp \
   Source/Core/Plugin.cpp \
   Source/Core/PluginRegistry.cpp \
   Source/Core/precompiled.cpp \
