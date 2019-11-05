@@ -184,10 +184,9 @@ void PrebindEventListener( ASInterface *as ) {
 // TODO: investigate if "self" here needs some reference counting tricks?
 
 // ch : note that the ordering in these wrapping functions went like this:
-//  1) we need to wrap a few functions to handle reference-counting
-//  2) we need few wrapper functions to look-a-like jquery
-//	3) we need to provide separate api for Form, Controls etc..
-//	4) we need to convert all Rml::Core::String to asstring_t*
+//  1) we need few wrapper functions to look-a-like jquery
+//	2) we need to provide separate api for Form, Controls etc..
+//	3) we need to convert all Rml::Core::String to asstring_t*
 // and thats why you have loads of misc functions in the end that use strings
 
 // dummy funcdef
@@ -196,20 +195,29 @@ static void Element_EventListenerCallback( Element *elem, Event *event ) {
 
 
 static Element *Element_Factory( void ) {
-	Element *e = dynamic_cast<Element *>( Factory::InstanceElement( NULL, "#text#", "#text", XMLAttributes() ).get() );
-	return e;
+	ElementPtr eptr = Factory::InstanceElement( NULL, "*", "#element", XMLAttributes() );
+	if( eptr == nullptr ) {
+		return nullptr;
+	}
+	return eptr.get();
 }
 
 static Element *Element_Factory2( Element *parent ) {
-	Element *e = dynamic_cast<Element *>( Factory::InstanceElement( parent, "#text#", "#text", XMLAttributes() ).get() );
-	return e;
+	ElementPtr eptr = Factory::InstanceElement( parent, "*", "#element", XMLAttributes() );
+	if( eptr == nullptr ) {
+		return nullptr;
+	}
+	return eptr.get();
 }
 
 static Element *Element_FactoryRML( Element *parent, const asstring_t &rml ) {
-	Element *e = dynamic_cast<Element *>( Factory::InstanceElement( parent, "#text#", "#text", XMLAttributes() ).get() );
-	if( e ) {
-		e->SetInnerRML( ASSTR( rml ) );
+	ElementPtr eptr = Factory::InstanceElement( parent, "*", "#element", XMLAttributes() );
+	if( eptr == nullptr ) {
+		return nullptr;
 	}
+
+	Element *e = eptr.get();
+	e->SetInnerRML( ASSTR( rml ) );
 	return e;
 }
 
@@ -219,7 +227,7 @@ static EventListener *Element_AddEventListener( Element *elem, const asstring_t 
 	if( func ) {
 		func->Release();
 	}
-	return listener;    // RETREF?
+	return listener;
 }
 
 static void Element_RemoveEventListener( Element *elem, const asstring_t &event, EventListener *listener ) {
