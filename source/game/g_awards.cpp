@@ -405,6 +405,7 @@ void G_AwardPlayerKilled( edict_t *self, edict_t *inflictor, edict_t *attacker, 
 			case 5:
 				Q_strncpyz( s, S_COLOR_YELLOW "God Mode!", sizeof( s ) );
 				G_PrintMsg( NULL, "%s" S_COLOR_YELLOW " is in God Mode!\n", attacker->r.client->netname );
+				break;
 			default:
 				Q_strncpyz( s, S_COLOR_YELLOW "God Mode!", sizeof( s ) );
 				G_PrintMsg( NULL, "%s" S_COLOR_YELLOW " is in God Mode! " S_COLOR_WHITE "%d" S_COLOR_YELLOW " frags!\n", attacker->r.client->netname, attacker->r.client->resp.awardInfo.frag_count );
