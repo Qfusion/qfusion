@@ -342,7 +342,6 @@ static void FindChunk( char *name ) {
 */
 wavinfo_t GetWavinfo( const char *name, uint8_t *wav, int wavlength ) {
 	wavinfo_t info;
-	int i;
 	int format;
 
 	memset( &info, 0, sizeof( info ) );
