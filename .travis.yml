@@ -30,6 +30,7 @@ matrix:
       env: QF_ARCH=x86_64
       addons:
         apt:
+          update: true
           packages:
             - clang
             - cmake
@@ -38,7 +39,7 @@ matrix:
             - libopenal-dev
             - libjpeg8-dev
             - libvorbis-dev
-            - libtheora-dev
+            - libpng-dev
             - libfreetype6-dev
             - zlib1g-dev
             - libcurl4-gnutls-dev

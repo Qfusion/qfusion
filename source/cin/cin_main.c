@@ -19,8 +19,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "cin_local.h"
-#include "cin_theora.h"
-
 struct mempool_s *cinPool;
 
 /*
@@ -36,8 +34,6 @@ int CIN_API( void ) {
 bool CIN_Init( bool verbose ) {
 	cinPool = CIN_AllocPool( "Generic pool" );
 
-	Theora_LoadTheoraLibraries();
-
 	return true;
 }
 
@@ -45,8 +41,6 @@ bool CIN_Init( bool verbose ) {
 * CIN_Shutdown
 */
 void CIN_Shutdown( bool verbose ) {
-	Theora_UnloadTheoraLibraries();
-
 	CIN_FreePool( &cinPool );
 }
 

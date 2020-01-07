@@ -22,7 +22,6 @@ APP_MODULES := \
   RmlUiControls \
   RmlUiDebugger \
   ssl \
-  theora \
   vorbis \
   \
   angelwrap \
