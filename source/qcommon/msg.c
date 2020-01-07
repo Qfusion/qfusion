@@ -972,7 +972,7 @@ static const msg_field_t ent_state_fields[] = {
 /*
 * MSG_WriteEntityNumber
 */
-static void MSG_WriteEntityNumber( msg_t *msg, int number, bool remove, unsigned byteMask ) {
+void MSG_WriteEntityNumber( msg_t *msg, int number, bool remove, unsigned byteMask ) {
 	MSG_WriteIntBase128( msg, (remove ? 1 : 0) | number << 1 );
 	MSG_WriteUintBase128( msg, byteMask );
 }

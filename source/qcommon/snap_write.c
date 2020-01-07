@@ -94,7 +94,7 @@ static void SNAP_EmitPacketEntities( ginfo_t *gi, client_snapshot_t *from, clien
 		}
 	}
 
-	MSG_WriteInt16( msg, 0 ); // end of packetentities
+	MSG_WriteEntityNumber( msg, 0, false, 0 ); // end of packetentities
 }
 
 /*

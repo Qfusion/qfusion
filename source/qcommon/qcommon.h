@@ -91,6 +91,7 @@ void MSG_WriteHalfFloat( msg_t *sb, float f );
 void MSG_WriteString( msg_t *sb, const char *s );
 #define MSG_WriteAngle16( sb, f ) ( MSG_WriteInt16( ( sb ), ANGLE2SHORT( ( f ) ) ) )
 void MSG_WriteDeltaUsercmd( msg_t *sb, const struct usercmd_s *from, struct usercmd_s *cmd );
+void MSG_WriteEntityNumber( msg_t *msg, int number, bool remove, unsigned byteMask );
 void MSG_WriteDeltaEntity( msg_t *msg, const struct entity_state_s *from, const struct entity_state_s *to, bool force );
 void MSG_WriteDeltaPlayerState( msg_t *msg, const player_state_t *ops, const player_state_t *ps );
 void MSG_WriteDeltaGameState( msg_t *msg, const game_state_t *from, const game_state_t *to );
