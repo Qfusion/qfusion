@@ -6,9 +6,9 @@ Vcs-Git: https://github.com/Qfusion/qfusion.git
 Standards-Version: 3.9.2
 
 Package: qfusion-dev
-Version: 0.4
+Version: 0.5
 Maintainer: Victor Luchits <vluchits@gmail.com>
-Depends: cmake (>=2.8.12), build-essential, libopenal-dev, libjpeg-dev, libvorbis-dev, libtheora-dev, libfreetype6-dev, libsdl2-dev, zlib1g-dev, libcurl4-gnutls-dev | libcurl3-gnutls-dev
+Depends: cmake (>=2.8.12), build-essential, libopenal-dev, libjpeg-dev, libvorbis-dev, libpng-dev, libfreetype6-dev, libsdl2-dev, zlib1g-dev, libcurl4-gnutls-dev | libcurl3-gnutls-dev
 Architecture: all
 Copyright: ../source/gnu.txt
 Readme: ../README.md

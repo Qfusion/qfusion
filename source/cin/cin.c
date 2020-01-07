@@ -27,13 +27,11 @@ CINEMATICS PLAYBACK ABSTRACTION LAYER
 */
 
 #include "cin_local.h"
-#include "cin_theora.h"
 #include "cin_roq.h"
 
 enum {
 	CIN_TYPE_NONE = -1,
 
-	CIN_TYPE_THEORA,
 	CIN_TYPE_ROQ,
 
 	CIN_NUM_TYPES
@@ -52,22 +50,6 @@ typedef struct {
 
 static const cin_type_t cin_types[] =
 {
-	// Ogg Theora
-	{
-		THEORA_FILE_EXTENSIONS,
-		Theora_Init_CIN,
-		Theora_HasOggAudio_CIN,
-		Theora_Shutdown_CIN,
-		Theora_Reset_CIN,
-		Theora_NeedNextFrame_CIN,
-#ifdef THEORA_SOFTWARE_YUV2RGB
-		Theora_ReadNextFrame_CIN,
-#else
-		NULL,
-#endif
-		Theora_ReadNextFrameYUV_CIN
-	},
-
 	// RoQ - http://wiki.multimedia.cx/index.php?title=ROQ
 	{
 		ROQ_FILE_EXTENSIONS,
@@ -126,14 +108,8 @@ cinematics_t *CIN_Open( const char *name, int64_t start_time,
 	cin->flags = 0;
 	cin->flags = flags;
 
-	if( trap_FS_IsUrl( name ) ) {
-		cin->type = CIN_TYPE_THEORA;
-		Q_strncpyz( cin->name, name, name_size );
-		trap_FS_FOpenFile( cin->name, &cin->file, FS_READ );
-	} else {
-		cin->type = CIN_TYPE_NONE;
-		Q_snprintfz( cin->name, name_size, "%s", name );
-	}
+	cin->type = CIN_TYPE_NONE;
+	Q_snprintfz( cin->name, name_size, "%s", name );
 
 	// loop through the list of supported formats
 	for( i = 0, type = cin_types; i < CIN_NUM_TYPES && cin->type == CIN_TYPE_NONE; i++, type++ ) {

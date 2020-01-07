@@ -145,7 +145,6 @@ extern "C" {
 #define LIBOGG_LIBNAME "libogg-0.dll|libogg.dll"
 #define LIBVORBIS_LIBNAME "libvorbis-0.dll|libvorbis.dll|vorbis.dll"
 #define LIBVORBISFILE_LIBNAME "libvorbisfile-3.dll|libvorbisfile.dll|vorbisfile.dll"
-#define LIBTHEORA_LIBNAME "libtheora-0.dll|libtheora.dll"
 #define LIBFREETYPE_LIBNAME "libfreetype-6.dll|freetype6.dll"
 
 #ifdef NDEBUG
@@ -215,7 +214,6 @@ typedef uintptr_t socket_handle_t;
 #define LIBOGG_LIBNAME "libogg.0.dylib|libogg.dylib"
 #define LIBVORBIS_LIBNAME "libvorbis.dylib"
 #define LIBVORBISFILE_LIBNAME "libvorbisfile.dylib"
-#define LIBTHEORA_LIBNAME "libtheora.0.dylib|libtheora.dylib"
 #define LIBFREETYPE_LIBNAME "libfreetype.6.dylib|libfreetype.dylib"
 
 #define STEAMQUERY_OS 'o'
@@ -253,7 +251,6 @@ typedef int socket_handle_t;
 #define LIBOGG_LIBNAME "libogg.so.0|libogg.so"
 #define LIBVORBIS_LIBNAME "libvorbis.so.0|libvorbis.so"
 #define LIBVORBISFILE_LIBNAME "libvorbisfile.so.3|libvorbisfile.so"
-#define LIBTHEORA_LIBNAME "libtheora.so.0|libtheora.so"
 #define LIBFREETYPE_LIBNAME "libfreetype.so.6|libfreetype.so"
 
 #if defined ( __ANDROID__ )

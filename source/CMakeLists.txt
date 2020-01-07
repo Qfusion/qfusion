@@ -76,7 +76,6 @@ if (WIN32)
     set(CMAKE_INCLUDE_PATH
         "../libsrcs/src/libogg"
         "../libsrcs/src/libvorbis"
-        "../libsrcs/src/libtheora"
         "../libsrcs/src/libcurl/include"
         "../libsrcs/src/zlib"
         "../libsrcs/src/libfreetype"
@@ -198,7 +197,6 @@ if (NOT GAME_MODULES_ONLY)
     if (NOT SERVER_ONLY)
         find_package(Ogg REQUIRED)
         find_package(Vorbis REQUIRED)
-        find_package(Theora REQUIRED)
         find_package(Freetype REQUIRED)
         find_package(JPEG REQUIRED)
         find_package(PNG REQUIRED)
@@ -239,7 +237,6 @@ if (NOT GAME_MODULES_ONLY)
             find_windows_release_libs(FREETYPE_LIBRARIES)
             find_windows_release_libs(OGG_LIBRARY)
             find_windows_release_libs(VORBIS_LIBRARIES)
-            find_windows_release_libs(THEORA_LIBRARY)
             find_windows_release_libs(SDL2_LIBRARIES)
         endif()
     endif()
@@ -260,9 +257,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux") # Do not add 'OR MINGW' here - we need
 
     set(VORBIS_LIBRARIES "")
     add_definitions(-DVORBISLIB_RUNTIME)
-
-    set(THEORA_LIBRARIES "")
-    add_definitions(-DTHEORALIB_RUNTIME)
 
     set(FREETYPE_LIBRARIES "")
     add_definitions(-DFREETYPELIB_RUNTIME)
