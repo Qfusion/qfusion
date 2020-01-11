@@ -169,7 +169,7 @@ void CL_Record_f( void ) {
 		return;
 	}
 
-	if( FS_FOpenFile( name, &cls.demo.file, FS_WRITE | SNAP_DEMO_GZ ) == -1 ) {
+	if( FS_FOpenFile( name, &cls.demo.file, FS_WRITE ) == -1 ) {
 		Com_Printf( "Error: Couldn't create the demo file.\n" );
 		Mem_ZoneFree( name );
 		return;
@@ -384,14 +384,14 @@ static void CL_StartDemo( const char *demoname, bool pause_on_stop ) {
 	}
 
 	if( filename ) {
-		tempdemofilelen = FS_FOpenFile( filename, &tempdemofilehandle, FS_READ | SNAP_DEMO_GZ );  // open the demo file
+		tempdemofilelen = FS_FOpenFile( filename, &tempdemofilehandle, FS_READ );  // open the demo file
 	}
 
 	if( !tempdemofilehandle ) {
 		// relative filename didn't work, try launching a demo from absolute path
 		Q_snprintfz( name, name_size, "%s", servername );
 		COM_DefaultExtension( name, APP_DEMO_EXTENSION_STR, name_size );
-		tempdemofilelen = FS_FOpenAbsoluteFile( name, &tempdemofilehandle, FS_READ | SNAP_DEMO_GZ );
+		tempdemofilelen = FS_FOpenAbsoluteFile( name, &tempdemofilehandle, FS_READ );
 	}
 
 	if( !tempdemofilehandle ) {
@@ -593,7 +593,7 @@ size_t CL_ReadDemoMetaData( const char *demopath, char *meta_data, size_t meta_d
 		Q_snprintfz( name, name_size, "demos/%s", servername );
 		COM_DefaultExtension( name, APP_DEMO_EXTENSION_STR, name_size );
 
-		demolength = FS_FOpenFile( name, &demofile, FS_READ | SNAP_DEMO_GZ );
+		demolength = FS_FOpenFile( name, &demofile, FS_READ );
 
 		if( !demofile || demolength < 1 ) {
 			// relative filename didn't work, try launching a demo from absolute path

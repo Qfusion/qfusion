@@ -10,3 +10,6 @@
 [submodule "third-party/nanosvg"]
 	path = third-party/nanosvg
 	url = https://github.com/Qfusion/nanosvg
+[submodule "third-party/miniz/miniz"]
+	path = third-party/miniz/miniz
+	url = https://github.com/Qfusion/miniz

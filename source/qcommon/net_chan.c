@@ -151,7 +151,7 @@ static int Netchan_ZLibCompressChunk( const uint8_t *source, unsigned long sourc
 									  int level, int wbits ) {
 	int result, zlerror;
 
-	zlerror = qzcompress2( dest, &destLen, source, sourceLen, level );
+	zlerror = mz_compress2( dest, &destLen, source, sourceLen, level );
 	switch( zlerror ) {
 		case Z_OK:
 			result = destLen; // returns the new length into destLen
@@ -181,7 +181,7 @@ static int Netchan_ZLibDecompressChunk( const uint8_t *source, unsigned long sou
 										int wbits ) {
 	int result, zlerror;
 
-	zlerror = qzuncompress( dest, &destLen, source, sourceLen );
+	zlerror = mz_uncompress( dest, &destLen, source, sourceLen );
 	switch( zlerror ) {
 		case Z_OK:
 			result = destLen; // returns the new length into destLen

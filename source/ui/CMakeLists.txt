@@ -8,9 +8,9 @@ file(GLOB UI_HEADERS
     "widgets/*.h"
     "decorators/*.h"
     "parsers/*.h"
-	"formatters/*.h"
-	"../gameshared/q_*.h"
-	"../qalgo/*.h"
+    "formatters/*.h"
+    "../gameshared/q_*.h"
+    "../qalgo/*.h"
 )
 
 file(GLOB UI_SOURCES
@@ -22,12 +22,12 @@ file(GLOB UI_SOURCES
     "decorators/*.cpp"
     "parsers/*.cpp"
     "../gameshared/q_*.c"
-	"../qalgo/*.c"
+    "../qalgo/*.c"
 )
 
 
 file(GLOB NANOSVG_HEADERS
-	"${NANOSVG_INCLUDE_DIR}/*.h"
+    "${NANOSVG_INCLUDE_DIR}/*.h"
 )
 
 source_group("nanosvg\\Header Files" FILES ${NANOSVG_HEADERS})

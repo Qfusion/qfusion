@@ -1,6 +1,6 @@
 project(${QFUSION_CLIENT_NAME})
 
-include_directories(${ZLIB_INCLUDE_DIR} ${CURL_INCLUDE_DIR})
+include_directories(${MINIZ_INCLUDE_DIR} ${CURL_INCLUDE_DIR})
 
 if (USE_SDL2 OR (UNIX AND NOT APPLE))
     include_directories(${SDL2_INCLUDE_DIR})
@@ -15,22 +15,23 @@ endif()
 
 file(GLOB CLIENT_HEADERS
     "*.h"
-	"../gameshared/q_*.h"
-	"../gameshared/anorms.h"
-	"../gameshared/config.h"
-	"../qcommon/*.h"
-	"../qalgo/*.h"
-	"../angelwrap/qas_public.h"
-	"../ref_gl/r_public.h"
-	"../cgame/cg_public.h"
-	"../cgame/ref.h"
-	"../game/g_public.h"
-	"../ui/ui_public.h"
-	"../ftlib/ftlib_public.h"
-	"../steamlib/steamlib_public.h"
-	"../cin/cin_public.h"
-	"../matchmaker/*.h"
-	"../server/*.h"
+    "../gameshared/q_*.h"
+    "../gameshared/anorms.h"
+    "../gameshared/config.h"
+    "../qcommon/*.h"
+    "../qalgo/*.h"
+    "../angelwrap/qas_public.h"
+    "../ref_gl/r_public.h"
+    "../cgame/cg_public.h"
+    "../cgame/ref.h"
+    "../game/g_public.h"
+    "../ui/ui_public.h"
+    "../ftlib/ftlib_public.h"
+    "../steamlib/steamlib_public.h"
+    "../cin/cin_public.h"
+    "../matchmaker/*.h"
+    "../server/*.h"
+    "${MINIZ_INCLUDE_DIR}/miniz.h"
 )
 
 file(GLOB CLIENT_COMMON_SOURCES
@@ -40,6 +41,7 @@ file(GLOB CLIENT_COMMON_SOURCES
     "../gameshared/q_*.c"
     "../qalgo/*.c"
     "../matchmaker/*.c"
+    "${MINIZ_SOURCE_DIR}/miniz.c"
 )
 
 if (WIN32)
@@ -196,5 +198,5 @@ if (APPLE)
     add_custom_command(TARGET ${QFUSION_CLIENT_NAME} POST_BUILD COMMAND ${COPY_DYLIBS})
 endif()
 
-target_link_libraries(${QFUSION_CLIENT_NAME} PRIVATE ${CURL_LIBRARY} ${ZLIB_LIBRARY} ${CLIENT_PLATFORM_LIBRARIES})
+target_link_libraries(${QFUSION_CLIENT_NAME} PRIVATE ${CURL_LIBRARY} ${CLIENT_PLATFORM_LIBRARIES})
 qf_set_output_dir(${QFUSION_CLIENT_NAME} "")

@@ -334,7 +334,7 @@ void SNAP_WriteDemoMetaData( const char *filename, const char *meta_data, size_t
 	}
 	Q_snprintfz( tmpn, sizeof( tmpn ), "%u.tmp", v );
 
-	if( FS_FOpenFile( tmpn, &filenum, FS_WRITE | SNAP_DEMO_GZ ) == -1 ) {
+	if( FS_FOpenFile( tmpn, &filenum, FS_WRITE ) == -1 ) {
 		return;
 	}
 
@@ -344,8 +344,8 @@ void SNAP_WriteDemoMetaData( const char *filename, const char *meta_data, size_t
 	// now open the original file in update mode and overwrite metadata
 
 	// important note: we need to the load the temp file before closing it
-	// because in the case of gz compression, closing the file may actually
-	// write some data we don't want to copy
+	// because in the case of gzip compression, closing the file will append
+	// auxillary gzip data we don't want to copy
 	filelen = FS_LoadFile( tmpn, &compressed_msg, NULL, 0 );
 
 	if( compressed_msg ) {

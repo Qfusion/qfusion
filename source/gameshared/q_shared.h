@@ -379,7 +379,7 @@ __declspec( noreturn ) void Com_Error( com_error_code_t code, _Printf_format_str
 #define FS_APPEND           2
 #define FS_NOSIZE           0x80    // FS_NOSIZE bit tells that we're not interested in real size of the file
 // it is merely a hint a proper file size may still be returned by FS_Open
-#define FS_GZ               0x100   // compress on write and decompress on read automatically
+#define FS_RESERVED         0x100
 // doesn't work for pk3 files
 #define FS_UPDATE           0x200
 #define FS_SECURE           0x400

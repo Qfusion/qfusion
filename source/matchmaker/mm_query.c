@@ -356,7 +356,7 @@ static void StatQuery_Prepare( stat_query_t *query ) {
 			Com_Printf( "StatQuery: Failed to allocate space for compressed JSON\n" );
 			return;
 		}
-		z_result = qzcompress( compData, &compSize, (unsigned char*)json_text, jsonSize );
+		z_result = mz_compress( compData, &compSize, (unsigned char*)json_text, jsonSize );
 		if( z_result != Z_OK ) {
 			Com_Printf( "StatQuery: Failed to compress JSON\n" );
 			SQFREE( compData );

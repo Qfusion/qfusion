@@ -49,8 +49,6 @@ QUAKE FILESYSTEM
 
 #define FS_PAK_MANIFEST_FILE        "manifest.txt"
 
-#define FZ_GZ_BUFSIZE               0x00020000
-
 enum {
 	FS_SEARCH_NONE = 0,
 	FS_SEARCH_PAKS = 1 << 0,
@@ -77,7 +75,7 @@ static const char *forbidden_gamedirs[] = {
 
 typedef struct {
 	unsigned char readBuffer[FS_ZIP_BUFSIZE]; // internal buffer for compressed data
-	z_stream zstream;                       // zLib stream structure for inflate
+	mz_stream zstream;                       // zLib stream structure for inflate
 	size_t compressedSize;
 	size_t restReadCompressed;            // number of bytes to be decompressed
 } zipEntry_t;
@@ -125,8 +123,6 @@ typedef struct filehandle_s {
 	unsigned uncompressedSize;      // uncompressed size
 	unsigned offset;                // current read/write pos
 	zipEntry_t *zipEntry;
-	gzFile gzstream;
-	int gzlevel;
 
 	wswcurl_req *streamHandle;
 	bool streamDone;
@@ -230,7 +226,7 @@ static unsigned FS_PK3CheckFileCoherency( FILE *f, packfile_t *file ) {
 		return 0;
 	}
 	compressed = LittleShortRaw( &localHeader[8] );
-	if( ( compressed == Z_DEFLATED ) && !( file->flags & FS_PACKFILE_DEFLATED ) ) {
+	if( ( compressed == MZ_DEFLATED ) && !( file->flags & FS_PACKFILE_DEFLATED ) ) {
 		return 0;
 	} else if( !compressed && ( file->flags & FS_PACKFILE_DEFLATED ) ) {
 		return 0;
@@ -931,10 +927,8 @@ static void FS_FileModeStr( int mode, char *modestr, size_t size ) {
 */
 int FS_FOpenAbsoluteFile( const char *filename, int *filenum, int mode ) {
 	FILE *f = NULL;
-	gzFile gzf = NULL;
 	filehandle_t *file;
 	int end;
-	bool gz;
 	bool update;
 	int realmode;
 	char modestr[4] = { 0, 0, 0, 0 };
@@ -943,16 +937,11 @@ int FS_FOpenAbsoluteFile( const char *filename, int *filenum, int mode ) {
 	// probably useful for streamed URLS
 
 	realmode = mode;
-	gz = mode & FS_GZ ? true : false;
 	update = mode & FS_UPDATE ? true : false;
 	mode = mode & FS_RWA_MASK;
 
 	assert( filenum || mode == FS_READ );
 
-	if( gz && update ) {
-		return -1; // unsupported
-
-	}
 	if( filenum ) {
 		*filenum = 0;
 	}
@@ -974,30 +963,18 @@ int FS_FOpenAbsoluteFile( const char *filename, int *filenum, int mode ) {
 
 	FS_FileModeStr( realmode, modestr, sizeof( modestr ) );
 
-	if( gz ) {
-		gzf = qgzopen( filename, modestr );
-	} else {
-		f = fopen( filename, modestr );
-	}
-	if( !f && !gzf ) {
+	f = fopen( filename, modestr );
+	if( !f ) {
 		Com_DPrintf( "FS_FOpenAbsoluteFile: can't %s %s\n", ( mode == FS_READ ? "find" : "write to" ), filename );
 		return -1;
 	}
 
-	end = ( mode == FS_WRITE || gz ? 0 : FS_FileLength( f, false ) );
+	end = ( mode == FS_WRITE || FS_FileLength( f, false ) );
 
 	*filenum = FS_OpenFileHandle();
 	file = &fs_filehandles[*filenum - 1];
 	file->fstream = f;
 	file->uncompressedSize = end;
-	file->gzstream = gzf;
-	file->gzlevel = Z_DEFAULT_COMPRESSION;
-
-#if ZLIB_VER_MAJOR >= 1 && ZLIB_VER_MINOR >= 2 && ZLIB_VER_REVISION >= 4
-	if( gzf ) {
-		qgzbuffer( gzf, FZ_GZ_BUFSIZE );
-	}
-#endif
 
 	return end;
 }
@@ -1071,7 +1048,7 @@ static int _FS_FOpenPakFile( packfile_t *pakFile, int *filenum ) {
 		// after the compressed stream in order to complete decompression and
 		// return Z_STREAM_END. We don't want absolutely Z_STREAM_END because we known the
 		// size of both compressed and uncompressed data
-		if( qzinflateInit2( &file->zipEntry->zstream, -MAX_WBITS ) != Z_OK ) {
+		if( mz_inflateInit2( &file->zipEntry->zstream, -MAX_WBITS ) != Z_OK ) {
 			Com_DPrintf( "_FS_FOpenPakFile: can't inflate %s\n", pakFile->name );
 			return -1;
 		}
@@ -1095,12 +1072,10 @@ static int _FS_FOpenFile( const char *filename, int *filenum, int mode, bool bas
 	searchpath_t *search;
 	filehandle_t *file;
 	bool noSize;
-	bool gz;
 	bool update;
 	bool secure;
 	bool cache;
 	packfile_t *pakFile = NULL;
-	gzFile gzf = NULL;
 	void *vfsHandle = NULL;
 	int realmode;
 	char tempname[FS_MAX_PATH];
@@ -1109,7 +1084,6 @@ static int _FS_FOpenFile( const char *filename, int *filenum, int mode, bool bas
 	// probably useful for streamed URLS
 
 	realmode = mode;
-	gz = mode & FS_GZ ? true : false;
 	noSize = mode & FS_NOSIZE ? true : false;
 	update = mode & FS_UPDATE ? true : false;
 	secure = mode & FS_SECURE ? true : false;
@@ -1125,7 +1099,7 @@ static int _FS_FOpenFile( const char *filename, int *filenum, int mode, bool bas
 
 	if( !filenum ) {
 		if( mode == FS_READ ) {
-			return FS_FileExists( filename, base, !gz );
+			return FS_FileExists( filename, base, true );
 		}
 		return -1;
 	}
@@ -1195,12 +1169,8 @@ static int _FS_FOpenFile( const char *filename, int *filenum, int mode, bool bas
 
 		FS_FileModeStr( realmode, modestr, sizeof( modestr ) );
 
-		if( gz ) {
-			gzf = qgzopen( tempname, modestr );
-		} else {
-			f = fopen( tempname, modestr );
-		}
-		if( !f && !gzf ) {
+		f = fopen( tempname, modestr );
+		if( !f ) {
 			return -1;
 		}
 
@@ -1213,21 +1183,14 @@ static int _FS_FOpenFile( const char *filename, int *filenum, int mode, bool bas
 		file = &fs_filehandles[*filenum - 1];
 		file->fstream = f;
 		file->uncompressedSize = end;
-		file->gzstream = gzf;
-		file->gzlevel = Z_DEFAULT_COMPRESSION;
 
-#if ZLIB_VER_MAJOR >= 1 && ZLIB_VER_MINOR >= 2 && ZLIB_VER_REVISION >= 4
-		if( gzf ) {
-			qgzbuffer( gzf, FZ_GZ_BUFSIZE );
-		}
-#endif
 		return end;
 	}
 
 	if( base ) {
-		search = FS_SearchPathForBaseFile( filename, tempname, sizeof( tempname ), !gz ? &vfsHandle : NULL );
+		search = FS_SearchPathForBaseFile( filename, tempname, sizeof( tempname ), &vfsHandle );
 	} else {
-		search = FS_SearchPathForFile( filename, &pakFile, tempname, sizeof( tempname ), !gz ? &vfsHandle : NULL, FS_SEARCH_ALL );
+		search = FS_SearchPathForFile( filename, &pakFile, tempname, sizeof( tempname ), &vfsHandle, FS_SEARCH_ALL );
 	}
 
 	if( !search ) {
@@ -1287,20 +1250,12 @@ static int _FS_FOpenFile( const char *filename, int *filenum, int mode, bool bas
 		}
 
 		f = fopen( tempname, "rb" );
-		end = FS_FileLength( f, gz );
-
-		if( gz ) {
-			f = NULL;
-			gzf = qgzopen( tempname, "rb" );
-			assert( gzf );
-		}
+		end = FS_FileLength( f, false );
 
 		*filenum = FS_OpenFileHandle();
 		file = &fs_filehandles[*filenum - 1];
 		file->fstream = f;
 		file->uncompressedSize = end;
-		file->gzstream = gzf;
-		file->gzlevel = Z_DEFAULT_COMPRESSION;
 
 		Com_DPrintf( "FS_FOpen%sFile: %s\n", ( base ? "Base" : "" ), tempname );
 		return end;
@@ -1345,7 +1300,7 @@ void FS_FCloseFile( int file ) {
 	fh = FS_FileHandleForNum( file );
 
 	if( fh->zipEntry ) {
-		qzinflateEnd( &fh->zipEntry->zstream );
+		mz_inflateEnd( &fh->zipEntry->zstream );
 		Mem_Free( fh->zipEntry );
 		fh->zipEntry = NULL;
 	}
@@ -1366,10 +1321,6 @@ void FS_FCloseFile( int file ) {
 		fh->customp = NULL;
 		fh->done_cb = NULL;
 		fh->read_cb = NULL;
-	}
-	if( fh->gzstream ) {
-		qgzclose( fh->gzstream );
-		fh->gzstream = NULL;
 	}
 
 	FS_CloseFileHandle( fh );
@@ -1424,7 +1375,7 @@ static int FS_ReadPK3File( uint8_t *buf, size_t len, filehandle_t *fh ) {
 			zipEntry->zstream.avail_in = (uInt)block;
 		}
 
-		error = qzinflate( &zipEntry->zstream, flush );
+		error = mz_inflate( &zipEntry->zstream, flush );
 
 		if( error == Z_STREAM_END ) {
 			break;
@@ -1473,8 +1424,6 @@ int FS_Read( void *buffer, size_t len, int file ) {
 		total = FS_ReadPK3File( ( uint8_t * )buffer, len, fh );
 	} else if( fh->streamHandle ) {
 		total = FS_ReadStream( (uint8_t *)buffer, len, fh );
-	} else if( fh->gzstream ) {
-		total = qgzread( fh->gzstream, buffer, len );
 	} else if( fh->fstream ) {
 		total = FS_ReadFile( ( uint8_t * )buffer, len, fh );
 	} else {
@@ -1529,10 +1478,6 @@ int FS_Write( const void *buffer, size_t len, int file ) {
 		Sys_Error( "FS_Write: writing to compressed file" );
 	}
 
-	if( fh->gzstream ) {
-		return qgzwrite( fh->gzstream, buffer, len );
-	}
-
 	if( !fh->fstream ) {
 		return 0;
 	}
@@ -1559,10 +1504,6 @@ int FS_Tell( int file ) {
 	filehandle_t *fh;
 
 	fh = FS_FileHandleForNum( file );
-
-	if( fh->gzstream ) {
-		return qgztell( fh->gzstream );
-	}
 	if( fh->streamHandle ) {
 		return wswcurl_tell( fh->streamHandle );
 	}
@@ -1580,14 +1521,6 @@ int FS_Seek( int file, int offset, int whence ) {
 	uint8_t buf[FS_ZIP_BUFSIZE * 4];
 
 	fh = FS_FileHandleForNum( file );
-
-	if( fh->gzstream ) {
-		return qgzseek( fh->gzstream, offset,
-						whence == FS_SEEK_CUR ? SEEK_CUR :
-						( whence == FS_SEEK_END ? SEEK_END :
-						  ( whence == FS_SEEK_SET ? SEEK_SET : -1 ) ) );
-	}
-
 	if( fh->streamHandle ) {
 		fh->uncompressedSize = wswcurl_getsize( fh->streamHandle, NULL );
 	}
@@ -1677,7 +1610,7 @@ int FS_Seek( int file, int offset, int whence ) {
 
 		zipEntry->zstream.next_in = zipEntry->readBuffer;
 		zipEntry->zstream.avail_in = 0;
-		error = qzinflateReset( &zipEntry->zstream );
+		error = mz_inflateReset( &zipEntry->zstream );
 		if( error != Z_OK ) {
 			Sys_Error( "FS_Seek: can't inflateReset file" );
 		}
@@ -1712,9 +1645,7 @@ int FS_Eof( int file ) {
 	if( fh->zipEntry ) {
 		return fh->zipEntry->restReadCompressed == 0;
 	}
-	if( fh->gzstream ) {
-		return qgzeof( fh->gzstream );
-	}
+
 	if( fh->fstream ) {
 		return ( fh->pakFile || fh->vfsHandle ) ? fh->offset >= fh->uncompressedSize : feof( fh->fstream );
 	}
@@ -1728,9 +1659,6 @@ int FS_Flush( int file ) {
 	filehandle_t *fh;
 
 	fh = FS_FileHandleForNum( file );
-	if( fh->gzstream ) {
-		return qgzflush( fh->gzstream, Z_FINISH );
-	}
 	if( !fh->fstream ) {
 		return 0;
 	}
@@ -1752,7 +1680,7 @@ int FS_FileNo( int file, size_t *offset ) {
 	}
 
 	fh = FS_FileHandleForNum( file );
-	if( fh->fstream && !fh->zipEntry && !fh->gzstream ) {
+	if( fh->fstream && !fh->zipEntry ) {
 		if( offset ) {
 			*offset = fh->pakOffset;
 		}
@@ -1766,21 +1694,12 @@ int FS_FileNo( int file, size_t *offset ) {
 * FS_SetCompressionLevel
 */
 void FS_SetCompressionLevel( int file, int level ) {
-	filehandle_t *fh = FS_FileHandleForNum( file );
-	if( fh->gzstream ) {
-		fh->gzlevel = level;
-		qgzsetparams( fh->gzstream, level,  Z_DEFAULT_STRATEGY );
-	}
 }
 
 /*
 * FS_GetCompressionLevel
 */
 int FS_GetCompressionLevel( int file ) {
-	filehandle_t *fh = FS_FileHandleForNum( file );
-	if( fh->gzstream ) {
-		return fh->gzlevel;
-	}
 	return 0;
 }
 

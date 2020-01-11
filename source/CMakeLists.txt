@@ -52,7 +52,7 @@ option(USE_SDL2 "Build using SDL2" OFF)
 option(GAME_MODULES_ONLY "Only build game modules" OFF)
 option(SERVER_ONLY "Only build server binaries and game modules" OFF)
 
-# We third-party libs from source
+# We compile third-party libs from source
 
 set(ANGELSCRIPT_DIR ${CMAKE_HOME_DIRECTORY}/../third-party/angelscript/sdk/angelscript)
 set(ANGELSCRIPT_INCLUDE_DIR ${ANGELSCRIPT_DIR}/include/)
@@ -64,6 +64,10 @@ set(LIBROCKET_SOURCE_DIR ${LIBROCKET_DIR}/Source)
 
 set(NANOSVG_DIR ${CMAKE_HOME_DIRECTORY}/../third-party/nanosvg)
 set(NANOSVG_INCLUDE_DIR ${NANOSVG_DIR}/src)
+
+set(MINIZ_DIR ${CMAKE_HOME_DIRECTORY}/../third-party/miniz)
+set(MINIZ_INCLUDE_DIR ${MINIZ_DIR}/amalgamation)
+set(MINIZ_SOURCE_DIR ${MINIZ_DIR}/amalgamation)
 
 # Windows specific settings
 if (WIN32)
