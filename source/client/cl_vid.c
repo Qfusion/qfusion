@@ -471,7 +471,6 @@ static bool VID_LoadRefresh( const char *name ) {
 */
 void VID_CheckChanges( void ) {
 	rserr_t err;
-	bool vid_ref_was_active = vid_ref_active;
 	bool verbose = vid_ref_verbose || vid_ref_sound_restart;
 
 	if( win_noalttab->modified ) {
@@ -628,42 +627,42 @@ load_refresh:
 
 		vid_ref_active = true;
 
-		// stop and free all sounds
-		CL_SoundModule_Init( verbose );
-
-		re.BeginRegistration();
-		CL_SoundModule_BeginRegistration();
-
 		FTLIB_PrecacheFonts( verbose );
 
 		// load common localization strings
 		L10n_LoadLangPOFile( "common", "l10n" );
 
-		if( vid_ref_was_active ) {
+		if( cls.state != CA_UNINITIALIZED ) {
+			// stop and free all sounds
+			CL_SoundModule_Init( verbose );
+
+			re.BeginRegistration();
+			CL_SoundModule_BeginRegistration();
+
 			IN_Restart();
-		}
 
-		CL_InitMedia();
+			CL_InitMedia();
 
-		cls.disable_screen = 0;
+			cls.disable_screen = 0;
 
-		Con_Close();
-
-		if( cgameActive ) {
-			CL_GameModule_Init();
 			Con_Close();
-			CL_UIModule_ForceMenuOff();
-			CL_SetKeyDest( key_game );
 
-			// this will precache game assets
-			SCR_UpdateScreen();
-		} else {
-			CL_UIModule_ForceMenuOn();
-			CL_SetKeyDest( key_menu );
+			if( cgameActive ) {
+				CL_GameModule_Init();
+				Con_Close();
+				CL_UIModule_ForceMenuOff();
+				CL_SetKeyDest( key_game );
+
+				// this will precache game assets
+				SCR_UpdateScreen();
+			} else {
+				CL_UIModule_ForceMenuOn();
+				CL_SetKeyDest( key_menu );
+			}
+
+			re.EndRegistration();
+			CL_SoundModule_EndRegistration();
 		}
-
-		re.EndRegistration();
-		CL_SoundModule_EndRegistration();
 
 		vid_ref_modified = false;
 		vid_ref_verbose = true;
