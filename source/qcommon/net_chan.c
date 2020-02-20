@@ -303,14 +303,8 @@ bool Netchan_TransmitNextFragment( netchan_t *chan ) {
 		Com_Printf( "Transmit fragment (%s) (id:%i)\n", NET_SocketToString( chan->socket ), chan->outgoingSequence );
 	}
 
-	MSG_WriteInt32( &send, chan->outgoingSequence | FRAGMENT_BIT );
-	// wsw : jal : by now our header sends incoming ack too (q3 doesn't)
-	// wsw : also add compressed bit if it's compressed
-	if( chan->unsentIsCompressed ) {
-		MSG_WriteInt32( &send, chan->incomingSequence | FRAGMENT_BIT );
-	} else {
-		MSG_WriteInt32( &send, chan->incomingSequence );
-	}
+	MSG_WriteIntBase128( &send, -chan->outgoingSequence );
+	MSG_WriteIntBase128( &send,  chan->incomingSequence * (chan->unsentIsCompressed ? -1 : 1) );
 
 	// send the game port if we are a client
 	if( !chan->socket->server ) {
@@ -327,7 +321,7 @@ bool Netchan_TransmitNextFragment( netchan_t *chan ) {
 	}
 
 	MSG_WriteInt16( &send, chan->unsentFragmentStart );
-	MSG_WriteInt16( &send, ( last ? ( fragmentLength | FRAGMENT_LAST ) : fragmentLength ) );
+	MSG_WriteInt16( &send, fragmentLength * (last ? 1 : -1) );
 	MSG_CopyData( &send, chan->unsentBuffer + chan->unsentFragmentStart, fragmentLength );
 
 	// send the datagram
@@ -404,14 +398,8 @@ bool Netchan_Transmit( netchan_t *chan, msg_t *msg ) {
 	MSG_Init( &send, send_buf, sizeof( send_buf ) );
 	MSG_Clear( &send );
 
-	MSG_WriteInt32( &send, chan->outgoingSequence );
-	// wsw : jal : by now our header sends incoming ack too (q3 doesn't)
-	// wsw : jal : also add compressed information if it's compressed
-	if( msg->compressed ) {
-		MSG_WriteInt32( &send, chan->incomingSequence | FRAGMENT_BIT );
-	} else {
-		MSG_WriteInt32( &send, chan->incomingSequence );
-	}
+	MSG_WriteIntBase128( &send, chan->outgoingSequence );
+	MSG_WriteIntBase128( &send, chan->incomingSequence * (msg->compressed ? -1 : 1) );
 
 	chan->outgoingSequence++;
 
@@ -456,12 +444,12 @@ bool Netchan_Process( netchan_t *chan, msg_t *msg ) {
 
 	// get sequence numbers
 	MSG_BeginReading( msg );
-	sequence = MSG_ReadInt32( msg );
-	sequence_ack = MSG_ReadInt32( msg ); // wsw : jal : by now our header sends incoming ack too (q3 doesn't)
+	sequence = (int)MSG_ReadIntBase128( msg );
+	sequence_ack = (int)MSG_ReadIntBase128( msg );
 
 	// check for fragment information
-	if( sequence & FRAGMENT_BIT ) {
-		sequence &= ~FRAGMENT_BIT;
+	if( sequence < 0 ) {
+		sequence *= -1;
 		fragmented = true;
 
 		if( net_showfragments->integer ) {
@@ -471,9 +459,8 @@ bool Netchan_Process( netchan_t *chan, msg_t *msg ) {
 		fragmented = false;
 	}
 
-	// wsw : jal : check for compressed information
-	if( sequence_ack & FRAGMENT_BIT ) {
-		sequence_ack &= ~FRAGMENT_BIT;
+	if( sequence_ack < 0 ) {
+		sequence_ack *= -1;
 		compressed = true;
 		if( !fragmented ) {
 			msg->compressed = true;
@@ -489,9 +476,9 @@ bool Netchan_Process( netchan_t *chan, msg_t *msg ) {
 	if( fragmented ) {
 		fragmentStart = MSG_ReadInt16( msg );
 		fragmentLength = MSG_ReadInt16( msg );
-		if( fragmentLength & FRAGMENT_LAST ) {
+		if( fragmentLength < 0 ) {
 			lastfragment = true;
-			fragmentLength &= ~FRAGMENT_LAST;
+			fragmentLength *= -1;
 		}
 	} else {
 		fragmentStart = 0; // stop warning message
@@ -578,11 +565,11 @@ bool Netchan_Process( netchan_t *chan, msg_t *msg ) {
 			return false;
 		}
 
-		// wsw : jal : reconstruct the message
+		// reconstruct the message
 
 		MSG_Clear( msg );
-		MSG_WriteInt32( msg, sequence );
-		MSG_WriteInt32( msg, sequence_ack );
+		MSG_WriteIntBase128( msg, sequence );
+		MSG_WriteIntBase128( msg, sequence_ack );
 		if( chan->socket->server ) {
 			MSG_WriteInt16( msg, game_port );
 		}
@@ -593,16 +580,13 @@ bool Netchan_Process( netchan_t *chan, msg_t *msg ) {
 		MSG_CopyData( msg, chan->fragmentBuffer, chan->fragmentLength );
 		msg->readcount = headerlength; // put read pointer after header again
 		chan->fragmentLength = 0;
-
-		//let it be finished as standard packets
 	}
 
 	// the message can now be read from the current message pointer
 	chan->incomingSequence = sequence;
 
-	// wsw : jal[start] :  get the ack from the very first fragment
+	// get the ack from the very first fragment
 	chan->incoming_acknowledged = sequence_ack;
-	// wsw : jal[end]
 
 	return true;
 }
