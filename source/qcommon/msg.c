@@ -973,7 +973,7 @@ static const msg_field_t ent_state_fields[] = {
 * MSG_WriteEntityNumber
 */
 void MSG_WriteEntityNumber( msg_t *msg, int number, bool remove, unsigned byteMask ) {
-	MSG_WriteIntBase128( msg, (remove ? 1 : 0) | number << 1 );
+	MSG_WriteIntBase128( msg, number & (remove ? -1 : 1) );
 	MSG_WriteUintBase128( msg, byteMask );
 }
 
@@ -1038,10 +1038,14 @@ void MSG_WriteDeltaEntity( msg_t *msg, const entity_state_t *from, const entity_
 int MSG_ReadEntityNumber( msg_t *msg, bool *remove, unsigned *byteMask ) {
 	int number;
 
+	*remove = false;
 	number = (int)MSG_ReadIntBase128( msg );
-	*remove = (number & 1 ? true : false);
-	number = number >> 1;
 	*byteMask = MSG_ReadUintBase128( msg );
+
+	if( number < 0 ) {
+		number *= -1;
+		remove = true;
+	}
 
 	return number;
 }
