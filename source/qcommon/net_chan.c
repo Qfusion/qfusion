@@ -216,6 +216,9 @@ int Netchan_CompressMessage( msg_t *msg ) {
 	if( msg == NULL || !msg->data ) {
 		return 0;
 	}
+	if( msg->cursize < MIN_COMPRESS_PACKETLEN ) {
+		return 0;
+	}
 
 	// zero-fill our buffer
 	length = 0;
@@ -232,7 +235,7 @@ int Netchan_CompressMessage( msg_t *msg ) {
 		return 0; // compressed was bigger. Send uncompressed
 	}
 
-	//write it back into the original container
+	// write it back into the original container
 	MSG_Clear( msg );
 	MSG_CopyData( msg, msg_process_data, length );
 	msg->compressed = true;
