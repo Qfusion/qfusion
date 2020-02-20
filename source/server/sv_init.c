@@ -98,11 +98,6 @@ static void SV_CreateBaseline( void ) {
 		if( !svent->r.inuse ) {
 			continue;
 		}
-		if( !svent->s.modelindex && !svent->s.sound && !svent->s.effects ) {
-			continue;
-		}
-
-		svent->s.number = entnum;
 
 		//
 		// take current state as baseline
