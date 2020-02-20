@@ -394,11 +394,7 @@ NET
 #define MAX_RELIABLE_COMMANDS   64          // max string commands buffered for restransmit
 #define MAX_PACKETLEN           1400        // max size of a network packet
 #define MAX_MSGLEN              32768       // max length of a message, which may be fragmented into multiple packets
-
-// wsw: Medar: doubled the MSGLEN as a temporary solution for multiview on bigger servers
 #define FRAGMENT_SIZE           ( MAX_PACKETLEN - 96 )
-#define FRAGMENT_LAST       (    1 << 14 )
-#define FRAGMENT_BIT            ( 1 << 31 )
 
 typedef enum {
 	NA_NOTRANSMIT,      // wsw : jal : fakeclients
