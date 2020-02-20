@@ -387,13 +387,13 @@ NET
 ==============================================================
 */
 
-// net.h -- quake's interface to the networking layer
-
-#define PACKET_HEADER           10          // two ints, and a short
+// net.h -- qfusion's interface to the networking layer
 
 #define MAX_RELIABLE_COMMANDS   64          // max string commands buffered for restransmit
 #define MAX_PACKETLEN           1400        // max size of a network packet
 #define MAX_MSGLEN              32768       // max length of a message, which may be fragmented into multiple packets
+#define MIN_COMPRESS_PACKETLEN  96          // if the packet len falls below this threshold, no data compression will occur for this packet
+
 #define FRAGMENT_SIZE           ( MAX_PACKETLEN - 96 )
 
 typedef enum {
