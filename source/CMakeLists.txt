@@ -69,6 +69,9 @@ set(MINIZ_DIR ${CMAKE_HOME_DIRECTORY}/../third-party/miniz)
 set(MINIZ_INCLUDE_DIR ${MINIZ_DIR}/amalgamation)
 set(MINIZ_SOURCE_DIR ${MINIZ_DIR}/amalgamation)
 
+set(STB_DIR ${CMAKE_HOME_DIRECTORY}/../third-party/stb)
+set(STB_INCLUDE_DIR ${STB_DIR})
+
 # Windows specific settings
 if (WIN32)
     set(QFUSION_WINDOWS_ARCH "x86")

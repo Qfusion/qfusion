@@ -1,6 +1,6 @@
 project(ref_gl)
 
-include_directories(${JPEG_INCLUDE_DIR} ${OPENGL_INCLUDE_DIR} ${PNG_INCLUDE_DIR})
+include_directories(${JPEG_INCLUDE_DIR} ${OPENGL_INCLUDE_DIR} ${PNG_INCLUDE_DIR} ${STB_INCLUDE_DIR})
 
 if (USE_SDL2)
     include_directories(${SDL2_INCLUDE_DIR})

@@ -253,7 +253,7 @@ void R_PrintImageList( const char *mask, bool ( *filter )( const char *mask, con
 			continue;
 		}
 
-		add = image->upload_width * image->upload_height * image->layers;
+		add = (double)image->upload_width * image->upload_height * image->layers;
 		if( !( image->flags & ( IT_DEPTH | IT_NOFILTERING | IT_NOMIPMAP ) ) ) {
 			add = (unsigned)floor( add / 0.75 );
 		}
