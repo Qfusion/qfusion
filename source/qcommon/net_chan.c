@@ -324,7 +324,7 @@ bool Netchan_TransmitNextFragment( netchan_t *chan ) {
 	}
 
 	MSG_WriteInt16( &send, chan->unsentFragmentStart );
-	MSG_WriteInt16( &send, fragmentLength * (last ? 1 : -1) );
+	MSG_WriteInt16( &send, fragmentLength * (last ? -1 : 1) );
 	MSG_CopyData( &send, chan->unsentBuffer + chan->unsentFragmentStart, fragmentLength );
 
 	// send the datagram

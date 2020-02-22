@@ -1242,8 +1242,8 @@ static bool CL_ProcessPacket( netchan_t *netchan, msg_t *msg ) {
 	}
 	// now if compressed, expand it
 	MSG_BeginReading( msg );
-	MSG_ReadInt32( msg ); // sequence
-	MSG_ReadInt32( msg ); // sequence_ack
+	MSG_ReadIntBase128( msg ); // sequence
+	MSG_ReadIntBase128( msg ); // sequence_ack
 	if( msg->compressed ) {
 		zerror = Netchan_DecompressMessage( msg );
 		if( zerror < 0 ) {
