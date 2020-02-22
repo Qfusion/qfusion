@@ -306,8 +306,8 @@ bool Netchan_TransmitNextFragment( netchan_t *chan ) {
 		Com_Printf( "Transmit fragment (%s) (id:%i)\n", NET_SocketToString( chan->socket ), chan->outgoingSequence );
 	}
 
-	MSG_WriteIntBase128( &send, -chan->outgoingSequence );
-	MSG_WriteIntBase128( &send,  chan->incomingSequence * (chan->unsentIsCompressed ? -1 : 1) );
+	MSG_WriteInt32( &send, -chan->outgoingSequence );
+	MSG_WriteInt32( &send,  chan->incomingSequence * (chan->unsentIsCompressed ? -1 : 1) );
 
 	// send the game port if we are a client
 	if( !chan->socket->server ) {
@@ -401,8 +401,8 @@ bool Netchan_Transmit( netchan_t *chan, msg_t *msg ) {
 	MSG_Init( &send, send_buf, sizeof( send_buf ) );
 	MSG_Clear( &send );
 
-	MSG_WriteIntBase128( &send, chan->outgoingSequence );
-	MSG_WriteIntBase128( &send, chan->incomingSequence * (msg->compressed ? -1 : 1) );
+	MSG_WriteInt32( &send, chan->outgoingSequence );
+	MSG_WriteInt32( &send, chan->incomingSequence * (msg->compressed ? -1 : 1) );
 
 	chan->outgoingSequence++;
 
@@ -447,8 +447,8 @@ bool Netchan_Process( netchan_t *chan, msg_t *msg ) {
 
 	// get sequence numbers
 	MSG_BeginReading( msg );
-	sequence = (int)MSG_ReadIntBase128( msg );
-	sequence_ack = (int)MSG_ReadIntBase128( msg );
+	sequence = (int)MSG_ReadInt32( msg );
+	sequence_ack = (int)MSG_ReadInt32( msg );
 
 	// check for fragment information
 	if( sequence < 0 ) {
@@ -571,8 +571,8 @@ bool Netchan_Process( netchan_t *chan, msg_t *msg ) {
 		// reconstruct the message
 
 		MSG_Clear( msg );
-		MSG_WriteIntBase128( msg, sequence );
-		MSG_WriteIntBase128( msg, sequence_ack );
+		MSG_WriteInt32( msg, sequence );
+		MSG_WriteInt32( msg, sequence_ack );
 		if( chan->socket->server ) {
 			MSG_WriteInt16( msg, game_port );
 		}
