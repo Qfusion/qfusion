@@ -94,14 +94,6 @@ static void R_WriteSTBFunc( void* context, void* data, int size ) {
 }
 
 /*
-=========================================================
-
-TARGA LOADING
-
-=========================================================
-*/
-
-/*
 * LoadTGA
 */
 r_imginfo_t LoadTGA( const char *name, uint8_t *( *allocbuf )( void *, size_t, const char *, int ), void *uptr ) {
@@ -128,14 +120,6 @@ bool WriteTGA( const char *name, r_imginfo_t *info, int quality ) {
 	ri.FS_FCloseFile( file );
 	return true;
 }
-
-/*
-=========================================================
-
-JPEG LOADING
-
-=========================================================
-*/
 
 /*
 * LoadJPG
@@ -166,39 +150,29 @@ bool WriteJPG( const char *name, r_imginfo_t *info, int quality ) {
 }
 
 /*
-=================================================================
-
-PCX LOADING
-
-=================================================================
-*/
-
-typedef struct {
-	char manufacturer;
-	char version;
-	char encoding;
-	char bits_per_pixel;
-	unsigned short xmin, ymin, xmax, ymax;
-	unsigned short hres, vres;
-	unsigned char palette[48];
-	char reserved;
-	char color_planes;
-	unsigned short bytes_per_line;
-	unsigned short palette_type;
-	char filler[58];
-	unsigned char data;         // unbounded
-} pcx_t;
-
-/*
 * LoadPCX
 */
 r_imginfo_t LoadPCX( const char *name, uint8_t *( *allocbuf )( void *, size_t, const char *, int ), void *uptr ) {
 	uint8_t *raw;
-	pcx_t *pcx;
 	int x, y;
 	int len, columns, rows;
 	int dataByte, runLength;
 	uint8_t *pal, *pix, *c;
+	struct {
+		char manufacturer;
+		char version;
+		char encoding;
+		char bits_per_pixel;
+		unsigned short xmin, ymin, xmax, ymax;
+		unsigned short hres, vres;
+		unsigned char palette[48];
+		char reserved;
+		char color_planes;
+		unsigned short bytes_per_line;
+		unsigned short palette_type;
+		char filler[58];
+		unsigned char data;         // unbounded
+	} *pcx;
 	r_imginfo_t imginfo;
 
 	memset( &imginfo, 0, sizeof( imginfo ) );
@@ -214,7 +188,7 @@ r_imginfo_t LoadPCX( const char *name, uint8_t *( *allocbuf )( void *, size_t, c
 	//
 	// parse the PCX file
 	//
-	pcx = (pcx_t *)raw;
+	pcx = (void *)raw;
 
 	pcx->xmin = LittleShort( pcx->xmin );
 	pcx->ymin = LittleShort( pcx->ymin );
@@ -279,14 +253,6 @@ r_imginfo_t LoadPCX( const char *name, uint8_t *( *allocbuf )( void *, size_t, c
 	imginfo.pixels = pix;
 	return imginfo;
 }
-
-/*
-=========================================================
-
-WAL LOADING
-
-=========================================================
-*/
 
 /*
 * LoadWAL
@@ -368,14 +334,6 @@ r_imginfo_t LoadWAL( const char *name, uint8_t *( *allocbuf )( void *, size_t, c
 	imginfo.pixels = (void *)trans;
 	return imginfo;
 }
-
-/*
-=========================================================
-
-PNG LOADING
-
-=========================================================
-*/
 
 /*
 * LoadPNG
