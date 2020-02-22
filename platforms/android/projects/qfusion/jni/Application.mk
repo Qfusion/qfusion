@@ -14,10 +14,8 @@ APP_MODULES := \
   crypto \
   curl \
   freetype \
-  jpeg \
   ogg \
   OpenAL-MOB \
-  png \
   RmlUiCore \
   RmlUiControls \
   RmlUiDebugger \
