@@ -84,10 +84,7 @@ if (WIN32)
         "../libsrcs/src/libogg"
         "../libsrcs/src/libvorbis"
         "../libsrcs/src/libcurl/include"
-        "../libsrcs/src/zlib"
         "../libsrcs/src/libfreetype"
-        "../libsrcs/src/libpng"
-        "../libsrcs/src/libjpeg"
         "../libsrcs/src/SDL2/include"
         "../libsrcs/src/OpenAL-MOB/include/AL"
     )
@@ -125,7 +122,6 @@ elseif (APPLE)
     set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libc++")          # Use modern libc++ instead of libstdc++
     set(CMAKE_FRAMEWORK_PATH "../libsrcs/lib/mac/Frameworks")
     set(CMAKE_MACOSX_RPATH 1)
-    set(JPEG_NAMES libjpeg) # libjpeg.framework should be renamed to jpeg.framework to remove this hack
     set(USE_SDL2 1)
 
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -fvisibility=hidden -Winvalid-pch -Wpedantic")
@@ -205,8 +201,6 @@ if (NOT GAME_MODULES_ONLY)
         find_package(Ogg REQUIRED)
         find_package(Vorbis REQUIRED)
         find_package(Freetype REQUIRED)
-        find_package(JPEG REQUIRED)
-        find_package(PNG REQUIRED)
         find_package(OpenAL)
         find_package(OpenGL)
 
@@ -239,8 +233,6 @@ if (NOT GAME_MODULES_ONLY)
         find_windows_release_libs(CURL_LIBRARY)
         find_windows_release_libs(ANGELSCRIPT_LIBRARY)
         if (NOT SERVER_ONLY)
-            find_windows_release_libs(JPEG_LIBRARIES)
-            find_windows_release_libs(PNG_LIBRARIES)
             find_windows_release_libs(FREETYPE_LIBRARIES)
             find_windows_release_libs(OGG_LIBRARY)
             find_windows_release_libs(VORBIS_LIBRARIES)
@@ -252,12 +244,6 @@ endif()
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux") # Do not add 'OR MINGW' here - we need to use suffix-prefix settings from Windows
     set(CURL_LIBRARY "")
     add_definitions(-DLIBCURL_RUNTIME)
-
-    set(JPEG_LIBRARIES "")
-    add_definitions(-DLIBJPEG_RUNTIME)
-
-    set(PNG_LIBRARIES "")
-    add_definitions(-DLIBPNG_RUNTIME)
 
     set(OGG_LIBRARY "")
     add_definitions(-DOGGLIB_RUNTIME)
