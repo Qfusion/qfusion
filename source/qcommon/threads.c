@@ -201,6 +201,10 @@ void QBufPipe_Destroy( qbufPipe_t **ppipe ) {
 	pipe = *ppipe;
 	*ppipe = NULL;
 
+	if( !pipe ) {
+		return;
+	}
+
 	QMutex_Destroy( &pipe->cmdbuf_mutex );
 	QMutex_Destroy( &pipe->nonempty_mutex );
 	QCondVar_Destroy( &pipe->nonempty_condvar );
