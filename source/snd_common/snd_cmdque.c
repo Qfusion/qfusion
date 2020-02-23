@@ -34,6 +34,9 @@ sndCmdPipe_t *S_CreateSoundCmdPipe( void ) {
 * S_DestroySoundCmdPipe
 */
 void S_DestroySoundCmdPipe( sndCmdPipe_t **pqueue ) {
+	if( !pqueue || !*pqueue ) {
+		return;
+	}
 	trap_BufPipe_Destroy( pqueue );
 }
 
@@ -44,6 +47,9 @@ void S_DestroySoundCmdPipe( sndCmdPipe_t **pqueue ) {
 * or terminates with an error.
 */
 void S_FinishSoundCmdPipe( sndCmdPipe_t *queue ) {
+	if( !queue ) {
+		return;
+	}
 	trap_BufPipe_Finish( queue );
 }
 
@@ -51,6 +57,9 @@ void S_FinishSoundCmdPipe( sndCmdPipe_t *queue ) {
 * S_EnqueueCmd
 */
 static void S_EnqueueCmd( sndCmdPipe_t *queue, const void *cmd, unsigned cmd_size ) {
+	if( !queue ) {
+		return;
+	}
 	trap_BufPipe_WriteCmd( queue, cmd, cmd_size );
 }
 
