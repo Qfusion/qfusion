@@ -632,10 +632,10 @@ load_refresh:
 		// load common localization strings
 		L10n_LoadLangPOFile( "common", "l10n" );
 
-		if( cls.state != CA_UNINITIALIZED ) {
-			// stop and free all sounds
-			CL_SoundModule_Init( verbose );
+		// stop and free all sounds
+		CL_SoundModule_Init( verbose );
 
+		if( cls.state != CA_UNINITIALIZED ) {
 			re.BeginRegistration();
 			CL_SoundModule_BeginRegistration();
 
