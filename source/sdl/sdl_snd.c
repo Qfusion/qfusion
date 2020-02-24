@@ -64,9 +64,6 @@
 
 static int snd_inited = 0;
 
-static cvar_t *s_bits = NULL;
-static cvar_t *s_channels = NULL;
-
 void S_Activate( bool active ) {
 }
 
@@ -135,10 +132,8 @@ bool SNDDMA_Init( void *hwnd, bool verbose ) {
 		Com_Printf( "SDL Audio driver initializing...\n" );
 	}
 
-	if( !s_bits ) {
-		s_bits = trap_Cvar_Get( "s_bits", "16", CVAR_ARCHIVE | CVAR_LATCH_SOUND );
-		s_channels = trap_Cvar_Get( "s_channels", "2", CVAR_ARCHIVE | CVAR_LATCH_SOUND );
-	}
+	trap_Cvar_Get( "s_bits", "16", CVAR_ARCHIVE | CVAR_LATCH_SOUND );
+	trap_Cvar_Get( "s_channels", "2", CVAR_ARCHIVE | CVAR_LATCH_SOUND );
 
 	if( !SDL_WasInit( SDL_INIT_AUDIO ) ) {
 		if( verbose ) {
@@ -180,7 +175,7 @@ bool SNDDMA_Init( void *hwnd, bool verbose ) {
 		desired.freq = 11025;
 	}
 
-	desired.format = ( ( s_bits->integer != 16 ) ? AUDIO_U8 : AUDIO_S16SYS );
+	desired.format = (int)trap_Cvar_Value( "s_bits") != 16 ? AUDIO_U8 : AUDIO_S16SYS;
 
 	// I dunno if this is the best idea, but I'll give it a try...
 	//  should probably check a cvar for this...
@@ -195,7 +190,7 @@ bool SNDDMA_Init( void *hwnd, bool verbose ) {
 		desired.samples = 2048; // (*shrug*)
 
 	}
-	desired.channels = s_channels->integer;
+	desired.channels = (int)trap_Cvar_Value( "s_channels" );
 	desired.callback = sdl_audio_callback;
 
 	if( SDL_OpenAudio( &desired, &obtained ) == -1 ) {

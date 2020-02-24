@@ -21,9 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../snd_qf/snd_local.h"
 #include <SLES/OpenSLES.h>
 
-static cvar_t *s_bits = NULL;
-static cvar_t *s_channels = NULL;
-
 static SLObjectItf snddma_android_engine = NULL;
 static SLObjectItf snddma_android_outputMix = NULL;
 static SLObjectItf snddma_android_player = NULL;
@@ -115,9 +112,11 @@ static const char *SNDDMA_Android_Init( void ) {
 	sourceLocator.locatorType = SL_DATALOCATOR_BUFFERQUEUE;
 	sourceLocator.numBuffers = 2;
 	sourceFormat.formatType = SL_DATAFORMAT_PCM;
-	sourceFormat.numChannels = Q_bound( 1, s_channels->integer, 2 );
+	sourceFormat.numChannels = (int)trap_Cvar_Value( "s_channels" );
+	sourceFormat.numChannels = Q_bound( 1, sourceFormat.numChannels, 2 );
 	sourceFormat.samplesPerSec = freq * 1000;
-	sourceFormat.bitsPerSample = ( ( s_bits->integer >= 16 ) ? 16 : 8 );
+	sourceFormat.bitsPerSample = (int)trap_Cvar_Value( "s_bits" );
+	sourceFormat.bitsPerSample = sourceFormat.bitsPerSample >= 16 ? 16 : 8;
 	sourceFormat.containerSize = sourceFormat.bitsPerSample;
 	sourceFormat.channelMask = ( ( sourceFormat.numChannels == 2 ) ? SL_SPEAKER_FRONT_LEFT | SL_SPEAKER_FRONT_RIGHT : SL_SPEAKER_FRONT_CENTER );
 	sourceFormat.endianness = SL_BYTEORDER_LITTLEENDIAN;
@@ -186,10 +185,8 @@ bool SNDDMA_Init( void *hwnd, bool verbose ) {
 		Com_Printf( "OpenSL ES audio device initializing...\n" );
 	}
 
-	if( !s_bits ) {
-		s_bits = trap_Cvar_Get( "s_bits", "16", CVAR_ARCHIVE | CVAR_LATCH_SOUND );
-		s_channels = trap_Cvar_Get( "s_channels", "2", CVAR_ARCHIVE | CVAR_LATCH_SOUND );
-	}
+	trap_Cvar_Get( "s_bits", "16", CVAR_ARCHIVE | CVAR_LATCH_SOUND );
+	trap_Cvar_Get( "s_channels", "2", CVAR_ARCHIVE | CVAR_LATCH_SOUND );
 
 	initError = SNDDMA_Android_Init();
 	if( initError ) {
