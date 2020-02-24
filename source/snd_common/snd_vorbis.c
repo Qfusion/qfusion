@@ -150,7 +150,7 @@ int qvorbis_stream_reset( qvorbis_stream_t* ogg_stream ) {
 
 static int qvorbis_stream_output_samples16( qvorbis_stream_t *ogg_stream, int samples, int c, void *buffer ) {
 	int s, fc = ogg_stream->stb.frame_channels;
-	const float** outputs = ogg_stream->stb.frame_outputs;
+	float** outputs = ogg_stream->stb.frame_outputs;
 	const float *left = outputs[0], *right = fc > 1 ? outputs[1] : outputs[0];
 	const float scale = 32768.0f;
 	short* shorts = buffer;
