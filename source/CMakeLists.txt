@@ -81,6 +81,7 @@ if (WIN32)
     endif()
 
     set(CMAKE_INCLUDE_PATH
+        "../libsrcs/src/zlib"
         "../libsrcs/src/libcurl/include"
         "../libsrcs/src/libfreetype"
         "../libsrcs/src/SDL2/include"
