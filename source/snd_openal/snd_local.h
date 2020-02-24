@@ -222,7 +222,6 @@ typedef struct snd_info_s {
 typedef struct snd_decoder_s snd_decoder_t;
 typedef struct snd_stream_s {
 	snd_decoder_t *decoder;
-	bool isUrl;
 	snd_info_t info; // TODO: Change to AL_FORMAT?
 	void *ptr; // decoder specific stuff
 } snd_stream_t;
@@ -243,13 +242,10 @@ typedef struct bgTrack_s {
 bool S_InitDecoders( bool verbose );
 void S_ShutdownDecoders( bool verbose );
 void *S_LoadSound( const char *filename, snd_info_t *info );
-snd_stream_t *S_OpenStream( const char *filename, bool *delay );
-bool S_ContOpenStream( snd_stream_t *stream );
-int S_ReadStream( snd_stream_t *stream, int bytes, void *buffer );
+snd_stream_t *S_OpenStream( const char *filename );
+int S_ReadStream( snd_stream_t *stream, int samples, void *buffer );
 void S_CloseStream( snd_stream_t *stream );
 bool S_ResetStream( snd_stream_t *stream );
-bool S_EoStream( snd_stream_t *stream );
-int S_SeekSteam( snd_stream_t *stream, int ofs, int whence );
 
 void S_BeginAviDemo( void );
 void S_StopAviDemo( void );

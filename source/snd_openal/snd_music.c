@@ -23,12 +23,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "snd_local.h"
 
-#define MUSIC_BUFFER_SIZE       8192
-
 #define MUSIC_PRELOAD_MSEC      200
-
-#define MUSIC_BUFFERING_SIZE    ( MUSIC_BUFFER_SIZE * 4 + 4000 )
-#define BACKGROUND_TRACK_BUFFERING_TIMEOUT  5000
 
 // =================================
 
@@ -38,9 +33,6 @@ static bgTrack_t *s_bgTrackHead;
 static bool s_bgTrackPaused = false;  // the track is manually paused
 static int s_bgTrackLocked = 0;     // the track is blocked by the game (e.g. the window's minimized)
 static bool s_bgTrackMuted = false;
-static volatile bool s_bgTrackBuffering = false;
-static volatile bool s_bgTrackLoading = false; // unset by s_bgOpenThread when finished loading
-static struct qthread_s *s_bgOpenThread;
 
 /*
 * S_AllocTrack
@@ -62,13 +54,6 @@ static bgTrack_t *S_AllocTrack( const char *filename ) {
 }
 
 /*
-* S_ValidMusicFile
-*/
-static bool S_ValidMusicFile( bgTrack_t *track ) {
-	return ( track->stream != NULL ) && ( !track->isUrl || !S_EoStream( track->stream ) );
-}
-
-/*
 * S_CloseMusicTrack
 */
 static void S_CloseMusicTrack( bgTrack_t *track ) {
@@ -83,7 +68,7 @@ static void S_CloseMusicTrack( bgTrack_t *track ) {
 /*
 * S_OpenMusicTrack
 */
-static bool S_OpenMusicTrack( bgTrack_t *track, bool *buffering ) {
+static bool S_OpenMusicTrack( bgTrack_t *track ) {
 	const char *filename = track->filename;
 
 	if( track->ignore ) {
@@ -91,21 +76,8 @@ static bool S_OpenMusicTrack( bgTrack_t *track, bool *buffering ) {
 	}
 
 mark0:
-	if( buffering ) {
-		*buffering = false;
-	}
-
 	if( !track->stream ) {
-		bool delay = false;
-
-		track->stream = S_OpenStream( filename, &delay );
-		if( track->stream && delay ) {
-			// let the background track buffer for a while
-			//Com_Printf( "S_OpenMusicTrack: buffering %s...\n", track->filename );
-			if( buffering ) {
-				*buffering = true;
-			}
-		}
+		track->stream = S_OpenStream( filename );
 	} else {
 		if( !S_ResetStream( track->stream ) ) {
 			// if seeking failed for whatever reason (stream?), try reopening again
@@ -155,60 +127,6 @@ static bgTrack_t *S_NextMusicTrack( bgTrack_t *track ) {
 	}
 
 	return next;
-}
-
-/*
-* S_OpenBackgroundTrackProc
-*/
-static void *S_OpenBackgroundTrackProc( void *ptrack ) {
-	bgTrack_t *track = ptrack;
-	unsigned start;
-	bool buffering;
-
-	S_OpenMusicTrack( track, &buffering );
-
-	s_bgTrackBuffering = buffering;
-
-	start = trap_Milliseconds();
-	while( s_bgTrackBuffering ) {
-		if( trap_Milliseconds() > start + BACKGROUND_TRACK_BUFFERING_TIMEOUT ) {
-		} else if( S_EoStream( track->stream ) ) {
-		} else {
-			if( S_SeekSteam( track->stream, MUSIC_BUFFERING_SIZE, SEEK_SET ) < 0 ) {
-				continue;
-			}
-			S_SeekSteam( track->stream, 0, SEEK_SET );
-		}
-
-		// in case we delayed openening to let the stream be cached for a while,
-		// start actually reading from it now
-		if( !S_ContOpenStream( track->stream ) ) {
-			track->ignore = true;
-		}
-		s_bgTrackBuffering = false;
-	}
-
-	s_bgTrack = track;
-	s_bgTrackLoading = false;
-	return NULL;
-}
-
-/*
-* S_OpenBackgroundTrackTask
-*/
-static void S_OpenBackgroundTrackTask( bgTrack_t *track ) {
-	s_bgTrackLoading = true;
-	s_bgTrackBuffering = false;
-	s_bgOpenThread = trap_Thread_Create( S_OpenBackgroundTrackProc, track );
-}
-
-/*
-* S_CloseBackgroundTrackTask
-*/
-static void S_CloseBackgroundTrackTask( void ) {
-	s_bgTrackBuffering = false;
-	trap_Thread_Join( s_bgOpenThread );
-	s_bgOpenThread = NULL;
 }
 
 // =================================
@@ -349,9 +267,9 @@ static bool S_AdvanceBackgroundTrack( int n ) {
 	}
 
 	if( track && track != s_bgTrack ) {
-		S_CloseBackgroundTrackTask();
 		S_CloseMusicTrack( s_bgTrack );
-		S_OpenBackgroundTrackTask( track );
+		S_OpenMusicTrack( track );
+		s_bgTrack = track;
 		return true;
 	}
 
@@ -365,27 +283,21 @@ static bool S_AdvanceBackgroundTrack( int n ) {
 */
 static bool music_process( void ) {
 	int l = 0;
-	snd_stream_t *music_stream;
-	uint8_t decode_buffer[MUSIC_BUFFER_SIZE];
+	uint8_t decode_buffer[8192];
 
 	while( S_GetRawSamplesLength() < MUSIC_PRELOAD_MSEC ) {
-		music_stream = s_bgTrack->stream;
+		snd_stream_t *music_stream = s_bgTrack->stream;
+
+		l = 0;
 		if( music_stream ) {
-			l = S_ReadStream( music_stream, MUSIC_BUFFER_SIZE, decode_buffer );
-		} else {
-			l = 0;
+			const int samples = sizeof( decode_buffer ) / (music_stream->info.width * music_stream->info.channels);
+			l = S_ReadStream( music_stream, samples, decode_buffer );
 		}
 
 		if( !l ) {
 			if( !s_bgTrack->loop ) {
 				if( !S_AdvanceBackgroundTrack( 1 ) ) {
-					if( !S_ValidMusicFile( s_bgTrack ) ) {
-						return false;
-					}
-				}
-
-				if( s_bgTrackBuffering || s_bgTrackLoading ) {
-					return true;
+					return false;
 				}
 			}
 
@@ -398,10 +310,10 @@ static bool music_process( void ) {
 			continue;
 		}
 
-		S_RawSamples2( l / ( music_stream->info.width * music_stream->info.channels ),
-					   music_stream->info.rate, music_stream->info.width,
-					   music_stream->info.channels, decode_buffer, true,
-					   s_bgTrackMuted ? 0 : 1 );
+		S_RawSamples2( l, 
+			music_stream->info.rate, music_stream->info.width,
+			music_stream->info.channels, decode_buffer, true,
+			s_bgTrackMuted ? 0 : 1 );
 	}
 
 	return true;
@@ -418,7 +330,7 @@ void S_UpdateMusic( void ) {
 	if( !s_musicvolume->value && !s_bgTrack->muteOnPause ) {
 		return;
 	}
-	if( s_bgTrackLoading || s_bgTrackPaused || s_bgTrackLocked > 0 ) {
+	if( s_bgTrackPaused || s_bgTrackLocked > 0 ) {
 		return;
 	}
 
@@ -471,7 +383,7 @@ void S_StartBackgroundTrack( const char *intro, const char *loop, int mode ) {
 
 	if( loop && loop[0] && Q_stricmp( intro, loop ) ) {
 		loopTrack = S_AllocTrack( loop );
-		if( S_OpenMusicTrack( loopTrack, NULL ) ) {
+		if( S_OpenMusicTrack( loopTrack ) ) {
 			S_CloseMusicTrack( loopTrack );
 
 			introTrack->next = introTrack->prev = loopTrack;
@@ -492,7 +404,8 @@ start_playback:
 		return;
 	}
 
-	S_OpenBackgroundTrackTask( firstTrack );
+	S_OpenMusicTrack( firstTrack );
+	s_bgTrack = firstTrack;
 
 	S_UpdateMusic();
 }
@@ -501,8 +414,6 @@ void S_StopBackgroundTrack( void ) {
 	bgTrack_t *next;
 
 	S_StopRawSamples();
-
-	S_CloseBackgroundTrackTask();
 
 	while( s_bgTrackHead ) {
 		next = s_bgTrackHead->anext;

@@ -129,14 +129,13 @@ typedef struct bgTrack_s {
 	bool ignore;
 	int file;
 	wavinfo_t info;
-	bool isUrl;
 	bool loop;
 	bool muteOnPause;
 
 	void *vorbisFile;
-	bool ( *open )( struct bgTrack_s *track, bool *delay );
-	int ( *read )( struct bgTrack_s *track, void *ptr, size_t size );
-	int ( *seek )( struct bgTrack_s *track, int pos );
+	bool ( *open )( struct bgTrack_s *track );
+	int ( *read )( struct bgTrack_s *track, void *ptr, int samples );
+	bool ( *reset )( struct bgTrack_s *track );
 	void ( *close )( struct bgTrack_s *track );
 
 	struct bgTrack_s *next; // the next track to be played, the looping part aways points to itself
@@ -195,7 +194,7 @@ void    SNDDMA_Submit( void );
 
 void    SNDOGG_Init( bool verbose );
 void    SNDOGG_Shutdown( bool verbose );
-bool SNDOGG_OpenTrack( bgTrack_t *track, bool *delay );
+bool SNDOGG_OpenTrack( bgTrack_t *track );
 sfxcache_t *SNDOGG_Load( sfx_t *s );
 
 //====================================================================
@@ -209,7 +208,7 @@ extern sfx_t known_sfx[MAX_SFX];
 extern int num_sfx;
 
 #define MAX_CHANNELS        128
-extern channel_t channels[MAX_CHANNELS];
+extern channel_t s_channels[MAX_CHANNELS];
 
 extern volatile unsigned int paintedtime;
 extern dma_t dma;

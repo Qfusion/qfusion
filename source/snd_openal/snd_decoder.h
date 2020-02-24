@@ -34,27 +34,19 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 // Codec functions
 typedef void *( *DECODER_LOAD )( const char *filename, snd_info_t *info );
-typedef snd_stream_t *( *DECODER_OPEN )( const char *filename, bool *delay );
-typedef bool ( *DECODER_CONT_OPEN )( snd_stream_t *stream );
-typedef int ( *DECODER_READ )( snd_stream_t *stream, int bytes, void *buffer );
+typedef snd_stream_t *( *DECODER_OPEN )( const char *filename );
+typedef int ( *DECODER_READ )( snd_stream_t *stream, int samples, void *buffer );
 typedef bool ( *DECODER_RESET )( snd_stream_t *stream );
-typedef bool ( *DECODER_EOF )( snd_stream_t *stream );
 typedef void ( *DECODER_CLOSE )( snd_stream_t *stream );
-typedef int ( *DECODER_TELL )( snd_stream_t *stream );
-typedef int ( *DECODER_SEEK )( snd_stream_t *stream, int offset, int whence );
 
 // Codec data structure
 struct snd_decoder_s {
 	char *ext;
 	DECODER_LOAD load;
 	DECODER_OPEN open;
-	DECODER_CONT_OPEN cont_open;
 	DECODER_READ read;
 	DECODER_CLOSE close;
 	DECODER_RESET reset;
-	DECODER_EOF eof;
-	DECODER_TELL tell;
-	DECODER_SEEK seek;
 	snd_decoder_t *next;
 };
 
@@ -69,28 +61,20 @@ void decoder_stream_shutdown( snd_stream_t *stream );
 */
 extern snd_decoder_t wav_decoder;
 void *decoder_wav_load( const char *filename, snd_info_t *info );
-snd_stream_t *decoder_wav_open( const char *filename, bool *delay );
-bool decoder_wav_cont_open( snd_stream_t *stream );
-int decoder_wav_read( snd_stream_t *stream, int bytes, void *buffer );
+snd_stream_t *decoder_wav_open( const char *filename );
+int decoder_wav_read( snd_stream_t *stream, int samples, void *buffer );
 void decoder_wav_close( snd_stream_t *stream );
 bool decoder_wav_reset( snd_stream_t *stream );
-bool decoder_wav_eof( snd_stream_t *stream );
-int decoder_wav_tell( snd_stream_t *stream );
-int decoder_wav_seek( snd_stream_t *stream, int offset, int whence );
 
 /**
 * Ogg Vorbis decoder
 */
-extern snd_decoder_t ogg_decoder, ogv_decoder;
+extern snd_decoder_t ogg_decoder;
 void *decoder_ogg_load( const char *filename, snd_info_t *info );
-snd_stream_t *decoder_ogg_open( const char *filename, bool *delay );
-bool decoder_ogg_cont_open( snd_stream_t *stream );
-int decoder_ogg_read( snd_stream_t *stream, int bytes, void *buffer );
+snd_stream_t *decoder_ogg_open( const char *filename );
+int decoder_ogg_read( snd_stream_t *stream, int samples, void *buffer );
 void decoder_ogg_close( snd_stream_t *stream );
 bool decoder_ogg_reset( snd_stream_t *stream );
-bool decoder_ogg_eof( snd_stream_t *stream );
-int decoder_ogg_tell( snd_stream_t *stream );
-int decoder_ogg_seek( snd_stream_t *stream, int offset, int whence );
 
 bool SNDOGG_Init( bool verbose );
 void SNDOGG_Shutdown( bool verbose );

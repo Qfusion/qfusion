@@ -21,8 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "snd_local.h"
 
 #define BACKGROUND_TRACK_PRELOAD_MSEC       200
-#define BACKGROUND_TRACK_BUFFERING_SIZE     MAX_RAW_SAMPLES * 4 + 4000
-#define BACKGROUND_TRACK_BUFFERING_TIMEOUT  5000
 
 bgTrack_t *s_bgTrack;
 bgTrack_t *s_bgTrackHead;
@@ -141,14 +139,7 @@ static int S_BackgroundTrack_GetWavinfo( const char *name, wavinfo_t *info ) {
 /*
 * S_BackgroundTrack_OpenWav
 */
-static bool S_BackgroundTrack_OpenWav( struct bgTrack_s *track, bool *delay ) {
-	if( delay ) {
-		*delay = false;
-	}
-	if( track->isUrl ) {
-		return false;
-	}
-
+static bool S_BackgroundTrack_OpenWav( struct bgTrack_s *track ) {
 	track->file = S_BackgroundTrack_GetWavinfo( track->filename, &track->info );
 	return ( track->file != 0 );
 }
@@ -165,19 +156,11 @@ static bgTrack_t *S_AllocTrack( const char *filename ) {
 	track->ignore = false;
 	track->filename = (char *)( (uint8_t *)track + sizeof( *track ) );
 	strcpy( track->filename, filename );
-	track->isUrl = trap_FS_IsUrl( track->filename );
-	track->muteOnPause = track->isUrl;
+	track->muteOnPause = false;
 	track->anext = s_bgTrackHead;
 	s_bgTrackHead = track;
 
 	return track;
-}
-
-/*
-* S_ValidMusicFile
-*/
-static bool S_ValidMusicFile( bgTrack_t *track ) {
-	return ( track->file && ( !track->isUrl || !trap_FS_Eof( track->file ) ) );
 }
 
 /*
@@ -199,49 +182,37 @@ static void S_CloseMusicTrack( bgTrack_t *track ) {
 /*
 * S_OpenMusicTrack
 */
-static bool S_OpenMusicTrack( bgTrack_t *track, bool *buffering ) {
+static bool S_OpenMusicTrack( bgTrack_t *track ) {
 	if( track->ignore ) {
 		return false;
 	}
 
 mark0:
-	if( buffering ) {
-		*buffering = false;
-	}
-
 	if( !track->file ) {
-		bool opened, delay = false;
+		bool opened;
 
 		memset( &track->info, 0, sizeof( track->info ) );
 
 		// try ogg
 		track->open = SNDOGG_OpenTrack;
-		opened = track->open( track, &delay );
+		opened = track->open( track );
 
 		// try wav
 		if( !opened ) {
 			track->open = S_BackgroundTrack_OpenWav;
-			opened = track->open( track, &delay );
-		}
-
-		if( opened && delay ) {
-			// let the background track buffer for a while
-			// Com_Printf( "S_OpenMusicTrack: buffering %s...\n", track->filename );
-			if( buffering ) {
-				*buffering = true;
-			}
+			opened = track->open( track );
 		}
 	} else {
-		int seek;
+		bool ok;
 
-		if( track->seek ) {
-			seek = track->seek( track, 0 );
+		if( track->reset ) {
+			ok = track->reset( track );
 		} else {
-			seek = trap_FS_Seek( track->file, track->info.dataofs, FS_SEEK_SET );
+			ok = trap_FS_Seek( track->file, track->info.dataofs, FS_SEEK_SET ) == 0;
 		}
 
 		// if seeking failed for whatever reason (stream?), try reopening again
-		if( seek ) {
+		if( !ok ) {
 			S_CloseMusicTrack( track );
 			goto mark0;
 		}
@@ -422,31 +393,8 @@ static bgTrack_t *S_ReadPlaylistFile( const char *filename, bool shuffle, bool l
 */
 static void *S_OpenBackgroundTrackProc( void *ptrack ) {
 	bgTrack_t *track = ptrack;
-	unsigned start;
-	bool buffering;
 
-	S_OpenMusicTrack( track, &buffering );
-
-	s_bgTrackBuffering = buffering;
-
-	start = trap_Milliseconds();
-	while( s_bgTrackBuffering ) {
-		if( trap_Milliseconds() > start + BACKGROUND_TRACK_BUFFERING_TIMEOUT ) {
-		} else if( trap_FS_Eof( track->file ) ) {
-		} else {
-			if( trap_FS_Seek( track->file, BACKGROUND_TRACK_BUFFERING_SIZE, FS_SEEK_SET ) < 0 ) {
-				continue;
-			}
-			trap_FS_Seek( track->file, 0, FS_SEEK_SET );
-		}
-
-		// in case we delayed openening to let the stream cache for a while,
-		// start actually reading from it now
-		if( !track->open( track, NULL ) ) {
-			track->ignore = true;
-		}
-		s_bgTrackBuffering = false;
-	}
+	S_OpenMusicTrack( track );
 
 	s_bgTrack = track;
 	s_bgTrackLoading = false;
@@ -506,18 +454,18 @@ void S_StartBackgroundTrack( const char *intro, const char *loop, int mode ) {
 	introTrack = S_AllocTrack( intro );
 	introTrack->loop = true;
 	introTrack->next = introTrack->prev = introTrack;
-	introTrack->muteOnPause = introTrack->isUrl || mode & 4 ? true : false;
+	introTrack->muteOnPause = ( mode & 4 ) != 0;
 
 	if( loop && loop[0] && Q_stricmp( intro, loop ) ) {
 		loopTrack = S_AllocTrack( loop );
-		if( S_OpenMusicTrack( loopTrack, NULL ) ) {
+		if( S_OpenMusicTrack( loopTrack ) ) {
 			S_CloseMusicTrack( loopTrack );
 
 			introTrack->next = introTrack->prev = loopTrack;
 			introTrack->loop = false;
 
 			loopTrack->loop = true;
-			loopTrack->muteOnPause = loopTrack->isUrl || mode & 4 ? true : false;
+			loopTrack->muteOnPause = ( mode & 4 ) != 0;
 			loopTrack->next = loopTrack->prev = loopTrack;
 		}
 	}
@@ -616,7 +564,7 @@ void S_PauseBackgroundTrack( void ) {
 * S_LockBackgroundTrack
 */
 void S_LockBackgroundTrack( bool lock ) {
-	if( s_bgTrack && !s_bgTrack->isUrl ) {
+	if( s_bgTrack ) {
 		s_bgTrackLocked += lock ? 1 : -1;
 		if( s_bgTrackLocked < 0 ) {
 			s_bgTrackLocked = 0;
@@ -655,6 +603,7 @@ static void byteSwapRawSamples( int samples, int width, int channels, const uint
 * S_UpdateBackgroundTrack
 */
 void S_UpdateBackgroundTrack( void ) {
+	int bps;
 	int samples, maxSamples;
 	int read, maxRead, total;
 	float scale;
@@ -676,8 +625,9 @@ void S_UpdateBackgroundTrack( void ) {
 		return;
 	}
 
+	bps = s_bgTrack->info.channels / s_bgTrack->info.width;
 	scale = (float)s_bgTrack->info.rate / dma.speed;
-	maxSamples = sizeof( data ) / s_bgTrack->info.channels / s_bgTrack->info.width;
+	maxSamples = sizeof( data ) / bps;
 
 	while( 1 ) {
 		unsigned int rawSamplesLength;
@@ -700,34 +650,33 @@ void S_UpdateBackgroundTrack( void ) {
 		maxRead = samples * s_bgTrack->info.channels * s_bgTrack->info.width;
 
 		total = 0;
-		while( total < maxRead ) {
-			int seek;
-
+		while( total < samples ) {
 			if( s_bgTrack->read ) {
-				read = s_bgTrack->read( s_bgTrack, data + total, maxRead - total );
+				read = s_bgTrack->read( s_bgTrack, data + total, samples - total );
 			} else {
-				read = trap_FS_Read( data + total, maxRead - total, s_bgTrack->file );
+				read = trap_FS_Read( data + total, (samples - total) * bps, s_bgTrack->file ) / bps;
 			}
 
 			if( !read ) {
+				bool ok;
+
 				if( !s_bgTrack->loop ) {
 					if( !S_AdvanceBackgroundTrack( 1 ) ) {
-						if( !S_ValidMusicFile( s_bgTrack ) ) {
-							S_StopBackgroundTrack();
-							return;
-						}
+						S_StopBackgroundTrack();
+						return;
 					}
 					if( s_bgTrackBuffering || s_bgTrackLoading ) {
 						return;
 					}
 				}
 
-				if( s_bgTrack->seek ) {
-					seek = s_bgTrack->seek( s_bgTrack, s_bgTrack->info.dataofs );
+				if( s_bgTrack->reset ) {
+					ok = s_bgTrack->reset( s_bgTrack );
 				} else {
-					seek = trap_FS_Seek( s_bgTrack->file, s_bgTrack->info.dataofs, FS_SEEK_SET );
+					ok = trap_FS_Seek( s_bgTrack->file, s_bgTrack->info.dataofs, FS_SEEK_SET ) == 0;
 				}
-				if( seek ) {
+
+				if( !ok ) {
 					// if the seek have failed we're going to loop here forever unless
 					// we stop now
 					S_StopBackgroundTrack();

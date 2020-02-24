@@ -1,6 +1,6 @@
 project(snd_qf)
 
-include_directories(${VORBIS_INCLUDE_DIR} ${OGG_INCLUDE_DIR} "../snd_common" ".")
+include_directories(${STB_INCLUDE_DIR} "../snd_common" ".")
 
 if (USE_SDL2 OR (UNIX AND NOT APPLE))
     include_directories(${SDL2_INCLUDE_DIR})
@@ -37,5 +37,5 @@ else()
 endif()
 
 add_library(snd_qf SHARED ${SND_QF_HEADERS} ${SND_QF_SOURCES} ${SND_QF_PLATFORM_SOURCES})
-target_link_libraries(snd_qf PRIVATE ${OGG_LIBRARY} ${VORBIS_LIBRARIES} ${SND_QF_PLATFORM_LIBRARIES})
+target_link_libraries(snd_qf PRIVATE ${SND_QF_PLATFORM_LIBRARIES})
 qf_set_output_dir(snd_qf libs)

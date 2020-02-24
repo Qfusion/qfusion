@@ -3,10 +3,9 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := snd_qf
 LOCAL_MODULE_FILENAME := lib$(LOCAL_MODULE)_android_$(TARGET_ARCH_ABI)
 
-LOCAL_C_INCLUDES := $(LOCAL_PATH)/../snd_common $(LOCAL_PATH)
+LOCAL_C_INCLUDES := $(QFUSION_PATH)/third-party/stb $(LOCAL_PATH)/../snd_common $(LOCAL_PATH)
 
 LOCAL_LDLIBS := -lOpenSLES
-LOCAL_STATIC_LIBRARIES := vorbis
 
 LOCAL_SRC_FILES := \
   ../android/android_snd.c \
