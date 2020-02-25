@@ -14,13 +14,11 @@ APP_MODULES := \
   crypto \
   curl \
   freetype \
-  ogg \
   OpenAL-MOB \
   RmlUiCore \
   RmlUiControls \
   RmlUiDebugger \
   ssl \
-  vorbis \
   \
   angelwrap \
   cin \

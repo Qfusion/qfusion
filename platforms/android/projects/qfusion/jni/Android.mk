@@ -8,11 +8,9 @@ include $(NDK_ROOT)/sources/android/native_app_glue/Android.mk
 include $(QFUSION_PATH)/source/android/libs/angelscript.mk
 include $(QFUSION_PATH)/source/android/libs/curl.mk
 include $(QFUSION_PATH)/source/android/libs/freetype.mk
-include $(QFUSION_PATH)/source/android/libs/ogg.mk
 include $(QFUSION_PATH)/source/android/libs/OpenAL-MOB.mk
 include $(QFUSION_PATH)/source/android/libs/openssl-crypto.mk
 include $(QFUSION_PATH)/source/android/libs/openssl-ssl.mk
-include $(QFUSION_PATH)/source/android/libs/vorbis.mk
 
 include $(QFUSION_PATH)/source/android/libs/RmlUiControls.mk
 include $(QFUSION_PATH)/source/android/libs/RmlUiCore.mk
