@@ -1176,7 +1176,7 @@ static int _FS_FOpenFile( const char *filename, int *filenum, int mode, bool bas
 
 		end = 0;
 		if( mode == FS_APPEND || mode == FS_READ || update ) {
-			end = f ? FS_FileLength( f, false ) : 0;
+			end = FS_FileLength( f, false );
 		}
 
 		*filenum = FS_OpenFileHandle();

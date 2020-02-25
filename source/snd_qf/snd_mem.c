@@ -502,13 +502,11 @@ bool SNDOGG_OpenTrack( bgTrack_t *track ) {
 	return true;
 
 error:
-	if( v ) {
-		qvorbis_stream_deinit( v );
-		S_Free( v );
-	}
-	if( file ) {
-		trap_FS_FCloseFile( file );
-	}
+	qvorbis_stream_deinit( v );
+	S_Free( v );
+
+	trap_FS_FCloseFile( file );
+
 	track->file = 0;
 	track->vorbisFile = NULL;
 	track->read = NULL;
