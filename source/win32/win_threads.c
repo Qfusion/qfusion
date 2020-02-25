@@ -176,14 +176,14 @@ void Sys_Thread_Yield( void ) {
 /*
 * Sys_Atomic_Add
 */
-int Sys_Atomic_Add( volatile int *value, int add, qmutex_t *mutex ) {
+int Sys_Atomic_Add( volatile int *value, int add ) {
 	return InterlockedExchangeAdd( (volatile LONG*)value, add );
 }
 
 /*
 * Sys_Atomic_CAS
 */
-bool Sys_Atomic_CAS( volatile int *value, int oldval, int newval, qmutex_t *mutex ) {
+bool Sys_Atomic_CAS( volatile int *value, int oldval, int newval ) {
 	return InterlockedCompareExchange( (volatile LONG*)value, newval, oldval ) == oldval;
 }
 

@@ -3892,7 +3892,6 @@ typedef struct {
 	volatile int *cnt;
 	int maxcnt;
 	pack_t **packs;
-	qmutex_t *mutex;
 } deferred_pack_arg_t;
 
 static void *FS_LoadDeferredPaks_Job( void *parg ) {
@@ -3901,7 +3900,7 @@ static void *FS_LoadDeferredPaks_Job( void *parg ) {
 	deferred_pack_arg_t *arg = parg;
 
 	while( true ) {
-		i = QAtomic_Add( arg->cnt, 1, arg->mutex );
+		i = QAtomic_Add( arg->cnt, 1 );
 		if( i >= arg->maxcnt ) {
 			break;
 		}
@@ -3952,7 +3951,6 @@ static void FS_LoadDeferredPaks( int newpaks ) {
 	arg->cnt = Mem_TempMalloc( sizeof( int ) );
 	arg->maxcnt = newpaks;
 	arg->packs = packs;
-	arg->mutex = QMutex_Create();
 
 	if( num_threads > 0 ) {
 		for( i = 0; i < num_threads; i++ )
@@ -3970,7 +3968,6 @@ static void FS_LoadDeferredPaks( int newpaks ) {
 
 	Mem_TempFree( (void *)arg->cnt );
 	Mem_TempFree( arg->packs );
-	QMutex_Destroy( &arg->mutex );
 	Mem_TempFree( arg );
 }
 

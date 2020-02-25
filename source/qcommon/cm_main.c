@@ -945,7 +945,6 @@ static cmodel_state_t *CM_New_( cmodel_state_t *parent, void *mempool ) {
 	cms->refcount = 0;
 	cms->parent = parent;
 	cms->mempool = cms_mempool;
-	cms->refcount_mutex = QMutex_Create();
 
 	CM_InitBoxHull( cms );
 
@@ -967,7 +966,6 @@ cmodel_state_t *CM_New( void *mempool ) {
 static void CM_Free( cmodel_state_t *cms ) {
 	cmodel_state_t *parent = cms->parent;
 
-	QMutex_Destroy( &cms->refcount_mutex );
 
 	if( parent ) {
 		CM_FreeCheckCounts( cms );
@@ -989,7 +987,7 @@ void CM_AddReference( cmodel_state_t *cms ) {
 	if( !cms ) {
 		return;
 	}
-	QAtomic_Add( &cms->refcount, 1, cms->refcount_mutex );
+	QAtomic_Add( &cms->refcount, 1 );
 }
 
 /*
@@ -1003,13 +1001,13 @@ void CM_ReleaseReference( cmodel_state_t *cms ) {
 	}
 
 	// note: QAtomic_Add returns the previous value of refcount
-	rc = QAtomic_Add( &cms->refcount, -1, cms->refcount_mutex );
+	rc = QAtomic_Add( &cms->refcount, -1 );
 	if( rc <= 0 ) {
 		Com_Error( ERR_FATAL, "CM_ReleaseReference: refcount < 0" );
 		return;
 	}
 
-	if( QAtomic_Add( &cms->refcount, 0, cms->refcount_mutex ) == 0 ) {
+	if( QAtomic_Add( &cms->refcount, 0 ) == 0 ) {
 		CM_Free( cms );
 	}
 }

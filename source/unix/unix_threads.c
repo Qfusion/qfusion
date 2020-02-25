@@ -123,14 +123,14 @@ void Sys_Thread_Yield( void ) {
 /*
 * Sys_Atomic_Add
 */
-int Sys_Atomic_Add( volatile int *value, int add, qmutex_t *mutex ) {
+int Sys_Atomic_Add( volatile int *value, int add ) {
 	return __sync_fetch_and_add( value, add );
 }
 
 /*
 * Sys_Atomic_CAS
 */
-bool Sys_Atomic_CAS( volatile int *value, int oldval, int newval, qmutex_t *mutex ) {
+bool Sys_Atomic_CAS( volatile int *value, int oldval, int newval ) {
 	return __sync_bool_compare_and_swap( value, oldval, newval );
 }
 

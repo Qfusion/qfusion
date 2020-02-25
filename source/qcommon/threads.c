@@ -146,15 +146,15 @@ void QThreads_Shutdown( void ) {
 /*
 * QAtomic_Add
 */
-int QAtomic_Add( volatile int *value, int add, qmutex_t *mutex ) {
-	return Sys_Atomic_Add( value, add, mutex );
+int QAtomic_Add( volatile int *value, int add ) {
+	return Sys_Atomic_Add( value, add );
 }
 
 /*
 * QAtomic_CAS
 */
-bool QAtomic_CAS( volatile int *value, int oldval, int newval, qmutex_t *mutex ) {
-	return Sys_Atomic_CAS( value, oldval, newval, mutex );
+bool QAtomic_CAS( volatile int *value, int oldval, int newval ) {
+	return Sys_Atomic_CAS( value, oldval, newval );
 }
 
 // ============================================================================
@@ -165,7 +165,6 @@ struct qbufPipe_s {
 	unsigned write_pos;
 	unsigned read_pos;
 	volatile int cmdbuf_len;
-	qmutex_t *cmdbuf_mutex;
 	size_t bufSize;
 	qcondvar_t *nonempty_condvar;
 	qmutex_t *nonempty_mutex;
@@ -177,11 +176,13 @@ struct qbufPipe_s {
 */
 qbufPipe_t *QBufPipe_Create( size_t bufSize, int flags ) {
 	qbufPipe_t *pipe = malloc( sizeof( *pipe ) + bufSize );
+	if( !pipe ) {
+		return NULL;
+	}
 	memset( pipe, 0, sizeof( *pipe ) );
 	pipe->blockWrite = flags & 1;
 	pipe->buf = (char *)( pipe + 1 );
 	pipe->bufSize = bufSize;
-	pipe->cmdbuf_mutex = QMutex_Create();
 	pipe->nonempty_condvar = QCondVar_Create();
 	pipe->nonempty_mutex = QMutex_Create();
 	return pipe;
@@ -205,7 +206,6 @@ void QBufPipe_Destroy( qbufPipe_t **ppipe ) {
 		return;
 	}
 
-	QMutex_Destroy( &pipe->cmdbuf_mutex );
 	QMutex_Destroy( &pipe->nonempty_mutex );
 	QCondVar_Destroy( &pipe->nonempty_condvar );
 	free( pipe );
@@ -227,7 +227,7 @@ static void QBufPipe_Wake( qbufPipe_t *pipe ) {
 * or terminates with an error.
 */
 void QBufPipe_Finish( qbufPipe_t *pipe ) {
-	while( Sys_Atomic_CAS( &pipe->cmdbuf_len, 0, 0, pipe->cmdbuf_mutex ) == false && !pipe->terminated ) {
+	while( Sys_Atomic_CAS( &pipe->cmdbuf_len, 0, 0 ) == false && !pipe->terminated ) {
 		QMutex_Lock( pipe->nonempty_mutex );
 		QBufPipe_Wake( pipe );
 		QMutex_Unlock( pipe->nonempty_mutex );
@@ -248,7 +248,7 @@ static void *QBufPipe_AllocCmd( qbufPipe_t *pipe, unsigned cmd_size ) {
 * QBufPipe_BufLenAdd
 */
 static void QBufPipe_BufLenAdd( qbufPipe_t *pipe, int val ) {
-	Sys_Atomic_Add( &pipe->cmdbuf_len, val, pipe->cmdbuf_mutex );
+	Sys_Atomic_Add( &pipe->cmdbuf_len, val );
 }
 
 /*
@@ -337,7 +337,7 @@ int QBufPipe_ReadCmds( qbufPipe_t *pipe, unsigned( **cmdHandlers )( const void *
 		return -1;
 	}
 
-	while( Sys_Atomic_CAS( &pipe->cmdbuf_len, 0, 0, pipe->cmdbuf_mutex ) == false && !pipe->terminated ) {
+	while( Sys_Atomic_CAS( &pipe->cmdbuf_len, 0, 0 ) == false && !pipe->terminated ) {
 		int cmd;
 		int cmd_size;
 		int read_remains;
@@ -393,7 +393,7 @@ void QBufPipe_Wait( qbufPipe_t *pipe, int ( *read )( qbufPipe_t *, unsigned( ** 
 		int res;
 		bool timeout = false;
 
-		while( Sys_Atomic_CAS( &pipe->cmdbuf_len, 0, 0, pipe->cmdbuf_mutex ) == true ) {
+		while( Sys_Atomic_CAS( &pipe->cmdbuf_len, 0, 0 ) == true ) {
 			QMutex_Lock( pipe->nonempty_mutex );
 
 			timeout = QCondVar_Wait( pipe->nonempty_condvar, pipe->nonempty_mutex, timeout_msec ) == false;

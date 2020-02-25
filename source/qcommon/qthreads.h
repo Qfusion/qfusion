@@ -60,7 +60,7 @@ int QBufPipe_ReadCmds( qbufPipe_t *queue, unsigned( **cmdHandlers )( const void 
 void QBufPipe_Wait( qbufPipe_t *queue, int ( *read )( qbufPipe_t *, unsigned( ** )( const void * ), bool ),
 					unsigned( **cmdHandlers )( const void * ), unsigned timeout_msec );
 
-int QAtomic_Add( volatile int *value, int add, qmutex_t *mutex );
-bool QAtomic_CAS( volatile int *value, int oldval, int newval, qmutex_t *mutex );
+int QAtomic_Add( volatile int *value, int add );
+bool QAtomic_CAS( volatile int *value, int oldval, int newval );
 
 #endif // Q_THREADS_H
