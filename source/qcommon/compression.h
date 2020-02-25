@@ -18,11 +18,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#define MINIZ_NO_STDIO
-#define MINIZ_NO_ARCHIVE_APIS
-#define MINIZ_NO_ARCHIVE_WRITING_APIS
-//#define MINIZ_NO_ZLIB_COMPATIBLE_NAMES
-
 #include "miniz.h"
 
 void Com_LoadCompressionLibraries( void );
