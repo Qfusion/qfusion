@@ -27,9 +27,6 @@ bgTrack_t *s_bgTrackHead;
 static bool s_bgTrackPaused = false;  // the track is manually paused
 static int s_bgTrackLocked = 0;       // the track is blocked by the game (e.g. the window's minimized)
 static bool s_bgTrackMuted = false;
-static volatile bool s_bgTrackBuffering = false;
-static volatile bool s_bgTrackLoading = false; // unset by s_bgOpenThread when finished loading
-static struct qthread_s *s_bgOpenThread;
 
 /*
 * S_BackgroundTrack_FindNextChunk
@@ -389,37 +386,6 @@ static bgTrack_t *S_ReadPlaylistFile( const char *filename, bool shuffle, bool l
 // =================================
 
 /*
-* S_OpenBackgroundTrackProc
-*/
-static void *S_OpenBackgroundTrackProc( void *ptrack ) {
-	bgTrack_t *track = ptrack;
-
-	S_OpenMusicTrack( track );
-
-	s_bgTrack = track;
-	s_bgTrackLoading = false;
-	return NULL;
-}
-
-/*
-* S_OpenBackgroundTrackTask
-*/
-static void S_OpenBackgroundTrackTask( bgTrack_t *track ) {
-	s_bgTrackLoading = true;
-	s_bgTrackBuffering = false;
-	s_bgOpenThread = trap_Thread_Create( S_OpenBackgroundTrackProc, track );
-}
-
-/*
-* S_CloseBackgroundTrackTask
-*/
-static void S_CloseBackgroundTrackTask( void ) {
-	s_bgTrackBuffering = false;
-	trap_Thread_Join( s_bgOpenThread );
-	s_bgOpenThread = NULL;
-}
-
-/*
 * S_StartBackgroundTrack
 */
 void S_StartBackgroundTrack( const char *intro, const char *loop, int mode ) {
@@ -479,7 +445,8 @@ start_playback:
 		return;
 	}
 
-	S_OpenBackgroundTrackTask( firstTrack );
+	S_OpenMusicTrack( firstTrack );
+	s_bgTrack = firstTrack;
 }
 
 /*
@@ -487,8 +454,6 @@ start_playback:
 */
 void S_StopBackgroundTrack( void ) {
 	bgTrack_t *next;
-
-	S_CloseBackgroundTrackTask();
 
 	while( s_bgTrackHead ) {
 		next = s_bgTrackHead->anext;
@@ -519,9 +484,9 @@ static bool S_AdvanceBackgroundTrack( int n ) {
 	}
 
 	if( track && track != s_bgTrack ) {
-		S_CloseBackgroundTrackTask();
 		S_CloseMusicTrack( s_bgTrack );
-		S_OpenBackgroundTrackTask( track );
+		S_OpenMusicTrack( track );
+		s_bgTrack = track;
 		return true;
 	}
 
@@ -615,7 +580,7 @@ void S_UpdateBackgroundTrack( void ) {
 	if( !s_musicvolume->value && !s_bgTrack->muteOnPause ) {
 		return;
 	}
-	if( s_bgTrackLoading || s_bgTrackPaused || s_bgTrackLocked > 0 ) {
+	if( s_bgTrackPaused || s_bgTrackLocked > 0 ) {
 		return;
 	}
 
@@ -663,9 +628,6 @@ void S_UpdateBackgroundTrack( void ) {
 				if( !s_bgTrack->loop ) {
 					if( !S_AdvanceBackgroundTrack( 1 ) ) {
 						S_StopBackgroundTrack();
-						return;
-					}
-					if( s_bgTrackBuffering || s_bgTrackLoading ) {
 						return;
 					}
 				}
