@@ -1581,7 +1581,7 @@ static void CG_AddPortalSurfaceEnt( centity_t *cent ) {
 /*
 * CG_VideoSpeakerEntRawSamples
 */
-static void CG_UpdateVideoSpeakerEnt( void *centp,
+static void CG_VideoSpeakerEntRawSamples( void *centp,
 									  unsigned int samples, unsigned int rate,
 									  unsigned short width, unsigned short channels, const uint8_t *data ) {
 	centity_t *cent = ( centity_t * )centp;
@@ -1624,7 +1624,7 @@ static void CG_UpdateVideoSpeakerEnt( centity_t *cent ) {
 static void CG_AddVideoSpeakerEnt( centity_t *cent ) {
 	if( cent->cin ) {
 		trap_CIN_AddRawSamplesListener( cent->cin, cent,
-										CG_UpdateVideoSpeakerEnt, CG_VideoSpeakerEntGetRawSamples );
+										CG_VideoSpeakerEntRawSamples, CG_VideoSpeakerEntGetRawSamples );
 	}
 
 	// DEBUG
