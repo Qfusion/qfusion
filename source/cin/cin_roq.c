@@ -532,7 +532,6 @@ cin_yuv_t *RoQ_ReadNextFrameYUV_CIN( cinematics_t *cin, bool *redraw ) {
 		if( chunk->id == RoQ_INFO ) {
 			RoQ_ReadInfo( cin );
 		} else if( ( chunk->id == RoQ_SOUND_MONO || chunk->id == RoQ_SOUND_STEREO ) ) {
-			assert( cin->num_listeners != 0 );
 			RoQ_ReadAudio( cin );
 		} else if( chunk->id == RoQ_QUAD_VQ ) {
 			*redraw = true;
