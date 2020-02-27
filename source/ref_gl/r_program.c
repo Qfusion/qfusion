@@ -281,7 +281,7 @@ void RP_PrecachePrograms( void ) {
 	} else {
 		while( 1 ) {
 			int type;
-			r_glslfeat_t lb, hb;
+			unsigned long lb, hb;
 			r_glslfeat_t features;
 			char name[256];
 			void *binary = NULL;
@@ -301,14 +301,14 @@ void RP_PrecachePrograms( void ) {
 			if( !token[0] ) {
 				break;
 			}
-			lb = atoi( token );
+			lb = strtoul( token, NULL, 10 );
 
 			// read higher bits
 			token = COM_ParseExt_r( tempbuf, sizeof( tempbuf ), ptr, false );
 			if( !token[0] ) {
 				break;
 			}
-			hb = atoi( token );
+			hb = strtoul( token, NULL, 10 );
 
 			// read program full name
 			token = COM_ParseExt_r( tempbuf, sizeof( tempbuf ), ptr, false );
@@ -317,7 +317,7 @@ void RP_PrecachePrograms( void ) {
 			}
 
 			Q_strncpyz( name, token, sizeof( name ) );
-			features = ( hb << 32 ) | lb;
+			features = ( (r_glslfeat_t)hb << 32 ) | lb;
 #ifdef GL_ES_VERSION_2_0
 			if( isDefaultCache ) {
 				if( glConfig.ext.fragment_precision_high ) {
@@ -465,10 +465,10 @@ void RP_StorePrecacheList( void ) {
 			}
 		}
 
-		ri.FS_Printf( handle, "%i %i %i \"%s\" %u\n",
+		ri.FS_Printf( handle, "%i %u %u \"%s\" %u\n",
 					  program->type,
-					  (int)( program->features & ULONG_MAX ),
-					  (int)( ( program->features >> 32 ) & ULONG_MAX ),
+					  (unsigned long)( program->features & ULONG_MAX ),
+					  (unsigned long)( ( program->features >> 32 ) & ULONG_MAX ),
 					  program->name, binaryPos );
 
 		if( binary ) {
