@@ -895,7 +895,7 @@ static const glsl_feature_t *const glsl_programtypes_features[GLSL_PROGRAM_TYPE_
 	"#endif\n" \
 	"#ifdef FRAGMENT_SHADER\n" \
 	"# define qf_FrontColor gl_Color\n" \
-	"# define qf_FragColor gl_FragColor\n" \
+	"# define qf_FragColor gl_FragData[0]\n" \
 	"# define qf_BrightColor gl_FragData[1]\n" \
 	"#endif\n" \
 	"#define qf_texture texture2D\n" \
