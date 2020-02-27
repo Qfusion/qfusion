@@ -114,7 +114,9 @@ static void R_UploadCinematicFrame( r_cinhandle_t *handle ) {
 		if( handle->new_frame ) {
 			bool multiSamples2D;
 			bool in2D;
-
+			int w, h;
+			/*ATTRIBUTE_ALIGNED( 16 ) */mat4_t projectionMatrix;
+	
 			// render/convert three 8-bit YUV images into RGB framebuffer
 			in2D = rf.twoD.enabled;
 			multiSamples2D = rf.twoD.multiSamples;
@@ -129,20 +131,27 @@ static void R_UploadCinematicFrame( r_cinhandle_t *handle ) {
 								   handle->cyuv->image_width, handle->cyuv->image_height,
 								   0, IT_SPECIAL | IT_FRAMEBUFFER, IMAGE_TAG_GENERIC, samples );
 
+			w = handle->image->upload_width;
+			h = handle->image->upload_height;
+
 			R_BindFrameBufferObject( handle->image->fbo );
 
 			R_SetupGL2D();
 
-			RB_Scissor( 0, 0, handle->image->upload_width, handle->image->upload_height );
+			Matrix4_OrthoProjection( 0, w, h, 0, -1, 1, projectionMatrix );
 
-			RB_Viewport( 0, 0, handle->image->upload_width, handle->image->upload_height );
+			RB_LoadProjectionMatrix( projectionMatrix );
+
+			RB_Scissor( 0, 0, w,h );
+
+			RB_Viewport( 0, 0, w, h );
 
 			R_UploadRawYUVPic( handle->yuv_images, handle->cyuv->yuv );
 
 			// flip the image vertically because we're rendering to a FBO
 			R_DrawStretchRawYUVBuiltin(
 				0, 0,
-				handle->image->upload_width, handle->image->upload_height,
+				w, h,
 				(float)handle->cyuv->x_offset / handle->cyuv->image_width,
 				(float)handle->cyuv->y_offset / handle->cyuv->image_height,
 				(float)( handle->cyuv->x_offset + handle->cyuv->width ) / handle->cyuv->image_width,
