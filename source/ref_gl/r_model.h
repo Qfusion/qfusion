@@ -80,8 +80,6 @@ typedef struct msurface_s {
 
 	unsigned int drawSurf;
 
-	int fragmentframe;                  // for multi-check avoidance
-
 	vec4_t plane;
 
 	union {
@@ -163,6 +161,8 @@ typedef struct mbrushmodel_s {
 
 	unsigned int numsurfaces;
 	msurface_t      *surfaces;
+	int				*surfTraceFrames;		// for multi-check avoidance
+	int				*surfFragmentFrames;	// for multi-check avoidance
 
 	unsigned int numlightgridelems;
 	mgridlight_t    *lightgrid;

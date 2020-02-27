@@ -26,7 +26,7 @@ typedef struct {
 	vec3_t endpos;              // final position
 	cplane_t plane;             // surface normal at impact
 	int surfFlags;              // surface hit
-	int ent;                    // not set by CM_*() functions
+	int ent;
 	struct shader_s *shader;    // surface shader
 } rtrace_t;
 

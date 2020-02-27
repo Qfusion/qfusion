@@ -426,12 +426,14 @@ bool R_SurfPotentiallyFragmented( const msurface_t *surf ) {
 */
 static void R_RecursiveFragmentNode( void ) {
 	unsigned i;
+	unsigned si;
 	int stackdepth = 0;
 	float dist;
 	bool inside;
 	mnode_t *node, *localstack[2048];
 	mleaf_t *leaf;
 	msurface_t *surf;
+	int *surfFragmentFrames = rsh.worldBrushModel->surfFragmentFrames;
 
 	for( node = rsh.worldBrushModel->nodes, stackdepth = 0; node != NULL; ) {
 		if( node->plane == NULL ) {
@@ -442,11 +444,13 @@ static void R_RecursiveFragmentNode( void ) {
 					return; // already reached the limit
 
 				}
-				surf = rsh.worldBrushModel->surfaces + leaf->fragmentSurfaces[i];
-				if( surf->fragmentframe == r_fragmentframecount ) {
+
+				si = leaf->fragmentSurfaces[i];
+				surf = rsh.worldBrushModel->surfaces + si;
+				if( surfFragmentFrames[si] == r_fragmentframecount ) {
 					continue;
 				}
-				surf->fragmentframe = r_fragmentframecount;
+				surfFragmentFrames[si] = r_fragmentframecount;
 
 				if( !BoundsOverlapSphere( surf->mins, surf->maxs, fragmentOrigin, fragmentRadius ) ) {
 					continue;

@@ -367,6 +367,8 @@ typedef struct {
 	msurface_t      *debugSurface;
 	qmutex_t        *debugSurfaceLock;
 
+	qmutex_t		*traceLineLock;
+
 	char drawBuffer[32];
 	bool newDrawBuffer;
 } r_globals_t;

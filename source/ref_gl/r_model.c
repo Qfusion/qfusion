@@ -693,6 +693,9 @@ void Mod_CreateVertexBufferObjects( model_t *mod ) {
 	loadbmodel->numDrawSurfaces = 0;
 	loadbmodel->drawSurfaces = Mod_Malloc( mod, sizeof( *loadbmodel->drawSurfaces ) * loadbmodel->numsurfaces );
 
+	loadbmodel->surfTraceFrames = Mod_Malloc( mod, sizeof( *loadbmodel->surfTraceFrames ) * loadbmodel->numsurfaces );
+	loadbmodel->surfFragmentFrames = Mod_Malloc(mod, sizeof( *loadbmodel->surfFragmentFrames ) * loadbmodel->numsurfaces );
+
 	total_vbos = Mod_CreateSubmodelBufferObjects( mod, &total_size );
 
 	if( total_vbos ) {

@@ -1447,6 +1447,7 @@ static rserr_t R_PostInit( void ) {
 	rf.swapInterval = -1;
 	rf.speedsMsgLock = ri.Mutex_Create();
 	rf.debugSurfaceLock = ri.Mutex_Create();
+	rf.traceLineLock = ri.Mutex_Create();
 
 	RJ_Init();
 
@@ -1647,6 +1648,7 @@ void R_Shutdown( bool verbose ) {
 
 	ri.Mutex_Destroy( &rf.speedsMsgLock );
 	ri.Mutex_Destroy( &rf.debugSurfaceLock );
+	ri.Mutex_Destroy( &rf.traceLineLock );
 
 	RJ_Shutdown();
 
