@@ -34,7 +34,7 @@ matrix:
           packages:
             - clang
             - cmake
-            - build-essential
+            - ninja-build
             - libsdl2-dev
             - libopenal-dev
             - libfreetype6-dev
@@ -48,8 +48,8 @@ matrix:
             name: "Qfusion/qfusion"
             description: "Build submitted via Travis CI"
           notification_email: vluchits@gmail.com
-          build_command_prepend: "cd source && cov-configure --comptype clangcc --compiler clang && cov-configure --comptype clangcxx --compiler clang++ && export SDL2DIR=$HOME/.deps/$QF_ARCH && cmake ."
-          build_command: "make -j8"
+          build_command_prepend: "cd source && cov-configure --comptype clangcc --compiler clang && cov-configure --comptype clangcxx --compiler clang++ && export SDL2DIR=$HOME/.deps/$QF_ARCH && make -G Ninja ."
+          build_command: "ninja"
           branch_pattern: ci
     - dist: precise
       language: android
@@ -65,14 +65,14 @@ install:
   - if [[ "$QF_ARCH" == "android" ]]; then export NDK_HOME=$HOME/.deps/android-ndk-r11c && export PATH="$PATH:$NDK_HOME"; fi
   - if [[ "$QF_ARCH" == "x86_64" ]]; then export CC=clang CXX=clang++; fi
   - cd "$TRAVIS_BUILD_DIR/source"
-  - if [[ "$QF_ARCH" == "x86_64" ]]; then cmake .; fi
+  - if [[ "$QF_ARCH" == "x86_64" ]]; then cmake -G Ninja .; fi
   - if [[ "$QF_ARCH" == "OSX" ]]; then cmake -G Xcode .; fi
   - if [[ "$QF_ARCH" == "android" ]]; then mkdir -p build/libs && cd ../platforms/android/projects/qfusion/jni && ln -s ../../../../../libsrcs libsrcs && ln -s ../../../../../third-party third-party && ln -s ../../../../../source source && ln -s ../../../../../icons icons; fi
   - cd "$TRAVIS_BUILD_DIR"
 
 script:
   - cd source
-  - if [[ "$QF_ARCH" == "x86_64" ]]; then make -j8; fi
+  - if [[ "$QF_ARCH" == "x86_64" ]]; then ninja; fi
   - if [[ "$QF_ARCH" == "OSX" ]]; then xcodebuild -project qfusion.xcodeproj/ -jobs 4 -configuration Release -scheme ALL_BUILD | xcpretty; fi
   - if [[ "$QF_ARCH" == "android" ]]; then cd ../platforms/android/projects/qfusion/jni && ndk-build APP_ABI=$QF_ANDROID_ABI -j8 && cd "$TRAVIS_BUILD_DIR/source" && cp -Rd ../platforms/android/projects/qfusion/libs/* build/; fi
 
