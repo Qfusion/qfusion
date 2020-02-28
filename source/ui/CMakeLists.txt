@@ -32,12 +32,18 @@ file(GLOB NANOSVG_HEADERS
 
 source_group("nanosvg\\Header Files" FILES ${NANOSVG_HEADERS})
 
-include_directories(${ANGELSCRIPT_INCLUDE_DIR} ${LIBROCKET_INCLUDE_DIR} ${NANOSVG_INCLUDE_DIR})
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}) # for ui_precompiled.h
-
 add_library(ui SHARED ${NANOSVG_HEADERS} ${UI_SOURCES} ${UI_HEADERS})
+
+target_include_directories(ui PRIVATE ${ANGELSCRIPT_INCLUDE_DIR} ${LIBROCKET_INCLUDE_DIR} ${NANOSVG_INCLUDE_DIR})
+target_include_directories(ui PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}) # for ui_precompiled.h
+
 target_link_libraries(ui PRIVATE RmlCore RmlControls RmlDebugger)
+
 set_target_properties(ui PROPERTIES COMPILE_DEFINITIONS "RMLUI_STATIC_LIB;RMLUI_NO_FONT_INTERFACE_DEFAULT;RMLUI_NO_THIRDPARTY_CONTAINERS")
+if (CMAKE_VERSION VERSION_GREATER 3.16.0)
+    target_precompile_headers(ui PRIVATE "$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/ui_precompiled.h>")
+endif()
+
 add_dependencies(ui angelwrap)
 
 option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
