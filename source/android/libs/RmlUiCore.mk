@@ -58,11 +58,11 @@ LOCAL_SRC_FILES := \
   Source/Core/FileInterface.cpp \
   Source/Core/FileInterfaceDefault.cpp \
   Source/Core/FontEffect.cpp \
+  Source/Core/FontEffectBlur.cpp \
+  Source/Core/FontEffectGlow.cpp \
   Source/Core/FontEffectInstancer.cpp \
   Source/Core/FontEffectOutline.cpp \
-  Source/Core/FontEffectOutlineInstancer.cpp \
   Source/Core/FontEffectShadow.cpp \
-  Source/Core/FontEffectShadowInstancer.cpp \
   Source/Core/FontEngineInterface.cpp \
   Source/Core/Geometry.cpp \
   Source/Core/GeometryUtilities.cpp \
@@ -74,6 +74,7 @@ LOCAL_SRC_FILES := \
   Source/Core/LayoutLineBox.cpp \
   Source/Core/Log.cpp \
   Source/Core/Math.cpp \
+  Source/Core/Memory.cpp \
   Source/Core/ObserverPtr.cpp \
   Source/Core/Plugin.cpp \
   Source/Core/PluginRegistry.cpp \

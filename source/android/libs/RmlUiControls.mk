@@ -23,6 +23,7 @@ LOCAL_SRC_FILES := \
   Source/Controls/ElementFormControlInput.cpp \
   Source/Controls/ElementFormControlSelect.cpp \
   Source/Controls/ElementFormControlTextArea.cpp \
+  Source/Controls/ElementProgressBar.cpp \
   Source/Controls/ElementTabSet.cpp \
   Source/Controls/ElementTextSelection.cpp \
   Source/Controls/InputType.cpp \
