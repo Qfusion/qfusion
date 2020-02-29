@@ -103,9 +103,9 @@ script:
     fi
   - |
     if [[ "$QF_ARCH" == "android" ]]; then
-      cd ../platforms/android/projects/qfusion/jni
-      ndk-build APP_ABI=$QF_ANDROID_ABI -j8
-      cd "$TRAVIS_BUILD_DIR/source"
+      cd ../platforms/android/projects/qfusion/jni &&
+      ndk-build APP_ABI=$QF_ANDROID_ABI -j8 &&
+      cd "$TRAVIS_BUILD_DIR/source" &&
       cp -Rd ../platforms/android/projects/qfusion/libs/* build/
     fi
 
