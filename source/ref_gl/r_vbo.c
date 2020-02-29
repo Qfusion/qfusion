@@ -19,7 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "r_local.h"
-#include "../qalgo/half_float.h"
+#include "mhf.h"
 
 /*
 =========================================================
@@ -461,7 +461,7 @@ int R_GetNumberOfActiveVBOs( void ) {
 	}
 
 R_FillVertexBuffer_f( float, float, )
-R_FillVertexBuffer_f( float, GLhalfARB, Com_FloatToHalf )
+R_FillVertexBuffer_f( float, GLhalfARB, _mesa_float_to_half )
 R_FillVertexBuffer_f( int, int, )
 #define R_FillVertexBuffer_float_or_half( gl_type,in,size,stride,numVerts,out ) \
 	do { \

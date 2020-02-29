@@ -150,7 +150,7 @@ void MSG_WriteFloat( msg_t *msg, float f ) {
 }
 
 void MSG_WriteHalfFloat( msg_t *msg, float f ) {
-	MSG_WriteUint16( msg, Com_FloatToHalf( f ) );
+	MSG_WriteUint16( msg, float_to_half( f ) );
 }
 
 void MSG_WriteDir( msg_t *msg, vec3_t dir ) {
@@ -277,7 +277,7 @@ float MSG_ReadFloat( msg_t *msg ) {
 }
 
 float MSG_ReadHalfFloat( msg_t *msg ) {
-	return Com_HalfToFloat( MSG_ReadUint16( msg ) );
+	return half_to_float( MSG_ReadUint16( msg ) );
 }
 
 void MSG_ReadDir( msg_t *msg, vec3_t dir ) {

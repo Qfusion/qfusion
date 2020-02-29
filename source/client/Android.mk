@@ -31,7 +31,6 @@ LOCAL_SRC_FILES := \
   qalgo/base64.c \
   qalgo/glob.c \
   qalgo/hash.c \
-  qalgo/half_float.c \
   qalgo/md5.c \
   qalgo/q_trie.c \
   $(addprefix qcommon/,$(notdir $(wildcard $(LOCAL_PATH)/qcommon/*.c))) \

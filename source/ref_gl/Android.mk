@@ -13,7 +13,6 @@ LOCAL_SRC_FILES := \
   ../gameshared/q_shared.c \
   ../qalgo/glob.c \
   ../qalgo/hash.c \
-  ../qalgo/half_float.c \
   ../qalgo/q_trie.c \
   ../qcommon/bsp.c \
   ../qcommon/patch.c \

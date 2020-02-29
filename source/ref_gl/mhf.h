@@ -193,15 +193,3 @@ _mesa_half_to_float( unsigned short val ) {
 	result = fi.f;
 	return result;
 }
-
-// ============================================================================
-
-unsigned short
-Com_FloatToHalf( float val ) {
-	return _mesa_float_to_half( val );
-}
-
-float
-Com_HalfToFloat( unsigned short val ) {
-	return _mesa_half_to_float( val );
-}
