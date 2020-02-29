@@ -3,6 +3,7 @@
 #define __UI_SVG_RASTERIZER_H__
 
 #include "ui_precompiled.h"
+#include <map>
 #include "nanosvg.h"
 #include "nanosvgrast.h"
 

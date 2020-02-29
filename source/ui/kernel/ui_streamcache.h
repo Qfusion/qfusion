@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __UI_STREAMCACHE_H__
 #define __UI_STREAMCACHE_H__
 
+#include <map>
 #include "kernel/ui_common.h"
 #include "kernel/ui_utils.h"
 

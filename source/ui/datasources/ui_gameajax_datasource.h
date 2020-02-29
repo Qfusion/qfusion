@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __UI_CALLVOTES_DATASOURCE_H__
 #define __UI_CALLVOTES_DATASOURCE_H__
 
+#include <map>
 #include <RmlUi/Controls/DataSource.h>
 
 namespace WSWUI

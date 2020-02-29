@@ -6,6 +6,7 @@
 #ifndef UI_FontEngineInterface_H_
 #define UI_FontEngineInterface_H_
 
+#include <map>
 #include <RmlUi/Core/FontEngineInterface.h>
 #include "kernel/ui_polyallocator.h"
 

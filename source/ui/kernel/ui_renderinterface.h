@@ -10,6 +10,7 @@
 #ifndef UI_RENDERINTERFACE_H_
 #define UI_RENDERINTERFACE_H_
 
+#include <map>
 #include "kernel/ui_polyallocator.h"
 #include <RmlUi/Core/RenderInterface.h>
 

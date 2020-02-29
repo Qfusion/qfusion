@@ -8,6 +8,7 @@
 #ifndef UI_FILEINTERFACE_H_
 #define UI_FILEINTERFACE_H_
 
+#include <map>
 #include <RmlUi/Core/FileInterface.h>
 
 namespace WSWUI
