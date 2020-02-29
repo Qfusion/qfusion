@@ -4,6 +4,7 @@
 
 #include "as/asui.h"
 #include "as/asui_local.h"
+#include <RmlUi/Core/Stream.h>
 
 namespace ASUI
 {
