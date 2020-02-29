@@ -78,7 +78,6 @@ LOCAL_SRC_FILES := \
   Source/Core/ObserverPtr.cpp \
   Source/Core/Plugin.cpp \
   Source/Core/PluginRegistry.cpp \
-  Source/Core/precompiled.cpp \
   Source/Core/Profiling.cpp \
   Source/Core/PropertiesIteratorView.cpp \
   Source/Core/Property.cpp \
@@ -128,6 +127,7 @@ LOCAL_SRC_FILES := \
   Source/Core/Transform.cpp \
   Source/Core/TransformPrimitive.cpp \
   Source/Core/TransformState.cpp \
+  Source/Core/Tween.cpp \
   Source/Core/TypeConverter.cpp \
   Source/Core/URL.cpp \
   Source/Core/Variant.cpp \
