@@ -62,9 +62,9 @@ matrix:
 
 install:
   - |
-    if [[ "$QF_ARCH" == "android" ]] && [ ! -e "$HOME/.deps/android-ndk-r11c" ];
+    if [[ "$QF_ARCH" == "android" ]] && [ ! -e "$HOME/.deps/android-ndk-r11c" ]; then
       NDK_URL="http://dl.google.com/android/repository/android-ndk-r11c-linux-x86_64.zip"
-      then curl -L ${NDK_URL} >ndk.zip && unzip ndk.zip -d $HOME/.deps &> /dev/null && rm ndk.zip
+      curl -L ${NDK_URL} >ndk.zip && unzip ndk.zip -d $HOME/.deps &> /dev/null && rm ndk.zip
     fi
   - if [[ "$QF_ARCH" == "android" ]]; then export NDK_HOME=$HOME/.deps/android-ndk-r11c && export PATH="$PATH:$NDK_HOME"; fi
   - if [[ "$QF_ARCH" == "x86_64" ]]; then export CC=clang CXX=clang++; fi
@@ -84,8 +84,8 @@ install:
   - if [[ "$QF_ARCH" == "x86_64" ]]; then cmake -G Ninja .; fi
   - if [[ "$QF_ARCH" == "OSX" ]]; then cmake -G Xcode .; fi
   - |
-    if [[ "$QF_ARCH" == "android" ]];
-      then mkdir -p build/libs
+    if [[ "$QF_ARCH" == "android" ]]; then
+      mkdir -p build/libs
       cd ../platforms/android/projects/qfusion/jni
       ln -s ../../../../../libsrcs libsrcs
       ln -s ../../../../../third-party third-party
@@ -98,12 +98,12 @@ script:
   - cd source
   - if [[ "$QF_ARCH" == "x86_64" ]]; then ninja; fi
   - |
-    if [[ "$QF_ARCH" == "OSX" ]];
-      then xcodebuild -project qfusion.xcodeproj/ -jobs 4 -configuration Release -scheme ALL_BUILD | xcpretty
+    if [[ "$QF_ARCH" == "OSX" ]]; then
+      xcodebuild -project qfusion.xcodeproj/ -jobs 4 -configuration Release -scheme ALL_BUILD | xcpretty
     fi
   - |
-    if [[ "$QF_ARCH" == "android" ]];
-      then cd ../platforms/android/projects/qfusion/jni
+    if [[ "$QF_ARCH" == "android" ]]; then
+      cd ../platforms/android/projects/qfusion/jni
       ndk-build APP_ABI=$QF_ANDROID_ABI -j8
       cd "$TRAVIS_BUILD_DIR/source"
       cp -Rd ../platforms/android/projects/qfusion/libs/* build/
