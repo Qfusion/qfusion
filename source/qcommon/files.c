@@ -1691,19 +1691,6 @@ int FS_FileNo( int file, size_t *offset ) {
 }
 
 /*
-* FS_SetCompressionLevel
-*/
-void FS_SetCompressionLevel( int file, int level ) {
-}
-
-/*
-* FS_GetCompressionLevel
-*/
-int FS_GetCompressionLevel( int file ) {
-	return 0;
-}
-
-/*
 * _FS_LoadFile
 */
 static int _FS_LoadFile( int fhandle, unsigned int len, void **buffer, void *stack, size_t stackSize, const char *filename, int fileline ) {
