@@ -38,21 +38,10 @@ break
 
 //#define AUTHED_SAY
 
-//#define TCP_ALLOW_CONNECT
-
-#if defined( TCP_ALLOW_CONNECT ) && !defined( TCP_SUPPORT )
-#undef TCP_ALLOW_CONNECT
-#endif
-
 #define HTTP_SUPPORT
 
 #if defined( HTTP_SUPPORT ) && !defined( TCP_SUPPORT )
 #undef HTTP_SUPPORT
-#endif
-
-#ifndef PUBLIC_BUILD
-#define TCP_ALLOW_CONNECT_CLIENT
-//#define WEAPONDEFS_FROM_DISK
 #endif
 
 #define DOWNSCALE_ITEMS // Ugly hack for the release. Item models are way too big

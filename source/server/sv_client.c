@@ -102,14 +102,6 @@ bool SV_ClientConnect( const socket_t *socket, const netadr_t *address, client_t
 
 	if( socket ) {
 		switch( socket->type ) {
-#ifdef TCP_ALLOW_CONNECT
-			case SOCKET_TCP:
-				client->reliable = true;
-				client->individual_socket = true;
-				client->socket = *socket;
-				break;
-#endif
-
 			case SOCKET_UDP:
 			case SOCKET_LOOPBACK:
 				client->reliable = false;

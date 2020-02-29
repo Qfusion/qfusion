@@ -126,16 +126,11 @@ void CL_UpdateClientCommandsToServer( msg_t *msg ) {
 		}
 
 		MSG_WriteUint8( msg, clc_clientcommand );
-		if( !cls.reliable ) {
-			MSG_WriteIntBase128( msg, i );
-		}
+		MSG_WriteIntBase128( msg, i );
 		MSG_WriteString( msg, cls.reliableCommands[i & ( MAX_RELIABLE_COMMANDS - 1 )] );
 	}
 
 	cls.reliableSent = cls.reliableSequence;
-	if( cls.reliable ) {
-		cls.reliableAcknowledge = cls.reliableSent;
-	}
 }
 
 /*
@@ -246,7 +241,7 @@ static void CL_CheckForResend( void ) {
 	}
 
 	// resend if we haven't gotten a reply yet
-	if( cls.state == CA_CONNECTING && !cls.reliable ) {
+	if( cls.state == CA_CONNECTING ) {
 		if( realtime - cls.connect_time < 3000 ) {
 			return;
 		}
@@ -260,50 +255,6 @@ static void CL_CheckForResend( void ) {
 		Com_Printf( "Connecting to %s...\n", cls.servername );
 
 		Netchan_OutOfBandPrint( cls.socket, &cls.serveraddress, "getchallenge\n" );
-	}
-
-	if( cls.state == CA_CONNECTING && cls.reliable ) {
-		if( realtime - cls.connect_time < 3000 ) {
-			return;
-		}
-
-#ifdef TCP_ALLOW_CONNECT
-		if( cls.socket->type == SOCKET_TCP && !cls.socket->connected ) {
-			connection_status_t status;
-
-			if( !cls.connect_count ) {
-				Com_Printf( "Connecting to %s...\n", cls.servername );
-
-				status = NET_Connect( cls.socket, &cls.serveraddress );
-			} else {
-				Com_Printf( "Checking connection to %s...\n", cls.servername );
-
-				status = NET_CheckConnect( cls.socket );
-			}
-
-			cls.connect_count++;
-			cls.connect_time = realtime;
-
-			if( status == CONNECTION_FAILED ) {
-				CL_Disconnect( va( "TCP connection failed: %s", NET_ErrorString() ) );
-				return;
-			}
-
-			if( status == CONNECTION_INPROGRESS ) {
-				return;
-			}
-
-			Com_Printf( "Connection made, asking for challenge %s...\n", cls.servername );
-			Netchan_OutOfBandPrint( cls.socket, &cls.serveraddress, "getchallenge\n" );
-			return;
-		}
-#endif
-
-		if( realtime - cls.connect_time < 10000 ) {
-			return;
-		}
-
-		CL_Disconnect( "Connection timed out" );
 	}
 }
 
@@ -327,26 +278,11 @@ static void CL_Connect( const char *servername, socket_type_t type, netadr_t *ad
 				return;
 			}
 			cls.socket = &cls.socket_loopback;
-			cls.reliable = false;
 			break;
 
 		case SOCKET_UDP:
 			cls.socket = ( address->type == NA_IP6 ?  &cls.socket_udp6 :  &cls.socket_udp );
-			cls.reliable = false;
 			break;
-
-#ifdef TCP_ALLOW_CONNECT
-		case SOCKET_TCP:
-			NET_InitAddress( &socketaddress, address->type );
-			if( !NET_OpenSocket( &cls.socket_tcp, SOCKET_TCP, &socketaddress, false ) ) {
-				Com_Error( ERR_FATAL, "Couldn't open the TCP socket\n" ); // FIXME
-				return;
-			}
-			NET_SetSocketNoDelay( &cls.socket_tcp, 1 );
-			cls.socket = &cls.socket_tcp;
-			cls.reliable = true;
-			break;
-#endif
 
 		default:
 			assert( false );
@@ -384,7 +320,6 @@ static void CL_Connect( const char *servername, socket_type_t type, netadr_t *ad
 	cls.connect_count = 0;
 	cls.rejected = false;
 	cls.lastPacketReceivedTime = cls.realtime; // reset the timeout limit
-	cls.mv = false;
 }
 
 /*
@@ -475,16 +410,6 @@ static void CL_Connect_Cmd_f( socket_type_t socket ) {
 static void CL_Connect_f( void ) {
 	CL_Connect_Cmd_f( SOCKET_UDP );
 }
-
-/*
-* CL_TCPConnect_f
-*/
-#if defined( TCP_ALLOW_CONNECT )
-static void CL_TCPConnect_f( void ) {
-	CL_Connect_Cmd_f( SOCKET_TCP );
-}
-#endif
-
 
 /*
 * CL_Rcon_f
@@ -869,8 +794,6 @@ void CL_Disconnect( const char *message ) {
 	}
 
 	cls.socket = NULL;
-	cls.reliable = false;
-	cls.mv = false;
 
 	if( cls.httpbaseurl ) {
 		Mem_Free( cls.httpbaseurl );
@@ -991,11 +914,7 @@ void CL_ServerReconnect_f( void ) {
 
 	Com_Printf( "Reconnecting...\n" );
 
-#ifdef TCP_ALLOW_CONNECT
-	cls.connect_time = Sys_Milliseconds();
-#else
 	cls.connect_time = Sys_Milliseconds() - 1500;
-#endif
 
 	memset( cl.configstrings, 0, sizeof( cl.configstrings ) );
 	CL_SetClientState( CA_HANDSHAKE );
@@ -1271,9 +1190,6 @@ void CL_ReadPackets( void ) {
 		&cls.socket_loopback,
 		&cls.socket_udp,
 		&cls.socket_udp6,
-#ifdef TCP_ALLOW_CONNECT
-		&cls.socket_tcp
-#endif
 	};
 
 	MSG_Init( &msg, msgData, sizeof( msgData ) );
@@ -1281,16 +1197,10 @@ void CL_ReadPackets( void ) {
 	for( socketind = 0; socketind < sizeof( sockets ) / sizeof( sockets[0] ); socketind++ ) {
 		socket = sockets[socketind];
 
-#ifdef TCP_ALLOW_CONNECT
-		if( socket->type == SOCKET_TCP && !socket->connected ) {
-			continue;
-		}
-#endif
-
 		while( socket->open && ( ret = NET_GetPacket( socket, &address, &msg ) ) != 0 ) {
 			if( ret == -1 ) {
 				Com_Printf( "Error receiving packet with %s: %s\n", NET_SocketToString( socket ), NET_ErrorString() );
-				if( cls.reliable && cls.socket == socket ) {
+				if( cls.socket == socket ) {
 					CL_Disconnect( va( "Error receiving packet: %s\n", NET_ErrorString() ) );
 				}
 
@@ -1334,13 +1244,6 @@ void CL_ReadPackets( void ) {
 			}
 			CL_ParseServerMessage( &msg );
 			cls.lastPacketReceivedTime = cls.realtime;
-
-#ifdef TCP_ALLOW_CONNECT
-			// we might have just been disconnected
-			if( socket->type == SOCKET_TCP && !socket->connected ) {
-				break;
-			}
-#endif
 		}
 	}
 
@@ -2035,9 +1938,6 @@ static void CL_InitLocal( void ) {
 	Cmd_AddCommand( "stop", CL_Stop_f );
 	Cmd_AddCommand( "quit", CL_Quit_f );
 	Cmd_AddCommand( "connect", CL_Connect_f );
-#if defined( TCP_ALLOW_CONNECT ) && defined( TCP_ALLOW_CONNECT_CLIENT )
-	Cmd_AddCommand( "tcpconnect", CL_TCPConnect_f );
-#endif
 	Cmd_AddCommand( "reconnect", CL_Reconnect_f );
 	Cmd_AddCommand( "rcon", CL_Rcon_f );
 	Cmd_AddCommand( "writeconfig", CL_WriteConfig_f );
@@ -2074,9 +1974,6 @@ static void CL_ShutdownLocal( void ) {
 	Cmd_RemoveCommand( "stop" );
 	Cmd_RemoveCommand( "quit" );
 	Cmd_RemoveCommand( "connect" );
-#if defined( TCP_ALLOW_CONNECT )
-	Cmd_RemoveCommand( "tcpconnect" );
-#endif
 	Cmd_RemoveCommand( "reconnect" );
 	Cmd_RemoveCommand( "rcon" );
 	Cmd_RemoveCommand( "writeconfig" );
@@ -2279,6 +2176,7 @@ static bool CL_MaxPacketsReached( void ) {
 	static float roundingMsec = 0.0f;
 	int minpackettime;
 	int elapsedTime;
+	float minTime;
 
 	if( lastPacketTime > cls.realtime ) {
 		lastPacketTime = cls.realtime;
@@ -2290,24 +2188,20 @@ static bool CL_MaxPacketsReached( void ) {
 	}
 
 	elapsedTime = cls.realtime - lastPacketTime;
-	if( cls.mv ) {
-		minpackettime = ( 1000.0f / 2 );
-	} else {
-		float minTime = ( 1000.0f / cl_pps->value );
+	minTime = ( 1000.0f / cl_pps->value );
 
-		// don't let cl_pps be smaller than sv_pps
-		if( cls.state == CA_ACTIVE && !cls.demo.playing && cl.snapFrameTime ) {
-			if( (unsigned int)minTime > cl.snapFrameTime ) {
-				minTime = cl.snapFrameTime;
-			}
+	// don't let cl_pps be smaller than sv_pps
+	if( cls.state == CA_ACTIVE && !cls.demo.playing && cl.snapFrameTime ) {
+		if( (unsigned int)minTime > cl.snapFrameTime ) {
+			minTime = cl.snapFrameTime;
 		}
+	}
 
-		minpackettime = (int)minTime;
-		roundingMsec += minTime - (int)minTime;
-		if( roundingMsec >= 1.0f ) {
-			minpackettime += (int)roundingMsec;
-			roundingMsec -= (int)roundingMsec;
-		}
+	minpackettime = (int)minTime;
+	roundingMsec += minTime - (int)minTime;
+	if( roundingMsec >= 1.0f ) {
+		minpackettime += (int)roundingMsec;
+		roundingMsec -= (int)roundingMsec;
 	}
 
 	if( elapsedTime < minpackettime ) {
@@ -2340,10 +2234,9 @@ void CL_SendMessagesToServer( bool sendNow ) {
 	if( cls.state < CA_ACTIVE ) {
 		if( sendNow || cls.realtime > 100 + cls.lastPacketSentTime ) {
 			// write the command ack
-			if( !cls.reliable ) {
-				MSG_WriteUint8( &message, clc_svcack );
-				MSG_WriteIntBase128( &message, cls.lastExecutedServerCommand );
-			}
+			MSG_WriteUint8( &message, clc_svcack );
+			MSG_WriteIntBase128( &message, cls.lastExecutedServerCommand );
+
 			//write up the clc commands
 			CL_UpdateClientCommandsToServer( &message );
 			if( message.cursize > 0 ) {
@@ -2352,10 +2245,9 @@ void CL_SendMessagesToServer( bool sendNow ) {
 		}
 	} else if( sendNow || CL_MaxPacketsReached() ) {
 		// write the command ack
-		if( !cls.reliable ) {
-			MSG_WriteUint8( &message, clc_svcack );
-			MSG_WriteIntBase128( &message, cls.lastExecutedServerCommand );
-		}
+		MSG_WriteUint8( &message, clc_svcack );
+		MSG_WriteIntBase128( &message, cls.lastExecutedServerCommand );
+
 		// send a userinfo update if needed
 		if( userinfo_modified ) {
 			userinfo_modified = false;

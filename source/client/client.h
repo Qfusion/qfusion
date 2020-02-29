@@ -217,9 +217,6 @@ typedef struct {
 	socket_t socket_loopback;
 	socket_t socket_udp;
 	socket_t socket_udp6;
-#ifdef TCP_SUPPORT
-	socket_t socket_tcp;
-#endif
 
 	// screen rendering information
 	bool cgameActive;
@@ -238,8 +235,6 @@ typedef struct {
 	int connect_count;
 
 	socket_t *socket;               // socket used by current connection
-	bool reliable;
-	bool mv;
 
 	netadr_t rconaddress;       // address where we are sending rcon messages, to ignore other print packets
 

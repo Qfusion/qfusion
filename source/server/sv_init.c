@@ -366,44 +366,6 @@ void SV_InitGame( void ) {
 		}
 	}
 
-#ifdef TCP_ALLOW_CONNECT
-	if( sv_tcp->integer && ( dedicated->integer || sv_maxclients->integer > 1 ) ) {
-		bool err = true;
-
-		if( !NET_OpenSocket( &svs.socket_tcp, SOCKET_TCP, &address, true ) ) {
-			Com_Printf( "Error: Couldn't open TCP socket: %s\n", NET_ErrorString() );
-		} else {
-			NET_SetSocketNoDelay( &svs.socket_tcp, 1 );
-			if( !NET_Listen( &svs.socket_tcp ) ) {
-				Com_Printf( "Error: Couldn't listen to TCP socket: %s\n", NET_ErrorString() );
-				NET_CloseSocket( &svs.socket_tcp );
-			} else {
-				err = false;
-				socket_opened = true;
-			}
-		}
-
-		if( ipv6_address.type == NA_IP6 ) {
-			if( !NET_OpenSocket( &svs.socket_tcp6, SOCKET_TCP, &ipv6_address, true ) ) {
-				Com_Printf( "Error: Couldn't open TCP6 socket: %s\n", NET_ErrorString() );
-			} else {
-				NET_SetSocketNoDelay( &svs.socket_tcp6, 1 );
-				if( !NET_Listen( &svs.socket_tcp6 ) ) {
-					Com_Printf( "Error: Couldn't listen to TCP6 socket: %s\n", NET_ErrorString() );
-					NET_CloseSocket( &svs.socket_tcp6 );
-				} else {
-					err = false;
-					socket_opened = true;
-				}
-			}
-		}
-
-		if( err ) {
-			Cvar_ForceSet( "sv_tcp", "0" );
-		}
-	}
-#endif
-
 	if( dedicated->integer && !socket_opened ) {
 		Com_Error( ERR_FATAL, "Couldn't open any socket\n" );
 	}
@@ -489,12 +451,6 @@ void SV_ShutdownGame( const char *finalmsg, bool reconnect ) {
 	NET_CloseSocket( &svs.socket_loopback );
 	NET_CloseSocket( &svs.socket_udp );
 	NET_CloseSocket( &svs.socket_udp6 );
-#ifdef TCP_ALLOW_CONNECT
-	if( sv_tcp->integer ) {
-		NET_CloseSocket( &svs.socket_tcp );
-		NET_CloseSocket( &svs.socket_tcp6 );
-	}
-#endif
 
 	// get any latched variable changes (sv_maxclients, etc)
 	Cvar_GetLatchedVars( CVAR_LATCH );
