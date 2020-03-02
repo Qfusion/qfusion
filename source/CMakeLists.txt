@@ -81,7 +81,6 @@ if (WIN32)
     endif()
 
     set(CMAKE_INCLUDE_PATH
-        "../libsrcs/src/zlib"
         "../libsrcs/src/libcurl/include"
         "../libsrcs/src/libfreetype"
         "../libsrcs/src/SDL2/include"
@@ -193,7 +192,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 endif()
 
 if (NOT GAME_MODULES_ONLY)
-    find_package(ZLIB REQUIRED)
     find_package(CURL REQUIRED)
 
     if (NOT SERVER_ONLY)
@@ -226,7 +224,6 @@ endif()
 
 if (NOT GAME_MODULES_ONLY)
     if (WIN32)
-        find_windows_release_libs(ZLIB_LIBRARY)
         find_windows_release_libs(CURL_LIBRARY)
         find_windows_release_libs(ANGELSCRIPT_LIBRARY)
         if (NOT SERVER_ONLY)
@@ -242,10 +239,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux") # Do not add 'OR MINGW' here - we need
 
     set(FREETYPE_LIBRARIES "")
     add_definitions(-DFREETYPELIB_RUNTIME)
-
-    set(ZLIB_LIBRARY "")
-    add_definitions(-DZLIB_RUNTIME)
-
 elseif (APPLE)
     capitalize(QFUSION_CLIENT_NAME)
 endif()
