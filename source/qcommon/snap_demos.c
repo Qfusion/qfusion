@@ -198,7 +198,7 @@ void SNAP_BeginDemoRecording( int demofile, unsigned int spawncount, unsigned in
 
 	for( i = 0; i < MAX_EDICTS; i++ ) {
 		base = &baselines[i];
-		if( base->modelindex || base->sound || base->effects ) {
+		if( base->number ) {
 			MSG_WriteUint8( &msg, svc_spawnbaseline );
 			MSG_WriteDeltaEntity( &msg, &nullstate, base, true );
 
