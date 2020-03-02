@@ -140,9 +140,6 @@ typedef struct {
 	int64_t ( *Milliseconds )( void );
 	bool ( *DownloadRequest )( const char *filename, bool requestpak );
 
-	unsigned int ( * Hash_BlockChecksum )( const uint8_t * data, size_t len );
-	unsigned int ( * Hash_SuperFastHash )( const uint8_t * data, size_t len, unsigned int seed );
-
 	void ( *NET_GetUserCmd )( int frame, usercmd_t *cmd );
 	int ( *NET_GetCurrentUserCmdNum )( void );
 	void ( *NET_GetCurrentState )( int64_t *incomingAcknowledged, int64_t *outgoingSequence, int64_t *outgoingSent );
