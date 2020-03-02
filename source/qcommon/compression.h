@@ -19,6 +19,3 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "miniz.h"
-
-void Com_LoadCompressionLibraries( void );
-void Com_UnloadCompressionLibraries( void );
