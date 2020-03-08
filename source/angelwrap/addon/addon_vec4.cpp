@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "../qas_precompiled.h"
 #include "addon_vec4.h"
+#include "addon_scriptarray.h"
 
 // CLASS: Vec4
 void objectVec4_DefaultConstructor( asvec4_t *self ) {
@@ -44,6 +45,14 @@ void objectVec4_CopyConstructor( asvec4_t *other, asvec4_t *self ) {
 	self->v[1] = other->v[1];
 	self->v[2] = other->v[2];
 	self->v[3] = other->v[3];
+}
+
+void objectVec4_ConstructorArray( CScriptArrayInterface &arr, asvec3_t *self )
+{
+	unsigned arr_size = arr.GetSize();
+	for( unsigned int i = 0; i < 4; i++ ) {
+		self->v[i] = i < arr_size ? *( (float *)arr.At( i ) ) : 0;
+	}
 }
 
 static asvec4_t *objectVec4_AssignBehaviour( asvec4_t *other, asvec4_t *self ) {
@@ -168,6 +177,20 @@ static float *objectVec4_Index( unsigned index, asvec3_t *self ) {
 	return &self->v[index];
 }
 
+static CScriptArrayInterface *objectVec4_VecToArray( unsigned index, asvec3_t *self )
+{
+	asIScriptContext *ctx = asGetActiveContext();
+	asIScriptEngine *engine = ctx->GetEngine();
+	asIObjectType *ot = engine->GetObjectTypeById( engine->GetTypeIdByDecl( "array<float>" ) );
+	CScriptArrayInterface *arr = QAS_NEW( CScriptArray )( 3, ot );
+
+	for( int i = 0; i < 3; i++ ) {
+		*( (float *)arr->At( i ) ) = self->v[i];
+	}
+
+	return arr;
+}
+
 void PreRegisterVec4Addon( asIScriptEngine *engine ) {
 	int r;
 
@@ -185,6 +208,9 @@ void RegisterVec4Addon( asIScriptEngine *engine ) {
 	r = engine->RegisterObjectBehaviour( "Vec4", asBEHAVE_CONSTRUCT, "void f(float x, float y, float z, float w)", asFUNCTION( objectVec4_Constructor3F ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour( "Vec4", asBEHAVE_CONSTRUCT, "void f(float v)", asFUNCTION( objectVec4_Constructor1F ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour( "Vec4", asBEHAVE_CONSTRUCT, "void f(const Vec4 &in)", asFUNCTION( objectVec4_CopyConstructor ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour( "Vec4", asBEHAVE_CONSTRUCT, "void f(const array<float> &)",
+		asFUNCTION( objectVec4_ConstructorArray ), asCALL_CDECL_OBJLAST );
+	assert( r >= 0 );
 
 	// register object methods
 
@@ -218,6 +244,9 @@ void RegisterVec4Addon( asIScriptEngine *engine ) {
 	r = engine->RegisterObjectMethod( "Vec4", "Vec3 xyz() const", asFUNCTION( objectVec4_XYZ ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "Vec4", "float &opIndex(uint)", asFUNCTION( objectVec4_Index ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "Vec4", "const float &opIndex(uint) const", asFUNCTION( objectVec4_Index ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
+
+	r = engine->RegisterObjectMethod(
+		"Vec4", "array<float> @toArray()", asFUNCTION( objectVec4_VecToArray ), asCALL_CDECL_OBJLAST );
 
 	// properties
 	r = engine->RegisterObjectProperty( "Vec4", "float x", asOFFSET( asvec4_t, v[0] ) ); assert( r >= 0 );
