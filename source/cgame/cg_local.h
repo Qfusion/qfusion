@@ -748,7 +748,6 @@ struct sfx_s *CG_RegisterSexedSound( int entnum, const char *name );
 // cg_predict.c
 //
 extern cvar_t *cg_predict;
-extern cvar_t *cg_predict_optimize;
 extern cvar_t *cg_showMiss;
 
 void CG_PredictedEvent( int entNum, int ev, int parm );
