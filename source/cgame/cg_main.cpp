@@ -94,7 +94,6 @@ cvar_t *cg_chatBeep;
 cvar_t *cg_chatFilter;
 
 cvar_t *cg_cartoonEffects;
-cvar_t *cg_cartoonHitEffect;
 
 cvar_t *cg_volume_hitsound;
 cvar_t *cg_autoaction_demo;
@@ -797,7 +796,6 @@ static void CG_RegisterVariables( void ) {
 	cg_showSelfShadow = trap_Cvar_Get( "cg_showSelfShadow", "0", CVAR_ARCHIVE );
 
 	cg_cartoonEffects =     trap_Cvar_Get( "cg_cartoonEffects", "7", CVAR_ARCHIVE );
-	cg_cartoonHitEffect =   trap_Cvar_Get( "cg_cartoonHitEffect", "1", CVAR_ARCHIVE );
 
 	cg_damage_indicator =   trap_Cvar_Get( "cg_damage_indicator", "1", CVAR_ARCHIVE );
 	cg_damage_indicator_time =  trap_Cvar_Get( "cg_damage_indicator_time", "25", CVAR_ARCHIVE );

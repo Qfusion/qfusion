@@ -250,9 +250,6 @@ typedef struct {
 	cgs_media_handle_t *shaderBloodTrailPuff;
 	cgs_media_handle_t *shaderBloodTrailLiquidPuff;
 	cgs_media_handle_t *shaderBloodImpactPuff;
-	cgs_media_handle_t *shaderCartoonHit;
-	cgs_media_handle_t *shaderCartoonHit2;
-	cgs_media_handle_t *shaderCartoonHit3;
 	cgs_media_handle_t *shaderTeamMateIndicator;
 	cgs_media_handle_t *shaderTeamCarrierIndicator;
 	cgs_media_handle_t *shaderTeleporterSmokePuff;
@@ -901,7 +898,6 @@ extern cvar_t *cg_projectileFireTrailAlpha;
 extern cvar_t *cg_bloodTrailAlpha;
 
 extern cvar_t *cg_cartoonEffects;
-extern cvar_t *cg_cartoonHitEffect;
 
 extern cvar_t *cg_explosionsRing;
 extern cvar_t *cg_explosionsDust;
@@ -1069,7 +1065,6 @@ void CG_Explosion2( const vec3_t pos );
 void CG_ProjectileTrail( centity_t *cent );
 void CG_NewBloodTrail( centity_t *cent );
 void CG_BloodDamageEffect( const vec3_t origin, const vec3_t dir, int damage );
-void CG_CartoonHitEffect( const vec3_t origin, const vec3_t dir, int damage );
 void CG_FlagTrail( const vec3_t origin, const vec3_t start, const vec3_t end, float r, float g, float b );
 void CG_GreenLaser( const vec3_t start, const vec3_t end );
 void CG_SmallPileOfGibs( const vec3_t origin, int damage, const vec3_t initialVelocity, int team );
