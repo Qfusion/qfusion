@@ -152,6 +152,7 @@ static const gs_asProperty_t ascamera_Properties[] =
 	{ ASLIB_PROPERTY_DECL( Vec3, origin ), ASLIB_FOFFSET( cg_viewdef_t, origin ) },
 	{ ASLIB_PROPERTY_DECL( Vec3, angles ), ASLIB_FOFFSET( cg_viewdef_t, angles ) },
 	{ ASLIB_PROPERTY_DECL( Vec3, velocity ), ASLIB_FOFFSET( cg_viewdef_t, velocity ) },
+	{ ASLIB_PROPERTY_DECL( Mat3, axis ), ASLIB_FOFFSET( cg_viewdef_t, axis ) },
 
 	ASLIB_PROPERTY_NULL
 };
