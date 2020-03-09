@@ -39,6 +39,10 @@ typedef struct asvec4_s {
 	vec4_t v;
 } asvec4_t;
 
+typedef struct asmat3_s {
+	mat3_t m;
+} asmat3_t;
+
 class CScriptArrayInterface
 {
 protected:

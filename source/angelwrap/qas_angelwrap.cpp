@@ -29,6 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "addon/addon_vec4.h"
 #include "addon/addon_cvar.h"
 #include "addon/addon_stringutils.h"
+#include "addon/addon_mat3.h"
 
 #include <list>
 
@@ -121,6 +122,7 @@ asIScriptEngine *qasCreateEngine( bool *asMaxPortability ) {
 	PreRegisterVec4Addon( engine );
 	PreRegisterCvarAddon( engine );
 	PreRegisterStringUtilsAddon( engine );
+	PreRegisterMat3Addon( engine );
 
 	RegisterMathAddon( engine );
 	RegisterScriptArray( engine, true );
@@ -132,6 +134,7 @@ asIScriptEngine *qasCreateEngine( bool *asMaxPortability ) {
 	RegisterVec4Addon( engine );
 	RegisterCvarAddon( engine );
 	RegisterStringUtilsAddon( engine );
+	RegisterMat3Addon( engine );
 
 	engine->SetDefaultAccessMask( 0x1 );
 
