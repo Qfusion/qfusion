@@ -155,7 +155,7 @@ inline void R_DrawRotatedStretchPic( int x, int y, int w, int h, float s1, float
 	UI_IMPORT.R_DrawRotatedStretchPic( x, y, w, h, s1, t1, s2, t2, angle, color, shader );
 }
 
-inline void R_TransformVectorToScreen( refdef_t *rd, vec3_t in, vec2_t out ) {
+inline void R_TransformVectorToScreen( refdef_t *rd, vec3_t in, vec3_t out ) {
 	UI_IMPORT.R_TransformVectorToScreen( rd, in, out );
 }
 

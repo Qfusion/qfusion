@@ -525,7 +525,7 @@ void RF_StopAviDemo( void ) {
 	RF_AdapterWait( &rrf.adapter );
 }
 
-void RF_TransformVectorToScreen( const refdef_t *rd, const vec3_t in, vec2_t out ) {
+void RF_TransformVectorToScreen( const refdef_t *rd, const vec3_t in, vec3_t out ) {
 	mat4_t p, m;
 	vec4_t temp, temp2;
 
@@ -561,6 +561,7 @@ void RF_TransformVectorToScreen( const refdef_t *rd, const vec3_t in, vec2_t out
 
 	out[0] = rd->x + ( temp[0] / temp[3] + 1.0f ) * rd->width * 0.5f;
 	out[1] = glConfig.height - ( rd->y + ( temp[1] / temp[3] + 1.0f ) * rd->height * 0.5f );
+	out[2] = ( temp[2] / temp[3] + 1.0f ) * 0.5f;
 }
 
 bool RF_LerpTag( orientation_t *orient, const model_t *mod, int oldframe, int frame, float lerpfrac, const char *name ) {

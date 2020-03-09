@@ -210,7 +210,7 @@ typedef struct {
 	struct shader_s * ( *GetShaderForOrigin )( const vec3_t origin );
 	struct cinematics_s * ( *GetShaderCinematic )( struct shader_s *shader );
 
-	void ( *TransformVectorToScreen )( const refdef_t *rd, const vec3_t in, vec2_t out );
+	void ( *TransformVectorToScreen )( const refdef_t *rd, const vec3_t in, vec3_t out );
 
 	// Should only be used as a hint - the renderer may keep drawing or not drawing to the window for a few frames when this changes
 	bool ( *RenderingEnabled )( void );

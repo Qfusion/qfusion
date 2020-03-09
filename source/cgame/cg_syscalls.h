@@ -308,7 +308,7 @@ static inline void trap_R_DrawStretchPoly( const poly_t *poly, float x_offset, f
 	CGAME_IMPORT.R_DrawStretchPoly( poly, x_offset, y_offset );
 }
 
-static inline void trap_R_TransformVectorToScreen( const refdef_t *rd, const vec3_t in, vec2_t out ) {
+static inline void trap_R_TransformVectorToScreen( const refdef_t *rd, const vec3_t in, vec3_t out ) {
 	CGAME_IMPORT.R_TransformVectorToScreen( rd, in, out );
 }
 

@@ -183,7 +183,7 @@ typedef struct {
 	void ( *R_GetScissor )( int *x, int *y, int *w, int *h );
 	void ( *R_ResetScissor )( void );
 	void ( *R_GetShaderDimensions )( const struct shader_s *shader, int *width, int *height );
-	void ( *R_TransformVectorToScreen )( const struct refdef_s *rd, const vec3_t in, vec2_t out );
+	void ( *R_TransformVectorToScreen )( const struct refdef_s *rd, const vec3_t in, vec3_t out );
 	int ( *R_SkeletalGetNumBones )( const struct model_s *mod, int *numFrames );
 	int ( *R_SkeletalGetBoneInfo )( const struct model_s *mod, int bone, char *name, size_t name_size, int *flags );
 	void ( *R_SkeletalGetBonePose )( const struct model_s *mod, int bone, int frame, struct bonepose_s *bonepose );

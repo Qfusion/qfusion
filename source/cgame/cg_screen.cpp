@@ -637,7 +637,7 @@ void CG_DrawPlayerNames( struct qfontface_s *font, vec4_t color ) {
 	centity_t *cent;
 	vec4_t tmpcolor;
 	vec3_t dir, drawOrigin;
-	vec2_t coords;
+	vec3_t coords;
 	float dist, fadeFrac;
 	trace_t trace;
 	int i;
@@ -786,7 +786,7 @@ void CG_DrawPlayerNames( struct qfontface_s *font, vec4_t color ) {
 void CG_DrawTeamMates( void ) {
 	centity_t *cent;
 	vec3_t dir, drawOrigin;
-	vec2_t coords;
+	vec3_t coords;
 	vec4_t color;
 	int i;
 	int pic_size = 18 * cgs.vidHeight / 600;
