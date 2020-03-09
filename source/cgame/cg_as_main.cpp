@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "cg_as_local.h"
 
-std::function<void(asIScriptContext *)> cg_empty_as_cb = [](asIScriptContext *ctx) {};
+std::function<void( asIScriptContext * )> cg_empty_as_cb = []( asIScriptContext *ctx ) {};
 
 static cg_asApiFuncPtr_t cg_asCGameAPI[] = {
 	{ "void CGame::Load()", &cgs.asMain.load, false },
@@ -36,41 +36,39 @@ static cg_asApiFuncPtr_t cg_asCGameAPI[] = {
 	{ "Vec3 CGame::Input::GetMovement()", &cgs.asInput.getMovement, true },
 
 	{ "void CGame::Camera::SetupCamera( CGame::Camera::Camera @cam )", &cgs.asCamera.setupCamera, true },
-	{ "void CGame::Camera::SetupRefdef( const CGame::Camera::Camera @cam, CGame::Camera::Refdef @rd )", &cgs.asCamera.setupRefdef, true },
+	{ "void CGame::Camera::SetupRefdef( const CGame::Camera::Camera @cam, CGame::Camera::Refdef @rd )",
+		&cgs.asCamera.setupRefdef, true },
 
 	{ nullptr, nullptr, false },
 };
 
 //=======================================================================
 
-static const gs_asEnumVal_t asLimitsEnumVals[] =
-{
+static const gs_asEnumVal_t asLimitsEnumVals[] = {
 	ASLIB_ENUM_VAL( CG_MAX_TOUCHES ),
 
-	ASLIB_ENUM_VAL_NULL
+	ASLIB_ENUM_VAL_NULL,
 };
 
-static const gs_asEnumVal_t asOverlayMenuEnumVals[] =
-{
+static const gs_asEnumVal_t asOverlayMenuEnumVals[] = {
 	ASLIB_ENUM_VAL( OVERLAY_MENU_LEFT ),
 	ASLIB_ENUM_VAL( OVERLAY_MENU_HIDDEN ),
 	ASLIB_ENUM_VAL( OVERLAY_MENU_RIGHT ),
 
-	ASLIB_ENUM_VAL_NULL
+	ASLIB_ENUM_VAL_NULL,
 };
 
-static const gs_asEnum_t asCGameEnums[] =
-{
+static const gs_asEnum_t asCGameEnums[] = {
 	{ "cg_limits_e", asLimitsEnumVals },
 	{ "cg_overlayMenuState_e", asOverlayMenuEnumVals },
 
-	ASLIB_ENUM_VAL_NULL
+	ASLIB_ENUM_VAL_NULL,
 };
-
 
 //======================================================================
 
-static void asFunc_Print( const asstring_t *str ) {
+static void asFunc_Print( const asstring_t *str )
+{
 	if( !str || !str->buffer ) {
 		return;
 	}
@@ -78,21 +76,28 @@ static void asFunc_Print( const asstring_t *str ) {
 	CG_Printf( "%s", str->buffer );
 }
 
-static const gs_asglobfuncs_t asCGameGlobalFuncs[] =
-{
+static const gs_asglobfuncs_t asCGameGlobalFuncs[] = {
 	{ "void Print( const String &in )", asFUNCTION( asFunc_Print ), NULL },
 	{ "void ShowOverlayMenu( int state, bool showCursor )", asFUNCTION( CG_ShowOverlayMenu ), NULL },
 
-	{ NULL }
+	{ NULL },
+};
+
+static const gs_asglobproperties_t asCGameStaticGlobalConstants[] = {
+	{ "const int vidWidth", &cgs.vidWidth },
+	{ "const int vidHeight", &cgs.vidHeight },
+
+	{ NULL },
 };
 
 //======================================================================
 
 /*
-* CG_asInitializeCGameEngineSyntax
-*/
-static void CG_asInitializeCGameEngineSyntax( asIScriptEngine *asEngine ) {
-	CG_Printf( "* Initializing Game module syntax\n" );
+ * CG_asInitializeCGameEngineSyntax
+ */
+static void CG_asInitializeCGameEngineSyntax( asIScriptEngine *asEngine )
+{
+	CG_Printf( "* Initializing CGame module syntax\n" );
 
 	// register shared stuff
 	GS_asInitializeEngine( asEngine );
@@ -120,12 +125,14 @@ static void CG_asInitializeCGameEngineSyntax( asIScriptEngine *asEngine ) {
 	GS_asRegisterGlobalFunctions( asEngine, asCGameCameraGlobalFuncs, "CGame::Camera" );
 
 	// register global properties
+	GS_asRegisterGlobalProperties( asEngine, asCGameStaticGlobalConstants, "CGame::Static" );
 }
 
 /*
-* CG_asInitScriptEngine
-*/
-void CG_asInitScriptEngine( void ) {
+ * CG_asInitScriptEngine
+ */
+void CG_asInitScriptEngine( void )
+{
 	bool asGeneric;
 	asIScriptEngine *asEngine;
 
@@ -155,9 +162,10 @@ void CG_asInitScriptEngine( void ) {
 }
 
 /*
-* CG_asShutdownScriptEngine
-*/
-void CG_asShutdownScriptEngine( void ) {
+ * CG_asShutdownScriptEngine
+ */
+void CG_asShutdownScriptEngine( void )
+{
 	auto asEngine = CGAME_AS_ENGINE();
 	if( asEngine == NULL ) {
 		return;
@@ -168,17 +176,19 @@ void CG_asShutdownScriptEngine( void ) {
 }
 
 /*
-* CG_asExecutionErrorReport
-*/
-bool CG_asExecutionErrorReport( int error ) {
-	return( error != asEXECUTION_FINISHED );
+ * CG_asExecutionErrorReport
+ */
+bool CG_asExecutionErrorReport( int error )
+{
+	return ( error != asEXECUTION_FINISHED );
 }
 
 /*
-* CG_asCallScriptFunc
-*/
-bool CG_asCallScriptFunc( void *ptr, std::function<void(asIScriptContext *)> setArgs,
-	std::function<void(asIScriptContext *)> getResult ) {
+ * CG_asCallScriptFunc
+ */
+bool CG_asCallScriptFunc(
+	void *ptr, std::function<void( asIScriptContext * )> setArgs, std::function<void( asIScriptContext * )> getResult )
+{
 	bool ok;
 
 	if( !ptr ) {
@@ -208,9 +218,10 @@ bool CG_asCallScriptFunc( void *ptr, std::function<void(asIScriptContext *)> set
 }
 
 /*
-* CG_asUnloadScriptModule
-*/
-void CG_asUnloadScriptModule( const char *moduleName, cg_asApiFuncPtr_t *api ) {
+ * CG_asUnloadScriptModule
+ */
+void CG_asUnloadScriptModule( const char *moduleName, cg_asApiFuncPtr_t *api )
+{
 	auto asEngine = CGAME_AS_ENGINE();
 	if( asEngine == NULL ) {
 		return;
@@ -228,10 +239,11 @@ void CG_asUnloadScriptModule( const char *moduleName, cg_asApiFuncPtr_t *api ) {
 }
 
 /*
-* CG_asLoadScriptModule
-*/
-asIScriptModule *CG_asLoadScriptModule( const char *moduleName, const char *dir,
-	const char *filename, const char *ext, cg_asApiFuncPtr_t *api ) {
+ * CG_asLoadScriptModule
+ */
+asIScriptModule *CG_asLoadScriptModule(
+	const char *moduleName, const char *dir, const char *filename, const char *ext, cg_asApiFuncPtr_t *api )
+{
 	auto asEngine = CGAME_AS_ENGINE();
 	if( asEngine == NULL ) {
 		return NULL;
@@ -239,8 +251,7 @@ asIScriptModule *CG_asLoadScriptModule( const char *moduleName, const char *dir,
 
 	asEngine->DiscardModule( moduleName );
 
-	auto asModule = cgs.asExport->asLoadScriptProject( asEngine, moduleName, 
-		"progs", dir, filename, ext );
+	auto asModule = cgs.asExport->asLoadScriptProject( asEngine, moduleName, "progs", dir, filename, ext );
 	if( asModule == nullptr ) {
 		return nullptr;
 	}
@@ -280,16 +291,18 @@ error:
 //======================================================================
 
 /*
-* CG_asLoadGameScript
-*/
-bool CG_asLoadGameScript( void ) {
+ * CG_asLoadGameScript
+ */
+bool CG_asLoadGameScript( void )
+{
 	return CG_asLoadScriptModule( CG_SCRIPTS_GAME_MODULE_NAME, "client", "cgame", ".cp", cg_asCGameAPI ) != nullptr;
 }
 
 /*
-* CG_asUnloadGameScript
-*/
-void CG_asUnloadGameScript( void ) {
+ * CG_asUnloadGameScript
+ */
+void CG_asUnloadGameScript( void )
+{
 	CG_asUnloadScriptModule( CG_SCRIPTS_GAME_MODULE_NAME, cg_asCGameAPI );
 }
 
@@ -306,45 +319,45 @@ static cg_asApiFuncPtr_t cg_asPmoveAPI[] = {
 /*
  * CG_asLoadPMoveScript
  */
-bool CG_asLoadPMoveScript( void ) {
-	return CG_asLoadScriptModule( CG_SCRIPTS_PMOVE_MODULE_NAME, PMOVE_SCRIPTS_DIRECTORY, "pmove", PMOVE_SCRIPTS_PROJECT_EXTENSION, cg_asPmoveAPI ) != nullptr;
+bool CG_asLoadPMoveScript( void )
+{
+	return CG_asLoadScriptModule( CG_SCRIPTS_PMOVE_MODULE_NAME, PMOVE_SCRIPTS_DIRECTORY, "pmove",
+			   PMOVE_SCRIPTS_PROJECT_EXTENSION, cg_asPmoveAPI ) != nullptr;
 }
 
 /*
  * CG_asUnloadPMoveScript
  */
-void CG_asUnloadPMoveScript( void ) {
+void CG_asUnloadPMoveScript( void )
+{
 	CG_asUnloadScriptModule( CG_SCRIPTS_PMOVE_MODULE_NAME, cg_asPmoveAPI );
 }
 
 /*
  * CG_asPMove
  */
-void CG_asPMove( pmove_t *pm, player_state_t *ps, usercmd_t *cmd ) {
-	CG_asCallScriptFunc( cgs.asPMove.pmove,
-		[pm, ps, cmd](asIScriptContext *ctx)
-		{
+void CG_asPMove( pmove_t *pm, player_state_t *ps, usercmd_t *cmd )
+{
+	CG_asCallScriptFunc(
+		cgs.asPMove.pmove,
+		[pm, ps, cmd]( asIScriptContext *ctx ) {
 			ctx->SetArgObject( 0, pm );
 			ctx->SetArgObject( 1, ps );
 			ctx->SetArgObject( 2, cmd );
 		},
-		cg_empty_as_cb
-	);
+		cg_empty_as_cb );
 }
 
 /*
  * CG_asGetViewAnglesClamp
  */
-void CG_asGetViewAnglesClamp( const player_state_t *ps, vec3_t vaclamp ) {
-	CG_asCallScriptFunc( cgs.asPMove.vaClamp,
-		[ps](asIScriptContext *ctx)
-		{
-			ctx->SetArgObject( 0, const_cast<player_state_t *>(ps) );
-		},
-		[vaclamp](asIScriptContext *ctx)
-		{
-			const asvec3_t *va = ( const asvec3_t * )ctx->GetReturnAddress();
+void CG_asGetViewAnglesClamp( const player_state_t *ps, vec3_t vaclamp )
+{
+	CG_asCallScriptFunc(
+		cgs.asPMove.vaClamp,
+		[ps]( asIScriptContext *ctx ) { ctx->SetArgObject( 0, const_cast<player_state_t *>( ps ) ); },
+		[vaclamp]( asIScriptContext *ctx ) {
+			const asvec3_t *va = (const asvec3_t *)ctx->GetReturnAddress();
 			VectorCopy( va->v, vaclamp );
-		}
-	);
+		} );
 }
