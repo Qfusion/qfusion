@@ -83,9 +83,16 @@ static const gs_asglobfuncs_t asCGameGlobalFuncs[] = {
 	{ NULL },
 };
 
+static auto cg_predictedPlayerStatePtr = &cg.predictedPlayerState;
+static const gs_asglobproperties_t asGameGlobalProperties[] = {
+	{ "PlayerState @PredictedPlayerState", &cg_predictedPlayerStatePtr },
+
+	{ NULL },
+};
+
 static const gs_asglobproperties_t asCGameStaticGlobalConstants[] = {
-	{ "const int vidWidth", &cgs.vidWidth },
-	{ "const int vidHeight", &cgs.vidHeight },
+	{ "const int VidWidth", &cgs.vidWidth },
+	{ "const int VidHeight", &cgs.vidHeight },
 
 	{ NULL },
 };
@@ -125,6 +132,7 @@ static void CG_asInitializeCGameEngineSyntax( asIScriptEngine *asEngine )
 	GS_asRegisterGlobalFunctions( asEngine, asCGameCameraGlobalFuncs, "CGame::Camera" );
 
 	// register global properties
+	GS_asRegisterGlobalProperties( asEngine, asGameGlobalProperties, "CGame" );
 	GS_asRegisterGlobalProperties( asEngine, asCGameStaticGlobalConstants, "CGame::Static" );
 }
 
