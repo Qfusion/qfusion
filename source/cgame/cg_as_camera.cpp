@@ -124,16 +124,18 @@ static const gs_asClassDescriptor_t asViewportClassDescriptor =
 
 static const gs_asFuncdef_t ascamera_Funcdefs[] =
 {
-	ASLIB_FUNCDEF_NULL
+	ASLIB_FUNCDEF_NULL,
 };
 
 static const gs_asBehavior_t ascamera_ObjectBehaviors[] =
 {
-	ASLIB_BEHAVIOR_NULL
+	ASLIB_BEHAVIOR_NULL,
 };
 
 static const gs_asMethod_t ascamera_Methods[] =
 {
+	{ ASLIB_FUNCTION_DECL( void, transformToScreen, ( const Vec3 &in, Vec3 &out ) const ), asFUNCTION( trap_R_TransformVectorToScreen ), asCALL_CDECL_OBJFIRST },
+
 	ASLIB_METHOD_NULL
 };
 
