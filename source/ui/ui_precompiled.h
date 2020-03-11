@@ -14,4 +14,5 @@
 #include <stdexcept>
 #include <utility>
 #include <list>
+#include <cmath>
 #include "kernel/ui_syscalls.h"
