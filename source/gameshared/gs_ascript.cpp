@@ -1668,7 +1668,7 @@ static const gs_asClassDescriptor_t asPMoveClassDescriptor =
 
 //=======================================================================
 
-// CLASS: PMove
+// CLASS: GameState
 
 static const gs_asFuncdef_t asGameState_Funcdefs[] =
 {
@@ -1723,6 +1723,72 @@ static const gs_asClassDescriptor_t asGameStateClassDescriptor =
 
 //=======================================================================
 
+// CLASS: FireDef
+
+static const gs_asFuncdef_t asFiredef_Funcdefs[] = {
+	ASLIB_FUNCDEF_NULL,
+};
+
+static const gs_asBehavior_t asFiredef_ObjectBehaviors[] = {
+	ASLIB_BEHAVIOR_NULL,
+};
+
+static const gs_asMethod_t asFiredef_Methods[] = {
+	ASLIB_METHOD_NULL,
+};
+
+static const gs_asProperty_t asFiredef_Properties[] = {
+	// ammo def
+	{ ASLIB_PROPERTY_DECL( int, fireMode ), ASLIB_FOFFSET( firedef_t, fire_mode ) },
+	{ ASLIB_PROPERTY_DECL( int, ammoID ), ASLIB_FOFFSET( firedef_t, ammo_id ) },
+	{ ASLIB_PROPERTY_DECL( int, usagCount ), ASLIB_FOFFSET( firedef_t, usage_count ) },
+	{ ASLIB_PROPERTY_DECL( int, projectileCount ), ASLIB_FOFFSET( firedef_t, projectile_count ) },
+
+	// timings
+	{ ASLIB_PROPERTY_DECL( uint, weaponupTime ), ASLIB_FOFFSET( firedef_t, weaponup_time ) },
+	{ ASLIB_PROPERTY_DECL( uint, weapondownTime ), ASLIB_FOFFSET( firedef_t, weapondown_time ) },
+	{ ASLIB_PROPERTY_DECL( uint, reloadTime ), ASLIB_FOFFSET( firedef_t, reload_time ) },
+	{ ASLIB_PROPERTY_DECL( uint, cooldownTime ), ASLIB_FOFFSET( firedef_t, cooldown_time ) },
+	{ ASLIB_PROPERTY_DECL( uint, timeout ), ASLIB_FOFFSET( firedef_t, timeout ) },
+	{ ASLIB_PROPERTY_DECL( bool, smoothRefire ), ASLIB_FOFFSET( firedef_t, smooth_refire ) },
+
+	// damages
+	{ ASLIB_PROPERTY_DECL( float, damage ), ASLIB_FOFFSET( firedef_t, damage ) },
+	{ ASLIB_PROPERTY_DECL( float, selfDamage ), ASLIB_FOFFSET( firedef_t, selfdamage ) },
+	{ ASLIB_PROPERTY_DECL( int, knockback ), ASLIB_FOFFSET( firedef_t, knockback ) },
+	{ ASLIB_PROPERTY_DECL( int, stun ), ASLIB_FOFFSET( firedef_t, stun ) },
+	{ ASLIB_PROPERTY_DECL( int, splashRadius ), ASLIB_FOFFSET( firedef_t, splash_radius ) },
+	{ ASLIB_PROPERTY_DECL( int, minDamage ), ASLIB_FOFFSET( firedef_t, mindamage ) },
+	{ ASLIB_PROPERTY_DECL( int, minKnockback ), ASLIB_FOFFSET( firedef_t, minknockback ) },
+
+	// projectile def
+	{ ASLIB_PROPERTY_DECL( int, speed ), ASLIB_FOFFSET( firedef_t, speed ) },
+	{ ASLIB_PROPERTY_DECL( int, spread ), ASLIB_FOFFSET( firedef_t, spread ) },
+	{ ASLIB_PROPERTY_DECL( int, vspread ), ASLIB_FOFFSET( firedef_t, v_spread ) },
+
+	// ammo amounts
+	{ ASLIB_PROPERTY_DECL( int, weaponPickup ), ASLIB_FOFFSET( firedef_t, weapon_pickup ) },
+	{ ASLIB_PROPERTY_DECL( int, ammoPickup ), ASLIB_FOFFSET( firedef_t, ammo_pickup ) },
+	{ ASLIB_PROPERTY_DECL( int, ammoMax ), ASLIB_FOFFSET( firedef_t, ammo_max ) },
+	{ ASLIB_PROPERTY_DECL( int, ammoLow ), ASLIB_FOFFSET( firedef_t, ammo_low ) },
+
+	ASLIB_PROPERTY_NULL,
+};
+
+static const gs_asClassDescriptor_t asFiredefClassDescriptor = {
+	"Firedef",				     /* name */
+	asOBJ_REF | asOBJ_NOCOUNT,	 /* object type flags */
+	sizeof( firedef_t ),		 /* size */
+	asFiredef_Funcdefs,			 /* funcdefs */
+	asFiredef_ObjectBehaviors,   /* object behaviors */
+	asFiredef_Methods,		     /* methods */
+	asFiredef_Properties,	     /* properties */
+
+	NULL, NULL /* string factory hack */
+};
+
+//=======================================================================
+
 static const gs_asClassDescriptor_t * const asGameClassesDescriptors[] =
 {
 	&asTraceClassDescriptor,
@@ -1733,6 +1799,7 @@ static const gs_asClassDescriptor_t * const asGameClassesDescriptors[] =
 	&asPlayerStateClassDescriptor,
 	&asPMoveClassDescriptor,
 	&asGameStateClassDescriptor,
+	&asFiredefClassDescriptor,
 
 	NULL
 };
@@ -1819,7 +1886,8 @@ static const gs_asglobfuncs_t asGameGlobalFunctions[] = {
 	{ "float GetPlayerGibHeight()", asFUNCTION( GS_asGetPlayerGibViewHeight ), NULL },
 
 	{ "EntityState @GetEntityState( int number, int deltaTime = 0 )", asFUNCTION( GS_asGetEntityState ), NULL },
-
+	{ "const Firedef @FiredefForPlayerState( const PlayerState @state, int checkWeapon )", asFUNCTION( GS_FiredefForPlayerState ), NULL },
+	
 	{ "int DirToByte( const Vec3 &in )", asFUNCTION( GS_asDirToByte ), NULL },
 
 	{ NULL }
