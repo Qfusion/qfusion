@@ -65,6 +65,7 @@ LOCAL_SRC_FILES := \
   Source/Core/FontEffectShadow.cpp \
   Source/Core/FontEngineInterface.cpp \
   Source/Core/Geometry.cpp \
+  Source/Core/GeometryDatabase.cpp \
   Source/Core/GeometryUtilities.cpp \
   Source/Core/LayoutBlockBox.cpp \
   Source/Core/LayoutBlockBoxSpace.cpp \
