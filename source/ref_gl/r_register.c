@@ -1319,7 +1319,7 @@ static unsigned R_GLVersionHash( const char *vendorString,
 	memcpy( tmp + pos, CPUSTRING, csize );
 	pos += csize;
 
-	hash = COM_SuperFastHash( tmp, tmp_size, tmp_size );
+	hash = COM_SuperFastHash( tmp, tmp_size );
 
 	R_Free( tmp );
 

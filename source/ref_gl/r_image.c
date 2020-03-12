@@ -1983,7 +1983,7 @@ static image_t *R_CreateImage( const char *name, int width, int height, int laye
 	int name_len = strlen( name );
 	unsigned hash;
 
-	hash = COM_SuperFastHash( ( const uint8_t *)name, name_len, name_len );
+	hash = COM_SuperFastHash( ( const uint8_t *)name, name_len );
 
 	image = R_LinkPic( hash );
 	if( !image ) {
@@ -2247,7 +2247,7 @@ image_t *R_FindImage( const char *name, const char *suffix, int flags, int minmi
 	searchFlags = flags & ~IT_LOADFLAGS;
 
 	// look for it
-	key = COM_SuperFastHash( ( const uint8_t *)pathname, len, len ) % IMAGES_HASH_SIZE;
+	key = COM_SuperFastHash( ( const uint8_t *)pathname, len ) % IMAGES_HASH_SIZE;
 	hnode = &r_images_hash_headnode[key];
 	for( image = hnode->prev; image != hnode; image = image->prev ) {
 		if( ( ( image->flags & ~IT_LOADFLAGS ) == searchFlags ) &&

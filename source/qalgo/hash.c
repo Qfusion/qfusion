@@ -1,46 +1,22 @@
 /*
-Copyright (C) 2013 Victor Luchits
+Copyright 2004-2008 Paul Hsieh 
 
-This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License
-as published by the Free Software Foundation; either version 2
-of the License, or (at your option) any later version.
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
+This library is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
 
-See the GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 #include "hash.h"
-
-/*
-* COM_HashKey
-*
-* Returns hash key for a string
-*/
-unsigned int COM_HashKey( const char *name, int hashsize ) {
-	int i;
-	unsigned int v;
-	unsigned int c;
-
-	v = 0;
-	for( i = 0; name[i]; i++ ) {
-		c = name[i];
-		if( c == '\\' ) {
-			c = '/';
-		}
-		v = ( v + i ) * 37 + tolower( c ); // case insensitivity
-	}
-
-	return v % hashsize;
-}
 
 #undef get16bits
 #if ( defined( __GNUC__ ) && defined( __i386__ ) ) || defined( __WATCOMC__ ) \
@@ -67,9 +43,10 @@ unsigned int COM_HashKey( const char *name, int hashsize ) {
 * Adaptation of Paul Hsieh's incremental SuperFastHash function.
 * Initialize hash to some non-zero value for the first call, like len.
 */
-unsigned int COM_SuperFastHash( const uint8_t * data, size_t len, unsigned int hash ) {
+unsigned int COM_SuperFastHash( const uint8_t * data, size_t len ) {
 	unsigned int tmp;
 	unsigned int rem;
+	unsigned int hash = (unsigned int)len;
 
 	if( len <= 0 || data == NULL ) {
 		return 0;
