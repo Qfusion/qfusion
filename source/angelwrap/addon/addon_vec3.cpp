@@ -35,10 +35,6 @@ void objectVec3_Constructor3F( float x, float y, float z, asvec3_t *self ) {
 	self->v[2] = z;
 }
 
-void objectVec3_Constructor1F( float v, asvec3_t *self ) {
-	self->v[0] = self->v[1] = self->v[2] = v;
-}
-
 void objectVec3_CopyConstructor( asvec3_t *other, asvec3_t *self ) {
 	self->v[0] = other->v[0];
 	self->v[1] = other->v[1];
@@ -47,24 +43,21 @@ void objectVec3_CopyConstructor( asvec3_t *other, asvec3_t *self ) {
 
 void objectVec3_ConstructorArray( CScriptArrayInterface &arr, asvec3_t *self )
 {
-	unsigned arr_size = arr.GetSize();
+	if( arr.GetSize() != 3 ) {
+		asIScriptContext *ctx = asGetActiveContext();
+		if( ctx ) {
+			ctx->SetException( "Invalid array size" );
+		}
+		return;
+	}
+
 	for( unsigned int i = 0; i < 3; i++ ) {
-		self->v[i] = i < arr_size ? *( (float *)arr.At( i ) ) : 0;
+		self->v[i] = *( (float *)arr.At( i ) );
 	}
 }
 
 static asvec3_t *objectVec3_AssignBehaviour( asvec3_t *other, asvec3_t *self ) {
 	VectorCopy( other->v, self->v );
-	return self;
-}
-
-static asvec3_t *objectVec3_AssignBehaviourD( float other, asvec3_t *self ) {
-	VectorSet( self->v, other, other, other );
-	return self;
-}
-
-static asvec3_t *objectVec3_AssignBehaviourI( int other, asvec3_t *self ) {
-	VectorSet( self->v, other, other, other );
 	return self;
 }
 
@@ -245,7 +238,6 @@ void RegisterVec3Addon( asIScriptEngine *engine ) {
 	// register object behaviours
 	r = engine->RegisterObjectBehaviour( "Vec3", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION( objectVec3_DefaultConstructor ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour( "Vec3", asBEHAVE_CONSTRUCT, "void f(float x, float y, float z)", asFUNCTION( objectVec3_Constructor3F ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour( "Vec3", asBEHAVE_CONSTRUCT, "void f(float v)", asFUNCTION( objectVec3_Constructor1F ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour( "Vec3", asBEHAVE_CONSTRUCT, "void f(const Vec3 &in)", asFUNCTION( objectVec3_CopyConstructor ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour( "Vec3", asBEHAVE_CONSTRUCT, "void f(const array<float> &)", asFUNCTION( objectVec3_ConstructorArray ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 
@@ -253,8 +245,6 @@ void RegisterVec3Addon( asIScriptEngine *engine ) {
 
 	// assignments
 	r = engine->RegisterObjectMethod( "Vec3", "Vec3 &opAssign(Vec3 &in)", asFUNCTION( objectVec3_AssignBehaviour ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
-	r = engine->RegisterObjectMethod( "Vec3", "Vec3 &opAssign(int)", asFUNCTION( objectVec3_AssignBehaviourI ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
-	r = engine->RegisterObjectMethod( "Vec3", "Vec3 &opAssign(float)", asFUNCTION( objectVec3_AssignBehaviourD ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "Vec3", "Vec3 &opAddAssign(Vec3 &in)", asFUNCTION( objectVec3_AddAssignBehaviour ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "Vec3", "Vec3 &opSubAssign(Vec3 &in)", asFUNCTION( objectVec3_SubAssignBehaviour ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "Vec3", "Vec3 &opMulAssign(Vec3 &in)", asFUNCTION( objectVec3_MulAssignBehaviour ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );

@@ -36,10 +36,6 @@ void objectVec4_Constructor3F( float x, float y, float z, float w, asvec4_t *sel
 	self->v[3] = w;
 }
 
-void objectVec4_Constructor1F( float v, asvec4_t *self ) {
-	self->v[0] = self->v[1] = self->v[2] = self->v[3] = v;
-}
-
 void objectVec4_CopyConstructor( asvec4_t *other, asvec4_t *self ) {
 	self->v[0] = other->v[0];
 	self->v[1] = other->v[1];
@@ -47,26 +43,23 @@ void objectVec4_CopyConstructor( asvec4_t *other, asvec4_t *self ) {
 	self->v[3] = other->v[3];
 }
 
-void objectVec4_ConstructorArray( CScriptArrayInterface &arr, asvec3_t *self )
+void objectVec4_ConstructorArray( CScriptArrayInterface &arr, asvec4_t *self )
 {
-	unsigned arr_size = arr.GetSize();
+	if( arr.GetSize() != 4 ) {
+		asIScriptContext *ctx = asGetActiveContext();
+		if( ctx ) {
+			ctx->SetException( "Invalid array size" );
+		}
+		return;
+	}
+
 	for( unsigned int i = 0; i < 4; i++ ) {
-		self->v[i] = i < arr_size ? *( (float *)arr.At( i ) ) : 0;
+		self->v[i] = *( (float *)arr.At( i ) );
 	}
 }
 
 static asvec4_t *objectVec4_AssignBehaviour( asvec4_t *other, asvec4_t *self ) {
 	Vector4Copy( other->v, self->v );
-	return self;
-}
-
-static asvec4_t *objectVec4_AssignBehaviourD( float other, asvec4_t *self ) {
-	Vector4Set( self->v, other, other, other, other );
-	return self;
-}
-
-static asvec4_t *objectVec4_AssignBehaviourI( int other, asvec4_t *self ) {
-	Vector4Set( self->v, other, other, other, other );
 	return self;
 }
 
@@ -166,7 +159,7 @@ static asvec3_t objectVec4_XYZ( const asvec4_t *self ) {
 	return v;
 }
 
-static float *objectVec4_Index( unsigned index, asvec3_t *self ) {
+static float *objectVec4_Index( unsigned index, asvec4_t *self ) {
 	if( index > 3 ) {
 		asIScriptContext *ctx = asGetActiveContext();
 		if( ctx ) {
@@ -177,14 +170,14 @@ static float *objectVec4_Index( unsigned index, asvec3_t *self ) {
 	return &self->v[index];
 }
 
-static CScriptArrayInterface *objectVec4_VecToArray( unsigned index, asvec3_t *self )
+static CScriptArrayInterface *objectVec4_VecToArray( unsigned index, asvec4_t *self )
 {
 	asIScriptContext *ctx = asGetActiveContext();
 	asIScriptEngine *engine = ctx->GetEngine();
 	asIObjectType *ot = engine->GetObjectTypeById( engine->GetTypeIdByDecl( "array<float>" ) );
-	CScriptArrayInterface *arr = QAS_NEW( CScriptArray )( 3, ot );
+	CScriptArrayInterface *arr = QAS_NEW( CScriptArray )( 4, ot );
 
-	for( int i = 0; i < 3; i++ ) {
+	for( int i = 0; i < 4; i++ ) {
 		*( (float *)arr->At( i ) ) = self->v[i];
 	}
 
@@ -206,7 +199,6 @@ void RegisterVec4Addon( asIScriptEngine *engine ) {
 	// register object behaviours
 	r = engine->RegisterObjectBehaviour( "Vec4", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION( objectVec4_DefaultConstructor ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour( "Vec4", asBEHAVE_CONSTRUCT, "void f(float x, float y, float z, float w)", asFUNCTION( objectVec4_Constructor3F ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour( "Vec4", asBEHAVE_CONSTRUCT, "void f(float v)", asFUNCTION( objectVec4_Constructor1F ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour( "Vec4", asBEHAVE_CONSTRUCT, "void f(const Vec4 &in)", asFUNCTION( objectVec4_CopyConstructor ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour( "Vec4", asBEHAVE_CONSTRUCT, "void f(const array<float> &)",
 		asFUNCTION( objectVec4_ConstructorArray ), asCALL_CDECL_OBJLAST );
@@ -216,8 +208,6 @@ void RegisterVec4Addon( asIScriptEngine *engine ) {
 
 	// assignments
 	r = engine->RegisterObjectMethod( "Vec4", "Vec4 &opAssign(Vec4 &in)", asFUNCTION( objectVec4_AssignBehaviour ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
-	r = engine->RegisterObjectMethod( "Vec4", "Vec4 &opAssign(int)", asFUNCTION( objectVec4_AssignBehaviourI ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
-	r = engine->RegisterObjectMethod( "Vec4", "Vec4 &opAssign(float)", asFUNCTION( objectVec4_AssignBehaviourD ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "Vec4", "Vec4 &opAddAssign(Vec4 &in)", asFUNCTION( objectVec4_AddAssignBehaviour ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "Vec4", "Vec4 &opSubAssign(Vec4 &in)", asFUNCTION( objectVec4_SubAssignBehaviour ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "Vec4", "Vec4 &opMulAssign(Vec4 &in)", asFUNCTION( objectVec4_MulAssignBehaviour ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );

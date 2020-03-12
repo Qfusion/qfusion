@@ -43,9 +43,16 @@ void objectMat3_CopyConstructor( asmat3_t *other, asmat3_t *self )
 
 void objectMat3_ConstructorArray( CScriptArrayInterface &arr, asmat3_t *self )
 {
-	unsigned arr_size = arr.GetSize();
+	if( arr.GetSize() != 9 ) {
+		asIScriptContext *ctx = asGetActiveContext();
+		if( ctx ) {
+			ctx->SetException( "Invalid array size" );
+		}
+		return;
+	}
+
 	for( unsigned int i = 0; i < 9; i++ ) {
-		self->m[i] = i < arr_size ? *( (float *)arr.At( i ) ) : 0;
+		self->m[i] = *( (float *)arr.At( i ) );
 	}
 }
 
@@ -122,7 +129,7 @@ static CScriptArrayInterface *objectMat3_VecToArray( unsigned index, asmat3_t *s
 	asIScriptContext *ctx = asGetActiveContext();
 	asIScriptEngine *engine = ctx->GetEngine();
 	asIObjectType *ot = engine->GetObjectTypeById( engine->GetTypeIdByDecl( "array<float>" ) );
-	CScriptArrayInterface *arr = QAS_NEW( CScriptArray )( 3, ot );
+	CScriptArrayInterface *arr = QAS_NEW( CScriptArray )( 9, ot );
 
 	for( int i = 0; i < 9; i++ ) {
 		*( (float *)arr->At( i ) ) = self->m[i];
@@ -202,6 +209,14 @@ void RegisterMat3Addon( asIScriptEngine *engine )
 
 	r = engine->RegisterObjectMethod(
 		"Mat3", "array<float> @toArray()", asFUNCTION( objectMat3_VecToArray ), asCALL_CDECL_OBJLAST );
+	assert( r >= 0 );
+
+	// properties
+	r = engine->RegisterObjectProperty( "Mat3", "Vec3 x", asOFFSET( asmat3_t, m[0] ) );
+	assert( r >= 0 );
+	r = engine->RegisterObjectProperty( "Mat3", "Vec3 y", asOFFSET( asmat3_t, m[3] ) );
+	assert( r >= 0 );
+	r = engine->RegisterObjectProperty( "Mat3", "Vec3 z", asOFFSET( asmat3_t, m[6] ) );
 	assert( r >= 0 );
 
 	(void)sizeof( r ); // hush the compiler
