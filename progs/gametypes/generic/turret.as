@@ -527,9 +527,9 @@ cTurret @ClientDropTurret( Client @client )
         return null;
 
     // first check that there's space for spawning the turret in front of us
-    Vec3 dir, start, end;
+    Vec3 dir, start, end, r, u;
 
-    client.getEnt().angles.angleVectors( dir, null, null );
+    client.getEnt().angles.angleVectors( dir, r, u );
     start = client.getEnt().origin;
     start.z += 6;
     end = ( start + ( 0.5 * ( turretMaxs + turretMins ) ) ) + ( dir * 64 );
