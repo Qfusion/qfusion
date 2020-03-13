@@ -123,12 +123,26 @@ static void asFunc_Print( const asstring_t *str )
 	CG_Printf( "%s", str->buffer );
 }
 
+static void asFunc_DrawPic( int x, int y, int w, int h, struct shader_s *shader, const asvec4_t *color, float s1, float t1, float s2, float t2 )
+{
+	trap_R_DrawStretchPic( x, y, w, h, s1, t1, s2, t2, color->v, shader );
+}
+
+static void asFunc_DrawPic2( int x, int y, int w, int h, struct shader_s *shader, float s1, float t1, float s2, float t2 )
+{
+	trap_R_DrawStretchPic( x, y, w, h, s1, t1, s2, t2, colorWhite, shader );
+}
+
 static const gs_asglobfuncs_t asCGameGlobalFuncs[] = {
 	{ "void Print( const String &in )", asFUNCTION( asFunc_Print ), NULL },
 	{ "void ShowOverlayMenu( int state, bool showCursor )", asFUNCTION( CG_ShowOverlayMenu ), NULL },
+
 	{ "ModelHandle RegisterModel( const String &in )", asFUNCTION( CG_RegisterModel ), NULL },
 	{ "SoundHandle RegisterSound( const String &in )", asFUNCTION( CG_RegisterSfx ), NULL },
 	{ "ShaderHandle RegisterShader( const String &in )", asFUNCTION( CG_RegisterShader ), NULL },
+
+	{ "void DrawPic( int x, int y, int w, int h, ShaderHandle shader, const Vec4 &color, float s1 = 0.0, float t1 = 0.0, float s2 = 1.0, float t2 = 1.0 )", asFUNCTION( asFunc_DrawPic ), NULL },
+	{ "void DrawPic( int x, int y, int w, int h, ShaderHandle shader, float s1 = 0.0, float t1 = 0.0, float s2 = 1.0, float t2 = 1.0 )", asFUNCTION( asFunc_DrawPic2 ), NULL },
 
 	{ NULL },
 };
