@@ -5,8 +5,7 @@ namespace Camera {
 void SetupCamera( Camera @cam ) {
 }
 
-void SetupRefdef( const Camera @cam, Refdef @rd ) {
-
+void SetupRefdef( Camera @cam ) {
 }
 
 }

@@ -34,4 +34,4 @@ const float ATTN_IDLE  			= 2.5;  	// stuff around you
 const float ATTN_STATIC  		= 5.0; 		// diminish very rapidly with distance
 const float ATTN_FOOTSTEPS  	= 10.0; 	// must be very close to hear it
 
-const Vec3 vec3Origin( 0.0f );
+const Vec3 vec3Origin();

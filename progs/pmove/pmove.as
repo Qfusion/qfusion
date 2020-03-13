@@ -802,7 +802,7 @@ class PMoveLocal {
 		mins.z = maxs.z = 0;
 		trace.doTrace( origin, mins, maxs, origin, playerState.POVnum, pm.contentMask );
 		if( !trace.allSolid && trace.fraction == 1.0f ) {
-			return Vec3( 0.0f );
+			return Vec3();
 		}
 
 		// determine the primary direction
@@ -858,7 +858,7 @@ class PMoveLocal {
 			trace.doTrace( origin, zero, zero, dir, playerState.POVnum, pm.contentMask );
 
 			if( trace.allSolid ) {
-				return Vec3( 0.0f );
+				return Vec3();
 			}
 
 			if( trace.fraction == 1.0f ) {
@@ -878,7 +878,7 @@ class PMoveLocal {
 			}
 		}
 
-		return Vec3( 0.0f );
+		return Vec3();
 	}
 
 	/*

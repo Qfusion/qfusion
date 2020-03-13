@@ -8,3 +8,5 @@ input/gamepad.as;
 input/main.as;
 
 camera/main.as;
+
+hud/main.as;
