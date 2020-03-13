@@ -36,8 +36,7 @@ static cg_asApiFuncPtr_t cg_asCGameAPI[] = {
 	{ "Vec3 CGame::Input::GetMovement()", &cgs.asInput.getMovement, true },
 
 	{ "void CGame::Camera::SetupCamera( CGame::Camera::Camera @cam )", &cgs.asCamera.setupCamera, true },
-	{ "void CGame::Camera::SetupRefdef( CGame::Camera::Camera @cam )",
-		&cgs.asCamera.setupRefdef, true },
+	{ "void CGame::Camera::SetupRefdef( CGame::Camera::Camera @cam )", &cgs.asCamera.setupRefdef, true },
 
 	{ nullptr, nullptr, false },
 };
@@ -67,50 +66,43 @@ static const gs_asEnum_t asCGameEnums[] = {
 
 //======================================================================
 
-static const gs_asClassDescriptor_t asModelHandleClassDescriptor =
-{
-	"ModelHandle",              /* name */
-	asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE,  /* object type flags */
-	sizeof( void * ),           /* size */
-	NULL,                       /* funcdefs */
-	NULL,                       /* object behaviors */
-	NULL,                       /* methods */
-	NULL,                       /* properties */
-	NULL, NULL                  /* string factory hack */
+static const gs_asClassDescriptor_t asModelHandleClassDescriptor = {
+	"ModelHandle",								   /* name */
+	asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE, /* object type flags */
+	sizeof( void * ),							   /* size */
+	NULL,										   /* funcdefs */
+	NULL,										   /* object behaviors */
+	NULL,										   /* methods */
+	NULL,										   /* properties */
+	NULL, NULL									   /* string factory hack */
 };
 
-static const gs_asClassDescriptor_t asSoundHandleClassDescriptor =
-{
-	"SoundHandle",              /* name */
-	asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE,  /* object type flags */
-	sizeof( void * ),           /* size */
-	NULL,                       /* funcdefs */
-	NULL,                       /* object behaviors */
-	NULL,                       /* methods */
-	NULL,                       /* properties */
-	NULL, NULL                  /* string factory hack */
+static const gs_asClassDescriptor_t asSoundHandleClassDescriptor = {
+	"SoundHandle",								   /* name */
+	asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE, /* object type flags */
+	sizeof( void * ),							   /* size */
+	NULL,										   /* funcdefs */
+	NULL,										   /* object behaviors */
+	NULL,										   /* methods */
+	NULL,										   /* properties */
+	NULL, NULL									   /* string factory hack */
 };
 
-static const gs_asClassDescriptor_t asShaderHandleClassDescriptor =
-{
-	"ShaderHandle",             /* name */
-	asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE,  /* object type flags */
-	sizeof( void * ),           /* size */
-	NULL,                       /* funcdefs */
-	NULL,                       /* object behaviors */
-	NULL,                       /* methods */
-	NULL,                       /* properties */
-	NULL, NULL                  /* string factory hack */
+static const gs_asClassDescriptor_t asShaderHandleClassDescriptor = {
+	"ShaderHandle",								   /* name */
+	asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE, /* object type flags */
+	sizeof( void * ),							   /* size */
+	NULL,										   /* funcdefs */
+	NULL,										   /* object behaviors */
+	NULL,										   /* methods */
+	NULL,										   /* properties */
+	NULL, NULL									   /* string factory hack */
 };
 
-const gs_asClassDescriptor_t * const asCGameClassesDescriptors[] =
-{
-	&asModelHandleClassDescriptor,
-	&asSoundHandleClassDescriptor,
-	&asShaderHandleClassDescriptor,
+const gs_asClassDescriptor_t *const asCGameClassesDescriptors[] = { &asModelHandleClassDescriptor,
+	&asSoundHandleClassDescriptor, &asShaderHandleClassDescriptor,
 
-	NULL
-};
+	NULL };
 
 //======================================================================
 
@@ -123,12 +115,26 @@ static void asFunc_Print( const asstring_t *str )
 	CG_Printf( "%s", str->buffer );
 }
 
-static void asFunc_DrawPic( int x, int y, int w, int h, struct shader_s *shader, const asvec4_t *color, float s1, float t1, float s2, float t2 )
+static void *asFunc_RegisterModel( const asstring_t *str ) {
+	return CG_RegisterModel( str->buffer );
+}
+
+static void *asFunc_RegisterSound( const asstring_t *str ) {
+	return CG_RegisterSfx( str->buffer );
+}
+
+static void *asFunc_RegisterShader( const asstring_t *str ) {
+	return CG_RegisterShader( str->buffer );
+}
+
+static void asFunc_DrawPic(
+	int x, int y, int w, int h, struct shader_s *shader, const asvec4_t *color, float s1, float t1, float s2, float t2 )
 {
 	trap_R_DrawStretchPic( x, y, w, h, s1, t1, s2, t2, color->v, shader );
 }
 
-static void asFunc_DrawPic2( int x, int y, int w, int h, struct shader_s *shader, float s1, float t1, float s2, float t2 )
+static void asFunc_DrawPic2(
+	int x, int y, int w, int h, struct shader_s *shader, float s1, float t1, float s2, float t2 )
 {
 	trap_R_DrawStretchPic( x, y, w, h, s1, t1, s2, t2, colorWhite, shader );
 }
@@ -137,12 +143,16 @@ static const gs_asglobfuncs_t asCGameGlobalFuncs[] = {
 	{ "void Print( const String &in )", asFUNCTION( asFunc_Print ), NULL },
 	{ "void ShowOverlayMenu( int state, bool showCursor )", asFUNCTION( CG_ShowOverlayMenu ), NULL },
 
-	{ "ModelHandle RegisterModel( const String &in )", asFUNCTION( CG_RegisterModel ), NULL },
-	{ "SoundHandle RegisterSound( const String &in )", asFUNCTION( CG_RegisterSfx ), NULL },
-	{ "ShaderHandle RegisterShader( const String &in )", asFUNCTION( CG_RegisterShader ), NULL },
+	{ "ModelHandle RegisterModel( const String &in )", asFUNCTION( asFunc_RegisterModel ), NULL },
+	{ "SoundHandle RegisterSound( const String &in )", asFUNCTION( asFunc_RegisterSound ), NULL },
+	{ "ShaderHandle RegisterShader( const String &in )", asFUNCTION( asFunc_RegisterShader ), NULL },
 
-	{ "void DrawPic( int x, int y, int w, int h, ShaderHandle shader, const Vec4 &color, float s1 = 0.0, float t1 = 0.0, float s2 = 1.0, float t2 = 1.0 )", asFUNCTION( asFunc_DrawPic ), NULL },
-	{ "void DrawPic( int x, int y, int w, int h, ShaderHandle shader, float s1 = 0.0, float t1 = 0.0, float s2 = 1.0, float t2 = 1.0 )", asFUNCTION( asFunc_DrawPic2 ), NULL },
+	{ "void DrawPic( int x, int y, int w, int h, ShaderHandle shader, const Vec4 &in color, float s1 = 0.0, float t1 = "
+	  "0.0, float s2 = 1.0, float t2 = 1.0 )",
+		asFUNCTION( asFunc_DrawPic ), NULL },
+	{ "void DrawPic( int x, int y, int w, int h, ShaderHandle shader, float s1 = 0.0, float t1 = 0.0, float s2 = 1.0, "
+	  "float t2 = 1.0 )",
+		asFUNCTION( asFunc_DrawPic2 ), NULL },
 
 	{ NULL },
 };

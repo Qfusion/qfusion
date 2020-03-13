@@ -536,7 +536,8 @@ static void CG_RegisterModels( void ) {
 		return;
 	}
 
-	CG_RegisterModels();
+	CG_PrecacheModels();
+
 	CG_RegisterBasePModel(); // never before registering the weapon models
 	CG_RegisterWeaponModels();
 
