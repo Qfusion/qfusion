@@ -344,7 +344,7 @@ void CG_AllocShadeBox( int entNum, const vec3_t origin, const vec3_t mins, const
 	sb->entNum = entNum;
 	sb->shader = shader;
 	if( !sb->shader ) {
-		sb->shader = CG_MediaShader( cgs.media.shaderPlayerShadow );
+		sb->shader = cgs.media.shaderPlayerShadow;
 	}
 }
 
@@ -1073,7 +1073,7 @@ void CG_AddParticles( void ) {
 		p->poly.stcoords = p->pStcoords;
 		p->poly.colors = p->pColor;
 		p->poly.fognum = p->fog ? 0 : -1;
-		p->poly.shader = ( p->shader == NULL ) ? CG_MediaShader( cgs.media.shaderParticle ) : p->shader;
+		p->poly.shader = ( p->shader == NULL ) ? cgs.media.shaderParticle : p->shader;
 
 		trap_R_AddPolyToScene( &p->poly );
 	}

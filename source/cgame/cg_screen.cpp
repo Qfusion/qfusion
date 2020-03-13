@@ -352,7 +352,7 @@ void CG_DrawNet( int x, int y, int w, int h, int align, vec4_t color ) {
 	}
 	x = CG_HorizontalAlignForWidth( x, align, w );
 	y = CG_VerticalAlignForHeight( y, align, h );
-	trap_R_DrawStretchPic( x, y, w, h, 0, 0, 1, 1, color, CG_MediaShader( cgs.media.shaderNet ) );
+	trap_R_DrawStretchPic( x, y, w, h, 0, 0, 1, 1, color, cgs.media.shaderNet );
 }
 
 /*
@@ -513,7 +513,7 @@ void CG_DrawKeyState( int x, int y, int w, int h, int align, const char *key ) {
 		color[3] = 0.5f;
 	}
 
-	trap_R_DrawStretchPic( x, y, w, h, 0, 0, 1, 1, color, CG_MediaShader( cgs.media.shaderKeyIcon[i] ) );
+	trap_R_DrawStretchPic( x, y, w, h, 0, 0, 1, 1, color, cgs.media.shaderKeyIcon[i] );
 }
 
 /*
@@ -805,7 +805,7 @@ void CG_DrawTeamMates( void ) {
 
 	for( i = 0; i < gs.maxclients; i++ ) {
 		trace_t trace;
-		cgs_media_handle_t *media;
+		struct shader_s *media;
 
 		if( !cgs.clientInfo[i].name[0] || ISVIEWERENTITY( i + 1 ) ) {
 			continue;
@@ -866,7 +866,7 @@ void CG_DrawTeamMates( void ) {
 			media = cgs.media.shaderVSayIcon[cent->localEffects[LOCALEFFECT_VSAY_HEADICON]];
 		}
 
-		trap_R_DrawStretchPic( coords[0], coords[1], pic_size, pic_size, 0, 0, 1, 1, color, CG_MediaShader( media ) );
+		trap_R_DrawStretchPic( coords[0], coords[1], pic_size, pic_size, 0, 0, 1, 1, color, media );
 	}
 }
 
@@ -1046,7 +1046,7 @@ void CG_DrawTeamInfo( int x, int y, int align, struct qfontface_s *font, vec4_t 
 			if( numIcons >= ( sizeof( icons ) / sizeof( icons[0] ) ) ) {
 				for( icon = 0; icon < numIcons; icon++ ) {
 					trap_R_DrawStretchPic( icons[icon][0], icons[icon][1], height, height, 0, 0, 1, 1, color,
-										   CG_MediaShader( cgs.media.shaderVSayIcon[icons[icon][2]] ) );
+										   cgs.media.shaderVSayIcon[icons[icon][2]] );
 				}
 				numIcons = 0;
 			}
@@ -1059,7 +1059,7 @@ void CG_DrawTeamInfo( int x, int y, int align, struct qfontface_s *font, vec4_t 
 
 	for( icon = 0; icon < numIcons; icon++ ) {
 		trap_R_DrawStretchPic( icons[icon][0], icons[icon][1], height, height, 0, 0, 1, 1, color,
-							   CG_MediaShader( cgs.media.shaderVSayIcon[icons[icon][2]] ) );
+							   cgs.media.shaderVSayIcon[icons[icon][2]] );
 	}
 }
 
@@ -1261,7 +1261,7 @@ void CG_TileClear( void ) {
 	left = scr_vrect.x;
 	right = left + scr_vrect.width - 1;
 
-	backTile = CG_MediaShader( cgs.media.shaderBackTile );
+	backTile = cgs.media.shaderBackTile;
 
 	// clear above view screen
 	CG_TileClearRect( 0, 0, w, top, backTile );

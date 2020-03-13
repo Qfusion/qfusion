@@ -536,7 +536,7 @@ static void CG_RegisterModels( void ) {
 		return;
 	}
 
-	CG_RegisterMediaModels();
+	CG_RegisterModels();
 	CG_RegisterBasePModel(); // never before registering the weapon models
 	CG_RegisterWeaponModels();
 
@@ -587,7 +587,7 @@ static void CG_RegisterSounds( void ) {
 		return;
 	}
 
-	CG_RegisterMediaSounds();
+	CG_PrecacheSounds();
 }
 
 /*
@@ -631,7 +631,7 @@ static void CG_RegisterShaders( void ) {
 		return;
 	}
 
-	CG_RegisterMediaShaders();
+	CG_PrecacheShaders();
 }
 
 /*
@@ -1175,13 +1175,13 @@ void CG_Init( const char *serverName, unsigned int playerNum,
 	CG_RegisterConfigStrings();
 
 	// register fonts here so loading screen works
-	CG_RegisterFonts();
+	CG_PrecacheFonts();
 	cgs.shaderWhite = trap_R_RegisterPic( "$whiteimage" );
 
 	// l10n
 	CG_InitL10n();
 
-	CG_RegisterLevelMinimap();
+	CG_PrecacheMinimap();
 
 	CG_RegisterCGameCommands();
 	CG_RegisterLightStyles();

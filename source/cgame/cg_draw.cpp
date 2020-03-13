@@ -104,7 +104,7 @@ void CG_DrawHUDNumeric( int x, int y, int align, float *color, int charwidth, in
 		}
 		u = ( frame & 3 ) * 0.25f;
 		v = ( frame >> 2 ) * 0.25f;
-		trap_R_DrawStretchPic( x, y, charwidth, charheight, u, v, u + 0.25f, v + 0.25f, color, CG_MediaShader( cgs.media.shaderSbNums ) );
+		trap_R_DrawStretchPic( x, y, charwidth, charheight, u, v, u + 0.25f, v + 0.25f, color, cgs.media.shaderSbNums );
 		x += charwidth;
 		ptr++;
 		length--;
@@ -155,7 +155,7 @@ void CG_DrawHUDField( int x, int y, int align, float *color, int size, int width
 		}
 		u = ( frame & 3 ) * 0.25f;
 		v = ( frame >> 2 ) * 0.25f;
-		trap_R_DrawStretchPic( x, y, w, h, u, v, u + 0.25f, v + 0.25f, color, CG_MediaShader( cgs.media.shaderSbNums ) );
+		trap_R_DrawStretchPic( x, y, w, h, u, v, u + 0.25f, v + 0.25f, color, cgs.media.shaderSbNums );
 		x += w;
 		ptr++;
 		length--;
@@ -443,7 +443,7 @@ void CG_DrawMiniMap( int x, int y, int iw, int ih, float viewDist, int align, ve
 				thisSize = fmax( box_size, 8 ) * cgs.vidHeight / 600;
 				thisX = CG_VerticalAlignForHeight( x + (int)coords[0], ALIGN_CENTER_MIDDLE, thisSize );
 				thisY = CG_VerticalAlignForHeight( y + (int)coords[1] - thisSize, ALIGN_CENTER_MIDDLE, thisSize );
-				trap_R_DrawStretchPic( thisX, thisY, thisSize, thisSize, 0, 0, 1, 1, tmp_yellow_alpha, CG_MediaShader( cgs.media.shaderDownArrow ) );
+				trap_R_DrawStretchPic( thisX, thisY, thisSize, thisSize, 0, 0, 1, 1, tmp_yellow_alpha, cgs.media.shaderDownArrow );
 			}
 		} else if( cent->current.type == ET_MINIMAP_ICON ) {
 			if( cent->ent.customShader ) {

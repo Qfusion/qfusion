@@ -954,7 +954,7 @@ void CG_AddFlagModelOnTag( centity_t *cent, byte_vec4_t teamcolor, const char *t
 		flag.renderfx = RF_NOSHADOW | RF_FULLBRIGHT;
 		flag.frame = flag.oldframe = 0;
 		flag.radius = 32.0f;
-		flag.customShader = CG_MediaShader( cgs.media.shaderFlagFlare );
+		flag.customShader = cgs.media.shaderFlagFlare;
 		flag.outlineHeight = 0;
 
 		CG_AddEntityToScene( &flag );
@@ -1479,7 +1479,7 @@ centity_t *CG_GetItemTimerEnt( int num ) {
 * CG_AddBeamEnt
 */
 static void CG_AddBeamEnt( centity_t *cent ) {
-	CG_QuickPolyBeam( cent->current.origin, cent->current.origin2, cent->current.frame * 0.5f, CG_MediaShader( cgs.media.shaderLaser ) ); // wsw : jalfixme: missing the color (comes inside cent->current.colorRGBA)
+	CG_QuickPolyBeam( cent->current.origin, cent->current.origin2, cent->current.frame * 0.5f, cgs.media.shaderLaser ); // wsw : jalfixme: missing the color (comes inside cent->current.colorRGBA)
 }
 
 //==========================================================================
@@ -2160,7 +2160,7 @@ void CG_UpdateEntities( void ) {
 					CG_UpdateGenericEnt( cent );
 
 					// set the gib model ignoring the modelindex one
-					cent->ent.model = CG_MediaModel( cgs.media.modIlluminatiGibs );
+					cent->ent.model = cgs.media.modIlluminatiGibs;
 				}
 				break;
 

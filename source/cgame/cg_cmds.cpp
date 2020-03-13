@@ -59,7 +59,7 @@ static void CG_SC_ChatPrint( void ) {
 	}
 
 	if( cg_chatBeep->integer ) {
-		trap_S_StartLocalSound( CG_MediaSfx( cgs.media.sfxChat ), CHAN_AUTO, 1.0f );
+		trap_S_StartLocalSound( cgs.media.sfxChat, CHAN_AUTO, 1.0f );
 	}
 }
 
@@ -116,7 +116,7 @@ void CG_ConfigString( int i, const char *s ) {
 
 	// do something apropriate
 	if( i == CS_MAPNAME ) {
-		CG_RegisterLevelMinimap();
+		CG_PrecacheMinimap();
 	} else if( i == CS_GAMETYPETITLE ) {
 	} else if( i == CS_GAMETYPENAME ) {
 		GS_SetGametypeName( cgs.configStrings[CS_GAMETYPENAME] );

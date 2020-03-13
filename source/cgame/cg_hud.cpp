@@ -963,51 +963,51 @@ static void CG_DrawObituaries( int x, int y, int align, struct qfontface_s *font
 
 		switch( obr->mod ) {
 			case MOD_GUNBLADE_W:
-				pic = CG_MediaShader( cgs.media.shaderWeaponIcon[WEAP_GUNBLADE - 1] );
+				pic = cgs.media.shaderWeaponIcon[WEAP_GUNBLADE - 1];
 				break;
 			case MOD_GUNBLADE_S:
-				pic = CG_MediaShader( cgs.media.shaderGunbladeBlastIcon );
+				pic = cgs.media.shaderGunbladeBlastIcon;
 				break;
 			case MOD_MACHINEGUN_W:
 			case MOD_MACHINEGUN_S:
-				pic = CG_MediaShader( cgs.media.shaderWeaponIcon[WEAP_MACHINEGUN - 1] );
+				pic = cgs.media.shaderWeaponIcon[WEAP_MACHINEGUN - 1];
 				break;
 			case MOD_RIOTGUN_W:
 			case MOD_RIOTGUN_S:
-				pic = CG_MediaShader( cgs.media.shaderWeaponIcon[WEAP_RIOTGUN - 1] );
+				pic = cgs.media.shaderWeaponIcon[WEAP_RIOTGUN - 1];
 				break;
 			case MOD_GRENADE_W:
 			case MOD_GRENADE_S:
 			case MOD_GRENADE_SPLASH_W:
 			case MOD_GRENADE_SPLASH_S:
-				pic = CG_MediaShader( cgs.media.shaderWeaponIcon[WEAP_GRENADELAUNCHER - 1] );
+				pic = cgs.media.shaderWeaponIcon[WEAP_GRENADELAUNCHER - 1];
 				break;
 			case MOD_ROCKET_W:
 			case MOD_ROCKET_S:
 			case MOD_ROCKET_SPLASH_W:
 			case MOD_ROCKET_SPLASH_S:
-				pic = CG_MediaShader( cgs.media.shaderWeaponIcon[WEAP_ROCKETLAUNCHER - 1] );
+				pic = cgs.media.shaderWeaponIcon[WEAP_ROCKETLAUNCHER - 1];
 				break;
 			case MOD_PLASMA_W:
 			case MOD_PLASMA_S:
 			case MOD_PLASMA_SPLASH_W:
 			case MOD_PLASMA_SPLASH_S:
-				pic = CG_MediaShader( cgs.media.shaderWeaponIcon[WEAP_PLASMAGUN - 1] );
+				pic = cgs.media.shaderWeaponIcon[WEAP_PLASMAGUN - 1];
 				break;
 			case MOD_ELECTROBOLT_W:
 			case MOD_ELECTROBOLT_S:
-				pic = CG_MediaShader( cgs.media.shaderWeaponIcon[WEAP_ELECTROBOLT - 1] );
+				pic = cgs.media.shaderWeaponIcon[WEAP_ELECTROBOLT - 1];
 				break;
 			case MOD_INSTAGUN_W:
 			case MOD_INSTAGUN_S:
-				pic = CG_MediaShader( cgs.media.shaderWeaponIcon[WEAP_INSTAGUN - 1] );
+				pic = cgs.media.shaderWeaponIcon[WEAP_INSTAGUN - 1];
 				break;
 			case MOD_LASERGUN_W:
 			case MOD_LASERGUN_S:
-				pic = CG_MediaShader( cgs.media.shaderWeaponIcon[WEAP_LASERGUN - 1] );
+				pic = cgs.media.shaderWeaponIcon[WEAP_LASERGUN - 1];
 				break;
 			default:
-				pic = CG_MediaShader( cgs.media.shaderWeaponIcon[WEAP_GUNBLADE - 1] ); // FIXME
+				pic = cgs.media.shaderWeaponIcon[WEAP_GUNBLADE - 1]; // FIXME
 				break;
 		}
 
@@ -1139,7 +1139,7 @@ static struct shader_s *CG_GetWeaponIcon( int weapon ) {
 
 	if( weapon == WEAP_GUNBLADE && cg.predictedPlayerState.inventory[AMMO_GUNBLADE] ) {
 		if( currentWeapon != WEAP_GUNBLADE || ( weaponState != WEAPON_STATE_REFIRESTRONG && weaponState != WEAPON_STATE_REFIRE ) ) {
-			return CG_MediaShader( cgs.media.shaderGunbladeBlastIcon );
+			return cgs.media.shaderGunbladeBlastIcon;
 		}
 	}
 
@@ -1150,12 +1150,12 @@ static struct shader_s *CG_GetWeaponIcon( int weapon ) {
 			if( chargeTimeStep > 0 ) {
 				int charge = ( chargeTime - cg.predictedPlayerState.stats[STAT_WEAPON_TIME] ) / chargeTimeStep;
 				Q_clamp( charge, 0, 2 );
-				return CG_MediaShader( cgs.media.shaderInstagunChargeIcon[charge] );
+				return cgs.media.shaderInstagunChargeIcon[charge];
 			}
 		}
 	}
 
-	return CG_MediaShader( cgs.media.shaderWeaponIcon[weapon - WEAP_GUNBLADE] );
+	return cgs.media.shaderWeaponIcon[weapon - WEAP_GUNBLADE];
 }
 
 static int cg_touch_dropWeapon;
@@ -1282,7 +1282,7 @@ static void CG_DrawWeaponIcons( int x, int y, int offx, int offy, int iw, int ih
 					if( customWeaponSelectPic ) {
 						trap_R_DrawStretchPic( curx, cury, curw, curh, 0, 0, 1, 1, colorTrans, trap_R_RegisterPic( customWeaponSelectPic ) );
 					} else {
-						trap_R_DrawStretchPic( curx, cury, curw, curh, 0, 0, 1, 1, colorTrans, CG_MediaShader( cgs.media.shaderSelect ) );
+						trap_R_DrawStretchPic( curx, cury, curw, curh, 0, 0, 1, 1, colorTrans, cgs.media.shaderSelect );
 					}
 				}
 				if( customWeaponPics[i] ) {
@@ -1294,7 +1294,7 @@ static void CG_DrawWeaponIcons( int x, int y, int offx, int offy, int iw, int ih
 			if( customNoGunWeaponPics[i] ) {
 				trap_R_DrawStretchPic( curx, cury, curw, curh, 0, 0, 1, 1, colorWhite, trap_R_RegisterPic( customNoGunWeaponPics[i] ) );
 			} else {
-				trap_R_DrawStretchPic( curx, cury, curw, curh, 0, 0, 1, 1, colorWhite, CG_MediaShader( cgs.media.shaderNoGunWeaponIcon[i] ) );
+				trap_R_DrawStretchPic( curx, cury, curw, curh, 0, 0, 1, 1, colorWhite, cgs.media.shaderNoGunWeaponIcon[i] );
 			}
 		}
 		j++;
@@ -1419,7 +1419,7 @@ static void CG_DrawWeaponCrossQuarter( int ammopass, int quarter, int x, int y, 
 		if( customWeaponSelectPic ) {
 			trap_R_DrawStretchPic( x, y, iw, ih, 0.0f, 0.0f, 1.0f, 1.0f, colorTrans, trap_R_RegisterPic( customWeaponSelectPic ) );
 		} else {
-			trap_R_DrawStretchPic( x, y, iw, ih, 0.0f, 0.0f, 1.0f, 1.0f, colorTrans, CG_MediaShader( cgs.media.shaderSelect ) );
+			trap_R_DrawStretchPic( x, y, iw, ih, 0.0f, 0.0f, 1.0f, 1.0f, colorTrans, cgs.media.shaderSelect );
 		}
 	}
 

@@ -129,183 +129,177 @@ typedef struct {
 
 #include "cg_pmodels.h"
 
-typedef struct cgs_media_handle_s {
-	char *name;
-	void *data;
-	struct cgs_media_handle_s *next;
-} cgs_media_handle_t;
-
 #define STAT_MINUS              10  // num frame for '-' stats digit
 
 typedef struct {
 	// sounds
-	cgs_media_handle_t *sfxChat;
+	struct sfx_s *sfxChat;
 
 	// timers
-	cgs_media_handle_t *sfxTimerBipBip;
-	cgs_media_handle_t *sfxTimerPloink;
+	struct sfx_s *sfxTimerBipBip;
+	struct sfx_s *sfxTimerPloink;
 
-	cgs_media_handle_t *sfxRic[2];
+	struct sfx_s *sfxRic[2];
 
-	cgs_media_handle_t *sfxWeaponUp;
-	cgs_media_handle_t *sfxWeaponUpNoAmmo;
+	struct sfx_s *sfxWeaponUp;
+	struct sfx_s *sfxWeaponUpNoAmmo;
 
-	cgs_media_handle_t *sfxWalljumpFailed;
+	struct sfx_s *sfxWalljumpFailed;
 
 	//--------------------------------------
 
-	cgs_media_handle_t *sfxWeaponHit[4];
-	cgs_media_handle_t *sfxWeaponKill;
-	cgs_media_handle_t *sfxWeaponHitTeam;
+	struct sfx_s *sfxWeaponHit[4];
+	struct sfx_s *sfxWeaponKill;
+	struct sfx_s *sfxWeaponHitTeam;
 
-	cgs_media_handle_t *sfxItemRespawn;
-	cgs_media_handle_t *sfxPlayerRespawn;
-	cgs_media_handle_t *sfxTeleportIn;
-	cgs_media_handle_t *sfxTeleportOut;
-	cgs_media_handle_t *sfxShellHit;
+	struct sfx_s *sfxItemRespawn;
+	struct sfx_s *sfxPlayerRespawn;
+	struct sfx_s *sfxTeleportIn;
+	struct sfx_s *sfxTeleportOut;
+	struct sfx_s *sfxShellHit;
 
 	// Gunblade sounds :
-	cgs_media_handle_t *sfxGunbladeWeakShot[3];
-	cgs_media_handle_t *sfxGunbladeStrongShot;
-	cgs_media_handle_t *sfxBladeFleshHit[3];
-	cgs_media_handle_t *sfxBladeWallHit[2];
-	cgs_media_handle_t *sfxGunbladeStrongHit[3];
+	struct sfx_s *sfxGunbladeWeakShot[3];
+	struct sfx_s *sfxGunbladeStrongShot;
+	struct sfx_s *sfxBladeFleshHit[3];
+	struct sfx_s *sfxBladeWallHit[2];
+	struct sfx_s *sfxGunbladeStrongHit[3];
 
 	// Riotgun sounds :
-	cgs_media_handle_t *sfxRiotgunWeakHit;
-	cgs_media_handle_t *sfxRiotgunStrongHit;
+	struct sfx_s *sfxRiotgunWeakHit;
+	struct sfx_s *sfxRiotgunStrongHit;
 
 	// Grenade launcher sounds :
-	cgs_media_handle_t *sfxGrenadeWeakBounce[2];
-	cgs_media_handle_t *sfxGrenadeStrongBounce[2];
-	cgs_media_handle_t *sfxGrenadeWeakExplosion;
-	cgs_media_handle_t *sfxGrenadeStrongExplosion;
+	struct sfx_s *sfxGrenadeWeakBounce[2];
+	struct sfx_s *sfxGrenadeStrongBounce[2];
+	struct sfx_s *sfxGrenadeWeakExplosion;
+	struct sfx_s *sfxGrenadeStrongExplosion;
 
 	// Rocket launcher sounds :
-	cgs_media_handle_t *sfxRocketLauncherWeakHit;
-	cgs_media_handle_t *sfxRocketLauncherStrongHit;
+	struct sfx_s *sfxRocketLauncherWeakHit;
+	struct sfx_s *sfxRocketLauncherStrongHit;
 
 	// Plasmagun sounds
-	cgs_media_handle_t *sfxPlasmaWeakHit;
-	cgs_media_handle_t *sfxPlasmaStrongHit;
+	struct sfx_s *sfxPlasmaWeakHit;
+	struct sfx_s *sfxPlasmaStrongHit;
 
 	// Lasergun sounds
-	cgs_media_handle_t *sfxLasergunWeakHum;
-	cgs_media_handle_t *sfxLasergunWeakQuadHum;
-	cgs_media_handle_t *sfxLasergunWeakStop;
-	cgs_media_handle_t *sfxLasergunStrongHum;
-	cgs_media_handle_t *sfxLasergunStrongQuadHum;
-	cgs_media_handle_t *sfxLasergunStrongStop;
-	cgs_media_handle_t *sfxLasergunHit[3];
+	struct sfx_s *sfxLasergunWeakHum;
+	struct sfx_s *sfxLasergunWeakQuadHum;
+	struct sfx_s *sfxLasergunWeakStop;
+	struct sfx_s *sfxLasergunStrongHum;
+	struct sfx_s *sfxLasergunStrongQuadHum;
+	struct sfx_s *sfxLasergunStrongStop;
+	struct sfx_s *sfxLasergunHit[3];
 
-	cgs_media_handle_t *sfxElectroboltHit;
+	struct sfx_s *sfxElectroboltHit;
 
-	cgs_media_handle_t *sfxQuadFireSound;
+	struct sfx_s *sfxQuadFireSound;
 
 	// VSAY sounds
-	cgs_media_handle_t *sfxVSaySounds[VSAY_TOTAL];
+	struct sfx_s *sfxVSaySounds[VSAY_TOTAL];
 
 	//no wsw
 
 	// models
 	//	cgs_media_handle_t		*modTeleportEffect;
-	cgs_media_handle_t *modDash;
-	cgs_media_handle_t *modHeadStun;
+	struct model_s *modDash;
+	struct model_s *modHeadStun;
 
-	cgs_media_handle_t *modIlluminatiGibs;
+	struct model_s *modIlluminatiGibs;
 
 	//wsw weapon sfx
-	cgs_media_handle_t *modRocketExplosion;
-	cgs_media_handle_t *modPlasmaExplosion;
+	struct model_s *modRocketExplosion;
+	struct model_s *modPlasmaExplosion;
 
-	cgs_media_handle_t *modBulletExplode;
-	cgs_media_handle_t *modBladeWallHit;
-	cgs_media_handle_t *modBladeWallExplo;
+	struct model_s *modBulletExplode;
+	struct model_s *modBladeWallHit;
+	struct model_s *modBladeWallExplo;
 
-	cgs_media_handle_t *modElectroBoltWallHit;
-	cgs_media_handle_t *modInstagunWallHit;
+	struct model_s *modElectroBoltWallHit;
+	struct model_s *modInstagunWallHit;
 
-	cgs_media_handle_t *modLasergunWallExplo;
+	struct model_s *modLasergunWallExplo;
 
 	//no wsw
 
-	cgs_media_handle_t *shaderParticle;
-	cgs_media_handle_t *shaderGrenadeExplosion;
-	cgs_media_handle_t *shaderRocketExplosion;
-	cgs_media_handle_t *shaderRocketExplosionRing;
-	cgs_media_handle_t *shaderBulletExplosion;
-	cgs_media_handle_t *shaderRaceGhostEffect;
-	cgs_media_handle_t *shaderWaterBubble;
+	struct shader_s *shaderParticle;
+	struct shader_s *shaderGrenadeExplosion;
+	struct shader_s *shaderRocketExplosion;
+	struct shader_s *shaderRocketExplosionRing;
+	struct shader_s *shaderBulletExplosion;
+	struct shader_s *shaderRaceGhostEffect;
+	struct shader_s *shaderWaterBubble;
 	//	cgs_media_handle_t		*shaderTeleportEffect;
-	cgs_media_handle_t *shaderSmokePuff;
+	struct shader_s *shaderSmokePuff;
 
-	cgs_media_handle_t *shaderSmokePuff1;
-	cgs_media_handle_t *shaderSmokePuff2;
-	cgs_media_handle_t *shaderSmokePuff3;
+	struct shader_s *shaderSmokePuff1;
+	struct shader_s *shaderSmokePuff2;
+	struct shader_s *shaderSmokePuff3;
 
-	cgs_media_handle_t *shaderStrongRocketFireTrailPuff;
-	cgs_media_handle_t *shaderWeakRocketFireTrailPuff;
-	cgs_media_handle_t *shaderGrenadeTrailSmokePuff;
-	cgs_media_handle_t *shaderRocketTrailSmokePuff;
-	cgs_media_handle_t *shaderBloodTrailPuff;
-	cgs_media_handle_t *shaderBloodTrailLiquidPuff;
-	cgs_media_handle_t *shaderBloodImpactPuff;
-	cgs_media_handle_t *shaderTeamMateIndicator;
-	cgs_media_handle_t *shaderTeamCarrierIndicator;
-	cgs_media_handle_t *shaderTeleporterSmokePuff;
-	cgs_media_handle_t *shaderBladeMark;
-	cgs_media_handle_t *shaderBulletMark;
-	cgs_media_handle_t *shaderExplosionMark;
-	cgs_media_handle_t *shaderEnergyMark;
-	cgs_media_handle_t *shaderLaser;
-	cgs_media_handle_t *shaderNet;
-	cgs_media_handle_t *shaderBackTile;
-	cgs_media_handle_t *shaderSelect;
-	cgs_media_handle_t *shaderChatBalloon;
-	cgs_media_handle_t *shaderDownArrow;
-	cgs_media_handle_t *shaderTeleportShellGfx;
+	struct shader_s *shaderStrongRocketFireTrailPuff;
+	struct shader_s *shaderWeakRocketFireTrailPuff;
+	struct shader_s *shaderGrenadeTrailSmokePuff;
+	struct shader_s *shaderRocketTrailSmokePuff;
+	struct shader_s *shaderBloodTrailPuff;
+	struct shader_s *shaderBloodTrailLiquidPuff;
+	struct shader_s *shaderBloodImpactPuff;
+	struct shader_s *shaderTeamMateIndicator;
+	struct shader_s *shaderTeamCarrierIndicator;
+	struct shader_s *shaderTeleporterSmokePuff;
+	struct shader_s *shaderBladeMark;
+	struct shader_s *shaderBulletMark;
+	struct shader_s *shaderExplosionMark;
+	struct shader_s *shaderEnergyMark;
+	struct shader_s *shaderLaser;
+	struct shader_s *shaderNet;
+	struct shader_s *shaderBackTile;
+	struct shader_s *shaderSelect;
+	struct shader_s *shaderChatBalloon;
+	struct shader_s *shaderDownArrow;
+	struct shader_s *shaderTeleportShellGfx;
 
 	//wsw
 	//----------------------------------------------
 
-	cgs_media_handle_t *shaderAdditiveParticleShine;
+	struct shader_s *shaderAdditiveParticleShine;
 
 	//wsw weapon sfx
-	cgs_media_handle_t *shaderPlasmaMark;
-	cgs_media_handle_t *shaderElectroBeamOld;
-	cgs_media_handle_t *shaderElectroBeamOldAlpha;
-	cgs_media_handle_t *shaderElectroBeamOldBeta;
-	cgs_media_handle_t *shaderElectroBeamA;
-	cgs_media_handle_t *shaderElectroBeamAAlpha;
-	cgs_media_handle_t *shaderElectroBeamABeta;
-	cgs_media_handle_t *shaderElectroBeamB;
-	cgs_media_handle_t *shaderElectroBeamBAlpha;
-	cgs_media_handle_t *shaderElectroBeamBBeta;
-	cgs_media_handle_t *shaderElectroBeamRing;
-	cgs_media_handle_t *shaderInstaBeam;
-	cgs_media_handle_t *shaderLaserGunBeam;
-	cgs_media_handle_t *shaderElectroboltMark;
-	cgs_media_handle_t *shaderInstagunMark;
+	struct shader_s *shaderPlasmaMark;
+	struct shader_s *shaderElectroBeamOld;
+	struct shader_s *shaderElectroBeamOldAlpha;
+	struct shader_s *shaderElectroBeamOldBeta;
+	struct shader_s *shaderElectroBeamA;
+	struct shader_s *shaderElectroBeamAAlpha;
+	struct shader_s *shaderElectroBeamABeta;
+	struct shader_s *shaderElectroBeamB;
+	struct shader_s *shaderElectroBeamBAlpha;
+	struct shader_s *shaderElectroBeamBBeta;
+	struct shader_s *shaderElectroBeamRing;
+	struct shader_s *shaderInstaBeam;
+	struct shader_s *shaderLaserGunBeam;
+	struct shader_s *shaderElectroboltMark;
+	struct shader_s *shaderInstagunMark;
 
 	//wsw
-	cgs_media_handle_t *shaderPlayerShadow;
-	cgs_media_handle_t *shaderFlagFlare;
+	struct shader_s *shaderPlayerShadow;
+	struct shader_s *shaderFlagFlare;
 
 	// hud icons
-	cgs_media_handle_t *shaderWeaponIcon[WEAP_TOTAL];
-	cgs_media_handle_t *shaderNoGunWeaponIcon[WEAP_TOTAL];
-	cgs_media_handle_t *shaderGunbladeBlastIcon;
-	cgs_media_handle_t *shaderInstagunChargeIcon[3];
+	struct shader_s *shaderWeaponIcon[WEAP_TOTAL];
+	struct shader_s *shaderNoGunWeaponIcon[WEAP_TOTAL];
+	struct shader_s *shaderGunbladeBlastIcon;
+	struct shader_s *shaderInstagunChargeIcon[3];
 
-	cgs_media_handle_t *shaderKeyIcon[KEYICON_TOTAL];
+	struct shader_s *shaderKeyIcon[KEYICON_TOTAL];
 
 	//no wsw
 
-	cgs_media_handle_t *shaderSbNums;
+	struct shader_s *shaderSbNums;
 
 	// VSAY icons
-	cgs_media_handle_t *shaderVSayIcon[VSAY_TOTAL];
-} cgs_media_t;
+	struct shader_s *shaderVSayIcon[VSAY_TOTAL];
+} cgs_precache_t;
 
 typedef struct bonenode_s {
 	int bonenum;
@@ -466,7 +460,7 @@ typedef struct {
 	struct qfontface_s *fontSystemMedium;
 	struct qfontface_s *fontSystemBig;
 
-	cgs_media_t media;
+	cgs_precache_t media;
 
 	bool precacheDone;
 
@@ -703,17 +697,15 @@ void CG_DrawPicBar( int x, int y, int width, int height, int align, float percen
 //
 // cg_media.c
 //
-void CG_RegisterMediaSounds( void );
-void CG_RegisterMediaModels( void );
-void CG_RegisterMediaShaders( void );
-void CG_RegisterLevelMinimap( void );
-void CG_RegisterFonts( void );
+void CG_PrecacheSounds( void );
+void CG_PrecacheModels( void );
+void CG_PrecacheShaders( void );
+void CG_PrecacheMinimap( void );
+void CG_PrecacheFonts( void );
 
 struct model_s *CG_RegisterModel( const char *name );
-
-struct sfx_s *CG_MediaSfx( cgs_media_handle_t *mediasfx );
-struct model_s *CG_MediaModel( cgs_media_handle_t *mediamodel );
-struct shader_s *CG_MediaShader( cgs_media_handle_t *mediashader );
+struct sfx_s *CG_RegisterSfx( const char *name );
+struct shader_s *CG_RegisterShader( const char *name );
 
 //
 // cg_overlay.c
