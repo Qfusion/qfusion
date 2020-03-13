@@ -67,6 +67,53 @@ static const gs_asEnum_t asCGameEnums[] = {
 
 //======================================================================
 
+static const gs_asClassDescriptor_t asModelHandleClassDescriptor =
+{
+	"ModelHandle",              /* name */
+	asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE,  /* object type flags */
+	sizeof( void * ),           /* size */
+	NULL,                       /* funcdefs */
+	NULL,                       /* object behaviors */
+	NULL,                       /* methods */
+	NULL,                       /* properties */
+	NULL, NULL                  /* string factory hack */
+};
+
+static const gs_asClassDescriptor_t asSoundHandleClassDescriptor =
+{
+	"SoundHandle",              /* name */
+	asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE,  /* object type flags */
+	sizeof( void * ),           /* size */
+	NULL,                       /* funcdefs */
+	NULL,                       /* object behaviors */
+	NULL,                       /* methods */
+	NULL,                       /* properties */
+	NULL, NULL                  /* string factory hack */
+};
+
+static const gs_asClassDescriptor_t asShaderHandleClassDescriptor =
+{
+	"ShaderHandle",             /* name */
+	asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE,  /* object type flags */
+	sizeof( void * ),           /* size */
+	NULL,                       /* funcdefs */
+	NULL,                       /* object behaviors */
+	NULL,                       /* methods */
+	NULL,                       /* properties */
+	NULL, NULL                  /* string factory hack */
+};
+
+const gs_asClassDescriptor_t * const asCGameClassesDescriptors[] =
+{
+	&asModelHandleClassDescriptor,
+	&asSoundHandleClassDescriptor,
+	&asShaderHandleClassDescriptor,
+
+	NULL
+};
+
+//======================================================================
+
 static void asFunc_Print( const asstring_t *str )
 {
 	if( !str || !str->buffer ) {
@@ -79,6 +126,9 @@ static void asFunc_Print( const asstring_t *str )
 static const gs_asglobfuncs_t asCGameGlobalFuncs[] = {
 	{ "void Print( const String &in )", asFUNCTION( asFunc_Print ), NULL },
 	{ "void ShowOverlayMenu( int state, bool showCursor )", asFUNCTION( CG_ShowOverlayMenu ), NULL },
+	{ "ModelHandle RegisterModel( const String &in )", asFUNCTION( CG_RegisterModel ), NULL },
+	{ "SoundHandle RegisterSound( const String &in )", asFUNCTION( CG_RegisterSfx ), NULL },
+	{ "ShaderHandle RegisterShader( const String &in )", asFUNCTION( CG_RegisterShader ), NULL },
 
 	{ NULL },
 };
@@ -118,10 +168,12 @@ static void CG_asInitializeCGameEngineSyntax( asIScriptEngine *asEngine )
 	GS_asRegisterFuncdefs( asEngine, asCGameCmdFuncdefs, "CGame::Cmd" );
 
 	// first register all class names so methods using custom classes work
+	GS_asRegisterObjectClassNames( asEngine, asCGameClassesDescriptors, "CGame" );
 	GS_asRegisterObjectClassNames( asEngine, asCGameInputClassesDescriptors, "CGame::Input" );
 	GS_asRegisterObjectClassNames( asEngine, asCGameCameraClassesDescriptors, "CGame::Camera" );
 
 	// register classes
+	GS_asRegisterObjectClasses( asEngine, asCGameClassesDescriptors, "CGame" );
 	GS_asRegisterObjectClasses( asEngine, asCGameInputClassesDescriptors, "CGame::Input" );
 	GS_asRegisterObjectClasses( asEngine, asCGameCameraClassesDescriptors, "CGame::Camera" );
 
