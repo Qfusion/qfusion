@@ -449,6 +449,12 @@ typedef struct {
 		void *vaClamp;
 	} asPMove;
 
+	// AS head-up display API
+	struct {
+		void *init;
+		void *drawCrosshair;
+	} asHUD;
+
 	// fonts
 	char fontSystemFamily[MAX_QPATH];
 	char fontSystemMonoFamily[MAX_QPATH];
@@ -1201,6 +1207,9 @@ bool CG_asLoadPMoveScript( void );
 void CG_asUnloadPMoveScript( void );
 void CG_asPMove( pmove_t *pm, player_state_t *ps, usercmd_t *cmd );
 void CG_asGetViewAnglesClamp( const player_state_t *ps, vec3_t clamp );
+
+void CG_asHUDInit( void );
+bool CG_asHUDDrawCrosshair( void );
 
 void CG_asInputInit( void );
 void CG_asInputShutdown( void );

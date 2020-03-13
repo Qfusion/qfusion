@@ -2531,6 +2531,9 @@ static bool CG_LFuncDrawTeamInfo( struct cg_layoutnode_s *commandnode, struct cg
 }
 
 static bool CG_LFuncDrawCrossHair( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments ) {
+	if( CG_asHUDDrawCrosshair() ) {
+		return true;
+	}
 	CG_DrawCrosshair( layout_cursor_x, layout_cursor_y, layout_cursor_align );
 	return true;
 }

@@ -38,6 +38,9 @@ static cg_asApiFuncPtr_t cg_asCGameAPI[] = {
 	{ "void CGame::Camera::SetupCamera( CGame::Camera::Camera @cam )", &cgs.asCamera.setupCamera, true },
 	{ "void CGame::Camera::SetupRefdef( CGame::Camera::Camera @cam )", &cgs.asCamera.setupRefdef, true },
 
+	{ "void CGame::HUD::Init()", &cgs.asHUD.init, false },
+	{ "bool CGame::HUD::DrawCrosshair()", &cgs.asHUD.drawCrosshair, false },
+
 	{ nullptr, nullptr, false },
 };
 
@@ -436,4 +439,35 @@ void CG_asGetViewAnglesClamp( const player_state_t *ps, vec3_t vaclamp )
 			const asvec3_t *va = (const asvec3_t *)ctx->GetReturnAddress();
 			VectorCopy( va->v, vaclamp );
 		} );
+}
+
+//======================================================================
+
+/*
+ * CG_asHUDInit
+ */
+void CG_asHUDInit( void )
+{
+	if( !cgs.asHUD.init ) {
+		return;
+	}
+	CG_asCallScriptFunc( cgs.asHUD.init, cg_empty_as_cb, cg_empty_as_cb );
+}
+
+/*
+ * CG_asHUDDrawCrosshair
+ */
+bool CG_asHUDDrawCrosshair( void )
+{
+	uint8_t res = 0;
+
+	if( !cgs.asHUD.drawCrosshair ) {
+		return false;
+	}
+
+	CG_asCallScriptFunc(
+		cgs.asHUD.drawCrosshair, cg_empty_as_cb,
+		[&res]( asIScriptContext *ctx ) { res = ctx->GetReturnByte(); } );
+
+	return res == 0 ? false : true;
 }

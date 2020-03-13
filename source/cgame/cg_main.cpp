@@ -1168,6 +1168,8 @@ void CG_Init( const char *serverName, unsigned int playerNum,
 
 	CG_ScreenInit();
 
+	CG_asHUDInit();
+
 	CG_ClearLightStyles();
 
 	CG_ClearLocalEntities();
