@@ -781,7 +781,9 @@ static void CG_UpdateChaseCam( void ) {
 */
 #define WAVE_AMPLITUDE  0.015   // [0..1]
 #define WAVE_FREQUENCY  0.6     // [0..1]
-static void CG_SetupRefDef( cg_viewdef_t *view, refdef_t *rd ) {
+static void CG_SetupRefDef( cg_viewdef_t *view ) {
+	refdef_t *rd = &view->refdef;
+
 	memset( rd, 0, sizeof( *rd ) );
 
 	// view rectangle size
@@ -803,8 +805,8 @@ static void CG_SetupRefDef( cg_viewdef_t *view, refdef_t *rd ) {
 
 	rd->minLight = 0.3f;
 
-	VectorCopy( cg.view.origin, rd->vieworg );
-	Matrix3_Copy( cg.view.axis, rd->viewaxis );
+	VectorCopy( view->origin, rd->vieworg );
+	Matrix3_Copy( view->axis, rd->viewaxis );
 	VectorInverse( &rd->viewaxis[AXIS_RIGHT] );
 
 	rd->colorCorrection = NULL;
@@ -832,7 +834,7 @@ static void CG_SetupRefDef( cg_viewdef_t *view, refdef_t *rd ) {
 
 	CG_SkyPortal( rd );
 
-	CG_asSetupRefdef( view, rd );
+	CG_asSetupRefdef( view );
 }
 
 /*
@@ -959,8 +961,6 @@ static void CG_SetupViewDef( cg_viewdef_t *view, int type, float stereo_separati
 * CG_RenderView
 */
 void CG_RenderView( int frameTime, int realFrameTime, int64_t realTime, int64_t serverTime, float stereo_separation, unsigned extrapolationTime ) {
-	refdef_t *rd = &cg.view.refdef;
-
 	// update time
 	cg.realTime = realTime;
 	cg.frameTime = frameTime;
@@ -1108,9 +1108,9 @@ void CG_RenderView( int frameTime, int realFrameTime, int64_t realTime, int64_t 
 
 	CG_SetSceneTeamColors(); // update the team colors in the renderer
 
-	CG_SetupRefDef( &cg.view, rd );
+	CG_SetupRefDef( &cg.view );
 
-	trap_R_RenderScene( rd );
+	trap_R_RenderScene( &cg.view.refdef );
 
 	cg.oldAreabits = true;
 

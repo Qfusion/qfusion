@@ -36,7 +36,7 @@ static cg_asApiFuncPtr_t cg_asCGameAPI[] = {
 	{ "Vec3 CGame::Input::GetMovement()", &cgs.asInput.getMovement, true },
 
 	{ "void CGame::Camera::SetupCamera( CGame::Camera::Camera @cam )", &cgs.asCamera.setupCamera, true },
-	{ "void CGame::Camera::SetupRefdef( const CGame::Camera::Camera @cam, CGame::Camera::Refdef @rd )",
+	{ "void CGame::Camera::SetupRefdef( CGame::Camera::Camera @cam )",
 		&cgs.asCamera.setupRefdef, true },
 
 	{ nullptr, nullptr, false },

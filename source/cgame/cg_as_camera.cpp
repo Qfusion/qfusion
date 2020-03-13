@@ -122,11 +122,9 @@ static const gs_asClassDescriptor_t asViewportClassDescriptor =
 
 //=======================================================================
 
-static asvec3_t asRefdef_transformToScreen( asvec3_t *vec, refdef_t *rd )
+static refdef_t *asCamera_getRefdef( cg_viewdef_t *view )
 {
-	asvec3_t res;
-	trap_R_TransformVectorToScreen( rd, vec->v, res.v );
-	return res;
+	return &view->refdef;
 }
 
 static const gs_asFuncdef_t ascamera_Funcdefs[] =
@@ -141,9 +139,9 @@ static const gs_asBehavior_t ascamera_ObjectBehaviors[] =
 
 static const gs_asMethod_t ascamera_Methods[] =
 {
-	{ ASLIB_FUNCTION_DECL( Vec3, transformToScreen, ( const Vec3 &in ) const ), asFUNCTION( asRefdef_transformToScreen ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( Refdef @, get_refdef, () const ), asFUNCTION( asCamera_getRefdef ), asCALL_CDECL_OBJLAST },
 
-	ASLIB_METHOD_NULL
+	ASLIB_METHOD_NULL,
 };
 
 static const gs_asProperty_t ascamera_Properties[] =
@@ -180,19 +178,28 @@ static const gs_asClassDescriptor_t asCameraClassDescriptor =
 
 //=======================================================================
 
+static asvec3_t asRefdef_transformToScreen( asvec3_t *vec, refdef_t *rd )
+{
+	asvec3_t res;
+	trap_R_TransformVectorToScreen( rd, vec->v, res.v );
+	return res;
+}
+
 static const gs_asFuncdef_t asrefdef_Funcdefs[] =
 {
-	ASLIB_FUNCDEF_NULL
+	ASLIB_FUNCDEF_NULL,
 };
 
 static const gs_asBehavior_t asrefdef_ObjectBehaviors[] =
 {
-	ASLIB_BEHAVIOR_NULL
+	ASLIB_BEHAVIOR_NULL,
 };
 
 static const gs_asMethod_t asrefdef_Methods[] =
 {
-	ASLIB_METHOD_NULL
+	{ ASLIB_FUNCTION_DECL( Vec3, transformToScreen, ( const Vec3 &in ) const ), asFUNCTION( asRefdef_transformToScreen ), asCALL_CDECL_OBJLAST },
+
+	ASLIB_METHOD_NULL,
 };
 
 static const gs_asProperty_t asrefdef_Properties[] =
@@ -274,11 +281,10 @@ void CG_asSetupCamera( cg_viewdef_t *view ) {
 /*
 * CG_asSetupRefdef
 */
-void CG_asSetupRefdef( cg_viewdef_t *view, refdef_t *rd ) {
-	CG_asCallScriptFunc( cgs.asCamera.setupRefdef, [view, rd](asIScriptContext *ctx)
+void CG_asSetupRefdef( cg_viewdef_t *view ) {
+	CG_asCallScriptFunc( cgs.asCamera.setupRefdef, [view](asIScriptContext *ctx)
 		{
 			ctx->SetArgObject( 0, view );
-			ctx->SetArgObject( 1, rd );
 		},
 		cg_empty_as_cb
 	);
