@@ -625,58 +625,6 @@ static void CG_InterpolatePlayerState( player_state_t *playerState ) {
 }
 
 /*
-* CG_ThirdPersonOffsetView
-*/
-static void CG_ThirdPersonOffsetView( cg_viewdef_t *view ) {
-	float dist, f, r;
-	vec3_t dest, stop;
-	vec3_t chase_dest;
-	trace_t trace;
-	vec3_t mins = { -4, -4, -4 };
-	vec3_t maxs = { 4, 4, 4 };
-
-	if( !cg_thirdPersonAngle || !cg_thirdPersonRange ) {
-		cg_thirdPersonAngle = trap_Cvar_Get( "cg_thirdPersonAngle", "0", CVAR_ARCHIVE );
-		cg_thirdPersonRange = trap_Cvar_Get( "cg_thirdPersonRange", "70", CVAR_ARCHIVE );
-	}
-
-	// calc exact destination
-	VectorCopy( view->origin, chase_dest );
-	r = DEG2RAD( cg_thirdPersonAngle->value );
-	f = -cos( r );
-	r = -sin( r );
-	VectorMA( chase_dest, cg_thirdPersonRange->value * f, &view->axis[AXIS_FORWARD], chase_dest );
-	VectorMA( chase_dest, cg_thirdPersonRange->value * r, &view->axis[AXIS_RIGHT], chase_dest );
-	chase_dest[2] += 8;
-
-	// find the spot the player is looking at
-	VectorMA( view->origin, 512, &view->axis[AXIS_FORWARD], dest );
-	CG_Trace( &trace, view->origin, mins, maxs, dest, view->POVent, MASK_SOLID );
-
-	// calculate pitch to look at the same spot from camera
-	VectorSubtract( trace.endpos, view->origin, stop );
-	dist = sqrt( stop[0] * stop[0] + stop[1] * stop[1] );
-	if( dist < 1 ) {
-		dist = 1;
-	}
-	view->angles[PITCH] = RAD2DEG( -atan2( stop[2], dist ) );
-	view->angles[YAW] -= cg_thirdPersonAngle->value;
-	Matrix3_FromAngles( view->angles, view->axis );
-
-	// move towards destination
-	CG_Trace( &trace, view->origin, mins, maxs, chase_dest, view->POVent, MASK_SOLID );
-
-	if( trace.fraction != 1.0 ) {
-		VectorCopy( trace.endpos, stop );
-		stop[2] += ( 1.0 - trace.fraction ) * 32;
-		CG_Trace( &trace, view->origin, mins, maxs, stop, view->POVent, MASK_SOLID );
-		VectorCopy( trace.endpos, chase_dest );
-	}
-
-	VectorCopy( chase_dest, view->origin );
-}
-
-/*
 * CG_ViewSmoothPredictedSteps
 */
 void CG_ViewSmoothPredictedSteps( vec3_t vieworg ) {
@@ -939,18 +887,20 @@ static void CG_SetupViewDef( cg_viewdef_t *view, int type, float stereo_separati
 
 	view->fov_x = CalcHorizontalFov( view->fov_y, scr_vrect.width, scr_vrect.height );
 
+	Matrix3_FromAngles( view->angles, view->axis );
+	if( view->flipped ) {
+		VectorInverse( &view->axis[AXIS_RIGHT] );
+	}
+
 	CG_asSetupCamera( view );
 
+	// update the view axis after calling the script function
 	Matrix3_FromAngles( view->angles, view->axis );
 	if( view->flipped ) {
 		VectorInverse( &view->axis[AXIS_RIGHT] );
 	}
 
 	view->fracDistFOV = tan( DEG2RAD( view->fov_x ) * 0.5f );
-
-	if( view->thirdperson ) {
-		CG_ThirdPersonOffsetView( view );
-	}
 
 	if( !view->playerPrediction ) {
 		cg.predictedWeaponSwitch = 0;
