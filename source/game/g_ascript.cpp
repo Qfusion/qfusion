@@ -1094,7 +1094,7 @@ static const gs_asMethod_t gameclient_Methods[] =
 	{ ASLIB_FUNCTION_DECL( float, get_pmoveDashSpeed, ( ) const ), asFUNCTION( objectGameClient_getPMoveDashSpeed ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( const String @, getUserInfoKey, ( const String &in ) const ), asFUNCTION( objectGameClient_getUserInfoKey ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, printMessage, ( const String &in ) ), asFUNCTION( objectGameClient_printMessage ), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL( void, chaseCam, ( const String @, bool teamOnly ) ), asFUNCTION( objectGameClient_ChaseCam ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( void, chaseCam, ( const String @+, bool teamOnly ) ), asFUNCTION( objectGameClient_ChaseCam ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, set_chaseActive, ( const bool active ) ), asFUNCTION( objectGameClient_SetChaseActive ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( bool, get_chaseActive, ( ) const ), asFUNCTION( objectGameClient_GetChaseActive ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, newRaceRun, ( int numSectors ) ), asFUNCTION( objectGameClient_NewRaceRun ), asCALL_CDECL_OBJLAST },
