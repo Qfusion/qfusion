@@ -152,32 +152,6 @@ static const gs_asEnumVal_t asGameStatFlagsEnumVals[] =
 	ASLIB_ENUM_VAL_NULL
 };
 
-static const gs_asEnumVal_t asHUDStatEnumVals[] =
-{
-	ASLIB_ENUM_VAL( STAT_PROGRESS_SELF ),
-	ASLIB_ENUM_VAL( STAT_PROGRESS_OTHER ),
-	ASLIB_ENUM_VAL( STAT_PROGRESS_ALPHA ),
-	ASLIB_ENUM_VAL( STAT_PROGRESS_BETA ),
-	ASLIB_ENUM_VAL( STAT_IMAGE_SELF ),
-	ASLIB_ENUM_VAL( STAT_IMAGE_OTHER ),
-	ASLIB_ENUM_VAL( STAT_IMAGE_ALPHA ),
-	ASLIB_ENUM_VAL( STAT_IMAGE_BETA ),
-	ASLIB_ENUM_VAL( STAT_TIME_SELF ),
-	ASLIB_ENUM_VAL( STAT_TIME_BEST ),
-	ASLIB_ENUM_VAL( STAT_TIME_RECORD ),
-	ASLIB_ENUM_VAL( STAT_TIME_ALPHA ),
-	ASLIB_ENUM_VAL( STAT_TIME_BETA ),
-	ASLIB_ENUM_VAL( STAT_MESSAGE_SELF ),
-	ASLIB_ENUM_VAL( STAT_MESSAGE_OTHER ),
-	ASLIB_ENUM_VAL( STAT_MESSAGE_ALPHA ),
-	ASLIB_ENUM_VAL( STAT_MESSAGE_BETA ),
-	ASLIB_ENUM_VAL( STAT_IMAGE_CLASSACTION1 ),
-	ASLIB_ENUM_VAL( STAT_IMAGE_CLASSACTION2 ),
-	ASLIB_ENUM_VAL( STAT_IMAGE_DROP_ITEM ),
-
-	ASLIB_ENUM_VAL_NULL
-};
-
 static const gs_asEnumVal_t asTeamEnumVals[] =
 {
 	ASLIB_ENUM_VAL( TEAM_SPECTATOR ),
@@ -719,7 +693,6 @@ static const gs_asEnum_t asGameEnums[] =
 	{ "matchstates_e", asMatchStateEnumVals },
 	{ "gamestats_e", asGameStatEnumVals },
 	{ "gamestatflags_e", asGameStatFlagsEnumVals },
-	{ "hudstats_e", asHUDStatEnumVals },
 	{ "teams_e", asTeamEnumVals },
 	{ "entitytype_e", asEntityTypeEnumVals },
 	{ "entityevent_e", asEntityEventEnumVals },
