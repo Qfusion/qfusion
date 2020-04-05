@@ -834,9 +834,8 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 	#ifdef CELSHADEDMATERIAL
 		programFeatures |= GLSL_SHADER_MATERIAL_CELSHADING;
 	#endif
-	#ifdef HALFLAMBERTLIGHTING
+
 		programFeatures |= GLSL_SHADER_MATERIAL_HALFLAMBERT;
-	#endif
 	}
 
 	Matrix4_Identity( texMatrix );
