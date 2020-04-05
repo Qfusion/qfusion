@@ -22,7 +22,6 @@ break
 // renderer config
 //#define CELSHADEDMATERIAL
 #define HALFLAMBERTLIGHTING
-#define AREAPORTALS_MATRIX
 
 // collision config
 #define TRACE_NOAXIAL // a hack to avoid issues with the return of traces against non axial planes

@@ -524,9 +524,7 @@ static void RF_IssueRenderSceneCmd( ref_cmdbuf_t *cmdbuf, const refdef_t *fd ) {
 
 	if( fd->areabits && rsh.worldBrushModel ) {
 		areabytes = ( ( rsh.worldBrushModel->numareas + 7 ) / 8 );
-#ifdef AREAPORTALS_MATRIX
 		areabytes *= rsh.worldBrushModel->numareas;
-#endif
 		cmd_len = Q_ALIGN( cmd_len + areabytes, sizeof( float ) );
 	}
 
