@@ -25,11 +25,7 @@ static bool in_initialized = false;
 static int64_t sys_frame_time;
 
 cvar_t *cl_ucmdMaxResend;
-
 cvar_t *cl_ucmdFPS;
-#ifdef UCMDTIMENUDGE
-cvar_t *cl_ucmdTimeNudge;
-#endif
 
 static void CL_CreateNewUserCommand( int realMsec );
 
@@ -168,17 +164,6 @@ void CL_InitInput( void ) {
 
 	cl_ucmdMaxResend =  Cvar_Get( "cl_ucmdMaxResend", "3", CVAR_ARCHIVE );
 	cl_ucmdFPS =        Cvar_Get( "cl_ucmdFPS", "62", CVAR_DEVELOPER );
-
-#ifdef UCMDTIMENUDGE
-	cl_ucmdTimeNudge =  Cvar_Get( "cl_ucmdTimeNudge", "0", CVAR_USERINFO | CVAR_DEVELOPER );
-	if( abs( cl_ucmdTimeNudge->integer ) > MAX_UCMD_TIMENUDGE ) {
-		if( cl_ucmdTimeNudge->integer < -MAX_UCMD_TIMENUDGE ) {
-			Cvar_SetValue( "cl_ucmdTimeNudge", -MAX_UCMD_TIMENUDGE );
-		} else if( cl_ucmdTimeNudge->integer > MAX_UCMD_TIMENUDGE ) {
-			Cvar_SetValue( "cl_ucmdTimeNudge", MAX_UCMD_TIMENUDGE );
-		}
-	}
-#endif
 
 	in_initialized = true;
 }

@@ -12,10 +12,6 @@
 //				going to be removed by keeping or discarding it.
 //==============================================
 
-#ifdef BROKEN_BUILD
-break
-#endif
-
 // pretty solid
 #define MOREGRAVITY
 
@@ -26,8 +22,6 @@ break
 // undecided status
 
 //#define PURE_CHEAT
-
-//#define UCMDTIMENUDGE
 
 #define TCP_SUPPORT
 

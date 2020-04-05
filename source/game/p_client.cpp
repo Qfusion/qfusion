@@ -1170,16 +1170,6 @@ void ClientUserinfoChanged( edict_t *ent, char *userinfo ) {
 		}
 	}
 
-#ifdef UCMDTIMENUDGE
-	s = Info_ValueForKey( userinfo, "cl_ucmdTimeNudge" );
-	if( !s ) {
-		cl->ucmdTimeNudge = 0;
-	} else {
-		cl->ucmdTimeNudge = atoi( s );
-		clamp( cl->ucmdTimeNudge, -MAX_UCMD_TIMENUDGE, MAX_UCMD_TIMENUDGE );
-	}
-#endif
-
 	// mm session
 	// TODO: remove the key after storing it to gclient_t !
 	s = Info_ValueForKey( userinfo, "cl_mm_session" );
@@ -1483,10 +1473,6 @@ void ClientThink( edict_t *ent, usercmd_t *ucmd, int timeDelta ) {
 
 		client->timeDeltas[client->timeDeltasHead & G_MAX_TIME_DELTAS_MASK] = timeDelta;
 		client->timeDeltasHead++;
-
-#ifdef UCMDTIMENUDGE
-		client->timeDelta += client->pers.ucmdTimeNudge;
-#endif
 	}
 
 	Q_clamp( client->timeDelta, -g_antilag_maxtimedelta->integer, 0 );
