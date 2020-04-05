@@ -41,12 +41,13 @@ void R_Imagelib_Init( void );
 void R_Imagelib_Shutdown( void );
 
 r_imginfo_t LoadTGA( const char *name, uint8_t *( *allocbuf )( void *, size_t, const char *, int ), void *uptr );
-bool WriteTGA( const char *name, r_imginfo_t *info, int quality );
+bool WriteTGA( const char *name, r_imginfo_t *info );
 
 r_imginfo_t LoadJPG( const char *name, uint8_t *( *allocbuf )( void *, size_t, const char *, int ), void *uptr );
 bool WriteJPG( const char *name, r_imginfo_t *info, int quality );
 
 r_imginfo_t LoadPNG( const char *name, uint8_t *( *allocbuf )( void *, size_t, const char *, int ), void *uptr );
+bool WritePNG( const char *name, r_imginfo_t *info );
 
 r_imginfo_t LoadPCX( const char *name, uint8_t *( *allocbuf )( void *, size_t, const char *, int ), void *uptr );
 

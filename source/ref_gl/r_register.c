@@ -133,8 +133,8 @@ cvar_t *r_skymip;
 cvar_t *r_nobind;
 cvar_t *r_polyblend;
 cvar_t *r_lockpvs;
-cvar_t *r_screenshot_fmtstr;
-cvar_t *r_screenshot_jpeg;
+cvar_t *r_screenshot_fnfmt;
+cvar_t *r_screenshot_format;
 cvar_t *r_screenshot_jpeg_quality;
 cvar_t *r_swapinterval;
 cvar_t *r_swapinterval_min;
@@ -1192,9 +1192,9 @@ static void R_Register( const char *screenshotsPrefix ) {
 	r_texturecompression = ri.Cvar_Get( "r_texturecompression", "0", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
 	r_stencilbits = ri.Cvar_Get( "r_stencilbits", "0", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
 
-	r_screenshot_jpeg = ri.Cvar_Get( "r_screenshot_jpeg", "1", CVAR_ARCHIVE );
+	r_screenshot_format = ri.Cvar_Get( "r_screenshot_format", "jpg", CVAR_ARCHIVE );
 	r_screenshot_jpeg_quality = ri.Cvar_Get( "r_screenshot_jpeg_quality", "90", CVAR_ARCHIVE );
-	r_screenshot_fmtstr = ri.Cvar_Get( "r_screenshot_fmtstr", va_r( tmp, sizeof( tmp ), "%s%%y%%m%%d_%%H%%M%%S", screenshotsPrefix ), CVAR_ARCHIVE );
+	r_screenshot_fnfmt = ri.Cvar_Get( "r_screenshot_fnfmt", va_r( tmp, sizeof( tmp ), "%s%%y%%m%%d_%%H%%M%%S", screenshotsPrefix ), CVAR_ARCHIVE );
 
 #if defined( GLX_VERSION ) && !defined( USE_SDL2 )
 	r_swapinterval = ri.Cvar_Get( "r_swapinterval", "0", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
@@ -1347,7 +1347,7 @@ rserr_t R_Init( const char *applicationName, const char *screenshotPrefix, int s
 		applicationName = "Qfusion";
 	}
 	if( !screenshotPrefix ) {
-		screenshotPrefix = "";
+		screenshotPrefix = "qfusion_";
 	}
 
 	R_Register( screenshotPrefix );

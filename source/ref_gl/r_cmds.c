@@ -43,19 +43,24 @@ void R_TakeScreenShot( const char *path, const char *name, const char *fmtString
 	const char *extension;
 	size_t path_size = strlen( path ) + 1;
 	char *checkname = NULL;
+	const char *format = r_screenshot_format->string;
 	size_t checkname_size = 0;
-	int quality;
+	int quality = 0;
 
 	if( !R_IsRenderingToScreen() ) {
 		return;
 	}
 
-	if( r_screenshot_jpeg->integer ) {
+	if( !Q_stricmp( format, "jpg" ) || !Q_stricmp( format, "jpeg" ) ) {
 		extension = ".jpg";
 		quality = r_screenshot_jpeg_quality->integer;
-	} else {
+	} else if( !Q_stricmp( format, "png" ) ) {
+		extension = ".png";
+	} else if( !Q_stricmp( format, "tga" ) ) {
 		extension = ".tga";
-		quality = 100;
+	} else {
+		Com_Printf( "Invalid screenshot format: %s\n", format );
+		return;
 	}
 
 	if( name && name[0] && Q_stricmp( name, "*" ) ) {
@@ -95,11 +100,11 @@ void R_TakeScreenShot( const char *path, const char *name, const char *fmtString
 			if( strcmp( lastFmtString, fmtString ) ) {
 				lastIndex = 0;
 				Q_strncpyz( lastFmtString, fmtString, sizeof( lastFmtString ) );
-				r_screenshot_fmtstr->modified = false;
+				r_screenshot_fnfmt->modified = false;
 			}
-			if( r_screenshot_jpeg->modified ) {
+			if( r_screenshot_format->modified ) {
 				lastIndex = 0;
-				r_screenshot_jpeg->modified = false;
+				r_screenshot_format->modified = false;
 			}
 		} else {
 			Q_snprintfz( checkname, checkname_size, "%s%s%s", path, timestampString, extension );
@@ -162,9 +167,9 @@ void R_ScreenShot_f( void ) {
 
 	// validate timestamp string
 	for( i = 0; i < 2; i++ ) {
-		strftime( timestamp_str, sizeof( timestamp_str ), r_screenshot_fmtstr->string, &newtime );
+		strftime( timestamp_str, sizeof( timestamp_str ), r_screenshot_fnfmt->string, &newtime );
 		if( !COM_ValidateRelativeFilename( timestamp_str ) ) {
-			ri.Cvar_ForceSet( r_screenshot_fmtstr->name, r_screenshot_fmtstr->dvalue );
+			ri.Cvar_ForceSet( r_screenshot_fnfmt->name, r_screenshot_fnfmt->dvalue );
 		} else {
 			break;
 		}
@@ -172,10 +177,10 @@ void R_ScreenShot_f( void ) {
 
 	// hm... shouldn't really happen, but check anyway
 	if( i == 2 ) {
-		ri.Cvar_ForceSet( r_screenshot_fmtstr->name, glConfig.screenshotPrefix );
+		ri.Cvar_ForceSet( r_screenshot_fnfmt->name, glConfig.screenshotPrefix );
 	}
 
-	RF_ScreenShot( path, name, r_screenshot_fmtstr->string,
+	RF_ScreenShot( path, name, r_screenshot_fnfmt->string,
 				   ri.Cmd_Argc() >= 3 && !Q_stricmp( ri.Cmd_Argv( 2 ), "silent" ) ? true : false );
 }
 

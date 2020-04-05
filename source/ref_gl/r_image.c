@@ -2304,6 +2304,7 @@ void R_ScreenShot( const char *filename, int x, int y, int width, int height, in
 	uint8_t *buffer, *flipped, *rgb, *rgba;
 	r_imginfo_t imginfo;
 	const char *extension;
+	bool success;
 
 	if( !R_IsRenderingToScreen() ) {
 		return;
@@ -2364,15 +2365,17 @@ void R_ScreenShot( const char *filename, int x, int y, int width, int height, in
 					   flipx, flipy, flipdiagonal );
 	}
 
+	success = false;
 	if( !Q_stricmp( extension, ".jpg" ) ) {
-		if( WriteJPG( filename, &imginfo, quality ) && !silent ) {
-			Com_Printf( "Wrote %s\n", filename );
-		}
-
+		success = WriteJPG( filename, &imginfo, quality );
+	} else if( !Q_stricmp( extension, ".png" ) ) {
+		success = WritePNG( filename, &imginfo );
 	} else {
-		if( WriteTGA( filename, &imginfo, 100 ) && !silent ) {
-			Com_Printf( "Wrote %s\n", filename );
-		}
+		success = WriteTGA( filename, &imginfo );
+	}
+
+	if( success && !silent ) {
+		Com_Printf( "Wrote %s\n", filename );
 	}
 }
 
