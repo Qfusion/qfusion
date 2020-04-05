@@ -156,16 +156,6 @@ static void GS_ClipVelocityToClippingPlanes( move_t *move ) {
 		if( DotProduct( move->velocity, move->clipPlaneNormals[i] ) >= SLIDEMOVE_PLANEINTERACT_EPSILON ) {
 			continue; // looking in the same direction than the velocity
 		}
-#ifndef TRACEVICFIX
-#ifndef TRACE_NOAXIAL
-		// this is a hack, cause non axial planes can return invalid positions in trace endpos
-		if( PlaneTypeForNormal( move->clipPlaneNormals[i] ) == PLANE_NONAXIAL ) {
-			// offset the origin a little bit along the plane normal
-			VectorMA( move->origin, 0.05, move->clipPlaneNormals[i], move->origin );
-		}
-#endif
-#endif
-
 		GS_ClipVelocity( move->velocity, move->clipPlaneNormals[i], move->velocity, move->slideBounce );
 	}
 }

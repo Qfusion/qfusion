@@ -378,12 +378,6 @@ static void CM_TransformedHullTrace( cmodel_state_t *cms, trace_t *tr, vec3_t st
 
 	// fix trace up by the offset
 	VectorAdd( tr->endpos, offset, tr->endpos );
-
-#ifdef TRACE_NOAXIAL
-	if( PlaneTypeForNormal( tr->plane.normal ) == PLANE_NONAXIAL ) {
-		VectorMA( tr->endpos, TRACE_NOAXIAL_SAFETY_OFFSET, tr->plane.normal, tr->endpos );
-	}
-#endif
 }
 
 /*
