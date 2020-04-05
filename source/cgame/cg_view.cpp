@@ -579,32 +579,6 @@ static void CG_InterpolatePlayerState( player_state_t *playerState ) {
 		teleported = true;
 	}
 
-#ifdef EXTRAPOLATE_PLAYERSTATE // isn't smooth enough for the 1st person view
-	if( cgs.extrapolationTime ) {
-		vec3_t newPosition, oldPosition;
-
-		// if the player entity was teleported this frame use the final position
-		if( !teleported ) {
-			for( i = 0; i < 3; i++ ) {
-				playerState->pmove.velocity[i] = ops->pmove.velocity[i] + cg.lerpfrac * ( ps->pmove.velocity[i] - ops->pmove.velocity[i] );
-				playerState->viewangles[i] = LerpAngle( ops->viewangles[i], ps->viewangles[i], cg.lerpfrac );
-			}
-		}
-
-		VectorMA( ps->pmove.origin, cg.xerpTime, ps->pmove.velocity, newPosition );
-
-		if( cg.xerpTime < 0.0f ) { // smooth with the ending of oldsnap-newsnap interpolation
-			if( teleported ) {
-				VectorCopy( ps->pmove.origin, oldPosition );
-			} else {
-				VectorMA( ops->pmove.origin, cg.oldXerpTime, ops->pmove.velocity, oldPosition );
-			}
-		}
-
-		VectorLerp( oldPosition, cg.xerpSmoothFrac, newPosition, playerState->pmove.origin );
-	} else {
-#endif
-
 	// if the player entity was teleported this frame use the final position
 	if( !teleported ) {
 		for( i = 0; i < 3; i++ ) {
@@ -613,9 +587,6 @@ static void CG_InterpolatePlayerState( player_state_t *playerState ) {
 			playerState->viewangles[i] = LerpAngle( ops->viewangles[i], ps->viewangles[i], cg.lerpfrac );
 		}
 	}
-#ifdef EXTRAPOLATE_PLAYERSTATE
-}
-#endif
 
 	// interpolate fov and viewheight
 	if( !teleported ) {
