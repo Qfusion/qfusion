@@ -559,55 +559,6 @@ static edict_t *G_Fire_Lasergun( vec3_t origin, vec3_t angles, firedef_t *firede
 }
 
 /*
-* G_Fire_WeakBolt
-*/
-#if 0
-static edict_t *G_Fire_WeakBolt( vec3_t origin, vec3_t angles, firedef_t *firedef, edict_t *owner, int seed ) {
-	int speed, maxknockback, minknockback, stun, mod;
-	float maxdamage, mindamage;
-	int timeDelta;
-	vec3_t dir;
-
-	// FIXME2: projectiles go slower underwater, do this at the actual firing function
-
-	timeDelta = 0;
-	if( owner && owner->r.client ) {
-		timeDelta = owner->r.client->timeDelta;
-	}
-
-	if( firedef->spread ) {
-		G_LocalSpread( angles, firedef->spread, seed );
-	}
-
-	mod = ( firedef->fire_mode == FIRE_MODE_STRONG ) ? MOD_ELECTROBOLT_S : MOD_ELECTROBOLT_W;
-	speed = firedef->speed;
-	maxdamage = firedef->damage;
-	mindamage = firedef->mindamage;
-	maxknockback = firedef->knockback;
-	minknockback = firedef->minknockback;
-	stun = firedef->stun;
-
-	if( is_quad ) {
-		mindamage *= QUAD_DAMAGE_SCALE;
-		maxdamage *= QUAD_DAMAGE_SCALE;
-		maxknockback *= QUAD_KNOCKBACK_SCALE;
-	}
-	
-	AngleVectors( angles, dir, NULL, NULL );
-
-#ifdef ELECTROBOLT_TEST
-	W_Fire_Electrobolt_Combined( owner, origin, dir, maxdamage, mindamage,
-								 maxknockback, minknockback, stun, firedef->timeout, mod, timeDelta );
-
-	return NULL;
-#else
-	return W_Fire_Electrobolt_Weak( owner, origin, dir, speed, maxdamage, minknockback, maxknockback, stun,
-									firedef->timeout, mod, timeDelta );
-#endif
-}
-#endif
-
-/*
 * G_Fire_StrongBolt
 */
 static edict_t *G_Fire_StrongBolt( vec3_t origin, vec3_t angles, firedef_t *firedef, edict_t *owner, int seed ) {
@@ -640,13 +591,10 @@ static edict_t *G_Fire_StrongBolt( vec3_t origin, vec3_t angles, firedef_t *fire
 	}
 	
 	AngleVectors( angles, dir, NULL, NULL );
-#ifdef ELECTROBOLT_TEST
+
 	W_Fire_Electrobolt_FullInstant( owner, origin, dir, maxdamage, mindamage,
 									maxknockback, minknockback, stun, ELECTROBOLT_RANGE, minDamageRange, mod, timeDelta );
-#else
-	W_Fire_Electrobolt_Combined( owner, origin, dir, maxdamage, mindamage,
-								 maxknockback, minknockback, stun, range, mod, timeDelta );
-#endif
+
 	return NULL;
 }
 

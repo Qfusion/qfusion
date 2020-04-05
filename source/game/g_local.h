@@ -894,7 +894,6 @@ edict_t *W_Fire_Grenade( edict_t *self, vec3_t start, vec3_t dir, int speed, flo
 edict_t *W_Fire_Rocket( edict_t *self, vec3_t start, vec3_t dir, int speed, float damage, float selfDamage, int minKnockback, int maxKnockback, int stun, int minDamage, int radius, int timeout, int mod, int timeDelta );
 edict_t *W_Fire_Plasma( edict_t *self, vec3_t start, vec3_t dir, float damage, float selfDamage, int minKnockback, int maxKnockback, int stun, int minDamage, int radius, int speed, int timeout, int mod, int timeDelta );
 void W_Fire_Electrobolt_FullInstant( edict_t *self, vec3_t start, vec3_t dir, float maxdamage, float mindamage, int maxknockback, int minknockback, int stun, int range, int minDamageRange, int mod, int timeDelta );
-void W_Fire_Electrobolt_Combined( edict_t *self, vec3_t start, vec3_t dir, float maxdamage, float mindamage, float maxknockback, float minknockback, int stun, int range, int mod, int timeDelta );
 edict_t *W_Fire_Electrobolt_Weak( edict_t *self, vec3_t start, vec3_t dir, float speed, float damage, int minKnockback, int maxKnockback, int stun, int timeout, int mod, int timeDelta );
 edict_t	*W_Fire_Lasergun( edict_t *self, vec3_t start, vec3_t dir, float damage, int knockback, int stun, int timeout, int mod, int timeDelta );
 edict_t	*W_Fire_Lasergun_Weak( edict_t *self, vec3_t dir, vec3_t end, float damage, int knockback, int stun, int timeout, int mod, int timeDelta );

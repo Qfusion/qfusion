@@ -1203,9 +1203,7 @@ void CG_EntityEvent( entity_state_t *ent, int ev, int parm, bool predicted ) {
 				vec3_t origin;
 
 				if( ( weapon == WEAP_ELECTROBOLT
-#ifndef ELECTROBOLT_TEST
 					  && fireMode == FIRE_MODE_STRONG
-#endif
 					  )
 					|| weapon == WEAP_INSTAGUN ) {
 					VectorCopy( cg.predictedPlayerState.pmove.origin, origin );
