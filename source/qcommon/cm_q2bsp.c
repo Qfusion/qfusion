@@ -170,6 +170,11 @@ static void CMod_LoadSubmodels( cmodel_state_t *cms, lump_t *l ) {
 			out->mins[j] = LittleFloat( in->mins[j] ) - 1;
 			out->maxs[j] = LittleFloat( in->maxs[j] ) + 1;
 		}
+
+		out->bihnodes = CM_BuildBIH( cms, out );
+		if( !out->bihnodes ) {
+			assert( 0 );
+		}
 	}
 }
 

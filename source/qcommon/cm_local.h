@@ -66,6 +66,36 @@ typedef struct {
 } cface_t;
 
 typedef struct {
+	// in a bih tree there are two values per node instead of a kd-tree's single midpoint
+	// this allows the two sides to overlap, which prevents the need to chop large objects into multiple leafs
+	//(it also allows gaps in the middle, which can further skip recursion)
+	enum {
+		BIH_X,
+		BIH_Y,
+		BIH_Z,
+		BIH_GROUP,
+		BIH_BRUSH,
+		BIH_PATCHBRUSH,
+		BIH_TRISOUP,
+	} type;
+	union {
+		struct {
+			int firstchild;
+			int numchildren;
+		} group;
+		struct {
+			int firstchild;
+			float cmin[2];
+			float cmax[2];
+		} node;
+		struct bihdata_s {
+			unsigned int contents;
+			cbrush_t *brush;
+		} data;
+	};
+} bihnode_t;
+
+typedef struct {
 	int contents;
 	int cluster;
 
@@ -97,6 +127,9 @@ typedef struct cmodel_s {
 	// which treats brush models as leafs
 	int *markfaces;
 	int *markbrushes;
+
+	int numbihnodes;
+	bihnode_t *bihnodes;
 } cmodel_t;
 
 typedef struct {
@@ -219,3 +252,5 @@ void    CM_FloodAreaConnections( cmodel_state_t *cms );
 void	CM_BoundBrush( cbrush_t *brush );
 
 uint8_t *CM_DecompressVis( const uint8_t *in, int rowsize, uint8_t *decompressed );
+
+bihnode_t *CM_BuildBIH( cmodel_state_t *cms, cmodel_t *mod );
