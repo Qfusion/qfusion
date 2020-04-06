@@ -15,7 +15,7 @@ AlwaysBreakBeforeMultilineStrings: true
 BreakBeforeBinaryOperators: false
 BreakBeforeTernaryOperators: true
 BreakConstructorInitializersBeforeComma: false
-BinPackParameters: false
+BinPackParameters: true
 ColumnLimit:     120
 ConstructorInitializerAllOnOneLineOrOnePerLine: true
 DerivePointerAlignment: false
@@ -37,7 +37,7 @@ PenaltyReturnTypeOnItsOwnLine: 200
 PointerAlignment: Right
 SpacesBeforeTrailingComments: 1
 Cpp11BracedListStyle: false
-Standard:        Cpp03
+Standard:        Cpp11
 IndentWidth:     4
 TabWidth:        4
 UseTab:          Always
@@ -55,5 +55,6 @@ SpaceBeforeParens: Never
 DisableFormat:   false
 CompactNamespaces: true
 AlignAfterOpenBracket: DontAlign
+SortIncludes: false
 ...
 
