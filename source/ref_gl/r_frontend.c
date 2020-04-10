@@ -26,12 +26,13 @@ static ref_frontend_t rrf;
 static ref_cmdbuf_t *RF_GetNextAdapterFrame( ref_frontendAdapter_t *adapter );
 
 /*
-* RF_AdapterFrame
-*
-* Handles polling for the next frame at fixed time intervals, yielding in between.
-* If vsync is enabled, only yields if got nothing to do.
-*/
-static void RF_AdapterFrame( ref_frontendAdapter_t *adapter ) {
+ * RF_AdapterFrame
+ *
+ * Handles polling for the next frame at fixed time intervals, yielding in between.
+ * If vsync is enabled, only yields if got nothing to do.
+ */
+static void RF_AdapterFrame( ref_frontendAdapter_t *adapter )
+{
 	ref_cmdbuf_t *frame;
 
 	if( adapter->noWait )
@@ -46,9 +47,10 @@ static void RF_AdapterFrame( ref_frontendAdapter_t *adapter ) {
 }
 
 /*
-* RF_AdapterThreadProc
-*/
-static void *RF_AdapterThreadProc( void *param ) {
+ * RF_AdapterThreadProc
+ */
+static void *RF_AdapterThreadProc( void *param )
+{
 	ref_frontendAdapter_t *adapter = param;
 
 	GLimp_MakeCurrent( adapter->GLcontext, GLimp_GetWindowSurface( NULL ) );
@@ -63,11 +65,12 @@ static void *RF_AdapterThreadProc( void *param ) {
 }
 
 /*
-* RF_AdapterWait
-*
-* Blocks the current thread until adapter is finished processing frame and inter-frame commands.
-*/
-static void RF_AdapterWait( ref_frontendAdapter_t *adapter ) {
+ * RF_AdapterWait
+ *
+ * Blocks the current thread until adapter is finished processing frame and inter-frame commands.
+ */
+static void RF_AdapterWait( ref_frontendAdapter_t *adapter )
+{
 	if( adapter->thread == NULL ) {
 		return;
 	}
@@ -76,9 +79,10 @@ static void RF_AdapterWait( ref_frontendAdapter_t *adapter ) {
 }
 
 /*
-* RF_AdapterShutdown
-*/
-static void RF_AdapterShutdown( ref_frontendAdapter_t *adapter ) {
+ * RF_AdapterShutdown
+ */
+static void RF_AdapterShutdown( ref_frontendAdapter_t *adapter )
+{
 	if( !adapter->cmdPipe ) {
 		return;
 	}
@@ -106,12 +110,18 @@ static void RF_AdapterShutdown( ref_frontendAdapter_t *adapter ) {
 }
 
 /*
-* RF_AdapterInit
-*/
-static bool RF_AdapterInit( ref_frontendAdapter_t *adapter ) {
-	adapter->cmdPipe = RF_CreateCmdPipe( !glConfig.multithreading );
+ * RF_AdapterInit
+ */
+static bool RF_AdapterInit( ref_frontendAdapter_t *adapter )
+{
+	bool multiThreading = false; // disable multi-threaded rendering pipeline
+#if 0
+	multiThreading = glConfig.multithreading;
+#endif
 
-	if( glConfig.multithreading ) {
+	adapter->cmdPipe = RF_CreateCmdPipe( !multiThreading );
+
+	if( multiThreading ) {
 		adapter->frameLock = ri.Mutex_Create();
 
 		GLimp_EnableMultithreadedRendering( true );
@@ -126,6 +136,9 @@ static bool RF_AdapterInit( ref_frontendAdapter_t *adapter ) {
 			GLimp_EnableMultithreadedRendering( false );
 			return false;
 		}
+	} else {
+		// FIXME
+		//GLimp_EnableMultithreadedRendering( false );
 	}
 
 	adapter->cmdPipe->Init( adapter->cmdPipe );
@@ -133,7 +146,8 @@ static bool RF_AdapterInit( ref_frontendAdapter_t *adapter ) {
 	return true;
 }
 
-static ref_cmdbuf_t *RF_GetNextAdapterFrame( ref_frontendAdapter_t *adapter ) {
+static ref_cmdbuf_t *RF_GetNextAdapterFrame( ref_frontendAdapter_t *adapter )
+{
 	ref_cmdbuf_t *result = NULL;
 	ref_frontend_t *fe = adapter->owner;
 
@@ -147,16 +161,15 @@ static ref_cmdbuf_t *RF_GetNextAdapterFrame( ref_frontendAdapter_t *adapter ) {
 	return result;
 }
 
-rserr_t RF_Init( const char *applicationName, const char *screenshotPrefix, int startupColor,
-				 int iconResource, const int *iconXPM,
-				 void *hinstance, void *wndproc, void *parenthWnd,
-				 bool verbose ) {
+rserr_t RF_Init( const char *applicationName, const char *screenshotPrefix, int startupColor, int iconResource,
+	const int *iconXPM, void *hinstance, void *wndproc, void *parenthWnd, bool verbose )
+{
 	rserr_t err;
 
 	memset( &rrf, 0, sizeof( rrf ) );
 
-	err = R_Init( applicationName, screenshotPrefix, startupColor,
-				  iconResource, iconXPM, hinstance, wndproc, parenthWnd, verbose );
+	err = R_Init( applicationName, screenshotPrefix, startupColor, iconResource, iconXPM, hinstance, wndproc,
+		parenthWnd, verbose );
 	if( err != rserr_ok ) {
 		return err;
 	}
@@ -164,7 +177,8 @@ rserr_t RF_Init( const char *applicationName, const char *screenshotPrefix, int 
 	return rserr_ok;
 }
 
-rserr_t RF_SetMode( int x, int y, int width, int height, bool fullScreen, bool stereo, bool borderless ) {
+rserr_t RF_SetMode( int x, int y, int width, int height, bool fullScreen, bool stereo, bool borderless )
+{
 	rserr_t err;
 
 	if( glConfig.width == width && glConfig.height == height && glConfig.fullScreen != fullScreen ) {
@@ -181,7 +195,7 @@ rserr_t RF_SetMode( int x, int y, int width, int height, bool fullScreen, bool s
 	rrf.frameNum = rrf.lastFrameNum = 0;
 
 	if( !rrf.frame ) {
-		if( glConfig.multithreading ) {
+		if( rrf.adapter.thread ) {
 			int i;
 			for( i = 0; i < 3; i++ )
 				rrf.frames[i] = RF_CreateCmdBuf( false );
@@ -190,7 +204,7 @@ rserr_t RF_SetMode( int x, int y, int width, int height, bool fullScreen, bool s
 		}
 	}
 
-	if( glConfig.multithreading ) {
+	if( rrf.adapter.thread ) {
 		rrf.frame = rrf.frames[0];
 	}
 
@@ -205,7 +219,8 @@ rserr_t RF_SetMode( int x, int y, int width, int height, bool fullScreen, bool s
 	return rserr_ok;
 }
 
-rserr_t RF_SetWindow( void *hinstance, void *wndproc, void *parenthWnd ) {
+rserr_t RF_SetWindow( void *hinstance, void *wndproc, void *parenthWnd )
+{
 	rserr_t err;
 	bool surfaceChangePending = false;
 
@@ -218,15 +233,17 @@ rserr_t RF_SetWindow( void *hinstance, void *wndproc, void *parenthWnd ) {
 	return err;
 }
 
-void RF_AppActivate( bool active, bool minimize, bool destroy ) {
+void RF_AppActivate( bool active, bool minimize, bool destroy )
+{
 	R_Flush();
 	GLimp_AppActivate( active, minimize, destroy );
 }
 
-void RF_Shutdown( bool verbose ) {
+void RF_Shutdown( bool verbose )
+{
 	RF_AdapterShutdown( &rrf.adapter );
 
-	if( glConfig.multithreading ) {
+	if( rrf.adapter.thread ) {
 		int i;
 		for( i = 0; i < 3; i++ )
 			RF_DestroyCmdBuf( &rrf.frames[i] );
@@ -238,7 +255,8 @@ void RF_Shutdown( bool verbose ) {
 	R_Shutdown( verbose );
 }
 
-static void RF_CheckCvars( void ) {
+static void RF_CheckCvars( void )
+{
 	// update gamma
 	if( r_gamma->modified ) {
 		r_gamma->modified = false;
@@ -253,7 +271,7 @@ static void RF_CheckCvars( void ) {
 	if( r_wallcolor->modified || r_floorcolor->modified ) {
 		vec3_t wallColor, floorColor;
 
-		sscanf( r_wallcolor->string,  "%3f %3f %3f", &wallColor[0], &wallColor[1], &wallColor[2] );
+		sscanf( r_wallcolor->string, "%3f %3f %3f", &wallColor[0], &wallColor[1], &wallColor[2] );
 		sscanf( r_floorcolor->string, "%3f %3f %3f", &floorColor[0], &floorColor[1], &floorColor[2] );
 
 		r_wallcolor->modified = r_floorcolor->modified = false;
@@ -273,7 +291,8 @@ static void RF_CheckCvars( void ) {
 	}
 }
 
-void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync, bool uncappedFPS ) {
+void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync, bool uncappedFPS )
+{
 	int swapInterval;
 
 	RF_CheckCvars();
@@ -284,7 +303,7 @@ void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync, bo
 	rrf.adapter.noWait = uncappedFPS;
 
 	// take the frame the backend is not busy processing
-	if( glConfig.multithreading ) {
+	if( rrf.adapter.thread ) {
 		ri.Mutex_Lock( rrf.adapter.frameLock );
 		if( rrf.lastFrameNum == rrf.adapter.frameNum ) {
 			rrf.frameNum = ( rrf.adapter.frameNum + 1 ) % 3;
@@ -309,12 +328,13 @@ void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync, bo
 	rrf.frame->BeginFrame( rrf.frame, cameraSeparation, forceClear, swapInterval );
 }
 
-void RF_EndFrame( void ) {
+void RF_EndFrame( void )
+{
 	R_DataSync();
 
 	rrf.frame->EndFrame( rrf.frame );
 
-	if( glConfig.multithreading ) {
+	if( rrf.adapter.thread ) {
 		ri.Mutex_Lock( rrf.adapter.frameLock );
 		rrf.lastFrameNum = rrf.frameNum;
 		ri.Mutex_Unlock( rrf.adapter.frameLock );
@@ -323,7 +343,8 @@ void RF_EndFrame( void ) {
 	rrf.adapter.cmdPipe->Fence( rrf.adapter.cmdPipe );
 }
 
-void RF_BeginRegistration( void ) {
+void RF_BeginRegistration( void )
+{
 	// sync to the backend thread to ensure it's not using old assets for drawing
 	RF_AdapterWait( &rrf.adapter );
 	R_BeginRegistration();
@@ -331,7 +352,8 @@ void RF_BeginRegistration( void ) {
 	RF_AdapterWait( &rrf.adapter );
 }
 
-void RF_EndRegistration( void ) {
+void RF_EndRegistration( void )
+{
 	// sync to the backend thread to ensure it's not using old assets for drawing
 	RF_AdapterWait( &rrf.adapter );
 	R_EndRegistration();
@@ -342,55 +364,67 @@ void RF_EndRegistration( void ) {
 	memset( rrf.customColors, 0, sizeof( rrf.customColors ) );
 }
 
-void RF_RegisterWorldModel( const char *model ) {
+void RF_RegisterWorldModel( const char *model )
+{
 	RF_AdapterWait( &rrf.adapter );
 	R_RegisterWorldModel( model );
 }
 
-void RF_ClearScene( void ) {
+void RF_ClearScene( void )
+{
 	rrf.frame->ClearScene( rrf.frame );
 }
 
-void RF_Finish( void ) {
+void RF_Finish( void )
+{
 	RF_AdapterWait( &rrf.adapter );
 }
 
-void RF_AddEntityToScene( const entity_t *ent ) {
+void RF_AddEntityToScene( const entity_t *ent )
+{
 	rrf.frame->AddEntityToScene( rrf.frame, ent );
 }
 
-void RF_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b ) {
+void RF_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b )
+{
 	rrf.frame->AddLightToScene( rrf.frame, org, intensity, r, g, b );
 }
 
-void RF_AddPolyToScene( const poly_t *poly ) {
+void RF_AddPolyToScene( const poly_t *poly )
+{
 	rrf.frame->AddPolyToScene( rrf.frame, poly );
 }
 
-void RF_AddLightStyleToScene( int style, float r, float g, float b ) {
+void RF_AddLightStyleToScene( int style, float r, float g, float b )
+{
 	rrf.frame->AddLightStyleToScene( rrf.frame, style, r, g, b );
 }
 
-void RF_RenderScene( const refdef_t *fd ) {
+void RF_RenderScene( const refdef_t *fd )
+{
 	rrf.frame->RenderScene( rrf.frame, fd );
 }
 
-void RF_BlurScreen( void ) {
+void RF_BlurScreen( void )
+{
 	rrf.frame->BlurScreen( rrf.frame );
 }
 
-void RF_DrawStretchPic( int x, int y, int w, int h, float s1, float t1, float s2, float t2,
-						const vec4_t color, const shader_t *shader ) {
+void RF_DrawStretchPic(
+	int x, int y, int w, int h, float s1, float t1, float s2, float t2, const vec4_t color, const shader_t *shader )
+{
 	rrf.frame->DrawRotatedStretchPic( rrf.frame, x, y, w, h, s1, t1, s2, t2, 0, color, shader );
 }
 
 void RF_DrawRotatedStretchPic( int x, int y, int w, int h, float s1, float t1, float s2, float t2, float angle,
-							   const vec4_t color, const shader_t *shader ) {
+	const vec4_t color, const shader_t *shader )
+{
 	rrf.frame->DrawRotatedStretchPic( rrf.frame, x, y, w, h, s1, t1, s2, t2, angle, color, shader );
 }
 
-void RF_DrawStretchRaw( int x, int y, int w, int h, int cols, int rows,
-						float s1, float t1, float s2, float t2, uint8_t *data ) {
+void RF_DrawStretchRaw(
+	int x, int y, int w, int h, int cols, int rows, float s1, float t1, float s2, float t2, uint8_t *data )
+{
 	if( !cols || !rows ) {
 		return;
 	}
@@ -402,8 +436,8 @@ void RF_DrawStretchRaw( int x, int y, int w, int h, int cols, int rows,
 	rrf.frame->DrawStretchRaw( rrf.frame, x, y, w, h, s1, t1, s2, t2 );
 }
 
-void RF_DrawStretchRawYUV( int x, int y, int w, int h,
-						   float s1, float t1, float s2, float t2, ref_img_plane_t *yuv ) {
+void RF_DrawStretchRawYUV( int x, int y, int w, int h, float s1, float t1, float s2, float t2, ref_img_plane_t *yuv )
+{
 	if( yuv ) {
 		R_UploadRawYUVPic( rsh.rawYUVTextures, yuv );
 	}
@@ -411,16 +445,19 @@ void RF_DrawStretchRawYUV( int x, int y, int w, int h,
 	rrf.frame->DrawStretchRawYUV( rrf.frame, x, y, w, h, s1, t1, s2, t2 );
 }
 
-void RF_DrawStretchPoly( const poly_t *poly, float x_offset, float y_offset ) {
+void RF_DrawStretchPoly( const poly_t *poly, float x_offset, float y_offset )
+{
 	rrf.frame->DrawStretchPoly( rrf.frame, poly, x_offset, y_offset );
 }
 
-void RF_SetScissor( int x, int y, int w, int h ) {
+void RF_SetScissor( int x, int y, int w, int h )
+{
 	rrf.frame->SetScissor( rrf.frame, x, y, w, h );
 	Vector4Set( rrf.scissor, x, y, w, h );
 }
 
-void RF_GetScissor( int *x, int *y, int *w, int *h ) {
+void RF_GetScissor( int *x, int *y, int *w, int *h )
+{
 	if( x ) {
 		*x = rrf.scissor[0];
 	}
@@ -435,12 +472,14 @@ void RF_GetScissor( int *x, int *y, int *w, int *h ) {
 	}
 }
 
-void RF_ResetScissor( void ) {
+void RF_ResetScissor( void )
+{
 	rrf.frame->ResetScissor( rrf.frame );
 	Vector4Set( rrf.scissor, 0, 0, glConfig.width, glConfig.height );
 }
 
-void RF_SetCustomColor( int num, int r, int g, int b ) {
+void RF_SetCustomColor( int num, int r, int g, int b )
+{
 	byte_vec4_t rgba;
 
 	Vector4Set( rgba, r, g, b, 255 );
@@ -451,42 +490,50 @@ void RF_SetCustomColor( int num, int r, int g, int b ) {
 	}
 }
 
-void RF_ScreenShot( const char *path, const char *name, const char *fmtstring, bool silent ) {
+void RF_ScreenShot( const char *path, const char *name, const char *fmtstring, bool silent )
+{
 	if( RF_RenderingEnabled() ) {
 		rrf.adapter.cmdPipe->ScreenShot( rrf.adapter.cmdPipe, path, name, fmtstring, silent );
 	}
 }
 
-void RF_EnvShot( const char *path, const char *name, unsigned pixels ) {
+void RF_EnvShot( const char *path, const char *name, unsigned pixels )
+{
 	if( RF_RenderingEnabled() ) {
 		rrf.adapter.cmdPipe->EnvShot( rrf.adapter.cmdPipe, path, name, pixels );
 	}
 }
 
-bool RF_RenderingEnabled( void ) {
+bool RF_RenderingEnabled( void )
+{
 	return GLimp_RenderingEnabled();
 }
 
-const char *RF_GetSpeedsMessage( char *out, size_t size ) {
+const char *RF_GetSpeedsMessage( char *out, size_t size )
+{
 	ri.Mutex_Lock( rf.speedsMsgLock );
 	Q_strncpyz( out, rf.speedsMsg, size );
 	ri.Mutex_Unlock( rf.speedsMsgLock );
 	return out;
 }
 
-int RF_GetAverageFrametime( void ) {
+int RF_GetAverageFrametime( void )
+{
 	return rf.frameTime.average;
 }
 
-void RF_ReplaceRawSubPic( shader_t *shader, int x, int y, int width, int height, uint8_t *data ) {
+void RF_ReplaceRawSubPic( shader_t *shader, int x, int y, int width, int height, uint8_t *data )
+{
 	R_ReplaceRawSubPic( shader, x, y, width, height, data );
 }
 
-void RF_BeginAviDemo( void ) {
+void RF_BeginAviDemo( void )
+{
 	RF_AdapterWait( &rrf.adapter );
 }
 
-void RF_WriteAviFrame( int frame, bool scissor ) {
+void RF_WriteAviFrame( int frame, bool scissor )
+{
 	int x, y, w, h;
 	const char *writedir, *gamedir;
 	size_t path_size;
@@ -521,11 +568,13 @@ void RF_WriteAviFrame( int frame, bool scissor ) {
 	rrf.adapter.cmdPipe->AviShot( rrf.adapter.cmdPipe, path, name, x, y, w, h );
 }
 
-void RF_StopAviDemo( void ) {
+void RF_StopAviDemo( void )
+{
 	RF_AdapterWait( &rrf.adapter );
 }
 
-void RF_TransformVectorToScreen( const refdef_t *rd, const vec3_t in, vec3_t out ) {
+void RF_TransformVectorToScreen( const refdef_t *rd, const vec3_t in, vec3_t out )
+{
 	mat4_t p, m;
 	vec4_t temp, temp2;
 
@@ -539,11 +588,10 @@ void RF_TransformVectorToScreen( const refdef_t *rd, const vec3_t in, vec3_t out
 	temp[3] = 1.0f;
 
 	if( rd->rdflags & RDF_USEORTHO ) {
-		Matrix4_OrthoProjection( rd->ortho_x, rd->ortho_x, rd->ortho_y, rd->ortho_y,
-									  -4096.0f, 4096.0f, p );
+		Matrix4_OrthoProjection( rd->ortho_x, rd->ortho_x, rd->ortho_y, rd->ortho_y, -4096.0f, 4096.0f, p );
 	} else {
-		Matrix4_InfinitePerspectiveProjection( rd->fov_x, rd->fov_y, Z_NEAR, rrf.cameraSeparation,
-											   p, glConfig.depthEpsilon );
+		Matrix4_InfinitePerspectiveProjection(
+			rd->fov_x, rd->fov_y, Z_NEAR, rrf.cameraSeparation, p, glConfig.depthEpsilon );
 	}
 
 	if( rd->rdflags & RDF_FLIPPED ) {
@@ -564,7 +612,8 @@ void RF_TransformVectorToScreen( const refdef_t *rd, const vec3_t in, vec3_t out
 	out[2] = ( temp[2] / temp[3] + 1.0f ) * 0.5f;
 }
 
-bool RF_LerpTag( orientation_t *orient, const model_t *mod, int oldframe, int frame, float lerpfrac, const char *name ) {
+bool RF_LerpTag( orientation_t *orient, const model_t *mod, int oldframe, int frame, float lerpfrac, const char *name )
+{
 	if( !orient ) {
 		return false;
 	}
@@ -586,16 +635,18 @@ bool RF_LerpTag( orientation_t *orient, const model_t *mod, int oldframe, int fr
 	return false;
 }
 
-void RF_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t diffuse, float radius ) {
+void RF_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t diffuse, float radius )
+{
 	R_LightForOrigin( origin, dir, ambient, diffuse, radius, false, false );
 }
 
 /*
-* RF_GetShaderForOrigin
-*
-* Trace 64 units in all axial directions to find the closest surface
-*/
-shader_t *RF_GetShaderForOrigin( const vec3_t origin ) {
+ * RF_GetShaderForOrigin
+ *
+ * Trace 64 units in all axial directions to find the closest surface
+ */
+shader_t *RF_GetShaderForOrigin( const vec3_t origin )
+{
 	int i, j;
 	vec3_t dir, end;
 	rtrace_t tr;
@@ -626,13 +677,15 @@ shader_t *RF_GetShaderForOrigin( const vec3_t origin ) {
 	return best;
 }
 
-struct cinematics_s *RF_GetShaderCinematic( shader_t *shader ) {
+struct cinematics_s *RF_GetShaderCinematic( shader_t *shader )
+{
 	if( !shader ) {
 		return NULL;
 	}
 	return R_GetCinematicById( shader->cin );
 }
 
-void RF_SetTransformMatrix( const float *m ) {
+void RF_SetTransformMatrix( const float *m )
+{
 	rrf.frame->SetTransformMatrix( rrf.frame, m );
 }
