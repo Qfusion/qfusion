@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_NO_STDIO
+#define STBI_ONLY_TGA
 #define STBI_ONLY_JPEG
 #define STBI_ONLY_PNG
 #include "stb_image.h"
