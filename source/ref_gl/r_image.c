@@ -2337,27 +2337,16 @@ void R_ScreenShot( const char *filename, int x, int y, int width, int height, in
 	imginfo.height = height;
 	imginfo.samples = 3;
 	imginfo.pixels = flipped ? flipped : buffer;
-	imginfo.comp = Q_stricmp( extension, ".jpg" ) ? IMGCOMP_BGR : IMGCOMP_RGB;
+	imginfo.comp = IMGCOMP_RGB;
 
 	qglReadPixels( 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, buffer );
 
 	rgb = rgba = buffer;
-	if( imginfo.comp == IMGCOMP_BGR ) {
-		while( ( size_t )( rgb - buffer ) < size ) {
-			int b = rgba[0]; // the first 3 pixels of rgb and rgba are aliased
-			rgb[0] = rgba[2];
-			rgb[1] = rgba[1];
-			rgb[2] = b;
-			rgb += 3;
-			rgba += 4;
-		}
-	} else {
-		while( ( size_t )( rgb - buffer ) < size ) {
-			*( rgb++ ) = *( rgba++ );
-			*( rgb++ ) = *( rgba++ );
-			*( rgb++ ) = *( rgba++ );
-			rgba++;
-		}
+	while( ( size_t )( rgb - buffer ) < size ) {
+		*( rgb++ ) = *( rgba++ );
+		*( rgb++ ) = *( rgba++ );
+		*( rgb++ ) = *( rgba++ );
+		rgba++;
 	}
 
 	if( flipped ) {
