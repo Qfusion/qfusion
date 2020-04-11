@@ -22,12 +22,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../qalgo/hash.h"
 
 #define STB_IMAGE_IMPLEMENTATION
-#define STB_NO_STDIO
-
+#define STBI_NO_STDIO
+#define STBI_ONLY_JPEG
+#define STBI_ONLY_PNG
 #include "stb_image.h"
 
-#define STBI_WRITE_NO_STDIO
 #define STB_IMAGE_WRITE_IMPLEMENTATION
+#define STBI_WRITE_NO_STDIO
 #include "stb_image_write.h"
 
 static const r_imginfo_t empty_imginfo = { 0 };
