@@ -54,11 +54,11 @@ typedef struct {
 } ref_frontend_t;
 
 // public API
-rserr_t RF_Init( const char *applicationName, const char *screenshotPrefix, int startupColor,
-				 int iconResource, const int *iconXPM, void *hinstance, void *wndproc, void *parenthWnd,  bool verbose );
+rserr_t RF_Init( const char *applicationName, const char *screenshotPrefix, int startupColor, int iconResource,
+	const int *iconXPM, void *hinstance, void *wndproc, void *hWnd, float pixelRatio, bool verbose );
 rserr_t RF_SetMode( int x, int y, int width, int height, bool fullScreen, bool stereo, bool borderless );
 void RF_AppActivate( bool active, bool minimize, bool destroy );
-rserr_t RF_SetWindow( void *hinstance, void *wndproc, void *parenthWnd );
+rserr_t RF_SetWindow( void *hinstance, void *wndproc, void *hWnd );
 void RF_Shutdown( bool verbose );
 void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync, bool uncappedFPS );
 void RF_EndFrame( void );

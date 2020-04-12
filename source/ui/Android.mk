@@ -3,7 +3,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := ui
 LOCAL_MODULE_FILENAME := lib$(LOCAL_MODULE)_android_$(TARGET_ARCH_ABI)
 
-LOCAL_C_INCLUDES := $(QFUSION_PATH)/third-party/angelscript/sdk/angelscript/include $(QFUSION_PATH)/third-party/nanosvg/src $(LOCAL_PATH)
+LOCAL_C_INCLUDES := $(QFUSION_PATH)/third-party/angelscript/sdk/angelscript/include $(LOCAL_PATH)
 LOCAL_PCH := ui_precompiled.h
 
 LOCAL_CFLAGS := $(LOCAL_EXPORT_CFLAGS)

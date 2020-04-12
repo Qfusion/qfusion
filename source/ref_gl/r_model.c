@@ -1359,7 +1359,7 @@ static void R_LoadWorldRtLightsFromMap( model_t *model ) {
 			l->worldModel = model;
 
 			if( cubemap[0] != '\0' ) {
-				l->cubemapFilter = R_FindImage( cubemap, NULL, IT_SRGB | IT_CLAMP | IT_CUBEMAP, 1, IMAGE_TAG_WORLD );
+				l->cubemapFilter = R_FindImage( cubemap, NULL, IT_SRGB | IT_CLAMP | IT_CUBEMAP, 1, IMAGE_TAG_WORLD, NULL );
 			}
 
 			R_GetRtLightVisInfo( bmodel, l );
@@ -1495,7 +1495,7 @@ static void R_LoadWorldRtLights( model_t *model ) {
 				memmove( cubemap, cubemap + 1, namelen );
 				cubemap[namelen] = '\0';
 			}
-			l->cubemapFilter = R_FindImage( cubemap, NULL, IT_SRGB | IT_CLAMP | IT_CUBEMAP, 1, IMAGE_TAG_WORLD );
+			l->cubemapFilter = R_FindImage( cubemap, NULL, IT_SRGB | IT_CLAMP | IT_CUBEMAP, 1, IMAGE_TAG_WORLD, NULL );
 		}
 
 		R_GetRtLightVisInfo( bmodel, l );

@@ -345,8 +345,8 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, bool fullscreen, boo
 /*
 ** GLimp_SetWindow
 */
-rserr_t GLimp_SetWindow( void *hinstance, void *wndproc, void *parenthWnd, bool *surfaceChangePending ) {
-	EGLNativeWindowType window = ( EGLNativeWindowType )parenthWnd;
+rserr_t GLimp_SetWindow( void *hinstance, void *wndproc, void *hWnd, bool *surfaceChangePending ) {
+	EGLNativeWindowType window = (EGLNativeWindowType)hWnd;
 
 	if( surfaceChangePending ) {
 		*surfaceChangePending = false;

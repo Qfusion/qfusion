@@ -32,50 +32,63 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define STBI_WRITE_NO_STDIO
 #include "stb_image_write.h"
 
-static const r_imginfo_t empty_imginfo = { 0 };
+#define NANOSVG_IMPLEMENTATION
+#include "nanosvg.h"
+
+#define NANOSVGRAST_IMPLEMENTATION
+#include "nanosvgrast.h"
+
+static NSVGrasterizer *r_nsvgRast;
+static const r_imginfo_t r_emptyImginfo = { 0 };
 
 /*
-* R_Imagelib_Init
-*/
-void R_Imagelib_Init( void ) {
+ * R_Imagelib_Init
+ */
+void R_Imagelib_Init( void )
+{
+	r_nsvgRast = nsvgCreateRasterizer();
+
 	stbi_flip_vertically_on_write( 1 );
 }
 
 /*
-* R_Imagelib_Shutdown
-*/
-void R_Imagelib_Shutdown( void ) {
+ * R_Imagelib_Shutdown
+ */
+void R_Imagelib_Shutdown( void )
+{
+	nsvgDeleteRasterizer( r_nsvgRast );
 }
 
 /*
-* R_LoadSTB
-*/
-static r_imginfo_t R_LoadSTB( const char *name, uint8_t *( *allocbuf )( void *, size_t, const char *, int ), void *uptr ) {
+ * R_LoadSTB
+ */
+static r_imginfo_t R_LoadSTB( const char *name, uint8_t *( *allocbuf )(void *, size_t, const char *, int), void *uptr )
+{
 	uint8_t *img;
-	uint8_t *png_data;
-	size_t png_datasize;
+	uint8_t *data;
+	size_t datasize;
 	size_t imgsize;
 	r_imginfo_t imginfo;
 
 	memset( &imginfo, 0, sizeof( imginfo ) );
 
 	// load the file
-	png_datasize = R_LoadFile( name, (void **)&png_data );
-	if( !png_data ) {
-		return empty_imginfo;
+	datasize = R_LoadFile( name, (void **)&data );
+	if( !data ) {
+		return r_emptyImginfo;
 	}
 
-	img = stbi_load_from_memory( png_data, png_datasize, &imginfo.width, &imginfo.height, &imginfo.samples, 0 );
-	R_FreeFile( png_data );
+	img = stbi_load_from_memory( data, datasize, &imginfo.width, &imginfo.height, &imginfo.samples, 0 );
+	R_FreeFile( data );
 
 	if( !img ) {
 		ri.Com_DPrintf( S_COLOR_YELLOW "Bad image file %s: %s\n", name, stbi_failure_reason() );
-		return empty_imginfo;
+		return r_emptyImginfo;
 	}
 
 	if( imginfo.samples != 1 && imginfo.samples != 3 && imginfo.samples != 4 ) {
 		ri.Com_DPrintf( S_COLOR_YELLOW "Bad image file %s samples: %d\n", name, imginfo.samples );
-		return empty_imginfo;
+		return r_emptyImginfo;
 	}
 
 	imgsize = (size_t)imginfo.width * imginfo.height * imginfo.samples;
@@ -87,25 +100,27 @@ static r_imginfo_t R_LoadSTB( const char *name, uint8_t *( *allocbuf )( void *, 
 	return imginfo;
 }
 
-
 /*
-* R_WriteSTBFunc
-*/
-static void R_WriteSTBFunc( void* context, void* data, int size ) {
-	ri.FS_Write( data, size, (int)((intptr_t)context) );
+ * R_WriteSTBFunc
+ */
+static void R_WriteSTBFunc( void *context, void *data, int size )
+{
+	ri.FS_Write( data, size, (int)( (intptr_t)context ) );
 }
 
 /*
-* LoadTGA
-*/
-r_imginfo_t LoadTGA( const char *name, uint8_t *( *allocbuf )( void *, size_t, const char *, int ), void *uptr ) {
+ * LoadTGA
+ */
+r_imginfo_t LoadTGA( const char *name, uint8_t *( *allocbuf )(void *, size_t, const char *, int), void *uptr )
+{
 	return R_LoadSTB( name, allocbuf, uptr );
 }
 
 /*
-* WriteTGA
-*/
-bool WriteTGA( const char *name, r_imginfo_t *info ) {
+ * WriteTGA
+ */
+bool WriteTGA( const char *name, r_imginfo_t *info )
+{
 	int file;
 
 	if( ri.FS_FOpenAbsoluteFile( name, &file, FS_WRITE ) == -1 ) {
@@ -113,27 +128,30 @@ bool WriteTGA( const char *name, r_imginfo_t *info ) {
 		return false;
 	}
 
-	if( !stbi_write_tga_to_func( &R_WriteSTBFunc, (void *)((intptr_t)file), info->width, info->height, info->samples, info->pixels ) ) {
+	if( !stbi_write_tga_to_func(
+			&R_WriteSTBFunc, (void *)( (intptr_t)file ), info->width, info->height, info->samples, info->pixels ) ) {
 		Com_Printf( "WriteTGA: Couldn't write to %s\n", name );
 		ri.FS_FCloseFile( file );
 		return false;
 	}
-	
+
 	ri.FS_FCloseFile( file );
 	return true;
 }
 
 /*
-* LoadJPG
-*/
-r_imginfo_t LoadJPG( const char *name, uint8_t *( *allocbuf )( void *, size_t, const char *, int ), void *uptr ) {
+ * LoadJPG
+ */
+r_imginfo_t LoadJPG( const char *name, uint8_t *( *allocbuf )(void *, size_t, const char *, int), void *uptr )
+{
 	return R_LoadSTB( name, allocbuf, uptr );
 }
 
 /*
-* WriteJPG
-*/
-bool WriteJPG( const char *name, r_imginfo_t *info, int quality ) {
+ * WriteJPG
+ */
+bool WriteJPG( const char *name, r_imginfo_t *info, int quality )
+{
 	int file;
 
 	if( ri.FS_FOpenAbsoluteFile( name, &file, FS_WRITE ) == -1 ) {
@@ -141,20 +159,22 @@ bool WriteJPG( const char *name, r_imginfo_t *info, int quality ) {
 		return false;
 	}
 
-	if( !stbi_write_jpg_to_func( &R_WriteSTBFunc, (void *)((intptr_t)file), info->width, info->height, info->samples, info->pixels, quality ) ) {
+	if( !stbi_write_jpg_to_func( &R_WriteSTBFunc, (void *)( (intptr_t)file ), info->width, info->height, info->samples,
+			info->pixels, quality ) ) {
 		Com_Printf( "WriteJPG: Couldn't write to %s\n", name );
 		ri.FS_FCloseFile( file );
 		return false;
 	}
-	
+
 	ri.FS_FCloseFile( file );
 	return true;
 }
 
 /*
-* LoadPCX
-*/
-r_imginfo_t LoadPCX( const char *name, uint8_t *( *allocbuf )( void *, size_t, const char *, int ), void *uptr ) {
+ * LoadPCX
+ */
+r_imginfo_t LoadPCX( const char *name, uint8_t *( *allocbuf )(void *, size_t, const char *, int), void *uptr )
+{
 	uint8_t *raw;
 	int x, y;
 	int len, columns, rows;
@@ -173,8 +193,8 @@ r_imginfo_t LoadPCX( const char *name, uint8_t *( *allocbuf )( void *, size_t, c
 		unsigned short bytes_per_line;
 		unsigned short palette_type;
 		char filler[58];
-		unsigned char data;         // unbounded
-	} *pcx;
+		unsigned char data; // unbounded
+	} * pcx;
 	r_imginfo_t imginfo;
 
 	memset( &imginfo, 0, sizeof( imginfo ) );
@@ -203,11 +223,8 @@ r_imginfo_t LoadPCX( const char *name, uint8_t *( *allocbuf )( void *, size_t, c
 
 	raw = &pcx->data;
 
-	if( pcx->manufacturer != 0x0a
-		|| pcx->version != 5
-		|| pcx->encoding != 1
-		|| pcx->bits_per_pixel != 8
-		|| len < 768 ) {
+	if( pcx->manufacturer != 0x0a || pcx->version != 5 || pcx->encoding != 1 || pcx->bits_per_pixel != 8 ||
+		len < 768 ) {
 		ri.Com_DPrintf( S_COLOR_YELLOW "Bad pcx file %s\n", name );
 		R_FreeFile( pcx );
 		return imginfo;
@@ -257,9 +274,10 @@ r_imginfo_t LoadPCX( const char *name, uint8_t *( *allocbuf )( void *, size_t, c
 }
 
 /*
-* LoadWAL
-*/
-r_imginfo_t LoadWAL( const char *name, uint8_t *( *allocbuf )( void *, size_t, const char *, int ), void *uptr ) {
+ * LoadWAL
+ */
+r_imginfo_t LoadWAL( const char *name, uint8_t *( *allocbuf )(void *, size_t, const char *, int), void *uptr )
+{
 	unsigned int i;
 	unsigned int p, s, *trans;
 	unsigned int rows, columns;
@@ -277,18 +295,19 @@ r_imginfo_t LoadWAL( const char *name, uint8_t *( *allocbuf )( void *, size_t, c
 		return imginfo;
 	}
 
-	mt = ( q2miptex_t * )buffer;
+	mt = (q2miptex_t *)buffer;
 	rows = LittleLong( mt->width );
 	columns = LittleLong( mt->height );
 	data = buffer + LittleLong( mt->offsets[0] );
 	s = LittleLong( mt->width ) * LittleLong( mt->height );
 
 	// determine the number of channels
-	for( i = 0; i < s && data[i] != 255; i++ ) ;
+	for( i = 0; i < s && data[i] != 255; i++ )
+		;
 	samples = ( i < s ) ? 4 : 3;
 
 	imgbuf = allocbuf( uptr, s * samples, __FILE__, __LINE__ );
-	trans = ( unsigned int * )imgbuf;
+	trans = (unsigned int *)imgbuf;
 
 	if( samples == 4 ) {
 		for( i = 0; i < s; i++ ) {
@@ -338,15 +357,16 @@ r_imginfo_t LoadWAL( const char *name, uint8_t *( *allocbuf )( void *, size_t, c
 }
 
 /*
-* LoadPNG
-*/
-r_imginfo_t LoadPNG( const char *name, uint8_t *( *allocbuf )( void *, size_t, const char *, int ), void *uptr ) {
+ * LoadPNG
+ */
+r_imginfo_t LoadPNG( const char *name, uint8_t *( *allocbuf )(void *, size_t, const char *, int), void *uptr )
+{
 	return R_LoadSTB( name, allocbuf, uptr );
 }
 
 /*
-* WritePNG
-*/
+ * WritePNG
+ */
 bool WritePNG( const char *name, r_imginfo_t *info )
 {
 	int file;
@@ -356,8 +376,8 @@ bool WritePNG( const char *name, r_imginfo_t *info )
 		return false;
 	}
 
-	if( !stbi_write_png_to_func( &R_WriteSTBFunc, (void *)( (intptr_t)file ), info->width, info->height, info->samples,
-			info->pixels, 0 ) ) {
+	if( !stbi_write_png_to_func(
+			&R_WriteSTBFunc, (void *)( (intptr_t)file ), info->width, info->height, info->samples, info->pixels, 0 ) ) {
 		Com_Printf( "WritePNG: Couldn't write to %s\n", name );
 		ri.FS_FCloseFile( file );
 		return false;
@@ -384,13 +404,14 @@ static const int q_etc1_modifierTable[] =
 	18, 60, -18, -60,
 	24, 80, -24, -80,
 	33, 106, -33, -106,
-	47, 183, -47, -183
+	47, 183, -47, -183,
 };
 
 static const int q_etc1_lookup[] = { 0, 1, 2, 3, -4, -3, -2, -1 };
 
-static void q_etc1_subblock( uint8_t *out, int stride, bool bgr, int r, int g, int b,
-							 const int *table, unsigned int low, bool second, bool flipped ) {
+static void q_etc1_subblock( uint8_t *out, int stride, bool bgr, int r, int g, int b, const int *table,
+	unsigned int low, bool second, bool flipped )
+{
 	int baseX = 0, baseY = 0;
 	int i;
 	int x, y;
@@ -426,11 +447,12 @@ static void q_etc1_subblock( uint8_t *out, int stride, bool bgr, int r, int g, i
 	}
 }
 
-static void q_etc1_block( const uint8_t *in, uint8_t *out, int stride, bool bgr ) {
+static void q_etc1_block( const uint8_t *in, uint8_t *out, int stride, bool bgr )
+{
 	unsigned int high = ( in[0] << 24 ) | ( in[1] << 16 ) | ( in[2] << 8 ) | in[3];
 	unsigned int low = ( in[4] << 24 ) | ( in[5] << 16 ) | ( in[6] << 8 ) | in[7];
 	int r1, r2, g1, g2, b1, b2;
-	bool flipped = ( bool )( high & 1 );
+	bool flipped = (bool)( high & 1 );
 
 	if( high & 2 ) {
 		int rBase, gBase, bBase;
@@ -458,15 +480,13 @@ static void q_etc1_block( const uint8_t *in, uint8_t *out, int stride, bool bgr 
 		b2 = ( ( high >> 4 ) & 0xf0 ) | ( ( high >> 8 ) & 0xf );
 	}
 
-	q_etc1_subblock( out, stride, bgr, r1, g1, b1,
-					 q_etc1_modifierTable + ( ( high >> 3 ) & ( 7 << 2 ) ),
-					 low, false, flipped );
-	q_etc1_subblock( out, stride, bgr, r2, g2, b2,
-					 q_etc1_modifierTable + ( high & ( 7 << 2 ) ),
-					 low, true, flipped );
+	q_etc1_subblock(
+		out, stride, bgr, r1, g1, b1, q_etc1_modifierTable + ( ( high >> 3 ) & ( 7 << 2 ) ), low, false, flipped );
+	q_etc1_subblock( out, stride, bgr, r2, g2, b2, q_etc1_modifierTable + ( high & ( 7 << 2 ) ), low, true, flipped );
 }
 
-void DecompressETC1( const uint8_t *in, int width, int height, uint8_t *out, bool bgr ) {
+void DecompressETC1( const uint8_t *in, int width, int height, uint8_t *out, bool bgr )
+{
 	int stride = Q_ALIGN( width, 4 ) * 3;
 	uint8_t *uncompressed = alloca( 4 * stride );
 	int i, j, rows, rowSize = width * 3, rowSizeAligned = Q_ALIGN( rowSize, 4 );
@@ -484,4 +504,62 @@ void DecompressETC1( const uint8_t *in, int width, int height, uint8_t *out, boo
 			out += rowSizeAligned;
 		}
 	}
+}
+
+/*
+=========================================================
+
+SVG
+
+=========================================================
+*/
+
+/*
+ * LoadSVG
+ */
+r_imginfo_t LoadSVG( const char *name, int width, int height, 
+	uint8_t *( *allocbuf )(void *, size_t, const char *, int), void *uptr )
+{
+	uint8_t *data;
+	size_t datasize;
+	size_t imgsize;
+	r_imginfo_t imginfo;
+	NSVGimage *svg;
+	float scale;
+	const float dpi = glConfig.pixelRatio * Q_BASE_DPI;
+
+	memset( &imginfo, 0, sizeof( imginfo ) );
+
+	// load the file
+	datasize = R_LoadFile( name, (void **)&data );
+	if( !data ) {
+		return r_emptyImginfo;
+	}
+
+	svg = nsvgParse( (char *)data, "px", dpi );
+	R_FreeFile( data );
+
+	if( width == 1 && height == 1 ) {
+		width = svg->width;
+		height = svg->height;
+		scale = 1.0f;
+	} else {
+		float scale_x = (float)width / svg->width;
+		float scale_y = (float)height / svg->height;
+		scale = min( scale_x, scale_y );
+	}
+
+	imginfo.width = width;
+	imginfo.height = height;
+	imginfo.samples = 4;
+	imginfo.comp = ( imginfo.samples & 1 ? IMGCOMP_RGB : IMGCOMP_RGBA );
+
+	imgsize = (size_t)imginfo.width * imginfo.height * imginfo.samples;
+	imginfo.pixels = allocbuf( uptr, imgsize, __FILE__, __LINE__ );
+
+	nsvgRasterize( r_nsvgRast, svg, 0, 0, scale, imginfo.pixels, width, height, width * 4 );
+
+	free( svg );
+
+	return imginfo;
 }

@@ -67,6 +67,7 @@ static char *r_shaderTemplateBuf;
 
 static char *r_shortShaderName;
 static size_t r_shortShaderNameSize;
+static char *r_shortShaderQMark;
 
 static bool Shader_Parsetok( shader_t *shader, shaderpass_t *pass, const shaderkey_t *keys, const char *token, const char **ptr );
 static void Shader_MakeCache( const char *filename );
@@ -434,7 +435,8 @@ static void Shader_ParseSkySides( const char **ptr, image_t **images, int imaget
 				}
 				Q_strncatz( suffix, cubemapSides[i][j].suf, sizeof( suffix ) );
 
-				images[j] = R_FindImage( token, suffix, IT_SKYFLAGS | cubemapSides[i][j].flags | IT_SRGB, 1, imagetags );
+				images[j] = R_FindImage(
+					token, suffix, IT_SKYFLAGS | cubemapSides[i][j].flags | IT_SRGB, 1, imagetags, NULL );
 				if( !images[j] ) {
 					break;
 				}
@@ -489,7 +491,7 @@ static void Shader_ParseCustomSkySides( const char **ptr, image_t **images, int 
 		}
 
 		if( !refs[i] ) {
-			images[i] = R_FindImage( token, NULL, IT_SKYFLAGS, 1, imagetags );
+			images[i] = R_FindImage( token, NULL, IT_SKYFLAGS, 1, imagetags, NULL );
 		}
 	}
 
@@ -589,7 +591,7 @@ static image_t *Shader_FindImage( shader_t *shader, const char *name, int flags 
 		return rsh.whiteTexture;
 	}
 
-	image = R_FindImage( name, NULL, flags, r_shaderMinMipSize, shader->imagetags );
+	image = R_FindImage( name, NULL, flags, r_shaderMinMipSize, shader->imagetags, r_shortShaderQMark );
 	if( !image ) {
 		ri.Com_Printf( S_COLOR_YELLOW "WARNING: shader %s has a stage with no image: %s\n", shader->name, name );
 		return r_defaultImage;
@@ -1005,16 +1007,16 @@ static void Shaderpass_LoadMaterial( image_t **normalmap, image_t **glossmap, im
 	images[0] = images[1] = images[2] = NULL;
 
 	// load normalmap image
-	images[0] = R_FindImage( name, "_norm", ( addFlags | IT_NORMALMAP ), r_shaderMinMipSize, imagetags );
+	images[0] = R_FindImage( name, "_norm", ( addFlags | IT_NORMALMAP ), r_shaderMinMipSize, imagetags, NULL );
 
 	// load glossmap image
 	if( r_lighting_specular->integer ) {
-		images[1] = R_FindImage( name, "_gloss", addFlags, r_shaderMinMipSize, imagetags );
+		images[1] = R_FindImage( name, "_gloss", addFlags, r_shaderMinMipSize, imagetags, NULL );
 	}
 
-	images[2] = R_FindImage( name, "_decal", addFlags, r_shaderMinMipSize, imagetags );
+	images[2] = R_FindImage( name, "_decal", addFlags, r_shaderMinMipSize, imagetags, NULL );
 	if( !images[2] ) {
-		images[2] = R_FindImage( name, "_add", addFlags, r_shaderMinMipSize, imagetags );
+		images[2] = R_FindImage( name, "_add", addFlags, r_shaderMinMipSize, imagetags, NULL );
 	}
 
 	*normalmap = images[0];
@@ -1100,7 +1102,7 @@ static void Shaderpass_CubeMapExt( shader_t *shader, shaderpass_t *pass, int add
 	pass->anim_fps = 0;
 	pass->flags &= ~( SHADERPASS_LIGHTMAP | SHADERPASS_PORTALMAP );
 
-	pass->images[0] = R_FindImage( token, NULL, flags | IT_CUBEMAP, r_shaderMinMipSize, shader->imagetags );
+	pass->images[0] = R_FindImage( token, NULL, flags | IT_CUBEMAP, r_shaderMinMipSize, shader->imagetags, NULL );
 	if( pass->images[0] ) {
 		pass->tcgen = tcgen;
 	} else {
@@ -2033,6 +2035,7 @@ void R_ShutdownShaders( void ) {
 	R_Free( r_shortShaderName );
 	r_shortShaderName = NULL;
 	r_shortShaderNameSize = 0;
+	r_shortShaderQMark = NULL;
 }
 
 static void Shader_Readpass( shader_t *shader, const char **ptr ) {
@@ -2427,11 +2430,12 @@ void R_UploadCinematicShader( const shader_t *shader ) {
 /*
 * R_ShaderCleanName
 */
-static size_t R_ShaderCleanName( const char *name, char *shortname, size_t shortname_size ) {
+static size_t R_ShaderCleanName( const char *name, char *shortname, size_t shortname_size, char **qmark ) {
 	int i;
 	size_t length = 0;
 	size_t lastDot = 0;
 	size_t lastSlash = 0;
+	size_t firstQMark = 0;
 
 	for( i = 0; name[i] && ( name[i] == '/' || name[i] == '\\' ); i++ ) ;
 
@@ -2446,6 +2450,8 @@ static size_t R_ShaderCleanName( const char *name, char *shortname, size_t short
 		}
 		if( shortname[length] == '/' ) {
 			lastSlash = length;
+		} else if( firstQMark == 0 && shortname[length] == '?' ) {
+			firstQMark = length;
 		}
 		length++;
 	}
@@ -2456,8 +2462,26 @@ static size_t R_ShaderCleanName( const char *name, char *shortname, size_t short
 	if( lastDot < lastSlash ) {
 		lastDot = 0;
 	}
+
+	// move what follows the question mark in place of extension:
+	// so that /a/bc/de.xxx?fooo becomes /a/bc/de?fooo
+	if( lastDot && firstQMark > lastDot + 1 ) {
+		memmove( &shortname[lastDot], &shortname[firstQMark], length - firstQMark );
+		length -= firstQMark - lastDot;
+		firstQMark = lastDot;
+		lastDot = 0;
+	}
+
+	if( qmark ) {
+		*qmark = NULL;
+		if( firstQMark ) {
+			*qmark = &shortname[firstQMark];
+		}
+	}
+
 	if( lastDot ) {
 		length = lastDot;
+		lastDot = 0;
 	}
 	shortname[length] = 0;
 
@@ -2820,7 +2844,7 @@ void R_TouchShadersByName( const char *name ) {
 
 	shortNameSize = strlen( name ) + 1;
 	shortName = alloca( shortNameSize );
-	nameLength = R_ShaderCleanName( name, shortName, shortNameSize );
+	nameLength = R_ShaderCleanName( name, shortName, shortNameSize, NULL );
 	if( !nameLength ) {
 		return;
 	}
@@ -2839,7 +2863,7 @@ void R_TouchShadersByName( const char *name ) {
 */
 shader_t *R_LoadShader( const char *name, shaderType_e type, bool forceDefault, const char *text ) {
 	unsigned int key, nameLength;
-	char *shortname;
+	char *shortname, *qmark = NULL;
 	shader_t *s;
 	shader_t *hnode, *prev, *next;
 	shadercache_t *cache = NULL;
@@ -2860,7 +2884,8 @@ shader_t *R_LoadShader( const char *name, shaderType_e type, bool forceDefault, 
 	}
 
 	shortname = r_shortShaderName;
-	nameLength = R_ShaderCleanName( name, r_shortShaderName, r_shortShaderNameSize );
+	nameLength = R_ShaderCleanName( name, r_shortShaderName, r_shortShaderNameSize, &r_shortShaderQMark );
+	qmark = r_shortShaderQMark;
 	if( !nameLength ) {
 		return NULL;
 	}
@@ -2893,7 +2918,12 @@ shader_t *R_LoadShader( const char *name, shaderType_e type, bool forceDefault, 
 
 	if( !text ) {
 		if( !forceDefault ) {
+			// never lookup "foo?xxx" in the cache, just "foo"
+			if( qmark )
+				*qmark = '\0';
 			Shader_GetCache( shortname, &cache );
+			if( qmark )
+				*qmark = '?';
 		}
 
 		// shader is in the shader scripts

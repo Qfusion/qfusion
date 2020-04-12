@@ -63,7 +63,7 @@ public:
 	void TouchAllCachedShaders( void );
 
    private:
-	const float basePixelsPerInch = 160.0f;
+	const float basePixelsPerInch = Q_BASE_DPI;
 
 	int vid_width;
 	int vid_height;

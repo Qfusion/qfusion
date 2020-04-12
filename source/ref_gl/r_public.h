@@ -127,10 +127,10 @@ typedef struct {
 	// if API is different, the dll cannot be used
 	int ( *API )( void );
 
-	rserr_t ( *Init )( const char *applicationName, const char *screenshotsPrefix, int startupColor,
-					   int iconResource, const int *iconXPM, void *hinstance, void *wndproc, void *parenthWnd, bool verbose );
+	rserr_t ( *Init )( const char *applicationName, const char *screenshotsPrefix, int startupColor, int iconResource,
+		const int *iconXPM, void *hinstance, void *wndproc, void *hWmd, float pixelRatio, bool verbose );
 	rserr_t ( *SetMode )( int x, int y, int width, int height, bool fullScreen, bool stereo, bool borderless );
-	rserr_t ( *SetWindow )( void *hinstance, void *wndproc, void *parenthWnd );
+	rserr_t ( *SetWindow )( void *hinstance, void *wndproc, void *hWnd );
 
 	void ( *Shutdown )( bool verbose );
 

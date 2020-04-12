@@ -32,9 +32,9 @@ static int VID_WndProc( void *wnd, int ev, int p1, int p2 ) {
  * VID_Sys_Init
  */
 rserr_t VID_Sys_Init( const char *applicationName, const char *screenshotsPrefix, int startupColor,
-					  const int *iconXPM, void *parentWindow, bool verbose ) {
+					  const int *iconXPM, bool verbose ) {
 	return re.Init( applicationName, screenshotsPrefix, startupColor, 0, iconXPM,
-					NULL, (void *)&VID_WndProc, parentWindow, verbose );
+					NULL, (void *)&VID_WndProc, NULL, VID_GetPixelRatio(), verbose );
 }
 
 /*
