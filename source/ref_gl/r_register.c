@@ -1329,10 +1329,9 @@ static unsigned R_GLVersionHash( const char *vendorString,
 /*
 * R_Init
 */
-rserr_t R_Init( const char *applicationName, const char *screenshotPrefix, int startupColor,
-				int iconResource, const int *iconXPM,
-				void *hinstance, void *wndproc, void *parenthWnd,
-				bool verbose ) {
+rserr_t R_Init( const char *applicationName, const char *screenshotPrefix, int startupColor, int iconResource,
+	const int *iconXPM, void *hinstance, void *wndproc, void *hWnd, float pixelRatio, bool verbose )
+{
 	const qgl_driverinfo_t *driver;
 	const char *dllname = "";
 	qgl_initerr_t initerr;
@@ -1348,6 +1347,9 @@ rserr_t R_Init( const char *applicationName, const char *screenshotPrefix, int s
 	}
 	if( !screenshotPrefix ) {
 		screenshotPrefix = "qfusion_";
+	}
+	if( !pixelRatio ) {
+		pixelRatio = 1.0f;
 	}
 
 	R_Register( screenshotPrefix );
@@ -1374,7 +1376,7 @@ init_qgl:
 	}
 
 	// initialize OS-specific parts of OpenGL
-	if( !GLimp_Init( applicationName, hinstance, wndproc, parenthWnd, iconResource, iconXPM ) ) {
+	if( !GLimp_Init( applicationName, hinstance, wndproc, hWnd, iconResource, iconXPM ) ) {
 		QGL_Shutdown();
 		return rserr_unknown;
 	}
@@ -1383,6 +1385,7 @@ init_qgl:
 	glConfig.applicationName = R_CopyString( applicationName );
 	glConfig.screenshotPrefix = R_CopyString( screenshotPrefix );
 	glConfig.startupColor = startupColor;
+	glConfig.pixelRatio = pixelRatio;
 
 	return rserr_ok;
 }

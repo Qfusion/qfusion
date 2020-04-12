@@ -221,6 +221,7 @@ typedef struct {
 	int width, height;
 	bool fullScreen;
 	bool borderless;
+	float pixelRatio;
 
 	bool stereoEnabled;
 	int stencilBits;
@@ -266,13 +267,12 @@ IMPLEMENTATION SPECIFIC FUNCTIONS
 bool    GLimp_RenderingEnabled( void );
 void    GLimp_BeginFrame( void );
 void    GLimp_EndFrame( void );
-bool    GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, void *parenthWnd,
-					int iconResource, const int *iconXPM );
+bool    GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, void *hWnd, int iconResource, const int *iconXPM );
 void    GLimp_Shutdown( void );
 
 rserr_t GLimp_SetMode( int x, int y, int width, int height, bool fullscreen, bool stereo, bool borderless );
 
-rserr_t GLimp_SetWindow( void *hinstance, void *wndproc, void *parenthWnd, bool *surfaceChangePending );
+rserr_t GLimp_SetWindow( void *hinstance, void *wndproc, void *hWnd, bool *surfaceChangePending );
 
 /*
 * GLimp_SetFullscreen

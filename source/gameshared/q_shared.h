@@ -463,6 +463,8 @@ typedef enum {
 	IN_DEVICE_SOFTKEYBOARD  = 1 << 4
 } in_devicemask_t;
 
+#define Q_BASE_DPI 96
+
 #ifdef __cplusplus
 };
 #endif

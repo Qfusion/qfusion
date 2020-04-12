@@ -122,7 +122,7 @@ void R_TextureMode( char *string );
 void R_AnisotropicFilter( int value );
 
 image_t *R_LoadImage( const char *name, uint8_t **pic, int width, int height, int flags, int minmipsize, int tags, int samples );
-image_t *R_FindImage( const char *name, const char *suffix, int flags, int minmipsize, int tags );
+image_t *R_FindImage( const char *name, const char *suffix, int flags, int minmipsize, int tags, const char *qmark );
 image_t *R_Create3DImage( const char *name, int width, int height, int layers, int flags, int tags, int samples, bool array );
 void R_ReplaceImage( image_t *image, uint8_t **pic, int width, int height, int flags, int minmipsize, int samples );
 void R_ReplaceSubImage( image_t *image, int layer, int x, int y, uint8_t **pic, int width, int height );

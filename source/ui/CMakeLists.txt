@@ -25,16 +25,9 @@ file(GLOB UI_SOURCES
     "../qalgo/*.c"
 )
 
+add_library(ui SHARED ${UI_SOURCES} ${UI_HEADERS})
 
-file(GLOB NANOSVG_HEADERS
-    "${NANOSVG_INCLUDE_DIR}/*.h"
-)
-
-source_group("nanosvg\\Header Files" FILES ${NANOSVG_HEADERS})
-
-add_library(ui SHARED ${NANOSVG_HEADERS} ${UI_SOURCES} ${UI_HEADERS})
-
-target_include_directories(ui PRIVATE ${ANGELSCRIPT_INCLUDE_DIR} ${LIBROCKET_INCLUDE_DIR} ${NANOSVG_INCLUDE_DIR})
+target_include_directories(ui PRIVATE ${ANGELSCRIPT_INCLUDE_DIR} ${LIBROCKET_INCLUDE_DIR})
 target_include_directories(ui PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}) # for ui_precompiled.h
 
 target_link_libraries(ui PRIVATE RmlCore RmlControls RmlDebugger)

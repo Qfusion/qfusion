@@ -2183,7 +2183,8 @@ static void Mod_Q1FixUpMiptexShader( q1mmiptex_t *miptex ) {
 				if( pass->images[k]->missing || pass->images[k] == rsh.noTexture ) {
 					data = step->texdata;
 					pass->images[k] = R_LoadImage( step->texture, &data, step->width, step->height,
-						IT_MIPTEX | ( j > basepass && miptex->fullbrights ? IT_MIPTEX_FULLBRIGHT : 0 ), 1, IMAGE_TAG_GENERIC, 1 );
+						IT_MIPTEX | ( j > basepass && miptex->fullbrights ? IT_MIPTEX_FULLBRIGHT : 0 ), 1,
+						IMAGE_TAG_GENERIC, 1 );
 				}
 			}
 		}

@@ -548,12 +548,11 @@ void *VID_GetWindowHandle( void ) {
 /*
 ** VID_Sys_Init
 */
-rserr_t VID_Sys_Init( const char *applicationName, const char *screenshotsPrefix, int startupColor,
-					  const int *iconXPM, void *parentWindow, bool verbose ) {
-	return re.Init( applicationName, screenshotsPrefix, startupColor,
-					IDI_APPICON_VALUE, iconXPM,
-					global_hInstance, (void *)&MainWndProc, parentWindow,
-					verbose );
+rserr_t VID_Sys_Init( const char *applicationName, const char *screenshotsPrefix, int startupColor, const int *iconXPM,
+	bool verbose )
+{
+	return re.Init( applicationName, screenshotsPrefix, startupColor, IDI_APPICON_VALUE, iconXPM, global_hInstance,
+		(void *)&MainWndProc, NULL, VID_GetPixelRatio(), verbose );
 }
 
 /*

@@ -27,7 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 const char *SOUND_EXTENSIONS[] = { ".ogg", ".wav" };
 const size_t NUM_SOUND_EXTENSIONS = sizeof( SOUND_EXTENSIONS ) / sizeof( SOUND_EXTENSIONS[0] );
 
-const char *IMAGE_EXTENSIONS[] = { ".tga", ".jpg", ".png", ".pcx", ".wal", ".ktx" }; // .ktx must be the last extension
+const char *IMAGE_EXTENSIONS[] = { ".tga", ".jpg", ".png", ".pcx", ".wal", ".svg", ".ktx" }; // .ktx must be the last extension
 const size_t NUM_IMAGE_EXTENSIONS = sizeof( IMAGE_EXTENSIONS ) / sizeof( IMAGE_EXTENSIONS[0] );
 
 //============================================================================

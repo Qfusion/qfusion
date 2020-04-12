@@ -7,7 +7,5 @@
 namespace WSWUI
 {
 
-Rml::Core::DecoratorInstancer *GetSVGDecoratorInstancer( void );
-
 }
 #endif

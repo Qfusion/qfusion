@@ -162,14 +162,14 @@ static ref_cmdbuf_t *RF_GetNextAdapterFrame( ref_frontendAdapter_t *adapter )
 }
 
 rserr_t RF_Init( const char *applicationName, const char *screenshotPrefix, int startupColor, int iconResource,
-	const int *iconXPM, void *hinstance, void *wndproc, void *parenthWnd, bool verbose )
+	const int *iconXPM, void *hinstance, void *wndproc, void *hWnd, float pixelRatio, bool verbose )
 {
 	rserr_t err;
 
 	memset( &rrf, 0, sizeof( rrf ) );
 
 	err = R_Init( applicationName, screenshotPrefix, startupColor, iconResource, iconXPM, hinstance, wndproc,
-		parenthWnd, verbose );
+		hWnd, pixelRatio, verbose );
 	if( err != rserr_ok ) {
 		return err;
 	}
@@ -219,12 +219,12 @@ rserr_t RF_SetMode( int x, int y, int width, int height, bool fullScreen, bool s
 	return rserr_ok;
 }
 
-rserr_t RF_SetWindow( void *hinstance, void *wndproc, void *parenthWnd )
+rserr_t RF_SetWindow( void *hinstance, void *wndproc, void *hWnd )
 {
 	rserr_t err;
 	bool surfaceChangePending = false;
 
-	err = GLimp_SetWindow( hinstance, wndproc, parenthWnd, &surfaceChangePending );
+	err = GLimp_SetWindow( hinstance, wndproc, hWnd, &surfaceChangePending );
 
 	if( err == rserr_ok && surfaceChangePending ) {
 		rrf.adapter.cmdPipe->SurfaceChange( rrf.adapter.cmdPipe );

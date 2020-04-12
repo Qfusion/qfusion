@@ -431,7 +431,6 @@ void RocketModule::registerCustoms() {
 
 	//
 	// DECORATORS
-	registerDecorator( "svg", GetSVGDecoratorInstancer() );
 
 	//
 	// GLOBAL CUSTOM PROPERTIES

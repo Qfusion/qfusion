@@ -1,11 +1,5 @@
 project(ref_gl)
 
-include_directories(${OPENGL_INCLUDE_DIR} ${STB_INCLUDE_DIR})
-
-if (USE_SDL2)
-    include_directories(${SDL2_INCLUDE_DIR})
-endif()
-
 file(GLOB REF_GL_HEADERS
     "*.h"
 	"../gameshared/q_*.h"
@@ -24,6 +18,15 @@ file(GLOB REF_GL_COMMON_SOURCES
     "../qalgo/*.c"
     "../qcommon/bsp.c"
     "../qcommon/patch.c"
+)
+
+file(GLOB NANOSVG_HEADERS
+    "${NANOSVG_INCLUDE_DIR}/*.h"
+)
+
+file(GLOB STB_HEADERS
+    "${STB_INCLUDE_DIR}/stb_image.h"
+    "${STB_INCLUDE_DIR}/stb_image_write.h"
 )
 
 if (USE_SDL2)
@@ -45,6 +48,16 @@ else()
     endif()
 endif()
 
-add_library(ref_gl SHARED ${REF_GL_HEADERS} ${REF_GL_COMMON_SOURCES} ${REF_GL_PLATFORM_SOURCES})
+source_group("nanosvg\\Header Files" FILES ${NANOSVG_HEADERS})
+
+add_library(ref_gl SHARED ${REF_GL_HEADERS} ${REF_GL_COMMON_SOURCES} ${REF_GL_PLATFORM_SOURCES} ${NANOSVG_HEADERS} ${STB_HEADERS})
+
+target_include_directories(ref_gl PRIVATE ${OPENGL_INCLUDE_DIR} ${STB_INCLUDE_DIR} ${NANOSVG_INCLUDE_DIR})
+
+if (USE_SDL2)
+    target_include_directories(ref_gl PRIVATE ${SDL2_INCLUDE_DIR})
+endif()
+
 target_link_libraries(ref_gl PRIVATE ${REF_GL_PLATFORM_LIBRARIES})
+
 qf_set_output_dir(ref_gl libs)

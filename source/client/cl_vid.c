@@ -33,7 +33,6 @@ cvar_t *vid_ypos;          // Y coordinate of window position
 cvar_t *vid_fullscreen;
 cvar_t *vid_borderless;
 cvar_t *vid_multiscreen_head;
-cvar_t *vid_parentwid;      // parent window identifier
 cvar_t *win_noalttab;
 cvar_t *win_nowinkeys;
 
@@ -62,8 +61,8 @@ static mempool_t *vid_ref_mempool = NULL;
 
 // These are system specific functions
 // wrapper around R_Init
-rserr_t VID_Sys_Init( const char *applicationName, const char *screenshotsPrefix, int startupColor, const int *iconXPM,
-					  void *parentWindow, bool verbose );
+rserr_t VID_Sys_Init(
+	const char *applicationName, const char *screenshotsPrefix, int startupColor, const int *iconXPM, bool verbose );
 void VID_UpdateWindowPosAndSize( int x, int y );
 void VID_EnableAltTab( bool enable );
 void VID_EnableWinKeys( bool enable );
@@ -120,15 +119,14 @@ static void VID_NewWindow( int width, int height ) {
 	viddef.height = height;
 }
 
-static rserr_t VID_Sys_Init_( void *parentWindow, bool verbose ) {
+static rserr_t VID_Sys_Init_( bool verbose ) {
 	rserr_t res;
 #include APP_XPM_ICON
 	int *xpm_icon;
 
 	xpm_icon = XPM_ParseIcon( sizeof( app256x256_xpm ) / sizeof( app256x256_xpm[0] ), app256x256_xpm );
 
-	res = VID_Sys_Init( APPLICATION_UTF8, APP_SCREENSHOTS_PREFIX, APP_STARTUP_COLOR, xpm_icon,
-						parentWindow, verbose );
+	res = VID_Sys_Init( APPLICATION_UTF8, APP_SCREENSHOTS_PREFIX, APP_STARTUP_COLOR, xpm_icon, verbose );
 
 	free( xpm_icon );
 
@@ -615,7 +613,7 @@ load_refresh:
 			}
 		}
 
-		err = VID_Sys_Init_( STR_TO_POINTER( vid_parentwid->string ), vid_ref_verbose );
+		err = VID_Sys_Init_( vid_ref_verbose );
 		if( err != rserr_ok ) {
 			Sys_Error( "VID_Init() failed with code %i", err );
 		}
@@ -749,7 +747,6 @@ void VID_Init( void ) {
 	vid_fullscreen = Cvar_Get( "vid_fullscreen", "1", CVAR_ARCHIVE );
 	vid_borderless = Cvar_Get( "vid_borderless", "1", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
 	vid_multiscreen_head = Cvar_Get( "vid_multiscreen_head", "-1", CVAR_ARCHIVE );
-	vid_parentwid = Cvar_Get( "vid_parentwid", "0", CVAR_NOSET );
 
 	win_noalttab = Cvar_Get( "win_noalttab", "0", CVAR_ARCHIVE );
 	win_nowinkeys = Cvar_Get( "win_nowinkeys", "0", CVAR_ARCHIVE );

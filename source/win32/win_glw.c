@@ -325,7 +325,7 @@ void GLimp_Shutdown( void ) {
 ** of OpenGL. Under Win32 this means dealing with the pixelformats and
 ** doing the wgl interface stuff.
 */
-static int GLimp_Init_( const char *applicationName, void *hinstance, void *wndproc, void *parenthWnd,
+static int GLimp_Init_( const char *applicationName, void *hinstance, void *wndproc,
 						int iconResource, const int *iconXPM, bool needPixelFormatARB ) {
 	size_t applicationNameSize = strlen( applicationName ) + 1;
     // save off hInstance and wndproc
@@ -364,12 +364,13 @@ static int GLimp_Init_( const char *applicationName, void *hinstance, void *wndp
 	return true;
 }
 
-bool GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, void *parenthWnd,
-				 int iconResource, const int *iconXPM ) {
-	if( !GLimp_Init_( applicationName, hinstance, wndproc, parenthWnd, iconResource, iconXPM, true ) ) {
+bool GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, void *hWnd, int iconResource, 
+	const int *iconXPM )
+{
+	if( !GLimp_Init_( applicationName, hinstance, wndproc, iconResource, iconXPM, true ) ) {
 		return false;
 	}
-	return GLimp_Init_( applicationName, hinstance, wndproc, parenthWnd, iconResource, iconXPM, false );
+	return GLimp_Init_( applicationName, hinstance, wndproc, iconResource, iconXPM, false );
 }
 
 static bool GLimp_InitGL( void ) {
@@ -596,11 +597,10 @@ void GLimp_AppActivate( bool active, bool minimize, bool destroy ) {
 /*
 ** GLimp_SetWindow
 */
-rserr_t GLimp_SetWindow( void *hinstance, void *wndproc, void *parenthWnd, bool *surfaceChangePending ) {
+rserr_t GLimp_SetWindow( void *hinstance, void *wndproc, void *hWnd, bool *surfaceChangePending ) {
 	if( surfaceChangePending ) {
 		*surfaceChangePending = false;
 	}
-
 	return rserr_ok; // surface cannot be lost
 }
 

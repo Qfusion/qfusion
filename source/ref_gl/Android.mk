@@ -4,7 +4,7 @@ LOCAL_MODULE := ref_gl
 LOCAL_MODULE_FILENAME := lib$(LOCAL_MODULE)_android_$(TARGET_ARCH_ABI)
 
 LOCAL_LDLIBS := -landroid
-LOCAL_C_INCLUDES := $(QFUSION_PATH)/third-party/stb $(LOCAL_PATH)
+LOCAL_C_INCLUDES := $(QFUSION_PATH)/third-party/stb $(QFUSION_PATH)/third-party/nanosvg/src $(LOCAL_PATH)
 
 LOCAL_SRC_FILES := \
   ../egl/egl_glw.c \
