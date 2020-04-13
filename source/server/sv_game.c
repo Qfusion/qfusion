@@ -88,10 +88,6 @@ static inline int PF_CM_LeafArea( int leafnum ) {
 	return CM_LeafArea( svs.cms, leafnum );
 }
 
-static inline int PF_CM_LeafsInPVS( int leafnum1, int leafnum2 ) {
-	return CM_LeafsInPVS( svs.cms, leafnum1, leafnum2 );
-}
-
 //======================================================================
 
 /*
@@ -490,7 +486,6 @@ void SV_InitGameProgs( void ) {
 	import.CM_BoxLeafnums = PF_CM_BoxLeafnums;
 	import.CM_LeafCluster = PF_CM_LeafCluster;
 	import.CM_LeafArea = PF_CM_LeafArea;
-	import.CM_LeafsInPVS = PF_CM_LeafsInPVS;
 
 	import.Milliseconds = Sys_Milliseconds;
 

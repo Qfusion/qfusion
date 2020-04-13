@@ -45,22 +45,21 @@ typedef struct {
 
 typedef struct {
 	gclient_t *client;
-	bool inuse;
+	bool	   inuse;
 
-	int num_clusters;           // if -1, use headnode instead
+	int num_clusters; // if -1, use headnode instead
 	int clusternums[MAX_ENT_CLUSTERS];
-	int leafnums[MAX_ENT_CLUSTERS];
-	int headnode;               // unused if num_clusters != -1
+	int headnode; // unused if num_clusters != -1
 	int areanum, areanum2;
 
 	//================================
 
-	unsigned int svflags;                // SVF_NOCLIENT, SVF_MONSTER, etc
-	vec3_t mins, maxs;
-	vec3_t absmin, absmax, size;
-	solid_t solid;
-	int clipmask;
-	edict_t *owner;
+	unsigned int svflags; // SVF_NOCLIENT, SVF_MONSTER, etc
+	vec3_t		 mins, maxs;
+	vec3_t		 absmin, absmax, size;
+	solid_t		 solid;
+	int			 clipmask;
+	edict_t *	 owner;
 } entity_shared_t;
 
 //===============================================================
@@ -114,7 +113,6 @@ typedef struct {
 	int ( *CM_BoxLeafnums )( vec3_t mins, vec3_t maxs, int *list, int listsize, int *topnode );
 	int ( *CM_LeafCluster )( int leafnum );
 	int ( *CM_LeafArea )( int leafnum );
-	int ( *CM_LeafsInPVS )( int leafnum1, int leafnum2 );
 
 	// managed memory allocation
 	void *( *Mem_Alloc )( size_t size, const char *filename, int fileline );
@@ -226,7 +224,7 @@ typedef struct {
 
 	// gameside rating library
 	struct clientRating_s *( *AddDefaultRating )( edict_t * ent, const char *gametype );
-	struct clientRating_s *( *AddRating )( edict_t * ent, const char *gametype, float rating, float deviation );
+	struct clientRating_s *( *AddRating )( edict_t *ent, const char *gametype, float rating, float deviation );
 	void ( *RemoveRating )( edict_t *ent );
 	void ( *AddRaceRecords )( edict_t *ent, int numRecords, unsigned int *records );
 } game_export_t;

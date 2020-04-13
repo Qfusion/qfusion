@@ -78,8 +78,6 @@ int CM_MergeVisSets( cmodel_state_t *cms, const vec3_t org, uint8_t *pvs, uint8_
 
 bool CM_InPVS( cmodel_state_t *cms, const vec3_t p1, const vec3_t p2 );
 
-bool CM_LeafsInPVS( cmodel_state_t *cms, int leafnum1, int leafnum2 );
-
 //
 cmodel_state_t *CM_New( void *mempool );
 void CM_AddReference( cmodel_state_t *cms );

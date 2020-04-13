@@ -892,17 +892,12 @@ int CM_MergeVisSets( cmodel_state_t *cms, const vec3_t org, uint8_t *pvs, uint8_
 */
 bool CM_InPVS( cmodel_state_t *cms, const vec3_t p1, const vec3_t p2 ) {
 	int leafnum1, leafnum2;
+	int		 cluster;
+	int		 area1, area2;
+	uint8_t *mask;
 
 	leafnum1 = CM_PointLeafnum( cms, p1 );
 	leafnum2 = CM_PointLeafnum( cms, p2 );
-
-	return CM_LeafsInPVS( cms, leafnum1, leafnum2 );
-}
-
-bool CM_LeafsInPVS( cmodel_state_t *cms, int leafnum1, int leafnum2 ) {
-	int cluster;
-	int area1, area2;
-	uint8_t *mask;
 
 	cluster = CM_LeafCluster( cms, leafnum1 );
 	area1 = CM_LeafArea( cms, leafnum1 );
@@ -914,10 +909,8 @@ bool CM_LeafsInPVS( cmodel_state_t *cms, int leafnum1, int leafnum2 ) {
 	if( ( !( mask[cluster >> 3] & ( 1 << ( cluster & 7 ) ) ) ) ) {
 		return false;
 	}
-
 	if( !CM_AreasConnected( cms, area1, area2 ) ) {
 		return false; // a door blocks sight
-
 	}
 	return true;
 }
