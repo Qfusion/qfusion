@@ -1642,8 +1642,7 @@ static const gs_asMethod_t asPMove_Methods[] =
 	{ ASLIB_FUNCTION_DECL( void, set_origin, ( const Vec3 &in ) ), asFUNCTION( objectPMove_SetOrigin ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( Vec3, get_velocity, () const ), asFUNCTION( objectPMove_GetVelocity ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, set_velocity, ( const Vec3 &in ) ), asFUNCTION( objectPMove_SetVelocity ), asCALL_CDECL_OBJLAST },
-
-	ASLIB_METHOD_NULL
+	ASLIB_METHOD_NULL,
 };
 
 static const gs_asProperty_t asPMove_Properties[] =
@@ -1664,21 +1663,19 @@ static const gs_asProperty_t asPMove_Properties[] =
 	{ ASLIB_PROPERTY_DECL( float, remainingTime ), ASLIB_FOFFSET( pmove_t, remainingTime ) },
 	{ ASLIB_PROPERTY_DECL( float, slideBounce ), ASLIB_FOFFSET( pmove_t, slideBounce ) },
 	{ ASLIB_PROPERTY_DECL( int, passEnt ), ASLIB_FOFFSET( pmove_t, passEnt ) },
-
-	ASLIB_PROPERTY_NULL
+	ASLIB_PROPERTY_NULL,
 };
 
 static const gs_asClassDescriptor_t asPMoveClassDescriptor =
 {
-	"PMove",                    /* name */
-	asOBJ_REF | asOBJ_NOCOUNT,  /* object type flags */
-	sizeof( pmove_t ),          /* size */
-	asPMove_Funcdefs,           /* funcdefs */
-	asPMove_ObjectBehaviors,    /* object behaviors */
-	asPMove_Methods,            /* methods */
-	asPMove_Properties,         /* properties */
-
-	NULL, NULL                  /* string factory hack */
+	"PMove",				   /* name */
+	asOBJ_REF | asOBJ_NOCOUNT, /* object type flags */
+	sizeof( pmove_t ),		   /* size */
+	asPMove_Funcdefs,		   /* funcdefs */
+	asPMove_ObjectBehaviors,   /* object behaviors */
+	asPMove_Methods,		   /* methods */
+	asPMove_Properties,		   /* properties */
+	NULL, NULL,				   /* string factory hack */
 };
 
 //=======================================================================
@@ -1915,6 +1912,7 @@ static int asPS_MAX_STATS = PS_MAX_STATS;
 static int asMAX_GAME_STATS = MAX_GAME_STATS;
 static int asMAX_EVENTS = MAX_EVENTS;
 static int asMAX_TOUCHENTS = MAXTOUCH;
+static int asMAX_EDICTS = MAX_EDICTS;
 
 static float asBASEGRAVITY = BASEGRAVITY;
 static float asGRAVITY = GRAVITY;
@@ -1930,21 +1928,20 @@ static const gs_asglobproperties_t asGameGlobalConstants[] =
 	{ "const int MAX_GAME_STATS", &asMAX_GAME_STATS },
 	{ "const int MAX_EVENTS", &asMAX_EVENTS },
 	{ "const int MAX_TOUCHENTS", &asMAX_TOUCHENTS },
+	{ "const int MAX_EDICTS", &asMAX_EDICTS },
 	{ "const float BASEGRAVITY", &asBASEGRAVITY },
 	{ "const float GRAVITY", &asGRAVITY },
 	{ "const float GRAVITY_COMPENSATE", &asGRAVITY_COMPENSATE },
 	{ "const int ZOOMTIME", &asZOOMTIME },
 	{ "const float STEPSIZE", &asSTEPSIZE },
 	{ "const float SLIDEMOVE_PLANEINTERACT_EPSILON", &asSLIDEMOVE_PLANEINTERACT_EPSILON },
-
-	{ NULL }
+	{ NULL },
 };
 
 static const gs_asglobproperties_t asGameGlobalProperties[] =
 {
 	{ "GameState gameState", &gs.gameState },
-
-	{ NULL }
+	{ NULL },
 };
 
 //=======================================================================
