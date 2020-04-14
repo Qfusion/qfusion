@@ -75,7 +75,7 @@ static bool CG_UpdateLinearProjectilePosition( centity_t *cent ) {
 	state = &cent->current;
 
 	if( !state->linearMovement ) {
-		return -1;
+		return true;
 	}
 
 	if( GS_MatchPaused() ) {
