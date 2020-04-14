@@ -62,8 +62,6 @@ static void CG_FixVolumeCvars( void ) {
 	}
 }
 
-//#define DRAWFROMWEAPON
-
 static bool CG_UpdateLinearProjectilePosition( centity_t *cent ) {
 	vec3_t origin;
 	entity_state_t *state;
@@ -147,28 +145,6 @@ static void CG_NewPacketEntityState( entity_state_t *state ) {
 
 		VectorClear( cent->velocity );
 		cent->canExtrapolate = false;
-
-#ifdef DRAWFROMWEAPON
-		if( firstTime && ISVIEWERENTITY( state->ownerNum ) && ( state->solid != SOLID_BMODEL ) ) { // experimental. Draw linear projectiles as if coming from the weapon
-			orientation_t projection;
-			vec3_t dir, end;
-
-			if( CG_PModel_GetProjectionSource( state->ownerNum, &projection ) ) {
-				VectorCopy( projection.origin, cent->linearProjectileViewerSource );
-
-				// recalculate the direction from the new projection source
-				VectorNormalize2( state->linearProjectileVelocity, dir );
-				VectorMA( state->origin2, 16000, dir, end );
-				VectorSubtract( end, cent->linearProjectileViewerSource, dir );
-				VectorNormalize( dir );
-				VectorScale( dir, VectorLength( state->linearProjectileVelocity ), cent->linearProjectileViewerVelocity );
-			} else {
-				//CG_Printf( "Couldn't get projection source\n" );
-				VectorCopy( state->linearProjectileVelocity, cent->linearProjectileViewerVelocity );
-				VectorCopy( state->origin2, cent->linearProjectileViewerSource );
-			}
-		}
-#endif
 		cent->linearProjectileCanDraw = CG_UpdateLinearProjectilePosition( cent );
 
 		VectorCopy( cent->current.linearMovementVelocity, cent->velocity );

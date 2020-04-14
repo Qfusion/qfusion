@@ -551,12 +551,7 @@ typedef struct {
 	int realFrameTime;
 	int frameCount;
 
-	int64_t firstViewRealTime;
-	int viewFrameCount;
-	bool startedMusic;
-
 	snapshot_t frame, oldFrame;
-	bool frameSequenceRunning;
 	bool oldAreabits;
 	bool portalInView;
 	bool fireEvents;

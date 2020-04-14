@@ -964,10 +964,6 @@ void CG_RenderView( int frameTime, int realFrameTime, int64_t realTime, int64_t 
 		}
 	}
 
-	if( !cg.viewFrameCount ) {
-		cg.firstViewRealTime = cg.realTime;
-	}
-
 	if( cg_fov->modified ) {
 		if( cg_fov->value < MIN_FOV ) {
 			trap_Cvar_ForceSet( cg_fov->name, STR_TOSTR( MIN_FOV ) );
@@ -1040,6 +1036,4 @@ void CG_RenderView( int frameTime, int realFrameTime, int64_t realTime, int64_t 
 	CG_Draw2D();
 
 	CG_ResetTemporaryBoneposesCache(); // clear for next frame
-
-	cg.viewFrameCount++;
 }
