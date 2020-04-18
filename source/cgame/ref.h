@@ -31,7 +31,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define RF_FULLBRIGHT           0x2       // always draw full intensity
 #define RF_FRAMELERP            0x4
 #define RF_NOSHADOW             0x8
-
 #define RF_VIEWERMODEL          0x10     // don't draw through eyes, only mirrors
 #define RF_WEAPONMODEL          0x20     // only draw through eyes and depth hack
 #define RF_CULLHACK             0x40
@@ -53,9 +52,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define RDF_CROSSINGWATER       0x80    // potentially crossing water surface
 #define RDF_USEORTHO            0x100   // use orthographic projection
 #define RDF_BLURRED             0x200
-
-// skm flags
-#define SKM_ATTACHMENT_BONE     1
 
 typedef struct orientation_s {
 	mat3_t axis;
