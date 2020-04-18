@@ -144,7 +144,7 @@ void PreRegisterMat3Addon( asIScriptEngine *engine )
 
 	// register the vector type
 	r = engine->RegisterObjectType(
-		"Mat3", sizeof( asvec3_t ), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_C | asOBJ_APP_CLASS_ALLFLOATS );
+		"Mat3", sizeof( asmat3_t ), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_C | asOBJ_APP_CLASS_ALLFLOATS );
 	assert( r >= 0 );
 
 	(void)sizeof( r ); // hush the compiler
