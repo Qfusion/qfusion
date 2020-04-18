@@ -293,6 +293,7 @@ void        R_UploadCinematicShader( const shader_t *shader );
 
 void        R_PrintShaderList( const char *mask, bool ( *filter )( const char *filter, const char *value ) );
 void        R_PrintShaderCache( const char *name );
+char **		R_ShaderDumpCompletion_f( const char *partial );
 
 shader_t    *R_ShaderById( unsigned int id );
 

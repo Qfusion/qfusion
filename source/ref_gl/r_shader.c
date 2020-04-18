@@ -24,8 +24,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_local.h"
 #include "../qalgo/hash.h"
 
-#define SHADERS_HASH_SIZE   128
-#define SHADERCACHE_HASH_SIZE   128
+#define SHADERS_HASH_SIZE 128
+#define SHADERCACHE_HASH_SIZE 128
 
 typedef struct {
 	const char *keyword;
@@ -33,50 +33,56 @@ typedef struct {
 } shaderkey_t;
 
 typedef struct shadercache_s {
-	char *name;
-	char *buffer;
-	char *filename;
-	size_t offset;
+	char *				  name;
+	char *				  buffer;
+	char *				  filename;
+	size_t				  offset;
 	struct shadercache_s *hash_next;
 } shadercache_t;
 
 static shader_t r_shaders[MAX_SHADERS];
 
-static shader_t r_shaders_hash_headnode[SHADERS_HASH_SIZE], *r_free_shaders;
+static shader_t		  r_shaders_hash_headnode[SHADERS_HASH_SIZE], *r_free_shaders;
 static shadercache_t *shadercache_hash[SHADERCACHE_HASH_SIZE];
 
-static deformv_t r_currentDeforms[MAX_SHADER_DEFORMVS];
+static deformv_t	r_currentDeforms[MAX_SHADER_DEFORMVS];
 static shaderpass_t r_currentPasses[MAX_SHADER_PASSES];
-static float r_currentRGBgenArgs[MAX_SHADER_PASSES][3], r_currentAlphagenArgs[MAX_SHADER_PASSES][2];
-static tcmod_t r_currentTcmods[MAX_SHADER_PASSES][MAX_SHADER_TCMODS];
-static vec4_t r_currentTcGen[MAX_SHADER_PASSES][2];
+static float		r_currentRGBgenArgs[MAX_SHADER_PASSES][3], r_currentAlphagenArgs[MAX_SHADER_PASSES][2];
+static tcmod_t		r_currentTcmods[MAX_SHADER_PASSES][MAX_SHADER_TCMODS];
+static vec4_t		r_currentTcGen[MAX_SHADER_PASSES][2];
 
 static bool r_shaderNoMipMaps;
 static bool r_shaderNoPicMip;
 static bool r_shaderNoFiltering;
 static bool r_shaderNoCompress;
-static int r_shaderMinMipSize;
+static int	r_shaderMinMipSize;
 static bool r_shaderHasLightmapPass;
 static bool r_shaderHasAutosprite;
-static int r_shaderAllDetail;
+static int	r_shaderAllDetail;
 static char r_shaderDeformvKey[1024];
 
-static image_t  *r_defaultImage;
+static image_t *r_defaultImage;
 
 static char *r_shaderTemplateBuf;
 
-static char *r_shortShaderName;
+static char * r_shortShaderName;
 static size_t r_shortShaderNameSize;
-static char *r_shortShaderQMark;
+static char * r_shortShaderQMark;
 
-static bool Shader_Parsetok( shader_t *shader, shaderpass_t *pass, const shaderkey_t *keys, const char *token, const char **ptr );
-static void Shader_MakeCache( const char *filename );
+static bool Shader_Parsetok(
+	shader_t *shader, shaderpass_t *pass, const shaderkey_t *keys, const char *token, const char **ptr );
+static void			Shader_MakeCache( const char *filename );
 static unsigned int Shader_GetCache( const char *name, shadercache_t **cache );
-#define R_FreePassCinematics( pass ) if( ( pass )->cin ) { R_FreeCinematic( ( pass )->cin ); ( pass )->cin = 0; }
+#define R_FreePassCinematics( pass )      \
+	if( ( pass )->cin ) {                 \
+		R_FreeCinematic( ( pass )->cin ); \
+		( pass )->cin = 0;                \
+	}
 
 //===========================================================================
 
-static char *Shader_ParseString( const char **ptr ) {
+static char *Shader_ParseString( const char **ptr )
+{
 	char *token;
 
 	if( !ptr || !( *ptr ) ) {
@@ -90,7 +96,8 @@ static char *Shader_ParseString( const char **ptr ) {
 	return Q_strlwr( token );
 }
 
-static float Shader_ParseFloat( const char **ptr ) {
+static float Shader_ParseFloat( const char **ptr )
+{
 	if( !ptr || !( *ptr ) ) {
 		return 0;
 	}
@@ -101,7 +108,8 @@ static float Shader_ParseFloat( const char **ptr ) {
 	return atof( COM_ParseExt( ptr, false ) );
 }
 
-static float Shader_ParseInt( const char **ptr ) {
+static float Shader_ParseInt( const char **ptr )
+{
 	if( !ptr || !( *ptr ) ) {
 		return 0;
 	}
@@ -112,10 +120,11 @@ static float Shader_ParseInt( const char **ptr ) {
 	return atoi( COM_ParseExt( ptr, false ) );
 }
 
-static void Shader_ParseVector( const char **ptr, float *v, unsigned int size ) {
+static void Shader_ParseVector( const char **ptr, float *v, unsigned int size )
+{
 	unsigned int i;
-	char *token;
-	bool bracket;
+	char *		 token;
+	bool		 bracket;
 
 	if( !size ) {
 		return;
@@ -154,7 +163,8 @@ static void Shader_ParseVector( const char **ptr, float *v, unsigned int size ) 
 	}
 }
 
-static void Shader_SkipLine( const char **ptr ) {
+static void Shader_SkipLine( const char **ptr )
+{
 	while( ptr ) {
 		const char *token = COM_ParseExt( ptr, false );
 		if( !token[0] ) {
@@ -163,9 +173,10 @@ static void Shader_SkipLine( const char **ptr ) {
 	}
 }
 
-static void Shader_SkipBlock( const char **ptr ) {
+static void Shader_SkipBlock( const char **ptr )
+{
 	const char *tok;
-	int brace_count;
+	int			brace_count;
 
 	// Opening brace
 	tok = COM_ParseExt( ptr, true );
@@ -186,21 +197,28 @@ static void Shader_SkipBlock( const char **ptr ) {
 	}
 }
 
-#define MAX_CONDITIONS      8
+#define MAX_CONDITIONS 8
 typedef enum { COP_LS, COP_LE, COP_EQ, COP_GR, COP_GE, COP_NE } conOp_t;
 typedef enum { COP2_AND, COP2_OR } conOp2_t;
-typedef struct { int operand; conOp_t op; bool negative; int val; conOp2_t logic; } shaderCon_t;
+typedef struct {
+	int		 operand;
+	conOp_t	 op;
+	bool	 negative;
+	int		 val;
+	conOp2_t logic;
+} shaderCon_t;
 
 char *conOpStrings[] = { "<", "<=", "==", ">", ">=", "!=", NULL };
 char *conOpStrings2[] = { "&&", "||", NULL };
 
-static bool Shader_ParseConditions( const char **ptr, shader_t *shader ) {
-	int i;
-	char *tok;
-	int numConditions;
+static bool Shader_ParseConditions( const char **ptr, shader_t *shader )
+{
+	int			i;
+	char *		tok;
+	int			numConditions;
 	shaderCon_t conditions[MAX_CONDITIONS];
-	bool result = false, val = false, skip, expectingOperator;
-//	static const int falseCondition = 0;
+	bool		result = false, val = false, skip, expectingOperator;
+	//	static const int falseCondition = 0;
 
 	numConditions = 0;
 	memset( conditions, 0, sizeof( conditions ) );
@@ -270,23 +288,23 @@ static bool Shader_ParseConditions( const char **ptr, shader_t *shader ) {
 
 		if( !conditions[numConditions].operand ) {
 			if( !Q_stricmp( tok, "maxTextureSize" ) ) {
-				conditions[numConditions].operand = ( int  )glConfig.maxTextureSize;
+				conditions[numConditions].operand = (int)glConfig.maxTextureSize;
 			} else if( !Q_stricmp( tok, "maxTextureCubemapSize" ) ) {
-				conditions[numConditions].operand = ( int )glConfig.maxTextureCubemapSize;
+				conditions[numConditions].operand = (int)glConfig.maxTextureCubemapSize;
 			} else if( !Q_stricmp( tok, "maxTextureUnits" ) ) {
-				conditions[numConditions].operand = ( int )glConfig.maxTextureUnits;
+				conditions[numConditions].operand = (int)glConfig.maxTextureUnits;
 			} else if( !Q_stricmp( tok, "textureCubeMap" ) ) {
-				conditions[numConditions].operand = ( int )glConfig.ext.texture_cube_map;
+				conditions[numConditions].operand = (int)glConfig.ext.texture_cube_map;
 			} else if( !Q_stricmp( tok, "GLSL" ) ) {
 				conditions[numConditions].operand = 1;
 			} else if( !Q_stricmp( tok, "deluxeMaps" ) || !Q_stricmp( tok, "deluxe" ) ) {
-				conditions[numConditions].operand = ( int )mapConfig.deluxeMappingEnabled;
+				conditions[numConditions].operand = (int)mapConfig.deluxeMappingEnabled;
 			} else if( !Q_stricmp( tok, "portalMaps" ) ) {
-				conditions[numConditions].operand = ( int )r_portalmaps->integer;
+				conditions[numConditions].operand = (int)r_portalmaps->integer;
 			} else {
-//				Com_Printf( S_COLOR_YELLOW "WARNING: Unknown expression '%s' in shader %s\n", tok, shader->name );
-//				skip = true;
-//				conditions[numConditions].operand = ( int )falseCondition;
+				//				Com_Printf( S_COLOR_YELLOW "WARNING: Unknown expression '%s' in shader %s\n", tok,
+				// shader->name ); 				skip = true; 				conditions[numConditions].operand = ( int
+				// )falseCondition;
 				conditions[numConditions].operand = atoi( tok );
 			}
 
@@ -320,7 +338,6 @@ static bool Shader_ParseConditions( const char **ptr, shader_t *shader ) {
 		Com_Printf( S_COLOR_YELLOW "WARNING: Empty 'if' statement in shader %s\n", shader->name );
 		return false;
 	}
-
 
 	for( i = 0; i < numConditions; i++ ) {
 		conditions[i].operand--;
@@ -368,9 +385,10 @@ static bool Shader_ParseConditions( const char **ptr, shader_t *shader ) {
 	return result;
 }
 
-static bool Shader_SkipConditionBlock( const char **ptr ) {
+static bool Shader_SkipConditionBlock( const char **ptr )
+{
 	const char *tok;
-	int condition_count;
+	int			condition_count;
 
 	for( condition_count = 1; condition_count > 0; ) {
 		tok = COM_ParseExt( ptr, true );
@@ -382,9 +400,9 @@ static bool Shader_SkipConditionBlock( const char **ptr ) {
 		} else if( !Q_stricmp( tok, "endif" ) ) {
 			condition_count--;
 		}
-// Vic: commented out for now
-//		else if( !Q_stricmp( tok, "else" ) && (condition_count == 1) )
-//			return true;
+		// Vic: commented out for now
+		//		else if( !Q_stricmp( tok, "else" ) && (condition_count == 1) )
+		//			return true;
 	}
 
 	return true;
@@ -392,17 +410,19 @@ static bool Shader_SkipConditionBlock( const char **ptr ) {
 
 //===========================================================================
 
-static void Shader_ParseSkySides( const char **ptr, image_t **images, int imagetags, bool underscore ) {
-	int i, j;
+static void Shader_ParseSkySides( const char **ptr, image_t **images, int imagetags, bool underscore )
+{
+	int	  i, j;
 	char *token;
-	bool noskybox = false;
+	bool  noskybox = false;
 
 	token = Shader_ParseString( ptr );
 	if( token[0] == '-' ) {
 		noskybox = true;
 	} else {
 		struct cubemapSufAndFlip {
-			char *suf; int flags;
+			char *suf;
+			int	  flags;
 		} cubemapSides[2][6] = {
 			{
 				{ "rt", 0 },
@@ -410,7 +430,7 @@ static void Shader_ParseSkySides( const char **ptr, image_t **images, int imaget
 				{ "lf", 0 },
 				{ "ft", 0 },
 				{ "up", 0 },
-				{ "dn", 0 }
+				{ "dn", 0 },
 			},
 			{
 				{ "px", IT_FLIPDIAGONAL },
@@ -418,8 +438,8 @@ static void Shader_ParseSkySides( const char **ptr, image_t **images, int imaget
 				{ "nx", IT_FLIPX | IT_FLIPY | IT_FLIPDIAGONAL },
 				{ "ny", IT_FLIPX },
 				{ "pz", IT_FLIPDIAGONAL },
-				{ "nz", IT_FLIPDIAGONAL }
-			}
+				{ "nz", IT_FLIPDIAGONAL },
+			},
 		};
 
 		for( i = 0; i < 2; i++ ) {
@@ -435,8 +455,8 @@ static void Shader_ParseSkySides( const char **ptr, image_t **images, int imaget
 				}
 				Q_strncatz( suffix, cubemapSides[i][j].suf, sizeof( suffix ) );
 
-				images[j] = R_FindImage(
-					token, suffix, IT_SKYFLAGS | cubemapSides[i][j].flags | IT_SRGB, 1, imagetags, NULL );
+				images[j] =
+					R_FindImage( token, suffix, IT_SKYFLAGS | cubemapSides[i][j].flags | IT_SRGB, 1, imagetags, NULL );
 				if( !images[j] ) {
 					break;
 				}
@@ -466,18 +486,12 @@ static void Shader_ParseSkySides( const char **ptr, image_t **images, int imaget
  * @param images    array to write the images to
  * @param imagetags image usage tags
  */
-static void Shader_ParseCustomSkySides( const char **ptr, image_t **images, int imagetags ) {
-	int i, j;
-	char *token;
-	int refs[6] = { 0 };
-	const char *refnames[] = {
-		"rt",
-		"bk",
-		"lf",
-		"ft",
-		"up",
-		"dn"
-	};
+static void Shader_ParseCustomSkySides( const char **ptr, image_t **images, int imagetags )
+{
+	int			i, j;
+	char *		token;
+	int			refs[6] = { 0 };
+	const char *refnames[] = { "rt", "bk", "lf", "ft", "up", "dn" };
 
 	memset( images, 0, sizeof( *images ) * 6 );
 
@@ -507,7 +521,8 @@ static void Shader_ParseCustomSkySides( const char **ptr, image_t **images, int 
 	}
 }
 
-static void Shader_ParseFunc( const char **ptr, shaderfunc_t *func ) {
+static void Shader_ParseFunc( const char **ptr, shaderfunc_t *func )
+{
 	char *token;
 
 	token = Shader_ParseString( ptr );
@@ -535,7 +550,8 @@ static void Shader_ParseFunc( const char **ptr, shaderfunc_t *func ) {
 
 //===========================================================================
 
-static int Shader_SetImageFlags( shader_t *shader ) {
+static int Shader_SetImageFlags( shader_t *shader )
+{
 	int flags = 0;
 
 	if( shader->flags & SHADER_SKY ) {
@@ -553,18 +569,17 @@ static int Shader_SetImageFlags( shader_t *shader ) {
 	if( r_shaderNoFiltering ) {
 		flags |= IT_NOFILTERING;
 	}
-	if( shader->type == SHADER_TYPE_2D
-		|| shader->type == SHADER_TYPE_2D_RAW
-		|| shader->type == SHADER_TYPE_VIDEO ) {
+	if( shader->type == SHADER_TYPE_2D || shader->type == SHADER_TYPE_2D_RAW || shader->type == SHADER_TYPE_VIDEO ) {
 		flags |= IT_SYNC;
 	}
-	//if( r_shaderHasAutosprite )
+	// if( r_shaderHasAutosprite )
 	//	flags |= IT_CLAMP;
 
 	return flags;
 }
 
-static image_t *Shader_FindImage( shader_t *shader, const char *name, int flags ) {
+static image_t *Shader_FindImage( shader_t *shader, const char *name, int flags )
+{
 	image_t *image;
 
 	if( !Q_stricmp( name, "$whiteimage" ) || !Q_stricmp( name, "*white" ) ) {
@@ -602,7 +617,8 @@ static image_t *Shader_FindImage( shader_t *shader, const char *name, int flags 
 
 /****************** shader keyword functions ************************/
 
-static void Shader_Cull( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
+static void Shader_Cull( shader_t *shader, shaderpass_t *pass, const char **ptr )
+{
 	char *token;
 
 	shader->flags &= ~( SHADER_CULL_FRONT | SHADER_CULL_BACK );
@@ -617,35 +633,41 @@ static void Shader_Cull( shader_t *shader, shaderpass_t *pass, const char **ptr 
 	}
 }
 
-static void Shader_NoMipMaps( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
+static void Shader_NoMipMaps( shader_t *shader, shaderpass_t *pass, const char **ptr )
+{
 	r_shaderNoMipMaps = r_shaderNoPicMip = true;
 	r_shaderMinMipSize = 1;
 }
 
-static void Shader_NoPicMip( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
+static void Shader_NoPicMip( shader_t *shader, shaderpass_t *pass, const char **ptr )
+{
 	r_shaderNoPicMip = true;
 }
 
-static void Shader_NoCompress( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
+static void Shader_NoCompress( shader_t *shader, shaderpass_t *pass, const char **ptr )
+{
 	r_shaderNoCompress = true;
 }
 
-static void Shader_NoFiltering( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
+static void Shader_NoFiltering( shader_t *shader, shaderpass_t *pass, const char **ptr )
+{
 	r_shaderNoFiltering = true;
 	shader->flags |= SHADER_NO_TEX_FILTERING;
 }
 
-static void Shader_SmallestMipMapSize( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
+static void Shader_SmallestMipMapSize( shader_t *shader, shaderpass_t *pass, const char **ptr )
+{
 	int size = Shader_ParseInt( ptr );
 	if( glConfig.ext.texture_lod && !r_shaderNoMipMaps ) {
 		r_shaderMinMipSize = max( size, 1 );
 	}
 }
 
-static void Shader_DeformVertexes( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
-	char tmp[128];
-	char *token;
-	deformv_t *deformv;
+static void Shader_DeformVertexes( shader_t *shader, shaderpass_t *pass, const char **ptr )
+{
+	char		  tmp[128];
+	char *		  token;
+	deformv_t *	  deformv;
 	shaderfunc_t *func;
 
 	if( shader->numdeforms == MAX_SHADER_DEFORMVS ) {
@@ -665,26 +687,25 @@ static void Shader_DeformVertexes( shader_t *shader, shaderpass_t *pass, const c
 		deformv->args[0] = Shader_ParseFloat( ptr );
 		Shader_ParseFunc( ptr, func );
 		Q_strncatz( r_shaderDeformvKey,
-					va_r( tmp, sizeof( tmp ), "%g%i%g%g%g%g",
-						  deformv->args[0], func->type, func->args[0], func->args[1], func->args[2], func->args[3] ),
-					sizeof( r_shaderDeformvKey ) );
+			va_r( tmp, sizeof( tmp ), "%g%i%g%g%g%g", deformv->args[0], func->type, func->args[0], func->args[1],
+				func->args[2], func->args[3] ),
+			sizeof( r_shaderDeformvKey ) );
 		deformv->args[0] = deformv->args[0] ? 1.0f / deformv->args[0] : 100.0f;
 	} else if( !strcmp( token, "bulge" ) ) {
 		deformv->type = DEFORMV_BULGE;
 		Shader_ParseVector( ptr, deformv->args, 4 );
 		Q_strncatz( r_shaderDeformvKey,
-					va_r( tmp, sizeof( tmp ), "%g%g%g%g",
-						  deformv->args[0], deformv->args[1], deformv->args[2], deformv->args[3] ),
-					sizeof( r_shaderDeformvKey ) );
+			va_r( tmp, sizeof( tmp ), "%g%g%g%g", deformv->args[0], deformv->args[1], deformv->args[2],
+				deformv->args[3] ),
+			sizeof( r_shaderDeformvKey ) );
 	} else if( !strcmp( token, "move" ) ) {
 		deformv->type = DEFORMV_MOVE;
 		Shader_ParseVector( ptr, deformv->args, 3 );
 		Shader_ParseFunc( ptr, &deformv->func );
 		Q_strncatz( r_shaderDeformvKey,
-					va_r( tmp, sizeof( tmp ), "%g%g%g%i%g%g%g%g",
-						  deformv->args[0], deformv->args[1], deformv->args[2],
-						  func->type, func->args[0], func->args[1], func->args[2], func->args[3] ),
-					sizeof( r_shaderDeformvKey ) );
+			va_r( tmp, sizeof( tmp ), "%g%g%g%i%g%g%g%g", deformv->args[0], deformv->args[1], deformv->args[2],
+				func->type, func->args[0], func->args[1], func->args[2], func->args[3] ),
+			sizeof( r_shaderDeformvKey ) );
 	} else if( !strcmp( token, "autosprite" ) ) {
 		deformv->type = DEFORMV_AUTOSPRITE;
 		shader->flags |= SHADER_AUTOSPRITE;
@@ -703,7 +724,8 @@ static void Shader_DeformVertexes( shader_t *shader, shaderpass_t *pass, const c
 	shader->numdeforms++;
 }
 
-static void Shader_SkyParmsExt( shader_t *shader, shaderpass_t *pass, const char **ptr, bool custom, bool underscore ) {
+static void Shader_SkyParmsExt( shader_t *shader, shaderpass_t *pass, const char **ptr, bool custom, bool underscore )
+{
 	float skyheight;
 
 	if( custom ) {
@@ -721,19 +743,23 @@ static void Shader_SkyParmsExt( shader_t *shader, shaderpass_t *pass, const char
 	shader->flags |= SHADER_SKY;
 }
 
-static void Shader_SkyParms( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
+static void Shader_SkyParms( shader_t *shader, shaderpass_t *pass, const char **ptr )
+{
 	Shader_SkyParmsExt( shader, pass, ptr, false, true );
 }
 
-static void Shader_SkyParms2( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
+static void Shader_SkyParms2( shader_t *shader, shaderpass_t *pass, const char **ptr )
+{
 	Shader_SkyParmsExt( shader, pass, ptr, false, false );
 }
 
-static void Shader_SkyParmsSides( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
+static void Shader_SkyParmsSides( shader_t *shader, shaderpass_t *pass, const char **ptr )
+{
 	Shader_SkyParmsExt( shader, pass, ptr, true, false );
 }
 
-static void Shader_SkyLightParms( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
+static void Shader_SkyLightParms( shader_t *shader, shaderpass_t *pass, const char **ptr )
+{
 	vec3_t color, dir;
 
 	Shader_ParseVector( ptr, color, 3 );
@@ -743,15 +769,16 @@ static void Shader_SkyLightParms( shader_t *shader, shaderpass_t *pass, const ch
 	VectorNormalize2( dir, shader->skyParms.lightDir );
 }
 
-static void Shader_FogParms( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
+static void Shader_FogParms( shader_t *shader, shaderpass_t *pass, const char **ptr )
+{
 	vec3_t color, fcolor;
 
 	Shader_ParseVector( ptr, color, 3 );
 	ColorNormalize( color, fcolor );
 
-	shader->fog_color[0] = ( int )( fcolor[0] * 255.0f );
-	shader->fog_color[1] = ( int )( fcolor[1] * 255.0f );
-	shader->fog_color[2] = ( int )( fcolor[2] * 255.0f );
+	shader->fog_color[0] = (int)( fcolor[0] * 255.0f );
+	shader->fog_color[1] = (int)( fcolor[1] * 255.0f );
+	shader->fog_color[2] = (int)( fcolor[2] * 255.0f );
 	shader->fog_color[3] = 255;
 	shader->fog_dist = Shader_ParseFloat( ptr );
 	if( shader->fog_dist <= 0.1f ) {
@@ -767,7 +794,8 @@ static void Shader_FogParms( shader_t *shader, shaderpass_t *pass, const char **
 	}
 }
 
-static void Shader_Sort( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
+static void Shader_Sort( shader_t *shader, shaderpass_t *pass, const char **ptr )
+{
 	char *token;
 
 	token = Shader_ParseString( ptr );
@@ -793,24 +821,29 @@ static void Shader_Sort( shader_t *shader, shaderpass_t *pass, const char **ptr 
 	}
 }
 
-static void Shader_Portal( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
+static void Shader_Portal( shader_t *shader, shaderpass_t *pass, const char **ptr )
+{
 	shader->flags |= SHADER_PORTAL;
 	shader->sort = SHADER_SORT_PORTAL;
 }
 
-static void Shader_PolygonOffset( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
+static void Shader_PolygonOffset( shader_t *shader, shaderpass_t *pass, const char **ptr )
+{
 	shader->flags |= SHADER_POLYGONOFFSET;
 }
 
-static void Shader_StencilTest( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
+static void Shader_StencilTest( shader_t *shader, shaderpass_t *pass, const char **ptr )
+{
 	shader->flags |= SHADER_STENCILTEST;
 }
 
-static void Shader_EntityMergable( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
+static void Shader_EntityMergable( shader_t *shader, shaderpass_t *pass, const char **ptr )
+{
 	shader->flags |= SHADER_ENTITY_MERGABLE;
 }
 
-static void Shader_If( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
+static void Shader_If( shader_t *shader, shaderpass_t *pass, const char **ptr )
+{
 	if( !Shader_ParseConditions( ptr, shader ) ) {
 		if( !Shader_SkipConditionBlock( ptr ) ) {
 			Com_Printf( S_COLOR_YELLOW "WARNING: Mismatched if/endif pair in shader %s\n", shader->name );
@@ -818,41 +851,44 @@ static void Shader_If( shader_t *shader, shaderpass_t *pass, const char **ptr ) 
 	}
 }
 
-static void Shader_Endif( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
-}
+static void Shader_Endif( shader_t *shader, shaderpass_t *pass, const char **ptr ) {}
 
-static void Shader_OffsetMappingScale( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
+static void Shader_OffsetMappingScale( shader_t *shader, shaderpass_t *pass, const char **ptr )
+{
 	shader->offsetmappingScale = Shader_ParseFloat( ptr );
 	if( shader->offsetmappingScale <= 0 ) {
 		shader->offsetmappingScale = 0;
 	}
 }
 
-static void Shader_GlossIntensity( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
+static void Shader_GlossIntensity( shader_t *shader, shaderpass_t *pass, const char **ptr )
+{
 	shader->glossIntensity = Shader_ParseFloat( ptr );
 	if( shader->glossIntensity <= 0 ) {
 		shader->glossIntensity = 0;
 	}
 }
 
-static void Shader_GlossExponent( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
+static void Shader_GlossExponent( shader_t *shader, shaderpass_t *pass, const char **ptr )
+{
 	shader->glossExponent = Shader_ParseFloat( ptr );
 	if( shader->glossExponent <= 0 ) {
 		shader->glossExponent = 0;
 	}
 }
 
-#define MAX_SHADER_TEMPLATE_ARGS    12
-static void Shader_Template( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
-	int i;
-	char *tmpl, *buf, *out, *token;
-	char *pos, *before, *ptr2;
-	const char *ptr_backup;
-	char backup;
-	char args[MAX_SHADER_TEMPLATE_ARGS][MAX_QPATH];
+#define MAX_SHADER_TEMPLATE_ARGS 12
+static void Shader_Template( shader_t *shader, shaderpass_t *pass, const char **ptr )
+{
+	int			   i;
+	char *		   tmpl, *buf, *out, *token;
+	char *		   pos, *before, *ptr2;
+	const char *   ptr_backup;
+	char		   backup;
+	char		   args[MAX_SHADER_TEMPLATE_ARGS][MAX_QPATH];
 	shadercache_t *cache;
-	int num_args;
-	size_t length;
+	int			   num_args;
+	size_t		   length;
 
 	token = Shader_ParseString( ptr );
 	if( !*token ) {
@@ -884,8 +920,8 @@ static void Shader_Template( shader_t *shader, shaderpass_t *pass, const char **
 
 	// now count occurences of each argument in a template
 	ptr_backup = *ptr;
-	for( i = 1, num_args = 0; ; i++ ) {
-		char arg[8];
+	for( i = 1, num_args = 0;; i++ ) {
+		char   arg[8];
 		size_t arg_count;
 
 		token = Shader_ParseString( ptr );
@@ -924,7 +960,7 @@ static void Shader_Template( shader_t *shader, shaderpass_t *pass, const char **
 		int arg;
 
 		// calculate the placeholder index
-		for( i = 1, arg = 0; ; i++ ) {
+		for( i = 1, arg = 0;; i++ ) {
 			if( *( pos + i ) >= '1' && *( pos + i ) <= '9' ) {
 				arg = arg * 10 + (int)( *( pos + i ) - '0' );
 				continue;
@@ -959,16 +995,17 @@ static void Shader_Template( shader_t *shader, shaderpass_t *pass, const char **
 	cache->buffer[ptr2 - cache->buffer] = backup;
 }
 
-static void Shader_Skip( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
+static void Shader_Skip( shader_t *shader, shaderpass_t *pass, const char **ptr )
+{
 	Shader_SkipLine( ptr );
 }
 
-static void Shader_SoftParticle( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
+static void Shader_SoftParticle( shader_t *shader, shaderpass_t *pass, const char **ptr )
+{
 	shader->flags |= SHADER_SOFT_PARTICLE;
 }
 
-static const shaderkey_t shaderkeys[] =
-{
+static const shaderkey_t shaderkeys[] = {
 	{ "cull", Shader_Cull },
 	{ "skyparms", Shader_SkyParms },
 	{ "skyparms2", Shader_SkyParms2 },
@@ -995,12 +1032,14 @@ static const shaderkey_t shaderkeys[] =
 	{ "skip", Shader_Skip },
 	{ "softparticle", Shader_SoftParticle },
 
-	{ NULL, NULL }
+	{ NULL, NULL },
 };
 
 // ===============================================================
 
-static void Shaderpass_LoadMaterial( image_t **normalmap, image_t **glossmap, image_t **decalmap, const char *name, int addFlags, int imagetags ) {
+static void Shaderpass_LoadMaterial(
+	image_t **normalmap, image_t **glossmap, image_t **decalmap, const char *name, int addFlags, int imagetags )
+{
 	image_t *images[3];
 
 	// set defaults
@@ -1024,8 +1063,9 @@ static void Shaderpass_LoadMaterial( image_t **normalmap, image_t **glossmap, im
 	*decalmap = images[2];
 }
 
-static void Shaderpass_MapExt( shader_t *shader, shaderpass_t *pass, int addFlags, const char **ptr ) {
-	int flags;
+static void Shaderpass_MapExt( shader_t *shader, shaderpass_t *pass, int addFlags, const char **ptr )
+{
+	int	  flags;
 	char *token;
 
 	R_FreePassCinematics( pass );
@@ -1063,8 +1103,9 @@ static void Shaderpass_MapExt( shader_t *shader, shaderpass_t *pass, int addFlag
 	pass->images[0] = Shader_FindImage( shader, token, flags );
 }
 
-static void Shaderpass_AnimMapExt( shader_t *shader, shaderpass_t *pass, int addFlags, const char **ptr ) {
-	int flags;
+static void Shaderpass_AnimMapExt( shader_t *shader, shaderpass_t *pass, int addFlags, const char **ptr )
+{
+	int	  flags;
 	char *token;
 
 	R_FreePassCinematics( pass );
@@ -1076,7 +1117,7 @@ static void Shaderpass_AnimMapExt( shader_t *shader, shaderpass_t *pass, int add
 	pass->anim_fps = Shader_ParseFloat( ptr );
 	pass->anim_numframes = 0;
 
-	for(;; ) {
+	for( ;; ) {
 		token = Shader_ParseString( ptr );
 		if( !token[0] ) {
 			break;
@@ -1091,8 +1132,9 @@ static void Shaderpass_AnimMapExt( shader_t *shader, shaderpass_t *pass, int add
 	}
 }
 
-static void Shaderpass_CubeMapExt( shader_t *shader, shaderpass_t *pass, int addFlags, int tcgen, const char **ptr ) {
-	int flags;
+static void Shaderpass_CubeMapExt( shader_t *shader, shaderpass_t *pass, int addFlags, int tcgen, const char **ptr )
+{
+	int	  flags;
 	char *token;
 
 	R_FreePassCinematics( pass );
@@ -1112,31 +1154,38 @@ static void Shaderpass_CubeMapExt( shader_t *shader, shaderpass_t *pass, int add
 	}
 }
 
-static void Shaderpass_Map( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
+static void Shaderpass_Map( shader_t *shader, shaderpass_t *pass, const char **ptr )
+{
 	Shaderpass_MapExt( shader, pass, 0, ptr );
 }
 
-static void Shaderpass_ClampMap( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
+static void Shaderpass_ClampMap( shader_t *shader, shaderpass_t *pass, const char **ptr )
+{
 	Shaderpass_MapExt( shader, pass, IT_CLAMP, ptr );
 }
 
-static void Shaderpass_AnimMap( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
+static void Shaderpass_AnimMap( shader_t *shader, shaderpass_t *pass, const char **ptr )
+{
 	Shaderpass_AnimMapExt( shader, pass, 0, ptr );
 }
 
-static void Shaderpass_AnimClampMap( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
+static void Shaderpass_AnimClampMap( shader_t *shader, shaderpass_t *pass, const char **ptr )
+{
 	Shaderpass_AnimMapExt( shader, pass, IT_CLAMP, ptr );
 }
 
-static void Shaderpass_CubeMap( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
+static void Shaderpass_CubeMap( shader_t *shader, shaderpass_t *pass, const char **ptr )
+{
 	Shaderpass_CubeMapExt( shader, pass, IT_CLAMP, TC_GEN_REFLECTION, ptr );
 }
 
-static void Shaderpass_SurroundMap( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
+static void Shaderpass_SurroundMap( shader_t *shader, shaderpass_t *pass, const char **ptr )
+{
 	Shaderpass_CubeMapExt( shader, pass, IT_CLAMP, TC_GEN_SURROUND, ptr );
 }
 
-static void Shaderpass_VideoMap( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
+static void Shaderpass_VideoMap( shader_t *shader, shaderpass_t *pass, const char **ptr )
+{
 	char *token;
 
 	R_FreePassCinematics( pass );
@@ -1149,10 +1198,11 @@ static void Shaderpass_VideoMap( shader_t *shader, shaderpass_t *pass, const cha
 	pass->flags &= ~( SHADERPASS_LIGHTMAP | SHADERPASS_PORTALMAP );
 }
 
-static void Shaderpass_Material( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
-	int i, flags;
+static void Shaderpass_Material( shader_t *shader, shaderpass_t *pass, const char **ptr )
+{
+	int	  i, flags;
 	char *token;
-	bool endl;
+	bool  endl;
 
 	R_FreePassCinematics( pass );
 
@@ -1167,7 +1217,8 @@ static void Shaderpass_Material( shader_t *shader, shaderpass_t *pass, const cha
 
 	pass->images[0] = Shader_FindImage( shader, token, flags | IT_SRGB );
 	if( !pass->images[0] ) {
-		ri.Com_DPrintf( S_COLOR_YELLOW "WARNING: failed to load base/diffuse image for material %s in shader %s.\n", token, shader->name );
+		ri.Com_DPrintf( S_COLOR_YELLOW "WARNING: failed to load base/diffuse image for material %s in shader %s.\n",
+			token, shader->name );
 		return;
 	}
 
@@ -1236,16 +1287,18 @@ static void Shaderpass_Material( shader_t *shader, shaderpass_t *pass, const cha
 
 	// load default images
 	pass->program_type = GLSL_PROGRAM_TYPE_MATERIAL;
-	Shaderpass_LoadMaterial( &pass->images[1], &pass->images[2], &pass->images[3],
-							 pass->images[0]->name, flags, shader->imagetags );
+	Shaderpass_LoadMaterial(
+		&pass->images[1], &pass->images[2], &pass->images[3], pass->images[0]->name, flags, shader->imagetags );
 }
 
-static void Shaderpass_Distortion( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
-	int flags;
+static void Shaderpass_Distortion( shader_t *shader, shaderpass_t *pass, const char **ptr )
+{
+	int	  flags;
 	char *token;
 
 	if( !r_portalmaps->integer ) {
-		ri.Com_DPrintf( S_COLOR_YELLOW "WARNING: shader %s has a distortion stage, while GLSL is not supported\n", shader->name );
+		ri.Com_DPrintf(
+			S_COLOR_YELLOW "WARNING: shader %s has a distortion stage, while GLSL is not supported\n", shader->name );
 		Shader_SkipLine( ptr );
 		return;
 	}
@@ -1283,9 +1336,10 @@ static void Shaderpass_Distortion( shader_t *shader, shaderpass_t *pass, const c
 	shader->flags |= SHADER_PORTAL | SHADER_PORTAL_CAPTURE | SHADER_PORTAL_CAPTURE2;
 }
 
-static void Shaderpass_RGBGen( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
+static void Shaderpass_RGBGen( shader_t *shader, shaderpass_t *pass, const char **ptr )
+{
 	char *token;
-	bool wave = false;
+	bool  wave = false;
 
 	token = Shader_ParseString( ptr );
 	if( !strcmp( token, "identitylighting" ) ) {
@@ -1302,8 +1356,8 @@ static void Shaderpass_RGBGen( shader_t *shader, shaderpass_t *pass, const char 
 		pass->rgbgen.type = RGB_GEN_WAVE;
 		Shader_ParseVector( ptr, pass->rgbgen.args, 3 );
 		Shader_ParseFunc( ptr, &pass->rgbgen.func );
-	} else if( !strcmp( token, "custom" ) || !strcmp( token, "teamcolor" )
-			   || ( wave = !strcmp( token, "teamcolorwave" ) || !strcmp( token, "customcolorwave" ) ? true : false ) ) {
+	} else if( !strcmp( token, "custom" ) || !strcmp( token, "teamcolor" ) ||
+			   ( wave = !strcmp( token, "teamcolorwave" ) || !strcmp( token, "customcolorwave" ) ? true : false ) ) {
 		pass->rgbgen.type = RGB_GEN_CUSTOMWAVE;
 		pass->rgbgen.args[0] = (int)Shader_ParseFloat( ptr );
 		if( pass->rgbgen.args[0] < 0 || pass->rgbgen.args[0] >= NUM_CUSTOMCOLORS ) {
@@ -1345,7 +1399,8 @@ static void Shaderpass_RGBGen( shader_t *shader, shaderpass_t *pass, const char 
 	}
 }
 
-static void Shaderpass_AlphaGen( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
+static void Shaderpass_AlphaGen( shader_t *shader, shaderpass_t *pass, const char **ptr )
+{
 	char *token;
 	float dist;
 
@@ -1381,7 +1436,8 @@ static void Shaderpass_AlphaGen( shader_t *shader, shaderpass_t *pass, const cha
 	}
 }
 
-static inline int Shaderpass_SrcBlendBits( char *token ) {
+static inline int Shaderpass_SrcBlendBits( char *token )
+{
 	if( !strcmp( token, "gl_zero" ) ) {
 		return GLSTATE_SRCBLEND_ZERO;
 	}
@@ -1409,7 +1465,8 @@ static inline int Shaderpass_SrcBlendBits( char *token ) {
 	return GLSTATE_SRCBLEND_ONE;
 }
 
-static inline int Shaderpass_DstBlendBits( char *token ) {
+static inline int Shaderpass_DstBlendBits( char *token )
+{
 	if( !strcmp( token, "gl_zero" ) ) {
 		return GLSTATE_DSTBLEND_ZERO;
 	}
@@ -1437,7 +1494,8 @@ static inline int Shaderpass_DstBlendBits( char *token ) {
 	return GLSTATE_DSTBLEND_ONE;
 }
 
-static void Shaderpass_BlendFunc( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
+static void Shaderpass_BlendFunc( shader_t *shader, shaderpass_t *pass, const char **ptr )
+{
 	char *token;
 
 	token = Shader_ParseString( ptr );
@@ -1455,7 +1513,8 @@ static void Shaderpass_BlendFunc( shader_t *shader, shaderpass_t *pass, const ch
 	}
 }
 
-static void Shaderpass_AlphaFunc( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
+static void Shaderpass_AlphaFunc( shader_t *shader, shaderpass_t *pass, const char **ptr )
+{
 	char *token;
 
 	token = Shader_ParseString( ptr );
@@ -1474,12 +1533,13 @@ static void Shaderpass_AlphaFunc( shader_t *shader, shaderpass_t *pass, const ch
 	}
 }
 
-static void Shaderpass_DepthFunc( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
+static void Shaderpass_DepthFunc( shader_t *shader, shaderpass_t *pass, const char **ptr )
+{
 	char *token;
 
 	token = Shader_ParseString( ptr );
 
-	pass->flags &= ~(GLSTATE_DEPTHFUNC_EQ|GLSTATE_DEPTHFUNC_GT);
+	pass->flags &= ~( GLSTATE_DEPTHFUNC_EQ | GLSTATE_DEPTHFUNC_GT );
 	if( !strcmp( token, "equal" ) ) {
 		pass->flags |= GLSTATE_DEPTHFUNC_EQ;
 	} else if( !strcmp( token, "greater" ) ) {
@@ -1487,14 +1547,16 @@ static void Shaderpass_DepthFunc( shader_t *shader, shaderpass_t *pass, const ch
 	}
 }
 
-static void Shaderpass_DepthWrite( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
+static void Shaderpass_DepthWrite( shader_t *shader, shaderpass_t *pass, const char **ptr )
+{
 	pass->flags |= GLSTATE_DEPTHWRITE;
 }
 
-static void Shaderpass_TcMod( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
-	int i;
+static void Shaderpass_TcMod( shader_t *shader, shaderpass_t *pass, const char **ptr )
+{
+	int		 i;
 	tcmod_t *tcmod;
-	char *token;
+	char *	 token;
 
 	if( pass->numtcmods == MAX_SHADER_TCMODS ) {
 		Com_Printf( S_COLOR_YELLOW "WARNING: shader %s has too many tcmods\n", shader->name );
@@ -1528,8 +1590,8 @@ static void Shaderpass_TcMod( shader_t *shader, shaderpass_t *pass, const char *
 		tcmod->type = TC_MOD_STRETCH;
 	} else if( !strcmp( token, "transform" ) ) {
 		Shader_ParseVector( ptr, tcmod->args, 6 );
-		//tcmod->args[4] = tcmod->args[4] - floor( tcmod->args[4] );
-		//tcmod->args[5] = tcmod->args[5] - floor( tcmod->args[5] );
+		// tcmod->args[4] = tcmod->args[4] - floor( tcmod->args[4] );
+		// tcmod->args[5] = tcmod->args[5] - floor( tcmod->args[5] );
 		tcmod->type = TC_MOD_TRANSFORM;
 	} else if( !strcmp( token, "turb" ) ) {
 		Shader_ParseVector( ptr, tcmod->args, 4 );
@@ -1542,7 +1604,8 @@ static void Shaderpass_TcMod( shader_t *shader, shaderpass_t *pass, const char *
 	r_currentPasses[shader->numpasses].numtcmods++;
 }
 
-static void Shaderpass_TcGen( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
+static void Shaderpass_TcGen( shader_t *shader, shaderpass_t *pass, const char **ptr )
+{
 	char *token;
 
 	token = Shader_ParseString( ptr );
@@ -1563,20 +1626,22 @@ static void Shaderpass_TcGen( shader_t *shader, shaderpass_t *pass, const char *
 	}
 }
 
-static void Shaderpass_Detail( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
+static void Shaderpass_Detail( shader_t *shader, shaderpass_t *pass, const char **ptr )
+{
 	pass->flags |= SHADERPASS_DETAIL;
 }
 
-static void Shaderpass_Greyscale( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
+static void Shaderpass_Greyscale( shader_t *shader, shaderpass_t *pass, const char **ptr )
+{
 	pass->flags |= SHADERPASS_GREYSCALE;
 }
 
-static void Shaderpass_Skip( shader_t *shader, shaderpass_t *pass, const char **ptr ) {
+static void Shaderpass_Skip( shader_t *shader, shaderpass_t *pass, const char **ptr )
+{
 	Shader_SkipLine( ptr );
 }
 
-static const shaderkey_t shaderpasskeys[] =
-{
+static const shaderkey_t shaderpasskeys[] = {
 	{ "rgbgen", Shaderpass_RGBGen },
 	{ "blendfunc", Shaderpass_BlendFunc },
 	{ "depthfunc", Shaderpass_DepthFunc },
@@ -1599,17 +1664,73 @@ static const shaderkey_t shaderpasskeys[] =
 	{ "greyscale", Shaderpass_Greyscale },
 	{ "skip", Shaderpass_Skip },
 
-	{ NULL, NULL }
+	{ NULL, NULL },
 };
 
 // ===============================================================
 
 /*
-* R_PrintShaderList
-*/
-void R_PrintShaderList( const char *pattern, bool ( *filter )( const char *filter, const char *value ) ) {
-	int i;
-	int numShaders;
+ * R_ShaderDumpCompletion_f
+ */
+char **R_ShaderDumpCompletion_f( const char *partial )
+{
+	char **	  matches = NULL;
+
+	Com_Printf( "%s\n", partial );
+	if( partial ) {
+		int	   key;
+		int	   num_matches = 0, max_matches = 10;
+		const int matches_limit = 100;
+		size_t partial_len = strlen( partial );
+
+		matches = (char **)R_Malloc( sizeof( char * ) * ( max_matches + 1 ) );
+		if( !matches ) {
+			return NULL;
+		}
+
+		for( key = 0; key < SHADERCACHE_HASH_SIZE; key++ ) {
+			shadercache_t *c;
+
+			if( num_matches == matches_limit ) {
+				break;
+			}
+
+			for( c = shadercache_hash[key]; c; c = c->hash_next ) {
+				if( Q_strnicmp( c->name, partial, partial_len ) ) {
+					continue;
+				}
+
+				if( num_matches == max_matches ) {
+					char **newmatches;
+
+					max_matches += 10;
+					newmatches = R_Realloc( matches, sizeof( char * ) * ( max_matches + 1 ) );
+					if( !newmatches ) {
+						break;
+					}
+					matches = newmatches;
+				}
+
+				matches[num_matches++] = c->name;
+				if( num_matches == matches_limit ) {
+					break;
+				}
+			}
+		}
+
+		matches[num_matches] = NULL;
+	}
+
+	return matches;
+}
+
+/*
+ * R_PrintShaderList
+ */
+void R_PrintShaderList( const char *pattern, bool ( *filter )( const char *filter, const char *value ) )
+{
+	int		  i;
+	int		  numShaders;
 	shader_t *shader;
 
 	if( !pattern ) {
@@ -1634,11 +1755,12 @@ void R_PrintShaderList( const char *pattern, bool ( *filter )( const char *filte
 }
 
 /*
-* R_PrintShaderCache
-*/
-void R_PrintShaderCache( const char *name ) {
-	char backup, *start;
-	const char *ptr;
+ * R_PrintShaderCache
+ */
+void R_PrintShaderCache( const char *name )
+{
+	char		   backup, *start;
+	const char *   ptr;
 	shadercache_t *cache;
 
 	Shader_GetCache( name, &cache );
@@ -1661,16 +1783,17 @@ void R_PrintShaderCache( const char *name ) {
 	cache->buffer[ptr - cache->buffer] = backup;
 }
 
-static void Shader_MakeCache( const char *filename ) {
-	int size;
-	unsigned int key;
-	char *pathName = NULL;
-	size_t pathNameSize;
-	char *token, *buf, *temp = NULL;
-	const char *ptr;
+static void Shader_MakeCache( const char *filename )
+{
+	int			   size;
+	unsigned int   key;
+	char *		   pathName = NULL;
+	size_t		   pathNameSize;
+	char *		   token, *buf, *temp = NULL;
+	const char *   ptr;
 	shadercache_t *cache;
-	uint8_t *cacheMemBuf;
-	size_t cacheMemSize;
+	uint8_t *	   cacheMemBuf;
+	size_t		   cacheMemSize;
 
 	pathNameSize = strlen( "scripts/" ) + strlen( filename ) + 1;
 	pathName = R_Malloc( pathNameSize );
@@ -1679,7 +1802,7 @@ static void Shader_MakeCache( const char *filename ) {
 
 	Com_Printf( "...loading '%s'\n", pathName );
 
-	size = R_LoadFile( pathName, ( void ** )&temp );
+	size = R_LoadFile( pathName, (void **)&temp );
 	if( !temp || size <= 0 ) {
 		goto done;
 	}
@@ -1725,14 +1848,15 @@ static void Shader_MakeCache( const char *filename ) {
 			goto set_path_and_offset;
 		}
 
-		cache = ( shadercache_t * )cacheMemBuf; cacheMemBuf += sizeof( shadercache_t ) + strlen( token ) + 1;
+		cache = (shadercache_t *)cacheMemBuf;
+		cacheMemBuf += sizeof( shadercache_t ) + strlen( token ) + 1;
 		cache->hash_next = shadercache_hash[key];
-		cache->name = ( char * )( (uint8_t *)cache + sizeof( shadercache_t ) );
+		cache->name = (char *)( (uint8_t *)cache + sizeof( shadercache_t ) );
 		cache->filename = NULL;
 		strcpy( cache->name, token );
 		shadercache_hash[key] = cache;
 
-set_path_and_offset:
+	set_path_and_offset:
 		if( cache->filename ) {
 			R_Free( cache->filename );
 		}
@@ -1751,17 +1875,18 @@ done:
 }
 
 /*
-* Shader_GetCache
-*/
-static unsigned int Shader_GetCache( const char *name, shadercache_t **cache ) {
-	unsigned int key;
+ * Shader_GetCache
+ */
+static unsigned int Shader_GetCache( const char *name, shadercache_t **cache )
+{
+	unsigned int   key;
 	shadercache_t *c;
-	unsigned int len;
+	unsigned int   len;
 
 	*cache = NULL;
 
 	len = strlen( name );
-	key = COM_SuperFastHash( ( const uint8_t * )name, len ) % SHADERCACHE_HASH_SIZE;
+	key = COM_SuperFastHash( (const uint8_t *)name, len ) % SHADERCACHE_HASH_SIZE;
 	for( c = shadercache_hash[key]; c; c = c->hash_next ) {
 		if( !Q_stricmp( c->name, name ) ) {
 			*cache = c;
@@ -1773,14 +1898,15 @@ static unsigned int Shader_GetCache( const char *name, shadercache_t **cache ) {
 }
 
 /*
-* R_InitShaderCache
-*/
-static void R_InitShaderCache( void ) {
-	int d;
-	int i, j, k, numfiles;
-	int numfiles_total;
+ * R_InitShaderCache
+ */
+static void R_InitShaderCache( void )
+{
+	int			d;
+	int			i, j, k, numfiles;
+	int			numfiles_total;
 	const char *fileptr;
-	char shaderPaths[1024];
+	char		shaderPaths[1024];
 	const char *dirs[3] = { "<scripts", ">scripts" };
 
 	r_shaderTemplateBuf = NULL;
@@ -1797,7 +1923,8 @@ static void R_InitShaderCache( void ) {
 
 		// now load them all
 		for( i = 0; i < numfiles; i += k ) {
-			if( ( k = ri.FS_GetFileList( dirs[d], ".shader", shaderPaths, sizeof( shaderPaths ), i, numfiles ) ) == 0 ) {
+			if( ( k = ri.FS_GetFileList( dirs[d], ".shader", shaderPaths, sizeof( shaderPaths ), i, numfiles ) ) ==
+				0 ) {
 				k = 1; // advance by one file
 				continue;
 			}
@@ -1824,7 +1951,8 @@ static void R_InitShaderCache( void ) {
 /*
  * R_ShutdownShaderCache
  */
-static void R_ShutdownShaderCache( void ) {
+static void R_ShutdownShaderCache( void )
+{
 	R_Free( r_shaderTemplateBuf );
 
 	r_shaderTemplateBuf = NULL;
@@ -1833,13 +1961,13 @@ static void R_ShutdownShaderCache( void ) {
 }
 
 /*
-* R_ReloadShaderCache
-*/
+ * R_ReloadShaderCache
+ */
 static void R_ReloadShaderCache( void )
 {
-	int i;
+	int		  i;
 	shader_t *s;
-	bool forceDefaultOnly = true;
+	bool	  forceDefaultOnly = true;
 
 	for( i = 0, s = r_shaders; i < MAX_SHADERS; i++, s++ ) {
 		if( !s->name ) {
@@ -1865,9 +1993,10 @@ static void R_ReloadShaderCache( void )
 }
 
 /*
-* R_InitShaders
-*/
-void R_InitShaders( void ) {
+ * R_InitShaders
+ */
+void R_InitShaders( void )
+{
 	int i;
 
 	R_InitShaderCache();
@@ -1886,10 +2015,11 @@ void R_InitShaders( void ) {
 }
 
 /*
-* R_FreeShader
-*/
-static void R_FreeShader( shader_t *shader ) {
-	unsigned i;
+ * R_FreeShader
+ */
+static void R_FreeShader( shader_t *shader )
+{
+	unsigned	  i;
 	shaderpass_t *pass;
 
 	if( shader->cin ) {
@@ -1912,9 +2042,10 @@ static void R_FreeShader( shader_t *shader ) {
 }
 
 /*
-* R_UnlinkShader
-*/
-static void R_UnlinkShader( shader_t *shader ) {
+ * R_UnlinkShader
+ */
+static void R_UnlinkShader( shader_t *shader )
+{
 	// remove from linked active list
 	shader->prev->next = shader->next;
 	shader->next->prev = shader->prev;
@@ -1925,9 +2056,10 @@ static void R_UnlinkShader( shader_t *shader ) {
 }
 
 /*
-* R_TouchShader
-*/
-void R_TouchShader( shader_t *s ) {
+ * R_TouchShader
+ */
+void R_TouchShader( shader_t *s )
+{
 	unsigned i, j;
 	unsigned imagetags;
 
@@ -1970,12 +2102,13 @@ void R_TouchShader( shader_t *s ) {
 }
 
 /*
-* R_FreeUnusedShadersByType
-*/
-void R_FreeUnusedShadersByType( const shaderType_e *types, unsigned int numTypes ) {
-	int i;
+ * R_FreeUnusedShadersByType
+ */
+void R_FreeUnusedShadersByType( const shaderType_e *types, unsigned int numTypes )
+{
+	int			 i;
 	unsigned int type;
-	shader_t *s;
+	shader_t *	 s;
 
 	for( i = 0, s = r_shaders; i < MAX_SHADERS; i++, s++ ) {
 		if( !s->name ) {
@@ -2006,8 +2139,8 @@ void R_FreeUnusedShadersByType( const shaderType_e *types, unsigned int numTypes
 }
 
 /*
-* R_FreeUnusedShaders
-*/
+ * R_FreeUnusedShaders
+ */
 void R_FreeUnusedShaders( void )
 {
 	R_FreeUnusedShadersByType( NULL, 0 );
@@ -2016,10 +2149,11 @@ void R_FreeUnusedShaders( void )
 }
 
 /*
-* R_ShutdownShaders
-*/
-void R_ShutdownShaders( void ) {
-	int i;
+ * R_ShutdownShaders
+ */
+void R_ShutdownShaders( void )
+{
+	int		  i;
 	shader_t *s;
 
 	for( i = 0, s = r_shaders; i < MAX_SHADERS; i++, s++ ) {
@@ -2038,10 +2172,11 @@ void R_ShutdownShaders( void ) {
 	r_shortShaderQMark = NULL;
 }
 
-static void Shader_Readpass( shader_t *shader, const char **ptr ) {
-	int n = shader->numpasses;
-	int blendmask;
-	const char *token;
+static void Shader_Readpass( shader_t *shader, const char **ptr )
+{
+	int			  n = shader->numpasses;
+	int			  blendmask;
+	const char *  token;
 	shaderpass_t *pass;
 
 	if( n == MAX_SHADER_PASSES ) {
@@ -2107,7 +2242,9 @@ static void Shader_Readpass( shader_t *shader, const char **ptr ) {
 	shader->numpasses++;
 }
 
-static bool Shader_Parsetok( shader_t *shader, shaderpass_t *pass, const shaderkey_t *keys, const char *token, const char **ptr ) {
+static bool Shader_Parsetok(
+	shader_t *shader, shaderpass_t *pass, const shaderkey_t *keys, const char *token, const char **ptr )
+{
 	const shaderkey_t *key;
 
 	for( key = keys; key->keyword != NULL; key++ ) {
@@ -2128,8 +2265,9 @@ static bool Shader_Parsetok( shader_t *shader, shaderpass_t *pass, const shaderk
 	return false;
 }
 
-static void Shader_SetVertexAttribs( shader_t *s ) {
-	unsigned i;
+static void Shader_SetVertexAttribs( shader_t *s )
+{
+	unsigned	  i;
 	shaderpass_t *pass;
 
 	s->vattribs |= VATTRIB_POSITION_BIT;
@@ -2215,16 +2353,17 @@ static void Shader_SetVertexAttribs( shader_t *s ) {
 	}
 }
 
-static void Shader_Finish( shader_t *s ) {
-	unsigned i;
-	int opaque = -1;
-	int blendmask;
+static void Shader_Finish( shader_t *s )
+{
+	unsigned	i;
+	int			opaque = -1;
+	int			blendmask;
 	const char *oldname = s->name;
-	size_t size = 0, bufferOffset = 0;
+	size_t		size = 0, bufferOffset = 0;
 
 	shaderpass_t *pass;
-	uint8_t *buffer;
-	size_t deformvKeyLen;
+	uint8_t *	  buffer;
+	size_t		  deformvKeyLen;
 
 	deformvKeyLen = strlen( r_shaderDeformvKey );
 
@@ -2244,18 +2383,21 @@ static void Shader_Finish( shader_t *s ) {
 	}
 
 	// fix up rgbgen's and blendmodes for lightmapped shaders and vertex lighting
-	if( r_shaderHasLightmapPass && r_lighting_vertexlight->integer && ( s->type == SHADER_TYPE_DELUXEMAP || s->type == SHADER_TYPE_VERTEX ) ) {
+	if( r_shaderHasLightmapPass && r_lighting_vertexlight->integer &&
+		( s->type == SHADER_TYPE_DELUXEMAP || s->type == SHADER_TYPE_VERTEX ) ) {
 		for( i = 0, pass = r_currentPasses; i < s->numpasses; i++, pass++ ) {
 			blendmask = pass->flags & GLSTATE_BLEND_MASK;
 
-			if( !blendmask || blendmask == ( GLSTATE_SRCBLEND_DST_COLOR | GLSTATE_DSTBLEND_ZERO ) || s->numpasses == 1 ) {
+			if( !blendmask || blendmask == ( GLSTATE_SRCBLEND_DST_COLOR | GLSTATE_DSTBLEND_ZERO ) ||
+				s->numpasses == 1 ) {
 				if( pass->rgbgen.type == RGB_GEN_IDENTITY ) {
 					pass->rgbgen.type = RGB_GEN_VERTEX;
 				}
-				//if( pass->alphagen.type == ALPHA_GEN_IDENTITY )
+				// if( pass->alphagen.type == ALPHA_GEN_IDENTITY )
 				//	pass->alphagen.type = ALPHA_GEN_VERTEX;
 
-				if( !( pass->flags & SHADERPASS_ALPHAFUNC ) && ( blendmask != ( GLSTATE_SRCBLEND_SRC_ALPHA | GLSTATE_DSTBLEND_ONE_MINUS_SRC_ALPHA ) ) ) {
+				if( !( pass->flags & SHADERPASS_ALPHAFUNC ) &&
+					( blendmask != ( GLSTATE_SRCBLEND_SRC_ALPHA | GLSTATE_DSTBLEND_ONE_MINUS_SRC_ALPHA ) ) ) {
 					pass->flags &= ~blendmask;
 				}
 				break;
@@ -2269,8 +2411,7 @@ static void Shader_Finish( shader_t *s ) {
 		size = Q_ALIGN( size, 16 );
 
 		// rgbgen args
-		if( pass->rgbgen.type == RGB_GEN_WAVE ||
-			pass->rgbgen.type == RGB_GEN_CONST ) {
+		if( pass->rgbgen.type == RGB_GEN_WAVE || pass->rgbgen.type == RGB_GEN_CONST ) {
 			size += sizeof( float ) * 4;
 		} else if( pass->rgbgen.type == RGB_GEN_CUSTOMWAVE ) {
 			size += sizeof( float ) * 2;
@@ -2293,39 +2434,44 @@ static void Shader_Finish( shader_t *s ) {
 	buffer = R_Malloc( size );
 	bufferOffset = 0;
 
-	s->passes = ( shaderpass_t * )( buffer + bufferOffset ); bufferOffset += s->numpasses * sizeof( shaderpass_t );
+	s->passes = (shaderpass_t *)( buffer + bufferOffset );
+	bufferOffset += s->numpasses * sizeof( shaderpass_t );
 	memcpy( s->passes, r_currentPasses, s->numpasses * sizeof( shaderpass_t ) );
 
 	for( i = 0, pass = s->passes; i < s->numpasses; i++, pass++ ) {
 		bufferOffset = Q_ALIGN( bufferOffset, 16 );
 
-		if( pass->rgbgen.type == RGB_GEN_WAVE ||
-			pass->rgbgen.type == RGB_GEN_CONST ) {
-			pass->rgbgen.args = ( float * )( buffer + bufferOffset ); bufferOffset += sizeof( float ) * 4;
+		if( pass->rgbgen.type == RGB_GEN_WAVE || pass->rgbgen.type == RGB_GEN_CONST ) {
+			pass->rgbgen.args = (float *)( buffer + bufferOffset );
+			bufferOffset += sizeof( float ) * 4;
 			memcpy( pass->rgbgen.args, r_currentPasses[i].rgbgen.args, sizeof( float ) * 3 );
 		} else if( pass->rgbgen.type == RGB_GEN_CUSTOMWAVE ) {
-			pass->rgbgen.args = ( float * )( buffer + bufferOffset ); bufferOffset += sizeof( float ) * 2;
+			pass->rgbgen.args = (float *)( buffer + bufferOffset );
+			bufferOffset += sizeof( float ) * 2;
 			memcpy( pass->rgbgen.args, r_currentPasses[i].rgbgen.args, sizeof( float ) * 1 );
 		}
 
 		if( pass->alphagen.type == ALPHA_GEN_CONST ) {
-			pass->alphagen.args = ( float * )( buffer + bufferOffset ); bufferOffset += sizeof( float ) * 2;
+			pass->alphagen.args = (float *)( buffer + bufferOffset );
+			bufferOffset += sizeof( float ) * 2;
 			memcpy( pass->alphagen.args, r_currentPasses[i].alphagen.args, sizeof( float ) * 2 );
 		}
 
 		if( pass->tcgen == TC_GEN_VECTOR ) {
-			pass->tcgenVec = ( vec_t * )( buffer + bufferOffset ); bufferOffset += sizeof( vec4_t ) * 2;
+			pass->tcgenVec = (vec_t *)( buffer + bufferOffset );
+			bufferOffset += sizeof( vec4_t ) * 2;
 			Vector4Copy( &r_currentPasses[i].tcgenVec[0], &pass->tcgenVec[0] );
 			Vector4Copy( &r_currentPasses[i].tcgenVec[4], &pass->tcgenVec[4] );
 		}
 
 		if( pass->numtcmods ) {
-			pass->tcmods = ( tcmod_t * )( buffer + bufferOffset ); bufferOffset += pass->numtcmods * sizeof( tcmod_t );
+			pass->tcmods = (tcmod_t *)( buffer + bufferOffset );
+			bufferOffset += pass->numtcmods * sizeof( tcmod_t );
 			memcpy( pass->tcmods, r_currentPasses[i].tcmods, pass->numtcmods * sizeof( tcmod_t ) );
 		}
 	}
 
-	s->name = ( char * )( buffer + bufferOffset );
+	s->name = (char *)( buffer + bufferOffset );
 	strcpy( s->name, oldname );
 
 	size = s->numdeforms * sizeof( deformv_t );
@@ -2335,11 +2481,12 @@ static void Shader_Finish( shader_t *s ) {
 	bufferOffset = 0;
 
 	if( s->numdeforms ) {
-		s->deforms = ( deformv_t * )( buffer + bufferOffset ); bufferOffset += s->numdeforms * sizeof( deformv_t );
+		s->deforms = (deformv_t *)( buffer + bufferOffset );
+		bufferOffset += s->numdeforms * sizeof( deformv_t );
 		memcpy( s->deforms, r_currentDeforms, s->numdeforms * sizeof( deformv_t ) );
 	}
 
-	s->deformsKey = ( char * )( buffer + bufferOffset );
+	s->deformsKey = (char *)( buffer + bufferOffset );
 	memcpy( s->deformsKey, r_shaderDeformvKey, deformvKeyLen + 1 );
 
 	if( s->flags & SHADER_AUTOSPRITE ) {
@@ -2362,8 +2509,8 @@ static void Shader_Finish( shader_t *s ) {
 		if( pass->cin ) {
 			s->cin = pass->cin;
 		}
-		if( ( pass->flags & SHADERPASS_LIGHTMAP ||
-			  pass->program_type == GLSL_PROGRAM_TYPE_MATERIAL ) && ( s->type >= SHADER_TYPE_DELUXEMAP ) ) {
+		if( ( pass->flags & SHADERPASS_LIGHTMAP || pass->program_type == GLSL_PROGRAM_TYPE_MATERIAL ) &&
+			( s->type >= SHADER_TYPE_DELUXEMAP ) ) {
 			s->flags |= SHADER_LIGHTMAP;
 		}
 		if( pass->flags & GLSTATE_DEPTHWRITE ) {
@@ -2413,31 +2560,34 @@ static void Shader_Finish( shader_t *s ) {
 }
 
 /*
-* R_UploadCinematicShader
-*/
-void R_UploadCinematicShader( const shader_t *shader ) {
-	unsigned j;
+ * R_UploadCinematicShader
+ */
+void R_UploadCinematicShader( const shader_t *shader )
+{
+	unsigned			j;
 	const shaderpass_t *pass;
 
 	// upload cinematics
 	for( j = 0, pass = shader->passes; j < shader->numpasses; j++, pass++ ) {
- 		if( pass->cin ) {
+		if( pass->cin ) {
 			R_UploadCinematic( pass->cin );
 		}
 	}
 }
 
 /*
-* R_ShaderCleanName
-*/
-static size_t R_ShaderCleanName( const char *name, char *shortname, size_t shortname_size, char **qmark ) {
-	int i;
+ * R_ShaderCleanName
+ */
+static size_t R_ShaderCleanName( const char *name, char *shortname, size_t shortname_size, char **qmark )
+{
+	int	   i;
 	size_t length = 0;
 	size_t lastDot = 0;
 	size_t lastSlash = 0;
 	size_t firstQMark = 0;
 
-	for( i = 0; name[i] && ( name[i] == '/' || name[i] == '\\' ); i++ ) ;
+	for( i = 0; name[i] && ( name[i] == '/' || name[i] == '\\' ); i++ )
+		;
 
 	for( length = 0; name[i] && ( length < shortname_size - 1 ); i++ ) {
 		if( name[i] == '.' ) {
@@ -2489,15 +2639,16 @@ static size_t R_ShaderCleanName( const char *name, char *shortname, size_t short
 }
 
 /*
-* R_LoadShaderReal
-*/
-static void R_LoadShaderReal( shader_t *s, const char *shortname,
-							  size_t shortname_length, const char *longname, shaderType_e type, const char *text ) {
-	void *data;
+ * R_LoadShaderReal
+ */
+static void R_LoadShaderReal( shader_t *s, const char *shortname, size_t shortname_length, const char *longname,
+	shaderType_e type, const char *text )
+{
+	void *		  data;
 	shaderpass_t *pass;
-	image_t *materialImages[MAX_SHADER_IMAGES];
+	image_t *	  materialImages[MAX_SHADER_IMAGES];
 
-	s->name = ( char * )shortname; // HACK, will be copied over in Shader_Finish
+	s->name = (char *)shortname; // HACK, will be copied over in Shader_Finish
 	s->type = type;
 
 	if( type >= SHADER_TYPE_BSP_MIN && type <= SHADER_TYPE_BSP_MAX ) {
@@ -2552,7 +2703,9 @@ static void R_LoadShaderReal( shader_t *s, const char *shortname,
 
 		Shader_Finish( s );
 	} else {
-create_default:
+	create_default:
+		s->forceDefault = true;
+
 		// make default shader
 		switch( type ) {
 			case SHADER_TYPE_VERTEX:
@@ -2562,8 +2715,8 @@ create_default:
 				s->vattribs = VATTRIB_POSITION_BIT | VATTRIB_TEXCOORDS_BIT | VATTRIB_COLOR0_BIT;
 				s->sort = SHADER_SORT_OPAQUE;
 				s->numpasses = 1;
-				s->passes = ( shaderpass_t * )data;
-				s->name = ( char * )( s->passes + 1 );
+				s->passes = (shaderpass_t *)data;
+				s->name = (char *)( s->passes + 1 );
 				strcpy( s->name, shortname );
 
 				s->numpasses = 0;
@@ -2576,15 +2729,17 @@ create_default:
 				break;
 			case SHADER_TYPE_DELUXEMAP:
 				// deluxemapping
-				Shaderpass_LoadMaterial( &materialImages[0], &materialImages[1], &materialImages[2], shortname, 0, s->imagetags );
+				Shaderpass_LoadMaterial(
+					&materialImages[0], &materialImages[1], &materialImages[2], shortname, 0, s->imagetags );
 
 				data = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) );
 				s->flags = SHADER_DEPTHWRITE | SHADER_CULL_FRONT | SHADER_LIGHTMAP;
-				s->vattribs = VATTRIB_POSITION_BIT | VATTRIB_TEXCOORDS_BIT | VATTRIB_LMCOORDS0_BIT | VATTRIB_NORMAL_BIT | VATTRIB_SVECTOR_BIT;
+				s->vattribs = VATTRIB_POSITION_BIT | VATTRIB_TEXCOORDS_BIT | VATTRIB_LMCOORDS0_BIT |
+							  VATTRIB_NORMAL_BIT | VATTRIB_SVECTOR_BIT;
 				s->sort = SHADER_SORT_OPAQUE;
 				s->numpasses = 1;
-				s->passes = ( shaderpass_t * )data;
-				s->name = ( char * )( s->passes + 1 );
+				s->passes = (shaderpass_t *)data;
+				s->name = (char *)( s->passes + 1 );
 				strcpy( s->name, shortname );
 
 				pass = &s->passes[0];
@@ -2603,8 +2758,8 @@ create_default:
 				s->vattribs = VATTRIB_POSITION_BIT | VATTRIB_TEXCOORDS_BIT | VATTRIB_COLOR0_BIT;
 				s->sort = SHADER_SORT_ADDITIVE;
 				s->numpasses = 1;
-				s->passes = ( shaderpass_t * )data;
-				s->name = ( char * )( s->passes + 1 );
+				s->passes = (shaderpass_t *)data;
+				s->name = (char *)( s->passes + 1 );
 				s->flags = SHADER_SOFT_PARTICLE;
 				strcpy( s->name, shortname );
 
@@ -2617,15 +2772,16 @@ create_default:
 				break;
 			case SHADER_TYPE_DIFFUSE:
 				// load material images
-				Shaderpass_LoadMaterial( &materialImages[0], &materialImages[1], &materialImages[2], shortname, 0, s->imagetags );
+				Shaderpass_LoadMaterial(
+					&materialImages[0], &materialImages[1], &materialImages[2], shortname, 0, s->imagetags );
 
 				data = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) );
 				s->flags = SHADER_DEPTHWRITE | SHADER_CULL_FRONT;
 				s->vattribs = VATTRIB_POSITION_BIT | VATTRIB_TEXCOORDS_BIT | VATTRIB_NORMAL_BIT;
 				s->sort = SHADER_SORT_OPAQUE;
 				s->numpasses = 1;
-				s->passes = ( shaderpass_t * )data;
-				s->name = ( char * )( s->passes + 1 );
+				s->passes = (shaderpass_t *)data;
+				s->name = (char *)( s->passes + 1 );
 				strcpy( s->name, shortname );
 
 				pass = &s->passes[0];
@@ -2634,7 +2790,7 @@ create_default:
 				pass->alphagen.type = ALPHA_GEN_IDENTITY;
 				pass->tcgen = TC_GEN_BASE;
 				pass->program_type = GLSL_PROGRAM_TYPE_MATERIAL;
-				pass->images[0] = Shader_FindImage( s, longname,  IT_SRGB );
+				pass->images[0] = Shader_FindImage( s, longname, IT_SRGB );
 				pass->images[1] = materialImages[0]; // normalmap
 				pass->images[2] = materialImages[1]; // glossmap
 				pass->images[3] = materialImages[2]; // decalmap
@@ -2650,8 +2806,8 @@ create_default:
 				s->vattribs = VATTRIB_POSITION_BIT | VATTRIB_TEXCOORDS_BIT | VATTRIB_COLOR0_BIT;
 				s->sort = SHADER_SORT_ADDITIVE;
 				s->numpasses = 1;
-				s->passes = ( shaderpass_t * )data;
-				s->name = ( char * )( s->passes + 1 );
+				s->passes = (shaderpass_t *)data;
+				s->name = (char *)( s->passes + 1 );
 				strcpy( s->name, shortname );
 
 				pass = &s->passes[0];
@@ -2682,9 +2838,9 @@ create_default:
 				s->sort = SHADER_SORT_OPAQUE;
 				s->flags = SHADER_CULL_FRONT | SHADER_DEPTHWRITE;
 				s->numpasses = 1;
-				s->passes = ( shaderpass_t * )( data );
-				s->passes[0].rgbgen.args = ( float * )( (uint8_t *)data + Q_ALIGN( sizeof( shaderpass_t ), 16 ) );
-				s->name = ( char * )( s->passes[0].rgbgen.args + 4 );
+				s->passes = (shaderpass_t *)( data );
+				s->passes[0].rgbgen.args = (float *)( (uint8_t *)data + Q_ALIGN( sizeof( shaderpass_t ), 16 ) );
+				s->name = (char *)( s->passes[0].rgbgen.args + 4 );
 				strcpy( s->name, shortname );
 
 				pass = &s->passes[0];
@@ -2702,8 +2858,8 @@ create_default:
 				s->sort = SHADER_SORT_SKY;
 				s->flags = SHADER_CULL_FRONT | SHADER_SKY;
 				s->numpasses = 1;
-				s->passes = ( shaderpass_t * )data;
-				s->name = ( char * )( s->passes + 1 );
+				s->passes = (shaderpass_t *)data;
+				s->name = (char *)( s->passes + 1 );
 				strcpy( s->name, shortname );
 
 				pass = &s->passes[0];
@@ -2721,7 +2877,7 @@ create_default:
 				s->sort = SHADER_SORT_FOG;
 				s->flags = SHADER_CULL_FRONT;
 				s->numpasses = 0;
-				s->name = ( char * )data;
+				s->name = (char *)data;
 				strcpy( s->name, shortname );
 				break;
 			case SHADER_TYPE_DEPTHONLY:
@@ -2731,15 +2887,15 @@ create_default:
 				s->sort = SHADER_SORT_PORTAL;
 				s->flags = SHADER_CULL_FRONT | SHADER_DEPTHWRITE;
 				s->numpasses = 1;
-				s->passes = ( shaderpass_t * )data;
-				s->name = ( char * )( s->passes + 1 );
+				s->passes = (shaderpass_t *)data;
+				s->name = (char *)( s->passes + 1 );
 				strcpy( s->name, shortname );
 
 				pass = &s->passes[0];
 				pass->rgbgen.type = RGB_GEN_IDENTITY;
 				pass->alphagen.type = ALPHA_GEN_IDENTITY;
 				pass->tcgen = TC_GEN_BASE;
-				pass->flags = GLSTATE_NO_COLORWRITE|GLSTATE_DEPTHWRITE;
+				pass->flags = GLSTATE_NO_COLORWRITE | GLSTATE_DEPTHWRITE;
 				pass->images[0] = rsh.whiteTexture;
 				break;
 			default:
@@ -2751,13 +2907,14 @@ create_default:
 }
 
 /*
-* R_PackShaderOrder
-*
-* Sort opaque shaders by this value for better caching of GL/program state.
-*/
-unsigned R_PackShaderOrder( const shader_t *shader ) {
-	int order;
-	int program_type;
+ * R_PackShaderOrder
+ *
+ * Sort opaque shaders by this value for better caching of GL/program state.
+ */
+unsigned R_PackShaderOrder( const shader_t *shader )
+{
+	int					order;
+	int					program_type;
 	const shaderpass_t *pass;
 
 	if( !shader->numpasses ) {
@@ -2770,8 +2927,7 @@ unsigned R_PackShaderOrder( const shader_t *shader ) {
 	if( program_type == GLSL_PROGRAM_TYPE_MATERIAL ) {
 		// this is not a material shader in case all images are missing except for the defuse
 		if( ( !pass->images[1] || pass->images[1]->missing || pass->images[1] == rsh.blankBumpTexture ) &&
-			( !pass->images[2] || pass->images[2]->missing ) &&
-			( !pass->images[3] || pass->images[3]->missing ) &&
+			( !pass->images[2] || pass->images[2]->missing ) && ( !pass->images[3] || pass->images[3]->missing ) &&
 			( !pass->images[4] || pass->images[4]->missing ) ) {
 			program_type = GLSL_PROGRAM_TYPE_Q3A_SHADER;
 		}
@@ -2789,9 +2945,10 @@ unsigned R_PackShaderOrder( const shader_t *shader ) {
 }
 
 /*
-* R_ShaderById
-*/
-shader_t *R_ShaderById( unsigned int id ) {
+ * R_ShaderById
+ */
+shader_t *R_ShaderById( unsigned int id )
+{
 	assert( id < MAX_SHADERS );
 	if( id >= MAX_SHADERS ) {
 		return NULL;
@@ -2800,9 +2957,10 @@ shader_t *R_ShaderById( unsigned int id ) {
 }
 
 /*
-* R_ShaderNoDlight
-*/
-bool R_ShaderNoDlight( const shader_t *shader ) {
+ * R_ShaderNoDlight
+ */
+bool R_ShaderNoDlight( const shader_t *shader )
+{
 	if( Shader_DepthRead( shader ) || !Shader_DepthWrite( shader ) ) {
 		return true;
 	}
@@ -2813,10 +2971,11 @@ bool R_ShaderNoDlight( const shader_t *shader ) {
 }
 
 /*
-* R_ShaderNoShadow
-*/
-bool R_ShaderNoShadow( const shader_t *shader ) {
-	if( ( shader->flags & (SHADER_CULL_BACK|SHADER_CULL_FRONT) ) == SHADER_CULL_BACK ) {
+ * R_ShaderNoShadow
+ */
+bool R_ShaderNoShadow( const shader_t *shader )
+{
+	if( ( shader->flags & ( SHADER_CULL_BACK | SHADER_CULL_FRONT ) ) == SHADER_CULL_BACK ) {
 		return true;
 	}
 	if( Shader_DepthRead( shader ) || !Shader_DepthWrite( shader ) ) {
@@ -2829,14 +2988,15 @@ bool R_ShaderNoShadow( const shader_t *shader ) {
 }
 
 /*
-* R_TouchShadersByName
-*/
-void R_TouchShadersByName( const char *name ) {
+ * R_TouchShadersByName
+ */
+void R_TouchShadersByName( const char *name )
+{
 	unsigned int shortNameSize;
-	char *shortName;
+	char *		 shortName;
 	unsigned int nameLength;
 	unsigned int key;
-	shader_t *hnode, *s;
+	shader_t *	 hnode, *s;
 
 	if( !name || !name[0] ) {
 		return;
@@ -2849,7 +3009,7 @@ void R_TouchShadersByName( const char *name ) {
 		return;
 	}
 
-	key = COM_SuperFastHash( ( const uint8_t * )shortName, nameLength ) % SHADERS_HASH_SIZE;
+	key = COM_SuperFastHash( (const uint8_t *)shortName, nameLength ) % SHADERS_HASH_SIZE;
 	hnode = &r_shaders_hash_headnode[key];
 	for( s = hnode->next; s != hnode; s = s->next ) {
 		if( !strcmp( s->name, shortName ) ) {
@@ -2859,13 +3019,14 @@ void R_TouchShadersByName( const char *name ) {
 }
 
 /*
-* R_LoadShader
-*/
-shader_t *R_LoadShader( const char *name, shaderType_e type, bool forceDefault, const char *text ) {
-	unsigned int key, nameLength;
-	char *shortname, *qmark = NULL;
-	shader_t *s;
-	shader_t *hnode, *prev, *next;
+ * R_LoadShader
+ */
+shader_t *R_LoadShader( const char *name, shaderType_e type, bool forceDefault, const char *text )
+{
+	unsigned int   key, nameLength;
+	char *		   shortname, *qmark = NULL;
+	shader_t *	   s;
+	shader_t *	   hnode, *prev, *next;
 	shadercache_t *cache = NULL;
 
 	if( !name || !name[0] ) {
@@ -2891,7 +3052,7 @@ shader_t *R_LoadShader( const char *name, shaderType_e type, bool forceDefault, 
 	}
 
 	// test if already loaded
-	key = COM_SuperFastHash( ( const uint8_t *)shortname, nameLength ) % SHADERS_HASH_SIZE;
+	key = COM_SuperFastHash( (const uint8_t *)shortname, nameLength ) % SHADERS_HASH_SIZE;
 	hnode = &r_shaders_hash_headnode[key];
 
 	// scan all instances of the same shader for exact match of the type
@@ -2955,20 +3116,22 @@ shader_t *R_LoadShader( const char *name, shaderType_e type, bool forceDefault, 
 }
 
 /*
-* R_RegisterPic
-*/
-shader_t *R_RegisterPic( const char *name ) {
+ * R_RegisterPic
+ */
+shader_t *R_RegisterPic( const char *name )
+{
 	return R_LoadShader( name, SHADER_TYPE_2D, false, NULL );
 }
 
 /*
-* R_RegisterRawPic_
-*
-* Registers default 2D shader with base image provided as raw data.
-*/
-shader_t *R_RegisterRawPic_( const char *name, int width, int height, uint8_t *data, int flags, int samples ) {
+ * R_RegisterRawPic_
+ *
+ * Registers default 2D shader with base image provided as raw data.
+ */
+shader_t *R_RegisterRawPic_( const char *name, int width, int height, uint8_t *data, int flags, int samples )
+{
 	shader_t *s;
-	int type;
+	int		  type;
 
 	type = SHADER_TYPE_2D_RAW;
 	flags |= IT_SPECIAL;
@@ -2992,27 +3155,30 @@ shader_t *R_RegisterRawPic_( const char *name, int width, int height, uint8_t *d
 }
 
 /*
-* R_RegisterRawPic
-*
-* Registers default 2D shader with base image provided as raw color data.
-*/
-shader_t *R_RegisterRawPic( const char *name, int width, int height, uint8_t *data, int samples ) {
+ * R_RegisterRawPic
+ *
+ * Registers default 2D shader with base image provided as raw color data.
+ */
+shader_t *R_RegisterRawPic( const char *name, int width, int height, uint8_t *data, int samples )
+{
 	return R_RegisterRawPic_( name, width, height, data, IT_SRGB, samples );
 }
 
 /*
-* R_RegisterRawAlphaMask
-*
-* Registers default alpha mask shader with base image provided as raw alpha values.
-*/
-shader_t *R_RegisterRawAlphaMask( const char *name, int width, int height, uint8_t *data ) {
-	return R_RegisterRawPic_( name, width, height, data, IT_SRGB|IT_ALPHAMASK, 1 );
+ * R_RegisterRawAlphaMask
+ *
+ * Registers default alpha mask shader with base image provided as raw alpha values.
+ */
+shader_t *R_RegisterRawAlphaMask( const char *name, int width, int height, uint8_t *data )
+{
+	return R_RegisterRawPic_( name, width, height, data, IT_SRGB | IT_ALPHAMASK, 1 );
 }
 
 /*
-* R_RegisterLevelshot
-*/
-shader_t *R_RegisterLevelshot( const char *name, shader_t *defaultShader, bool *matchesDefault ) {
+ * R_RegisterLevelshot
+ */
+shader_t *R_RegisterLevelshot( const char *name, shader_t *defaultShader, bool *matchesDefault )
+{
 	shader_t *shader;
 
 	r_defaultImage = defaultShader ? defaultShader->passes[0].images[0] : NULL;
@@ -3028,45 +3194,49 @@ shader_t *R_RegisterLevelshot( const char *name, shader_t *defaultShader, bool *
 }
 
 /*
-* R_RegisterShader
-*/
-shader_t *R_RegisterShader( const char *name, shaderType_e type ) {
+ * R_RegisterShader
+ */
+shader_t *R_RegisterShader( const char *name, shaderType_e type )
+{
 	return R_LoadShader( name, type, false, NULL );
 }
 
 /*
-* R_RegisterSkin
-*/
-shader_t *R_RegisterSkin( const char *name ) {
+ * R_RegisterSkin
+ */
+shader_t *R_RegisterSkin( const char *name )
+{
 	return R_LoadShader( name, SHADER_TYPE_DIFFUSE, false, NULL );
 }
 
 /*
-* R_RegisterVideo
-*/
-shader_t *R_RegisterVideo( const char *name ) {
+ * R_RegisterVideo
+ */
+shader_t *R_RegisterVideo( const char *name )
+{
 	return R_LoadShader( name, SHADER_TYPE_VIDEO, false, NULL );
 }
 
 /*
-* R_RegisterLinearPic
-*/
-shader_t *R_RegisterLinearPic( const char *name ) {
+ * R_RegisterLinearPic
+ */
+shader_t *R_RegisterLinearPic( const char *name )
+{
 	return R_LoadShader( name, SHADER_TYPE_2D_LINEAR, false, NULL );
 }
 
 /*
-* R_RemapShader
-*/
-void R_RemapShader( const char *from, const char *to, int timeOffset ) {
-}
+ * R_RemapShader
+ */
+void R_RemapShader( const char *from, const char *to, int timeOffset ) {}
 
 /*
-* R_GetShaderDimensions
-*
-* Returns dimensions for shader's base (taken from the first pass) image
-*/
-void R_GetShaderDimensions( const shader_t *shader, int *width, int *height ) {
+ * R_GetShaderDimensions
+ *
+ * Returns dimensions for shader's base (taken from the first pass) image
+ */
+void R_GetShaderDimensions( const shader_t *shader, int *width, int *height )
+{
 	image_t *baseImage;
 
 	assert( shader );
@@ -3089,12 +3259,13 @@ void R_GetShaderDimensions( const shader_t *shader, int *width, int *height ) {
 }
 
 /*
-* R_ReplaceRawSubPic
-*
-* Adds a new subimage to the specified raw pic.
-* Must not be used to overwrite previously written areas when doing batched drawing.
-*/
-void R_ReplaceRawSubPic( shader_t *shader, int x, int y, int width, int height, uint8_t *data ) {
+ * R_ReplaceRawSubPic
+ *
+ * Adds a new subimage to the specified raw pic.
+ * Must not be used to overwrite previously written areas when doing batched drawing.
+ */
+void R_ReplaceRawSubPic( shader_t *shader, int x, int y, int width, int height, uint8_t *data )
+{
 	image_t *baseImage;
 
 	assert( shader );

@@ -1238,6 +1238,8 @@ static void R_Register( const char *screenshotsPrefix ) {
 	ri.Cmd_AddCommand( "gfxinfo", R_GfxInfo_f );
 	ri.Cmd_AddCommand( "glslprogramlist", RP_ProgramList_f );
 	ri.Cmd_AddCommand( "cinlist", R_CinList_f );
+
+	ri.Cmd_SetCompletionFunc( "shaderdump", R_ShaderDumpCompletion_f );
 }
 
 /*
