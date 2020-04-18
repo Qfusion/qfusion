@@ -83,4 +83,10 @@ extern const gs_asglobfuncs_t asCGameInputGlobalFuncs[];
 extern const gs_asFuncdef_t asCGameCmdFuncdefs[];
 extern const gs_asglobfuncs_t asCGameCmdGlobalFuncs[];
 
+//
+// cg_as_refscene.cpp
+//
+extern const gs_asEnum_t asCGameRefSceneEnums[];
+extern const gs_asClassDescriptor_t *const asCGameRefSceneClassesDescriptors[];
+
 void CG_asReleaseModuleCommands( const char *moduleName );

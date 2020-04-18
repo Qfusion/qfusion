@@ -191,7 +191,7 @@ static const gs_asglobfuncs_t asCGameGlobalFuncs[] = {
 
 static auto cg_predictedPlayerStatePtr = &cg.predictedPlayerState;
 
-static const gs_asglobproperties_t asGameGlobalProperties[] = {
+static const gs_asglobproperties_t asCGameGlobalProperties[] = {
 	{ "PlayerState @PredictedPlayerState", &cg_predictedPlayerStatePtr },
 
 	{ NULL },
@@ -350,6 +350,7 @@ static void CG_asInitializeCGameEngineSyntax( asIScriptEngine *asEngine )
 	GS_asRegisterEnums( asEngine, asCGameEnums, "CGame" );
 	GS_asRegisterEnums( asEngine, asCGameInputEnums, "CGame" );
 	GS_asRegisterEnums( asEngine, asCGameCameraEnums, "CGame" );
+	GS_asRegisterEnums( asEngine, asCGameRefSceneEnums, "CGame" );
 
 	// register global funcdefs
 	GS_asRegisterFuncdefs( asEngine, asCGameCmdFuncdefs, "CGame::Cmd" );
@@ -358,11 +359,13 @@ static void CG_asInitializeCGameEngineSyntax( asIScriptEngine *asEngine )
 	GS_asRegisterObjectClassNames( asEngine, asCGameClassesDescriptors, "CGame" );
 	GS_asRegisterObjectClassNames( asEngine, asCGameInputClassesDescriptors, "CGame::Input" );
 	GS_asRegisterObjectClassNames( asEngine, asCGameCameraClassesDescriptors, "CGame::Camera" );
+	GS_asRegisterObjectClassNames( asEngine, asCGameRefSceneClassesDescriptors, "CGame::Scene" );
 
 	// register classes
 	GS_asRegisterObjectClasses( asEngine, asCGameClassesDescriptors, "CGame" );
 	GS_asRegisterObjectClasses( asEngine, asCGameInputClassesDescriptors, "CGame::Input" );
 	GS_asRegisterObjectClasses( asEngine, asCGameCameraClassesDescriptors, "CGame::Camera" );
+	GS_asRegisterObjectClasses( asEngine, asCGameRefSceneClassesDescriptors, "CGame::Scene" );
 
 	// register global functions
 	GS_asRegisterGlobalFunctions( asEngine, asCGameGlobalFuncs, "CGame" );
@@ -372,7 +375,7 @@ static void CG_asInitializeCGameEngineSyntax( asIScriptEngine *asEngine )
 	GS_asRegisterGlobalFunctions( asEngine, asCGameScreenGlobalFuncs, "CGame::Screen" );
 
 	// register global properties
-	GS_asRegisterGlobalProperties( asEngine, asGameGlobalProperties, "CGame" );
+	GS_asRegisterGlobalProperties( asEngine, asCGameGlobalProperties, "CGame" );
 }
 
 /*
@@ -454,8 +457,6 @@ bool CG_asCallScriptFunc(
 
 	error = ctx->Execute();
 	ok = CG_asExecutionErrorReport( error ) == false;
-
-	assert( ok == true );
 
 	if( ok ) {
 		getResult( ctx );
