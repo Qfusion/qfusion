@@ -52,41 +52,48 @@ typedef struct {
 
 extern std::function<void(asIScriptContext *)> cg_empty_as_cb;
 
-void CG_asUnloadScriptModule( const char *moduleName, cg_asApiFuncPtr_t *api );
-asIScriptModule *CG_asLoadScriptModule( const char *moduleName, const char *dir, const char *filename, const char *ext, cg_asApiFuncPtr_t *api );
+void			 CG_asUnloadScriptModule( const char *moduleName, cg_asApiFuncPtr_t *api );
+asIScriptModule *CG_asLoadScriptModule(
+	const char *moduleName, const char *dir, const char *filename, const char *ext, cg_asApiFuncPtr_t *api );
 
 bool CG_asExecutionErrorReport( int error );
-bool CG_asCallScriptFunc( void *ptr, std::function<void(asIScriptContext *)> setArgs,
-	std::function<void(asIScriptContext *)> getResult );
+bool CG_asCallScriptFunc(
+	void *ptr, std::function<void( asIScriptContext * )> setArgs, std::function<void( asIScriptContext * )> getResult );
 
 //
 // cg_as_camera.cpp
 //
-
-extern const gs_asEnum_t asCGameCameraEnums[];
-extern const gs_asClassDescriptor_t * const asCGameCameraClassesDescriptors[];
-extern const gs_asglobfuncs_t asCGameCameraGlobalFuncs[];
+extern const gs_asEnum_t				   asCGameCameraEnums[];
+extern const gs_asClassDescriptor_t *const asCGameCameraClassesDescriptors[];
+extern const gs_asglobfuncs_t			   asCGameCameraGlobalFuncs[];
 
 
 //
 // cg_as_input.cpp
 //
-
-extern const gs_asEnum_t asCGameInputEnums[];
-extern const gs_asClassDescriptor_t * const asCGameInputClassesDescriptors[];
-extern const gs_asglobfuncs_t asCGameInputGlobalFuncs[];
+extern const gs_asEnum_t				   asCGameInputEnums[];
+extern const gs_asClassDescriptor_t *const asCGameInputClassesDescriptors[];
+extern const gs_asglobfuncs_t			   asCGameInputGlobalFuncs[];
 
 
 //
 // cg_as_cmds.cpp
 //
-extern const gs_asFuncdef_t asCGameCmdFuncdefs[];
+extern const gs_asFuncdef_t	  asCGameCmdFuncdefs[];
 extern const gs_asglobfuncs_t asCGameCmdGlobalFuncs[];
+
 
 //
 // cg_as_refscene.cpp
 //
-extern const gs_asEnum_t asCGameRefSceneEnums[];
+extern const gs_asEnum_t				   asCGameRefSceneEnums[];
 extern const gs_asClassDescriptor_t *const asCGameRefSceneClassesDescriptors[];
+
+
+//
+// cg_as_screen.cpp
+//
+extern const gs_asEnum_t	  asCGameScreenEnums[];
+extern const gs_asglobfuncs_t asCGameScreenGlobalFuncs[];
 
 void CG_asReleaseModuleCommands( const char *moduleName );

@@ -52,44 +52,50 @@ static const gs_asEnumVal_t asLimitsEnumVals[] = {
 	ASLIB_ENUM_VAL_NULL,
 };
 
-static const gs_asEnumVal_t asOverlayMenuEnumVals[] = {
-	ASLIB_ENUM_VAL( OVERLAY_MENU_LEFT ),
-	ASLIB_ENUM_VAL( OVERLAY_MENU_HIDDEN ),
-	ASLIB_ENUM_VAL( OVERLAY_MENU_RIGHT ),
-
-	ASLIB_ENUM_VAL_NULL,
-};
-
-static const gs_asEnumVal_t asFontStyleEnumVals[] = {
-	ASLIB_ENUM_VAL( QFONT_STYLE_NONE ),
-	ASLIB_ENUM_VAL( QFONT_STYLE_ITALIC ),
-	ASLIB_ENUM_VAL( QFONT_STYLE_BOLD ),
-	ASLIB_ENUM_VAL( QFONT_STYLE_MASK ),
-
-	ASLIB_ENUM_VAL_NULL,
-};
-
-static const gs_asEnumVal_t asAlignmentEnumVals[] = {
-	ASLIB_ENUM_VAL( ALIGN_LEFT_TOP ),
-	ASLIB_ENUM_VAL( ALIGN_CENTER_TOP ),
-	ASLIB_ENUM_VAL( ALIGN_RIGHT_TOP ),
-	ASLIB_ENUM_VAL( ALIGN_LEFT_MIDDLE ),
-	ASLIB_ENUM_VAL( ALIGN_CENTER_MIDDLE ),
-	ASLIB_ENUM_VAL( ALIGN_RIGHT_MIDDLE ),
-	ASLIB_ENUM_VAL( ALIGN_LEFT_BOTTOM ),
-	ASLIB_ENUM_VAL( ALIGN_CENTER_BOTTOM ),
-	ASLIB_ENUM_VAL( ALIGN_RIGHT_BOTTOM ),
-
-	ASLIB_ENUM_VAL_NULL,
-};
-
 static const gs_asEnum_t asCGameEnums[] = {
 	{ "cg_limits_e", asLimitsEnumVals },
-	{ "cg_overlayMenuState_e", asOverlayMenuEnumVals },
-	{ "cg_fontStyle_e", asFontStyleEnumVals },
-	{ "cg_alingment_e", asAlignmentEnumVals },
 
 	ASLIB_ENUM_VAL_NULL,
+};
+
+//======================================================================
+
+static const gs_asFuncdef_t asCGameSnapshotFuncdefs[] = {
+	ASLIB_FUNCDEF_NULL,
+};
+
+static const gs_asBehavior_t asCGameSnapshotObjectBehaviors[] = {
+	ASLIB_BEHAVIOR_NULL,
+};
+
+static const gs_asMethod_t asCGameSnapshotMethods[] = {
+	ASLIB_METHOD_NULL,
+};
+
+static const gs_asProperty_t asCGameSnapshotProperties[] = {
+	{ ASLIB_PROPERTY_DECL( bool, valid ), ASLIB_FOFFSET( snapshot_t, valid ) },
+	{ ASLIB_PROPERTY_DECL( int64, serverFrame ), ASLIB_FOFFSET( snapshot_t, serverFrame ) },
+	{ ASLIB_PROPERTY_DECL( int64, serverTime ), ASLIB_FOFFSET( snapshot_t, serverTime ) },
+	{ ASLIB_PROPERTY_DECL( int64, ucmdExecuted ), ASLIB_FOFFSET( snapshot_t, ucmdExecuted ) },
+	{ ASLIB_PROPERTY_DECL( bool, delta ), ASLIB_FOFFSET( snapshot_t, delta ) },
+	{ ASLIB_PROPERTY_DECL( bool, allentities ), ASLIB_FOFFSET( snapshot_t, allentities ) },
+	{ ASLIB_PROPERTY_DECL( bool, multipov ), ASLIB_FOFFSET( snapshot_t, multipov ) },
+	{ ASLIB_PROPERTY_DECL( int64, deltaFrameNum ), ASLIB_FOFFSET( snapshot_t, deltaFrameNum ) },
+	{ ASLIB_PROPERTY_DECL( int, numPlayers ), ASLIB_FOFFSET( snapshot_t, numplayers ) },
+	{ ASLIB_PROPERTY_DECL( PlayerState @, playerState ), ASLIB_FOFFSET( snapshot_t, playerState ) },
+
+	ASLIB_PROPERTY_NULL,
+};
+
+static const gs_asClassDescriptor_t asSnapshotClassDescriptor = {
+	"Snapshot",						/* name */
+	asOBJ_REF | asOBJ_NOCOUNT,		/* object type flags */
+	sizeof( snapshot_t ),			/* size */
+	asCGameSnapshotFuncdefs,		/* funcdefs */
+	asCGameSnapshotObjectBehaviors, /* object behaviors */
+	asCGameSnapshotMethods,			/* methods */
+	asCGameSnapshotProperties,		/* properties */
+	NULL, NULL,						/* string factory hack */
 };
 
 //======================================================================
@@ -143,6 +149,7 @@ const gs_asClassDescriptor_t *const asCGameClassesDescriptors[] = {
 	&asSoundHandleClassDescriptor,
 	&asShaderHandleClassDescriptor,
 	&asFontHandleClassDescriptor,
+	&asSnapshotClassDescriptor,
 
 	NULL,
 };
@@ -178,8 +185,14 @@ static void *asFunc_RegisterFont( const asstring_t *str, int style, unsigned siz
 	return trap_SCR_RegisterFont( str->buffer, style, size );
 }
 
+static float asFunc_ExtrapolationTime( void )
+{
+	return cgs.extrapolationTime;
+}
+
 static const gs_asglobfuncs_t asCGameGlobalFuncs[] = {
 	{ "void Print( const String &in )", asFUNCTION( asFunc_Print ), NULL },
+	{ "float get_ExtrapolationTime()", asFUNCTION( asFunc_ExtrapolationTime ), NULL },
 
 	{ "ModelHandle RegisterModel( const String &in )", asFUNCTION( asFunc_RegisterModel ), NULL },
 	{ "SoundHandle RegisterSound( const String &in )", asFUNCTION( asFunc_RegisterSound ), NULL },
@@ -190,146 +203,12 @@ static const gs_asglobfuncs_t asCGameGlobalFuncs[] = {
 };
 
 static auto cg_predictedPlayerStatePtr = &cg.predictedPlayerState;
+static auto cg_snapshotPtr = &cg.frame, cg_oldSnapshotPtr = &cg.oldFrame;
 
 static const gs_asglobproperties_t asCGameGlobalProperties[] = {
 	{ "PlayerState @PredictedPlayerState", &cg_predictedPlayerStatePtr },
-
-	{ NULL },
-};
-
-//======================================================================
-
-static void asFunc_SCR_DrawPic(
-	int x, int y, int w, int h, struct shader_s *shader, const asvec4_t *color, float s1, float t1, float s2, float t2 )
-{
-	trap_R_DrawStretchPic( x, y, w, h, s1, t1, s2, t2, color->v, shader );
-}
-
-static void asFunc_SCR_DrawPic2(
-	int x, int y, int w, int h, struct shader_s *shader, float s1, float t1, float s2, float t2 )
-{
-	trap_R_DrawStretchPic( x, y, w, h, s1, t1, s2, t2, colorWhite, shader );
-}
-
-static inline int asFunc_SCR_DrawString(
-	int x, int y, int align, asstring_t *str, struct qfontface_s *font, asvec4_t *color )
-{
-	return trap_SCR_DrawString( x, y, align, str->buffer, font, color->v );
-}
-
-static inline int asFunc_SCR_DrawString2(
-	int x, int y, int align, asstring_t *str, struct qfontface_s *font )
-{
-	return trap_SCR_DrawString( x, y, align, str->buffer, font, colorWhite );
-}
-
-static inline int asFunc_SCR_DrawStringWidth(
-	int x, int y, int align, asstring_t *str, int maxwidth, struct qfontface_s *font, asvec4_t *color )
-{
-	return (int)trap_SCR_DrawStringWidth( x, y, align, str->buffer, maxwidth, font, color->v );
-}
-
-static inline int asFunc_SCR_DrawStringWidth2(
-	int x, int y, int align, asstring_t *str, int maxwidth, struct qfontface_s *font )
-{
-	return (int)trap_SCR_DrawStringWidth( x, y, align, str->buffer, maxwidth, font, colorWhite );
-}
-
-static inline void asFunc_SCR_DrawClampString(
-	int x, int y, asstring_t *str, int xmin, int ymin, int xmax, int ymax, struct qfontface_s *font, asvec4_t *color )
-{
-	trap_SCR_DrawClampString( x, y, str->buffer, xmin, ymin, xmax, ymax, font, color->v );
-}
-
-static inline void asFunc_SCR_DrawClampString2(
-	int x, int y, asstring_t *str, int xmin, int ymin, int xmax, int ymax, struct qfontface_s *font )
-{
-	trap_SCR_DrawClampString( x, y, str->buffer, xmin, ymin, xmax, ymax, font, colorWhite );
-}
-
-static inline int asFunc_SCR_DrawMultilineString(
-	int x, int y, asstring_t *str, int halign, int maxwidth, int maxlines, struct qfontface_s *font, asvec4_t *color )
-{
-	return trap_SCR_DrawMultilineString( y, y, str->buffer, halign, maxwidth, maxlines, font, color->v );
-}
-
-static inline int asFunc_SCR_DrawMultilineString2(
-	int x, int y, asstring_t *str, int halign, int maxwidth, int maxlines, struct qfontface_s *font )
-{
-	return trap_SCR_DrawMultilineString( y, y, str->buffer, halign, maxwidth, maxlines, font, colorWhite );
-}
-
-static inline void asFunc_SCR_DrawRawChar( int x, int y, int num, struct qfontface_s *font, asvec4_t *color )
-{
-	trap_SCR_DrawRawChar( x, y, num, font, color->v );
-}
-
-static inline void asFunc_SCR_DrawRawChar2( int x, int y, int num, struct qfontface_s *font )
-{
-	trap_SCR_DrawRawChar( x, y, num, font, colorWhite );
-}
-
-static inline void asFunc_SCR_DrawClampChar(
-	int x, int y, int num, int xmin, int ymin, int xmax, int ymax, struct qfontface_s *font, asvec4_t *color )
-{
-	trap_SCR_DrawClampChar( x, y, num, xmin, ymin, xmax, ymax, font, color->v );
-}
-
-static inline void asFunc_SCR_DrawClampChar2(
-	int x, int y, int num, int xmin, int ymin, int xmax, int ymax, struct qfontface_s *font )
-{
-	trap_SCR_DrawClampChar( x, y, num, xmin, ymin, xmax, ymax, font, colorWhite );
-}
-
-static inline int asFunc_SCR_strWidth( asstring_t *str, struct qfontface_s *font, int maxlen )
-{
-	return trap_SCR_strWidth( str->buffer, font, maxlen );
-}
-
-static inline int asFunc_SCR_StrlenForWidth( asstring_t *str, struct qfontface_s *font, int maxwidth )
-{
-	return trap_SCR_StrlenForWidth( str->buffer, font, maxwidth );
-}
-
-static const gs_asglobfuncs_t asCGameScreenGlobalFuncs[] = {
-	{ "void ShowOverlayMenu( int state, bool showCursor )", asFUNCTION( CG_ShowOverlayMenu ), NULL },
-	{ "int FontHeight( FontHandle font )", asFUNCTION( trap_SCR_FontHeight ), NULL },
-
-	{ "void DrawPic( int x, int y, int w, int h, ShaderHandle shader, const Vec4 &in color, float s1 = 0.0, float t1 = "
-	  "0.0, float s2 = 1.0, float t2 = 1.0 )",
-		asFUNCTION( asFunc_SCR_DrawPic ), NULL },
-	{ "void DrawPic( int x, int y, int w, int h, ShaderHandle shader, float s1 = 0.0, float t1 = 0.0, float s2 = 1.0, "
-	  "float t2 = 1.0 )",
-		asFUNCTION( asFunc_SCR_DrawPic2 ), NULL },
-
-	{ "int DrawString( int x, int y, int align, const String &in str, FontHandle font, const Vec4 &in color )",
-		asFUNCTION( asFunc_SCR_DrawString ), NULL },
-	{ "int DrawString( int x, int y, int align, const String &in str, FontHandle font )",
-		asFUNCTION( asFunc_SCR_DrawString2 ), NULL },
-	{ "int DrawStringWidth( int x, int y, int align, const String &in str, int maxWidth, FontHandle font, const Vec4 &in color )",
-		asFUNCTION( asFunc_SCR_DrawStringWidth ), NULL },
-	{ "int DrawStringWidth( int x, int y, int align, const String &in str, int maxWidth, FontHandle font )",
-		asFUNCTION( asFunc_SCR_DrawStringWidth2 ), NULL },
-	{ "void DrawClampString( int x, int y, const String &in str, int xMin, int yMin, int xMax, int yMax, FontHandle font, const Vec4 &in color )",
-		asFUNCTION( asFunc_SCR_DrawClampString ), NULL },
-	{ "void DrawClampString( int x, int y, const String &in str, int xMin, int yMin, int xMax, int yMax, FontHandle font )",
-		asFUNCTION( asFunc_SCR_DrawClampString2 ), NULL },
-	{ "int DrawClampMultineString( int x, int y, const String &in str, int maxWidth, int maxLines, FontHandle font, const Vec4 &in color )",
-		asFUNCTION( asFunc_SCR_DrawMultilineString ), NULL },
-	{ "int DrawClampMultineString( int x, int y, const String &in str, int maxWidth, int maxLines, FontHandle font )",
-		asFUNCTION( asFunc_SCR_DrawMultilineString2 ), NULL },
-	{ "void DrawRawChar( int x, int y, int chr, FontHandle font, const Vec4 &in color )",
-		asFUNCTION( asFunc_SCR_DrawRawChar ), NULL },
-	{ "void DrawRawChar( int x, int y, int chr, FontHandle font )",
-		asFUNCTION( asFunc_SCR_DrawRawChar2 ), NULL },
-	{ "void DrawClampChar( int x, int y, int chr, int xMin, int yMin, int xMax, int yMax, FontHandle font, const Vec4 &in color )",
-		asFUNCTION( asFunc_SCR_DrawClampChar ), NULL },
-	{ "void DrawClampChar( int x, int y, int chr, int xMin, int yMin, int xMax, int yMax, FontHandle font )",
-		asFUNCTION( asFunc_SCR_DrawClampChar2 ), NULL },
-	{ "int StringWidth( const String &in str, FontHandle font, int maxLen = 0 )", asFUNCTION( asFunc_SCR_strWidth ),
-		NULL },
-	{ "int StrlenForWidth( const String &in str, FontHandle font, int maxWidth = 0 )",
-		asFUNCTION( asFunc_SCR_StrlenForWidth ), NULL },
+	{ "Snapshot @Snap", &cg_snapshotPtr },
+	{ "Snapshot @OldSnap", &cg_oldSnapshotPtr },
 
 	{ NULL },
 };
@@ -350,6 +229,7 @@ static void CG_asInitializeCGameEngineSyntax( asIScriptEngine *asEngine )
 	GS_asRegisterEnums( asEngine, asCGameEnums, "CGame" );
 	GS_asRegisterEnums( asEngine, asCGameInputEnums, "CGame" );
 	GS_asRegisterEnums( asEngine, asCGameCameraEnums, "CGame" );
+	GS_asRegisterEnums( asEngine, asCGameScreenEnums, "CGame" );
 	GS_asRegisterEnums( asEngine, asCGameRefSceneEnums, "CGame" );
 
 	// register global funcdefs
@@ -608,34 +488,4 @@ void CG_asGetViewAnglesClamp( const player_state_t *ps, vec3_t vaclamp )
 			const asvec3_t *va = (const asvec3_t *)ctx->GetReturnAddress();
 			VectorCopy( va->v, vaclamp );
 		} );
-}
-
-//======================================================================
-
-/*
- * CG_asHUDInit
- */
-void CG_asHUDInit( void )
-{
-	if( !cgs.asHUD.init ) {
-		return;
-	}
-	CG_asCallScriptFunc( cgs.asHUD.init, cg_empty_as_cb, cg_empty_as_cb );
-}
-
-/*
- * CG_asHUDDrawCrosshair
- */
-bool CG_asHUDDrawCrosshair( void )
-{
-	uint8_t res = 0;
-
-	if( !cgs.asHUD.drawCrosshair ) {
-		return false;
-	}
-
-	CG_asCallScriptFunc(
-		cgs.asHUD.drawCrosshair, cg_empty_as_cb, [&res]( asIScriptContext *ctx ) { res = ctx->GetReturnByte(); } );
-
-	return res == 0 ? false : true;
 }
