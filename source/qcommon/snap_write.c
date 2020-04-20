@@ -552,9 +552,8 @@ static bool SNAP_SnapCullSoundEntity( cmodel_state_t *cms, edict_t *ent, const v
 */
 static bool SNAP_SnapCullEntity( cmodel_state_t *cms, edict_t *ent, edict_t *clent, client_snapshot_t *frame, 
 								const vec3_t vieworg, int viewarea, uint8_t *fatpvs ) {
-	uint8_t *areabits;
-	bool snd_cull_only;
-	bool snd_culled;
+	bool snd_cull_only = false;
+	bool snd_culled = false;
 
 	// filters: this entity has been disabled for comunication
 	if( ent->r.svflags & SVF_NOCLIENT ) {
@@ -590,7 +589,7 @@ static bool SNAP_SnapCullEntity( cmodel_state_t *cms, edict_t *ent, edict_t *cle
 	}
 	if( viewarea >= 0 ) {
 		// this is the same as CM_AreasConnected but portal's visibility included
-		areabits = frame->areabits + viewarea * CM_AreaRowSize( cms );
+		uint8_t *areabits = frame->areabits + viewarea * CM_AreaRowSize( cms );
 		if( !( areabits[ent->r.areanum >> 3] & ( 1 << ( ent->r.areanum & 7 ) ) ) ) {
 			// doors can legally straddle two areas, so we may need to check another one
 			if( ent->r.areanum2 < 0 || !( areabits[ent->r.areanum2 >> 3] & ( 1 << ( ent->r.areanum2 & 7 ) ) ) ) {
@@ -598,9 +597,6 @@ static bool SNAP_SnapCullEntity( cmodel_state_t *cms, edict_t *ent, edict_t *cle
 			}
 		}
 	}
-
-	snd_cull_only = false;
-	snd_culled = true;
 
 	// sound entities culling
 	if( ent->r.svflags & SVF_SOUNDCULL ) {
@@ -646,11 +642,9 @@ static void SNAP_AddEntitiesVisibleAtOrigin( cmodel_state_t *cms, ginfo_t *gi, e
 			ent->s.number = entNum;
 		}
 
-		if( !frame->allentities ) {
-			// always add the client entity, even if SVF_NOCLIENT
-			if( ( ent != clent ) && SNAP_SnapCullEntity( cms, ent, clent, frame, vieworg, viewarea, pvs ) ) {
-				continue;
-			}
+		// always add the client entity, even if SVF_NOCLIENT
+		if( ( ent != clent ) && SNAP_SnapCullEntity( cms, ent, clent, frame, vieworg, viewarea, pvs ) ) {
+			continue;
 		}
 
 		// add it
