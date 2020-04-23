@@ -231,6 +231,8 @@ static void CG_NewPacketEntityState( entity_state_t *state ) {
 		//if( cent->canExtrapolate )
 		//	VectorMA( cent->current.origin, 0.001f * cgs.extrapolationTime, cent->velocity, cent->extrapolatedOrigin );
 	}
+
+	CG_asNewPacketEntityState( state );
 }
 
 int CG_LostMultiviewPOV( void ) {

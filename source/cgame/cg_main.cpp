@@ -301,6 +301,7 @@ static void CG_InitGameShared( void ) {
 	api.RoundUpToHullSize = CG_GS_RoundUpToHullSize;
 	api.GetConfigString = CG_GS_GetConfigString;
 	api.GetAngelExport = NULL;
+	api.NumInlineModels = trap_CM_NumInlineModels;
 
 	GS_InitModule( GS_MODULE_CGAME, maxclients, &api );
 

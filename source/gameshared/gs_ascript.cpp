@@ -1881,6 +1881,16 @@ static int GS_asDirToByte( asvec3_t *vec ) {
 	return DirToByte( vec->v );
 }
 
+static bool GS_asIsEventEntity( entity_state_t *state )
+{
+	return ISEVENTENTITY( state );
+}
+
+static bool GS_asIsBrushModel( int x )
+{
+	return ( x > 0 ) && ( x < gs.api.NumInlineModels() );
+}
+
 static const gs_asglobfuncs_t asGameGlobalFunctions[] = {
 	{ "void Print( const String &in )", asFUNCTION( GS_asPrint ), NULL },
 	{ "int PointContents( const Vec3 &in )", asFUNCTION( GS_asPointContents ), NULL },
@@ -1901,6 +1911,9 @@ static const gs_asglobfuncs_t asGameGlobalFunctions[] = {
 	{ "const Firedef @FiredefForPlayerState( const PlayerState @state, int checkWeapon )", asFUNCTION( GS_FiredefForPlayerState ), NULL },
 	
 	{ "int DirToByte( const Vec3 &in )", asFUNCTION( GS_asDirToByte ), NULL },
+
+	{ "bool IsEventEntity( const EntityState @ )", asFUNCTION( GS_asIsEventEntity ), NULL },
+	{ "bool IsBrushModel( int modelindex )", asFUNCTION( GS_asIsBrushModel ), NULL },
 
 	{ NULL }
 };

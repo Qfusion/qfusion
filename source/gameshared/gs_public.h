@@ -48,6 +48,7 @@ typedef struct {
 	void ( *RoundUpToHullSize )( vec3_t mins, vec3_t maxs );
 	const char *( *GetConfigString )( int index );
 	struct angelwrap_api_s *( *GetAngelExport )( void );
+	int ( *NumInlineModels )( void );
 } gs_module_api_t;
 
 extern gs_module_api_t gs_api;
