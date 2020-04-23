@@ -1920,12 +1920,10 @@ static const gs_asglobfuncs_t asGameGlobalFunctions[] = {
 
 //=======================================================================
 
-static int asMAX_ITEMS = MAX_ITEMS;
 static int asPS_MAX_STATS = PS_MAX_STATS;
 static int asMAX_GAME_STATS = MAX_GAME_STATS;
 static int asMAX_EVENTS = MAX_EVENTS;
 static int asMAX_TOUCHENTS = MAXTOUCH;
-static int asMAX_EDICTS = MAX_EDICTS;
 
 static float asBASEGRAVITY = BASEGRAVITY;
 static float asGRAVITY = GRAVITY;
@@ -1934,20 +1932,38 @@ static int asZOOMTIME = ZOOMTIME;
 static float asSTEPSIZE = STEPSIZE;
 static float asSLIDEMOVE_PLANEINTERACT_EPSILON = SLIDEMOVE_PLANEINTERACT_EPSILON;
 
+static int asMAX_CLIENTS = MAX_CLIENTS;
+static int asMAX_EDICTS = MAX_EDICTS;
+static int asMAX_LIGHTSTYLES = MAX_LIGHTSTYLES;
+static int asMAX_MODELS = MAX_MODELS;
+static int asMAX_IMAGES = MAX_IMAGES;
+static int asMAX_SKINFILES = MAX_SKINFILES;
+static int asMAX_ITEMS = MAX_ITEMS;
+static int asMAX_GENERAL = MAX_GENERAL;
+static int asMAX_MMPLAYERINFOS = MAX_MMPLAYERINFOS;
+
 static const gs_asglobproperties_t asGameGlobalConstants[] =
 {
-	{ "const int MAX_ITEMS", &asMAX_ITEMS },
 	{ "const int PS_MAX_STATS", &asPS_MAX_STATS },
 	{ "const int MAX_GAME_STATS", &asMAX_GAME_STATS },
 	{ "const int MAX_EVENTS", &asMAX_EVENTS },
 	{ "const int MAX_TOUCHENTS", &asMAX_TOUCHENTS },
-	{ "const int MAX_EDICTS", &asMAX_EDICTS },
 	{ "const float BASEGRAVITY", &asBASEGRAVITY },
 	{ "const float GRAVITY", &asGRAVITY },
 	{ "const float GRAVITY_COMPENSATE", &asGRAVITY_COMPENSATE },
 	{ "const int ZOOMTIME", &asZOOMTIME },
 	{ "const float STEPSIZE", &asSTEPSIZE },
 	{ "const float SLIDEMOVE_PLANEINTERACT_EPSILON", &asSLIDEMOVE_PLANEINTERACT_EPSILON },
+	{ "const int MAX_CLIENTS", &asMAX_CLIENTS },
+	{ "const int MAX_EDICTS", &asMAX_EDICTS },
+	{ "const int MAX_LIGHTSTYLES", &asMAX_LIGHTSTYLES },
+	{ "const int MAX_MODELS", &asMAX_MODELS },
+	{ "const int MAX_IMAGES", &asMAX_IMAGES },
+	{ "const int MAX_SKINFILES", &asMAX_SKINFILES },
+	{ "const int MAX_ITEMS", &asMAX_ITEMS },
+	{ "const int MAX_GENERAL", &asMAX_GENERAL },
+	{ "const int MAX_MMPLAYERINFOS", &asMAX_MMPLAYERINFOS },
+
 	{ NULL },
 };
 
