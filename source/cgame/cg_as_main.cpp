@@ -41,6 +41,8 @@ static cg_asApiFuncPtr_t cg_asCGameAPI[] = {
 	{ "void CGame::HUD::Init()", &cgs.asHUD.init, false },
 	{ "bool CGame::HUD::DrawCrosshair()", &cgs.asHUD.drawCrosshair, false },
 
+	{ "void CGame::NewPacketEntityState( const EntityState @ )", &cgs.asGameState.newPacketEntityState, false },
+
 	{ nullptr, nullptr, false },
 };
 
@@ -185,14 +187,20 @@ static void *asFunc_RegisterFont( const asstring_t *str, int style, unsigned siz
 	return trap_SCR_RegisterFont( str->buffer, style, size );
 }
 
-static float asFunc_ExtrapolationTime( void )
+static int asFunc_ExtrapolationTime( void )
 {
 	return cgs.extrapolationTime;
 }
 
+static int asFunc_SnapFrameTime( void )
+{
+	return cgs.snapFrameTime;
+}
+
 static const gs_asglobfuncs_t asCGameGlobalFuncs[] = {
 	{ "void Print( const String &in )", asFUNCTION( asFunc_Print ), NULL },
-	{ "float get_ExtrapolationTime()", asFUNCTION( asFunc_ExtrapolationTime ), NULL },
+	{ "int get_ExtrapolationTime()", asFUNCTION( asFunc_ExtrapolationTime ), NULL },
+	{ "int get_SnapFrameTime()", asFUNCTION( asFunc_SnapFrameTime ), NULL },
 
 	{ "ModelHandle RegisterModel( const String &in )", asFUNCTION( asFunc_RegisterModel ), NULL },
 	{ "SoundHandle RegisterSound( const String &in )", asFUNCTION( asFunc_RegisterSound ), NULL },
@@ -488,4 +496,20 @@ void CG_asGetViewAnglesClamp( const player_state_t *ps, vec3_t vaclamp )
 			const asvec3_t *va = (const asvec3_t *)ctx->GetReturnAddress();
 			VectorCopy( va->v, vaclamp );
 		} );
+}
+
+/*
+ * CG_asNewPacketEntityState
+ */
+void CG_asNewPacketEntityState( entity_state_t *state )
+{
+	if( !cgs.asGameState.newPacketEntityState ) {
+		return;
+	}
+	CG_asCallScriptFunc(
+		cgs.asGameState.newPacketEntityState,
+		[state]( asIScriptContext *ctx ) {
+			ctx->SetArgObject( 0, state );
+		},
+		cg_empty_as_cb );
 }

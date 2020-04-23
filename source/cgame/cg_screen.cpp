@@ -1217,7 +1217,7 @@ void CG_LoadingString( const char *str ) {
 * Stop accepting new precaches after the timelimit for this frame has been reached.
 */
 bool CG_LoadingItemName( const char *str ) {
-	if( cgs.precacheCount > cgs.precacheStart && ( trap_Milliseconds() > cgs.precacheStartMsec + 33 ) ) {
+	if( cgs.precacheCount > cgs.precacheStart && ( trap_Milliseconds() > cgs.precacheStartMsec + 10 ) ) {
 		return false;
 	}
 	cgs.precacheCount++;

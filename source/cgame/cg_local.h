@@ -455,6 +455,11 @@ typedef struct {
 		void *drawCrosshair;
 	} asHUD;
 
+	// AS gamestate API
+	struct {
+		void *newPacketEntityState;
+	} asGameState;
+
 	// fonts
 	char fontSystemFamily[MAX_QPATH];
 	char fontSystemMonoFamily[MAX_QPATH];
@@ -1200,6 +1205,8 @@ bool CG_asLoadPMoveScript( void );
 void CG_asUnloadPMoveScript( void );
 void CG_asPMove( pmove_t *pm, player_state_t *ps, usercmd_t *cmd );
 void CG_asGetViewAnglesClamp( const player_state_t *ps, vec3_t clamp );
+
+void CG_asNewPacketEntityState( entity_state_t *state );
 
 void CG_asHUDInit( void );
 bool CG_asHUDDrawCrosshair( void );
