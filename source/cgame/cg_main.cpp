@@ -935,6 +935,8 @@ void CG_Precache( void ) {
 		return;
 	}
 
+	CG_asPrecache();
+
 	cgs.precacheDone = true;
 }
 
