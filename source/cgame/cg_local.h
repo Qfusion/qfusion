@@ -419,9 +419,11 @@ typedef struct {
 	struct angelwrap_api_s *asExport;
 
 	void *asEngine;
-	// AS input subsystem API
+
+	// AS general API
 	struct {
 		void *load;
+		void *precache;
 	} asMain;
 
 	// AS input subsystem API
@@ -1205,6 +1207,8 @@ bool CG_asLoadPMoveScript( void );
 void CG_asUnloadPMoveScript( void );
 void CG_asPMove( pmove_t *pm, player_state_t *ps, usercmd_t *cmd );
 void CG_asGetViewAnglesClamp( const player_state_t *ps, vec3_t clamp );
+
+void CG_asPrecache( void );
 
 void CG_asNewPacketEntityState( entity_state_t *state );
 

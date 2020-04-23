@@ -24,6 +24,7 @@ std::function<void( asIScriptContext * )> cg_empty_as_cb = []( asIScriptContext 
 
 static cg_asApiFuncPtr_t cg_asCGameAPI[] = {
 	{ "void CGame::Load()", &cgs.asMain.load, false },
+	{ "void CGame::Precache()", &cgs.asMain.load, false },
 
 	{ "void CGame::Input::Init()", &cgs.asInput.init, true },
 	{ "void CGame::Input::Shutdown()", &cgs.asInput.shutdown, true },
@@ -496,6 +497,17 @@ void CG_asGetViewAnglesClamp( const player_state_t *ps, vec3_t vaclamp )
 			const asvec3_t *va = (const asvec3_t *)ctx->GetReturnAddress();
 			VectorCopy( va->v, vaclamp );
 		} );
+}
+
+/*
+ * CG_asPrecache
+ */
+void CG_asPrecache( void )
+{
+	if( !cgs.asMain.precache ) {
+		return;
+	}
+	CG_asCallScriptFunc( cgs.asMain.precache, cg_empty_as_cb, cg_empty_as_cb );
 }
 
 /*
