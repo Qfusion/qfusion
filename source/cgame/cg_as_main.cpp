@@ -147,12 +147,24 @@ static const gs_asClassDescriptor_t asFontHandleClassDescriptor = {
 	NULL, NULL									   /* string factory hack */
 };
 
+static const gs_asClassDescriptor_t asModelSkeletonClassDescriptor = {
+	"ModelSkeleton",							   /* name */
+	asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE, /* object type flags */
+	sizeof( void * ),							   /* size */
+	NULL,										   /* funcdefs */
+	NULL,										   /* object behaviors */
+	NULL,										   /* methods */
+	NULL,										   /* properties */
+	NULL, NULL									   /* string factory hack */
+};
+
 const gs_asClassDescriptor_t *const asCGameClassesDescriptors[] = {
 	&asModelHandleClassDescriptor,
 	&asSoundHandleClassDescriptor,
 	&asShaderHandleClassDescriptor,
 	&asFontHandleClassDescriptor,
 	&asSnapshotClassDescriptor,
+	&asModelSkeletonClassDescriptor,
 
 	NULL,
 };
@@ -198,6 +210,11 @@ static int asFunc_SnapFrameTime( void )
 	return cgs.snapFrameTime;
 }
 
+static void *asFunc_SkeletonForModel( struct model_s *m )
+{
+	return CG_SkeletonForModel( m );
+}
+
 static const gs_asglobfuncs_t asCGameGlobalFuncs[] = {
 	{ "void Print( const String &in )", asFUNCTION( asFunc_Print ), NULL },
 	{ "int get_ExtrapolationTime()", asFUNCTION( asFunc_ExtrapolationTime ), NULL },
@@ -207,6 +224,7 @@ static const gs_asglobfuncs_t asCGameGlobalFuncs[] = {
 	{ "SoundHandle RegisterSound( const String &in )", asFUNCTION( asFunc_RegisterSound ), NULL },
 	{ "ShaderHandle RegisterShader( const String &in )", asFUNCTION( asFunc_RegisterShader ), NULL },
 	{ "FontHandle RegisterFont( const String &in, int style, uint size )", asFUNCTION( asFunc_RegisterFont ), NULL },
+	{ "ModelSkeleton SkeletonForModel( ModelHandle )", asFUNCTION( asFunc_SkeletonForModel ), NULL },
 
 	{ NULL },
 };
