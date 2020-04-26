@@ -956,7 +956,7 @@ static void CL_ParseFrame( msg_t *msg ) {
 
 	oldSnap = ( cl.receivedSnapNum > 0 ) ? &cl.snapShots[cl.receivedSnapNum & UPDATE_MASK] : NULL;
 
-	snap = SNAP_ParseFrame( msg, oldSnap, &cl.suppressCount, cl.snapShots, cl_baselines, cl_shownet->integer );
+	snap = SNAP_ParseFrame( msg, oldSnap, &cl.suppressCount, cl.snapShots, cl.parseEntities, &cl.firstParseEntity, cl_baselines, cl_shownet->integer );
 	if( snap->valid ) {
 		cl.receivedSnapNum = snap->serverFrame;
 

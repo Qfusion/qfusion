@@ -49,28 +49,29 @@ typedef void ( *cg_fdrawchar_t )( int x, int y, int w, int h, float s1, float t1
 // structs and variables shared with the main engine
 //
 
-#define MAX_PARSE_ENTITIES  1024
+#define MAX_PARSE_ENTITIES  16384
 typedef struct snapshot_s {
-	bool valid;             // cleared if delta parsing was invalid
-	int64_t serverFrame;
-	int64_t serverTime;    // time in the server when frame was created
-	int64_t ucmdExecuted;
-	bool delta;
-	bool allentities;
-	bool multipov;
-	int64_t deltaFrameNum;
-	size_t areabytes;
-	uint8_t *areabits;             // portalarea visibility bits
-	int numplayers;
-	player_state_t playerState;
-	player_state_t playerStates[MAX_CLIENTS];
-	int numEntities;
-	entity_state_t parsedEntities[MAX_PARSE_ENTITIES];
-	game_state_t gameState;
-	int numgamecommands;
-	gcommand_t gamecommands[MAX_PARSE_GAMECOMMANDS];
-	char gamecommandsData[( MAX_STRING_CHARS / 16 ) * MAX_PARSE_GAMECOMMANDS];
-	size_t gamecommandsDataHead;
+	bool			valid; // cleared if delta parsing was invalid
+	int64_t			serverFrame;
+	int64_t			serverTime; // time in the server when frame was created
+	int64_t			ucmdExecuted;
+	bool			delta;
+	bool			allentities;
+	bool			multipov;
+	int64_t			deltaFrameNum;
+	size_t			areabytes;
+	uint8_t *		areabits; // portalarea visibility bits
+	int				numplayers;
+	int				numEntities;
+	int				firstEntity;
+	entity_state_t *parseEntities;
+	game_state_t	gameState;
+	int				numgamecommands;
+	size_t			gamecommandsDataHead;
+	player_state_t	playerState;
+	player_state_t	playerStates[MAX_CLIENTS];
+	gcommand_t		gamecommands[MAX_PARSE_GAMECOMMANDS];
+	char			gamecommandsData[( MAX_STRING_CHARS / 16 ) * MAX_PARSE_GAMECOMMANDS];
 } snapshot_t;
 
 //===============================================================
