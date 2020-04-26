@@ -639,6 +639,7 @@ void CL_ClearState( void ) {
 	cl.cmds = Mem_ZoneMalloc( sizeof( *cl.cmds ) * CMD_BACKUP );
 	cl.cmd_time = Mem_ZoneMalloc( sizeof( *cl.cmd_time ) * CMD_BACKUP );
 	cl.snapShots = Mem_ZoneMalloc( sizeof( *cl.snapShots ) * CMD_BACKUP );
+	cl.parseEntities = Mem_ZoneMalloc( sizeof( *cl.parseEntities ) * MAX_PARSE_ENTITIES );
 
 	//userinfo_modified = true;
 	cls.lastExecutedServerCommand = 0;

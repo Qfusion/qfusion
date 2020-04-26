@@ -1572,7 +1572,7 @@ static void CG_FireEntityEvents( bool early ) {
 	entity_state_t *state;
 
 	for( pnum = 0; pnum < cg.frame.numEntities; pnum++ ) {
-		state = &cg.frame.parsedEntities[pnum & ( MAX_PARSE_ENTITIES - 1 )];
+		state = &cg.frame.parseEntities[(pnum + cg.frame.firstEntity) & ( MAX_PARSE_ENTITIES - 1 )];
 
 		if( state->type == ET_SOUNDEVENT ) {
 			if( early ) {

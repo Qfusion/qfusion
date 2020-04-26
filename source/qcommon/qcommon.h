@@ -138,8 +138,9 @@ void Com_FreePureList( purelist_t **purelist );
 #define SNAP_MAX_DEMO_META_DATA_SIZE    4 * 1024
 
 void SNAP_ParseBaseline( msg_t *msg, entity_state_t *baselines );
-void SNAP_SkipFrame( msg_t *msg, struct snapshot_s *header );
-struct snapshot_s *SNAP_ParseFrame( msg_t *msg, struct snapshot_s *lastFrame, int *suppressCount, struct snapshot_s *backup, entity_state_t *baselines, int showNet );
+struct snapshot_s *SNAP_ParseFrame( msg_t *msg, struct snapshot_s *lastFrame, int *suppressCount,
+	struct snapshot_s *backup, entity_state_t *parseEntities, int *firstParseEntity, entity_state_t *baselines,
+	int showNet );
 
 void SNAP_WriteFrameSnapToClient( struct ginfo_s *gi, struct client_s *client, msg_t *msg, int64_t frameNum, int64_t gameTime,
 								  entity_state_t *baselines, struct client_entities_s *client_entities,

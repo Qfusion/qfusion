@@ -63,6 +63,14 @@ static const gs_asEnum_t asCGameEnums[] = {
 
 //======================================================================
 
+static entity_state_t *asSnapshot_getEntityState( int i, snapshot_t *snap )
+{
+	if( i < 0 || i >= snap->numEntities ) {
+		return NULL;
+	}
+	return &snap->parseEntities[(i + snap->firstEntity) & (MAX_PARSE_ENTITIES-1)];
+}
+
 static const gs_asFuncdef_t asCGameSnapshotFuncdefs[] = {
 	ASLIB_FUNCDEF_NULL,
 };
@@ -72,6 +80,9 @@ static const gs_asBehavior_t asCGameSnapshotObjectBehaviors[] = {
 };
 
 static const gs_asMethod_t asCGameSnapshotMethods[] = {
+	{ ASLIB_FUNCTION_DECL( EntityState @, getEntityState, ( int &in ) const ), asFUNCTION( asSnapshot_getEntityState ),
+		asCALL_CDECL_OBJLAST },
+
 	ASLIB_METHOD_NULL,
 };
 
@@ -86,6 +97,7 @@ static const gs_asProperty_t asCGameSnapshotProperties[] = {
 	{ ASLIB_PROPERTY_DECL( int64, deltaFrameNum ), ASLIB_FOFFSET( snapshot_t, deltaFrameNum ) },
 	{ ASLIB_PROPERTY_DECL( int, numPlayers ), ASLIB_FOFFSET( snapshot_t, numplayers ) },
 	{ ASLIB_PROPERTY_DECL( PlayerState @, playerState ), ASLIB_FOFFSET( snapshot_t, playerState ) },
+	{ ASLIB_PROPERTY_DECL( int, numEntities ), ASLIB_FOFFSET( snapshot_t, numEntities ) },
 
 	ASLIB_PROPERTY_NULL,
 };

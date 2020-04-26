@@ -84,7 +84,7 @@ static void SNAP_ParsePlayerstate( msg_t *msg, const player_state_t *oldstate, p
 static void SNAP_ParseDeltaEntity( msg_t *msg, snapshot_t *frame, int newnum, entity_state_t *old, unsigned byteMask ) {
 	entity_state_t *state;
 
-	state = &frame->parsedEntities[frame->numEntities & ( MAX_PARSE_ENTITIES - 1 )];
+	state = &frame->parseEntities[(frame->firstEntity + frame->numEntities) & ( MAX_PARSE_ENTITIES - 1 )];
 	frame->numEntities++;
 	MSG_ReadDeltaEntity( msg, old, state, newnum, byteMask );
 }
@@ -117,7 +117,8 @@ void SNAP_ParseBaseline( msg_t *msg, entity_state_t *baselines ) {
 * An svc_packetentities has just been parsed, deal with the
 * rest of the data stream.
 */
-static void SNAP_ParsePacketEntities( msg_t *msg, snapshot_t *oldframe, snapshot_t *newframe, entity_state_t *baselines, int shownet ) {
+static void SNAP_ParsePacketEntities( msg_t *msg, snapshot_t *oldframe, snapshot_t *newframe, entity_state_t *baselines, int shownet )
+{
 	int newnum;
 	bool remove;
 	unsigned byteMask;
@@ -133,7 +134,7 @@ static void SNAP_ParsePacketEntities( msg_t *msg, snapshot_t *oldframe, snapshot
 	} else if( oldindex >= oldframe->numEntities ) {
 		oldnum = 99999;
 	} else {
-		oldstate = &oldframe->parsedEntities[oldindex & ( MAX_PARSE_ENTITIES - 1 )];
+		oldstate = &oldframe->parseEntities[( oldindex + oldframe->firstEntity ) & ( MAX_PARSE_ENTITIES - 1 )];
 		oldnum = oldstate->number;
 	}
 
@@ -162,7 +163,7 @@ static void SNAP_ParsePacketEntities( msg_t *msg, snapshot_t *oldframe, snapshot
 			if( oldindex >= oldframe->numEntities ) {
 				oldnum = 99999;
 			} else {
-				oldstate = &oldframe->parsedEntities[oldindex & ( MAX_PARSE_ENTITIES - 1 )];
+				oldstate = &oldframe->parseEntities[( oldindex + oldframe->firstEntity ) & ( MAX_PARSE_ENTITIES - 1 )];
 				oldnum = oldstate->number;
 			}
 		}
@@ -198,7 +199,8 @@ static void SNAP_ParsePacketEntities( msg_t *msg, snapshot_t *oldframe, snapshot
 				if( oldindex >= oldframe->numEntities ) {
 					oldnum = 99999;
 				} else {
-					oldstate = &oldframe->parsedEntities[oldindex & ( MAX_PARSE_ENTITIES - 1 )];
+					oldstate =
+						&oldframe->parseEntities[( oldindex + oldframe->firstEntity ) & ( MAX_PARSE_ENTITIES - 1 )];
 					oldnum = oldstate->number;
 				}
 				continue;
@@ -215,7 +217,7 @@ static void SNAP_ParsePacketEntities( msg_t *msg, snapshot_t *oldframe, snapshot
 			if( oldindex >= oldframe->numEntities ) {
 				oldnum = 99999;
 			} else {
-				oldstate = &oldframe->parsedEntities[oldindex & ( MAX_PARSE_ENTITIES - 1 )];
+				oldstate = &oldframe->parseEntities[( oldindex + oldframe->firstEntity ) & ( MAX_PARSE_ENTITIES - 1 )];
 				oldnum = oldstate->number;
 			}
 			continue;
@@ -235,7 +237,7 @@ static void SNAP_ParsePacketEntities( msg_t *msg, snapshot_t *oldframe, snapshot
 		if( oldindex >= oldframe->numEntities ) {
 			oldnum = 99999;
 		} else {
-			oldstate = &oldframe->parsedEntities[oldindex & ( MAX_PARSE_ENTITIES - 1 )];
+			oldstate = &oldframe->parseEntities[( oldindex + oldframe->firstEntity ) & ( MAX_PARSE_ENTITIES - 1 )];
 			oldnum = oldstate->number;
 		}
 	}
@@ -244,7 +246,9 @@ static void SNAP_ParsePacketEntities( msg_t *msg, snapshot_t *oldframe, snapshot
 /*
 * SNAP_ParseFrameHeader
 */
-static snapshot_t *SNAP_ParseFrameHeader( msg_t *msg, snapshot_t *newframe, int *suppressCount, snapshot_t *backup, bool skipBody ) {
+static snapshot_t *SNAP_ParseFrameHeader( msg_t *msg, snapshot_t *newframe, int *suppressCount, snapshot_t *backup,
+	entity_state_t *parseEntities, int *firstParseEntity )
+{
 	int len, pos;
 	int areabytes;
 	uint8_t *areabits;
@@ -268,6 +272,9 @@ static snapshot_t *SNAP_ParseFrameHeader( msg_t *msg, snapshot_t *newframe, int 
 	memset( newframe, 0, sizeof( snapshot_t ) );
 	newframe->areabytes = areabytes;
 	newframe->areabits = areabits;
+
+	newframe->parseEntities = parseEntities;
+	newframe->firstEntity = *firstParseEntity;
 
 	newframe->serverTime = serverTime;
 	newframe->serverFrame = snapNum;
@@ -311,30 +318,18 @@ static snapshot_t *SNAP_ParseFrameHeader( msg_t *msg, snapshot_t *newframe, int 
 			} else {
 				newframe->valid = true; // valid delta parse
 			}
-		} else {
-			newframe->valid = skipBody;
 		}
-	}
-
-	if( skipBody ) {
-		MSG_SkipData( msg, len - ( msg->readcount - pos ) );
 	}
 
 	return newframe;
 }
 
 /*
-* SNAP_SkipFrame
-*/
-void SNAP_SkipFrame( msg_t *msg, snapshot_t *header ) {
-	static snapshot_t frame;
-	SNAP_ParseFrameHeader( msg, header ? header : &frame, NULL, NULL, true );
-}
-
-/*
 * SNAP_ParseFrame
 */
-snapshot_t *SNAP_ParseFrame( msg_t *msg, snapshot_t *lastFrame, int *suppressCount, snapshot_t *backup, entity_state_t *baselines, int showNet ) {
+snapshot_t *SNAP_ParseFrame( msg_t *msg, snapshot_t *lastFrame, int *suppressCount, snapshot_t *backup,
+	entity_state_t *parseEntities, int *firstParseEntity, entity_state_t *baselines, int showNet )
+{
 	int cmd;
 	size_t len;
 	snapshot_t  *deltaframe;
@@ -345,7 +340,7 @@ snapshot_t *SNAP_ParseFrame( msg_t *msg, snapshot_t *lastFrame, int *suppressCou
 	snapshot_t  *newframe;
 
 	// read header
-	newframe = SNAP_ParseFrameHeader( msg, NULL, suppressCount, backup, false );
+	newframe = SNAP_ParseFrameHeader( msg, NULL, suppressCount, backup, parseEntities, firstParseEntity );
 	deltaframe = NULL;
 
 	if( showNet == 3 ) {
@@ -443,7 +438,9 @@ snapshot_t *SNAP_ParseFrame( msg_t *msg, snapshot_t *lastFrame, int *suppressCou
 	if( cmd != svc_packetentities ) {
 		Com_Error( ERR_DROP, "SNAP_ParseFrame: not packetentities" );
 	}
+
 	SNAP_ParsePacketEntities( msg, deltaframe, newframe, baselines, showNet );
+	*firstParseEntity += newframe->numEntities;
 
 	return newframe;
 }
