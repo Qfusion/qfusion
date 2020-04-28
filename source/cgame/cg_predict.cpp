@@ -21,11 +21,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "cg_local.h"
 
 int cg_numSolids;
-static entity_state_t *cg_solidList[MAX_PARSE_ENTITIES];
+static entity_state_t *cg_solidList[MAX_SNAPSHOT_ENTITIES];
 
 int cg_numTriggers;
-static entity_state_t *cg_triggersList[MAX_PARSE_ENTITIES];
-static bool cg_triggersListTriggered[MAX_PARSE_ENTITIES];
+static entity_state_t *cg_triggersList[MAX_SNAPSHOT_ENTITIES];
+static bool			   cg_triggersListTriggered[MAX_SNAPSHOT_ENTITIES];
 
 static bool ucmdReady = false;
 
@@ -116,7 +116,7 @@ void CG_BuildSolidList( void ) {
 	cg_numSolids = 0;
 	cg_numTriggers = 0;
 	for( i = 0; i < cg.frame.numEntities; i++ ) {
-		ent = &cg.frame.parsedEntities[i & ( MAX_PARSE_ENTITIES - 1 )];
+		ent = &cg.frame.entities[i];
 		if( ISEVENTENTITY( ent ) ) {
 			continue;
 		}

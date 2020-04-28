@@ -327,7 +327,7 @@ void SV_InitGame( void ) {
 
 	svs.spawncount = rand();
 	svs.clients = Mem_Alloc( sv_mempool, sizeof( client_t ) * sv_maxclients->integer );
-	svs.client_entities.num_entities = sv_maxclients->integer * UPDATE_BACKUP * MAX_SNAP_ENTITIES;
+	svs.client_entities.num_entities = sv_maxclients->integer * UPDATE_BACKUP * MAX_SNAPSHOT_ENTITIES;
 	svs.client_entities.entities = Mem_Alloc( sv_mempool, sizeof( entity_state_t ) * svs.client_entities.num_entities );
 
 	// init network stuff

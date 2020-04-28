@@ -49,7 +49,6 @@ typedef void ( *cg_fdrawchar_t )( int x, int y, int w, int h, float s1, float t1
 // structs and variables shared with the main engine
 //
 
-#define MAX_PARSE_ENTITIES  1024
 typedef struct snapshot_s {
 	bool valid;             // cleared if delta parsing was invalid
 	int64_t serverFrame;
@@ -59,18 +58,18 @@ typedef struct snapshot_s {
 	bool allentities;
 	bool multipov;
 	int64_t deltaFrameNum;
-	size_t areabytes;
-	uint8_t *areabits;             // portalarea visibility bits
 	int numplayers;
 	player_state_t playerState;
-	player_state_t playerStates[MAX_CLIENTS];
 	int numEntities;
-	entity_state_t parsedEntities[MAX_PARSE_ENTITIES];
 	game_state_t gameState;
 	int numgamecommands;
-	gcommand_t gamecommands[MAX_PARSE_GAMECOMMANDS];
-	char gamecommandsData[( MAX_STRING_CHARS / 16 ) * MAX_PARSE_GAMECOMMANDS];
-	size_t gamecommandsDataHead;
+	size_t		   areabytes;
+	uint8_t *	   areabits; // portalarea visibility bits
+	size_t		   gamecommandsDataHead;
+	player_state_t playerStates[MAX_CLIENTS];
+	entity_state_t entities[MAX_SNAPSHOT_ENTITIES];
+	gcommand_t	   gamecommands[MAX_SNAPSHOT_GAMECOMMANDS];
+	char		   gamecommandsData[16384];
 } snapshot_t;
 
 //===============================================================

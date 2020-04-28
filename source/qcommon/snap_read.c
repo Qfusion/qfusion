@@ -84,7 +84,11 @@ static void SNAP_ParsePlayerstate( msg_t *msg, const player_state_t *oldstate, p
 static void SNAP_ParseDeltaEntity( msg_t *msg, snapshot_t *frame, int newnum, entity_state_t *old, unsigned byteMask ) {
 	entity_state_t *state;
 
-	state = &frame->parsedEntities[frame->numEntities & ( MAX_PARSE_ENTITIES - 1 )];
+	if( frame->numEntities >= MAX_SNAPSHOT_ENTITIES ) {
+		Com_Error( ERR_DROP, "SNAP_ParseDeltaEntity: >numEntities >= MAX_SNAPSHOT_ENTITIES:%i", frame->numEntities );
+	}
+
+	state = &frame->entities[frame->numEntities];
 	frame->numEntities++;
 	MSG_ReadDeltaEntity( msg, old, state, newnum, byteMask );
 }
@@ -133,7 +137,7 @@ static void SNAP_ParsePacketEntities( msg_t *msg, snapshot_t *oldframe, snapshot
 	} else if( oldindex >= oldframe->numEntities ) {
 		oldnum = 99999;
 	} else {
-		oldstate = &oldframe->parsedEntities[oldindex & ( MAX_PARSE_ENTITIES - 1 )];
+		oldstate = &oldframe->entities[oldindex];
 		oldnum = oldstate->number;
 	}
 
@@ -162,7 +166,7 @@ static void SNAP_ParsePacketEntities( msg_t *msg, snapshot_t *oldframe, snapshot
 			if( oldindex >= oldframe->numEntities ) {
 				oldnum = 99999;
 			} else {
-				oldstate = &oldframe->parsedEntities[oldindex & ( MAX_PARSE_ENTITIES - 1 )];
+				oldstate = &oldframe->entities[oldindex];
 				oldnum = oldstate->number;
 			}
 		}
@@ -198,7 +202,7 @@ static void SNAP_ParsePacketEntities( msg_t *msg, snapshot_t *oldframe, snapshot
 				if( oldindex >= oldframe->numEntities ) {
 					oldnum = 99999;
 				} else {
-					oldstate = &oldframe->parsedEntities[oldindex & ( MAX_PARSE_ENTITIES - 1 )];
+					oldstate = &oldframe->entities[oldindex];
 					oldnum = oldstate->number;
 				}
 				continue;
@@ -215,7 +219,7 @@ static void SNAP_ParsePacketEntities( msg_t *msg, snapshot_t *oldframe, snapshot
 			if( oldindex >= oldframe->numEntities ) {
 				oldnum = 99999;
 			} else {
-				oldstate = &oldframe->parsedEntities[oldindex & ( MAX_PARSE_ENTITIES - 1 )];
+				oldstate = &oldframe->entities[oldindex];
 				oldnum = oldstate->number;
 			}
 			continue;
@@ -235,7 +239,7 @@ static void SNAP_ParsePacketEntities( msg_t *msg, snapshot_t *oldframe, snapshot
 		if( oldindex >= oldframe->numEntities ) {
 			oldnum = 99999;
 		} else {
-			oldstate = &oldframe->parsedEntities[oldindex & ( MAX_PARSE_ENTITIES - 1 )];
+			oldstate = &oldframe->entities[oldindex];
 			oldnum = oldstate->number;
 		}
 	}
@@ -373,7 +377,7 @@ snapshot_t *SNAP_ParseFrame( msg_t *msg, snapshot_t *lastFrame, int *suppressCou
 		if( newframe->valid &&
 			( !lastFrame || !lastFrame->valid || newframe->serverFrame > lastFrame->serverFrame + framediff ) ) {
 			newframe->numgamecommands++;
-			if( newframe->numgamecommands > MAX_PARSE_GAMECOMMANDS ) {
+			if( newframe->numgamecommands > MAX_SNAPSHOT_GAMECOMMANDS ) {
 				Com_Error( ERR_DROP, "SNAP_ParseFrame: too many gamecommands" );
 			}
 			if( newframe->gamecommandsDataHead + strlen( text ) >= sizeof( newframe->gamecommandsData ) ) {

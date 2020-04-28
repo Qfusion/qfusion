@@ -443,7 +443,6 @@ static bool SNAP_BitsCullEntity( cmodel_state_t *cms, edict_t *ent, uint8_t *bit
 
 //=====================================================================
 
-#define MAX_SNAPSHOT_ENTITIES   1024
 typedef struct {
 	int numSnapshotEntities;
 	int snapshotEntities[MAX_SNAPSHOT_ENTITIES];
