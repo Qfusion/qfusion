@@ -133,9 +133,9 @@ static void SNAP_WriteMultiPOVCommands( ginfo_t *gi, client_t *client, msg_t *ms
 		}
 
 		maxnumtargets++;
-		for( positions[i] = cl->gameCommandCurrent - MAX_RELIABLE_COMMANDS + 1;
+		for( positions[i] = cl->gameCommandCurrent - MAX_SNAPSHOT_GAMECOMMANDS + 1;
 			 positions[i] <= cl->gameCommandCurrent; positions[i]++ ) {
-			index = positions[i] & ( MAX_RELIABLE_COMMANDS - 1 );
+			index = positions[i] & ( MAX_SNAPSHOT_GAMECOMMANDS - 1 );
 
 			// we need to check for too new commands too, because gamecommands for the next snap are generated
 			// all the time, and we might want to create a server demo frame or something in between snaps
@@ -168,7 +168,7 @@ static void SNAP_WriteMultiPOVCommands( ginfo_t *gi, client_t *client, msg_t *ms
 				continue;
 			}
 
-			index = positions[i] & ( MAX_RELIABLE_COMMANDS - 1 );
+			index = positions[i] & ( MAX_SNAPSHOT_GAMECOMMANDS - 1 );
 
 			if( command && !strcmp( cl->gameCommands[index].command, command ) &&
 				framenum == cl->gameCommands[index].framenum ) {
@@ -296,8 +296,8 @@ void SNAP_WriteFrameSnapToClient( ginfo_t *gi, client_t *client, msg_t *msg, int
 	if( frame->multipov ) {
 		SNAP_WriteMultiPOVCommands( gi, client, msg, frameNum );
 	} else {
-		for( i = client->gameCommandCurrent - MAX_RELIABLE_COMMANDS + 1; i <= client->gameCommandCurrent; i++ ) {
-			index = i & ( MAX_RELIABLE_COMMANDS - 1 );
+		for( i = client->gameCommandCurrent - MAX_SNAPSHOT_GAMECOMMANDS + 1; i <= client->gameCommandCurrent; i++ ) {
+			index = i & ( MAX_SNAPSHOT_GAMECOMMANDS - 1 );
 
 			// check that it is valid command and that has not already been sent
 			// we can only allow commands from certain amount of old frames, so the short won't overflow
