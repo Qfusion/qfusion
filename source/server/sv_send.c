@@ -362,18 +362,16 @@ void SV_ResetClientFrameCounters( void ) {
 * SV_WriteFrameSnapToClient
 */
 void SV_WriteFrameSnapToClient( client_t *client, msg_t *msg ) {
-	SNAP_WriteFrameSnapToClient( &sv.gi, client, msg, sv.framenum, svs.gametime, sv.baselines,
-								 &svs.client_entities, 0, NULL, NULL );
+	SNAP_WriteFrameSnapToClient( &sv.gi, client, msg, sv.framenum, svs.gametime, sv.baselines, &svs.client_entities, 
+		0, NULL, NULL );
 }
 
 /*
 * SV_BuildClientFrameSnap
 */
 void SV_BuildClientFrameSnap( client_t *client ) {
-	SNAP_BuildClientFrameSnap( svs.cms, &sv.gi, sv.framenum, svs.gametime,
-							  client, ge->GetGameState(),
-							   &svs.client_entities,
-							   false, sv_mempool );
+	SNAP_BuildClientFrameSnap( svs.cms, &sv.gi, sv.framenum, svs.gametime, client, ge->GetGameState(), 
+		&svs.client_entities, sv_mempool );
 }
 
 /*
