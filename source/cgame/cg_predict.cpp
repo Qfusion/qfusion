@@ -116,7 +116,7 @@ void CG_BuildSolidList( void ) {
 	cg_numSolids = 0;
 	cg_numTriggers = 0;
 	for( i = 0; i < cg.frame.numEntities; i++ ) {
-		ent = &cg.frame.parseEntities[(i + cg.frame.firstEntity) & ( MAX_PARSE_ENTITIES - 1 )];
+		ent = &cg.frame.parsedEntities[i & ( MAX_PARSE_ENTITIES - 1 )];
 		if( ISEVENTENTITY( ent ) ) {
 			continue;
 		}

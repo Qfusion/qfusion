@@ -84,9 +84,7 @@ typedef struct {
 	int previousSnapNum;
 	int suppressCount;              // number of messages rate suppressed
 	snapshot_t *snapShots;          // [CMD_BACKUP]
-	entity_state_t *parseEntities;	// [MAX_PARSE_ENTITIES]
-	int				firstParseEntity;
-	uint8_t *	frames_areabits;
+	uint8_t *frames_areabits;
 
 	cmodel_state_t *cms;
 

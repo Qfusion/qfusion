@@ -379,7 +379,7 @@ void CG_DrawMiniMap( int x, int y, int iw, int ih, float viewDist, int align, ve
 	draw_minimap( x, y, isize, tmp_col, centre );
 
 	for( i = cg.frame.numEntities - 1; i >= 0; i-- ) { // draw players above everything
-		entnum = cg.frame.parseEntities[(i + cg.frame.firstEntity) & ( MAX_PARSE_ENTITIES - 1 )].number;
+		entnum = cg.frame.parsedEntities[i & ( MAX_PARSE_ENTITIES - 1 )].number;
 
 		// filter invalid ents
 		if( entnum < 1 || entnum >= MAX_EDICTS ) {
