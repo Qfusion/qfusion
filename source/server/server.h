@@ -189,10 +189,6 @@ typedef struct client_s {
 // out before legitimate users connected
 #define MAX_CHALLENGES  1024
 
-// MAX_SNAP_ENTITIES is the guess of what we consider maximum amount of entities
-// to be sent to a client into a snap. It's used for finding size of the backup storage
-#define MAX_SNAP_ENTITIES 64
-
 typedef struct {
 	netadr_t adr;
 	int challenge;
