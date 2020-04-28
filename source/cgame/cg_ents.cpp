@@ -349,7 +349,7 @@ bool CG_NewFrameSnap( snapshot_t *frame, snapshot_t *lerpframe ) {
 	CG_UpdatePlayerState();
 
 	for( i = 0; i < frame->numEntities; i++ )
-		CG_NewPacketEntityState( &frame->parseEntities[(i + frame->firstEntity) & ( MAX_PARSE_ENTITIES - 1 )] );
+		CG_NewPacketEntityState( &frame->parsedEntities[i & ( MAX_PARSE_ENTITIES - 1 )] );
 
 	if( lerpframe && ( memcmp( cg.oldFrame.areabits, cg.frame.areabits, cg.frame.areabytes ) == 0 ) ) {
 		cg.oldAreabits = true;
@@ -1828,7 +1828,7 @@ void CG_AddEntities( void ) {
 	AnglesToAxis( autorotate, cg.autorotateAxis );
 
 	for( pnum = 0; pnum < cg.frame.numEntities; pnum++ ) {
-		state = &cg.frame.parseEntities[(pnum + cg.frame.firstEntity) & ( MAX_PARSE_ENTITIES - 1 )];
+		state = &cg.frame.parsedEntities[pnum & ( MAX_PARSE_ENTITIES - 1 )];
 		cent = &cg_entities[state->number];
 
 		if( cent->current.linearMovement ) {
@@ -2027,7 +2027,7 @@ void CG_LerpEntities( void ) {
 		int number;
 		bool spatialize;
 
-		state = &cg.frame.parseEntities[(pnum + cg.frame.firstEntity) & ( MAX_PARSE_ENTITIES - 1 )];
+		state = &cg.frame.parsedEntities[pnum & ( MAX_PARSE_ENTITIES - 1 )];
 		number = state->number;
 		cent = &cg_entities[number];
 		spatialize = true;
@@ -2121,7 +2121,7 @@ void CG_UpdateEntities( void ) {
 	CG_ResetItemTimers();
 
 	for( pnum = 0; pnum < cg.frame.numEntities; pnum++ ) {
-		state = &cg.frame.parseEntities[(pnum + cg.frame.firstEntity) & ( MAX_PARSE_ENTITIES - 1 )];
+		state = &cg.frame.parsedEntities[pnum & ( MAX_PARSE_ENTITIES - 1 )];
 		cent = &cg_entities[state->number];
 		cent->type = state->type;
 		cent->effects = state->effects;
