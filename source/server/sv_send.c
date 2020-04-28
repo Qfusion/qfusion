@@ -60,7 +60,7 @@ void SV_AddGameCommand( client_t *client, const char *cmd ) {
 	}
 
 	client->gameCommandCurrent++;
-	index = client->gameCommandCurrent & ( MAX_RELIABLE_COMMANDS - 1 );
+	index = client->gameCommandCurrent & ( MAX_SNAPSHOT_GAMECOMMANDS - 1 );
 	Q_strncpyz( client->gameCommands[index].command, cmd, sizeof( client->gameCommands[index].command ) );
 	if( client->lastSentFrameNum ) {
 		client->gameCommands[index].framenum = client->lastSentFrameNum + 1;
