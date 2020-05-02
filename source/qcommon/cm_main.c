@@ -531,13 +531,6 @@ int CM_ClusterRowSize( cmodel_state_t *cms ) {
 }
 
 /*
-* CM_ClusterRowLongs
-*/
-static int CM_ClusterRowLongs( cmodel_state_t *cms ) {
-	return cms->map_pvs ? ( cms->map_pvs->rowsize + 3 ) / 4 : MAX_CM_LEAFS / 32;
-}
-
-/*
 * CM_NumClusters
 */
 int CM_NumClusters( cmodel_state_t *cms ) {
@@ -545,27 +538,14 @@ int CM_NumClusters( cmodel_state_t *cms ) {
 }
 
 /*
-* CM_PVSData
-*/
-dvis_t *CM_PVSData( cmodel_state_t *cms ) {
-	return cms->map_pvs;
-}
-
-/*
-* CM_ClusterVS
-*/
-static inline uint8_t *CM_ClusterVS( int cluster, dvis_t *vis, uint8_t *nullrow ) {
-	if( cluster == -1 || !vis ) {
-		return nullrow;
-	}
-	return ( uint8_t * )vis->data + cluster * vis->rowsize;
-}
-
-/*
 * CM_ClusterPVS
 */
-static inline uint8_t *CM_ClusterPVS( cmodel_state_t *cms, int cluster ) {
-	return CM_ClusterVS( cluster, cms->map_pvs, cms->nullrow );
+uint8_t *CM_ClusterPVS( cmodel_state_t *cms, int cluster ) {
+	dvis_t *vis = cms->map_pvs;
+	if( cluster == -1 || !vis ) {
+		return cms->nullrow;
+	}
+	return (uint8_t *)vis->data + cluster * vis->rowsize;
 }
 
 /*
@@ -819,70 +799,6 @@ bool CM_HeadnodeVisible( cmodel_state_t *cms, int nodenum, uint8_t *visbits ) {
 		return true;
 	}
 	return false;
-}
-
-
-/*
-* CM_MergePVS
-* Merge PVS at origin into out
-*/
-void CM_MergePVS( cmodel_state_t *cms, const vec3_t org, uint8_t *out ) {
-	int leafs[128];
-	int i, j, count;
-	int longs;
-	uint8_t *src;
-	vec3_t mins, maxs;
-
-	for( i = 0; i < 3; i++ ) {
-		mins[i] = org[i] - 9;
-		maxs[i] = org[i] + 9;
-	}
-
-	count = CM_BoxLeafnums( cms, mins, maxs, leafs, sizeof( leafs ) / sizeof( int ), NULL );
-	if( count < 1 ) {
-		Com_Error( ERR_FATAL, "CM_MergePVS: count < 1" );
-	}
-	longs = CM_ClusterRowLongs( cms );
-
-	// convert leafs to clusters
-	for( i = 0; i < count; i++ )
-		leafs[i] = CM_LeafCluster( cms, leafs[i] );
-
-	// or in all the other leaf bits
-	for( i = 0; i < count; i++ ) {
-		for( j = 0; j < i; j++ )
-			if( leafs[i] == leafs[j] ) {
-				break;
-			}
-		if( j != i ) {
-			continue; // already have the cluster we want
-		}
-		src = CM_ClusterPVS( cms, leafs[i] );
-		for( j = 0; j < longs; j++ )
-			( (int *)out )[j] |= ( (int *)src )[j];
-	}
-}
-
-/*
-* CM_MergeVisSets
-*/
-int CM_MergeVisSets( cmodel_state_t *cms, const vec3_t org, uint8_t *pvs, uint8_t *areabits ) {
-	int area;
-
-	assert( pvs || areabits );
-
-	if( pvs ) {
-		CM_MergePVS( cms, org, pvs );
-	}
-
-	area = CM_PointLeafnum( cms, org );
-
-	area = CM_LeafArea( cms, area );
-	if( areabits && area > -1 ) {
-		CM_MergeAreaBits( cms, areabits, area );
-	}
-
-	return CM_AreaRowSize( cms ); // areabytes
 }
 
 /*

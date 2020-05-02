@@ -362,8 +362,42 @@ Build a client frame structure
 * so we can't use a single PVS point
 */
 static void SNAP_FatPVS( cmodel_state_t *cms, const vec3_t org, uint8_t *fatpvs ) {
+	int	   leafs[128];
+	int	   i, j, count;
+	int	   longs;
+	vec3_t mins, maxs;
+
 	memset( fatpvs, 0, CM_ClusterRowSize( cms ) );
-	CM_MergePVS( cms, org, fatpvs );
+
+	for( i = 0; i < 3; i++ ) {
+		mins[i] = org[i] - 9;
+		maxs[i] = org[i] + 9;
+	}
+
+	count = CM_BoxLeafnums( cms, mins, maxs, leafs, sizeof( leafs ) / sizeof( int ), NULL );
+	if( count < 1 ) {
+		Com_Error( ERR_FATAL, "CM_MergePVS: count < 1" );
+	}
+	longs = (CM_ClusterRowSize( cms ) + 3) / 4;
+
+	// convert leafs to clusters
+	for( i = 0; i < count; i++ )
+		leafs[i] = CM_LeafCluster( cms, leafs[i] );
+
+	// or in all the other leaf bits
+	for( i = 0; i < count; i++ ) {
+		uint8_t *src;
+		for( j = 0; j < i; j++ )
+			if( leafs[i] == leafs[j] ) {
+				break;
+			}
+		if( j != i ) {
+			continue; // already have the cluster we want
+		}
+		src = CM_ClusterPVS( cms, leafs[i] );
+		for( j = 0; j < longs; j++ )
+			( (int *)fatpvs )[j] |= ( (int *)src )[j];
+	}
 }
 
 /*

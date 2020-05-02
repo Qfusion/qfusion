@@ -29,15 +29,13 @@ struct cmodel_s *CM_LoadMap( cmodel_state_t *cms, const char *name, bool clientl
 struct cmodel_s *CM_InlineModel( cmodel_state_t *cms, int num ); // 1, 2, etc
 char *CM_LoadMapMessage( char *name, char *message, int size );
 
-dvis_t *CM_PVSData( cmodel_state_t *cms );
-dvis_t *CM_PHSData( cmodel_state_t *cms );
-
 int CM_NumClusters( cmodel_state_t *cms );
 int CM_NumAreas( cmodel_state_t *cms );
 int CM_NumInlineModels( cmodel_state_t *cms );
 char *CM_EntityString( cmodel_state_t *cms );
 int CM_EntityStringLen( cmodel_state_t *cms );
 const char *CM_ShaderrefName( cmodel_state_t *cms, int ref );
+uint8_t *CM_ClusterPVS( cmodel_state_t *cms, int cluster );
 
 // creates a clipping hull for an arbitrary bounding box
 struct cmodel_s *CM_ModelForBBox( cmodel_state_t *cms, vec3_t mins, vec3_t maxs );
@@ -72,9 +70,6 @@ bool CM_HeadnodeVisible( cmodel_state_t *cms, int headnode, uint8_t *visbits );
 
 void CM_WritePortalState( cmodel_state_t *cms, int file );
 void CM_ReadPortalState( cmodel_state_t *cms, int file );
-
-void CM_MergePVS( cmodel_state_t *cms, const vec3_t org, uint8_t *out );
-int CM_MergeVisSets( cmodel_state_t *cms, const vec3_t org, uint8_t *pvs, uint8_t *areabits );
 
 bool CM_InPVS( cmodel_state_t *cms, const vec3_t p1, const vec3_t p2 );
 

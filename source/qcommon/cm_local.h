@@ -163,7 +163,7 @@ struct cmodel_state_s {
 	carea_t *map_areas;             // = &map_area_empty;
 	int *map_areaportals;
 
-	dvis_t *map_pvs, *map_phs;
+	dvis_t *map_pvs;
 	int map_visdatasize;
 
 	uint8_t nullrow[MAX_CM_LEAFS / 8];
