@@ -82,7 +82,6 @@ struct edict_s {
 typedef struct {
 	bool allentities;
 	bool multipov;
-	int clientarea;
 	int numareas;
 	int areabytes;
 	uint8_t *areabits;                  // portalarea visibility bits

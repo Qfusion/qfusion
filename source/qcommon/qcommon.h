@@ -72,6 +72,7 @@ void *MSG_GetSpace( msg_t *buf, size_t length );
 void MSG_WriteData( msg_t *msg, const void *data, size_t length );
 void MSG_CopyData( msg_t *buf, const void *data, size_t length );
 int MSG_SkipData( msg_t *sb, size_t length );
+uint8_t *MSG_PeekData( msg_t *msg, size_t size );
 
 //============================================================================
 
