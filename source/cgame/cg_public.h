@@ -63,13 +63,12 @@ typedef struct snapshot_s {
 	int numEntities;
 	game_state_t gameState;
 	int numgamecommands;
-	size_t		   areabytes;
-	uint8_t *	   areabits; // portalarea visibility bits
 	size_t		   gamecommandsDataHead;
 	player_state_t playerStates[MAX_CLIENTS];
 	entity_state_t entities[MAX_SNAPSHOT_ENTITIES];
 	gcommand_t	   gamecommands[MAX_SNAPSHOT_GAMECOMMANDS];
 	char		   gamecommandsData[16384];
+	uint8_t		   areabits[MAX_SNAPSHOT_AREABYTES]; // portalarea visibility bits
 } snapshot_t;
 
 //===============================================================

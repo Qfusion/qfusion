@@ -407,10 +407,11 @@ typedef struct {
 
 //==============================================
 
-// MAX_SNAP_ENTITIES is the guess of what we consider maximum amount of entities
+// MAX_SNAPSHOT_ENTITIES is the guess of what we consider maximum amount of entities
 // to be sent to a client into a snap.
 #define MAX_SNAPSHOT_ENTITIES 2048
 #define MAX_SNAPSHOT_GAMECOMMANDS 64
+#define MAX_SNAPSHOT_AREABYTES ( 256 * ( 256 / 8 ) ) // must match MAX_MAP_AREAS!
 
 typedef struct {
 	bool all;

@@ -535,10 +535,6 @@ static int CG_RenderFlags( void ) {
 		}
 	}
 
-	if( cg.oldAreabits ) {
-		rdflags |= RDF_OLDAREABITS;
-	}
-
 	if( cg.portalInView ) {
 		rdflags |= RDF_PORTALINVIEW;
 	}
@@ -1028,8 +1024,6 @@ void CG_RenderView( int frameTime, int realFrameTime, int64_t realTime, int64_t 
 	CG_SetupRefDef( &cg.view );
 
 	trap_R_RenderScene( &cg.view.refdef );
-
-	cg.oldAreabits = true;
 
 	trap_S_Update( cg.view.origin, cg.view.velocity, cg.view.axis, cgs.clientInfo[cgs.playerNum].name );
 
