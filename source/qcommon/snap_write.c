@@ -223,8 +223,9 @@ static void SNAP_WriteMultiPOVCommands( ginfo_t *gi, client_t *client, msg_t *ms
 * SNAP_WriteFrameSnapToClient
 */
 void SNAP_WriteFrameSnapToClient( ginfo_t *gi, client_t *client, msg_t *msg, int64_t frameNum, int64_t gameTime,
-								  entity_state_t *baselines, client_entities_t *client_entities,
-								  int numcmds, gcommand_t *commands, const char *commandsData ) {
+	entity_state_t *baselines, client_entities_t *client_entities, int numcmds, gcommand_t *commands,
+	const char *commandsData )
+{
 	client_snapshot_t *frame, *oldframe;
 	int flags, i, index, pos, length, supcnt;
 
@@ -320,7 +321,7 @@ void SNAP_WriteFrameSnapToClient( ginfo_t *gi, client_t *client, msg_t *msg, int
 	MSG_WriteInt16( msg, -1 );
 
 	// send over the areabits
-	MSG_WriteUint8( msg, frame->areabytes );
+	MSG_WriteUintBase128( msg, frame->numareas );
 	MSG_WriteData( msg, frame->areabits, frame->areabytes );
 
 	SNAP_WriteDeltaGameStateToClient( oldframe, frame, msg );
@@ -403,7 +404,7 @@ static void SNAP_FatPVS( cmodel_state_t *cms, const vec3_t org, uint8_t *fatpvs 
 /*
 * SNAP_BitsCullEntity
 */
-static bool SNAP_BitsCullEntity( cmodel_state_t *cms, edict_t *ent, uint8_t *bits, int max_clusters ) {
+static bool SNAP_BitsCullEntity( cmodel_state_t *cms, edict_t *ent, const uint8_t *bits, int max_clusters ) {
 	int i, l;
 
 	// too many leafs for individual check, go by headnode
@@ -572,12 +573,13 @@ static bool SNAP_SnapCullEntity( cmodel_state_t *cms, edict_t *ent, edict_t *cle
 	if( ent->r.areanum < 0 ) {
 		return true;
 	}
+
 	if( viewarea >= 0 ) {
 		// this is the same as CM_AreasConnected but portal's visibility included
 		uint8_t *areabits = frame->areabits + viewarea * CM_AreaRowSize( cms );
 		if( !( areabits[ent->r.areanum >> 3] & ( 1 << ( ent->r.areanum & 7 ) ) ) ) {
 			// doors can legally straddle two areas, so we may need to check another one
-			if( ent->r.areanum2 < 0 || !( areabits[ent->r.areanum2 >> 3] & ( 1 << ( ent->r.areanum2 & 7 ) ) ) ) {
+			if( ent->r.areanum2 < 0 || !CM_AreasConnected( cms, viewarea, ent->r.areanum2 ) ) {
 				return true; // blocked by a door
 			}
 		}
@@ -656,8 +658,9 @@ static void SNAP_AddEntitiesVisibleAtOrigin( cmodel_state_t *cms, ginfo_t *gi, e
 /*
 * SNAP_BuildSnapEntitiesList
 */
-static void SNAP_BuildSnapEntitiesList( cmodel_state_t *cms, ginfo_t *gi, edict_t *clent, const vec3_t vieworg, 
-										client_snapshot_t *frame, snapshotEntityNumbers_t *entList ) {
+static void SNAP_BuildSnapEntitiesList( cmodel_state_t *cms, ginfo_t *gi, edict_t *clent, const vec3_t vieworg,
+	client_snapshot_t *frame, snapshotEntityNumbers_t *entList )
+{
 	int entNum;
 	int leafnum, clientarea;
 
@@ -667,9 +670,6 @@ static void SNAP_BuildSnapEntitiesList( cmodel_state_t *cms, ginfo_t *gi, edict_
 	// find the client's PVS
 	leafnum = CM_PointLeafnum( cms, vieworg );
 	clientarea = CM_LeafArea( cms, leafnum );
-
-	frame->clientarea = clientarea;
-	frame->areabytes = CM_WriteAreaBits( cms, frame->areabits );
 
 	// always add the client entity
 	if( clent ) {
@@ -713,8 +713,8 @@ void SNAP_BuildClientFrameSnap( cmodel_state_t *cms, ginfo_t *gi, int64_t frameN
 	clent = client->edict;
 	if( clent && !clent->r.client ) {   // allow NULL ent for server record
 		return;     // not in game yet
-
 	}
+
 	if( clent ) {
 		VectorCopy( clent->s.origin, org );
 		org[2] += clent->r.client->ps.viewheight;
@@ -741,13 +741,18 @@ void SNAP_BuildClientFrameSnap( cmodel_state_t *cms, ginfo_t *gi, int64_t frameN
 	if( frame->numareas < numareas ) {
 		frame->numareas = numareas;
 
-		numareas *= CM_AreaRowSize( cms );
+		frame->areabytes = CM_AreaBitsUTMSize( numareas );
+		if( frame->areabytes > MAX_SNAPSHOT_AREABYTES ) {
+			Com_Error( ERR_FATAL, "SNAP_BuildClientFrameSnap: frame->areabytes > MAX_SNAPSHOT_AREABYTES" );
+		}
+
 		if( frame->areabits ) {
 			Mem_Free( frame->areabits );
-			frame->areabits = NULL;
 		}
-		frame->areabits = (uint8_t*)Mem_Alloc( mempool, numareas );
+		frame->areabits = (uint8_t *)Mem_Alloc( mempool, frame->areabytes );
 	}
+
+	CM_WriteAreaBitsUTM( cms, frame->areabits );
 
 	// grab the current player_state_t
 	if( frame->multipov ) {

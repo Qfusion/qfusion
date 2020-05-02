@@ -28,25 +28,24 @@ static bool cm_initialized = false;
 static mempool_t *cmap_mempool;
 
 static cvar_t *cm_noAreas;
-cvar_t *cm_noCurves;
+cvar_t *	   cm_noCurves;
 
 void CM_LoadQ2BrushModel( cmodel_state_t *cms, void *parent, void *buf, bspFormatDesc_t *format );
 void CM_LoadQ1BrushModel( cmodel_state_t *cms, void *parent, void *buffer, bspFormatDesc_t *format );
 void CM_LoadQ3BrushModel( cmodel_state_t *cms, void *parent, void *buffer, bspFormatDesc_t *format );
 
-static const modelFormatDescr_t cm_supportedformats[] =
-{
+static const modelFormatDescr_t cm_supportedformats[] = {
 	// Q3-alike .bsp models
-	{ "*", 4, q3BSPFormats, ( const modelLoader_t )CM_LoadQ3BrushModel },
+	{ "*", 4, q3BSPFormats, (const modelLoader_t)CM_LoadQ3BrushModel },
 
 	// Q2-alike .bsp models
-	{ "*", 4, q2BSPFormats, ( const modelLoader_t )CM_LoadQ2BrushModel },
+	{ "*", 4, q2BSPFormats, (const modelLoader_t)CM_LoadQ2BrushModel },
 
 	// Q1-alike .bsp models
-	{ "*", 0, q1BSPFormats, ( const modelLoader_t )CM_LoadQ1BrushModel },
+	{ "*", 0, q1BSPFormats, (const modelLoader_t)CM_LoadQ1BrushModel },
 
 	// trailing NULL
-	{ NULL, 0, NULL, NULL }
+	{ NULL, 0, NULL, NULL },
 };
 
 static void CM_AllocateCheckCounts( cmodel_state_t *cms );
@@ -60,18 +59,20 @@ PATCH LOADING
 */
 
 /*
-* CM_AllocateCheckCounts
-*/
-static void CM_AllocateCheckCounts( cmodel_state_t *cms ) {
+ * CM_AllocateCheckCounts
+ */
+static void CM_AllocateCheckCounts( cmodel_state_t *cms )
+{
 	cms->checkcount = 0;
 	cms->map_brush_checkcheckouts = Mem_Alloc( cms->mempool, cms->numbrushes * sizeof( int ) );
 	cms->map_face_checkcheckouts = Mem_Alloc( cms->mempool, cms->numfaces * sizeof( int ) );
 }
 
 /*
-* CM_FreeCheckCounts
-*/
-static void CM_FreeCheckCounts( cmodel_state_t *cms ) {
+ * CM_FreeCheckCounts
+ */
+static void CM_FreeCheckCounts( cmodel_state_t *cms )
+{
 	cms->checkcount = 0;
 
 	if( cms->map_brush_checkcheckouts ) {
@@ -86,9 +87,10 @@ static void CM_FreeCheckCounts( cmodel_state_t *cms ) {
 }
 
 /*
-* CM_Clear
-*/
-static void CM_Clear( cmodel_state_t *cms ) {
+ * CM_Clear
+ */
+static void CM_Clear( cmodel_state_t *cms )
+{
 	int i;
 
 	if( cms->map_shaderrefs ) {
@@ -209,18 +211,19 @@ MAP LOADING
 */
 
 /*
-* CM_LoadMap
-* Loads in the map and all submodels
-*
-*  for spawning a server with no map at all, call like this:
-*  CM_LoadMap( "", false, &checksum );	// no real map
-*/
-cmodel_t *CM_LoadMap( cmodel_state_t *cms, const char *name, bool clientload, unsigned *checksum ) {
-	int length;
-	unsigned *buf;
-	char *header;
+ * CM_LoadMap
+ * Loads in the map and all submodels
+ *
+ *  for spawning a server with no map at all, call like this:
+ *  CM_LoadMap( "", false, &checksum );	// no real map
+ */
+cmodel_t *CM_LoadMap( cmodel_state_t *cms, const char *name, bool clientload, unsigned *checksum )
+{
+	int						  length;
+	unsigned *				  buf;
+	char *					  header;
 	const modelFormatDescr_t *descr;
-	bspFormatDesc_t *bspFormat = NULL;
+	bspFormatDesc_t *		  bspFormat = NULL;
 
 	assert( cms );
 	assert( name && strlen( name ) < MAX_CONFIGSTRING_CHARS );
@@ -243,22 +246,22 @@ cmodel_t *CM_LoadMap( cmodel_state_t *cms, const char *name, bool clientload, un
 		cms->numleafs = 1;
 		cms->numcmodels = 2;
 		*checksum = 0;
-		return cms->map_cmodels;    // cinematic servers won't have anything at all
+		return cms->map_cmodels; // cinematic servers won't have anything at all
 	}
 
 	//
 	// load the file
 	//
-	length = FS_LoadFile( name, ( void ** )&buf, NULL, 0 );
+	length = FS_LoadFile( name, (void **)&buf, NULL, 0 );
 	if( !buf ) {
 		Com_Error( ERR_DROP, "Couldn't load %s", name );
 	}
 
-	cms->checksum = md5_digest32( ( const uint8_t * )buf, length );
+	cms->checksum = md5_digest32( (const uint8_t *)buf, length );
 	*checksum = cms->checksum;
 
 	// call the apropriate loader
-	descr = Q_FindFormatDescriptor( cm_supportedformats, ( const uint8_t * )buf, (const bspFormatDesc_t **)&bspFormat );
+	descr = Q_FindFormatDescriptor( cm_supportedformats, (const uint8_t *)buf, (const bspFormatDesc_t **)&bspFormat );
 	if( !descr ) {
 		Com_Error( ERR_DROP, "CM_LoadMap: unknown fileid for %s", name );
 	}
@@ -282,7 +285,8 @@ cmodel_t *CM_LoadMap( cmodel_state_t *cms, const char *name, bool clientload, un
 
 	if( cms->numareas ) {
 		cms->map_areas = Mem_Alloc( cms->mempool, cms->numareas * sizeof( *cms->map_areas ) );
-		cms->map_areaportals = Mem_Alloc( cms->mempool, cms->numareas * cms->numareas * sizeof( *cms->map_areaportals ) );
+		cms->map_areaportals =
+			Mem_Alloc( cms->mempool, cms->numareas * cms->numareas * sizeof( *cms->map_areaportals ) );
 
 		memset( cms->map_areaportals, 0, cms->numareas * cms->numareas * sizeof( *cms->map_areaportals ) );
 		CM_FloodAreaConnections( cms );
@@ -298,18 +302,19 @@ cmodel_t *CM_LoadMap( cmodel_state_t *cms, const char *name, bool clientload, un
 }
 
 /*
-* CM_LoadMapMessage
-*/
-char *CM_LoadMapMessage( char *name, char *message, int size ) {
-	int file, len;
-	uint8_t h_v[8];
-	char *data, *entitystring;
-	lump_t l;
-	bool isworld;
-	char key[MAX_KEY], value[MAX_VALUE], token[MAX_TOKEN_CHARS];
-	size_t keyLength;
+ * CM_LoadMapMessage
+ */
+char *CM_LoadMapMessage( char *name, char *message, int size )
+{
+	int						  file, len;
+	uint8_t					  h_v[8];
+	char *					  data, *entitystring;
+	lump_t					  l;
+	bool					  isworld;
+	char					  key[MAX_KEY], value[MAX_VALUE], token[MAX_TOKEN_CHARS];
+	size_t					  keyLength;
 	const modelFormatDescr_t *descr;
-	const bspFormatDesc_t *bspFormat = NULL;
+	const bspFormatDesc_t *	  bspFormat = NULL;
 
 	*message = '\0';
 
@@ -356,7 +361,6 @@ char *CM_LoadMapMessage( char *name, char *message, int size ) {
 			COM_Parse_r( token, sizeof( token ), &data );
 			if( !token[0] || token[0] == '}' ) {
 				break; // end of entity
-
 			}
 			Q_strncpyz( key, token, sizeof( key ) );
 			// remove trailing spaces
@@ -368,7 +372,6 @@ char *CM_LoadMapMessage( char *name, char *message, int size ) {
 			COM_Parse_r( token, sizeof( token ), &data );
 			if( !token[0] ) {
 				break; // error
-
 			}
 			Q_strncpyz( value, token, sizeof( value ) );
 
@@ -397,9 +400,10 @@ char *CM_LoadMapMessage( char *name, char *message, int size ) {
 }
 
 /*
-* CM_InlineModel
-*/
-cmodel_t *CM_InlineModel( cmodel_state_t *cms, int num ) {
+ * CM_InlineModel
+ */
+cmodel_t *CM_InlineModel( cmodel_state_t *cms, int num )
+{
 	if( num < 0 || num >= cms->numcmodels ) {
 		Com_Error( ERR_DROP, "CM_InlineModel: bad number %i (%i)", num, cms->numcmodels );
 	}
@@ -407,16 +411,18 @@ cmodel_t *CM_InlineModel( cmodel_state_t *cms, int num ) {
 }
 
 /*
-* CM_NumInlineModels
-*/
-int CM_NumInlineModels( cmodel_state_t *cms ) {
+ * CM_NumInlineModels
+ */
+int CM_NumInlineModels( cmodel_state_t *cms )
+{
 	return cms->numcmodels;
 }
 
 /*
-* CM_InlineModelBounds
-*/
-void CM_InlineModelBounds( cmodel_state_t *cms, cmodel_t *cmodel, vec3_t mins, vec3_t maxs ) {
+ * CM_InlineModelBounds
+ */
+void CM_InlineModelBounds( cmodel_state_t *cms, cmodel_t *cmodel, vec3_t mins, vec3_t maxs )
+{
 	if( cmodel == cms->map_cmodels ) {
 		VectorCopy( cms->world_mins, mins );
 		VectorCopy( cms->world_maxs, maxs );
@@ -427,9 +433,10 @@ void CM_InlineModelBounds( cmodel_state_t *cms, cmodel_t *cmodel, vec3_t mins, v
 }
 
 /*
-* CM_ShaderrefName
-*/
-const char *CM_ShaderrefName( cmodel_state_t *cms, int ref ) {
+ * CM_ShaderrefName
+ */
+const char *CM_ShaderrefName( cmodel_state_t *cms, int ref )
+{
 	if( ref < 0 || ref >= cms->numshaderrefs ) {
 		return NULL;
 	}
@@ -437,23 +444,26 @@ const char *CM_ShaderrefName( cmodel_state_t *cms, int ref ) {
 }
 
 /*
-* CM_EntityStringLen
-*/
-int CM_EntityStringLen( cmodel_state_t *cms ) {
+ * CM_EntityStringLen
+ */
+int CM_EntityStringLen( cmodel_state_t *cms )
+{
 	return cms->numentitychars;
 }
 
 /*
-* CM_EntityString
-*/
-char *CM_EntityString( cmodel_state_t *cms ) {
+ * CM_EntityString
+ */
+char *CM_EntityString( cmodel_state_t *cms )
+{
 	return cms->map_entitystring;
 }
 
 /*
-* CM_LeafCluster
-*/
-int CM_LeafCluster( cmodel_state_t *cms, int leafnum ) {
+ * CM_LeafCluster
+ */
+int CM_LeafCluster( cmodel_state_t *cms, int leafnum )
+{
 	if( leafnum < 0 || leafnum >= cms->numleafs ) {
 		Com_Error( ERR_DROP, "CM_LeafCluster: bad number" );
 	}
@@ -461,9 +471,10 @@ int CM_LeafCluster( cmodel_state_t *cms, int leafnum ) {
 }
 
 /*
-* CM_LeafArea
-*/
-int CM_LeafArea( cmodel_state_t *cms, int leafnum ) {
+ * CM_LeafArea
+ */
+int CM_LeafArea( cmodel_state_t *cms, int leafnum )
+{
 	if( leafnum < 0 || leafnum >= cms->numleafs ) {
 		Com_Error( ERR_DROP, "CM_LeafArea: bad number" );
 	}
@@ -471,9 +482,10 @@ int CM_LeafArea( cmodel_state_t *cms, int leafnum ) {
 }
 
 /*
-* CM_BoundBrush
-*/
-void CM_BoundBrush( cbrush_t *brush ) {
+ * CM_BoundBrush
+ */
+void CM_BoundBrush( cbrush_t *brush )
+{
 	int i;
 
 	for( i = 0; i < 3; i++ ) {
@@ -491,14 +503,15 @@ PVS
 */
 
 /*
-* CM_DecompressVis
-*
-* Decompresses RLE-compressed PVS data
-*/
-uint8_t *CM_DecompressVis( const uint8_t *in, int rowsize, uint8_t *decompressed ) {
-	int c;
+ * CM_DecompressVis
+ *
+ * Decompresses RLE-compressed PVS data
+ */
+uint8_t *CM_DecompressVis( const uint8_t *in, int rowsize, uint8_t *decompressed )
+{
+	int		 c;
 	uint8_t *out;
-	int row;
+	int		 row;
 
 	row = rowsize;
 	out = decompressed;
@@ -524,23 +537,26 @@ uint8_t *CM_DecompressVis( const uint8_t *in, int rowsize, uint8_t *decompressed
 }
 
 /*
-* CM_ClusterRowSize
-*/
-int CM_ClusterRowSize( cmodel_state_t *cms ) {
+ * CM_ClusterRowSize
+ */
+int CM_ClusterRowSize( cmodel_state_t *cms )
+{
 	return cms->map_pvs ? cms->map_pvs->rowsize : MAX_CM_LEAFS / 8;
 }
 
 /*
-* CM_NumClusters
-*/
-int CM_NumClusters( cmodel_state_t *cms ) {
+ * CM_NumClusters
+ */
+int CM_NumClusters( cmodel_state_t *cms )
+{
 	return cms->map_pvs ? cms->map_pvs->numclusters : 0;
 }
 
 /*
-* CM_ClusterPVS
-*/
-uint8_t *CM_ClusterPVS( cmodel_state_t *cms, int cluster ) {
+ * CM_ClusterPVS
+ */
+uint8_t *CM_ClusterPVS( cmodel_state_t *cms, int cluster )
+{
 	dvis_t *vis = cms->map_pvs;
 	if( cluster == -1 || !vis ) {
 		return cms->nullrow;
@@ -549,16 +565,18 @@ uint8_t *CM_ClusterPVS( cmodel_state_t *cms, int cluster ) {
 }
 
 /*
-* CM_NumAreas
-*/
-int CM_NumAreas( cmodel_state_t *cms ) {
+ * CM_NumAreas
+ */
+int CM_NumAreas( cmodel_state_t *cms )
+{
 	return cms->numareas;
 }
 
 /*
-* CM_AreaRowSize
-*/
-int CM_AreaRowSize( cmodel_state_t *cms ) {
+ * CM_AreaRowSize
+ */
+int CM_AreaRowSize( cmodel_state_t *cms )
+{
 	return ( cms->numareas + 7 ) / 8;
 }
 
@@ -571,12 +589,13 @@ AREAPORTALS
 */
 
 /*
-* CM_FloodArea_r
-*/
-static void CM_FloodArea_r( cmodel_state_t *cms, int areanum, int floodnum ) {
-	int i;
+ * CM_FloodArea_r
+ */
+static void CM_FloodArea_r( cmodel_state_t *cms, int areanum, int floodnum )
+{
+	int		 i;
 	carea_t *area;
-	int *p;
+	int *	 p;
 
 	area = &cms->map_areas[areanum];
 	if( area->floodvalid == cms->floodvalid ) {
@@ -597,9 +616,10 @@ static void CM_FloodArea_r( cmodel_state_t *cms, int areanum, int floodnum ) {
 }
 
 /*
-* CM_FloodAreaConnections
-*/
-void CM_FloodAreaConnections( cmodel_state_t *cms ) {
+ * CM_FloodAreaConnections
+ */
+void CM_FloodAreaConnections( cmodel_state_t *cms )
+{
 	int i;
 	int floodnum;
 
@@ -616,9 +636,10 @@ void CM_FloodAreaConnections( cmodel_state_t *cms ) {
 }
 
 /*
-* CM_SetAreaPortalState
-*/
-void CM_SetAreaPortalState( cmodel_state_t *cms, int area1, int area2, bool open ) {
+ * CM_SetAreaPortalState
+ */
+void CM_SetAreaPortalState( cmodel_state_t *cms, int area1, int area2, bool open )
+{
 	int row1, row2;
 
 	if( area1 == area2 ) {
@@ -646,9 +667,10 @@ void CM_SetAreaPortalState( cmodel_state_t *cms, int area1, int area2, bool open
 }
 
 /*
-* CM_AreasConnected
-*/
-bool CM_AreasConnected( cmodel_state_t *cms, int area1, int area2 ) {
+ * CM_AreasConnected
+ */
+bool CM_AreasConnected( cmodel_state_t *cms, int area1, int area2 )
+{
 	if( cm_noAreas->integer ) {
 		return true;
 	}
@@ -674,45 +696,32 @@ bool CM_AreasConnected( cmodel_state_t *cms, int area1, int area2 ) {
 }
 
 /*
-* CM_MergeAreaBits
-*/
-static int CM_MergeAreaBits( cmodel_state_t *cms, uint8_t *buffer, int area ) {
-	int i;
+ * CM_WriteAreaBitsUTM
+ */
+int CM_WriteAreaBitsUTM( cmodel_state_t *cms, uint8_t *buffer )
+{
+	int i, j, k;
+	int bytes;
 
-	if( area < 0 ) {
-		return CM_AreaRowSize( cms );
-	}
-
-	for( i = 0; i < cms->numareas; i++ ) {
-		if( CM_AreasConnected( cms, i, area ) ) {
-			buffer[i >> 3] |= 1 << ( i & 7 );
-		}
-	}
-
-	return CM_AreaRowSize( cms );
-}
-
-/*
-* CM_WriteAreaBits
-*/
-int CM_WriteAreaBits( cmodel_state_t *cms, uint8_t *buffer ) {
-	int i;
-	int rowsize, bytes;
-
-	rowsize = CM_AreaRowSize( cms );
-	bytes = rowsize * cms->numareas;
+	// only send the upper triangle of the triangluar state matrix
+	// ignore the main diagonal as it's all ones
+	bytes = CM_AreaBitsUTMSize( cms->numareas );
 
 	if( cm_noAreas->integer || cms->cmap_bspFormat->flags & BSP_NOAREAS ) {
 		// for debugging, send everything
 		memset( buffer, 255, bytes );
-	} else {
-		uint8_t *row;
+		return bytes;
+	}
 
-		memset( buffer, 0, bytes );
+	memset( buffer, 0, bytes );
 
-		for( i = 0; i < cms->numareas; i++ ) {
-			row = buffer + i * rowsize;
-			CM_MergeAreaBits( cms, row, i );
+	k = 0;
+	for( i = 0; i < cms->numareas; i++ ) {
+		for( j = i + 1; j < cms->numareas; j++ ) {
+			if( CM_AreasConnected( cms, i, j ) ) {
+				buffer[k >> 3] |= ( 1 << ( k & 7 ) );
+			}
+			k++;
 		}
 	}
 
@@ -720,34 +729,44 @@ int CM_WriteAreaBits( cmodel_state_t *cms, uint8_t *buffer ) {
 }
 
 /*
-* CM_ReadAreaBits
-*/
-void CM_ReadAreaBits( cmodel_state_t *cms, uint8_t *buffer ) {
-	int i, j;
+ * CM_ReadAreaBitsUTM
+ */
+void CM_ReadAreaBitsUTM( int numareas, const uint8_t *buffer, uint8_t *out )
+{
+	int i, j, k;
+	int bytes;
 	int rowsize;
 
-	memset( cms->map_areaportals, 0, cms->numareas * cms->numareas * sizeof( *cms->map_areaportals ) );
+	bytes = CM_AreaBitsUTMSize( numareas );
+	rowsize = ( numareas + 7 ) / 8;
 
-	rowsize = CM_AreaRowSize( cms );
-	for( i = 0; i < cms->numareas; i++ ) {
-		uint8_t *row;
+	memset( out, 0, bytes );
 
-		row = buffer + i * rowsize;
-		for( j = 0; j < cms->numareas; j++ ) {
-			if( row[j >> 3] & ( 1 << ( j & 7 ) ) ) {
-				cms->map_areaportals[i * cms->numareas + j] = 1;
+	// read and mirror the upper triangluar matrix
+	// set the main diagonal bits to 1
+	k = 0;
+	for( i = 0; i < numareas; i++ ) {
+		uint8_t *row = out + i * rowsize;
+
+		for( j = i + 1; j < numareas; j++ ) {
+			if( buffer[k >> 8] & ( 1 << ( k & 7 ) ) ) {
+				uint8_t *row2 = out + j * rowsize;
+
+				row[j >> 3] |= ( 1 << ( j & 7 ) );
+				row2[i >> 3] |= ( 1 << ( i & 7 ) );
 			}
+			k++;
 		}
-	}
 
-	CM_FloodAreaConnections( cms );
+		row[i >> 3] |= ( 1 << ( i & 7 ) );
+	}
 }
 
 /*
-* CM_WritePortalState
-* Writes the portal state to a savegame file
-*/
-void CM_WritePortalState( cmodel_state_t *cms, int file ) {
+ * CM_WritePortalState
+ */
+void CM_WritePortalState( cmodel_state_t *cms, int file )
+{
 	int i, j, t;
 
 	for( i = 0; i < cms->numareas; i++ ) {
@@ -759,11 +778,10 @@ void CM_WritePortalState( cmodel_state_t *cms, int file ) {
 }
 
 /*
-* CM_ReadPortalState
-* Reads the portal state from a savegame file
-* and recalculates the area connections
-*/
-void CM_ReadPortalState( cmodel_state_t *cms, int file ) {
+ * CM_ReadPortalState
+ */
+void CM_ReadPortalState( cmodel_state_t *cms, int file )
+{
 	int i;
 
 	FS_Read( &cms->map_areaportals, cms->numareas * cms->numareas * sizeof( *cms->map_areaportals ), file );
@@ -775,12 +793,11 @@ void CM_ReadPortalState( cmodel_state_t *cms, int file ) {
 }
 
 /*
-* CM_HeadnodeVisible
-* Returns true if any leaf under headnode has a cluster that
-* is potentially visible
-*/
-bool CM_HeadnodeVisible( cmodel_state_t *cms, int nodenum, uint8_t *visbits ) {
-	int cluster;
+ * CM_HeadnodeVisible
+ */
+bool CM_HeadnodeVisible( cmodel_state_t *cms, int nodenum, const uint8_t *visbits )
+{
+	int		 cluster;
 	cnode_t *node;
 
 	while( nodenum >= 0 ) {
@@ -802,12 +819,11 @@ bool CM_HeadnodeVisible( cmodel_state_t *cms, int nodenum, uint8_t *visbits ) {
 }
 
 /*
-* CM_InPVS
-*
-* Also checks portalareas so that doors block sight
-*/
-bool CM_InPVS( cmodel_state_t *cms, const vec3_t p1, const vec3_t p2 ) {
-	int leafnum1, leafnum2;
+ * CM_InPVS
+ */
+bool CM_InPVS( cmodel_state_t *cms, const vec3_t p1, const vec3_t p2 )
+{
+	int		 leafnum1, leafnum2;
 	int		 cluster;
 	int		 area1, area2;
 	uint8_t *mask;
@@ -832,11 +848,12 @@ bool CM_InPVS( cmodel_state_t *cms, const vec3_t p1, const vec3_t p2 ) {
 }
 
 /*
-* CM_New_
-*/
-static cmodel_state_t *CM_New_( cmodel_state_t *parent, void *mempool ) {
+ * CM_New_
+ */
+static cmodel_state_t *CM_New_( cmodel_state_t *parent, void *mempool )
+{
 	cmodel_state_t *cms;
-	mempool_t *cms_mempool;
+	mempool_t *		cms_mempool;
 
 	cms_mempool = ( mempool ? (mempool_t *)mempool : cmap_mempool );
 
@@ -863,18 +880,19 @@ static cmodel_state_t *CM_New_( cmodel_state_t *parent, void *mempool ) {
 }
 
 /*
-* CM_New
-*/
-cmodel_state_t *CM_New( void *mempool ) {
+ * CM_New
+ */
+cmodel_state_t *CM_New( void *mempool )
+{
 	return CM_New_( NULL, mempool );
 }
 
 /*
-* CM_Free
-*/
-static void CM_Free( cmodel_state_t *cms ) {
+ * CM_Free
+ */
+static void CM_Free( cmodel_state_t *cms )
+{
 	cmodel_state_t *parent = cms->parent;
-
 
 	if( parent ) {
 		CM_FreeCheckCounts( cms );
@@ -890,9 +908,10 @@ static void CM_Free( cmodel_state_t *cms ) {
 }
 
 /*
-* CM_AddReference
-*/
-void CM_AddReference( cmodel_state_t *cms ) {
+ * CM_AddReference
+ */
+void CM_AddReference( cmodel_state_t *cms )
+{
 	if( !cms ) {
 		return;
 	}
@@ -900,9 +919,10 @@ void CM_AddReference( cmodel_state_t *cms ) {
 }
 
 /*
-* CM_ReleaseReference
-*/
-void CM_ReleaseReference( cmodel_state_t *cms ) {
+ * CM_ReleaseReference
+ */
+void CM_ReleaseReference( cmodel_state_t *cms )
+{
 	int rc;
 
 	if( !cms ) {
@@ -922,9 +942,10 @@ void CM_ReleaseReference( cmodel_state_t *cms ) {
 }
 
 /*
-* CM_ThreadLocalCopy
-*/
-cmodel_state_t *CM_ThreadLocalCopy( cmodel_state_t *cms, void *mempool ) {
+ * CM_ThreadLocalCopy
+ */
+cmodel_state_t *CM_ThreadLocalCopy( cmodel_state_t *cms, void *mempool )
+{
 	cmodel_state_t *copy;
 
 	if( cms->parent ) {
@@ -938,23 +959,25 @@ cmodel_state_t *CM_ThreadLocalCopy( cmodel_state_t *cms, void *mempool ) {
 }
 
 /*
-* CM_Init
-*/
-void CM_Init( void ) {
+ * CM_Init
+ */
+void CM_Init( void )
+{
 	assert( !cm_initialized );
 
 	cmap_mempool = Mem_AllocPool( NULL, "Collision Map" );
 
-	cm_noAreas =        Cvar_Get( "cm_noAreas", "0", CVAR_CHEAT );
-	cm_noCurves =       Cvar_Get( "cm_noCurves", "0", CVAR_CHEAT );
+	cm_noAreas = Cvar_Get( "cm_noAreas", "0", CVAR_CHEAT );
+	cm_noCurves = Cvar_Get( "cm_noCurves", "0", CVAR_CHEAT );
 
 	cm_initialized = true;
 }
 
 /*
-* CM_Shutdown
-*/
-void CM_Shutdown( void ) {
+ * CM_Shutdown
+ */
+void CM_Shutdown( void )
+{
 	if( !cm_initialized ) {
 		return;
 	}

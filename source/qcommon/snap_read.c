@@ -332,15 +332,18 @@ void SNAP_SkipFrame( msg_t *msg, snapshot_t *header ) {
 /*
 * SNAP_ParseFrame
 */
-snapshot_t *SNAP_ParseFrame( msg_t *msg, snapshot_t *lastFrame, int *suppressCount, snapshot_t *backup, entity_state_t *baselines, int showNet ) {
-	int cmd;
-	size_t len;
-	snapshot_t  *deltaframe;
-	int numplayers;
-	char *text;
-	int framediff, numtargets;
+snapshot_t *SNAP_ParseFrame(
+	msg_t *msg, snapshot_t *lastFrame, int *suppressCount, snapshot_t *backup, entity_state_t *baselines, int showNet )
+{
+	int			cmd;
+	size_t		len;
+	snapshot_t *deltaframe;
+	int			numareas;
+	int			numplayers;
+	char *		text;
+	int			framediff, numtargets;
 	gcommand_t *gcmd;
-	snapshot_t  *newframe;
+	snapshot_t *newframe;
 
 	// read header
 	newframe = SNAP_ParseFrameHeader( msg, NULL, suppressCount, backup, false );
@@ -348,7 +351,7 @@ snapshot_t *SNAP_ParseFrame( msg_t *msg, snapshot_t *lastFrame, int *suppressCou
 
 	if( showNet == 3 ) {
 		Com_Printf( "   frame:%" PRIi64 "  old:%" PRIi64 "%s\n", newframe->serverFrame, newframe->deltaFrameNum,
-					( newframe->delta ? "" : " no delta" ) );
+			( newframe->delta ? "" : " no delta" ) );
 	}
 
 	if( newframe->delta ) {
@@ -382,7 +385,7 @@ snapshot_t *SNAP_ParseFrame( msg_t *msg, snapshot_t *lastFrame, int *suppressCou
 			gcmd->all = true;
 
 			Q_strncpyz( newframe->gamecommandsData + newframe->gamecommandsDataHead, text,
-						sizeof( newframe->gamecommandsData ) - newframe->gamecommandsDataHead );
+				sizeof( newframe->gamecommandsData ) - newframe->gamecommandsDataHead );
 			gcmd->commandOffset = newframe->gamecommandsDataHead;
 			newframe->gamecommandsDataHead += strlen( text ) + 1;
 
@@ -396,18 +399,20 @@ snapshot_t *SNAP_ParseFrame( msg_t *msg, snapshot_t *lastFrame, int *suppressCou
 					MSG_ReadData( msg, gcmd->targets, numtargets );
 				}
 			}
-		} else if( newframe->multipov ) {   // otherwise, ignore it
+		} else if( newframe->multipov ) { // otherwise, ignore it
 			numtargets = MSG_ReadUint8( msg );
 			MSG_SkipData( msg, numtargets );
 		}
 	}
 
 	// read areabits
-	len = (size_t)MSG_ReadUint8( msg );
+	numareas = MSG_ReadUintBase128( msg );
+	len = CM_AreaBitsUTMSize( numareas );
 	if( len > MAX_SNAPSHOT_AREABYTES ) {
 		Com_Error( ERR_DROP, "Invalid areabits size: %" PRIuPTR " > MAX_SNAPSHOT_AREABYTES", (uintptr_t)len );
 	}
-	MSG_ReadData( msg, newframe->areabits, len );
+	CM_ReadAreaBitsUTM( numareas, MSG_PeekData( msg, len ), newframe->areabits );
+	MSG_SkipData( msg, len );
 
 	// read match info
 	cmd = MSG_ReadUint8( msg );

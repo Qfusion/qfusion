@@ -64,13 +64,61 @@ int CM_LeafArea( cmodel_state_t *cms, int leafnum );
 void CM_SetAreaPortalState( cmodel_state_t *cms, int area1, int area2, bool open );
 bool CM_AreasConnected( cmodel_state_t *cms, int area1, int area2 );
 
-int CM_WriteAreaBits( cmodel_state_t *cms, uint8_t *buffer );
-void CM_ReadAreaBits( cmodel_state_t *cms, uint8_t *buffer );
-bool CM_HeadnodeVisible( cmodel_state_t *cms, int headnode, uint8_t *visbits );
 
+/*
+ * CM_WriteAreaBitsUTM
+ *
+ * The number of bytes required for the diagonal areabits matrix
+ * The sum of arithmetic progression: S=1...num_areas-1 for bits, then (S+7)/8
+ */
+#define CM_AreaBitsUTMSize( numareas )  ( ( ( ( numareas ) * ( ( numareas ) - 1 ) / 2  ) + 7 ) / 8 )
+
+/*
+ * CM_WriteAreaBitsUTM
+ *
+ * Only writes the upper triangle of the triangluar state matrix
+ * with the exception of the main diagonal because it's all ones
+ * (the area is always visible to itself)
+ *
+ * Returns the number of bytes written into output buffer
+ */
+int	 CM_WriteAreaBitsUTM( cmodel_state_t *cms, uint8_t *buffer );
+
+/*
+ * CM_ReadAreaBitsUTM
+ *
+ * Reads and mirrors the upper triangluar matrix with area state
+ */
+void CM_ReadAreaBitsUTM( int numareas, const uint8_t *buffer, uint8_t *out );
+
+/*
+ * CM_HeadnodeVisible
+ *
+ * Returns true if any leaf under headnode has a cluster that
+ * is potentially visible
+ */
+bool CM_HeadnodeVisible( cmodel_state_t *cms, int headnode, const uint8_t *visbits );
+
+/*
+ * CM_WritePortalState
+ *
+ * Writes the portal state to a savegame file
+ */
 void CM_WritePortalState( cmodel_state_t *cms, int file );
+
+/*
+ * CM_ReadPortalState
+ *
+ * Reads the portal state from a savegame file
+ * and recalculates the area connections
+ */
 void CM_ReadPortalState( cmodel_state_t *cms, int file );
 
+/*
+ * CM_InPVS
+ *
+ * Also checks portalareas so that doors block sight
+ */
 bool CM_InPVS( cmodel_state_t *cms, const vec3_t p1, const vec3_t p2 );
 
 //

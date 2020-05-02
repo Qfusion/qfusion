@@ -63,13 +63,7 @@ void *MSG_GetSpace( msg_t *msg, size_t length ) {
 
 
 void MSG_WriteData( msg_t *msg, const void *data, size_t length ) {
-#if 0
-	unsigned int i;
-	for( i = 0; i < length; i++ )
-		MSG_WriteUint8( msg, ( (uint8_t *)data )[i] );
-#else
 	MSG_CopyData( msg, data, length );
-#endif
 }
 
 void MSG_CopyData( msg_t *buf, const void *data, size_t length ) {
@@ -294,6 +288,14 @@ int MSG_SkipData( msg_t *msg, size_t length ) {
 		return 1;
 	}
 	return 0;
+}
+
+uint8_t *MSG_PeekData( msg_t *msg, size_t size )
+{
+	if( msg->readcount + size > msg->cursize ) {
+		return NULL;
+	}
+	return &msg->data[msg->readcount];
 }
 
 static char *MSG_ReadString2( msg_t *msg, bool linebreak ) {
