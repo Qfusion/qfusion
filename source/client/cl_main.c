@@ -612,11 +612,6 @@ void CL_ClearState( void ) {
 		cl.cms = NULL;
 	}
 
-	if( cl.frames_areabits ) {
-		Mem_Free( cl.frames_areabits );
-		cl.frames_areabits = NULL;
-	}
-
 	if( cl.cmds ) {
 		Mem_Free( cl.cmds );
 		cl.cmds = NULL;
@@ -1292,9 +1287,6 @@ static int precache_pure;
 #define TEXTURE_CNT ( ENV_CNT + 1 )
 
 static unsigned int CL_LoadMap( const char *name ) {
-	int i;
-	int areas;
-
 	unsigned int map_checksum;
 
 	assert( !cl.cms );
@@ -1311,16 +1303,6 @@ static unsigned int CL_LoadMap( const char *name ) {
 	CM_AddReference( cl.cms );
 
 	assert( cl.cms );
-
-	// allocate memory for areabits
-	areas = CM_NumAreas( cl.cms );
-	areas *= CM_AreaRowSize( cl.cms );
-
-	cl.frames_areabits = Mem_ZoneMalloc( UPDATE_BACKUP * areas );
-	for( i = 0; i < UPDATE_BACKUP; i++ ) {
-		cl.snapShots[i].areabytes = areas;
-		cl.snapShots[i].areabits = cl.frames_areabits + i * areas;
-	}
 
 	// check memory integrity
 	Mem_DebugCheckSentinelsGlobal();
