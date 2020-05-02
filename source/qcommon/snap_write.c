@@ -574,9 +574,10 @@ static bool SNAP_SnapCullEntity( cmodel_state_t *cms, edict_t *ent, edict_t *cle
 /*
 * SNAP_AddEntitiesVisibleAtOrigin
 */
-static void SNAP_AddEntitiesVisibleAtOrigin( cmodel_state_t *cms, ginfo_t *gi, edict_t *clent, const vec3_t vieworg, 
-											int viewarea, client_snapshot_t *frame, snapshotEntityNumbers_t *entList ) {
-	int entNum;
+static void SNAP_AddEntitiesVisibleAtOrigin( cmodel_state_t *cms, ginfo_t *gi, edict_t *clent, const vec3_t vieworg,
+	int viewarea, client_snapshot_t *frame, snapshotEntityNumbers_t *entList )
+{
+	int		 entNum;
 	edict_t *ent;
 	uint8_t *pvs;
 
@@ -593,32 +594,27 @@ static void SNAP_AddEntitiesVisibleAtOrigin( cmodel_state_t *cms, ginfo_t *gi, e
 			ent->s.number = entNum;
 		}
 
+		// make sure owner number is valid too
+		if( ent->s.ownerNum < 0 || ent->s.ownerNum >= gi->num_edicts ) {
+			Com_Printf( "FIXING ENT->S.OWNERNUM: %i %i!!!\n", ent->s.type, ent->s.ownerNum );
+			ent->s.ownerNum = 0;
+		}
+
 		// always add the client entity, even if SVF_NOCLIENT
 		if( ( ent != clent ) && SNAP_SnapCullEntity( cms, ent, clent, frame, vieworg, viewarea, pvs ) ) {
 			continue;
 		}
 
-		// add it
-		if( !SNAP_AddEntNumToSnapList( entNum, entList ) ) {
-			continue;
+		SNAP_AddEntNumToSnapList( entNum, entList );
+
+		if( ( ent->r.svflags & SVF_FORCEOWNER ) && ( ent->s.ownerNum != 0 ) ) {
+			SNAP_AddEntNumToSnapList( ent->s.ownerNum, entList );
 		}
 
-		if( ent->r.svflags & SVF_FORCEOWNER ) {
-			// make sure owner number is valid too
-			if( ent->s.ownerNum > 0 && ent->s.ownerNum < gi->num_edicts ) {
-				SNAP_AddEntNumToSnapList( ent->s.ownerNum, entList );
-			} else {
-				Com_Printf( "FIXING ENT->S.OWNERNUM: %i %i!!!\n", ent->s.type, ent->s.ownerNum );
-				ent->s.ownerNum = 0;
-			}
-		}
-
-		if( ent->r.svflags & SVF_PORTAL ) {
-			// if it's a portal entity and not a mirror,
-			// recursively add everything from its camera positiom
-			if( !VectorCompare( ent->s.origin, ent->s.origin2 ) ) {
-				SNAP_AddEntitiesVisibleAtOrigin( cms, gi, clent, ent->s.origin2, ent->r.areanum, frame, entList );
-			}
+		// if it's a portal entity and not a mirror,
+		// recursively add everything from its camera positiom
+		if( ( ent->r.svflags & SVF_PORTAL ) && !VectorCompare( ent->s.origin, ent->s.origin2 ) ) {
+			SNAP_AddEntitiesVisibleAtOrigin( cms, gi, clent, ent->s.origin2, ent->r.areanum, frame, entList );
 		}
 	}
 }
