@@ -20,19 +20,20 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "cg_local.h"
 
-int cg_numSolids;
+int					   cg_numSolids;
 static entity_state_t *cg_solidList[MAX_SNAPSHOT_ENTITIES];
 
-int cg_numTriggers;
+int					   cg_numTriggers;
 static entity_state_t *cg_triggersList[MAX_SNAPSHOT_ENTITIES];
 static bool			   cg_triggersListTriggered[MAX_SNAPSHOT_ENTITIES];
 
 static bool ucmdReady = false;
 
 /*
-* CG_PredictedEvent - shared code can fire events during prediction
-*/
-void CG_PredictedEvent( int entNum, int ev, int parm ) {
+ * CG_PredictedEvent - shared code can fire events during prediction
+ */
+void CG_PredictedEvent( int entNum, int ev, int parm )
+{
 	if( ev >= PREDICTABLE_EVENTS_MAX ) {
 		return;
 	}
@@ -41,7 +42,8 @@ void CG_PredictedEvent( int entNum, int ev, int parm ) {
 	if( ucmdReady && ( cg.predictingTimeStamp > cg.predictedEventTimes[ev] ) ) {
 		// inhibit the fire event when there is a weapon change predicted
 		if( ev == EV_FIREWEAPON ) {
-			if( cg.predictedWeaponSwitch && ( cg.predictedWeaponSwitch != cg.predictedPlayerState.stats[STAT_PENDING_WEAPON] ) ) {
+			if( cg.predictedWeaponSwitch &&
+				( cg.predictedWeaponSwitch != cg.predictedPlayerState.stats[STAT_PENDING_WEAPON] ) ) {
 				return;
 			}
 		}
@@ -52,20 +54,22 @@ void CG_PredictedEvent( int entNum, int ev, int parm ) {
 }
 
 /*
-* CG_Predict_ChangeWeapon
-*/
-void CG_Predict_ChangeWeapon( int new_weapon ) {
+ * CG_Predict_ChangeWeapon
+ */
+void CG_Predict_ChangeWeapon( int new_weapon )
+{
 	if( cg.view.playerPrediction ) {
 		cg.predictedWeaponSwitch = new_weapon;
 	}
 }
 
 /*
-* CG_CheckPredictionError
-*/
-void CG_CheckPredictionError( void ) {
-	int delta[3];
-	int frame;
+ * CG_CheckPredictionError
+ */
+void CG_CheckPredictionError( void )
+{
+	int	   delta[3];
+	int	   frame;
 	vec3_t origin;
 
 	if( !cg.view.playerPrediction ) {
@@ -94,12 +98,14 @@ void CG_CheckPredictionError( void ) {
 	// save the prediction error for interpolation
 	if( abs( delta[0] ) > 128 || abs( delta[1] ) > 128 || abs( delta[2] ) > 128 ) {
 		if( cg_showMiss->integer ) {
-			CG_Printf( "prediction miss on %" PRIi64 ": %i\n", cg.frame.serverFrame, abs( delta[0] ) + abs( delta[1] ) + abs( delta[2] ) );
+			CG_Printf( "prediction miss on %" PRIi64 ": %i\n", cg.frame.serverFrame,
+				abs( delta[0] ) + abs( delta[1] ) + abs( delta[2] ) );
 		}
-		VectorClear( cg.predictionError );          // a teleport or something
+		VectorClear( cg.predictionError ); // a teleport or something
 	} else {
 		if( cg_showMiss->integer && ( delta[0] || delta[1] || delta[2] ) ) {
-			CG_Printf( "prediction miss on %" PRIi64" : %i\n", cg.frame.serverFrame, abs( delta[0] ) + abs( delta[1] ) + abs( delta[2] ) );
+			CG_Printf( "prediction miss on %" PRIi64 " : %i\n", cg.frame.serverFrame,
+				abs( delta[0] ) + abs( delta[1] ) + abs( delta[2] ) );
 		}
 		VectorCopy( cg.frame.playerState.pmove.origin, cg.predictedOrigins[frame] );
 		VectorCopy( delta, cg.predictionError ); // save for error interpolation
@@ -107,60 +113,100 @@ void CG_CheckPredictionError( void ) {
 }
 
 /*
-* CG_BuildSolidList
-*/
-void CG_BuildSolidList( void ) {
-	int i;
-	entity_state_t *ent;
-
+ * CG_ClearSolidList
+ */
+void CG_ClearSolidList( void )
+{
 	cg_numSolids = 0;
 	cg_numTriggers = 0;
+}
+
+/*
+ * CG_AddEntityToSolidList
+ */
+void CG_AddEntityToSolidList( int number )
+{
+	if( number < 0 || number >= MAX_EDICTS ) {
+		return;
+	}
+	if( cg_numSolids >= MAX_SNAPSHOT_ENTITIES ) {
+		return;
+	}
+
+	entity_state_t *ent = &cg_entities[number].current;
+	if( ent->solid && !ISEVENTENTITY( ent ) ) {
+		cg_solidList[cg_numSolids++] = ent;
+	}
+}
+
+/*
+ * CG_AddEntityToTriggerList
+ */
+void CG_AddEntityToTriggerList( int number )
+{
+	if( number < 0 || number >= MAX_EDICTS ) {
+		return;
+	}
+	if( cg_numTriggers >= MAX_SNAPSHOT_ENTITIES ) {
+		return;
+	}
+
+	entity_state_t *ent = &cg_entities[number].current;
+	if( ent->solid && !ISEVENTENTITY( ent ) ) {
+		cg_triggersList[cg_numTriggers++] = ent;
+	}
+}
+
+/*
+ * CG_BuildSolidList
+ */
+void CG_BuildSolidList( void )
+{
+	int				i;
+	entity_state_t *ent;
+
 	for( i = 0; i < cg.frame.numEntities; i++ ) {
 		ent = &cg.frame.entities[i];
-		if( ISEVENTENTITY( ent ) ) {
-			continue;
-		}
 
-		if( ent->solid ) {
-			switch( ent->type ) {
-				// the following entities can never be solid
-				case ET_BEAM:
-				case ET_PORTALSURFACE:
-				case ET_BLASTER:
-				case ET_ELECTRO_WEAK:
-				case ET_ROCKET:
-				case ET_GRENADE:
-				case ET_PLASMA:
-				case ET_LASERBEAM:
-				case ET_CURVELASERBEAM:
-				case ET_MINIMAP_ICON:
-				case ET_DECAL:
-				case ET_ITEM_TIMER:
-				case ET_PARTICLES:
-					break;
+		switch( ent->type ) {
+			// the following entities can never be solid
+			case ET_BEAM:
+			case ET_PORTALSURFACE:
+			case ET_BLASTER:
+			case ET_ELECTRO_WEAK:
+			case ET_ROCKET:
+			case ET_GRENADE:
+			case ET_PLASMA:
+			case ET_LASERBEAM:
+			case ET_CURVELASERBEAM:
+			case ET_MINIMAP_ICON:
+			case ET_DECAL:
+			case ET_ITEM_TIMER:
+			case ET_PARTICLES:
+				break;
 
-				case ET_PUSH_TRIGGER:
-					cg_triggersList[cg_numTriggers++] = &cg_entities[ ent->number ].current;
-					break;
+			case ET_PUSH_TRIGGER:
+				CG_AddEntityToTriggerList( ent->number );
+				break;
 
-				default:
-					cg_solidList[cg_numSolids++] = &cg_entities[ ent->number ].current;
-					break;
-			}
+			default:
+				CG_AddEntityToSolidList( ent->number );
+				break;
 		}
 	}
 }
 
 /*
-* CG_ClipEntityContact
-*/
-static bool CG_ClipEntityContact( const vec3_t origin, const vec3_t mins, const vec3_t maxs, int entNum ) {
-	centity_t *cent;
+ * CG_ClipEntityContact
+ */
+static bool CG_ClipEntityContact( const vec3_t origin, const vec3_t mins, const vec3_t maxs, int entNum )
+{
+	centity_t *		 cent;
 	struct cmodel_s *cmodel;
-	trace_t tr;
-	vec3_t absmins, absmaxs;
-	vec3_t entorigin, entangles;
-	int64_t serverTime = cg.frame.serverTime;
+	trace_t			 tr;
+	vec3_t			 absmins, absmaxs;
+	vec3_t			 entorigin, entangles;
+	int64_t			 serverTime = cg.frame.serverTime;
 
 	if( !mins ) {
 		mins = vec3_origin;
@@ -185,7 +231,7 @@ static bool CG_ClipEntityContact( const vec3_t origin, const vec3_t mins, const 
 			VectorCopy( cent->current.origin, entorigin );
 		}
 		VectorCopy( cent->current.angles, entangles );
-	} else {   // encoded bbox
+	} else { // encoded bbox
 		VectorCopy( cent->current.origin, entorigin );
 		VectorClear( entangles ); // boxes don't rotate
 	}
@@ -193,15 +239,17 @@ static bool CG_ClipEntityContact( const vec3_t origin, const vec3_t mins, const 
 	// convert the box to compare to absolute coordinates
 	VectorAdd( origin, mins, absmins );
 	VectorAdd( origin, maxs, absmaxs );
-	trap_CM_TransformedBoxTrace( &tr, vec3_origin, vec3_origin, absmins, absmaxs, cmodel, MASK_ALL, entorigin, entangles );
+	trap_CM_TransformedBoxTrace(
+		&tr, vec3_origin, vec3_origin, absmins, absmaxs, cmodel, MASK_ALL, entorigin, entangles );
 	return tr.startsolid == true || tr.allsolid == true;
 }
 
 /*
-* CG_Predict_TouchTriggers
-*/
-void CG_Predict_TouchTriggers( pmove_t *pm, player_state_t *ps, vec3_t previous_origin ) {
-	int i;
+ * CG_Predict_TouchTriggers
+ */
+void CG_Predict_TouchTriggers( pmove_t *pm, player_state_t *ps, vec3_t previous_origin )
+{
+	int				i;
 	entity_state_t *state;
 
 	// fixme: more accurate check for being able to touch or not
@@ -227,16 +275,18 @@ void CG_Predict_TouchTriggers( pmove_t *pm, player_state_t *ps, vec3_t previous_
 }
 
 /*
-* CG_ClipMoveToEntities
-*/
-static void CG_ClipMoveToEntities( const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int ignore, int contentmask, trace_t *tr ) {
-	int i, x, zd, zu;
-	trace_t trace;
-	vec3_t origin, angles;
-	entity_state_t *ent;
+ * CG_ClipMoveToEntities
+ */
+static void CG_ClipMoveToEntities( const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end,
+	int ignore, int contentmask, trace_t *tr )
+{
+	int				 i, x, zd, zu;
+	trace_t			 trace;
+	vec3_t			 origin, angles;
+	entity_state_t * ent;
 	struct cmodel_s *cmodel;
-	vec3_t bmins, bmaxs;
-	int64_t serverTime = cg.frame.serverTime;
+	vec3_t			 bmins, bmaxs;
+	int64_t			 serverTime = cg.frame.serverTime;
 
 	for( i = 0; i < cg_numSolids; i++ ) {
 		ent = cg_solidList[i];
@@ -261,7 +311,7 @@ static void CG_ClipMoveToEntities( const vec3_t start, const vec3_t mins, const 
 			}
 
 			VectorCopy( ent->angles, angles );
-		} else {   // encoded bbox
+		} else { // encoded bbox
 			x = 8 * ( ent->solid & 31 );
 			zd = 8 * ( ( ent->solid >> 5 ) & 31 );
 			zu = 8 * ( ( ent->solid >> 10 ) & 63 ) - 32;
@@ -281,7 +331,8 @@ static void CG_ClipMoveToEntities( const vec3_t start, const vec3_t mins, const 
 			}
 		}
 
-		trap_CM_TransformedBoxTrace( &trace, (vec_t *)start, (vec_t *)end, (vec_t *)mins, (vec_t *)maxs, cmodel, contentmask, origin, angles );
+		trap_CM_TransformedBoxTrace(
+			&trace, (vec_t *)start, (vec_t *)end, (vec_t *)mins, (vec_t *)maxs, cmodel, contentmask, origin, angles );
 		if( trace.allsolid || trace.fraction < tr->fraction ) {
 			trace.ent = ent->number;
 			*tr = trace;
@@ -296,15 +347,15 @@ static void CG_ClipMoveToEntities( const vec3_t start, const vec3_t mins, const 
 }
 
 /*
-* CG_Trace
-*/
-void CG_Trace( trace_t *t, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int ignore, int contentmask ) {
+ * CG_Trace
+ */
+void CG_Trace( trace_t *t, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int ignore, int contentmask )
+{
 	// check against world
 	trap_CM_TransformedBoxTrace( t, start, end, mins, maxs, NULL, contentmask, NULL, NULL );
 	t->ent = t->fraction < 1.0 ? 0 : -1; // world entity is 0
 	if( t->fraction == 0 ) {
 		return; // blocked by the world
-
 	}
 
 	// check all other solid models
@@ -312,13 +363,14 @@ void CG_Trace( trace_t *t, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, i
 }
 
 /*
-* CG_PointContents
-*/
-int CG_PointContents( const vec3_t point ) {
-	int i;
-	entity_state_t *ent;
+ * CG_PointContents
+ */
+int CG_PointContents( const vec3_t point )
+{
+	int				 i;
+	entity_state_t * ent;
 	struct cmodel_s *cmodel;
-	int contents;
+	int				 contents;
 
 	contents = trap_CM_TransformedPointContents( (vec_t *)point, NULL, NULL, NULL );
 
@@ -337,15 +389,14 @@ int CG_PointContents( const vec3_t point ) {
 	return contents;
 }
 
-
 static float predictedSteps[CMD_BACKUP]; // for step smoothing
 /*
-* CG_PredictAddStep
-*/
-static void CG_PredictAddStep( int virtualtime, int predictiontime, float stepSize ) {
-
+ * CG_PredictAddStep
+ */
+static void CG_PredictAddStep( int virtualtime, int predictiontime, float stepSize )
+{
 	float oldStep;
-	int delta;
+	int	  delta;
 
 	// check for stepping up before a previous step is completed
 	delta = cg.realTime - cg.predictedStepTime;
@@ -360,14 +411,15 @@ static void CG_PredictAddStep( int virtualtime, int predictiontime, float stepSi
 }
 
 /*
-* CG_PredictSmoothSteps
-*/
-static void CG_PredictSmoothSteps( void ) {
-	int64_t outgoing;
-	int64_t frame;
+ * CG_PredictSmoothSteps
+ */
+static void CG_PredictSmoothSteps( void )
+{
+	int64_t	  outgoing;
+	int64_t	  frame;
 	usercmd_t cmd;
-	int i;
-	int virtualtime = 0, predictiontime = 0;
+	int		  i;
+	int		  virtualtime = 0, predictiontime = 0;
 
 	cg.predictedStepTime = 0;
 	cg.predictedStep = 0;
@@ -399,14 +451,15 @@ static void CG_PredictSmoothSteps( void ) {
 }
 
 /*
-* CG_PredictMovement
-*
-* Sets cg.predictedVelocty, cg.predictedOrigin and cg.predictedAngles
-*/
-void CG_PredictMovement( void ) {
-	int64_t ucmdExecuted, ucmdHead;
-	int64_t frame;
-	pmove_t pm;
+ * CG_PredictMovement
+ *
+ * Sets cg.predictedVelocty, cg.predictedOrigin and cg.predictedAngles
+ */
+void CG_PredictMovement( void )
+{
+	int64_t	  ucmdExecuted, ucmdHead;
+	int64_t	  frame;
+	pmove_t	  pm;
 	usercmd_t ucmd;
 
 	trap_NET_GetCurrentState( NULL, &ucmdHead, NULL );
@@ -462,11 +515,13 @@ void CG_PredictMovement( void ) {
 				GS_AddLaserbeamPoint( &cg.weaklaserTrail, &cg.predictedPlayerState, ucmd.serverTimeStamp );
 			}
 
-			cg_entities[cg.predictedPlayerState.POVnum].current.weapon = GS_ThinkPlayerWeapon( &cg.predictedPlayerState, ucmd.buttons, ucmd.msec, 0 );
+			cg_entities[cg.predictedPlayerState.POVnum].current.weapon =
+				GS_ThinkPlayerWeapon( &cg.predictedPlayerState, ucmd.buttons, ucmd.msec, 0 );
 		}
 
 		// save for debug checking
-		VectorCopy( cg.predictedPlayerState.pmove.origin, cg.predictedOrigins[frame] ); // store for prediction error checks
+		VectorCopy(
+			cg.predictedPlayerState.pmove.origin, cg.predictedOrigins[frame] ); // store for prediction error checks
 
 		// backup the last predicted ucmd which has a timestamp (it's closed)
 		if( ucmdExecuted == ucmdHead - 1 ) {
@@ -486,7 +541,7 @@ void CG_PredictMovement( void ) {
 
 		if( ent->solid == SOLID_BMODEL ) {
 			if( ent->linearMovement ) {
-				vec3_t move;
+				vec3_t	move;
 				int64_t serverTime;
 
 				serverTime = GS_MatchPaused() ? cg.frame.serverTime : cg.time + cgs.extrapolationTime;

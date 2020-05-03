@@ -346,6 +346,8 @@ bool CG_NewFrameSnap( snapshot_t *frame, snapshot_t *lerpframe ) {
 		trap_Cvar_ForceSet( "cg_projectileAntilagOffset", cg_projectileAntilagOffset->dvalue );
 	}
 
+	CG_ClearSolidList();
+
 	CG_UpdatePlayerState();
 
 	for( i = 0; i < frame->numEntities; i++ )
