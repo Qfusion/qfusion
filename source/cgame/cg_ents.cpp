@@ -340,8 +340,6 @@ bool CG_NewFrameSnap( snapshot_t *frame, snapshot_t *lerpframe ) {
 	cg.frame = *frame;
 	gs.gameState = frame->gameState;
 
-	cg.portalInView = false;
-
 	if( cg_projectileAntilagOffset->value > 1.0f || cg_projectileAntilagOffset->value < 0.0f ) {
 		trap_Cvar_ForceSet( "cg_projectileAntilagOffset", cg_projectileAntilagOffset->dvalue );
 	}
@@ -1521,7 +1519,6 @@ static void CG_UpdatePortalSurfaceEnt( centity_t *cent ) {
 	VectorCopy( cent->current.origin2, cent->ent.origin2 );
 
 	if( !VectorCompare( cent->ent.origin, cent->ent.origin2 ) ) {
-		cg.portalInView = true;
 		cent->ent.frame = cent->current.skinnum;
 	}
 
