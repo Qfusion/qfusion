@@ -45,7 +45,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define RDF_UNDERWATER          0x1     // warp the screen as apropriate
 #define RDF_NOWORLDMODEL        0x2     // used for player configuration screen
 #define RDF_UNUSED              0x4
-#define RDF_PORTALINVIEW        0x8     // cull entities using vis too because pvs\areabits are merged serverside
+#define RDF_UNUSED2             0x8
 #define RDF_SKYPORTALINVIEW     0x10    // draw skyportal instead of regular sky
 #define RDF_FLIPPED             0x20
 #define RDF_WORLDOUTLINES       0x40    // draw cell outlines for world surfaces

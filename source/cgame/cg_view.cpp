@@ -535,10 +535,6 @@ static int CG_RenderFlags( void ) {
 		}
 	}
 
-	if( cg.portalInView ) {
-		rdflags |= RDF_PORTALINVIEW;
-	}
-
 	if( cg_outlineWorld->integer ) {
 		rdflags |= RDF_WORLDOUTLINES;
 	}
