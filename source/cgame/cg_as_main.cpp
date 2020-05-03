@@ -231,6 +231,8 @@ static const gs_asglobfuncs_t asCGameGlobalFuncs[] = {
 	{ "void Print( const String &in )", asFUNCTION( asFunc_Print ), NULL },
 	{ "int get_ExtrapolationTime()", asFUNCTION( asFunc_ExtrapolationTime ), NULL },
 	{ "int get_SnapFrameTime()", asFUNCTION( asFunc_SnapFrameTime ), NULL },
+	{ "void AddEntityToSolidList( int number )", asFUNCTION( CG_AddEntityToSolidList ), NULL },
+	{ "void AddEntityToTriggerList( int number )", asFUNCTION( CG_AddEntityToTriggerList ), NULL },
 
 	{ "ModelHandle RegisterModel( const String &in )", asFUNCTION( asFunc_RegisterModel ), NULL },
 	{ "SoundHandle RegisterSound( const String &in )", asFUNCTION( asFunc_RegisterSound ), NULL },
