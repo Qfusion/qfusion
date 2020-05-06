@@ -95,7 +95,6 @@ void MSG_WriteEntityNumber( msg_t *msg, int number, bool remove, unsigned byteMa
 void MSG_WriteDeltaEntity( msg_t *msg, const struct entity_state_s *from, const struct entity_state_s *to, bool force );
 void MSG_WriteDeltaPlayerState( msg_t *msg, const player_state_t *ops, const player_state_t *ps );
 void MSG_WriteDeltaGameState( msg_t *msg, const game_state_t *from, const game_state_t *to );
-void MSG_WriteDir( msg_t *sb, vec3_t vector );
 void MSG_WriteDeltaStruct( msg_t *msg, const void *from, const void *to, const msg_field_t *fields, size_t numFields );
 
 void MSG_BeginReading( msg_t *sb );

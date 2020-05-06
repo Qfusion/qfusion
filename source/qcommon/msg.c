@@ -153,10 +153,6 @@ void MSG_WriteHalfFloat( msg_t *msg, float f ) {
 	MSG_WriteUint16( msg, float_to_half( f ) );
 }
 
-void MSG_WriteDir( msg_t *msg, vec3_t dir ) {
-	MSG_WriteUint8( msg, dir ? DirToByte( dir ) : 0 );
-}
-
 void MSG_WriteString( msg_t *msg, const char *s ) {
 	if( !s ) {
 		MSG_WriteData( msg, "", 1 );
