@@ -96,7 +96,6 @@ LOCAL_SRC_FILES := \
   Source/Core/Stream.cpp \
   Source/Core/StreamFile.cpp \
   Source/Core/StreamMemory.cpp \
-  Source/Core/StringCache.cpp \
   Source/Core/StringUtilities.cpp \
   Source/Core/StyleSheet.cpp \
   Source/Core/StyleSheetFactory.cpp \
