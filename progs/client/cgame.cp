@@ -10,3 +10,5 @@ input/main.as;
 camera/main.as;
 
 hud/main.as;
+
+main/ents.as;
