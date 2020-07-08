@@ -142,7 +142,8 @@ asIScriptEngine *qasCreateEngine( bool *asMaxPortability ) {
 }
 
 void qasWriteEngineDocsToFile( asIScriptEngine *engine, const char *path, bool singleFile, bool markdown, unsigned andMask, unsigned notMask ) {
-	int i, j, filenum;
+	asUINT		i, j;
+	int			filenum;
 	const char *str = 0;    // for temporary strings
 	const char *singleFn;
 	std::string spath( path );
@@ -172,125 +173,171 @@ void qasWriteEngineDocsToFile( asIScriptEngine *engine, const char *path, bool s
 
 	//
 	// global enums
-	if( markdown ) {
-		str = "\r\n## Enums\r\n```c++\r\n";
-	} else {
-		str = "/**\r\n * Enums\r\n */\r\n";
-	}
-	trap_FS_Write( str, strlen( str ), filenum );
-
-	int enumCount = engine->GetEnumCount();
-	for( i = 0; i < enumCount; i++ ) {
-		int enumTypeId;
-		const char *enumName = engine->GetEnumByIndex( i, &enumTypeId, NULL, NULL, NULL );
-
-		str = "typedef enum\r\n{\r\n";
+	asUINT enumCount = engine->GetEnumCount();
+	if( enumCount > 0 ) {
+		if( markdown ) {
+			str = "\r\n## Enums\r\n```c++\r\n\r\n";
+		} else {
+			str = "/**\r\n * Enums\r\n */\r\n\r\n";
+		}
 		trap_FS_Write( str, strlen( str ), filenum );
 
-		int enumValueCount = engine->GetEnumValueCount( enumTypeId );
-		for( j = 0; j < enumValueCount; j++ ) {
-			int outValue;
-			const char *valueName = engine->GetEnumValueByIndex( enumTypeId, j, &outValue );
-			str = va( "\t%s = 0x%x,\r\n", valueName, outValue );
+		for( i = 0; i < enumCount; i++ ) {
+			int			enumTypeId;
+			const char *ns;
+			const char *enumName = engine->GetEnumByIndex( i, &enumTypeId, &ns, NULL, NULL );
+
+			if( ns && *ns ) {
+				str = va( "namespace %s\r\n{\r\n", ns );
+				trap_FS_Write( str, strlen( str ), filenum );
+			}
+
+			str = va( "enum %s\r\n{\r\n", enumName );
 			trap_FS_Write( str, strlen( str ), filenum );
+
+			asUINT enumValueCount = engine->GetEnumValueCount( enumTypeId );
+			for( j = 0; j < enumValueCount; j++ ) {
+				int			outValue;
+				const char *valueName = engine->GetEnumValueByIndex( enumTypeId, j, &outValue );
+				str = va( "\t%s = 0x%x,\r\n", valueName, outValue );
+				trap_FS_Write( str, strlen( str ), filenum );
+			}
+
+			str = "}\r\n\r\n";
+			trap_FS_Write( str, strlen( str ), filenum );
+
+			if( ns && *ns ) {
+				str = "}\r\n\r\n";
+				trap_FS_Write( str, strlen( str ), filenum );
+			}
 		}
 
-		str = va( "} %s;\r\n\r\n", enumName );
-		trap_FS_Write( str, strlen( str ), filenum );
-	}
-
-	if( markdown ) {
-		str = "```\r\n";
-		trap_FS_Write( str, strlen( str ), filenum );
+		if( markdown ) {
+			str = "```\r\n";
+			trap_FS_Write( str, strlen( str ), filenum );
+		}
 	}
 
 	//
-	// global properties
-	if( markdown ) {
-		str = "\r\n## Global properties\r\n```c++\r\n";
-	} else {
-		str = "\r\n/**\r\n * Global properties\r\n */\r\n";
-	}
-	trap_FS_Write( str, strlen( str ), filenum );
+	// funcdefs
+	asUINT funcdefCount = engine->GetFuncdefCount();
+	if( funcdefCount  > 0 ) {
+		if( markdown ) {
+			str = "\r\n## Funcdefs\r\n```c++\r\n\r\n";
+		} else {
+			str = "/**\r\n * Funcdefs\r\n */\r\n\r\n";
+		}
+		trap_FS_Write( str, strlen( str ), filenum );
 
-	int propertyCount = engine->GetGlobalPropertyCount();
-	for( i = 0; i < propertyCount; i++ ) {
-		const char *propertyName;
-		const char *propertyNamespace;
-		int propertyTypeId;
-		bool propertyIsConst;
-		asDWORD mask;
+		for( i = 0; i < funcdefCount; i++ ) {
+			auto *f = engine->GetFuncdefByIndex( i );
+			str = va( "funcdef %s;\r\n", f->GetDeclaration( false, false, true ) );
+			trap_FS_Write( str, strlen( str ), filenum );
+		}
 
-		if( engine->GetGlobalPropertyByIndex( i, &propertyName, &propertyNamespace, &propertyTypeId, &propertyIsConst, NULL, NULL, &mask ) >= 0 ) {
-			if( ( mask & andMask ) == 0 ) {
-				continue;
-			}
-			if( ~( mask & notMask ) == 0 ) {
-				continue;
-			}
-
-			const char *decl;
-			const char *constAttr = propertyIsConst ? "const " : "";
-
-			if( propertyNamespace && *propertyNamespace ) {
-				decl = va( "%s%s %s::%s;\r\n", constAttr,
-				engine->GetTypeDeclaration( propertyTypeId ), propertyNamespace, propertyName );
-			} else {
-				decl = va( "%s%s %s;\r\n", constAttr,
-					engine->GetTypeDeclaration( propertyTypeId ), propertyName );
-			}
-
-			trap_FS_Write( decl, strlen( decl ), filenum );
+		if( markdown ) {
+			str = "```\r\n";
+			trap_FS_Write( str, strlen( str ), filenum );
 		}
 	}
 
-	if( markdown ) {
-		str = "```\r\n";
+
+	//
+	// global properties
+	asUINT propertyCount = engine->GetGlobalPropertyCount();
+	if( propertyCount > 0 ) {
+		if( markdown ) {
+			str = "\r\n## Global properties\r\n```c++\r\n\r\n";
+		} else {
+			str = "\r\n/**\r\n * Global properties\r\n */\r\n\r\n";
+		}
 		trap_FS_Write( str, strlen( str ), filenum );
+
+		for( i = 0; i < propertyCount; i++ ) {
+			const char *propertyName;
+			const char *propertyNamespace;
+			int propertyTypeId;
+			bool propertyIsConst;
+			asDWORD mask;
+
+			if( engine->GetGlobalPropertyByIndex( i, &propertyName, &propertyNamespace, &propertyTypeId, &propertyIsConst, NULL, NULL, &mask ) >= 0 ) {
+				if( ( mask & andMask ) == 0 ) {
+					continue;
+				}
+				if( ~( mask & notMask ) == 0 ) {
+					continue;
+				}
+
+				const char *decl;
+				const char *constAttr = propertyIsConst ? "const " : "";
+
+				if( propertyNamespace && *propertyNamespace ) {
+					decl = va( "%s%s %s::%s;\r\n", constAttr,
+					engine->GetTypeDeclaration( propertyTypeId ), propertyNamespace, propertyName );
+				} else {
+					decl = va( "%s%s %s;\r\n", constAttr,
+						engine->GetTypeDeclaration( propertyTypeId ), propertyName );
+				}
+
+				trap_FS_Write( decl, strlen( decl ), filenum );
+			}
+		}
+
+		if( markdown ) {
+			str = "```\r\n";
+			trap_FS_Write( str, strlen( str ), filenum );
+		}
 	}
 
 	//
 	// global functions
-	if( markdown ) {
-		str = "\r\n## Global functions\r\n```c++\r\n";
-	} else {
-		str = "\r\n/**\r\n * Global functions\r\n */\r\n";
-	}
-	trap_FS_Write( str, strlen( str ), filenum );
 
-	int functionCount = engine->GetGlobalFunctionCount();
-	for( i = 0; i < functionCount; i++ ) {
-		asIScriptFunction *func = engine->GetGlobalFunctionByIndex( i );
-		if( func ) {
-			asDWORD mask = func->GetAccessMask();
-
-			if( ( mask & andMask ) == 0 ) {
-				continue;
-			}
-			if( ~( mask & notMask ) == 0 ) {
-				continue;
-			}
-
-			const char *decl = va( "%s;\r\n", func->GetDeclaration( false, false, true ) );
-			trap_FS_Write( decl, strlen( decl ), filenum );
+	asUINT functionCount = engine->GetGlobalFunctionCount();
+	if( functionCount > 0 ) {
+		if( markdown ) {
+			str = "\r\n## Global functions\r\n```c++\r\n\r\n";
+		} else {
+			str = "\r\n/**\r\n * Global functions\r\n */\r\n\r\n";
 		}
-	}
-
-	if( markdown ) {
-		str = "```\r\n";
 		trap_FS_Write( str, strlen( str ), filenum );
+
+		for( i = 0; i < functionCount; i++ ) {
+			asIScriptFunction *func = engine->GetGlobalFunctionByIndex( i );
+			if( func ) {
+				asDWORD mask = func->GetAccessMask();
+
+				if( ( mask & andMask ) == 0 ) {
+					continue;
+				}
+				if( ~( mask & notMask ) == 0 ) {
+					continue;
+				}
+
+				const char *decl = va( "%s;\r\n", func->GetDeclaration( false, false, true ) );
+				trap_FS_Write( decl, strlen( decl ), filenum );
+			}
+		}
+
+		if( markdown ) {
+			str = "```\r\n";
+			trap_FS_Write( str, strlen( str ), filenum );
+		}
 	}
 
 	trap_FS_FCloseFile( filenum );
 	Com_Printf( "Wrote %s\n", global_file.c_str() );
 
 	// classes
-	int objectCount = engine->GetObjectTypeCount();
+	asUINT objectCount = engine->GetObjectTypeCount();
 	bool wroteClassesHeader = !singleFile;
 	for( i = 0; i < objectCount; i++ ) {
 		asIObjectType *objectType = engine->GetObjectTypeByIndex( i );
 		std::map<std::string, bool> skipSetters;
 		asDWORD mask = objectType->GetAccessMask();
+
+		if( ( objectType->GetFlags() & asOBJ_SCRIPT_OBJECT ) != 0 ) {
+			continue;
+		}
 
 		if( ( mask & andMask ) == 0 ) {
 			continue;
@@ -335,83 +382,93 @@ void qasWriteEngineDocsToFile( asIScriptEngine *engine, const char *path, bool s
 			} else {
 				str = va( "/**\r\n * %s\r\n */\r\n", objectType->GetName() );
 			}
-			trap_FS_Write( str, strlen( str ), filenum );
-			str = va( "class %s\r\n{\r\npublic:", objectType->GetName() );
+
 			trap_FS_Write( str, strlen( str ), filenum );
 
-			// properties
-			str = "\r\n\t/* object properties */\r\n";
-			trap_FS_Write( str, strlen( str ), filenum );
-
-			int memberCount = objectType->GetPropertyCount();
-			for( j = 0; j < memberCount; j++ ) {
-				const char *decl = va( "\t%s;\r\n\r\n", objectType->GetPropertyDeclaration( j ) );
-				trap_FS_Write( decl, strlen( decl ), filenum );
+			const char *ns = objectType->GetNamespace();
+			if( ns && *ns ) {
+				str = va( "namespace %s\r\n{\r\n", ns );
+				trap_FS_Write( str, strlen( str ), filenum );
 			}
 
-			// properties with accessors
-			{
-				int methodCount = objectType->GetMethodCount();
-				for( j = 0; j < methodCount; j++ ) {
-					asIScriptFunction *method = objectType->GetMethodByIndex( j );
-					const char *methodName = method->GetName();
-					if( strncmp( methodName, "get_", 4 ) ) {
+			str = va( "class %s\r\n{", objectType->GetName() );
+			trap_FS_Write( str, strlen( str ), filenum );
+
+			asUINT memberCount = objectType->GetPropertyCount();
+			if( memberCount > 0 ) {
+				// properties
+				str = "\r\n\t/* properties */\r\n\r\n";
+				trap_FS_Write( str, strlen( str ), filenum );
+
+				for( j = 0; j < memberCount; j++ ) {
+					bool isPrivate;
+
+					objectType->GetProperty( j, NULL, NULL, &isPrivate );
+					if( isPrivate ) {
 						continue;
 					}
 
-					std::string setterName = "set_";
-					setterName += methodName + 4;
-					asIScriptFunction *setter = objectType->GetMethodByName( setterName.c_str() );
-					bool readOnly = setter == nullptr;
-					skipSetters[setterName] = true;
-
-					const char *typeDecl = engine->GetTypeDeclaration( method->GetReturnTypeId() );
-					const char *decl = va( "\t%s%s %s;\r\n\r\n", readOnly ? "const " : "", typeDecl, methodName + 4 );
+					const char *decl = va( "\t%s;\r\n", objectType->GetPropertyDeclaration( j ) );
 					trap_FS_Write( decl, strlen( decl ), filenum );
 				}
 			}
 
-			// behaviours
-			str = "\r\n\t/* object behaviors */\r\n";
-			trap_FS_Write( str, strlen( str ), filenum );
+			asUINT behaviourCount = objectType->GetBehaviourCount();		
+			if( behaviourCount > 0 ) {
+				// behaviours
+				str = "\r\n\t/* behaviors */\r\n\r\n";
+				trap_FS_Write( str, strlen( str ), filenum );
+				for( j = 0; j < behaviourCount; j++ ) {
+					// ch : FIXME: obscure function names in behaviours
+					asEBehaviours behaviourType;
 
-			int behaviourCount = objectType->GetBehaviourCount();
-			for( j = 0; j < behaviourCount; j++ ) {
-				// ch : FIXME: obscure function names in behaviours
-				asEBehaviours behaviourType;
-				asIScriptFunction *function = objectType->GetBehaviourByIndex( j, &behaviourType );
-				if( behaviourType == asBEHAVE_ADDREF || behaviourType == asBEHAVE_RELEASE ) {
-					continue;
+					asIScriptFunction *function = objectType->GetBehaviourByIndex( j, &behaviourType );
+					if( behaviourType == asBEHAVE_ADDREF || behaviourType == asBEHAVE_RELEASE ) {
+						continue;
+					}
+					if( behaviourType >= asBEHAVE_FIRST_GC && behaviourType <= asBEHAVE_LAST_GC ) {
+						continue;
+					}
+					if( behaviourType == asBEHAVE_TEMPLATE_CALLBACK ) {
+						continue;
+					}
+
+					const char *decl = va( "\t%s {}\r\n", function->GetDeclaration( false, false, true ) );
+					trap_FS_Write( decl, strlen( decl ), filenum );
 				}
-
-				const char *decl = va( "\t%s;%s\r\n\r\n", function->GetDeclaration( false, false, true ),
-					( behaviourType == asBEHAVE_FACTORY ? " /* factory */ " : "" ) );
-				trap_FS_Write( decl, strlen( decl ), filenum );
 			}
 
-			// methods
-			str = "\r\n\t/* object methods */\r\n";
-			trap_FS_Write( str, strlen( str ), filenum );
-
-			int methodCount = objectType->GetMethodCount();
-			for( j = 0; j < methodCount; j++ ) {
-				asIScriptFunction *method = objectType->GetMethodByIndex( j );
-				const char *methodName = method->GetName();
-
-				// skip accesors for properties we have already dumped
-				if( !strncmp( methodName, "get_", 4 ) ) {
-					continue;
+			asUINT factoryCount = objectType->GetFactoryCount();
+			if( factoryCount > 0 ) {
+				// factories
+				str = "\r\n\t/* factories */\r\n\r\n";
+				trap_FS_Write( str, strlen( str ), filenum );
+				for( j = 0; j < factoryCount; j++ ) {
+					asIScriptFunction *function = objectType->GetFactoryByIndex( j );
+					const char *	   decl = va( "\t%s {}\r\n", function->GetDeclaration( false, false, true ) );
+					trap_FS_Write( decl, strlen( decl ), filenum );
 				}
-				if( skipSetters.find( methodName ) != skipSetters.end() ) {
-					continue;
-				}
-
-				const char *decl = va( "\t%s;\r\n\r\n", method->GetDeclaration( false, false, true ) );
-				trap_FS_Write( decl, strlen( decl ), filenum );
 			}
 
-			str = "};\r\n\r\n";
+			asUINT methodCount = objectType->GetMethodCount();
+			if( methodCount > 0 ) {
+				// methods
+				str = "\r\n\t/* methods */\r\n\r\n";
+				trap_FS_Write( str, strlen( str ), filenum );
+				for( j = 0; j < methodCount; j++ ) {
+					asIScriptFunction *method = objectType->GetMethodByIndex( j );
+					const char *decl = va( "\t%s {}\r\n", method->GetDeclaration( false, false, true ) );
+					trap_FS_Write( decl, strlen( decl ), filenum );
+				}
+			}
+
+			str = "}\r\n\r\n";
 			trap_FS_Write( str, strlen( str ), filenum );
+
+			if( ns && *ns ) {
+				str = "}\r\n\r\n";
+				trap_FS_Write( str, strlen( str ), filenum );
+			}
 
 			if( markdown ) {
 				str = "```\r\n\r\n";
