@@ -827,8 +827,6 @@ void G_InitLevel( char *mapname, char *entities, int entstrlen, int64_t levelTim
 	char name[MAX_CONFIGSTRING_CHARS];
 	int i;
 
-	G_asGarbageCollect( true );
-
 	GT_asCallShutdown();
 	G_asCallMapExit();
 
@@ -939,8 +937,6 @@ void G_InitLevel( char *mapname, char *entities, int entstrlen, int64_t levelTim
 	// always start in warmup match state and let the thinking code
 	// revert it to wait state if empty ( so gametype based item masks are setup )
 	G_Match_LaunchState( MATCH_STATE_WARMUP );
-
-	G_asGarbageCollect( true );
 }
 
 void G_ResetLevel( void ) {

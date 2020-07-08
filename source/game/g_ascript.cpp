@@ -192,16 +192,6 @@ static void objectMatch_setClockOverride( int64_t time, match_t *self ) {
 	gs.gameState.stats[GAMESTAT_CLOCKOVERRIDE] = time;
 }
 
-static const gs_asFuncdef_t match_Funcdefs[] =
-{
-	ASLIB_FUNCDEF_NULL
-};
-
-static const gs_asBehavior_t match_ObjectBehaviors[] =
-{
-	ASLIB_BEHAVIOR_NULL
-};
-
 static const gs_asMethod_t match_Methods[] =
 {
 	{ ASLIB_FUNCTION_DECL( void, launchState, (int state) const ), asFUNCTION( objectMatch_launchState ), asCALL_CDECL_OBJLAST },
@@ -228,22 +218,16 @@ static const gs_asMethod_t match_Methods[] =
 	ASLIB_METHOD_NULL
 };
 
-static const gs_asProperty_t match_Properties[] =
-{
-	ASLIB_PROPERTY_NULL
-};
-
 static const gs_asClassDescriptor_t asMatchClassDescriptor =
 {
-	"Match",                    /* name */
+	"Match",													/* name */
 	static_cast<asEObjTypeFlags>( asOBJ_REF | asOBJ_NOHANDLE ), /* object type flags */
-	sizeof( match_t ),          /* size */
-	match_Funcdefs,             /* funcdefs */
-	match_ObjectBehaviors,      /* object behaviors */
-	match_Methods,              /* methods */
-	match_Properties,           /* properties */
-
-	NULL, NULL                  /* string factory hack */
+	sizeof( match_t ),											/* size */
+	NULL,														/* funcdefs */
+	NULL,														/* object behaviors */
+	match_Methods,												/* methods */
+	NULL,														/* properties */
+	NULL, NULL,													/* string factory hack */
 };
 
 //=======================================================================
@@ -322,16 +306,6 @@ static bool objectGametypeDescriptor_isInvidualGameType( gametype_descriptor_t *
 	return GS_InvidualGameType();
 }
 
-static const gs_asFuncdef_t gametypedescr_Funcdefs[] =
-{
-	ASLIB_FUNCDEF_NULL
-};
-
-static const gs_asBehavior_t gametypedescr_ObjectBehaviors[] =
-{
-	ASLIB_BEHAVIOR_NULL
-};
-
 static const gs_asMethod_t gametypedescr_Methods[] =
 {
 	{ ASLIB_FUNCTION_DECL( const String @, get_name, ( ) const ), asFUNCTION( objectGametypeDescriptor_getName ), asCALL_CDECL_OBJLAST },
@@ -348,7 +322,7 @@ static const gs_asMethod_t gametypedescr_Methods[] =
 	{ ASLIB_FUNCTION_DECL( bool, get_hasSelfDamage, ( ) const ), asFUNCTION( objectGametypeDescriptor_hasSelfDamage ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( bool, get_isInvidualGameType, ( ) const ), asFUNCTION( objectGametypeDescriptor_isInvidualGameType ), asCALL_CDECL_OBJLAST },
 
-	ASLIB_METHOD_NULL
+	ASLIB_METHOD_NULL,
 };
 
 static const gs_asProperty_t gametypedescr_Properties[] =
@@ -391,20 +365,18 @@ static const gs_asProperty_t gametypedescr_Properties[] =
 	{ ASLIB_PROPERTY_DECL( uint, forceTeamBots ), ASLIB_FOFFSET( gametype_descriptor_t, forceTeamBots ) },
 	{ ASLIB_PROPERTY_DECL( bool, disableObituaries ), ASLIB_FOFFSET( gametype_descriptor_t, disableObituaries ) },
 
-	ASLIB_PROPERTY_NULL
+	ASLIB_PROPERTY_NULL,
 };
 
-static const gs_asClassDescriptor_t asGametypeClassDescriptor =
-{
-	"GametypeDesc",                 /* name */
-	asOBJ_REF | asOBJ_NOHANDLE,     /* object type flags */
-	sizeof( gametype_descriptor_t ),/* size */
-	gametypedescr_Funcdefs,         /* funcdefs */
-	gametypedescr_ObjectBehaviors,  /* object behaviors */
-	gametypedescr_Methods,          /* methods */
-	gametypedescr_Properties,       /* properties */
-
-	NULL, NULL                      /* string factory hack */
+static const gs_asClassDescriptor_t asGametypeClassDescriptor = {
+	"GametypeDesc",					 /* name */
+	asOBJ_REF | asOBJ_NOHANDLE,		 /* object type flags */
+	sizeof( gametype_descriptor_t ), /* size */
+	NULL,							 /* funcdefs */
+	NULL,							 /* object behaviors */
+	gametypedescr_Methods,			 /* methods */
+	gametypedescr_Properties,		 /* properties */
+	NULL, NULL						 /* string factory hack */
 };
 
 //=======================================================================
@@ -474,16 +446,6 @@ static int objectTeamlist_getTeamIndex( g_teamlist_t *obj ) {
 	return index;
 }
 
-static const gs_asFuncdef_t teamlist_Funcdefs[] =
-{
-	ASLIB_FUNCDEF_NULL
-};
-
-static const gs_asBehavior_t teamlist_ObjectBehaviors[] =
-{
-	ASLIB_BEHAVIOR_NULL
-};
-
 static const gs_asMethod_t teamlist_Methods[] =
 {
 	{ ASLIB_FUNCTION_DECL( Entity @, ent, ( int index ) ), asFUNCTION( objectTeamlist_GetPlayerEntity ), asCALL_CDECL_OBJLAST },
@@ -511,15 +473,14 @@ static const gs_asProperty_t teamlist_Properties[] =
 
 static const gs_asClassDescriptor_t asTeamListClassDescriptor =
 {
-	"Team",                     /* name */
-	asOBJ_REF | asOBJ_NOCOUNT,    /* object type flags */
-	sizeof( g_teamlist_t ),     /* size */
-	teamlist_Funcdefs,          /* funcdefs */
-	teamlist_ObjectBehaviors,   /* object behaviors */
-	teamlist_Methods,           /* methods */
-	teamlist_Properties,        /* properties */
-
-	NULL, NULL                  /* string factory hack */
+	"Team",					   /* name */
+	asOBJ_REF | asOBJ_NOCOUNT, /* object type flags */
+	sizeof( g_teamlist_t ),	   /* size */
+	NULL,					   /* funcdefs */
+	NULL,					   /* object behaviors */
+	teamlist_Methods,		   /* methods */
+	teamlist_Properties,	   /* properties */
+	NULL, NULL,				   /* string factory hack */
 };
 
 //=======================================================================
@@ -581,16 +542,6 @@ static void objectScoreStats_RoundAdd( score_stats_t *obj ) {
 	obj->numrounds++;
 }
 
-static const gs_asFuncdef_t scorestats_Funcdefs[] =
-{
-	ASLIB_FUNCDEF_NULL
-};
-
-static const gs_asBehavior_t scorestats_ObjectBehaviors[] =
-{
-	ASLIB_BEHAVIOR_NULL
-};
-
 static const gs_asMethod_t scorestats_Methods[] =
 {
 	{ ASLIB_FUNCTION_DECL( void, setScore, ( int i ) ), asFUNCTION( objectScoreStats_ScoreSet ), asCALL_CDECL_OBJLAST },
@@ -626,15 +577,14 @@ static const gs_asProperty_t scorestats_Properties[] =
 
 static const gs_asClassDescriptor_t asScoreStatsClassDescriptor =
 {
-	"Stats",                    /* name */
-	asOBJ_REF | asOBJ_NOCOUNT,    /* object type flags */
-	sizeof( score_stats_t ),    /* size */
-	scorestats_Funcdefs,        /* funcdefs */
-	scorestats_ObjectBehaviors, /* object behaviors */
-	scorestats_Methods,         /* methods */
-	scorestats_Properties,      /* properties */
-
-	NULL, NULL                  /* string factory hack */
+	"Stats",				   /* name */
+	asOBJ_REF | asOBJ_NOCOUNT, /* object type flags */
+	sizeof( score_stats_t ),   /* size */
+	NULL,					   /* funcdefs */
+	NULL,					   /* object behaviors */
+	scorestats_Methods,		   /* methods */
+	scorestats_Properties,	   /* properties */
+	NULL, NULL,				   /* string factory hack */
 };
 
 //=======================================================================
@@ -946,11 +896,10 @@ static void objectGameClient_setHUDStat( int stat, int value, gclient_t *self ) 
 }
 
 static int objectGameClient_getHUDStat( int stat, gclient_t *self ) {
-	if( stat < 0 && stat >= MAX_STATS ) {
+	if( stat < 0 && stat >= PS_MAX_STATS ) {
 		G_Printf( "* WARNING: stat %i is out of range\n", stat );
 		return 0;
 	}
-
 	return self->ps.stats[ stat ];
 }
 
@@ -1112,16 +1061,6 @@ static void objectGameClient_SetOverlayMenuItems( asstring_t *str, gclient_t *se
 	trap_GameCmd( PLAYERENT( playerNum ), va( "qm %s", str->buffer ) );
 }
 
-static const gs_asFuncdef_t gameclient_Funcdefs[] =
-{
-	ASLIB_FUNCDEF_NULL
-};
-
-static const gs_asBehavior_t gameclient_ObjectBehaviors[] =
-{
-	ASLIB_BEHAVIOR_NULL
-};
-
 static const gs_asMethod_t gameclient_Methods[] =
 {
 	{ ASLIB_FUNCTION_DECL( int, get_playerNum, ( ) const ), asFUNCTION( objectGameClient_PlayerNum ), asCALL_CDECL_OBJLAST },
@@ -1196,15 +1135,14 @@ static const gs_asProperty_t gameclient_Properties[] =
 
 static const gs_asClassDescriptor_t asGameClientDescriptor =
 {
-	"Client",                   /* name */
-	asOBJ_REF | asOBJ_NOCOUNT,    /* object type flags */
-	sizeof( gclient_t ),        /* size */
-	gameclient_Funcdefs,        /* funcdefs */
-	gameclient_ObjectBehaviors, /* object behaviors */
-	gameclient_Methods,         /* methods */
-	gameclient_Properties,      /* properties */
-
-	NULL, NULL                  /* string factory hack */
+	"Client",				   /* name */
+	asOBJ_REF | asOBJ_NOCOUNT, /* object type flags */
+	sizeof( gclient_t ),	   /* size */
+	NULL,					   /* funcdefs */
+	NULL,					   /* object behaviors */
+	gameclient_Methods,		   /* methods */
+	gameclient_Properties,	   /* properties */
+	NULL, NULL,				   /* string factory hack */
 };
 
 //=======================================================================
@@ -1555,11 +1493,6 @@ static const gs_asFuncdef_t gedict_Funcdefs[] =
 	ASLIB_FUNCDEF_NULL
 };
 
-static const gs_asBehavior_t gedict_ObjectBehaviors[] =
-{
-	ASLIB_BEHAVIOR_NULL
-};
-
 static const gs_asMethod_t gedict_Methods[] =
 {
 	{ ASLIB_FUNCTION_DECL( Vec3, get_velocity, ( ) const ), asFUNCTION( objectGameEntity_GetVelocity ), asCALL_CDECL_OBJLAST },
@@ -1688,15 +1621,14 @@ static const gs_asProperty_t gedict_Properties[] =
 
 static const gs_asClassDescriptor_t asGameEntityClassDescriptor =
 {
-	"Entity",                   /* name */
-	asOBJ_REF | asOBJ_NOCOUNT,    /* object type flags */
-	sizeof( edict_t ),          /* size */
-	gedict_Funcdefs,            /* funcdefs */
-	gedict_ObjectBehaviors,     /* object behaviors */
-	gedict_Methods,             /* methods */
-	gedict_Properties,          /* properties */
-
-	NULL, NULL                  /* string factory hack */
+	"Entity",				   /* name */
+	asOBJ_REF | asOBJ_NOCOUNT, /* object type flags */
+	sizeof( edict_t ),		   /* size */
+	gedict_Funcdefs,		   /* funcdefs */
+	NULL,					   /* object behaviors */
+	gedict_Methods,			   /* methods */
+	gedict_Properties,		   /* properties */
+	NULL, NULL,				   /* string factory hack */
 };
 
 //=======================================================================
@@ -2844,249 +2776,6 @@ void G_asShutdownGameModuleEngine( void ) {
 }
 
 /*
-* G_asGarbageCollect
-*
-* Perform garbage collection procedure
-*/
-void G_asGarbageCollect( bool force ) {
-	static int64_t lastTime = 0;
-	unsigned int currentSize, totalDestroyed, totalDetected;
-	asIScriptEngine *asEngine;
-
-	if( !game.asExport ) {
-		return;
-	}
-
-	asEngine = GAME_AS_ENGINE();
-	if( !asEngine ) {
-		return;
-	}
-
-	if( lastTime > game.serverTime ) {
-		force = true;
-	}
-
-	if( force || lastTime + g_asGC_interval->value * 1000 < game.serverTime ) {
-		asEngine->GetGCStatistics( &currentSize, &totalDestroyed, &totalDetected );
-
-		if( g_asGC_stats->integer ) {
-			G_Printf( "GC: t=%" PRIi64 " size=%u destroyed=%u detected=%u\n", game.serverTime, currentSize, totalDestroyed, totalDetected );
-		}
-
-		asEngine->GarbageCollect();
-
-		lastTime = game.serverTime;
-	}
-}
-
-/*
-* G_asDumpAPIToFile
-*
-* Dump all classes, global functions and variables into a file
-*/
-static void G_asDumpAPIToFile( const char *path ) {
-	int i, j;
-	int file;
-	const gs_asClassDescriptor_t *cDescr;
-	const char *name;
-	char *filename = NULL;
-	size_t filename_size = 0;
-	char string[1024];
-
-	// dump class definitions, containing methods, behaviors and properties
-	const gs_asClassDescriptor_t *const *allDescriptors[] = { asGameClassesDescriptors };
-	for( const gs_asClassDescriptor_t *const *descriptors: allDescriptors ) {
-		for( i = 0;; i++ ) {
-			if( !( cDescr = descriptors[i] ) ) {
-				break;
-			}
-
-			name = cDescr->name;
-			if( strlen( path ) + strlen( name ) + 2 >= filename_size ) {
-				if( filename_size ) {
-					G_Free( filename );
-				}
-				filename_size = ( strlen( path ) + strlen( name ) + 2 ) * 2 + 1;
-				filename = (char *) G_Malloc( filename_size );
-			}
-
-			Q_snprintfz( filename, filename_size, "%s%s.h", path, name );
-			if( trap_FS_FOpenFile( filename, &file, FS_WRITE ) == -1 ) {
-				G_Printf( "G_asDumpAPIToFile: Couldn't write %s.\n", filename );
-				return;
-			}
-
-			// funcdefs
-			if( cDescr->funcdefs ) {
-				Q_snprintfz( string, sizeof( string ), "/* funcdefs */\r\n" );
-				trap_FS_Write( string, strlen( string ), file );
-
-				for( j = 0;; j++ ) {
-					const gs_asFuncdef_t *funcdef = &cDescr->funcdefs[j];
-					if( !funcdef->declaration ) {
-						break;
-					}
-
-					Q_snprintfz( string, sizeof( string ), "funcdef %s;\r\n", funcdef->declaration );
-					trap_FS_Write( string, strlen( string ), file );
-				}
-
-				Q_snprintfz( string, sizeof( string ), "\r\n" );
-				trap_FS_Write( string, strlen( string ), file );
-			}
-
-			Q_snprintfz( string, sizeof( string ), "/**\r\n * %s\r\n */\r\n", cDescr->name );
-			trap_FS_Write( string, strlen( string ), file );
-
-			Q_snprintfz( string, sizeof( string ), "class %s\r\n{\r\npublic:", cDescr->name );
-			trap_FS_Write( string, strlen( string ), file );
-
-			// object properties
-			if( cDescr->objProperties ) {
-				Q_snprintfz( string, sizeof( string ), "\r\n\t/* object properties */\r\n" );
-				trap_FS_Write( string, strlen( string ), file );
-
-				for( j = 0;; j++ ) {
-					const gs_asProperty_t *objProperty = &cDescr->objProperties[j];
-					if( !objProperty->declaration ) {
-						break;
-					}
-
-					Q_snprintfz( string, sizeof( string ), "\t%s;\r\n", objProperty->declaration );
-					trap_FS_Write( string, strlen( string ), file );
-				}
-			}
-
-			// object behaviors
-			if( cDescr->objBehaviors ) {
-				Q_snprintfz( string, sizeof( string ), "\r\n\t/* object behaviors */\r\n" );
-				trap_FS_Write( string, strlen( string ), file );
-
-				for( j = 0;; j++ ) {
-					const gs_asBehavior_t *objBehavior = &cDescr->objBehaviors[j];
-					if( !objBehavior->declaration ) {
-						break;
-					}
-
-					// ignore add/remove reference behaviors as they can not be used explicitly anyway
-					if( objBehavior->behavior == asBEHAVE_ADDREF || objBehavior->behavior == asBEHAVE_RELEASE ) {
-						continue;
-					}
-
-					Q_snprintfz( string, sizeof( string ), "\t%s;%s\r\n", objBehavior->declaration,
-								 ( objBehavior->behavior == asBEHAVE_FACTORY ? " /* factory */ " : "" )
-								 );
-					trap_FS_Write( string, strlen( string ), file );
-				}
-			}
-
-			// object methods
-			if( cDescr->objMethods ) {
-				Q_snprintfz( string, sizeof( string ), "\r\n\t/* object methods */\r\n" );
-				trap_FS_Write( string, strlen( string ), file );
-
-				for( j = 0;; j++ ) {
-					const gs_asMethod_t *objMethod = &cDescr->objMethods[j];
-					if( !objMethod->declaration ) {
-						break;
-					}
-
-					Q_snprintfz( string, sizeof( string ), "\t%s;\r\n", objMethod->declaration );
-					trap_FS_Write( string, strlen( string ), file );
-				}
-			}
-
-			Q_snprintfz( string, sizeof( string ), "};\r\n\r\n" );
-			trap_FS_Write( string, strlen( string ), file );
-
-			trap_FS_FCloseFile( file );
-
-			G_Printf( "Wrote %s\n", filename );
-		}
-	}
-
-	// globals
-	name = "globals";
-	if( strlen( path ) + strlen( name ) + 2 >= filename_size ) {
-		if( filename_size ) {
-			G_Free( filename );
-		}
-		filename_size = ( strlen( path ) + strlen( name ) + 2 ) * 2 + 1;
-		filename = ( char * )G_Malloc( filename_size );
-	}
-
-	Q_snprintfz( filename, filename_size, "%s%s.h", path, name );
-	if( trap_FS_FOpenFile( filename, &file, FS_WRITE ) == -1 ) {
-		G_Printf( "G_asDumpAPIToFile: Couldn't write %s.\n", filename );
-		return;
-	}
-
-	// enums
-	{
-		const gs_asEnum_t *asEnum;
-		const gs_asEnumVal_t *asEnumVal;
-
-		Q_snprintfz( string, sizeof( string ), "/**\r\n * %s\r\n */\r\n", "Enums" );
-		trap_FS_Write( string, strlen( string ), file );
-
-		const gs_asEnum_t *const allEnumsLists[] = { asGameEnums };
-		for( const gs_asEnum_t *const enumsList: allEnumsLists ) {
-			for( i = 0, asEnum = enumsList; asEnum->name != NULL; i++, asEnum++ ) {
-				Q_snprintfz( string, sizeof( string ), "typedef enum\r\n{\r\n" );
-				trap_FS_Write( string, strlen( string ), file );
-
-				for( j = 0, asEnumVal = asEnum->values; asEnumVal->name != NULL; j++, asEnumVal++ ) {
-					Q_snprintfz( string, sizeof( string ), "\t%s = 0x%x,\r\n", asEnumVal->name, asEnumVal->value );
-					trap_FS_Write( string, strlen( string ), file );
-				}
-
-				Q_snprintfz( string, sizeof( string ), "} %s;\r\n\r\n", asEnum->name );
-				trap_FS_Write( string, strlen( string ), file );
-			}
-		}
-	}
-
-	// global properties
-	{
-		const gs_asglobproperties_t *prop;
-
-		Q_snprintfz( string, sizeof( string ), "/**\r\n * %s\r\n */\r\n", "Global properties" );
-		trap_FS_Write( string, strlen( string ), file );
-
-		for( prop = asGlobProps; prop->declaration; prop++ ) {
-			Q_snprintfz( string, sizeof( string ), "%s;\r\n", prop->declaration );
-			trap_FS_Write( string, strlen( string ), file );
-		}
-
-		Q_snprintfz( string, sizeof( string ), "\r\n" );
-		trap_FS_Write( string, strlen( string ), file );
-	}
-
-	// global functions
-	{
-		const gs_asglobfuncs_t *func;
-
-		Q_snprintfz( string, sizeof( string ), "/**\r\n * %s\r\n */\r\n", "Global functions" );
-		trap_FS_Write( string, strlen( string ), file );
-
-		const gs_asglobfuncs_t *const allFuncsList[] = { asGameGlobFuncs, asAIGlobFuncs };
-		for( const gs_asglobfuncs_t *funcsList: allFuncsList ) {
-			for( func = funcsList; func->declaration; func++ ) {
-				Q_snprintfz( string, sizeof( string ), "%s;\r\n", func->declaration );
-				trap_FS_Write( string, strlen( string ), file );
-			}
-		}
-
-		Q_snprintfz( string, sizeof( string ), "\r\n" );
-		trap_FS_Write( string, strlen( string ), file );
-	}
-
-	trap_FS_FCloseFile( file );
-
-	G_Printf( "Wrote %s\n", filename );
-}
-
-/*
 * G_asDumpAPI_f
 *
 * Dump all classes, global functions and variables into a file
@@ -3095,5 +2784,6 @@ void G_asDumpAPI_f( void ) {
 	char path[MAX_QPATH];
 
 	Q_snprintfz( path, sizeof( path ), "AS_API/v%.g/", trap_Cvar_Value( "version" ) );
-	G_asDumpAPIToFile( path );
+
+	game.asExport->asWriteEngineDocsToFile( GAME_AS_ENGINE(), path, false, false, ~(unsigned)0, 0 );
 }

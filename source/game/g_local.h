@@ -541,7 +541,6 @@ void G_asCallPMoveGetViewAnglesClamp( const player_state_t *ps, vec3_t vaclamp )
 
 void G_asInitGameModuleEngine( void );
 void G_asShutdownGameModuleEngine( void );
-void G_asGarbageCollect( bool force );
 void G_asDumpAPI_f( void );
 
 #define world   ( (edict_t *)game.edicts )

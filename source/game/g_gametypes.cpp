@@ -1725,8 +1725,6 @@ void G_RunGametype( void ) {
 	if( GS_TeamBasedGametype() ) {
 		G_Teams_UpdateTeamInfoMessages();
 	}
-
-	G_asGarbageCollect( false );
 }
 
 //======================================================
