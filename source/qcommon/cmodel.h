@@ -66,30 +66,11 @@ bool CM_AreasConnected( cmodel_state_t *cms, int area1, int area2 );
 
 
 /*
- * CM_WriteAreaBitsUTM
+ * CM_WriteAreaBits
  *
- * The number of bytes required for the diagonal areabits matrix
- * The sum of arithmetic progression: S=1...num_areas-1 for bits, then (S+7)/8
+ * Requires numareas * CM_AreaRowSize bytes of buffer space
  */
-#define CM_AreaBitsUTMSize( numareas )  ( ( ( ( numareas ) * ( ( numareas ) - 1 ) / 2  ) + 7 ) / 8 )
-
-/*
- * CM_WriteAreaBitsUTM
- *
- * Only writes the upper triangle of the triangluar state matrix
- * with the exception of the main diagonal because it's all ones
- * (the area is always visible to itself)
- *
- * Returns the number of bytes written into output buffer
- */
-int	 CM_WriteAreaBitsUTM( cmodel_state_t *cms, uint8_t *buffer );
-
-/*
- * CM_ReadAreaBitsUTM
- *
- * Reads and mirrors the upper triangluar matrix with area state
- */
-void CM_ReadAreaBitsUTM( int numareas, const uint8_t *buffer, uint8_t *out );
+int	 CM_WriteAreaBits( cmodel_state_t *cms, uint8_t *buffer );
 
 /*
  * CM_HeadnodeVisible

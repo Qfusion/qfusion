@@ -161,6 +161,45 @@ void MSG_WriteString( msg_t *msg, const char *s ) {
 	}
 }
 
+#define MSG_AreaBitsUTMSize( numareas ) ( ( ( ( numareas ) * ( (numareas)-1 ) / 2 ) + 7 ) / 8 )
+#define MSG_AreaBitsRowSize( numareas ) ( ( numareas + 7 ) / 8 )
+
+/*
+ * MSG_WriteAreaBitsUTM
+ */
+int MSG_WriteAreaBitsUTM( msg_t *msg, int numareas, const uint8_t *areabits )
+{
+	int		 i, j, k;
+	int		 bytes;
+	int		 rowsize;
+	uint8_t *out;
+
+	// only send the upper triangle of the triangluar state matrix
+	// ignore the main diagonal
+	bytes = MSG_AreaBitsUTMSize( numareas );
+	rowsize = MSG_AreaBitsRowSize( numareas );
+
+	if( !bytes ) {
+		return 0;
+	}
+
+	out = MSG_GetSpace( msg, bytes );
+	memset( out, 0, bytes );
+
+	k = 0;
+	for( i = 0; i < numareas; i++ ) {
+		const uint8_t *row = areabits + i * rowsize;
+		for( j = i + 1; j < numareas; j++ ) {
+			if( row[j >> 3] & ( 1 << ( j & 7 ) ) ) {
+				out[k >> 3] |= ( 1 << ( k & 7 ) );
+			}
+			k++;
+		}
+	}
+
+	return bytes;
+}
+
 //==================================================
 // READ FUNCTIONS
 //==================================================
@@ -324,6 +363,53 @@ char *MSG_ReadString( msg_t *msg ) {
 
 char *MSG_ReadStringLine( msg_t *msg ) {
 	return MSG_ReadString2( msg, true );
+}
+
+/*
+ * MSG_ReadAreaBitsUTM
+ */
+void MSG_ReadAreaBitsUTM( msg_t *msg, int numareas, uint8_t *out, size_t outsize )
+{
+	int		 i, j, k;
+	int		 inbytes, outbytes;
+	int		 rowsize;
+	uint8_t *buffer;
+
+	inbytes = MSG_AreaBitsUTMSize( numareas );
+	rowsize = MSG_AreaBitsRowSize( numareas );
+	if( msg->readcount + inbytes > msg->cursize ) {
+		return;
+	}
+
+	outbytes = numareas * rowsize;
+	if( (size_t)outbytes > outsize ) {
+		Com_Error( ERR_DROP, "Invalid areabits size: %" PRIuPTR " > MAX_SNAPSHOT_AREABYTES", (uintptr_t)outbytes );
+		return;
+	}
+
+	memset( out, 0, outbytes );
+	buffer = &msg->data[msg->readcount];
+
+	// read and mirror the upper triangluar matrix
+	// set the main diagonal bits to 1
+	k = 0;
+	for( i = 0; i < numareas; i++ ) {
+		uint8_t *row = out + i * rowsize;
+
+		for( j = i + 1; j < numareas; j++ ) {
+			if( buffer[k >> 8] & ( 1 << ( k & 7 ) ) ) {
+				uint8_t *row2 = out + j * rowsize;
+
+				row[j >> 3] |= ( 1 << ( j & 7 ) );
+				row2[i >> 3] |= ( 1 << ( i & 7 ) );
+			}
+			k++;
+		}
+
+		row[i >> 3] |= ( 1 << ( i & 7 ) );
+	}
+
+	msg->readcount += inbytes;
 }
 
 //==================================================

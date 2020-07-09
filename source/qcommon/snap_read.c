@@ -336,7 +336,6 @@ snapshot_t *SNAP_ParseFrame(
 	msg_t *msg, snapshot_t *lastFrame, int *suppressCount, snapshot_t *backup, entity_state_t *baselines, int showNet )
 {
 	int			cmd;
-	size_t		len;
 	snapshot_t *deltaframe;
 	int			numareas;
 	int			numplayers;
@@ -407,12 +406,7 @@ snapshot_t *SNAP_ParseFrame(
 
 	// read areabits
 	numareas = MSG_ReadUintBase128( msg );
-	len = CM_AreaBitsUTMSize( numareas );
-	if( len > MAX_SNAPSHOT_AREABYTES ) {
-		Com_Error( ERR_DROP, "Invalid areabits size: %" PRIuPTR " > MAX_SNAPSHOT_AREABYTES", (uintptr_t)len );
-	}
-	CM_ReadAreaBitsUTM( numareas, MSG_PeekData( msg, len ), newframe->areabits );
-	MSG_SkipData( msg, len );
+	MSG_ReadAreaBitsUTM( msg, numareas, newframe->areabits, MAX_SNAPSHOT_AREABYTES );
 
 	// read match info
 	cmd = MSG_ReadUint8( msg );
