@@ -97,6 +97,7 @@ void MSG_WriteDeltaEntity( msg_t *msg, const struct entity_state_s *from, const 
 void MSG_WriteDeltaPlayerState( msg_t *msg, const player_state_t *ops, const player_state_t *ps );
 void MSG_WriteDeltaGameState( msg_t *msg, const game_state_t *from, const game_state_t *to );
 void MSG_WriteDeltaStruct( msg_t *msg, const void *from, const void *to, const msg_field_t *fields, size_t numFields );
+int	 MSG_WriteAreaBitsUTM( msg_t *msg, int numareas, const uint8_t *areabits );
 
 void MSG_BeginReading( msg_t *sb );
 int MSG_ReadInt8( msg_t *msg );
@@ -120,6 +121,7 @@ void MSG_ReadDeltaGameState( msg_t *msg, const game_state_t *from, game_state_t 
 void MSG_ReadDir( msg_t *sb, vec3_t vector );
 void MSG_ReadData( msg_t *sb, void *buffer, size_t length );
 void MSG_ReadDeltaStruct( msg_t *msg, const void *from, void *to, size_t size, const msg_field_t *fields, size_t numFields );
+void MSG_ReadAreaBitsUTM( msg_t *msg, int numareas, uint8_t *out, size_t outsize );
 
 //============================================================================
 

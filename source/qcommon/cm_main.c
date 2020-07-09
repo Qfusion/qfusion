@@ -696,16 +696,18 @@ bool CM_AreasConnected( cmodel_state_t *cms, int area1, int area2 )
 }
 
 /*
- * CM_WriteAreaBitsUTM
+ * CM_WriteAreaBits
  */
-int CM_WriteAreaBitsUTM( cmodel_state_t *cms, uint8_t *buffer )
+int CM_WriteAreaBits( cmodel_state_t *cms, uint8_t *buffer )
 {
 	int i, j, k;
 	int bytes;
+	int rowsize;
 
 	// only send the upper triangle of the triangluar state matrix
 	// ignore the main diagonal as it's all ones
-	bytes = CM_AreaBitsUTMSize( cms->numareas );
+	rowsize = CM_AreaRowSize( cms );
+	bytes = cms->numareas * rowsize;
 
 	if( cm_noAreas->integer || cms->cmap_bspFormat->flags & BSP_NOAREAS ) {
 		// for debugging, send everything
@@ -717,49 +719,15 @@ int CM_WriteAreaBitsUTM( cmodel_state_t *cms, uint8_t *buffer )
 
 	k = 0;
 	for( i = 0; i < cms->numareas; i++ ) {
-		for( j = i + 1; j < cms->numareas; j++ ) {
+		uint8_t *row = buffer + i * rowsize;
+		for( j = 0; j < cms->numareas; j++ ) {
 			if( CM_AreasConnected( cms, i, j ) ) {
-				buffer[k >> 3] |= ( 1 << ( k & 7 ) );
+				row[j >> 3] |= ( 1 << ( j & 7 ) );
 			}
-			k++;
 		}
 	}
 
 	return bytes;
-}
-
-/*
- * CM_ReadAreaBitsUTM
- */
-void CM_ReadAreaBitsUTM( int numareas, const uint8_t *buffer, uint8_t *out )
-{
-	int i, j, k;
-	int bytes;
-	int rowsize;
-
-	bytes = CM_AreaBitsUTMSize( numareas );
-	rowsize = ( numareas + 7 ) / 8;
-
-	memset( out, 0, bytes );
-
-	// read and mirror the upper triangluar matrix
-	// set the main diagonal bits to 1
-	k = 0;
-	for( i = 0; i < numareas; i++ ) {
-		uint8_t *row = out + i * rowsize;
-
-		for( j = i + 1; j < numareas; j++ ) {
-			if( buffer[k >> 8] & ( 1 << ( k & 7 ) ) ) {
-				uint8_t *row2 = out + j * rowsize;
-
-				row[j >> 3] |= ( 1 << ( j & 7 ) );
-				row2[i >> 3] |= ( 1 << ( i & 7 ) );
-			}
-			k++;
-		}
-
-		row[i >> 3] |= ( 1 << ( i & 7 ) );
-	}
 }
 
 /*

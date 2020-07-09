@@ -322,7 +322,7 @@ void SNAP_WriteFrameSnapToClient( ginfo_t *gi, client_t *client, msg_t *msg, int
 
 	// send over the areabits
 	MSG_WriteUintBase128( msg, frame->numareas );
-	MSG_WriteData( msg, frame->areabits, frame->areabytes );
+	MSG_WriteAreaBitsUTM( msg, frame->numareas, frame->areabits );
 
 	SNAP_WriteDeltaGameStateToClient( oldframe, frame, msg );
 
@@ -578,7 +578,7 @@ static bool SNAP_SnapCullEntity( cmodel_state_t *cms, edict_t *ent, edict_t *cle
 		uint8_t *areabits = frame->areabits + viewarea * CM_AreaRowSize( cms );
 		if( !( areabits[ent->r.areanum >> 3] & ( 1 << ( ent->r.areanum & 7 ) ) ) ) {
 			// doors can legally straddle two areas, so we may need to check another one
-			if( ent->r.areanum2 < 0 || !CM_AreasConnected( cms, viewarea, ent->r.areanum2 ) ) {
+			if( ent->r.areanum2 < 0 || !( areabits[ent->r.areanum2 >> 3] & ( 1 << ( ent->r.areanum2 & 7 ) ) ) ) {
 				return true; // blocked by a door
 			}
 		}
@@ -740,7 +740,7 @@ void SNAP_BuildClientFrameSnap( cmodel_state_t *cms, ginfo_t *gi, int64_t frameN
 	if( frame->numareas < numareas ) {
 		frame->numareas = numareas;
 
-		frame->areabytes = CM_AreaBitsUTMSize( numareas );
+		frame->areabytes = numareas * CM_AreaRowSize( cms );
 		if( frame->areabytes > MAX_SNAPSHOT_AREABYTES ) {
 			Com_Error( ERR_FATAL, "SNAP_BuildClientFrameSnap: frame->areabytes > MAX_SNAPSHOT_AREABYTES" );
 		}
@@ -751,7 +751,7 @@ void SNAP_BuildClientFrameSnap( cmodel_state_t *cms, ginfo_t *gi, int64_t frameN
 		frame->areabits = (uint8_t *)Mem_Alloc( mempool, frame->areabytes );
 	}
 
-	CM_WriteAreaBitsUTM( cms, frame->areabits );
+	CM_WriteAreaBits( cms, frame->areabits );
 
 	// grab the current player_state_t
 	if( frame->multipov ) {
