@@ -281,7 +281,7 @@ public:
 			notMask = ~notMask;
 		}
 
-		as_api->asWriteEngineDocsToFile( engine, path, markdown, singleFile, andMask, notMask );
+		as_api->asWriteEngineDocsToFile( engine, path, "ui", markdown, singleFile, andMask, notMask );
 	}
 
 	virtual void buildReset( asIScriptModule *module ) {

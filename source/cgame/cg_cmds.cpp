@@ -1164,6 +1164,7 @@ static const cgcmd_t cgcmds[] =
 	{ "centerview", CG_CenterViewCmd_f, false },
 	{ "players", NULL, false },
 	{ "spectators", NULL, false },
+	{ "dumpCGameAPI", CG_asDumpAPI , false },
 
 	{ NULL, NULL, false }
 };
