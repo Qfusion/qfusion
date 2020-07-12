@@ -809,7 +809,7 @@ void UI_Main::DumpAPI_f( void ) {
 	singleFile = atoi( trap::Cmd_Argv( 2 ) ) != 0;
 	andMask = strtoul( trap::Cmd_Argv( 3 ), NULL, 16 );
 	notMask = strtoul( trap::Cmd_Argv( 4 ), NULL, 16 );
-	self->asmodule->dumpAPI( va( "AS_API/v%.g-ui/", version ), markdown, singleFile, andMask, notMask );
+	self->asmodule->dumpAPI( va( "AS_API/v%.g/", version ), markdown, singleFile, andMask, notMask );
 }
 
 void UI_Main::M_Menu_Force_f( void ) {

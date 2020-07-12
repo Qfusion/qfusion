@@ -1203,6 +1203,7 @@ void CG_asInitScriptEngine( void );
 void CG_asShutdownScriptEngine( void );
 bool CG_asLoadGameScript( void );
 void CG_asUnloadGameScript( void );
+void CG_asDumpAPI( void );
 
 bool CG_asLoadPMoveScript( void );
 void CG_asUnloadPMoveScript( void );

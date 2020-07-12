@@ -475,6 +475,15 @@ void CG_asUnloadGameScript( void )
 	CG_asUnloadScriptModule( CG_SCRIPTS_GAME_MODULE_NAME, cg_asCGameAPI );
 }
 
+/*
+ * CG_asDumpAPI
+ */
+void CG_asDumpAPI( void )
+{
+	cgs.asExport->asWriteEngineDocsToFile(
+		CGAME_AS_ENGINE(), va( "AS_API/v%.g/", trap_Cvar_Value( "version" ) ), "cgame", false, false, ~(unsigned)0, 0 );
+}
+
 //======================================================================
 
 static cg_asApiFuncPtr_t cg_asPmoveAPI[] = {

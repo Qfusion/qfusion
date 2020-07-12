@@ -2781,9 +2781,7 @@ void G_asShutdownGameModuleEngine( void ) {
 * Dump all classes, global functions and variables into a file
 */
 void G_asDumpAPI_f( void ) {
-	char path[MAX_QPATH];
-
-	Q_snprintfz( path, sizeof( path ), "AS_API/v%.g/", trap_Cvar_Value( "version" ) );
-
-	game.asExport->asWriteEngineDocsToFile( GAME_AS_ENGINE(), path, false, false, ~(unsigned)0, 0 );
+	game.asExport->asWriteEngineDocsToFile( GAME_AS_ENGINE(), 
+		va( "AS_API/v%.g/", trap_Cvar_Value( "version" ) ), "game",
+		false, false, ~(unsigned)0, 0 );
 }
