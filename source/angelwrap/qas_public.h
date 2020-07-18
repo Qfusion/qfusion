@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __QAS_PUBLIC_H__
 #define __QAS_PUBLIC_H__
 
-#define ANGELWRAP_API_VERSION   16
+#define ANGELWRAP_API_VERSION   17
 
 typedef struct {
 	void ( *Print )( const char *msg );
@@ -59,6 +59,7 @@ typedef struct {
 	int ( *FS_Eof )( int file );
 	int ( *FS_Flush )( int file );
 	void ( *FS_FCloseFile )( int file );
+	time_t ( *FS_SysMTime )( int file );
 	bool ( *FS_RemoveFile )( const char *filename );
 	int ( *FS_GetFileList )( const char *dir, const char *extension, char *buf, size_t bufsize, int start, int end );
 	const char *( *FS_FirstExtension )( const char *filename, const char *extensions[], int num_extensions );

@@ -24,6 +24,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "winquake.h"
 #include <direct.h>
 #include <shlobj.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #ifndef CSIDL_APPDATA
 # define CSIDL_APPDATA                  0x001A
@@ -336,7 +338,7 @@ time_t Sys_FS_FileMTime( const char *filename ) {
 	hFile = CreateFile( filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL );
 	if( hFile == INVALID_HANDLE_VALUE ) {
 		// the file doesn't exist
-		return 0;
+		return -1;
 	}
 
 	// retrieve the last-write file time for the file
@@ -361,6 +363,24 @@ time_t Sys_FS_FileMTime( const char *filename ) {
 */
 int Sys_FS_FileNo( FILE *fp ) {
 	return _fileno( fp );
+}
+
+/*
+ * Sys_FS_FileNoMTime
+ */
+time_t Sys_FS_FileNoMTime( int fd )
+{
+	struct _stat buf;
+	int			 result;
+
+	if( fd < 0 ) {
+		return -1;
+	}
+	result = _fstat( fd, &buf );
+	if( result != 0 ) {
+		return -1;
+	}
+	return buf.st_mtime;
 }
 
 /*
