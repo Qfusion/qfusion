@@ -139,6 +139,9 @@ static rserr_t VID_Sys_Init_( bool verbose ) {
 void VID_AppActivate( bool active, bool minimize, bool destroy ) {
 	vid_app_active = active;
 	vid_app_minimized = minimize;
+	
+	Com_SetAppActive( vid_app_active );
+
 	re.AppActivate( active, minimize, destroy );
 }
 

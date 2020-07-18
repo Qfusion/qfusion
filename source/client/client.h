@@ -419,8 +419,9 @@ bool CL_GameModule_KeyEvent( int key, bool down );
 
 void CL_GameModule_TouchEvent( int id, touchevent_t type, int x, int y, int64_t time );
 bool CL_GameModule_IsTouchDown( int id );
+void CL_GameModule_HotloadAssets( void );
 
-//
+	//
 // cl_sound.c
 //
 void CL_SoundModule_Init( bool verbose );

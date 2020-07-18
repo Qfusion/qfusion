@@ -726,3 +726,13 @@ bool CL_GameModule_IsTouchDown( int id ) {
 
 	return false;
 }
+
+/*
+ * CL_GameModule_HotloadAssets
+ */
+void CL_GameModule_HotloadAssets( void )
+{
+	if( cge ) {
+		cge->HotloadAssets();
+	}
+}
