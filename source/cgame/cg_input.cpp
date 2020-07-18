@@ -299,14 +299,12 @@ void CG_CenterView( float pitch ) {
 * CG_InputInit
 */
 void CG_InitInput( void ) {
-	CG_asInputInit();
 }
 
 /*
 * CG_ShutdownInput
 */
 void CG_ShutdownInput( void ) {
-	CG_asInputShutdown();
 }
 
 /*
