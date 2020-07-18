@@ -24,7 +24,7 @@ std::function<void( asIScriptContext * )> cg_empty_as_cb = []( asIScriptContext 
 
 static cg_asApiFuncPtr_t cg_asCGameAPI[] = {
 	{ "void CGame::Load()", &cgs.asMain.load, false },
-	{ "void CGame::Precache()", &cgs.asMain.load, false },
+	{ "void CGame::Precache()", &cgs.asMain.precache, false },
 
 	{ "void CGame::Input::Init()", &cgs.asInput.init, true },
 	{ "void CGame::Input::Shutdown()", &cgs.asInput.shutdown, true },
