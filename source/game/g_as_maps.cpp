@@ -179,7 +179,7 @@ bool G_asLoadMapScript( const char *mapName ) {
 	G_ResetMapScriptData();
 
 	// Load the script
-	asModule = G_LoadGameScript( moduleName, MAP_SCRIPTS_DIRECTORY, mapName, MAP_SCRIPTS_PROJECT_EXTENSION );
+	asModule = G_LoadGameScript( moduleName, MAP_SCRIPTS_DIRECTORY, va( "%s%s", mapName, MAP_SCRIPTS_PROJECT_EXTENSION ) );
 	if( !asModule ) {
 		return false;
 	}

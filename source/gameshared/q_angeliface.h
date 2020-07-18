@@ -154,7 +154,8 @@ typedef struct angelwrap_api_s {
 	void ( *asReleaseAnyCpp )( CScriptAnyInterface *any );
 
 	// projects
-	asIScriptModule *( *asLoadScriptProject )( asIScriptEngine *engine, const char *moduleName, const char *rootDir, const char *dir, const char *filename, const char *ext );
+	asIScriptModule *( *asLoadScriptProject )( asIScriptEngine *engine, const char *moduleName, const char *rootDir, const char *dir, const char *filename, time_t *mtime );
+	time_t ( *asScriptProjectMTime )( const char *rootDir, const char *dir, const char *filename );
 } angelwrap_api_t;
 
 #endif

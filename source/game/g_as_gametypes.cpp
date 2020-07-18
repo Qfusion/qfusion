@@ -530,7 +530,7 @@ bool GT_asLoadScript( const char *gametypeName ) {
 	GT_ResetScriptData();
 
 	// Load the script
-	asModule = G_LoadGameScript( moduleName, GAMETYPE_SCRIPTS_DIRECTORY, gametypeName, GAMETYPE_PROJECT_EXTENSION );
+	asModule = G_LoadGameScript( moduleName, GAMETYPE_SCRIPTS_DIRECTORY, va( "%s%s", gametypeName, GAMETYPE_PROJECT_EXTENSION ) );
 	if( asModule == NULL ) {
 		return false;
 	}

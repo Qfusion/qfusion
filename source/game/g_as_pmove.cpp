@@ -138,7 +138,7 @@ bool G_asLoadPMoveScript( void ) {
 	G_ResetPMoveScriptData();
 
 	// Load the script
-	asModule = G_LoadGameScript( moduleName, PMOVE_SCRIPTS_DIRECTORY, "pmove", PMOVE_SCRIPTS_PROJECT_EXTENSION );
+	asModule = G_LoadGameScript( moduleName, PMOVE_SCRIPTS_DIRECTORY, "pmove" PMOVE_SCRIPTS_PROJECT_EXTENSION );
 	if( !asModule ) {
 		return false;
 	}

@@ -413,7 +413,7 @@ void CG_asUnloadScriptModule( const char *moduleName, cg_asApiFuncPtr_t *api )
  * CG_asLoadScriptModule
  */
 asIScriptModule *CG_asLoadScriptModule(
-	const char *moduleName, const char *dir, const char *filename, const char *ext, cg_asApiFuncPtr_t *api )
+	const char *moduleName, const char *dir, const char *filename, cg_asApiFuncPtr_t *api, time_t *mtime )
 {
 	auto asEngine = CGAME_AS_ENGINE();
 	if( asEngine == NULL ) {
@@ -423,7 +423,7 @@ asIScriptModule *CG_asLoadScriptModule(
 	std::string tempModuleName( moduleName );
 	tempModuleName += va( "_%d", rand() );
 
-	auto asModule = cgs.asExport->asLoadScriptProject( asEngine, tempModuleName.c_str(), "progs", dir, filename, ext );
+	auto asModule = cgs.asExport->asLoadScriptProject( asEngine, tempModuleName.c_str(), "progs", dir, filename, mtime );
 	if( asModule == nullptr ) {
 		return nullptr;
 	}
@@ -486,7 +486,19 @@ void CG_asDumpAPI( void )
  */
 bool CG_asLoadGameScript( void )
 {
-	return CG_asLoadScriptModule( CG_SCRIPTS_GAME_MODULE_NAME, "client", "cgame", ".cp", cg_asCGameAPI ) != nullptr;
+	return CG_asLoadScriptModule( CG_SCRIPTS_GAME_MODULE_NAME, "client", "cgame.cp", cg_asCGameAPI, &cgs.asMain.mtime ) != nullptr;
+}
+
+/*
+ * CG_asReloadGameScript
+ */
+bool CG_asReloadGameScript( void )
+{
+	time_t mtime = cgs.asExport->asScriptProjectMTime( "progs", "client", "cgame.cp" );
+	if( mtime == -1 || mtime <= cgs.asMain.mtime ) {
+		return false;
+	}
+	return CG_asLoadGameScript();
 }
 
 /*
@@ -512,8 +524,8 @@ static cg_asApiFuncPtr_t cg_asPmoveAPI[] = {
  */
 bool CG_asLoadPMoveScript( void )
 {
-	return CG_asLoadScriptModule( CG_SCRIPTS_PMOVE_MODULE_NAME, PMOVE_SCRIPTS_DIRECTORY, "pmove",
-			   PMOVE_SCRIPTS_PROJECT_EXTENSION, cg_asPmoveAPI ) != nullptr;
+	return CG_asLoadScriptModule( CG_SCRIPTS_PMOVE_MODULE_NAME, PMOVE_SCRIPTS_DIRECTORY,
+			   "pmove" PMOVE_SCRIPTS_PROJECT_EXTENSION, cg_asPmoveAPI, &cgs.asPMove.mtime ) != nullptr;
 }
 
 /*

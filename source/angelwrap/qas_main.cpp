@@ -55,6 +55,7 @@ void QAS_InitAngelExport( void ) {
 	angelExport.asReleaseAnyCpp = qasReleaseAnyCpp;
 
 	angelExport.asLoadScriptProject = qasLoadScriptProject;
+	angelExport.asScriptProjectMTime = qasScriptProjectMTime;
 }
 
 int QAS_API( void ) {
