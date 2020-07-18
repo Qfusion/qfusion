@@ -1691,6 +1691,20 @@ int FS_FileNo( int file, size_t *offset ) {
 }
 
 /*
+ * FS_SysMTime
+ */
+time_t FS_SysMTime( int file )
+{
+	filehandle_t *fh;
+
+	fh = FS_FileHandleForNum( file );
+	if( !fh->fstream ) {
+		return -1;
+	}
+	return Sys_FS_FileNoMTime( Sys_FS_FileNo( fh->fstream ) );
+}
+
+/*
 * _FS_LoadFile
 */
 static int _FS_LoadFile( int fhandle, unsigned int len, void **buffer, void *stack, size_t stackSize, const char *filename, int fileline ) {

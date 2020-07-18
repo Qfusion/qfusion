@@ -190,6 +190,7 @@ void Com_ScriptModule_Init( void ) {
 	import.FS_Eof = FS_Eof;
 	import.FS_Flush = FS_Flush;
 	import.FS_FCloseFile = FS_FCloseFile;
+	import.FS_SysMTime = FS_SysMTime;
 	import.FS_RemoveFile = FS_RemoveFile;
 	import.FS_GetFileList = FS_GetFileList;
 	import.FS_FirstExtension = FS_FirstExtension;

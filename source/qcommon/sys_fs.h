@@ -40,8 +40,10 @@ void        Sys_FS_UnlockFile( void *handle );
 time_t      Sys_FS_FileMTime( const char *filename );
 
 int         Sys_FS_FileNo( FILE *fp );
+time_t		Sys_FS_FileNoMTime( int fd );
 
-void        *Sys_FS_MMapFile( int fileno, size_t size, size_t offset, void **mapping, size_t *mapping_offset );
+
+void * Sys_FS_MMapFile( int fileno, size_t size, size_t offset, void **mapping, size_t *mapping_offset );
 void        Sys_FS_UnMMapFile( void *mapping, void *data, size_t size, size_t mapping_offset );
 
 void        Sys_FS_AddFileToMedia( const char *filename );

@@ -462,6 +462,24 @@ int Sys_FS_FileNo( FILE *fp ) {
 }
 
 /*
+* Sys_FS_FileNoMTime
+*/
+time_t Sys_FS_FileNoMTime( int fd ) {
+	struct stat buffer;
+	int status;
+
+	if( fd < 0 ) {
+		return -1;
+	}
+	status = fstat( fd, &buffer );
+	if( status ) {
+		return -1;
+	}
+	return buffer.st_mtime;
+}
+
+}
+/*
 * Sys_FS_MMapFile
 */
 void *Sys_FS_MMapFile( int fileno, size_t size, size_t offset, void **mapping, size_t *mapping_offset ) {

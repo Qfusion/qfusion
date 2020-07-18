@@ -128,6 +128,10 @@ static inline void trap_FS_FCloseFile( int file ) {
 	ANGELWRAP_IMPORT.FS_FCloseFile( file );
 }
 
+static inline time_t trap_FS_SysMTime( int file ) {
+	return ANGELWRAP_IMPORT.FS_SysMTime( file );
+}
+
 static inline bool trap_FS_RemoveFile( const char *filename ) {
 	return ANGELWRAP_IMPORT.FS_RemoveFile( filename ) == true;
 }
