@@ -733,6 +733,10 @@ void        Com_SetServerCM( struct cmodel_state_s *cms, unsigned checksum );
 
 unsigned int Com_DaysSince1900( void );
 
+bool Com_GetHotloadState( void );
+void Com_SetHotloadState( bool hotload );
+void Com_SetAppActive( bool active );
+
 extern cvar_t *developer;
 extern cvar_t *dedicated;
 extern cvar_t *host_speeds;

@@ -1062,6 +1062,16 @@ void CG_asPreGameShutdown( void )
 }
 
 /*
+ * CG_HotloadAssets
+ */
+void CG_HotloadAssets( void )
+{
+	if( CG_asReloadGameScript() ) {
+		CG_asGameInit();
+	}
+}
+
+/*
 * CG_Init
 */
 void CG_Init( const char *serverName, unsigned int playerNum,

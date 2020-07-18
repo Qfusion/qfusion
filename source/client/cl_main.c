@@ -2331,6 +2331,10 @@ void CL_Frame( int realMsec, int gameMsec ) {
 	allRealMsec += realMsec;
 	allGameMsec += gameMsec;
 
+	if( Com_GetHotloadState() ) {
+		CL_GameModule_HotloadAssets();
+	}
+
 	CL_UpdateSnapshot();
 	CL_AdjustServerTime( gameMsec );
 	CL_UserInputFrame( realMsec );
@@ -2377,7 +2381,7 @@ void CL_Frame( int realMsec, int gameMsec ) {
 	}
 
 	if( allRealMsec + extraMsec < minMsec ) {
-		// let CPU sleep while playing fullscreen video, while minimized
+		// sleep while playing fullscreen video, while minimized
 		// or when cl_sleep is enabled
 		bool sleep = cl_sleep->integer != 0 ||
 			cls.state == CA_CINEMATIC || cls.state == CA_DISCONNECTED ||

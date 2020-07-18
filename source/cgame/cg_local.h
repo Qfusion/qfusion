@@ -962,6 +962,7 @@ void CG_Init( const char *serverName, unsigned int playerNum,
 			  bool demoplaying, const char *demoName, bool pure, unsigned snapFrameTime,
 			  int protocol, const char *demoExtension, int sharedSeed, bool gameStart );
 void CG_Shutdown( void );
+void CG_HotloadAssets( void );
 void CG_ValidateItemDef( int tag, char *name );
 
 #ifndef _MSC_VER

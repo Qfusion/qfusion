@@ -54,7 +54,8 @@ static cvar_t *logconsole_append;
 static cvar_t *logconsole_flush;
 static cvar_t *logconsole_timestamp;
 static cvar_t *com_showtrace;
-static cvar_t *com_introPlayed3;
+static cvar_t *com_introPlayed;
+static cvar_t *com_hotloadAssets;
 
 static qmutex_t *com_print_mutex;
 
@@ -63,6 +64,9 @@ static int log_file = 0;
 static int server_state = CA_UNINITIALIZED;
 static int client_state = CA_UNINITIALIZED;
 static bool demo_playing = false;
+
+static bool com_hotload;
+static bool com_appActive = true;
 
 struct cmodel_state_s *server_cms = NULL;
 unsigned server_map_checksum = 0;
@@ -370,6 +374,24 @@ unsigned int Com_DaysSince1900( void ) {
 	newtime = localtime( &long_time );
 
 	return ( newtime->tm_year * 365 ) + newtime->tm_yday;
+}
+
+bool Com_GetHotloadState( void )
+{
+	return com_hotload;
+}
+
+void Com_SetHotloadState( bool hotload )
+{
+	com_hotload = hotload;
+}
+
+void Com_SetAppActive( bool active ) {
+	if( dedicated && dedicated->integer ) {
+		com_appActive = true;
+		return;
+	}
+	com_appActive = active;
 }
 
 //============================================================================
@@ -754,7 +776,12 @@ void Qcommon_Init( int argc, char **argv ) {
 	logconsole_timestamp =  Cvar_Get( "logconsole_timestamp", "0", CVAR_ARCHIVE );
 
 	com_showtrace =     Cvar_Get( "com_showtrace", "0", 0 );
-	com_introPlayed3 =   Cvar_Get( "com_introPlayed3", "0", CVAR_ARCHIVE );
+	com_introPlayed =   Cvar_Get( "com_introPlayed", "0", CVAR_ARCHIVE );
+#if defined(DEDICATED_ONLY) || defined(PUBLIC_BUILD)
+	com_hotloadAssets = Cvar_Get( "com_hotloadAssets", "0", CVAR_NOSET );
+#else
+	com_hotloadAssets = Cvar_Get( "com_hotloadAssets", "1", 0 );
+#endif
 
 	Cvar_Get( "gamename", APPLICATION, CVAR_READONLY );
 	versioncvar = Cvar_Get( "version", APP_VERSION_STR " " CPUSTRING " " __DATE__ " " BUILDSTRING, CVAR_SERVERINFO | CVAR_READONLY );
@@ -773,6 +800,8 @@ void Qcommon_Init( int argc, char **argv ) {
 #endif
 
 	Com_ScriptModule_Init();
+
+	Com_SetHotloadState( false );
 
 	MM_Init();
 
@@ -793,8 +822,8 @@ void Qcommon_Init( int argc, char **argv ) {
 
 		if( !dedicated->integer ) {
 			// only play the introduction sequence once
-			if( !com_introPlayed3->integer ) {
-				Cvar_ForceSet( com_introPlayed3->name, "1" );
+			if( !com_introPlayed->integer ) {
+				Cvar_ForceSet( com_introPlayed->name, "1" );
 #if ( !defined( __ANDROID__ ) || defined ( __i386__ ) || defined ( __x86_64__ ) )
 				Cbuf_AddText( "cinematic intro.roq\n" );
 #endif
@@ -851,6 +880,21 @@ void Qcommon_Frame( unsigned int realMsec ) {
 		c_pointcontents = 0;
 	}
 
+	if( com_hotloadAssets->integer ) {
+		static int64_t lastHotloadTime = 0;
+		static bool lastActive = true;
+		int64_t time = Sys_Milliseconds();
+		bool justBecameActive = com_appActive && !lastActive;
+
+		// hotload assets when the window regains focus or every 1 second when not focused
+		if( justBecameActive || ( !com_appActive && time - lastHotloadTime >= 1000 ) ) {
+			Com_SetHotloadState( true );
+			lastHotloadTime = time;
+		}
+
+		lastActive = com_appActive;
+	}
+
 	wswcurl_perform();
 
 	FS_Frame();
@@ -902,6 +946,8 @@ void Qcommon_Frame( unsigned int realMsec ) {
 	}
 
 	MM_Frame( realMsec );
+
+	Com_SetHotloadState( false );
 }
 
 /*
