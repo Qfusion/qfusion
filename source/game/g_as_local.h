@@ -38,5 +38,5 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define GAME_AS_ENGINE()                    ( static_cast<asIScriptEngine *>( game.asEngine ) )
 
-asIScriptModule *G_LoadGameScript( const char *moduleName, const char *dir, const char *filename, const char *ext );
+asIScriptModule *G_LoadGameScript( const char *moduleName, const char *dir, const char *filename );
 bool G_ExecutionErrorReport( int error );

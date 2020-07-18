@@ -54,7 +54,7 @@ extern std::function<void(asIScriptContext *)> cg_empty_as_cb;
 
 void			 CG_asUnloadScriptModule( const char *moduleName, cg_asApiFuncPtr_t *api );
 asIScriptModule *CG_asLoadScriptModule(
-	const char *moduleName, const char *dir, const char *filename, const char *ext, cg_asApiFuncPtr_t *api );
+	const char *moduleName, const char *dir, const char *filename, cg_asApiFuncPtr_t *api, time_t *mtime );
 
 bool CG_asExecutionErrorReport( int error );
 bool CG_asCallScriptFunc(

@@ -424,6 +424,7 @@ typedef struct {
 	struct {
 		void *load;
 		void *precache;
+		time_t mtime;
 	} asMain;
 
 	// AS input subsystem API
@@ -449,6 +450,7 @@ typedef struct {
 	struct {
 		void *pmove;
 		void *vaClamp;
+		time_t mtime;
 	} asPMove;
 
 	// AS head-up display API
@@ -1205,6 +1207,7 @@ void CG_DrawChat( cg_gamechat_t *chat, int x, int y, char *fontName, struct qfon
 void CG_asInitScriptEngine( void );
 void CG_asShutdownScriptEngine( void );
 bool CG_asLoadGameScript( void );
+bool CG_asReloadGameScript( void );
 void CG_asUnloadGameScript( void );
 void CG_asDumpAPI( void );
 

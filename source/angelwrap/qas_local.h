@@ -109,6 +109,8 @@ CScriptAnyInterface *qasCreateAnyCpp( asIScriptEngine *engine );
 void qasReleaseAnyCpp( CScriptAnyInterface *any );
 
 // projects / bundles
-asIScriptModule *qasLoadScriptProject( asIScriptEngine *engine, const char *moduleName, const char *rootDir, const char *dir, const char *filename, const char *ext );
+asIScriptModule *qasLoadScriptProject( asIScriptEngine *engine, const char *moduleName, const char *rootDir,
+	const char *dir, const char *filename, time_t *mtime );
+time_t qasScriptProjectMTime( const char *rootDir, const char *dir, const char *filename );
 
 #endif // __QAS_LOCAL_H__
