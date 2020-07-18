@@ -988,6 +988,9 @@ void CG_StartBackgroundTrack( void );
 const char *CG_TranslateString( const char *string );
 const char *CG_TranslateColoredString( const char *string, char *dst, size_t dst_size );
 
+void CG_asGameInit( void );
+void CG_asPreGameShutdown( void );
+
 //
 // cg_svcmds.c
 //

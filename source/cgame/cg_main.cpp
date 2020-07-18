@@ -1045,6 +1045,23 @@ void CG_Reset( void ) {
 }
 
 /*
+ * CG_asGameInit
+ */
+void CG_asGameInit( void )
+{
+	CG_asInputInit();
+	CG_asHUDInit();
+}
+
+/*
+ * CG_asPreGameShutdown
+ */
+void CG_asPreGameShutdown( void )
+{
+	CG_asInputShutdown();
+}
+
+/*
 * CG_Init
 */
 void CG_Init( const char *serverName, unsigned int playerNum,
@@ -1100,13 +1117,13 @@ void CG_Init( const char *serverName, unsigned int playerNum,
 
 	CG_InitInput();
 
+	CG_asGameInit();
+
 	CG_RegisterVariables();
 	CG_InitTemporaryBoneposesCache();
 	CG_PModelsInit();
 
 	CG_ScreenInit();
-
-	CG_asHUDInit();
 
 	CG_ClearLightStyles();
 
@@ -1163,6 +1180,7 @@ void CG_Shutdown( void ) {
 	CG_ScreenShutdown();
 	CG_UnregisterCGameCommands();
 	CG_FreeTemporaryBoneposesCache();
+	CG_asPreGameShutdown();
 	CG_ShutdownInput();
 	CG_asUnloadGameScript();
 	CG_asUnloadPMoveScript();

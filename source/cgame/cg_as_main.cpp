@@ -19,6 +19,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "cg_as_local.h"
+#include <string>
+#include <vector>
 
 std::function<void( asIScriptContext * )> cg_empty_as_cb = []( asIScriptContext *ctx ) {};
 
@@ -418,9 +420,10 @@ asIScriptModule *CG_asLoadScriptModule(
 		return NULL;
 	}
 
-	asEngine->DiscardModule( moduleName );
+	std::string tempModuleName( moduleName );
+	tempModuleName += va( "_%d", rand() );
 
-	auto asModule = cgs.asExport->asLoadScriptProject( asEngine, moduleName, "progs", dir, filename, ext );
+	auto asModule = cgs.asExport->asLoadScriptProject( asEngine, tempModuleName.c_str(), "progs", dir, filename, ext );
 	if( asModule == nullptr ) {
 		return nullptr;
 	}
@@ -429,32 +432,51 @@ asIScriptModule *CG_asLoadScriptModule(
 		return asModule;
 	}
 
+	std::vector<asIScriptFunction *> funcs;
 	for( size_t i = 0; api[i].decl != nullptr; i++ ) {
 		auto decl = api[i].decl;
 		auto ptr = asModule->GetFunctionByDecl( decl );
 
 		if( !ptr && api[i].mandatory ) {
-			CG_Printf( S_COLOR_RED "* The function '%s' was not found. Can not continue.\n", decl );
+			CG_Printf( S_COLOR_RED "* The function '%s' was not found. Can't continue.\n", decl );
 			goto error;
 		}
-		*api[i].ptr = ptr;
+
+		funcs.push_back( ptr );
 	}
+
+	CG_asUnloadScriptModule( moduleName, api );
+
+	for( size_t i = 0; api[i].decl != nullptr; i++ ) {
+		*api[i].ptr = funcs[i];
+	}
+
+	asModule->SetName( moduleName );
 
 	//
 	// execute the optional 'load' function
 	//
-	if( *api[0].ptr != NULL ) {
-		if( !CG_asCallScriptFunc( *api[0].ptr, cg_empty_as_cb, cg_empty_as_cb ) ) {
-			goto error;
+	if( funcs[0] != NULL ) {
+		if( !CG_asCallScriptFunc( funcs[0], cg_empty_as_cb, cg_empty_as_cb ) ) {
+			CG_asUnloadScriptModule( moduleName, api );
+			return nullptr;
 		}
 	}
 
 	return asModule;
 
 error:
-	CG_asUnloadScriptModule( moduleName, api );
-
+	asEngine->DiscardModule( tempModuleName.c_str() );
 	return nullptr;
+}
+
+/*
+ * CG_asDumpAPI
+ */
+void CG_asDumpAPI( void )
+{
+	cgs.asExport->asWriteEngineDocsToFile(
+		CGAME_AS_ENGINE(), va( "AS_API/v%.g/", trap_Cvar_Value( "version" ) ), "cgame", false, false, ~(unsigned)0, 0 );
 }
 
 //======================================================================
@@ -473,15 +495,6 @@ bool CG_asLoadGameScript( void )
 void CG_asUnloadGameScript( void )
 {
 	CG_asUnloadScriptModule( CG_SCRIPTS_GAME_MODULE_NAME, cg_asCGameAPI );
-}
-
-/*
- * CG_asDumpAPI
- */
-void CG_asDumpAPI( void )
-{
-	cgs.asExport->asWriteEngineDocsToFile(
-		CGAME_AS_ENGINE(), va( "AS_API/v%.g/", trap_Cvar_Value( "version" ) ), "cgame", false, false, ~(unsigned)0, 0 );
 }
 
 //======================================================================
