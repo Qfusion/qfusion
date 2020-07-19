@@ -997,5 +997,8 @@ DIAGNOSTICS
 void Com_InitDiagnostics();
 void Com_RunDiagnosticsFrame();
 void Com_ShutdownDiagnostics();
+void Com_Diag_Begin( const char **filenames );
+void Com_Diag_Message( int severity, const char *filename, int line, int col, const char *text );
+void Com_Diag_End( void );
 
 #endif // __QCOMMON_H

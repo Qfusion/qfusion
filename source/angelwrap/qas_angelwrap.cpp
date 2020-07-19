@@ -348,19 +348,25 @@ qasEngineContextMap contexts;
 
 static void qasMessageCallback( const asSMessageInfo *msg ) {
 	const char *msg_type;
+	int			severity = 0;
 
 	switch( msg->type ) {
 		case asMSGTYPE_ERROR:
+			severity = 2;
 			msg_type = S_COLOR_RED "ERROR: ";
 			break;
 		case asMSGTYPE_WARNING:
+			severity = 1;
 			msg_type = S_COLOR_YELLOW "WARNING: ";
 			break;
 		case asMSGTYPE_INFORMATION:
 		default:
+			severity = 0;
 			msg_type = S_COLOR_CYAN "ANGELSCRIPT: ";
 			break;
 	}
+
+	trap_Diag_Message( severity, msg->section, msg->row, msg->col, msg->message );
 
 	Com_Printf( "%s%s %d:%d: %s\n", msg_type, msg->section, msg->row, msg->col, msg->message );
 }
@@ -733,8 +739,8 @@ static bool qasLoadScriptSection(
 /*
 * qasParseScriptProject
 */
-static bool qasParseScriptProject(
-	asIScriptModule *asModule, const char *rootDir, const char *dir, const char *filename, time_t *mtime )
+static bool qasParseScriptProject( asIScriptModule *asModule, const char *rootDir, const char *dir,
+	const char *filename, time_t *mtime, std::vector<std::string> &files )
 {
 	char			 filepath[MAX_QPATH];
 	int				 length, filenum;
@@ -787,6 +793,8 @@ static bool qasParseScriptProject(
 			continue;
 		}
 
+		files.push_back( fileName );
+
 		int error = asModule->AddScriptSection( fileName, section, strlen( section ) );
 
 		qasFree( section );
@@ -819,6 +827,7 @@ asIScriptModule *qasLoadScriptProject(
 {
 	asIScriptModule *asModule;
 	time_t			 mtime_ = -1;
+	std::vector<std::string> files;
 
 	if( engine == NULL ) {
 		QAS_Printf( S_COLOR_RED "qasBuildGameScript: Angelscript API unavailable\n" );
@@ -833,14 +842,33 @@ asIScriptModule *qasLoadScriptProject(
 	}
 
 	// Initialize the script
-	if( !qasParseScriptProject( asModule, rootDir, dir, filename, &mtime_ ) ) {
+	if( !qasParseScriptProject( asModule, rootDir, dir, filename, &mtime_, files ) ) {
 		engine->DiscardModule( moduleName );
 		return NULL;
 	}
 
 	QAS_Printf( "* Initializing script '%s'\n", filename );
 
+	char **diagnames = ( char ** )QAS_Malloc( sizeof( char * ) * (files.size() + 1) );
+	for( int i = 0; i < files.size(); i++ ) {
+		const char *fn = files[i].c_str();
+		size_t		fn_size = strlen( fn ) + 1;
+
+		diagnames[i] = (char *)QAS_Malloc( fn_size );
+		memcpy( diagnames[i], fn, fn_size );
+	}
+
+	trap_Diag_Begin( ( const char **)diagnames );
+
+	for( int i = 0; i < files.size(); i++ ) {
+		QAS_Free( diagnames[i] );
+	}
+	QAS_Free( diagnames );
+
 	int error = asModule->Build();
+
+	trap_Diag_End();
+
 	if( error ) {
 		QAS_Printf( S_COLOR_RED "* Failed to build script '%s'\n", filename );
 		engine->DiscardModule( moduleName );
@@ -860,9 +888,10 @@ asIScriptModule *qasLoadScriptProject(
 time_t qasScriptProjectMTime( const char *rootDir, const char *dir, const char *filename )
 {
 	time_t mtime;
+	std::vector<std::string> files;
 
 	// Initialize the script
-	if( !qasParseScriptProject( NULL, rootDir, dir, filename, &mtime ) ) {
+	if( !qasParseScriptProject( NULL, rootDir, dir, filename, &mtime, files ) ) {
 		return -1;
 	}
 

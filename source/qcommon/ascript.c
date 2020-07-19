@@ -207,6 +207,10 @@ void Com_ScriptModule_Init( void ) {
 	import.Mem_FreePool = Com_ScriptModule_MemFreePool;
 	import.Mem_EmptyPool = Com_ScriptModule_MemEmptyPool;
 
+	import.Diag_Begin = Com_Diag_Begin;
+	import.Diag_Message = Com_Diag_Message;
+	import.Diag_End = Com_Diag_End;
+
 	// load the actual library
 	if( !Com_ScriptModule_Load( name, &import ) ) {
 		Mem_FreePool( &com_scriptmodulepool );
