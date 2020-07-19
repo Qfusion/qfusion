@@ -123,6 +123,7 @@ typedef struct filehandle_s {
 	unsigned uncompressedSize;      // uncompressed size
 	unsigned offset;                // current read/write pos
 	zipEntry_t *zipEntry;
+	char *fileName;
 
 	wswcurl_req *streamHandle;
 	bool streamDone;
@@ -975,6 +976,7 @@ int FS_FOpenAbsoluteFile( const char *filename, int *filenum, int mode ) {
 	file = &fs_filehandles[*filenum - 1];
 	file->fstream = f;
 	file->uncompressedSize = end;
+	file->fileName = ZoneCopyString( filename );
 
 	return end;
 }
@@ -1019,7 +1021,8 @@ static int _FS_FOpenPakFile( packfile_t *pakFile, int *filenum ) {
 
 	*filenum = FS_OpenFileHandle();
 	file = &fs_filehandles[*filenum - 1];
-	file->fstream = fopen( pakFile->vfsHandle ? Sys_VFS_VFSName( pakFile->vfsHandle ) : pakFile->pakname, "rb" );
+	file->fileName = ZoneCopyString( pakFile->vfsHandle ? Sys_VFS_VFSName( pakFile->vfsHandle ) : pakFile->pakname );
+	file->fstream = fopen( file->fileName, "rb" );
 	if( !file->fstream ) {
 		Com_Error( ERR_FATAL, "Error opening pak file: %s", pakFile->pakname );
 	}
@@ -1182,6 +1185,7 @@ static int _FS_FOpenFile( const char *filename, int *filenum, int mode, bool bas
 		*filenum = FS_OpenFileHandle();
 		file = &fs_filehandles[*filenum - 1];
 		file->fstream = f;
+		file->fileName = ZoneCopyString( tempname );
 		file->uncompressedSize = end;
 
 		return end;
@@ -1235,6 +1239,7 @@ static int _FS_FOpenFile( const char *filename, int *filenum, int mode, bool bas
 		file = &fs_filehandles[*filenum - 1];
 		file->vfsHandle = vfsHandle;
 		file->fstream = f;
+		file->fileName = ZoneCopyString( vfsName );
 		file->pakOffset = vfsOffset;
 		file->uncompressedSize = Sys_VFS_FileSize( vfsHandle );
 
@@ -1255,6 +1260,7 @@ static int _FS_FOpenFile( const char *filename, int *filenum, int mode, bool bas
 		*filenum = FS_OpenFileHandle();
 		file = &fs_filehandles[*filenum - 1];
 		file->fstream = f;
+		file->fileName = ZoneCopyString( tempname );
 		file->uncompressedSize = end;
 
 		Com_DPrintf( "FS_FOpen%sFile: %s\n", ( base ? "Base" : "" ), tempname );
@@ -1307,6 +1313,10 @@ void FS_FCloseFile( int file ) {
 	if( fh->fstream ) {
 		fclose( fh->fstream );
 		fh->fstream = NULL;
+	}
+	if( fh->fileName ) {
+		Mem_ZoneFree( fh->fileName );
+		fh->fileName = NULL;
 	}
 	if( fh->streamHandle ) {
 		if( fh->done_cb && !fh->streamDone ) {
@@ -1367,7 +1377,7 @@ static int FS_ReadPK3File( uint8_t *buf, size_t len, filehandle_t *fh ) {
 			read = fread( zipEntry->readBuffer, 1, block, fh->fstream );
 
 			if( read != block ) {
-				Sys_Error( "FS_Read: can't read %" PRIuPTR " bytes", (uintptr_t)block );
+				Sys_Error( "FS_Read: can't read %" PRIuPTR " bytes from %s", (uintptr_t)block, fh->fileName );
 			}
 
 			zipEntry->restReadCompressed -= block;
@@ -1489,7 +1499,7 @@ int FS_Write( const void *buffer, size_t len, int file ) {
 
 	written = fwrite( buf, 1, len, fh->fstream );
 	if( written != len ) {
-		Sys_Error( "FS_Write: can't write %" PRIuPTR " bytes", (uintptr_t)len );
+		Sys_Error( "FS_Write: can't write %" PRIuPTR " bytes to %s", (uintptr_t)len, fh->fileName );
 	}
 
 	fh->offset += written;
@@ -1688,6 +1698,28 @@ int FS_FileNo( int file, size_t *offset ) {
 	}
 
 	return -1;
+}
+
+/*
+* FS_FGetFullPathName
+*/
+int FS_FGetFullPathName( int file, char *buffer, int buffer_size ) {
+	filehandle_t *fh;
+
+	fh = FS_FileHandleForNum( file );
+	if( fh->fileName ) {
+		return Sys_FS_GetFullPathName( fh->fileName, buffer, buffer_size );
+	}
+
+	return 0;
+}
+
+/*
+ * FS_GetFullPathName
+ */
+int FS_GetFullPathName( char *pathname, char *buffer, int buffer_size )
+{
+	return Sys_FS_GetFullPathName( pathname, buffer, buffer_size );
 }
 
 /*

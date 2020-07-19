@@ -41,7 +41,7 @@ time_t      Sys_FS_FileMTime( const char *filename );
 
 int         Sys_FS_FileNo( FILE *fp );
 time_t		Sys_FS_FileNoMTime( int fd );
-
+int			Sys_FS_GetFullPathName( const char *pathname, char *buffer, int buffer_size );
 
 void * Sys_FS_MMapFile( int fileno, size_t size, size_t offset, void **mapping, size_t *mapping_offset );
 void        Sys_FS_UnMMapFile( void *mapping, void *data, size_t size, size_t mapping_offset );

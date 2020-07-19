@@ -60,6 +60,7 @@ typedef struct {
 	int ( *FS_Flush )( int file );
 	void ( *FS_FCloseFile )( int file );
 	time_t ( *FS_SysMTime )( int file );
+	int ( *FS_FGetFullPathName )( int file, char *buffer, int buffer_size );
 	bool ( *FS_RemoveFile )( const char *filename );
 	int ( *FS_GetFileList )( const char *dir, const char *extension, char *buf, size_t bufsize, int start, int end );
 	const char *( *FS_FirstExtension )( const char *filename, const char *extensions[], int num_extensions );
@@ -67,6 +68,7 @@ typedef struct {
 	bool ( *FS_IsUrl )( const char *url );
 	time_t ( *FS_FileMTime )( const char *filename );
 	bool ( *FS_RemoveDirectory )( const char *dirname );
+	int ( *FS_GetFullPathName )( char *pathname, char *buffer, int buffer_size );
 
 	// managed memory allocation
 	struct mempool_s *( *Mem_AllocPool )( const char *name, const char *filename, int fileline );
