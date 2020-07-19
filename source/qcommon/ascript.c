@@ -198,6 +198,8 @@ void Com_ScriptModule_Init( void ) {
 	import.FS_IsUrl = FS_IsUrl;
 	import.FS_FileMTime = FS_BaseFileMTime;
 	import.FS_RemoveDirectory = FS_RemoveDirectory;
+	import.FS_FGetFullPathName = FS_FGetFullPathName;
+	import.FS_GetFullPathName = FS_GetFullPathName;
 
 	import.Mem_Alloc = Com_ScriptModule_MemAlloc;
 	import.Mem_Free = Com_ScriptModule_MemFree;

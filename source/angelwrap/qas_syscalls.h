@@ -132,7 +132,16 @@ static inline time_t trap_FS_SysMTime( int file ) {
 	return ANGELWRAP_IMPORT.FS_SysMTime( file );
 }
 
-static inline bool trap_FS_RemoveFile( const char *filename ) {
+static inline int trap_FS_FGetFullPathName( int file, char *buffer, int buffer_size ) {
+	return ANGELWRAP_IMPORT.FS_FGetFullPathName( file, buffer, buffer_size );
+}
+
+static inline int trap_FS_GetFullPathName( char *pathname, char *buffer, int buffer_size ) {
+	return ANGELWRAP_IMPORT.FS_GetFullPathName( pathname, buffer, buffer_size );
+}
+
+static inline bool trap_FS_RemoveFile( const char *filename )
+{
 	return ANGELWRAP_IMPORT.FS_RemoveFile( filename ) == true;
 }
 

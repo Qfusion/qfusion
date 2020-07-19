@@ -384,6 +384,26 @@ time_t Sys_FS_FileNoMTime( int fd )
 }
 
 /*
+ * Sys_FS_GetFullPathName
+ */
+int Sys_FS_GetFullPathName( const char *pathname, char *buffer, int buffer_size ) {
+	int i;
+	int ret;
+
+	ret = GetFullPathName( pathname, buffer_size, buffer, NULL );
+	if( ret == 0 ) {
+		return 0;
+	}
+
+	for( i = 0; i < ret; i++ ) {
+		if( buffer[i] == '\\' )
+			buffer[i] = '/';
+	}
+
+	return ret;
+}
+
+/*
 * Sys_FS_MMapFile
 */
 void *Sys_FS_MMapFile( int fileno, size_t size, size_t offset, void **mapping, size_t *mapping_offset ) {
