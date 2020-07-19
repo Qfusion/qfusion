@@ -664,9 +664,10 @@ asIScriptContext *qasGetActiveContext( void ) {
 * qasLoadScriptSection
 */
 static bool qasLoadScriptSection(
-	const char *rootDir, const char *dir, const char *script, int sectionNum, char **pdata, time_t *mtime )
+	const char *rootDir, const char *dir, const char *script, int sectionNum, char **psectionName, char **pdata, time_t *mtime )
 {
 	char filename[MAX_QPATH];
+	char  fullpath[4096];
 	int length, filenum;
 	char *sectionName;
 
@@ -696,6 +697,27 @@ static bool qasLoadScriptSection(
 
 	*mtime = trap_FS_SysMTime( filenum );
 
+	if( psectionName ) {
+		fullpath[0] = '\0';
+
+		// use full path name to the .as file as the section name
+		// if the real file is not an AS script (most likely a pak file), then
+		// revert to the relative path name
+		if( trap_FS_FGetFullPathName( filenum, fullpath, sizeof( fullpath ) ) > 0 ) {
+			if( strlen( fullpath ) <= strlen( QAS_FILE_EXTENSION )
+				|| Q_stricmp( fullpath + strlen( fullpath ) - strlen( QAS_FILE_EXTENSION ), QAS_FILE_EXTENSION ) ) {
+				fullpath[0] = '\0';
+			}
+		}
+
+		if( fullpath[0] == '\0' ) {
+			Q_strncpyz( fullpath, filename, sizeof( fullpath ) );
+		}
+
+		*psectionName = ( char * )QAS_Malloc( strlen( fullpath ) + 1 );
+		memcpy( *psectionName, fullpath, strlen( fullpath ) + 1 );
+	}
+
 	if( pdata ) {
 		// load the script data into memory
 		char *data = (char *)qasAlloc( length + 1 );
@@ -718,8 +740,8 @@ static bool qasParseScriptProject(
 	int				 length, filenum;
 	char *			 script;
 	int				 numSections, sNum;
-	char *			 section;
-	char **			 psection;
+	char *			 section, *fileName = NULL;
+	char **			 psection, **pFileName;
 	time_t			 smtime;
 
 	Q_snprintfz( filepath, sizeof( filepath ), "%s/%s/%s", rootDir, dir, filename );
@@ -753,27 +775,30 @@ static bool qasParseScriptProject(
 	}
 
 	psection = asModule ? &section : NULL;
+	pFileName = asModule ? &fileName : NULL;
 
 	// load up the script sections
-	for( sNum = 0; qasLoadScriptSection( rootDir, dir, script, sNum, psection, &smtime ); sNum++ ) {
+	for( sNum = 0; qasLoadScriptSection( rootDir, dir, script, sNum, pFileName, psection, &smtime ); sNum++ ) {
 		if( smtime > *mtime ) {
 			*mtime = smtime;
 		}
 
-		if( !asModule ) {
+		if( !asModule || !fileName ) {
 			continue;
 		}
 
-		const char *sectionName = COM_ListNameForPosition( script, sNum, QAS_SECTIONS_SEPARATOR );
-		int error = asModule->AddScriptSection( sectionName, section, strlen( section ) );
+		int error = asModule->AddScriptSection( fileName, section, strlen( section ) );
 
 		qasFree( section );
 		
 		if( error ) {
-			QAS_Printf( S_COLOR_RED "* Failed to add the script section %s with error %i\n", sectionName, error );
+			QAS_Printf( S_COLOR_RED "* Failed to add file %s with error %i\n", fileName, error );
+			qasFree( fileName );
 			qasFree( script );
 			return false;
 		}
+
+		qasFree( fileName );
 	}
 
 	qasFree( script );
