@@ -795,6 +795,8 @@ void Qcommon_Init( int argc, char **argv ) {
 
 	CM_Init();
 
+	Com_InitDiagnostics();
+
 #if APP_STEAMID
 	Steam_LoadLibrary();
 #endif
@@ -947,6 +949,8 @@ void Qcommon_Frame( unsigned int realMsec ) {
 
 	MM_Frame( realMsec );
 
+	Com_RunDiagnosticsFrame();
+
 	Com_SetHotloadState( false );
 }
 
@@ -961,6 +965,8 @@ void Qcommon_Shutdown( void ) {
 		return;
 	}
 	isdown = true;
+
+	Com_ShutdownDiagnostics();
 
 	Com_ScriptModule_Shutdown();
 	CM_Shutdown();
