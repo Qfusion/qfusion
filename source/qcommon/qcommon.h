@@ -984,4 +984,15 @@ void Com_Autoupdate_Run( bool checkOnly, void ( *newfiles_cb )( void ) );
 void Com_Autoupdate_Cancel( void );
 void Com_Autoupdate_Shutdown( void );
 
+/*
+==============================================================
+
+DIAGNOSTICS
+
+==============================================================
+*/
+void Com_InitDiagnostics();
+void Com_RunDiagnosticsFrame();
+void Com_ShutdownDiagnostics();
+
 #endif // __QCOMMON_H
