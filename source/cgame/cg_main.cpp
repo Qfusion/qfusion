@@ -1069,6 +1069,8 @@ void CG_HotloadAssets( void )
 	if( CG_asReloadGameScript() ) {
 		CG_asGameInit();
 	}
+	CG_InitL10n();
+	CG_LoadStatusBar();
 }
 
 /*
