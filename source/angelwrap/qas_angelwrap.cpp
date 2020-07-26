@@ -838,7 +838,7 @@ asIScriptModule *qasLoadScriptProject(
 	asModule = engine->GetModule( moduleName, asGM_CREATE_IF_NOT_EXISTS );
 	if( asModule == NULL ) {
 		QAS_Printf( S_COLOR_RED "qasLoadScriptProject: GetModule '%s' failed\n", moduleName );
-		return false;
+		return NULL;
 	}
 
 	// Initialize the script
@@ -872,7 +872,7 @@ asIScriptModule *qasLoadScriptProject(
 	if( error ) {
 		QAS_Printf( S_COLOR_RED "* Failed to build script '%s'\n", filename );
 		engine->DiscardModule( moduleName );
-		return false;
+		return NULL;
 	}
 
 	if( mtime ) {
