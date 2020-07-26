@@ -478,7 +478,6 @@ time_t Sys_FS_FileNoMTime( int fd ) {
 	return buffer.st_mtime;
 }
 
-}
 /*
 * Sys_FS_MMapFile
 */
