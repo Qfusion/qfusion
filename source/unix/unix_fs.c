@@ -478,6 +478,16 @@ time_t Sys_FS_FileNoMTime( int fd ) {
 	return buffer.st_mtime;
 }
 
+int Sys_FS_GetFullPathName( const char *pathname, char *buffer, int buffer_size ) {
+	int res;
+	char *rp = realpath( pathname, NULL );
+	if( !rp )
+		return 0;
+	res = Q_snprintfz( buffer, buffer_size, "%s", rp );
+	free( rp );
+	return res;
+}
+
 /*
 * Sys_FS_MMapFile
 */
