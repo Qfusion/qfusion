@@ -333,6 +333,24 @@ typedef struct linear_allocator_s linear_allocator_t;
 typedef void *( *alloc_function_t )( size_t, const char*, int );
 typedef void ( *free_function_t )( void *ptr, const char*, int );
 
+typedef struct qstreambuf_s {
+	uint8_t *bytes;
+	size_t	 len, cap, pos;
+
+	void ( *prepare )( struct qstreambuf_s *stream, size_t size );
+	uint8_t *( *buffer )( struct qstreambuf_s *stream );
+	size_t ( *size )( struct qstreambuf_s *stream );
+	uint8_t *( *write )( struct qstreambuf_s *stream, uint8_t *b, size_t len );
+	void ( *consume )( struct qstreambuf_s *stream, size_t p );
+	uint8_t *( *data )( struct qstreambuf_s *stream );
+	size_t ( *datalength )( struct qstreambuf_s *stream );
+	void ( *compact )( struct qstreambuf_s *stream );
+	uint8_t *( *commit )( struct qstreambuf_s *stream, size_t l );
+	void ( *clear )( struct qstreambuf_s *stream );
+} qstreambuf_t;
+
+void QStreamBuf_Init( qstreambuf_t *stream );
+
 // Block Allocator
 block_allocator_t * BlockAllocator( size_t elemSize, size_t blockSize, alloc_function_t alloc_function, free_function_t free_function );
 void BlockAllocator_Free( block_allocator_t *ba );

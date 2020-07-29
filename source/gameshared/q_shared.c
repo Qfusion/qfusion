@@ -2206,3 +2206,112 @@ size_t LA_Size( linear_allocator_t *la ) {
 void LinearAllocator_Free( linear_allocator_t *la ) {
 	la->free( la, __FILE__, __LINE__ );
 }
+
+//============================================
+
+static void QStreamBuf_Prepare( qstreambuf_t *stream, size_t size )
+{
+	size_t rem = stream->cap - stream->len;
+	if( rem >= size )
+		return;
+
+	size -= rem;
+	if( stream->cap + size < stream->cap + stream->cap / 2 ) {
+		size = stream->cap / 2;
+	}
+
+	stream->cap += size;
+	if( stream->bytes ) {
+		uint8_t *newbytes = realloc( stream->bytes, stream->cap );
+		if( !newbytes )
+			Sys_Error( "QStreamBuf_Prepare: failed to reallocate memory at %s:%i", __FILE__, __LINE__ );
+		stream->bytes = newbytes;
+		return;
+	}
+
+	stream->bytes = malloc( stream->cap );
+	if( !stream->bytes )
+		Sys_Error( "QStreamBuf_Prepare: failed to allocate memory at %s:%i", __FILE__, __LINE__ );
+}
+
+static uint8_t *QStreamBuf_Buffer( qstreambuf_t *stream )
+{
+	return stream->bytes + stream->len;
+}
+
+static size_t QStreamBuf_Size( qstreambuf_t *stream )
+{
+	return stream->cap - stream->len;
+}
+
+static uint8_t *QStreamBuf_Data( qstreambuf_t *stream )
+{
+	return stream->bytes + stream->pos;
+}
+
+static size_t QStreamBuf_DataLength( qstreambuf_t *stream )
+{
+	if( stream->len < stream->pos ) {
+		assert( stream->len >= stream->pos );
+		return 0;
+	}
+	if( stream->len == stream->pos )
+		return 0;
+	return stream->len - stream->pos;
+}
+
+static void QStreamBuf_Consume( qstreambuf_t *stream, size_t p )
+{
+	stream->pos += p;
+	if( stream->pos > stream->len )
+		Sys_Error( "Consume overrun" );
+}
+
+static uint8_t *QStreamBuf_Write( qstreambuf_t *stream, uint8_t *b, size_t len )
+{
+	stream->prepare( stream, len );
+	memcpy( stream->bytes + stream->len, b, len );
+	stream->len += len;
+	return stream->bytes + stream->len - len;
+}
+
+static uint8_t *QStreamBuf_Commit( qstreambuf_t *stream, size_t l )
+{
+	uint8_t *b = stream->bytes + stream->len;
+	stream->len += l;
+	if( stream->len > stream->cap )
+		Sys_Error( "Buffer overrun" );
+	return b;
+}
+
+static void QStreamBuf_Compact( qstreambuf_t *stream )
+{
+	size_t p = stream->pos;
+	if( stream->len == 0 )
+		return;
+
+	memmove( stream->bytes, stream->bytes + p, stream->len - p );
+	stream->len -= p;
+	stream->pos = 0;
+}
+
+static void QStreamBuf_Clear( qstreambuf_t *stream )
+{
+	free( stream->bytes );
+	memset( stream, 0, sizeof( *stream ) );
+}
+
+void QStreamBuf_Init( qstreambuf_t *stream )
+{
+	memset( stream, 0, sizeof( *stream ) );
+	stream->write = QStreamBuf_Write;
+	stream->prepare = QStreamBuf_Prepare;
+	stream->buffer = QStreamBuf_Buffer;
+	stream->size = QStreamBuf_Size;
+	stream->commit = QStreamBuf_Commit;
+	stream->clear = QStreamBuf_Clear;
+	stream->consume = QStreamBuf_Consume;
+	stream->compact = QStreamBuf_Compact;
+	stream->data = QStreamBuf_Data;
+	stream->datalength = QStreamBuf_DataLength;
+}
