@@ -29,20 +29,7 @@ enum DiagMessageType {
 	DebugDatabase,
 };
 
-typedef struct com_diag_byteslice_s {
-	uint8_t *bytes;
-	size_t	 len, cap;
-
-	void ( *reserve )( struct com_diag_byteslice_s *slice, size_t size );
-	uint8_t *( *buffer )( struct com_diag_byteslice_s *slice );
-	size_t ( *size )( struct com_diag_byteslice_s *slice );
-	uint8_t *( *append )( struct com_diag_byteslice_s *slice, uint8_t *b, size_t len );
-	void ( *move )( struct com_diag_byteslice_s *slice, size_t p );
-	uint8_t *( *read )( struct com_diag_byteslice_s *slice, size_t l );
-	void ( *free )( struct com_diag_byteslice_s *slice );
-} com_diag_byteslice_t;
-
-typedef struct com_diag_message_s {
+typedef struct {
 	int	  severity;
 	int	  line, col;
 	char *text;
@@ -59,8 +46,7 @@ typedef struct com_diag_connection_s {
 	netadr_t address;
 	int64_t	 last_active;
 
-	com_diag_byteslice_t *recvbuf, *sendbuf;
-	size_t				  recvpos, sendpos;
+	qstreambuf_t recvbuf, sendbuf;
 
 	struct com_diag_connection_s *next, *prev;
 } com_diag_connection_t;
@@ -76,85 +62,6 @@ static cvar_t *com_diagnostics;
 static cvar_t *com_diagnostics_port;
 static cvar_t *com_diagnostics_timeout;
 
-
-// ======
-
-static void ByteSlice_Reserve( com_diag_byteslice_t *slice, size_t size )
-{
-	size_t rem = slice->cap - slice->len;
-	if( rem >= size )
-		return;
-
-	size -= rem;
-	if( slice->cap + size < slice->cap + slice->cap / 2 ) {
-		size = slice->cap / 2;
-	}
-
-	slice->cap += size;
-	if( !slice->bytes )
-		slice->bytes = Mem_ZoneMalloc( slice->cap );
-	else
-		slice->bytes = Mem_Realloc( slice->bytes, slice->cap );
-}
-
-static uint8_t *ByteSlice_Buffer( com_diag_byteslice_t *slice )
-{
-	return slice->bytes + slice->len;
-}
-
-static size_t ByteSlice_Size( com_diag_byteslice_t *slice )
-{
-	return slice->cap - slice->len;
-}
-
-static uint8_t *ByteSlice_Append( com_diag_byteslice_t *slice, uint8_t *b, size_t len )
-{
-	ByteSlice_Reserve( slice, len );
-	memcpy( slice->bytes + slice->len, b, len );
-	slice->len += len;
-	return slice->bytes + slice->len - len;
-}
-
-static uint8_t *ByteSlice_Read( com_diag_byteslice_t *slice, size_t l )
-{
-	uint8_t *b = slice->bytes + slice->len;
-	slice->len += l;
-	if( slice->len > slice->cap )
-		Com_Error( ERR_FATAL, "Buffer overrun" );
-	return b;
-}
-
-static void ByteSlice_Move( com_diag_byteslice_t *slice, size_t p )
-{
-	if( slice->len == 0 )
-		return;
-	if( p > slice->len )
-		Com_Error( ERR_FATAL, "Move overrun" );
-	memmove( slice->bytes, slice->bytes + p, slice->len - p );
-	slice->len -= p;
-}
-
-static void ByteSlice_Free( com_diag_byteslice_t *slice )
-{
-	Mem_ZoneFree( slice->bytes );
-	memset( slice, 0, sizeof( *slice ) );
-}
-
-static com_diag_byteslice_t *Diag_NewByteSlice( void )
-{
-	com_diag_byteslice_t *slice = Mem_ZoneMalloc( sizeof( *slice ) );
-	slice->append = ByteSlice_Append;
-	slice->reserve = ByteSlice_Reserve;
-	slice->buffer = ByteSlice_Buffer;
-	slice->size = ByteSlice_Size;
-	slice->read = ByteSlice_Read;
-	slice->free = ByteSlice_Free;
-	slice->move = ByteSlice_Move;
-	return slice;
-}
-
-// ======
-
 static com_diag_connection_t *Com_Diag_AllocConnection( void )
 {
 	com_diag_connection_t *con;
@@ -167,10 +74,8 @@ static com_diag_connection_t *Com_Diag_AllocConnection( void )
 		return NULL;
 	}
 
-	con->recvbuf = Diag_NewByteSlice();
-	con->sendbuf = Diag_NewByteSlice();
-	con->recvpos = 0;
-	con->sendpos = 0;
+	QStreamBuf_Init( &con->recvbuf );
+	QStreamBuf_Init( &con->sendbuf );
 
 	// put at the start of the list
 	con->prev = &com_diag_connection_headnode;
@@ -182,16 +87,8 @@ static com_diag_connection_t *Com_Diag_AllocConnection( void )
 
 static void Com_Diag_FreeConnection( com_diag_connection_t *con )
 {
-	if( con->recvbuf ) {
-		con->recvbuf->free( con->recvbuf );
-		Mem_ZoneFree( con->recvbuf );
-		con->recvbuf = NULL;
-	}
-	if( con->sendbuf ) {
-		con->sendbuf->free( con->sendbuf );
-		Mem_ZoneFree( con->sendbuf );
-		con->sendbuf = NULL;
-	}
+	con->recvbuf.clear( &con->recvbuf );
+	con->sendbuf.clear( &con->sendbuf );
 
 	// remove from linked active list
 	con->prev->next = con->next;
@@ -259,19 +156,14 @@ static bool Com_Diag_PeekMessage( com_diag_connection_t *con ) {
 	int		 len;
 	msg_t	 msg;
 	size_t	 s;
-	uint8_t *b;
+	qstreambuf_t *rb = &con->recvbuf;
 
-	if( con->recvbuf->len <= con->recvpos ) {
-		return false;
-	}
-
-	s = con->recvbuf->len - con->recvpos;
-	b = con->recvbuf->bytes + con->recvpos;
+	s = rb->datalength( rb );
 	if( s < 4 ) {
 		return false;
 	}
 
-	MSG_Init( &msg, b, s );
+	MSG_Init( &msg, rb->data( rb ), s );
 	MSG_GetSpace( &msg, msg.maxsize );
 
 	len = MSG_ReadInt32( &msg );
@@ -282,27 +174,21 @@ static void Com_Diag_ReadMessage( com_diag_connection_t *con ) {
 	int		 len;
 	msg_t	 msg;
 	size_t	 s;
-	uint8_t *b;
+	qstreambuf_t *rb = &con->recvbuf;
 
-	if( con->recvbuf->len <= con->recvpos ) {
-		assert( con->recvbuf->len > con->recvpos );
-		return;
-	}
-
-	s = con->recvbuf->len - con->recvpos;
-	b = con->recvbuf->bytes + con->recvpos;
+	s = rb->datalength( rb );
 	if( s < 4 ) {
 		assert( s >= 4 );
 		return;
 	}
 
-	MSG_Init( &msg, b, s );
+	MSG_Init( &msg, rb->data( rb ), s );
 	MSG_GetSpace( &msg, msg.maxsize );
 
 	len = MSG_ReadInt32( &msg );
 	MSG_SkipData( &msg, len );
 
-	con->recvpos += s;
+	rb->consume( rb, s );
 }
 
 static void Com_Diag_ReceiveRequest( socket_t *socket, com_diag_connection_t *con )
@@ -310,6 +196,7 @@ static void Com_Diag_ReceiveRequest( socket_t *socket, com_diag_connection_t *co
 	uint8_t			   recvbuf[1024];
 	size_t			   recvbuf_size = sizeof( recvbuf );
 	size_t			   total_received = 0;
+	qstreambuf_t *rb = &con->recvbuf;
 
 	while( !Com_Diag_PeekMessage( con ) ) {
 		int read = NET_Get( &con->socket, NULL, recvbuf, recvbuf_size );
@@ -326,24 +213,23 @@ static void Com_Diag_ReceiveRequest( socket_t *socket, com_diag_connection_t *co
 
 		total_received += read;
 
-		con->recvbuf->append( con->recvbuf, recvbuf, read );
+		rb->write( rb, recvbuf, read );
 	}
 
 	while( Com_Diag_PeekMessage( con ) ) {
 		Com_Diag_ReadMessage( con );
 	}
 
-	con->recvbuf->move( con->recvbuf, con->recvpos );
-	con->recvpos = 0;
+	rb->compact( rb );
 }
 
 static void Com_Diag_WriteResponse( socket_t *socket, com_diag_connection_t *con )
 {
 	size_t total_sent = 0;
+	qstreambuf_t *sb = &con->sendbuf;
 
-	while( con->sendpos < con->sendbuf->len ) {
-		int sent = NET_Send(
-			&con->socket, con->sendbuf->bytes + con->sendpos, con->sendbuf->len - con->sendpos, &con->address );
+	while( sb->datalength( sb ) > 0 ) {
+		int sent = NET_Send( &con->socket, sb->data( sb ), sb->datalength( sb ), &con->address );
 		if( sent < 0 ) {
 			con->open = false;
 			Com_DPrintf( "Diag connection send error from %s\n", NET_AddressToString( &con->address ) );
@@ -356,14 +242,13 @@ static void Com_Diag_WriteResponse( socket_t *socket, com_diag_connection_t *con
 		}
 
 		total_sent += sent;
-		con->sendpos += sent;
+		sb->consume( sb, sent );
 	}
 
 	if( !con->open )
 		return;
 
-	con->sendbuf->move( con->sendbuf, con->sendpos );
-	con->sendpos = 0;
+	sb->compact( sb );
 }
 
 void Com_Diag_Begin( const char **filenames )
@@ -410,7 +295,7 @@ void Com_Diag_End( void )
 	unsigned int		  i, j;
 	msg_t				  msg;
 	struct trie_dump_s *  dump;
-	com_diag_byteslice_t *slice;
+	qstreambuf_t stream;
 	com_diag_connection_t *con, *next, *hnode = &com_diag_connection_headnode;
 
 	if( !com_diag_initialized )
@@ -419,7 +304,7 @@ void Com_Diag_End( void )
 	assert( com_diag_messages != NULL );
 	Trie_Dump( com_diag_messages, "", TRIE_DUMP_BOTH, &dump );
 
-	slice = Diag_NewByteSlice();
+	QStreamBuf_Init( &stream );
 
 	for( i = 0; i < dump->size; i++ ) {
 		const char *			filename = dump->key_value_vector[i].key;
@@ -427,27 +312,27 @@ void Com_Diag_End( void )
 		com_diag_messagelist_t *ml = dump->key_value_vector[i].value;
 		size_t					head;
 
-		slice->reserve( slice, 5 );
+		stream.prepare( &stream, 5 );
 		// skip
-		head = slice->len;
-		slice->read( slice, 5 );
+		head = stream.datalength( &stream );
+		stream.commit( &stream, 5 );
 
-		slice->reserve( slice, 4 + filename_len + 4 );
+		stream.prepare( &stream, 4 + filename_len + 4 );
 
-		MSG_Init( &msg, slice->buffer( slice ), slice->size( slice ) );
+		MSG_Init( &msg, stream.buffer( &stream ), stream.size( &stream ) );
 		MSG_WriteInt32( &msg, ( filename_len ) );
 		MSG_WriteData( &msg, filename, filename_len );
 		MSG_WriteInt32( &msg, ( ml->num_messages ) );
 
-		slice->read( slice, msg.cursize );
+		stream.commit( &stream, msg.cursize );
 
 		for( j = 0; j < ml->num_messages; j++ ) {
 			com_diag_message_t *dm = &ml->messages[j];
 			size_t				text_len = strlen( dm->text );
 
-			slice->reserve( slice, 4 + text_len + 4 + 4 + 4 + 4 );
+			stream.prepare( &stream, 4 + text_len + 4 + 4 + 4 + 4 );
 
-			MSG_Init( &msg, slice->buffer( slice ), slice->size( slice ) );
+			MSG_Init( &msg, stream.buffer( &stream ), stream.size( &stream ) );
 			MSG_WriteInt32( &msg, ( text_len ) );
 			MSG_WriteData( &msg, dm->text, text_len );
 			MSG_WriteInt32( &msg, ( dm->line ) );
@@ -455,13 +340,13 @@ void Com_Diag_End( void )
 			MSG_WriteInt32( &msg, ( dm->severity > 1 ) );
 			MSG_WriteInt32( &msg, ( dm->severity == 0 ) );
 
-			slice->read( slice, msg.cursize );
+			stream.commit( &stream, msg.cursize );
 
 			Mem_ZoneFree( dm->text );
 		}
 
-		MSG_Init( &msg, slice->bytes + head, 5 );
-		MSG_WriteInt32( &msg, ( slice->len - head - 5 ) );
+		MSG_Init( &msg, stream.data( &stream ) + head, 5 );
+		MSG_WriteInt32( &msg, ( stream.datalength( &stream ) - head - 5 ) );
 		MSG_WriteInt8( &msg, Diagnostics );
 
 		Mem_ZoneFree( ml->messages );
@@ -473,12 +358,12 @@ void Com_Diag_End( void )
 	com_diag_messages = NULL;
 
 	for( con = hnode->prev; con != hnode; con = next ) {
+		qstreambuf_t *sb = &con->sendbuf;
 		next = con->prev;
-		con->sendbuf->append( con->sendbuf, slice->bytes, slice->len );
+		sb->write( sb, stream.data( &stream ), stream.datalength( &stream ) );
 	}
 
-	slice->free( slice );
-	Mem_ZoneFree( slice );
+	stream.clear( &stream );
 }
 
 void Com_InitDiagnostics() {
