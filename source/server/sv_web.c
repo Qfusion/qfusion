@@ -1332,12 +1332,12 @@ static void SV_Web_Listen( socket_t *socket ) {
 	int ret;
 	socket_t newsocket = { 0 };
 	netadr_t newaddress;
-	sv_http_connection_t *con;
 
 	// accept new connections
 	while( ( ret = NET_Accept( socket, &newsocket, &newaddress ) ) ) {
 		bool block;
 		bool is_upstream;
+		sv_http_connection_t *con = NULL;
 
 		if( ret == -1 ) {
 			Com_Printf( "NET_Accept: Error: %s\n", NET_ErrorString() );
@@ -1359,20 +1359,20 @@ static void SV_Web_Listen( socket_t *socket ) {
 		if( !block ) {
 			Com_DPrintf( "HTTP connection accepted from %s\n", NET_AddressToString( &newaddress ) );
 			con = SV_Web_AllocConnection();
-			if( !con ) {
-				break;
-			}
-			con->socket = newsocket;
-			con->address = newaddress;
-			con->last_active = Sys_Milliseconds();
-			con->open = true;
-			con->state = HTTP_CONN_STATE_RECV;
-			con->is_upstream = is_upstream;
+		}
+
+		if( !con ) {
+			Com_DPrintf( "HTTP connection refused for %s\n", NET_AddressToString( &newaddress ) );
+			NET_CloseSocket( &newsocket );
 			continue;
 		}
 
-		Com_DPrintf( "HTTP connection refused for %s\n", NET_AddressToString( &newaddress ) );
-		NET_CloseSocket( &newsocket );
+		con->socket = newsocket;
+		con->address = newaddress;
+		con->last_active = Sys_Milliseconds();
+		con->open = true;
+		con->state = HTTP_CONN_STATE_RECV;
+		con->is_upstream = is_upstream;
 	}
 }
 
