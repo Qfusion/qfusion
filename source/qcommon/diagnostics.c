@@ -33,14 +33,14 @@ typedef struct {
 	int	  severity;
 	int	  line, col;
 	char *text;
-} com_diag_message_t;
+} diag_message_t;
 
 typedef struct {
 	unsigned			num_messages;
-	com_diag_message_t *messages;
-} com_diag_messagelist_t;
+	diag_message_t *messages;
+} diag_messagelist_t;
 
-typedef struct com_diag_connection_s {
+typedef struct diag_connection_s {
 	bool	 open;
 	socket_t socket;
 	netadr_t address;
@@ -48,23 +48,23 @@ typedef struct com_diag_connection_s {
 
 	qstreambuf_t recvbuf, sendbuf;
 
-	struct com_diag_connection_s *next, *prev;
-} com_diag_connection_t;
+	struct diag_connection_s *next, *prev;
+} diag_connection_t;
 
-static socket_t com_diagnostics_sock;
-static bool		com_diag_initialized;
-static trie_t	*com_diag_messages;
+static socket_t diag_sock;
+static bool		diag_initialized;
+static trie_t	*diag_messages;
 
-static com_diag_connection_t com_diag_connections[MAX_DIAGNOSTICS_CONNECTIONS];
-static com_diag_connection_t com_diag_connection_headnode, *com_free_diag_connections;
+static diag_connection_t diag_connections[MAX_DIAGNOSTICS_CONNECTIONS];
+static diag_connection_t diag_connection_headnode, *com_free_diag_connections;
 
 static cvar_t *com_diagnostics;
 static cvar_t *com_diagnostics_port;
 static cvar_t *com_diagnostics_timeout;
 
-static com_diag_connection_t *Com_Diag_AllocConnection( void )
+static diag_connection_t *Diag_AllocConnection( void )
 {
-	com_diag_connection_t *con;
+	diag_connection_t *con;
 
 	if( com_free_diag_connections ) {
 		// take a free connection if possible
@@ -78,14 +78,14 @@ static com_diag_connection_t *Com_Diag_AllocConnection( void )
 	QStreamBuf_Init( &con->sendbuf );
 
 	// put at the start of the list
-	con->prev = &com_diag_connection_headnode;
-	con->next = com_diag_connection_headnode.next;
+	con->prev = &diag_connection_headnode;
+	con->next = diag_connection_headnode.next;
 	con->next->prev = con;
 	con->prev->next = con;
 	return con;
 }
 
-static void Com_Diag_FreeConnection( com_diag_connection_t *con )
+static void Diag_FreeConnection( diag_connection_t *con )
 {
 	con->recvbuf.clear( &con->recvbuf );
 	con->sendbuf.clear( &con->sendbuf );
@@ -99,7 +99,7 @@ static void Com_Diag_FreeConnection( com_diag_connection_t *con )
 	com_free_diag_connections = con;
 }
 
-static void Com_Diag_InitSocket( const char *addrstr, netadrtype_t adrtype, socket_t *socket )
+static void Diag_InitSocket( const char *addrstr, netadrtype_t adrtype, socket_t *socket )
 {
 	netadr_t address;
 
@@ -115,12 +115,12 @@ static void Com_Diag_InitSocket( const char *addrstr, netadrtype_t adrtype, sock
 			Com_Printf( "Error: Couldn't listen to TCP socket: %s", NET_ErrorString() );
 			NET_CloseSocket( socket );
 		} else {
-			Com_Printf( "Web server started on %s\n", NET_AddressToString( &address ) );
+			Com_Printf( "Diagnostics server started on %s\n", NET_AddressToString( &address ) );
 		}
 	}
 }
 
-static void Com_Diag_Listen( socket_t *socket )
+static void Diag_Listen( socket_t *socket )
 {
 	int					  ret;
 	socket_t			  newsocket = { 0 };
@@ -128,7 +128,7 @@ static void Com_Diag_Listen( socket_t *socket )
 
 	// accept new connections
 	while( ( ret = NET_Accept( socket, &newsocket, &newaddress ) ) ) {
-		com_diag_connection_t *con = NULL;
+		diag_connection_t *con = NULL;
 
 		if( ret == -1 ) {
 			Com_Printf( "NET_Accept: Error: %s\n", NET_ErrorString() );
@@ -137,7 +137,7 @@ static void Com_Diag_Listen( socket_t *socket )
 
 		if( NET_IsLocalAddress( &newaddress ) ) {
 			Com_DPrintf( "Diag connection accepted from %s\n", NET_AddressToString( &newaddress ) );
-			con = Com_Diag_AllocConnection();
+			con = Diag_AllocConnection();
 		}
 
 		if( !con ) {
@@ -153,7 +153,7 @@ static void Com_Diag_Listen( socket_t *socket )
 	}
 }
 
-static bool Com_Diag_PeekMessage( com_diag_connection_t *con ) {
+static bool Diag_PeekMessage( diag_connection_t *con ) {
 	int		 len;
 	msg_t	 msg;
 	size_t	 s;
@@ -171,7 +171,7 @@ static bool Com_Diag_PeekMessage( com_diag_connection_t *con ) {
 	return msg.cursize - msg.readcount >= len;
 }
 
-static void Com_Diag_ReadMessage( com_diag_connection_t *con ) {
+static void Diag_ReadMessage( diag_connection_t *con ) {
 	int		 len;
 	msg_t	 msg;
 	size_t	 s;
@@ -192,14 +192,14 @@ static void Com_Diag_ReadMessage( com_diag_connection_t *con ) {
 	rb->consume( rb, s );
 }
 
-static void Com_Diag_ReceiveRequest( socket_t *socket, com_diag_connection_t *con )
+static void Diag_ReadFromSocket( socket_t *socket, diag_connection_t *con )
 {
 	uint8_t			   recvbuf[1024];
 	size_t			   recvbuf_size = sizeof( recvbuf );
 	size_t			   total_received = 0;
 	qstreambuf_t *rb = &con->recvbuf;
 
-	while( !Com_Diag_PeekMessage( con ) ) {
+	while( !Diag_PeekMessage( con ) ) {
 		int read = NET_Get( &con->socket, NULL, recvbuf, recvbuf_size );
 		if( read < 0 ) {
 			con->open = false;
@@ -217,14 +217,14 @@ static void Com_Diag_ReceiveRequest( socket_t *socket, com_diag_connection_t *co
 		rb->write( rb, recvbuf, read );
 	}
 
-	while( Com_Diag_PeekMessage( con ) ) {
-		Com_Diag_ReadMessage( con );
+	while( Diag_PeekMessage( con ) ) {
+		Diag_ReadMessage( con );
 	}
 
 	rb->compact( rb );
 }
 
-static void Com_Diag_WriteResponse( socket_t *socket, com_diag_connection_t *con )
+static void Diag_WriteToSocket( socket_t *socket, diag_connection_t *con )
 {
 	size_t total_sent = 0;
 	qstreambuf_t *sb = &con->sendbuf;
@@ -252,30 +252,30 @@ static void Com_Diag_WriteResponse( socket_t *socket, com_diag_connection_t *con
 	sb->compact( sb );
 }
 
-void Com_Diag_Begin( const char **filenames )
+void Diag_BeginBuild( const char **filenames )
 {
 	int i;
 
-	if( !com_diag_initialized )
+	if( !diag_initialized )
 		return;
 
-	assert( com_diag_messages == NULL );
+	assert( diag_messages == NULL );
 
-	Trie_Create( TRIE_CASE_INSENSITIVE, &com_diag_messages );
+	Trie_Create( TRIE_CASE_INSENSITIVE, &diag_messages );
 
 	for( i = 0; filenames[i]; i++ ) {
-		Trie_Insert( com_diag_messages, filenames[i],
-			Mem_ZoneMalloc( sizeof( com_diag_messagelist_t ) ) );
+		Trie_Insert( diag_messages, filenames[i],
+			Mem_ZoneMalloc( sizeof( diag_messagelist_t ) ) );
 	}
 }
 
-void Com_Diag_Message( int severity, const char *filename, int line, int col, const char *text ) {
-	com_diag_message_t *	newmsg;
-	com_diag_messagelist_t *ml;
+void Diag_Message( int severity, const char *filename, int line, int col, const char *text ) {
+	diag_message_t *	newmsg;
+	diag_messagelist_t *ml;
 
-	if( !com_diag_initialized )
+	if( !diag_initialized )
 		return;
-	if( Trie_Find( com_diag_messages, filename, TRIE_EXACT_MATCH, (void **)&ml ) == TRIE_KEY_NOT_FOUND )
+	if( Trie_Find( diag_messages, filename, TRIE_EXACT_MATCH, (void **)&ml ) == TRIE_KEY_NOT_FOUND )
 		return;
 
 	if( !ml->messages )
@@ -291,31 +291,34 @@ void Com_Diag_Message( int severity, const char *filename, int line, int col, co
 	newmsg->severity = severity;
 }
 
-void Com_Diag_End( void )
+void Diag_EndBuild( void )
 {
 	unsigned int		  i, j;
 	msg_t				  msg;
 	struct trie_dump_s *  dump;
 	qstreambuf_t stream;
-	com_diag_connection_t *con, *next, *hnode = &com_diag_connection_headnode;
+	diag_connection_t *con, *next, *hnode = &diag_connection_headnode;
 
-	if( !com_diag_initialized )
+	if( !diag_initialized )
 		return;
 
-	assert( com_diag_messages != NULL );
-	Trie_Dump( com_diag_messages, "", TRIE_DUMP_BOTH, &dump );
+	if( diag_messages == NULL ) {
+		assert( diag_messages != NULL );
+		return;
+	}
+
+	Trie_Dump( diag_messages, "", TRIE_DUMP_BOTH, &dump );
 
 	QStreamBuf_Init( &stream );
 
 	for( i = 0; i < dump->size; i++ ) {
 		const char *			filename = dump->key_value_vector[i].key;
 		size_t					filename_len = strlen( filename );
-		com_diag_messagelist_t *ml = dump->key_value_vector[i].value;
-		size_t					head;
+		diag_messagelist_t *ml = dump->key_value_vector[i].value;
+		size_t					head_pos;
 
 		stream.prepare( &stream, 5 );
-		// skip
-		head = stream.datalength( &stream );
+		head_pos = stream.datalength( &stream );
 		stream.commit( &stream, 5 );
 
 		stream.prepare( &stream, 4 + filename_len + 4 );
@@ -328,7 +331,7 @@ void Com_Diag_End( void )
 		stream.commit( &stream, msg.cursize );
 
 		for( j = 0; j < ml->num_messages; j++ ) {
-			com_diag_message_t *dm = &ml->messages[j];
+			diag_message_t *dm = &ml->messages[j];
 			size_t				text_len = strlen( dm->text );
 
 			stream.prepare( &stream, 4 + text_len + 4 + 4 + 4 + 4 );
@@ -346,8 +349,8 @@ void Com_Diag_End( void )
 			Mem_ZoneFree( dm->text );
 		}
 
-		MSG_Init( &msg, stream.data( &stream ) + head, 5 );
-		MSG_WriteInt32( &msg, ( stream.datalength( &stream ) - head - 5 ) );
+		MSG_Init( &msg, stream.data( &stream ) + head_pos, 5 );
+		MSG_WriteInt32( &msg, ( stream.datalength( &stream ) - head_pos - 5 ) );
 		MSG_WriteInt8( &msg, Diagnostics );
 
 		Mem_ZoneFree( ml->messages );
@@ -355,8 +358,8 @@ void Com_Diag_End( void )
 	}
 
 	Trie_FreeDump( dump );
-	Trie_Destroy( com_diag_messages );
-	com_diag_messages = NULL;
+	Trie_Destroy( diag_messages );
+	diag_messages = NULL;
 
 	for( con = hnode->prev; con != hnode; con = next ) {
 		qstreambuf_t *sb = &con->sendbuf;
@@ -367,10 +370,10 @@ void Com_Diag_End( void )
 	stream.clear( &stream );
 }
 
-void Com_InitDiagnostics() {
+void Diag_Init( void ) {
 	unsigned int i;
 
-	com_diag_initialized = false;
+	diag_initialized = false;
 
 #ifdef PUBLIC_BUILD
 	com_diagnostics = Cvar_Get( "com_diagnostics", "0", 0 );
@@ -381,36 +384,36 @@ void Com_InitDiagnostics() {
 	com_diagnostics_port = Cvar_Get( "com_diagnostics_port", "28099", 0 );
 	com_diagnostics_timeout = Cvar_Get( "com_diagnostics_timeout", "900", 0 );
 
-	memset( com_diag_connections, 0, sizeof( com_diag_connections ) );
+	memset( diag_connections, 0, sizeof( diag_connections ) );
 
 	if( !com_diagnostics->integer ) {
 		return;
 	}
 
-	com_free_diag_connections = com_diag_connections;
-	com_diag_connection_headnode.prev = &com_diag_connection_headnode;
-	com_diag_connection_headnode.next = &com_diag_connection_headnode;
+	com_free_diag_connections = diag_connections;
+	diag_connection_headnode.prev = &diag_connection_headnode;
+	diag_connection_headnode.next = &diag_connection_headnode;
 	for( i = 0; i < MAX_DIAGNOSTICS_CONNECTIONS - 2; i++ ) {
-		com_diag_connections[i].next = &com_diag_connections[i + 1];
+		diag_connections[i].next = &diag_connections[i + 1];
 	}
 
-	Com_Diag_InitSocket( "", NA_IP, &com_diagnostics_sock );
+	Diag_InitSocket( "", NA_IP, &diag_sock );
 
-	com_diag_initialized = ( com_diagnostics_sock.address.type == NA_IP );
+	diag_initialized = ( diag_sock.address.type == NA_IP );
 }
 
-void Com_RunDiagnosticsFrame() {
-	com_diag_connection_t *con, *next, *hnode = &com_diag_connection_headnode;
+void Diag_RunFrame( void ) {
+	diag_connection_t *con, *next, *hnode = &diag_connection_headnode;
 	socket_t *			  sockets[MAX_DIAGNOSTICS_CONNECTIONS + 1];
 	void *				  connections[MAX_DIAGNOSTICS_CONNECTIONS];
 	int					  num_sockets = 0;
 
-	if( !com_diag_initialized ) {
+	if( !diag_initialized ) {
 		return;
 	}
 
-	if( com_diagnostics_sock.address.type == NA_IP ) {
-		Com_Diag_Listen( &com_diagnostics_sock );
+	if( diag_sock.address.type == NA_IP ) {
+		Diag_Listen( &diag_sock );
 	}
 
 	// handle incoming data
@@ -425,12 +428,12 @@ void Com_RunDiagnosticsFrame() {
 
 	if( num_sockets != 0 ) {
 		NET_Monitor( 0, sockets, 
-			(void ( * )( socket_t *, void * ))Com_Diag_ReceiveRequest,
-			(void ( * )( socket_t *, void * ))Com_Diag_WriteResponse, 
+			(void ( * )( socket_t *, void * ))Diag_ReadFromSocket,
+			(void ( * )( socket_t *, void * ))Diag_WriteToSocket,
 			NULL, connections );
 	} else {
-		if( com_diagnostics_sock.address.type == NA_IP ) {
-			sockets[num_sockets++] = &com_diagnostics_sock;
+		if( diag_sock.address.type == NA_IP ) {
+			sockets[num_sockets++] = &diag_sock;
 		}
 		sockets[num_sockets] = NULL;
 		NET_Sleep( 0, sockets );
@@ -451,23 +454,23 @@ void Com_RunDiagnosticsFrame() {
 
 		if( !con->open ) {
 			NET_CloseSocket( &con->socket );
-			Com_Diag_FreeConnection( con );
+			Diag_FreeConnection( con );
 		}
 	}
 }
 
-void Com_ShutdownDiagnostics() {
-	com_diag_connection_t *con, *next, *hnode;
+void Diag_Shutdown( void ) {
+	diag_connection_t *con, *next, *hnode;
 
 	// close dead connections
-	hnode = &com_diag_connection_headnode;
+	hnode = &diag_connection_headnode;
 	for( con = hnode->prev; con != hnode; con = next ) {
 		next = con->prev;
 		if( con->open ) {
 			NET_CloseSocket( &con->socket );
-			Com_Diag_FreeConnection( con );
+			Diag_FreeConnection( con );
 		}
 	}
 
-	com_diag_initialized = false;
+	diag_initialized = false;
 }
