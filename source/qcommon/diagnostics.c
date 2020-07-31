@@ -125,10 +125,11 @@ static void Com_Diag_Listen( socket_t *socket )
 	int					  ret;
 	socket_t			  newsocket = { 0 };
 	netadr_t			  newaddress;
-	com_diag_connection_t *con;
 
 	// accept new connections
 	while( ( ret = NET_Accept( socket, &newsocket, &newaddress ) ) ) {
+		com_diag_connection_t *con = NULL;
+
 		if( ret == -1 ) {
 			Com_Printf( "NET_Accept: Error: %s\n", NET_ErrorString() );
 			continue;
@@ -137,18 +138,18 @@ static void Com_Diag_Listen( socket_t *socket )
 		if( NET_IsLocalAddress( &newaddress ) ) {
 			Com_DPrintf( "Diag connection accepted from %s\n", NET_AddressToString( &newaddress ) );
 			con = Com_Diag_AllocConnection();
-			if( !con ) {
-				break;
-			}
-			con->socket = newsocket;
-			con->address = newaddress;
-			con->last_active = Sys_Milliseconds();
-			con->open = true;
+		}
+
+		if( !con ) {
+			Com_DPrintf( "Diag connection refused for %s\n", NET_AddressToString( &newaddress ) );
+			NET_CloseSocket( &newsocket );
 			continue;
 		}
 
-		Com_DPrintf( "Diag connection refused for %s\n", NET_AddressToString( &newaddress ) );
-		NET_CloseSocket( &newsocket );
+		con->socket = newsocket;
+		con->address = newaddress;
+		con->last_active = Sys_Milliseconds();
+		con->open = true;
 	}
 }
 
