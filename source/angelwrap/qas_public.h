@@ -77,9 +77,9 @@ typedef struct {
 	void ( *Mem_FreePool )( struct mempool_s **pool, const char *filename, int fileline );
 	void ( *Mem_EmptyPool )( struct mempool_s *pool, const char *filename, int fileline );
 
-	void ( *Diag_Begin )( const char **filenames );
+	void ( *Diag_BeginBuild )( const char **filenames );
 	void ( *Diag_Message )( int severity, const char *filename, int line, int col, const char *text );
-	void ( *Diag_End )( void );
+	void ( *Diag_EndBuild )( void );
 } angelwrap_import_t;
 
 typedef struct {

@@ -858,7 +858,7 @@ asIScriptModule *qasLoadScriptProject(
 		memcpy( diagnames[i], fn, fn_size );
 	}
 
-	trap_Diag_Begin( ( const char **)diagnames );
+	trap_Diag_BeginBuild( ( const char **)diagnames );
 
 	for( int i = 0; i < files.size(); i++ ) {
 		QAS_Free( diagnames[i] );
@@ -867,7 +867,7 @@ asIScriptModule *qasLoadScriptProject(
 
 	int error = asModule->Build();
 
-	trap_Diag_End();
+	trap_Diag_EndBuild();
 
 	if( error ) {
 		QAS_Printf( S_COLOR_RED "* Failed to build script '%s'\n", filename );
