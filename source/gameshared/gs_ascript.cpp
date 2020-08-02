@@ -1941,9 +1941,9 @@ static int asMAX_SKINFILES = MAX_SKINFILES;
 static int asMAX_ITEMS = MAX_ITEMS;
 static int asMAX_GENERAL = MAX_GENERAL;
 static int asMAX_MMPLAYERINFOS = MAX_MMPLAYERINFOS;
+static int asMAX_CONFIGSTRINGS = MAX_CONFIGSTRINGS;
 
-static const gs_asglobproperties_t asGameGlobalConstants[] =
-{
+static const gs_asglobproperties_t asGameGlobalConstants[] = {
 	{ "const int PS_MAX_STATS", &asPS_MAX_STATS },
 	{ "const int MAX_GAME_STATS", &asMAX_GAME_STATS },
 	{ "const int MAX_EVENTS", &asMAX_EVENTS },
@@ -1963,6 +1963,7 @@ static const gs_asglobproperties_t asGameGlobalConstants[] =
 	{ "const int MAX_ITEMS", &asMAX_ITEMS },
 	{ "const int MAX_GENERAL", &asMAX_GENERAL },
 	{ "const int MAX_MMPLAYERINFOS", &asMAX_MMPLAYERINFOS },
+	{ "const int MAX_CONFIGSTRINGS", &asMAX_CONFIGSTRINGS },
 
 	{ NULL },
 };
