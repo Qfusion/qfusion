@@ -229,6 +229,17 @@ static void *asFunc_SkeletonForModel( struct model_s *m )
 	return CG_SkeletonForModel( m );
 }
 
+static int asFunc_TeamColorForEntity( int entNum ) {
+	union {
+		int			color;
+		uint8_t		shaderRGBA[4];
+	} res;
+
+	CG_TeamColorForEntity( entNum, res.shaderRGBA );
+
+	return res.color;
+}
+
 static const gs_asglobfuncs_t asCGameGlobalFuncs[] = {
 	{ "void Print( const String &in )", asFUNCTION( asFunc_Print ), NULL },
 	{ "int get_ExtrapolationTime()", asFUNCTION( asFunc_ExtrapolationTime ), NULL },
@@ -241,6 +252,8 @@ static const gs_asglobfuncs_t asCGameGlobalFuncs[] = {
 	{ "ShaderHandle RegisterShader( const String &in )", asFUNCTION( asFunc_RegisterShader ), NULL },
 	{ "FontHandle RegisterFont( const String &in, int style, uint size )", asFUNCTION( asFunc_RegisterFont ), NULL },
 	{ "ModelSkeleton SkeletonForModel( ModelHandle )", asFUNCTION( asFunc_SkeletonForModel ), NULL },
+
+	{ "int TeamColorForEntity( int entNum )", asFUNCTION( asFunc_TeamColorForEntity ), NULL },
 
 	{ NULL },
 };
