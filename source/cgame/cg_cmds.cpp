@@ -156,6 +156,8 @@ void CG_ConfigString( int i, const char *s ) {
 	} else if( i >= CS_WEAPONDEFS && i < CS_WEAPONDEFS + MAX_WEAPONDEFS ) {
 		CG_OverrideWeapondef( i - CS_WEAPONDEFS, cgs.configStrings[i] );
 	}
+
+	CG_asConfigString( i, s );
 }
 
 /*

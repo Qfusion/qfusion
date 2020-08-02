@@ -462,6 +462,7 @@ typedef struct {
 	// AS gamestate API
 	struct {
 		void *newPacketEntityState;
+		void *configString;
 	} asGameState;
 
 	// fonts
@@ -1220,6 +1221,7 @@ void CG_asGetViewAnglesClamp( const player_state_t *ps, vec3_t clamp );
 void CG_asPrecache( void );
 
 void CG_asNewPacketEntityState( entity_state_t *state );
+void CG_asConfigString( int index, const char *str );
 
 void CG_asHUDInit( void );
 bool CG_asHUDDrawCrosshair( void );

@@ -45,6 +45,7 @@ static cg_asApiFuncPtr_t cg_asCGameAPI[] = {
 	{ "bool CGame::HUD::DrawCrosshair()", &cgs.asHUD.drawCrosshair, false },
 
 	{ "void CGame::NewPacketEntityState( const EntityState @ )", &cgs.asGameState.newPacketEntityState, false },
+	{ "void CGame::ConfigString( int index, const String @ )", &cgs.asGameState.configString, false },
 
 	{ nullptr, nullptr, false },
 };
@@ -601,6 +602,22 @@ void CG_asNewPacketEntityState( entity_state_t *state )
 		cgs.asGameState.newPacketEntityState,
 		[state]( asIScriptContext *ctx ) {
 			ctx->SetArgObject( 0, state );
+		},
+		cg_empty_as_cb );
+}
+
+/*
+ * CG_asConfigString
+ */
+void CG_asConfigString( int index, const char *str )
+{
+	if( !cgs.asGameState.configString ) {
+		return;
+	}
+	CG_asCallScriptFunc(
+		cgs.asGameState.configString, [index, str]( asIScriptContext *ctx ) { 
+			ctx->SetArgDWord( 0, index );
+			ctx->SetArgObject( 1, cgs.asExport->asStringFactoryBuffer( str, strlen( str ) ) );
 		},
 		cg_empty_as_cb );
 }
