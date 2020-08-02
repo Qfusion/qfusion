@@ -1123,6 +1123,9 @@ void CG_Init( const char *serverName, unsigned int playerNum,
 
 	CG_asInitScriptEngine();
 
+	CG_asInit( serverName, playerNum, demoplaying, demoName, pure, snapFrameTime,
+		protocol, demoExtension, gameStart );
+
 	CG_RefreshOverlayMenu();
 
 	CG_asLoadGameScript();

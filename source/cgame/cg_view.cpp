@@ -881,6 +881,8 @@ void CG_RenderView( int frameTime, int realFrameTime, int64_t realTime, int64_t 
 	cg.frameCount++;
 	cg.time = serverTime;
 
+	CG_asFrame( frameTime, realFrameTime, realTime, serverTime, stereo_separation, extrapolationTime );
+
 	if( !cgs.precacheDone || !cg.frame.valid ) {
 		CG_Precache();
 		CG_DrawLoading();

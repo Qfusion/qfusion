@@ -27,6 +27,13 @@ std::function<void( asIScriptContext * )> cg_empty_as_cb = []( asIScriptContext 
 static cg_asApiFuncPtr_t cg_asCGameAPI[] = {
 	{ "void CGame::Load()", &cgs.asMain.load, false },
 	{ "void CGame::Precache()", &cgs.asMain.precache, false },
+	{ "void CGame::Init( const String @serverName, uint playerNum, "
+	  "bool demoplaying, const String @demoName, bool pure, "
+	  "uint snapFrameTime, int protocol, const String @demoExtension, bool gameStart)",
+		&cgs.asMain.init, true },
+	{ "void CGame::Frame( int frameTime, int realFrameTime, int64 realTime, int64 serverTime, "
+	  "float stereoSeparation, uint extrapolationTime )",
+		&cgs.asMain.frame, true },
 
 	{ "void CGame::Input::Init()", &cgs.asInput.init, true },
 	{ "void CGame::Input::Shutdown()", &cgs.asInput.shutdown, true },
@@ -242,6 +249,11 @@ static int asFunc_TeamColorForEntity( int entNum ) {
 	return res.color;
 }
 
+static bool asFunc_IsViewerEntity( int entNum )
+{
+	return ISVIEWERENTITY( entNum );
+}
+
 static const gs_asglobfuncs_t asCGameGlobalFuncs[] = {
 	{ "void Print( const String &in )", asFUNCTION( asFunc_Print ), NULL },
 	{ "int get_ExtrapolationTime()", asFUNCTION( asFunc_ExtrapolationTime ), NULL },
@@ -256,6 +268,7 @@ static const gs_asglobfuncs_t asCGameGlobalFuncs[] = {
 	{ "ModelSkeleton SkeletonForModel( ModelHandle )", asFUNCTION( asFunc_SkeletonForModel ), NULL },
 
 	{ "int TeamColorForEntity( int entNum )", asFUNCTION( asFunc_TeamColorForEntity ), NULL },
+	{ "bool IsViewerEntity( int entNum )", asFUNCTION( asFunc_IsViewerEntity ), NULL },
 
 	{ NULL },
 };
@@ -527,33 +540,24 @@ void CG_asUnloadGameScript( void )
 //======================================================================
 
 static cg_asApiFuncPtr_t cg_asPmoveAPI[] = {
-	{ "void PM::Load()", &cgs.asMain.load, false },
+	{ "void PM::Load()", &cgs.asPMove.load, false },
 	{ "void PM::PMove( PMove @pm, PlayerState @playerState, UserCmd cmd )", &cgs.asPMove.pmove, true },
 	{ "Vec3 PM::GetViewAnglesClamp( const PlayerState @playerState )", &cgs.asPMove.vaClamp, false },
 
 	{ nullptr, nullptr, false },
 };
 
-/*
- * CG_asLoadPMoveScript
- */
 bool CG_asLoadPMoveScript( void )
 {
 	return CG_asLoadScriptModule( CG_SCRIPTS_PMOVE_MODULE_NAME, PMOVE_SCRIPTS_DIRECTORY,
 			   "pmove" PMOVE_SCRIPTS_PROJECT_EXTENSION, cg_asPmoveAPI, &cgs.asPMove.mtime ) != nullptr;
 }
 
-/*
- * CG_asUnloadPMoveScript
- */
 void CG_asUnloadPMoveScript( void )
 {
 	CG_asUnloadScriptModule( CG_SCRIPTS_PMOVE_MODULE_NAME, cg_asPmoveAPI );
 }
 
-/*
- * CG_asPMove
- */
 void CG_asPMove( pmove_t *pm, player_state_t *ps, usercmd_t *cmd )
 {
 	CG_asCallScriptFunc(
@@ -566,9 +570,6 @@ void CG_asPMove( pmove_t *pm, player_state_t *ps, usercmd_t *cmd )
 		cg_empty_as_cb );
 }
 
-/*
- * CG_asGetViewAnglesClamp
- */
 void CG_asGetViewAnglesClamp( const player_state_t *ps, vec3_t vaclamp )
 {
 	CG_asCallScriptFunc(
@@ -580,9 +581,6 @@ void CG_asGetViewAnglesClamp( const player_state_t *ps, vec3_t vaclamp )
 		} );
 }
 
-/*
- * CG_asPrecache
- */
 void CG_asPrecache( void )
 {
 	if( !cgs.asMain.precache ) {
@@ -591,9 +589,48 @@ void CG_asPrecache( void )
 	CG_asCallScriptFunc( cgs.asMain.precache, cg_empty_as_cb, cg_empty_as_cb );
 }
 
-/*
- * CG_asNewPacketEntityState
- */
+void CG_asInit( const char *serverName, unsigned int playerNum, bool demoplaying, const char *demoName, 
+	bool pure, unsigned snapFrameTime, int protocol, const char *demoExtension, bool gameStart )
+{
+	if( !cgs.asMain.init ) {
+		return;
+	}
+	CG_asCallScriptFunc( cgs.asMain.init, 
+		[serverName, playerNum, demoplaying, demoName, pure, snapFrameTime, 
+		protocol, demoExtension, gameStart]( asIScriptContext *ctx ) 
+		{
+			ctx->SetArgObject( 0, cgs.asExport->asStringFactoryBuffer( serverName, strlen( serverName ) ) );
+			ctx->SetArgDWord( 1, playerNum );
+			ctx->SetArgByte( 2, demoplaying );
+			ctx->SetArgObject( 3, cgs.asExport->asStringFactoryBuffer( demoName, strlen( demoName ) ) );
+			ctx->SetArgByte( 4, pure );
+			ctx->SetArgDWord( 5, snapFrameTime );
+			ctx->SetArgDWord( 6, protocol );
+			ctx->SetArgObject( 7, cgs.asExport->asStringFactoryBuffer( demoExtension, strlen( demoExtension ) ) );
+			ctx->SetArgByte( 8, gameStart );
+		},
+		cg_empty_as_cb );
+}
+
+void CG_asFrame( int frameTime, int realFrameTime, int64_t realTime, int64_t serverTime, float stereoSeparation,
+	unsigned extrapolationTime )
+{
+	if( !cgs.asMain.frame ) {
+		return;
+	}
+	CG_asCallScriptFunc(
+		cgs.asMain.frame,
+		[frameTime, realFrameTime, realTime, serverTime, stereoSeparation, extrapolationTime]( asIScriptContext *ctx ) {
+			ctx->SetArgDWord( 0, frameTime );
+			ctx->SetArgDWord( 1, realFrameTime );
+			ctx->SetArgQWord( 2, realTime );
+			ctx->SetArgQWord( 3, serverTime );
+			ctx->SetArgFloat( 4, stereoSeparation );
+			ctx->SetArgDWord( 5, extrapolationTime );
+		},
+		cg_empty_as_cb );
+}
+
 void CG_asNewPacketEntityState( entity_state_t *state )
 {
 	if( !cgs.asGameState.newPacketEntityState ) {
@@ -607,9 +644,6 @@ void CG_asNewPacketEntityState( entity_state_t *state )
 		cg_empty_as_cb );
 }
 
-/*
- * CG_asConfigString
- */
 void CG_asConfigString( int index, const char *str )
 {
 	if( !cgs.asGameState.configString ) {
@@ -623,9 +657,6 @@ void CG_asConfigString( int index, const char *str )
 		cg_empty_as_cb );
 }
 
-/*
- * CG_asUpdateEntities
- */
 void CG_asUpdateEntities( void )
 {
 	if( !cgs.asGameState.updateEntities ) {
