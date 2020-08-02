@@ -423,7 +423,9 @@ typedef struct {
 	// AS general API
 	struct {
 		void *load;
+		void *init;
 		void *precache;
+		void *frame;
 		time_t mtime;
 	} asMain;
 
@@ -448,6 +450,7 @@ typedef struct {
 
 	// AS player movement API
 	struct {
+		void *load;
 		void *pmove;
 		void *vaClamp;
 		time_t mtime;
@@ -1241,7 +1244,13 @@ void CG_asGetMovement( vec3_t movement );
 void CG_asSetupCamera( cg_viewdef_t *view );
 void CG_asSetupRefdef( cg_viewdef_t *view );
 
-//
+void CG_asInit( const char *serverName, unsigned int playerNum, bool demoplaying, const char *demoName, 
+	bool pure, unsigned snapFrameTime, int protocol, const char *demoExtension, bool gameStart );
+void CG_asFrame( int frameTime, int realFrameTime, int64_t realTime, int64_t serverTime, float stereoSeparation,
+	unsigned extrapolationTime );
+
+
+	//
 // cg_input.cpp
 //
 
