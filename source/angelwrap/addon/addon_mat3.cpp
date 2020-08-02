@@ -187,7 +187,7 @@ void RegisterMat3Addon( asIScriptEngine *engine )
 	r = engine->RegisterObjectMethod(
 		"Mat3", "bool opEquals(const Mat3 &in) const", asFUNCTION( objectMat3_EqualBehaviour ), asCALL_CDECL_OBJFIRST );
 	assert( r >= 0 );
-	r = engine->RegisterObjectMethod( "Mat3", "void clear()", asFUNCTION( objectMat3_Identity ), asCALL_CDECL_OBJLAST );
+	r = engine->RegisterObjectMethod( "Mat3", "void identity()", asFUNCTION( objectMat3_Identity ), asCALL_CDECL_OBJLAST );
 	assert( r >= 0 );
 	r = engine->RegisterObjectMethod(
 		"Mat3", "void normalize()", asFUNCTION( objectMat3_Normalize ), asCALL_CDECL_OBJLAST );

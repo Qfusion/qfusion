@@ -131,6 +131,20 @@ static asvec3_t asFunc_RotatePointAroundVector( const asvec3_t *dir, const asvec
 	return dst;
 }
 
+static asvec3_t asFunc_AnglesSubtract( asvec3_t *a1, asvec3_t *a2 ) {
+	asvec3_t dst;
+	AnglesSubtract( a1->v, a2->v, dst.v );
+	return dst;
+}
+
+static asvec3_t asFunc_LerpAngles( asvec3_t *a1, asvec3_t *a2, float f )
+{
+	asvec3_t dst;
+	for( int i = 0; i < 3; i++ )
+		dst.v[i] = LerpAngle( a1->v[i], a2->v[i], f );
+	return dst;
+}
+
 void PreRegisterMathAddon( asIScriptEngine *engine ) {
 }
 
@@ -168,6 +182,14 @@ void RegisterMathAddon( asIScriptEngine *engine ) {
 		{ "double rad2deg( double rad )", asFUNCTION( asFunc_rad2deg ) },
 		{ "int rand()", asFUNCTION( asFunc_rand ) },
 		{ "Vec3 RotatePointAroundVector( const Vec3 &in dir, const Vec3 &in point, float degrees )", asFUNCTION( asFunc_RotatePointAroundVector ) },
+		{ "float AngleSubtract( float v1, float v2 )", asFUNCTION( AngleSubtract ) },
+		{ "Vec3 AnglesSubtract( const Vec3 &in a1, const Vec3 &in a2 )", asFUNCTION( asFunc_AnglesSubtract ) },
+		{ "float AngleNormalize360( float a )", asFUNCTION( AngleNormalize360 ) },
+		{ "float AngleNormalize180( float a )", asFUNCTION( AngleNormalize180 ) },
+		{ "float AngleDelta( float a )", asFUNCTION( AngleDelta ) },
+		{ "float anglemod( float a )", asFUNCTION( anglemod ) },
+		{ "float LerpAngle( float v1, float v2, float lerp )", asFUNCTION( LerpAngle ) },
+		{ "Vec3 LerpAngles( const Vec3 &in a1, const Vec3 &in a2, float f )", asFUNCTION( asFunc_LerpAngles ) },
 
 		{ NULL, asFUNCTION( 0 ) }
 	}, *func;
