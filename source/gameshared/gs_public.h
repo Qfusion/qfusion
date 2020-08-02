@@ -49,6 +49,8 @@ typedef struct {
 	const char *( *GetConfigString )( int index );
 	struct angelwrap_api_s *( *GetAngelExport )( void );
 	int ( *NumInlineModels )( void );
+	struct cmodel_s *( *InlineModel )( int num );
+	void ( *InlineModelBounds )( struct cmodel_s *model, vec3_t mins, vec3_t maxs );
 } gs_module_api_t;
 
 extern gs_module_api_t gs_api;

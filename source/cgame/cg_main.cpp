@@ -302,6 +302,8 @@ static void CG_InitGameShared( void ) {
 	api.GetConfigString = CG_GS_GetConfigString;
 	api.GetAngelExport = NULL;
 	api.NumInlineModels = trap_CM_NumInlineModels;
+	api.InlineModel = trap_CM_InlineModel;
+	api.InlineModelBounds = trap_CM_InlineModelBounds;
 
 	GS_InitModule( GS_MODULE_CGAME, maxclients, &api );
 

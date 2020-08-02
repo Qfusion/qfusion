@@ -265,6 +265,7 @@ static const gs_asEnumVal_t asSolidEnumVals[] =
 	ASLIB_ENUM_VAL( SOLID_NOT ),
 	ASLIB_ENUM_VAL( SOLID_TRIGGER ),
 	ASLIB_ENUM_VAL( SOLID_YES ),
+	ASLIB_ENUM_VAL( SOLID_BMODEL ),
 
 	ASLIB_ENUM_VAL_NULL
 };
@@ -1801,6 +1802,19 @@ static const gs_asClassDescriptor_t asFiredefClassDescriptor = {
 
 //=======================================================================
 
+static const gs_asClassDescriptor_t asCModelHandleClassDescriptor = {
+	"CModelHandle",								   /* name */
+	asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE, /* object type flags */
+	sizeof( void * ),							   /* size */
+	NULL,										   /* funcdefs */
+	NULL,										   /* object behaviors */
+	NULL,										   /* methods */
+	NULL,										   /* properties */
+	NULL, NULL									   /* string factory hack */
+};
+
+//=======================================================================
+
 static const gs_asClassDescriptor_t * const asGameClassesDescriptors[] =
 {
 	&asTraceClassDescriptor,
@@ -1812,6 +1826,7 @@ static const gs_asClassDescriptor_t * const asGameClassesDescriptors[] =
 	&asPMoveClassDescriptor,
 	&asGameStateClassDescriptor,
 	&asFiredefClassDescriptor,
+	&asCModelHandleClassDescriptor,
 
 	NULL
 };
@@ -1820,6 +1835,10 @@ static const gs_asClassDescriptor_t * const asGameClassesDescriptors[] =
 
 static void GS_asPrint( asstring_t *str ) {
 	gs.api.Printf( "%s", str->buffer );
+}
+
+static void GS_asError( asstring_t *str ) {
+	gs.api.Error( "%s", str->buffer );
 }
 
 static int GS_asPointContents( asvec3_t *vec ) {
@@ -1891,8 +1910,20 @@ static bool GS_asIsBrushModel( int x )
 	return ( x > 0 ) && ( x < gs.api.NumInlineModels() );
 }
 
+static struct cmodel_s *GS_asInlineModel( int x )
+{
+	return gs.api.InlineModel( x );
+}
+
+static void GS_asInlineModelBounds( struct cmodel_s *model, asvec3_t *mins, asvec3_t *maxs )
+{
+	return gs.api.InlineModelBounds( model, mins->v, maxs->v );
+}
+
 static const gs_asglobfuncs_t asGameGlobalFunctions[] = {
 	{ "void Print( const String &in )", asFUNCTION( GS_asPrint ), NULL },
+	{ "void Error( const String &in )", asFUNCTION( GS_asError ), NULL },
+
 	{ "int PointContents( const Vec3 &in )", asFUNCTION( GS_asPointContents ), NULL },
 	{ "int PointContents4D( const Vec3 &in, int timeDelta )", asFUNCTION( GS_asPointContents4D ), NULL },
 	{ "void PredictedEvent( int entityNumber, int event, int param )", asFUNCTION( GS_asPredictedEvent ), NULL },
@@ -1915,7 +1946,10 @@ static const gs_asglobfuncs_t asGameGlobalFunctions[] = {
 	{ "bool IsEventEntity( const EntityState @ )", asFUNCTION( GS_asIsEventEntity ), NULL },
 	{ "bool IsBrushModel( int modelindex )", asFUNCTION( GS_asIsBrushModel ), NULL },
 
-	{ NULL }
+	{ "CModelHandle InlineModel( int modNum )", asFUNCTION( GS_asInlineModel ), NULL },
+	{ "void InlineModelBounds( CModelHandle handle, Vec3 & out, Vec3 & out )", asFUNCTION( GS_asInlineModelBounds ), NULL },
+
+	{ NULL },
 };
 
 //=======================================================================
