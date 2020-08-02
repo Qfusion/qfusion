@@ -198,6 +198,11 @@ static void objectVec3_AnglesToMatrix3( asmat3_t *res, asvec3_t *self )
 	Matrix3_FromAngles( self->v, res->m );
 }
 
+static void objectVec3_AnglesToAxis( asmat3_t *res, asvec3_t *self )
+{
+	Matrix3_FromAngles( self->v, res->m );
+}
+
 static float *objectVec3_Index( unsigned index, asvec3_t *self ) {
 	if( index > 2 ) {
 		asIScriptContext *ctx = asGetActiveContext();
@@ -276,6 +281,7 @@ void RegisterVec3Addon( asIScriptEngine *engine ) {
 	r = engine->RegisterObjectMethod( "Vec3", "Vec3 perpendicular() const", asFUNCTION( objectVec3_Perpendicular ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "Vec3", "void makeNormalVectors(Vec3 &out, Vec3 &out) const", asFUNCTION( objectVec3_MakeNormalVectors ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "Vec3", "void anglesToMarix(Mat3 &out) const", asFUNCTION( objectVec3_AnglesToMatrix3 ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
+	r = engine->RegisterObjectMethod( "Vec3", "void anglesToAxis(Mat3 &out) const", asFUNCTION( objectVec3_AnglesToAxis ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "Vec3", "float &opIndex(uint)", asFUNCTION( objectVec3_Index ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "Vec3", "const float &opIndex(uint) const", asFUNCTION( objectVec3_Index ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 
