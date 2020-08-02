@@ -1802,7 +1802,8 @@ void CG_EntityLoopSound( entity_state_t *state, float attenuation ) {
 		return;
 	}
 
-	trap_S_AddLoopSound( cgs.soundPrecache[state->sound], state->number, cg_volume_effects->value, ISVIEWERENTITY( state->number ) ? ATTN_NONE : ATTN_IDLE );
+	trap_S_AddLoopSound( cgs.soundPrecache[state->sound], state->number, cg_volume_effects->value,
+		ISVIEWERENTITY( state->number ) ? attenuation : ATTN_IDLE );
 }
 
 /*
@@ -2112,6 +2113,8 @@ void CG_UpdateEntities( void ) {
 	centity_t *cent;
 
 	CG_ResetItemTimers();
+
+	CG_asUpdateEntities();
 
 	for( pnum = 0; pnum < cg.frame.numEntities; pnum++ ) {
 		state = &cg.frame.entities[pnum];

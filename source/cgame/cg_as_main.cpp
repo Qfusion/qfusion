@@ -46,6 +46,7 @@ static cg_asApiFuncPtr_t cg_asCGameAPI[] = {
 
 	{ "void CGame::NewPacketEntityState( const EntityState @ )", &cgs.asGameState.newPacketEntityState, false },
 	{ "void CGame::ConfigString( int index, const String @ )", &cgs.asGameState.configString, false },
+	{ "void CGame::UpdateEntities()", &cgs.asGameState.updateEntities, false },
 
 	{ nullptr, nullptr, false },
 };
@@ -83,7 +84,7 @@ static const gs_asBehavior_t asCGameSnapshotObjectBehaviors[] = {
 };
 
 static const gs_asMethod_t asCGameSnapshotMethods[] = {
-	{ ASLIB_FUNCTION_DECL( EntityState @, getEntityState, ( int &in ) const ), asFUNCTION( asSnapshot_getEntityState ),
+	{ ASLIB_FUNCTION_DECL( EntityState @, getEntityState, ( int index ) const ), asFUNCTION( asSnapshot_getEntityState ),
 		asCALL_CDECL_OBJLAST },
 
 	ASLIB_METHOD_NULL,
@@ -620,4 +621,15 @@ void CG_asConfigString( int index, const char *str )
 			ctx->SetArgObject( 1, cgs.asExport->asStringFactoryBuffer( str, strlen( str ) ) );
 		},
 		cg_empty_as_cb );
+}
+
+/*
+ * CG_asUpdateEntities
+ */
+void CG_asUpdateEntities( void )
+{
+	if( !cgs.asGameState.updateEntities ) {
+		return;
+	}
+	CG_asCallScriptFunc( cgs.asGameState.updateEntities, cg_empty_as_cb, cg_empty_as_cb );
 }
