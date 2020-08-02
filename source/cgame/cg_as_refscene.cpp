@@ -67,6 +67,7 @@ static asrefentity_t *objectRefEntity_Factory( void )
 	asrefentity_t *e = (asrefentity_t *)CG_Malloc( sizeof( asrefentity_t ) );
 	e->ent.scale = 1;
 	Matrix3_Identity( e->ent.axis );
+	Vector4Set( e->ent.shaderRGBA, 255, 255, 255, 255 );
 	e->asRefCount = 1;
 	return e;
 }
@@ -91,6 +92,14 @@ void objectRefEntity_Release( asrefentity_t *e )
 	}
 }
 
+static void asrefentity_Reset( asrefentity_t *e )
+{
+	memset( &e->ent, 0, sizeof( e->ent ) );
+	e->ent.scale = 1;
+	Matrix3_Identity( e->ent.axis );
+	Vector4Set( e->ent.shaderRGBA, 255, 255, 255, 255 );
+}
+
 static const gs_asFuncdef_t asrefentity_Funcdefs[] = {
 	ASLIB_FUNCDEF_NULL,
 };
@@ -108,6 +117,9 @@ static const gs_asBehavior_t asrefentity_ObjectBehaviors[] = {
 };
 
 static const gs_asMethod_t asrefentity_Methods[] = {
+	{ ASLIB_FUNCTION_DECL( void, reset, () ), asFUNCTION( asrefentity_Reset ),
+		asCALL_CDECL_OBJLAST },
+
 	ASLIB_METHOD_NULL,
 };
 
