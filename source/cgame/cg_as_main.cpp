@@ -34,6 +34,7 @@ static cg_asApiFuncPtr_t cg_asCGameAPI[] = {
 	{ "void CGame::Frame( int frameTime, int realFrameTime, int64 realTime, int64 serverTime, "
 	  "float stereoSeparation, uint extrapolationTime )",
 		&cgs.asMain.frame, true },
+	{ "bool CGame::AddEntity( int entNum )", &cgs.asMain.addEntity, false },
 
 	{ "void CGame::Input::Init()", &cgs.asInput.init, true },
 	{ "void CGame::Input::Shutdown()", &cgs.asInput.shutdown, true },
@@ -54,6 +55,7 @@ static cg_asApiFuncPtr_t cg_asCGameAPI[] = {
 	{ "void CGame::NewPacketEntityState( const EntityState @ )", &cgs.asGameState.newPacketEntityState, false },
 	{ "void CGame::ConfigString( int index, const String @ )", &cgs.asGameState.configString, false },
 	{ "void CGame::UpdateEntities()", &cgs.asGameState.updateEntities, false },
+	{ "void CGame::EntityEvent( const EntityState @, int ev, int parm, bool predicted )", &cgs.asGameState.entityEvent, false },
 
 	{ nullptr, nullptr, false },
 };
@@ -126,13 +128,40 @@ static const gs_asClassDescriptor_t asSnapshotClassDescriptor = {
 
 //======================================================================
 
+static void objectResourceHandle_DefaultConstructor( void **handle )
+{
+	*handle = NULL;
+}
+
+static bool objectResourceHandle_EqualBehaviour( void **handle, void **ref, int typeId )
+{
+	// Null handles are received as reference to a null handle
+	if( typeId == 0 )
+		return *handle == nullptr;
+	return ( *handle == *ref );
+}
+
+static const gs_asBehavior_t asCGameResourceHandleObjectBehaviors[] = {
+	{ asBEHAVE_CONSTRUCT, ASLIB_FUNCTION_DECL( void, f, () ), asFUNCTION( objectResourceHandle_DefaultConstructor ),
+		asCALL_CDECL_OBJLAST },
+
+	ASLIB_BEHAVIOR_NULL,
+};
+
+static const gs_asMethod_t asCGameResourceHandleObjectMethods[] = {
+	{ ASLIB_FUNCTION_DECL( bool, opEquals, (const ?&in) const ), asFUNCTION( objectResourceHandle_EqualBehaviour ),
+		asCALL_CDECL_OBJFIRST },
+
+	ASLIB_METHOD_NULL,
+};
+
 static const gs_asClassDescriptor_t asModelHandleClassDescriptor = {
 	"ModelHandle",								   /* name */
 	asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE, /* object type flags */
 	sizeof( void * ),							   /* size */
 	NULL,										   /* funcdefs */
-	NULL,										   /* object behaviors */
-	NULL,										   /* methods */
+	asCGameResourceHandleObjectBehaviors,		   /* object behaviors */
+	asCGameResourceHandleObjectMethods,			   /* methods */
 	NULL,										   /* properties */
 	NULL, NULL									   /* string factory hack */
 };
@@ -142,8 +171,8 @@ static const gs_asClassDescriptor_t asSoundHandleClassDescriptor = {
 	asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE, /* object type flags */
 	sizeof( void * ),							   /* size */
 	NULL,										   /* funcdefs */
-	NULL,										   /* object behaviors */
-	NULL,										   /* methods */
+	asCGameResourceHandleObjectBehaviors,		   /* object behaviors */
+	asCGameResourceHandleObjectMethods,			   /* methods */
 	NULL,										   /* properties */
 	NULL, NULL									   /* string factory hack */
 };
@@ -153,8 +182,8 @@ static const gs_asClassDescriptor_t asShaderHandleClassDescriptor = {
 	asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE, /* object type flags */
 	sizeof( void * ),							   /* size */
 	NULL,										   /* funcdefs */
-	NULL,										   /* object behaviors */
-	NULL,										   /* methods */
+	asCGameResourceHandleObjectBehaviors,		   /* object behaviors */
+	asCGameResourceHandleObjectMethods,			   /* methods */
 	NULL,										   /* properties */
 	NULL, NULL									   /* string factory hack */
 };
@@ -164,8 +193,8 @@ static const gs_asClassDescriptor_t asFontHandleClassDescriptor = {
 	asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE, /* object type flags */
 	sizeof( void * ),							   /* size */
 	NULL,										   /* funcdefs */
-	NULL,										   /* object behaviors */
-	NULL,										   /* methods */
+	asCGameResourceHandleObjectBehaviors,		   /* object behaviors */
+	asCGameResourceHandleObjectMethods,			   /* methods */
 	NULL,										   /* properties */
 	NULL, NULL									   /* string factory hack */
 };
@@ -175,7 +204,7 @@ static const gs_asClassDescriptor_t asModelSkeletonClassDescriptor = {
 	asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE, /* object type flags */
 	sizeof( void * ),							   /* size */
 	NULL,										   /* funcdefs */
-	NULL,										   /* object behaviors */
+	asCGameResourceHandleObjectBehaviors,		   /* object behaviors */
 	NULL,										   /* methods */
 	NULL,										   /* properties */
 	NULL, NULL									   /* string factory hack */
@@ -249,6 +278,18 @@ static int asFunc_TeamColorForEntity( int entNum ) {
 	return res.color;
 }
 
+static int asFunc_PlayerColorForEntity( int entNum )
+{
+	union {
+		int		color;
+		uint8_t shaderRGBA[4];
+	} res;
+
+	CG_PlayerColorForEntity( entNum, res.shaderRGBA );
+
+	return res.color;
+}
+
 static bool asFunc_IsViewerEntity( int entNum )
 {
 	return ISVIEWERENTITY( entNum );
@@ -268,6 +309,7 @@ static const gs_asglobfuncs_t asCGameGlobalFuncs[] = {
 	{ "ModelSkeleton SkeletonForModel( ModelHandle )", asFUNCTION( asFunc_SkeletonForModel ), NULL },
 
 	{ "int TeamColorForEntity( int entNum )", asFUNCTION( asFunc_TeamColorForEntity ), NULL },
+	{ "int PlayerColorForEntity( int entNum )", asFUNCTION( asFunc_PlayerColorForEntity ), NULL },
 	{ "bool IsViewerEntity( int entNum )", asFUNCTION( asFunc_IsViewerEntity ), NULL },
 
 	{ NULL },
@@ -323,6 +365,7 @@ static void CG_asInitializeCGameEngineSyntax( asIScriptEngine *asEngine )
 	GS_asRegisterGlobalFunctions( asEngine, asCGameCmdGlobalFuncs, "CGame::Cmd" );
 	GS_asRegisterGlobalFunctions( asEngine, asCGameInputGlobalFuncs, "CGame::Input" );
 	GS_asRegisterGlobalFunctions( asEngine, asCGameCameraGlobalFuncs, "CGame::Camera" );
+	GS_asRegisterGlobalFunctions( asEngine, asCGameRefSceneGlobalFuncs, "CGame::Scene" );
 	GS_asRegisterGlobalFunctions( asEngine, asCGameScreenGlobalFuncs, "CGame::Screen" );
 
 	// register global properties
@@ -631,6 +674,23 @@ void CG_asFrame( int frameTime, int realFrameTime, int64_t realTime, int64_t ser
 		cg_empty_as_cb );
 }
 
+bool CG_asAddEntity( int entNum )
+{
+	uint8_t res = 0;
+
+	if( !cgs.asMain.addEntity ) {
+		return false;
+	}
+
+	CG_asCallScriptFunc(
+		cgs.asMain.addEntity, 
+		[entNum]( asIScriptContext *ctx ) { ctx->SetArgDWord( 0, entNum ); },
+		[&res]( asIScriptContext *ctx ) { res = ctx->GetReturnByte(); }
+	);
+
+	return res == 0 ? false : true;
+}
+
 void CG_asNewPacketEntityState( entity_state_t *state )
 {
 	if( !cgs.asGameState.newPacketEntityState ) {
@@ -663,4 +723,20 @@ void CG_asUpdateEntities( void )
 		return;
 	}
 	CG_asCallScriptFunc( cgs.asGameState.updateEntities, cg_empty_as_cb, cg_empty_as_cb );
+}
+
+void CG_asEntityEvent( entity_state_t *ent, int ev, int parm, bool predicted )
+{
+	if( !cgs.asGameState.entityEvent ) {
+		return;
+	}
+	CG_asCallScriptFunc(
+		cgs.asGameState.entityEvent,
+		[ent, ev, parm, predicted]( asIScriptContext *ctx ) {
+			ctx->SetArgObject( 0, ent );
+			ctx->SetArgDWord( 1, ev );
+			ctx->SetArgDWord( 2, parm );
+			ctx->SetArgByte( 3, predicted );
+		},
+		cg_empty_as_cb );
 }

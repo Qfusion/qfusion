@@ -978,6 +978,7 @@ static const gs_asProperty_t asitem_Properties[] =
 	{ ASLIB_PROPERTY_DECL( const int, inventoryMax ), ASLIB_FOFFSET( gsitem_t, inventory_max ) },
 	{ ASLIB_PROPERTY_DECL( const int, ammoTag ), ASLIB_FOFFSET( gsitem_t, ammo_tag ) },
 	{ ASLIB_PROPERTY_DECL( const int, weakAmmoTag ), ASLIB_FOFFSET( gsitem_t, weakammo_tag ) },
+	{ ASLIB_PROPERTY_DECL( const int, effects ), ASLIB_FOFFSET( gsitem_t, effects ) },
 
 	ASLIB_PROPERTY_NULL
 };
@@ -1959,6 +1960,10 @@ static const gs_asglobfuncs_t asGameGlobalFunctions[] = {
 	{ "CModelHandle InlineModel( int modNum )", asFUNCTION( GS_asInlineModel ), NULL },
 	{ "void InlineModelBounds( CModelHandle handle, Vec3 & out, Vec3 & out )", asFUNCTION( GS_asInlineModelBounds ), NULL },
 
+	{ "Item @FindItemByTag( int tag )", asFUNCTION( GS_FindItemByTag ), NULL },
+	{ "Item @FindItemByName( const String &in )", asFUNCTION( GS_FindItemByName ), NULL },
+	{ "Item @FindItemByClassname( const String &in )", asFUNCTION( GS_FindItemByClassname ), NULL },
+
 	{ NULL },
 };
 
@@ -1988,6 +1993,8 @@ static int asMAX_GENERAL = MAX_GENERAL;
 static int asMAX_MMPLAYERINFOS = MAX_MMPLAYERINFOS;
 static int asMAX_CONFIGSTRINGS = MAX_CONFIGSTRINGS;
 
+static float asPREDICTABLE_EVENTS_MAX = PREDICTABLE_EVENTS_MAX;
+
 static const gs_asglobproperties_t asGameGlobalConstants[] = {
 	{ "const int PS_MAX_STATS", &asPS_MAX_STATS },
 	{ "const int MAX_GAME_STATS", &asMAX_GAME_STATS },
@@ -2010,6 +2017,7 @@ static const gs_asglobproperties_t asGameGlobalConstants[] = {
 	{ "const int MAX_GENERAL", &asMAX_GENERAL },
 	{ "const int MAX_MMPLAYERINFOS", &asMAX_MMPLAYERINFOS },
 	{ "const int MAX_CONFIGSTRINGS", &asMAX_CONFIGSTRINGS },
+	{ "const int PREDICTABLE_EVENTS_MAX", &asPREDICTABLE_EVENTS_MAX },
 
 	{ NULL },
 };

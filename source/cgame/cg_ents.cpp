@@ -1825,6 +1825,10 @@ void CG_AddEntities( void ) {
 		state = &cg.frame.entities[pnum];
 		cent = &cg_entities[state->number];
 
+		if( CG_asAddEntity( state->number ) ) {
+			continue;
+		}
+
 		if( cent->current.linearMovement ) {
 			if( !cent->linearProjectileCanDraw ) {
 				continue;

@@ -300,7 +300,7 @@ static void CG_InitGameShared( void ) {
 	api.PMoveTouchTriggers = CG_Predict_TouchTriggers;
 	api.RoundUpToHullSize = CG_GS_RoundUpToHullSize;
 	api.GetConfigString = CG_GS_GetConfigString;
-	api.GetAngelExport = NULL;
+	api.GetAngelExport = trap_asGetAngelExport;
 	api.NumInlineModels = trap_CM_NumInlineModels;
 	api.InlineModel = trap_CM_InlineModel;
 	api.InlineModelBounds = trap_CM_InlineModelBounds;

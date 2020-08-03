@@ -1128,6 +1128,8 @@ void CG_EntityEvent( entity_state_t *ent, int ev, int parm, bool predicted ) {
 	vec4_t color;
 	int weapon = 0, fireMode = 0, count = 0;
 
+	CG_asEntityEvent( ent, ev, parm, predicted );
+
 	if( viewer && ( ev < PREDICTABLE_EVENTS_MAX ) && ( predicted != cg.view.playerPrediction ) ) {
 		return;
 	}
