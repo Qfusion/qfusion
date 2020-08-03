@@ -847,6 +847,10 @@ asIScriptModule *qasLoadScriptProject(
 		return NULL;
 	}
 
+	if( mtime ) {
+		*mtime = mtime_;
+	}
+
 	QAS_Printf( "* Initializing script '%s'\n", filename );
 
 	char **diagnames = ( char ** )QAS_Malloc( sizeof( char * ) * (files.size() + 1) );
@@ -873,10 +877,6 @@ asIScriptModule *qasLoadScriptProject(
 		QAS_Printf( S_COLOR_RED "* Failed to build script '%s'\n", filename );
 		engine->DiscardModule( moduleName );
 		return NULL;
-	}
-
-	if( mtime ) {
-		*mtime = mtime_;
 	}
 
 	return asModule;
