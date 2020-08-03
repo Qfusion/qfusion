@@ -259,7 +259,10 @@ void Diag_BeginBuild( const char **filenames )
 	if( !diag_initialized )
 		return;
 
-	assert( diag_messages == NULL );
+	if( diag_messages != NULL ) {
+		assert( diag_messages == NULL );
+		return;
+	}
 
 	Trie_Create( TRIE_CASE_INSENSITIVE, &diag_messages );
 
@@ -274,6 +277,8 @@ void Diag_Message( int severity, const char *filename, int line, int col, const 
 	diag_messagelist_t *ml;
 
 	if( !diag_initialized )
+		return;
+	if( diag_messages == NULL )
 		return;
 	if( Trie_Find( diag_messages, filename, TRIE_EXACT_MATCH, (void **)&ml ) == TRIE_KEY_NOT_FOUND )
 		return;
