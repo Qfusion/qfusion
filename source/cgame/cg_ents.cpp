@@ -1807,7 +1807,7 @@ void CG_EntityLoopSound( entity_state_t *state, float attenuation ) {
 }
 
 /*
-* CG_AddPacketEntitiesToScene
+* CG_AddEntities
 * Add the entities to the rendering list
 */
 void CG_AddEntities( void ) {
