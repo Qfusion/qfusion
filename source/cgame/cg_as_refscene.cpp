@@ -162,8 +162,64 @@ static const gs_asClassDescriptor_t asRefEntityClassDescriptor = {
 
 //=======================================================================
 
+static const gs_asFuncdef_t asOrientation_Funcdefs[] = { ASLIB_FUNCDEF_NULL };
+
+static void objectOrientation_DefaultConstructor( orientation_t *o )
+{
+	memset( o, 0, sizeof( orientation_t ) );
+}
+
+static void objectOrientation_CopyConstructor( orientation_t *other, orientation_t *o )
+{
+	*o = *other;
+}
+
+static const gs_asBehavior_t asOrientation_ObjectBehaviors[] = {
+	{ asBEHAVE_CONSTRUCT, ASLIB_FUNCTION_DECL( void, f, () ), asFUNCTION( objectOrientation_DefaultConstructor ), asCALL_CDECL_OBJLAST, },
+	{ asBEHAVE_CONSTRUCT, ASLIB_FUNCTION_DECL( void, f, ( const Orientation &in ) ), asFUNCTION( objectOrientation_CopyConstructor ), asCALL_CDECL_OBJLAST, },
+	ASLIB_BEHAVIOR_NULL,
+};
+
+static const gs_asMethod_t asOrientation_Methods[] = { ASLIB_METHOD_NULL };
+
+static const gs_asProperty_t asOrientation_Properties[] = { 
+	{ ASLIB_PROPERTY_DECL( Vec3, origin ), ASLIB_FOFFSET( orientation_t, origin ) },
+	{ ASLIB_PROPERTY_DECL( Mat3, axis ), ASLIB_FOFFSET( orientation_t, axis ) },
+	ASLIB_PROPERTY_NULL,
+};
+
+static const gs_asClassDescriptor_t asOrientationClassDescriptor = {
+	"Orientation",								  /* name */
+	asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CK, /* object type flags */
+	sizeof( orientation_t ),					  /* size */
+	asOrientation_Funcdefs,						  /* funcdefs */
+	asOrientation_ObjectBehaviors,				  /* object behaviors */
+	asOrientation_Methods,						  /* methods */
+	asOrientation_Properties,					  /* properties */
+	NULL, NULL,									  /* string factory hack */
+};
+
+//=======================================================================
+
 const gs_asClassDescriptor_t *const asCGameRefSceneClassesDescriptors[] = {
 	&asRefEntityClassDescriptor,
+	&asOrientationClassDescriptor,
 
 	NULL,
+};
+
+//=======================================================================
+
+const gs_asglobfuncs_t asCGameRefSceneGlobalFuncs[] = {
+	{ "void PlaceRotatedModelOnTag( Entity @ent, const Entity @dest, const Orientation &in )",
+		asFUNCTION( CG_PlaceRotatedModelOnTag ), NULL },
+	{ "void PlaceModelOnTag( Entity @ent, const Entity @dest, const Orientation &in )",
+		asFUNCTION( CG_PlaceModelOnTag ), NULL },
+	{ "bool GrabTag( const Orientation &out, const Entity @ent, const String &in )",
+		asFUNCTION( CG_GrabTag ), NULL },
+
+	{ "void AddEntityToScene( Entity @ent )", asFUNCTION( CG_AddEntityToScene ),
+		NULL },
+
+	{ NULL },
 };

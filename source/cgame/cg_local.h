@@ -426,6 +426,7 @@ typedef struct {
 		void *init;
 		void *precache;
 		void *frame;
+		void *addEntity;
 		time_t mtime;
 	} asMain;
 
@@ -467,6 +468,7 @@ typedef struct {
 		void *newPacketEntityState;
 		void *configString;
 		void *updateEntities;
+		void *entityEvent;
 	} asGameState;
 
 	// fonts
@@ -1227,6 +1229,7 @@ void CG_asPrecache( void );
 void CG_asNewPacketEntityState( entity_state_t *state );
 void CG_asConfigString( int index, const char *str );
 void CG_asUpdateEntities( void );
+void CG_asEntityEvent( entity_state_t *ent, int ev, int parm, bool predicted );
 
 void CG_asHUDInit( void );
 bool CG_asHUDDrawCrosshair( void );
@@ -1248,7 +1251,7 @@ void CG_asInit( const char *serverName, unsigned int playerNum, bool demoplaying
 	bool pure, unsigned snapFrameTime, int protocol, const char *demoExtension, bool gameStart );
 void CG_asFrame( int frameTime, int realFrameTime, int64_t realTime, int64_t serverTime, float stereoSeparation,
 	unsigned extrapolationTime );
-
+bool CG_asAddEntity( int entNum );
 
 	//
 // cg_input.cpp

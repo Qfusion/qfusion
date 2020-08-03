@@ -88,7 +88,7 @@ extern const gs_asglobfuncs_t asCGameCmdGlobalFuncs[];
 //
 extern const gs_asEnum_t				   asCGameRefSceneEnums[];
 extern const gs_asClassDescriptor_t *const asCGameRefSceneClassesDescriptors[];
-
+extern const gs_asglobfuncs_t			   asCGameRefSceneGlobalFuncs[];
 
 //
 // cg_as_screen.cpp
