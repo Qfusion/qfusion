@@ -76,7 +76,7 @@ void RegisterTimeAddon( asIScriptEngine *engine ) {
 	r = engine->RegisterObjectMethod( "Time", "Time &opAssign(const Time &in)", asFUNCTION( objectTime_AssignBehaviour ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 
 	// == !=
-	r = engine->RegisterObjectMethod( "Time", "bool opEquals(const Time &in, const Time &in)", asFUNCTION( objectTime_EqualBehaviour ), asCALL_CDECL_OBJFIRST ); assert( r >= 0 );
+	r = engine->RegisterObjectMethod( "Time", "bool opEquals(const Time &in)", asFUNCTION( objectTime_EqualBehaviour ), asCALL_CDECL_OBJFIRST ); assert( r >= 0 );
 
 	// properties
 	r = engine->RegisterObjectProperty( "Time", "const int64 time", asOFFSET( astime_t, time ) ); assert( r >= 0 );
