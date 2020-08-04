@@ -268,6 +268,15 @@ static bool asFunc_IsViewerEntity( int entNum )
 	return ISVIEWERENTITY( entNum );
 }
 
+static asstring_t *asFunc_GetConfigString( int index )
+{
+	if( index < 0 || index >= MAX_CONFIGSTRINGS ) {
+		return NULL;
+	}
+	const char *cs = cgs.configStrings[ index ];
+	return cgs.asExport->asStringFactoryBuffer( cs, strlen( cs ) );
+}
+
 static const gs_asglobfuncs_t asCGameGlobalFuncs[] = {
 	{ "void Print( const String &in )", asFUNCTION( asFunc_Print ), NULL },
 	{ "int get_ExtrapolationTime()", asFUNCTION( asFunc_ExtrapolationTime ), NULL },
@@ -284,6 +293,7 @@ static const gs_asglobfuncs_t asCGameGlobalFuncs[] = {
 	{ "int TeamColorForEntity( int entNum )", asFUNCTION( asFunc_TeamColorForEntity ), NULL },
 	{ "int PlayerColorForEntity( int entNum )", asFUNCTION( asFunc_PlayerColorForEntity ), NULL },
 	{ "bool IsViewerEntity( int entNum )", asFUNCTION( asFunc_IsViewerEntity ), NULL },
+	{ "String @GetConfigString( int entNum )", asFUNCTION( asFunc_GetConfigString ), NULL },
 
 	{ NULL },
 };
