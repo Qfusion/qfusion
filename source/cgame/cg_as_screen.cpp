@@ -154,46 +154,46 @@ static inline int asFunc_SCR_StrlenForWidth( asstring_t *str, struct qfontface_s
 
 const gs_asglobfuncs_t asCGameScreenGlobalFuncs[] = {
 	{ "void ShowOverlayMenu( int state, bool showCursor )", asFUNCTION( CG_ShowOverlayMenu ), NULL },
-	{ "int FontHeight( FontHandle font )", asFUNCTION( trap_SCR_FontHeight ), NULL },
+	{ "int FontHeight( FontHandle @font )", asFUNCTION( trap_SCR_FontHeight ), NULL },
 
-	{ "void DrawPic( int x, int y, int w, int h, ShaderHandle shader, const Vec4 &in color, float s1 = 0.0, float t1 = "
+	{ "void DrawPic( int x, int y, int w, int h, ShaderHandle @shader, const Vec4 &in color, float s1 = 0.0, float t1 = "
 	  "0.0, float s2 = 1.0, float t2 = 1.0 )",
 		asFUNCTION( asFunc_SCR_DrawPic ), NULL },
-	{ "void DrawPic( int x, int y, int w, int h, ShaderHandle shader, float s1 = 0.0, float t1 = 0.0, float s2 = 1.0, "
+	{ "void DrawPic( int x, int y, int w, int h, ShaderHandle @shader, float s1 = 0.0, float t1 = 0.0, float s2 = 1.0, "
 	  "float t2 = 1.0 )",
 		asFUNCTION( asFunc_SCR_DrawPic2 ), NULL },
 
-	{ "int DrawString( int x, int y, int align, const String &in str, FontHandle font, const Vec4 &in color )",
+	{ "int DrawString( int x, int y, int align, const String &in str, FontHandle @font, const Vec4 &in color )",
 		asFUNCTION( asFunc_SCR_DrawString ), NULL },
-	{ "int DrawString( int x, int y, int align, const String &in str, FontHandle font )",
+	{ "int DrawString( int x, int y, int align, const String &in str, FontHandle @font )",
 		asFUNCTION( asFunc_SCR_DrawString2 ), NULL },
-	{ "int DrawStringWidth( int x, int y, int align, const String &in str, int maxWidth, FontHandle font, const Vec4 "
+	{ "int DrawStringWidth( int x, int y, int align, const String &in str, int maxWidth, FontHandle @font, const Vec4 "
 	  "&in color )",
 		asFUNCTION( asFunc_SCR_DrawStringWidth ), NULL },
-	{ "int DrawStringWidth( int x, int y, int align, const String &in str, int maxWidth, FontHandle font )",
+	{ "int DrawStringWidth( int x, int y, int align, const String &in str, int maxWidth, FontHandle @font )",
 		asFUNCTION( asFunc_SCR_DrawStringWidth2 ), NULL },
-	{ "void DrawClampString( int x, int y, const String &in str, int xMin, int yMin, int xMax, int yMax, FontHandle "
+	{ "void DrawClampString( int x, int y, const String &in str, int xMin, int yMin, int xMax, int yMax, FontHandle @"
 	  "font, const Vec4 &in color )",
 		asFUNCTION( asFunc_SCR_DrawClampString ), NULL },
-	{ "void DrawClampString( int x, int y, const String &in str, int xMin, int yMin, int xMax, int yMax, FontHandle "
+	{ "void DrawClampString( int x, int y, const String &in str, int xMin, int yMin, int xMax, int yMax, FontHandle @"
 	  "font )",
 		asFUNCTION( asFunc_SCR_DrawClampString2 ), NULL },
-	{ "int DrawClampMultineString( int x, int y, const String &in str, int maxWidth, int maxLines, FontHandle font, "
+	{ "int DrawClampMultineString( int x, int y, const String &in str, int maxWidth, int maxLines, FontHandle @font, "
 	  "const Vec4 &in color )",
 		asFUNCTION( asFunc_SCR_DrawMultilineString ), NULL },
-	{ "int DrawClampMultineString( int x, int y, const String &in str, int maxWidth, int maxLines, FontHandle font )",
+	{ "int DrawClampMultineString( int x, int y, const String &in str, int maxWidth, int maxLines, FontHandle @font )",
 		asFUNCTION( asFunc_SCR_DrawMultilineString2 ), NULL },
-	{ "void DrawRawChar( int x, int y, int chr, FontHandle font, const Vec4 &in color )",
+	{ "void DrawRawChar( int x, int y, int chr, FontHandle @font, const Vec4 &in color )",
 		asFUNCTION( asFunc_SCR_DrawRawChar ), NULL },
-	{ "void DrawRawChar( int x, int y, int chr, FontHandle font )", asFUNCTION( asFunc_SCR_DrawRawChar2 ), NULL },
-	{ "void DrawClampChar( int x, int y, int chr, int xMin, int yMin, int xMax, int yMax, FontHandle font, const Vec4 "
+	{ "void DrawRawChar( int x, int y, int chr, FontHandle @font )", asFUNCTION( asFunc_SCR_DrawRawChar2 ), NULL },
+	{ "void DrawClampChar( int x, int y, int chr, int xMin, int yMin, int xMax, int yMax, FontHandle @font, const Vec4 "
 	  "&in color )",
 		asFUNCTION( asFunc_SCR_DrawClampChar ), NULL },
-	{ "void DrawClampChar( int x, int y, int chr, int xMin, int yMin, int xMax, int yMax, FontHandle font )",
+	{ "void DrawClampChar( int x, int y, int chr, int xMin, int yMin, int xMax, int yMax, FontHandle @font )",
 		asFUNCTION( asFunc_SCR_DrawClampChar2 ), NULL },
-	{ "int StringWidth( const String &in str, FontHandle font, int maxLen = 0 )", asFUNCTION( asFunc_SCR_strWidth ),
+	{ "int StringWidth( const String &in str, FontHandle @font, int maxLen = 0 )", asFUNCTION( asFunc_SCR_strWidth ),
 		NULL },
-	{ "int StrlenForWidth( const String &in str, FontHandle font, int maxWidth = 0 )",
+	{ "int StrlenForWidth( const String &in str, FontHandle @font, int maxWidth = 0 )",
 		asFUNCTION( asFunc_SCR_StrlenForWidth ), NULL },
 
 	{ NULL },
