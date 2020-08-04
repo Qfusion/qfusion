@@ -12,7 +12,7 @@ class ClientStatic {
     bool gameStart;
 
     array<String> configStrings(GS::MAX_CONFIGSTRINGS);
-    array<ModelHandle> modelDraw(GS::MAX_MODELS);
+    array<ModelHandle @> modelDraw(GS::MAX_MODELS);
     bool demoPlaying;
     bool precacheDone;
 
@@ -42,11 +42,15 @@ void ConfigString( int index, const String @s )
 {
     cgs.configStrings[index] = s;
 
-    if( index >= CS_MODELS && index < CS_MODELS + MAX_MODELS ) {
-        if( s.substr(0, 1) == "$" ) {  // indexed pmodel
-            //cgs.pModelsIndex[index - CS_MODELS] = RegisterPlayerModel( s );
+    if( index > CS_MODELS && index < CS_MODELS + MAX_MODELS ) {
+		index -= CS_MODELS;
+
+		if( s.empty() ) {
+			@cgs.modelDraw[index] = null;
+		} else if( s.substr( 0, 1 ) == "$" ) {  // indexed pmodel
+            //cgs.pModelsIndex[index] = RegisterPlayerModel( s );
         } else {
-            cgs.modelDraw[index - CS_MODELS] = RegisterModel( s );
+            @cgs.modelDraw[index] = RegisterModel( s );
         }
     }
 }
@@ -71,6 +75,9 @@ void Init( const String @serverName, uint playerNum, bool demoPlaying, const Str
 
 void Precache()
 {
+	for( int i = 0; i < MAX_MODELS; i++ ) {
+		ConfigString( CS_MODELS + i, CGame::GetConfigString( CS_MODELS + i ) );
+	}
     cgs.precacheDone = true;
 }
 
@@ -137,6 +144,8 @@ void Frame( int frameTime, int realFrameTime, int64 realTime, int64 serverTime,
 
 	autorotate[YAW] = ( cg.time % 3600 ) * 0.1 * ( flipped ? -1.0f : 1.0f );
 	autorotate.anglesToAxis( cg.autorotateAxis );
+
+	LerpEntities();
 }
 
 }

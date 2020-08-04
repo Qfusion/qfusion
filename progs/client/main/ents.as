@@ -9,7 +9,7 @@ class CEntity {
 	Item @item;
 	int64 serverFrame;
 	CGame::Scene::Entity refEnt;
-	ModelSkeleton skel;
+	ModelSkeleton @skel;
 
 	Vec3 velocity;
 	Vec3 prevVelocity;
@@ -140,7 +140,7 @@ bool UpdateLinearProjectilePosition( CEntity @cent ) {
 		return true;
 	}
 
-	if( GS::MatchPaused() ) {
+	if( /*GS::MatchPaused()*/false ) {
 		serverTime = CGame::Snap.serverTime;
 	} else {
 		serverTime = cg.time + cg.extrapolationTime;
@@ -154,7 +154,7 @@ bool UpdateLinearProjectilePosition( CEntity @cent ) {
 		}
 	}
 
-	moveTime = GS::LinearMovement( state, serverTime, origin );
+	moveTime = /*GS::LinearMovement( state, serverTime, origin )*/0;
 	state.origin = origin;
 
 	if( ( moveTime < 0 ) && ( state.solid != SOLID_BMODEL ) ) {
@@ -200,7 +200,7 @@ bool GetEntitySpatilization( int entNum, Vec3 &out origin, Vec3 &out velocity ) 
 
 	// bmodel
 	Vec3 mins, maxs;
-	CModelHandle cmodel = GS::InlineModel( cent.current.modelindex );
+	CModelHandle @cmodel = GS::InlineModel( cent.current.modelindex );
 	GS::InlineModelBounds( cmodel, mins, maxs );
 	origin = cent.refEnt.origin + 0.5 * (mins + maxs);
 	velocity = cent.velocity;
@@ -211,7 +211,7 @@ void AddLinkedModel( CEntity @cent ) {
 	bool barrel;
 	CGame::Scene::Entity ent;
 	CGame::Scene::Orientation tag;
-	ModelHandle model;
+	ModelHandle @model;
 
 	if( cent.current.modelindex2 == 0 )
 		return;
@@ -220,23 +220,23 @@ void AddLinkedModel( CEntity @cent ) {
 	if( cent.current.linearMovement )
 		return;
 
-	model = cgs.modelDraw[cent.current.modelindex2];
-	//if( !model )
-	//return;
+	@model = cgs.modelDraw[cent.current.modelindex2];
+	if( @model == null )
+		return;
 
 	ent.rtype = RT_MODEL;
 	ent.scale = cent.refEnt.scale;
 	ent.renderfx = cent.refEnt.renderfx;
 	ent.shaderTime = cent.refEnt.shaderTime;
 	ent.shaderRGBA = cent.refEnt.shaderRGBA;
-	ent.model = model;
+	@ent.model = model;
 	ent.origin = cent.refEnt.origin;
 	ent.origin2 = cent.refEnt.origin2;
 	ent.lightingOrigin = cent.refEnt.lightingOrigin;
 	ent.axis = cent.refEnt.axis;
 
 	if( @cent.item != null && ( cent.effects & EF_AMMOBOX ) != 0 ) { // ammobox icon hack
-		ent.customShader = CGame::RegisterShader( cent.item.icon );
+		@ent.customShader = CGame::RegisterShader( cent.item.icon );
 	}
 
 	barrel = false;
@@ -256,7 +256,6 @@ void AddLinkedModel( CEntity @cent ) {
 
 	if( barrel && CGame::Scene::GrabTag( tag, @cent.refEnt, "tag_barrel2" ) ) {
 		CGame::Scene::PlaceModelOnTag( @ent, @cent.refEnt, tag );
-		CGame::Print("BARREL");
 		//CGame::Scene::AddEntityToScene( @ent );
 		//CG_AddShellEffects( &ent, cent->effects );
 	}
@@ -279,7 +278,7 @@ void EntAddTeamColorTransitionEffect( CEntity @cent ) {
 	int scaledcolor, newcolor;
 	const Vec4 ac (1.0, 1.0, 1.0, 1.0);
 
-	float f = bound( 0.0f, float( cent.current.counterNum ) / 255.0f, 1.0f );
+	//float f = bound( 0.0f, float( cent.current.counterNum ) / 255.0f, 1.0f );
 
 	if( cent.current.type == ET_PLAYER || cent.current.type == ET_CORPSE ) {
 		currentcolor = PlayerColorForEntity( cent.current.number );
@@ -287,9 +286,9 @@ void EntAddTeamColorTransitionEffect( CEntity @cent ) {
 		currentcolor = TeamColorForEntity( cent.current.number );
 	}
 
-	Vec4 cv = ColorToVec4( currentcolor );
-	int nc = Vec4ToColor( ac + f * (cv - ac) );
-	cent.refEnt.shaderRGBA = COLOR_REPLACEA( nc, COLOR_A( cent.refEnt.shaderRGBA ) );
+	//Vec4 cv = ColorToVec4( currentcolor );
+	//int nc = Vec4ToColor( ac + f * (cv - ac) );
+	//cent.refEnt.shaderRGBA = COLOR_REPLACEA( nc, COLOR_A( cent.refEnt.shaderRGBA ) );
 }
 
 void UpdateGenericEnt( CEntity @cent ) {
@@ -302,10 +301,10 @@ void UpdateGenericEnt( CEntity @cent ) {
 
 	int modelindex = cent.current.modelindex;
 	if( modelindex > 0 && modelindex < MAX_MODELS ) {
-		cent.refEnt.model = cgs.modelDraw[modelindex];
+		@cent.refEnt.model = @cgs.modelDraw[modelindex];
 	}
 
-	cent.skel = SkeletonForModel( cent.refEnt.model );
+	@cent.skel = SkeletonForModel( cent.refEnt.model );
 }
 
 void UpdateItemEnt( CEntity @cent ) {
@@ -320,8 +319,8 @@ void UpdateItemEnt( CEntity @cent ) {
 
 	if( cg_simpleItems.boolean && !cent.item.simpleIcon.empty() ) {
 		cent.refEnt.rtype = RT_SPRITE;
-		//cent.refEnt.model = NULL;
-		//cent.skel = NULL; // FIXME
+		@cent.refEnt.model = null;
+		@cent.skel = null;
 		cent.refEnt.renderfx = RF_NOSHADOW | RF_FULLBRIGHT;
 		cent.refEnt.frame = cent.refEnt.oldFrame = 0;
 
@@ -334,15 +333,15 @@ void UpdateItemEnt( CEntity @cent ) {
 			cent.effects &= ~EF_ROTATE_AND_BOB;
 		}
 
-		cent.refEnt.customShader = CGame::RegisterShader( cent.item.simpleIcon );
+		@cent.refEnt.customShader = CGame::RegisterShader( cent.item.simpleIcon );
 	} else {
 		cent.refEnt.rtype = RT_MODEL;
 		cent.refEnt.frame = cent.current.frame;
 		cent.refEnt.oldFrame = cent.prev.frame;
 
 		// set up the model
-		cent.refEnt.model = cgs.modelDraw[cent.current.modelindex];
-		cent.skel = CGame::SkeletonForModel( cent.refEnt.model );
+		@cent.refEnt.model = cgs.modelDraw[cent.current.modelindex];
+		@cent.skel = CGame::SkeletonForModel( cent.refEnt.model );
 	}
 }
 
@@ -494,7 +493,7 @@ void AddGenericEnt( CEntity @cent ) {
 			// find out the ammo box color
 			auto @colorToken = @item.colorToken;
 			if( colorToken.length() > 1 ) {
-				cent.refEnt.shaderRGBA = ColorByIndex( ColorIndex( colorToken[1] ) );
+				//cent.refEnt.shaderRGBA = ColorByIndex( ColorIndex( colorToken[1] ) );
 			} else {   // set white
 				cent.refEnt.shaderRGBA = COLOR_RGBA( 255, 255, 255, 255 );
 			}
@@ -502,9 +501,9 @@ void AddGenericEnt( CEntity @cent ) {
 
 		if( ( cent.effects & EF_GHOST ) != 0 ) {
 			cent.refEnt.renderfx |= RF_ALPHAHACK | RF_GREYSCALE;
-			cent.refEnt.shaderRGBA = COLOR_REPLACEA( cent.refEnt.shaderRGBA, 100 );
+			//cent.refEnt.shaderRGBA = COLOR_REPLACEA( cent.refEnt.shaderRGBA, 100 );
 		} else {
-			cent.refEnt.shaderRGBA = COLOR_REPLACEA( cent.refEnt.shaderRGBA, 255 );
+			//cent.refEnt.shaderRGBA = COLOR_REPLACEA( cent.refEnt.shaderRGBA, 255 );
 		}
 
 		// add shadows for items (do it before offseting for weapons)
@@ -527,12 +526,12 @@ void AddGenericEnt( CEntity @cent ) {
 		}
 	}
 
-	//if( cent.skel != 0 ) {
+	if( @cent.skel != null ) {
 		// get space in cache, interpolate, transform, link
 		//cent.refEnt.boneposes = cent.refEnt.oldboneposes = CG_RegisterTemporaryExternalBoneposes( cent.skel );
 		//CG_LerpSkeletonPoses( cent.skel, cent.refEnt.frame, cent.refEnt.oldframe, cent.refEnt.boneposes, 1.0 - cent.refEnt.backlerp );
 		//CG_TransformBoneposes( cent.skel, cent.refEnt.boneposes, cent.refEnt.boneposes );
-	//}
+	}
 
 	// flags are special
 	if( ( cent.effects & EF_FLAG_TRAIL ) != 0 ) {
@@ -593,7 +592,7 @@ void AddItemEnt( CEntity @cent ) {
 		return;
 	} else {
 		if( ( cent.effects & EF_GHOST ) != 0 ) {
-			cent.refEnt.shaderRGBA = COLOR_REPLACEA( cent.refEnt.shaderRGBA, 100 );
+			//cent.refEnt.shaderRGBA = COLOR_REPLACEA( cent.refEnt.shaderRGBA, 100 );
 			cent.refEnt.renderfx |= RF_GREYSCALE;
 		}
 	}
