@@ -126,7 +126,7 @@ static const gs_asMethod_t asrefentity_Methods[] = {
 static const gs_asProperty_t asrefentity_Properties[] = {
 	{ ASLIB_PROPERTY_DECL( int, rtype ), ASLIB_FOFFSET( asrefentity_t, ent.rtype ) },
 	{ ASLIB_PROPERTY_DECL( int, renderfx ), ASLIB_FOFFSET( asrefentity_t, ent.renderfx ) },
-	{ ASLIB_PROPERTY_DECL( ModelHandle, model ), ASLIB_FOFFSET( asrefentity_t, ent.model ) },
+	{ ASLIB_PROPERTY_DECL( ModelHandle @, model ), ASLIB_FOFFSET( asrefentity_t, ent.model ) },
 
 	{ ASLIB_PROPERTY_DECL( int, frame ), ASLIB_FOFFSET( asrefentity_t, ent.frame ) },
 	{ ASLIB_PROPERTY_DECL( Mat3, axis ), ASLIB_FOFFSET( asrefentity_t, ent.axis ) },
@@ -136,7 +136,7 @@ static const gs_asProperty_t asrefentity_Properties[] = {
 
 	{ ASLIB_PROPERTY_DECL( int, shaderRGBA ), ASLIB_FOFFSET( asrefentity_t, ent.shaderRGBA ) },
 
-	{ ASLIB_PROPERTY_DECL( ShaderHandle, customShader ), ASLIB_FOFFSET( asrefentity_t, ent.customShader ) },
+	{ ASLIB_PROPERTY_DECL( ShaderHandle @, customShader ), ASLIB_FOFFSET( asrefentity_t, ent.customShader ) },
 	{ ASLIB_PROPERTY_DECL( int64, shaderTime ), ASLIB_FOFFSET( asrefentity_t, ent.shaderTime ) },
 
 	{ ASLIB_PROPERTY_DECL( int, oldFrame ), ASLIB_FOFFSET( asrefentity_t, ent.oldframe ) },

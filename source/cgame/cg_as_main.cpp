@@ -128,83 +128,56 @@ static const gs_asClassDescriptor_t asSnapshotClassDescriptor = {
 
 //======================================================================
 
-static void objectResourceHandle_DefaultConstructor( void **handle )
-{
-	*handle = NULL;
-}
-
-static bool objectResourceHandle_EqualBehaviour( void **handle, void **ref, int typeId )
-{
-	// Null handles are received as reference to a null handle
-	if( typeId == 0 )
-		return *handle == nullptr;
-	return ( *handle == *ref );
-}
-
-static const gs_asBehavior_t asCGameResourceHandleObjectBehaviors[] = {
-	{ asBEHAVE_CONSTRUCT, ASLIB_FUNCTION_DECL( void, f, () ), asFUNCTION( objectResourceHandle_DefaultConstructor ),
-		asCALL_CDECL_OBJLAST },
-
-	ASLIB_BEHAVIOR_NULL,
-};
-
-static const gs_asMethod_t asCGameResourceHandleObjectMethods[] = {
-	{ ASLIB_FUNCTION_DECL( bool, opEquals, (const ?&in) const ), asFUNCTION( objectResourceHandle_EqualBehaviour ),
-		asCALL_CDECL_OBJFIRST },
-
-	ASLIB_METHOD_NULL,
-};
-
 static const gs_asClassDescriptor_t asModelHandleClassDescriptor = {
 	"ModelHandle",								   /* name */
-	asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE, /* object type flags */
+	asOBJ_REF | asOBJ_NOCOUNT, /* object type flags */
 	sizeof( void * ),							   /* size */
 	NULL,										   /* funcdefs */
-	asCGameResourceHandleObjectBehaviors,		   /* object behaviors */
-	asCGameResourceHandleObjectMethods,			   /* methods */
+	NULL,		   /* object behaviors */
+	NULL,			   /* methods */
 	NULL,										   /* properties */
 	NULL, NULL									   /* string factory hack */
 };
 
 static const gs_asClassDescriptor_t asSoundHandleClassDescriptor = {
 	"SoundHandle",								   /* name */
-	asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE, /* object type flags */
+	asOBJ_REF | asOBJ_NOCOUNT, /* object type flags */
 	sizeof( void * ),							   /* size */
 	NULL,										   /* funcdefs */
-	asCGameResourceHandleObjectBehaviors,		   /* object behaviors */
-	asCGameResourceHandleObjectMethods,			   /* methods */
+	NULL,		   /* object behaviors */
+	NULL,			   /* methods */
 	NULL,										   /* properties */
 	NULL, NULL									   /* string factory hack */
 };
 
 static const gs_asClassDescriptor_t asShaderHandleClassDescriptor = {
 	"ShaderHandle",								   /* name */
-	asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE, /* object type flags */
+	asOBJ_REF | asOBJ_NOCOUNT, /* object type flags */
 	sizeof( void * ),							   /* size */
 	NULL,										   /* funcdefs */
-	asCGameResourceHandleObjectBehaviors,		   /* object behaviors */
-	asCGameResourceHandleObjectMethods,			   /* methods */
+	NULL,		   /* object behaviors */
+	NULL,			   /* methods */
 	NULL,										   /* properties */
 	NULL, NULL									   /* string factory hack */
 };
 
 static const gs_asClassDescriptor_t asFontHandleClassDescriptor = {
 	"FontHandle",								   /* name */
-	asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE, /* object type flags */
+	asOBJ_REF | asOBJ_NOCOUNT, /* object type flags */
 	sizeof( void * ),							   /* size */
 	NULL,										   /* funcdefs */
-	asCGameResourceHandleObjectBehaviors,		   /* object behaviors */
-	asCGameResourceHandleObjectMethods,			   /* methods */
+	NULL,		   /* object behaviors */
+	NULL,			   /* methods */
 	NULL,										   /* properties */
 	NULL, NULL									   /* string factory hack */
 };
 
 static const gs_asClassDescriptor_t asModelSkeletonClassDescriptor = {
 	"ModelSkeleton",							   /* name */
-	asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE, /* object type flags */
+	asOBJ_REF | asOBJ_NOCOUNT, /* object type flags */
 	sizeof( void * ),							   /* size */
 	NULL,										   /* funcdefs */
-	asCGameResourceHandleObjectBehaviors,		   /* object behaviors */
+	NULL,		   /* object behaviors */
 	NULL,										   /* methods */
 	NULL,										   /* properties */
 	NULL, NULL									   /* string factory hack */
@@ -302,11 +275,11 @@ static const gs_asglobfuncs_t asCGameGlobalFuncs[] = {
 	{ "void AddEntityToSolidList( int number )", asFUNCTION( CG_AddEntityToSolidList ), NULL },
 	{ "void AddEntityToTriggerList( int number )", asFUNCTION( CG_AddEntityToTriggerList ), NULL },
 
-	{ "ModelHandle RegisterModel( const String &in )", asFUNCTION( asFunc_RegisterModel ), NULL },
-	{ "SoundHandle RegisterSound( const String &in )", asFUNCTION( asFunc_RegisterSound ), NULL },
-	{ "ShaderHandle RegisterShader( const String &in )", asFUNCTION( asFunc_RegisterShader ), NULL },
-	{ "FontHandle RegisterFont( const String &in, int style, uint size )", asFUNCTION( asFunc_RegisterFont ), NULL },
-	{ "ModelSkeleton SkeletonForModel( ModelHandle )", asFUNCTION( asFunc_SkeletonForModel ), NULL },
+	{ "ModelHandle @RegisterModel( const String &in )", asFUNCTION( asFunc_RegisterModel ), NULL },
+	{ "SoundHandle @RegisterSound( const String &in )", asFUNCTION( asFunc_RegisterSound ), NULL },
+	{ "ShaderHandle @RegisterShader( const String &in )", asFUNCTION( asFunc_RegisterShader ), NULL },
+	{ "FontHandle @RegisterFont( const String &in, int style, uint size )", asFUNCTION( asFunc_RegisterFont ), NULL },
+	{ "ModelSkeleton @SkeletonForModel( ModelHandle @ )", asFUNCTION( asFunc_SkeletonForModel ), NULL },
 
 	{ "int TeamColorForEntity( int entNum )", asFUNCTION( asFunc_TeamColorForEntity ), NULL },
 	{ "int PlayerColorForEntity( int entNum )", asFUNCTION( asFunc_PlayerColorForEntity ), NULL },

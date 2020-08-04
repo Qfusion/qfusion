@@ -1815,7 +1815,7 @@ static const gs_asClassDescriptor_t asFiredefClassDescriptor = {
 
 static const gs_asClassDescriptor_t asCModelHandleClassDescriptor = {
 	"CModelHandle",								   /* name */
-	asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE, /* object type flags */
+	asOBJ_REF | asOBJ_NOCOUNT, /* object type flags */
 	sizeof( void * ),							   /* size */
 	NULL,										   /* funcdefs */
 	NULL,										   /* object behaviors */
@@ -1957,8 +1957,8 @@ static const gs_asglobfuncs_t asGameGlobalFunctions[] = {
 	{ "bool IsEventEntity( const EntityState @ )", asFUNCTION( GS_asIsEventEntity ), NULL },
 	{ "bool IsBrushModel( int modelindex )", asFUNCTION( GS_asIsBrushModel ), NULL },
 
-	{ "CModelHandle InlineModel( int modNum )", asFUNCTION( GS_asInlineModel ), NULL },
-	{ "void InlineModelBounds( CModelHandle handle, Vec3 & out, Vec3 & out )", asFUNCTION( GS_asInlineModelBounds ), NULL },
+	{ "CModelHandle @InlineModel( int modNum )", asFUNCTION( GS_asInlineModel ), NULL },
+	{ "void InlineModelBounds( CModelHandle @handle, Vec3 & out, Vec3 & out )", asFUNCTION( GS_asInlineModelBounds ), NULL },
 
 	{ "Item @FindItemByTag( int tag )", asFUNCTION( GS_FindItemByTag ), NULL },
 	{ "Item @FindItemByName( const String &in )", asFUNCTION( GS_FindItemByName ), NULL },
