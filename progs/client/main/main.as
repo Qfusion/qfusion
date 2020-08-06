@@ -13,6 +13,8 @@ class ClientStatic {
 
     array<String> configStrings(GS::MAX_CONFIGSTRINGS);
     array<ModelHandle @> modelDraw(GS::MAX_MODELS);
+    array<SoundHandle @> soundPrecache(GS::MAX_SOUNDS);
+
     bool demoPlaying;
     bool precacheDone;
 
@@ -42,8 +44,12 @@ void ConfigString( int index, const String @s )
 {
     cgs.configStrings[index] = s;
 
-    if( index > CS_MODELS && index < CS_MODELS + MAX_MODELS ) {
-		index -= CS_MODELS;
+    if( index >= GS::CS_MODELS && index < GS::CS_MODELS + GS::MAX_MODELS ) {
+		index -= GS::CS_MODELS;
+
+		if( index == 0 ) {
+			return;
+		}
 
 		if( s.empty() ) {
 			@cgs.modelDraw[index] = null;
@@ -52,6 +58,14 @@ void ConfigString( int index, const String @s )
         } else {
             @cgs.modelDraw[index] = RegisterModel( s );
         }
+    } else if( index >= GS::CS_SOUNDS && index < GS::CS_SOUNDS + GS::MAX_SOUNDS ) {
+		index -= GS::CS_SOUNDS;
+
+		if( s.empty() ) {
+			@cgs.soundPrecache[index] = null;
+		} else if( s.substr( 0, 1 ) != "*" ) {
+			@cgs.soundPrecache[index] = RegisterSound( s );
+		}
     }
 }
 

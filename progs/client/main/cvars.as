@@ -7,4 +7,6 @@ Cvar cg_shadows( "cg_shadows", "1", CVAR_ARCHIVE );
 Cvar cg_simpleItems( "cg_simpleItems", "0", CVAR_ARCHIVE );
 Cvar cg_simpleItemsSize( "cg_simpleItemsSize", "16", CVAR_ARCHIVE );
 
+Cvar cg_volume_effects( "cg_volume_effects", "1.0", CVAR_ARCHIVE );
+
 }

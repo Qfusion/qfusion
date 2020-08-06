@@ -176,6 +176,14 @@ bool UpdateLinearProjectilePosition( CEntity @cent ) {
 	return true;
 }
 
+void EntityLoopSound( EntityState @state, float attenuation ) {
+	if( state.sound == 0 ) {
+		return;
+	}
+	CGame::Sound::AddLoopSound( cgs.soundPrecache[state.sound], state.number, cg_volume_effects.value,
+		IsViewerEntity( state.number ) ? attenuation : ATTN_IDLE );
+}
+
 bool GetEntitySpatilization( int entNum, Vec3 &out origin, Vec3 &out velocity ) {
 	if( entNum < -1 || entNum >= MAX_EDICTS ) {
 		GS::Error( "GetEntitySoundOrigin: bad entnum" );
@@ -675,21 +683,28 @@ void LerpEntities( void ) {
 
 		Vec3 origin, velocity;
 		GetEntitySpatilization( number, origin, velocity );
-		//trap_S_SetEntitySpatilization( number, origin, velocity );
+		CGame::Sound::SetEntitySpatilization( number, origin, velocity );
 	}
 }
 
 bool AddEntity( int entNum )
 {
 	CEntity @cent = cgEnts[entNum];
+	EntityState @state = @cent.current;
 
 	switch( cent.type ) {
 		case ET_GENERIC:
 			AddGenericEnt( @cent );
+			EntityLoopSound( state, ATTN_STATIC );
 			return true;
 		case ET_ITEM:
 			AddItemEnt( cent );
-			return true;		
+			EntityLoopSound( state, ATTN_IDLE );
+			return true;
+		case ET_PLASMA:
+			AddGenericEnt( cent );
+			EntityLoopSound( state, ATTN_STATIC );
+			return true;
 		default:
 			return false;
 	}
