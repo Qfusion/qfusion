@@ -90,10 +90,17 @@ extern const gs_asEnum_t				   asCGameRefSceneEnums[];
 extern const gs_asClassDescriptor_t *const asCGameRefSceneClassesDescriptors[];
 extern const gs_asglobfuncs_t			   asCGameRefSceneGlobalFuncs[];
 
+
 //
 // cg_as_screen.cpp
 //
 extern const gs_asEnum_t	  asCGameScreenEnums[];
 extern const gs_asglobfuncs_t asCGameScreenGlobalFuncs[];
+
+
+//
+// cg_as_sound.cpp
+//
+extern const gs_asglobfuncs_t asCGameSoundGlobalFuncs[];
 
 void CG_asReleaseModuleCommands( const char *moduleName );

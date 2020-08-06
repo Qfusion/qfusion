@@ -1989,6 +1989,7 @@ static int asMAX_MODELS = MAX_MODELS;
 static int asMAX_IMAGES = MAX_IMAGES;
 static int asMAX_SKINFILES = MAX_SKINFILES;
 static int asMAX_ITEMS = MAX_ITEMS;
+static int asMAX_SOUNDS = MAX_SOUNDS;
 static int asMAX_GENERAL = MAX_GENERAL;
 static int asMAX_MMPLAYERINFOS = MAX_MMPLAYERINFOS;
 static int asMAX_CONFIGSTRINGS = MAX_CONFIGSTRINGS;
@@ -2014,6 +2015,7 @@ static const gs_asglobproperties_t asGameGlobalConstants[] = {
 	{ "const int MAX_IMAGES", &asMAX_IMAGES },
 	{ "const int MAX_SKINFILES", &asMAX_SKINFILES },
 	{ "const int MAX_ITEMS", &asMAX_ITEMS },
+	{ "const int MAX_SOUNDS", &asMAX_SOUNDS },
 	{ "const int MAX_GENERAL", &asMAX_GENERAL },
 	{ "const int MAX_MMPLAYERINFOS", &asMAX_MMPLAYERINFOS },
 	{ "const int MAX_CONFIGSTRINGS", &asMAX_CONFIGSTRINGS },

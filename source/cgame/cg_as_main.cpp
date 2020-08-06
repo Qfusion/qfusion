@@ -350,6 +350,7 @@ static void CG_asInitializeCGameEngineSyntax( asIScriptEngine *asEngine )
 	GS_asRegisterGlobalFunctions( asEngine, asCGameCameraGlobalFuncs, "CGame::Camera" );
 	GS_asRegisterGlobalFunctions( asEngine, asCGameRefSceneGlobalFuncs, "CGame::Scene" );
 	GS_asRegisterGlobalFunctions( asEngine, asCGameScreenGlobalFuncs, "CGame::Screen" );
+	GS_asRegisterGlobalFunctions( asEngine, asCGameSoundGlobalFuncs, "CGame::Sound" );
 
 	// register global properties
 	GS_asRegisterGlobalProperties( asEngine, asCGameGlobalProperties, "CGame" );
