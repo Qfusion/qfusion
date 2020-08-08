@@ -17,6 +17,31 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
+uint8 COLOR_BLACK    = '0';
+uint8 COLOR_RED      = '1';
+uint8 COLOR_GREEN    = '2';
+uint8 COLOR_YELLOW   = '3';
+uint8 COLOR_BLUE     = '4';
+uint8 COLOR_CYAN     = '5';
+uint8 COLOR_MAGENTA  = '6';
+uint8 COLOR_WHITE    = '7';
+uint8 COLOR_ORANGE   = '8';
+uint8 COLOR_GREY     = '9';
+
+array<array<float>> colorTable =
+{
+	{ 0.0, 0.0, 0.0, 1.0 },
+	{ 1.0, 0.0, 0.0, 1.0 },
+	{ 0.0, 1.0, 0.0, 1.0 },
+	{ 1.0, 1.0, 0.0, 1.0 },
+	{ 0.0, 0.0, 1.0, 1.0 },
+	{ 0.0, 1.0, 1.0, 1.0 },
+	{ 1.0, 0.0, 1.0, 1.0 }, // magenta
+	{ 1.0, 1.0, 1.0, 1.0 },
+	{ 1.0, 0.5, 0.0, 1.0 }, // orange
+	{ 0.5, 0.5, 0.5, 1.0 }, // grey
+};
+
 int rint( float x )
 {
 	return int( x < 0 ? ( x - 0.5f ) : ( x + 0.5f ) );
@@ -27,11 +52,82 @@ int rint( double x )
 	return int( x < 0 ? ( x - 0.5f ) : ( x + 0.5f ) );
 }
 
-int COLOR_RGBA( int r, int g, int b, int a )
+float bound( float x, float a, float b )
+{
+	return x < a ? a : ( (x > b ? b : x) );
+}
+
+double bound( double x, double a, double b )
+{
+	return x < a ? a : ( (x > b ? b : x) );
+}
+
+int bound( int x, int a, int b )
+{
+	return x < a ? a : ( (x > b ? b : x) );
+}
+
+uint bound( uint x, uint a, uint b )
+{
+	return x < a ? a : ( (x > b ? b : x) );
+}
+
+int COLOR_RGBA( uint8 r, uint8 g, uint8 b, uint8 a )
 {
 	return (( r & 255 ) << 0 ) | (( g & 255 ) << 8 ) | (( b & 255 ) << 16 ) | (( a & 255 ) << 24 );
 }
 
+int COLOR_ZEROA( int c )
+{
+	return c & ( ( 1 << 24 ) - 1);
+}
+
+uint8 COLOR_A( int c )
+{
+	return (c>>24) & 255;
+}
+
+int COLOR_REPLACEA( int c, uint8 a )
+{
+	return COLOR_ZEROA( c ) | (( a & 255 ) << 24 );
+}
+
+int ColorIndex( uint8 c ) {
+	uint i = uint( c - '0' );
+	if( i >= colorTable.length() ) {
+		i = 7;
+	}
+	return int( i );
+}
+
+Vec4 ColorToVec4( int c ) {
+	return Vec4( ( c & 255 ) / 255.0f,
+		( (c>>8) & 255 ) / 255.0f,
+		( (c>>16) & 255 ) / 255.0f,
+		( (c>>24) & 255 ) / 255.0f );
+}
+
+int Vec4ToColor( const Vec4 &in v ) {
+	return COLOR_RGBA( bound( 0, int(v[0] * 255.0), 255 ),
+		bound( 0, int(v[1] * 255.0), 255 ),
+		bound( 0, int(v[2] * 255.0), 255 ),
+		bound( 0, int(v[3] * 255.0), 255 ) );
+}
+
+int ColorByIndex( int i, uint8 alpha ) {
+	if( i < 0 || i >= int( colorTable.length() ) ) {
+		return 0;
+	}
+	auto c = colorTable[i];
+	int r = bound( 0, rint( c[0] * 255.0f ), 255 );
+	int g = bound( 0, rint( c[1] * 255.0f ), 255 );
+	int b = bound( 0, rint( c[2] * 255.0f ), 255 );
+	return COLOR_RGBA( r, g, b, alpha );
+}
+
+int ColorByIndex( int i ) {
+	return ColorByIndex( i, 255 );
+}
 
 Vec3 stringToVec3( const String &str )
 {
