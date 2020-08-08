@@ -200,7 +200,7 @@ static void objectVec3_AnglesToMatrix3( asmat3_t *res, asvec3_t *self )
 
 static void objectVec3_AnglesToAxis( asmat3_t *res, asvec3_t *self )
 {
-	Matrix3_FromAngles( self->v, res->m );
+	AnglesToAxis( self->v, res->m );
 }
 
 static float *objectVec3_Index( unsigned index, asvec3_t *self ) {
