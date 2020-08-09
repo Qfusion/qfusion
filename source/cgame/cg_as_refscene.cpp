@@ -100,10 +100,6 @@ static void asrefentity_Reset( asrefentity_t *e )
 	Vector4Set( e->ent.shaderRGBA, 255, 255, 255, 255 );
 }
 
-static const gs_asFuncdef_t asrefentity_Funcdefs[] = {
-	ASLIB_FUNCDEF_NULL,
-};
-
 static const gs_asBehavior_t asrefentity_ObjectBehaviors[] = {
 	{ asBEHAVE_FACTORY, ASLIB_FUNCTION_DECL( Entity @, f, () ), asFUNCTION( objectRefEntity_Factory ),
 		asCALL_CDECL },
@@ -133,6 +129,8 @@ static const gs_asProperty_t asrefentity_Properties[] = {
 	{ ASLIB_PROPERTY_DECL( Vec3, origin ), ASLIB_FOFFSET( asrefentity_t, ent.origin ) },
 	{ ASLIB_PROPERTY_DECL( Vec3, origin2 ), ASLIB_FOFFSET( asrefentity_t, ent.origin2 ) },
 	{ ASLIB_PROPERTY_DECL( Vec3, lightingOrigin ), ASLIB_FOFFSET( asrefentity_t, ent.lightingOrigin ) },
+	{ ASLIB_PROPERTY_DECL( Boneposes @, boneposes ), ASLIB_FOFFSET( asrefentity_t, ent.boneposes ) },
+	{ ASLIB_PROPERTY_DECL( Boneposes @, oldBoneposes ), ASLIB_FOFFSET( asrefentity_t, ent.oldboneposes ) },
 
 	{ ASLIB_PROPERTY_DECL( int, shaderRGBA ), ASLIB_FOFFSET( asrefentity_t, ent.shaderRGBA ) },
 
@@ -153,7 +151,7 @@ static const gs_asClassDescriptor_t asRefEntityClassDescriptor = {
 	"Entity",					 /* name */
 	asOBJ_REF,					 /* object type flags */
 	sizeof( asrefentity_t ),	 /* size */
-	asrefentity_Funcdefs,		 /* funcdefs */
+	NULL,						 /* funcdefs */
 	asrefentity_ObjectBehaviors, /* object behaviors */
 	asrefentity_Methods,		 /* methods */
 	asrefentity_Properties,		 /* properties */
@@ -162,21 +160,14 @@ static const gs_asClassDescriptor_t asRefEntityClassDescriptor = {
 
 //=======================================================================
 
-static const gs_asFuncdef_t asOrientation_Funcdefs[] = { ASLIB_FUNCDEF_NULL };
-
 static void objectOrientation_DefaultConstructor( orientation_t *o )
 {
 	memset( o, 0, sizeof( orientation_t ) );
-}
-
-static void objectOrientation_CopyConstructor( orientation_t *other, orientation_t *o )
-{
-	*o = *other;
+	Matrix3_Identity( o->axis );
 }
 
 static const gs_asBehavior_t asOrientation_ObjectBehaviors[] = {
 	{ asBEHAVE_CONSTRUCT, ASLIB_FUNCTION_DECL( void, f, () ), asFUNCTION( objectOrientation_DefaultConstructor ), asCALL_CDECL_OBJLAST, },
-	{ asBEHAVE_CONSTRUCT, ASLIB_FUNCTION_DECL( void, f, ( const Orientation &in ) ), asFUNCTION( objectOrientation_CopyConstructor ), asCALL_CDECL_OBJLAST, },
 	ASLIB_BEHAVIOR_NULL,
 };
 
@@ -189,14 +180,27 @@ static const gs_asProperty_t asOrientation_Properties[] = {
 };
 
 static const gs_asClassDescriptor_t asOrientationClassDescriptor = {
-	"Orientation",								  /* name */
-	asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CK, /* object type flags */
-	sizeof( orientation_t ),					  /* size */
-	asOrientation_Funcdefs,						  /* funcdefs */
-	asOrientation_ObjectBehaviors,				  /* object behaviors */
-	asOrientation_Methods,						  /* methods */
-	asOrientation_Properties,					  /* properties */
-	NULL, NULL,									  /* string factory hack */
+	"Orientation",															 /* name */
+	asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_C | asOBJ_APP_CLASS_ALLFLOATS, /* object type flags */
+	sizeof( orientation_t ),												 /* size */
+	NULL,																	 /* funcdefs */
+	asOrientation_ObjectBehaviors,											 /* object behaviors */
+	asOrientation_Methods,													 /* methods */
+	asOrientation_Properties,												 /* properties */
+	NULL, NULL,																 /* string factory hack */
+};
+
+//=======================================================================
+
+static const gs_asClassDescriptor_t asBoneposesClassDescriptor = {
+	"Boneposes",			   /* name */
+	asOBJ_REF | asOBJ_NOCOUNT, /* object type flags */
+	sizeof( bonepose_t * ),	   /* size */
+	NULL,					   /* funcdefs */
+	NULL,					   /* object behaviors */
+	NULL,					   /* methods */
+	NULL,					   /* properties */
+	NULL, NULL,				   /* string factory hack */
 };
 
 //=======================================================================
@@ -204,6 +208,7 @@ static const gs_asClassDescriptor_t asOrientationClassDescriptor = {
 const gs_asClassDescriptor_t *const asCGameRefSceneClassesDescriptors[] = {
 	&asRefEntityClassDescriptor,
 	&asOrientationClassDescriptor,
+	&asBoneposesClassDescriptor,
 
 	NULL,
 };
@@ -211,14 +216,21 @@ const gs_asClassDescriptor_t *const asCGameRefSceneClassesDescriptors[] = {
 //=======================================================================
 
 const gs_asglobfuncs_t asCGameRefSceneGlobalFuncs[] = {
-	{ "void PlaceRotatedModelOnTag( Entity @ent, const Entity @dest, const Orientation &in )",
+	{ "void PlaceRotatedModelOnTag( Entity @+ ent, const Entity @+ dest, const Orientation &in )",
 		asFUNCTION( CG_PlaceRotatedModelOnTag ), NULL },
-	{ "void PlaceModelOnTag( Entity @ent, const Entity @dest, const Orientation &in )",
+	{ "void PlaceModelOnTag( Entity @+ ent, const Entity @+ dest, const Orientation &in )",
 		asFUNCTION( CG_PlaceModelOnTag ), NULL },
-	{ "bool GrabTag( const Orientation &out, const Entity @ent, const String &in )",
+	{ "bool GrabTag( const Orientation &out, const Entity @+ ent, const String &in )",
 		asFUNCTION( CG_GrabTag ), NULL },
 
-	{ "void AddEntityToScene( Entity @ent )", asFUNCTION( CG_AddEntityToScene ),
+	{ "Boneposes @RegisterTemporaryExternalBoneposes( ModelSkeleton @ )",
+		asFUNCTION( CG_RegisterTemporaryExternalBoneposes ), NULL },
+	{ "bool LerpSkeletonPoses( ModelSkeleton @, int frame, int oldFrame, Boneposes @ boneposes, float frac )",
+		asFUNCTION( CG_LerpSkeletonPoses ), NULL },
+	{ "void TransformBoneposes( ModelSkeleton @, Boneposes @ boneposes, Boneposes @ sourceBoneposes )",
+		asFUNCTION( CG_TransformBoneposes ), NULL },
+
+	{ "void AddEntityToScene( Entity @+ ent )", asFUNCTION( CG_AddEntityToScene ),
 		NULL },
 
 	{ NULL },

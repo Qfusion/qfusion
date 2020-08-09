@@ -1070,6 +1070,11 @@ void CG_HotloadAssets( void )
 {
 	if( CG_asReloadGameScript() ) {
 		CG_asGameInit();
+
+		CG_asInit( cgs.serverName, cgs.playerNum, cgs.demoPlaying, cgs.demoName, cgs.pure, cgs.snapFrameTime,
+				cgs.gameProtocol, cgs.demoExtension, false );
+
+		CG_asPrecache();
 	}
 	CG_InitL10n();
 	CG_LoadStatusBar();
@@ -1123,12 +1128,12 @@ void CG_Init( const char *serverName, unsigned int playerNum,
 
 	CG_asInitScriptEngine();
 
-	CG_asInit( serverName, playerNum, demoplaying, demoName, pure, snapFrameTime,
-		protocol, demoExtension, gameStart );
-
 	CG_RefreshOverlayMenu();
 
 	CG_asLoadGameScript();
+
+	CG_asInit( cgs.serverName, cgs.playerNum, cgs.demoPlaying, cgs.demoName, cgs.pure, cgs.snapFrameTime,
+		cgs.gameProtocol, cgs.demoExtension, gameStart );
 
 	CG_asLoadPMoveScript();
 
