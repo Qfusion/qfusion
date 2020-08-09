@@ -215,13 +215,17 @@ const gs_asClassDescriptor_t *const asCGameRefSceneClassesDescriptors[] = {
 
 //=======================================================================
 
+static bool asFunc_CG_GrabTag( orientation_t *tag, entity_t *ent, asstring_t *tagname ) {
+	return CG_GrabTag( tag, ent, tagname->buffer );
+}
+
 const gs_asglobfuncs_t asCGameRefSceneGlobalFuncs[] = {
 	{ "void PlaceRotatedModelOnTag( Entity @+ ent, const Entity @+ dest, const Orientation &in )",
 		asFUNCTION( CG_PlaceRotatedModelOnTag ), NULL },
 	{ "void PlaceModelOnTag( Entity @+ ent, const Entity @+ dest, const Orientation &in )",
 		asFUNCTION( CG_PlaceModelOnTag ), NULL },
-	{ "bool GrabTag( const Orientation &out, const Entity @+ ent, const String &in )",
-		asFUNCTION( CG_GrabTag ), NULL },
+	{ "bool GrabTag( const Orientation &out, const Entity @+ ent, const String &in )", asFUNCTION( asFunc_CG_GrabTag ),
+		NULL },
 
 	{ "Boneposes @RegisterTemporaryExternalBoneposes( ModelSkeleton @ )",
 		asFUNCTION( CG_RegisterTemporaryExternalBoneposes ), NULL },
@@ -230,8 +234,7 @@ const gs_asglobfuncs_t asCGameRefSceneGlobalFuncs[] = {
 	{ "void TransformBoneposes( ModelSkeleton @, Boneposes @ boneposes, Boneposes @ sourceBoneposes )",
 		asFUNCTION( CG_TransformBoneposes ), NULL },
 
-	{ "void AddEntityToScene( Entity @+ ent )", asFUNCTION( CG_AddEntityToScene ),
-		NULL },
+	{ "void AddEntityToScene( Entity @+ ent )", asFUNCTION( CG_AddEntityToScene ), NULL },
 
 	{ NULL },
 };

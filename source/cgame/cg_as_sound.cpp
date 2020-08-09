@@ -20,10 +20,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "cg_as_local.h"
 
-static void asFunc_S_SetEntitySpatilization( int entNum, asvec3_t *origin, asvec3_t *velocity ) {
-	return trap_S_SetEntitySpatilization( entNum, origin->v, velocity->v );
-}
-
 const gs_asglobfuncs_t asCGameSoundGlobalFuncs[] = {
 	{ "void AddLoopSound( SoundHandle @, int entnum, float fvol, float attenuation )",
 		asFUNCTION( trap_S_AddLoopSound ), NULL },
@@ -34,7 +30,7 @@ const gs_asglobfuncs_t asCGameSoundGlobalFuncs[] = {
 	{ "void StartLocalSound( SoundHandle @, int channel, float fvol )",
 		asFUNCTION( trap_S_StartLocalSound ), NULL },
 	{ "void SetEntitySpatilization( int entnum, const Vec3 &in origin, const Vec3 &in velocity )",
-		asFUNCTION( asFunc_S_SetEntitySpatilization ), NULL },
+		asFUNCTION( trap_S_SetEntitySpatilization ), NULL },
 
 	{ NULL },
 };
