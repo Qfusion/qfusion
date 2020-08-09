@@ -154,7 +154,7 @@ bool UpdateLinearProjectilePosition( CEntity @cent ) {
 		}
 	}
 
-	moveTime = /*GS::LinearMovement( state, serverTime, origin )*/0;
+	moveTime = GS::LinearMovement( state, serverTime, origin );
 	state.origin = origin;
 
 	if( ( moveTime < 0 ) && ( state.solid != SOLID_BMODEL ) ) {
@@ -264,7 +264,7 @@ void AddLinkedModel( CEntity @cent ) {
 
 	if( barrel && CGame::Scene::GrabTag( tag, @cent.refEnt, "tag_barrel2" ) ) {
 		CGame::Scene::PlaceModelOnTag( @ent, @cent.refEnt, tag );
-		//CGame::Scene::AddEntityToScene( @ent );
+		CGame::Scene::AddEntityToScene( @ent );
 		//CG_AddShellEffects( &ent, cent->effects );
 	}
 }
@@ -286,7 +286,7 @@ void EntAddTeamColorTransitionEffect( CEntity @cent ) {
 	int scaledcolor, newcolor;
 	const Vec4 ac (1.0, 1.0, 1.0, 1.0);
 
-	//float f = bound( 0.0f, float( cent.current.counterNum ) / 255.0f, 1.0f );
+	float f = bound( 0.0f, float( cent.current.counterNum ) / 255.0f, 1.0f );
 
 	if( cent.current.type == ET_PLAYER || cent.current.type == ET_CORPSE ) {
 		currentcolor = PlayerColorForEntity( cent.current.number );
@@ -294,9 +294,9 @@ void EntAddTeamColorTransitionEffect( CEntity @cent ) {
 		currentcolor = TeamColorForEntity( cent.current.number );
 	}
 
-	//Vec4 cv = ColorToVec4( currentcolor );
-	//int nc = Vec4ToColor( ac + f * (cv - ac) );
-	//cent.refEnt.shaderRGBA = COLOR_REPLACEA( nc, COLOR_A( cent.refEnt.shaderRGBA ) );
+	Vec4 cv = ColorToVec4( currentcolor );
+	int nc = Vec4ToColor( ac + f * (cv - ac) );
+	cent.refEnt.shaderRGBA = COLOR_REPLACEA( nc, COLOR_A( cent.refEnt.shaderRGBA ) );
 }
 
 void UpdateGenericEnt( CEntity @cent ) {
@@ -501,7 +501,7 @@ void AddGenericEnt( CEntity @cent ) {
 			// find out the ammo box color
 			auto @colorToken = @item.colorToken;
 			if( colorToken.length() > 1 ) {
-				//cent.refEnt.shaderRGBA = ColorByIndex( ColorIndex( colorToken[1] ) );
+				cent.refEnt.shaderRGBA = ColorByIndex( ColorIndex( colorToken[1] ) );
 			} else {   // set white
 				cent.refEnt.shaderRGBA = COLOR_RGBA( 255, 255, 255, 255 );
 			}
@@ -509,9 +509,9 @@ void AddGenericEnt( CEntity @cent ) {
 
 		if( ( cent.effects & EF_GHOST ) != 0 ) {
 			cent.refEnt.renderfx |= RF_ALPHAHACK | RF_GREYSCALE;
-			//cent.refEnt.shaderRGBA = COLOR_REPLACEA( cent.refEnt.shaderRGBA, 100 );
+			cent.refEnt.shaderRGBA = COLOR_REPLACEA( cent.refEnt.shaderRGBA, 100 );
 		} else {
-			//cent.refEnt.shaderRGBA = COLOR_REPLACEA( cent.refEnt.shaderRGBA, 255 );
+			cent.refEnt.shaderRGBA = COLOR_REPLACEA( cent.refEnt.shaderRGBA, 255 );
 		}
 
 		// add shadows for items (do it before offseting for weapons)
@@ -536,9 +536,10 @@ void AddGenericEnt( CEntity @cent ) {
 
 	if( @cent.skel != null ) {
 		// get space in cache, interpolate, transform, link
-		//cent.refEnt.boneposes = cent.refEnt.oldboneposes = CG_RegisterTemporaryExternalBoneposes( cent.skel );
-		//CG_LerpSkeletonPoses( cent.skel, cent.refEnt.frame, cent.refEnt.oldframe, cent.refEnt.boneposes, 1.0 - cent.refEnt.backlerp );
-		//CG_TransformBoneposes( cent.skel, cent.refEnt.boneposes, cent.refEnt.boneposes );
+		@cent.refEnt.boneposes = CGame::Scene::RegisterTemporaryExternalBoneposes( @cent.skel );
+		@cent.refEnt.oldBoneposes = @cent.refEnt.boneposes;
+		CGame::Scene::LerpSkeletonPoses( @cent.skel, cent.refEnt.frame, cent.refEnt.oldFrame, @cent.refEnt.boneposes, 1.0 - cent.refEnt.backLerp );
+		CGame::Scene::TransformBoneposes( @cent.skel, @cent.refEnt.boneposes, @cent.refEnt.boneposes );
 	}
 
 	// flags are special
@@ -600,7 +601,7 @@ void AddItemEnt( CEntity @cent ) {
 		return;
 	} else {
 		if( ( cent.effects & EF_GHOST ) != 0 ) {
-			//cent.refEnt.shaderRGBA = COLOR_REPLACEA( cent.refEnt.shaderRGBA, 100 );
+			cent.refEnt.shaderRGBA = COLOR_REPLACEA( cent.refEnt.shaderRGBA, 100 );
 			cent.refEnt.renderfx |= RF_GREYSCALE;
 		}
 	}
@@ -627,7 +628,7 @@ void UpdateEntities() {
 
 		switch( cent.type ) {
 			case ET_GENERIC:
-				UpdateGenericEnt( cent );
+				UpdateGenericEnt( @cent );
 				break;
 
 			// projectiles with linear trajectories
@@ -637,11 +638,11 @@ void UpdateEntities() {
 			case ET_PLASMA:
 			case ET_GRENADE:
 				cent.renderfx |= ( RF_NOSHADOW | RF_FULLBRIGHT );
-				UpdateGenericEnt( cent );
+				UpdateGenericEnt( @cent );
 				break;
 
 			case ET_ITEM:
-				UpdateItemEnt( cent );
+				UpdateItemEnt( @cent );
 				break;
 		}
 	}
@@ -698,11 +699,11 @@ bool AddEntity( int entNum )
 			EntityLoopSound( state, ATTN_STATIC );
 			return true;
 		case ET_ITEM:
-			AddItemEnt( cent );
+			AddItemEnt( @cent );
 			EntityLoopSound( state, ATTN_IDLE );
 			return true;
 		case ET_PLASMA:
-			AddGenericEnt( cent );
+			AddGenericEnt( @cent );
 			EntityLoopSound( state, ATTN_STATIC );
 			return true;
 		default:
