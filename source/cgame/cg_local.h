@@ -266,9 +266,6 @@ typedef struct {
 
 	//wsw weapon sfx
 	struct shader_s *shaderPlasmaMark;
-	struct shader_s *shaderElectroBeamOld;
-	struct shader_s *shaderElectroBeamOldAlpha;
-	struct shader_s *shaderElectroBeamOldBeta;
 	struct shader_s *shaderElectroBeamA;
 	struct shader_s *shaderElectroBeamAAlpha;
 	struct shader_s *shaderElectroBeamABeta;
@@ -1115,7 +1112,6 @@ void CG_AddDecals( void );
 //
 // cg_polys.c	-	wsw	: jal
 //
-extern cvar_t *cg_ebbeam_old;
 extern cvar_t *cg_ebbeam_width;
 extern cvar_t *cg_ebbeam_alpha;
 extern cvar_t *cg_ebbeam_time;

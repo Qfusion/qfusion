@@ -229,9 +229,6 @@ void CG_PrecacheShaders( void ) {
 	cgs.media.shaderElectroboltMark = CG_RegisterShader( "gfx/decals/d_electrobolt_hit" );
 	cgs.media.shaderInstagunMark = CG_RegisterShader( "gfx/decals/d_instagun_hit" );
 
-	cgs.media.shaderElectroBeamOld = CG_RegisterShader( "gfx/misc/electro" );
-	cgs.media.shaderElectroBeamOldAlpha = CG_RegisterShader( "gfx/misc/electro_alpha" );
-	cgs.media.shaderElectroBeamOldBeta = CG_RegisterShader( "gfx/misc/electro_beta" );
 	cgs.media.shaderElectroBeamA = CG_RegisterShader( "gfx/misc/electro2a" );
 	cgs.media.shaderElectroBeamAAlpha = CG_RegisterShader( "gfx/misc/electro2a_alpha" );
 	cgs.media.shaderElectroBeamABeta = CG_RegisterShader( "gfx/misc/electro2a_beta" );
