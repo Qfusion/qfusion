@@ -401,33 +401,19 @@ void CG_ElectroPolyBeam( const vec3_t start, const vec3_t end, int team ) {
 		return;
 	}
 
-	if( cg_ebbeam_old->integer ) {
-		if( cg_teamColoredBeams->integer && ( team == TEAM_ALPHA || team == TEAM_BETA ) ) {
-			if( team == TEAM_ALPHA ) {
-				shader = cgs.media.shaderElectroBeamOldAlpha;
-			} else {
-				shader = cgs.media.shaderElectroBeamOldBeta;
-			}
+	if( cg_teamColoredBeams->integer && ( team == TEAM_ALPHA || team == TEAM_BETA ) ) {
+		if( team == TEAM_ALPHA ) {
+			shader = cgs.media.shaderElectroBeamAAlpha;
 		} else {
-			shader = cgs.media.shaderElectroBeamOld;
+			shader = cgs.media.shaderElectroBeamABeta;
 		}
-
-		CG_SpawnPolyBeam( start, end, NULL, cg_ebbeam_width->integer, cg_ebbeam_time->value * 1000, cg_ebbeam_time->value * 1000 * 0.4f, shader, 128, 0 );
 	} else {
-		if( cg_teamColoredBeams->integer && ( team == TEAM_ALPHA || team == TEAM_BETA ) ) {
-			if( team == TEAM_ALPHA ) {
-				shader = cgs.media.shaderElectroBeamAAlpha;
-			} else {
-				shader = cgs.media.shaderElectroBeamABeta;
-			}
-		} else {
-			shader = cgs.media.shaderElectroBeamA;
-		}
-
-		CG_SpawnPolyBeam( start, end, NULL, cg_ebbeam_width->integer, 
-			cg_ebbeam_time->value * 1000, cg_ebbeam_time->value * 1000 * 0.4f, 
-			shader, 128, 0 );
+		shader = cgs.media.shaderElectroBeamA;
 	}
+
+	CG_SpawnPolyBeam( start, end, NULL, cg_ebbeam_width->integer, 
+		cg_ebbeam_time->value * 1000, cg_ebbeam_time->value * 1000 * 0.4f, 
+		shader, 128, 0 );
 }
 
 /*

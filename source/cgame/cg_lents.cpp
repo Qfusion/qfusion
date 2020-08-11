@@ -330,14 +330,9 @@ void CG_ElectroTrail2( const vec3_t start, const vec3_t end, int team ) {
 		CG_TeamColor( team, color );
 	}
 
-	if( cg_ebbeam_old->integer ) {
-		CG_ElectroPolyBeam( start, end, team );
-		CG_ElectroIonsTrail( start, end, color );
-	} else {
-		CG_ElectroPolyBeam( start, end, team );
-		CG_ElectroRings( start, end, color );
-		CG_ElectroIonsTrail2( start, end, color );
-	}
+	CG_ElectroPolyBeam( start, end, team );
+	CG_ElectroRings( start, end, color );
+	CG_ElectroIonsTrail2( start, end, color );
 }
 
 /*
