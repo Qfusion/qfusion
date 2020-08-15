@@ -15,6 +15,8 @@ class ClientStatic {
     array<ModelHandle @> modelDraw(GS::MAX_MODELS);
     array<SoundHandle @> soundPrecache(GS::MAX_SOUNDS);
 
+	CMedia media;
+
     bool demoPlaying;
     bool precacheDone;
 
@@ -92,6 +94,9 @@ void Precache()
 	for( int i = 0; i < MAX_MODELS; i++ ) {
 		ConfigString( CS_MODELS + i, CGame::GetConfigString( CS_MODELS + i ) );
 	}
+
+	cgs.media.PrecacheShaders();
+
     cgs.precacheDone = true;
 }
 

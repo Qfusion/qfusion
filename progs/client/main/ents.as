@@ -10,6 +10,8 @@ class CEntity {
 	int64 serverFrame;
 	CGame::Scene::Entity refEnt;
 	ModelSkeleton @skel;
+	Vec3 mins;
+	Vec3 maxs;
 
 	Vec3 velocity;
 	Vec3 prevVelocity;
@@ -123,6 +125,22 @@ void NewPacketEntityState( const EntityState @state ) {
 			cent.canExtrapolate = false;
 		}
 	}
+
+	if( state.solid == SOLID_BMODEL ) {	
+		GS::InlineModelBounds( GS::InlineModel( state.modelindex ), cent.mins, cent.maxs );
+	} else if( state.solid != 0 ) {
+		int x = 8 * ( state.solid & 31 );
+		int zd = 8 * ( ( state.solid >> 5 ) & 31 );
+		int zu = 8 * ( ( state.solid >> 10 ) & 63 ) - 32;
+
+		cent.mins[0] = cent.mins[1] = -x;
+		cent.maxs[0] = cent.maxs[1] = x;
+		cent.mins[2] = -zd;
+		cent.maxs[2] = zu;
+	} else {
+		cent.mins = Vec3(0.0f, 0.0f, 0.0f);
+		cent.maxs = Vec3(0.0f, 0.0f, 0.0f);
+	}
 }
 
 const float MIN_DRAWDISTANCE_FIRSTPERSON = 86;
@@ -214,6 +232,27 @@ bool GetEntitySpatilization( int entNum, Vec3 &out origin, Vec3 &out velocity ) 
 	velocity = cent.velocity;
 	return true;
 }
+
+void DrawEntityBox( CEntity @cent ) {
+	if( cg_drawEntityBoxes.integer == 0 )
+		return;
+	if( ( cent.refEnt.renderfx & RF_VIEWERMODEL ) != 0 )
+		return;
+	if( cent.current.solid == 0 )
+		return;
+	if( cg_drawEntityBoxes.integer < 2 && cent.current.solid == SOLID_BMODEL )
+		return;
+
+	Vec3 origin = cent.current.origin;
+	Vec3 mins = cent.mins, maxs = cent.maxs;
+
+	// push triggers don't move so aren't interpolated
+	if( cent.current.type != ET_PUSH_TRIGGER )
+		origin = cent.prev.origin + cg.lerpfrac * (cent.current.origin - cent.prev.origin);
+
+	DrawTestBox( origin, mins, maxs );
+}
+
 
 void AddLinkedModel( CEntity @cent ) {
 	bool barrel;
@@ -644,6 +683,9 @@ void UpdateEntities() {
 			case ET_ITEM:
 				UpdateItemEnt( @cent );
 				break;
+
+			case ET_PUSH_TRIGGER:
+				break;
 		}
 	}
 }
@@ -678,6 +720,10 @@ void LerpEntities( void ) {
 					LerpGenericEnt( cent );
 				}
 				break;
+
+			case ET_PUSH_TRIGGER:
+				break;
+
 			default:
 				break;
 		}
@@ -696,16 +742,26 @@ bool AddEntity( int entNum )
 	switch( cent.type ) {
 		case ET_GENERIC:
 			AddGenericEnt( @cent );
+			DrawEntityBox( @cent );
 			EntityLoopSound( state, ATTN_STATIC );
 			return true;
+
 		case ET_ITEM:
 			AddItemEnt( @cent );
+			DrawEntityBox( @cent );
 			EntityLoopSound( state, ATTN_IDLE );
 			return true;
+
 		case ET_PLASMA:
 			AddGenericEnt( @cent );
 			EntityLoopSound( state, ATTN_STATIC );
 			return true;
+
+		case ET_PUSH_TRIGGER:
+			DrawEntityBox( @cent );
+			EntityLoopSound( state, ATTN_STATIC );
+			return true;
+
 		default:
 			return false;
 	}

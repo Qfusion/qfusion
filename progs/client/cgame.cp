@@ -16,3 +16,6 @@ main/ents.as;
 main/main.as;
 main/cvars.as;
 main/events.as;
+main/media.as;
+main/polys.as;
+main/test.as;

@@ -27,6 +27,44 @@ const String S_COLOR_WHITE = "^7";
 const String S_COLOR_ORANGE = "^8";
 const String S_COLOR_GREY = "^9";
 
+uint8 COLOR_BLACK    = '0';
+uint8 COLOR_RED      = '1';
+uint8 COLOR_GREEN    = '2';
+uint8 COLOR_YELLOW   = '3';
+uint8 COLOR_BLUE     = '4';
+uint8 COLOR_CYAN     = '5';
+uint8 COLOR_MAGENTA  = '6';
+uint8 COLOR_WHITE    = '7';
+uint8 COLOR_ORANGE   = '8';
+uint8 COLOR_GREY     = '9';
+
+array<array<float>> colorTable =
+{
+	{ 0.0, 0.0, 0.0, 1.0 },
+	{ 1.0, 0.0, 0.0, 1.0 },
+	{ 0.0, 1.0, 0.0, 1.0 },
+	{ 1.0, 1.0, 0.0, 1.0 },
+	{ 0.0, 0.0, 1.0, 1.0 },
+	{ 0.0, 1.0, 1.0, 1.0 },
+	{ 1.0, 0.0, 1.0, 1.0 }, // magenta
+	{ 1.0, 1.0, 1.0, 1.0 },
+	{ 1.0, 0.5, 0.0, 1.0 }, // orange
+	{ 0.5, 0.5, 0.5, 1.0 }, // grey
+};
+
+const Vec4 colorBlack( 0.0f, 0.0f, 0.0f, 1.0f );
+const Vec4 colorRed( 1.0f, 0.0f, 0.0f, 1.0f );
+const Vec4 colorGreen( 0.0f, 1.0f, 0.0f, 1.0f );
+const Vec4 colorBlue( 0.0f, 0.0f, 1.0f, 1.0f );
+const Vec4 colorYellow( 1.0f, 1.0f, 0.0f, 1.0f );
+const Vec4 colorOrange( 1.0f, 0.5f, 0.0f, 1.0f );
+const Vec4 colorMagenta( 1.0f, 0.0f, 1.0f, 1.0f );
+const Vec4 colorCyan( 0.0f, 1.0f, 1.0f, 1.0f );
+const Vec4 colorWhite( 1.0f, 1.0f, 1.0f, 1.0f );
+const Vec4 colorLtGrey( 0.75f, 0.75f, 0.75f, 1.0f );
+const Vec4 colorMdGrey( 0.5f, 0.5f, 0.5f, 1.0f );
+const Vec4 colorDkGrey( 0.25f, 0.25f, 0.25f, 1.0f );
+
 const float ATTN_NONE  			= 0.0; 		// full volume the entire level
 const float ATTN_DISTANT  		= 0.5; 		// distant sound (most likely explosions)
 const float ATTN_NORM  			= 0.875; 	// players, weapons, etc
