@@ -149,6 +149,19 @@ class Touchpad
 
 namespace Scene
 {
+
+/**
+ * Global functions
+ */
+void PlaceRotatedModelOnTag(Entity@ ent, const Entity@ dest, const Orientation&in) {}
+void PlaceModelOnTag(Entity@ ent, const Entity@ dest, const Orientation&in) {}
+bool GrabTag(const Orientation&out, const Entity@ ent, const String&in) {}
+Boneposes@ RegisterTemporaryExternalBoneposes(ModelSkeleton@) {}
+bool LerpSkeletonPoses(ModelSkeleton@, int frame, int oldFrame, Boneposes@ boneposes, float frac) {}
+void TransformBoneposes(ModelSkeleton@, Boneposes@ boneposes, Boneposes@ sourceBoneposes) {}
+void SpawnPolyQuad(const Vec3&in, const Vec3&in, const Vec3&in, const Vec3&in, float stx, float sty, const Vec4&in, int64 dieTime, int64 fadeTime, ShaderHandle@, int tag) {}
+void SpawnPolyBeam(const Vec3&in start, const Vec3&in end, const Vec4&in, int width, int64 dieTime, int64 fadeTime, ShaderHandle@, int shaderLength, int tag) {}
+void AddEntityToScene(Entity@ ent) {}
 /**
  * Entity
  */
@@ -157,14 +170,16 @@ class Entity
 	/* properties */
 	int rtype;
 	int renderfx;
-	ModelHandle model;
+	ModelHandle@ model;
 	int frame;
 	Mat3 axis;
 	Vec3 origin;
 	Vec3 origin2;
 	Vec3 lightingOrigin;
+	Boneposes@ boneposes;
+	Boneposes@ oldBoneposes;
 	int shaderRGBA;
-	ShaderHandle customShader;
+	ShaderHandle@ customShader;
 	int64 shaderTime;
 	int oldFrame;
 	float backLerp;
@@ -183,6 +198,34 @@ class Entity
 
 }
 
+/**
+ * Orientation
+ */
+class Orientation
+{
+	/* properties */
+	Vec3 origin;
+	Mat3 axis;
+
+	/* behaviors */
+	Orientation() {}
+
+}
+
+/**
+ * Boneposes
+ */
+class Boneposes
+{
+}
+
+/**
+ * Poly
+ */
+class Poly
+{
+}
+
 
 }
 
@@ -194,23 +237,38 @@ namespace Screen
  * Global functions
  */
 void ShowOverlayMenu(int state, bool showCursor) {}
-int FontHeight(FontHandle font) {}
-void DrawPic(int x, int y, int w, int h, ShaderHandle shader, const Vec4&in color, float s1 = 0.0, float t1 = 0.0, float s2 = 1.0, float t2 = 1.0) {}
-void DrawPic(int x, int y, int w, int h, ShaderHandle shader, float s1 = 0.0, float t1 = 0.0, float s2 = 1.0, float t2 = 1.0) {}
-int DrawString(int x, int y, int align, const String&in str, FontHandle font, const Vec4&in color) {}
-int DrawString(int x, int y, int align, const String&in str, FontHandle font) {}
-int DrawStringWidth(int x, int y, int align, const String&in str, int maxWidth, FontHandle font, const Vec4&in color) {}
-int DrawStringWidth(int x, int y, int align, const String&in str, int maxWidth, FontHandle font) {}
-void DrawClampString(int x, int y, const String&in str, int xMin, int yMin, int xMax, int yMax, FontHandle font, const Vec4&in color) {}
-void DrawClampString(int x, int y, const String&in str, int xMin, int yMin, int xMax, int yMax, FontHandle font) {}
-int DrawClampMultineString(int x, int y, const String&in str, int maxWidth, int maxLines, FontHandle font, const Vec4&in color) {}
-int DrawClampMultineString(int x, int y, const String&in str, int maxWidth, int maxLines, FontHandle font) {}
-void DrawRawChar(int x, int y, int chr, FontHandle font, const Vec4&in color) {}
-void DrawRawChar(int x, int y, int chr, FontHandle font) {}
-void DrawClampChar(int x, int y, int chr, int xMin, int yMin, int xMax, int yMax, FontHandle font, const Vec4&in color) {}
-void DrawClampChar(int x, int y, int chr, int xMin, int yMin, int xMax, int yMax, FontHandle font) {}
-int StringWidth(const String&in str, FontHandle font, int maxLen = 0) {}
-int StrlenForWidth(const String&in str, FontHandle font, int maxWidth = 0) {}
+int FontHeight(FontHandle@ font) {}
+void DrawPic(int x, int y, int w, int h, ShaderHandle@ shader, const Vec4&in color, float s1 = 0.0, float t1 = 0.0, float s2 = 1.0, float t2 = 1.0) {}
+void DrawPic(int x, int y, int w, int h, ShaderHandle@ shader, float s1 = 0.0, float t1 = 0.0, float s2 = 1.0, float t2 = 1.0) {}
+int DrawString(int x, int y, int align, const String&in str, FontHandle@ font, const Vec4&in color) {}
+int DrawString(int x, int y, int align, const String&in str, FontHandle@ font) {}
+int DrawStringWidth(int x, int y, int align, const String&in str, int maxWidth, FontHandle@ font, const Vec4&in color) {}
+int DrawStringWidth(int x, int y, int align, const String&in str, int maxWidth, FontHandle@ font) {}
+void DrawClampString(int x, int y, const String&in str, int xMin, int yMin, int xMax, int yMax, FontHandle@ font, const Vec4&in color) {}
+void DrawClampString(int x, int y, const String&in str, int xMin, int yMin, int xMax, int yMax, FontHandle@ font) {}
+int DrawClampMultineString(int x, int y, const String&in str, int maxWidth, int maxLines, FontHandle@ font, const Vec4&in color) {}
+int DrawClampMultineString(int x, int y, const String&in str, int maxWidth, int maxLines, FontHandle@ font) {}
+void DrawRawChar(int x, int y, int chr, FontHandle@ font, const Vec4&in color) {}
+void DrawRawChar(int x, int y, int chr, FontHandle@ font) {}
+void DrawClampChar(int x, int y, int chr, int xMin, int yMin, int xMax, int yMax, FontHandle@ font, const Vec4&in color) {}
+void DrawClampChar(int x, int y, int chr, int xMin, int yMin, int xMax, int yMax, FontHandle@ font) {}
+int StringWidth(const String&in str, FontHandle@ font, int maxLen = 0) {}
+int StrlenForWidth(const String&in str, FontHandle@ font, int maxWidth = 0) {}
+
+}
+
+
+namespace Sound
+{
+
+/**
+ * Global functions
+ */
+void AddLoopSound(SoundHandle@, int entnum, float fvol, float attenuation) {}
+void StartRelativeSound(SoundHandle@, int entnum, int channel, float fvol, float attenuation) {}
+void StartGlobalSound(SoundHandle@, int channel, float fvol) {}
+void StartLocalSound(SoundHandle@, int channel, float fvol) {}
+void SetEntitySpatilization(int entnum, const Vec3&in origin, const Vec3&in velocity) {}
 
 }
 
@@ -325,13 +383,15 @@ int get_ExtrapolationTime() {}
 int get_SnapFrameTime() {}
 void AddEntityToSolidList(int number) {}
 void AddEntityToTriggerList(int number) {}
-ModelHandle RegisterModel(const String&in) {}
-SoundHandle RegisterSound(const String&in) {}
-ShaderHandle RegisterShader(const String&in) {}
-FontHandle RegisterFont(const String&in, int style, uint size) {}
-ModelSkeleton SkeletonForModel(ModelHandle) {}
+ModelHandle@ RegisterModel(const String&in) {}
+SoundHandle@ RegisterSound(const String&in) {}
+ShaderHandle@ RegisterShader(const String&in) {}
+FontHandle@ RegisterFont(const String&in, int style, uint size) {}
+ModelSkeleton@ SkeletonForModel(ModelHandle@) {}
 int TeamColorForEntity(int entNum) {}
+int PlayerColorForEntity(int entNum) {}
 bool IsViewerEntity(int entNum) {}
+String@ GetConfigString(int entNum) {}
 /**
  * ModelHandle
  */
@@ -423,8 +483,11 @@ const Firedef@ FiredefForPlayerState(const PlayerState@ state, int checkWeapon) 
 int DirToByte(const Vec3&in) {}
 bool IsEventEntity(const EntityState@) {}
 bool IsBrushModel(int modelindex) {}
-CModelHandle InlineModel(int modNum) {}
-void InlineModelBounds(CModelHandle handle, Vec3&out, Vec3&out) {}
+CModelHandle@ InlineModel(int modNum) {}
+void InlineModelBounds(CModelHandle@ handle, Vec3&out, Vec3&out) {}
+Item@ FindItemByTag(int tag) {}
+Item@ FindItemByName(const String&in) {}
+Item@ FindItemByClassname(const String&in) {}
 
 }
 
@@ -513,7 +576,6 @@ enum state_effects_e
 	EF_SHELL = 0x2,
 	EF_STRONG_WEAPON = 0x4,
 	EF_QUAD = 0x8,
-	EF_REGEN = 0x1000,
 	EF_CARRIER = 0x10,
 	EF_BUSYICON = 0x20,
 	EF_FLAG_TRAIL = 0x40,
@@ -521,10 +583,17 @@ enum state_effects_e
 	EF_TEAMCOLOR_TRANSITION = 0x100,
 	EF_EXPIRING_QUAD = 0x200,
 	EF_EXPIRING_SHELL = 0x400,
-	EF_EXPIRING_REGEN = 0x2000,
 	EF_GODMODE = 0x800,
+	EF_REGEN = 0x1000,
+	EF_EXPIRING_REGEN = 0x2000,
+	EF_GHOST = 0x4000,
+	EF_NOPORTALENTS = 0x10,
 	EF_PLAYER_STUNNED = 0x1,
 	EF_PLAYER_HIDENAME = 0x100,
+	EF_AMMOBOX = 0x10000,
+	EF_RACEGHOST = 0x20000,
+	EF_OUTLINE = 0x40000,
+	EF_GHOSTITEM = 0x80000,
 }
 
 enum matchstates_e
@@ -603,6 +672,8 @@ enum entitytype_e
 	ET_PARTICLES = 0x14,
 	ET_SPAWN_INDICATOR = 0x15,
 	ET_RADAR = 0x17,
+	ET_MONSTER_PLAYER = 0x18,
+	ET_MONSTER_CORPSE = 0x19,
 	ET_EVENT = 0x60,
 	ET_SOUNDEVENT = 0x61,
 }
@@ -1064,9 +1135,11 @@ const int MAX_MODELS;
 const int MAX_IMAGES;
 const int MAX_SKINFILES;
 const int MAX_ITEMS;
+const int MAX_SOUNDS;
 const int MAX_GENERAL;
 const int MAX_MMPLAYERINFOS;
 const int MAX_CONFIGSTRINGS;
+const int PREDICTABLE_EVENTS_MAX;
 
 /**
  * Global functions
@@ -1266,7 +1339,7 @@ class Time
 
 	/* methods */
 	Time& opAssign(const Time&in) {}
-	bool opEquals(const Time&in, const Time&in) {}
+	bool opEquals(const Time&in) {}
 
 }
 
@@ -1487,6 +1560,7 @@ class Item
 	const int inventoryMax;
 	const int ammoTag;
 	const int weakAmmoTag;
+	const int effects;
 
 	/* methods */
 	const String@ get_classname() const {}
