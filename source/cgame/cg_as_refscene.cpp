@@ -190,8 +190,6 @@ static const gs_asClassDescriptor_t asOrientationClassDescriptor = {
 	NULL, NULL,																 /* string factory hack */
 };
 
-//=======================================================================
-
 static const gs_asClassDescriptor_t asBoneposesClassDescriptor = {
 	"Boneposes",			   /* name */
 	asOBJ_REF | asOBJ_NOCOUNT, /* object type flags */
@@ -219,6 +217,16 @@ static bool asFunc_CG_GrabTag( orientation_t *tag, entity_t *ent, asstring_t *ta
 	return CG_GrabTag( tag, ent, tagname->buffer );
 }
 
+static void asFunc_CG_SpawnPolyQuad( const asvec3_t *v1, const asvec3_t *v2, const asvec3_t *v3, const asvec3_t *v4,
+	float stx, float sty, const asvec4_t *color, int64_t dietime, int64_t fadetime, struct shader_s *shader, int tag ) {
+	CG_SpawnPolyQuad( v1->v, v2->v, v3->v, v4->v, stx, sty, color->v, dietime, fadetime, shader, tag );
+}
+
+static void asFunc_CG_SpawnPolyBeam( const asvec3_t *start, const asvec3_t *end, const asvec4_t *color, int width,
+	int64_t dietime, int64_t fadetime, struct shader_s *shader, int shaderlength, int tag ) {
+	CG_SpawnPolyBeam( start->v, end->v, color->v, width, dietime, fadetime, shader, shaderlength, tag );
+}
+
 const gs_asglobfuncs_t asCGameRefSceneGlobalFuncs[] = {
 	{ "void PlaceRotatedModelOnTag( Entity @+ ent, const Entity @+ dest, const Orientation &in )",
 		asFUNCTION( CG_PlaceRotatedModelOnTag ), NULL },
@@ -233,6 +241,13 @@ const gs_asglobfuncs_t asCGameRefSceneGlobalFuncs[] = {
 		asFUNCTION( CG_LerpSkeletonPoses ), NULL },
 	{ "void TransformBoneposes( ModelSkeleton @, Boneposes @ boneposes, Boneposes @ sourceBoneposes )",
 		asFUNCTION( CG_TransformBoneposes ), NULL },
+
+	{ "void SpawnPolyQuad( const Vec3 &in, const Vec3 &in, const Vec3 &in, const Vec3 &in, float stx, float sty, " 
+	  "const Vec4 &in, int64 dieTime, int64 fadeTime, ShaderHandle @, int tag )",
+		asFUNCTION( asFunc_CG_SpawnPolyQuad ), NULL },
+	{ "void SpawnPolyBeam( const Vec3 &in start, const Vec3 &in end, const Vec4 &in, int width, int64 dieTime, int64 "
+	  "fadeTime, ShaderHandle @, int shaderLength, int tag )",
+		asFUNCTION( asFunc_CG_SpawnPolyBeam ), NULL },
 
 	{ "void AddEntityToScene( Entity @+ ent )", asFUNCTION( CG_AddEntityToScene ), NULL },
 
