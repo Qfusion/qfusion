@@ -1,6 +1,8 @@
 /shared/constants.as;
 /shared/utils.as;
 /shared/move.as;
+/shared/respaths.as;
+/shared/match.as;
 
 input/keys.as;
 input/mouse.as;
