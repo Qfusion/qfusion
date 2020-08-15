@@ -21,3 +21,4 @@ main/events.as;
 main/media.as;
 main/polys.as;
 main/test.as;
+main/effects.as;

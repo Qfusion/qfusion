@@ -299,12 +299,12 @@ void AddLinkedModel( CEntity @cent ) {
 	}
 
 	CGame::Scene::AddEntityToScene( @ent );
-	//CG_AddShellEffects( &ent, cent.effects );
+	AddShellEffects( @ent, cent.effects );
 
 	if( barrel && CGame::Scene::GrabTag( tag, @cent.refEnt, "tag_barrel2" ) ) {
 		CGame::Scene::PlaceModelOnTag( @ent, @cent.refEnt, tag );
 		CGame::Scene::AddEntityToScene( @ent );
-		//CG_AddShellEffects( &ent, cent.effects );
+		AddShellEffects( @ent, cent.effects );
 	}
 }
 
@@ -373,7 +373,7 @@ void AddFlagModelOnTag( CEntity @cent, int teamcolor, const String @tagname ) {
 
 		if( cent.localEffects[LOCALEFFECT_FLAGTRAIL_LAST_DROP] + FLAG_TRAIL_DROP_DELAY < cg.time ) {
 			cent.localEffects[LOCALEFFECT_FLAGTRAIL_LAST_DROP] = cg.time;
-			CG_FlagTrail( flag.origin, cent.trailOrigin, cent.ent.origin, teamcolor[0] / 255, teamcolor[1] / 255, teamcolor[2] / 255 );
+			CG_FlagTrail( flag.origin, cent.trailOrigin, cent.refEnt.origin, teamcolor[0] / 255, teamcolor[1] / 255, teamcolor[2] / 255 );
 		}
 	}
 */
@@ -460,6 +460,29 @@ void UpdateItemEnt( CEntity @cent ) {
 		@cent.refEnt.model = cgs.modelDraw[cent.current.modelindex];
 		@cent.skel = CGame::SkeletonForModel( cent.refEnt.model );
 	}
+}
+
+void UpdateFlagBaseEnt( CEntity @cent ) {
+	// set entity color based on team
+	cent.refEnt.shaderRGBA = TeamColorForEntity( cent.current.number );
+
+	cent.refEnt.scale = 1.0f;
+
+	@cent.item = GS::FindItemByTag( cent.current.itemNum );
+	if( @cent.item != null ) {
+		cent.effects |= cent.item.effects;
+	}
+
+	cent.refEnt.rtype = RT_MODEL;
+	cent.refEnt.frame = cent.current.frame;
+	cent.refEnt.oldFrame = cent.prev.frame;
+
+	// set up the model
+	int modelindex = cent.current.modelindex;
+	if( modelindex > 0 && modelindex < MAX_MODELS ) {
+		@cent.refEnt.model = @cgs.modelDraw[modelindex];
+	}
+	@cent.skel = CGame::SkeletonForModel( cent.refEnt.model );
 }
 
 void ExtrapolateLinearProjectile( CEntity @cent ) {
@@ -726,6 +749,46 @@ void AddItemEnt( CEntity @cent ) {
 	CGame::Scene::AddEntityToScene( @cent.refEnt );
 }
 
+void AddFlagBaseEnt( CEntity @cent ) {
+	if( cent.refEnt.scale == 0.0f )
+		return;
+
+	// if set to invisible, skip
+	if( cent.current.modelindex == 0 )
+		return;
+
+	// bobbing & auto-rotation
+	if( cent.current.type != ET_PLAYER && ( cent.effects & EF_ROTATE_AND_BOB ) != 0 ) {
+		EntAddBobEffect( cent );
+		cent.refEnt.axis = cg.autorotateAxis;
+	}
+
+	// render effects
+	cent.refEnt.renderfx = cent.renderfx | RF_NOSHADOW;
+
+	// let's see: We add first the modelindex 1 (the base)
+
+	if( @cent.skel != null ) {
+		// get space in cache, interpolate, transform, link
+		@cent.refEnt.boneposes = CGame::Scene::RegisterTemporaryExternalBoneposes( @cent.skel );
+		@cent.refEnt.oldBoneposes = @cent.refEnt.boneposes;
+		CGame::Scene::LerpSkeletonPoses( @cent.skel, cent.refEnt.frame, cent.refEnt.oldFrame, @cent.refEnt.boneposes, 1.0 - cent.refEnt.backLerp );
+		CGame::Scene::TransformBoneposes( @cent.skel, @cent.refEnt.boneposes, @cent.refEnt.boneposes );
+	}
+
+	// add to refresh list
+	CGame::Scene::AddEntityToScene( @cent.refEnt );
+
+	@cent.refEnt.customSkin = null;
+	@cent.refEnt.customShader = null;  // never use a custom skin on others
+
+	// see if we have to add a flag
+	if( ( cent.effects & EF_FLAG_TRAIL ) != 0 ) {
+		int teamcolor = TeamColorForEntity( cent.current.number );
+		AddFlagModelOnTag( cent, teamcolor, "tag_flag1" );
+	}
+}
+
 void UpdateEntities() {
 	for( int i = 0; i < CGame::Snap.numEntities; i++ ) {
 		auto @state = CGame::Snap.getEntityState( i );
@@ -759,6 +822,10 @@ void UpdateEntities() {
 
 			case ET_ITEM:
 				UpdateItemEnt( @cent );
+				break;
+
+			case ET_FLAG_BASE:
+				UpdateFlagBaseEnt( @cent );
 				break;
 
 			case ET_PUSH_TRIGGER:
@@ -843,6 +910,10 @@ bool AddEntityReal( CEntity @cent )
 		case ET_PUSH_TRIGGER:
 			DrawEntityBox( @cent );
 			EntityLoopSound( state, ATTN_STATIC );
+			return true;
+
+		case ET_FLAG_BASE:
+			AddFlagBaseEnt( @cent );
 			return true;
 
 		default:
