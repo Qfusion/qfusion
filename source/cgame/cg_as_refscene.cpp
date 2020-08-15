@@ -100,6 +100,12 @@ static void asrefentity_Reset( asrefentity_t *e )
 	Vector4Set( e->ent.shaderRGBA, 255, 255, 255, 255 );
 }
 
+static asrefentity_t *asrefentity_Assign( asrefentity_t *other, asrefentity_t *self )
+{
+	memcpy( &self->ent, &other->ent, sizeof( entity_t ) );
+	return self;
+}
+
 static const gs_asBehavior_t asrefentity_ObjectBehaviors[] = {
 	{ asBEHAVE_FACTORY, ASLIB_FUNCTION_DECL( Entity @, f, () ), asFUNCTION( objectRefEntity_Factory ),
 		asCALL_CDECL },
@@ -114,6 +120,8 @@ static const gs_asBehavior_t asrefentity_ObjectBehaviors[] = {
 
 static const gs_asMethod_t asrefentity_Methods[] = {
 	{ ASLIB_FUNCTION_DECL( void, reset, () ), asFUNCTION( asrefentity_Reset ),
+		asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( Entity &, opAssign, ( const Entity &in ) ), asFUNCTION( asrefentity_Assign ),
 		asCALL_CDECL_OBJLAST },
 
 	ASLIB_METHOD_NULL,
@@ -143,6 +151,8 @@ static const gs_asProperty_t asrefentity_Properties[] = {
 	{ ASLIB_PROPERTY_DECL( float, scale ), ASLIB_FOFFSET( asrefentity_t, ent.scale ) },
 	{ ASLIB_PROPERTY_DECL( float, radius ), ASLIB_FOFFSET( asrefentity_t, ent.radius ) },
 	{ ASLIB_PROPERTY_DECL( float, rotation ), ASLIB_FOFFSET( asrefentity_t, ent.rotation ) },
+
+	{ ASLIB_PROPERTY_DECL( SkinHandle @, customSkin ), ASLIB_FOFFSET( asrefentity_t, ent.customSkin ) },
 
 	ASLIB_PROPERTY_NULL,
 };

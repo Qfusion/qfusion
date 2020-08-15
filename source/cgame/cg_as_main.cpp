@@ -161,6 +161,17 @@ static const gs_asClassDescriptor_t asShaderHandleClassDescriptor = {
 	NULL, NULL									   /* string factory hack */
 };
 
+static const gs_asClassDescriptor_t asSkinHandleClassDescriptor = {
+	"SkinHandle",			   /* name */
+	asOBJ_REF | asOBJ_NOCOUNT, /* object type flags */
+	sizeof( void * ),		   /* size */
+	NULL,					   /* funcdefs */
+	NULL,					   /* object behaviors */
+	NULL,					   /* methods */
+	NULL,					   /* properties */
+	NULL, NULL				   /* string factory hack */
+};
+
 static const gs_asClassDescriptor_t asFontHandleClassDescriptor = {
 	"FontHandle",								   /* name */
 	asOBJ_REF | asOBJ_NOCOUNT, /* object type flags */
@@ -190,6 +201,7 @@ const gs_asClassDescriptor_t *const asCGameClassesDescriptors[] = {
 	&asFontHandleClassDescriptor,
 	&asSnapshotClassDescriptor,
 	&asModelSkeletonClassDescriptor,
+	&asSkinHandleClassDescriptor,
 
 	NULL,
 };
