@@ -1122,6 +1122,10 @@ extern cvar_t *cg_instabeam_time;
 void CG_ClearPolys( void );
 void CG_AddPolys( void );
 void CG_KillPolyBeamsByTag( int key );
+void CG_SpawnPolyQuad( const vec3_t v1, const vec3_t v2, const vec3_t v3, const vec3_t v4, float stx, float sty,
+	const vec4_t color, int64_t dietime, int64_t fadetime, struct shader_s *shader, int tag );
+void CG_SpawnPolyBeam( const vec3_t start, const vec3_t end, const vec4_t color, int width, int64_t dietime,
+	int64_t fadetime, struct shader_s *shader, int shaderlength, int tag );
 void CG_QuickPolyBeam( const vec3_t start, const vec3_t end, int width, struct shader_s *shader );
 void CG_LaserGunPolyBeam( const vec3_t start, const vec3_t end, const vec4_t color, int key );
 void CG_ElectroPolyboardBeam( const vec3_t start, const vec3_t end, int subdivisions, float phase, 
