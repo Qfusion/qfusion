@@ -97,6 +97,8 @@ void Precache()
 
 	cgs.media.PrecacheShaders();
 
+	cgs.media.PrecacheModels();
+
     cgs.precacheDone = true;
 }
 

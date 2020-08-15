@@ -234,7 +234,7 @@ bool GetEntitySpatilization( int entNum, Vec3 &out origin, Vec3 &out velocity ) 
 }
 
 void DrawEntityBox( CEntity @cent ) {
-	if( cg_drawEntityBoxes.integer == 0 )
+	if( !cg_drawEntityBoxes.boolean )
 		return;
 	if( ( cent.refEnt.renderfx & RF_VIEWERMODEL ) != 0 )
 		return;
@@ -669,6 +669,13 @@ void UpdateEntities() {
 			case ET_GENERIC:
 				UpdateGenericEnt( @cent );
 				break;
+			case ET_GIB:
+				if( cg_gibs.boolean ) {
+					cent.renderfx |= RF_NOSHADOW;
+					UpdateGenericEnt( @cent );
+					@cent.refEnt.model = @cgs.media.modIlluminatiGib;
+				}
+				break;
 
 			// projectiles with linear trajectories
 			case ET_BLASTER:
@@ -734,9 +741,8 @@ void LerpEntities( void ) {
 	}
 }
 
-bool AddEntity( int entNum )
+bool AddEntityReal( CEntity @cent )
 {
-	CEntity @cent = cgEnts[entNum];
 	EntityState @state = @cent.current;
 
 	switch( cent.type ) {
@@ -744,6 +750,13 @@ bool AddEntity( int entNum )
 			AddGenericEnt( @cent );
 			DrawEntityBox( @cent );
 			EntityLoopSound( state, ATTN_STATIC );
+			return true;
+
+		case ET_GIB:
+			if( cg_gibs.boolean ) {
+				AddGenericEnt( @cent );
+				EntityLoopSound( state, ATTN_STATIC );
+			}
 			return true;
 
 		case ET_ITEM:
@@ -766,6 +779,18 @@ bool AddEntity( int entNum )
 			return false;
 	}
 	return false;
+}
+
+bool AddEntity( int entNum )
+{
+	CEntity @cent = cgEnts[entNum];
+
+	bool res = AddEntityReal( @cent );
+	if( res ) {
+		cent.trailOrigin = cent.refEnt.origin;
+	}
+
+	return res;
 }
 
 }

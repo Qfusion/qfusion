@@ -9,6 +9,8 @@ Cvar cg_simpleItemsSize( "cg_simpleItemsSize", "16", CVAR_ARCHIVE );
 
 Cvar cg_volume_effects( "cg_volume_effects", "1.0", CVAR_ARCHIVE );
 
+Cvar cg_gibs( "cg_gibs", "1", CVAR_ARCHIVE );
+
 Cvar cg_drawEntityBoxes( "cg_drawEntityBoxes", "0", 0 );
 
 }
