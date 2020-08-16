@@ -22,3 +22,8 @@ main/media.as;
 main/polys.as;
 main/test.as;
 main/effects.as;
+
+main/ents/flag.as;
+main/ents/generic.as;
+main/ents/item.as;
+main/ents/projectile.as;
