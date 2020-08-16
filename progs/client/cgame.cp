@@ -27,3 +27,4 @@ main/ents/flag.as;
 main/ents/generic.as;
 main/ents/item.as;
 main/ents/projectile.as;
+main/ents/sprite.as;

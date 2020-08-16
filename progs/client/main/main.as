@@ -14,6 +14,7 @@ class ClientStatic {
     array<String> configStrings(GS::MAX_CONFIGSTRINGS);
     array<ModelHandle @> modelDraw(GS::MAX_MODELS);
     array<SoundHandle @> soundPrecache(GS::MAX_SOUNDS);
+    array<ShaderHandle @> imagePrecache(GS::MAX_IMAGES);
 
 	CMedia media;
 
@@ -67,6 +68,14 @@ void ConfigString( int index, const String @s )
 			@cgs.soundPrecache[index] = null;
 		} else if( s.substr( 0, 1 ) != "*" ) {
 			@cgs.soundPrecache[index] = RegisterSound( s );
+		}
+    } else if( index >= GS::CS_IMAGES && index < GS::CS_IMAGES + GS::MAX_IMAGES ) {
+		index -= GS::CS_IMAGES;
+
+		if( s.empty() ) {
+			@cgs.imagePrecache[index] = null;
+		} else {
+			@cgs.imagePrecache[index] = RegisterShader( s );
 		}
     }
 }

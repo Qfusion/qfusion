@@ -323,6 +323,13 @@ void UpdateEntities() {
 				UpdateFlagBaseEnt( @cent );
 				break;
 
+			case ET_RADAR:
+				cent.renderfx |= RF_NODEPTHTEST;
+			case ET_SPRITE:
+				cent.renderfx |= ( RF_NOSHADOW | RF_FULLBRIGHT );
+				UpdateSpriteEnt( @cent );
+				break;
+
 			case ET_PUSH_TRIGGER:
 				break;
 		}
@@ -354,10 +361,15 @@ void LerpEntities( void ) {
 			case ET_MONSTER_PLAYER:
 			case ET_MONSTER_CORPSE:
 				if( state.linearMovement ) {
-					ExtrapolateLinearProjectile( cent );
+					ExtrapolateLinearProjectile( @cent );
 				} else {
-					LerpGenericEnt( cent );
+					LerpGenericEnt( @cent );
 				}
+				break;
+
+			case ET_SPRITE:
+			case ET_RADAR:
+				LerpSpriteEnt( @cent );
 				break;
 
 			case ET_PUSH_TRIGGER:
@@ -381,34 +393,41 @@ bool AddEntityReal( CEntity @cent )
 		case ET_GENERIC:
 			AddGenericEnt( @cent );
 			DrawEntityBox( @cent );
-			EntityLoopSound( state, ATTN_STATIC );
+			EntityLoopSound( @state, ATTN_STATIC );
 			return true;
 
 		case ET_GIB:
 			if( cg_gibs.boolean ) {
 				AddGenericEnt( @cent );
-				EntityLoopSound( state, ATTN_STATIC );
+				EntityLoopSound( @state, ATTN_STATIC );
 			}
 			return true;
 
 		case ET_ITEM:
 			AddItemEnt( @cent );
 			DrawEntityBox( @cent );
-			EntityLoopSound( state, ATTN_IDLE );
+			EntityLoopSound( @state, ATTN_IDLE );
 			return true;
 
 		case ET_PLASMA:
 			AddGenericEnt( @cent );
-			EntityLoopSound( state, ATTN_STATIC );
+			EntityLoopSound( @state, ATTN_STATIC );
 			return true;
 
 		case ET_PUSH_TRIGGER:
 			DrawEntityBox( @cent );
-			EntityLoopSound( state, ATTN_STATIC );
+			EntityLoopSound( @state, ATTN_STATIC );
 			return true;
 
 		case ET_FLAG_BASE:
 			AddFlagBaseEnt( @cent );
+			return true;
+
+		case ET_SPRITE:
+		case ET_RADAR:
+			AddSpriteEnt( @cent );
+			EntityLoopSound( @state, ATTN_STATIC );
+			//canLight = true;
 			return true;
 
 		default:
@@ -419,7 +438,7 @@ bool AddEntityReal( CEntity @cent )
 
 bool AddEntity( int entNum )
 {
-	CEntity @cent = cgEnts[entNum];
+	CEntity @cent = @cgEnts[entNum];
 
 	bool res = AddEntityReal( @cent );
 	if( res ) {
