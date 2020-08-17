@@ -47,8 +47,8 @@ void ConfigString( int index, const String @s )
 {
     cgs.configStrings[index] = s;
 
-    if( index >= GS::CS_MODELS && index < GS::CS_MODELS + GS::MAX_MODELS ) {
-		index -= GS::CS_MODELS;
+    if( index >= CS_MODELS && index < CS_MODELS + GS::MAX_MODELS ) {
+		index -= CS_MODELS;
 
 		if( index == 0 ) {
 			return;
@@ -61,16 +61,16 @@ void ConfigString( int index, const String @s )
         } else {
             @cgs.modelDraw[index] = RegisterModel( s );
         }
-    } else if( index >= GS::CS_SOUNDS && index < GS::CS_SOUNDS + GS::MAX_SOUNDS ) {
-		index -= GS::CS_SOUNDS;
+    } else if( index >= CS_SOUNDS && index < CS_SOUNDS + GS::MAX_SOUNDS ) {
+		index -= CS_SOUNDS;
 
 		if( s.empty() ) {
 			@cgs.soundPrecache[index] = null;
 		} else if( s.substr( 0, 1 ) != "*" ) {
 			@cgs.soundPrecache[index] = RegisterSound( s );
 		}
-    } else if( index >= GS::CS_IMAGES && index < GS::CS_IMAGES + GS::MAX_IMAGES ) {
-		index -= GS::CS_IMAGES;
+    } else if( index >= CS_IMAGES && index < CS_IMAGES + GS::MAX_IMAGES ) {
+		index -= CS_IMAGES;
 
 		if( s.empty() ) {
 			@cgs.imagePrecache[index] = null;
@@ -107,6 +107,8 @@ void Precache()
 	cgs.media.PrecacheShaders();
 
 	cgs.media.PrecacheModels();
+
+	cgs.media.PrecacheSounds();
 
     cgs.precacheDone = true;
 }
