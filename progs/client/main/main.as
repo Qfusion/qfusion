@@ -1,38 +1,38 @@
 namespace CGame {
 
 class ClientStatic {
-    String serverName;
-    uint playerNum;
+	String serverName;
+	uint playerNum;
 	bool demoplaying;
-    String demoName;
-    bool pure;
+	String demoName;
+	bool pure;
 	uint snapFrameTime;
-    int protocol;
-    String demoExtension;
-    bool gameStart;
+	int protocol;
+	String demoExtension;
+	bool gameStart;
 
-    array<String> configStrings(GS::MAX_CONFIGSTRINGS);
-    array<ModelHandle @> modelDraw(GS::MAX_MODELS);
-    array<SoundHandle @> soundPrecache(GS::MAX_SOUNDS);
-    array<ShaderHandle @> imagePrecache(GS::MAX_IMAGES);
+	array<String> configStrings(GS::MAX_CONFIGSTRINGS);
+	array<ModelHandle @> modelDraw(GS::MAX_MODELS);
+	array<SoundHandle @> soundPrecache(GS::MAX_SOUNDS);
+	array<ShaderHandle @> imagePrecache(GS::MAX_IMAGES);
 
 	CMedia media;
 
-    bool demoPlaying;
-    bool precacheDone;
+	bool demoPlaying;
+	bool precacheDone;
 
 	CGame::Scene::Orientation weaponItemTag;
 }
 
 class ClientState {
-    int64 time;
-    int64 realTime;
-    int64 frameCount;
-    int frameTime;
-    int realFrameTime;
-    uint extrapolationTime;
+	int64 time;
+	int64 realTime;
+	int64 frameCount;
+	int frameTime;
+	int realFrameTime;
+	uint extrapolationTime;
 
-	float lerpfrac;                     // between oldframe and frame
+	float lerpfrac;					 // between oldframe and frame
 	float xerpTime;
 	float oldXerpTime;
 	float xerpSmoothFrac;
@@ -45,9 +45,9 @@ ClientState cg;
 
 void ConfigString( int index, const String @s )
 {
-    cgs.configStrings[index] = s;
+	cgs.configStrings[index] = s;
 
-    if( index >= CS_MODELS && index < CS_MODELS + GS::MAX_MODELS ) {
+	if( index >= CS_MODELS && index < CS_MODELS + GS::MAX_MODELS ) {
 		index -= CS_MODELS;
 
 		if( index == 0 ) {
@@ -57,11 +57,11 @@ void ConfigString( int index, const String @s )
 		if( s.empty() ) {
 			@cgs.modelDraw[index] = null;
 		} else if( s.substr( 0, 1 ) == "$" ) {  // indexed pmodel
-            //cgs.pModelsIndex[index] = RegisterPlayerModel( s );
-        } else {
-            @cgs.modelDraw[index] = RegisterModel( s );
-        }
-    } else if( index >= CS_SOUNDS && index < CS_SOUNDS + GS::MAX_SOUNDS ) {
+			//cgs.pModelsIndex[index] = RegisterPlayerModel( s );
+		} else {
+			@cgs.modelDraw[index] = RegisterModel( s );
+		}
+	} else if( index >= CS_SOUNDS && index < CS_SOUNDS + GS::MAX_SOUNDS ) {
 		index -= CS_SOUNDS;
 
 		if( s.empty() ) {
@@ -69,7 +69,7 @@ void ConfigString( int index, const String @s )
 		} else if( s.substr( 0, 1 ) != "*" ) {
 			@cgs.soundPrecache[index] = RegisterSound( s );
 		}
-    } else if( index >= CS_IMAGES && index < CS_IMAGES + GS::MAX_IMAGES ) {
+	} else if( index >= CS_IMAGES && index < CS_IMAGES + GS::MAX_IMAGES ) {
 		index -= CS_IMAGES;
 
 		if( s.empty() ) {
@@ -77,22 +77,22 @@ void ConfigString( int index, const String @s )
 		} else {
 			@cgs.imagePrecache[index] = RegisterShader( s );
 		}
-    }
+	}
 }
 
 void Init( const String @serverName, uint playerNum, bool demoPlaying, const String @demoName, 
-    bool pure, uint snapFrameTime, int protocol, const String @demoExtension, bool gameStart )
+	bool pure, uint snapFrameTime, int protocol, const String @demoExtension, bool gameStart )
 {
-    cgs.serverName = serverName;
-    cgs.playerNum = playerNum;
+	cgs.serverName = serverName;
+	cgs.playerNum = playerNum;
 	cgs.demoPlaying = demoPlaying;
-    cgs.demoName = demoName;
-    cgs.pure = pure;
+	cgs.demoName = demoName;
+	cgs.pure = pure;
 	cgs.snapFrameTime = snapFrameTime;
-    cgs.protocol = protocol;
-    cgs.demoExtension = demoExtension;
-    cgs.gameStart = gameStart;
-    cgs.precacheDone = false;
+	cgs.protocol = protocol;
+	cgs.demoExtension = demoExtension;
+	cgs.gameStart = gameStart;
+	cgs.precacheDone = false;
 
 	cgs.weaponItemTag.axis.identity();
 	cgs.weaponItemTag.origin = -14.0 * cgs.weaponItemTag.axis.x;
@@ -110,11 +110,11 @@ void Precache()
 
 	cgs.media.PrecacheSounds();
 
-    cgs.precacheDone = true;
+	cgs.precacheDone = true;
 }
 
 void Frame( int frameTime, int realFrameTime, int64 realTime, int64 serverTime, 
-    float stereoSeparation, uint extrapolationTime )
+	float stereoSeparation, uint extrapolationTime )
 {
 	cg.realTime = realTime;
 	cg.frameTime = frameTime;
@@ -142,16 +142,16 @@ void Frame( int frameTime, int realFrameTime, int64 realTime, int64 serverTime,
 			cg.xerpSmoothFrac = double( cg.time - CGame::Snap.serverTime ) / double( cg.extrapolationTime );
 		} else {
 			cg.xerpSmoothFrac = double( CGame::Snap.serverTime - cg.time ) / double( cg.extrapolationTime );
-            if( cg.xerpSmoothFrac < -1.0f ) cg.xerpSmoothFrac = -1.0f;
-            if( cg.xerpSmoothFrac >  0.0f ) cg.xerpSmoothFrac =  0.0f;
+			if( cg.xerpSmoothFrac < -1.0f ) cg.xerpSmoothFrac = -1.0f;
+			if( cg.xerpSmoothFrac >  0.0f ) cg.xerpSmoothFrac =  0.0f;
 			cg.xerpSmoothFrac = 1.0f - cg.xerpSmoothFrac;
 		}
 
-        if( cg.xerpSmoothFrac < 0.0f ) cg.xerpSmoothFrac = 0.0f;
-        if( cg.xerpSmoothFrac > 1.0f ) cg.xerpSmoothFrac = 1.0f;
+		if( cg.xerpSmoothFrac < 0.0f ) cg.xerpSmoothFrac = 0.0f;
+		if( cg.xerpSmoothFrac > 1.0f ) cg.xerpSmoothFrac = 1.0f;
 
-        if( cg.xerpTime < -( cg.extrapolationTime * 0.001f ) )
-            cg.xerpTime = -( cg.extrapolationTime * 0.001f );
+		if( cg.xerpTime < -( cg.extrapolationTime * 0.001f ) )
+			cg.xerpTime = -( cg.extrapolationTime * 0.001f );
 
 		//clamp( cg.xerpTime, -( cgs.extrapolationTime * 0.001f ), ( cgs.extrapolationTime * 0.001f ) );
 		//clamp( cg.oldXerpTime, 0, ( ( snapTime + cgs.extrapolationTime ) * 0.001f ) );
@@ -168,8 +168,8 @@ void Frame( int frameTime, int realFrameTime, int64 realTime, int64 serverTime,
 		}
 	}
 
-    if( cg.lerpfrac < 0.0f ) cg.xerpSmoothFrac = 0.0f;
-    if( cg.lerpfrac > 1.0f ) cg.xerpSmoothFrac = 1.0f;
+	if( cg.lerpfrac < 0.0f ) cg.xerpSmoothFrac = 0.0f;
+	if( cg.lerpfrac > 1.0f ) cg.xerpSmoothFrac = 1.0f;
 
 	Vec3 autorotate;
 	bool flipped = CGame::Camera::GetMainCamera().flipped;
