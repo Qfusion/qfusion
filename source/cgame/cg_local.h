@@ -1229,7 +1229,7 @@ void CG_asPrecache( void );
 void CG_asNewPacketEntityState( entity_state_t *state );
 void CG_asConfigString( int index, const char *str );
 void CG_asUpdateEntities( void );
-void CG_asEntityEvent( entity_state_t *ent, int ev, int parm, bool predicted );
+bool CG_asEntityEvent( entity_state_t *ent, int ev, int parm, bool predicted );
 
 void CG_asHUDInit( void );
 bool CG_asHUDDrawCrosshair( void );

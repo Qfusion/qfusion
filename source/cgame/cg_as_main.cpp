@@ -55,7 +55,7 @@ static cg_asApiFuncPtr_t cg_asCGameAPI[] = {
 	{ "void CGame::NewPacketEntityState( const EntityState @ )", &cgs.asGameState.newPacketEntityState, false },
 	{ "void CGame::ConfigString( int index, const String @ )", &cgs.asGameState.configString, false },
 	{ "void CGame::UpdateEntities()", &cgs.asGameState.updateEntities, false },
-	{ "void CGame::EntityEvent( const EntityState @, int ev, int parm, bool predicted )", &cgs.asGameState.entityEvent, false },
+	{ "bool CGame::EntityEvent( const EntityState @, int ev, int parm, bool predicted )", &cgs.asGameState.entityEvent, false },
 
 	{ nullptr, nullptr, false },
 };
@@ -721,10 +721,12 @@ void CG_asUpdateEntities( void )
 	CG_asCallScriptFunc( cgs.asGameState.updateEntities, cg_empty_as_cb, cg_empty_as_cb );
 }
 
-void CG_asEntityEvent( entity_state_t *ent, int ev, int parm, bool predicted )
+bool CG_asEntityEvent( entity_state_t *ent, int ev, int parm, bool predicted )
 {
+	uint8_t res = 0;
+
 	if( !cgs.asGameState.entityEvent ) {
-		return;
+		return false;
 	}
 	CG_asCallScriptFunc(
 		cgs.asGameState.entityEvent,
@@ -734,5 +736,7 @@ void CG_asEntityEvent( entity_state_t *ent, int ev, int parm, bool predicted )
 			ctx->SetArgDWord( 2, parm );
 			ctx->SetArgByte( 3, predicted );
 		},
-		cg_empty_as_cb );
+		[&res]( asIScriptContext *ctx ) { res = ctx->GetReturnByte(); } );
+
+	return res == 0 ? false : true;
 }
