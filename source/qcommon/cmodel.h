@@ -23,7 +23,7 @@ typedef struct cmodel_state_s cmodel_state_t;
 extern cvar_t *cm_noCurves;
 
 // debug/performance counter vars
-int c_pointcontents, c_traces, c_brush_traces;
+extern int c_pointcontents, c_traces, c_brush_traces;
 
 struct cmodel_s *CM_LoadMap( cmodel_state_t *cms, const char *name, bool clientload, unsigned *checksum );
 struct cmodel_s *CM_InlineModel( cmodel_state_t *cms, int num ); // 1, 2, etc
