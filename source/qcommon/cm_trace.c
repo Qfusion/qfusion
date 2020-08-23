@@ -59,6 +59,8 @@ typedef struct {
 	int *face_checkcounts;
 } traceWork_t;
 
+int c_pointcontents, c_traces, c_brush_traces;
+
 /*
  * CM_InitBoxHull
  *
