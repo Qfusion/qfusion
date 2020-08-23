@@ -1031,11 +1031,6 @@ void CG_UpdatePlayerModelEnt( centity_t *cent ) {
 		CG_Error( "CG_PlayerModelEntityNewState: ET_PLAYER without a skeleton\n" );
 	}
 
-	// Spawning (teleported bit) forces nobacklerp and the interruption of EVENT_CHANNEL animations
-	if( cent->current.teleported ) {
-		CG_PModel_ClearEventAnimations( cent->current.number );
-	}
-
 	// update parts rotation angles
 	for( i = LOWER; i < PMODEL_PARTS; i++ )
 		VectorCopy( pmodel->angles[i], pmodel->oldangles[i] );
