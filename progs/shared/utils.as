@@ -47,6 +47,11 @@ uint bound( uint x, uint a, uint b )
 	return x < a ? a : ( (x > b ? b : x) );
 }
 
+float HorizontalLength( const Vec3 &in v ) {
+	float x = v.x, y = v.y;
+	return sqrt( x * x + y * y );
+}
+
 int COLOR_RGBA( uint8 r, uint8 g, uint8 b, uint8 a )
 {
 	return (( r & 255 ) << 0 ) | (( g & 255 ) << 8 ) | (( b & 255 ) << 16 ) | (( a & 255 ) << 24 );

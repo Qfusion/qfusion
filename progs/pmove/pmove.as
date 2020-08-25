@@ -202,7 +202,7 @@ class PMoveLocal {
 		up_dist = ( up.x - start_o.x ) * ( up.x - start_o.x )
 				  + ( up.y - start_o.y ) * ( up.y - start_o.y );
 
-		if( down_dist >= up_dist || trace.allSolid || ( trace.fraction != 1.0 && !IsWalkablePlane( trace.planeNormal ) ) ) {
+		if( down_dist >= up_dist || trace.allSolid || ( trace.fraction != 1.0 && !GS::IsWalkablePlane( trace.planeNormal ) ) ) {
 			origin = down_o;
 			velocity = down_v;
 			return;
@@ -215,7 +215,7 @@ class PMoveLocal {
 
 		// Preserve speed when sliding up ramps
 		hspeed = HorizontalLength( start_v );
-		if( hspeed > 0.0f && IsWalkablePlane( trace.planeNormal ) ) {
+		if( hspeed > 0.0f && GS::IsWalkablePlane( trace.planeNormal ) ) {
 			if( trace.planeNormal.z >= 1.0f - SLIDEMOVE_PLANEINTERACT_EPSILON ) {
 				velocity = start_v;
 			} else {
@@ -692,7 +692,7 @@ class PMoveLocal {
 			groundSurfFlags = trace.surfFlags;
 			groundContents = trace.contents;
 
-			if( ( trace.fraction == 1.0f ) || ( !IsWalkablePlane( trace.planeNormal ) && !trace.startSolid ) ) {
+			if( ( trace.fraction == 1.0f ) || ( !GS::IsWalkablePlane( trace.planeNormal ) && !trace.startSolid ) ) {
 				pm.groundEntity = -1;
 				pm_flags &= ~PMF_ON_GROUND;
 			} else {
@@ -1076,7 +1076,7 @@ class PMoveLocal {
 
 			if( upPush >= 10
 				|| ( hspeed > pmoveState.stats[PM_STAT_DASHSPEED] && velocity[2] > 8 )
-				|| ( trace.fraction == 1.0f ) || ( !IsWalkablePlane( trace.planeNormal ) && !trace.startSolid ) ) {
+				|| ( trace.fraction == 1.0f ) || ( !GS::IsWalkablePlane( trace.planeNormal ) && !trace.startSolid ) ) {
 				normal = PlayerTouchWall( 20, 0.3f );
 				if( normal.length() == 0.0f ) {
 					return;

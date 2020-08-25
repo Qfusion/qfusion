@@ -47,13 +47,4 @@ int CrouchLerpPlayerSize( int timer, Vec3 &out mins, Vec3 &out maxs, float &out 
 	return timer;
 }
 
-bool IsWalkablePlane( const Vec3 &in normal ) {
-	return normal.z >= 0.7;
-}
-
-float HorizontalLength( const Vec3 &in v ) {
-	float x = v.x, y = v.y;
-	return sqrt( x * x + y * y );
-}
-
 }

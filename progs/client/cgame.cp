@@ -3,6 +3,8 @@
 /shared/move.as;
 /shared/respaths.as;
 /shared/match.as;
+/shared/misc.as;
+/shared/anim.as;
 
 input/keys.as;
 input/mouse.as;

@@ -124,21 +124,7 @@ void NewPacketEntityState( const EntityState @state ) {
 		}
 	}
 
-	if( state.solid == SOLID_BMODEL ) {	
-		GS::InlineModelBounds( GS::InlineModel( state.modelindex ), cent.mins, cent.maxs );
-	} else if( state.solid != 0 ) {
-		int x = 8 * ( state.solid & 31 );
-		int zd = 8 * ( ( state.solid >> 5 ) & 31 );
-		int zu = 8 * ( ( state.solid >> 10 ) & 63 ) - 32;
-
-		cent.mins[0] = cent.mins[1] = -x;
-		cent.maxs[0] = cent.maxs[1] = x;
-		cent.mins[2] = -zd;
-		cent.maxs[2] = zu;
-	} else {
-		cent.mins = Vec3(0.0f, 0.0f, 0.0f);
-		cent.maxs = Vec3(0.0f, 0.0f, 0.0f);
-	}
+	GS::BBoxForEntityState( @state, cent.mins, cent.maxs );
 }
 
 void EntityLoopSound( EntityState @state, float attenuation ) {
