@@ -1,6 +1,6 @@
 namespace GS {
 
-namespace PModel {
+namespace Anim {
 
 // The parts must be listed in draw order
 enum Part {
@@ -15,76 +15,198 @@ enum Part {
 // ANIMATIONS
 
 enum Anim {
-	ANIM_NONE = 0
-	, BOTH_DEATH1       //Death animation
-	, BOTH_DEAD1        //corpse on the ground
-	, BOTH_DEATH2
-	, BOTH_DEAD2
-	, BOTH_DEATH3
-	, BOTH_DEAD3
+	ANIM_NONE = 0,
+	BOTH_DEATH1,       //Death animation
+	BOTH_DEAD1,        //corpse on the ground
+	BOTH_DEATH2,
+	BOTH_DEAD2,
+	BOTH_DEATH3,
+	BOTH_DEAD3,
 
-	, LEGS_STAND_IDLE
-	, LEGS_WALK_FORWARD
-	, LEGS_WALK_BACK
-	, LEGS_WALK_LEFT
-	, LEGS_WALK_RIGHT
+	LEGS_STAND_IDLE,
+	LEGS_WALK_FORWARD,
+	LEGS_WALK_BACK,
+	LEGS_WALK_LEFT,
+	LEGS_WALK_RIGHT,
 
-	, LEGS_RUN_FORWARD
-	, LEGS_RUN_BACK
-	, LEGS_RUN_LEFT
-	, LEGS_RUN_RIGHT
+	LEGS_RUN_FORWARD,
+	LEGS_RUN_BACK,
+	LEGS_RUN_LEFT,
+	LEGS_RUN_RIGHT,
 
-	, LEGS_JUMP_LEG1
-	, LEGS_JUMP_LEG2
-	, LEGS_JUMP_NEUTRAL
-	, LEGS_LAND
+	LEGS_JUMP_LEG1,
+	LEGS_JUMP_LEG2,
+	LEGS_JUMP_NEUTRAL,
+	LEGS_LAND,
 
-	, LEGS_CROUCH_IDLE
-	, LEGS_CROUCH_WALK
+	LEGS_CROUCH_IDLE,
+	LEGS_CROUCH_WALK,
 
-	, LEGS_SWIM_FORWARD
-	, LEGS_SWIM_NEUTRAL
+	LEGS_SWIM_FORWARD,
+	LEGS_SWIM_NEUTRAL,
 
-	, LEGS_WALLJUMP
-	, LEGS_WALLJUMP_LEFT
-	, LEGS_WALLJUMP_RIGHT
-	, LEGS_WALLJUMP_BACK
+	LEGS_WALLJUMP,
+	LEGS_WALLJUMP_LEFT,
+	LEGS_WALLJUMP_RIGHT,
+	LEGS_WALLJUMP_BACK,
 
-	, LEGS_DASH
-	, LEGS_DASH_LEFT
-	, LEGS_DASH_RIGHT
-	, LEGS_DASH_BACK
+	LEGS_DASH,
+	LEGS_DASH_LEFT,
+	LEGS_DASH_RIGHT,
+	LEGS_DASH_BACK,
 
-	, TORSO_HOLD_BLADE
-	, TORSO_HOLD_PISTOL
-	, TORSO_HOLD_LIGHTWEAPON
-	, TORSO_HOLD_HEAVYWEAPON
-	, TORSO_HOLD_AIMWEAPON
+	TORSO_HOLD_BLADE,
+	TORSO_HOLD_PISTOL,
+	TORSO_HOLD_LIGHTWEAPON,
+	TORSO_HOLD_HEAVYWEAPON,
+	TORSO_HOLD_AIMWEAPON,
 
-	, TORSO_SHOOT_BLADE
-	, TORSO_SHOOT_PISTOL
-	, TORSO_SHOOT_LIGHTWEAPON
-	, TORSO_SHOOT_HEAVYWEAPON
-	, TORSO_SHOOT_AIMWEAPON
+	TORSO_SHOOT_BLADE,
+	TORSO_SHOOT_PISTOL,
+	TORSO_SHOOT_LIGHTWEAPON,
+	TORSO_SHOOT_HEAVYWEAPON,
+	TORSO_SHOOT_AIMWEAPON,
 
-	, TORSO_WEAPON_SWITCHOUT
-	, TORSO_WEAPON_SWITCHIN
+	TORSO_WEAPON_SWITCHOUT,
+	TORSO_WEAPON_SWITCHIN,
 
-	, TORSO_DROPHOLD
-	, TORSO_DROP
+	TORSO_DROPHOLD,
+	TORSO_DROP,
 
-	, TORSO_SWIM
+	TORSO_SWIM,
 
-	, TORSO_PAIN1
-	, TORSO_PAIN2
-	, TORSO_PAIN3
+	TORSO_PAIN1,
+	TORSO_PAIN2,
+	TORSO_PAIN3,
 
-	, PMODEL_TOTAL_ANIMATIONS
+	PMODEL_TOTAL_ANIMATIONS
+}
+
+enum Channel {
+	BASE_CHANNEL,
+	EVENT_CHANNEL,
+	PLAYERANIM_CHANNELS
 }
 
 class MoveAnim {
 	int moveflags = 0;              // moving direction
 	array<int> animState(PMODEL_PARTS, 0);
+}
+
+class AnimBuffer {
+	array<int> newanim(PMODEL_PARTS, 0);
+}
+
+class AnimState {
+	int anim = 0;
+	int frame = 0;
+	int64 startTimestamp = 0;
+	float lerpFrac = 0.0f;
+}
+
+class PModelAnimState {
+	// animations in the mixer
+	array<array<AnimState>> curAnims(PMODEL_PARTS, array<GS::Anim::AnimState>(PLAYERANIM_CHANNELS));
+	array<AnimBuffer> buffer(PLAYERANIM_CHANNELS);
+
+	// results
+	array<int> frame(PMODEL_PARTS, 0);
+	array<int> oldframe(PMODEL_PARTS, 0);
+	array<float> lerpFrac(PMODEL_PARTS, 0.0f);
+
+	void ClearEventAnimations() {
+		for( int i = LOWER; i < PMODEL_PARTS; i++ ) {
+			buffer[EVENT_CHANNEL].newanim[i] = ANIM_NONE;
+			curAnims[i][EVENT_CHANNEL].anim = ANIM_NONE;
+		}
+	}
+
+	void AddAnimation( int loweranim, int upperanim, int headanim, int channel ) {
+		array<int> newanim(PMODEL_PARTS);
+
+		newanim[LOWER] = loweranim;
+		newanim[UPPER] = upperanim;
+		newanim[HEAD] = headanim;
+
+		AnimBuffer @buf = @buffer[channel];
+
+		for( int i = LOWER; i < PMODEL_PARTS; i++ ) {
+			// ignore new events if in death
+			if( channel != BASE_CHANNEL && buf.newanim[i] != ANIM_NONE && ( buf.newanim[i] <= BOTH_DEAD1 ) ) {
+				continue;
+			}
+
+			if( newanim[i] != ANIM_NONE && ( newanim[i] < PMODEL_TOTAL_ANIMATIONS ) ) {
+				buf.newanim[i] = newanim[i];
+			}
+		}
+	}
+
+	/*
+	* BASE_CHANEL plays continuous animations forced to loop.
+	* if the same animation is received twice it will *not* restart
+	* but continue looping.
+	*
+	* EVENT_CHANNEL overrides base channel and plays until
+	* the animation is finished. Then it returns to base channel.
+	* If an animation is received twice, it will be restarted.
+	* If an event channel animation has a loop setting, it will
+	* continue playing it until a new event chanel animation
+	* is fired.
+	*/
+	void AnimToFrame( int64 curTime, PModelAnimSet @animSet ) {
+		for( int i = LOWER; i < PMODEL_PARTS; i++ ) {
+			for( int channel = BASE_CHANNEL; channel < PLAYERANIM_CHANNELS; channel++ ) {
+				AnimState @thisAnim = @curAnims[i][channel];
+
+				// see if there are new animations to be played
+				if( buffer[channel].newanim[i] != ANIM_NONE ) {
+					if( channel == EVENT_CHANNEL ||
+						( channel == BASE_CHANNEL && buffer[channel].newanim[i] != thisAnim.anim ) ) {
+						thisAnim.anim = buffer[channel].newanim[i];
+						thisAnim.startTimestamp = curTime;
+					}
+
+					buffer[channel].newanim[i] = ANIM_NONE;
+				}
+
+				if( thisAnim.anim != 0 ) {
+					bool forceLoop = channel == BASE_CHANNEL;
+
+					thisAnim.lerpFrac = FrameForTime( thisAnim.frame, curTime, thisAnim.startTimestamp,
+						animSet.frametime[thisAnim.anim], animSet.firstframe[thisAnim.anim], animSet.lastframe[thisAnim.anim],
+						animSet.loopingframes[thisAnim.anim], forceLoop );
+
+					// the animation was completed
+					if( thisAnim.frame < 0 ) {
+						thisAnim.anim = ANIM_NONE;
+					}
+				}
+			}
+		}
+
+		// we set all animations up, but now select which ones are going to be shown
+		for( int i = LOWER; i < PMODEL_PARTS; i++ ) {
+			int lastframe = frame[i];
+			int channel = ( curAnims[i][EVENT_CHANNEL].anim != ANIM_NONE ) ? EVENT_CHANNEL : BASE_CHANNEL;
+
+			frame[i] = curAnims[i][channel].frame;
+			lerpFrac[i] = curAnims[i][channel].lerpFrac;
+
+			if( lastframe == 0 || oldframe[i] == 0 ) {
+				oldframe[i] = frame[i];
+			} else if( frame[i] != lastframe ) {
+				oldframe[i] = lastframe;
+			}
+		}
+	}
+}
+
+class PModelAnimSet {
+	array<int> firstframe(PMODEL_TOTAL_ANIMATIONS);
+	array<int> lastframe(PMODEL_TOTAL_ANIMATIONS);
+	array<int> loopingframes(PMODEL_TOTAL_ANIMATIONS);
+	array<float> frametime(PMODEL_TOTAL_ANIMATIONS);
 }
 
 // movement flags for animation control
@@ -290,7 +412,6 @@ int UpdateBaseAnims( EntityState @state, Vec3 &in velocity ) {
 	SetBaseAnims( @pmanim, state.weapon );
 	return EncodeAnimState( pmanim.animState[LOWER], pmanim.animState[UPPER], pmanim.animState[HEAD] );
 }
-
 
 }
 

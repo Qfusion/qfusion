@@ -1806,4 +1806,3 @@ class Firedef
 class CModelHandle
 {
 }
-
