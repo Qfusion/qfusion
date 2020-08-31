@@ -31,6 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include <string>
 #include <map>
+#include <vector>
 #include "cg_local.h"
 
 pmodel_t cg_entPModels[MAX_EDICTS];
