@@ -1993,6 +1993,7 @@ static int asMAX_SOUNDS = MAX_SOUNDS;
 static int asMAX_GENERAL = MAX_GENERAL;
 static int asMAX_MMPLAYERINFOS = MAX_MMPLAYERINFOS;
 static int asMAX_CONFIGSTRINGS = MAX_CONFIGSTRINGS;
+static int asMAX_TEAMS = GS_MAX_TEAMS;
 
 static float asPREDICTABLE_EVENTS_MAX = PREDICTABLE_EVENTS_MAX;
 
@@ -2019,6 +2020,7 @@ static const gs_asglobproperties_t asGameGlobalConstants[] = {
 	{ "const int MAX_GENERAL", &asMAX_GENERAL },
 	{ "const int MAX_MMPLAYERINFOS", &asMAX_MMPLAYERINFOS },
 	{ "const int MAX_CONFIGSTRINGS", &asMAX_CONFIGSTRINGS },
+	{ "const int MAX_TEAMS", &asMAX_TEAMS },
 	{ "const int PREDICTABLE_EVENTS_MAX", &asPREDICTABLE_EVENTS_MAX },
 
 	{ NULL },
@@ -2027,6 +2029,7 @@ static const gs_asglobproperties_t asGameGlobalConstants[] = {
 static const gs_asglobproperties_t asGameGlobalProperties[] =
 {
 	{ "GameState gameState", &gs.gameState },
+	{ "int maxClients", &gs.maxclients },
 	{ NULL },
 };
 
