@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "addon_vec3.h"
 #include "addon_mat3.h"
 #include "addon_scriptarray.h"
+#include "addon_string.h"
 
 // CLASS: Vec3
 void objectVec3_DefaultConstructor( asvec3_t *self ) {
@@ -228,6 +229,14 @@ static CScriptArrayInterface *objectVec3_VecToArray( unsigned index, asvec3_t *s
 	return arr;
 }
 
+// same as vtos
+static asstring_t *objectVec3_VecToString( asvec3_t *self )
+{
+	char s[32];
+	int len = Q_snprintfz( s, 32, "(%+6.3f %+6.3f %+6.3f)", self->v[0], self->v[1], self->v[2] );
+	return objectString_FactoryBuffer( s, len );
+}
+
 void PreRegisterVec3Addon( asIScriptEngine *engine ) {
 	int r;
 
@@ -285,7 +294,8 @@ void RegisterVec3Addon( asIScriptEngine *engine ) {
 	r = engine->RegisterObjectMethod( "Vec3", "float &opIndex(uint)", asFUNCTION( objectVec3_Index ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "Vec3", "const float &opIndex(uint) const", asFUNCTION( objectVec3_Index ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 
-	r = engine->RegisterObjectMethod( "Vec3", "array<float> @toArray()", asFUNCTION( objectVec3_VecToArray ), asCALL_CDECL_OBJLAST );
+	r = engine->RegisterObjectMethod( "Vec3", "array<float> @toArray() const", asFUNCTION( objectVec3_VecToArray ), asCALL_CDECL_OBJLAST );
+	r = engine->RegisterObjectMethod( "Vec3", "String @toString() const", asFUNCTION( objectVec3_VecToString ), asCALL_CDECL_OBJLAST );
 
 	assert( r >= 0 );
 
