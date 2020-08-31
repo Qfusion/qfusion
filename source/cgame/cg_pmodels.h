@@ -19,6 +19,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // cg_pmodels.h -- local definitions for pmodels and view weapon
 
+#include <vector>
+#include <map>
+
 //=============================================================================
 //
 //							SPLITMODELS
@@ -118,9 +121,10 @@ typedef struct pmodelinfo_s {
 	struct  model_s *model;
 	struct cg_sexedSfx_s *sexedSfx;
 
-	int numRotators[PMODEL_PARTS];
-	int rotator[PMODEL_PARTS][16];
-	int rootanims[PMODEL_PARTS];
+	std::map<std::string, std::vector<int>> rotator;
+	std::map<std::string, int> rootanims;
+	std::vector<int> anim_data[4];
+	int numAnims;
 
 	gs_pmodel_animationset_t animSet; // animation script
 

@@ -252,12 +252,20 @@ const gs_asClassDescriptor_t * const asCGameCameraClassesDescriptors[] =
 	NULL
 };
 
+static asvec3_t CG_asViewSmoothPredictedSteps( asvec3_t v ) {
+	asvec3_t p;
+	VectorCopy( v.v, p.v );
+	CG_ViewSmoothPredictedSteps( p.v );
+	return p;
+}
+
 const gs_asglobfuncs_t asCGameCameraGlobalFuncs[] =
 {
 	{ "Viewport @GetViewport()", asFUNCTION( CG_asGetViewport ), NULL },
 	{ "Camera @GetMainCamera()", asFUNCTION( CG_asGetMainCamera ), NULL },
 	{ "float CalcVerticalFov( float fovX, float width, float height )", asFUNCTION( CalcVerticalFov ), NULL },
 	{ "float CalcHorizontalFov( float fovY, float width, float height )", asFUNCTION( CalcHorizontalFov ), NULL },
+	{ "Vec3 SmoothPredictedSteps( Vec3 &in org )", asFUNCTION( CG_asViewSmoothPredictedSteps ), NULL },
 
 	{ NULL }
 };

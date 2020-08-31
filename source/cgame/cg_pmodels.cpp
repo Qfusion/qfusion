@@ -29,6 +29,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // - Adding the Player model using Skeletal animation blending
 // by Jalisk0
 
+#include <string>
+#include <map>
 #include "cg_local.h"
 
 pmodel_t cg_entPModels[MAX_EDICTS];
@@ -61,7 +63,7 @@ void CG_ResetPModels( void ) {
 /*
 * CG_FindBoneNum
 */
-static int CG_FindBoneNum( cgs_skeleton_t *skel, char *bonename ) {
+static int CG_FindBoneNum( cgs_skeleton_t *skel, const char *bonename ) {
 	int j;
 
 	if( !skel || !bonename ) {
@@ -80,7 +82,7 @@ static int CG_FindBoneNum( cgs_skeleton_t *skel, char *bonename ) {
 /*
 * CG_ParseRotationBone
 */
-static void CG_ParseRotationBone( pmodelinfo_t *pmodelinfo, char *token, int pmpart ) {
+static void CG_ParseRotationBone( pmodelinfo_t *pmodelinfo, const char *token, const std::string &rb ) {
 	int boneNumber;
 
 	boneNumber = CG_FindBoneNum( CG_SkeletonForModel( pmodelinfo->model ), token );
@@ -95,8 +97,9 @@ static void CG_ParseRotationBone( pmodelinfo_t *pmodelinfo, char *token, int pmp
 	if( cg_debugPlayerModels->integer ) {
 		CG_Printf( "Script: CG_ParseRotationBone: %s is %i\n", token, boneNumber );
 	}
-	pmodelinfo->rotator[pmpart][pmodelinfo->numRotators[pmpart]] = boneNumber;
-	pmodelinfo->numRotators[pmpart]++;
+
+	auto &rotators = pmodelinfo->rotator[rb];
+	rotators.push_back( boneNumber );
 }
 
 /*
@@ -156,15 +159,21 @@ static bool CG_ParseAnimationScript( pmodelinfo_t *pmodelinfo, char *filename ) 
 	char *ptr, *token;
 	int rounder, counter, i;
 	bool debug = true;
-	int anim_data[4][PMODEL_TOTAL_ANIMATIONS];
-	int rootanims[PMODEL_PARTS];
+	auto &anim_data = pmodelinfo->anim_data;
+
 	int filenum;
 	int length;
 
-	memset( rootanims, -1, sizeof( rootanims ) );
 	pmodelinfo->sex = GENDER_MALE;
+	pmodelinfo->numAnims = 0;
 	rounder = 0;
-	counter = 1; //reseve 0 for 'no animation'
+	
+	//reseve 0 for 'no animation'
+	counter = 1;
+	for (i = 0; i < 4; i++)
+		anim_data[i].clear();
+	for (i = 0; i < 4; i++)
+		anim_data[i].push_back(0);
 
 	if( !cg_debugPlayerModels->integer ) {
 		debug = false;
@@ -185,6 +194,8 @@ static bool CG_ParseAnimationScript( pmodelinfo_t *pmodelinfo, char *filename ) 
 		CG_Printf( "Couldn't load animation script: %s\n", filename );
 		return false;
 	}
+
+	cgs_skeleton_t *skel = CG_SkeletonForModel( pmodelinfo->model );
 
 	// proceed
 	ptr = ( char * )buf;
@@ -232,53 +243,26 @@ static bool CG_ParseAnimationScript( pmodelinfo_t *pmodelinfo, char *filename ) 
 					}
 					break; //Error
 				}
-
-
 			}
 			// Rotation bone
 			else if( !Q_stricmp( token, "rotationbone" ) ) {
-				token = COM_ParseExt( &ptr, false );
+				token = Q_strlwr( COM_ParseExt( &ptr, false ) );
 				if( !token[0] ) {
 					break;             //Error (fixme)
+				}
 
-				}
-				if( !Q_stricmp( token, "upper" ) ) {
-					token = COM_ParseExt( &ptr, false );
-					if( !token[0] ) {
-						break;             //Error (fixme)
-					}
-					CG_ParseRotationBone( pmodelinfo, token, UPPER );
-				} else if( !Q_stricmp( token, "head" ) ) {
-					token = COM_ParseExt( &ptr, false );
-					if( !token[0] ) {
-						break;             //Error (fixme)
-					}
-					CG_ParseRotationBone( pmodelinfo, token, HEAD );
-				} else if( debug ) {
-					CG_Printf( "Script: ERROR: Unrecognized rotation pmodel part %s\n", token );
-					CG_Printf( "Script: ERROR: Valid names are: 'upper', 'head'\n" );
-				}
+				std::string rb(token);
+				CG_ParseRotationBone( pmodelinfo, token, rb );
 			}
 			// Root animation bone
 			else if( !Q_stricmp( token, "rootanim" ) ) {
-				token = COM_ParseExt( &ptr, false );
+				token = Q_strlwr( COM_ParseExt( &ptr, false ) );
 				if( !token[0] ) {
 					break;
 				}
 
-				if( !Q_stricmp( token, "upper" ) ) {
-					rootanims[UPPER] = CG_FindBoneNum( CG_SkeletonForModel( pmodelinfo->model ), COM_ParseExt( &ptr, false ) );
-				} else if( !Q_stricmp( token, "head" ) ) {
-					rootanims[HEAD] = CG_FindBoneNum( CG_SkeletonForModel( pmodelinfo->model ), COM_ParseExt( &ptr, false ) );
-				} else if( !Q_stricmp( token, "lower" ) ) {
-					rootanims[LOWER] = CG_FindBoneNum( CG_SkeletonForModel( pmodelinfo->model ), COM_ParseExt( &ptr, false ) );
-
-					//we parse it so it makes no error, but we ignore it later on
-					CG_Printf( "Script: WARNING: Ignored rootanim lower: Valid names are: 'upper', 'head' (lower is always skeleton root)\n" );
-				} else if( debug ) {
-					CG_Printf( "Script: ERROR: Unrecognized root animation pmodel part %s\n", token );
-					CG_Printf( "Script: ERROR: Valid names are: 'upper', 'head'\n" );
-				}
+				std::string ra(token);
+				pmodelinfo->rootanims[ra] = CG_FindBoneNum( skel, COM_ParseExt( &ptr, false ) );
 			}
 			// Tag bone (format is: tagmask "bone name" "tag name")
 			else if( !Q_stricmp( token, "tagmask" ) ) {
@@ -289,7 +273,7 @@ static bool CG_ParseAnimationScript( pmodelinfo_t *pmodelinfo, char *filename ) 
 					break; //Error
 
 				}
-				bonenum =  CG_FindBoneNum( CG_SkeletonForModel( pmodelinfo->model ), token );
+				bonenum = CG_FindBoneNum( skel, token );
 				if( bonenum != -1 ) {
 					char maskname[MAX_QPATH];
 					float forward, right, up, pitch, yaw, roll;
@@ -321,7 +305,7 @@ static bool CG_ParseAnimationScript( pmodelinfo_t *pmodelinfo, char *filename ) 
 			if( debug ) {
 				CG_Printf( "%i - ", i );
 			}
-			anim_data[rounder][counter] = i;
+			anim_data[rounder % 4].push_back(i);
 			rounder++;
 			if( rounder > 3 ) {
 				rounder = 0;
@@ -329,20 +313,11 @@ static bool CG_ParseAnimationScript( pmodelinfo_t *pmodelinfo, char *filename ) 
 					CG_Printf( " anim: %i\n", counter );
 				}
 				counter++;
-				if( counter == PMODEL_TOTAL_ANIMATIONS ) {
-					break;
-				}
 			}
 		}
 	}
 
 	CG_Free( buf );
-
-	//it must contain at least as many animations as a Q3 script to be valid
-	if( counter < PMODEL_TOTAL_ANIMATIONS ) {
-		CG_Printf( "PModel Error: Not enough animations(%i) at animations script: %s\n", counter, filename );
-		return false;
-	}
 
 	// animation ANIM_NONE (0) is always at frame 0, and it's never
 	// received from the game, but just used on the client when none
@@ -362,20 +337,12 @@ static bool CG_ParseAnimationScript( pmodelinfo_t *pmodelinfo, char *filename ) 
 	}
 
 	// validate frames inside skeleton range
-	{
-		cgs_skeleton_t *skel;
-		skel = CG_SkeletonForModel( pmodelinfo->model );
-		for( i = 0; i < counter; ++i ) {
-			Q_clamp( pmodelinfo->animSet.firstframe[i], 0, skel->numFrames - 1 );
-			Q_clamp( pmodelinfo->animSet.lastframe[i], 0, skel->numFrames - 1 );
-		}
+	for( i = 0; i < counter; ++i ) {
+		Q_clamp( pmodelinfo->animSet.firstframe[i], 0, skel->numFrames - 1 );
+		Q_clamp( pmodelinfo->animSet.lastframe[i], 0, skel->numFrames - 1 );
 	}
 
-	// store root bones of animations
-	rootanims[LOWER] = -1;
-	for( i = LOWER; i < PMODEL_PARTS; i++ )
-		pmodelinfo->rootanims[i] = rootanims[i];
-
+	pmodelinfo->numAnims = counter;
 	return true;
 }
 
@@ -434,7 +401,7 @@ struct pmodelinfo_s *CG_RegisterPlayerModel( const char *filename ) {
 		}
 	}
 
-	pmodelinfo = ( pmodelinfo_t * )CG_Malloc( sizeof( pmodelinfo_t ) );
+	pmodelinfo = new( CG_Malloc( sizeof( pmodelinfo_t ) ) )( pmodelinfo_t );
 	if( !CG_LoadPlayerModel( pmodelinfo, filename ) ) {
 		CG_Free( pmodelinfo );
 		return NULL;
@@ -1205,7 +1172,7 @@ void CG_AddPModel( centity_t *cent ) {
 	CG_LerpSkeletonPoses( cent->skel, animState->frame[UPPER], animState->oldframe[UPPER], blendpose, animState->lerpFrac[UPPER] );
 
 	// blend it into base pose
-	rootanim = pmodel->pmodelinfo->rootanims[UPPER];
+	rootanim = pmodel->pmodelinfo->rootanims["upper"];
 	CG_RecurseBlendSkeletalBone( blendpose, cent->ent.boneposes, CG_BoneNodeFromNum( cent->skel, rootanim ), 1.0f );
 
 	// add skeleton effects (pose is unmounted yet)
@@ -1223,20 +1190,25 @@ void CG_AddPModel( centity_t *cent ) {
 
 		AnglesToAxis( tmpangles, cent->ent.axis );
 
-		// apply UPPER and HEAD angles to rotator bones
+		// apply angles to rotator bones
 		// also add rotations from velocity leaning
-		for( i = UPPER; i < PMODEL_PARTS; i++ ) {
+		std::map<std::string, std::vector<int>>::const_iterator it;
+		for( it = pmodel->pmodelinfo->rotator.begin(); it != pmodel->pmodelinfo->rotator.end(); ++it ) {
 			// rotator bones
-			if( pmodel->pmodelinfo->numRotators[i] ) {
-				// lerp rotation and divide angles by the number of rotation bones
-				for( j = 0; j < 3; j++ ) {
-					tmpangles[j] = LerpAngle( pmodel->oldangles[i][j], pmodel->angles[i][j], cg.lerpfrac );
-					tmpangles[j] /= pmodel->pmodelinfo->numRotators[i];
-				}
-
-				for( j = 0; j < pmodel->pmodelinfo->numRotators[i]; j++ )
-					CG_RotateBonePose( tmpangles, &cent->ent.boneposes[pmodel->pmodelinfo->rotator[i][j]] );
+			auto &rotators = it->second;
+			if( rotators.empty() ) {
+				continue;
 			}
+
+			// lerp rotation and divide angles by the number of rotation bones
+			int numRotators = rotators.size();
+			for( j = 0; j < 3; j++ ) {
+				tmpangles[j] = LerpAngle( pmodel->oldangles[i][j], pmodel->angles[i][j], cg.lerpfrac );
+				tmpangles[j] /= (float)numRotators;
+			}
+
+			for( j = 0; j < numRotators; j++ )
+				CG_RotateBonePose( tmpangles, &cent->ent.boneposes[rotators[j]] );
 		}
 	}
 

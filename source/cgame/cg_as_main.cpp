@@ -84,14 +84,6 @@ static entity_state_t *asSnapshot_getEntityState( int i, snapshot_t *snap )
 	return &snap->entities[i];
 }
 
-static const gs_asFuncdef_t asCGameSnapshotFuncdefs[] = {
-	ASLIB_FUNCDEF_NULL,
-};
-
-static const gs_asBehavior_t asCGameSnapshotObjectBehaviors[] = {
-	ASLIB_BEHAVIOR_NULL,
-};
-
 static const gs_asMethod_t asCGameSnapshotMethods[] = {
 	{ ASLIB_FUNCTION_DECL( EntityState @, getEntityState, ( int index ) const ), asFUNCTION( asSnapshot_getEntityState ),
 		asCALL_CDECL_OBJLAST },
@@ -119,8 +111,8 @@ static const gs_asClassDescriptor_t asSnapshotClassDescriptor = {
 	"Snapshot",						/* name */
 	asOBJ_REF | asOBJ_NOCOUNT,		/* object type flags */
 	sizeof( snapshot_t ),			/* size */
-	asCGameSnapshotFuncdefs,		/* funcdefs */
-	asCGameSnapshotObjectBehaviors, /* object behaviors */
+	NULL,		/* funcdefs */
+	NULL, /* object behaviors */
 	asCGameSnapshotMethods,			/* methods */
 	asCGameSnapshotProperties,		/* properties */
 	NULL, NULL,						/* string factory hack */
@@ -194,6 +186,47 @@ static const gs_asClassDescriptor_t asModelSkeletonClassDescriptor = {
 	NULL, NULL									   /* string factory hack */
 };
 
+//======================================================================
+
+static uint32_t asFunc_PlayerModelGetNumAnims( pmodelinfo_t *pmodel ) {
+	return pmodel->numAnims;
+}
+
+static void asFunc_PlayerModelGetAnim( uint32_t idx,
+	int *firstframe, int *lastframe, int *loopframe, int *fps, pmodelinfo_t *pmodel ) {
+	if( idx >= pmodel->numAnims ) {
+		return;
+	}
+
+	auto &anim_data = pmodel->anim_data[idx];
+	*firstframe = anim_data[0];
+	*lastframe = anim_data[1];
+	*loopframe = anim_data[2];
+	*fps = anim_data[3];
+}
+
+static const gs_asMethod_t asPlayerModelMethods[] = {
+	{ ASLIB_FUNCTION_DECL( uint, get_numAnims, () const ), asFUNCTION( asFunc_PlayerModelGetNumAnims ),
+		asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( void, getAnim, (uint index, int &out first, int &out last, int &out loop, int &out fps) const ), asFUNCTION( asFunc_PlayerModelGetAnim ),
+		asCALL_CDECL_OBJLAST },
+
+	ASLIB_METHOD_NULL,
+};
+
+static const gs_asClassDescriptor_t asPlayerModelClassDescriptor = {
+	"PlayerModel",							   /* name */
+	asOBJ_REF | asOBJ_NOCOUNT, /* object type flags */
+	sizeof( void * ),							   /* size */
+	NULL,										   /* funcdefs */
+	NULL,		   /* object behaviors */
+	asPlayerModelMethods,										   /* methods */
+	NULL,										   /* properties */
+	NULL, NULL									   /* string factory hack */
+};
+
+//======================================================================
+
 const gs_asClassDescriptor_t *const asCGameClassesDescriptors[] = {
 	&asModelHandleClassDescriptor,
 	&asSoundHandleClassDescriptor,
@@ -202,6 +235,7 @@ const gs_asClassDescriptor_t *const asCGameClassesDescriptors[] = {
 	&asSnapshotClassDescriptor,
 	&asModelSkeletonClassDescriptor,
 	&asSkinHandleClassDescriptor,
+	&asPlayerModelClassDescriptor,
 
 	NULL,
 };
@@ -210,11 +244,12 @@ const gs_asClassDescriptor_t *const asCGameClassesDescriptors[] = {
 
 static void asFunc_Print( const asstring_t *str )
 {
-	if( !str || !str->buffer ) {
-		return;
-	}
-
 	CG_Printf( "%s", str->buffer );
+}
+
+static void asFunc_Error( const asstring_t *str )
+{
+	CG_Error( "%s", str->buffer );
 }
 
 static void *asFunc_RegisterModel( const asstring_t *str )
@@ -230,6 +265,11 @@ static void *asFunc_RegisterSound( const asstring_t *str )
 static void *asFunc_RegisterShader( const asstring_t *str )
 {
 	return CG_RegisterShader( str->buffer );
+}
+
+static void *asFunc_RegisterSkin( const asstring_t *str )
+{
+	return trap_R_RegisterSkin( str->buffer );
 }
 
 static void *asFunc_RegisterFont( const asstring_t *str, int style, unsigned size )
@@ -250,6 +290,11 @@ static int asFunc_SnapFrameTime( void )
 static void *asFunc_SkeletonForModel( struct model_s *m )
 {
 	return CG_SkeletonForModel( m );
+}
+
+static void *asFunc_RegisterPlayerModel( const asstring_t *str )
+{
+	return CG_RegisterPlayerModel( str->buffer );
 }
 
 static int asFunc_TeamColorForEntity( int entNum ) {
@@ -289,8 +334,22 @@ static asstring_t *asFunc_GetConfigString( int index )
 	return cgs.asExport->asStringFactoryBuffer( cs, strlen( cs ) );
 }
 
+static asvec3_t asFunc_GetPredictionError( void )
+{
+	asvec3_t v;
+	VectorCopy( cg.predictionError, v.v );
+	return v;
+}
+
+static bool asFunc_IsPureFile( asstring_t *fn )
+{
+	return trap_FS_IsPureFile( fn->buffer );
+}
+
 static const gs_asglobfuncs_t asCGameGlobalFuncs[] = {
 	{ "void Print( const String &in )", asFUNCTION( asFunc_Print ), NULL },
+	{ "void Error( const String &in )", asFUNCTION( asFunc_Error ), NULL },
+
 	{ "int get_ExtrapolationTime()", asFUNCTION( asFunc_ExtrapolationTime ), NULL },
 	{ "int get_SnapFrameTime()", asFUNCTION( asFunc_SnapFrameTime ), NULL },
 	{ "void AddEntityToSolidList( int number )", asFUNCTION( CG_AddEntityToSolidList ), NULL },
@@ -300,12 +359,18 @@ static const gs_asglobfuncs_t asCGameGlobalFuncs[] = {
 	{ "SoundHandle @RegisterSound( const String &in )", asFUNCTION( asFunc_RegisterSound ), NULL },
 	{ "ShaderHandle @RegisterShader( const String &in )", asFUNCTION( asFunc_RegisterShader ), NULL },
 	{ "FontHandle @RegisterFont( const String &in, int style, uint size )", asFUNCTION( asFunc_RegisterFont ), NULL },
+	{ "SkinHandle @RegisterSkin( const String &in )", asFUNCTION( asFunc_RegisterSkin ), NULL },
+	{ "PlayerModel @RegisterPlayerModel( const String &in )", asFUNCTION( asFunc_RegisterPlayerModel ), NULL },
+
 	{ "ModelSkeleton @SkeletonForModel( ModelHandle @ )", asFUNCTION( asFunc_SkeletonForModel ), NULL },
 
 	{ "int TeamColorForEntity( int entNum )", asFUNCTION( asFunc_TeamColorForEntity ), NULL },
 	{ "int PlayerColorForEntity( int entNum )", asFUNCTION( asFunc_PlayerColorForEntity ), NULL },
 	{ "bool IsViewerEntity( int entNum )", asFUNCTION( asFunc_IsViewerEntity ), NULL },
 	{ "String @GetConfigString( int entNum )", asFUNCTION( asFunc_GetConfigString ), NULL },
+	{ "Vec3 PredictionError()", asFUNCTION( asFunc_GetPredictionError ), NULL },
+
+	{ "bool IsPureFile( const String &in )", asFUNCTION( asFunc_IsPureFile ), NULL },
 
 	{ NULL },
 };
