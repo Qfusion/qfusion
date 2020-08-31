@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../qas_precompiled.h"
 #include "addon_vec4.h"
 #include "addon_scriptarray.h"
+#include "addon_string.h"
 
 // CLASS: Vec4
 void objectVec4_DefaultConstructor( asvec4_t *self ) {
@@ -184,6 +185,14 @@ static CScriptArrayInterface *objectVec4_VecToArray( unsigned index, asvec4_t *s
 	return arr;
 }
 
+// same as vtos
+static asstring_t *objectVec4_VecToString( asvec4_t *self )
+{
+	char s[64];
+	int len = Q_snprintfz( s, 32, "(%+6.3f %+6.3f %+6.3f %+6.3f)", self->v[0], self->v[1], self->v[2], self->v[3] );
+	return objectString_FactoryBuffer( s, len );
+}
+
 void PreRegisterVec4Addon( asIScriptEngine *engine ) {
 	int r;
 
@@ -236,7 +245,8 @@ void RegisterVec4Addon( asIScriptEngine *engine ) {
 	r = engine->RegisterObjectMethod( "Vec4", "const float &opIndex(uint) const", asFUNCTION( objectVec4_Index ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 
 	r = engine->RegisterObjectMethod(
-		"Vec4", "array<float> @toArray()", asFUNCTION( objectVec4_VecToArray ), asCALL_CDECL_OBJLAST );
+		"Vec4", "array<float> @toArray() const", asFUNCTION( objectVec4_VecToArray ), asCALL_CDECL_OBJLAST );
+	r = engine->RegisterObjectMethod( "Vec4", "String @toString() const", asFUNCTION( objectVec4_VecToString ), asCALL_CDECL_OBJLAST );
 
 	// properties
 	r = engine->RegisterObjectProperty( "Vec4", "float x", asOFFSET( asvec4_t, v[0] ) ); assert( r >= 0 );
