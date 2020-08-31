@@ -54,12 +54,12 @@ float HorizontalLength( const Vec3 &in v ) {
 
 int COLOR_RGB( uint8 r, uint8 g, uint8 b )
 {
-	return (( r & 255 ) << 0 ) | (( g & 255 ) << 8 ) | (( b & 255 ) << 16 );
+	return ( r  << 0 ) | ( g << 8 ) | ( b << 16 );
 }
 
 int COLOR_RGBA( uint8 r, uint8 g, uint8 b, uint8 a )
 {
-	return (( r & 255 ) << 0 ) | (( g & 255 ) << 8 ) | (( b & 255 ) << 16 ) | (( a & 255 ) << 24 );
+	return ( r << 0 ) | ( g << 8 ) | ( b << 16 ) | ( a << 24 );
 }
 
 int COLOR_ZEROA( int c )
@@ -86,10 +86,10 @@ int ColorIndex( uint8 c ) {
 }
 
 Vec4 ColorToVec4( int c ) {
-	return Vec4( ( c & 255 ) / 255.0f,
-		( (c>>8) & 255 ) / 255.0f,
-		( (c>>16) & 255 ) / 255.0f,
-		( (c>>24) & 255 ) / 255.0f );
+	return Vec4( float( c & 255 ) / 255.0f,
+		float( (c>>8) & 255 ) / 255.0f,
+		float( (c>>16) & 255 ) / 255.0f,
+		float( (c>>24) & 255 ) / 255.0f );
 }
 
 int Vec4ToColor( const Vec4 &in v ) {
@@ -118,26 +118,11 @@ int ReadColorRGBString( const String &in str ) {
 	array<String @> @parts = StringUtils::Split( str, " " );
 
 	if( parts.size() == 3 ) {
-		int r = int( parts[0] );
-		int g = int( parts[1] );
-		int b = int( parts[2] );
+		int r = bound( 0, int( parts[0] ), 255 );
+		int g = bound( 0, int( parts[1] ), 255 );
+		int b = bound( 0, int( parts[2] ), 255 );
 		return COLOR_RGB( r, g, b );
 	}
 
 	return -1;
-}
-
-Vec3 stringToVec3( const String &str )
-{
-	float x, y, z;
-	
-	x = str.getToken(0).toFloat();
-	y = str.getToken(1).toFloat();
-	z = str.getToken(2).toFloat();
-	return Vec3( x, y, z );
-}
-
-String @vec3ToString( Vec3 vec )
-{
-	 return "" + vec.x + " " + vec.y + " " + vec.z;
 }

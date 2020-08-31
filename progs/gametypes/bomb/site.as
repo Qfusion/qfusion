@@ -260,7 +260,7 @@ void misc_capture_area_indicator( Entity @ent )
 
 		if ( trace.startSolid )
 		{
-			G_Print( ent.classname + " at " + vec3ToString(ent.origin) + " is in a solid, removing...\n" );
+			G_Print( ent.classname + " at " + ent.origin.toString() + " is in a solid, removing...\n" );
 
 			ent.freeEntity();
 
@@ -347,7 +347,7 @@ void trigger_capture_area_think( Entity @ent )
 	array<Entity @> @targets = ent.findTargets();
 	if ( targets.empty() )
 	{
-		G_Print( "trigger_capture_area at " + vec3ToString(ent.origin) + " has no target, removing...\n" );
+		G_Print( "trigger_capture_area at " + ent.origin.toString() + " has no target, removing...\n" );
 		ent.freeEntity();
 	}
 }
