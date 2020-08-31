@@ -73,3 +73,8 @@ const float ATTN_NORM  			= 0.875; 	// players, weapons, etc
 const float ATTN_IDLE  			= 2.5;  	// stuff around you
 const float ATTN_STATIC  		= 5.0; 		// diminish very rapidly with distance
 const float ATTN_FOOTSTEPS  	= 10.0; 	// must be very close to hear it
+
+const String DEFAULT_PLAYERMODEL = "bigvic";
+const String DEFAULT_PLAYERSKIN  = "default";
+const String DEFAULT_TEAMALPHA_COLOR = "255 70 45";
+const String DEFAULT_TEAMBETA_COLOR  = "0 255 70";

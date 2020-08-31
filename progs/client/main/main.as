@@ -15,6 +15,15 @@ class ClientStatic {
 	array<ModelHandle @> modelDraw(GS::MAX_MODELS);
 	array<SoundHandle @> soundPrecache(GS::MAX_SOUNDS);
 	array<ShaderHandle @> imagePrecache(GS::MAX_IMAGES);
+	array<SkinHandle @> skinPrecache(GS::MAX_SKINFILES);
+
+	array<PlayerModel @> pModels(GS::MAX_MODELS);
+	PlayerModel @basePModelInfo; //fall back replacements
+	SkinHandle @baseSkin;
+
+	array<PlayerModel @> teamModelInfo(GS::MAX_TEAMS);
+	array<SkinHandle @> teamCustomSkin(GS::MAX_TEAMS); // user defined
+	array<int> teamColor(GS::MAX_TEAMS);
 
 	CMedia media;
 
@@ -57,7 +66,7 @@ void ConfigString( int index, const String @s )
 		if( s.empty() ) {
 			@cgs.modelDraw[index] = null;
 		} else if( s.substr( 0, 1 ) == "$" ) {  // indexed pmodel
-			//cgs.pModelsIndex[index] = RegisterPlayerModel( s );
+			@cgs.pModels[index] = RegisterPlayerModel( s.substr( 1 ) );
 		} else {
 			@cgs.modelDraw[index] = RegisterModel( s );
 		}
@@ -77,7 +86,34 @@ void ConfigString( int index, const String @s )
 		} else {
 			@cgs.imagePrecache[index] = RegisterShader( s );
 		}
+	} else if( index >= CS_SKINFILES && index < CS_SKINFILES + GS::MAX_SKINFILES ) {
+		index -= CS_SKINFILES;
+
+		if( s.empty() ) {
+			@cgs.skinPrecache[index] = null;
+		} else {
+			@cgs.skinPrecache[index] = RegisterSkin( s );
+		}
 	}
+}
+
+void Load()
+{
+	cg_teamPLAYERSmodel.modified = true;
+	cg_teamPLAYERSmodelForce.modified = true;
+	cg_teamPLAYERSskin.modified = true;
+	cg_teamPLAYERScolor.modified = true;
+	cg_teamPLAYERScolorForce.modified = true;
+
+	cg_teamALPHAmodel.modified = true;
+	cg_teamALPHAmodelForce.modified = true;
+	cg_teamALPHAskin.modified = true;
+	cg_teamALPHAcolor.modified = true;
+
+	cg_teamBETAmodel.modified = true;
+	cg_teamBETAmodelForce.modified = true;
+	cg_teamBETAskin.modified = true;
+	cg_teamBETAcolor.modified = true;
 }
 
 void Init( const String @serverName, uint playerNum, bool demoPlaying, const String @demoName, 

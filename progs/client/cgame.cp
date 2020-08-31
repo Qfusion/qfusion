@@ -24,6 +24,8 @@ main/media.as;
 main/polys.as;
 main/test.as;
 main/effects.as;
+main/pmodel.as;
+main/teams.as;
 
 main/ents/flag.as;
 main/ents/generic.as;

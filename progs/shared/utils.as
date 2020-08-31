@@ -52,6 +52,11 @@ float HorizontalLength( const Vec3 &in v ) {
 	return sqrt( x * x + y * y );
 }
 
+int COLOR_RGB( uint8 r, uint8 g, uint8 b )
+{
+	return (( r & 255 ) << 0 ) | (( g & 255 ) << 8 ) | (( b & 255 ) << 16 );
+}
+
 int COLOR_RGBA( uint8 r, uint8 g, uint8 b, uint8 a )
 {
 	return (( r & 255 ) << 0 ) | (( g & 255 ) << 8 ) | (( b & 255 ) << 16 ) | (( a & 255 ) << 24 );
@@ -107,6 +112,19 @@ int ColorByIndex( int i, uint8 alpha ) {
 
 int ColorByIndex( int i ) {
 	return ColorByIndex( i, 255 );
+}
+
+int ReadColorRGBString( const String &in str ) {
+	array<String @> @parts = StringUtils::Split( str, " " );
+
+	if( parts.size() == 3 ) {
+		int r = int( parts[0] );
+		int g = int( parts[1] );
+		int b = int( parts[2] );
+		return COLOR_RGB( r, g, b );
+	}
+
+	return -1;
 }
 
 Vec3 stringToVec3( const String &str )
