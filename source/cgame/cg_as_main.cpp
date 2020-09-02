@@ -35,6 +35,7 @@ static cg_asApiFuncPtr_t cg_asCGameAPI[] = {
 	  "float stereoSeparation, uint extrapolationTime )",
 		&cgs.asMain.frame, true },
 	{ "bool CGame::AddEntity( int entNum )", &cgs.asMain.addEntity, false },
+	{ "void CGame::Reset()", &cgs.asMain.reset, true },
 
 	{ "void CGame::Input::Init()", &cgs.asInput.init, true },
 	{ "void CGame::Input::Shutdown()", &cgs.asInput.shutdown, true },
@@ -121,36 +122,36 @@ static const gs_asClassDescriptor_t asSnapshotClassDescriptor = {
 //======================================================================
 
 static const gs_asClassDescriptor_t asModelHandleClassDescriptor = {
-	"ModelHandle",								   /* name */
+	"ModelHandle",			   /* name */
 	asOBJ_REF | asOBJ_NOCOUNT, /* object type flags */
-	sizeof( void * ),							   /* size */
-	NULL,										   /* funcdefs */
-	NULL,		   /* object behaviors */
-	NULL,			   /* methods */
-	NULL,										   /* properties */
-	NULL, NULL									   /* string factory hack */
+	sizeof( void * ),		   /* size */
+	NULL,					   /* funcdefs */
+	NULL,					   /* object behaviors */
+	NULL,					   /* methods */
+	NULL,					   /* properties */
+	NULL, NULL				   /* string factory hack */
 };
 
 static const gs_asClassDescriptor_t asSoundHandleClassDescriptor = {
-	"SoundHandle",								   /* name */
+	"SoundHandle",			   /* name */
 	asOBJ_REF | asOBJ_NOCOUNT, /* object type flags */
-	sizeof( void * ),							   /* size */
-	NULL,										   /* funcdefs */
-	NULL,		   /* object behaviors */
-	NULL,			   /* methods */
-	NULL,										   /* properties */
-	NULL, NULL									   /* string factory hack */
+	sizeof( void * ),		   /* size */
+	NULL,					   /* funcdefs */
+	NULL,					   /* object behaviors */
+	NULL,					   /* methods */
+	NULL,					   /* properties */
+	NULL, NULL				   /* string factory hack */
 };
 
 static const gs_asClassDescriptor_t asShaderHandleClassDescriptor = {
-	"ShaderHandle",								   /* name */
+	"ShaderHandle",			   /* name */
 	asOBJ_REF | asOBJ_NOCOUNT, /* object type flags */
-	sizeof( void * ),							   /* size */
-	NULL,										   /* funcdefs */
-	NULL,		   /* object behaviors */
-	NULL,			   /* methods */
-	NULL,										   /* properties */
-	NULL, NULL									   /* string factory hack */
+	sizeof( void * ),		   /* size */
+	NULL,					   /* funcdefs */
+	NULL,					   /* object behaviors */
+	NULL,					   /* methods */
+	NULL,					   /* properties */
+	NULL, NULL				   /* string factory hack */
 };
 
 static const gs_asClassDescriptor_t asSkinHandleClassDescriptor = {
@@ -165,25 +166,25 @@ static const gs_asClassDescriptor_t asSkinHandleClassDescriptor = {
 };
 
 static const gs_asClassDescriptor_t asFontHandleClassDescriptor = {
-	"FontHandle",								   /* name */
+	"FontHandle",			   /* name */
 	asOBJ_REF | asOBJ_NOCOUNT, /* object type flags */
-	sizeof( void * ),							   /* size */
-	NULL,										   /* funcdefs */
-	NULL,		   /* object behaviors */
-	NULL,			   /* methods */
-	NULL,										   /* properties */
-	NULL, NULL									   /* string factory hack */
+	sizeof( void * ),		   /* size */
+	NULL,					   /* funcdefs */
+	NULL,					   /* object behaviors */
+	NULL,					   /* methods */
+	NULL,					   /* properties */
+	NULL, NULL				   /* string factory hack */
 };
 
 static const gs_asClassDescriptor_t asModelSkeletonClassDescriptor = {
-	"ModelSkeleton",							   /* name */
+	"ModelSkeleton",		   /* name */
 	asOBJ_REF | asOBJ_NOCOUNT, /* object type flags */
-	sizeof( void * ),							   /* size */
-	NULL,										   /* funcdefs */
-	NULL,		   /* object behaviors */
-	NULL,										   /* methods */
-	NULL,										   /* properties */
-	NULL, NULL									   /* string factory hack */
+	sizeof( void * ),		   /* size */
+	NULL,					   /* funcdefs */
+	NULL,					   /* object behaviors */
+	NULL,					   /* methods */
+	NULL,					   /* properties */
+	NULL, NULL				   /* string factory hack */
 };
 
 //======================================================================
@@ -297,29 +298,6 @@ static void *asFunc_RegisterPlayerModel( const asstring_t *str )
 	return CG_RegisterPlayerModel( str->buffer );
 }
 
-static int asFunc_TeamColorForEntity( int entNum ) {
-	union {
-		int			color;
-		uint8_t		shaderRGBA[4];
-	} res;
-
-	CG_TeamColorForEntity( entNum, res.shaderRGBA );
-
-	return res.color;
-}
-
-static int asFunc_PlayerColorForEntity( int entNum )
-{
-	union {
-		int		color;
-		uint8_t shaderRGBA[4];
-	} res;
-
-	CG_PlayerColorForEntity( entNum, res.shaderRGBA );
-
-	return res.color;
-}
-
 static bool asFunc_IsViewerEntity( int entNum )
 {
 	return ISVIEWERENTITY( entNum );
@@ -364,8 +342,6 @@ static const gs_asglobfuncs_t asCGameGlobalFuncs[] = {
 
 	{ "ModelSkeleton @SkeletonForModel( ModelHandle @ )", asFUNCTION( asFunc_SkeletonForModel ), NULL },
 
-	{ "int TeamColorForEntity( int entNum )", asFUNCTION( asFunc_TeamColorForEntity ), NULL },
-	{ "int PlayerColorForEntity( int entNum )", asFUNCTION( asFunc_PlayerColorForEntity ), NULL },
 	{ "bool IsViewerEntity( int entNum )", asFUNCTION( asFunc_IsViewerEntity ), NULL },
 	{ "String @GetConfigString( int entNum )", asFUNCTION( asFunc_GetConfigString ), NULL },
 	{ "Vec3 PredictionError()", asFUNCTION( asFunc_GetPredictionError ), NULL },
@@ -750,6 +726,14 @@ bool CG_asAddEntity( int entNum )
 	);
 
 	return res == 0 ? false : true;
+}
+
+void CG_asReset( void )
+{
+	if( !cgs.asMain.reset ) {
+		return;
+	}
+	CG_asCallScriptFunc( cgs.asMain.reset, cg_empty_as_cb, cg_empty_as_cb );
 }
 
 void CG_asNewPacketEntityState( entity_state_t *state )

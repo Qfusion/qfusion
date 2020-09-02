@@ -424,6 +424,7 @@ typedef struct {
 		void *precache;
 		void *frame;
 		void *addEntity;
+		void *reset;
 		time_t mtime;
 	} asMain;
 
@@ -1252,8 +1253,9 @@ void CG_asInit( const char *serverName, unsigned int playerNum, bool demoplaying
 void CG_asFrame( int frameTime, int realFrameTime, int64_t realTime, int64_t serverTime, float stereoSeparation,
 	unsigned extrapolationTime );
 bool CG_asAddEntity( int entNum );
+void CG_asReset( void );
 
-	//
+//
 // cg_input.cpp
 //
 

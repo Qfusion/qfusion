@@ -1042,6 +1042,8 @@ void CG_Reset( void ) {
 	cg.predictFrom = 0;
 
 	memset( cg_entities, 0, sizeof( cg_entities ) );
+
+	CG_asReset();
 }
 
 /*
