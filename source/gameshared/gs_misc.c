@@ -25,6 +25,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "q_collision.h"
 #include "gs_public.h"
 
+struct cmodels_s;
+
 // TEMP MOVE ME
 gs_state_t gs;
 
@@ -86,19 +88,19 @@ void GS_BBoxForEntityState( entity_state_t *state, vec3_t mins, vec3_t maxs ) {
 	int x, zd, zu;
 
 	if( state->solid == SOLID_BMODEL ) {
-		// FIXME: This is wrong, we don't have access to bmodels at gameshared (simply didn't add it)
-		gs.api.Error( "GS_BBoxForEntityState: called for a brush model\n" );
-		//cmodel = trap_CM_InlineModel( state->modelindex );
-	} else {                          // encoded bbox
-		x = 8 * ( state->solid & 31 );
-		zd = 8 * ( ( state->solid >> 5 ) & 31 );
-		zu = 8 * ( ( state->solid >> 10 ) & 63 ) - 32;
-
-		mins[0] = mins[1] = -x;
-		maxs[0] = maxs[1] = x;
-		mins[2] = -zd;
-		maxs[2] = zu;
+		gs.api.InlineModelBounds( gs.api.InlineModel( state->modelindex ), mins, maxs );
+		return;
 	}
+
+    // encoded bbox
+	x = 8 * ( state->solid & 31 );
+	zd = 8 * ( ( state->solid >> 5 ) & 31 );
+	zu = 8 * ( ( state->solid >> 10 ) & 63 ) - 32;
+
+	mins[0] = mins[1] = -x;
+	maxs[0] = maxs[1] = x;
+	mins[2] = -zd;
+	maxs[2] = zu;
 }
 
 /*
