@@ -17,6 +17,7 @@ Viewport@ GetViewport() {}
 Camera@ GetMainCamera() {}
 float CalcVerticalFov(float fovX, float width, float height) {}
 float CalcHorizontalFov(float fovY, float width, float height) {}
+Vec3 SmoothPredictedSteps(Vec3&in org) {}
 /**
  * Viewport
  */
@@ -186,6 +187,7 @@ class Entity
 	float scale;
 	float radius;
 	float rotation;
+	SkinHandle@ customSkin;
 
 	/* behaviors */
 
@@ -195,6 +197,7 @@ class Entity
 
 	/* methods */
 	void reset() {}
+	Entity& opAssign(const Entity&in) {}
 
 }
 
@@ -216,13 +219,6 @@ class Orientation
  * Boneposes
  */
 class Boneposes
-{
-}
-
-/**
- * Poly
- */
-class Poly
 {
 }
 
@@ -379,6 +375,7 @@ Snapshot@ OldSnap;
  * Global functions
  */
 void Print(const String&in) {}
+void Error(const String&in) {}
 int get_ExtrapolationTime() {}
 int get_SnapFrameTime() {}
 void AddEntityToSolidList(int number) {}
@@ -387,11 +384,13 @@ ModelHandle@ RegisterModel(const String&in) {}
 SoundHandle@ RegisterSound(const String&in) {}
 ShaderHandle@ RegisterShader(const String&in) {}
 FontHandle@ RegisterFont(const String&in, int style, uint size) {}
+SkinHandle@ RegisterSkin(const String&in) {}
+PlayerModel@ RegisterPlayerModel(const String&in) {}
 ModelSkeleton@ SkeletonForModel(ModelHandle@) {}
-int TeamColorForEntity(int entNum) {}
-int PlayerColorForEntity(int entNum) {}
 bool IsViewerEntity(int entNum) {}
 String@ GetConfigString(int entNum) {}
+Vec3 PredictionError() {}
+bool IsPureFile(const String&in) {}
 /**
  * ModelHandle
  */
@@ -450,6 +449,24 @@ class ModelSkeleton
 {
 }
 
+/**
+ * SkinHandle
+ */
+class SkinHandle
+{
+}
+
+/**
+ * PlayerModel
+ */
+class PlayerModel
+{
+	/* methods */
+	uint get_numAnims() const {}
+	void getAnim(uint index, int&out first, int&out last, int&out loop, int&out fps) const {}
+
+}
+
 
 }
 
@@ -457,10 +474,23 @@ class ModelSkeleton
 namespace GS
 {
 
+namespace Info
+{
+
+/**
+ * Global functions
+ */
+bool Validate(const String&in info) {}
+String@ ValueForKey(const String&in info, const String&in key) {}
+
+}
+
+
 /**
  * Global properties
  */
 GameState gameState;
+int maxClients;
 
 /**
  * Global functions
@@ -1139,6 +1169,7 @@ const int MAX_SOUNDS;
 const int MAX_GENERAL;
 const int MAX_MMPLAYERINFOS;
 const int MAX_CONFIGSTRINGS;
+const int MAX_TEAMS;
 const int PREDICTABLE_EVENTS_MAX;
 
 /**
@@ -1174,7 +1205,7 @@ float AngleSubtract(float v1, float v2) {}
 Vec3 AnglesSubtract(const Vec3&in a1, const Vec3&in a2) {}
 float AngleNormalize360(float a) {}
 float AngleNormalize180(float a) {}
-float AngleDelta(float a) {}
+float AngleDelta(float a1, float a2) {}
 float anglemod(float a) {}
 float LerpAngle(float v1, float v2, float lerp) {}
 Vec3 LerpAngles(const Vec3&in a1, const Vec3&in a2, float f) {}
@@ -1412,7 +1443,8 @@ class Vec3
 	void anglesToAxis(Mat3&out) const {}
 	float& opIndex(uint) {}
 	const float& opIndex(uint) const {}
-	float[]@ toArray() {}
+	float[]@ toArray() const {}
+	String@ toString() const {}
 
 }
 
@@ -1456,7 +1488,8 @@ class Vec4
 	Vec3 xyz() const {}
 	float& opIndex(uint) {}
 	const float& opIndex(uint) const {}
-	float[]@ toArray() {}
+	float[]@ toArray() const {}
+	String@ toString() const {}
 
 }
 
@@ -1806,3 +1839,4 @@ class Firedef
 class CModelHandle
 {
 }
+
