@@ -388,12 +388,8 @@ static bool CG_LoadPlayerModel( pmodelinfo_t *pmodelinfo, const char *filename )
 	return true;
 }
 
-/*
-* CG_RegisterPModel
-* PModel is not exactly the model, but the indexes of the
-* models contained in the pmodel and it's animation data
-*/
-struct pmodelinfo_s *CG_RegisterPlayerModel( const char *filename ) {
+pmodelinfo_t *CG_RegisterPlayerModel( const char *filename )
+{
 	pmodelinfo_t *pmodelinfo;
 
 	for( pmodelinfo = cg_PModelInfos; pmodelinfo; pmodelinfo = pmodelinfo->next ) {

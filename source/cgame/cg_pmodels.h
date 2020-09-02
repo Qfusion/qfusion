@@ -172,7 +172,15 @@ void CG_MoveToTag( vec3_t move_origin,
 void CG_PModelsInit( void );
 void CG_ResetPModels( void );
 void CG_RegisterBasePModel( void );
-struct pmodelinfo_s *CG_RegisterPlayerModel( const char *filename );
+
+/**
+ * PModel is not exactly the model, but the indexes of the
+ * models contained in the pmodel and it's animation data
+ * 
+ * @param filename   filename
+ */
+pmodelinfo_t *CG_RegisterPlayerModel( const char *filename );
+
 void CG_AddPModel( centity_t *cent );
 bool CG_PModel_GetProjectionSource( int entnum, orientation_t *tag_result );
 void CG_UpdatePlayerModelEnt( centity_t *cent );
