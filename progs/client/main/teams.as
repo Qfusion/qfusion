@@ -168,4 +168,15 @@ void RegisterTeamColor( int team ) {
 	}
 }
 
+Vec4 TeamColor( int team ) {
+	int forcedteam = ForceTeam( team ); // check all teams against the client
+	if( forcedteam < TEAM_PLAYERS || forcedteam >= GS_MAX_TEAMS ) { // limit out of range and spectators team
+		forcedteam = TEAM_PLAYERS;
+	}
+
+	RegisterTeamColor( forcedteam );
+
+	return ColorToVec4( COLOR_REPLACEA( cgs.teamColor[forcedteam], 255 ) );
+}
+
 }
