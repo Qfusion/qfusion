@@ -2,7 +2,7 @@ namespace CGame {
 
 void UpdateGenericEnt( CEntity @cent ) {
 	cent.refEnt.reset();
-	cent.refEnt.shaderRGBA = TeamColorForEntity( cent.current.number );
+	cent.refEnt.shaderRGBA = ColorForEntity( @cent, false );
 
 	cent.refEnt.frame = cent.current.frame;
 	cent.refEnt.oldFrame = cent.prev.frame;

@@ -140,6 +140,8 @@ void Precache()
 		ConfigString( CS_MODELS + i, CGame::GetConfigString( CS_MODELS + i ) );
 	}
 
+	RegisterForceModels();
+
 	cgs.media.PrecacheShaders();
 
 	cgs.media.PrecacheModels();

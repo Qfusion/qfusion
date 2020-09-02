@@ -73,7 +73,7 @@ void AddFlagModelOnTag( CEntity @cent, int teamcolor, const String @tagname ) {
 
 void UpdateFlagBaseEnt( CEntity @cent ) {
 	// set entity color based on team
-	cent.refEnt.shaderRGBA = TeamColorForEntity( cent.current.number );
+	cent.refEnt.shaderRGBA = ColorForEntity( @cent, false );
 
 	cent.refEnt.scale = 1.0f;
 
@@ -127,7 +127,7 @@ void AddFlagBaseEnt( CEntity @cent ) {
 
 	// see if we have to add a flag
 	if( ( cent.effects & EF_FLAG_TRAIL ) != 0 ) {
-		int teamcolor = TeamColorForEntity( cent.current.number );
+		int teamcolor = ColorForEntity( @cent, false );
 		AddFlagModelOnTag( cent, teamcolor, "tag_flag1" );
 	}
 }

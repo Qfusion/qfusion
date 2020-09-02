@@ -43,7 +43,7 @@ void UpdateSpriteEnt( CEntity @cent )
 	cent.refEnt.renderfx = cent.renderfx;
 
 	// set entity color based on team
-	cent.refEnt.shaderRGBA = TeamColorForEntity( cent.current.number );
+	cent.refEnt.shaderRGBA = ColorForEntity( @cent, false );
 
 	// set up the sprite
 	cent.refEnt.rtype = RT_SPRITE;

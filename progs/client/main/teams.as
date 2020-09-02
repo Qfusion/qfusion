@@ -12,6 +12,10 @@ int ForceTeam( int team ) {
 			}
 		}
 	}
+	
+	if( team < TEAM_PLAYERS || team >= GS_MAX_TEAMS ) { // limit out of range and spectators team
+		team = TEAM_PLAYERS;
+	}
 	return team;
 }
 
@@ -170,13 +174,63 @@ void RegisterTeamColor( int team ) {
 
 Vec4 TeamColor( int team ) {
 	int forcedteam = ForceTeam( team ); // check all teams against the client
-	if( forcedteam < TEAM_PLAYERS || forcedteam >= GS_MAX_TEAMS ) { // limit out of range and spectators team
-		forcedteam = TEAM_PLAYERS;
-	}
 
 	RegisterTeamColor( forcedteam );
 
-	return ColorToVec4( COLOR_REPLACEA( cgs.teamColor[forcedteam], 255 ) );
+	return ColorToVec4( cgs.teamColor[forcedteam] );
+}
+
+int ColorForEntity( CEntity @cent, bool player ) {
+	CEntity @owner = @cent;
+	if( cent.current.type == ET_CORPSE && cent.current.bodyOwner != 0 ) { // it's a body
+		@owner = @cgEnts[cent.current.bodyOwner];
+	}
+
+	int team = ForceTeam( owner.current.team );
+
+	RegisterTeamColor( team );
+
+	bool useForceColor;
+	if( ( team == TEAM_ALPHA ) || ( team == TEAM_BETA ) ) {
+		useForceColor = true;
+	} else {
+		useForceColor = cg_teamPLAYERScolorForce.boolean && !cg_teamPLAYERScolor.string.empty();
+	}
+
+	int color = COLOR_RGBA( 255, 255, 255, 255 );
+
+	// if forced models is enabled or it is color forced team we do,
+	if( useForceColor && cent.current.type != ET_CORPSE ) {
+		// skin color to team color
+		color = cgs.teamColor[team];
+	}
+	// user defined colors if it's a player
+	else if( ( player && ( owner.current.number - 1 < GS::maxClients ) ) && cent.current.type != ET_CORPSE ) {
+		color = COLOR_RGBA( 255, 0, 0, 255 );
+		// TODO
+		//Vector4Copy( cgs.clientInfo[owner.current.number - 1].color, color );
+	}
+	// Make corpses grey
+	else if( cent.current.type == ET_CORPSE && cent.current.bodyOwner != 0 ) {
+		color = COLOR_RGBA( 60, 60, 60, 255 );
+	// white for everything else
+	} else {
+		
+	}
+
+	return color;
+}
+
+void RegisterForceModels( void ) {
+	int team;
+
+	RegisterForceModel( cg_teamPLAYERSmodel, cg_teamPLAYERSmodelForce, cg_teamPLAYERSskin, @cgs.teamModelInfo[TEAM_PLAYERS], @cgs.teamCustomSkin[TEAM_PLAYERS] );
+	RegisterForceModel( cg_teamALPHAmodel, cg_teamALPHAmodelForce, cg_teamALPHAskin, @cgs.teamModelInfo[TEAM_ALPHA], @cgs.teamCustomSkin[TEAM_ALPHA] );
+	RegisterForceModel( cg_teamBETAmodel, cg_teamBETAmodelForce, cg_teamBETAskin, @cgs.teamModelInfo[TEAM_BETA], @cgs.teamCustomSkin[TEAM_BETA] );
+
+	for( team = TEAM_ALPHA; team < GS_MAX_TEAMS; team++ ) {
+		RegisterTeamColor( team );
+	}
 }
 
 }

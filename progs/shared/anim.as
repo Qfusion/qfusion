@@ -118,6 +118,9 @@ class PModelAnimState {
 		for( int i = LOWER; i < PMODEL_PARTS; i++ ) {
 			buffer[EVENT_CHANNEL].newanim[i] = ANIM_NONE;
 			curAnims[i][EVENT_CHANNEL].anim = ANIM_NONE;
+			frame[i] = 0;
+			oldframe[i] = 0;
+			lerpFrac[i] = 0.0f;
 		}
 	}
 

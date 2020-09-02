@@ -27,6 +27,8 @@ class CEntity {
 	Vec3 trailOrigin;
 	int64 respawnTime;
 	int64 flyStopTime;
+
+	PModel pmodel;
 }
 
 array< CEntity > cgEnts( MAX_EDICTS );
@@ -82,6 +84,10 @@ void NewPacketEntityState( const EntityState @state ) {
 			// duplicate the current state so lerping doesn't hurt anything
 			cent.prev = state;
 			cent.microSmooth = 0;
+
+			if( CGame::Snap.valid && ( state.type == ET_PLAYER || state.type == ET_CORPSE || state.type == ET_MONSTER_PLAYER || state.type == ET_MONSTER_CORPSE ) ) {
+				cent.pmodel.ClearEventAnimations();
+			}
 		} else {
 			// shuffle the last state to previous
 			cent.prev = cent.current;
@@ -260,9 +266,9 @@ void EntAddTeamColorTransitionEffect( CEntity @cent ) {
 	float f = bound( 0.0f, float( cent.current.counterNum ) / 255.0f, 1.0f );
 
 	if( cent.current.type == ET_PLAYER || cent.current.type == ET_CORPSE ) {
-		currentcolor = PlayerColorForEntity( cent.current.number );
+		currentcolor = ColorForEntity( @cent, true );
 	} else {
-		currentcolor = TeamColorForEntity( cent.current.number );
+		currentcolor = ColorForEntity( @cent, false );
 	}
 
 	Vec4 cv = ColorToVec4( currentcolor );

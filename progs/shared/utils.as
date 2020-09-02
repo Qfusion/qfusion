@@ -121,7 +121,7 @@ int ReadColorRGBString( const String &in str ) {
 		int r = bound( 0, int( parts[0] ), 255 );
 		int g = bound( 0, int( parts[1] ), 255 );
 		int b = bound( 0, int( parts[2] ), 255 );
-		return COLOR_RGB( r, g, b );
+		return COLOR_RGBA( r, g, b, 255 );
 	}
 
 	return -1;
