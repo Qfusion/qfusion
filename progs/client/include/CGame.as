@@ -158,8 +158,11 @@ void PlaceRotatedModelOnTag(Entity@ ent, const Entity@ dest, const Orientation&i
 void PlaceModelOnTag(Entity@ ent, const Entity@ dest, const Orientation&in) {}
 bool GrabTag(const Orientation&out, const Entity@ ent, const String&in) {}
 Boneposes@ RegisterTemporaryExternalBoneposes(ModelSkeleton@) {}
+Boneposes@ RegisterTemporaryExternalBoneposes(int numBones) {}
 bool LerpSkeletonPoses(ModelSkeleton@, int frame, int oldFrame, Boneposes@ boneposes, float frac) {}
 void TransformBoneposes(ModelSkeleton@, Boneposes@ boneposes, Boneposes@ sourceBoneposes) {}
+void RecurseBlendSkeletalBone(ModelSkeleton@, Boneposes@ inBoneposes, Boneposes@ outBoneposes, int root, float frac) {}
+void RotateBonePoses(const Vec3&in angles, Boneposes@ inBoneposes, int[]@ rotators) {}
 void SpawnPolyQuad(const Vec3&in, const Vec3&in, const Vec3&in, const Vec3&in, float stx, float sty, const Vec4&in, int64 dieTime, int64 fadeTime, ShaderHandle@, int tag) {}
 void SpawnPolyBeam(const Vec3&in start, const Vec3&in end, const Vec4&in, int width, int64 dieTime, int64 fadeTime, ShaderHandle@, int shaderLength, int tag) {}
 void AddEntityToScene(Entity@ ent) {}
@@ -464,6 +467,9 @@ class PlayerModel
 	/* methods */
 	uint get_numAnims() const {}
 	void getAnim(uint index, int&out first, int&out last, int&out loop, int&out fps) const {}
+	ModelHandle@ get_model() const {}
+	int getRootAnim(const String&in name) const {}
+	int[]@ getRotators(const String&in name) const {}
 
 }
 

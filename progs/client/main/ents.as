@@ -28,7 +28,59 @@ class CEntity {
 	int64 respawnTime;
 	int64 flyStopTime;
 
+	// used for client side animation of player models
 	PModel pmodel;
+	bool pendingAnimationsUpdate;
+	int lastAnims;
+	array<int> lastVelocitiesFrames(4);
+	array<Vec3> lastVelocities(4);
+	array<float> lastYawVelocities(4);
+	bool jumpedLeft;
+	Vec3 animVelocity;
+	float yawVelocity;
+
+	/*
+	* It's better to delay this set up until the other entities are linked, so they
+	* can be detected as groundentities by the animation checks
+	*/
+	void UpdatePModelAnimations() {
+		array<int> newanim(GS::Anim::PMODEL_PARTS);
+		array<int> lastanim(GS::Anim::PMODEL_PARTS);
+		int frame, lastframe;
+
+		if( !pendingAnimationsUpdate )
+			return;
+
+		pendingAnimationsUpdate = false;
+
+		if( current.frame != 0 ) { // animation was provided by the server
+			frame = current.frame;
+		} else {
+			frame = GS::Anim::UpdateBaseAnims( @current, animVelocity );
+		}
+		lastframe = lastAnims;
+		lastAnims = frame;
+
+		GS::Anim::DecodeAnimState( frame, newanim );
+		GS::Anim::DecodeAnimState( lastframe, lastanim );
+
+		// filter unchanged animations
+		for( int i = GS::Anim::LOWER; i <= GS::Anim::HEAD; i++ ) {
+			newanim[i] *= newanim[i] != lastanim[i] ? 1 : 0;
+		}
+
+		pmodel.AddAnimation( newanim, GS::Anim::BASE_CHANNEL );
+	}
+
+	void ClearPModelAnimations() {
+		lastAnims = 0;
+		for (int i = 0; i < 4; i++) {
+			lastVelocities[i].clear();
+			lastYawVelocities[i] = 0.0f;
+			lastVelocitiesFrames[i] = 0;
+		}
+		pmodel.ClearEventAnimations();
+	}
 }
 
 array< CEntity > cgEnts( MAX_EDICTS );
@@ -85,8 +137,8 @@ void NewPacketEntityState( const EntityState @state ) {
 			cent.prev = state;
 			cent.microSmooth = 0;
 
-			if( CGame::Snap.valid && ( state.type == ET_PLAYER || state.type == ET_CORPSE || state.type == ET_MONSTER_PLAYER || state.type == ET_MONSTER_CORPSE ) ) {
-				cent.pmodel.ClearEventAnimations();
+			if( CGame::Snap.valid ) {
+				cent.ClearPModelAnimations();
 			}
 		} else {
 			// shuffle the last state to previous
@@ -276,10 +328,54 @@ void EntAddTeamColorTransitionEffect( CEntity @cent ) {
 	cent.refEnt.shaderRGBA = COLOR_REPLACEA( nc, COLOR_A( cent.refEnt.shaderRGBA ) );
 }
 
+bool PModelForCentity( CEntity @cent, PModelInfo @&out pmodelinfo, SkinHandle @&out skin )
+{
+	int team;
+	CEntity @owner;
+	int ownerNum;
+
+	@owner = @cent;
+	if( cent.current.type == ET_CORPSE && cent.current.bodyOwner != 0 ) { // it's a body
+		@owner = @cgEnts[cent.current.bodyOwner];
+	}
+	ownerNum = owner.current.number;
+	team = owner.current.team;
+
+	if( team != TEAM_SPECTATOR ) {
+		team = ForceTeam( team );
+	}
+
+	CheckUpdateTeamModelRegistration( team ); // check for cvar changes
+
+	// use the player defined one if not forcing
+	@pmodelinfo = @cgs.pModels[cent.current.modelindex];
+	@skin = @cgs.skinPrecache[cent.current.skinNum];
+
+	if( GS::CanForceModels() && ( ownerNum < GS::maxClients + 1 ) ) {
+		if( ( team == TEAM_ALPHA ) || ( team == TEAM_BETA ) ||
+		    // Don't force the model for the local player in non-team modes to distinguish the sounds from enemies'
+			( ( team == TEAM_PLAYERS ) && ( ownerNum != int( cgs.playerNum)  + 1 ) ) ) {
+			if( @cgs.teamModelInfo[team] !is null ) {
+				// There is a force model for this team
+				@pmodelinfo = @cgs.teamModelInfo[team];
+
+				if( @cgs.teamCustomSkin[team] !is null ) {
+					// There is a force skin for this team
+					@skin = @cgs.teamCustomSkin[team];
+				}
+
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
 void UpdateEntities() {
 	for( int i = 0; i < CGame::Snap.numEntities; i++ ) {
 		auto @state = CGame::Snap.getEntityState( i );
-		CEntity @cent = cgEnts[state.number];
+		CEntity @cent = @cgEnts[state.number];
 		cent.type = state.type;
 		cent.effects = state.effects;
 		@cent.item = null;
@@ -320,6 +416,13 @@ void UpdateEntities() {
 			case ET_SPRITE:
 				cent.renderfx |= ( RF_NOSHADOW | RF_FULLBRIGHT );
 				UpdateSpriteEnt( @cent );
+				break;
+
+			case ET_PLAYER:
+			case ET_CORPSE:
+			case ET_MONSTER_PLAYER:
+			case ET_MONSTER_CORPSE:
+				UpdatePlayerModelEnt( @cent );
 				break;
 
 			case ET_PUSH_TRIGGER:
@@ -419,6 +522,14 @@ bool AddEntityReal( CEntity @cent )
 		case ET_RADAR:
 			AddSpriteEnt( @cent );
 			EntityLoopSound( @state, ATTN_STATIC );
+			//canLight = true;
+			return true;
+
+		case ET_PLAYER:
+		case ET_CORPSE:
+		case ET_MONSTER_PLAYER:
+		case ET_MONSTER_CORPSE:
+			AddPlayerEnt( @cent );
 			//canLight = true;
 			return true;
 

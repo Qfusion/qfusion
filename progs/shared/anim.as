@@ -124,13 +124,7 @@ class PModelAnimState {
 		}
 	}
 
-	void AddAnimation( int loweranim, int upperanim, int headanim, int channel ) {
-		array<int> newanim(PMODEL_PARTS);
-
-		newanim[LOWER] = loweranim;
-		newanim[UPPER] = upperanim;
-		newanim[HEAD] = headanim;
-
+	void AddAnimation( array<int> &newanim, int channel ) {
 		AnimBuffer @buf = @buffer[channel];
 
 		for( int i = LOWER; i < PMODEL_PARTS; i++ ) {
@@ -340,14 +334,15 @@ void SetBaseAnims( MoveAnim @pmanim, int carried_weapon ) {
 	}
 }
 
-int EncodeAnimState(int lower, int upper, int head) {
+int EncodeAnimState(array<int> &anim) {
+	int lower = anim[LOWER], upper = anim[UPPER], head = anim[HEAD];
     return ((lower&0x3F)|((upper&0x3F )<<6)|((head&0xF)<<12));
 }
 
-void DecodeAnimState(int frame, int &out lower, int &out upper, int &out head) {
-    lower = frame & 0x3F;
-    upper = (frame >> 6) & 0x3F;
-    head = (frame >> 12) & 0xF;
+void DecodeAnimState(int frame, array<int> &anim) {
+    anim[LOWER] = frame & 0x3F;
+    anim[UPPER] = (frame >> 6) & 0x3F;
+    anim[HEAD] = (frame >> 12) & 0xF;
 }
 
 int UpdateBaseAnims( EntityState @state, Vec3 &in velocity ) {
@@ -413,7 +408,7 @@ int UpdateBaseAnims( EntityState @state, Vec3 &in velocity ) {
 	}
 
 	SetBaseAnims( @pmanim, state.weapon );
-	return EncodeAnimState( pmanim.animState[LOWER], pmanim.animState[UPPER], pmanim.animState[HEAD] );
+	return EncodeAnimState( pmanim.animState );
 }
 
 }

@@ -168,6 +168,7 @@ void AddGenericEnt( CEntity @cent ) {
 		if( !cg_shadows.boolean || ( cent.renderfx & RF_NOSHADOW ) != 0 ) {
 			cent.refEnt.renderfx |= RF_NOSHADOW;
 		} else if( cg_shadows.integer == 1 ) {
+			//TODO
 			//CG_AllocShadeBox( cent.current.number, cent.refEnt.origin, item_box_mins, item_box_maxs, NULL );
 			cent.refEnt.renderfx |= RF_NOSHADOW;
 		}

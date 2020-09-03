@@ -26,9 +26,11 @@ main/test.as;
 main/effects.as;
 main/pmodel.as;
 main/teams.as;
+main/clients.as;
 
 main/ents/flag.as;
 main/ents/generic.as;
 main/ents/item.as;
 main/ents/projectile.as;
 main/ents/sprite.as;
+main/ents/player.as;

@@ -19,7 +19,7 @@ int ForceTeam( int team ) {
 	return team;
 }
 
-void RegisterForceModel( Cvar &in teamForceModel, Cvar &in teamForceModelToggle, Cvar &in teamForceSkin, PlayerModel @&out pmodelinfo, SkinHandle @&out skin ) {
+void RegisterForceModel( Cvar &in teamForceModel, Cvar &in teamForceModelToggle, Cvar &in teamForceSkin, PModelInfo @&out pmodelinfo, SkinHandle @&out skin ) {
 	if( teamForceModel.modified ) {
 		teamForceModel.modified = false;
 	}
@@ -39,10 +39,10 @@ void RegisterForceModel( Cvar &in teamForceModel, Cvar &in teamForceModelToggle,
     const String @forceModelName = @teamForceModel.string;
     const String @forceModelSkin = @teamForceSkin.string;
 	if( teamForceModelToggle.boolean && !forceModelName.empty() ) {
-		@pmodelinfo = CGame::RegisterPlayerModel( StringUtils::Format( "models/players/%s", forceModelName ) );
+		@pmodelinfo = PModelInfo( CGame::RegisterPlayerModel( StringUtils::Format( "models/players/%s", forceModelName ) ) );
 
 		// if it failed, it will be NULL, so also disabled
-		if( @pmodelinfo !is null ) {
+		if( @pmodelinfo.model !is null ) {
 			// when we register a new model, we must re-register the skin, even if the cvar is not modified
 			if( !cgs.pure || CGame::IsPureFile( StringUtils::Format( "models/players/%s/%s.skin", forceModelName, forceModelSkin ) ) ) {
 				@skin = CGame::RegisterSkin( StringUtils::Format( "models/players/%s/%s", forceModelName, forceModelSkin ) );
@@ -54,8 +54,8 @@ void RegisterForceModel( Cvar &in teamForceModel, Cvar &in teamForceModelToggle,
 			}
 		}
 
-		if( @pmodelinfo is null  or @skin is null ) {
-			@pmodelinfo = null;
+		if( @pmodelinfo.model is null or @skin is null ) {
+			@pmodelinfo.model = null;
 			@skin = null;
 		}
 	}
@@ -82,47 +82,6 @@ void CheckUpdateTeamModelRegistration( int team ) {
 		default:
 			break;
 	}
-}
-
-bool PModelForCentity( CEntity @cent, PlayerModel @&out modelinfo, SkinHandle @&out skin )
-{
-	int team;
-	CEntity @owner;
-	int ownerNum;
-
-	@owner = @cent;
-	if( cent.current.type == ET_CORPSE && cent.current.bodyOwner != 0 ) { // it's a body
-		@owner = @cgEnts[cent.current.bodyOwner];
-	}
-	ownerNum = owner.current.number;
-
-	team = ForceTeam( owner.current.team );
-
-	CheckUpdateTeamModelRegistration( team ); // check for cvar changes
-
-	// use the player defined one if not forcing
-	@modelinfo = @cgs.pModels[cent.current.modelindex];
-	@skin = @cgs.skinPrecache[cent.current.skinNum];
-
-	if( GS::CanForceModels() && ( ownerNum < GS::maxClients + 1 ) ) {
-		if( ( team == TEAM_ALPHA ) || ( team == TEAM_BETA ) ||
-		    // Don't force the model for the local player in non-team modes to distinguish the sounds from enemies'
-			( ( team == TEAM_PLAYERS ) && ( ownerNum != int( cgs.playerNum)  + 1 ) ) ) {
-			if( @cgs.teamModelInfo[team] !is null ) {
-				// There is a force model for this team
-				@modelinfo = @cgs.teamModelInfo[team];
-
-				if( @cgs.teamCustomSkin[team] !is null ) {
-					// There is a force skin for this team
-					@skin = @cgs.teamCustomSkin[team];
-				}
-
-				return true;
-			}
-		}
-	}
-
-	return false;
 }
 
 void RegisterTeamColor( int team ) {
@@ -206,9 +165,7 @@ int ColorForEntity( CEntity @cent, bool player ) {
 	}
 	// user defined colors if it's a player
 	else if( ( player && ( owner.current.number - 1 < GS::maxClients ) ) && cent.current.type != ET_CORPSE ) {
-		color = COLOR_RGBA( 255, 0, 0, 255 );
-		// TODO
-		//Vector4Copy( cgs.clientInfo[owner.current.number - 1].color, color );
+		color = cgs.clientInfo[owner.current.number - 1].color;
 	}
 	// Make corpses grey
 	else if( cent.current.type == ET_CORPSE && cent.current.bodyOwner != 0 ) {

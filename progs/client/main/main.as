@@ -17,11 +17,13 @@ class ClientStatic {
 	array<ShaderHandle @> imagePrecache(GS::MAX_IMAGES);
 	array<SkinHandle @> skinPrecache(GS::MAX_SKINFILES);
 
-	array<PlayerModel @> pModels(GS::MAX_MODELS);
-	PlayerModel @basePModelInfo; //fall back replacements
+	array<PModelInfo @> pModels(GS::MAX_MODELS);
+	PModelInfo @basePModelInfo; //fall back replacements
 	SkinHandle @baseSkin;
 
-	array<PlayerModel @> teamModelInfo(GS::MAX_TEAMS);
+	array<ClientInfo> clientInfo(GS::MAX_CLIENTS);
+
+	array<PModelInfo @> teamModelInfo(GS::MAX_TEAMS);
 	array<SkinHandle @> teamCustomSkin(GS::MAX_TEAMS); // user defined
 	array<int> teamColor(GS::MAX_TEAMS);
 
@@ -46,11 +48,15 @@ class ClientState {
 	float oldXerpTime;
 	float xerpSmoothFrac;
 
+	CGame::Scene::Boneposes @tempBoneposes;
+
+	int effects;
 	Mat3 autorotateAxis;
 }
 
 ClientStatic cgs;
 ClientState cg;
+const int SKM_MAX_BONES = 256;
 
 void ConfigString( int index, const String @s )
 {
@@ -66,7 +72,7 @@ void ConfigString( int index, const String @s )
 		if( s.empty() ) {
 			@cgs.modelDraw[index] = null;
 		} else if( s.substr( 0, 1 ) == "$" ) {  // indexed pmodel
-			@cgs.pModels[index] = RegisterPlayerModel( s.substr( 1 ) );
+			@cgs.pModels[index] = PModelInfo( RegisterPlayerModel( s.substr( 1 ) ) );
 		} else {
 			@cgs.modelDraw[index] = RegisterModel( s );
 		}
@@ -94,6 +100,8 @@ void ConfigString( int index, const String @s )
 		} else {
 			@cgs.skinPrecache[index] = RegisterSkin( s );
 		}
+	} else if( index >= CS_PLAYERINFOS && index < CS_PLAYERINFOS + GS::MAX_CLIENTS ) {
+		LoadClientInfo( index - CS_PLAYERINFOS );
 	}
 }
 
@@ -138,6 +146,12 @@ void Precache()
 {
 	for( int i = 0; i < MAX_MODELS; i++ ) {
 		ConfigString( CS_MODELS + i, CGame::GetConfigString( CS_MODELS + i ) );
+	}
+	for( int i = 0; i < MAX_CLIENTS; i++ ) {
+		ConfigString( CS_PLAYERINFOS + i, CGame::GetConfigString( CS_PLAYERINFOS + i ) );
+	}
+	for( int i = 0; i < MAX_SKINFILES; i++ ) {
+		ConfigString( CS_SKINFILES + i, CGame::GetConfigString( CS_SKINFILES + i ) );
 	}
 
 	RegisterForceModels();
@@ -215,7 +229,14 @@ void Frame( int frameTime, int realFrameTime, int64 realTime, int64 serverTime,
 	autorotate[YAW] = ( cg.time % 3600 ) * 0.1 * ( flipped ? -1.0f : 1.0f );
 	autorotate.anglesToAxis( cg.autorotateAxis );
 
+	@cg.tempBoneposes = CGame::Scene::RegisterTemporaryExternalBoneposes( SKM_MAX_BONES );
+
 	LerpEntities();
+}
+
+void Reset()
+{
+	ResetClientInfos();
 }
 
 }
