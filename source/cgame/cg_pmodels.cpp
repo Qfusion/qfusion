@@ -253,7 +253,7 @@ static bool CG_ParseAnimationScript( pmodelinfo_t *pmodelinfo, char *filename ) 
 				}
 
 				std::string rb(token);
-				CG_ParseRotationBone( pmodelinfo, token, rb );
+				CG_ParseRotationBone( pmodelinfo, COM_ParseExt( &ptr, false ), rb );
 			}
 			// Root animation bone
 			else if( !Q_stricmp( token, "rootanim" ) ) {
@@ -320,6 +320,12 @@ static bool CG_ParseAnimationScript( pmodelinfo_t *pmodelinfo, char *filename ) 
 
 	CG_Free( buf );
 
+	// validate frames inside skeleton range
+	for( i = 0; i < counter; ++i ) {
+		Q_clamp( anim_data[0][i], 0, skel->numFrames - 1 );
+		Q_clamp( anim_data[1][i], 0, skel->numFrames - 1 );
+	}
+
 	// animation ANIM_NONE (0) is always at frame 0, and it's never
 	// received from the game, but just used on the client when none
 	// animation was ever set for a model (head).
@@ -335,12 +341,6 @@ static bool CG_ParseAnimationScript( pmodelinfo_t *pmodelinfo, char *filename ) 
 		pmodelinfo->animSet.lastframe[i] = anim_data[1][i];
 		pmodelinfo->animSet.loopingframes[i] = anim_data[2][i];
 		pmodelinfo->animSet.frametime[i] = 1000.0f / (float)( anim_data[3][i] > 10 ? anim_data[3][i] : 10 );
-	}
-
-	// validate frames inside skeleton range
-	for( i = 0; i < counter; ++i ) {
-		Q_clamp( pmodelinfo->animSet.firstframe[i], 0, skel->numFrames - 1 );
-		Q_clamp( pmodelinfo->animSet.lastframe[i], 0, skel->numFrames - 1 );
 	}
 
 	pmodelinfo->numAnims = counter;
@@ -1170,7 +1170,7 @@ void CG_AddPModel( centity_t *cent ) {
 
 	// blend it into base pose
 	rootanim = pmodel->pmodelinfo->rootanims["upper"];
-	CG_RecurseBlendSkeletalBone( blendpose, cent->ent.boneposes, CG_BoneNodeFromNum( cent->skel, rootanim ), 1.0f );
+	CG_RecurseBlendSkeletalBone( cent->skel, blendpose, cent->ent.boneposes, rootanim, 1.0f );
 
 	// add skeleton effects (pose is unmounted yet)
 	if( cent->current.type != ET_CORPSE ) {
@@ -1199,13 +1199,20 @@ void CG_AddPModel( centity_t *cent ) {
 
 			// lerp rotation and divide angles by the number of rotation bones
 			int numRotators = rotators.size();
-			for( j = 0; j < 3; j++ ) {
-				tmpangles[j] = LerpAngle( pmodel->oldangles[i][j], pmodel->angles[i][j], cg.lerpfrac );
-				tmpangles[j] /= (float)numRotators;
+			int rotators_[SKM_MAX_BONES];
+			for( j = 0; j < numRotators; j++ ) {
+				rotators_[j] = rotators[j];
 			}
 
-			for( j = 0; j < numRotators; j++ )
-				CG_RotateBonePose( tmpangles, &cent->ent.boneposes[rotators[j]] );
+			int part = UPPER;
+			if( it->first == "head" ) {
+				part = HEAD;
+			}
+			for( j = 0; j < 3; j++ ) {
+				tmpangles[j] = LerpAngle( pmodel->oldangles[part][j], pmodel->angles[part][j], cg.lerpfrac );
+			}
+
+			CG_RotateBonePoses( tmpangles, cent->ent.boneposes, rotators_, numRotators );
 		}
 	}
 

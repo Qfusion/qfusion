@@ -125,7 +125,7 @@ typedef struct pmodelinfo_s {
 	std::map<std::string, std::vector<int>> rotator;
 	std::map<std::string, int> rootanims;
 	std::vector<int> anim_data[4];
-	int numAnims;
+	unsigned numAnims;
 
 	gs_pmodel_animationset_t animSet; // animation script
 
