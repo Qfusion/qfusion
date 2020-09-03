@@ -199,11 +199,43 @@ static void asFunc_PlayerModelGetAnim( uint32_t idx,
 		return;
 	}
 
-	auto &anim_data = pmodel->anim_data[idx];
-	*firstframe = anim_data[0];
-	*lastframe = anim_data[1];
-	*loopframe = anim_data[2];
-	*fps = anim_data[3];
+	*firstframe = pmodel->anim_data[0][idx];
+	*lastframe = pmodel->anim_data[1][idx];
+	*loopframe = pmodel->anim_data[2][idx];
+	*fps = pmodel->anim_data[3][idx];
+}
+
+static void *asFunc_PlayerModelGetModel( pmodelinfo_t *pmodel )
+{
+	return pmodel->model;
+}
+
+static int asFunc_getRootAnim( asstring_t &str, pmodelinfo_t *pmodel )
+{
+	auto it = pmodel->rootanims.find( str.buffer );
+	if( it == pmodel->rootanims.end() )
+		return -1;
+	return it->second;
+}
+
+static CScriptArrayInterface *asFunc_getRotators( const asstring_t &str, pmodelinfo_t *pmodel )
+{
+	auto asEngine = CGAME_AS_ENGINE();
+
+	auto it = pmodel->rotator.find( str.buffer );
+	if( it == pmodel->rotator.end() )
+		return NULL;
+
+	auto &rotators = it->second;
+
+	asIObjectType *ot = asEngine->GetObjectTypeById( asEngine->GetTypeIdByDecl( "array<int>" ) );
+	CScriptArrayInterface *arr = cgs.asExport->asCreateArrayCpp( rotators.size(), ot );
+
+	for( int i = 0; i < rotators.size(); i++ ) {
+		*( (int *)arr->At( i ) ) = rotators[i];
+	}
+
+	return arr;
 }
 
 static const gs_asMethod_t asPlayerModelMethods[] = {
@@ -211,19 +243,24 @@ static const gs_asMethod_t asPlayerModelMethods[] = {
 		asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, getAnim, (uint index, int &out first, int &out last, int &out loop, int &out fps) const ), asFUNCTION( asFunc_PlayerModelGetAnim ),
 		asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( ModelHandle @, get_model, () const ), asFUNCTION( asFunc_PlayerModelGetModel ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( int, getRootAnim, ( const String &in name ) const ), asFUNCTION( asFunc_getRootAnim ),
+		asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( array<int> @, getRotators, ( const String &in name ) const ),
+		asFUNCTION( asFunc_getRotators ), asCALL_CDECL_OBJLAST },
 
 	ASLIB_METHOD_NULL,
 };
 
 static const gs_asClassDescriptor_t asPlayerModelClassDescriptor = {
-	"PlayerModel",							   /* name */
+	"PlayerModel",			   /* name */
 	asOBJ_REF | asOBJ_NOCOUNT, /* object type flags */
-	sizeof( void * ),							   /* size */
-	NULL,										   /* funcdefs */
-	NULL,		   /* object behaviors */
-	asPlayerModelMethods,										   /* methods */
-	NULL,										   /* properties */
-	NULL, NULL									   /* string factory hack */
+	sizeof( void * ),		   /* size */
+	NULL,					   /* funcdefs */
+	NULL,					   /* object behaviors */
+	asPlayerModelMethods,	   /* methods */
+	NULL,					   /* properties */
+	NULL, NULL				   /* string factory hack */
 };
 
 //======================================================================
@@ -270,7 +307,7 @@ static void *asFunc_RegisterShader( const asstring_t *str )
 
 static void *asFunc_RegisterSkin( const asstring_t *str )
 {
-	return trap_R_RegisterSkin( str->buffer );
+	return trap_R_RegisterSkinFile( str->buffer );
 }
 
 static void *asFunc_RegisterFont( const asstring_t *str, int style, unsigned size )

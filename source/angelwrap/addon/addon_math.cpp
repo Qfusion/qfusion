@@ -186,7 +186,7 @@ void RegisterMathAddon( asIScriptEngine *engine ) {
 		{ "Vec3 AnglesSubtract( const Vec3 &in a1, const Vec3 &in a2 )", asFUNCTION( asFunc_AnglesSubtract ) },
 		{ "float AngleNormalize360( float a )", asFUNCTION( AngleNormalize360 ) },
 		{ "float AngleNormalize180( float a )", asFUNCTION( AngleNormalize180 ) },
-		{ "float AngleDelta( float a )", asFUNCTION( AngleDelta ) },
+		{ "float AngleDelta( float a1, float a2 )", asFUNCTION( AngleDelta ) },
 		{ "float anglemod( float a )", asFUNCTION( anglemod ) },
 		{ "float LerpAngle( float v1, float v2, float lerp )", asFUNCTION( LerpAngle ) },
 		{ "Vec3 LerpAngles( const Vec3 &in a1, const Vec3 &in a2, float f )", asFUNCTION( asFunc_LerpAngles ) },

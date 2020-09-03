@@ -237,6 +237,32 @@ static void asFunc_CG_SpawnPolyBeam( const asvec3_t *start, const asvec3_t *end,
 	CG_SpawnPolyBeam( start->v, end->v, color->v, width, dietime, fadetime, shader, shaderlength, tag );
 }
 
+static void asFunc_CG_RotateBonePoses( asvec3_t *angles, bonepose_t *boneposes, CScriptArrayInterface *arr )
+{
+	if( !arr ) {
+		return;
+	}
+
+	int numRotators = arr->GetSize();
+	if( !numRotators ) {
+		return;
+	}
+	if( numRotators > SKM_MAX_BONES ) {
+		return;
+	}
+
+	int *rotators = (int *)alloca( numRotators * sizeof( int ) );
+	if( rotators == nullptr ) {
+		return;
+	}
+
+	for( int i = 0; i < numRotators; i++ ) {
+		rotators[i] = *( (int *)arr->At( i ) );
+	}
+
+	CG_RotateBonePoses( angles->v, boneposes, rotators, numRotators );
+}
+
 const gs_asglobfuncs_t asCGameRefSceneGlobalFuncs[] = {
 	{ "void PlaceRotatedModelOnTag( Entity @+ ent, const Entity @+ dest, const Orientation &in )",
 		asFUNCTION( CG_PlaceRotatedModelOnTag ), NULL },
@@ -247,10 +273,16 @@ const gs_asglobfuncs_t asCGameRefSceneGlobalFuncs[] = {
 
 	{ "Boneposes @RegisterTemporaryExternalBoneposes( ModelSkeleton @ )",
 		asFUNCTION( CG_RegisterTemporaryExternalBoneposes ), NULL },
+	{ "Boneposes @RegisterTemporaryExternalBoneposes( int numBones )",
+		asFUNCTION( CG_RegisterTemporaryExternalBoneposes2 ), NULL },
 	{ "bool LerpSkeletonPoses( ModelSkeleton @, int frame, int oldFrame, Boneposes @ boneposes, float frac )",
 		asFUNCTION( CG_LerpSkeletonPoses ), NULL },
 	{ "void TransformBoneposes( ModelSkeleton @, Boneposes @ boneposes, Boneposes @ sourceBoneposes )",
 		asFUNCTION( CG_TransformBoneposes ), NULL },
+	{ "void RecurseBlendSkeletalBone( ModelSkeleton @, Boneposes @ inBoneposes, Boneposes @ outBoneposes, int root, float frac )",
+		asFUNCTION( CG_RecurseBlendSkeletalBone ), NULL },
+	{ "void RotateBonePoses( const Vec3 &in angles, Boneposes @ inBoneposes, array<int> @rotators )",
+		asFUNCTION( asFunc_CG_RotateBonePoses ), NULL },
 
 	{ "void SpawnPolyQuad( const Vec3 &in, const Vec3 &in, const Vec3 &in, const Vec3 &in, float stx, float sty, " 
 	  "const Vec4 &in, int64 dieTime, int64 fadeTime, ShaderHandle @, int tag )",

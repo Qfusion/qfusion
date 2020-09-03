@@ -30,19 +30,21 @@ void CG_AddEntityToScene( entity_t *ent );
 cgs_skeleton_t *CG_SkeletonForModel( struct model_s *model );
 
 bonepose_t *CG_RegisterTemporaryExternalBoneposes( cgs_skeleton_t *skel );
+bonepose_t *CG_RegisterTemporaryExternalBoneposes2( int numBones );
 cgs_skeleton_t *CG_SetBoneposesForTemporaryEntity( entity_t *ent );
 void CG_InitTemporaryBoneposesCache( void );
 void CG_ResetTemporaryBoneposesCache( void );
 void CG_FreeTemporaryBoneposesCache( void );
-bonenode_t *CG_BoneNodeFromNum( cgs_skeleton_t *skel, int bonenum );
-void CG_RecurseBlendSkeletalBone( bonepose_t *inboneposes, bonepose_t *outboneposes,
-								  bonenode_t *bonenode, float frac );
+void CG_RecurseBlendSkeletalBone( cgs_skeleton_t *skel, bonepose_t *inboneposes, 
+	bonepose_t *outboneposes, int root, float frac );
 bool CG_LerpBoneposes( cgs_skeleton_t *skel, bonepose_t *curboneposes, bonepose_t *oldboneposes,
 					   bonepose_t *outboneposes, float frontlerp );
 bool CG_LerpSkeletonPoses( cgs_skeleton_t *skel, int curframe, int oldframe,
 						   bonepose_t *outboneposes, float frontlerp );
 void CG_TransformBoneposes( cgs_skeleton_t *skel, bonepose_t *boneposes,
 							bonepose_t *sourceboneposes );
-void CG_RotateBonePose( vec3_t angles, bonepose_t *bonepose );
-bool CG_SkeletalPoseGetAttachment( orientation_t *orient, cgs_skeleton_t *skel,
+void CG_RotateBonePose( const vec3_t angles, bonepose_t *outboneposes, int rotator );
+void CG_RotateBonePoses( const vec3_t angles, bonepose_t *outboneposes, int *rotators, int numRotators );
+bool CG_SkeletalPoseGetAttachment(
+	orientation_t *orient, cgs_skeleton_t *skel,
 								   bonepose_t *boneposes, const char *bonename );

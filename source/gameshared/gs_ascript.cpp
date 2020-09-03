@@ -1969,6 +1969,30 @@ static const gs_asglobfuncs_t asGameGlobalFunctions[] = {
 
 //=======================================================================
 
+static bool GS_asInfoValidate( asstring_t *info )
+{
+	return Info_Validate( info->buffer );
+}
+
+static asstring_t *GS_asInfoValueForKey( asstring_t *info, asstring_t *key )
+{
+	const char *value = Info_ValueForKey( info->buffer, key->buffer );
+	if( value == NULL ) {
+		return NULL;
+	}
+	return module_angelExport->asStringFactoryBuffer( value, strlen( value ) );
+}
+
+static const gs_asglobfuncs_t asGameGlobalInfoFunctions[] = {
+	{ "bool Validate( const String &in info )", asFUNCTION( GS_asInfoValidate ), NULL },
+	{ "String @ValueForKey( const String &in info, const String &in key )", asFUNCTION( GS_asInfoValueForKey ),
+		NULL },
+
+	{ NULL },
+};
+
+//=======================================================================
+
 static int asPS_MAX_STATS = PS_MAX_STATS;
 static int asMAX_GAME_STATS = MAX_GAME_STATS;
 static int asMAX_EVENTS = MAX_EVENTS;
@@ -2234,6 +2258,8 @@ void GS_asInitializeEngine( asIScriptEngine *asEngine ) {
 	GS_asRegisterGlobalProperties( asEngine, asGameGlobalProperties, "GS" );
 
 	GS_asRegisterGlobalFunctions( asEngine, asGameGlobalFunctions, "GS" );
+
+	GS_asRegisterGlobalFunctions( asEngine, asGameGlobalInfoFunctions, "GS::Info" );
 
 	GS_asRegisterObjectClasses( asEngine, asGameClassesDescriptors, NULL );
 }

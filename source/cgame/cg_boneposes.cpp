@@ -30,29 +30,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 cgs_skeleton_t *skel_headnode;
 
-//#define SKEL_PRINTBONETREE
-#ifdef SKEL_PRINTBONETREE
-static void CG_PrintBoneTree( cgs_skeleton_t *skel, bonenode_t *node, int level ) {
-	int i;
-
-	if( node->bonenum != -1 ) {
-		for( i = 0; i < level; i++ ) {
-			CG_Printf( "  " );
-		}
-		CG_Printf( "%i %s\n", skel->bones[node->bonenum].parent, skel->bones[node->bonenum].name );
-	}
-
-	level++;
-
-	// find children of this bone
-	for( i = 0; i < node->numbonechildren; i++ ) {
-		if( node->bonechildren[i] ) {
-			CG_PrintBoneTree( skel, node->bonechildren[i], level );
-		}
-	}
-}
-#endif
-
 /*
 * CG_CreateBonesTreeNode
 * Find out the original tree
@@ -66,7 +43,6 @@ static bonenode_t *CG_CreateBonesTreeNode( cgs_skeleton_t *skel, int bone ) {
 	bonenode->bonenum = bone;
 	if( bone != -1 ) {
 		skel->bones[bone].node = bonenode; // store a pointer in the linear array for fast first access.
-
 	}
 
 	// find childs of this bone
@@ -158,18 +134,14 @@ cgs_skeleton_t *CG_SkeletonForModel( struct model_s *model ) {
 /*
 * CG_BoneNodeFromNum
 */
-bonenode_t *CG_BoneNodeFromNum( cgs_skeleton_t *skel, int bonenum ) {
+static bonenode_t *CG_BoneNodeFromNum( cgs_skeleton_t *skel, int bonenum ) {
 	if( bonenum < 0 || bonenum >= skel->numBones ) {
 		return skel->bonetree;
 	}
 	return skel->bones[bonenum].node;
 }
 
-/*
-* CG_RecurseBlendSkeletalBone
-* Combine 2 different poses in one from a given root bone
-*/
-void CG_RecurseBlendSkeletalBone( bonepose_t *inboneposes, bonepose_t *outboneposes, bonenode_t *bonenode, float frac ) {
+static void CG_RecurseBlendSkeletalBone_r( bonepose_t *inboneposes, bonepose_t *outboneposes, bonenode_t *bonenode, float frac ) {
 	int i;
 	bonepose_t *inbone, *outbone;
 
@@ -186,9 +158,19 @@ void CG_RecurseBlendSkeletalBone( bonepose_t *inboneposes, bonepose_t *outbonepo
 
 	for( i = 0; i < bonenode->numbonechildren; i++ ) {
 		if( bonenode->bonechildren[i] ) {
-			CG_RecurseBlendSkeletalBone( inboneposes, outboneposes, bonenode->bonechildren[i], frac );
+			CG_RecurseBlendSkeletalBone_r( inboneposes, outboneposes, bonenode->bonechildren[i], frac );
 		}
 	}
+}
+
+/*
+ * CG_RecurseBlendSkeletalBone
+ * Combine 2 different poses in one from a given root bone
+ */
+void CG_RecurseBlendSkeletalBone( cgs_skeleton_t *skel, bonepose_t *inboneposes, bonepose_t *outboneposes, int root, float frac )
+{
+	bonenode_t *node = CG_BoneNodeFromNum( skel, root );
+	CG_RecurseBlendSkeletalBone_r( inboneposes, outboneposes, node, frac );
 }
 
 /*
@@ -264,10 +246,12 @@ bool CG_LerpSkeletonPoses( cgs_skeleton_t *skel, int curframe, int oldframe, bon
 /*
 * CG_RotateBonePose
 */
-void CG_RotateBonePose( vec3_t angles, bonepose_t *bonepose ) {
+void CG_RotateBonePose( const vec3_t angles, bonepose_t *outboneposes, int rotator )
+{
 	dualquat_t quat_rotator;
 	bonepose_t temppose;
 	vec3_t tempangles;
+	bonepose_t *bonepose = outboneposes + rotator;
 
 	tempangles[0] = -angles[YAW];
 	tempangles[1] = -angles[PITCH];
@@ -278,6 +262,34 @@ void CG_RotateBonePose( vec3_t angles, bonepose_t *bonepose ) {
 	memcpy( &temppose, bonepose, sizeof( bonepose_t ) );
 
 	DualQuat_Multiply( quat_rotator, temppose.dualquat, bonepose->dualquat );
+}
+
+/*
+ * CG_RotateBonePoses
+ */
+void CG_RotateBonePoses( const const vec3_t angles, bonepose_t *outboneposes, int *rotators, int numRotators )
+{
+	dualquat_t	quat_rotator;
+	vec3_t		tempangles;
+
+	if( numRotators == 0 ) {
+		return;
+	}
+
+	float scale = 1.0f / (float)numRotators;
+	tempangles[0] = -angles[YAW] * scale;
+	tempangles[1] = -angles[PITCH] * scale;
+	tempangles[2] = -angles[ROLL] * scale;
+
+	DualQuat_FromAnglesAndVector( tempangles, vec3_origin, quat_rotator );
+
+	for( int i = 0; i < numRotators; i++ ) {
+		int			rotator = rotators[i];
+		bonepose_t *bonepose = outboneposes + rotator;
+		bonepose_t	temppose = *bonepose;
+
+		DualQuat_Multiply( quat_rotator, temppose.dualquat, bonepose->dualquat );
+	}
 }
 
 /*
@@ -434,17 +446,26 @@ void CG_ResetTemporaryBoneposesCache( void ) {
 }
 
 /*
+ * CG_RegisterTemporaryExternalBoneposes
+ * These boneposes are RESET after drawing EACH FRAME
+ */
+bonepose_t *CG_RegisterTemporaryExternalBoneposes( cgs_skeleton_t *skel )
+{
+	return CG_RegisterTemporaryExternalBoneposes2( skel->numBones );
+}
+
+/*
 * CG_RegisterTemporaryExternalBoneposes
 * These boneposes are RESET after drawing EACH FRAME
 */
-bonepose_t *CG_RegisterTemporaryExternalBoneposes( cgs_skeleton_t *skel ) {
+bonepose_t *CG_RegisterTemporaryExternalBoneposes2( int numBones ) {
 	bonepose_t *boneposes;
-	if( ( TBC_Count + skel->numBones ) > TBC_Size ) {
-		CG_ExpandTemporaryBoneposesCache( skel->numBones );
+	if( ( TBC_Count + numBones ) > TBC_Size ) {
+		CG_ExpandTemporaryBoneposesCache( numBones );
 	}
 
 	boneposes = &TBC[TBC_Count];
-	TBC_Count += skel->numBones;
+	TBC_Count += numBones;
 
 	return boneposes;
 }
