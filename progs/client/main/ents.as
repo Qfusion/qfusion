@@ -1,5 +1,21 @@
 namespace CGame {
 
+enum eLocalEffects {
+	EV_PLAYER_TELEPORT_IN,
+	EV_PLAYER_TELEPORT_OUT,
+	VSAY_HEADICON,
+	VSAY_HEADICON_TIMEOUT,
+	ROCKETTRAIL_LAST_DROP,
+	ROCKETFIRE_LAST_DROP,
+	GRENADETRAIL_LAST_DROP,
+	BLOODTRAIL_LAST_DROP,
+	FLAGTRAIL_LAST_DROP,
+	LASERBEAM,
+	LASERBEAM_SMOKE_TRAIL,
+	EV_WEAPONBEAM,
+	MAX_LOCALEFFECTS
+};
+
 class CEntity {
 	EntityState current;
 	EntityState prev;
@@ -27,6 +43,7 @@ class CEntity {
 	Vec3 trailOrigin;
 	int64 respawnTime;
 	int64 flyStopTime;
+	array<int64> localEffects(MAX_LOCALEFFECTS);
 
 	// used for client side animation of player models
 	PModel pmodel;
@@ -136,6 +153,10 @@ void NewPacketEntityState( const EntityState @state ) {
 			// duplicate the current state so lerping doesn't hurt anything
 			cent.prev = state;
 			cent.microSmooth = 0;
+
+			for( int i = 0; i < MAX_LOCALEFFECTS; i++ ) {
+				cent.localEffects[i] = 0;
+			}
 
 			if( CGame::Snap.valid ) {
 				cent.ClearPModelAnimations();
@@ -266,14 +287,14 @@ void AddLinkedModel( CEntity @cent ) {
 	ent.renderfx = cent.refEnt.renderfx;
 	ent.shaderTime = cent.refEnt.shaderTime;
 	ent.shaderRGBA = cent.refEnt.shaderRGBA;
-	@ent.model = model;
+	@ent.model = @model;
 	ent.origin = cent.refEnt.origin;
 	ent.origin2 = cent.refEnt.origin2;
 	ent.lightingOrigin = cent.refEnt.lightingOrigin;
 	ent.axis = cent.refEnt.axis;
 
 	if( @cent.item != null && ( cent.effects & EF_AMMOBOX ) != 0 ) { // ammobox icon hack
-		@ent.customShader = CGame::RegisterShader( cent.item.icon );
+		@ent.customShader = CGame::RegisterShader( @cent.item.icon );
 	}
 
 	barrel = false;
