@@ -267,7 +267,7 @@ void CG_RotateBonePose( const vec3_t angles, bonepose_t *outboneposes, int rotat
 /*
  * CG_RotateBonePoses
  */
-void CG_RotateBonePoses( const const vec3_t angles, bonepose_t *outboneposes, int *rotators, int numRotators )
+void CG_RotateBonePoses( const vec3_t angles, bonepose_t *outboneposes, int *rotators, int numRotators )
 {
 	dualquat_t	quat_rotator;
 	vec3_t		tempangles;

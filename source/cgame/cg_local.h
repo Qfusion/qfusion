@@ -506,8 +506,6 @@ typedef struct {
 
 	bool hasGametypeMenu;
 
-	char weaponModels[WEAP_TOTAL][MAX_QPATH];
-	int numWeaponModels;
 	weaponinfo_t *weaponInfos[WEAP_TOTAL];    // indexed list of weapon model infos
 	orientation_t weaponItemTag;
 

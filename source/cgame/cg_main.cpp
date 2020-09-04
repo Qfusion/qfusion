@@ -393,14 +393,18 @@ const char *CG_TranslateColoredString( const char *string, char *dst, size_t dst
 static void CG_RegisterWeaponModels( void ) {
 	int i;
 
-	for( i = 0; i < cgs.numWeaponModels; i++ ) {
-		cgs.weaponInfos[i] = CG_RegisterWeaponModel( cgs.weaponModels[i], i );
+	// special case for weapon 0. Must always load the animation script
+	cgs.weaponInfos[WEAP_NONE] = CG_CreateWeaponZeroModel( "generic/generic.md3" );
+
+	for( i = WEAP_NONE+1; i < WEAP_TOTAL; i++ ) {
+		cgs.weaponInfos[i] = cgs.weaponInfos[0];
+
+		gsitem_t *item = GS_FindItemByTag( i );
+		if( item ) {
+			cgs.weaponInfos[i] = CG_RegisterWeaponModel( item->world_model[0], i );
+		}
 	}
 
-	// special case for weapon 0. Must always load the animation script
-	if( !cgs.weaponInfos[0] ) {
-		cgs.weaponInfos[0] = CG_CreateWeaponZeroModel( cgs.weaponModels[0] );
-	}
 }
 
 /*
@@ -426,9 +430,6 @@ static void CG_RegisterModels( void ) {
 
 		CG_LoadingString( "models" );
 
-		cgs.numWeaponModels = 1;
-		Q_strncpyz( cgs.weaponModels[0], "generic/generic.md3", sizeof( cgs.weaponModels[0] ) );
-
 		cgs.precacheModelsStart = 1;
 	}
 
@@ -442,19 +443,7 @@ static void CG_RegisterModels( void ) {
 
 		cgs.precacheModelsStart = i;
 
-		if( name[0] == '#' ) {
-			// special player weapon model
-			if( cgs.numWeaponModels >= WEAP_TOTAL ) {
-				continue;
-			}
-
-			if( !CG_LoadingItemName( name ) ) {
-				return;
-			}
-
-			Q_strncpyz( cgs.weaponModels[cgs.numWeaponModels], name + 1, sizeof( cgs.weaponModels[cgs.numWeaponModels] ) );
-			cgs.numWeaponModels++;
-		} else if( name[0] == '$' ) {
+		if( name[0] == '$' ) {
 			if( !CG_LoadingItemName( name ) ) {
 				return;
 			}
