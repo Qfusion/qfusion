@@ -15,6 +15,74 @@ void PlayerModelAddFlag( CEntity @cent ) {
 	AddFlagModelOnTag( @cent, color, "tag_flag1" );
 }
 
+void AddHeadIcon( CEntity @cent ) {
+	ShaderHandle @iconShader;
+	float radius = 6, upoffset = 8;
+	CGame::Scene::Orientation tag_head;
+
+	if( ( cent.refEnt.renderfx & RF_VIEWERMODEL ) != 0 ) {
+		return;
+	}
+
+	if( ( cent.effects & EF_BUSYICON ) != 0 ) {
+		@iconShader = @cgs.media.shaderChatBalloon;
+		radius = 12.0f;
+		upoffset = 2.0f;
+	} else if( cent.localEffects[VSAY_HEADICON_TIMEOUT] > cg.time ) {
+		if( cent.localEffects[VSAY_HEADICON] < VSAY_TOTAL ) {
+			@iconShader = @cgs.media.shaderVSayIcon[cent.localEffects[VSAY_HEADICON]];
+		} else {
+			@iconShader = @cgs.media.shaderVSayIcon[VSAY_GENERIC];
+		}
+
+		radius = 12.0f;
+		upoffset = 0.0f;
+	}
+
+	bool stunned = ( cent.effects & EF_PLAYER_STUNNED ) != 0 || ( cent.prev.effects & EF_PLAYER_STUNNED ) != 0;
+	bool showIcon = ( @iconShader !is null || stunned );
+
+	// add the current active icon
+	if( !showIcon ) {
+		return;
+	}
+
+	CGame::Scene::Entity balloon;
+	balloon.renderfx = RF_NOSHADOW;
+
+	if( CGame::Scene::GrabTag( tag_head, @cent.refEnt, "tag_head" ) ) {
+		balloon.origin = tag_head.origin;
+		balloon.origin.z += upoffset;
+		CGame::Scene::PlaceModelOnTag( @balloon, @cent.refEnt, tag_head );
+	} else {
+		balloon.origin = cent.refEnt.origin;
+		balloon.origin.z += playerboxStandMins.z + upoffset;
+	}
+	balloon.origin2 = balloon.origin;
+
+	if( @iconShader !is null ) {
+		balloon.rtype = RT_SPRITE;
+		@balloon.customShader = @iconShader;
+		balloon.radius = radius;
+		@balloon.model = null;
+		CGame::Scene::AddEntityToScene( @balloon );
+	}
+
+	// add stun effect: not really a head icon, but there's no point in finding the head location twice
+	if( stunned ) {
+		balloon.rtype = RT_MODEL;
+		@balloon.customShader = null;
+		balloon.radius = 0;
+		@balloon.model = @cgs.media.modHeadStun;
+
+		if( ( cent.current.effects & EF_PLAYER_STUNNED ) == 0 ) {
+			balloon.shaderRGBA = COLOR_REPLACEA( balloon.shaderRGBA, uint8( 255.0f * ( 1.0f - cg.lerpfrac ) ) );
+		}
+
+		CGame::Scene::AddEntityToScene( @balloon );
+	}
+}
+
 /*
 * UpdatePlayerModelEnt
 * Called each new serverframe
@@ -275,15 +343,15 @@ void AddPlayerEnt( CEntity @cent ) {
 
 	AddShellEffects( @cent.refEnt, cent.effects );
 
-/*
-	CG_AddHeadIcon( cent );
+	AddHeadIcon( @cent );
 
+/*
 	// add teleporter sfx if needed
 	CG_PModel_SpawnTeleportEffect( cent );
 
 	// add weapon model
-	if( cent.current.weapon && CG_GrabTag( &tag_weapon, &cent.ent, "tag_weapon" ) ) {
-		CG_AddWeaponOnTag( &cent.ent, &tag_weapon, cent.current.weapon, cent.effects, 
+	if( cent.current.weapon && CG_GrabTag( &tag_weapon, &cent.refEnt, "tag_weapon" ) ) {
+		CG_AddWeaponOnTag( &cent.refEnt, &tag_weapon, cent.current.weapon, cent.effects, 
 			&pmodel.projectionSource, pmodel.flash_time, pmodel.barrel_time, -1 );
 	}
 */

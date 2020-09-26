@@ -1,0 +1,1 @@
+const int HEADICON_TIMEOUT = 4000;

@@ -1,5 +1,14 @@
 namespace CGame {
 
+Vec3 playerboxStandMins, playerboxStandMaxs;
+float playerboxStandViewheight;
+
+Vec3 playerboxCrouchMins, playerboxCrouchMaxs;
+float playerboxCrouchViewheight;
+
+Vec3 playerboxGibMins, playerboxGibMaxs;
+float playerboxGibViewheight;
+
 class ClientStatic {
 	String serverName;
 	uint playerNum;
@@ -122,6 +131,15 @@ void Load()
 	cg_teamBETAmodelForce.modified = true;
 	cg_teamBETAskin.modified = true;
 	cg_teamBETAcolor.modified = true;
+
+	GS::GetPlayerStandSize( playerboxStandMins, playerboxStandMaxs );
+	playerboxStandViewheight = GS::GetPlayerStandViewHeight();
+
+	GS::GetPlayerCrouchSize( playerboxCrouchMins, playerboxCrouchMaxs );
+	playerboxCrouchViewheight = GS::GetPlayerCrouchHeight();
+
+	GS::GetPlayerGibSize( playerboxGibMins, playerboxGibMaxs );
+	playerboxGibViewheight = GS::GetPlayerGibHeight();
 }
 
 void Init( const String @serverName, uint playerNum, bool demoPlaying, const String @demoName, 

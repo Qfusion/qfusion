@@ -12,10 +12,13 @@ Cvar cg_raceGhosts( "cg_raceGhosts", "0", CVAR_ARCHIVE );
 Cvar cg_raceGhostsAlpha( "cg_raceGhostsAlpha", "0.25", CVAR_ARCHIVE );
 
 Cvar cg_volume_effects( "cg_volume_effects", "1.0", CVAR_ARCHIVE );
+Cvar cg_volume_voicechats( "cg_volume_voicechats", "1.0", CVAR_ARCHIVE );
 
 Cvar cg_gibs( "cg_gibs", "1", CVAR_ARCHIVE );
 
 Cvar cg_drawEntityBoxes( "cg_drawEntityBoxes", "0", 0 );
+
+Cvar cg_voiceChats( "cg_voiceChats", "1", CVAR_ARCHIVE );
 
 //team models
 Cvar cg_teamPLAYERSmodel( "cg_teamPLAYERSmodel", DEFAULT_PLAYERMODEL, CVAR_ARCHIVE );
