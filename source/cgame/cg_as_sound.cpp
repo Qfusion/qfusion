@@ -29,6 +29,8 @@ const gs_asglobfuncs_t asCGameSoundGlobalFuncs[] = {
 		asFUNCTION( trap_S_StartGlobalSound ), NULL },
 	{ "void StartLocalSound( SoundHandle @, int channel, float fvol )",
 		asFUNCTION( trap_S_StartLocalSound ), NULL },
+	{ "void StartFixedSound( SoundHandle @, const Vec3 &in origin, int channel, float fvol, float attenuation )",
+		asFUNCTION( trap_S_StartFixedSound ), NULL },
 	{ "void SetEntitySpatilization( int entnum, const Vec3 &in origin, const Vec3 &in velocity )",
 		asFUNCTION( trap_S_SetEntitySpatilization ), NULL },
 
