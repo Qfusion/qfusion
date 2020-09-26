@@ -12,6 +12,10 @@ class CMedia {
     array<ShaderHandle @> shaderVSayIcon(eVSays::VSAY_TOTAL);
 
     SoundHandle  @sfxItemRespawn;
+    SoundHandle  @sfxPlayerRespawn;
+    SoundHandle  @sfxTeleportIn;
+    SoundHandle  @sfxTeleportOut;
+
     array<SoundHandle @> sfxVSaySounds(eVSays::VSAY_TOTAL);
 
     void PrecacheShaders() {
@@ -65,6 +69,9 @@ class CMedia {
 
     void PrecacheSounds() {
         @sfxItemRespawn = CGame::RegisterSound( S_ITEM_RESPAWN );
+        @sfxPlayerRespawn = CGame::RegisterSound( S_PLAYER_RESPAWN );
+        @sfxTeleportIn = CGame::RegisterSound( S_TELEPORT );
+        @sfxTeleportOut = CGame::RegisterSound( S_TELEPORT );
 
         //VSAY sounds
         @sfxVSaySounds[VSAY_GENERIC] = CGame::RegisterSound( S_CHAT );

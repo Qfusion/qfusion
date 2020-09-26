@@ -8,6 +8,8 @@ const String PATH_BALLONCHAT_ICON = "gfx/2d/bubblechat";
 const String S_CHAT = "sounds/misc/chat";
 
 const String S_ITEM_RESPAWN = "sounds/items/item_spawn";
+const String S_PLAYER_RESPAWN = "sounds/world/player_respawn";
+const String S_TELEPORT = "sounds/world/tele_in";
 
 // vsay icons
 const String PATH_VSAY_GENERIC_ICON     = "gfx/hud/icons/vsay/generic";

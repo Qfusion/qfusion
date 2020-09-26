@@ -267,6 +267,7 @@ void AddLoopSound(SoundHandle@, int entnum, float fvol, float attenuation) {}
 void StartRelativeSound(SoundHandle@, int entnum, int channel, float fvol, float attenuation) {}
 void StartGlobalSound(SoundHandle@, int channel, float fvol) {}
 void StartLocalSound(SoundHandle@, int channel, float fvol) {}
+void StartFixedSound(SoundHandle@, const Vec3&in origin, int channel, float fvol, float attenuation) {}
 void SetEntitySpatilization(int entnum, const Vec3&in origin, const Vec3&in velocity) {}
 
 }

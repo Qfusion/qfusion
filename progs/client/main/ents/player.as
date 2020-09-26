@@ -28,9 +28,9 @@ void AddHeadIcon( CEntity @cent ) {
 		@iconShader = @cgs.media.shaderChatBalloon;
 		radius = 12.0f;
 		upoffset = 2.0f;
-	} else if( cent.localEffects[VSAY_HEADICON_TIMEOUT] > cg.time ) {
-		if( cent.localEffects[VSAY_HEADICON] < VSAY_TOTAL ) {
-			@iconShader = @cgs.media.shaderVSayIcon[cent.localEffects[VSAY_HEADICON]];
+	} else if( cent.localEffects[LEF_VSAY_HEADICON_TIMEOUT] > cg.time ) {
+		if( cent.localEffects[LEF_VSAY_HEADICON] < VSAY_TOTAL ) {
+			@iconShader = @cgs.media.shaderVSayIcon[cent.localEffects[LEF_VSAY_HEADICON]];
 		} else {
 			@iconShader = @cgs.media.shaderVSayIcon[VSAY_GENERIC];
 		}
