@@ -30,6 +30,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "addon/addon_cvar.h"
 #include "addon/addon_stringutils.h"
 #include "addon/addon_mat3.h"
+#include "addon/addon_filepath.h"
 
 #include <list>
 #include <vector>
@@ -422,6 +423,7 @@ asIScriptEngine *qasCreateEngine( bool *asMaxPortability ) {
 	PreRegisterCvarAddon( engine );
 	PreRegisterStringUtilsAddon( engine );
 	PreRegisterMat3Addon( engine );
+	PreRegisterFilePathAddon( engine );
 
 	RegisterMathAddon( engine );
 	RegisterScriptArray( engine, true );
@@ -434,6 +436,7 @@ asIScriptEngine *qasCreateEngine( bool *asMaxPortability ) {
 	RegisterCvarAddon( engine );
 	RegisterStringUtilsAddon( engine );
 	RegisterMat3Addon( engine );
+	RegisterFilePathAddon( engine );
 
 	engine->SetDefaultAccessMask( 0x1 );
 
