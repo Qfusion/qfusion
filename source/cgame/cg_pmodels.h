@@ -106,6 +106,13 @@ typedef struct weaponinfo_s {
 	float acDigitAlpha;
 	float acIconSize;
 	float acIconAlpha;
+
+	std::map<std::string, std::vector<std::vector<std::string>>> info;
+
+	std::vector<int> anim_data[4];
+	unsigned		 numAnims;
+
+	int asRefCount;
 } weaponinfo_t;
 
 extern weaponinfo_t cg_pWeaponModelInfos[WEAP_TOTAL];
@@ -194,6 +201,8 @@ struct weaponinfo_s *CG_RegisterWeaponModel( const char *cgs_name, int weaponTag
 void CG_AddWeaponOnTag( entity_t *ent, orientation_t *tag, int weapon, int effects, 
 	orientation_t *projectionSource, int64_t flash_time, int64_t barrel_time, int ammo_count );
 struct weaponinfo_s *CG_GetWeaponInfo( int currentweapon );
+
+bool CG_vWeap_ParseAnimationScript( weaponinfo_t *weaponinfo, const char *filename );
 
 //=================================================
 //				VIEW WEAPON

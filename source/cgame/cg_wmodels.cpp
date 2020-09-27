@@ -30,6 +30,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // by Jalisk0
 
 #include "cg_local.h"
+#include <map>
+#include <string>
+#include <vector>
 
 
 //======================================================================
@@ -54,16 +57,20 @@ static const char *wmPartSufix[] = { "", "_expansion", "_flash", "_hand", "_barr
 * "rotationscale": value witch will scale the barrel rotation speed
 * "ammoCounter": digital ammo counter parameters: font_family font_size digit_width digit_height digit_alpha icon_size icon_alpha
 */
-static bool CG_vWeap_ParseAnimationScript( weaponinfo_t *weaponinfo, const char *filename ) {
+bool CG_vWeap_ParseAnimationScript( weaponinfo_t *weaponinfo, const char *filename ) {
 	uint8_t *buf;
 	char *ptr, *token;
 	int rounder, counter, i;
 	bool debug = true;
-	int anim_data[4][VWEAP_MAXANIMS];
+	auto &anim_data = weaponinfo->anim_data;
 	int length, filenum;
 
 	rounder = 0;
 	counter = 1; // reserve 0 for 'no animation'
+	for( i = 0; i < 4; i++ )
+		anim_data[i].clear();
+	for( i = 0; i < 4; i++ )
+		anim_data[i].push_back( 0 );
 
 	// set some defaults
 	for( i = 0; i < VWEAP_MAXPARTS; i++ )
@@ -96,8 +103,6 @@ static bool CG_vWeap_ParseAnimationScript( weaponinfo_t *weaponinfo, const char 
 		CG_Printf( "%sLoading weapon animation script:%s%s\n", S_COLOR_BLUE, filename, S_COLOR_WHITE );
 	}
 
-	memset( anim_data, 0, sizeof( anim_data ) );
-
 	//proceed
 	ptr = ( char * )buf;
 	while( ptr ) {
@@ -108,6 +113,9 @@ static bool CG_vWeap_ParseAnimationScript( weaponinfo_t *weaponinfo, const char 
 
 		//see if it is keyword or number
 		if( *token < '0' || *token > '9' ) {
+			char *ptrbak = ptr;
+			std::string tokenbak(token);
+
 			if( !Q_stricmp( token, "barrel" ) ) {
 				if( debug ) {
 					CG_Printf( "%sScript: barrel:%s", S_COLOR_BLUE, S_COLOR_WHITE );
@@ -258,6 +266,20 @@ static bool CG_vWeap_ParseAnimationScript( weaponinfo_t *weaponinfo, const char 
 			} else if( token[0] && debug ) {
 				CG_Printf( "%signored: %s%s\n", S_COLOR_YELLOW, token, S_COLOR_WHITE );
 			}
+
+			if( tokenbak != token ) {
+				// add line
+				ptr = ptrbak;
+				std::vector<std::string> line;
+
+				while( true ) {
+					token = COM_ParseExt( &ptr, false );
+					if( !token[0] )
+						break;
+					line.push_back( token );
+				}
+				weaponinfo->info[tokenbak].push_back( line );
+			}
 		} else {
 			//frame & animation values
 			i = (int)atoi( token );
@@ -267,7 +289,7 @@ static bool CG_vWeap_ParseAnimationScript( weaponinfo_t *weaponinfo, const char 
 				}
 				CG_Printf( "%s%i - %s", S_COLOR_BLUE, i, S_COLOR_WHITE );
 			}
-			anim_data[rounder][counter] = i;
+			anim_data[rounder % 4].push_back( i );
 			rounder++;
 			if( rounder > 3 ) {
 				rounder = 0;
@@ -275,16 +297,15 @@ static bool CG_vWeap_ParseAnimationScript( weaponinfo_t *weaponinfo, const char 
 					CG_Printf( "%s anim: %i%s\n", S_COLOR_BLUE, counter, S_COLOR_WHITE );
 				}
 				counter++;
-				if( counter == VWEAP_MAXANIMS ) {
-					break;
-				}
 			}
 		}
 	}
 
 	CG_Free( buf );
 
-	if( counter < VWEAP_MAXANIMS ) {
+	weaponinfo->numAnims = counter;
+
+	if( counter != VWEAP_MAXANIMS ) {
 		CG_Printf( "%sERROR: incomplete WEAPON script: %s - Using default%s\n", S_COLOR_YELLOW, filename, S_COLOR_WHITE );
 		return false;
 	}
@@ -294,12 +315,7 @@ static bool CG_vWeap_ParseAnimationScript( weaponinfo_t *weaponinfo, const char 
 		weaponinfo->firstframe[i] = anim_data[0][i];
 		weaponinfo->lastframe[i] = anim_data[1][i];
 		weaponinfo->loopingframes[i] = anim_data[2][i];
-
-		if( anim_data[3][i] < 10 ) { //never allow less than 10 fps
-			anim_data[3][i] = 10;
-		}
-
-		weaponinfo->frametime[i] = 1000 / anim_data[3][i];
+		weaponinfo->frametime[i] = 1000 / (anim_data[3][i] < 10 ? 10 : anim_data[3][i]); //never allow less than 10 fps
 	}
 
 	return true;
@@ -340,8 +356,6 @@ static void CG_CreateHandDefaultAnimations( weaponinfo_t *weaponinfo ) {
 	weaponinfo->lastframe[WEAPANIM_WEAPONUP] = 10;
 	weaponinfo->loopingframes[WEAPANIM_WEAPONUP] = 1;
 	weaponinfo->frametime[WEAPANIM_WEAPONUP] = 1000 / defaultfps;
-
-	return;
 }
 
 /*

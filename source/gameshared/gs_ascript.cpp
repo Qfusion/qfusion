@@ -940,6 +940,15 @@ static bool objectGItem_isDropable( gsitem_t *self ) {
 	return ( self && ( self->flags & ITFLAG_DROPABLE ) ) ? true : false;
 }
 
+static asstring_t *objectGItem_getWorldModel( unsigned idx, gsitem_t *self )
+{
+	if( idx >= MAX_ITEM_MODELS ) {
+		return NULL;
+	}
+	const char *model = self->world_model[idx];
+	return module_angelExport->asStringFactoryBuffer( model, model ? strlen( model ) : 0 );
+}
+
 static const gs_asFuncdef_t asitem_Funcdefs[] =
 {
 	ASLIB_FUNCDEF_NULL
@@ -961,6 +970,8 @@ static const gs_asMethod_t asitem_Methods[] =
 	{ ASLIB_FUNCTION_DECL( const String @, get_simpleIcon, ( ) const ), asFUNCTION( objectGItem_getSimpleItemName ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( const String @, get_pickupSound, ( ) const ), asFUNCTION( objectGItem_getPickupSoundName ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( const String @, get_colorToken, ( ) const ), asFUNCTION( objectGItem_getColorToken ), asCALL_CDECL_OBJLAST },
+
+	{ ASLIB_FUNCTION_DECL( const String @, getWorldModel, ( uint idx ) const ), asFUNCTION( objectGItem_getWorldModel ), asCALL_CDECL_OBJLAST },
 
 	{ ASLIB_FUNCTION_DECL( bool, isPickable, ( ) const ), asFUNCTION( objectGItem_isPickable ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( bool, isUsable, ( ) const ), asFUNCTION( objectGItem_isUsable ), asCALL_CDECL_OBJLAST },

@@ -176,8 +176,24 @@ static void objectOrientation_DefaultConstructor( orientation_t *o )
 	Matrix3_Identity( o->axis );
 }
 
+static void objectOrientation_CopyConstructor( orientation_t *other, orientation_t *o )
+{
+	memcpy( o, other, sizeof( orientation_t ) );
+}
+
+//static void objectOrientation_Vec3Mat3Constructor( asvec3_t *v, asmat3_t *m, orientation_t *o )
+//{
+//	VectorCopy( v->v, o->origin );
+//	Matrix3_Copy( m->m, o->axis );
+//}
+
 static const gs_asBehavior_t asOrientation_ObjectBehaviors[] = {
 	{ asBEHAVE_CONSTRUCT, ASLIB_FUNCTION_DECL( void, f, () ), asFUNCTION( objectOrientation_DefaultConstructor ), asCALL_CDECL_OBJLAST, },
+	{ asBEHAVE_CONSTRUCT, ASLIB_FUNCTION_DECL( void, f, ( const Orientation &in ) ), asFUNCTION( objectOrientation_CopyConstructor ), asCALL_CDECL_OBJLAST, },
+
+	// FIXME: this acts weird, corrupting the input data. probably an AS bug
+	//{ asBEHAVE_CONSTRUCT, ASLIB_FUNCTION_DECL( void, f, ( const Vec3 &in, int a, const Mat3 &in) ), asFUNCTION( objectOrientation_Vec3Mat3Constructor ), asCALL_CDECL_OBJLAST, },
+
 	ASLIB_BEHAVIOR_NULL,
 };
 
@@ -227,6 +243,13 @@ static bool asFunc_CG_GrabTag( orientation_t *tag, entity_t *ent, asstring_t *ta
 	return CG_GrabTag( tag, ent, tagname->buffer );
 }
 
+orientation_t asFunc_CG_MoveToTag( orientation_t *space, orientation_t *tag )
+{
+	orientation_t o;
+	CG_MoveToTag( o.origin, o.axis, space->origin, space->axis, tag->origin, tag->axis );
+	return o;
+}
+
 static void asFunc_CG_SpawnPolyQuad( const asvec3_t *v1, const asvec3_t *v2, const asvec3_t *v3, const asvec3_t *v4,
 	float stx, float sty, const asvec4_t *color, int64_t dietime, int64_t fadetime, struct shader_s *shader, int tag ) {
 	CG_SpawnPolyQuad( v1->v, v2->v, v3->v, v4->v, stx, sty, color->v, dietime, fadetime, shader, tag );
@@ -263,12 +286,21 @@ static void asFunc_CG_RotateBonePoses( asvec3_t *angles, bonepose_t *boneposes, 
 	CG_RotateBonePoses( angles->v, boneposes, rotators, numRotators );
 }
 
+void asFunc_CG_AddLightToScene( asvec3_t *org, float radius, int color ) {
+	CG_AddLightToScene( org->v, radius, 
+		( color & 255 ) / 255.0f, 
+		( ( color >> 8 ) & 255 ) / 255.0f, 
+		( ( color >> 16 ) & 255 ) / 255.0f );
+}
+
 const gs_asglobfuncs_t asCGameRefSceneGlobalFuncs[] = {
 	{ "void PlaceRotatedModelOnTag( Entity @+ ent, const Entity @+ dest, const Orientation &in )",
 		asFUNCTION( CG_PlaceRotatedModelOnTag ), NULL },
 	{ "void PlaceModelOnTag( Entity @+ ent, const Entity @+ dest, const Orientation &in )",
 		asFUNCTION( CG_PlaceModelOnTag ), NULL },
-	{ "bool GrabTag( const Orientation &out, const Entity @+ ent, const String &in )", asFUNCTION( asFunc_CG_GrabTag ),
+	{ "bool GrabTag( Orientation &out, const Entity @+ ent, const String &in )", asFUNCTION( asFunc_CG_GrabTag ),
+		NULL },
+	{ "Orientation MoveToTag( const Orientation &in space, const Orientation &in tag )", asFUNCTION( asFunc_CG_MoveToTag ),
 		NULL },
 
 	{ "Boneposes @RegisterTemporaryExternalBoneposes( ModelSkeleton @ )",
@@ -292,6 +324,7 @@ const gs_asglobfuncs_t asCGameRefSceneGlobalFuncs[] = {
 		asFUNCTION( asFunc_CG_SpawnPolyBeam ), NULL },
 
 	{ "void AddEntityToScene( Entity @+ ent )", asFUNCTION( CG_AddEntityToScene ), NULL },
+	{ "void AddLightToScene( const Vec3 &in origin, float radius, int color )", asFUNCTION( asFunc_CG_AddLightToScene ), NULL },
 
 	{ NULL },
 };

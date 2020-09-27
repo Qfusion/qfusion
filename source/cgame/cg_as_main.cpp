@@ -265,6 +265,107 @@ static const gs_asClassDescriptor_t asPlayerModelClassDescriptor = {
 
 //======================================================================
 
+static uint32_t asFunc_WeaponModelGetNumAnims( weaponinfo_t *wmodel )
+{
+	return wmodel->numAnims;
+}
+
+static void asFunc_WeaponModelGetAnim(
+	uint32_t idx, int *firstframe, int *lastframe, int *loopframe, int *fps, weaponinfo_t *wmodel )
+{
+	if( idx >= wmodel->numAnims ) {
+		return;
+	}
+
+	*firstframe = wmodel->anim_data[0][idx];
+	*lastframe = wmodel->anim_data[1][idx];
+	*loopframe = wmodel->anim_data[2][idx];
+	*fps = wmodel->anim_data[3][idx];
+}
+
+static uint32_t asFunc_WeaponModelGetNumInfoLines( const asstring_t &str, weaponinfo_t *wmodel )
+{
+	auto it = wmodel->info.find( str.buffer );
+	if( it == wmodel->info.end() )
+		return 0;
+
+	auto &lines = it->second;
+	return lines.size();
+}
+
+static CScriptArrayInterface *asFunc_WeaponModelGetInfoLine( const asstring_t &str, unsigned idx, weaponinfo_t *wmodel )
+{
+	auto asEngine = CGAME_AS_ENGINE();
+
+	auto it = wmodel->info.find( str.buffer );
+	if( it == wmodel->info.end() )
+		return NULL;
+
+	auto &lines = it->second;
+	if( idx >= lines.size() )
+		return NULL;
+
+	auto &line = lines[idx];
+
+	asIObjectType *		   ot = asEngine->GetObjectTypeById( asEngine->GetTypeIdByDecl( "array<String @>" ) );
+	CScriptArrayInterface *arr = cgs.asExport->asCreateArrayCpp( line.size(), ot );
+
+	arr->Resize( line.size() );
+	for( int i = 0; i < line.size(); i++ ) {
+		*( (asstring_t **)arr->At( i ) ) = cgs.asExport->asStringFactoryBuffer( line[i].c_str(), line[i].size() );
+	}
+
+	return arr;
+}
+
+static void asWeaponModel_AddRef( weaponinfo_t *wmodel )
+{
+	wmodel->asRefCount++;
+}
+
+static void asWeaponModel_Release( weaponinfo_t *wmodel )
+{
+	if( --wmodel->asRefCount == 0 ) {
+		CG_Free( wmodel );
+	}
+}
+
+static const gs_asMethod_t asWeaponModelMethods[] = {
+	{ ASLIB_FUNCTION_DECL( uint, get_numAnims, () const ), asFUNCTION( asFunc_WeaponModelGetNumAnims ),
+		asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL(
+		  void, getAnim, ( uint index, int &out first, int &out last, int &out loop, int &out fps ) const ),
+		asFUNCTION( asFunc_WeaponModelGetAnim ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( uint, getNumInfoLines, ( const String &in name ) const ),
+		asFUNCTION( asFunc_WeaponModelGetNumInfoLines ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( array<String @> @, getInfoLine, ( const String &in name, uint index ) const ),
+		asFUNCTION( asFunc_WeaponModelGetInfoLine ), asCALL_CDECL_OBJLAST },
+
+	ASLIB_METHOD_NULL,
+};
+
+static const gs_asBehavior_t asWeaponModelehaviors[] = {
+	{ asBEHAVE_ADDREF, ASLIB_FUNCTION_DECL( void, f, () ), asFUNCTION( asWeaponModel_AddRef ),
+		asCALL_CDECL_OBJLAST },
+	{ asBEHAVE_RELEASE, ASLIB_FUNCTION_DECL( void, f, () ), asFUNCTION( asWeaponModel_Release ),
+		asCALL_CDECL_OBJLAST },
+
+	ASLIB_BEHAVIOR_NULL
+};
+
+static const gs_asClassDescriptor_t asWeaponModelClassDescriptor = {
+	"WeaponModel",		   /* name */
+	asOBJ_REF,			   /* object type flags */
+	sizeof( void * ),	   /* size */
+	NULL,				   /* funcdefs */
+	asWeaponModelehaviors, /* object behaviors */
+	asWeaponModelMethods,  /* methods */
+	NULL,				   /* properties */
+	NULL, NULL			   /* string factory hack */
+};
+
+//======================================================================
+
 const gs_asClassDescriptor_t *const asCGameClassesDescriptors[] = {
 	&asModelHandleClassDescriptor,
 	&asSoundHandleClassDescriptor,
@@ -274,6 +375,7 @@ const gs_asClassDescriptor_t *const asCGameClassesDescriptors[] = {
 	&asModelSkeletonClassDescriptor,
 	&asSkinHandleClassDescriptor,
 	&asPlayerModelClassDescriptor,
+	&asWeaponModelClassDescriptor,
 
 	NULL,
 };
@@ -335,6 +437,22 @@ static void *asFunc_RegisterPlayerModel( const asstring_t *str )
 	return CG_RegisterPlayerModel( str->buffer );
 }
 
+static void *asFunc_LoadWeaponModel( const asstring_t *str )
+{
+	weaponinfo_t *info = new( CG_Malloc( sizeof( weaponinfo_t ) ) )( weaponinfo_t );
+	if( info == nullptr ) {
+		return NULL;
+	}
+
+	if( !CG_vWeap_ParseAnimationScript( info, str->buffer ) ) {
+		CG_Free( info );
+		return NULL;
+	}
+
+	info->asRefCount = 1;
+	return info;
+}
+
 static bool asFunc_IsViewerEntity( int entNum )
 {
 	return ISVIEWERENTITY( entNum );
@@ -376,6 +494,8 @@ static const gs_asglobfuncs_t asCGameGlobalFuncs[] = {
 	{ "FontHandle @RegisterFont( const String &in, int style, uint size )", asFUNCTION( asFunc_RegisterFont ), NULL },
 	{ "SkinHandle @RegisterSkin( const String &in )", asFUNCTION( asFunc_RegisterSkin ), NULL },
 	{ "PlayerModel @RegisterPlayerModel( const String &in )", asFUNCTION( asFunc_RegisterPlayerModel ), NULL },
+
+	{ "WeaponModel @LoadWeaponModel( const String &in )", asFUNCTION( asFunc_LoadWeaponModel ), NULL },
 
 	{ "ModelSkeleton @SkeletonForModel( ModelHandle @ )", asFUNCTION( asFunc_SkeletonForModel ), NULL },
 
