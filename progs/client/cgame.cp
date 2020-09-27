@@ -28,6 +28,7 @@ main/pmodel.as;
 main/teams.as;
 main/clients.as;
 main/constants.as;
+main/wmodel.as;
 
 main/ents/flag.as;
 main/ents/generic.as;

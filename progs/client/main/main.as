@@ -32,6 +32,8 @@ class ClientStatic {
 
 	array<ClientInfo> clientInfo(GS::MAX_CLIENTS);
 
+	array<WModelInfo @> weaponModelInfo(GS::WEAP_TOTAL);
+
 	array<PModelInfo @> teamModelInfo(GS::MAX_TEAMS);
 	array<SkinHandle @> teamCustomSkin(GS::MAX_TEAMS); // user defined
 	array<int> teamColor(GS::MAX_TEAMS);
@@ -173,6 +175,8 @@ void Precache()
 	}
 
 	RegisterForceModels();
+
+	RegisterWeaponModels();
 
 	cgs.media.PrecacheShaders();
 

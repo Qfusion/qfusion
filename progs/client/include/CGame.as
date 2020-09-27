@@ -156,7 +156,8 @@ namespace Scene
  */
 void PlaceRotatedModelOnTag(Entity@ ent, const Entity@ dest, const Orientation&in) {}
 void PlaceModelOnTag(Entity@ ent, const Entity@ dest, const Orientation&in) {}
-bool GrabTag(const Orientation&out, const Entity@ ent, const String&in) {}
+bool GrabTag(Orientation&out, const Entity@ ent, const String&in) {}
+Orientation MoveToTag(const Orientation&in space, const Orientation&in tag) {}
 Boneposes@ RegisterTemporaryExternalBoneposes(ModelSkeleton@) {}
 Boneposes@ RegisterTemporaryExternalBoneposes(int numBones) {}
 bool LerpSkeletonPoses(ModelSkeleton@, int frame, int oldFrame, Boneposes@ boneposes, float frac) {}
@@ -166,6 +167,7 @@ void RotateBonePoses(const Vec3&in angles, Boneposes@ inBoneposes, int[]@ rotato
 void SpawnPolyQuad(const Vec3&in, const Vec3&in, const Vec3&in, const Vec3&in, float stx, float sty, const Vec4&in, int64 dieTime, int64 fadeTime, ShaderHandle@, int tag) {}
 void SpawnPolyBeam(const Vec3&in start, const Vec3&in end, const Vec4&in, int width, int64 dieTime, int64 fadeTime, ShaderHandle@, int shaderLength, int tag) {}
 void AddEntityToScene(Entity@ ent) {}
+void AddLightToScene(const Vec3&in origin, float radius, int color) {}
 /**
  * Entity
  */
@@ -215,6 +217,7 @@ class Orientation
 
 	/* behaviors */
 	Orientation() {}
+	Orientation(const Orientation&in) {}
 
 }
 
@@ -390,6 +393,7 @@ ShaderHandle@ RegisterShader(const String&in) {}
 FontHandle@ RegisterFont(const String&in, int style, uint size) {}
 SkinHandle@ RegisterSkin(const String&in) {}
 PlayerModel@ RegisterPlayerModel(const String&in) {}
+WeaponModel@ LoadWeaponModel(const String&in) {}
 ModelSkeleton@ SkeletonForModel(ModelHandle@) {}
 bool IsViewerEntity(int entNum) {}
 String@ GetConfigString(int entNum) {}
@@ -474,6 +478,32 @@ class PlayerModel
 
 }
 
+/**
+ * WeaponModel
+ */
+class WeaponModel
+{
+	/* behaviors */
+
+	/* methods */
+	uint get_numAnims() const {}
+	void getAnim(uint index, int&out first, int&out last, int&out loop, int&out fps) const {}
+	uint getNumInfoLines(const String&in name) const {}
+	String@[]@ getInfoLine(const String&in name, uint index) const {}
+
+}
+
+
+}
+
+
+namespace FilePath
+{
+
+/**
+ * Global functions
+ */
+String@ StripExtension(const String&in) {}
 
 }
 
@@ -1612,6 +1642,7 @@ class Item
 	const String@ get_simpleIcon() const {}
 	const String@ get_pickupSound() const {}
 	const String@ get_colorToken() const {}
+	const String@ getWorldModel(uint idx) const {}
 	bool isPickable() const {}
 	bool isUsable() const {}
 	bool isDropable() const {}

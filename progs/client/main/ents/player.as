@@ -348,13 +348,14 @@ void AddPlayerEnt( CEntity @cent ) {
 /*
 	// add teleporter sfx if needed
 	CG_PModel_SpawnTeleportEffect( cent );
+*/
 
 	// add weapon model
-	if( cent.current.weapon && CG_GrabTag( &tag_weapon, &cent.refEnt, "tag_weapon" ) ) {
-		CG_AddWeaponOnTag( &cent.refEnt, &tag_weapon, cent.current.weapon, cent.effects, 
-			&pmodel.projectionSource, pmodel.flash_time, pmodel.barrel_time, -1 );
+	CGame::Scene::Orientation tag_weapon;
+	if( cent.current.weapon != 0 && CGame::Scene::GrabTag( tag_weapon, @cent.refEnt, "tag_weapon" ) ) {
+		pmodel.projectionSource = AddWeaponOnTag( @cent.refEnt, tag_weapon, cent.current.weapon, 
+			cent.effects, pmodel.flashTime, pmodel.barrelTime, -1 );
 	}
-*/
 
 	// corpses can never have a model in modelindex2
 	if( cent.current.type == ET_CORPSE ) {
