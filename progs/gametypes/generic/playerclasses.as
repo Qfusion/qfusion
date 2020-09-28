@@ -61,7 +61,7 @@ class cPlayerClass
 
     ~cPlayerClass() {}
 
-    void setup( String &class_name, String &list, int health, int armor, String &icon )
+    void setup( const String &class_name, const String &list, int health, int armor, const String &icon )
     {
         this.name = class_name;
         this.itemList = list;

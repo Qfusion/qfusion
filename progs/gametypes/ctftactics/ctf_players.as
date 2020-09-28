@@ -254,7 +254,7 @@ class cPlayer
         @this.playerClass = @cPlayerClassInfos[class_tag];
     }
 
-    bool setPlayerClass( String @className )
+    bool setPlayerClass( const String &className )
     {
         bool success = false;
 
@@ -277,7 +277,13 @@ class cPlayer
         return success;
     }
 
-    void setPlayerClassCommand( String &argsString )
+    void assignClass( int classTag )
+    {
+        @this.playerClass = @cPlayerClassInfos[classTag];
+        playerClasses[client.playerNum] = classTag;
+    }
+
+    void setPlayerClassCommand( const String &argsString )
     {
         String token = argsString.getToken( 0 );
 

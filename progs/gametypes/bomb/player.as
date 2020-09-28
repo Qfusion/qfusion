@@ -343,7 +343,40 @@ class cPlayer
 		this.pendingSecondary = weapon;
 	}
 
-	void selectWeapon( String &weapon )
+    void selectRandomBotWeapons() 
+    {
+        // Prefer EB + LG
+        if ( random() < 0.7f )
+        {
+            this.pendingPrimary = PRIMARY_EBLG;
+            // Choose RG to compensate lack of RL
+            if ( random() < 0.7f )
+                this.pendingSecondary = SECONDARY_RG;
+            else if ( random() < 0.7f )
+                this.pendingSecondary = SECONDARY_PG;
+            else 
+                this.pendingSecondary = SECONDARY_GL;
+        }        
+        // Otherwise prefer EB + RL
+        else if ( random() < 0.7f )
+        {
+            this.pendingPrimary = PRIMARY_EBRL;
+            // Choose PG to compensate lack of continous fire weapons
+            if ( random() < 0.7f )            
+                this.pendingSecondary = SECONDARY_PG;
+            else
+                this.pendingSecondary = SECONDARY_MG;    
+        }
+        // RL + LG
+        else    
+        {
+            this.pendingPrimary = PRIMARY_RLLG;
+            // Choose MG to compensate lack of long-range weapons 
+            this.pendingSecondary = SECONDARY_MG;
+        }
+    }
+
+	void selectWeapon( const String &weapon )
 	{
 		String token;
 		int len;
