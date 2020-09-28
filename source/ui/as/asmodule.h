@@ -6,7 +6,7 @@
 class asIScriptEngine;
 class asIScriptContext;
 class asIScriptModule;
-class asIObjectType;
+class asITypeInfo;
 class asIScriptFunction;
 
 class CScriptArrayInterface;
@@ -37,7 +37,7 @@ public:
 	virtual asIScriptContext *getActiveContext( void ) const = 0;
 	virtual asIScriptModule *getActiveModule( void ) const = 0;
 
-	virtual asIObjectType *getStringObjectType( void ) const = 0;
+	virtual asITypeInfo *getStringObjectType( void ) const = 0;
 
 	// called to start a building round
 	// note that temporary name assigned to the build (module)
@@ -67,7 +67,7 @@ public:
 	virtual void garbageCollectFullCycle( void ) = 0;
 
 	// creates a new array object, which can be natively passed on to scripts
-	virtual CScriptArrayInterface *createArray( unsigned int size, asIObjectType *ot ) = 0;
+	virtual CScriptArrayInterface *createArray( unsigned int size, asITypeInfo *ot ) = 0;
 
 	// AS string functions
 	virtual asstring_t *createString( const char *buffer, unsigned int length ) = 0;

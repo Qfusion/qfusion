@@ -19,12 +19,12 @@ namespace ASUI
 class ASElementsArray : public CScriptArrayInterface
 {
 };
-static asIObjectType *elementsArrayType;
+static asITypeInfo *elementsArrayType;
 
 class ASStringsArray : public CScriptArrayInterface
 {
 };
-static asIObjectType *stringsArrayType;
+static asITypeInfo *stringsArrayType;
 
 typedef Rml::Controls::ElementForm ElementForm;
 typedef Rml::Controls::ElementFormControl ElementFormControl;
@@ -1080,10 +1080,10 @@ void BindElement( ASInterface *as ) {
 	;
 
 	// cache type id for array<Element @>
-	elementsArrayType = engine->GetObjectTypeById( engine->GetTypeIdByDecl( ASBind::typestr<ASElementsArray>() ) );
+	elementsArrayType = engine->GetTypeInfoById( engine->GetTypeIdByDecl( ASBind::typestr<ASElementsArray>() ) );
 
 	// cache type id for array<String @>
-	stringsArrayType = engine->GetObjectTypeById( engine->GetTypeIdByDecl( ASBind::typestr<ASStringsArray>() ) );
+	stringsArrayType = engine->GetTypeInfoById( engine->GetTypeIdByDecl( ASBind::typestr<ASStringsArray>() ) );
 
 	// ElementDocument
 	BindElementDocument( as );

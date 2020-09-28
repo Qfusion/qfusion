@@ -35,6 +35,17 @@ static inline asstring_t *objectString_Alloc( void ) {
 	return object;
 }
 
+void objectString_Free( const asstring_t *obj )
+{
+	if( ( obj->size & CONST_STRING_BITFLAG ) == 0 ) {
+		delete[] obj->buffer;
+		delete obj;
+	} else {
+		uint8_t *rawmem = (uint8_t *)obj;
+		delete[] rawmem;
+	}
+}
+
 asstring_t *objectString_FactoryBuffer( const char *buffer, unsigned int length ) {
 	asstring_t *object;
 	unsigned int size = ( length + 1 ) & ~CONST_STRING_BITFLAG;
@@ -184,23 +195,53 @@ void objectString_Release( asstring_t *obj ) {
 	clamp_low( obj->asRefCount, 0 );
 
 	if( !obj->asRefCount ) {
-		if( ( obj->size & CONST_STRING_BITFLAG ) == 0 ) {
-			delete[] obj->buffer;
-			delete obj;
-		} else {
-			uint8_t *rawmem = ( uint8_t * )obj;
-			delete[] rawmem;
-		}
+		objectString_Free( obj );
 	}
 }
 
-static asstring_t *StringFactory( unsigned int length, const char *s ) {
-	return objectString_FactoryBuffer( s, length );
-}
+class CStringFactory : public asIStringFactory
+{
+private:
+	CStringFactory() {}
 
-static const asstring_t *ConstStringFactory( unsigned int length, const char *s ) {
-	return objectString_ConstFactoryBuffer( s, length );
-}
+public:
+	const void *GetStringConstant( const char *data, asUINT length )
+	{
+		return reinterpret_cast<const void *>( objectString_FactoryBuffer( data, length ) );
+	}
+
+	int ReleaseStringConstant( const void *str )
+	{
+		if( str == 0 )
+			return asERROR;
+
+		objectString_Free( reinterpret_cast<const asstring_t *>( str ) );
+
+		return asSUCCESS;
+	}
+
+	int GetRawStringData( const void *str, char *data, asUINT *length ) const
+	{
+		if( str == 0 )
+			return asERROR;
+
+		const asstring_t *obj = reinterpret_cast<const asstring_t *>( str );
+		if( length )
+			*length = (asUINT)obj->len;
+
+		if( data )
+			memcpy( data, obj->buffer, obj->len );
+
+		return asSUCCESS;
+	}
+
+	static CStringFactory *GetStringFactory() {
+		static CStringFactory *factory = nullptr;
+		if( factory == nullptr )
+			factory = new CStringFactory();
+		return factory;
+	}
+};
 
 static char *objectString_Index( unsigned int i, asstring_t *self ) {
 	if( i > self->len ) {
@@ -475,8 +516,7 @@ void RegisterStringAddon( asIScriptEngine *engine ) {
 	int r;
 
 	// register the string factory
-	r = engine->RegisterStringFactory( "String @", asFUNCTION( StringFactory ), asCALL_CDECL ); assert( r >= 0 );
-	r = engine->RegisterStringFactory( "const String @", asFUNCTION( ConstStringFactory ), asCALL_CDECL ); assert( r >= 0 );
+	r = engine->RegisterStringFactory( "String", CStringFactory::GetStringFactory() ); assert( r >= 0 );
 
 	// register object behaviours
 	r = engine->RegisterObjectBehaviour( "String", asBEHAVE_FACTORY, "String @f()", asFUNCTION( objectString_Factory ), asCALL_CDECL ); assert( r >= 0 );
@@ -489,9 +529,9 @@ void RegisterStringAddon( asIScriptEngine *engine ) {
 	r = engine->RegisterObjectBehaviour( "String", asBEHAVE_RELEASE, "void f()", asFUNCTION( objectString_Release ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 
 #ifdef ENABLE_STRING_IMPLICIT_CASTS
-	r = engine->RegisterObjectBehaviour( "String", asBEHAVE_IMPLICIT_VALUE_CAST, "int f() const", asFUNCTION( objectString_CastToInt ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour( "String", asBEHAVE_IMPLICIT_VALUE_CAST, "float f() const", asFUNCTION( objectString_CastToFloat ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour( "String", asBEHAVE_IMPLICIT_VALUE_CAST, "double f() const", asFUNCTION( objectString_CastToDouble ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
+	r = engine->RegisterObjectMethod( "String", "int opImplCast() const", asFUNCTION( objectString_CastToInt ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
+	r = engine->RegisterObjectMethod( "String", "float opImplCast() const", asFUNCTION( objectString_CastToFloat ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
+	r = engine->RegisterObjectMethod( "String", "double opImplCast() const", asFUNCTION( objectString_CastToDouble ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 #endif
 
 	// register object methods

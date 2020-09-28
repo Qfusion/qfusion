@@ -1715,8 +1715,8 @@ public:
 	template<typename F>
 	Class & cast( F f, bool implicit_cast, bool obj_first ) {
 		std::string funcname = obj_first ?
-							   FunctionString( StripThisFirst( f ), "f" ) :
-							   FunctionString( StripThisLast( f ), "f" );
+							   FunctionString( StripThisFirst( f ), implicit_cast ? "opImplConv" : "opConv" ) :
+							   FunctionString( StripThisLast( f ), implicit_cast ? "opImplConv" : "opConv" );
 
 #ifdef __DEBUG_COUT_PRINT__
 		std::cout << name << "::cast " << funcname << std::endl;
@@ -1725,10 +1725,7 @@ public:
 		Com_Printf( "%s::cast %s\n", name.c_str(), funcname.c_str() );
 #endif
 
-		// select the cast type
-		asEBehaviours cast_type = implicit_cast ? asBEHAVE_IMPLICIT_VALUE_CAST : asBEHAVE_VALUE_CAST;
-
-		int _id = engine->RegisterObjectBehaviour( name.c_str(), cast_type, funcname.c_str(),
+		int _id = engine->RegisterObjectMethod( name.c_str(), funcname.c_str(),
 												   asFUNCTION( f ), obj_first ? asCALL_CDECL_OBJFIRST : asCALL_CDECL_OBJLAST );
 		if( _id < 0 ) {
 			throw Exception( va( "ASBind::Class::cast (%s::%s) RegisterObjectMethod failed %d", name.c_str(), funcname.c_str(), _id ) );
@@ -1741,8 +1738,8 @@ public:
 	template<typename F>
 	Class & refcast( F f, bool implicit_cast, bool obj_first ) {
 		std::string funcname = obj_first ?
-							   FunctionString( StripThisFirst( f ), "f" ) :
-							   FunctionString( StripThisLast( f ), "f" );
+							   FunctionString( StripThisFirst( f ), implicit_cast ? "opImplCast" : "opCast" ) :
+							   FunctionString( StripThisLast( f ), implicit_cast ? "opImplCast" : "opCast" );
 
 #ifdef __DEBUG_COUT_PRINT__
 		std::cout << name << "::cast " << funcname << std::endl;
@@ -1751,10 +1748,7 @@ public:
 		Com_Printf( "%s::cast %s\n", name.c_str(), funcname.c_str() );
 #endif
 
-		// select the cast type
-		asEBehaviours cast_type = implicit_cast ? asBEHAVE_IMPLICIT_REF_CAST : asBEHAVE_REF_CAST;
-
-		int _id = engine->RegisterObjectBehaviour( name.c_str(), cast_type, funcname.c_str(),
+		int _id = engine->RegisterObjectMethod( name.c_str(), funcname.c_str(),
 												   asFUNCTION( f ), obj_first ? asCALL_CDECL_OBJFIRST : asCALL_CDECL_OBJLAST );
 		if( _id < 0 ) {
 			throw Exception( va( "ASBind::Class::cast (%s::%s) RegisterObjectMethod failed %d", name.c_str(), funcname.c_str(), _id ) );
@@ -1777,7 +1771,7 @@ Class<T> GetClass( asIScriptEngine *engine, const char *name = TypeString<T>( ).
 
 	count = engine->GetObjectTypeCount();
 	for( i = 0; i < count; i++ ) {
-		asIObjectType *obj = engine->GetObjectTypeByIndex( i );
+		asITypeInfo *obj = engine->GetObjectTypeByIndex( i );
 		if( obj && sname == obj->GetName() ) {
 #ifdef __DEBUG_COUT_PRINT__
 			std::cout << "GetClass found class " << name << std::endl;
