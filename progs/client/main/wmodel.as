@@ -522,9 +522,9 @@ CGame::Scene::Orientation AddWeaponOnTag( CGame::Scene::Entity @ent, CGame::Scen
 	AddShellEffects( @weapon, effects );
 
 	// update projection source
-    projectionSource.origin = weapon.origin;
-    projectionSource.axis = weapon.axis;
-	projectionSource = CGame::Scene::MoveToTag( projectionSource, weaponInfo.tag_projectionsource );
+	projectionSource = CGame::Scene::MoveToTag( 
+        CGame::Scene::Orientation( weapon.origin, weapon.axis ), 
+        weaponInfo.tag_projectionsource );
 
 	// expansion
 	if( ( effects & EF_STRONG_WEAPON ) != 0 ) {
