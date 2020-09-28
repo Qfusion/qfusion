@@ -181,18 +181,16 @@ static void objectOrientation_CopyConstructor( orientation_t *other, orientation
 	memcpy( o, other, sizeof( orientation_t ) );
 }
 
-//static void objectOrientation_Vec3Mat3Constructor( asvec3_t *v, asmat3_t *m, orientation_t *o )
-//{
-//	VectorCopy( v->v, o->origin );
-//	Matrix3_Copy( m->m, o->axis );
-//}
+static void objectOrientation_Vec3Mat3Constructor( asvec3_t *v, asmat3_t *m, orientation_t *o )
+{
+	VectorCopy( v->v, o->origin );
+	Matrix3_Copy( m->m, o->axis );
+}
 
 static const gs_asBehavior_t asOrientation_ObjectBehaviors[] = {
 	{ asBEHAVE_CONSTRUCT, ASLIB_FUNCTION_DECL( void, f, () ), asFUNCTION( objectOrientation_DefaultConstructor ), asCALL_CDECL_OBJLAST, },
 	{ asBEHAVE_CONSTRUCT, ASLIB_FUNCTION_DECL( void, f, ( const Orientation &in ) ), asFUNCTION( objectOrientation_CopyConstructor ), asCALL_CDECL_OBJLAST, },
-
-	// FIXME: this acts weird, corrupting the input data. probably an AS bug
-	//{ asBEHAVE_CONSTRUCT, ASLIB_FUNCTION_DECL( void, f, ( const Vec3 &in, int a, const Mat3 &in) ), asFUNCTION( objectOrientation_Vec3Mat3Constructor ), asCALL_CDECL_OBJLAST, },
+	{ asBEHAVE_CONSTRUCT, ASLIB_FUNCTION_DECL( void, f, ( const Vec3 &in, const Mat3 &in) ), asFUNCTION( objectOrientation_Vec3Mat3Constructor ), asCALL_CDECL_OBJLAST, },
 
 	ASLIB_BEHAVIOR_NULL,
 };
