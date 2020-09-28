@@ -87,10 +87,10 @@ static const gs_asEnum_t asGameEnums[] =
 
 //=======================================================================
 
-static asIObjectType *asEntityArrayType() {
+static asITypeInfo *asEntityArrayType() {
 	asIScriptContext *ctx = game.asExport->asGetActiveContext();
 	asIScriptEngine *engine = ctx->GetEngine();
-	asIObjectType *ot = engine->GetObjectTypeById( engine->GetTypeIdByDecl( "array<Entity @>" ) );
+	asITypeInfo *ot = engine->GetTypeInfoById( engine->GetTypeIdByDecl( "array<Entity @>" ) );
 	return ot;
 }
 
@@ -1391,7 +1391,7 @@ static edict_t *objectGameEntity_DropItem( gsitem_t *item, edict_t *self ) {
 }
 
 static CScriptArrayInterface *objectGameEntity_findTargets( edict_t *self ) {
-	asIObjectType *ot = asEntityArrayType();
+	asITypeInfo *ot = asEntityArrayType();
 	CScriptArrayInterface *arr = game.asExport->asCreateArrayCpp( 0, ot );
 
 	if( self->target && self->target[0] != '\0' ) {
@@ -1408,7 +1408,7 @@ static CScriptArrayInterface *objectGameEntity_findTargets( edict_t *self ) {
 }
 
 static CScriptArrayInterface *objectGameEntity_findTargeting( edict_t *self ) {
-	asIObjectType *ot = asEntityArrayType();
+	asITypeInfo *ot = asEntityArrayType();
 	CScriptArrayInterface *arr = game.asExport->asCreateArrayCpp( 0, ot );
 
 	if( self->targetname && self->targetname[0] != '\0' ) {
@@ -2089,7 +2089,7 @@ static void asFunc_SetConfigString( int index, asstring_t *str ) {
 }
 
 static CScriptArrayInterface *asFunc_G_FindInRadius( asvec3_t *org, float radius ) {
-	asIObjectType *ot = asEntityArrayType();
+	asITypeInfo *ot = asEntityArrayType();
 
 	int touch[MAX_EDICTS];
 	int numtouch = GClip_FindInRadius( org->v, radius, touch, MAX_EDICTS );
@@ -2104,7 +2104,7 @@ static CScriptArrayInterface *asFunc_G_FindInRadius( asvec3_t *org, float radius
 static CScriptArrayInterface *asFunc_G_FindByClassname( asstring_t *str ) {
 	const char *classname = str->buffer;
 
-	asIObjectType *ot = asEntityArrayType();
+	asITypeInfo *ot = asEntityArrayType();
 	CScriptArrayInterface *arr = game.asExport->asCreateArrayCpp( 0, ot );
 
 	int count = 0;

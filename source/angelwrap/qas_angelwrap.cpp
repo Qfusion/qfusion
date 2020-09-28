@@ -35,13 +35,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <list>
 #include <vector>
 #include <map>
-static void *qasAlloc( size_t size ) {
-	return QAS_Malloc( size );
-}
-
-static void qasFree( void *mem ) {
-	QAS_Free( mem );
-}
 
 struct qasNamespaceDump {
 	std::string								  name;
@@ -138,17 +131,16 @@ struct qasNamespaceDump {
 			trap_FS_Write( str, strlen( str ), filenum );
 
 			for( i = 0; i < enumCount; i++ ) {
-				int			enumTypeId;
-				const char *ns;
-				const char *enumName = engine->GetEnumByIndex( enums[i], &enumTypeId, &ns, NULL, NULL );
+				asITypeInfo *enum_ = engine->GetEnumByIndex( enums[i] );
+				const char * enumName = enum_->GetName();
 
 				str = va( "\r\nenum %s\r\n{\r\n", enumName );
 				trap_FS_Write( str, strlen( str ), filenum );
 
-				asUINT enumValueCount = engine->GetEnumValueCount( enumTypeId );
+				asUINT enumValueCount = enum_->GetEnumValueCount();
 				for( j = 0; j < enumValueCount; j++ ) {
 					int			outValue;
-					const char *valueName = engine->GetEnumValueByIndex( enumTypeId, j, &outValue );
+					const char *valueName = enum_->GetEnumValueByIndex( j, &outValue );
 					str = va( "\t%s = 0x%x,\r\n", valueName, outValue );
 					trap_FS_Write( str, strlen( str ), filenum );
 				}
@@ -234,7 +226,7 @@ struct qasNamespaceDump {
 		}
 		if( objectCount > 0 ) {
 			for( i = 0; i < objectCount; i++ ) {
-				asIObjectType *objectType = engine->GetObjectTypeByIndex( classes[i] );
+				asITypeInfo *objectType = engine->GetObjectTypeByIndex( classes[i] );
 				if( !objectType ) {
 					continue;
 				}
@@ -389,7 +381,7 @@ asIScriptEngine *qasCreateEngine( bool *asMaxPortability ) {
 	asIScriptEngine *engine;
 
 	// register the global memory allocation and deallocation functions
-	asSetGlobalMemoryFunctions( qasAlloc, qasFree );
+	asSetGlobalMemoryFunctions( QAS_Malloc, QAS_Free );
 
 	// always new
 
@@ -411,13 +403,15 @@ asIScriptEngine *qasCreateEngine( bool *asMaxPortability ) {
 	engine->SetMessageCallback( asFUNCTION( qasMessageCallback ), 0, asCALL_CDECL );
 	engine->SetEngineProperty( asEP_ALWAYS_IMPL_DEFAULT_CONSTRUCT, 1 );
 	engine->SetDefaultAccessMask( 0xFFFFFFFF );
+	engine->SetEngineProperty( asEP_PROPERTY_ACCESSOR_MODE, 2 );
+
+	CScriptArray::SetMemoryFunctions( QAS_Malloc, QAS_Free );
+
+	RegisterScriptArray( engine, true );
 
 	PreRegisterMathAddon( engine );
-	PreRegisterScriptArray( engine, true );
 	PreRegisterStringAddon( engine );
-	PreRegisterScriptDictionary( engine );
 	PreRegisterTimeAddon( engine );
-	PreRegisterScriptAny( engine );
 	PreRegisterVec3Addon( engine );
 	PreRegisterVec4Addon( engine );
 	PreRegisterCvarAddon( engine );
@@ -425,12 +419,12 @@ asIScriptEngine *qasCreateEngine( bool *asMaxPortability ) {
 	PreRegisterMat3Addon( engine );
 	PreRegisterFilePathAddon( engine );
 
-	RegisterMathAddon( engine );
-	RegisterScriptArray( engine, true );
-	RegisterStringAddon( engine );
-	RegisterScriptDictionary( engine );
-	RegisterTimeAddon( engine );
 	RegisterScriptAny( engine );
+	RegisterScriptDictionary( engine );
+
+	RegisterMathAddon( engine );
+	RegisterStringAddon( engine );
+	RegisterTimeAddon( engine );
 	RegisterVec3Addon( engine );
 	RegisterVec4Addon( engine );
 	RegisterCvarAddon( engine );
@@ -479,7 +473,7 @@ void qasWriteEngineDocsToFile( asIScriptEngine *engine, const char *path, const 
 
 		for( i = 0; i < funcdefCount; i++ ) {
 			auto *f = engine->GetFuncdefByIndex( i );
-			str = va( "funcdef %s;\r\n", f->GetDeclaration( false, false, true ) );
+			str = va( "funcdef %s;\r\n", f->GetFuncdefSignature()->GetDeclaration( false, false, true ) );
 			trap_FS_Write( str, strlen( str ), filenum );
 		}
 
@@ -495,8 +489,8 @@ void qasWriteEngineDocsToFile( asIScriptEngine *engine, const char *path, const 
 	asUINT enumCount = engine->GetEnumCount();
 	if( enumCount > 0 ) {
 		for( i = 0; i < enumCount; i++ ) {
-			const char *ns;
-			engine->GetEnumByIndex( i, NULL, &ns, NULL, NULL );
+			asITypeInfo *enum_ = engine->GetEnumByIndex( i );
+			const char * ns = enum_->GetNamespace();
 			gns.filterObject( ns ? ns : "", i, qasNamespaceDump::qasDumpType::qasEnum );
 		}
 	}
@@ -545,7 +539,7 @@ void qasWriteEngineDocsToFile( asIScriptEngine *engine, const char *path, const 
 	// classes
 	asUINT objectCount = engine->GetObjectTypeCount();
 	for( i = 0; i < objectCount; i++ ) {
-		asIObjectType *objectType = engine->GetObjectTypeByIndex( i );
+		asITypeInfo *objectType = engine->GetObjectTypeByIndex( i );
 		if( !objectType ) {
 			continue;
 		}
@@ -729,7 +723,7 @@ static bool qasLoadScriptSection(
 
 	if( pdata ) {
 		// load the script data into memory
-		char *data = (char *)qasAlloc( length + 1 );
+		char *data = (char *)QAS_Malloc( length + 1 );
 		trap_FS_Read( data, length, filenum );
 		*pdata = data;
 		QAS_Printf( "* Loaded script section '%s'\n", filename );
@@ -770,7 +764,7 @@ static bool qasParseScriptProject( asIScriptModule *asModule, const char *rootDi
 	*mtime = trap_FS_SysMTime( filenum );
 
 	// load the script data into memory
-	script = (char *)qasAlloc( length + 1 );
+	script = (char *)QAS_Malloc( length + 1 );
 	trap_FS_Read( script, length, filenum );
 	trap_FS_FCloseFile( filenum );
 
@@ -778,7 +772,7 @@ static bool qasParseScriptProject( asIScriptModule *asModule, const char *rootDi
 	for( numSections = 0; ( section = COM_ListNameForPosition( script, numSections, QAS_SECTIONS_SEPARATOR ) ) != NULL; numSections++ ) ;
 
 	if( !numSections ) {
-		qasFree( script );
+		QAS_Free( script );
 		QAS_Printf( S_COLOR_RED "* Error: script '%s' has no sections\n", filename );
 		return false;
 	}
@@ -800,19 +794,19 @@ static bool qasParseScriptProject( asIScriptModule *asModule, const char *rootDi
 
 		int error = asModule->AddScriptSection( fileName, section, strlen( section ) );
 
-		qasFree( section );
+		QAS_Free( section );
 		
 		if( error ) {
 			QAS_Printf( S_COLOR_RED "* Failed to add file %s with error %i\n", fileName, error );
-			qasFree( fileName );
-			qasFree( script );
+			QAS_Free( fileName );
+			QAS_Free( script );
 			return false;
 		}
 
-		qasFree( fileName );
+		QAS_Free( fileName );
 	}
 
-	qasFree( script );
+	QAS_Free( script );
 
 	if( sNum != numSections ) {
 		QAS_Printf( S_COLOR_RED "* Error: couldn't load all script sections.\n" );
@@ -901,12 +895,12 @@ time_t qasScriptProjectMTime( const char *rootDir, const char *dir, const char *
 	return mtime;
 }
 
-	/*************************************
+/*************************************
 * Array tools
 **************************************/
 
 CScriptArrayInterface *qasCreateArrayCpp( unsigned int length, void *ot ) {
-	return QAS_NEW( CScriptArray )( length, static_cast<asIObjectType *>( ot ) );
+	return CScriptArray::Create( static_cast<asITypeInfo *>( ot ), length );
 }
 
 void qasReleaseArrayCpp( CScriptArrayInterface *arr ) {
@@ -934,7 +928,7 @@ asstring_t *qasStringAssignString( asstring_t *self, const char *string, unsigne
 **************************************/
 
 CScriptDictionaryInterface *qasCreateDictionaryCpp( asIScriptEngine *engine ) {
-	return QAS_NEW( CScriptDictionary )( engine );
+	return CScriptDictionary::Create( engine );
 }
 
 void qasReleaseDictionaryCpp( CScriptDictionaryInterface *dict ) {

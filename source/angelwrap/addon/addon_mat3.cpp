@@ -128,8 +128,8 @@ static CScriptArrayInterface *objectMat3_VecToArray( unsigned index, asmat3_t *s
 {
 	asIScriptContext *ctx = asGetActiveContext();
 	asIScriptEngine *engine = ctx->GetEngine();
-	asIObjectType *ot = engine->GetObjectTypeById( engine->GetTypeIdByDecl( "array<float>" ) );
-	CScriptArrayInterface *arr = QAS_NEW( CScriptArray )( 9, ot );
+	asITypeInfo *ot = engine->GetTypeInfoById( engine->GetTypeIdByDecl( "array<float>" ) );
+	CScriptArrayInterface *arr = qasCreateArrayCpp( 9, ot );
 
 	for( int i = 0; i < 9; i++ ) {
 		*( (float *)arr->At( i ) ) = self->m[i];

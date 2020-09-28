@@ -72,6 +72,14 @@ int QAS_Init( void ) {
 	return 1;
 }
 
+void *QAS_Malloc( size_t size ) {
+	return QAS_MemAlloc( angelwrappool, size );
+}
+
+void QAS_Free( void *data ) {
+	QAS_MemFree( data );
+}
+
 void QAS_ShutDown( void ) {
 	QAS_MemFreePool( &angelwrappool );
 }

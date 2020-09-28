@@ -295,11 +295,11 @@ public:
 		trap::VID_FlashWindow( count );
 	}
 
-	int getConnectCount( void ) {
+	int getConnectCount( void ) const {
 		return UI_Main::Get()->getConnectCount();
 	}
 
-	unsigned int getSupportedInputDevices( void ) {
+	unsigned int getSupportedInputDevices( void ) const {
 		return trap::IN_SupportedDevices();
 	}
 
@@ -307,7 +307,7 @@ public:
 		trap::IN_ShowSoftKeyboard( show ? true : false );
 	}
 
-	bool isBrowserAvailable( void ) {
+	bool isBrowserAvailable( void ) const {
 		return trap::CL_IsBrowserAvailable();
 	}
 

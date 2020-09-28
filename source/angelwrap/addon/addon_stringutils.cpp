@@ -188,10 +188,9 @@ static asstring_t *QAS_FormatString8( const asstring_t &format, const asstring_t
 static CScriptArrayInterface *QAS_SplitString( const asstring_t &str, const asstring_t &delim ) {
 	asIScriptContext *ctx = asGetActiveContext();
 	asIScriptEngine *engine = ctx->GetEngine();
+	asITypeInfo *ot = engine->GetTypeInfoById( engine->GetTypeIdByDecl( "array<String @>" ) );
 
-	asIObjectType *ot = engine->GetObjectTypeById( engine->GetTypeIdByDecl( "array<String @>" ) );
-
-	CScriptArrayInterface *arr = QAS_NEW( CScriptArray )( 0, ot );
+	CScriptArrayInterface *arr = qasCreateArrayCpp( 0, ot );
 	const char *pdelim = delim.buffer;
 	const size_t delim_len = strlen( pdelim );
 

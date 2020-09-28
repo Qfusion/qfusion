@@ -44,24 +44,25 @@ public:
 	void *getData() { return data; }
 
 	// asIBinaryStream implementation
-	void Read( void *ptr, asUINT _size ) {
+	int Read( void *ptr, asUINT _size ) {
 		if( !data || !ptr ) {
 			trap::Error( "BinaryBuffer::Read null pointer" );
-			return;
+			return -1;
 		}
 		if( ( offset + _size ) > allocated ) {
 			trap::Error( "BinaryBuffer::Read tried to read more bytes than available" );
-			return;
+			return -1;
 		}
 
 		memcpy( ptr, data + offset, _size );
 		offset += _size;
+		return (int)size;
 	}
 
-	void Write( const void *ptr, asUINT _size ) {
+	int Write( const void *ptr, asUINT _size ) {
 		if( !data || !ptr ) {
 			trap::Error( "BinaryBuffer::Write null pointer" );
-			return;
+			return -1;
 		}
 
 		if( ( size + _size ) > allocated ) {
@@ -75,6 +76,7 @@ public:
 
 		memcpy( data + size, ptr, _size );
 		size += _size;
+		return (int)size;
 	}
 };
 
@@ -110,22 +112,22 @@ public:
 	}
 
 	// asIBinaryStream implementation
-	void Read( void *ptr, asUINT size ) {
+	int Read( void *ptr, asUINT size ) {
 		if( !fh ) {
 			trap::Error( "BinaryFileStream::Read tried to read from closed file" );
-			return;
+			return -1;
 		}
 
-		trap::FS_Read( ptr, size, fh );
+		return trap::FS_Read( ptr, size, fh );
 	}
 
-	void Write( const void *ptr, asUINT size ) {
+	int Write( const void *ptr, asUINT size ) {
 		if( !fh ) {
 			trap::Error( "BinaryFileStream::Write tried to write to closed file" );
-			return;
+			return -1;
 		}
 
-		trap::FS_Write( ptr, size, fh );
+		return trap::FS_Write( ptr, size, fh );
 	}
 };
 
@@ -137,7 +139,7 @@ class ASModule : public ASInterface
 
 	asIScriptEngine *engine;
 	struct angelwrap_api_s *as_api;
-	asIObjectType *stringObjectType;
+	asITypeInfo *stringObjectType;
 
 	static const asDWORD accessMask = 0x1;
 
@@ -172,7 +174,7 @@ public:
 
 		engine->SetDefaultAccessMask( accessMask );
 
-		stringObjectType = engine->GetObjectTypeById( engine->GetTypeIdByDecl( "String" ) );
+		stringObjectType = engine->GetTypeInfoById( engine->GetTypeIdByDecl( "String" ) );
 
 		/*
 		module = engine->GetModule( UI_AS_MODULE, asGM_ALWAYS_CREATE );
@@ -236,7 +238,7 @@ public:
 		return currentFunction != nullptr ? currentFunction->GetModule() : nullptr;
 	}
 
-	virtual asIObjectType *getStringObjectType( void ) const {
+	virtual asITypeInfo *getStringObjectType( void ) const {
 		return stringObjectType;
 	}
 
@@ -310,7 +312,7 @@ public:
 	}
 
 	// array factory
-	virtual CScriptArrayInterface *createArray( unsigned int size, asIObjectType *ot ) {
+	virtual CScriptArrayInterface *createArray( unsigned int size, asITypeInfo *ot ) {
 		if( as_api ) {
 			return static_cast<CScriptArrayInterface *>( as_api->asCreateArrayCpp( size, static_cast<void *>( ot ) ) );
 		}

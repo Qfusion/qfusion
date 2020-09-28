@@ -228,7 +228,7 @@ static CScriptArrayInterface *asFunc_getRotators( const asstring_t &str, pmodeli
 
 	auto &rotators = it->second;
 
-	asIObjectType *ot = asEngine->GetObjectTypeById( asEngine->GetTypeIdByDecl( "array<int>" ) );
+	asITypeInfo *ot = asEngine->GetTypeInfoById( asEngine->GetTypeIdByDecl( "array<int>" ) );
 	CScriptArrayInterface *arr = cgs.asExport->asCreateArrayCpp( rotators.size(), ot );
 
 	for( int i = 0; i < rotators.size(); i++ ) {
@@ -307,7 +307,7 @@ static CScriptArrayInterface *asFunc_WeaponModelGetInfoLine( const asstring_t &s
 
 	auto &line = lines[idx];
 
-	asIObjectType *		   ot = asEngine->GetObjectTypeById( asEngine->GetTypeIdByDecl( "array<String @>" ) );
+	asITypeInfo *ot = asEngine->GetTypeInfoById( asEngine->GetTypeIdByDecl( "array<String @>" ) );
 	CScriptArrayInterface *arr = cgs.asExport->asCreateArrayCpp( line.size(), ot );
 
 	arr->Resize( line.size() );

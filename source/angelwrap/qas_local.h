@@ -60,8 +60,8 @@ extern struct mempool_s *angelwrappool;
 #define QAS_MemFreePool( pool ) trap_MemFreePool( pool, __FILE__, __LINE__ )
 #define QAS_MemEmptyPool( pool ) trap_MemEmptyPool( pool, __FILE__, __LINE__ )
 
-#define QAS_Malloc( size ) QAS_MemAlloc( angelwrappool, size )
-#define QAS_Free( data ) QAS_MemFree( data )
+void *QAS_Malloc( size_t size );
+void QAS_Free( void *data );
 
 #define QAS_NEW( x )        new( QAS_Malloc( sizeof( x ) ) )( x )
 #define QAS_DELETE( ptr,x ) {void *tmp = ptr; ( ptr )->~x(); QAS_Free( tmp );}
