@@ -536,7 +536,6 @@ void G_AddPlayerReport( edict_t *ent, bool final ) {
 		quit->stats.bombs_planted += cl->level.stats.bombs_planted;
 		quit->stats.bombs_defused += cl->level.stats.bombs_defused;
 		quit->stats.flags_capped += cl->level.stats.flags_capped;
-		quit->stats.fairplay_count += cl->level.stats.fairplay_count;
 
 		for( i = 0; i < ( AMMO_TOTAL - AMMO_GUNBLADE ); i++ ) {
 			quit->stats.accuracy_damage[i] += cl->level.stats.accuracy_damage[i];
@@ -688,35 +687,6 @@ static stat_query_t *G_Match_GenerateReport( void ) {
 
 	// TODO: write the weapon indexes
 	// weapindexarray = sq_api->CreateSection( query, 0, "weapindices" );
-
-	// find player of the match (best score)
-	// FIXME: is it the right place for this stuff here?
-	potm = NULL;
-	for( cl = game.quits; cl; cl = cl->next ) {
-		stats = &cl->stats;
-		if( !potm || stats->score > potm->stats.score ) {
-			potm = cl;
-		}
-	}
-
-	// to receieve "Player of the Match" award the player must also have the "Fair Play" award
-	if( potm && potm->stats.fairplay_count <= 0 ) {
-		potm = NULL;
-	}
-
-	if( potm ) {
-		edict_t *ent;
-		for( ent = game.edicts + 1; PLAYERNUM( ent ) < gs.maxclients; ent++ ) {
-			if( ent->r.client->mm_session != potm->mm_session ) {
-				continue;
-			}
-			if( ent->r.inuse ) {
-				G_PlayerAward( ent, S_COLOR_YELLOW "Player of the Match!" );
-			}
-			break;
-		}
-		G_PrintMsg( NULL, "Player of the match: %s" S_COLOR_WHITE "\n", potm->netname );
-	}
 
 	// Write player properties
 	playersarray = sq_api->CreateArray( query, 0, "players" );
