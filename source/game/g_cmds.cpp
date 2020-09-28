@@ -699,10 +699,6 @@ void Cmd_Say_f( edict_t *ent, bool arg0, bool checkflood ) {
 	// don't let text be too long for malicious reasons
 	text[arg0len + ( MAX_CHAT_BYTES - 1 )] = 0;
 
-	if( !Q_stricmp( text, "gg" ) || !Q_stricmp( text, "good game" ) ) {
-		G_AwardFairPlay( ent );
-	}
-
 	G_ChatMsg( NULL, ent, false, "%s", text );
 }
 
@@ -846,10 +842,6 @@ static void G_vsay_f( edict_t *ent, bool team ) {
 		if( team ) {
 			event->s.team = ent->s.team;
 			event->r.svflags |= SVF_ONLYTEAM; // send only to clients with the same ->s.team value
-		}
-
-		if( !team && ( vsay->id == VSAY_GOODGAME ) ) {
-			G_AwardFairPlay( ent );
 		}
 
 		if( trap_Cmd_Argc() > 2 ) {

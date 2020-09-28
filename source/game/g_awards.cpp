@@ -499,42 +499,6 @@ void G_AwardRaceRecord( edict_t *self ) {
 	G_PlayerAward( self, S_COLOR_CYAN "New Record!" );
 }
 
-void G_AwardFairPlay( edict_t *ent ) {
-	// only award during postmatch
-	if( GS_MatchState() != MATCH_STATE_POSTMATCH ) {
-		return;
-	}
-	if( level.finalMatchDuration <= SIGNIFICANT_MATCH_DURATION ) {
-		return;
-	}
-
-	gclient_t *client = ent->r.client;
-
-	// don't try to give the award to the server console
-	if( !client ) {
-		return;
-	}
-
-	// already awarded
-	if( client->resp.awardInfo.fairplay_award ) {
-		return;
-	}
-
-	// the player must not be muted during the match
-	if( client->level.stats.muted_count > 0 ) {
-		return;
-	}
-
-	// has he actually played?
-	if( !client->level.stats.had_playtime ) {
-		return;
-	}
-
-	client->level.stats.fairplay_count++;
-	client->resp.awardInfo.fairplay_award = true;
-	G_PlayerAward( ent, S_COLOR_CYAN "Fair Play!" );
-}
-
 void G_DeathAwards( edict_t *ent ) {
 	int frag_count = ent->r.client->resp.awardInfo.frag_count;
 	if( frag_count >= 5 ) {

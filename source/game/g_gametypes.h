@@ -92,7 +92,6 @@ typedef struct {
 	int bombs_planted;
 	int bombs_defused;
 	int flags_capped;
-	int fairplay_count;
 	int muted_count;
 	bool had_playtime;
 
