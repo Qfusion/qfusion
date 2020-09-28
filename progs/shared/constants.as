@@ -27,16 +27,16 @@ const String S_COLOR_WHITE = "^7";
 const String S_COLOR_ORANGE = "^8";
 const String S_COLOR_GREY = "^9";
 
-uint8 COLOR_BLACK    = '0';
-uint8 COLOR_RED      = '1';
-uint8 COLOR_GREEN    = '2';
-uint8 COLOR_YELLOW   = '3';
-uint8 COLOR_BLUE     = '4';
-uint8 COLOR_CYAN     = '5';
-uint8 COLOR_MAGENTA  = '6';
-uint8 COLOR_WHITE    = '7';
-uint8 COLOR_ORANGE   = '8';
-uint8 COLOR_GREY     = '9';
+uint8 COLOR_BLACK    = '0'[0];
+uint8 COLOR_RED      = '1'[0];
+uint8 COLOR_GREEN    = '2'[0];
+uint8 COLOR_YELLOW   = '3'[0];
+uint8 COLOR_BLUE     = '4'[0];
+uint8 COLOR_CYAN     = '5'[0];
+uint8 COLOR_MAGENTA  = '6'[0];
+uint8 COLOR_WHITE    = '7'[0];
+uint8 COLOR_ORANGE   = '8'[0];
+uint8 COLOR_GREY     = '9'[0];
 
 array<array<float>> colorTable =
 {

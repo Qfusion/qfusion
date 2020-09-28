@@ -252,15 +252,15 @@ class WModelInfo {
             if( @acFont !is null )
                 acFontWidth = CGame::Screen::StringWidth( "0", @acFont, 0 );
 
-            if( l.length >= 3 )
+            if( l.length() >= 3 )
     			acDigitWidth = l[2].toFloat();
-            if( l.length >= 4 )
+            if( l.length() >= 4 )
     			acDigitHeight = l[3].toFloat();
-            if( l.length >= 5 )
+            if( l.length() >= 5 )
     			acDigitAlpha = l[4].toFloat();
-            if( l.length >= 6 )
+            if( l.length() >= 6 )
     			acIconSize = l[5].toFloat();
-            if( l.length >= 7 )
+            if( l.length() >= 7 )
     			acIconAlpha = l[6].toFloat();
         }
 
@@ -556,6 +556,7 @@ CGame::Scene::Orientation AddWeaponOnTag( CGame::Scene::Entity @ent, CGame::Scen
 }
 
 void RegisterWeaponModels( void ) {
+   
 	// special case for weapon 0. Must always load the animation script
 	@cgs.weaponModelInfo[WEAP_NONE] = WModelInfo();
     cgs.weaponModelInfo[WEAP_NONE].updateRegistration( "generic/generic.md3" );

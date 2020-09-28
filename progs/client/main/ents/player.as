@@ -131,7 +131,7 @@ void UpdatePlayerModelEnt( CEntity @cent ) {
         int serverFrame = CGame::Snap.serverFrame;
 
 		// rotational yaw velocity
-		float adelta = GS::AngleDelta( cent.current.angles[YAW], cent.prev.angles[YAW] );
+		float adelta = AngleDelta( cent.current.angles[YAW], cent.prev.angles[YAW] );
         adelta = bound( -35.0f, adelta, 35.0f );;
     
 		// smooth a velocity vector between the last snaps 

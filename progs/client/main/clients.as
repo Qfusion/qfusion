@@ -21,7 +21,7 @@ class ClientInfo {
         cleanName = name.removeColorTokens();
 
         @s = GS::Info::ValueForKey( info, "hand" );
-        hand = @s is null or s.empty() ? 2 : int( s );
+        hand = @s is null or s.empty() ? 2 :  s.toInt();
 
         @s = GS::Info::ValueForKey( info, "color" );
         color = @s is null or s.empty() ? -1 : ReadColorRGBString( s );
@@ -39,8 +39,8 @@ void LoadClientInfo( int client ) {
 }
 
 void ResetClientInfos( void ) {
-	for( int i = 0; i < GS::MAX_CLIENTS; i++ ) {
-        int cs = GS::CS_PLAYERINFOS + i;
+	for( int i = 0; i < MAX_CLIENTS; i++ ) {
+        int cs = CS_PLAYERINFOS + i;
         
         cgs.clientInfo[i] = ClientInfo();
 

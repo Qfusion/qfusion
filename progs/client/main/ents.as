@@ -297,7 +297,7 @@ void AddLinkedModel( CEntity @cent ) {
 	ent.axis = cent.refEnt.axis;
 
 	if( @cent.item != null && ( cent.effects & EF_AMMOBOX ) != 0 ) { // ammobox icon hack
-		@ent.customShader = CGame::RegisterShader( @cent.item.icon );
+		@ent.customShader = CGame::RegisterShader( cent.item.icon );
 	}
 
 	barrel = false;

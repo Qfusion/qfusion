@@ -20,23 +20,23 @@ class ClientStatic {
 	String demoExtension;
 	bool gameStart;
 
-	array<String> configStrings(GS::MAX_CONFIGSTRINGS);
-	array<ModelHandle @> modelDraw(GS::MAX_MODELS);
-	array<SoundHandle @> soundPrecache(GS::MAX_SOUNDS);
-	array<ShaderHandle @> imagePrecache(GS::MAX_IMAGES);
-	array<SkinHandle @> skinPrecache(GS::MAX_SKINFILES);
+	array<String> configStrings(MAX_CONFIGSTRINGS);
+	array<ModelHandle @> modelDraw(MAX_MODELS);
+	array<SoundHandle @> soundPrecache(MAX_SOUNDS);
+	array<ShaderHandle @> imagePrecache(MAX_IMAGES);
+	array<SkinHandle @> skinPrecache(MAX_SKINFILES);
 
-	array<PModelInfo @> pModels(GS::MAX_MODELS);
+	array<PModelInfo @> pModels(MAX_MODELS);
 	PModelInfo @basePModelInfo; //fall back replacements
 	SkinHandle @baseSkin;
 
-	array<ClientInfo> clientInfo(GS::MAX_CLIENTS);
+	array<ClientInfo> clientInfo(MAX_CLIENTS);
 
-	array<WModelInfo @> weaponModelInfo(GS::WEAP_TOTAL);
+	array<WModelInfo @> weaponModelInfo(WEAP_TOTAL);
 
-	array<PModelInfo @> teamModelInfo(GS::MAX_TEAMS);
-	array<SkinHandle @> teamCustomSkin(GS::MAX_TEAMS); // user defined
-	array<int> teamColor(GS::MAX_TEAMS);
+	array<PModelInfo @> teamModelInfo(MAX_TEAMS);
+	array<SkinHandle @> teamCustomSkin(MAX_TEAMS); // user defined
+	array<int> teamColor(MAX_TEAMS);
 
 	CMedia media;
 
@@ -73,7 +73,7 @@ void ConfigString( int index, const String @s )
 {
 	cgs.configStrings[index] = s;
 
-	if( index >= CS_MODELS && index < CS_MODELS + GS::MAX_MODELS ) {
+	if( index >= CS_MODELS && index < CS_MODELS + MAX_MODELS ) {
 		index -= CS_MODELS;
 
 		if( index == 0 ) {
@@ -87,7 +87,7 @@ void ConfigString( int index, const String @s )
 		} else {
 			@cgs.modelDraw[index] = RegisterModel( s );
 		}
-	} else if( index >= CS_SOUNDS && index < CS_SOUNDS + GS::MAX_SOUNDS ) {
+	} else if( index >= CS_SOUNDS && index < CS_SOUNDS + MAX_SOUNDS ) {
 		index -= CS_SOUNDS;
 
 		if( s.empty() ) {
@@ -95,7 +95,7 @@ void ConfigString( int index, const String @s )
 		} else if( s.substr( 0, 1 ) != "*" ) {
 			@cgs.soundPrecache[index] = RegisterSound( s );
 		}
-	} else if( index >= CS_IMAGES && index < CS_IMAGES + GS::MAX_IMAGES ) {
+	} else if( index >= CS_IMAGES && index < CS_IMAGES + MAX_IMAGES ) {
 		index -= CS_IMAGES;
 
 		if( s.empty() ) {
@@ -103,7 +103,7 @@ void ConfigString( int index, const String @s )
 		} else {
 			@cgs.imagePrecache[index] = RegisterShader( s );
 		}
-	} else if( index >= CS_SKINFILES && index < CS_SKINFILES + GS::MAX_SKINFILES ) {
+	} else if( index >= CS_SKINFILES && index < CS_SKINFILES + MAX_SKINFILES ) {
 		index -= CS_SKINFILES;
 
 		if( s.empty() ) {
@@ -111,7 +111,7 @@ void ConfigString( int index, const String @s )
 		} else {
 			@cgs.skinPrecache[index] = RegisterSkin( s );
 		}
-	} else if( index >= CS_PLAYERINFOS && index < CS_PLAYERINFOS + GS::MAX_CLIENTS ) {
+	} else if( index >= CS_PLAYERINFOS && index < CS_PLAYERINFOS + MAX_CLIENTS ) {
 		LoadClientInfo( index - CS_PLAYERINFOS );
 	}
 }

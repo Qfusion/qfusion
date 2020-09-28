@@ -78,7 +78,7 @@ int COLOR_REPLACEA( int c, uint8 a )
 }
 
 int ColorIndex( uint8 c ) {
-	uint i = uint( c - '0' );
+	uint i = uint( c - '0'[0] );
 	if( i >= colorTable.length() ) {
 		i = 7;
 	}
@@ -118,9 +118,9 @@ int ReadColorRGBString( const String &in str ) {
 	array<String @> @parts = StringUtils::Split( str, " " );
 
 	if( parts.size() == 3 ) {
-		int r = bound( 0, int( parts[0] ), 255 );
-		int g = bound( 0, int( parts[1] ), 255 );
-		int b = bound( 0, int( parts[2] ), 255 );
+		int r = bound( 0, parts[0].toInt(), 255 );
+		int g = bound( 0, parts[1].toInt(), 255 );
+		int b = bound( 0, parts[2].toInt(), 255 );
 		return COLOR_RGBA( r, g, b, 255 );
 	}
 

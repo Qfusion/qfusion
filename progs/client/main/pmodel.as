@@ -113,7 +113,7 @@ class PModel {
 
 		for( int j = GS::Anim::LOWER; j < GS::Anim::PMODEL_PARTS; j++ ) {
 			for( int i = 0; i < 3; i++ ) {
-				angles[i][j] = GS::AngleNormalize180( angles[i][j] + leanAngles[i][j] );
+				angles[i][j] = AngleNormalize180( angles[i][j] + leanAngles[i][j] );
 			}
 		}
 	}

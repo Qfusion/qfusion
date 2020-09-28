@@ -229,7 +229,7 @@ void GENERIC_RequestCheatVars()
         cheackVarChecked = 0;
 }
 
-void GENERIC_CheatVarResponse( Client @client, String &cmdString, String &argsString, int argc )
+void GENERIC_CheatVarResponse( Client @client, const String &cmdString, const String &argsString, int argc )
 {
     //G_Print( S_COLOR_RED + "cvarinfo response: (argc" + argc + ") " + S_COLOR_WHITE + client.name + S_COLOR_WHITE + " " + argsString + "\n" );
 
