@@ -25,7 +25,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <algorithm>
 
 #define CONST_STRING_BITFLAG    ( 1 << 31 )
-#define ENABLE_STRING_IMPLICIT_CASTS
 
 static inline asstring_t *objectString_Alloc( void ) {
 	static asstring_t *object;
@@ -323,8 +322,6 @@ static bool objectString_EqualBehaviour( asstring_t *first, asstring_t *second )
 	return ( Q_stricmp( first->buffer, second->buffer ) == 0 );
 }
 
-#ifdef ENABLE_STRING_IMPLICIT_CASTS
-
 static int objectString_CastToInt( asstring_t *self ) {
 	return atoi( self->buffer );
 }
@@ -336,8 +333,6 @@ static float objectString_CastToFloat( asstring_t *self ) {
 static double objectString_CastToDouble( asstring_t *self ) {
 	return atof( self->buffer );
 }
-
-#endif
 
 // ==================================================================================
 
@@ -528,11 +523,13 @@ void RegisterStringAddon( asIScriptEngine *engine ) {
 	r = engine->RegisterObjectBehaviour( "String", asBEHAVE_ADDREF, "void f()", asFUNCTION( objectString_Addref ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour( "String", asBEHAVE_RELEASE, "void f()", asFUNCTION( objectString_Release ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 
-#ifdef ENABLE_STRING_IMPLICIT_CASTS
 	r = engine->RegisterObjectMethod( "String", "int opImplCast() const", asFUNCTION( objectString_CastToInt ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "String", "float opImplCast() const", asFUNCTION( objectString_CastToFloat ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "String", "double opImplCast() const", asFUNCTION( objectString_CastToDouble ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
-#endif
+
+	r = engine->RegisterObjectMethod( "String", "int opCast() const", asFUNCTION( objectString_CastToInt ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
+	r = engine->RegisterObjectMethod( "String", "float opCast() const", asFUNCTION( objectString_CastToFloat ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
+	r = engine->RegisterObjectMethod( "String", "double opCast() const", asFUNCTION( objectString_CastToDouble ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 
 	// register object methods
 
