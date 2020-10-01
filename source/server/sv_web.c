@@ -1095,6 +1095,8 @@ static void SV_Web_RespondToQuery( sv_http_connection_t *con ) {
 	} else if( response->content_state == CONTENT_STATE_RECEIVED ) {
 		content = response->content;
 		content_length = response->content_length;
+
+		response->code = HTTP_RESP_OK;
 	} else {
 		SV_Web_RouteRequest( request, response, &content, &content_length );
 
