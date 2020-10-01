@@ -564,7 +564,6 @@ typedef struct {
 	int frameCount;
 
 	snapshot_t frame, oldFrame;
-	bool fireEvents;
 	bool firstFrame;
 
 	float predictedOrigins[CMD_BACKUP][3];              // for debug comparing against server
@@ -1189,7 +1188,7 @@ extern cvar_t *cg_damage_indicator_time;
 extern cvar_t *cg_pickup_flash;
 extern cvar_t *cg_weaponAutoSwitch;
 
-void CG_FireEvents( bool early );
+void CG_FireEvents( void );
 void CG_EntityEvent( entity_state_t *ent, int ev, int parm, bool predicted );
 void CG_AddAnnouncerEvent( struct sfx_s *sound, bool queued );
 void CG_ReleaseAnnouncerEvents( void );

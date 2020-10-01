@@ -365,7 +365,6 @@ bool CG_NewFrameSnap( snapshot_t *frame, snapshot_t *lerpframe ) {
 	CG_CheckPredictionError();
 
 	cg.predictFrom = 0; // force the prediction to be restarted from the new snapshot
-	cg.fireEvents = true;
 
 	for( i = 0; i < cg.frame.numgamecommands; i++ ) {
 		int target = cg.frame.playerState.POVnum - 1;
@@ -374,7 +373,7 @@ bool CG_NewFrameSnap( snapshot_t *frame, snapshot_t *lerpframe ) {
 		}
 	}
 
-	CG_FireEvents( true );
+	CG_FireEvents();
 
 	if( cg.firstFrame && !cgs.demoPlaying ) {
 		// request updates on our private state

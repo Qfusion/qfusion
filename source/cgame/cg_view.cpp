@@ -999,8 +999,6 @@ void CG_RenderView( int frameTime, int realFrameTime, int64_t realTime, int64_t 
 
 	CG_CalcViewWeapon( &cg.weapon );
 
-	CG_FireEvents( false );
-
 	CG_AddEntities();
 	CG_AddViewWeapon( &cg.weapon );
 	CG_AddLocalEntities();
