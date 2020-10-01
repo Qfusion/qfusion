@@ -1566,12 +1566,10 @@ void CG_EntityEvent( entity_state_t *ent, int ev, int parm, bool predicted ) {
 	}
 }
 
-#define ISEARLYEVENT( ev ) ( ev == EV_WEAPONDROP )
-
 /*
 * CG_FireEvents
 */
-static void CG_FireEntityEvents( bool early ) {
+static void CG_FireEntityEvents( void ) {
 	int pnum, j;
 	entity_state_t *state;
 
@@ -1579,16 +1577,12 @@ static void CG_FireEntityEvents( bool early ) {
 		state = &cg.frame.entities[pnum];
 
 		if( state->type == ET_SOUNDEVENT ) {
-			if( early ) {
-				CG_SoundEntityNewState( &cg_entities[state->number] );
-			}
+			CG_SoundEntityNewState( &cg_entities[state->number] );
 			continue;
 		}
 
 		for( j = 0; j < 2; j++ ) {
-			if( early == ISEARLYEVENT( state->events[j] ) ) {
-				CG_EntityEvent( state, state->events[j], state->eventParms[j], false );
-			}
+			CG_EntityEvent( state, state->events[j], state->eventParms[j], false );
 		}
 	}
 }
@@ -1724,17 +1718,8 @@ static void CG_FirePlayerStateEvents( void ) {
 /*
 * CG_FireEvents
 */
-void CG_FireEvents( bool early ) {
-	if( !cg.fireEvents ) {
-		return;
-	}
-
-	CG_FireEntityEvents( early );
-
-	if( early ) {
-		return;
-	}
+void CG_FireEvents( void ) {
+	CG_FireEntityEvents();
 
 	CG_FirePlayerStateEvents();
-	cg.fireEvents = false;
 }
