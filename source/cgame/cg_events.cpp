@@ -1128,6 +1128,10 @@ void CG_EntityEvent( entity_state_t *ent, int ev, int parm, bool predicted ) {
 	vec4_t color;
 	int weapon = 0, fireMode = 0, count = 0;
 
+	if( ev == EV_NONE ) {
+		return;
+	}
+
 	if( CG_asEntityEvent( ent, ev, parm, predicted ) ) {
 		return;
 	}
@@ -1137,7 +1141,6 @@ void CG_EntityEvent( entity_state_t *ent, int ev, int parm, bool predicted ) {
 	}
 
 	switch( ev ) {
-		case EV_NONE:
 		default:
 			break;
 
