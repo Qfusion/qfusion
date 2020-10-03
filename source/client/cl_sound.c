@@ -36,19 +36,27 @@ static void CL_SoundModule_SetAttenuationModel( void );
 static char *CL_SetSoundExtension( const char *name ) {
 	unsigned int i;
 	char *finalname;
-	size_t finalname_size, maxlen;
+	size_t finalname_size;
 	const char *extension;
+	static size_t maxlen = 0;
 
-	assert( name );
+	if( !name ) {
+		assert( name != NULL );
+		return NULL;
+	}
+	if( !name[0] ) {
+		return NULL;
+	}
 
 	if( COM_FileExtension( name ) ) {
 		return TempCopyString( name );
 	}
 
-	maxlen = 0;
-	for( i = 0; i < NUM_SOUND_EXTENSIONS; i++ ) {
-		if( strlen( SOUND_EXTENSIONS[i] ) > maxlen ) {
-			maxlen = strlen( SOUND_EXTENSIONS[i] );
+	if( maxlen == 0 ) {
+		for( i = 0; i < NUM_SOUND_EXTENSIONS; i++ ) {
+			if( strlen( SOUND_EXTENSIONS[i] ) > maxlen ) {
+				maxlen = strlen( SOUND_EXTENSIONS[i] );
+			}
 		}
 	}
 
@@ -57,11 +65,12 @@ static char *CL_SetSoundExtension( const char *name ) {
 	Q_strncpyz( finalname, name, finalname_size );
 
 	extension = FS_FirstExtension( finalname, SOUND_EXTENSIONS, NUM_SOUND_EXTENSIONS );
-	if( extension ) {
-		Q_strncatz( finalname, extension, finalname_size );
+	if( !extension ) {
+		Mem_TempFree( finalname );
+		return NULL;
 	}
-	// if not found, we just pass it without the extension
 
+	Q_strncatz( finalname, extension, finalname_size );
 	return finalname;
 }
 
@@ -426,6 +435,10 @@ struct sfx_s *CL_SoundModule_RegisterSound( const char *name ) {
 		char *finalname;
 
 		finalname = CL_SetSoundExtension( name );
+		if( !finalname ) {
+			return NULL;
+		}
+
 		retval = se->RegisterSound( finalname );
 		Mem_TempFree( finalname );
 
@@ -527,7 +540,7 @@ void CL_SoundModule_StartBackgroundTrack( const char *intro, const char *loop, i
 		char *finalintro, *finalloop;
 
 		finalintro = CL_SetSoundExtension( intro );
-		if( loop ) {
+		if( loop && loop[0] != '\0' ) {
 			finalloop = CL_SetSoundExtension( loop );
 		} else {
 			finalloop = NULL;
