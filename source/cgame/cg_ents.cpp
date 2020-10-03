@@ -1740,7 +1740,7 @@ void CG_UpdateParticlesEnt( centity_t *cent ) {
 // ET_SOUNDEVENT
 //==================================================
 
-void CG_SoundEntityNewState( centity_t *cent ) {
+static void CG_SoundEntityNewState( centity_t *cent ) {
 	int channel, soundindex, owner;
 	float attenuation;
 	bool fixed;
@@ -2203,7 +2203,10 @@ void CG_UpdateEntities( void ) {
 				break;
 
 			case ET_EVENT:
+				break;
+
 			case ET_SOUNDEVENT:
+				//CG_SoundEntityNewState( cent );
 				break;
 
 			case ET_ITEM_TIMER:
