@@ -238,6 +238,11 @@ static CScriptArrayInterface *asFunc_getRotators( const asstring_t &str, pmodeli
 	return arr;
 }
 
+static asstring_t *asFunc_PlayerModelGetSex( pmodelinfo_t *pmodel )
+{
+	return cgs.asExport->asStringFactoryBuffer( pmodel->sexStr.c_str(), pmodel->sexStr.length() );
+}
+
 static const gs_asMethod_t asPlayerModelMethods[] = {
 	{ ASLIB_FUNCTION_DECL( uint, get_numAnims, () const ), asFUNCTION( asFunc_PlayerModelGetNumAnims ),
 		asCALL_CDECL_OBJLAST },
@@ -248,6 +253,7 @@ static const gs_asMethod_t asPlayerModelMethods[] = {
 		asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( array<int> @, getRotators, ( const String &in name ) const ),
 		asFUNCTION( asFunc_getRotators ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( String @, getSex, () const ), asFUNCTION( asFunc_PlayerModelGetSex ), asCALL_CDECL_OBJLAST },
 
 	ASLIB_METHOD_NULL,
 };
@@ -344,7 +350,7 @@ static const gs_asMethod_t asWeaponModelMethods[] = {
 	ASLIB_METHOD_NULL,
 };
 
-static const gs_asBehavior_t asWeaponModelehaviors[] = {
+static const gs_asBehavior_t asWeaponModelBehaviors[] = {
 	{ asBEHAVE_ADDREF, ASLIB_FUNCTION_DECL( void, f, () ), asFUNCTION( asWeaponModel_AddRef ),
 		asCALL_CDECL_OBJLAST },
 	{ asBEHAVE_RELEASE, ASLIB_FUNCTION_DECL( void, f, () ), asFUNCTION( asWeaponModel_Release ),
@@ -354,14 +360,14 @@ static const gs_asBehavior_t asWeaponModelehaviors[] = {
 };
 
 static const gs_asClassDescriptor_t asWeaponModelClassDescriptor = {
-	"WeaponModel",		   /* name */
-	asOBJ_REF,			   /* object type flags */
-	sizeof( void * ),	   /* size */
-	NULL,				   /* funcdefs */
-	asWeaponModelehaviors, /* object behaviors */
-	asWeaponModelMethods,  /* methods */
-	NULL,				   /* properties */
-	NULL, NULL			   /* string factory hack */
+	"WeaponModel",			/* name */
+	asOBJ_REF,				/* object type flags */
+	sizeof( void * ),		/* size */
+	NULL,					/* funcdefs */
+	asWeaponModelBehaviors, /* object behaviors */
+	asWeaponModelMethods,	/* methods */
+	NULL,					/* properties */
+	NULL, NULL				/* string factory hack */
 };
 
 //======================================================================

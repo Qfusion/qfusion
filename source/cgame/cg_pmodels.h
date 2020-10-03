@@ -123,7 +123,9 @@ extern weaponinfo_t cg_pWeaponModelInfos[WEAP_TOTAL];
 //Consider it static 'read-only', cause it is shared by different players
 typedef struct pmodelinfo_s {
 	char *name;
-	int sex;
+
+	int			sex;
+	std::string sexStr;
 
 	struct  model_s *model;
 	struct cg_sexedSfx_s *sexedSfx;
