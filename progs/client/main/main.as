@@ -83,7 +83,7 @@ void ConfigString( int index, const String @s )
 		if( s.empty() ) {
 			@cgs.modelDraw[index] = null;
 		} else if( s.substr( 0, 1 ) == "$" ) {  // indexed pmodel
-			@cgs.pModels[index] = PModelInfo( RegisterPlayerModel( s.substr( 1 ) ) );
+			@cgs.pModels[index] = PModelInfo( s.substr( 1 ) );
 		} else {
 			@cgs.modelDraw[index] = RegisterModel( s );
 		}

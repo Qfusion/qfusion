@@ -2,20 +2,68 @@ namespace CGame {
 
 const float MIN_LEANING_SPEED = 10.0f;
 
+enum ePmodelModelSex {
+	SEX_MALE,
+	SEX_FEMALE,
+	SEX_NEUTRAL
+};
+
+array<const String @> defaultPlayerSounds = 
+{
+	"*death", //"*death2", "*death3", "*death4",
+	"*fall_0", "*fall_1", "*fall_2",
+	"*falldeath",
+	"*gasp", "*drown",
+	"*jump_1", "*jump_2",
+	"*pain25", "*pain50", "*pain75", "*pain100",
+	"*wj_1", "*wj_2",
+	"*dash_1", "*dash_2",
+	"*taunt"
+};
+
 class PModelInfo {
+	String name;
+	int sex;
 	ModelHandle @model;
 	GS::Anim::PModelAnimSet animSet;
 	array<int> rootAnims(GS::Anim::PMODEL_PARTS);
 	array<array<int> @> rotators(GS::Anim::PMODEL_PARTS);
+	Dictionary sexedSounds;
 
-	PModelInfo( PlayerModel @pmodel ) {
+	PModelInfo( const String @pmodelName ) {
 		@model = null;
 
+		PlayerModel @pmodel = CGame::RegisterPlayerModel( pmodelName );
 		if( @pmodel is null ) {
 			return;
 		}
 
-		@model = pmodel.model;
+		name = "";
+		@model = @pmodel.model;
+		sex = SEX_MALE;
+
+		String modelName = name;
+		uint pos = modelName.locate( "/", 1 );
+		if( pos < modelName.length() ) {
+			modelName = modelName.substr( pos + 1 );
+			pos = modelName.locate( "/", 0 );
+			if( pos < modelName.length() ) {
+				name = modelName.substr( 0, pos );
+			}
+		}
+
+		if( name.empty() ) {
+			name = DEFAULT_PLAYERMODEL;
+		}
+		
+		String sexLetter = pmodel.getSex().substr(0 , 1).tolower();
+		if( sexLetter == "m" ) {
+			sex = SEX_MALE;
+		} else if( sexLetter == "f") {
+			sex = SEX_FEMALE;
+		} else if( sexLetter == "n" ) {
+			sex = SEX_NEUTRAL;
+		}
 
 		for( uint i = 0; i < pmodel.numAnims; i++ ) {
 			int fps;
@@ -35,6 +83,60 @@ class PModelInfo {
 
 		@rotators[GS::Anim::UPPER] = @pmodel.getRotators( "upper" );
 		@rotators[GS::Anim::HEAD] = @pmodel.getRotators( "head" );
+
+		RegisterAllSexedSounds();
+	}
+
+	SoundHandle @RegisterSexedSound( const String &sname ) {
+		if( @model is null ) {
+			return null;
+		}
+		if( sname.empty() ) {
+			return null;
+		}
+
+		FilePath::StripExtension( sname );
+
+		SoundHandle @sfx;
+		if( sexedSounds.get( sname, @sfx ) ) {
+			return sfx;
+		}
+
+		String realsname = sname.substr( 1 );
+		String spath = StringUtils::Format( "sounds/players/%s/%s", name, realsname );
+
+		@sfx = CGame::RegisterSound( spath );
+		if( sfx is null ) {
+			if( sex == SEX_FEMALE ) {
+				spath = StringUtils::Format( "sounds/player/female/%s", realsname );
+			} else {
+				spath = StringUtils::Format( "sounds/player/male/%s", realsname );
+			}
+			@sfx = CGame::RegisterSound( spath );
+		}
+
+		sexedSounds.set( sname, @sfx );
+		return @sfx;
+	}
+
+	void RegisterAllSexedSounds() {
+		sexedSounds.clear();
+
+		for( uint i = 0; i < defaultPlayerSounds.length(); i++ ) {
+			RegisterSexedSound( defaultPlayerSounds[i] );
+		}
+
+		for( int i = 0; i < MAX_SOUNDS; i++ ) {
+			int csi = CS_SOUNDS + i;
+
+			const String @cs = @cgs.configStrings[csi];
+			if( cs.empty() ) {
+				break;
+			}
+			if( cs.substr( 0, 1 ) == "*" ) {
+				RegisterSexedSound( cs );
+			}
+		}
 	}
 }
 
@@ -124,7 +226,7 @@ void RegisterBasePModel( void ) {
 
 	// pmodelinfo
 	filename = StringUtils::Format( "%s/%s", "models/players", DEFAULT_PLAYERMODEL );
-	@cgs.basePModelInfo = PModelInfo( CGame::RegisterPlayerModel( filename ) );
+	@cgs.basePModelInfo = PModelInfo( filename );
 	if( @cgs.basePModelInfo.model is null ) {
 		CGame::Error( StringUtils::Format( "Default Player Model '%s' failed to load", DEFAULT_PLAYERMODEL ) );
 	}

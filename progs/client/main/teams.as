@@ -39,7 +39,7 @@ void RegisterForceModel( Cvar &in teamForceModel, Cvar &in teamForceModelToggle,
     const String @forceModelName = @teamForceModel.string;
     const String @forceModelSkin = @teamForceSkin.string;
 	if( teamForceModelToggle.boolean && !forceModelName.empty() ) {
-		@pmodelinfo = PModelInfo( CGame::RegisterPlayerModel( StringUtils::Format( "models/players/%s", forceModelName ) ) );
+		@pmodelinfo = PModelInfo( StringUtils::Format( "models/players/%s", forceModelName ) );
 
 		// if it failed, it will be NULL, so also disabled
 		if( @pmodelinfo.model !is null ) {

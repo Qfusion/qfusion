@@ -31,6 +31,38 @@ class ClientInfo {
     }
 }
 
+void SexedSound( int entnum, int entchannel, const String &in name, float fvol, float attn ) {
+	bool fixed;
+
+    if( name.empty() ) {
+        return;
+    }
+    if( entnum < 0 || entnum >= MAX_EDICTS ) {
+        return;
+    }
+
+	fixed = ( entchannel & CHAN_FIXED ) != 0 ? true : false;
+	entchannel &= ~CHAN_FIXED;
+
+    auto @pmodel = cgs.pModels[entnum];
+    if( @pmodel is null ) {
+        return;
+    }
+
+    auto @sfx = pmodel.RegisterSexedSound( name );
+    if( @sfx is null ) {
+        return;
+    }
+
+	if( fixed ) {
+		CGame::Sound::StartFixedSound( @sfx, cgEnts[entnum].current.origin, entchannel, fvol, attn );
+	} else if( IsViewerEntity( entnum ) ) {
+		CGame::Sound::StartGlobalSound( @sfx, entchannel, fvol );
+	} else {
+		CGame::Sound::StartRelativeSound( @sfx, entnum, entchannel, fvol, attn );
+	}
+}
+
 /*
 * Updates cached client info from the current CS_PLAYERINFOS configstring value
 */
@@ -41,7 +73,7 @@ void LoadClientInfo( int client ) {
 void ResetClientInfos( void ) {
 	for( int i = 0; i < MAX_CLIENTS; i++ ) {
         int cs = CS_PLAYERINFOS + i;
-        
+
         cgs.clientInfo[i] = ClientInfo();
 
 		if( !cgs.configStrings[cs].empty() ) {
