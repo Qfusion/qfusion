@@ -166,6 +166,7 @@ static bool CG_ParseAnimationScript( pmodelinfo_t *pmodelinfo, char *filename ) 
 	int length;
 
 	pmodelinfo->sex = GENDER_MALE;
+	pmodelinfo->sexStr = "";
 	pmodelinfo->numAnims = 0;
 	rounder = 0;
 	
@@ -218,7 +219,8 @@ static bool CG_ParseAnimationScript( pmodelinfo_t *pmodelinfo, char *filename ) 
 				if( !token[0] ) { //Error (fixme)
 					break;
 				}
-
+				
+				pmodelinfo->sexStr = token;
 				if( token[0] == 'm' || token[0] == 'M' ) {
 					pmodelinfo->sex = GENDER_MALE;
 					if( debug ) {
