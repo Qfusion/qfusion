@@ -76,13 +76,16 @@ void ConfigString( int index, const String @s )
 	if( index >= CS_MODELS && index < CS_MODELS + MAX_MODELS ) {
 		index -= CS_MODELS;
 
+		@cgs.modelDraw[index] = null;
+		
 		if( index == 0 ) {
 			return;
 		}
-
 		if( s.empty() ) {
-			@cgs.modelDraw[index] = null;
-		} else if( s.substr( 0, 1 ) == "$" ) {  // indexed pmodel
+			return;
+		}
+
+		if( s.substr( 0, 1 ) == "$" ) {  // indexed pmodel
 			@cgs.pModels[index] = PModelInfo( s.substr( 1 ) );
 		} else {
 			@cgs.modelDraw[index] = RegisterModel( s );
@@ -90,25 +93,30 @@ void ConfigString( int index, const String @s )
 	} else if( index >= CS_SOUNDS && index < CS_SOUNDS + MAX_SOUNDS ) {
 		index -= CS_SOUNDS;
 
+		@cgs.soundPrecache[index] = null;
+
 		if( s.empty() ) {
-			@cgs.soundPrecache[index] = null;
-		} else if( s.substr( 0, 1 ) != "*" ) {
+			return;	
+		}
+		if( s.substr( 0, 1 ) != "*" ) {
 			@cgs.soundPrecache[index] = RegisterSound( s );
 		}
 	} else if( index >= CS_IMAGES && index < CS_IMAGES + MAX_IMAGES ) {
 		index -= CS_IMAGES;
 
+		@cgs.imagePrecache[index] = null;
+
 		if( s.empty() ) {
-			@cgs.imagePrecache[index] = null;
-		} else {
-			@cgs.imagePrecache[index] = RegisterShader( s );
+			return;
 		}
+
+		@cgs.imagePrecache[index] = RegisterShader( s );
 	} else if( index >= CS_SKINFILES && index < CS_SKINFILES + MAX_SKINFILES ) {
 		index -= CS_SKINFILES;
 
-		if( s.empty() ) {
-			@cgs.skinPrecache[index] = null;
-		} else {
+		@cgs.skinPrecache[index] = null;
+
+		if( !s.empty() ) {
 			@cgs.skinPrecache[index] = RegisterSkin( s );
 		}
 	} else if( index >= CS_PLAYERINFOS && index < CS_PLAYERINFOS + MAX_CLIENTS ) {
@@ -166,6 +174,9 @@ void Precache()
 {
 	for( int i = 0; i < MAX_MODELS; i++ ) {
 		ConfigString( CS_MODELS + i, CGame::GetConfigString( CS_MODELS + i ) );
+	}
+	for( int i = 0; i < MAX_SOUNDS; i++ ) {
+		ConfigString( CS_SOUNDS + i, CGame::GetConfigString( CS_SOUNDS + i ) );
 	}
 	for( int i = 0; i < MAX_CLIENTS; i++ ) {
 		ConfigString( CS_PLAYERINFOS + i, CGame::GetConfigString( CS_PLAYERINFOS + i ) );

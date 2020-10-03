@@ -36,3 +36,4 @@ main/ents/item.as;
 main/ents/projectile.as;
 main/ents/sprite.as;
 main/ents/player.as;
+main/ents/soundevent.as;

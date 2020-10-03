@@ -451,6 +451,10 @@ void UpdateEntities() {
 
 			case ET_PUSH_TRIGGER:
 				break;
+
+			case ET_SOUNDEVENT:
+				UpdateSoundEventEnt( @cent );
+				break;
 		}
 	}
 }
