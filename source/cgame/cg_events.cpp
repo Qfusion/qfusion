@@ -1573,18 +1573,12 @@ void CG_EntityEvent( entity_state_t *ent, int ev, int parm, bool predicted ) {
 * CG_FireEvents
 */
 static void CG_FireEntityEvents( void ) {
-	int pnum, j;
-	entity_state_t *state;
+	int pnum;
 
 	for( pnum = 0; pnum < cg.frame.numEntities; pnum++ ) {
-		state = &cg.frame.entities[pnum];
+		entity_state_t *state = &cg.frame.entities[pnum];
 
-		if( state->type == ET_SOUNDEVENT ) {
-			CG_SoundEntityNewState( &cg_entities[state->number] );
-			continue;
-		}
-
-		for( j = 0; j < 2; j++ ) {
+		for( int j = 0; j < 2; j++ ) {
 			CG_EntityEvent( state, state->events[j], state->eventParms[j], false );
 		}
 	}

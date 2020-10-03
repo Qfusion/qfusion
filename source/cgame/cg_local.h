@@ -674,7 +674,6 @@ extern cvar_t *cg_gun_alpha;
 
 bool CG_NewFrameSnap( snapshot_t *frame, snapshot_t *lerpframe );
 struct cmodel_s *CG_CModelForEntity( int entNum );
-void CG_SoundEntityNewState( centity_t *cent );
 void CG_AddEntities( void );
 void CG_GetEntitySpatilization( int entNum, vec3_t origin, vec3_t velocity );
 void CG_LerpEntities( void );
