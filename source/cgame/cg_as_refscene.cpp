@@ -214,6 +214,214 @@ static const gs_asClassDescriptor_t asOrientationClassDescriptor = {
 	NULL, NULL,																 /* string factory hack */
 };
 
+//=======================================================================
+
+typedef struct {
+	asvec3_t xyz;
+	asvec3_t norm;
+	asvec3_t st;
+	asvec4_t color;
+} aspolyVert_t;
+
+static void objectPolyVert_DefaultConstructor( aspolyVert_t *v )
+{
+	memset( v, 0, sizeof( aspolyVert_t ) );
+}
+
+static void objectPolyVert_CopyConstructor( aspolyVert_t *other, aspolyVert_t *v )
+{
+	memcpy( v, other, sizeof( aspolyVert_t ) );
+}
+
+static const gs_asBehavior_t asPolyVert_ObjectBehaviors[] = {
+	{ asBEHAVE_CONSTRUCT, ASLIB_FUNCTION_DECL( void, f, () ), asFUNCTION( objectPolyVert_DefaultConstructor ), asCALL_CDECL_OBJLAST, },
+	{ asBEHAVE_CONSTRUCT, ASLIB_FUNCTION_DECL( void, f, ( const PolyVert &in ) ), asFUNCTION( objectPolyVert_CopyConstructor ), asCALL_CDECL_OBJLAST, },
+
+	ASLIB_BEHAVIOR_NULL,
+};
+
+static const gs_asMethod_t asPolyVert_Methods[] = {
+	ASLIB_METHOD_NULL
+};
+
+static const gs_asProperty_t asPolyVert_Properties[] = {
+	{ ASLIB_PROPERTY_DECL( Vec3, xyz ), ASLIB_FOFFSET( aspolyVert_t, xyz ) },
+	{ ASLIB_PROPERTY_DECL( Vec3, norm ), ASLIB_FOFFSET( aspolyVert_t, norm ) },
+	{ ASLIB_PROPERTY_DECL( Vec3, st ), ASLIB_FOFFSET( aspolyVert_t, st ) },
+	{ ASLIB_PROPERTY_DECL( Vec4, color ), ASLIB_FOFFSET( aspolyVert_t, xyz ) },
+
+	ASLIB_PROPERTY_NULL
+};
+
+static const gs_asClassDescriptor_t asPolyVertClassDescriptor = {
+	"PolyVert",																 /* name */
+	asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_C | asOBJ_APP_CLASS_ALLFLOATS, /* object type flags */
+	sizeof( aspolyVert_t ),													 /* size */
+	NULL,																	 /* funcdefs */
+	asPolyVert_ObjectBehaviors,												 /* object behaviors */
+	asPolyVert_Methods,														 /* methods */
+	asPolyVert_Properties,													 /* properties */
+	NULL, NULL,																 /* string factory hack */
+};
+
+//=======================================================================
+
+const asPWORD POLY_CACHE = 1010;
+
+struct SPolyCache {
+	asITypeInfo *vertArrayType;
+	asITypeInfo *elemArrayType;
+
+	// This is called from RegisterScriptDictionary
+	static SPolyCache *Setup( asIScriptEngine *engine )
+	{
+		SPolyCache *cache = reinterpret_cast<SPolyCache *>( engine->GetUserData( POLY_CACHE ) );
+		if( cache == 0 ) {
+			cache = new SPolyCache;
+			engine->SetUserData( cache, POLY_CACHE );
+			engine->SetEngineUserDataCleanupCallback( SPolyCache::Cleanup, POLY_CACHE );
+
+			cache->vertArrayType = engine->GetTypeInfoByDecl( "array<PolyVert>" );
+			cache->elemArrayType = engine->GetTypeInfoByDecl( "array<uint16>" );
+		}
+		return cache;
+	}
+
+	// This is called from the engine when shutting down
+	static void Cleanup( asIScriptEngine *engine )
+	{
+		SPolyCache *cache = reinterpret_cast<SPolyCache *>( engine->GetUserData( POLY_CACHE ) );
+		if( cache )
+			delete cache;
+	}
+};
+
+typedef struct {
+	int					   asRefCount;
+	CScriptArrayInterface *verts;
+	CScriptArrayInterface *elems;
+	struct shader_s *	   shader;
+	int					   fognum;
+	int					   renderfx;
+} aspoly_t;
+
+static void objectPoly_Init( aspoly_t *p, asIScriptEngine *engine, int numverts, int numelems )
+{
+	memset( p, 0, sizeof( *p ) );
+	p->asRefCount = 1;
+	p->fognum = -1;
+
+	// The dictionary object type is cached to avoid dynamically parsing it each time
+	SPolyCache *cache = reinterpret_cast<SPolyCache *>( engine->GetUserData( POLY_CACHE ) );
+	if( cache == nullptr ) {
+		cache = SPolyCache::Setup( engine );
+	}
+
+	p->verts = cgs.asExport->asCreateArrayCpp( numverts, cache->vertArrayType );
+	p->elems = cgs.asExport->asCreateArrayCpp( numelems, cache->vertArrayType );
+}
+
+static aspoly_t *objectPoly_Factory( void )
+{
+	asIScriptContext *ctx = cgs.asExport->asGetActiveContext();
+
+	aspoly_t *p = (aspoly_t *)CG_Malloc( sizeof( aspoly_t ) );
+	objectPoly_Init( p, ctx->GetEngine(), 0, 0 );
+	return p;
+}
+
+static aspoly_t *objectPoly_FactoryWithCnts( int numverts, int numelems )
+{
+	asIScriptContext *ctx = cgs.asExport->asGetActiveContext();
+
+	aspoly_t *p = (aspoly_t *)CG_Malloc( sizeof( aspoly_t ) );
+	objectPoly_Init( p, ctx->GetEngine(), 0, 0 );
+	return p;
+}
+
+static void objectPoly_Addref( aspoly_t *p )
+{
+	p->asRefCount++;
+}
+
+void objectPoly_Release( aspoly_t *p )
+{
+	if( --p->asRefCount <= 0 ) {
+		p->verts->Release();
+		p->elems->Release();
+		CG_Free( p );
+	}
+}
+
+static CScriptArrayInterface *asPoly_GetVerts( aspoly_t *p ) 
+{
+	CScriptArrayInterface *v = p->verts;
+	v->AddRef();
+	return v;
+}
+
+static CScriptArrayInterface *asPoly_GetElems( aspoly_t *p ) 
+{
+	CScriptArrayInterface *e = p->elems;
+	e->AddRef();
+	return e;
+}
+
+static CScriptArrayInterface *asPoly_SetVerts( CScriptArrayInterface *v, aspoly_t *p )
+{
+	p->verts->Release();
+	p->verts = v;
+	v->AddRef();
+	return v;
+}
+
+static CScriptArrayInterface *asPoly_SetElems( CScriptArrayInterface *e, aspoly_t *p )
+{
+	p->elems->Release();
+	p->elems = e;
+	e->AddRef();
+	return e;
+}
+
+static const gs_asBehavior_t asPoly_ObjectBehaviors[] = {
+	{ asBEHAVE_FACTORY, ASLIB_FUNCTION_DECL( Poly @, f, () ), asFUNCTION( objectPoly_Factory ), asCALL_CDECL, },
+	{ asBEHAVE_FACTORY, ASLIB_FUNCTION_DECL( Poly @, f, ( int numverts, int numelems ) ), asFUNCTION( objectPoly_FactoryWithCnts ), asCALL_CDECL, },
+	{ asBEHAVE_ADDREF, ASLIB_FUNCTION_DECL( void, f, () ), asFUNCTION( objectPoly_Addref ), asCALL_CDECL_OBJLAST },
+	{ asBEHAVE_RELEASE, ASLIB_FUNCTION_DECL( void, f, () ), asFUNCTION( objectPoly_Release ), asCALL_CDECL_OBJLAST },
+
+	ASLIB_BEHAVIOR_NULL,
+};
+
+static const gs_asMethod_t asPoly_Methods[] = {
+	{ ASLIB_FUNCTION_DECL( void, get_verts, () const ), asFUNCTION( asPoly_GetVerts ), asCALL_CDECL_OBJLAST }, 
+	{ ASLIB_FUNCTION_DECL( void, get_elems, () const ), asFUNCTION( asPoly_GetElems ), asCALL_CDECL_OBJLAST }, 
+	{ ASLIB_FUNCTION_DECL( void, set_verts, (const array<PolyVert>&in) ), asFUNCTION( asPoly_SetVerts ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( void, set_elems, (const array<uint16>&in) ), asFUNCTION( asPoly_SetElems ), asCALL_CDECL_OBJLAST }, 
+
+	ASLIB_METHOD_NULL
+};
+
+static const gs_asProperty_t asPoly_Properties[] = {
+	{ ASLIB_PROPERTY_DECL( int, renderfx ), ASLIB_FOFFSET( aspoly_t, renderfx ) },
+	{ ASLIB_PROPERTY_DECL( int, fognum ), ASLIB_FOFFSET( aspoly_t, fognum ) },
+	{ ASLIB_PROPERTY_DECL( ShaderHandle @, shader ), ASLIB_FOFFSET( aspoly_t, shader ) },
+
+	ASLIB_PROPERTY_NULL
+};
+
+static const gs_asClassDescriptor_t asPolyClassDescriptor = {
+	"Poly",					/* name */
+	asOBJ_REF,				/* object type flags */
+	sizeof( aspoly_t ),		/* size */
+	NULL,					/* funcdefs */
+	asPoly_ObjectBehaviors, /* object behaviors */
+	asPoly_Methods,			/* methods */
+	asPoly_Properties,		/* properties */
+	NULL, NULL,				/* string factory hack */
+};
+
+//=======================================================================
+
 static const gs_asClassDescriptor_t asBoneposesClassDescriptor = {
 	"Boneposes",			   /* name */
 	asOBJ_REF | asOBJ_NOCOUNT, /* object type flags */
@@ -231,6 +439,8 @@ const gs_asClassDescriptor_t *const asCGameRefSceneClassesDescriptors[] = {
 	&asRefEntityClassDescriptor,
 	&asOrientationClassDescriptor,
 	&asBoneposesClassDescriptor,
+	&asPolyVertClassDescriptor,
+	&asPolyClassDescriptor,
 
 	NULL,
 };
@@ -291,6 +501,51 @@ void asFunc_CG_AddLightToScene( asvec3_t *org, float radius, int color ) {
 		( ( color >> 16 ) & 255 ) / 255.0f );
 }
 
+void asFunc_CG_AddPolyToScene( aspoly_t *asp )
+{
+	poly_t		   p;
+	const int	   maxPolyVerts = 32;
+	vec4_t		   xyz[maxPolyVerts];
+	vec4_t		   normals[maxPolyVerts];
+	vec2_t		   st[maxPolyVerts];
+	byte_vec4_t	   colors[maxPolyVerts];
+	unsigned short elems[maxPolyVerts * 6];
+
+	memset( &p, 0, sizeof( poly_t ) );
+	p.fognum = asp->fognum;
+	p.renderfx = asp->renderfx;
+	p.shader = asp->shader;
+
+	p.numverts = asp->verts->GetSize();
+	p.verts = xyz;
+	p.stcoords = st;
+	p.normals = normals;
+	p.colors = colors;
+	if( p.numverts > sizeof( xyz ) / sizeof( xyz[0] ) )
+		p.numverts = sizeof( xyz ) / sizeof( xyz[0] );
+
+	for( int i = 0; i < p.numverts; i++ ) {
+		aspolyVert_t &v = *( (aspolyVert_t *)( asp->verts->At( i ) ) );
+		VectorCopy( v.xyz.v, xyz[i] );
+		Vector2Copy( v.st.v, st[i] );
+		VectorCopy( v.norm.v, normals[i] );
+	}
+
+	p.numelems = asp->verts->GetSize();
+	if( p.numelems > 0 ) {
+		p.elems = elems;
+	}
+	if( p.numelems > sizeof( elems ) / sizeof( elems[0] ) ) {
+		p.numelems = sizeof( elems ) / sizeof( elems[0] );
+	}
+
+	for( int i = 0; i < p.numelems; i++ ) {
+		elems[i] = *( (unsigned short *)( asp->elems->At( i ) ) );
+	}
+
+	trap_R_AddPolyToScene( &p );
+}
+
 const gs_asglobfuncs_t asCGameRefSceneGlobalFuncs[] = {
 	{ "void PlaceRotatedModelOnTag( Entity @+ ent, const Entity @+ dest, const Orientation &in )",
 		asFUNCTION( CG_PlaceRotatedModelOnTag ), NULL },
@@ -323,6 +578,7 @@ const gs_asglobfuncs_t asCGameRefSceneGlobalFuncs[] = {
 
 	{ "void AddEntityToScene( Entity @+ ent )", asFUNCTION( CG_AddEntityToScene ), NULL },
 	{ "void AddLightToScene( const Vec3 &in origin, float radius, int color )", asFUNCTION( asFunc_CG_AddLightToScene ), NULL },
+	{ "void AddPolyToScene( const Poly &in poly )", asFUNCTION( asFunc_CG_AddPolyToScene ), NULL },
 
 	{ NULL },
 };
