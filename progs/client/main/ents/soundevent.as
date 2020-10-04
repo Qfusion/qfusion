@@ -6,6 +6,9 @@ void UpdateSoundEventEnt( CEntity @cent ) {
 	bool fixed;
     EntityState @state = @cent.current;
 
+    if( !cg_test.boolean )
+    	return;
+
 	soundindex = state.sound;
 	owner = state.ownerNum;
 	channel = state.channel & ~CHAN_FIXED;

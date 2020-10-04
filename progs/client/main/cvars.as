@@ -1,5 +1,7 @@
 namespace CGame {
 
+Cvar cg_test( "cg_test", "1", CVAR_ARCHIVE );
+
 Cvar cg_projectileAntilagOffset( "cg_projectileAntilagOffset", "1.0", CVAR_ARCHIVE );
 Cvar cg_showClamp( "cg_showClamp", "0", 0 );
 Cvar cg_shadows( "cg_shadows", "1", CVAR_ARCHIVE );
@@ -19,6 +21,21 @@ Cvar cg_gibs( "cg_gibs", "1", CVAR_ARCHIVE );
 Cvar cg_drawEntityBoxes( "cg_drawEntityBoxes", "0", 0 );
 
 Cvar cg_voiceChats( "cg_voiceChats", "1", CVAR_ARCHIVE );
+
+Cvar cg_gun( "cg_gun", "1", CVAR_ARCHIVE );
+Cvar cg_gunx( "cg_gunx", "0", CVAR_ARCHIVE );
+Cvar cg_guny( "cg_guny", "0", CVAR_ARCHIVE );
+Cvar cg_gunz( "cg_gunz", "0", CVAR_ARCHIVE );
+Cvar cg_gunbob( "cg_gunbob", "1", CVAR_ARCHIVE );
+
+Cvar cg_gun_fov( "cg_gun_fov", "75", CVAR_ARCHIVE );
+Cvar cg_gun_alpha( "cg_gun_alpha", "1", CVAR_ARCHIVE );
+Cvar cg_weaponFlashes( "cg_weaponFlashes", "2", CVAR_ARCHIVE );
+
+Cvar cg_hand( "hand", "0", CVAR_USERINFO | CVAR_ARCHIVE );
+Cvar cg_handOffset( "cg_handOffset", "5", CVAR_ARCHIVE );
+
+Cvar cg_viewBob( "cg_viewBob", "1", CVAR_ARCHIVE );
 
 //team models
 Cvar cg_teamPLAYERSmodel( "cg_teamPLAYERSmodel", DEFAULT_PLAYERMODEL, CVAR_ARCHIVE );

@@ -48,9 +48,15 @@ void SetupCamera( Camera @cam ) {
 	if( cam.thirdPerson ) {
 		ThirdPersonOffsetView( cam );
 	}
+
+	cg.vweapon.CalcViewWeapon( @cam );
 }
 
 void SetupRefdef( Camera @cam ) {
+	if( !cg_test.boolean ) {
+		return;
+	}
+	cg.vweapon.AddViewWeapon( @cam );
 }
 
 }

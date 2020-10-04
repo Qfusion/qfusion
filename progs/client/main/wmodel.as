@@ -183,10 +183,10 @@ class WModelInfo {
                 barrelTime = l[0].toInt();
             }
             if( l.length() > 1 ) {
-                barrelSpeed[WEAPMODEL_BARREL] = l[1].toInt();
+                barrelSpeed[WEAPMODEL_BARREL] = l[1].toFloat();
             }
             if( l.length() > 2 ) {
-                barrelSpeed[WEAPMODEL_BARREL2] = l[2].toInt();
+                barrelSpeed[WEAPMODEL_BARREL2] = l[2].toFloat();
             }
         }
 
@@ -495,7 +495,7 @@ CGame::Scene::Orientation AddWeaponOnTag( CGame::Scene::Entity @ent, CGame::Scen
 		return projectionSource;
 	}
 
-	auto @weaponInfo = cgs.weaponModelInfo[weaponid];
+	auto @weaponInfo = @cgs.weaponModelInfo[weaponid];
     if( @weaponInfo is null ) {
         return projectionSource;
     }

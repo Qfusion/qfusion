@@ -512,6 +512,10 @@ bool AddEntityReal( CEntity @cent )
 {
 	EntityState @state = @cent.current;
 
+	if( !cg_test.boolean ) {
+		return false;
+	}
+
 	switch( cent.type ) {
 		case ET_GENERIC:
 			AddGenericEnt( @cent );

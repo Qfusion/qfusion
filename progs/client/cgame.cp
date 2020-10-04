@@ -29,6 +29,8 @@ main/teams.as;
 main/clients.as;
 main/constants.as;
 main/wmodel.as;
+main/vweapon.as;
+main/view.as;
 
 main/ents/flag.as;
 main/ents/generic.as;

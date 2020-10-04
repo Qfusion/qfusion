@@ -63,6 +63,18 @@ class ClientState {
 
 	int effects;
 	Mat3 autorotateAxis;
+
+	ViewWeapon vweapon;
+
+	//
+	// color blend effects
+	//
+	array<ViewBlend> colorblends(MAX_COLORBLENDS);
+	array<int64> damageBlends(4);
+
+	int64 fallEffectTime;
+	int64 fallEffectRebounceTime;
+	int64 screenDamageTimeOff;
 }
 
 ClientStatic cgs;
@@ -77,7 +89,7 @@ void ConfigString( int index, const String @s )
 		index -= CS_MODELS;
 
 		@cgs.modelDraw[index] = null;
-		
+
 		if( index == 0 ) {
 			return;
 		}
