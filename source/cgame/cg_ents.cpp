@@ -1745,6 +1745,9 @@ static void CG_SoundEntityNewState( centity_t *cent ) {
 	float attenuation;
 	bool fixed;
 
+	if( cg_test->integer )
+		return;
+
 	soundindex = cent->current.sound;
 	owner = cent->current.ownerNum;
 	channel = cent->current.channel & ~CHAN_FIXED;
@@ -2206,7 +2209,7 @@ void CG_UpdateEntities( void ) {
 				break;
 
 			case ET_SOUNDEVENT:
-				//CG_SoundEntityNewState( cent );
+				CG_SoundEntityNewState( cent );
 				break;
 
 			case ET_ITEM_TIMER:

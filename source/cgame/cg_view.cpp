@@ -855,6 +855,8 @@ static void CG_SetupViewDef( cg_viewdef_t *view, int type, float stereo_separati
 		VectorInverse( &view->axis[AXIS_RIGHT] );
 	}
 
+	view->fracDistFOV = tan( DEG2RAD( view->fov_x ) * 0.5f );
+
 	CG_asSetupCamera( view );
 
 	// update the view axis after calling the script function

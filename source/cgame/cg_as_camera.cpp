@@ -158,7 +158,8 @@ static const gs_asProperty_t ascamera_Properties[] =
 	{ ASLIB_PROPERTY_DECL( Vec3, angles ), ASLIB_FOFFSET( cg_viewdef_t, angles ) },
 	{ ASLIB_PROPERTY_DECL( Vec3, velocity ), ASLIB_FOFFSET( cg_viewdef_t, velocity ) },
 	{ ASLIB_PROPERTY_DECL( Mat3, axis ), ASLIB_FOFFSET( cg_viewdef_t, axis ) },
-
+	{ ASLIB_PROPERTY_DECL( float, fracDistFOV ), ASLIB_FOFFSET( cg_viewdef_t, fracDistFOV ) },
+	
 	ASLIB_PROPERTY_NULL
 };
 
@@ -263,6 +264,7 @@ const gs_asglobfuncs_t asCGameCameraGlobalFuncs[] =
 {
 	{ "Viewport @GetViewport()", asFUNCTION( CG_asGetViewport ), NULL },
 	{ "Camera @GetMainCamera()", asFUNCTION( CG_asGetMainCamera ), NULL },
+	{ "float WidescreenFov( float fov )", asFUNCTION( WidescreenFov ), NULL },
 	{ "float CalcVerticalFov( float fovX, float width, float height )", asFUNCTION( CalcVerticalFov ), NULL },
 	{ "float CalcHorizontalFov( float fovY, float width, float height )", asFUNCTION( CalcHorizontalFov ), NULL },
 	{ "Vec3 SmoothPredictedSteps( Vec3 &in org )", asFUNCTION( CG_asViewSmoothPredictedSteps ), NULL },

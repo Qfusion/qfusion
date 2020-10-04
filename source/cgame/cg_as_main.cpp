@@ -102,7 +102,7 @@ static const gs_asProperty_t asCGameSnapshotProperties[] = {
 	{ ASLIB_PROPERTY_DECL( bool, multipov ), ASLIB_FOFFSET( snapshot_t, multipov ) },
 	{ ASLIB_PROPERTY_DECL( int64, deltaFrameNum ), ASLIB_FOFFSET( snapshot_t, deltaFrameNum ) },
 	{ ASLIB_PROPERTY_DECL( int, numPlayers ), ASLIB_FOFFSET( snapshot_t, numplayers ) },
-	{ ASLIB_PROPERTY_DECL( PlayerState @, playerState ), ASLIB_FOFFSET( snapshot_t, playerState ) },
+	{ ASLIB_PROPERTY_DECL( PlayerState, playerState ), ASLIB_FOFFSET( snapshot_t, playerState ) },
 	{ ASLIB_PROPERTY_DECL( int, numEntities ), ASLIB_FOFFSET( snapshot_t, numEntities ) },
 
 	ASLIB_PROPERTY_NULL,

@@ -695,6 +695,21 @@ static const gs_asEnumVal_t asStatEnumVals[] = {
 	ASLIB_ENUM_VAL_NULL,
 };
 
+static const gs_asEnumVal_t asWeaponStateEnumVals[] = {
+	ASLIB_ENUM_VAL( WEAPON_STATE_READY ),
+	ASLIB_ENUM_VAL( WEAPON_STATE_ACTIVATING ),
+	ASLIB_ENUM_VAL( WEAPON_STATE_DROPPING ),
+	ASLIB_ENUM_VAL( WEAPON_STATE_POWERING ),
+	ASLIB_ENUM_VAL( WEAPON_STATE_COOLDOWN ),
+	ASLIB_ENUM_VAL( WEAPON_STATE_FIRING ),
+	ASLIB_ENUM_VAL( WEAPON_STATE_RELOADING ),
+	ASLIB_ENUM_VAL( WEAPON_STATE_NOAMMOCLICK ),
+	ASLIB_ENUM_VAL( WEAPON_STATE_REFIRE ),
+	ASLIB_ENUM_VAL( WEAPON_STATE_REFIRESTRONG ),
+
+	ASLIB_ENUM_VAL_NULL,
+};
+
 //=======================================================================
 
 static const gs_asEnum_t asGameEnums[] =
@@ -734,6 +749,7 @@ static const gs_asEnum_t asGameEnums[] =
 
 	{ "slidemoveflags_e", asSlideMoveEnumVals },
 	{ "stat_e", asStatEnumVals },
+	{ "weaponstate_e", asWeaponStateEnumVals  },
 
 	ASLIB_ENUM_VAL_NULL,
 };
