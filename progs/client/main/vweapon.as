@@ -181,7 +181,7 @@ class ViewWeapon {
         bobTime = ( oldBobTime += bobMove );
 
         bobCycle = int( bobTime );
-        bobFracSin = abs( sin( deg2rad( bobTime / 180.0f ) ) );
+        bobFracSin = abs( sin( deg2rad( bobTime * 180.0f ) ) );
     }
 
     void ResetKickAngles() {
@@ -383,7 +383,7 @@ class ViewWeapon {
         ent.origin += gunOffset.z * cam.axis.z;
 
         // add angles effects
-        AddAngleEffects( gunAngles );
+        gunAngles = AddAngleEffects( gunAngles );
 
         // finish
         gunAngles.anglesToAxis( ent.axis );
