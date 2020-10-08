@@ -41,8 +41,8 @@ matrix:
             - zlib1g-dev
             - libcurl4-gnutls-dev
             - libpulse-dev
-            - libpulse0=1:8.0-0ubuntu3.12
-            - libpulse-mainloop-glib0=1:8.0-0ubuntu3.12
+            - libpulse0=1:8.0-0ubuntu3.14
+            - libpulse-mainloop-glib0=1:8.0-0ubuntu3.14
         coverity_scan:
           project:
             name: "Qfusion/qfusion"
