@@ -546,6 +546,12 @@ void asFunc_CG_AddPolyToScene( aspoly_t *asp )
 	trap_R_AddPolyToScene( &p );
 }
 
+void asFunc_CG_AddQuadOnTag( const asrefentity_t *e, const orientation_t *tag, float width, float height,
+	float x_offset, float s1, float t1, float s2, float t2, const asvec4_t *color, struct shader_s *shader )
+{
+	CG_AddQuadOnTag( &e->ent, tag, width, height, x_offset, s1, t1, s2, t2, color->v, shader );
+}
+
 const gs_asglobfuncs_t asCGameRefSceneGlobalFuncs[] = {
 	{ "void PlaceRotatedModelOnTag( Entity @+ ent, const Entity @+ dest, const Orientation &in )",
 		asFUNCTION( CG_PlaceRotatedModelOnTag ), NULL },
@@ -579,6 +585,9 @@ const gs_asglobfuncs_t asCGameRefSceneGlobalFuncs[] = {
 	{ "void AddEntityToScene( Entity @+ ent )", asFUNCTION( CG_AddEntityToScene ), NULL },
 	{ "void AddLightToScene( const Vec3 &in origin, float radius, int color )", asFUNCTION( asFunc_CG_AddLightToScene ), NULL },
 	{ "void AddPolyToScene( const Poly &in poly )", asFUNCTION( asFunc_CG_AddPolyToScene ), NULL },
+	{ "void AddQuadOnTag( Entity @+ ent, const Orientation &in tag, float width, float height, " 
+		"float x_offset, float s1, float t1, float s2, float t2, const Vec4 &in color, ShaderHandle @shader )",
+		asFUNCTION( asFunc_CG_AddQuadOnTag ), NULL },
 
 	{ NULL },
 };

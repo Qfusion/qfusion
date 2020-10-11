@@ -142,6 +142,34 @@ static inline void asFunc_SCR_DrawClampChar2(
 	trap_SCR_DrawClampChar( x, y, num, xmin, ymin, xmax, ymax, font, colorWhite );
 }
 
+static int				char_w, char_h;
+static float			char_s1, char_t1, char_s2, char_t2;
+static struct shader_s *char_shader;
+
+static void DrawCharCallback( int x, int y, int w, int h, float s1, float t1, float s2, float t2, const vec4_t color,
+	const struct shader_s *shader )
+{
+	char_w = w;
+	char_h = h;
+	char_s1 = s1, char_t1 = t1, char_s2 = s2, char_t2 = t2;
+	char_shader = (struct shader_s *)shader;
+}
+
+static inline void asFunc_SCR_DrawCharIntercept( unsigned c, struct qfontface_s *font, float &width, float &height,
+	float &s1, float &t1, float &s2, float &t2, struct shader_s **shader )
+{
+	cg_fdrawchar_t pop;
+
+	pop = trap_SCR_SetDrawCharIntercept( (cg_fdrawchar_t)&DrawCharCallback );
+	trap_SCR_DrawRawChar( 0, 0, c, font, colorWhite );
+
+	trap_SCR_SetDrawCharIntercept( pop );
+
+	width = char_w, height = char_h;
+	s1 = char_s1, t1 = char_t1, s2 = char_s2, t2 = char_t2;
+	*shader = char_shader;
+}
+
 static inline int asFunc_SCR_strWidth( asstring_t *str, struct qfontface_s *font, int maxlen )
 {
 	return trap_SCR_strWidth( str->buffer, font, maxlen );
@@ -191,6 +219,9 @@ const gs_asglobfuncs_t asCGameScreenGlobalFuncs[] = {
 		asFUNCTION( asFunc_SCR_DrawClampChar ), NULL },
 	{ "void DrawClampChar( int x, int y, int chr, int xMin, int yMin, int xMax, int yMax, FontHandle @font )",
 		asFUNCTION( asFunc_SCR_DrawClampChar2 ), NULL },
+	{ "void DrawCharIntercept( uint c, FontHandle @font, float &out width, float &out height," 
+		"float &out s1, float &out t1, float &out s2, float &out t2, ShaderHandle @&out shader )",
+		asFUNCTION( asFunc_SCR_DrawCharIntercept ), NULL },
 	{ "int StringWidth( const String &in str, FontHandle @font, int maxLen = 0 )", asFUNCTION( asFunc_SCR_strWidth ),
 		NULL },
 	{ "int StrlenForWidth( const String &in str, FontHandle @font, int maxWidth = 0 )",
