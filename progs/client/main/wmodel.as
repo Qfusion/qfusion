@@ -238,9 +238,9 @@ class WModelInfo {
             }
         }
 
-        n = wmodel.getNumInfoLines( "ammCounter" );
+        n = wmodel.getNumInfoLines( "ammoCounter" );
         if( n > 0 ) {
-            array<String @> @l = wmodel.getInfoLine( "ammCounter", n - 1 );
+            array<String @> @l = wmodel.getInfoLine( "ammoCounter", n - 1 );
             String @fontFamily;
 
             if( l.length() > 2 ) {
@@ -472,6 +472,60 @@ void AddWeaponBarrelOnTag( CGame::Scene::Entity @weapon, WModelInfo @weaponInfo,
 	AddShellEffects( @barrel, effects );
 }
 
+void AddAmmoDigitOnTag( CGame::Scene::Entity @weapon, WModelInfo @weaponInfo, 
+	const GS::Item @ammoItem, int num, const String &tag_name ) {
+	float width, height;
+	CGame::Scene::Orientation tag_digit;
+
+	if( @weaponInfo.acFont is null ) {
+		return;
+	}
+	if( weaponInfo.acDigitWidth == 0 || weaponInfo.acDigitHeight == 0 ) {
+		return;
+	}
+	if( !CGame::Scene::GrabTag( tag_digit, @weapon, tag_name ) ) {
+		return;
+	}
+	
+	width = weaponInfo.acDigitWidth;
+	height = weaponInfo.acDigitHeight;
+
+    float char_w, char_h, char_s1, char_t1, char_s2, char_t2;
+    ShaderHandle @char_shader;
+
+    CGame::Screen::DrawCharIntercept( "0"[0] + num, @weaponInfo.acFont, char_w, char_h, 
+        char_s1, char_t1, char_s2, char_t2, @char_shader );
+
+	float x_width = weaponInfo.acFontWidth;
+	float x_offset = width * ( 1.0 - char_w / x_width );
+
+    Vec4 color = colorTable[ ColorIndex( ammoItem.colorToken[1] ) ];
+    color[3] = weaponInfo.acDigitAlpha;
+
+	CGame::Scene::AddQuadOnTag( @weapon, tag_digit, width, height, x_offset, char_s1, char_t1, char_s2, char_t2, 
+		color, char_shader );
+}
+
+void AddItemIconOnTag( CGame::Scene::Entity @weapon, WModelInfo @weaponInfo, 
+	const GS::Item @item, const String &tag_name ) {
+	CGame::Scene::Orientation tag_icon;
+
+	if( !CGame::Scene::GrabTag( tag_icon, @weapon, tag_name ) ) {
+		return;
+	}
+
+	float size = weaponInfo.acIconSize;
+	if( size == 0.0f ) {
+		return;
+	}
+
+    Vec4 color = colorWhite;
+    color[3] = weaponInfo.acIconAlpha;
+
+	CGame::Scene::AddQuadOnTag( @weapon, tag_icon, size, size, 0.0f, 0.0, 0.0, 1.0, 1.0, 
+		color, CGame::RegisterShader( item.icon ) );
+}
+
 /*
 * Add weapon model(s) positioned at the tag
 *
@@ -538,19 +592,17 @@ CGame::Scene::Orientation AddWeaponOnTag( CGame::Scene::Entity @ent, CGame::Scen
 	// flash
 	AddWeaponFlashOnTag( @weapon, @weaponInfo, WEAPMODEL_FLASH, "tag_flash", effects, flashTime );
 
-/*
-	auto @ammoItem = GS::FindItemByTag( weaponItem.ammo_tag );
+	auto @ammoItem = GS::FindItemByTag( weaponItem.ammoTag );
 	// ammo counter
-	if( ammo_count >= 0 ) {
-		CG_AddAmmoDigitOnTag( &weapon, weaponInfo, ammoItem, ammo_count % 10, "tag_ammo_digit_1" );
-		CG_AddAmmoDigitOnTag( &weapon, weaponInfo, ammoItem, (ammo_count % 100) / 10, "tag_ammo_digit_10" );
-		CG_AddAmmoDigitOnTag( &weapon, weaponInfo, ammoItem, ammo_count / 100, "tag_ammo_digit_100" );
+	if( ammoCount >= 0 ) {
+		AddAmmoDigitOnTag( @weapon, @weaponInfo, @ammoItem, ammoCount % 10, "tag_ammo_digit_1" );
+		AddAmmoDigitOnTag( @weapon, @weaponInfo, @ammoItem, (ammoCount % 100) / 10, "tag_ammo_digit_10" );
+		AddAmmoDigitOnTag( @weapon, @weaponInfo, @ammoItem, ammoCount / 100, "tag_ammo_digit_100" );
 	}
 
 	// icons
-	CG_AddItemIconOnTag( &weapon, weaponInfo, weaponItem, "tag_weapon_icon" );
-	CG_AddItemIconOnTag( &weapon, weaponInfo, ammoItem, "tag_ammo_icon" );
-*/
+	AddItemIconOnTag( @weapon, @weaponInfo, @weaponItem, "tag_weapon_icon" );
+	AddItemIconOnTag( @weapon,@ weaponInfo, @ammoItem, "tag_ammo_icon" );
 
     return projectionSource;
 }
