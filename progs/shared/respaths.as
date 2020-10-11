@@ -11,6 +11,31 @@ const String S_ITEM_RESPAWN = "sounds/items/item_spawn";
 const String S_PLAYER_RESPAWN = "sounds/world/player_respawn";
 const String S_TELEPORT = "sounds/world/tele_in";
 
+// player sounds
+const String S_PLAYER_JUMP_1_to_2      =  "*jump_%i";            // player jump
+const String S_PLAYER_WALLJUMP_1_to_2  =  "*wj_%i";              // player walljump
+const String S_PLAYER_DASH_1_to_2      =  "*dash_%i";            // player dash
+
+
+//const String S_PLAYER_FALL_0_to_3	   = "*fall_%i";				// player fall (height)
+const String S_PLAYER_FALLDEATH        =  "*falldeath";          // player falling to his death
+const String S_PLAYER_PAINS            = "*pain%i";              // player pain (percent)
+const String S_PLAYER_DEATH            = "*death";
+
+const String S_PLAYER_DROWN            = "*drown";               // player drown
+const String S_PLAYER_GASP             = "*gasp";                // player gasp
+const String S_PLAYER_BURN_1_to_2      = "*burn%i";              // player dash
+
+// combat and weapons
+const String S_WEAPON_HITS     = "sounds/misc/hit_%i";
+const String S_WEAPON_KILL     = "sounds/misc/kill";
+const String S_WEAPON_HIT_TEAM = "sounds/misc/hit_team";
+const String S_WEAPON_SWITCH   = "sounds/weapons/weapon_switch";
+const String S_WEAPON_NOAMMO   = "sounds/weapons/weapon_noammo";
+
+const String S_QUAD_FIRE       = "sounds/items/quad_fire";
+const String S_SHELL_HIT       = "sounds/items/shell_hit";
+
 // vsay icons
 const String PATH_VSAY_GENERIC_ICON     = "gfx/hud/icons/vsay/generic";
 const String PATH_VSAY_NEEDHEALTH_ICON  = "gfx/hud/icons/vsay/needhealth";

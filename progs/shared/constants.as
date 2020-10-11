@@ -79,6 +79,22 @@ const String DEFAULT_PLAYERSKIN  = "default";
 const String DEFAULT_TEAMALPHA_COLOR = "255 70 45";
 const String DEFAULT_TEAMBETA_COLOR  = "0 255 70";
 
+enum ePain {
+	PAIN_20,
+	PAIN_30,
+	PAIN_60,
+	PAIN_100,
+	PAIN_WARSHELL,
+	PAIN_TOTAL
+};
+
+// fire modes as event parm
+enum eFireMode {
+	FIRE_MODE_WEAK,
+	FIRE_MODE_STRONG,
+	FIRE_MODES_COUNT
+};
+
 // vsay tokens list
 enum eVSays {
 	VSAY_GENERIC,

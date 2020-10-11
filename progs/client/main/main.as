@@ -65,6 +65,7 @@ class ClientState {
 	Mat3 autorotateAxis;
 
 	ViewWeapon vweapon;
+	int predictedWeaponSwitch;
 
 	//
 	// color blend effects
@@ -196,6 +197,8 @@ void Precache()
 	for( int i = 0; i < MAX_SKINFILES; i++ ) {
 		ConfigString( CS_SKINFILES + i, CGame::GetConfigString( CS_SKINFILES + i ) );
 	}
+
+	RegisterBasePModel();
 
 	RegisterForceModels();
 

@@ -286,7 +286,7 @@ class ViewWeapon {
         }
 
         if( curframe < 0 ) {
-            CGame::Error( "CG_ViewWeapon_UpdateAnimation(2): Base Animation without a defined loop.\n" );
+            CGame::Error( "UpdateAnimation(2): Base Animation without a defined loop.\n" );
         }
 
         if( nolerp ) {
@@ -304,7 +304,7 @@ class ViewWeapon {
         return true;
     }
 
-    void CG_ViewWeapon_StartAnimationEvent( int newAnim ) {
+    void StartAnimationEvent( int newAnim ) {
         eventAnim = newAnim;
         eventAnimStartTime = cg.time;
         RefreshAnimation();

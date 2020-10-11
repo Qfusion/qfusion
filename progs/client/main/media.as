@@ -11,10 +11,14 @@ class CMedia {
     ShaderHandle @shaderChatBalloon;
     array<ShaderHandle @> shaderVSayIcon(eVSays::VSAY_TOTAL);
 
-    SoundHandle  @sfxItemRespawn;
-    SoundHandle  @sfxPlayerRespawn;
-    SoundHandle  @sfxTeleportIn;
-    SoundHandle  @sfxTeleportOut;
+    SoundHandle @sfxItemRespawn;
+    SoundHandle @sfxPlayerRespawn;
+    SoundHandle @sfxTeleportIn;
+    SoundHandle @sfxTeleportOut;
+	SoundHandle @sfxWeaponUp;
+	SoundHandle @sfxWeaponUpNoAmmo;
+    SoundHandle @sfxQuadFireSound;
+    SoundHandle @sfxShellHit;
 
     array<SoundHandle @> sfxVSaySounds(eVSays::VSAY_TOTAL);
 
@@ -72,6 +76,10 @@ class CMedia {
         @sfxPlayerRespawn = CGame::RegisterSound( S_PLAYER_RESPAWN );
         @sfxTeleportIn = CGame::RegisterSound( S_TELEPORT );
         @sfxTeleportOut = CGame::RegisterSound( S_TELEPORT );
+        @sfxWeaponUp = CGame::RegisterSound( S_WEAPON_SWITCH );
+        @sfxWeaponUpNoAmmo = CGame::RegisterSound( S_WEAPON_NOAMMO );
+        @sfxQuadFireSound = CGame::RegisterSound( S_QUAD_FIRE );
+        @sfxShellHit = CGame::RegisterSound( S_SHELL_HIT );
 
         //VSAY sounds
         @sfxVSaySounds[VSAY_GENERIC] = CGame::RegisterSound( S_CHAT );

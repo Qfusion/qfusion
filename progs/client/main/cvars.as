@@ -13,7 +13,10 @@ Cvar cg_simpleItemsSize( "cg_simpleItemsSize", "16", CVAR_ARCHIVE );
 Cvar cg_raceGhosts( "cg_raceGhosts", "0", CVAR_ARCHIVE );
 Cvar cg_raceGhostsAlpha( "cg_raceGhostsAlpha", "0.25", CVAR_ARCHIVE );
 
+Cvar cg_volume_players( "cg_volume_players", "1.0", CVAR_ARCHIVE );
 Cvar cg_volume_effects( "cg_volume_effects", "1.0", CVAR_ARCHIVE );
+Cvar cg_volume_announcer( "cg_volume_announcer", "1.0", CVAR_ARCHIVE );
+Cvar cg_volume_hitsound( "cg_volume_hitsound", "1.0", CVAR_ARCHIVE );
 Cvar cg_volume_voicechats( "cg_volume_voicechats", "1.0", CVAR_ARCHIVE );
 
 Cvar cg_gibs( "cg_gibs", "1", CVAR_ARCHIVE );
