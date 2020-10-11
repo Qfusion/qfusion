@@ -279,6 +279,33 @@ static asstring_t *QAS_StringFromCharCodes( const CScriptArrayInterface &arr ) {
 	return ret;
 }
 
+static CScriptArrayInterface *QAS_StringToCharCodes( const asstring_t &str, unsigned maxChars )
+{
+	asIScriptContext *ctx = asGetActiveContext();
+	asIScriptEngine * engine = ctx->GetEngine();
+	asITypeInfo *	  ot = engine->GetTypeInfoById( engine->GetTypeIdByDecl( "array<uint>" ) );
+
+	CScriptArrayInterface *arr = qasCreateArrayCpp( 0, ot );
+
+	const char *pbuf = str.buffer;
+	if( maxChars == 0 )
+		maxChars = str.len;
+
+	unsigned int count = 0;
+	while( count < maxChars ) {
+		wchar_t num = Q_GrabWCharFromUtf8String( &pbuf );
+		if( !num )
+			break;
+
+		arr->Resize( count + 1 );
+		*( (unsigned *)arr->At( count ) ) = num;
+
+		count++;
+	}
+
+	return arr;
+}
+
 }
 
 using namespace StringUtils;
@@ -315,7 +342,9 @@ void RegisterStringUtilsAddon( asIScriptEngine *engine ) {
 	r = engine->RegisterGlobalFunction( "uint Strtol(const String &in string, uint base)", asFUNCTION( QAS_Strtol ), asCALL_CDECL ); assert( r >= 0 );
 
 	r = engine->RegisterGlobalFunction( "String @FromCharCode(uint charCode)", asFUNCTION( QAS_StringFromCharCode ), asCALL_CDECL ); assert( r >= 0 );
-	r = engine->RegisterGlobalFunction( "String @FromCharCode(array<uint> &in charCodes)", asFUNCTION( QAS_StringFromCharCodes ), asCALL_CDECL ); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction( "String @FromCharCodes(array<uint> &in charCodes)", asFUNCTION( QAS_StringFromCharCodes ), asCALL_CDECL ); assert( r >= 0 );
+
+	r = engine->RegisterGlobalFunction( "array<uint> @ToCharCodes(const String &in string, uint limit = 0)", asFUNCTION( QAS_StringToCharCodes ), asCALL_CDECL ); assert( r >= 0 );
 
 	r = engine->SetDefaultNamespace( "" ); assert( r >= 0 );
 
