@@ -2,6 +2,7 @@
  * Funcdefs
  */
 
+funcdef bool less(const T&in a, const T&in b);
 funcdef void CmdFunction();
 
 namespace CGame
@@ -15,6 +16,7 @@ namespace Camera
  */
 Viewport@ GetViewport() {}
 Camera@ GetMainCamera() {}
+float WidescreenFov(float fov) {}
 float CalcVerticalFov(float fovX, float width, float height) {}
 float CalcHorizontalFov(float fovY, float width, float height) {}
 Vec3 SmoothPredictedSteps(Vec3&in org) {}
@@ -58,9 +60,10 @@ class Camera
 	Vec3 angles;
 	Vec3 velocity;
 	Mat3 axis;
+	float fracDistFOV;
 
 	/* methods */
-	Refdef@ get_refdef() const {}
+	CGame::Camera::Refdef@ get_refdef() const {}
 
 }
 
@@ -158,16 +161,18 @@ void PlaceRotatedModelOnTag(Entity@ ent, const Entity@ dest, const Orientation&i
 void PlaceModelOnTag(Entity@ ent, const Entity@ dest, const Orientation&in) {}
 bool GrabTag(Orientation&out, const Entity@ ent, const String&in) {}
 Orientation MoveToTag(const Orientation&in space, const Orientation&in tag) {}
-Boneposes@ RegisterTemporaryExternalBoneposes(ModelSkeleton@) {}
+Boneposes@ RegisterTemporaryExternalBoneposes(CGame::ModelSkeleton@) {}
 Boneposes@ RegisterTemporaryExternalBoneposes(int numBones) {}
-bool LerpSkeletonPoses(ModelSkeleton@, int frame, int oldFrame, Boneposes@ boneposes, float frac) {}
-void TransformBoneposes(ModelSkeleton@, Boneposes@ boneposes, Boneposes@ sourceBoneposes) {}
-void RecurseBlendSkeletalBone(ModelSkeleton@, Boneposes@ inBoneposes, Boneposes@ outBoneposes, int root, float frac) {}
+bool LerpSkeletonPoses(CGame::ModelSkeleton@, int frame, int oldFrame, Boneposes@ boneposes, float frac) {}
+void TransformBoneposes(CGame::ModelSkeleton@, Boneposes@ boneposes, Boneposes@ sourceBoneposes) {}
+void RecurseBlendSkeletalBone(CGame::ModelSkeleton@, Boneposes@ inBoneposes, Boneposes@ outBoneposes, int root, float frac) {}
 void RotateBonePoses(const Vec3&in angles, Boneposes@ inBoneposes, int[]@ rotators) {}
-void SpawnPolyQuad(const Vec3&in, const Vec3&in, const Vec3&in, const Vec3&in, float stx, float sty, const Vec4&in, int64 dieTime, int64 fadeTime, ShaderHandle@, int tag) {}
-void SpawnPolyBeam(const Vec3&in start, const Vec3&in end, const Vec4&in, int width, int64 dieTime, int64 fadeTime, ShaderHandle@, int shaderLength, int tag) {}
+void SpawnPolyQuad(const Vec3&in, const Vec3&in, const Vec3&in, const Vec3&in, float stx, float sty, const Vec4&in, int64 dieTime, int64 fadeTime, CGame::ShaderHandle@, int tag) {}
+void SpawnPolyBeam(const Vec3&in start, const Vec3&in end, const Vec4&in, int width, int64 dieTime, int64 fadeTime, CGame::ShaderHandle@, int shaderLength, int tag) {}
 void AddEntityToScene(Entity@ ent) {}
 void AddLightToScene(const Vec3&in origin, float radius, int color) {}
+void AddPolyToScene(const Poly&in poly) {}
+void AddQuadOnTag(Entity@ ent, const Orientation&in tag, float width, float height, float x_offset, float s1, float t1, float s2, float t2, const Vec4&in color, CGame::ShaderHandle@ shader) {}
 /**
  * Entity
  */
@@ -176,7 +181,7 @@ class Entity
 	/* properties */
 	int rtype;
 	int renderfx;
-	ModelHandle@ model;
+	CGame::ModelHandle@ model;
 	int frame;
 	Mat3 axis;
 	Vec3 origin;
@@ -185,24 +190,24 @@ class Entity
 	Boneposes@ boneposes;
 	Boneposes@ oldBoneposes;
 	int shaderRGBA;
-	ShaderHandle@ customShader;
+	CGame::ShaderHandle@ customShader;
 	int64 shaderTime;
 	int oldFrame;
 	float backLerp;
 	float scale;
 	float radius;
 	float rotation;
-	SkinHandle@ customSkin;
+	CGame::SkinHandle@ customSkin;
 
 	/* behaviors */
 
 	/* factories */
-	Entity@ Entity() {}
-	Entity@ Entity(const Entity&in) {}
+	CGame::Scene::Entity@ Entity() {}
+	CGame::Scene::Entity@ Entity(const CGame::Scene::Entity&in) {}
 
 	/* methods */
 	void reset() {}
-	Entity& opAssign(const Entity&in) {}
+	CGame::Scene::Entity& opAssign(const CGame::Scene::Entity&in) {}
 
 }
 
@@ -217,7 +222,8 @@ class Orientation
 
 	/* behaviors */
 	Orientation() {}
-	Orientation(const Orientation&in) {}
+	Orientation(const CGame::Scene::Orientation&in) {}
+	Orientation(const Vec3&in, const Mat3&in) {}
 
 }
 
@@ -226,6 +232,47 @@ class Orientation
  */
 class Boneposes
 {
+}
+
+/**
+ * PolyVert
+ */
+class PolyVert
+{
+	/* properties */
+	Vec3 xyz;
+	Vec3 norm;
+	Vec3 st;
+	Vec4 color;
+
+	/* behaviors */
+	PolyVert() {}
+	PolyVert(const CGame::Scene::PolyVert&in) {}
+
+}
+
+/**
+ * Poly
+ */
+class Poly
+{
+	/* properties */
+	int renderfx;
+	int fognum;
+	CGame::ShaderHandle@ shader;
+
+	/* behaviors */
+
+	/* factories */
+	CGame::Scene::Poly@ Poly() {}
+	CGame::Scene::Poly@ Poly(int numverts, int numelems) {}
+
+	/* methods */
+	void get_verts() const {}
+	void get_elems() const {}
+	void set_verts(const CGame::Scene::PolyVert[]&in) {}
+	void set_elems(const uint16[]&in) {}
+
 }
 
 
@@ -239,23 +286,24 @@ namespace Screen
  * Global functions
  */
 void ShowOverlayMenu(int state, bool showCursor) {}
-int FontHeight(FontHandle@ font) {}
-void DrawPic(int x, int y, int w, int h, ShaderHandle@ shader, const Vec4&in color, float s1 = 0.0, float t1 = 0.0, float s2 = 1.0, float t2 = 1.0) {}
-void DrawPic(int x, int y, int w, int h, ShaderHandle@ shader, float s1 = 0.0, float t1 = 0.0, float s2 = 1.0, float t2 = 1.0) {}
-int DrawString(int x, int y, int align, const String&in str, FontHandle@ font, const Vec4&in color) {}
-int DrawString(int x, int y, int align, const String&in str, FontHandle@ font) {}
-int DrawStringWidth(int x, int y, int align, const String&in str, int maxWidth, FontHandle@ font, const Vec4&in color) {}
-int DrawStringWidth(int x, int y, int align, const String&in str, int maxWidth, FontHandle@ font) {}
-void DrawClampString(int x, int y, const String&in str, int xMin, int yMin, int xMax, int yMax, FontHandle@ font, const Vec4&in color) {}
-void DrawClampString(int x, int y, const String&in str, int xMin, int yMin, int xMax, int yMax, FontHandle@ font) {}
-int DrawClampMultineString(int x, int y, const String&in str, int maxWidth, int maxLines, FontHandle@ font, const Vec4&in color) {}
-int DrawClampMultineString(int x, int y, const String&in str, int maxWidth, int maxLines, FontHandle@ font) {}
-void DrawRawChar(int x, int y, int chr, FontHandle@ font, const Vec4&in color) {}
-void DrawRawChar(int x, int y, int chr, FontHandle@ font) {}
-void DrawClampChar(int x, int y, int chr, int xMin, int yMin, int xMax, int yMax, FontHandle@ font, const Vec4&in color) {}
-void DrawClampChar(int x, int y, int chr, int xMin, int yMin, int xMax, int yMax, FontHandle@ font) {}
-int StringWidth(const String&in str, FontHandle@ font, int maxLen = 0) {}
-int StrlenForWidth(const String&in str, FontHandle@ font, int maxWidth = 0) {}
+int FontHeight(CGame::FontHandle@ font) {}
+void DrawPic(int x, int y, int w, int h, CGame::ShaderHandle@ shader, const Vec4&in color, float s1 = 0.0, float t1 = 0.0, float s2 = 1.0, float t2 = 1.0) {}
+void DrawPic(int x, int y, int w, int h, CGame::ShaderHandle@ shader, float s1 = 0.0, float t1 = 0.0, float s2 = 1.0, float t2 = 1.0) {}
+int DrawString(int x, int y, int align, const String&in str, CGame::FontHandle@ font, const Vec4&in color) {}
+int DrawString(int x, int y, int align, const String&in str, CGame::FontHandle@ font) {}
+int DrawStringWidth(int x, int y, int align, const String&in str, int maxWidth, CGame::FontHandle@ font, const Vec4&in color) {}
+int DrawStringWidth(int x, int y, int align, const String&in str, int maxWidth, CGame::FontHandle@ font) {}
+void DrawClampString(int x, int y, const String&in str, int xMin, int yMin, int xMax, int yMax, CGame::FontHandle@ font, const Vec4&in color) {}
+void DrawClampString(int x, int y, const String&in str, int xMin, int yMin, int xMax, int yMax, CGame::FontHandle@ font) {}
+int DrawClampMultineString(int x, int y, const String&in str, int maxWidth, int maxLines, CGame::FontHandle@ font, const Vec4&in color) {}
+int DrawClampMultineString(int x, int y, const String&in str, int maxWidth, int maxLines, CGame::FontHandle@ font) {}
+void DrawRawChar(int x, int y, int chr, CGame::FontHandle@ font, const Vec4&in color) {}
+void DrawRawChar(int x, int y, int chr, CGame::FontHandle@ font) {}
+void DrawClampChar(int x, int y, int chr, int xMin, int yMin, int xMax, int yMax, CGame::FontHandle@ font, const Vec4&in color) {}
+void DrawClampChar(int x, int y, int chr, int xMin, int yMin, int xMax, int yMax, CGame::FontHandle@ font) {}
+void DrawCharIntercept(uint c, CGame::FontHandle@ font, float&out width, float&out height, float&out s1, float&out t1, float&out s2, float&out t2, CGame::ShaderHandle@&out shader) {}
+int StringWidth(const String&in str, CGame::FontHandle@ font, int maxLen = 0) {}
+int StrlenForWidth(const String&in str, CGame::FontHandle@ font, int maxWidth = 0) {}
 
 }
 
@@ -266,11 +314,11 @@ namespace Sound
 /**
  * Global functions
  */
-void AddLoopSound(SoundHandle@, int entnum, float fvol, float attenuation) {}
-void StartRelativeSound(SoundHandle@, int entnum, int channel, float fvol, float attenuation) {}
-void StartGlobalSound(SoundHandle@, int channel, float fvol) {}
-void StartLocalSound(SoundHandle@, int channel, float fvol) {}
-void StartFixedSound(SoundHandle@, const Vec3&in origin, int channel, float fvol, float attenuation) {}
+void AddLoopSound(CGame::SoundHandle@, int entnum, float fvol, float attenuation) {}
+void StartRelativeSound(CGame::SoundHandle@, int entnum, int channel, float fvol, float attenuation) {}
+void StartGlobalSound(CGame::SoundHandle@, int channel, float fvol) {}
+void StartLocalSound(CGame::SoundHandle@, int channel, float fvol) {}
+void StartFixedSound(CGame::SoundHandle@, const Vec3&in origin, int channel, float fvol, float attenuation) {}
 void SetEntitySpatilization(int entnum, const Vec3&in origin, const Vec3&in velocity) {}
 
 }
@@ -375,8 +423,8 @@ enum cg_entreftype_e
  * Global properties
  */
 PlayerState@ PredictedPlayerState;
-Snapshot@ Snap;
-Snapshot@ OldSnap;
+CGame::Snapshot@ Snap;
+CGame::Snapshot@ OldSnap;
 
 /**
  * Global functions
@@ -442,7 +490,7 @@ class Snapshot
 	bool multipov;
 	int64 deltaFrameNum;
 	int numPlayers;
-	PlayerState@ playerState;
+	PlayerState playerState;
 	int numEntities;
 
 	/* methods */
@@ -472,9 +520,10 @@ class PlayerModel
 	/* methods */
 	uint get_numAnims() const {}
 	void getAnim(uint index, int&out first, int&out last, int&out loop, int&out fps) const {}
-	ModelHandle@ get_model() const {}
+	CGame::ModelHandle@ get_model() const {}
 	int getRootAnim(const String&in name) const {}
 	int[]@ getRotators(const String&in name) const {}
+	String@ getSex() const {}
 
 }
 
@@ -579,7 +628,8 @@ String@[]@ Split(const String&in string, const String&in delimiter) {}
 String@ Join(String@[]&in, const String&in delimiter) {}
 uint Strtol(const String&in string, uint base) {}
 String@ FromCharCode(uint charCode) {}
-String@ FromCharCode(uint[]&in charCodes) {}
+String@ FromCharCodes(uint[]&in charCodes) {}
+uint[]@ ToCharCodes(const String&in string, uint limit = 0) {}
 
 }
 
@@ -1181,6 +1231,20 @@ enum stat_e
 	STAT_IMAGE_DROP_ITEM = 0x33,
 }
 
+enum weaponstate_e
+{
+	WEAPON_STATE_READY = 0x0,
+	WEAPON_STATE_ACTIVATING = 0x1,
+	WEAPON_STATE_DROPPING = 0x2,
+	WEAPON_STATE_POWERING = 0x3,
+	WEAPON_STATE_COOLDOWN = 0x4,
+	WEAPON_STATE_FIRING = 0x5,
+	WEAPON_STATE_RELOADING = 0x6,
+	WEAPON_STATE_NOAMMOCLICK = 0x7,
+	WEAPON_STATE_REFIRE = 0x8,
+	WEAPON_STATE_REFIRESTRONG = 0x9,
+}
+
 /**
  * Global properties
  */
@@ -1252,40 +1316,44 @@ Vec3 LerpAngles(const Vec3&in a1, const Vec3&in a2, float f) {}
 class array
 {
 	/* behaviors */
-	T[]@ _beh_4_(int&in, int&in) { repeat T } {}
+	T[]@ $list(int&in type, int&in list) { repeat T } {}
 
 	/* factories */
 	T[]@ array(int&in) {}
-	T[]@ array(int&in, uint) {}
-	T[]@ array(int&in, uint, const T&in) {}
+	T[]@ array(int&in, uint length) {}
+	T[]@ array(int&in, uint length, const T&in value) {}
 
 	/* methods */
-	T& opIndex(uint) {}
-	const T& opIndex(uint) const {}
+	T& opIndex(uint index) {}
+	const T& opIndex(uint index) const {}
 	T[]& opAssign(const T[]&in) {}
-	void insertAt(uint, const T&in) {}
-	void removeAt(uint) {}
-	void insertLast(const T&in) {}
+	void insertAt(uint index, const T&in value) {}
+	void insertAt(uint index, const T[]&inout arr) {}
+	void insertLast(const T&in value) {}
+	void removeAt(uint index) {}
 	void removeLast() {}
+	void removeRange(uint start, uint count) {}
 	uint length() const {}
-	void reserve(uint) {}
-	void resize(uint) {}
+	void reserve(uint length) {}
+	void resize(uint length) {}
 	void sortAsc() {}
-	void sortAsc(uint, uint) {}
+	void sortAsc(uint startAt, uint count) {}
 	void sortDesc() {}
-	void sortDesc(uint, uint) {}
+	void sortDesc(uint startAt, uint count) {}
 	void reverse() {}
-	int find(const T&in) const {}
-	int find(uint, const T&in) const {}
+	int find(const T&in value) const {}
+	int find(uint startAt, const T&in value) const {}
+	int findByRef(const T&in value) const {}
+	int findByRef(uint startAt, const T&in value) const {}
 	bool opEquals(const T[]&in) const {}
 	bool isEmpty() const {}
-	uint get_length() const {}
-	void set_length(uint) {}
+	void sort(array::less&in, uint startAt = 0, uint count = uint ( - 1 )) {}
 	uint size() const {}
 	bool empty() const {}
 	void push_back(const T&in) {}
 	void pop_back() {}
-	void insert(uint, const T&in) {}
+	void insert(uint index, const T&in value) {}
+	void insert(uint index, const T[]&inout arr) {}
 	void erase(uint) {}
 
 }
@@ -1305,9 +1373,12 @@ class String
 	String@ String(double) {}
 
 	/* methods */
-	int opImplConv() {}
-	float opImplConv() {}
-	double opImplConv() {}
+	int opImplCast() const {}
+	float opImplCast() const {}
+	double opImplCast() const {}
+	int opCast() const {}
+	float opCast() const {}
+	double opCast() const {}
 	String& opAssign(const String&in) {}
 	String& opAssign(int) {}
 	String& opAssign(double) {}
@@ -1350,40 +1421,6 @@ class String
 }
 
 /**
- * Dictionary
- */
-class Dictionary
-{
-	/* behaviors */
-	Dictionary@ _beh_4_(int&in) { repeat { String, ? } } {}
-
-	/* factories */
-	Dictionary@ Dictionary() {}
-
-	/* methods */
-	Dictionary& opAssign(const Dictionary&in) {}
-	void set(const String&in, ?&in) {}
-	bool get(const String&in, ?&out) const {}
-	void set(const String&in, int64&in) {}
-	bool get(const String&in, int64&out) const {}
-	void set(const String&in, double&in) {}
-	bool get(const String&in, double&out) const {}
-	void set(const String&in, const String&in) {}
-	bool get(const String&in, String&out) const {}
-	bool exists(const String&in) const {}
-	bool isEmpty() const {}
-	uint getSize() const {}
-	void delete(const String&in) {}
-	void deleteAll() {}
-	String@[]@ getKeys() const {}
-	bool empty() const {}
-	uint size() const {}
-	void erase(const String&in) {}
-	void clear() {}
-
-}
-
-/**
  * Time
  */
 class Time
@@ -1402,34 +1439,12 @@ class Time
 
 	/* behaviors */
 	Time() {}
-	Time(int64) {}
+	Time(int64 t) {}
 	Time(const Time&in) {}
 
 	/* methods */
 	Time& opAssign(const Time&in) {}
 	bool opEquals(const Time&in) {}
-
-}
-
-/**
- * any
- */
-class any
-{
-	/* behaviors */
-
-	/* factories */
-	any@ any() {}
-	any@ any(?&in) {}
-
-	/* methods */
-	any& opAssign(any&in) {}
-	void store(?&in) {}
-	void store(int64&in) {}
-	void store(double&in) {}
-	bool retrieve(?&out) {}
-	bool retrieve(int64&out) {}
-	bool retrieve(double&out) {}
 
 }
 
@@ -1445,7 +1460,7 @@ class Vec3
 
 	/* behaviors */
 	Vec3() {}
-	Vec3(float, float, float) {}
+	Vec3(float x, float y, float z) {}
 	Vec3(const Vec3&in) {}
 	Vec3(const float[]&inout) {}
 
@@ -1498,7 +1513,7 @@ class Vec4
 
 	/* behaviors */
 	Vec4() {}
-	Vec4(float, float, float, float) {}
+	Vec4(float x, float y, float z, float w) {}
 	Vec4(const Vec4&in) {}
 	Vec4(const float[]&inout) {}
 
@@ -1536,7 +1551,7 @@ class Vec4
 class Cvar
 {
 	/* behaviors */
-	Cvar(const String&in, const String&in, const uint) {}
+	Cvar(const String&in, const String&in, const uint flags) {}
 	Cvar(const Cvar&in) {}
 
 	/* methods */
@@ -1586,6 +1601,87 @@ class Mat3
 	float& opIndex(uint) {}
 	const float& opIndex(uint) const {}
 	float[]@ toArray() {}
+
+}
+
+/**
+ * any
+ */
+class any
+{
+	/* behaviors */
+
+	/* factories */
+	any@ any() {}
+	any@ any(?&in) {}
+	any@ any(const int64&in) {}
+	any@ any(const double&in) {}
+
+	/* methods */
+	any& opAssign(any&in) {}
+	void store(?&in) {}
+	void store(const int64&in) {}
+	void store(const double&in) {}
+	bool retrieve(?&out) {}
+	bool retrieve(int64&out) {}
+	bool retrieve(double&out) {}
+
+}
+
+/**
+ * DictionaryValue
+ */
+class DictionaryValue
+{
+	/* behaviors */
+	~DictionaryValue() {}
+	DictionaryValue() {}
+
+	/* methods */
+	DictionaryValue& opAssign(const DictionaryValue&in) {}
+	DictionaryValue& opHndlAssign(const ?&in) {}
+	DictionaryValue& opHndlAssign(const DictionaryValue&in) {}
+	DictionaryValue& opAssign(const ?&in) {}
+	DictionaryValue& opAssign(double) {}
+	DictionaryValue& opAssign(int64) {}
+	void opCast(?&out) {}
+	void opConv(?&out) {}
+	int64 opConv() {}
+	double opConv() {}
+
+}
+
+/**
+ * Dictionary
+ */
+class Dictionary
+{
+	/* behaviors */
+	Dictionary@ $list(int&in) { repeat { String, ? } } {}
+
+	/* factories */
+	Dictionary@ Dictionary() {}
+
+	/* methods */
+	Dictionary& opAssign(const Dictionary&in) {}
+	void set(const String&in, const ?&in) {}
+	bool get(const String&in, ?&out) const {}
+	void set(const String&in, const int64&in) {}
+	bool get(const String&in, int64&out) const {}
+	void set(const String&in, const double&in) {}
+	bool get(const String&in, double&out) const {}
+	bool exists(const String&in) const {}
+	bool isEmpty() const {}
+	uint getSize() const {}
+	bool delete(const String&in) {}
+	void deleteAll() {}
+	String@[]@ getKeys() const {}
+	DictionaryValue& opIndex(const String&in) {}
+	const DictionaryValue& opIndex(const String&in) const {}
+	bool empty() const {}
+	uint size() const {}
+	void erase(const String&in) {}
+	void clear() {}
 
 }
 
