@@ -203,6 +203,8 @@ struct weaponinfo_s *CG_RegisterWeaponModel( const char *cgs_name, int weaponTag
 void CG_AddWeaponOnTag( entity_t *ent, orientation_t *tag, int weapon, int effects, 
 	orientation_t *projectionSource, int64_t flash_time, int64_t barrel_time, int ammo_count );
 struct weaponinfo_s *CG_GetWeaponInfo( int currentweapon );
+void CG_AddQuadOnTag( const entity_t *entity, const orientation_t *tag, float width, float height, float x_offset,
+	float s1, float t1, float s2, float t2, const vec4_t color, struct shader_s *shader );
 
 bool CG_vWeap_ParseAnimationScript( weaponinfo_t *weaponinfo, const char *filename );
 

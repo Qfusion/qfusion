@@ -704,10 +704,10 @@ static void CG_AddWeaponBarrelOnTag( entity_t *weapon, weaponinfo_t *weaponInfo,
 }
 
 /*
-* CG_AddPolyOnTag
+* CG_AddQuadOnTag
 */
-static void CG_AddPolyOnTag( const entity_t *weapon, const orientation_t *tag, float width, float height, 
-	float x_offset, float s1, float t1, float s2, float t2, const vec4_t color, float alpha, struct shader_s *shader ) {
+void CG_AddQuadOnTag( const entity_t *entity, const orientation_t *tag, float width, float height, 
+	float x_offset, float s1, float t1, float s2, float t2, const vec4_t color, struct shader_s *shader ) {
 	int i;
 	vec4_t origin;
 	mat3_t mat, tmat;
@@ -721,9 +721,6 @@ static void CG_AddPolyOnTag( const entity_t *weapon, const orientation_t *tag, f
 	if( !tag ) {
 		return;
 	}
-	if( !alpha ) {
-		return;
-	}
 
 	Vector4Set( origin, 0, width / 2.0, height / 2.0, 1 );
 
@@ -733,7 +730,11 @@ static void CG_AddPolyOnTag( const entity_t *weapon, const orientation_t *tag, f
 
 	for( i = 0; i < 3; i++ )
 		colors[0][i] = ( uint8_t )Q_bound( 0, color[i] * 255, 255 );
-	colors[0][3] = ( uint8_t )(alpha * (float)weapon->shaderRGBA[3]);
+	colors[0][3] = ( uint8_t )( color[3] * (float)entity->shaderRGBA[3] );
+
+	if( colors[0][3] == 0 ) {
+		return;
+	}
 
 	Vector4Set( verts[1], 0, width, 0, 1 );
 	Vector4Set( normals[0], 0, 0, 0, 0 );
@@ -758,7 +759,7 @@ static void CG_AddPolyOnTag( const entity_t *weapon, const orientation_t *tag, f
 	p.numverts = 4;
 	p.elems = elems;
 	p.numelems = 6;
-	p.renderfx = weapon->renderfx;
+	p.renderfx = entity->renderfx;
 	p.shader = shader;
 
 	for( i = 0; i < 4; i++ ) {
@@ -770,7 +771,7 @@ static void CG_AddPolyOnTag( const entity_t *weapon, const orientation_t *tag, f
 		VectorSubtract( verts[i], origin, verts[i] );
 
 		CG_MoveToTag( org, mat,
-			weapon->origin, weapon->axis,
+			entity->origin, entity->axis,
 			tag->origin,
 			tag->axis
 		);
@@ -801,9 +802,9 @@ static void DrawCharCallback( int x, int y, int w, int h, float s1,
 static void CG_AddAmmoDigitOnTag( entity_t *weapon, const weaponinfo_t *weaponInfo, 
 	const gsitem_t *ammoItem, int num, const char *tag_name ) {
 	float width, height;
-	float x_width, x_offset;
 	cg_fdrawchar_t pop;
 	orientation_t tag_digit;
+	vec4_t		   color;
 
 	if( !weaponInfo->acFont ) {
 		return;
@@ -823,11 +824,14 @@ static void CG_AddAmmoDigitOnTag( entity_t *weapon, const weaponinfo_t *weaponIn
 
 	trap_SCR_SetDrawCharIntercept( pop );
 
-	x_width = weaponInfo->acFontWidth;
-	x_offset = width * (1.0 - (float)char_w / x_width);
+	float x_width = weaponInfo->acFontWidth;
+	float x_offset = width * ( 1.0 - (float)char_w / x_width );
 
-	CG_AddPolyOnTag( weapon, &tag_digit, width, height, x_offset, char_s1, char_t1, char_s2, char_t2, 
-		color_table[ColorIndex( ammoItem->color[1] )], weaponInfo->acDigitAlpha, char_shader );
+	VectorCopy( color_table[ColorIndex( ammoItem->color[1] )], color );
+	color[3] = weaponInfo->acDigitAlpha;
+
+	CG_AddQuadOnTag( weapon, &tag_digit, width, height, x_offset, char_s1, char_t1, char_s2, char_t2, 
+		color, char_shader );
 }
 
 /*
@@ -837,6 +841,7 @@ static void CG_AddItemIconOnTag( entity_t *weapon, const weaponinfo_t *weaponInf
 	const gsitem_t *item, const char *tag_name ) {
 	float size;
 	orientation_t tag_icon;
+	vec4_t		  color;
 
 	if( !CG_GrabTag( &tag_icon, weapon, tag_name ) ) {
 		return;
@@ -847,8 +852,11 @@ static void CG_AddItemIconOnTag( entity_t *weapon, const weaponinfo_t *weaponInf
 		return;
 	}
 
-	CG_AddPolyOnTag( weapon, &tag_icon, size, size, 0, 0.0, 0.0, 1.0, 1.0, 
-		colorWhite, weaponInfo->acIconAlpha, trap_R_RegisterPic( item->icon ) );
+	VectorCopy( colorWhite, color );
+	color[3] = weaponInfo->acIconAlpha;
+
+	CG_AddQuadOnTag( weapon, &tag_icon, size, size, 0.0, 0.0, 0.0, 1.0, 1.0, 
+		color, trap_R_RegisterPic( item->icon ) );
 }
 
 /*
