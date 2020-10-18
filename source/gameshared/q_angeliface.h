@@ -75,11 +75,11 @@ public:
 	virtual void Release() const = 0;
 
 	virtual void Set( const asstring_t &key, void *value, int typeId ) = 0;
-	virtual void Set( const asstring_t &key, const int64_t &value ) = 0;
+	virtual void Set( const asstring_t &key, const asINT64 &value ) = 0;
 	virtual void Set( const asstring_t &key, const double &value ) = 0;
 
 	virtual bool Get( const asstring_t &key, void *value, int typeId ) const = 0;
-	virtual bool Get( const asstring_t &key, int64_t &value ) const = 0;
+	virtual bool Get( const asstring_t &key, asINT64 &value ) const = 0;
 	virtual bool Get( const asstring_t &key, double &value ) const = 0;
 
 	// Returns true if the key is set

@@ -124,14 +124,14 @@ public:
 	CScriptDictionary &operator =(const CScriptDictionary &other);
 
 	// Sets a key/value pair
-	void Set(const realDictKey_t &key, void *value, int typeId);
-	void Set(const realDictKey_t &key, const asINT64 &value);
-	void Set(const realDictKey_t &key, const double &value);
+	void Set_(const realDictKey_t &key, void *value, int typeId);
+	void Set_(const realDictKey_t &key, const asINT64 &value);
+	void Set_(const realDictKey_t &key, const double &value);
 
 	// Gets the stored value. Returns false if the value isn't compatible with the informed typeId
-	bool Get(const realDictKey_t &key, void *value, int typeId) const;
-	bool Get(const realDictKey_t &key, asINT64 &value) const;
-	bool Get(const realDictKey_t &key, double &value) const;
+	bool Get_(const realDictKey_t &key, void *value, int typeId) const;
+	bool Get_(const realDictKey_t &key, asINT64 &value) const;
+	bool Get_(const realDictKey_t &key, double &value) const;
 
 	// Index accessors. If the dictionary is not const it inserts the value if it doesn't already exist
 	// If the dictionary is const then a script exception is set if it doesn't exist and a null pointer is returned
