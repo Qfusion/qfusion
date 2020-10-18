@@ -641,7 +641,7 @@ static stat_query_t *G_Match_GenerateReport( void ) {
 	stat_query_section_t *playersarray;
 
 	//stat_query_section_t *weapindexarray;
-	gclient_quit_t *cl, *potm;
+	gclient_quit_t *cl;
 	int i, teamGame, duelGame;
 	static const char *weapnames[WEAP_TOTAL] = { NULL };
 	score_stats_t *stats;
