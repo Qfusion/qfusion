@@ -276,11 +276,11 @@ CScriptDictionary &CScriptDictionary::operator =(const CScriptDictionary &other)
 	for( it = other.dict.begin(); it != other.dict.end(); it++ )
 	{
 		if( it->second.m_typeId & asTYPEID_OBJHANDLE )
-			Set(it->first, (void*)&it->second.m_valueObj, it->second.m_typeId);
+			Set_(it->first, (void*)&it->second.m_valueObj, it->second.m_typeId);
 		else if( it->second.m_typeId & asTYPEID_MASK_OBJECT )
-			Set(it->first, (void*)it->second.m_valueObj, it->second.m_typeId);
+			Set_(it->first, (void*)it->second.m_valueObj, it->second.m_typeId);
 		else
-			Set(it->first, (void*)&it->second.m_valueInt, it->second.m_typeId);
+			Set_(it->first, (void*)&it->second.m_valueInt, it->second.m_typeId);
 	}
 
 	return *this;
@@ -308,7 +308,7 @@ const CScriptDictValue *CScriptDictionary::operator[](const realDictKey_t &key) 
 	return 0;
 }
 
-void CScriptDictionary::Set(const realDictKey_t &key, void *value, int typeId)
+void CScriptDictionary::Set_(const realDictKey_t &key, void *value, int typeId)
 {
 	dictMap_t::iterator it;
 	it = dict.find(key);
@@ -323,22 +323,22 @@ void CScriptDictionary::Set(const realDictKey_t &key, void *value, int typeId)
 // through implicit conversions. This simplifies the management of the
 // numeric types when the script retrieves the stored value using a 
 // different type.
-void CScriptDictionary::Set(const realDictKey_t &key, const asINT64 &value)
+void CScriptDictionary::Set_(const realDictKey_t &key, const asINT64 &value)
 {
-	Set(key, const_cast<asINT64*>(&value), asTYPEID_INT64);
+	Set_(key, const_cast<asINT64*>(&value), asTYPEID_INT64);
 }
 
 // This overloaded method is implemented so that all floating point types 
 // will be stored in the dictionary as double through implicit conversions. 
 // This simplifies the management of the numeric types when the script 
 // retrieves the stored value using a different type.
-void CScriptDictionary::Set(const realDictKey_t &key, const double &value)
+void CScriptDictionary::Set_(const realDictKey_t &key, const double &value)
 {
-	Set(key, const_cast<double*>(&value), asTYPEID_DOUBLE);
+	Set_(key, const_cast<double*>(&value), asTYPEID_DOUBLE);
 }
 
 // Returns true if the value was successfully retrieved
-bool CScriptDictionary::Get(const realDictKey_t &key, void *value, int typeId) const
+bool CScriptDictionary::Get_(const realDictKey_t &key, void *value, int typeId) const
 {
 	dictMap_t::const_iterator it;
 	it = dict.find(key);
@@ -363,14 +363,14 @@ int CScriptDictionary::GetTypeId(const realDictKey_t &key) const
 	return -1;
 }
 
-bool CScriptDictionary::Get(const realDictKey_t &key, asINT64 &value) const
+bool CScriptDictionary::Get_(const realDictKey_t &key, asINT64 &value) const
 {
-	return Get(key, &value, asTYPEID_INT64);
+	return Get_(key, &value, asTYPEID_INT64);
 }
 
-bool CScriptDictionary::Get(const realDictKey_t &key, double &value) const
+bool CScriptDictionary::Get_(const realDictKey_t &key, double &value) const
 {
-	return Get(key, &value, asTYPEID_DOUBLE);
+	return Get_(key, &value, asTYPEID_DOUBLE);
 }
 
 bool CScriptDictionary::Exists(const realDictKey_t &key) const
@@ -441,32 +441,32 @@ CScriptArray* CScriptDictionary::GetKeys() const
 
 void CScriptDictionary::Set( const dictKey_t &key, void *value, int typeId )
 {
-	Set( key.buffer, value, typeId );
+	Set_( key.buffer, value, typeId );
 }
 
 void CScriptDictionary::Set( const dictKey_t &key, const asINT64 &value )
 {
-	Set( key.buffer, value );
+	Set_( key.buffer, value );
 }
 
 void CScriptDictionary::Set( const dictKey_t &key, const double &value )
 {
-	Set( key, value );
+	Set_( key.buffer, value );
 }
 
 bool CScriptDictionary::Get( const dictKey_t &key, void *value, int typeId ) const
 {
-	return Get( key.buffer, value, typeId );
+	return Get_( key.buffer, value, typeId );
 }
 
 bool CScriptDictionary::Get( const dictKey_t &key, asINT64 &value ) const
 {
-	return Get( key.buffer, value );
+	return Get_( key.buffer, value );
 }
 
 bool CScriptDictionary::Get( const dictKey_t &key, double &value ) const
 {
-	return Get( key.buffer, value );
+	return Get_( key.buffer, value );
 }
 
 int CScriptDictionary::GetTypeId( const dictKey_t &key ) const
