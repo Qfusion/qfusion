@@ -99,6 +99,7 @@ script:
   - if [[ "$QF_ARCH" == "x86_64" ]]; then ninja; fi
   - |
     if [[ "$QF_ARCH" == "OSX" ]]; then
+      set -o pipefail
       xcodebuild -project qfusion.xcodeproj/ -jobs 4 -configuration Release -scheme ALL_BUILD | xcpretty
     fi
   - |
