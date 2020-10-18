@@ -137,8 +137,8 @@ You can define cast operations too, once again either as real methods or global 
     string MyClass::toString() { ... return string; }
     string MyClass_toString(MyClass *self) { ... return string; }
 
-    myclass.cast( &MyClass::toString );
-    myclass.cast( MyClass_toString );
+    myclass.conv( &MyClass::toString );
+    myclass.conv( MyClass_toString );
 
 Note that any custom type you use has to be declared as a type before using them in any of these
 bindings.
@@ -1700,10 +1700,9 @@ public:
 
 	// input method
 	template<typename F>
-	Class & cast( F f ) {
-		std::string funcname = MethodString<F>( "f" );
-		int _id = engine->RegisterObjectBehaviour( name.c_str(), asBEHAVE_VALUE_CAST,
-												   funcname.c_str(), asSMethodPtr<sizeof( f )>::Convert( f ), asCALL_THISCALL );
+	Class & conv( F f ) {
+		int _id = engine->RegisterObjectMethod( name.c_str(), "opConv",
+												   asSMethodPtr<sizeof( f )>::Convert( f ), asCALL_THISCALL );
 		if( _id < 0 ) {
 			throw Exception( va( "ASBind::Class::cast (%s) RegisterObjectBehaviour failed %d", name.c_str(), _id ) );
 		}
@@ -1713,10 +1712,10 @@ public:
 
 	// input global function with *this either first or last parameter (obj_first)
 	template<typename F>
-	Class & cast( F f, bool implicit_cast, bool obj_first ) {
+	Class & conv( F f, bool implicit_conv, bool obj_first ) {
 		std::string funcname = obj_first ?
-							   FunctionString( StripThisFirst( f ), implicit_cast ? "opImplConv" : "opConv" ) :
-							   FunctionString( StripThisLast( f ), implicit_cast ? "opImplConv" : "opConv" );
+							   FunctionString( StripThisFirst( f ), implicit_conv ? "opImplConv" : "opConv" ) :
+							   FunctionString( StripThisLast( f ), implicit_conv ? "opImplConv" : "opConv" );
 
 #ifdef __DEBUG_COUT_PRINT__
 		std::cout << name << "::cast " << funcname << std::endl;
