@@ -752,13 +752,13 @@ static bool qasParseScriptProject( asIScriptModule *asModule, const char *rootDi
 	length = trap_FS_FOpenFile( filepath, &filenum, FS_READ );
 	if( length == -1 ) {
 		QAS_Printf( "qasParseScriptProject: Couldn't find '%s'.\n", filepath );
-		return NULL;
+		return false;
 	}
 
 	if( !length ) {
 		QAS_Printf( "qasParseScriptProject: '%s' is empty.\n", filepath );
 		trap_FS_FCloseFile( filenum );
-		return NULL;
+		return false;
 	}
 
 	*mtime = trap_FS_SysMTime( filenum );
