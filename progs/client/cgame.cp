@@ -5,6 +5,7 @@
 /shared/match.as;
 /shared/misc.as;
 /shared/anim.as;
+/shared/list.as;
 
 input/keys.as;
 input/mouse.as;
@@ -31,6 +32,7 @@ main/constants.as;
 main/wmodel.as;
 main/vweapon.as;
 main/view.as;
+main/localents.as;
 
 main/ents/flag.as;
 main/ents/generic.as;

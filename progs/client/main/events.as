@@ -20,7 +20,7 @@ void StartVoiceTokenEffect( int entNum, int type, int vsay ) {
 	cent.localEffects[LEF_VSAY_HEADICON_TIMEOUT] = cg.time + HEADICON_TIMEOUT;
 
 	// play the sound
-	SoundHandle @sound = cgs.media.sfxVSaySounds[vsay];
+	SoundHandle @sound = @cgs.media.sfxVSaySounds[vsay];
 	if( @sound is null ) {
 		return;
 	}
