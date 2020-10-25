@@ -49,6 +49,7 @@ void R_Imagelib_Init( void )
 	r_nsvgRast = nsvgCreateRasterizer();
 
 	stbi_flip_vertically_on_write( 1 );
+	stbi_write_tga_with_rle = 0;
 }
 
 /*
