@@ -52,7 +52,7 @@ typedef struct lentity_s
 	entity_t ent;
 	vec4_t color;
 
-	unsigned int start;
+	int64_t start;
 
 	float light;
 	vec3_t lightcolor;

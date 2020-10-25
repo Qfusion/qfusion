@@ -538,7 +538,7 @@ PARTICLE MANAGEMENT
 
 typedef struct particle_s
 {
-	float time;
+	int64_t time;
 
 	vec3_t org;
 	vec3_t vel;
@@ -1034,7 +1034,7 @@ void CG_AddParticles( void ) {
 	activeparticles = 0;
 
 	for( i = 0, p = particles; i < cg_numparticles; i++, p++ ) {
-		time = ( cg.time - p->time ) * 0.001f;
+		time = float( cg.time - p->time ) * 0.001f;
 		alpha = alphaValues[i] = p->alpha + time * p->alphavel;
 
 		if( alpha <= 0 ) { // faded out
