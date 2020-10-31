@@ -42,14 +42,10 @@ class PModelInfo {
 		@model = @pmodel.model;
 		sex = SEX_MALE;
 
-		String modelName = name;
+		String modelName = pmodelName;
 		uint pos = modelName.locate( "/", 1 );
 		if( pos < modelName.length() ) {
-			modelName = modelName.substr( pos + 1 );
-			pos = modelName.locate( "/", 0 );
-			if( pos < modelName.length() ) {
-				name = modelName.substr( 0, pos );
-			}
+			name = modelName.substr( pos + 1 );
 		}
 
 		if( name.empty() ) {
