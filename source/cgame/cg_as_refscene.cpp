@@ -100,6 +100,20 @@ static void asrefentity_Reset( asrefentity_t *e )
 	Vector4Set( e->ent.shaderRGBA, 255, 255, 255, 255 );
 }
 
+static void	asrefentity_SetTemporaryBoneposes( asrefentity_t *e )
+{
+	if( !e->ent.model ) {
+		return;
+	}
+	if( e->ent.boneposes && e->ent.oldboneposes ) {
+		return;
+	}
+	if( !trap_R_SkeletalGetNumBones( e->ent.model, NULL ) ) {
+		return;
+	}
+	CG_SetBoneposesForTemporaryEntity( &e->ent );
+}
+
 static asrefentity_t *asrefentity_Assign( asrefentity_t *other, asrefentity_t *self )
 {
 	memcpy( &self->ent, &other->ent, sizeof( entity_t ) );
@@ -121,6 +135,7 @@ static const gs_asBehavior_t asrefentity_ObjectBehaviors[] = {
 static const gs_asMethod_t asrefentity_Methods[] = {
 	{ ASLIB_FUNCTION_DECL( void, reset, () ), asFUNCTION( asrefentity_Reset ),
 		asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( void, setTemporaryBoneposes, () ), asFUNCTION( asrefentity_SetTemporaryBoneposes ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( Entity &, opAssign, ( const Entity &in ) ), asFUNCTION( asrefentity_Assign ),
 		asCALL_CDECL_OBJLAST },
 
@@ -495,7 +510,8 @@ static void asFunc_CG_RotateBonePoses( asvec3_t *angles, bonepose_t *boneposes, 
 }
 
 void asFunc_CG_AddEntityToScene( asrefentity_t *e ) {
-	CG_AddEntityToScene( &e->ent );
+	asrefentity_SetTemporaryBoneposes( e );
+	trap_R_AddEntityToScene( &e->ent );
 }
 
 void asFunc_CG_AddLightToScene( asvec3_t *org, float radius, int color ) {
