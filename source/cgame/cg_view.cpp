@@ -883,11 +883,14 @@ void CG_RenderView( int frameTime, int realFrameTime, int64_t realTime, int64_t 
 	cg.frameCount++;
 	cg.time = serverTime;
 
+	trap_R_ClearScene();
+
 	CG_asFrame( frameTime, realFrameTime, realTime, serverTime, stereo_separation, extrapolationTime );
 
 	if( !cgs.precacheDone || !cg.frame.valid ) {
 		CG_Precache();
 		CG_DrawLoading();
+		CG_ResetTemporaryBoneposesCache(); // clear for next frame
 		return;
 	}
 
@@ -988,8 +991,6 @@ void CG_RenderView( int frameTime, int realFrameTime, int64_t realTime, int64_t 
 	CG_RunLightStyles();
 
 	CG_ClearFragmentedDecals();
-
-	trap_R_ClearScene();
 
 	if( CG_DemoCam_Update() ) {
 		CG_SetupViewDef( &cg.view, CG_DemoCam_GetViewType(), stereo_separation );
