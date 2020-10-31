@@ -47,6 +47,11 @@ uint bound( uint x, uint a, uint b )
 	return x < a ? a : ( (x > b ? b : x) );
 }
 
+float crandom()
+{
+	return brandom( -1.0f, 1.0f );
+}
+
 float HorizontalLength( const Vec3 &in v ) {
 	float x = v.x, y = v.y;
 	return sqrt( x * x + y * y );
@@ -97,6 +102,12 @@ int Vec4ToColor( const Vec4 &in v ) {
 		bound( 0, int(v[1] * 255.0), 255 ),
 		bound( 0, int(v[2] * 255.0), 255 ),
 		bound( 0, int(v[3] * 255.0), 255 ) );
+}
+
+int Vec3ToColor( const Vec3 &in v ) {
+	return COLOR_RGB( bound( 0, int(v[0] * 255.0), 255 ),
+		bound( 0, int(v[1] * 255.0), 255 ),
+		bound( 0, int(v[2] * 255.0), 255 ) );
 }
 
 int ColorByIndex( int i, uint8 alpha ) {
