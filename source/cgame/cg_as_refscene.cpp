@@ -447,8 +447,8 @@ const gs_asClassDescriptor_t *const asCGameRefSceneClassesDescriptors[] = {
 
 //=======================================================================
 
-static bool asFunc_CG_GrabTag( orientation_t *tag, entity_t *ent, asstring_t *tagname ) {
-	return CG_GrabTag( tag, ent, tagname->buffer );
+static bool asFunc_CG_GrabTag( orientation_t *tag, asrefentity_t *ent, asstring_t *tagname ) {
+	return CG_GrabTag( tag, &ent->ent, tagname->buffer );
 }
 
 orientation_t asFunc_CG_MoveToTag( orientation_t *space, orientation_t *tag )
@@ -492,6 +492,10 @@ static void asFunc_CG_RotateBonePoses( asvec3_t *angles, bonepose_t *boneposes, 
 	}
 
 	CG_RotateBonePoses( angles->v, boneposes, rotators, numRotators );
+}
+
+void asFunc_CG_AddEntityToScene( asrefentity_t *e ) {
+	CG_AddEntityToScene( &e->ent );
 }
 
 void asFunc_CG_AddLightToScene( asvec3_t *org, float radius, int color ) {
@@ -582,7 +586,7 @@ const gs_asglobfuncs_t asCGameRefSceneGlobalFuncs[] = {
 	  "fadeTime, ShaderHandle @, int shaderLength, int tag )",
 		asFUNCTION( asFunc_CG_SpawnPolyBeam ), NULL },
 
-	{ "void AddEntityToScene( Entity @+ ent )", asFUNCTION( CG_AddEntityToScene ), NULL },
+	{ "void AddEntityToScene( Entity @+ ent )", asFUNCTION( asFunc_CG_AddEntityToScene ), NULL },
 	{ "void AddLightToScene( const Vec3 &in origin, float radius, int color )", asFUNCTION( asFunc_CG_AddLightToScene ), NULL },
 	{ "void AddPolyToScene( const Poly &in poly )", asFUNCTION( asFunc_CG_AddPolyToScene ), NULL },
 	{ "void AddQuadOnTag( Entity @+ ent, const Orientation &in tag, float width, float height, " 

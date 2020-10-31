@@ -1938,6 +1938,13 @@ static int GS_asDirToByte( asvec3_t *vec ) {
 	return DirToByte( vec->v );
 }
 
+static asvec3_t GS_asByteToDir( int b )
+{
+	asvec3_t v;
+	ByteToDir( b, v.v );
+	return v;
+}
+
 static bool GS_asIsEventEntity( entity_state_t *state )
 {
 	return ISEVENTENTITY( state );
@@ -1980,6 +1987,7 @@ static const gs_asglobfuncs_t asGameGlobalFunctions[] = {
 	{ "const Firedef @FiredefForPlayerState( const PlayerState @state, int checkWeapon )", asFUNCTION( GS_FiredefForPlayerState ), NULL },
 	
 	{ "int DirToByte( const Vec3 &in )", asFUNCTION( GS_asDirToByte ), NULL },
+	{ "Vec3 ByteToDir( const int b )", asFUNCTION( GS_asByteToDir ), NULL },
 
 	{ "bool IsEventEntity( const EntityState @ )", asFUNCTION( GS_asIsEventEntity ), NULL },
 	{ "bool IsBrushModel( int modelindex )", asFUNCTION( GS_asIsBrushModel ), NULL },
