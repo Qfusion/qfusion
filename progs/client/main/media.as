@@ -4,6 +4,7 @@ class CMedia {
     ModelHandle @modIlluminatiGib;
     ModelHandle @modFlag;
     ModelHandle @modHeadStun;
+    ModelHandle @modDash;
 
     ShaderHandle @shaderLaser;
     ShaderHandle @shaderFlagFlare;
@@ -21,6 +22,12 @@ class CMedia {
     SoundHandle @sfxQuadFireSound;
     SoundHandle @sfxShellHit;
     SoundHandle @sfxWalljumpFailed;
+
+	// Grenade launcher sounds :
+	array<SoundHandle @>sfxGrenadeWeakBounce(2);
+	array<SoundHandle @>sfxGrenadeStrongBounce(2);
+	SoundHandle @sfxGrenadeWeakExplosion;
+	SoundHandle @sfxGrenadeStrongExplosion;
 
     array<SoundHandle @> sfxVSaySounds(eVSays::VSAY_TOTAL);
 
@@ -74,6 +81,7 @@ class CMedia {
         @modIlluminatiGib = CGame::RegisterModel( "models/objects/gibs/illuminati/illuminati1.md3" );
         @modFlag = CGame::RegisterModel( PATH_FLAG_MODEL );
         @modHeadStun = CGame::RegisterModel( "models/effects/head_stun.md3" );
+        @modDash = CGame::RegisterModel( "models/effects/dash_burst.md3" );
     }
 
     void PrecacheSounds() {
@@ -86,6 +94,11 @@ class CMedia {
         @sfxQuadFireSound = CGame::RegisterSound( S_QUAD_FIRE );
         @sfxShellHit = CGame::RegisterSound( S_SHELL_HIT );
         @sfxWalljumpFailed = CGame::RegisterSound( "sounds/world/ft_walljump_failed" );
+
+    	for( int i = 0; i < 2; i++ ) {
+            @sfxGrenadeWeakBounce[i] = CGame::RegisterSound( StringUtils::Format( S_WEAPON_GRENADE_W_BOUNCE_1_to_2, i + 1 ) );
+            @sfxGrenadeStrongBounce[i] = CGame::RegisterSound( StringUtils::Format( S_WEAPON_GRENADE_S_BOUNCE_1_to_2, i + 1 ) );
+        }
 
         //VSAY sounds
         @sfxVSaySounds[VSAY_GENERIC] = CGame::RegisterSound( S_CHAT );

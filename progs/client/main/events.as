@@ -207,9 +207,6 @@ void Event_Die( const EntityState @state, int parm )
 	pmodel.AddAnimation( {anim, anim, 0}, GS::Anim::Channel::EVENT_CHANNEL );
 }
 
-/*
-* Event_WallJump
-*/
 void Event_WallJump( const EntityState @state, int parm, int ev )
 {
 	Vec3 normal = GS::ByteToDir( parm );
@@ -247,6 +244,89 @@ void Event_WallJump( const EntityState @state, int parm, int ev )
 			CGame::LE::DustCircle( pos, normal, 65.0f, 12 );
 		}
 	}
+}
+
+void Event_DoubleJump( const EntityState @state, int parm ) {
+	SexedSound( state.number, CHAN_BODY, StringUtils::Format( S_PLAYER_JUMP_1_to_2, ( rand() & 1 ) + 1 ),
+		cg_volume_players.value, state.attenuation );
+}
+
+void Event_Jump( const EntityState @state, int parm ) {
+	const float MOVEDIREPSILON = 0.25f;
+	auto @cent = @cgEnts[state.number];
+	PModel @pmodel = @cent.pmodel;
+
+	float xyspeedcheck = Vec3( cent.animVelocity[0], cent.animVelocity[1], 0.0f ).length();
+
+	if( xyspeedcheck < 100 ) { // the player is jumping on the same place, not running
+		pmodel.AddAnimation( { GS::Anim::Anim::LEGS_JUMP_NEUTRAL, 0, 0 }, GS::Anim::Channel::EVENT_CHANNEL );
+		SexedSound( state.number, CHAN_BODY, StringUtils::Format( S_PLAYER_JUMP_1_to_2, ( rand() & 1 ) + 1 ),
+					   cg_volume_players.value, state.attenuation );
+	} else {
+		Vec3 movedir;
+		Mat3 viewaxis;
+
+		movedir[0] = cent.animVelocity[0];
+		movedir[1] = cent.animVelocity[1];
+		movedir[2] = 0;
+		movedir.normalize();
+
+		Vec3( 0.0f, state.angles[YAW], 0.0f ).anglesToAxis( viewaxis );
+
+		// see what's his relative movement direction
+		if( movedir * viewaxis.x > MOVEDIREPSILON ) {
+			cent.jumpedLeft = !cent.jumpedLeft;
+
+			if( !cent.jumpedLeft ) {
+				pmodel.AddAnimation( { GS::Anim::Anim::LEGS_JUMP_LEG2, 0, 0 }, GS::Anim::Channel::EVENT_CHANNEL );
+				SexedSound( state.number, CHAN_BODY, StringUtils::Format( S_PLAYER_JUMP_1_to_2, ( rand() & 1 ) + 1 ),
+							   cg_volume_players.value, state.attenuation );
+			} else {
+				pmodel.AddAnimation( { GS::Anim::Anim::LEGS_JUMP_LEG1, 0, 0 }, GS::Anim::Channel::EVENT_CHANNEL );
+				SexedSound( state.number, CHAN_BODY, StringUtils::Format( S_PLAYER_JUMP_1_to_2, ( rand() & 1 ) + 1 ),
+							   cg_volume_players.value, state.attenuation );
+			}
+		} else {
+			pmodel.AddAnimation( { GS::Anim::Anim::LEGS_JUMP_NEUTRAL, 0, 0 }, GS::Anim::Channel::EVENT_CHANNEL );
+			SexedSound( state.number, CHAN_BODY, StringUtils::Format( S_PLAYER_JUMP_1_to_2, ( rand() & 1 ) + 1 ),
+						   cg_volume_players.value, state.attenuation );
+		}
+	}
+}
+
+void Event_Dash( const EntityState @state, int parm ) {
+	auto @cent = @cgEnts[state.number];
+	PModel @pmodel = @cent.pmodel;
+
+	switch( parm ) {
+		case 0: // dash front
+			pmodel.AddAnimation( { GS::Anim::Anim::LEGS_DASH, 0, 0 }, GS::Anim::Channel::EVENT_CHANNEL );
+			SexedSound( state.number, CHAN_BODY, StringUtils::Format( S_PLAYER_DASH_1_to_2, ( rand() & 1 ) + 1 ),
+						   cg_volume_players.value, state.attenuation );
+			break;
+		case 1: // dash left
+			pmodel.AddAnimation( { GS::Anim::Anim::LEGS_DASH_LEFT, 0, 0 }, GS::Anim::Channel::EVENT_CHANNEL );
+			SexedSound( state.number, CHAN_BODY, StringUtils::Format( S_PLAYER_DASH_1_to_2, ( rand() & 1 ) + 1 ),
+						   cg_volume_players.value, state.attenuation );
+			break;
+		case 2: // dash right
+			pmodel.AddAnimation( { GS::Anim::Anim::LEGS_DASH_RIGHT, 0, 0 }, GS::Anim::Channel::EVENT_CHANNEL );
+			SexedSound( state.number, CHAN_BODY, StringUtils::Format( S_PLAYER_DASH_1_to_2, ( rand() & 1 ) + 1 ),
+						   cg_volume_players.value, state.attenuation );
+			break;
+		case 3: // dash back
+			pmodel.AddAnimation( { GS::Anim::Anim::LEGS_DASH_BACK, 0, 0 }, GS::Anim::Channel::EVENT_CHANNEL );
+			SexedSound( state.number, CHAN_BODY, StringUtils::Format( S_PLAYER_DASH_1_to_2, ( rand() & 1 ) + 1 ),
+						   cg_volume_players.value, state.attenuation );
+			break;
+		default:
+			break;			
+	}
+
+	LE::DashEffect( @cent ); // Dash smoke effect
+
+	// since most dash animations jump with right leg, reset the jump to start with left leg after a dash
+	cent.jumpedLeft = true;
 }
 
 bool EntityEvent( const EntityState @ent, int ev, int parm, bool predicted )
@@ -309,6 +389,7 @@ bool EntityEvent( const EntityState @ent, int ev, int parm, bool predicted )
 				cg.vweapon.RefreshAnimation();
 
 				if( weapon == WEAP_LASERGUN ) {
+					//TODO
 					//CG_Event_LaserBeam( ent.number, weapon, fireMode );
 				}
 			}
@@ -329,6 +410,7 @@ bool EntityEvent( const EntityState @ent, int ev, int parm, bool predicted )
 
 			// riotgun bullets, electrobolt and instagun beams are predicted when the weapon is fired
 			if( predicted ) {
+				//TODO
 /*				Vec3 origin;
 
 				if( ( weapon == WEAP_ELECTROBOLT
@@ -407,9 +489,21 @@ bool EntityEvent( const EntityState @ent, int ev, int parm, bool predicted )
 			StartVoiceTokenEffect( ent.ownerNum, EV_VSAY, parm );
 			return true;
 
+		case EV_DASH:
+			Event_Dash( @ent, parm );
+			return true;
+
 		case EV_WALLJUMP:
 		case EV_WALLJUMP_FAILED:
 			Event_WallJump( @ent, parm, ev );
+			return true;
+
+		case EV_DOUBLEJUMP:
+			Event_DoubleJump( @ent, parm );
+			return true;
+
+		case EV_JUMP:
+			Event_Jump( @ent, parm );
 			return true;
 
 		case EV_JUMP_PAD:
@@ -447,6 +541,14 @@ bool EntityEvent( const EntityState @ent, int ev, int parm, bool predicted )
 
 		case EV_DROP:
 			cent.pmodel.AddAnimation( { 0, GS::Anim::TORSO_DROP, 0 }, GS::Anim::Channel::EVENT_CHANNEL );
+			return true;
+
+		case EV_GRENADE_BOUNCE:
+			if( parm == FIRE_MODE_STRONG ) {
+				CGame::Sound::StartRelativeSound( @cgs.media.sfxGrenadeStrongBounce[rand() & 1], ent.number, CHAN_AUTO, cg_volume_effects.value, ATTN_IDLE );
+			} else {
+				CGame::Sound::StartRelativeSound( @cgs.media.sfxGrenadeWeakBounce[rand() & 1], ent.number, CHAN_AUTO, cg_volume_effects.value, ATTN_IDLE );
+			}
 			return true;
 
 		default:

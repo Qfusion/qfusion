@@ -36,6 +36,11 @@ const String S_WEAPON_NOAMMO   = "sounds/weapons/weapon_noammo";
 const String S_QUAD_FIRE       = "sounds/items/quad_fire";
 const String S_SHELL_HIT       = "sounds/items/shell_hit";
 
+const String S_WEAPON_GRENADE_W_BOUNCE_1_to_2 = "sounds/weapons/gren_strong_bounce%s";
+const String S_WEAPON_GRENADE_S_BOUNCE_1_to_2 = "sounds/weapons/gren_strong_bounce%s";
+const String S_WEAPON_GRENADE_W_HIT           = "sounds/weapons/gren_strong_explosion";
+const String S_WEAPON_GRENADE_S_HIT           = "sounds/weapons/gren_strong_explosion1";
+
 // vsay icons
 const String PATH_VSAY_GENERIC_ICON     = "gfx/hud/icons/vsay/generic";
 const String PATH_VSAY_NEEDHEALTH_ICON  = "gfx/hud/icons/vsay/needhealth";

@@ -203,17 +203,14 @@ void Explosion_Puff( const Vec3 &in pos, float radius, int frame ) {
 }
 
 void Explosion_Puff_2( const Vec3 &in pos, const Vec3 &in vel, float radius ) {
-	LocalEntity @le;
-	ShaderHandle @shader = cgs.media.shaderSmokePuff3;
-
 	if( radius == 0.0f ) {
 		radius = floor( 35.0f + crandom() * 5 );
 	}
 
-	@le = AllocSprite( LE_PUFF_SHRINK, pos, radius, 7,
+	LocalEntity @le = AllocSprite( LE_PUFF_SHRINK, pos, radius, 7,
 						1.0f, 1.0f, 1.0f, 0.2f,
 						0, 0, 0, 0,
-						@shader );
+						@cgs.media.shaderSmokePuff3 );
 	le.velocity = vel;
 }
 
@@ -241,6 +238,40 @@ void DustCircle( const Vec3 &in pos, const Vec3 &in dir, float radius, int count
 		dir_temp *= crandom() * 10 + radius;
 		Explosion_Puff_2( pos, dir_temp, 10.0f );
 	}
+}
+
+void DashEffect( CEntity @cent ) {
+	const float IGNORE_DASH = 6.0;
+
+	if( ( cg_cartoonEffects.integer & 4 ) == 0 ) {
+		return;
+	}
+
+	// KoFFiE: Calculate angle based on relative position of the previous origin state of the player entity
+	Vec3 pos = cent.current.origin;
+	Vec3 dvect = pos - cent.prev.origin;
+
+	// ugly inline define . Ignore when difference between 2 positions was less than this value.
+	if( ( dvect[0] > -IGNORE_DASH ) && ( dvect[0] < IGNORE_DASH ) &&
+		( dvect[1] > -IGNORE_DASH ) && ( dvect[1] < IGNORE_DASH ) ) {
+		return;
+	}
+
+	Vec3 angle = dvect.toAngles();
+	angle[1] += 270; // Adjust angle
+	pos[2] -= 24; // Adjust the position to ground height
+
+	if( ( GS::PointContents( pos ) & MASK_WATER ) != 0 ) {
+		return; // no smoke under water :)
+	}
+
+	LocalEntity @le = AllocModel( LE_DASH_SCALE, pos, angle, 7, //5
+						1.0, 1.0, 1.0, 0.2f,
+						0, 0, 0, 0,
+						@cgs.media.modDash,
+						null );
+	le.refEnt.scale = 0.01f;
+	le.refEnt.axis.z.z *= 2.0f;
 }
 
 void AddLocalEntities( void ) {
