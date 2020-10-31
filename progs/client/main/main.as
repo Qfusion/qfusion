@@ -181,10 +181,14 @@ void Init( const String @serverName, uint playerNum, bool demoPlaying, const Str
 
 	cgs.weaponItemTag.axis.identity();
 	cgs.weaponItemTag.origin = -14.0 * cgs.weaponItemTag.axis.x;
+
+	LE::Init();
 }
 
 void Precache()
 {
+	@cg.tempBoneposes = CGame::Scene::RegisterTemporaryExternalBoneposes( SKM_MAX_BONES );
+
 	for( int i = 0; i < MAX_MODELS; i++ ) {
 		ConfigString( CS_MODELS + i, CGame::GetConfigString( CS_MODELS + i ) );
 	}
@@ -280,6 +284,8 @@ void Frame( int frameTime, int realFrameTime, int64 realTime, int64 serverTime,
 	@cg.tempBoneposes = CGame::Scene::RegisterTemporaryExternalBoneposes( SKM_MAX_BONES );
 
 	LerpEntities();
+
+	LE::AddLocalEntities();
 }
 
 void Reset()

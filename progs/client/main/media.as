@@ -9,6 +9,7 @@ class CMedia {
     ShaderHandle @shaderFlagFlare;
     ShaderHandle @shaderRaceGhostEffect;
     ShaderHandle @shaderChatBalloon;
+    ShaderHandle @shaderSmokePuff1, shaderSmokePuff2, shaderSmokePuff3;
     array<ShaderHandle @> shaderVSayIcon(eVSays::VSAY_TOTAL);
 
     SoundHandle @sfxItemRespawn;
@@ -19,6 +20,7 @@ class CMedia {
 	SoundHandle @sfxWeaponUpNoAmmo;
     SoundHandle @sfxQuadFireSound;
     SoundHandle @sfxShellHit;
+    SoundHandle @sfxWalljumpFailed;
 
     array<SoundHandle @> sfxVSaySounds(eVSays::VSAY_TOTAL);
 
@@ -27,6 +29,9 @@ class CMedia {
         @shaderFlagFlare = CGame::RegisterShader( PATH_FLAG_FLARE_SHADER );
         @shaderRaceGhostEffect = CGame::RegisterShader( "gfx/raceghost" );
         @shaderChatBalloon = CGame::RegisterShader( PATH_BALLONCHAT_ICON );
+        @shaderSmokePuff1 = CGame::RegisterShader( "gfx/misc/smokepuff1" );
+        @shaderSmokePuff2 = CGame::RegisterShader( "gfx/misc/smokepuff2" );
+        @shaderSmokePuff3 = CGame::RegisterShader( "gfx/misc/smokepuff3" );
 
         // VSAY icons
         @shaderVSayIcon[VSAY_GENERIC] = CGame::RegisterShader( PATH_VSAY_GENERIC_ICON );
@@ -80,6 +85,7 @@ class CMedia {
         @sfxWeaponUpNoAmmo = CGame::RegisterSound( S_WEAPON_NOAMMO );
         @sfxQuadFireSound = CGame::RegisterSound( S_QUAD_FIRE );
         @sfxShellHit = CGame::RegisterSound( S_SHELL_HIT );
+        @sfxWalljumpFailed = CGame::RegisterSound( "sounds/world/ft_walljump_failed" );
 
         //VSAY sounds
         @sfxVSaySounds[VSAY_GENERIC] = CGame::RegisterSound( S_CHAT );

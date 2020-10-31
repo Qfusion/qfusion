@@ -207,6 +207,48 @@ void Event_Die( const EntityState @state, int parm )
 	pmodel.AddAnimation( {anim, anim, 0}, GS::Anim::Channel::EVENT_CHANNEL );
 }
 
+/*
+* Event_WallJump
+*/
+void Event_WallJump( const EntityState @state, int parm, int ev )
+{
+	Vec3 normal = GS::ByteToDir( parm );
+
+	Vec3 f, r, u;
+	Vec3( state.angles.x, state.angles.y, 0.0f ).angleVectors( f, r, u );
+
+	PModel @pmodel = @cgEnts[state.number].pmodel;
+	if( normal * r > 0.3 ) {
+		pmodel.AddAnimation( {GS::Anim::Anim::LEGS_WALLJUMP_RIGHT, 0, 0}, GS::Anim::Channel::EVENT_CHANNEL );
+	} else if( -( normal * r ) > 0.3 ) {
+		pmodel.AddAnimation( {GS::Anim::Anim::LEGS_WALLJUMP_LEFT, 0, 0}, GS::Anim::Channel::EVENT_CHANNEL );
+	} else if( -( normal * f ) > 0.3 ) {
+		pmodel.AddAnimation( {GS::Anim::Anim::LEGS_WALLJUMP_BACK, 0, 0}, GS::Anim::Channel::EVENT_CHANNEL );
+	} else {
+		pmodel.AddAnimation( {GS::Anim::Anim::LEGS_WALLJUMP, 0, 0}, GS::Anim::Channel::EVENT_CHANNEL );
+	}
+
+	if( ev == EV_WALLJUMP_FAILED ) {
+		if( IsViewerEntity( state.number ) ) {
+			CGame::Sound::StartGlobalSound( @cgs.media.sfxWalljumpFailed,
+				CHAN_BODY, cg_volume_effects.value );
+		} else {
+			CGame::Sound::StartRelativeSound( @cgs.media.sfxWalljumpFailed, state.number,
+				CHAN_BODY, cg_volume_effects.value, ATTN_NORM );
+		}
+	} else {
+		SexedSound( state.number, CHAN_BODY, StringUtils::Format( S_PLAYER_WALLJUMP_1_to_2, ( rand() & 1 ) + 1 ),
+					   cg_volume_players.value, state.attenuation );
+
+		// smoke effect
+		if( ( cg_cartoonEffects.integer & 1 ) != 0 ) {
+			Vec3 pos = state.origin;
+			pos.z += 15;
+			CGame::LE::DustCircle( pos, normal, 65.0f, 12 );
+		}
+	}
+}
+
 bool EntityEvent( const EntityState @ent, int ev, int parm, bool predicted )
 {
 	CEntity @cent = @cgEnts[ent.number];
@@ -365,6 +407,11 @@ bool EntityEvent( const EntityState @ent, int ev, int parm, bool predicted )
 			StartVoiceTokenEffect( ent.ownerNum, EV_VSAY, parm );
 			return true;
 
+		case EV_WALLJUMP:
+		case EV_WALLJUMP_FAILED:
+			Event_WallJump( @ent, parm, ev );
+			return true;
+
 		case EV_JUMP_PAD:
 			SexedSound( ent.number, CHAN_BODY, StringUtils::Format( S_PLAYER_JUMP_1_to_2, ( rand() & 1 ) + 1 ),
 						   cg_volume_players.value, ent.attenuation );
@@ -384,11 +431,11 @@ bool EntityEvent( const EntityState @ent, int ev, int parm, bool predicted )
 			return true;
 
 		case EV_PAIN:
-			Event_Pain( ent, parm );
+			Event_Pain( @ent, parm );
 			return true;
 
 		case EV_DIE:
-			Event_Die( ent, parm );
+			Event_Die( @ent, parm );
 			return true;
 
 		case EV_GIB:
