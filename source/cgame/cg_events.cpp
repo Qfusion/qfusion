@@ -449,11 +449,11 @@ static void CG_LeadWaterSplash( trace_t *tr ) {
 	dir = tr->plane.normal;
 
 	if( contents & CONTENTS_WATER ) {
-		CG_ParticleEffect( pos, dir, 0.47f, 0.48f, 0.8f, 8 );
+		CG_SplashParticles( pos, dir, 0.47f, 0.48f, 0.8f, 8 );
 	} else if( contents & CONTENTS_SLIME ) {
-		CG_ParticleEffect( pos, dir, 0.0f, 1.0f, 0.0f, 8 );
+		CG_SplashParticles( pos, dir, 0.0f, 1.0f, 0.0f, 8 );
 	} else if( contents & CONTENTS_LAVA ) {
-		CG_ParticleEffect( pos, dir, 1.0f, 0.67f, 0.0f, 8 );
+		CG_SplashParticles( pos, dir, 1.0f, 0.67f, 0.0f, 8 );
 	}
 }
 
@@ -575,7 +575,7 @@ static void CG_BulletImpact( trace_t *tr ) {
 
 	// throw particles on dust
 	if( tr->surfFlags & SURF_DUST ) {
-		CG_ParticleEffect( tr->endpos, tr->plane.normal, 0.30f, 0.30f, 0.25f, 20 );
+		CG_SplashParticles( tr->endpos, tr->plane.normal, 0.30f, 0.30f, 0.25f, 20 );
 	}
 
 	// impact sound
@@ -615,7 +615,7 @@ static void CG_BulletImpact( trace_t *tr ) {
 
 	// throw particles on dust
 	if( cg_particles->integer && ( tr->surfFlags & SURF_DUST ) ) {
-		CG_ParticleEffect( tr->endpos, tr->plane.normal, 0.30f, 0.30f, 0.25f, 1 );
+		CG_SplashParticles( tr->endpos, tr->plane.normal, 0.30f, 0.30f, 0.25f, 1 );
 	}
 
 	// spawn decal
@@ -1369,20 +1369,20 @@ void CG_EntityEvent( entity_state_t *ent, int ev, int parm, bool predicted ) {
 				count = 6;
 			}
 
-			CG_ParticleEffect( ent->origin, dir, 1.0f, 0.67f, 0.0f, count );
+			CG_SplashParticles( ent->origin, dir, 1.0f, 0.67f, 0.0f, count );
 			break;
 
 		case EV_BULLET_SPARKS:
 			ByteToDir( parm, dir );
 			CG_BulletExplosion( ent->origin, dir, NULL );
-			CG_ParticleEffect( ent->origin, dir, 1.0f, 0.67f, 0.0f, 6 );
+			CG_SplashParticles( ent->origin, dir, 1.0f, 0.67f, 0.0f, 6 );
 			trap_S_StartFixedSound( cgs.media.sfxRic[rand() % 2], ent->origin, CHAN_AUTO,
 									cg_volume_effects->value, ATTN_STATIC );
 			break;
 
 		case EV_LASER_SPARKS:
 			ByteToDir( parm, dir );
-			CG_ParticleEffect2( ent->origin, dir,
+			CG_SplashParticles2( ent->origin, dir,
 								COLOR_R( ent->colorRGBA ) * ( 1.0 / 255.0 ),
 								COLOR_G( ent->colorRGBA ) * ( 1.0 / 255.0 ),
 								COLOR_B( ent->colorRGBA ) * ( 1.0 / 255.0 ),

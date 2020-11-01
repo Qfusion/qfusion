@@ -1134,6 +1134,29 @@ void CG_PLink( const vec3_t start, const vec3_t end, const vec4_t color, int fla
 //
 // cg_effects.c
 //
+
+enum class ParticleEffectType : int {
+	Normal,
+	Fly,
+};
+
+struct ParticleEffect {
+	ParticleEffectType type = ParticleEffectType::Normal;
+
+	float size = 1.0f;
+
+	vec4_t color = { 0, 0, 0, 1 };
+	vec4_t colorRand = { 0, 0, 0, 0 };
+	vec2_t orgRand = { 0, 0 };
+	vec3_t orgSpread = { 0, 0, 0 };
+	vec2_t dirRand = { 0, 0 };
+	float  dirMAToVel = 0.0f;
+	vec3_t vel = { 0, 0, 0 };
+	vec2_t velRand = { 0, 0 };
+	vec3_t accel = { 0, 0, 0 };
+	vec2_t alphaDecay = { 0, 0 };
+};
+
 void CG_ClearEffects( void );
 
 void CG_AddLightToScene( vec3_t org, float radius, float r, float g, float b );
@@ -1150,13 +1173,12 @@ void CG_AddFragmentedDecal( vec3_t origin, vec3_t dir, float orient, float radiu
 							float r, float g, float b, float a, struct shader_s *shader );
 
 void CG_AddParticles( void );
-void CG_ParticleEffect( const vec3_t org, const vec3_t dir, float r, float g, float b, int count );
-void CG_ParticleEffect2( const vec3_t org, const vec3_t dir, float r, float g, float b, int count );
+void CG_SplashParticles( const vec3_t org, const vec3_t dir, float r, float g, float b, int count );
+void CG_SplashParticles2( const vec3_t org, const vec3_t dir, float r, float g, float b, int count );
 void CG_ParticleExplosionEffect( const vec3_t org, const vec3_t dir, float r, float g, float b, int count );
 void CG_BlasterTrail( const vec3_t start, const vec3_t end );
 void CG_FlyEffect( centity_t *ent, const vec3_t origin );
 void CG_ElectroIonsTrail( const vec3_t start, const vec3_t end, const vec4_t color );
-void CG_ElectroIonsTrail2( const vec3_t start, const vec3_t end, const vec4_t color );
 void CG_ElectroWeakTrail( const vec3_t start, const vec3_t end, const vec4_t color );
 void CG_ImpactPuffParticles( const vec3_t org, const vec3_t dir, int count, float scale, float r, float g, float b, float a, struct shader_s *shader );
 void CG_HighVelImpactPuffParticles( const vec3_t org, const vec3_t dir, int count, float scale, float r, float g, float b, float a, struct shader_s *shader );

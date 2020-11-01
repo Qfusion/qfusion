@@ -546,7 +546,7 @@ typedef struct particle_s
 	vec3_t color;
 	float alpha;
 	float alphavel;
-	float scale;
+	float size;
 	bool fog;
 
 	poly_t poly;
@@ -560,8 +560,6 @@ typedef struct particle_s
 #define PARTICLE_GRAVITY    500
 
 #define MAX_PARTICLES       2048
-
-static vec3_t avelocities[NUMVERTEXNORMALS];
 
 cparticle_t particles[MAX_PARTICLES];
 int cg_numparticles;
@@ -584,27 +582,15 @@ static void CG_ClearParticles( void ) {
 	}
 }
 
-#define CG_InitParticle( p, s, a, r, g, b, h ) \
-	( \
-		( p )->time = cg.time, \
-		( p )->scale = ( s ), \
-		( p )->alpha = ( a ), \
-		( p )->color[0] = ( r ), \
-		( p )->color[1] = ( g ), \
-		( p )->color[2] = ( b ), \
-		( p )->shader = ( h ), \
-		( p )->fog = true \
-	)
-
 /*
-* CG_ParticleEffect
-*
-* Wall impact puffs
-*/
-void CG_ParticleEffect( const vec3_t org, const vec3_t dir, float r, float g, float b, int count ) {
-	int j;
+ * CG_NormalParticleEffect
+ */
+static void CG_NormalParticleEffect( ParticleEffect &ef, const vec3_t org, const vec3_t dir, int count )
+{
+	int			 j;
 	cparticle_t *p;
-	float d;
+	float		 d;
+	vec3_t		 move;
 
 	if( !cg_particles->integer ) {
 		return;
@@ -613,320 +599,52 @@ void CG_ParticleEffect( const vec3_t org, const vec3_t dir, float r, float g, fl
 	if( cg_numparticles + count > MAX_PARTICLES ) {
 		count = MAX_PARTICLES - cg_numparticles;
 	}
-	for( p = &particles[cg_numparticles], cg_numparticles += count; count > 0; count--, p++ ) {
-		CG_InitParticle( p, 0.75, 1, r + random() * 0.1, g + random() * 0.1, b + random() * 0.1, NULL );
 
-		d = rand() & 31;
+	VectorCopy( org, move );
+	for( p = &particles[cg_numparticles], cg_numparticles += count; count > 0; count--, p++ ) {
+		float r = ef.color[0] + random() * ef.colorRand[0];
+		float g = ef.color[1] + random() * ef.colorRand[1];
+		float b = ef.color[2] + random() * ef.colorRand[2];
+		float a = ef.color[3] + random() * ef.colorRand[3];
+
+		p->time = cg.time;
+		p->size = ef.size;
+		p->alpha = a;
+		VectorSet( p->color, r, g, b );
+		p->shader = NULL;
+		p->fog = true;
+
+		d = brandom( ef.dirRand[0], ef.dirRand[1] );
 		for( j = 0; j < 3; j++ ) {
-			p->org[j] = org[j] + ( ( rand() & 7 ) - 4 ) + d * dir[j];
-			p->vel[j] = crandom() * 20;
+			p->org[j] = move[j] + brandom( ef.orgRand[0], ef.orgRand[1] ) + d * dir[j];
+			p->vel[j] = ef.vel[j] + ef.dirMAToVel * dir[j] + brandom( ef.velRand[0], ef.velRand[1] );
+			p->accel[j] = ef.accel[j];
 		}
 
-		p->accel[0] = p->accel[1] = 0;
-		p->accel[2] = -PARTICLE_GRAVITY;
-		p->alphavel = -1.0 / ( 0.5 + random() * 0.3 );
+		VectorAdd( move, ef.orgSpread, move );
+
+		float decay = brandom( ef.alphaDecay[0], ef.alphaDecay[1] );
+		if( decay < 0.0f ) {
+			decay = -decay;
+		} else if( decay == 0.0f ) {
+			decay = 0.5 + random() * 0.3;
+		}
+		p->alphavel = -1.0 / decay;
 	}
 }
 
 /*
-* CG_ParticleEffect2
-*/
-void CG_ParticleEffect2( const vec3_t org, const vec3_t dir, float r, float g, float b, int count ) {
-	int j;
-	float d;
+ * CG_FlyParticleEffect
+ */
+static void CG_FlyParticleEffect( ParticleEffect &ef, const vec3_t origin, int count )
+{
+	int			 i, j;
+	float		 sp, sy, cp, cy;
+	vec3_t		 forward, dir;
+	float		 dist;
 	cparticle_t *p;
-
-	if( !cg_particles->integer ) {
-		return;
-	}
-
-	if( cg_numparticles + count > MAX_PARTICLES ) {
-		count = MAX_PARTICLES - cg_numparticles;
-	}
-	for( p = &particles[cg_numparticles], cg_numparticles += count; count > 0; count--, p++ ) {
-		CG_InitParticle( p, 0.75, 1, r, g, b, NULL );
-
-		d = rand() & 7;
-		for( j = 0; j < 3; j++ ) {
-			p->org[j] = org[j] + ( ( rand() & 7 ) - 4 ) + d * dir[j];
-			p->vel[j] = crandom() * 20;
-		}
-
-		p->accel[0] = p->accel[1] = 0;
-		p->accel[2] = -PARTICLE_GRAVITY;
-		p->alphavel = -1.0 / ( 0.5 + random() * 0.3 );
-	}
-}
-
-/*
-* CG_ParticleExplosionEffect
-*/
-void CG_ParticleExplosionEffect( const vec3_t org, const vec3_t dir, float r, float g, float b, int count ) {
-	int j;
-	cparticle_t *p;
-	float d;
-
-	if( !cg_particles->integer ) {
-		return;
-	}
-
-	if( cg_numparticles + count > MAX_PARTICLES ) {
-		count = MAX_PARTICLES - cg_numparticles;
-	}
-	for( p = &particles[cg_numparticles], cg_numparticles += count; count > 0; count--, p++ ) {
-		CG_InitParticle( p, 0.75, 1, r + random() * 0.1, g + random() * 0.1, b + random() * 0.1, NULL );
-
-		d = rand() & 31;
-		for( j = 0; j < 3; j++ ) {
-			p->org[j] = org[j] + ( ( rand() & 7 ) - 4 ) + d * dir[j];
-			p->vel[j] = crandom() * 400;
-		}
-
-		//p->accel[0] = p->accel[1] = 0;
-		p->accel[2] = -PARTICLE_GRAVITY;
-		p->alphavel = -1.0 / ( 0.7 + random() * 0.25 );
-	}
-}
-
-
-/*
-* CG_BlasterTrail
-*/
-void CG_BlasterTrail( const vec3_t start, const vec3_t end ) {
-	int j, count;
-	vec3_t move, vec;
-	float len;
-
-	//const float	dec = 5.0f;
-	const float dec = 3.0f;
-	cparticle_t *p;
-
-	if( !cg_particles->integer ) {
-		return;
-	}
-
-	VectorCopy( start, move );
-	VectorSubtract( end, start, vec );
-	len = VectorNormalize( vec );
-	VectorScale( vec, dec, vec );
-
-	count = (int)( len / dec ) + 1;
-	if( cg_numparticles + count > MAX_PARTICLES ) {
-		count = MAX_PARTICLES - cg_numparticles;
-	}
-	for( p = &particles[cg_numparticles], cg_numparticles += count; count > 0; count--, p++ ) {
-		CG_InitParticle( p, 2.5f, 0.25f, 1.0f, 0.85f, 0, NULL );
-
-		p->alphavel = -1.0 / ( 0.1 + random() * 0.2 );
-		for( j = 0; j < 3; j++ ) {
-			p->org[j] = move[j] + crandom();
-			p->vel[j] = crandom() * 5;
-		}
-
-		VectorClear( p->accel );
-		VectorAdd( move, vec, move );
-	}
-}
-
-/*
-* CG_ElectroWeakTrail
-*/
-void CG_ElectroWeakTrail( const vec3_t start, const vec3_t end, const vec4_t color ) {
-	int j, count;
-	vec3_t move, vec;
-	float len;
-	const float dec = 5;
-	cparticle_t *p;
-	vec4_t ucolor = { 1.0f, 1.0f, 1.0f, 0.8f };
-
-	if( color ) {
-		VectorCopy( color, ucolor );
-	}
-
-	if( !cg_particles->integer ) {
-		return;
-	}
-
-	VectorCopy( start, move );
-	VectorSubtract( end, start, vec );
-	len = VectorNormalize( vec );
-	VectorScale( vec, dec, vec );
-
-	count = (int)( len / dec ) + 1;
-	if( cg_numparticles + count > MAX_PARTICLES ) {
-		count = MAX_PARTICLES - cg_numparticles;
-	}
-
-	for( p = &particles[cg_numparticles], cg_numparticles += count; count > 0; count--, p++ ) {
-		//CG_InitParticle( p, 2.0f, 0.8f, 1.0f, 1.0f, 1.0f, NULL );
-		CG_InitParticle( p, 2.0f, ucolor[3], ucolor[0], ucolor[1], ucolor[2], NULL );
-
-		p->alphavel = -1.0 / ( 0.2 + random() * 0.1 );
-		for( j = 0; j < 3; j++ ) {
-			p->org[j] = move[j] + random();/* + crandom();*/
-			p->vel[j] = crandom() * 2;
-		}
-
-		VectorClear( p->accel );
-		VectorAdd( move, vec, move );
-	}
-}
-
-/*
-* CG_ImpactPuffParticles
-* Wall impact puffs
-*/
-void CG_ImpactPuffParticles( const vec3_t org, const vec3_t dir, int count, float scale, float r, float g, float b, float a, struct shader_s *shader ) {
-	int j;
-	float d;
-	cparticle_t *p;
-
-	if( !cg_particles->integer ) {
-		return;
-	}
-
-	if( cg_numparticles + count > MAX_PARTICLES ) {
-		count = MAX_PARTICLES - cg_numparticles;
-	}
-	for( p = &particles[cg_numparticles], cg_numparticles += count; count > 0; count--, p++ ) {
-		CG_InitParticle( p, scale, a, r, g, b, shader );
-
-		d = rand() & 15;
-		for( j = 0; j < 3; j++ ) {
-			p->org[j] = org[j] + ( ( rand() & 7 ) - 4 ) + d * dir[j];
-			p->vel[j] = dir[j] * 90 + crandom() * 40;
-		}
-
-		p->accel[0] = p->accel[1] = 0;
-		p->accel[2] = -PARTICLE_GRAVITY;
-		p->alphavel = -1.0 / ( 0.5 + random() * 0.3 );
-	}
-}
-
-/*
-* CG_HighVelImpactPuffParticles
-* High velocity wall impact puffs
-*/
-void CG_HighVelImpactPuffParticles( const vec3_t org, const vec3_t dir, int count, float scale, float r, float g, float b, float a, struct shader_s *shader ) {
-	int j;
-	float d;
-	cparticle_t *p;
-
-	if( !cg_particles->integer ) {
-		return;
-	}
-
-	if( cg_numparticles + count > MAX_PARTICLES ) {
-		count = MAX_PARTICLES - cg_numparticles;
-	}
-	for( p = &particles[cg_numparticles], cg_numparticles += count; count > 0; count--, p++ ) {
-		CG_InitParticle( p, scale, a, r, g, b, shader );
-
-		d = rand() & 15;
-		for( j = 0; j < 3; j++ ) {
-			p->org[j] = org[j] + ( ( rand() & 7 ) - 4 ) + d * dir[j];
-			p->vel[j] = dir[j] * 180 + crandom() * 40;
-		}
-
-		p->accel[0] = p->accel[1] = 0;
-		p->accel[2] = -PARTICLE_GRAVITY * 2;
-		p->alphavel = -5.0 / ( 0.5 + random() * 0.3 );
-	}
-}
-
-/*
-* CG_ElectroIonsTrail
-*/
-void CG_ElectroIonsTrail( const vec3_t start, const vec3_t end, const vec4_t color ) {
-#define MAX_BOLT_IONS 48
-	int i, count;
-	vec3_t move, vec;
-	float len;
-	float dec2 = 24.0f;
-	cparticle_t *p;
-
-	if( !cg_particles->integer ) {
-		return;
-	}
-
-	VectorSubtract( end, start, vec );
-	len = VectorNormalize( vec );
-	count = (int)( len / dec2 ) + 1;
-	if( count > MAX_BOLT_IONS ) {
-		count = MAX_BOLT_IONS;
-		dec2 = len / count;
-	}
-
-	VectorScale( vec, dec2, vec );
-	VectorCopy( start, move );
-
-	if( cg_numparticles + count > MAX_PARTICLES ) {
-		count = MAX_PARTICLES - cg_numparticles;
-	}
-	for( p = &particles[cg_numparticles], cg_numparticles += count; count > 0; count--, p++ ) {
-		CG_InitParticle( p, 0.65f, color[3], color[0] + crandom() * 0.1, color[1] + crandom() * 0.1, color[2] + crandom() * 0.1, NULL );
-
-		for( i = 0; i < 3; i++ ) {
-			p->org[i] = move[i];
-			p->vel[i] = crandom() * 4;
-		}
-		p->alphavel = -1.0 / ( 0.6 + random() * 0.6 );
-		VectorClear( p->accel );
-		VectorAdd( move, vec, move );
-	}
-}
-
-void CG_ElectroIonsTrail2( const vec3_t start, const vec3_t end, const vec4_t color ) {
-#define MAX_RING_IONS 96
-	int count;
-	vec3_t move, vec;
-	float len;
-	float dec2 = 8.0f;
-	cparticle_t *p;
-
-	if( !cg_particles->integer ) {
-		return;
-	}
-
-	VectorSubtract( end, start, vec );
-	len = VectorNormalize( vec );
-	count = (int)( len / dec2 ) + 1;
-	if( count > MAX_RING_IONS ) {
-		count = MAX_RING_IONS;
-		dec2 = len / count;
-	}
-
-	VectorScale( vec, dec2, vec );
-	VectorCopy( start, move );
-
-	if( cg_numparticles + count > MAX_PARTICLES ) {
-		count = MAX_PARTICLES - cg_numparticles;
-	}
-
-	// Ring rail eb particles
-	for( p = &particles[cg_numparticles], cg_numparticles += count; count > 0; count--, p++ ) {
-		CG_InitParticle( p, 0.65f, color[3], color[0] + crandom() * 0.1, color[1] + crandom() * 0.1, color[2] + crandom() * 0.1, NULL );
-
-		p->alphavel = -1.0 / ( 0.6 + random() * 0.6 );
-
-		VectorCopy( move, p->org );
-		VectorClear( p->accel );
-		VectorClear( p->vel );
-		VectorAdd( move, vec, move );
-	}
-}
-
-#define BEAMLENGTH      16
-
-/*
-* CG_FlyParticles
-*/
-static void CG_FlyParticles( const vec3_t origin, int count ) {
-	int i, j;
-	float angle, sp, sy, cp, cy;
-	vec3_t forward, dir;
-	float dist, ltime;
-	cparticle_t *p;
+	double		  ltime = (double)cg.time / 1000.0;
+	static vec3_t avelocities[NUMVERTEXNORMALS];
 
 	if( !cg_particles->integer ) {
 		return;
@@ -942,15 +660,15 @@ static void CG_FlyParticles( const vec3_t origin, int count ) {
 				avelocities[i][j] = ( rand() & 255 ) * 0.01;
 	}
 
-	i = 0;
-	ltime = (float)cg.time / 1000.0;
-
 	count /= 2;
 	if( cg_numparticles + count > MAX_PARTICLES ) {
 		count = MAX_PARTICLES - cg_numparticles;
 	}
+
+	i = 0;
+
 	for( p = &particles[cg_numparticles], cg_numparticles += count; count > 0; count--, p++ ) {
-		CG_InitParticle( p, 1, 1, 0, 0, 0, NULL );
+		double angle;
 
 		angle = ltime * avelocities[i][0];
 		sy = sin( angle );
@@ -965,9 +683,16 @@ static void CG_FlyParticles( const vec3_t origin, int count ) {
 
 		dist = sin( ltime + i ) * 64;
 		ByteToDir( i, dir );
-		p->org[0] = origin[0] + dir[0] * dist + forward[0] * BEAMLENGTH;
-		p->org[1] = origin[1] + dir[1] * dist + forward[1] * BEAMLENGTH;
-		p->org[2] = origin[2] + dir[2] * dist + forward[2] * BEAMLENGTH;
+
+		p->time = cg.time;
+		p->size = 1.0f;
+		p->alpha = ef.color[3];
+		VectorSet( p->color, ef.color[0], ef.color[1], ef.color[2] );
+		p->shader = NULL;
+		p->fog = true;
+		p->org[0] = origin[0] + dir[0] * dist + forward[0] * ef.size;
+		p->org[1] = origin[1] + dir[1] * dist + forward[1] * ef.size;
+		p->org[2] = origin[2] + dir[2] * dist + forward[2] * ef.size;
 
 		VectorClear( p->vel );
 		VectorClear( p->accel );
@@ -978,12 +703,196 @@ static void CG_FlyParticles( const vec3_t origin, int count ) {
 }
 
 /*
+ * CG_ParticleEffect
+ */
+void CG_ParticleEffect( ParticleEffect &ef, const vec3_t org, const vec3_t dir, int count )
+{
+	switch( ef.type ) {
+		case ParticleEffectType::Normal:
+			CG_NormalParticleEffect( ef, org, dir, count );
+			break;
+		case ParticleEffectType::Fly:
+			CG_FlyParticleEffect( ef, org, count );
+			break;
+		default:
+			break;
+	}
+}
+
+/*
+* CG_SplashParticles
+*
+* Wall impact puffs
+*/
+void CG_SplashParticles( const vec3_t org, const vec3_t dir, float r, float g, float b, int count )
+{
+	ParticleEffect ef;
+	ef.size = 0.75f;
+	Vector2Set( ef.alphaDecay, 0.5, 0.8 );
+	VectorSet( ef.color, r, g, b );
+	VectorSet( ef.colorRand, 0.1, 0.1, 0.1 );
+	Vector2Set( ef.orgRand, -4.0f, 4.0f );
+	Vector2Set( ef.dirRand, 0.0f, 31.0f );
+	Vector2Set( ef.velRand, -20.0f, 20.0f );
+	ef.accel[2] = -PARTICLE_GRAVITY;
+
+	CG_NormalParticleEffect( ef, org, dir, count );
+}
+
+/*
+* CG_SplashParticles2
+*/
+void CG_SplashParticles2( const vec3_t org, const vec3_t dir, float r, float g, float b, int count )
+{
+	ParticleEffect ef;
+	ef.size = 0.75f;
+	Vector2Set( ef.alphaDecay, 0.5, 0.8 );
+	VectorSet( ef.color, r, g, b );
+	Vector2Set( ef.orgRand, -4.0f, 4.0f );
+	Vector2Set( ef.dirRand, 0.0f, 7.0f );
+	Vector2Set( ef.velRand, -20.0f, 20.0f );
+	ef.accel[2] = -PARTICLE_GRAVITY;
+
+	CG_NormalParticleEffect( ef, org, dir, count );
+}
+
+/*
+* CG_ParticleExplosionEffect
+*/
+void CG_ParticleExplosionEffect( const vec3_t org, const vec3_t dir, float r, float g, float b, int count ) {
+	ParticleEffect ef;
+	ef.size = 0.75f;
+	Vector2Set( ef.alphaDecay, 0.7, 0.95 );
+	VectorSet( ef.color, r, g, b );
+	VectorSet( ef.colorRand, 0.1, 0.1, 0.1 );
+	Vector2Set( ef.orgRand, -4.0f, 4.0f );
+	Vector2Set( ef.dirRand, 0.0f, 31.0f );
+	Vector2Set( ef.velRand, -400.0f, 400.0f );
+	ef.accel[2] = -PARTICLE_GRAVITY;
+
+	CG_NormalParticleEffect( ef, org, dir, count );
+}
+
+/*
+* CG_BlasterTrail
+*/
+void CG_BlasterTrail( const vec3_t start, const vec3_t end ) {
+	vec3_t move;
+	float len;
+	const float dec = 3.0f;
+
+	VectorSubtract( end, start, move );
+	len = VectorNormalize( move );
+	VectorScale( move, dec, move );
+
+	ParticleEffect ef;
+	ef.size = 2.5f;
+	Vector2Set( ef.alphaDecay, 0.1, 0.3 );
+	Vector4Set( ef.color, 1.0f, 0.85f, 0, 0.25f );
+	Vector2Set( ef.orgRand, -1.0f, 1.0f );
+	Vector2Set( ef.velRand, -5.0f, 5.0f );
+	VectorCopy( move, ef.orgSpread );
+
+	CG_NormalParticleEffect( ef, start, vec3_origin, (int)( len / dec ) + 1 );
+}
+
+/*
+* CG_ElectroWeakTrail
+*/
+void CG_ElectroWeakTrail( const vec3_t start, const vec3_t end, const vec4_t color ) {
+	vec3_t move;
+	float len;
+	const float dec = 5;
+	vec4_t ucolor = { 1.0f, 1.0f, 1.0f, 0.8f };
+
+	if( color ) {
+		VectorCopy( color, ucolor );
+	}
+
+	VectorSubtract( end, start, move );
+	len = VectorNormalize( move );
+	VectorScale( move, dec, move );
+
+	ParticleEffect ef;
+	ef.size = 2.0f;
+	Vector2Set( ef.alphaDecay, 0.2, 0.3 );
+	Vector4Copy( ucolor, ef.color );
+	Vector2Set( ef.orgRand, 0.0f, 1.0f );
+	Vector2Set( ef.velRand, -2.0f, 2.0f );
+	VectorCopy( move, ef.orgSpread );
+
+	CG_NormalParticleEffect( ef, start, vec3_origin, (int)( len / dec ) + 1 );
+}
+
+/*
+* CG_ImpactPuffParticles
+* Wall impact puffs
+*/
+void CG_ImpactPuffParticles( const vec3_t org, const vec3_t dir, int count, float scale, float r, float g, float b, float a, struct shader_s *shader ) {
+	ParticleEffect ef;
+	ef.size = scale;
+	Vector2Set( ef.alphaDecay, 0.5, 0.8 );
+	Vector4Set( ef.color, r, g, b, a );
+	Vector2Set( ef.orgRand, -4.0f, 4.0f );
+	Vector2Set( ef.dirRand, 0.0f, 15.0f );
+	ef.dirMAToVel = 90.0f;
+	Vector2Set( ef.velRand, -40.0f, 40.0f );
+	ef.accel[2] = -PARTICLE_GRAVITY;
+
+	CG_NormalParticleEffect( ef, org, dir, count );
+}
+
+/*
+* CG_HighVelImpactPuffParticles
+* High velocity wall impact puffs
+*/
+void CG_HighVelImpactPuffParticles( const vec3_t org, const vec3_t dir, int count, float scale, float r, float g, float b, float a, struct shader_s *shader ) {
+	ParticleEffect ef;
+	ef.size = scale;
+	Vector2Set( ef.alphaDecay, 0.1, 0.16 );
+	Vector4Set( ef.color, r, g, b, a );
+	Vector2Set( ef.orgRand, -4.0f, 4.0f );
+	Vector2Set( ef.dirRand, 0.0f, 15.0f );
+	ef.dirMAToVel = 180.0f;
+	Vector2Set( ef.velRand, -40.0f, 40.0f );
+	ef.accel[2] = -PARTICLE_GRAVITY * 2;
+
+	CG_NormalParticleEffect( ef, org, dir, count );
+}
+
+void CG_ElectroIonsTrail( const vec3_t start, const vec3_t end, const vec4_t color ) {
+	int count;
+	vec3_t move;
+	float len;
+	float dec = 8.0f;
+	const int MAX_RING_IONS = 96;
+
+	VectorSubtract( end, start, move );
+	len = VectorNormalize( move );
+	count = (int)( len / dec ) + 1;
+	if( count > MAX_RING_IONS ) {
+		count = MAX_RING_IONS;
+		dec = len / count;
+	}
+	VectorScale( move, dec, move );
+
+	ParticleEffect ef;
+	ef.size = 0.65f;
+	Vector2Set( ef.alphaDecay, 0.6, 1.2 );
+	Vector4Copy( color, ef.color );
+	VectorSet( ef.colorRand, 0.1, 0.1, 0.1 );
+	VectorCopy( move, ef.orgSpread );
+
+	CG_NormalParticleEffect( ef, start, vec3_origin, count );
+}
+
+/*
 * CG_FlyEffect
 */
 void CG_FlyEffect( centity_t *ent, const vec3_t origin ) {
-	int n;
 	int count;
-	int starttime;
+	int64_t starttime;
+	const float BEAMLENGTH = 16.0f;
 
 	if( !cg_particles->integer ) {
 		return;
@@ -996,19 +905,23 @@ void CG_FlyEffect( centity_t *ent, const vec3_t origin ) {
 		starttime = ent->fly_stoptime - 60000;
 	}
 
-	n = cg.time - starttime;
+	int64_t n = cg.time - starttime;
 	if( n < 20000 ) {
-		count = n * 162 / 20000.0;
+		count = (float)n * 162 / 20000.0;
 	} else {
 		n = ent->fly_stoptime - cg.time;
 		if( n < 20000 ) {
-			count = n * 162 / 20000.0;
+			count = (float)n * 162 / 20000.0;
 		} else {
 			count = 162;
 		}
 	}
 
-	CG_FlyParticles( origin, count );
+	ParticleEffect ef;
+	VectorSet( ef.color, 0, 0, 0 );
+	ef.size = BEAMLENGTH;
+
+	CG_FlyParticleEffect( ef, origin, count );
 }
 
 /*
@@ -1022,8 +935,9 @@ void CG_AddParticles( void ) {
 	vec3_t corner;
 	byte_vec4_t color;
 	int maxparticle, activeparticles;
-	float alphaValues[MAX_PARTICLES];
-	cparticle_t *p, *free_particles[MAX_PARTICLES];
+	uint8_t expired[MAX_PARTICLES];
+	cparticle_t *p;
+	static int free_particles[MAX_PARTICLES];
 
 	if( !cg_numparticles ) {
 		return;
@@ -1035,10 +949,11 @@ void CG_AddParticles( void ) {
 
 	for( i = 0, p = particles; i < cg_numparticles; i++, p++ ) {
 		time = float( cg.time - p->time ) * 0.001f;
-		alpha = alphaValues[i] = p->alpha + time * p->alphavel;
+		alpha = p->alpha + time * p->alphavel;
+		expired[i] = alpha <= 0;
 
 		if( alpha <= 0 ) { // faded out
-			free_particles[j++] = p;
+			free_particles[j++] = i;
 			continue;
 		}
 
@@ -1057,13 +972,13 @@ void CG_AddParticles( void ) {
 		color[3] = (uint8_t)( Q_bound( 0, alpha, 1.0f ) * 255 );
 
 		corner[0] = org[0];
-		corner[1] = org[1] - 0.5f * p->scale;
-		corner[2] = org[2] - 0.5f * p->scale;
+		corner[1] = org[1] - 0.5f * p->size;
+		corner[2] = org[2] - 0.5f * p->size;
 
-		Vector4Set( p->pVerts[0], corner[0], corner[1] + p->scale, corner[2] + p->scale, 1 );
-		Vector4Set( p->pVerts[1], corner[0], corner[1], corner[2] + p->scale, 1 );
+		Vector4Set( p->pVerts[0], corner[0], corner[1] + p->size, corner[2] + p->size, 1 );
+		Vector4Set( p->pVerts[1], corner[0], corner[1], corner[2] + p->size, 1 );
 		Vector4Set( p->pVerts[2], corner[0], corner[1], corner[2], 1 );
-		Vector4Set( p->pVerts[3], corner[0], corner[1] + p->scale, corner[2], 1 );
+		Vector4Set( p->pVerts[3], corner[0], corner[1] + p->size, corner[2], 1 );
 		for( k = 0; k < 4; k++ ) {
 			Vector4Copy( color, p->pColor[k] );
 		}
@@ -1080,10 +995,10 @@ void CG_AddParticles( void ) {
 
 	i = 0;
 	while( maxparticle >= activeparticles ) {
-		*free_particles[i++] = particles[maxparticle--];
+		particles[free_particles[i++]] = particles[maxparticle--];
 
 		while( maxparticle >= activeparticles ) {
-			if( alphaValues[maxparticle] <= 0 ) {
+			if( expired[maxparticle] ) {
 				maxparticle--;
 			} else {
 				break;

@@ -332,7 +332,7 @@ void CG_ElectroTrail2( const vec3_t start, const vec3_t end, int team ) {
 
 	CG_ElectroPolyBeam( start, end, team );
 	CG_ElectroRings( start, end, color );
-	CG_ElectroIonsTrail2( start, end, color );
+	CG_ElectroIonsTrail( start, end, color );
 }
 
 /*
@@ -671,14 +671,14 @@ void CG_BladeImpact( const vec3_t pos, const vec3_t dir ) {
 		le->ent.rotation = rand() % 360;
 		le->ent.scale = 1.0f;
 
-		trap_S_StartFixedSound( cgs.media.sfxBladeFleshHit[(int)( random() * 3 )], origin, CHAN_AUTO,
+		trap_S_StartFixedSound( cgs.media.sfxBladeFleshHit[rand() % 3], origin, CHAN_AUTO,
 								cg_volume_effects->value, ATTN_NORM );
 	} else if( trace.surfFlags & SURF_DUST ) {
 		// throw particles on dust
-		CG_ParticleEffect( trace.endpos, trace.plane.normal, 0.30f, 0.30f, 0.25f, 30 );
+		CG_SplashParticles( trace.endpos, trace.plane.normal, 0.30f, 0.30f, 0.25f, 30 );
 
 		//fixme? would need a dust sound
-		trap_S_StartFixedSound( cgs.media.sfxBladeWallHit[(int)( random() * 2 )], origin, CHAN_AUTO,
+		trap_S_StartFixedSound( cgs.media.sfxBladeWallHit[rand() % 2], origin, CHAN_AUTO,
 								cg_volume_effects->value, ATTN_NORM );
 	} else {
 		le = CG_AllocModel( LE_ALPHA_FADE, origin, angles, 3, //3 frames for weak
@@ -688,9 +688,9 @@ void CG_BladeImpact( const vec3_t pos, const vec3_t dir ) {
 		le->ent.rotation = rand() % 360;
 		le->ent.scale = 1.0f;
 
-		CG_ParticleEffect( trace.endpos, trace.plane.normal, 0.30f, 0.30f, 0.25f, 15 );
+		CG_SplashParticles( trace.endpos, trace.plane.normal, 0.30f, 0.30f, 0.25f, 15 );
 
-		trap_S_StartFixedSound( cgs.media.sfxBladeWallHit[(int)( random() * 2 )], origin, CHAN_AUTO,
+		trap_S_StartFixedSound( cgs.media.sfxBladeWallHit[rand() % 2], origin, CHAN_AUTO,
 								cg_volume_effects->value, ATTN_NORM );
 		if( !( trace.surfFlags & SURF_NOMARKS ) ) {
 			CG_SpawnDecal( pos, dir, random() * 10, 8, 1, 1, 1, 1, 10, 1, false, cgs.media.shaderBladeMark );
