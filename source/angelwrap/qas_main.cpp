@@ -84,6 +84,45 @@ void QAS_ShutDown( void ) {
 	QAS_MemFreePool( &angelwrappool );
 }
 
+angelwrap_stack_frame_t **QAS_GetCallstack( void )
+{
+	asIScriptContext *ctx = qasGetActiveContext();
+
+	if( ctx == 0 ) {
+		ctx = qasGetExceptionContext();
+	}
+	if( ctx == 0 ) {
+		return NULL;
+	}
+
+	asUINT ss = ctx->GetCallstackSize();
+
+	angelwrap_stack_frame_t **stack =
+		(angelwrap_stack_frame_t **)QAS_Malloc( sizeof( angelwrap_stack_frame_t * ) * ( ss + 1 ) );
+	for( asUINT n = 0; n < ss; n++ ) {
+		const char *file = 0;
+		int			lineNbr = ctx->GetLineNumber( n, 0, &file );
+		const char *decl = ctx->GetFunction( n )->GetDeclaration();
+
+		stack[n] = (angelwrap_stack_frame_t *)QAS_Malloc( sizeof( angelwrap_stack_frame_t ) );
+		stack[n]->file = QAS_CopyString( file );
+		stack[n]->line = lineNbr;
+		stack[n]->func = QAS_CopyString( decl );
+	}
+	stack[ss] = NULL;
+
+	return stack;
+}
+
+char *_QAS_CopyString( const char *in, const char *filename, int fileline )
+{
+	char *out;
+
+	out = (char *)trap_MemAlloc( angelwrappool, strlen( in ) + 1, filename, fileline );
+	strcpy( out, in );
+	return out;
+}
+
 void QAS_Error( const char *format, ... ) {
 	va_list argptr;
 	char msg[1024];

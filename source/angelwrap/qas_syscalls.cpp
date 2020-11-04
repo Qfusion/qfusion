@@ -31,7 +31,7 @@ extern "C" QF_DLL_EXPORT angelwrap_export_t * GetAngelwrapAPI( angelwrap_import_
 	globals.API = QAS_API;
 	globals.Init = QAS_Init;
 	globals.Shutdown = QAS_ShutDown;
-
+	globals.asGetCallstack = QAS_GetCallstack;
 	globals.asGetAngelExport = QAS_GetAngelExport;
 
 	return &globals;

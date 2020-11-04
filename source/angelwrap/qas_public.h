@@ -23,6 +23,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define ANGELWRAP_API_VERSION   17
 
+typedef struct angelwrap_stack_frame_s {
+	char *file;
+	int	  line;
+	char *func;
+} angelwrap_stack_frame_t;
+
 typedef struct {
 	void ( *Print )( const char *msg );
 
@@ -87,6 +93,7 @@ typedef struct {
 	int ( *API )( void );
 	int ( *Init )( void );
 	void ( *Shutdown )( void );
+	angelwrap_stack_frame_t **( *asGetCallstack )( void );
 
 	struct angelwrap_api_s *( *asGetAngelExport )( void );
 } angelwrap_export_t;
