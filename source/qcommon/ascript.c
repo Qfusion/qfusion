@@ -210,6 +210,7 @@ void Com_ScriptModule_Init( void ) {
 	import.Diag_BeginBuild = Diag_BeginBuild;
 	import.Diag_Message = Diag_Message;
 	import.Diag_EndBuild = Diag_EndBuild;
+	import.Diag_Exception = Diag_Exception;
 
 	// load the actual library
 	if( !Com_ScriptModule_Load( name, &import ) ) {

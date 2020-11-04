@@ -27,6 +27,39 @@ enum DiagMessageType {
 	Diagnostics,
 	RequestDebugDatabase,
 	DebugDatabase,
+
+    StartDebugging,
+	StopDebugging,
+	Pause,
+	Continue,
+
+	RequestCallStack,
+	CallStack,
+
+	ClearBreakpoints,
+	SetBreakpoint,
+
+	HasStopped,
+	HasContinued,
+
+	StepOver,
+	StepIn,
+	StepOut,
+
+	EngineBreak,
+
+	RequestVariables,
+	Variables,
+
+	RequestEvaluate,
+	Evaluate,
+	GoToDefinition,
+
+	BreakOptions,
+	RequestBreakFilters,
+	BreakFilters,
+
+	Disconnect,
 };
 
 typedef struct {
@@ -174,7 +207,7 @@ static bool Diag_PeekMessage( diag_connection_t *con ) {
 static void Diag_ReadMessage( diag_connection_t *con ) {
 	int		 len;
 	msg_t	 msg;
-	size_t	 s;
+	size_t	 s, rc;
 	qstreambuf_t *rb = &con->recvbuf;
 
 	s = rb->datalength( rb );
@@ -187,7 +220,21 @@ static void Diag_ReadMessage( diag_connection_t *con ) {
 	MSG_GetSpace( &msg, msg.maxsize );
 
 	len = MSG_ReadInt32( &msg );
-	MSG_SkipData( &msg, len );
+	rc = msg.readcount;
+
+	if( len != 0 ) {
+		int mt = MSG_ReadUint8( &msg );
+		switch( mt ) {
+			case StartDebugging:
+				break;
+			case StopDebugging:
+				break;
+			case RequestCallStack:
+				break;
+		}
+	}
+
+	MSG_SkipData( &msg, len - ( msg.readcount - rc ) );
 
 	rb->consume( rb, s );
 }
@@ -252,6 +299,16 @@ static void Diag_WriteToSocket( socket_t *socket, diag_connection_t *con )
 	sb->compact( sb );
 }
 
+static void Diag_Broadcast( qstreambuf_t *stream ) {
+	diag_connection_t *con, *next, *hnode = &diag_connection_headnode;
+
+	for( con = hnode->prev; con != hnode; con = next ) {
+		qstreambuf_t *sb = &con->sendbuf;
+		next = con->prev;
+		sb->write( sb, stream->data( stream ), stream->datalength( stream ) );
+	}
+}
+
 void Diag_BeginBuild( const char **filenames )
 {
 	int i;
@@ -270,6 +327,89 @@ void Diag_BeginBuild( const char **filenames )
 		Trie_Insert( diag_messages, filenames[i],
 			Mem_ZoneMalloc( sizeof( diag_messagelist_t ) ) );
 	}
+}
+
+static size_t Diag_BeginEncodeMsg( qstreambuf_t *stream )
+{
+	size_t head_pos;
+
+	stream->prepare( stream, 5 );
+	head_pos = stream->datalength( stream );
+	stream->commit( stream, 5 );
+
+	return head_pos;
+}
+
+static void Diag_EncodeMsg( qstreambuf_t *stream, msg_t *msg, const char *fmt, ... )
+{
+	int	   j;
+	size_t total_len = 0;
+
+	for( j = 0; j < 2; j++ ) {
+		int			i = 0;
+		char *		s = NULL;
+		size_t		s_len;
+		size_t		len = 0;
+		va_list		argp;
+		const char *p;
+
+		if( j != 0 ) {
+			stream->prepare( stream, total_len );
+			MSG_Init( msg, stream->buffer( stream ), stream->size( stream ) );
+		}
+
+		va_start( argp, fmt );
+
+		for( p = fmt; *p != '\0'; p++ ) {
+			if( *p != '%' ) {
+				continue;
+			}
+
+			switch( *++p ) {
+				case 'c':
+					i = va_arg( argp, int );
+					len += 1;
+					if( j != 0 ) {
+						MSG_WriteUint8( msg, i );
+					}
+					break;
+				case 's':
+					s = va_arg( argp, char * );
+					s_len = strlen( s );
+					len += 4;
+					len += s_len;
+					if( j != 0 ) {
+						MSG_WriteInt32( msg, s_len );
+						MSG_WriteData( msg, s, s_len );
+					}
+					break;
+				case 'i':
+				case 'd':
+					i = va_arg( argp, int );
+					len += 4;
+					if( j != 0 ) {
+						MSG_WriteInt32( msg, i );
+					}
+					break;
+			}
+		}
+
+		va_end( argp );
+
+		if( j != 0 ) {
+			stream->commit( stream, msg->cursize );
+			break;
+		}
+
+		total_len = len;
+	}
+}
+
+static void Diag_FinishEncodeMsg( qstreambuf_t *stream, msg_t *msg, size_t head_pos, int type )
+{
+	MSG_Init( msg, stream->data( stream ) + head_pos, 5 );
+	MSG_WriteInt32( msg, ( stream->datalength( stream ) - head_pos - 5 ) );
+	MSG_WriteInt8( msg, type );
 }
 
 void Diag_Message( int severity, const char *filename, int line, int col, const char *text ) {
@@ -298,11 +438,10 @@ void Diag_Message( int severity, const char *filename, int line, int col, const 
 
 void Diag_EndBuild( void )
 {
-	unsigned int		  i, j;
-	msg_t				  msg;
-	struct trie_dump_s *  dump;
-	qstreambuf_t stream;
-	diag_connection_t *con, *next, *hnode = &diag_connection_headnode;
+	unsigned int		i, j;
+	msg_t				msg;
+	struct trie_dump_s *dump;
+	qstreambuf_t		stream;
 
 	if( !diag_initialized )
 		return;
@@ -318,45 +457,22 @@ void Diag_EndBuild( void )
 
 	for( i = 0; i < dump->size; i++ ) {
 		const char *			filename = dump->key_value_vector[i].key;
-		size_t					filename_len = strlen( filename );
 		diag_messagelist_t *ml = dump->key_value_vector[i].value;
 		size_t					head_pos;
 
-		stream.prepare( &stream, 5 );
-		head_pos = stream.datalength( &stream );
-		stream.commit( &stream, 5 );
+		head_pos = Diag_BeginEncodeMsg( &stream );
 
-		stream.prepare( &stream, 4 + filename_len + 4 );
-
-		MSG_Init( &msg, stream.buffer( &stream ), stream.size( &stream ) );
-		MSG_WriteInt32( &msg, ( filename_len ) );
-		MSG_WriteData( &msg, filename, filename_len );
-		MSG_WriteInt32( &msg, ( ml->num_messages ) );
-
-		stream.commit( &stream, msg.cursize );
+		Diag_EncodeMsg( &stream, &msg, "%s%i", filename, ml->num_messages );
 
 		for( j = 0; j < ml->num_messages; j++ ) {
 			diag_message_t *dm = &ml->messages[j];
-			size_t				text_len = strlen( dm->text );
 
-			stream.prepare( &stream, 4 + text_len + 4 + 4 + 4 + 4 );
-
-			MSG_Init( &msg, stream.buffer( &stream ), stream.size( &stream ) );
-			MSG_WriteInt32( &msg, ( text_len ) );
-			MSG_WriteData( &msg, dm->text, text_len );
-			MSG_WriteInt32( &msg, ( dm->line ) );
-			MSG_WriteInt32( &msg, ( dm->col ) );
-			MSG_WriteInt32( &msg, ( dm->severity > 1 ) );
-			MSG_WriteInt32( &msg, ( dm->severity == 0 ) );
-
-			stream.commit( &stream, msg.cursize );
+			Diag_EncodeMsg( &stream, &msg, "%s%i%i%i%i", dm->text, dm->line, dm->col, dm->severity > 1, dm->severity == 0 );
 
 			Mem_ZoneFree( dm->text );
 		}
 
-		MSG_Init( &msg, stream.data( &stream ) + head_pos, 5 );
-		MSG_WriteInt32( &msg, ( stream.datalength( &stream ) - head_pos - 5 ) );
-		MSG_WriteInt8( &msg, Diagnostics );
+		Diag_FinishEncodeMsg( &stream, &msg, head_pos, Diagnostics );
 
 		Mem_ZoneFree( ml->messages );
 		Mem_ZoneFree( ml );
@@ -366,11 +482,26 @@ void Diag_EndBuild( void )
 	Trie_Destroy( diag_messages );
 	diag_messages = NULL;
 
-	for( con = hnode->prev; con != hnode; con = next ) {
-		qstreambuf_t *sb = &con->sendbuf;
-		next = con->prev;
-		sb->write( sb, stream.data( &stream ), stream.datalength( &stream ) );
-	}
+	Diag_Broadcast( &stream );
+
+	stream.clear( &stream );
+}
+
+void Diag_Exception( const char *sectionName, int line, int col, const char *funcDecl, const char *exceptionString )
+{
+	qstreambuf_t	   stream;
+	msg_t			   msg;
+	size_t			   head_pos;
+
+	QStreamBuf_Init( &stream );
+
+	head_pos = Diag_BeginEncodeMsg( &stream );
+
+	Diag_EncodeMsg( &stream, &msg, "%s%i%s", "exception", 0, exceptionString );
+
+	Diag_FinishEncodeMsg( &stream, &msg, head_pos, HasStopped );
+
+	Diag_Broadcast( &stream );
 
 	stream.clear( &stream );
 }
