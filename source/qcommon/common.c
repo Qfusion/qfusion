@@ -856,7 +856,12 @@ void Qcommon_Frame( unsigned int realMsec ) {
 
 	if( setjmp( abortframe ) ) {
 		return; // an ERR_DROP was thrown
+	}
 
+	if( Diag_Stopped() ) {
+		Diag_RunFrame();
+		Sys_Sleep( 20 );
+		return;
 	}
 
 	if( logconsole && logconsole->modified ) {

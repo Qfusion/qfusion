@@ -931,6 +931,7 @@ WSW ANGEL SCRIPT SYSTEMS
 void Com_ScriptModule_Init( void );
 void Com_ScriptModule_Shutdown( void );
 struct angelwrap_api_s *Com_asGetAngelExport( void );
+struct angelwrap_stack_frame_s **Com_asGetCallstack( void );
 
 /*
 ==============================================================
@@ -995,11 +996,12 @@ DIAGNOSTICS
 ==============================================================
 */
 void Diag_Init();
-void Diag_RunFrame();
-void Diag_Shutdown();
+void Diag_RunFrame( void  );
+void Diag_Shutdown( void );
 void Diag_BeginBuild( const char **filenames );
 void Diag_Message( int severity, const char *filename, int line, int col, const char *text );
 void Diag_EndBuild( void );
 void Diag_Exception( const char *sectionName, int line, int col, const char *funcDecl, const char *exceptionString );
+bool Diag_Stopped( void );
 
 #endif // __QCOMMON_H

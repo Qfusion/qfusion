@@ -336,6 +336,7 @@ typedef std::list<asIScriptContext *> qasContextList;
 typedef std::map<asIScriptEngine *, qasContextList> qasEngineContextMap;
 
 qasEngineContextMap contexts;
+asIScriptContext *	qasExceptionCtx;
 
 // ============================================================================
 
@@ -369,6 +370,7 @@ static void qasExceptionCallback( asIScriptContext *ctx ) {
 	asIScriptFunction *func;
 	const char *sectionName, *exceptionString, *funcDecl;
 
+	qasExceptionCtx = ctx;
 	line = ctx->GetExceptionLineNumber( &col, &sectionName );
 	func = ctx->GetExceptionFunction();
 	exceptionString = ctx->GetExceptionString();
@@ -609,12 +611,6 @@ static asIScriptContext *qasCreateContext( asIScriptEngine *engine ) {
 		return NULL;
 	}
 
-	// We don't want to allow the script to hang the application, e.g. with an
-	// infinite loop, so we'll use the line callback function to set a timeout
-	// that will abort the script after a certain time. Before executing the
-	// script the timeOut variable will be set to the time when the script must
-	// stop executing.
-
 	error = ctx->SetExceptionCallback( asFUNCTION( qasExceptionCallback ), NULL, asCALL_CDECL );
 	if( error < 0 ) {
 		ctx->Release();
@@ -659,6 +655,11 @@ asIScriptContext *qasAcquireContext( asIScriptEngine *engine ) {
 
 asIScriptContext *qasGetActiveContext( void ) {
 	return asGetActiveContext();
+}
+
+asIScriptContext *qasGetExceptionContext( void )
+{
+	return qasExceptionCtx;
 }
 
 /*************************************

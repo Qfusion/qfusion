@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "qcommon.h"
 #include "../qalgo/q_trie.h"
+#include "../angelwrap/qas_public.h"
 
 #define MAX_DIAGNOSTICS_CONNECTIONS 10
 
@@ -78,6 +79,7 @@ typedef struct diag_connection_s {
 	socket_t socket;
 	netadr_t address;
 	int64_t	 last_active;
+	bool	 debugging;
 
 	qstreambuf_t recvbuf, sendbuf;
 
@@ -87,6 +89,8 @@ typedef struct diag_connection_s {
 static socket_t diag_sock;
 static bool		diag_initialized;
 static trie_t	*diag_messages;
+static int		diag_debugging;
+static bool		diag_stopped;
 
 static diag_connection_t diag_connections[MAX_DIAGNOSTICS_CONNECTIONS];
 static diag_connection_t diag_connection_headnode, *com_free_diag_connections;
@@ -94,6 +98,9 @@ static diag_connection_t diag_connection_headnode, *com_free_diag_connections;
 static cvar_t *com_diagnostics;
 static cvar_t *com_diagnostics_port;
 static cvar_t *com_diagnostics_timeout;
+
+static void Diag_RespBreakFilters( diag_connection_t *con );
+static void Diag_RespCallStack( diag_connection_t *con );
 
 static diag_connection_t *Diag_AllocConnection( void )
 {
@@ -107,6 +114,7 @@ static diag_connection_t *Diag_AllocConnection( void )
 		return NULL;
 	}
 
+	con->debugging = false;
 	QStreamBuf_Init( &con->recvbuf );
 	QStreamBuf_Init( &con->sendbuf );
 
@@ -120,6 +128,11 @@ static diag_connection_t *Diag_AllocConnection( void )
 
 static void Diag_FreeConnection( diag_connection_t *con )
 {
+	con->debugging = false;
+	if( con->debugging ) {
+		diag_debugging--;
+	}
+
 	con->recvbuf.clear( &con->recvbuf );
 	con->sendbuf.clear( &con->sendbuf );
 
@@ -226,10 +239,25 @@ static void Diag_ReadMessage( diag_connection_t *con ) {
 		int mt = MSG_ReadUint8( &msg );
 		switch( mt ) {
 			case StartDebugging:
+				if( !con->debugging ) {
+					con->debugging = true;
+					diag_debugging++;
+				}
 				break;
 			case StopDebugging:
+				if( con->debugging ) {
+					con->debugging = false;
+					diag_debugging--;
+				}
+				break;
+			case RequestBreakFilters:
+				Diag_RespBreakFilters( con );
 				break;
 			case RequestCallStack:
+				Diag_RespCallStack( con );
+				break;
+			case Continue:
+				diag_stopped = false;
 				break;
 		}
 	}
@@ -299,13 +327,18 @@ static void Diag_WriteToSocket( socket_t *socket, diag_connection_t *con )
 	sb->compact( sb );
 }
 
+static void Diag_Unicast( diag_connection_t *con, qstreambuf_t *stream )
+{
+	qstreambuf_t *sb = &con->sendbuf;
+	sb->write( sb, stream->data( stream ), stream->datalength( stream ) );
+}
+
 static void Diag_Broadcast( qstreambuf_t *stream ) {
 	diag_connection_t *con, *next, *hnode = &diag_connection_headnode;
 
 	for( con = hnode->prev; con != hnode; con = next ) {
-		qstreambuf_t *sb = &con->sendbuf;
 		next = con->prev;
-		sb->write( sb, stream->data( stream ), stream->datalength( stream ) );
+		Diag_Unicast( con, stream );
 	}
 }
 
@@ -493,6 +526,15 @@ void Diag_Exception( const char *sectionName, int line, int col, const char *fun
 	msg_t			   msg;
 	size_t			   head_pos;
 
+	if( !diag_initialized ) {
+		return;
+	}
+	if( !diag_debugging ) {
+		return;
+	}
+
+	diag_stopped = true;
+
 	QStreamBuf_Init( &stream );
 
 	head_pos = Diag_BeginEncodeMsg( &stream );
@@ -506,10 +548,74 @@ void Diag_Exception( const char *sectionName, int line, int col, const char *fun
 	stream.clear( &stream );
 }
 
+bool Diag_Stopped( void ) {
+	if( !diag_debugging ) {
+		diag_stopped = false;
+	}
+	return diag_stopped;
+}
+
+static void Diag_RespBreakFilters( diag_connection_t *con )
+{
+	qstreambuf_t stream;
+	msg_t		 msg;
+	size_t		 head_pos;
+
+	QStreamBuf_Init( &stream );
+
+	head_pos = Diag_BeginEncodeMsg( &stream );
+
+	Diag_EncodeMsg( &stream, &msg, "%i%s%s", 1, "uncaught", "Uncaught Exceptions" );
+
+	Diag_FinishEncodeMsg( &stream, &msg, head_pos, BreakFilters );
+
+	Diag_Unicast( con, &stream );
+
+	stream.clear( &stream );
+}
+
+static void Diag_RespCallStack( diag_connection_t *con )
+{
+	qstreambuf_t stream;
+	msg_t		 msg;
+	size_t		 head_pos;
+	int			 i, stack_size;
+
+	angelwrap_stack_frame_t **stack;
+
+	QStreamBuf_Init( &stream );
+
+	head_pos = Diag_BeginEncodeMsg( &stream );
+
+	stack = Com_asGetCallstack();
+	stack_size = 0;
+	if( stack ) {
+		for( i = 0; stack[i]; i++ )
+			stack_size++;
+	}
+
+	Diag_EncodeMsg( &stream, &msg, "%i", stack_size );
+	for( i = 0; i < stack_size; i++ ){
+		Diag_EncodeMsg( &stream, &msg, "%s%s%i", stack[i]->func, stack[i]->file, stack[i]->line );
+		Mem_Free( stack[i]->file );
+		Mem_Free( stack[i]->func );
+		Mem_Free( stack[i] );
+	}
+	Mem_Free( stack );
+
+	Diag_FinishEncodeMsg( &stream, &msg, head_pos, CallStack );
+
+	Diag_Unicast( con, &stream );
+
+	stream.clear( &stream );
+}
+
 void Diag_Init( void ) {
 	unsigned int i;
 
 	diag_initialized = false;
+	diag_stopped = false;
+	diag_debugging = 0;
 
 #ifdef PUBLIC_BUILD
 	com_diagnostics = Cvar_Get( "com_diagnostics", "0", 0 );
@@ -609,4 +715,6 @@ void Diag_Shutdown( void ) {
 	}
 
 	diag_initialized = false;
+	diag_stopped = false;
+	diag_debugging = 0;
 }

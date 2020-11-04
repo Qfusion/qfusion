@@ -62,6 +62,9 @@ extern struct mempool_s *angelwrappool;
 
 void *QAS_Malloc( size_t size );
 void QAS_Free( void *data );
+char *_QAS_CopyString( const char *in, const char *filename, int fileline );
+
+#define QAS_CopyString( in ) _QAS_CopyString(in,__FILE__, __LINE__)
 
 #define QAS_NEW( x )        new( QAS_Malloc( sizeof( x ) ) )( x )
 #define QAS_DELETE( ptr,x ) {void *tmp = ptr; ( ptr )->~x(); QAS_Free( tmp );}
@@ -73,6 +76,7 @@ int QAS_API( void );
 int QAS_Init( void );
 void QAS_ShutDown( void );
 struct angelwrap_api_s *QAS_GetAngelExport( void );
+angelwrap_stack_frame_t **QAS_GetCallstack( void );
 
 #ifndef _MSC_VER
 void QAS_Printf( const char *format, ... ) __attribute__( ( format( printf, 1, 2 ) ) );
@@ -88,8 +92,10 @@ asIScriptContext *qasAcquireContext( asIScriptEngine *engine );
 void qasReleaseContext( asIScriptContext *ctx );
 void qasReleaseEngine( asIScriptEngine *engine );
 asIScriptContext *qasGetActiveContext( void );
+asIScriptContext *qasGetExceptionContext( void );
 void qasWriteEngineDocsToFile( asIScriptEngine *engine, const char *path, const char *contextName, 
 	bool markdown, bool singleFile,	unsigned andMask, unsigned notMask );
+
 
 // array tools
 CScriptArrayInterface *qasCreateArrayCpp( unsigned int length, void *ot );

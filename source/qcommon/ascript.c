@@ -236,3 +236,15 @@ struct angelwrap_api_s *Com_asGetAngelExport( void ) {
 
 	return ae->asGetAngelExport();
 }
+
+/*
+ * Com_asGetCallstack
+ */
+angelwrap_stack_frame_t **Com_asGetCallstack( void )
+{
+	if( !ae ) {
+		return NULL;
+	}
+
+	return ae->asGetCallstack();
+}
