@@ -80,6 +80,7 @@ typedef struct {
 	void ( *Diag_BeginBuild )( const char **filenames );
 	void ( *Diag_Message )( int severity, const char *filename, int line, int col, const char *text );
 	void ( *Diag_EndBuild )( void );
+	void ( *Diag_Exception )( const char *sectionName, int line, int col, const char *funcDecl, const char *exceptionString );
 } angelwrap_import_t;
 
 typedef struct {

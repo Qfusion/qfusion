@@ -189,4 +189,8 @@ static inline void trap_Diag_EndBuild( void ) {
 	ANGELWRAP_IMPORT.Diag_EndBuild();
 }
 
+static inline void trap_Diag_Exception( const char *sectionName, int line, int col, const char *funcDecl, const char *exceptionString ) {
+	ANGELWRAP_IMPORT.Diag_Exception( sectionName, line, col, funcDecl, exceptionString );
+}
+
 #endif // __QAS_SYSCALLS_H__
