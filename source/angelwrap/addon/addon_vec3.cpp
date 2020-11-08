@@ -304,5 +304,8 @@ void RegisterVec3Addon( asIScriptEngine *engine ) {
 	r = engine->RegisterObjectProperty( "Vec3", "float y", asOFFSET( asvec3_t, v[1] ) ); assert( r >= 0 );
 	r = engine->RegisterObjectProperty( "Vec3", "float z", asOFFSET( asvec3_t, v[2] ) ); assert( r >= 0 );
 
+	asITypeInfo *type = engine->GetTypeInfoByName( "Vec3" );
+	type->SetUserData( &objectVec3_VecToString, 33 );
+
 	(void)sizeof( r ); // hush the compiler
 }
