@@ -46,6 +46,9 @@ void FireWeaponEvent( int entNum, int weapon, int fireMode )
 	PModel @pmodel = @cent.pmodel;
 	SoundHandle @sound = null;
 	WModelInfo @weaponInfo = @cgs.weaponModelInfo[weapon];
+	if( @weaponInfo is null )  {
+		return;
+	}
 
 	// sound
 	if( fireMode == FIRE_MODE_STRONG ) {

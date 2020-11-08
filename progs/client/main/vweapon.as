@@ -236,8 +236,13 @@ class ViewWeapon {
         POVnum = state.POVnum;
         weapon = state.stats[STAT_WEAPON];
 
+        WModelInfo @weaponInfo = null;
+        if( weapon >= WEAP_NONE || weapon < WEAP_TOTAL ) {
+            @weaponInfo = @cgs.weaponModelInfo[weapon];
+        }
+
         // hack cause of missing animation config
-        if( weapon == WEAP_NONE || weapon >= WEAP_TOTAL ) {
+        if( @weaponInfo is null ) {
             ent.frame = ent.oldFrame = 0;
             ent.backLerp = 0.0f;
             eventAnim = 0;
@@ -246,7 +251,6 @@ class ViewWeapon {
         }
 
         baseAnim = BaseanimFromWeaponState( state.weaponState );
-        auto @weaponInfo = @cgs.weaponModelInfo[weapon];
 
         // Full restart
         if( baseAnimStartTime == 0 ) {
