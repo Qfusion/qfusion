@@ -33,6 +33,7 @@ extern "C" QF_DLL_EXPORT angelwrap_export_t * GetAngelwrapAPI( angelwrap_import_
 	globals.Shutdown = QAS_ShutDown;
 	globals.asGetCallstack = QAS_GetCallstack;
 	globals.asGetAngelExport = QAS_GetAngelExport;
+	globals.asGetVariables = QAS_asGetVariables;
 
 	return &globals;
 }

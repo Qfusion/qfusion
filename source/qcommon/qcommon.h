@@ -932,6 +932,7 @@ void Com_ScriptModule_Init( void );
 void Com_ScriptModule_Shutdown( void );
 struct angelwrap_api_s *Com_asGetAngelExport( void );
 struct angelwrap_stack_frame_s **Com_asGetCallstack( void );
+struct angelwrap_variable_s **Com_asGetVariables( int stackLevel, const char *scope );
 
 /*
 ==============================================================
@@ -1003,5 +1004,6 @@ void Diag_Message( int severity, const char *filename, int line, int col, const 
 void Diag_EndBuild( void );
 void Diag_Exception( const char *sectionName, int line, int col, const char *funcDecl, const char *exceptionString );
 bool Diag_Stopped( void );
+void Diag_Stop( bool stop );
 
 #endif // __QCOMMON_H

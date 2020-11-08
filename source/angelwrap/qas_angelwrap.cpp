@@ -33,7 +33,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "addon/addon_filepath.h"
 
 #include <list>
-#include <vector>
 #include <map>
 
 struct qasNamespaceDump {
@@ -371,6 +370,7 @@ static void qasExceptionCallback( asIScriptContext *ctx ) {
 	const char *sectionName, *exceptionString, *funcDecl;
 
 	qasExceptionCtx = ctx;
+
 	line = ctx->GetExceptionLineNumber( &col, &sectionName );
 	func = ctx->GetExceptionFunction();
 	exceptionString = ctx->GetExceptionString();
@@ -659,7 +659,8 @@ asIScriptContext *qasGetActiveContext( void ) {
 
 asIScriptContext *qasGetExceptionContext( void )
 {
-	return qasExceptionCtx;
+	asIScriptContext *ctx = qasExceptionCtx;
+	return ctx;
 }
 
 /*************************************

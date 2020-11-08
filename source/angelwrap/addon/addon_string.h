@@ -26,6 +26,7 @@ asstring_t *objectString_FactoryBuffer( const char *buffer, unsigned int length 
 const asstring_t *objectString_ConstFactoryBuffer( const char *buffer, unsigned int length );
 void objectString_Release( asstring_t *obj );
 asstring_t *objectString_AssignString( asstring_t *self, const char *string, size_t strlen );
+void objectString_Free( const asstring_t *obj );
 
 void PreRegisterStringAddon( asIScriptEngine *engine );
 void RegisterStringAddon( asIScriptEngine *engine );

@@ -230,21 +230,15 @@ void Com_ScriptModule_Init( void ) {
 * Fixme: This should be improved to include some kind of API validation
 */
 struct angelwrap_api_s *Com_asGetAngelExport( void ) {
-	if( !ae ) {
-		return NULL;
-	}
-
-	return ae->asGetAngelExport();
+	return ae ? ae->asGetAngelExport() : NULL;
 }
 
-/*
- * Com_asGetCallstack
- */
 angelwrap_stack_frame_t **Com_asGetCallstack( void )
 {
-	if( !ae ) {
-		return NULL;
-	}
+	return ae ? ae->asGetCallstack() : NULL;
+}
 
-	return ae->asGetCallstack();
+angelwrap_variable_t **Com_asGetVariables( int stackLevel, const char *scope )
+{
+	return ae ? ae->asGetVariables( stackLevel, scope ) : NULL;
 }

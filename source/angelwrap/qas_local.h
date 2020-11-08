@@ -44,6 +44,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include <new>
 #include <string>
+#include <vector>
 
 #if defined ( _WIN32 ) || ( _WIN64 )
 #include <string.h>
@@ -77,6 +78,7 @@ int QAS_Init( void );
 void QAS_ShutDown( void );
 struct angelwrap_api_s *QAS_GetAngelExport( void );
 angelwrap_stack_frame_t **QAS_GetCallstack( void );
+angelwrap_variable_t **QAS_asGetVariables( int stackLevel, const char *scope );
 
 #ifndef _MSC_VER
 void QAS_Printf( const char *format, ... ) __attribute__( ( format( printf, 1, 2 ) ) );
@@ -85,6 +87,8 @@ void QAS_Error( const char *format, ... ) __attribute__( ( format( printf, 1, 2 
 void QAS_Printf( _Printf_format_string_ const char *format, ... );
 __declspec( noreturn ) void QAS_Error( _Printf_format_string_ const char *format, ... );
 #endif
+
+typedef asstring_t *( *qasObjToString_t )( void *obj );
 
 /******* C++ objects *******/
 asIScriptEngine *qasCreateEngine( bool *asMaxPortability );

@@ -607,6 +607,13 @@ void Key_Event( int key, bool down, int64_t time ) {
 		return;
 	}
 
+	if( key == K_F5 && down ) {
+		if( Diag_Stopped() ) {
+			Diag_Stop( false );
+			return;
+		}
+	}
+
 	// menu key is hardcoded, so the user can never unbind it
 	if( key == K_ESCAPE ) {
 		if( !down ) {
