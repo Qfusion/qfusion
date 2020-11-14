@@ -858,7 +858,7 @@ void Qcommon_Frame( unsigned int realMsec ) {
 		return; // an ERR_DROP was thrown
 	}
 
-	if( Diag_Stopped() ) {
+	if( Com_asDiag_Paused() ) {
 		Diag_RunFrame();
 		Sys_Sleep( 20 );
 		return;

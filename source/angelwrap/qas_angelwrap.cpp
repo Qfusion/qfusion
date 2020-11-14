@@ -359,7 +359,7 @@ static void qasMessageCallback( const asSMessageInfo *msg ) {
 			break;
 	}
 
-	trap_Diag_Message( severity, msg->section, msg->row, msg->col, msg->message );
+	Diag_Message( severity, msg->section, msg->row, msg->col, msg->message );
 
 	Com_Printf( "%s%s %d:%d: %s\n", msg_type, msg->section, msg->row, msg->col, msg->message );
 }
@@ -376,7 +376,7 @@ static void qasExceptionCallback( asIScriptContext *ctx ) {
 	exceptionString = ctx->GetExceptionString();
 	funcDecl = ( func ? func->GetDeclaration( true ) : "" );
 
-	trap_Diag_Exception( sectionName, line, col, funcDecl, exceptionString );
+	Diag_Exception( sectionName, line, col, funcDecl, exceptionString );
 
 	Com_Printf( S_COLOR_RED "ASModule::ExceptionCallback:\n%s %d:%d %s: %s\n", sectionName, line, col, funcDecl, exceptionString );
 }
@@ -863,7 +863,7 @@ asIScriptModule *qasLoadScriptProject(
 		memcpy( diagnames[i], fn, fn_size );
 	}
 
-	trap_Diag_BeginBuild( ( const char **)diagnames );
+	Diag_BeginBuild( ( const char **)diagnames );
 
 	for( int i = 0; i < files.size(); i++ ) {
 		QAS_Free( diagnames[i] );
@@ -872,7 +872,7 @@ asIScriptModule *qasLoadScriptProject(
 
 	int error = asModule->Build();
 
-	trap_Diag_EndBuild();
+	Diag_EndBuild();
 
 	if( error ) {
 		QAS_Printf( S_COLOR_RED "* Failed to build script '%s'\n", filename );
