@@ -203,10 +203,91 @@ static void Diag_Listen( socket_t *socket )
 	}
 }
 
+static int Diag_ReadInt8( uint8_t *buf, uint8_t *end, int *res )
+{
+	if( buf + 1 > end )
+		return 0;
+	*res = buf[0];
+	return 1;
+}
+
+static int Diag_ReadInt32( uint8_t *buf, uint8_t *end, int *res )
+{
+	if( buf + 4 > end )
+		return 0;
+	*res = buf[0] | ( buf[1] << 8 ) | ( buf[2] << 16 ) | ( buf[3] << 24 );
+	return 4;
+}
+
+static int Diag_ReadString( uint8_t *buf, uint8_t *end, char **pres )
+{
+	int32_t len;
+	int32_t off = 0;
+	char *res;
+
+	*pres = NULL;
+	if( buf + 4 > end )
+		return 0;
+
+	off += Diag_ReadInt32( buf, end, &len );
+
+	if( buf + off + len > end )
+		return 0;
+
+	res = Mem_TempMalloc( len + 1 );
+	memcpy( res, (char *)( buf + off ), len );
+	res[len] = 0;
+	*pres = res;
+
+	off += len;
+
+	return off;
+}
+
+static int Diag_WriteInt8( uint8_t *buf, uint8_t *end, int val )
+{
+	if( buf + 1 > end )
+		return 0;
+	buf[0] = (uint8_t)val;
+	return 1;
+}
+
+static int Diag_WriteInt32( uint8_t *buf, uint8_t *end, int val )
+{
+	if( buf + 4 > end )
+		return 0;
+	buf[0] = ( uint8_t )( val & 0xff );
+	buf[1] = ( uint8_t )( ( val >> 8 ) & 0xff );
+	buf[2] = ( uint8_t )( ( val >> 16 ) & 0xff );
+	buf[3] = ( uint8_t )( val >> 24 );
+	return 4;
+}
+
+static int Diag_WriteString( uint8_t *buf, uint8_t *end, char *str, size_t len )
+{
+	int32_t off = 0;
+
+	if( !str )
+		return 0;
+
+	if( buf + 4 > end )
+		return 0;
+
+	off += Diag_WriteInt32( buf, end, len );
+
+	if( buf + off + len > end )
+		return 0;
+
+	memcpy( buf + off, str, len );
+	off += len;
+
+	return off;
+}
+
 static bool Diag_PeekMessage( diag_connection_t *con ) {
 	int		 len;
-	msg_t	 msg;
-	size_t	 s;
+	size_t	 s, off;
+	uint8_t *data;
 	qstreambuf_t *rb = &con->recvbuf;
 
 	s = rb->datalength( rb );
@@ -214,17 +295,15 @@ static bool Diag_PeekMessage( diag_connection_t *con ) {
 		return false;
 	}
 
-	MSG_Init( &msg, rb->data( rb ), s );
-	MSG_GetSpace( &msg, msg.maxsize );
-
-	len = MSG_ReadInt32( &msg );
-	return msg.cursize - msg.readcount >= len;
+	data = rb->data( rb );
+	off = Diag_ReadInt32( data, data + s, &len );
+	return s - off >= len;
 }
 
 static void Diag_ReadMessage( diag_connection_t *con ) {
 	int		 len;
-	msg_t	 msg;
-	size_t	 s, rc;
+	uint8_t *data, *end;
+	size_t	 s, off;
 
 	qstreambuf_t *rb = &con->recvbuf;
 	qstreambuf_t  resp;
@@ -237,14 +316,16 @@ static void Diag_ReadMessage( diag_connection_t *con ) {
 
 	QStreamBuf_Init( &resp );
 
-	MSG_Init( &msg, rb->data( rb ), s );
-	MSG_GetSpace( &msg, msg.maxsize );
+	off = 0;
+	data = rb->data( rb );
+	end = data + s;
 
-	len = MSG_ReadInt32( &msg );
-	rc = msg.readcount;
+	off += Diag_ReadInt32( data + off, end, &len );
 
 	if( len != 0 ) {
-		int mt = MSG_ReadUint8( &msg );
+		int mt;
+
+		off += Diag_ReadInt8( data + off, end, &mt );
 
 		switch( mt ) {
 			case StartDebugging:
@@ -274,11 +355,13 @@ static void Diag_ReadMessage( diag_connection_t *con ) {
 				break;
 			case RequestVariables:
 				{
-					char *sep;
-					int c = MSG_ReadInt32( &msg );
-					char *str = Mem_TempMalloc( c + 1 );
-					MSG_ReadData( &msg, str, c );
-					str[c] = 0;
+					char *sep, *str;
+
+					off += Diag_ReadString( data + off, end, &str );
+
+					if( !str ) {
+						break;
+					}
 
 					sep = strchr( str, ':' );
 					if( sep ) {
@@ -292,9 +375,7 @@ static void Diag_ReadMessage( diag_connection_t *con ) {
 		}
 	}
 
-	MSG_SkipData( &msg, len - ( msg.readcount - rc ) );
-
-	rb->consume( rb, msg.readcount );
+	rb->consume( rb, 4 + len );
 
 	if( resp.datalength( &resp ) > 0 ) {
 		Diag_Unicast( con, &resp );
@@ -410,7 +491,7 @@ static size_t Diag_BeginEncodeMsg( qstreambuf_t *stream )
 	return head_pos;
 }
 
-static void Diag_EncodeMsg( qstreambuf_t *stream, msg_t *msg, const char *fmt, ... )
+static void Diag_EncodeMsg( qstreambuf_t *stream, const char *fmt, ... )
 {
 	int	   j;
 	size_t total_len = 0;
@@ -419,13 +500,16 @@ static void Diag_EncodeMsg( qstreambuf_t *stream, msg_t *msg, const char *fmt, .
 		int			i = 0;
 		char *		s = NULL;
 		size_t		s_len;
-		size_t		len = 0;
+		size_t		len = 0, off = 0;
 		va_list		argp;
 		const char *p;
+		uint8_t		*buf = NULL, *end = NULL;
 
 		if( j != 0 ) {
 			stream->prepare( stream, total_len );
-			MSG_Init( msg, stream->buffer( stream ), stream->size( stream ) );
+			buf = stream->buffer( stream );
+			end = buf + stream->size( stream );
+			off = 0;
 		}
 
 		va_start( argp, fmt );
@@ -440,7 +524,7 @@ static void Diag_EncodeMsg( qstreambuf_t *stream, msg_t *msg, const char *fmt, .
 					i = va_arg( argp, int );
 					len += 1;
 					if( j != 0 ) {
-						MSG_WriteUint8( msg, i );
+						off += Diag_WriteInt8( buf + off, end, i );
 					}
 					break;
 				case 's':
@@ -449,8 +533,7 @@ static void Diag_EncodeMsg( qstreambuf_t *stream, msg_t *msg, const char *fmt, .
 					len += 4;
 					len += s_len;
 					if( j != 0 ) {
-						MSG_WriteInt32( msg, s_len );
-						MSG_WriteData( msg, s, s_len );
+						off += Diag_WriteString( buf + off, end, s, s_len );
 					}
 					break;
 				case 'i':
@@ -458,7 +541,7 @@ static void Diag_EncodeMsg( qstreambuf_t *stream, msg_t *msg, const char *fmt, .
 					i = va_arg( argp, int );
 					len += 4;
 					if( j != 0 ) {
-						MSG_WriteInt32( msg, i );
+						off += Diag_WriteInt32( buf + off, end, i );
 					}
 					break;
 			}
@@ -467,7 +550,7 @@ static void Diag_EncodeMsg( qstreambuf_t *stream, msg_t *msg, const char *fmt, .
 		va_end( argp );
 
 		if( j != 0 ) {
-			stream->commit( stream, msg->cursize );
+			stream->commit( stream, off );
 			break;
 		}
 
@@ -475,11 +558,14 @@ static void Diag_EncodeMsg( qstreambuf_t *stream, msg_t *msg, const char *fmt, .
 	}
 }
 
-static void Diag_FinishEncodeMsg( qstreambuf_t *stream, msg_t *msg, size_t head_pos, int type )
+static void Diag_FinishEncodeMsg( qstreambuf_t *stream, size_t head_pos, int type )
 {
-	MSG_Init( msg, stream->data( stream ) + head_pos, 5 );
-	MSG_WriteInt32( msg, ( stream->datalength( stream ) - head_pos - 5 ) );
-	MSG_WriteInt8( msg, type );
+	uint8_t *buf = stream->data( stream ) + head_pos;
+	uint8_t *end = buf + 5;
+	size_t	 off = 0;
+
+	off += Diag_WriteInt32( buf + off, end, ( stream->datalength( stream ) - head_pos - 5 ) );
+	off += Diag_WriteInt8( buf + off, end, type );
 }
 
 void Diag_Message( int severity, const char *filename, int line, int col, const char *text ) {
@@ -509,7 +595,6 @@ void Diag_Message( int severity, const char *filename, int line, int col, const 
 void Diag_EndBuild( void )
 {
 	unsigned int		i, j;
-	msg_t				msg;
 	struct trie_dump_s *dump;
 	qstreambuf_t		stream;
 
@@ -532,17 +617,17 @@ void Diag_EndBuild( void )
 
 		head_pos = Diag_BeginEncodeMsg( &stream );
 
-		Diag_EncodeMsg( &stream, &msg, "%s%i", filename, ml->num_messages );
+		Diag_EncodeMsg( &stream, "%s%i", filename, ml->num_messages );
 
 		for( j = 0; j < ml->num_messages; j++ ) {
 			diag_message_t *dm = &ml->messages[j];
 
-			Diag_EncodeMsg( &stream, &msg, "%s%i%i%i%i", dm->text, dm->line, dm->col, dm->severity > 1, dm->severity == 0 );
+			Diag_EncodeMsg( &stream, "%s%i%i%i%i", dm->text, dm->line, dm->col, dm->severity > 1, dm->severity == 0 );
 
 			Mem_ZoneFree( dm->text );
 		}
 
-		Diag_FinishEncodeMsg( &stream, &msg, head_pos, Diagnostics );
+		Diag_FinishEncodeMsg( &stream, head_pos, Diagnostics );
 
 		Mem_ZoneFree( ml->messages );
 		Mem_ZoneFree( ml );
@@ -560,7 +645,6 @@ void Diag_EndBuild( void )
 static void Diag_Pause_( const char *sectionName, int line, int col, const char *funcDecl, const char *reason, const char *reasonString )
 {
 	qstreambuf_t stream;
-	msg_t		 msg;
 	size_t		 head_pos;
 
 	if( !diag_initialized ) {
@@ -576,9 +660,9 @@ static void Diag_Pause_( const char *sectionName, int line, int col, const char 
 
 	head_pos = Diag_BeginEncodeMsg( &stream );
 
-	Diag_EncodeMsg( &stream, &msg, "%s%i%s", reason, 0, reasonString );
+	Diag_EncodeMsg( &stream, "%s%i%s", reason, 0, reasonString );
 
-	Diag_FinishEncodeMsg( &stream, &msg, head_pos, HasStopped );
+	Diag_FinishEncodeMsg( &stream, head_pos, HasStopped );
 
 	Diag_Broadcast( &stream );
 
@@ -593,14 +677,13 @@ void Diag_Exception( const char *sectionName, int line, int col, const char *fun
 static void Diag_HasContinued( void )
 {
 	qstreambuf_t stream;
-	msg_t		 msg;
 	size_t		 head_pos;
 
 	QStreamBuf_Init( &stream );
 
 	head_pos = Diag_BeginEncodeMsg( &stream );
 
-	Diag_FinishEncodeMsg( &stream, &msg, head_pos, HasContinued );
+	Diag_FinishEncodeMsg( &stream, head_pos, HasContinued );
 
 	Diag_Broadcast( &stream );
 
@@ -627,19 +710,17 @@ bool Diag_Stopped( void ) {
 
 static void Diag_RespBreakFilters( diag_connection_t *con, qstreambuf_t *stream )
 {
-	msg_t		 msg;
 	size_t		 head_pos;
 
 	head_pos = Diag_BeginEncodeMsg( stream );
 
-	Diag_EncodeMsg( stream, &msg, "%i%s%s", 1, "uncaught", "Uncaught Exceptions" );
+	Diag_EncodeMsg( stream, "%i%s%s", 1, "uncaught", "Uncaught Exceptions" );
 
-	Diag_FinishEncodeMsg( stream, &msg, head_pos, BreakFilters );
+	Diag_FinishEncodeMsg( stream, head_pos, BreakFilters );
 }
 
 static void Diag_RespCallStack( diag_connection_t *con, qstreambuf_t *stream )
 {
-	msg_t		 msg;
 	size_t		 head_pos;
 	int			 i, stack_size;
 
@@ -654,21 +735,20 @@ static void Diag_RespCallStack( diag_connection_t *con, qstreambuf_t *stream )
 			stack_size++;
 	}
 
-	Diag_EncodeMsg( stream, &msg, "%i", stack_size );
+	Diag_EncodeMsg( stream, "%i", stack_size );
 	for( i = 0; i < stack_size; i++ ){
-		Diag_EncodeMsg( stream, &msg, "%s%s%i", stack[i]->func, stack[i]->file, stack[i]->line );
+		Diag_EncodeMsg( stream, "%s%s%i", stack[i]->func, stack[i]->file, stack[i]->line );
 		Mem_Free( stack[i]->file );
 		Mem_Free( stack[i]->func );
 		Mem_Free( stack[i] );
 	}
 	Mem_Free( stack );
 
-	Diag_FinishEncodeMsg( stream, &msg, head_pos, CallStack );
+	Diag_FinishEncodeMsg( stream, head_pos, CallStack );
 }
 
 static void Diag_RespVariables( diag_connection_t *con, qstreambuf_t *stream, int level, const char *scope )
 {
-	msg_t		 msg;
 	size_t		 head_pos;
 	int			 i, num_vars = 0;
 
@@ -684,9 +764,9 @@ static void Diag_RespVariables( diag_connection_t *con, qstreambuf_t *stream, in
 			num_vars++;
 	}
 
-	Diag_EncodeMsg( stream, &msg, "%i", num_vars );
+	Diag_EncodeMsg( stream, "%i", num_vars );
 	for( i = 0; i < num_vars; i++ ) {
-		Diag_EncodeMsg( stream, &msg, "%s%s%s%i", vars[i]->name, vars[i]->value, vars[i]->type, (int)vars[i]->hasProperties );
+		Diag_EncodeMsg( stream, "%s%s%s%i", vars[i]->name, vars[i]->value, vars[i]->type, (int)vars[i]->hasProperties );
 		Mem_Free( vars[i]->name );
 		Mem_Free( vars[i]->value );
 		Mem_Free( vars[i]->type );
@@ -694,7 +774,7 @@ static void Diag_RespVariables( diag_connection_t *con, qstreambuf_t *stream, in
 	}
 	Mem_Free( vars );
 
-	Diag_FinishEncodeMsg( stream, &msg, head_pos, Variables );
+	Diag_FinishEncodeMsg( stream, head_pos, Variables );
 }
 
 void Diag_Init( void ) {
