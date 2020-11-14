@@ -207,10 +207,7 @@ void Com_ScriptModule_Init( void ) {
 	import.Mem_FreePool = Com_ScriptModule_MemFreePool;
 	import.Mem_EmptyPool = Com_ScriptModule_MemEmptyPool;
 
-	import.Diag_BeginBuild = Diag_BeginBuild;
-	import.Diag_Message = Diag_Message;
-	import.Diag_EndBuild = Diag_EndBuild;
-	import.Diag_Exception = Diag_Exception;
+	import.Diag_Broadcast = Diag_Broadcast;
 
 	// load the actual library
 	if( !Com_ScriptModule_Load( name, &import ) ) {
@@ -233,12 +230,20 @@ struct angelwrap_api_s *Com_asGetAngelExport( void ) {
 	return ae ? ae->asGetAngelExport() : NULL;
 }
 
-angelwrap_stack_frame_t **Com_asGetCallstack( void )
-{
-	return ae ? ae->asGetCallstack() : NULL;
+void Com_asDiag_Pause( bool pause ) {
+	if( ae )
+		ae->Diag_Pause( pause );
 }
 
-angelwrap_variable_t **Com_asGetVariables( int stackLevel, const char *scope )
-{
-	return ae ? ae->asGetVariables( stackLevel, scope ) : NULL;
+bool Com_asDiag_Paused( void ) {
+	return ae ? ae->Diag_Paused() : false;
+}
+
+bool Com_asDiag_PeekMessage( qstreambuf_t *rb ) {
+	return ae ? ae->Diag_PeekMessage( rb ) : false;
+}
+
+void Com_asDiag_ReadMessage( qstreambuf_t *rb, qstreambuf_t *resp ) {
+	if( ae )
+		ae->Diag_ReadMessage( rb, resp );
 }

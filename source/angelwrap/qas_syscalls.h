@@ -177,20 +177,8 @@ static inline void trap_MemEmptyPool( struct mempool_s *pool, const char *filena
 	ANGELWRAP_IMPORT.Mem_EmptyPool( pool, filename, fileline );
 }
 
-static inline void trap_Diag_BeginBuild( const char **filenames ) {
-	ANGELWRAP_IMPORT.Diag_BeginBuild( filenames );
-}
-
-static inline void trap_Diag_Message( int severity, const char *filename, int line, int col, const char *text ) {
-	ANGELWRAP_IMPORT.Diag_Message( severity, filename, line, col, text );
-}
-
-static inline void trap_Diag_EndBuild( void ) {
-	ANGELWRAP_IMPORT.Diag_EndBuild();
-}
-
-static inline void trap_Diag_Exception( const char *sectionName, int line, int col, const char *funcDecl, const char *exceptionString ) {
-	ANGELWRAP_IMPORT.Diag_Exception( sectionName, line, col, funcDecl, exceptionString );
+static inline void trap_Diag_Broadcast( struct qstreambuf_s *stream ) {
+	ANGELWRAP_IMPORT.Diag_Broadcast( stream );
 }
 
 #endif // __QAS_SYSCALLS_H__

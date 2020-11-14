@@ -23,19 +23,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define ANGELWRAP_API_VERSION   18
 
-typedef struct angelwrap_stack_frame_s {
-	char *file;
-	int	  line;
-	char *func;
-} angelwrap_stack_frame_t;
-
-typedef struct angelwrap_variable_s {
-	char *name;
-	char *value;
-	char *type;
-	bool  hasProperties;
-} angelwrap_variable_t;
-
 typedef struct {
 	void ( *Print )( const char *msg );
 
@@ -90,18 +77,18 @@ typedef struct {
 	void ( *Mem_FreePool )( struct mempool_s **pool, const char *filename, int fileline );
 	void ( *Mem_EmptyPool )( struct mempool_s *pool, const char *filename, int fileline );
 
-	void ( *Diag_BeginBuild )( const char **filenames );
-	void ( *Diag_Message )( int severity, const char *filename, int line, int col, const char *text );
-	void ( *Diag_EndBuild )( void );
-	void ( *Diag_Exception )( const char *sectionName, int line, int col, const char *funcDecl, const char *exceptionString );
+	void ( *Diag_Broadcast )( struct qstreambuf_s *stream );
 } angelwrap_import_t;
 
 typedef struct {
 	int ( *API )( void );
 	int ( *Init )( void );
 	void ( *Shutdown )( void );
-	angelwrap_stack_frame_t **( *asGetCallstack )( void );
-	struct angelwrap_variable_s **( *asGetVariables )( int stackLevel, const char *scope );
+
+	bool ( *Diag_Paused )( void );
+	void ( *Diag_Pause )( bool pause );
+	bool ( *Diag_PeekMessage )( struct qstreambuf_s *rb );
+	void ( *Diag_ReadMessage )( struct qstreambuf_s *rb, struct qstreambuf_s *resp );
 
 	struct angelwrap_api_s *( *asGetAngelExport )( void );
 } angelwrap_export_t;

@@ -931,18 +931,11 @@ WSW ANGEL SCRIPT SYSTEMS
 void Com_ScriptModule_Init( void );
 void Com_ScriptModule_Shutdown( void );
 struct angelwrap_api_s *Com_asGetAngelExport( void );
-struct angelwrap_stack_frame_s **Com_asGetCallstack( void );
-struct angelwrap_variable_s **Com_asGetVariables( int stackLevel, const char *scope );
 
-/*
-==============================================================
-
-ANTICHEAT SYSTEMS
-
-==============================================================
-*/
-bool AC_LoadServerLibrary( void *exports, void *imports );
-bool AC_LoadClientLibrary( void *exports, void *imports );
+void Com_asDiag_Pause( bool pause );
+bool Com_asDiag_Paused( void );
+bool Com_asDiag_PeekMessage( qstreambuf_t *rb );
+void Com_asDiag_ReadMessage( qstreambuf_t *rb, qstreambuf_t *resp );
 
 /*
 ==============================================================
@@ -999,11 +992,6 @@ DIAGNOSTICS
 void Diag_Init();
 void Diag_RunFrame( void  );
 void Diag_Shutdown( void );
-void Diag_BeginBuild( const char **filenames );
-void Diag_Message( int severity, const char *filename, int line, int col, const char *text );
-void Diag_EndBuild( void );
-void Diag_Exception( const char *sectionName, int line, int col, const char *funcDecl, const char *exceptionString );
-bool Diag_Stopped( void );
-void Diag_Stop( bool stop );
+void Diag_Broadcast( qstreambuf_t *stream );
 
 #endif // __QCOMMON_H

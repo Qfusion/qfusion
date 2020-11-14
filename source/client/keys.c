@@ -608,8 +608,8 @@ void Key_Event( int key, bool down, int64_t time ) {
 	}
 
 	if( key == K_F5 && down ) {
-		if( Diag_Stopped() ) {
-			Diag_Stop( false );
+		if( Com_asDiag_Paused() ) {
+			Com_asDiag_Pause( false );
 			return;
 		}
 	}

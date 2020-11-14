@@ -77,8 +77,17 @@ int QAS_API( void );
 int QAS_Init( void );
 void QAS_ShutDown( void );
 struct angelwrap_api_s *QAS_GetAngelExport( void );
-angelwrap_stack_frame_t **QAS_GetCallstack( void );
-angelwrap_variable_t **QAS_asGetVariables( int stackLevel, const char *scope );
+
+void Diag_Pause( bool pause );
+void Diag_Start( void );
+void Diag_Stop( void );
+bool Diag_Paused( void );
+bool Diag_PeekMessage( qstreambuf_t *rb );
+void Diag_ReadMessage( qstreambuf_t *rb, qstreambuf_t *resp );
+void Diag_BeginBuild( const char **filenames );
+void Diag_Message( int severity, const char *filename, int line, int col, const char *text );
+void Diag_EndBuild( void );
+void Diag_Exception( const char *sectionName, int line, int col, const char *funcDecl, const char *exceptionString );
 
 #ifndef _MSC_VER
 void QAS_Printf( const char *format, ... ) __attribute__( ( format( printf, 1, 2 ) ) );
