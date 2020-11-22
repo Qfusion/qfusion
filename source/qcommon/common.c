@@ -858,12 +858,6 @@ void Qcommon_Frame( unsigned int realMsec ) {
 		return; // an ERR_DROP was thrown
 	}
 
-	if( Com_asDiag_Paused() ) {
-		Diag_RunFrame();
-		Sys_Sleep( 20 );
-		return;
-	}
-
 	if( logconsole && logconsole->modified ) {
 		logconsole->modified = false;
 		Com_ReopenConsoleLog();
@@ -970,6 +964,8 @@ void Qcommon_Shutdown( void ) {
 		return;
 	}
 	isdown = true;
+
+	Com_ScriptModule_DiagStop();
 
 	Diag_Shutdown();
 

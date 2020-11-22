@@ -336,6 +336,9 @@ typedef std::map<asIScriptEngine *, qasContextList> qasEngineContextMap;
 
 qasEngineContextMap contexts;
 asIScriptContext *	qasExceptionCtx;
+bool				qasHasLineCallback;
+asSFuncPtr			qasLineCallback;
+int					qasLineCallbackConv;
 
 // ============================================================================
 
@@ -374,11 +377,12 @@ static void qasExceptionCallback( asIScriptContext *ctx ) {
 	line = ctx->GetExceptionLineNumber( &col, &sectionName );
 	func = ctx->GetExceptionFunction();
 	exceptionString = ctx->GetExceptionString();
-	funcDecl = ( func ? func->GetDeclaration( true ) : "" );
+	funcDecl = ( func ? func->GetDeclaration( false ) : "" );
 
-	Diag_Exception( sectionName, line, col, funcDecl, exceptionString );
+	Com_Printf( S_COLOR_RED "ASModule::ExceptionCallback:\n%s %d:%d %s: %s\n", sectionName, line, col, funcDecl,
+		exceptionString );
 
-	Com_Printf( S_COLOR_RED "ASModule::ExceptionCallback:\n%s %d:%d %s: %s\n", sectionName, line, col, funcDecl, exceptionString );
+	Diag_Exception( ctx, sectionName, line, col, exceptionString );
 }
 
 asIScriptEngine *qasCreateEngine( bool *asMaxPortability ) {
@@ -597,6 +601,24 @@ void qasReleaseEngine( asIScriptEngine *engine ) {
 	engine->Release();
 }
 
+static void qasSetLineCallback( asIScriptContext *ctx ) {
+	if( qasHasLineCallback ) {
+		ctx->SetLineCallback( qasLineCallback, ctx, qasLineCallbackConv );
+	} else {
+		ctx->ClearLineCallback();
+	}
+}
+
+static void qasUpdateLineCallbacks( void )
+{
+	for( qasEngineContextMap::iterator it = contexts.begin(); it != contexts.end(); ++it ) {
+		qasContextList &ctxList = it->second;
+		for( qasContextList::iterator cit = ctxList.begin(); cit != ctxList.end(); cit++ ) {
+			qasSetLineCallback( *cit );
+		}
+	}
+}
+
 static asIScriptContext *qasCreateContext( asIScriptEngine *engine ) {
 	asIScriptContext *ctx;
 	int error;
@@ -616,6 +638,8 @@ static asIScriptContext *qasCreateContext( asIScriptEngine *engine ) {
 		ctx->Release();
 		return NULL;
 	}
+
+	qasSetLineCallback( ctx );
 
 	qasContextList &ctxList = contexts[engine];
 	ctxList.push_back( ctx );
@@ -645,6 +669,7 @@ asIScriptContext *qasAcquireContext( asIScriptEngine *engine ) {
 	for( qasContextList::iterator it = ctxList.begin(); it != ctxList.end(); it++ ) {
 		asIScriptContext *ctx = *it;
 		if( ctx->GetState() == asEXECUTION_FINISHED ) {
+			qasSetLineCallback( ctx );
 			return ctx;
 		}
 	}
@@ -662,6 +687,20 @@ asIScriptContext *qasGetExceptionContext( void )
 	asIScriptContext *ctx = qasExceptionCtx;
 	return ctx;
 }
+
+void qasSetLineCallback( asSFuncPtr callback, int callConv )
+{
+	qasHasLineCallback = true;
+	qasLineCallback = callback;
+	qasLineCallbackConv = callConv;
+	qasUpdateLineCallbacks();
+}
+
+void qasClearLineCallback( void )
+{
+	qasHasLineCallback = false;
+	qasUpdateLineCallbacks();
+} 
 
 /*************************************
 * Scripts

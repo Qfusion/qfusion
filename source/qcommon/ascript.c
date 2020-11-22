@@ -38,6 +38,13 @@ static void Com_ScriptModule_Print( const char *msg ) {
 	Com_Printf( "%s", msg );
 }
 
+static void Com_ScriptModule_DiagBreak( void ) {
+	while( Com_asDiag_Paused() ) {
+		Diag_RunFrame();
+		Sys_Sleep( 100 );
+	}
+}
+
 static void *Com_ScriptModule_MemAlloc( mempool_t *pool, size_t size, const char *filename, int fileline ) {
 	return _Mem_Alloc( pool, size, MEMPOOL_ANGELSCRIPT, 0, filename, fileline );
 }
@@ -98,6 +105,13 @@ static void *Com_LoadScriptLibrary( const char *basename, void *parms ) {
 	return NULL;
 }
 
+void Com_ScriptModule_DiagStop( void ) {
+	if( !ae ) {
+		return;
+	}
+	ae->Diag_Stop();
+}
+
 void Com_ScriptModule_Shutdown( void ) {
 	if( !ae ) {
 		return;
@@ -146,16 +160,6 @@ void Com_ScriptModule_Init( void ) {
 	static const char *name = "angelwrap";
 
 	Com_ScriptModule_Shutdown();
-
-	//if( !com_angelscript->integer )
-	//{
-	//	if( verbose )
-	//	{
-	//		Com_Printf( "Not loading angel script module\n" );
-	//		Com_Printf( "------------------------------------\n" );
-	//	}
-	//	return;
-	//}
 
 	Com_Printf( "------- angel script initialization -------\n" );
 
@@ -207,6 +211,7 @@ void Com_ScriptModule_Init( void ) {
 	import.Mem_FreePool = Com_ScriptModule_MemFreePool;
 	import.Mem_EmptyPool = Com_ScriptModule_MemEmptyPool;
 
+	import.Diag_Break = Com_ScriptModule_DiagBreak;
 	import.Diag_Broadcast = Diag_Broadcast;
 
 	// load the actual library

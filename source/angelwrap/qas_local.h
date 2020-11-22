@@ -87,7 +87,8 @@ void Diag_ReadMessage( qstreambuf_t *rb, qstreambuf_t *resp );
 void Diag_BeginBuild( const char **filenames );
 void Diag_Message( int severity, const char *filename, int line, int col, const char *text );
 void Diag_EndBuild( void );
-void Diag_Exception( const char *sectionName, int line, int col, const char *funcDecl, const char *exceptionString );
+void Diag_Exception( asIScriptContext *ctx, const char *sectionName, int line, int col, const char *exceptionString );
+void Diag_Breakpoint( asIScriptContext *ctx, const char *sectionName, int line );
 
 #ifndef _MSC_VER
 void QAS_Printf( const char *format, ... ) __attribute__( ( format( printf, 1, 2 ) ) );
@@ -108,7 +109,8 @@ asIScriptContext *qasGetActiveContext( void );
 asIScriptContext *qasGetExceptionContext( void );
 void qasWriteEngineDocsToFile( asIScriptEngine *engine, const char *path, const char *contextName, 
 	bool markdown, bool singleFile,	unsigned andMask, unsigned notMask );
-
+void qasSetLineCallback( asSFuncPtr callback, int callConv );
+void qasClearLineCallback( void );
 
 // array tools
 CScriptArrayInterface *qasCreateArrayCpp( unsigned int length, void *ot );

@@ -177,6 +177,10 @@ static inline void trap_MemEmptyPool( struct mempool_s *pool, const char *filena
 	ANGELWRAP_IMPORT.Mem_EmptyPool( pool, filename, fileline );
 }
 
+static inline void trap_Diag_Break( void ) {
+	ANGELWRAP_IMPORT.Diag_Break();
+}
+
 static inline void trap_Diag_Broadcast( struct qstreambuf_s *stream ) {
 	ANGELWRAP_IMPORT.Diag_Broadcast( stream );
 }

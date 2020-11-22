@@ -930,6 +930,7 @@ WSW ANGEL SCRIPT SYSTEMS
 
 void Com_ScriptModule_Init( void );
 void Com_ScriptModule_Shutdown( void );
+void Com_ScriptModule_DiagStop( void );
 struct angelwrap_api_s *Com_asGetAngelExport( void );
 
 void Com_asDiag_Pause( bool pause );
