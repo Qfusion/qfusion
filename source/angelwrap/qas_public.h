@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __QAS_PUBLIC_H__
 #define __QAS_PUBLIC_H__
 
-#define ANGELWRAP_API_VERSION   18
+#define ANGELWRAP_API_VERSION   19
 
 typedef struct {
 	void ( *Print )( const char *msg );
@@ -77,6 +77,7 @@ typedef struct {
 	void ( *Mem_FreePool )( struct mempool_s **pool, const char *filename, int fileline );
 	void ( *Mem_EmptyPool )( struct mempool_s *pool, const char *filename, int fileline );
 
+	void ( *Diag_Break )( void );
 	void ( *Diag_Broadcast )( struct qstreambuf_s *stream );
 } angelwrap_import_t;
 
@@ -89,6 +90,7 @@ typedef struct {
 	void ( *Diag_Pause )( bool pause );
 	bool ( *Diag_PeekMessage )( struct qstreambuf_s *rb );
 	void ( *Diag_ReadMessage )( struct qstreambuf_s *rb, struct qstreambuf_s *resp );
+	void ( *Diag_Stop )( void );
 
 	struct angelwrap_api_s *( *asGetAngelExport )( void );
 } angelwrap_export_t;

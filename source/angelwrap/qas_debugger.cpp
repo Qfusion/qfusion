@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <sstream>
 #include <vector>
 #include <map>
+#include <algorithm>
 
 enum DiagMessageType {
 	Diagnostics,
@@ -64,6 +65,28 @@ enum DiagMessageType {
 	Disconnect,
 };
 
+enum DebugAction {
+	CONTINUE,  // continue until next break point
+	STEP_INTO, // stop at next instruction
+	STEP_OVER, // stop at next instruction, skipping called functions
+	STEP_OUT   // run until returning from current function
+};
+DebugAction		   m_action;
+asUINT			   m_lastCommandAtStackLevel;
+
+struct BreakPoint {
+	BreakPoint( std::string f, int n, int id ) : name( f ), lineNbr( n ),  id( id ), needsAdjusting( true ) {
+		file = f;
+		std::replace( file.begin(), file.end(), '\\', '/' );
+	}
+
+	std::string name;
+	int			lineNbr;
+	int			id;
+	bool		needsAdjusting;
+	std::string file;
+};
+
 typedef struct {
 	int	  severity;
 	int	  line, col;
@@ -92,10 +115,18 @@ static std::map < std::string, diag_messagelist_t *> diag_messages;
 
 static bool diag_debugging;
 static bool diag_paused;
+static bool diag_send_exceptions;
+
+static asIScriptContext *diag_context;
+static asIScriptFunction *diag_function;
+
+std::vector<BreakPoint> m_breakPoints;
 
 static void Diag_RespBreakFilters( qstreambuf_t *stream );
 static void Diag_RespCallStack( qstreambuf_t *stream );
 static void Diag_RespVariables( qstreambuf_t *stream, int level, const char *scope );
+static void Diag_HasContinued( void );
+static void	Diag_SetBreakpoint( BreakPoint *bp );
 
 static std::string VarToString(
 	void *value, asUINT typeId, int expandMembers, asIScriptEngine *engine, asUINT stringTypeId )
@@ -363,11 +394,12 @@ static void ListScriptModuleGlobalVarProperties( asIScriptModule *mod, std::vect
 
 std::vector<angelwrap_variable_t> QAS_asGetVariables( int stackLevel, const char *scope_ )
 {
-	asIScriptContext *ctx = qasGetActiveContext();
+	//asIScriptContext *ctx = qasGetActiveContext();
+	asIScriptContext *ctx = 0;
 	std::vector<angelwrap_variable_t> res;
 
 	if( ctx == 0 ) {
-		ctx = qasGetExceptionContext();
+		ctx = diag_context;
 	}
 	if( ctx == 0 ) {
 		return res;
@@ -451,6 +483,100 @@ std::vector<angelwrap_stack_frame_t > QAS_GetCallstack( void )
 	}
 
 	return stack;
+}
+
+bool CheckBreakPoint( asIScriptContext *ctx )
+{
+	if( ctx == 0 )
+		return false;
+
+	const char *tmp = 0;
+	int			lineNbr = ctx->GetLineNumber( 0, 0, &tmp );
+	const char *file = tmp ? tmp : "";
+
+	// Determine if there is a breakpoint at the current line
+	for( size_t n = 0; n < m_breakPoints.size(); n++ ) {
+		if( m_breakPoints[n].lineNbr == lineNbr ) {
+			if( !Q_stricmp( m_breakPoints[n].file.c_str(), file ) ) {
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+void LineCallback( asIScriptContext *ctx )
+{
+	// This should never happen, but it doesn't hurt to validate it
+	if( ctx == 0 ) {
+		assert( ctx );
+		return;
+	}
+
+	// By default we ignore callbacks when the context is not active.
+	// An application might override this to for example disconnect the
+	// debugger as the execution finished.
+	if( ctx->GetState() != asEXECUTION_ACTIVE ) {
+		return;
+	}
+
+	const char *tmp = 0;
+	int			lineNbr = ctx->GetLineNumber( 0, 0, &tmp );
+	const char *file = tmp ? tmp : "";
+
+	asIScriptFunction *func = ctx->GetFunction();
+	if( diag_function != func ) {
+		for( auto it = m_breakPoints.begin(); it != m_breakPoints.end(); ++it ) {
+			BreakPoint &bp = *it;
+
+			if( !bp.needsAdjusting ) {
+				continue;
+			}
+			if( Q_stricmp( bp.file.c_str(), file ) ) {
+				continue;
+			}
+
+			int line = func->FindNextLineWithCode( bp.lineNbr );
+			if( line >= 0 ) {
+				bp.needsAdjusting = false;
+
+				if( bp.lineNbr != line ) {
+					// Move the breakpoint to the next line
+					bp.lineNbr = line;
+					Diag_SetBreakpoint( &bp );
+				}
+			}
+		}
+		diag_function = func;
+	}
+
+	if( m_action == CONTINUE ) {
+		if( !CheckBreakPoint( ctx ) ) {
+			return;
+		}
+	} else if( m_action == STEP_OVER ) {
+		if( ctx->GetCallstackSize() > m_lastCommandAtStackLevel ) {
+			if( !CheckBreakPoint( ctx ) ) {
+				return;
+			}
+		}
+	} else if( m_action == STEP_OUT ) {
+		if( ctx->GetCallstackSize() >= m_lastCommandAtStackLevel ) {
+			if( !CheckBreakPoint( ctx ) ) {
+				return;
+			}
+		}
+	} else if( m_action == STEP_INTO ) {
+		if( CheckBreakPoint( ctx ) ) {
+			return;
+		}
+
+		// Always break, but we call the check break point anyway
+		// to tell user when break point has been reached
+	}
+
+	Diag_Breakpoint( ctx, file, lineNbr );
 }
 
 static int Diag_ReadInt8( uint8_t *buf, uint8_t *end, int *res )
@@ -589,11 +715,51 @@ void Diag_ReadMessage( qstreambuf_t *rb, qstreambuf_t *resp )
 				Diag_RespCallStack( resp );
 				break;
 			case Pause:
+				m_action = STEP_INTO;
 				//Diag_Pause( true );
 				break;
 			case Continue:
+				if( diag_context ) {
+					diag_context->Release();
+					diag_context = NULL;
+				}
+				m_action = CONTINUE;
 				Diag_Pause( false );
 				break;
+			case StepIn:
+				m_action = STEP_INTO;
+				Diag_Pause( false );
+				break;
+			case StepOut:
+				m_action = STEP_OUT;
+				m_lastCommandAtStackLevel = diag_context ? diag_context->GetCallstackSize() : 0;
+				Diag_Pause( false );
+				break;
+			case StepOver:
+				m_action = STEP_OVER;
+				m_lastCommandAtStackLevel = diag_context ? diag_context->GetCallstackSize() : 1;
+				Diag_Pause( false );
+				break;
+			case ClearBreakpoints:
+				m_breakPoints.clear();
+				break;
+			case SetBreakpoint: {
+				char *fn;
+				int	  line, id;
+
+				off += Diag_ReadString( data + off, end, &fn );
+				off += Diag_ReadInt32( data + off, end, &line );
+				off += Diag_ReadInt32( data + off, end, &id );
+
+				if( fn != NULL && id != 0 ) {
+					BreakPoint bp( fn, line, id );
+					m_breakPoints.push_back( bp );
+
+					//Diag_RespSetBreakpoint( resp, bp.name.c_str(), bp.lineNbr, bp.id );
+				}
+
+				QAS_Free( fn );
+			} break;
 			case RequestVariables: {
 				char *sep, *str;
 
@@ -610,6 +776,25 @@ void Diag_ReadMessage( qstreambuf_t *rb, qstreambuf_t *resp )
 				}
 
 				QAS_Free( str );
+			} break;
+			case BreakOptions: {
+				int count;
+
+				diag_send_exceptions = false;
+
+				off += Diag_ReadInt32( data + off, end, &count );
+				for( int i = 0; i < count; i++ ) {
+					char *filter;
+
+					off += Diag_ReadString( data + off, end, &filter );
+
+					if( !strcmp( filter, "uncaught" ) ) {
+						diag_send_exceptions = true;
+					}
+
+					QAS_Free( filter );
+				}
+
 			} break;
 		}
 	}
@@ -779,8 +964,8 @@ void Diag_EndBuild( void )
 	stream.clear( &stream );
 }
 
-static void Diag_Pause_(
-	const char *sectionName, int line, int col, const char *funcDecl, const char *reason, const char *reasonString )
+static void Diag_Pause_( asIScriptContext *ctx,
+	const char *sectionName, int line, int col, const char *reason, const char *reasonString )
 {
 	qstreambuf_t stream;
 	size_t		 head_pos;
@@ -791,6 +976,9 @@ static void Diag_Pause_(
 	if( diag_paused ) {
 		return;
 	}
+
+	diag_context = ctx;
+	ctx->AddRef();
 
 	QStreamBuf_Init( &stream );
 
@@ -803,11 +991,23 @@ static void Diag_Pause_(
 	trap_Diag_Broadcast( &stream );
 
 	stream.clear( &stream );
+
+	Diag_Pause( true );
+
+	trap_Diag_Break();
 }
 
-void Diag_Exception( const char *sectionName, int line, int col, const char *funcDecl, const char *exceptionString )
+void Diag_Exception( asIScriptContext *ctx, const char *sectionName, int line, int col, const char *exceptionString )
 {
-	Diag_Pause_( sectionName, line, col, funcDecl, "exception", exceptionString );
+	if( !diag_send_exceptions ) {
+		return;
+	}
+	Diag_Pause_( ctx, sectionName, line, col, "exception", exceptionString );
+}
+
+void Diag_Breakpoint( asIScriptContext *ctx, const char *sectionName, int line )
+{
+	Diag_Pause_( ctx, sectionName, line, 0, "breakpoint", "" );
 }
 
 static void Diag_HasContinued( void )
@@ -826,11 +1026,27 @@ static void Diag_HasContinued( void )
 	stream.clear( &stream );
 }
 
+static void Diag_SetBreakpoint( BreakPoint *bp )
+{
+	qstreambuf_t stream;
+	size_t		 head_pos;
+
+	QStreamBuf_Init( &stream );
+
+	head_pos = Diag_BeginEncodeMsg( &stream );
+
+	Diag_EncodeMsg( &stream, "%s%i%i", bp->name.c_str(), bp->lineNbr, bp->id );
+
+	Diag_FinishEncodeMsg( &stream, head_pos, SetBreakpoint );
+
+	trap_Diag_Broadcast( &stream );
+
+	stream.clear( &stream );
+}
+
 static void Diag_RespBreakFilters( qstreambuf_t *stream )
 {
-	size_t head_pos;
-
-	head_pos = Diag_BeginEncodeMsg( stream );
+	size_t head_pos = Diag_BeginEncodeMsg( stream );
 
 	Diag_EncodeMsg( stream, "%i%s%s", 1, "uncaught", "Uncaught Exceptions" );
 
@@ -878,7 +1094,9 @@ void Diag_Start( void )
 	if( diag_debugging ) {
 		return;
 	}
+
 	diag_debugging = true;
+	qasSetLineCallback( asFUNCTION( LineCallback ), asCALL_CDECL );
 }
 
 void Diag_Pause( bool pause )
@@ -901,6 +1119,13 @@ void Diag_Stop( void )
 	if( !diag_debugging ) {
 		return;
 	}
+
+	if( diag_context ) {
+		diag_context->Release();
+		diag_context = NULL;
+	}
+
+	qasClearLineCallback();
 	diag_debugging = false;
 }
 

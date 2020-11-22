@@ -37,6 +37,7 @@ extern "C" QF_DLL_EXPORT angelwrap_export_t * GetAngelwrapAPI( angelwrap_import_
 	globals.Diag_Paused = Diag_Paused;
 	globals.Diag_PeekMessage = Diag_PeekMessage;
 	globals.Diag_ReadMessage = Diag_ReadMessage;
+	globals.Diag_Stop = Diag_Stop;
 
 	return &globals;
 }
