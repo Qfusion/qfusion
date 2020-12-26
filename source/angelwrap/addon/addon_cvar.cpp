@@ -164,6 +164,15 @@ static const asstring_t *objectCVar_getLatchedString( ascvar_t *self ) {
 	return objectString_ConstFactoryBuffer( self->cvar->latched_string, strlen( self->cvar->latched_string ) );
 }
 
+// same as vtos
+static asstring_t *objectCVar_ToString( ascvar_t *self )
+{
+	if( !self->cvar || !self->cvar->string ) {
+		return objectString_FactoryBuffer( NULL, 0 );
+	}
+	return objectString_FactoryBuffer( self->cvar->string, strlen( self->cvar->string ) );
+}
+
 void PreRegisterCvarAddon( asIScriptEngine *engine ) {
 	int r;
 
@@ -206,6 +215,9 @@ void RegisterCvarAddon( asIScriptEngine *engine ) {
 	r = engine->RegisterObjectMethod( "Cvar", "const String @ get_string() const", asFUNCTION( objectCVar_getString ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "Cvar", "const String @ get_defaultString() const", asFUNCTION( objectCVar_getDefaultString ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "Cvar", "const String @ get_latchedString() const", asFUNCTION( objectCVar_getLatchedString ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
+
+	asITypeInfo *type = engine->GetTypeInfoByName( "Cvar" );
+	type->SetUserData( &objectCVar_ToString, 33 );
 
 	// enums
 	r = engine->RegisterEnumValue( "eCvarFlag", "CVAR_ARCHIVE", CVAR_ARCHIVE ); assert( r >= 0 );

@@ -215,7 +215,7 @@ static float *objectVec3_Index( unsigned index, asvec3_t *self ) {
 	return &self->v[index];
 }
 
-static CScriptArrayInterface *objectVec3_VecToArray( unsigned index, asvec3_t *self )
+static CScriptArrayInterface *objectVec3_ToArray( unsigned index, asvec3_t *self )
 {
 	asIScriptContext *ctx = asGetActiveContext();
 	asIScriptEngine *engine = ctx->GetEngine();
@@ -230,10 +230,10 @@ static CScriptArrayInterface *objectVec3_VecToArray( unsigned index, asvec3_t *s
 }
 
 // same as vtos
-static asstring_t *objectVec3_VecToString( asvec3_t *self )
+static asstring_t *objectVec3_ToString( asvec3_t *self )
 {
 	char s[32];
-	int len = Q_snprintfz( s, 32, "(%+6.3f %+6.3f %+6.3f)", self->v[0], self->v[1], self->v[2] );
+	int len = Q_snprintfz( s, sizeof( s ), "(%+6.3f %+6.3f %+6.3f)", self->v[0], self->v[1], self->v[2] );
 	return objectString_FactoryBuffer( s, len );
 }
 
@@ -294,8 +294,8 @@ void RegisterVec3Addon( asIScriptEngine *engine ) {
 	r = engine->RegisterObjectMethod( "Vec3", "float &opIndex(uint)", asFUNCTION( objectVec3_Index ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "Vec3", "const float &opIndex(uint) const", asFUNCTION( objectVec3_Index ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 
-	r = engine->RegisterObjectMethod( "Vec3", "array<float> @toArray() const", asFUNCTION( objectVec3_VecToArray ), asCALL_CDECL_OBJLAST );
-	r = engine->RegisterObjectMethod( "Vec3", "String @toString() const", asFUNCTION( objectVec3_VecToString ), asCALL_CDECL_OBJLAST );
+	r = engine->RegisterObjectMethod( "Vec3", "array<float> @toArray() const", asFUNCTION( objectVec3_ToArray ), asCALL_CDECL_OBJLAST );
+	r = engine->RegisterObjectMethod( "Vec3", "String @toString() const", asFUNCTION( objectVec3_ToString ), asCALL_CDECL_OBJLAST );
 
 	assert( r >= 0 );
 
@@ -305,7 +305,7 @@ void RegisterVec3Addon( asIScriptEngine *engine ) {
 	r = engine->RegisterObjectProperty( "Vec3", "float z", asOFFSET( asvec3_t, v[2] ) ); assert( r >= 0 );
 
 	asITypeInfo *type = engine->GetTypeInfoByName( "Vec3" );
-	type->SetUserData( &objectVec3_VecToString, 33 );
+	type->SetUserData( &objectVec3_ToString, 33 );
 
 	(void)sizeof( r ); // hush the compiler
 }
