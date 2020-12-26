@@ -208,10 +208,12 @@ static std::string VarToString(
 	return s.str();
 }
 
-static bool ScriptVarHasProperties( void *ptr, int typeId )
+static bool ScriptVarHasProperties( asIScriptEngine *engine, void *ptr, int typeId )
 {
-	if( !( typeId & asTYPEID_SCRIPTOBJECT ) )
-		return false;
+	if( !( typeId & asTYPEID_SCRIPTOBJECT ) ) {
+		asITypeInfo *type = engine->GetTypeInfoById( typeId );
+		return type ? type->GetPropertyCount() > 0 : false;
+	}
 
 	// Dereference handles, so we can see what it points to
 	if( typeId & asTYPEID_OBJHANDLE )
@@ -226,7 +228,7 @@ static void FillScriptVarInfo(
 {
 	var.value = VarToString( ptr, typeId, 0, engine, stringTypeId ).c_str();
 	var.type = engine->GetTypeDeclaration( typeId );
-	var.hasProperties = ScriptVarHasProperties( ptr, typeId );
+	var.hasProperties = ScriptVarHasProperties( engine, ptr, typeId );
 }
 
 static void GetScriptVarProperty(
@@ -266,9 +268,6 @@ static void ListScriptVarProperties( void *ptr, int typeId, std::vector<angelwra
 	int			pTypeId = 0;
 
 	while( !path.empty() ) {
-		if( ( typeId & asTYPEID_SCRIPTOBJECT ) != asTYPEID_SCRIPTOBJECT ) {
-			return;
-		}
 		if( typeId & asTYPEID_OBJHANDLE ) {
 			ptr = *(void **)ptr;
 		}
@@ -292,11 +291,12 @@ static void ListScriptVarProperties( void *ptr, int typeId, std::vector<angelwra
 		}
 	}
 
-	if( ( typeId & asTYPEID_SCRIPTOBJECT ) != asTYPEID_SCRIPTOBJECT ) {
-		return;
-	}
 	if( typeId & asTYPEID_OBJHANDLE ) {
 		ptr = *(void **)ptr;
+	}
+
+	if( !ptr ) {
+		return;
 	}
 
 	asUINT stringTypeId = engine->GetStringFactoryReturnTypeId();
