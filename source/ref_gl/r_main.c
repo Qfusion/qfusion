@@ -1229,7 +1229,6 @@ add:
 */
 static void R_DrawEntities( void ) {
 	unsigned int i;
-	int lod;
 	entity_t *e;
 	entSceneCache_t *cache;
 
@@ -1237,20 +1236,14 @@ static void R_DrawEntities( void ) {
 		e = R_NUM2ENT( rn.entities[i] );
 		cache = R_ENTCACHE( e );
 
-		lod = 0;
-		if( !(e->flags & RF_FORCENOLOD ) ) {
-			float dist = BoundsNearestDistance( rn.lodOrigin, cache->absmins, cache->absmaxs );
-			lod = R_ComputeLOD( dist, cache->radius, rn.lodScale, rn.lodBias );
-		}
-
 		switch( e->rtype ) {
 		case RT_MODEL:
 			switch( cache->mod_type ) {
 			case mod_alias:
-				R_AddAliasModelToDrawList( e, lod );
+				R_AddAliasModelToDrawList( e );
 				break;
 			case mod_skeletal:
-				R_AddSkeletalModelToDrawList( e, lod );
+				R_AddSkeletalModelToDrawList( e );
 				break;
 			case mod_brush:
 				R_AddBrushModelToDrawList( e );

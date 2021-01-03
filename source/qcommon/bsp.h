@@ -48,7 +48,6 @@ typedef struct {
 	const char *header;
 	int headerLen;
 	const bspFormatDesc_t *bspFormats;
-	int maxLods;
 	modelLoader_t loader;
 } modelFormatDescr_t;
 

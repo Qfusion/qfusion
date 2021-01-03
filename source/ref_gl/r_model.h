@@ -377,8 +377,6 @@ typedef struct mskmodel_s {
 typedef enum { mod_bad = -1, mod_free, mod_brush, mod_alias, mod_skeletal, mod_sprite } modtype_t;
 typedef void ( *mod_touch_t )( struct model_s *model );
 
-#define MOD_MAX_LODS    4
-
 typedef struct model_s {
 	char            *name;
 	int registrationSequence;
@@ -396,10 +394,6 @@ typedef struct model_s {
 	// memory representation pointer
 	//
 	void            *extradata;
-
-	int lodnum;                 // LOD index, 0 for parent model, 1..MOD_MAX_LODS for LOD models
-	int numlods;
-	struct model_s  *lods[MOD_MAX_LODS];
 
 	mempool_t       *mempool;
 } model_t;

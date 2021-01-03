@@ -45,7 +45,7 @@ static void R_LoadWorldRtSkyLights( model_t *model );
 
 static uint8_t mod_novis[MAX_MAP_LEAFS / 8];
 
-#define MAX_MOD_KNOWN   512 * MOD_MAX_LODS
+#define MAX_MOD_KNOWN   512
 static model_t mod_known[MAX_MOD_KNOWN];
 static int mod_numknown;
 static int modfilelen;
@@ -58,22 +58,22 @@ static mempool_t *mod_mempool;
 static const modelFormatDescr_t mod_supportedformats[] =
 {
 	// Quake III Arena .md3 models
-	{ IDMD3HEADER, 4, NULL, MOD_MAX_LODS, ( const modelLoader_t )Mod_LoadAliasMD3Model },
+	{ IDMD3HEADER, 4, NULL, ( const modelLoader_t )Mod_LoadAliasMD3Model },
 
 	// Skeletal models
-	{ IQM_MAGIC, sizeof( IQM_MAGIC ), NULL, MOD_MAX_LODS, ( const modelLoader_t )Mod_LoadSkeletalModel },
+	{ IQM_MAGIC, sizeof( IQM_MAGIC ), NULL, ( const modelLoader_t )Mod_LoadSkeletalModel },
 
 	// Q3-alike .bsp models
-	{ "*", 4, q3BSPFormats, 0, ( const modelLoader_t )Mod_LoadQ3BrushModel },
+	{ "*", 4, q3BSPFormats, ( const modelLoader_t )Mod_LoadQ3BrushModel },
 
 	// Q2 .bsp models
-	{ "*", 4, q2BSPFormats, 0, ( const modelLoader_t )Mod_LoadQ2BrushModel },
+	{ "*", 4, q2BSPFormats, ( const modelLoader_t )Mod_LoadQ2BrushModel },
 
 	// Q1 .bsp models
-	{ "*", 0, q1BSPFormats, 0, ( const modelLoader_t )Mod_LoadQ1BrushModel },
+	{ "*", 0, q1BSPFormats, ( const modelLoader_t )Mod_LoadQ1BrushModel },
 
 	// trailing NULL
-	{ NULL, 0, NULL, 0, NULL }
+	{ NULL, 0, NULL, NULL }
 };
 
 //===============================================================================
@@ -894,7 +894,7 @@ void Mod_StripLODSuffix( char *name ) {
 		return;
 	}
 
-	if( name[len - 1] >= '0' && name[len - 1] <= '0' + MOD_MAX_LODS ) {
+	if( name[len - 1] >= '0' && name[len - 1] <= '9' ) {
 		name[len - 2] = 0;
 	}
 }
@@ -957,10 +957,9 @@ model_t *Mod_ForHandle( unsigned int elem ) {
 * Loads in a model for the given name
 */
 model_t *Mod_ForName( const char *name, bool crash ) {
-	int i;
-	model_t *mod, *lod;
+	model_t *mod;
 	unsigned *buf;
-	char shortname[MAX_QPATH], lodname[MAX_QPATH];
+	char shortname[MAX_QPATH];
 	const char *extension;
 	const modelFormatDescr_t *descr;
 	bspFormatDesc_t *bspFormat = NULL;
@@ -1058,40 +1057,6 @@ model_t *Mod_ForName( const char *name, bool crash ) {
 		r_lighting_realtime_sky_direction->modified = false;
 	}
 
-	if( !descr->maxLods ) {
-		return mod;
-	}
-
-	//
-	// load level-of-detail models
-	//
-	mod->lodnum = 0;
-	mod->numlods = 0;
-	for( i = 0; i < descr->maxLods; i++ ) {
-		Q_snprintfz( lodname, sizeof( lodname ), "%s_%i.%s", shortname, i + 1, extension );
-		R_LoadFile( lodname, (void **)&buf );
-		if( !buf || strncmp( (const char *)buf, descr->header, descr->headerLen ) ) {
-			break;
-		}
-
-		lod = mod->lods[i] = Mod_FindSlot( lodname );
-		if( lod->name && !strcmp( lod->name, lodname ) ) {
-			continue;
-		}
-
-		lod->type = mod_bad;
-		lod->lodnum = i + 1;
-		lod->mempool = R_AllocPool( mod_mempool, lodname );
-		lod->name = Mod_Malloc( lod, strlen( lodname ) + 1 );
-		strcpy( lod->name, lodname );
-
-		mod_numknown++;
-
-		descr->loader( lod, mod, buf, bspFormat );
-		R_FreeFile( buf );
-
-		mod->numlods++;
-	}
 
 	return mod;
 }
@@ -1100,9 +1065,6 @@ model_t *Mod_ForName( const char *name, bool crash ) {
 * R_TouchModel
 */
 static void R_TouchModel( model_t *mod ) {
-	int i;
-	model_t *lod;
-
 	if( mod->registrationSequence == rsh.registrationSequence ) {
 		return;
 	}
@@ -1111,15 +1073,6 @@ static void R_TouchModel( model_t *mod ) {
 	mod->registrationSequence = rsh.registrationSequence;
 	if( mod->touch ) {
 		mod->touch( mod );
-	}
-
-	// handle Level Of Details
-	for( i = 0; i < mod->numlods; i++ ) {
-		lod = mod->lods[i];
-		lod->registrationSequence = rsh.registrationSequence;
-		if( lod->touch ) {
-			lod->touch( lod );
-		}
 	}
 }
 

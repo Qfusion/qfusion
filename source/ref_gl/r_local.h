@@ -182,7 +182,6 @@ typedef struct refinst_s {
 
 	int viewcluster, viewarea;
 
-	vec3_t lodOrigin;
 	vec3_t pvsOrigin;
 	cplane_t clipPlane;
 
@@ -196,9 +195,6 @@ typedef struct refinst_s {
 	mat4_t modelviewProjectionMatrix;               // modelviewMatrix * projectionMatrix
 
 	drawSurfaceSky_t skyDrawSurface;
-
-	int lodBias;
-	float lodScale;
 
 	unsigned int numPortalSurfaces;
 	unsigned int numDepthPortalSurfaces;
@@ -477,9 +473,6 @@ extern cvar_t *r_fxaa;
 extern cvar_t *r_samples;
 extern cvar_t *r_samples2D;
 
-extern cvar_t *r_lodbias;
-extern cvar_t *r_lodscale;
-
 extern cvar_t *r_gamma;
 extern cvar_t *r_texturemode;
 extern cvar_t *r_texturefilter;
@@ -529,7 +522,7 @@ void R_LatLongToNorm4( const uint8_t latlong[2], vec4_t out );
 // r_alias.c
 //
 void	R_CacheAliasModelEntity( const entity_t *e );
-bool    R_AddAliasModelToDrawList( const entity_t *e, int lod );
+bool    R_AddAliasModelToDrawList( const entity_t *e );
 void    R_DrawAliasSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, int lightStyleNum, 
 	const portalSurface_t *portalSurface, drawSurfaceAlias_t *drawSurf );
 bool    R_AliasModelLerpTag( orientation_t *orient, const maliasmodel_t *aliasmodel, int framenum, int oldframenum,
@@ -840,7 +833,7 @@ shader_t    *R_FindShaderForSkinFile( const struct skinfile_s *skinfile, const c
 // r_skm.c
 //
 void	R_CacheSkeletalModelEntity( const entity_t *e );
-bool    R_AddSkeletalModelToDrawList( const entity_t *e, int lod );
+bool    R_AddSkeletalModelToDrawList( const entity_t *e );
 void    R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, int lightStyleNum, 
 	const portalSurface_t *portalSurface, drawSurfaceSkeletal_t *drawSurf );
 void        R_SkeletalModelFrameBounds( const model_t *mod, int frame, vec3_t mins, vec3_t maxs );

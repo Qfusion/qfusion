@@ -689,9 +689,9 @@ void R_CacheAliasModelEntity( const entity_t *e ) {
 *
 * Returns true if the entity is added to draw list
 */
-bool R_AddAliasModelToDrawList( const entity_t *e, int lod ) {
+bool R_AddAliasModelToDrawList( const entity_t *e ) {
 	int i, j;
-	const model_t *mod = lod < e->model->numlods ? e->model->lods[lod] : e->model;
+	const model_t *mod = e->model;
 	const maliasmodel_t *aliasmodel;
 	const mfog_t *fog;
 	const maliasmesh_t *mesh;

@@ -37,16 +37,16 @@ void CM_LoadQ3BrushModel( cmodel_state_t *cms, void *parent, void *buffer, bspFo
 static const modelFormatDescr_t cm_supportedformats[] =
 {
 	// Q3-alike .bsp models
-	{ "*", 4, q3BSPFormats, 0, ( const modelLoader_t )CM_LoadQ3BrushModel },
+	{ "*", 4, q3BSPFormats, ( const modelLoader_t )CM_LoadQ3BrushModel },
 
 	// Q2-alike .bsp models
-	{ "*", 4, q2BSPFormats, 0, ( const modelLoader_t )CM_LoadQ2BrushModel },
+	{ "*", 4, q2BSPFormats, ( const modelLoader_t )CM_LoadQ2BrushModel },
 
 	// Q1-alike .bsp models
-	{ "*", 0, q1BSPFormats, 0, ( const modelLoader_t )CM_LoadQ1BrushModel },
+	{ "*", 0, q1BSPFormats, ( const modelLoader_t )CM_LoadQ1BrushModel },
 
 	// trailing NULL
-	{ NULL, 0, NULL, 0, NULL }
+	{ NULL, 0, NULL, NULL }
 };
 
 static void CM_AllocateCheckCounts( cmodel_state_t *cms );

@@ -344,7 +344,7 @@ static void R_ComputeShadowCascades( const refinst_t *rpn, rtlight_t *l, int bor
 	}
 
 	nearClip = rpn->nearClip;
-	farClip = BoundsFurthestDistance( rpn->lodOrigin, l->worldmins, l->worldmaxs );
+	farClip = BoundsFurthestDistance( rpn->viewOrigin, l->worldmins, l->worldmaxs );
 
 	zRange = farClip - nearClip;
 	zRatio = farClip / nearClip;
@@ -535,15 +535,12 @@ static void R_DrawRtLightShadow( rtlight_t *l, image_t *target, int sideMask, bo
 	rnp->meshlist = &r_shadowlist;
 	rnp->portalmasklist = &r_shadowportallist;
 	rnp->parent = prevrn;
-	rnp->lodBias = r_shadows_lodbias->integer;
-	rnp->lodScale = 1;
 	rnp->numDepthPortalSurfaces = 0;
 	rnp->numRtLightEntities = l->numShadowEnts;
 	rnp->rtLightEntities = l->shadowEnts;
 	rnp->rtLightSurfaceInfo = l->surfaceInfo;
 	rnp->numRtLightVisLeafs = l->numVisLeafs;
 	rnp->rtLightVisLeafs = l->visLeafs;
-	VectorCopy( l->origin, rnp->lodOrigin );
 	VectorCopy( l->origin, rnp->pvsOrigin );
 
 	if( l->sky ) {
