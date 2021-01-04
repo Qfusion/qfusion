@@ -120,9 +120,6 @@ cvar_t *r_fxaa;
 cvar_t *r_samples;
 cvar_t *r_samples2D;
 
-cvar_t *r_lodbias;
-cvar_t *r_lodscale;
-
 cvar_t *r_stencilbits;
 cvar_t *r_gamma;
 cvar_t *r_texturemode;
