@@ -125,6 +125,7 @@ std::vector<BreakPoint> m_breakPoints;
 static void Diag_RespBreakFilters( qstreambuf_t *stream );
 static void Diag_RespCallStack( qstreambuf_t *stream );
 static void Diag_RespVariables( qstreambuf_t *stream, int level, const char *scope );
+static void Diag_RespEvaluate( qstreambuf_t *stream, int level, const char *expr );
 static void Diag_HasContinued( void );
 static void	Diag_SetBreakpoint( BreakPoint *bp );
 
@@ -260,12 +261,13 @@ static void GetScriptVarProperty(
 	*ptypeId = typeId;
 }
 
-static void ListScriptVarProperties( void *ptr, int typeId, std::vector<angelwrap_variable_t> &res,
-	asIScriptEngine *engine, std::vector<std::string> &path )
+static void ListScriptVarProperties( const std::string &pname, void *ptr, int typeId, std::vector<angelwrap_variable_t> &res,
+	asIScriptEngine *engine, std::vector<std::string> &path, bool evaluate = false )
 {
 	const char *propName = 0;
 	void *		pPtr = 0;
 	int			pTypeId = 0;
+	std::string name = pname;
 
 	while( !path.empty() ) {
 		if( typeId & asTYPEID_OBJHANDLE ) {
@@ -280,6 +282,7 @@ static void ListScriptVarProperties( void *ptr, int typeId, std::vector<angelwra
 			if( propName != path[0] )
 				continue;
 
+			name = path[0];
 			ptr = pPtr;
 			typeId = pTypeId;
 			path.erase( path.begin() );
@@ -291,6 +294,20 @@ static void ListScriptVarProperties( void *ptr, int typeId, std::vector<angelwra
 		}
 	}
 
+	asUINT stringTypeId = engine->GetStringFactoryReturnTypeId();
+
+	if( evaluate ) {
+		if( !ptr ) {
+			return;
+		}
+
+		angelwrap_variable_t var;
+		var.name = name;
+		FillScriptVarInfo( ptr, typeId, engine, stringTypeId, var );
+		res.push_back( var );
+		return;
+	}
+
 	if( typeId & asTYPEID_OBJHANDLE ) {
 		ptr = *(void **)ptr;
 	}
@@ -299,9 +316,11 @@ static void ListScriptVarProperties( void *ptr, int typeId, std::vector<angelwra
 		return;
 	}
 
-	asUINT stringTypeId = engine->GetStringFactoryReturnTypeId();
-
 	asITypeInfo *type = engine->GetTypeInfoById( typeId );
+	if( !type ) {
+		return;
+	}
+
 	for( asUINT n = 0; n < type->GetPropertyCount(); n++ ) {
 		GetScriptVarProperty( n, ptr, type, &propName, &pPtr, &pTypeId );
 
@@ -331,7 +350,7 @@ static void ListScriptFuncLocals( asIScriptContext *ctx, int stackLevel, asIScri
 }
 
 static void ListScriptFuncLocalVarProperties( asIScriptContext *ctx, int stackLevel, asIScriptFunction *func,
-	std::vector<angelwrap_variable_t> &res, asIScriptEngine *engine, std::vector<std::string> &path )
+	std::vector<angelwrap_variable_t> &res, asIScriptEngine *engine, std::vector<std::string> &path, bool evaluate = false )
 {
 	if( path.empty() ) {
 		return;
@@ -345,11 +364,12 @@ static void ListScriptFuncLocalVarProperties( asIScriptContext *ctx, int stackLe
 			continue;
 		}
 
+		std::string name = path[0];
 		void *ptr = ctx->GetAddressOfVar( n, stackLevel );
 		int	  typeId = ctx->GetVarTypeId( n, stackLevel );
 		path.erase( path.begin() );
 
-		ListScriptVarProperties( ptr, typeId, res, engine, path );
+		ListScriptVarProperties( name, ptr, typeId, res, engine, path, evaluate );
 		return;
 	}
 }
@@ -374,25 +394,27 @@ static void ListScriptModuleGlobals(
 }
 
 static void ListScriptModuleGlobalVarProperties( asIScriptModule *mod, std::vector<angelwrap_variable_t> &res,
-	asIScriptEngine *engine, std::vector<std::string> &path )
+	asIScriptEngine *engine, std::vector<std::string> &path, bool evaluate = false )
 {
+	std::string name = path[0];
+	
 	for( asUINT n = 0; n < mod->GetGlobalVarCount(); n++ ) {
 		void *		ptr = mod->GetAddressOfGlobalVar( n );
 		int			typeId = 0;
-		const char *name;
+		const char *pname;
 
-		mod->GetGlobalVar( n, &name, NULL, &typeId );
-		if( path[0] != name ) {
+		mod->GetGlobalVar( n, &pname, NULL, &typeId );
+		if( pname != name ) {
 			continue;
 		}
 
 		path.erase( path.begin() );
-		ListScriptVarProperties( ptr, typeId, res, engine, path );
+		ListScriptVarProperties( pname, ptr, typeId, res, engine, path, evaluate );
 		return;
 	}
 }
 
-std::vector<angelwrap_variable_t> QAS_asGetVariables( int stackLevel, const char *scope_ )
+std::vector<angelwrap_variable_t> QAS_asGetVariables( int stackLevel, std::string &scope, bool evaluate )
 {
 	//asIScriptContext *ctx = qasGetActiveContext();
 	asIScriptContext *ctx = 0;
@@ -409,7 +431,6 @@ std::vector<angelwrap_variable_t> QAS_asGetVariables( int stackLevel, const char
 	asIScriptFunction *func = ctx->GetFunction( stackLevel );
 	asIScriptModule *  mod = func->GetModule();
 
-	std::string				 scope( scope_ );
 	std::vector<std::string> path;
 	size_t					 pos = scope.find( "%", 1 );
 	if( pos != std::string::npos ) {
@@ -434,21 +455,23 @@ std::vector<angelwrap_variable_t> QAS_asGetVariables( int stackLevel, const char
 		if( path.empty() ) {
 			ListScriptFuncLocals( ctx, stackLevel, func, res, engine );
 		} else {
-			ListScriptFuncLocalVarProperties( ctx, stackLevel, func, res, engine, path );
+			ListScriptFuncLocalVarProperties( ctx, stackLevel, func, res, engine, path, evaluate );
 		}
 	} else if( scope.rfind( "%this%" ) == 0 ) {
+		std::string name( "this" );
+
 		path.clear();
 
 		if( func->GetObjectType() ) {
-			ListScriptVarProperties(
-				ctx->GetThisPointer( stackLevel ), ctx->GetThisTypeId( stackLevel ), res, engine, path );
+			ListScriptVarProperties( name,
+				ctx->GetThisPointer( stackLevel ), ctx->GetThisTypeId( stackLevel ), res, engine, path, evaluate );
 		}
 	} else if( scope.rfind( "%module%" ) == 0 ) {
 		if( mod ) {
 			if( path.empty() ) {
 				ListScriptModuleGlobals( mod, res, engine );
 			} else {
-				ListScriptModuleGlobalVarProperties( mod, res, engine, path );
+				ListScriptModuleGlobalVarProperties( mod, res, engine, path, evaluate );
 			}
 		}
 	}
@@ -796,6 +819,17 @@ void Diag_ReadMessage( qstreambuf_t *rb, qstreambuf_t *resp )
 				}
 
 			} break;
+			case RequestEvaluate: {
+				char *expr;
+				int	  frame;
+
+				off += Diag_ReadString( data + off, end, &expr );
+				off += Diag_ReadInt32( data + off, end, &frame );
+
+				Diag_RespEvaluate( resp, frame, expr );
+
+				QAS_Free( expr );
+			} break;
 		}
 	}
 
@@ -1071,14 +1105,15 @@ static void Diag_RespCallStack( qstreambuf_t *stream )
 	Diag_FinishEncodeMsg( stream, head_pos, CallStack );
 }
 
-static void Diag_RespVariables( qstreambuf_t *stream, int level, const char *scope )
+static void Diag_RespVariables( qstreambuf_t *stream, int level, const char *scope_ )
 {
 	size_t head_pos;
 	int	   i, num_vars = 0;
 
 	head_pos = Diag_BeginEncodeMsg( stream );
 
-	auto vars = QAS_asGetVariables( level, scope );
+	std::string scope( scope_ );
+	auto vars = QAS_asGetVariables( level, scope, false );
 	num_vars = vars.size();
 
 	Diag_EncodeMsg( stream, "%i", num_vars );
@@ -1087,6 +1122,33 @@ static void Diag_RespVariables( qstreambuf_t *stream, int level, const char *sco
 	}
 
 	Diag_FinishEncodeMsg( stream, head_pos, Variables );
+}
+
+static void Diag_RespEvaluate( qstreambuf_t *stream, int level, const char *expr )
+{
+	size_t head_pos;
+	std::vector<std::string> scopes = { "%local%", "%this%", "%module%" };
+	angelwrap_variable_t	 var;
+
+	head_pos = Diag_BeginEncodeMsg( stream );
+
+	for( auto it = scopes.begin(); it != scopes.end(); ++it ) {
+		std::string scope = *it + "." + expr;
+		auto		vars = QAS_asGetVariables( level, scope, true );
+
+		int num_vars = vars.size();
+		if( num_vars == 0 ) {
+			continue;
+		}
+
+		var = vars[0];
+		break;
+	}
+
+	Diag_EncodeMsg( stream, "%s%s%s%i", var.name.c_str(), var.value.c_str(), var.type.c_str(),
+		(int)var.hasProperties );
+
+	Diag_FinishEncodeMsg( stream, head_pos, Evaluate );
 }
 
 void Diag_Start( void )
