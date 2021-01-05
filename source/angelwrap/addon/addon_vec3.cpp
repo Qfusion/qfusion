@@ -229,6 +229,13 @@ static CScriptArrayInterface *objectVec3_ToArray( unsigned index, asvec3_t *self
 	return arr;
 }
 
+static asvec2_t objectVec3_XY( const asvec3_t *self )
+{
+	asvec2_t v;
+	Vector2Copy( self->v, v.v );
+	return v;
+}
+
 // same as vtos
 static asstring_t *objectVec3_ToString( asvec3_t *self )
 {
@@ -294,6 +301,7 @@ void RegisterVec3Addon( asIScriptEngine *engine ) {
 	r = engine->RegisterObjectMethod( "Vec3", "float &opIndex(uint)", asFUNCTION( objectVec3_Index ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "Vec3", "const float &opIndex(uint) const", asFUNCTION( objectVec3_Index ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 
+	r = engine->RegisterObjectMethod( "Vec3", "Vec2 xy() const", asFUNCTION( objectVec3_XY ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "Vec3", "array<float> @toArray() const", asFUNCTION( objectVec3_ToArray ), asCALL_CDECL_OBJLAST );
 	r = engine->RegisterObjectMethod( "Vec3", "String @toString() const", asFUNCTION( objectVec3_ToString ), asCALL_CDECL_OBJLAST );
 
