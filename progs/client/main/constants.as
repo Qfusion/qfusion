@@ -1,1 +1,3 @@
 const int HEADICON_TIMEOUT = 4000;
+
+const float PARTICLE_GRAVITY = 500.0f;

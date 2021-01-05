@@ -530,6 +530,21 @@ bool AddEntityReal( CEntity @cent )
 			}
 			return true;
 
+		case ET_BLASTER:
+			AddGenericEnt( @cent );
+			BlasterTrail( cent.trailOrigin, cent.refEnt.origin );
+			EntityLoopSound( @state, ATTN_STATIC );
+			return true;
+
+		case ET_ELECTRO_WEAK:
+			cent.current.frame = cent.prev.frame = 0;
+			cent.refEnt.frame = cent.refEnt.oldFrame = 0;
+
+			AddGenericEnt( @cent );
+			EntityLoopSound( @state, ATTN_STATIC );
+			ElectroWeakTrail( cent.trailOrigin, cent.refEnt.origin );
+			return true;
+
 		case ET_ITEM:
 			AddItemEnt( @cent );
 			DrawEntityBox( @cent );

@@ -20,6 +20,7 @@ Cvar cg_volume_hitsound( "cg_volume_hitsound", "1.0", CVAR_ARCHIVE );
 Cvar cg_volume_voicechats( "cg_volume_voicechats", "1.0", CVAR_ARCHIVE );
 
 Cvar cg_gibs( "cg_gibs", "1", CVAR_ARCHIVE );
+Cvar cg_particles( "cg_particles", "1", CVAR_ARCHIVE );
 
 Cvar cg_cartoonEffects( "cg_cartoonEffects", "7", CVAR_ARCHIVE );
 

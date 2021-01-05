@@ -43,7 +43,7 @@ void SexedSound( int entnum, int entchannel, const String &in name, float fvol, 
 
 	fixed = ( entchannel & CHAN_FIXED ) != 0 ? true : false;
 	entchannel &= ~CHAN_FIXED;
-
+    
     auto @pmodel = @cgEnts[entnum].pmodel.pmodelinfo;
     if( @pmodel is null ) {
         return;
