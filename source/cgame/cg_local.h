@@ -1157,6 +1157,8 @@ struct ParticleEffect {
 	vec2_t alphaDecay = { 0, 0 };
 };
 
+void CG_ParticleEffect( ParticleEffect &ef, const vec3_t org, const vec3_t dir, int count );
+
 void CG_ClearEffects( void );
 
 void CG_AddLightToScene( vec3_t org, float radius, float r, float g, float b );
