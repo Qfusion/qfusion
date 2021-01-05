@@ -31,15 +31,19 @@ typedef struct asstring_s {
 	int asRefCount;
 } asstring_t;
 
-typedef struct asvec3_s {
+typedef struct {
+	vec4_t v;
+} asvec2_t;
+
+typedef struct {
 	vec3_t v;
 } asvec3_t;
 
-typedef struct asvec4_s {
+typedef struct {
 	vec4_t v;
 } asvec4_t;
 
-typedef struct asmat3_s {
+typedef struct {
 	mat3_t m;
 } asmat3_t;
 

@@ -936,6 +936,22 @@ vec_t VectorNormalize2( const vec3_t v, vec3_t out ) {
 	return length;
 }
 
+vec_t Vector2Normalize( vec4_t v )
+{
+	float length, ilength;
+
+	length = v[0] * v[0] + v[1] * v[1];
+
+	if( length ) {
+		length = sqrt( length ); // FIXME
+		ilength = 1.0 / length;
+		v[0] *= ilength;
+		v[1] *= ilength;
+	}
+
+	return length;
+}
+
 vec_t Vector4Normalize( vec4_t v ) {
 	float length, ilength;
 

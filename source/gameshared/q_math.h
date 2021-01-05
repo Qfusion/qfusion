@@ -188,9 +188,19 @@ int Q_bitcount( int v );
 #define VectorLengthFast( v )     ( SQRTFAST( DotProduct( ( v ), ( v ) ) ) )  // jal :  //The expression a * rsqrt(b) is intended as a higher performance alternative to a / sqrt(b). The two expressions are comparably accurate, but do not compute exactly the same value in every case. For example, a * rsqrt(a*a + b*b) can be just slightly greater than 1, in rare cases.
 #define DistanceFast( v1, v2 )     ( SQRTFAST( DistanceSquared( v1, v2 ) ) )  // jal :  //The expression a * rsqrt(b) is intended as a higher performance alternative to a / sqrt(b). The two expressions are comparably accurate, but do not compute exactly the same value in every case. For example, a * rsqrt(a*a + b*b) can be just slightly greater than 1, in rare cases.
 
-#define Vector2Set( v, x, y )     ( ( v )[0] = ( x ), ( v )[1] = ( y ) )
+#define Vector2Set( v, a, b )   ( ( v )[0] = ( a ), ( v )[1] = ( b ) )
+#define Vector2Clear( a )     ( ( a )[0] = ( a )[1] = 0 )
 #define Vector2Copy( a, b )    ( ( b )[0] = ( a )[0], ( b )[1] = ( a )[1] )
-#define Vector2Avg( a, b, c )       ( ( c )[0] = ( ( ( a[0] ) + ( b[0] ) ) * 0.5f ), ( c )[1] = ( ( ( a[1] ) + ( b[1] ) ) * 0.5f ) )
+#define Vector2Scale( in, scale, out )      ( ( out )[0] = ( in )[0] * scale, ( out )[1] = ( in )[1] * scale )
+#define Vector2Add( a, b, c )       ( ( c )[0] = ( ( ( ( a )[0] ) + ( ( b )[0] ) ) ), ( c )[1] = ( ( ( ( a )[1] ) + ( ( b )[1] ) ) ) )
+#define Vector2Subtract( a, b, c )       ( ( c )[0] = ( ( ( ( a )[0] ) - ( ( b )[0] ) ) ), ( c )[1] = ( ( ( ( a )[1] ) - ( ( b )[1] ) ) ) )
+#define Vector2Avg( a, b, c )       ( ( c )[0] = ( ( ( ( a )[0] ) + ( ( b )[0] ) ) * 0.5f ), ( c )[1] = ( ( ( ( a )[1] ) + ( ( b )[1] ) ) * 0.5f ) )
+#define Vector2Negate( a, b )      ( ( b )[0] = -( a )[0], ( b )[1] = -( a )[1] )
+#define Vector2Inverse( v )         ( ( v )[0] = -( v )[0], ( v )[1] = -( v )[1] )
+#define DotProduct2( x, y )    ( ( x )[0] * ( y )[0] + ( x )[1] * ( y )[1] )
+#define Vector2Compare( v1, v2 )    ( ( v1 )[0] == ( v2 )[0] && ( v1 )[1] == ( v2 )[1] )
+#define Vector2LengthSquared( v )    ( DotProduct2( ( v ), ( v ) ) )
+#define Vector2Length( v )     ( sqrt( Vector2LengthSquared( v ) ) )
 
 #define Vector4Set( v, a, b, c, d )   ( ( v )[0] = ( a ), ( v )[1] = ( b ), ( v )[2] = ( c ), ( v )[3] = ( d ) )
 #define Vector4Clear( a )     ( ( a )[0] = ( a )[1] = ( a )[2] = ( a )[3] = 0 )
@@ -210,7 +220,8 @@ vec_t VectorNormalize( vec3_t v );       // returns vector length
 vec_t VectorNormalize2( const vec3_t v, vec3_t out );
 void  VectorNormalizeFast( vec3_t v );
 
-vec_t Vector4Normalize( vec4_t v );      // returns vector length
+vec_t Vector2Normalize( vec2_t v ); // returns vector length
+vec_t Vector4Normalize( vec4_t v ); // returns vector length
 
 void VectorReflect( const vec3_t v, const vec3_t n, const vec_t dist, vec3_t out );
 
