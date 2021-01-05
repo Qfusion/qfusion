@@ -48,9 +48,17 @@ static const gs_asEnumVal_t asEntTypeEnumVals[] = {
 	ASLIB_ENUM_VAL_NULL,
 };
 
+static const gs_asEnumVal_t asParticleEffectTypeEnumVals[] = {
+	{ "PE_NORMAL", int( ParticleEffectType::Normal ) },
+	{ "PE_FLY", int( ParticleEffectType::Fly ) },
+
+	ASLIB_ENUM_VAL_NULL,
+};
+
 const gs_asEnum_t asCGameRefSceneEnums[] = {
 	{ "cg_entrenderfx_e", asRenderfxFlagsEnumVals },
 	{ "cg_entreftype_e", asEntTypeEnumVals },
+	{ "cg_particlefxtype_e", asParticleEffectTypeEnumVals },
 
 	ASLIB_ENUM_VAL_NULL,
 };
@@ -421,7 +429,7 @@ static const gs_asProperty_t asPoly_Properties[] = {
 	{ ASLIB_PROPERTY_DECL( int, fognum ), ASLIB_FOFFSET( aspoly_t, fognum ) },
 	{ ASLIB_PROPERTY_DECL( ShaderHandle @, shader ), ASLIB_FOFFSET( aspoly_t, shader ) },
 
-	ASLIB_PROPERTY_NULL
+	ASLIB_PROPERTY_NULL,
 };
 
 static const gs_asClassDescriptor_t asPolyClassDescriptor = {
@@ -450,12 +458,77 @@ static const gs_asClassDescriptor_t asBoneposesClassDescriptor = {
 
 //=======================================================================
 
+struct asParticleEffect {
+	int asRefCount;
+	ParticleEffect ef;
+};
+
+static asParticleEffect *objectParticleEffect_Factory( void )
+{
+	asParticleEffect *p = (asParticleEffect *)CG_Malloc( sizeof( asParticleEffect ) );
+	new( &p->ef ) ParticleEffect();
+	p->asRefCount = 1;
+	return p;
+}
+
+static void objectParticleEffect_Addref( asParticleEffect *p )
+{
+	p->asRefCount++;
+}
+
+void objectParticleEffect_Release( asParticleEffect *p )
+{
+	if( --p->asRefCount <= 0 ) {
+		( &p->ef )->~ParticleEffect();
+		CG_Free( p );
+	}
+}
+
+static const gs_asBehavior_t asParticleEffect_ObjectBehaviors[] = {
+	{ asBEHAVE_FACTORY, ASLIB_FUNCTION_DECL( ParticleEffect @, f, () ), asFUNCTION( objectParticleEffect_Factory ), asCALL_CDECL, },
+	{ asBEHAVE_ADDREF, ASLIB_FUNCTION_DECL( void, f, () ), asFUNCTION( objectParticleEffect_Addref ), asCALL_CDECL_OBJLAST },
+	{ asBEHAVE_RELEASE, ASLIB_FUNCTION_DECL( void, f, () ), asFUNCTION( objectParticleEffect_Release ), asCALL_CDECL_OBJLAST },
+
+	ASLIB_BEHAVIOR_NULL,
+};
+
+static const gs_asProperty_t asParticleEffect_Properties[] = {
+	{ ASLIB_PROPERTY_DECL( int, type ), ASLIB_FOFFSET( asParticleEffect, ef.type ) },
+	{ ASLIB_PROPERTY_DECL( float, size ), ASLIB_FOFFSET( asParticleEffect, ef.size ) },
+	{ ASLIB_PROPERTY_DECL( Vec4, color ), ASLIB_FOFFSET( asParticleEffect, ef.color ) },
+	{ ASLIB_PROPERTY_DECL( Vec4, colorRand ), ASLIB_FOFFSET( asParticleEffect, ef.colorRand ) },
+	{ ASLIB_PROPERTY_DECL( Vec2, orgRand ), ASLIB_FOFFSET( asParticleEffect, ef.orgRand ) },
+	{ ASLIB_PROPERTY_DECL( Vec3, orgSpread ), ASLIB_FOFFSET( asParticleEffect, ef.orgSpread ) },
+	{ ASLIB_PROPERTY_DECL( Vec2, dirRand ), ASLIB_FOFFSET( asParticleEffect, ef.dirRand ) },
+	{ ASLIB_PROPERTY_DECL( float, dirMAToVel ), ASLIB_FOFFSET( asParticleEffect, ef.dirMAToVel ) },
+	{ ASLIB_PROPERTY_DECL( Vec3, vel ), ASLIB_FOFFSET( asParticleEffect, ef.vel ) },
+	{ ASLIB_PROPERTY_DECL( Vec2, velRand ), ASLIB_FOFFSET( asParticleEffect, ef.velRand ) },
+	{ ASLIB_PROPERTY_DECL( Vec3, accel ), ASLIB_FOFFSET( asParticleEffect, ef.accel ) },
+	{ ASLIB_PROPERTY_DECL( Vec2, alphaDecay ), ASLIB_FOFFSET( asParticleEffect, ef.alphaDecay ) },
+
+	ASLIB_PROPERTY_NULL,
+};
+
+static const gs_asClassDescriptor_t asParticleEffectClassDescriptor = {
+	"ParticleEffect",				  /* name */
+	asOBJ_REF,						  /* object type flags */
+	sizeof( asParticleEffect ),		  /* size */
+	NULL,							  /* funcdefs */
+	asParticleEffect_ObjectBehaviors, /* object behaviors */
+	NULL,							  /* methods */
+	asParticleEffect_Properties,	  /* properties */
+	NULL, NULL,						  /* string factory hack */
+};
+
+//=======================================================================
+
 const gs_asClassDescriptor_t *const asCGameRefSceneClassesDescriptors[] = {
 	&asRefEntityClassDescriptor,
 	&asOrientationClassDescriptor,
 	&asBoneposesClassDescriptor,
 	&asPolyVertClassDescriptor,
 	&asPolyClassDescriptor,
+	&asParticleEffectClassDescriptor,
 
 	NULL,
 };
@@ -509,19 +582,21 @@ static void asFunc_CG_RotateBonePoses( asvec3_t *angles, bonepose_t *boneposes, 
 	CG_RotateBonePoses( angles->v, boneposes, rotators, numRotators );
 }
 
-void asFunc_CG_AddEntityToScene( asrefentity_t *e ) {
+static void asFunc_CG_AddEntityToScene( asrefentity_t *e )
+{
 	asrefentity_SetTemporaryBoneposes( e );
 	trap_R_AddEntityToScene( &e->ent );
 }
 
-void asFunc_CG_AddLightToScene( asvec3_t *org, float radius, int color ) {
+static void asFunc_CG_AddLightToScene( asvec3_t *org, float radius, int color )
+{
 	CG_AddLightToScene( org->v, radius, 
 		( color & 255 ) / 255.0f, 
 		( ( color >> 8 ) & 255 ) / 255.0f, 
 		( ( color >> 16 ) & 255 ) / 255.0f );
 }
 
-void asFunc_CG_AddPolyToScene( aspoly_t *asp )
+static void asFunc_CG_AddPolyToScene( aspoly_t *asp )
 {
 	poly_t		   p;
 	const int	   maxPolyVerts = 32;
@@ -566,10 +641,14 @@ void asFunc_CG_AddPolyToScene( aspoly_t *asp )
 	trap_R_AddPolyToScene( &p );
 }
 
-void asFunc_CG_AddQuadOnTag( const asrefentity_t *e, const orientation_t *tag, float width, float height,
+static void asFunc_CG_AddQuadOnTag( const asrefentity_t *e, const orientation_t *tag, float width, float height,
 	float x_offset, float s1, float t1, float s2, float t2, const asvec4_t *color, struct shader_s *shader )
 {
 	CG_AddQuadOnTag( &e->ent, tag, width, height, x_offset, s1, t1, s2, t2, color->v, shader );
+}
+
+void asCG_ParticleEffect( asParticleEffect *ef, const asvec3_t *org, const asvec3_t *dir, int count ) {
+	CG_ParticleEffect( ef->ef, org->v, dir->v, count );
 }
 
 const gs_asglobfuncs_t asCGameRefSceneGlobalFuncs[] = {
@@ -601,6 +680,9 @@ const gs_asglobfuncs_t asCGameRefSceneGlobalFuncs[] = {
 	{ "void SpawnPolyBeam( const Vec3 &in start, const Vec3 &in end, const Vec4 &in, int width, int64 dieTime, int64 "
 	  "fadeTime, ShaderHandle @, int shaderLength, int tag )",
 		asFUNCTION( asFunc_CG_SpawnPolyBeam ), NULL },
+
+	{ "void SpawnParticleEffect( ParticleEffect @+ p, const Vec3 &in, const Vec3 &in, int count )",
+		asFUNCTION( asCG_ParticleEffect ), NULL },
 
 	{ "void AddEntityToScene( Entity @+ ent )", asFUNCTION( asFunc_CG_AddEntityToScene ), NULL },
 	{ "void AddLightToScene( const Vec3 &in origin, float radius, int color )", asFUNCTION( asFunc_CG_AddLightToScene ), NULL },
