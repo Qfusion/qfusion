@@ -130,7 +130,7 @@ static void objectVec2_Clear( asvec2_t *vec ) {
 	Vector2Clear( vec->v );
 }
 
-static void objectVec2_Set( float x, float y, float z, float w, asvec2_t *vec ) {
+static void objectVec2_Set( float x, float y, asvec2_t *vec ) {
 	Vector2Set( vec->v, x, y );
 }
 
