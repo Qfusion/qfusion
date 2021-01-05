@@ -169,6 +169,7 @@ void RecurseBlendSkeletalBone(CGame::ModelSkeleton@, Boneposes@ inBoneposes, Bon
 void RotateBonePoses(const Vec3&in angles, Boneposes@ inBoneposes, int[]@ rotators) {}
 void SpawnPolyQuad(const Vec3&in, const Vec3&in, const Vec3&in, const Vec3&in, float stx, float sty, const Vec4&in, int64 dieTime, int64 fadeTime, CGame::ShaderHandle@, int tag) {}
 void SpawnPolyBeam(const Vec3&in start, const Vec3&in end, const Vec4&in, int width, int64 dieTime, int64 fadeTime, CGame::ShaderHandle@, int shaderLength, int tag) {}
+void SpawnParticleEffect(ParticleEffect&in, const Vec3&in, const Vec3&in, int count) {}
 void AddEntityToScene(Entity@ ent) {}
 void AddLightToScene(const Vec3&in origin, float radius, int color) {}
 void AddPolyToScene(const Poly&in poly) {}
@@ -207,6 +208,7 @@ class Entity
 
 	/* methods */
 	void reset() {}
+	void setTemporaryBoneposes() {}
 	CGame::Scene::Entity& opAssign(const CGame::Scene::Entity&in) {}
 
 }
@@ -272,6 +274,32 @@ class Poly
 	void get_elems() const {}
 	void set_verts(const CGame::Scene::PolyVert[]&in) {}
 	void set_elems(const uint16[]&in) {}
+
+}
+
+/**
+ * ParticleEffect
+ */
+class ParticleEffect
+{
+	/* properties */
+	int type;
+	float size;
+	Vec4 color;
+	Vec4 colorRand;
+	Vec2 orgRand;
+	Vec3 orgSpread;
+	Vec2 dirRand;
+	float dirMAToVel;
+	Vec3 vel;
+	Vec2 velRand;
+	Vec3 accel;
+	Vec2 alphaDecay;
+
+	/* behaviors */
+
+	/* factories */
+	CGame::Scene::ParticleEffect@ ParticleEffect() {}
 
 }
 
@@ -417,6 +445,12 @@ enum cg_entreftype_e
 	RT_MODEL = 0x0,
 	RT_SPRITE = 0x1,
 	RT_PORTALSURFACE = 0x2,
+}
+
+enum cg_particlefxtype_e
+{
+	PE_NORMAL = 0x0,
+	PE_FLY = 0x1,
 }
 
 /**
@@ -597,6 +631,7 @@ float GetPlayerGibHeight() {}
 EntityState@ GetEntityState(int number, int deltaTime = 0) {}
 const Firedef@ FiredefForPlayerState(const PlayerState@ state, int checkWeapon) {}
 int DirToByte(const Vec3&in) {}
+Vec3 ByteToDir(const int b) {}
 bool IsEventEntity(const EntityState@) {}
 bool IsBrushModel(int modelindex) {}
 CModelHandle@ InlineModel(int modNum) {}
@@ -1449,6 +1484,48 @@ class Time
 }
 
 /**
+ * Vec2
+ */
+class Vec2
+{
+	/* properties */
+	float x;
+	float y;
+
+	/* behaviors */
+	Vec2() {}
+	Vec2(float x, float y) {}
+	Vec2(const Vec2&in) {}
+	Vec2(const float[]&inout) {}
+
+	/* methods */
+	Vec2& opAssign(Vec2&in) {}
+	Vec2& opAddAssign(Vec2&in) {}
+	Vec2& opSubAssign(Vec2&in) {}
+	Vec2& opMulAssign(Vec2&in) {}
+	Vec2& opMulAssign(int) {}
+	Vec2& opMulAssign(float) {}
+	Vec2 opAdd(Vec2&in) const {}
+	Vec2 opSub(Vec2&in) const {}
+	float opMul(Vec2&in) const {}
+	Vec2 opMul(float) const {}
+	Vec2 opMul_r(float) const {}
+	Vec2 opMul(int) const {}
+	Vec2 opMul_r(int) const {}
+	bool opEquals(const Vec2&in) const {}
+	void clear() {}
+	void set(float x, float y) {}
+	float length() const {}
+	float normalize() {}
+	float distance(const Vec2&in) const {}
+	float& opIndex(uint) {}
+	const float& opIndex(uint) const {}
+	float[]@ toArray() const {}
+	String@ toString() const {}
+
+}
+
+/**
  * Vec3
  */
 class Vec3
@@ -1495,6 +1572,7 @@ class Vec3
 	void anglesToAxis(Mat3&out) const {}
 	float& opIndex(uint) {}
 	const float& opIndex(uint) const {}
+	Vec2 xy() const {}
 	float[]@ toArray() const {}
 	String@ toString() const {}
 
