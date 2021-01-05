@@ -326,7 +326,7 @@ unsigned int CG_GetButtonBits( void ) {
 * @param flipped    horizontal flipping direction
 */
 void CG_AddViewAngles( vec3_t viewAngles ) {
-	vec3_t am;
+	vec3_t am = { 0, 0, 0 };
 	bool flipped = cg_flip->integer != 0;
 	
 	CG_GetAngularMovement( am );
@@ -347,7 +347,7 @@ void CG_AddViewAngles( vec3_t viewAngles ) {
 * CG_AddMovement
 */
 void CG_AddMovement( vec3_t movement ) {
-	vec3_t dm;
+	vec3_t dm = { 0, 0, 0 };
 	bool flipped = cg_flip->integer != 0;
 
 	CG_GetMovement( dm );
@@ -363,6 +363,7 @@ void CG_AddMovement( vec3_t movement ) {
 * CG_GetAngularMovement
 */
 void CG_GetAngularMovement( vec3_t movement ) {
+	VectorClear( movement );
 	CG_asGetAngularMovement( movement );
 }
 
@@ -370,7 +371,9 @@ void CG_GetAngularMovement( vec3_t movement ) {
 * CG_GetMovement
 */
 void CG_GetMovement( vec3_t movement ) {
-	int upmove;
+	int upmove = 0;
+
+	VectorClear( movement );
 
 	CG_asGetMovement( movement );
 

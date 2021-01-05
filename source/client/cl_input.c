@@ -109,7 +109,7 @@ void CL_ClearInputState( void ) {
 * Notifies cgame of new frame, refreshes input timings, coordinates and angles
 */
 static void CL_UpdateGameInput( int frameTime ) {
-	int mx, my;
+	int mx = 0, my = 0;
 
 	// refresh input in cgame
 	CL_GameModule_InputFrame( sys_frame_time );
