@@ -202,6 +202,7 @@ void AddPlayerEnt( CEntity @cent ) {
 	//CGame::Scene::Orientation tag_weapon;
     auto @cam = @CGame::Camera::GetMainCamera();
     bool isViewer = CGame::IsViewerEntity( cent.current.number );
+	bool isCorpse = cent.current.type == ET_CORPSE || cent.current.type == ET_MONSTER_CORPSE;
 
 	cent.UpdatePModelAnimations();
 
@@ -211,7 +212,9 @@ void AddPlayerEnt( CEntity @cent ) {
 
 	// render effects
 	cent.refEnt.renderfx = cent.renderfx;
-	cent.refEnt.renderfx |= RF_MINLIGHT;
+	if( cent.current.type == ET_PLAYER ) {
+		cent.refEnt.renderfx |= RF_MINLIGHT;
+	}
 
 	// if viewer model, and casting shadows, offset the entity to predicted player position
 	// for view and shadow accuracy
@@ -291,7 +294,7 @@ void AddPlayerEnt( CEntity @cent ) {
 
 	// apply angles to rotator bones
 	// also add rotations from velocity leaning
-	if( cent.current.type != ET_CORPSE ) {
+	if( !isCorpse ) {
 		array<int> parts = { GS::Anim::UPPER, GS::Anim::HEAD };
 
 		for( uint i = 0; i < parts.size(); i++ ) {
@@ -358,7 +361,7 @@ void AddPlayerEnt( CEntity @cent ) {
 	}
 
 	// corpses can never have a model in modelindex2
-	if( cent.current.type == ET_CORPSE ) {
+	if( isCorpse ) {
 		return;
 	}
 

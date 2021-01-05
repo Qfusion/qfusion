@@ -1,3 +1,10 @@
 const int HEADICON_TIMEOUT = 4000;
 
 const float PARTICLE_GRAVITY = 500.0f;
+
+const float IMPACT_POINT_OFFSET = 2.0f;
+
+const float GRENADE_EXPLOSION_MODEL_RADIUS       = 30.0;
+const float PLASMA_EXPLOSION_MODEL_RADIUS        = 10.0;
+const float ROCKET_EXPLOSION_MODEL_RADIUS        = 10.0;
+const float GUNBLADEBLAST_EXPLOSION_MODEL_RADIUS = 10.0;

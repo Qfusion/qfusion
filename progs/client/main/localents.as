@@ -214,8 +214,345 @@ void Explosion_Puff_2( const Vec3 &in pos, const Vec3 &in vel, float radius ) {
 	le.velocity = vel;
 }
 
-void DustCircle( const Vec3 &in pos, const Vec3 &in dir, float radius, int count )
-{
+void ElectroRings( const Vec3 &in start, const Vec3 &in end, const Vec4 &in color ) {
+	const float space = 15.0f;
+
+	Vec3 dir = end - start;
+	float len = dir.normalize();
+	if( len == 0.0f ) {
+		return;
+	}
+
+	int numrings = int( len / space ) + 1;
+	float timeFrac = 0.6f / float( numrings );
+	for( int i = 0; i < numrings; i++ ) {
+		int t = int( ( float( i ) * timeFrac + 7.5f + ( i * 0.20f ) ) * cg_ebbeam_time.value );
+		float l = i * space;
+
+		Vec3 origin = start + l * dir;
+		LocalEntity @le = AllocSprite( LE_ALPHA_FADE, origin, 4.25f, t,
+							color.x, color.y, color.z, color.w, 0, 0, 0, 0,
+							@cgs.media.shaderElectroBeamRing );
+		le.refEnt.rotation = rand() % 360;
+	}
+}
+
+void ElectroTrail2( const Vec3 &in start, const Vec3 &in end, int team ) {
+	Vec4 color( 1.0f, 1.0f, 1.0f, 1.0f );
+
+	if( cg_ebbeam_time.value < 0.05f ) {
+		return;
+	}
+
+	if( cg_teamColoredBeams.boolean && ( ( team == TEAM_ALPHA ) || ( team == TEAM_BETA ) ) ) {
+		color = TeamColor( team );
+	}
+
+	ElectroPolyBeam( start, end, team );
+	ElectroRings( start, end, color );
+	ElectroIonsTrail( start, end, color );
+}
+
+void ImpactSmokePuff( const Vec3 &in origin, const Vec3 &in dir, float radius, float alpha, int time, int speed ) {
+	const float SMOKEPUFF_MAXVIEWDIST = 700.0f;
+
+	if( ( GS::PointContents( origin ) & MASK_WATER ) != 0 ) {
+		return;
+	}
+
+	Vec3 local_dir = dir;
+	local_dir.normalize();
+
+	//offset the origin by half of the radius
+	Vec3 local_origin = origin + radius * 0.5f * local_dir;
+
+	LocalEntity @le = AllocSprite( LE_SCALE_ALPHA_FADE, local_origin, radius + crandom(), time,
+						1, 1, 1, alpha, 0, 0, 0, 0, @cgs.media.shaderSmokePuff );
+	le.refEnt.rotation = rand() % 360;
+	le.velocity = local_dir * speed;
+}
+
+void BulletExplosion( const Vec3 &in pos, const Vec3 &in dir ) {
+	LocalEntity @le = AllocModel( LE_ALPHA_FADE, pos, dir.toAngles(), 3, //3 frames for weak
+		1, 1, 1, 1, //full white no inducted alpha
+		0, 0, 0, 0, //dlight
+		@cgs.media.modBulletExplode,
+		null );
+
+	le.refEnt.rotation = rand() % 360;
+	le.refEnt.scale = 1.0f;
+	if( cg_particles.boolean ) {
+		ImpactSmokePuff( pos, dir, 2, 0.6f, 6, 8 );
+	}
+}
+
+void BulletExplosion( const Vec3 &in pos, const Trace &in tr ) {
+	Vec3 dir = tr.planeNormal;
+	Vec3 angles = dir.toAngles();
+
+	if( tr.entNum > 0 && cgEnts[tr.entNum].current.type == ET_PLAYER ) {
+		return;
+	}
+	
+	if( ( tr.surfFlags & SURF_FLESH ) != 0 || ( tr.entNum > 0 && cgEnts[tr.entNum].current.type == ET_CORPSE ) ) {
+		LocalEntity @le = AllocModel( LE_ALPHA_FADE, pos, angles, 3, //3 frames for weak
+							1, 0, 0, 1, //full white no inducted alpha
+							0, 0, 0, 0, //dlight
+							@cgs.media.modBulletExplode,
+							null );
+		le.refEnt.rotation = rand() % 360;
+		le.refEnt.scale = 1.0f;
+		if( IsViewerEntity( tr.entNum ) ) {
+			le.refEnt.renderfx |= RF_VIEWERMODEL;
+		}
+	} else if( cg_particles.boolean && ( tr.surfFlags & SURF_DUST ) != 0 ) {
+		// throw particles on dust
+		ImpactSmokePuff( tr.endPos, tr.planeNormal, 4, 0.6f, 6, 8 );
+	} else {
+		LocalEntity @le = AllocModel( LE_ALPHA_FADE, pos, angles, 3, //3 frames for weak
+							1, 1, 1, 1, //full white no inducted alpha
+							0, 0, 0, 0, //dlight
+							cgs.media.modBulletExplode,
+							null );
+		le.refEnt.rotation = rand() % 360;
+		le.refEnt.scale = 1.0f;
+
+		if( cg_particles.boolean ) {
+			ImpactSmokePuff( tr.endPos, tr.planeNormal, 2, 0.6f, 6, 8 );
+		}
+
+		if( ( tr.surfFlags & SURF_NOMARKS ) == 0 ) {
+			CGame::Scene::SpawnDecal( pos, dir, random() * 360, 8, 1, 1, 1, 1, 10, 1, false, @cgs.media.shaderBulletMark );
+		}
+	}
+}
+
+void BubbleTrail( const Vec3 &in start, const Vec3 &in end, int dist ) {
+	Vec3 vec = end - start;
+	float len = vec.normalize();
+	if( len == 0.0f ) {
+		return;
+	}
+
+	vec *= dist;
+	auto @shader = @cgs.media.shaderWaterBubble;
+
+	Vec3 move = start;
+	for( int i = 0; i < len; i += dist ) {
+		LocalEntity @le = AllocSprite( LE_ALPHA_FADE, move, 3, 10,
+							 1, 1, 1, 1,
+							 0, 0, 0, 0,
+							 shader );
+		le.velocity.set( crandom() * 5, crandom() * 5, crandom() * 5 + 6 );
+		move += vec;
+	}
+}
+
+void PlasmaExplosion( const Vec3 &in pos, const Vec3 &in dir, int fire_mode, float radius ) {
+	LocalEntity @le;
+	const float model_radius = PLASMA_EXPLOSION_MODEL_RADIUS;
+
+	Vec3 angles = dir.toAngles();
+	Vec3 origin = pos + IMPACT_POINT_OFFSET * dir;
+
+	if( fire_mode == FIRE_MODE_STRONG ) {
+		@le = AllocModel( LE_ALPHA_FADE, origin, angles, 4,
+							1, 1, 1, 1,
+							150, 0, 0.75, 0,
+							@cgs.media.modPlasmaExplosion,
+							null );
+		le.refEnt.scale = radius / model_radius;
+	} else {
+		@le = AllocModel( LE_ALPHA_FADE, origin, angles, 4,
+							1, 1, 1, 1,
+							80, 0, 0.75, 0,
+							@cgs.media.modPlasmaExplosion,
+							null );
+		le.refEnt.scale = radius / model_radius;
+	}
+
+	le.refEnt.rotation = rand() % 360;
+
+	CGame::Scene::SpawnDecal( pos, dir, 90, 16,
+				   1, 1, 1, 1, 4, 1, true,
+				   @cgs.media.shaderPlasmaMark );
+}
+
+void BoltExplosionMode( const Vec3 &in pos, const Vec3 &in dir, int fire_mode, int surfFlags ) {
+	if( CGame::Scene::SpawnDecal( pos, dir, random() * 360, 12,
+		1, 1, 1, 1, 10, 1, true, @cgs.media.shaderElectroboltMark ) == 0 ) {
+		if( ( surfFlags & ( SURF_SKY | SURF_NOMARKS | SURF_NOIMPACT ) ) != 0 ) {
+			return;
+		}
+	}
+
+	Vec3 angles = dir.toAngles();
+	Vec3 origin = pos + IMPACT_POINT_OFFSET * dir;
+
+	LocalEntity @le = AllocModel( LE_INVERSESCALE_ALPHA_FADE, pos, angles, 6, // 6 is time
+						1, 1, 1, 1, //full white no inducted alpha
+						250, 0.75, 0.75, 0.75, //white dlight
+						@cgs.media.modElectroBoltWallHit, null );
+
+	le.refEnt.rotation = rand() % 360;
+	le.refEnt.scale = ( fire_mode == FIRE_MODE_STRONG ) ? 1.5f : 1.0f;
+
+	// add white energy particles on the impact
+	ImpactPuffParticles( origin, dir, 15, 0.75f, 1, 1, 1, 1 );
+
+	CGame::Sound::StartFixedSound( @cgs.media.sfxElectroboltHit, origin, CHAN_AUTO,
+							cg_volume_effects.value, ATTN_STATIC );
+}
+
+void InstaExplosionMode( const Vec3 &in pos, const Vec3 &in dir, int fire_mode, int surfFlags, int owner ) {
+	int team = -1;
+	Vec4 tcolor( 0.65f, 0.0f, 0.26f, 1.0f );
+
+	if( cg_teamColoredInstaBeams.boolean && ( owner > 0 ) && ( owner < GS::maxClients + 1 ) ) {
+		team = cgEnts[owner].current.team;
+	}
+
+	if( ( team == TEAM_ALPHA ) || ( team == TEAM_BETA ) ) {
+		tcolor = TeamColor( team );
+		tcolor.x *= 0.65f;
+		tcolor.y *= 0.65f;
+		tcolor.z *= 0.65f;
+	}
+
+	Vec3 angles = dir.toAngles();
+	Vec3 origin = pos + IMPACT_POINT_OFFSET * dir;
+
+	if( CGame::Scene::SpawnDecal( pos, dir, random() * 360, 12,
+						tcolor[0], tcolor[1], tcolor[2], 1.0f,
+						10, 1, true, @cgs.media.shaderInstagunMark ) == 0 ) {
+		if( ( surfFlags & ( SURF_SKY | SURF_NOMARKS | SURF_NOIMPACT ) ) != 0 ) {
+			return;
+		}
+	}
+
+	LocalEntity @le = AllocModel( LE_ALPHA_FADE, origin, angles, 6, // 6 is time
+						tcolor[0], tcolor[1], tcolor[2], 1,
+						250, 0.65, 0.65, 0.65, //white dlight
+						@cgs.media.modInstagunWallHit, null );
+
+	le.refEnt.rotation = rand() % 360;
+	le.refEnt.scale = ( fire_mode == FIRE_MODE_STRONG ) ? 1.5f : 1.0f;
+
+	// add white energy particles on the impact
+	ImpactPuffParticles( origin, dir, 15, 0.75f, 1, 1, 1, 1 );
+
+	CGame::Sound::StartFixedSound( cgs.media.sfxElectroboltHit, origin, CHAN_AUTO,
+							cg_volume_effects.value, ATTN_STATIC );
+}
+
+void RocketExplosionMode( const Vec3 pos, const Vec3 dir, int fire_mode, float radius ) {
+	const float expvelocity = 8.0f;
+
+	Vec3 angles = dir.toAngles();
+
+	if( fire_mode == FIRE_MODE_STRONG ) {
+		//trap_S_StartSound ( pos, 0, 0, CG_RegisterSfx (cgs.media.sfxRocketLauncherStrongHit), cg_volume_effects.value, ATTN_NORM, 0 );
+		CGame::Scene::SpawnDecal( pos, dir, random() * 360, radius * 0.5, 1, 1, 1, 1, 10, 1, false, @cgs.media.shaderExplosionMark );
+	} else {
+		//trap_S_StartSound ( pos, 0, 0, CG_RegisterSfx (cgs.media.sfxRocketLauncherWeakHit), cg_volume_effects.value, ATTN_NORM, 0 );
+		CGame::Scene::SpawnDecal( pos, dir, random() * 360, radius * 0.25, 1, 1, 1, 1, 10, 1, false, @cgs.media.shaderExplosionMark );
+	}
+
+	// animmap shader of the explosion
+	Vec3 origin = pos +radius * 0.12f * dir;
+	LocalEntity @le = AllocSprite( LE_ALPHA_FADE, origin, radius * 0.5f, 8,
+						1, 1, 1, 1,
+						radius * 4, 0.8f, 0.6f, 0, // orange dlight
+						@cgs.media.shaderRocketExplosion );
+
+	Vec3 vec ( crandom() * expvelocity, crandom() * expvelocity, crandom() * expvelocity );
+	le.velocity = vec + dir * expvelocity;
+	le.refEnt.rotation = rand() % 360;
+
+	if( cg_explosionsRing.boolean ) {
+		// explosion ring sprite
+		origin = pos + radius * 0.20f * dir;
+		le = AllocSprite( LE_ALPHA_FADE, origin, radius, 3,
+							 1, 1, 1, 1,
+							 0, 0, 0, 0, // no dlight
+							 cgs.media.shaderRocketExplosionRing );
+
+		le.refEnt.rotation = rand() % 360;
+	}
+
+	if( cg_explosionsDust.integer == 1 ) {
+		// dust ring parallel to the contact surface
+		ExplosionsDust( pos, dir, radius );
+	}
+
+	// Explosion particles
+	ParticleExplosionEffect( pos, dir, 1, 0.5, 0, 32 );
+
+	if( fire_mode == FIRE_MODE_STRONG ) {
+		CGame::Sound::StartFixedSound( @cgs.media.sfxRocketLauncherStrongHit, pos, CHAN_AUTO, cg_volume_effects.value, ATTN_DISTANT );
+	} else {
+		CGame::Sound::StartFixedSound( @cgs.media.sfxRocketLauncherWeakHit, pos, CHAN_AUTO, cg_volume_effects.value, ATTN_DISTANT );
+	}
+
+	//jalfixme: add sound at water?
+}
+
+void BladeImpact( const Vec3 &in pos, const Vec3 &in dir ) {
+	int POVent = CGame::Camera::GetMainCamera().POVent;
+
+	//find what are we hitting
+	Vec3 local_pos( pos );
+	Vec3 local_dir = dir;
+	local_dir.normalize();
+	Vec3 end = pos - local_dir;
+
+	Trace trace;
+	trace.doTrace( local_pos, vec3Origin, vec3Origin, end, POVent, MASK_SHOT );
+	if( trace.fraction == 1.0 ) {
+		return;
+	}
+
+	Vec3 angles = dir.toAngles();
+	Vec3 origin = pos + IMPACT_POINT_OFFSET * dir;
+
+	if( ( trace.surfFlags & SURF_FLESH ) != 0 ||
+		( trace.entNum > 0 && cgEnts[trace.entNum].current.type == ET_PLAYER )
+		|| ( trace.entNum > 0 && cgEnts[trace.entNum].current.type == ET_CORPSE ) ) {
+		LocalEntity le = AllocModel( LE_ALPHA_FADE, origin, angles, 3, //3 frames for weak
+							1, 1, 1, 1, //full white no inducted alpha
+							0, 0, 0, 0, //dlight
+							@cgs.media.modBladeWallHit, null );
+		le.refEnt.rotation = rand() % 360;
+		le.refEnt.scale = 1.0f;
+
+		CGame::Sound::StartFixedSound( @cgs.media.sfxBladeFleshHit[rand() % 3], origin, CHAN_AUTO,
+								cg_volume_effects.value, ATTN_NORM );
+	} else if( ( trace.surfFlags & SURF_DUST ) != 0 ) {
+		// throw particles on dust
+		SplashParticles( trace.endPos, trace.planeNormal, 0.30f, 0.30f, 0.25f, 30 );
+
+		//fixme? would need a dust sound
+		CGame::Sound::StartFixedSound( @cgs.media.sfxBladeWallHit[rand() % 2], origin, CHAN_AUTO,
+								cg_volume_effects.value, ATTN_NORM );
+	} else {
+		LocalEntity le = AllocModel( LE_ALPHA_FADE, origin, angles, 3, //3 frames for weak
+							1, 1, 1, 1, //full white no inducted alpha
+							0, 0, 0, 0, //dlight
+							@cgs.media.modBladeWallHit, null );
+		le.refEnt.rotation = rand() % 360;
+		le.refEnt.scale = 1.0f;
+
+		SplashParticles( trace.endPos, trace.planeNormal, 0.30f, 0.30f, 0.25f, 15 );
+
+		CGame::Sound::StartFixedSound( cgs.media.sfxBladeWallHit[rand() % 2], origin, CHAN_AUTO,
+								cg_volume_effects.value, ATTN_NORM );
+		if( ( trace.surfFlags & SURF_NOMARKS ) == 0 ) {
+			CGame::Scene::SpawnDecal( pos, dir, random() * 10, 8, 1, 1, 1, 1, 10, 1, false, @cgs.media.shaderBladeMark );
+		}
+	}
+}
+
+void DustCircle( const Vec3 &in pos, const Vec3 &in dir, float radius, int count ) {
 	if( ( GS::PointContents( pos ) & MASK_WATER ) != 0 ) {
 		return; // no smoke under water :)
 	}
@@ -237,6 +574,35 @@ void DustCircle( const Vec3 &in pos, const Vec3 &in dir, float radius, int count
 		//VectorScale(dir_temp, VectorNormalize(dir_temp),dir_temp );
 		dir_temp *= crandom() * 10 + radius;
 		Explosion_Puff_2( pos, dir_temp, 10.0f );
+	}
+}
+
+void ExplosionsDust( const Vec3 &in  pos, const Vec3 &in  dir, float radius ) {
+	const int count = 32; /* Number of sprites used to create the circle */
+
+	if( ( GS::PointContents( pos ) & MASK_WATER ) != 0 ) {
+		return; // no smoke under water :
+	}
+
+	Vec3 dir_per2 = dir.perpendicular();
+	Vec3 dir_per1 = dir ^ dir_per2;
+
+	// make a circle out of the specified number (int count) of sprites
+	for( int i = 0; i < count; i++ ) {
+		float angle = float( 6.2831f / count * i );
+		Vec3 dir_temp;
+
+		dir_temp += sin( angle ) * dir_per1;
+		dir_temp += cos( angle ) * dir_per2;
+
+		dir_temp *= crandom() * 8 + radius + 16.0f;
+
+		// make the sprite smaller & alpha'd
+		LocalEntity @le = AllocSprite( LE_ALPHA_FADE, pos, 10, 10,
+							1.0f, 1.0f, 1.0f, 1.0f,
+							0, 0, 0, 0,
+							@cgs.media.shaderSmokePuff3 );
+		le.velocity = dir_temp;
 	}
 }
 

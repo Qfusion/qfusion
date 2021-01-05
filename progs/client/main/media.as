@@ -6,11 +6,44 @@ class CMedia {
     ModelHandle @modHeadStun;
     ModelHandle @modDash;
 
+	ModelHandle @modRocketExplosion;
+	ModelHandle @modPlasmaExplosion;
+
+	ModelHandle @modBulletExplode;
+	ModelHandle @modBladeWallHit;
+	ModelHandle @modBladeWallExplo;
+
+	ModelHandle @modElectroBoltWallHit;
+	ModelHandle @modInstagunWallHit;
+
+	ModelHandle @modLasergunWallExplo;
+
     ShaderHandle @shaderLaser;
     ShaderHandle @shaderFlagFlare;
     ShaderHandle @shaderRaceGhostEffect;
     ShaderHandle @shaderChatBalloon;
+	ShaderHandle @shaderWaterBubble;
+    ShaderHandle @shaderSmokePuff;
     ShaderHandle @shaderSmokePuff1, shaderSmokePuff2, shaderSmokePuff3;
+    ShaderHandle @shaderElectroBeamA;
+    ShaderHandle @shaderElectroBeamAAlpha;
+    ShaderHandle @shaderElectroBeamABeta;
+    ShaderHandle @shaderElectroBeamB;
+    ShaderHandle @shaderElectroBeamBAlpha;
+    ShaderHandle @shaderElectroBeamBBeta;
+    ShaderHandle @shaderElectroBeamRing;
+    ShaderHandle @shaderInstaBeam;
+    ShaderHandle @shaderLaserGunBeam;
+    ShaderHandle @shaderRocketExplosion;
+    ShaderHandle @shaderRocketExplosionRing;
+
+    ShaderHandle @shaderBladeMark;
+    ShaderHandle @shaderBulletMark;
+    ShaderHandle @shaderExplosionMark;
+    ShaderHandle @shaderPlasmaMark;
+    ShaderHandle @shaderElectroboltMark;
+    ShaderHandle @shaderInstagunMark;
+
     array<ShaderHandle @> shaderVSayIcon(eVSays::VSAY_TOTAL);
 
     SoundHandle @sfxItemRespawn;
@@ -22,12 +55,35 @@ class CMedia {
     SoundHandle @sfxQuadFireSound;
     SoundHandle @sfxShellHit;
     SoundHandle @sfxWalljumpFailed;
+    array<SoundHandle @> sfxRic(2);
+
+	// Gunblade sounds :
+	array<SoundHandle @> sfxGunbladeWeakShot(3);
+	SoundHandle @sfxGunbladeStrongShot;
+	array<SoundHandle @> sfxBladeFleshHit(3);
+	array<SoundHandle @> sfxBladeWallHit(2);
+	array<SoundHandle @> sfxGunbladeStrongHit(3);
 
 	// Grenade launcher sounds :
 	array<SoundHandle @>sfxGrenadeWeakBounce(2);
 	array<SoundHandle @>sfxGrenadeStrongBounce(2);
 	SoundHandle @sfxGrenadeWeakExplosion;
 	SoundHandle @sfxGrenadeStrongExplosion;
+ 
+    // Rocket launcher sounds :
+    SoundHandle @sfxRocketLauncherWeakHit;
+    SoundHandle @sfxRocketLauncherStrongHit;
+
+	// Lasergun sounds
+	SoundHandle @sfxLasergunWeakHum;
+	SoundHandle @sfxLasergunWeakQuadHum;
+	SoundHandle @sfxLasergunWeakStop;
+	SoundHandle @sfxLasergunStrongHum;
+	SoundHandle @sfxLasergunStrongQuadHum;
+	SoundHandle @sfxLasergunStrongStop;
+	array<SoundHandle @>sfxLasergunHit(3);
+
+	SoundHandle @sfxElectroboltHit;
 
     array<SoundHandle @> sfxVSaySounds(eVSays::VSAY_TOTAL);
 
@@ -36,9 +92,30 @@ class CMedia {
         @shaderFlagFlare = CGame::RegisterShader( PATH_FLAG_FLARE_SHADER );
         @shaderRaceGhostEffect = CGame::RegisterShader( "gfx/raceghost" );
         @shaderChatBalloon = CGame::RegisterShader( PATH_BALLONCHAT_ICON );
+	    @shaderWaterBubble = CGame::RegisterShader( "gfx/misc/waterBubble" );
+        @shaderSmokePuff = CGame::RegisterShader( "gfx/misc/smokepuff" );
         @shaderSmokePuff1 = CGame::RegisterShader( "gfx/misc/smokepuff1" );
         @shaderSmokePuff2 = CGame::RegisterShader( "gfx/misc/smokepuff2" );
         @shaderSmokePuff3 = CGame::RegisterShader( "gfx/misc/smokepuff3" );
+
+        @shaderElectroBeamA = CGame::RegisterShader( "gfx/misc/electro2a" );
+        @shaderElectroBeamAAlpha = CGame::RegisterShader( "gfx/misc/electro2a_alpha" );
+        @shaderElectroBeamABeta = CGame::RegisterShader( "gfx/misc/electro2a_beta" );
+        @shaderElectroBeamB = CGame::RegisterShader( "gfx/misc/electro2b" );
+        @shaderElectroBeamBAlpha = CGame::RegisterShader( "gfx/misc/electro2b_alpha" );
+        @shaderElectroBeamBBeta = CGame::RegisterShader( "gfx/misc/electro2b_beta" );
+        @shaderElectroBeamRing = CGame::RegisterShader( "gfx/misc/beamring.tga" );
+        @shaderInstaBeam = CGame::RegisterShader( "gfx/misc/instagun" );
+        @shaderLaserGunBeam = CGame::RegisterShader( "gfx/misc/laserbeam" );
+        @shaderRocketExplosion = CGame::RegisterShader( PATH_ROCKET_EXPLOSION_SPRITE );
+        @shaderRocketExplosionRing = CGame::RegisterShader( PATH_ROCKET_EXPLOSION_RING_SPRITE );
+
+        @shaderBladeMark = CGame::RegisterShader( "gfx/decals/d_blade_hit" );
+        @shaderBulletMark = CGame::RegisterShader( "gfx/decals/d_bullet_hit" );
+        @shaderExplosionMark = CGame::RegisterShader( "gfx/decals/d_explode_hit" );
+        @shaderPlasmaMark = CGame::RegisterShader( "gfx/decals/d_plasma_hit" );
+        @shaderElectroboltMark = CGame::RegisterShader( "gfx/decals/d_electrobolt_hit" );
+        @shaderInstagunMark = CGame::RegisterShader( "gfx/decals/d_instagun_hit" );
 
         // VSAY icons
         @shaderVSayIcon[VSAY_GENERIC] = CGame::RegisterShader( PATH_VSAY_GENERIC_ICON );
@@ -82,6 +159,13 @@ class CMedia {
         @modFlag = CGame::RegisterModel( PATH_FLAG_MODEL );
         @modHeadStun = CGame::RegisterModel( "models/effects/head_stun.md3" );
         @modDash = CGame::RegisterModel( "models/effects/dash_burst.md3" );
+
+        @modBulletExplode = CGame::RegisterModel( PATH_BULLET_EXPLOSION_MODEL );
+        @modBladeWallHit = CGame::RegisterModel( PATH_GUNBLADEBLAST_IMPACT_MODEL );
+        @modBladeWallExplo = CGame::RegisterModel( PATH_GUNBLADEBLAST_EXPLOSION_MODEL );
+        @modElectroBoltWallHit = CGame::RegisterModel( PATH_ELECTROBLAST_IMPACT_MODEL );
+        @modInstagunWallHit = CGame::RegisterModel( PATH_INSTABLAST_IMPACT_MODEL );
+        @modLasergunWallExplo = CGame::RegisterModel( PATH_LASERGUN_IMPACT_MODEL );
     }
 
     void PrecacheSounds() {
@@ -99,6 +183,38 @@ class CMedia {
             @sfxGrenadeWeakBounce[i] = CGame::RegisterSound( StringUtils::Format( S_WEAPON_GRENADE_W_BOUNCE_1_to_2, i + 1 ) );
             @sfxGrenadeStrongBounce[i] = CGame::RegisterSound( StringUtils::Format( S_WEAPON_GRENADE_S_BOUNCE_1_to_2, i + 1 ) );
         }
+
+        for( int i = 0; i < 2; i++ ) {
+            @sfxRic[i] = CGame::RegisterSound( StringUtils::Format( "sounds/weapons/ric%s", i + 1 ) );
+        }
+
+	// Gunblade sounds (weak is blade):
+        for( int i = 0; i < 3; i++ ) 
+            @cgs.media.sfxGunbladeWeakShot[i] = CGame::RegisterSound( StringUtils::Format( S_WEAPON_GUNBLADE_W_SHOT_1_to_3, i + 1 ) );
+        for( int i = 0; i < 3; i++ ) 
+            @cgs.media.sfxBladeFleshHit[i] = CGame::RegisterSound( StringUtils::Format( S_WEAPON_GUNBLADE_W_HIT_FLESH_1_to_3, i + 1 ) );
+        for( int i = 0; i < 2; i++ )
+            @cgs.media.sfxBladeWallHit[i] = CGame::RegisterSound( StringUtils::Format( S_WEAPON_GUNBLADE_W_HIT_WALL_1_to_2, i + 1 ) );
+        @cgs.media.sfxGunbladeStrongShot = CGame::RegisterSound( S_WEAPON_GUNBLADE_S_SHOT );
+        for( int i = 0; i < 3; i++ )
+            @cgs.media.sfxGunbladeStrongHit[i] = CGame::RegisterSound( StringUtils::Format( S_WEAPON_GUNBLADE_S_HIT_1_to_2, i + 1 ) );
+
+        // Rocket launcher sounds :
+        @sfxRocketLauncherWeakHit = CGame::RegisterSound( S_WEAPON_ROCKET_W_HIT );
+        @sfxRocketLauncherStrongHit = CGame::RegisterSound( S_WEAPON_ROCKET_S_HIT );
+
+        // Lasergun sounds
+        @sfxLasergunWeakHum = CGame::RegisterSound( S_WEAPON_LASERGUN_W_HUM );
+        @sfxLasergunWeakQuadHum = CGame::RegisterSound( S_WEAPON_LASERGUN_W_QUAD_HUM );
+        @sfxLasergunWeakStop = CGame::RegisterSound( S_WEAPON_LASERGUN_W_STOP );
+        @sfxLasergunStrongHum = CGame::RegisterSound( S_WEAPON_LASERGUN_S_HUM );
+        @sfxLasergunStrongQuadHum = CGame::RegisterSound( S_WEAPON_LASERGUN_S_QUAD_HUM );
+        @sfxLasergunStrongStop = CGame::RegisterSound( S_WEAPON_LASERGUN_S_STOP );
+        @sfxLasergunHit[0] = CGame::RegisterSound( S_WEAPON_LASERGUN_HIT_0 );
+        @sfxLasergunHit[1] = CGame::RegisterSound( S_WEAPON_LASERGUN_HIT_1 );
+        @sfxLasergunHit[2] = CGame::RegisterSound( S_WEAPON_LASERGUN_HIT_2 );
+
+        @sfxElectroboltHit = CGame::RegisterSound( S_WEAPON_ELECTROBOLT_HIT );
 
         //VSAY sounds
         @sfxVSaySounds[VSAY_GENERIC] = CGame::RegisterSound( S_CHAT );

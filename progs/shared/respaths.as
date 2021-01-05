@@ -36,10 +36,47 @@ const String S_WEAPON_NOAMMO   = "sounds/weapons/weapon_noammo";
 const String S_QUAD_FIRE       = "sounds/items/quad_fire";
 const String S_SHELL_HIT       = "sounds/items/shell_hit";
 
+const String S_WEAPON_GUNBLADE_W_SHOT_1_to_3      = "sounds/weapons/blade_strike%s";
+const String S_WEAPON_GUNBLADE_W_HIT_FLESH_1_to_3 = "sounds/weapons/blade_hitflsh%s";
+const String S_WEAPON_GUNBLADE_W_HIT_WALL_1_to_2  = "sounds/weapons/blade_hitwall%s";
+const String S_WEAPON_GUNBLADE_S_SHOT             = "sounds/weapons/bladegun_strong_fire";
+const String S_WEAPON_GUNBLADE_S_HIT_1_to_2       = "sounds/weapons/bladegun_strong_hit_%s";
+
 const String S_WEAPON_GRENADE_W_BOUNCE_1_to_2 = "sounds/weapons/gren_strong_bounce%s";
 const String S_WEAPON_GRENADE_S_BOUNCE_1_to_2 = "sounds/weapons/gren_strong_bounce%s";
 const String S_WEAPON_GRENADE_W_HIT           = "sounds/weapons/gren_strong_explosion";
 const String S_WEAPON_GRENADE_S_HIT           = "sounds/weapons/gren_strong_explosion1";
+
+const String S_WEAPON_ROCKET_W_FLY            = "sounds/weapons/rocket_fly_strong";
+const String S_WEAPON_ROCKET_S_FLY            = "sounds/weapons/rocket_fly_strong";
+const String S_WEAPON_ROCKET_W_HIT            = "sounds/weapons/rocket_strong_explosion";
+const String S_WEAPON_ROCKET_S_HIT            = "sounds/weapons/rocket_strong_explosion";
+
+const String S_WEAPON_LASERGUN_S_HUM      = "sounds/weapons/laser_strong_hum";
+const String S_WEAPON_LASERGUN_W_HUM      = "sounds/weapons/laser_strong_hum";
+const String S_WEAPON_LASERGUN_S_QUAD_HUM = "sounds/weapons/laser_strong_quad_hum";
+const String S_WEAPON_LASERGUN_W_QUAD_HUM = "sounds/weapons/laser_strong_quad_hum";
+const String S_WEAPON_LASERGUN_S_STOP     = "sounds/weapons/laser_strong_stop";
+const String S_WEAPON_LASERGUN_W_STOP     = "sounds/weapons/laser_strong_stop";
+const String S_WEAPON_LASERGUN_HIT_0      = "sounds/weapons/laser_hit0";
+const String S_WEAPON_LASERGUN_HIT_1      = "sounds/weapons/laser_hit1";
+const String S_WEAPON_LASERGUN_HIT_2      = "sounds/weapons/laser_hit2";
+
+const String S_WEAPON_ELECTROBOLT_HIT     = "sounds/weapons/electrobolt_hit";
+
+// explosions
+const String PATH_ROCKET_EXPLOSION_SPRITE      = "gfx/rocket_explosion";
+const String PATH_ROCKET_EXPLOSION_RING_SPRITE = "gfx/misc/rlexplo_ring";
+
+const String PATH_BULLET_EXPLOSION_MODEL        = "models/weapon_hits/bullet/hit_bullet.md3";
+const String PATH_GRENADE_EXPLOSION_MODEL       = "models/weapon_hits/glauncher/hit_glauncher.md3";
+const String PATH_PLASMA_EXPLOSION_MODEL        = "models/weapon_hits/plasmagun/hit_plasmagun.md3";
+const String PATH_ROCKET_EXPLOSION_MODEL        = "models/weapon_hits/rlauncher/hit_rlauncher.md3";
+const String PATH_GUNBLADEBLAST_IMPACT_MODEL    = "models/weapon_hits/gunblade/hit_blast.md3";
+const String PATH_GUNBLADEBLAST_EXPLOSION_MODEL = "models/weapon_hits/gunblade/hit_blastexp.md3";
+const String PATH_ELECTROBLAST_IMPACT_MODEL     = "models/weapon_hits/electrobolt/hit_electrobolt.md3";
+const String PATH_INSTABLAST_IMPACT_MODEL       = "models/weapon_hits/instagun/hit_instagun.md3";
+const String PATH_LASERGUN_IMPACT_MODEL         = "models/weapon_hits/lasergun/hit_blastexp.md3";
 
 // vsay icons
 const String PATH_VSAY_GENERIC_ICON     = "gfx/hud/icons/vsay/generic";

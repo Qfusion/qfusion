@@ -22,6 +22,20 @@ Cvar cg_volume_voicechats( "cg_volume_voicechats", "1.0", CVAR_ARCHIVE );
 Cvar cg_gibs( "cg_gibs", "1", CVAR_ARCHIVE );
 Cvar cg_particles( "cg_particles", "1", CVAR_ARCHIVE );
 
+Cvar cg_teamColoredBeams( "cg_teamColoredBeams", "0", CVAR_ARCHIVE );
+Cvar cg_teamColoredInstaBeams( "cg_teamColoredInstaBeams", "1", CVAR_ARCHIVE );
+
+Cvar cg_ebbeam_width( "cg_ebbeam_width", "64", CVAR_ARCHIVE );
+Cvar cg_ebbeam_alpha( "cg_ebbeam_alpha", "0.4", CVAR_ARCHIVE );
+Cvar cg_ebbeam_time( "cg_ebbeam_time", "0.6", CVAR_ARCHIVE );
+
+Cvar cg_instabeam_width( "cg_instabeam_width", "7", CVAR_ARCHIVE );
+Cvar cg_instabeam_alpha( "cg_instabeam_alpha", "0.4", CVAR_ARCHIVE );
+Cvar cg_instabeam_time( "cg_instabeam_time", "0.4", CVAR_ARCHIVE );
+
+Cvar cg_explosionsRing( "cg_explosionsRing", "0", CVAR_ARCHIVE );
+Cvar cg_explosionsDust( "cg_explosionsDust", "0", CVAR_ARCHIVE );
+
 Cvar cg_cartoonEffects( "cg_cartoonEffects", "7", CVAR_ARCHIVE );
 
 Cvar cg_drawEntityBoxes( "cg_drawEntityBoxes", "0", 0 );

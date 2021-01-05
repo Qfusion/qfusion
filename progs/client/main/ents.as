@@ -40,6 +40,9 @@ class CEntity {
 	Vec3 microSmoothOrigin;
 	Vec3 microSmoothOrigin2;
 
+	Vec3 laserOrigin;
+	Vec3 laserPoint;
+
 	Vec3 trailOrigin;
 	int64 respawnTime;
 	int64 flyStopTime;
@@ -100,6 +103,22 @@ class CEntity {
 			lastVelocitiesFrames[i] = 0;
 		}
 		pmodel.ClearEventAnimations();
+	}
+
+	bool GetPModelProjectionSource( CGame::Scene::Orientation &out tag_result ) {
+		if( serverFrame != CGame::Snap.serverFrame ) {
+			return false;
+		}
+
+		// see if it's the view weapon
+		if( IsViewerEntity( current.number ) && !CGame::Camera::GetMainCamera().thirdPerson ) {
+			tag_result = cg.vweapon.projectionSource;
+			return true;
+		}
+
+		// it's a 3rd person model
+		tag_result = pmodel.projectionSource;
+		return true;
 	}
 }
 
@@ -573,10 +592,16 @@ bool AddEntityReal( CEntity @cent )
 			return true;
 
 		case ET_PLAYER:
-		case ET_CORPSE:
 		case ET_MONSTER_PLAYER:
+			AddPlayerEnt( @cent );
+			WeaponBeamEffect( @cent );
+			EntityLoopSound( @state, ATTN_IDLE );
+			return true;
+
+		case ET_CORPSE:
 		case ET_MONSTER_CORPSE:
 			AddPlayerEnt( @cent );
+			EntityLoopSound( @state, ATTN_IDLE );
 			//canLight = true;
 			return true;
 

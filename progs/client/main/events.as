@@ -338,6 +338,8 @@ bool EntityEvent( const EntityState @ent, int ev, int parm, bool predicted )
 	bool viewer = IsViewerEntity( ent.number );
 	auto @cam = CGame::Camera::GetMainCamera();
 	int weapon, fireMode;
+	Vec3 dir;
+	int count;
 
 	if( !cg_test.boolean ) {
 		return false;
@@ -552,6 +554,29 @@ bool EntityEvent( const EntityState @ent, int ev, int parm, bool predicted )
 			} else {
 				CGame::Sound::StartRelativeSound( @cgs.media.sfxGrenadeWeakBounce[rand() & 1], ent.number, CHAN_AUTO, cg_volume_effects.value, ATTN_IDLE );
 			}
+			return true;
+
+		case EV_SPARKS:
+			dir = GS::ByteToDir( parm );
+			if( ent.damage > 0 ) {
+				count = bound( 1, int( ent.damage * 0.25f ), 10 );
+			} else {
+				count = 6;
+			}
+
+			SplashParticles( ent.origin, dir, 1.0f, 0.67f, 0.0f, count );
+			return true;
+
+		case EV_BULLET_SPARKS:
+			dir = GS::ByteToDir( parm );
+			LE::BulletExplosion( ent.origin, dir );
+			SplashParticles( ent.origin, dir, 1.0f, 0.67f, 0.0f, 6 );
+			CGame::Sound::StartFixedSound( @cgs.media.sfxRic[rand() % 2], ent.origin, CHAN_AUTO,
+									cg_volume_effects.value, ATTN_STATIC );
+			return true;
+
+		case EV_BLADE_IMPACT:
+			LE::BladeImpact( ent.origin, ent.origin2 );
 			return true;
 
 		default:

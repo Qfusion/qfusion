@@ -28,6 +28,27 @@ void AddShellEffects( CGame::Scene::Entity @ent, int effects ) {
 	}
 }
 
+void WeaponBeamEffect( CEntity @cent ) {
+	CGame::Scene::Orientation projection;
+
+	if( cent.localEffects[LEF_EV_WEAPONBEAM] == 0 ) {
+		return;
+	}
+
+	// now find the projection source for the beam we will draw
+	if( !cent.GetPModelProjectionSource( projection ) ) {
+		projection.origin = cent.laserOrigin;
+	}
+
+	if( cent.localEffects[LEF_EV_WEAPONBEAM] == WEAP_ELECTROBOLT ) {
+		LE::ElectroTrail2( projection.origin, cent.laserPoint, cent.current.team );
+	} else {
+		InstaPolyBeam( projection.origin, cent.laserPoint, cent.current.team );
+	}
+
+	cent.localEffects[LEF_EV_WEAPONBEAM] = 0;
+}
+
 /*
 * Wall impact puffs
 */
@@ -110,7 +131,7 @@ void ElectroWeakTrail( const Vec3 &in start, const Vec3 &in end ) {
 	CGame::Scene::SpawnParticleEffect( @ef, start, vec3Origin, int( len / dec ) + 1 );
 }
 
-void ImpactPuffParticles( const Vec3 &in org, const Vec3 &in dir, int count, float scale, float r, float g, float b, float a, ShaderHandle @shader ) {
+void ImpactPuffParticles( const Vec3 &in org, const Vec3 &in dir, int count, float scale, float r, float g, float b, float a ) {
 	CGame::Scene::ParticleEffect ef;
 	ef.size = scale;
 	ef.alphaDecay.set( 0.5, 0.8 );
@@ -127,7 +148,7 @@ void ImpactPuffParticles( const Vec3 &in org, const Vec3 &in dir, int count, flo
 /*
 * High velocity wall impact puffs
 */
-void HighVelImpactPuffParticles( const Vec3 &in org, const Vec3 &in dir, int count, float scale, float r, float g, float b, float a, ShaderHandle @shader ) {
+void HighVelImpactPuffParticles( const Vec3 &in org, const Vec3 &in dir, int count, float scale, float r, float g, float b, float a ) {
 	CGame::Scene::ParticleEffect ef;
 	ef.size = scale;
 	ef.alphaDecay.set( 0.1, 0.16 );
