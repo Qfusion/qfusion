@@ -570,6 +570,20 @@ bool AddEntityReal( CEntity @cent )
 			EntityLoopSound( @state, ATTN_IDLE );
 			return true;
 
+		case ET_ROCKET:
+			AddGenericEnt( @cent );
+			LE::ProjectileTrail( @cent );
+			EntityLoopSound( @state, ATTN_NORM );
+			CGame::Scene::AddLightToScene( cent.refEnt.origin, 300.0f, Vec3ToColor( Vec3( 0.8f, 0.6f, 0 ) ) );
+			return true;
+
+		case ET_GRENADE:
+			AddGenericEnt( @cent );
+			EntityLoopSound( @state, ATTN_STATIC );
+			LE::ProjectileTrail( @cent );
+			//canLight = true;
+			return true;
+
 		case ET_PLASMA:
 			AddGenericEnt( @cent );
 			EntityLoopSound( @state, ATTN_STATIC );

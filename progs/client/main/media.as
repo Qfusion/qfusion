@@ -25,6 +25,19 @@ class CMedia {
 	ShaderHandle @shaderWaterBubble;
     ShaderHandle @shaderSmokePuff;
     ShaderHandle @shaderSmokePuff1, shaderSmokePuff2, shaderSmokePuff3;
+
+    ShaderHandle @shaderStrongRocketFireTrailPuff;
+    ShaderHandle @shaderWeakRocketFireTrailPuff;
+    ShaderHandle @shaderTeleporterSmokePuff;
+    ShaderHandle @shaderGrenadeTrailSmokePuff;
+    ShaderHandle @shaderRocketTrailSmokePuff;
+    ShaderHandle @shaderBloodTrailPuff;
+    ShaderHandle @shaderBloodTrailLiquidPuff;
+    ShaderHandle @shaderBloodImpactPuff;
+    ShaderHandle @shaderTeamMateIndicator;
+    ShaderHandle @shaderTeamCarrierIndicator;
+    ShaderHandle @shaderTeleportShellGfx;
+
     ShaderHandle @shaderElectroBeamA;
     ShaderHandle @shaderElectroBeamAAlpha;
     ShaderHandle @shaderElectroBeamABeta;
@@ -97,6 +110,18 @@ class CMedia {
         @shaderSmokePuff1 = CGame::RegisterShader( "gfx/misc/smokepuff1" );
         @shaderSmokePuff2 = CGame::RegisterShader( "gfx/misc/smokepuff2" );
         @shaderSmokePuff3 = CGame::RegisterShader( "gfx/misc/smokepuff3" );
+
+        @shaderStrongRocketFireTrailPuff = CGame::RegisterShader( "gfx/misc/strong_rocket_fire" );
+        @shaderWeakRocketFireTrailPuff = CGame::RegisterShader( "gfx/misc/strong_rocket_fire" );
+        @shaderTeleporterSmokePuff = CGame::RegisterShader( "TeleporterSmokePuff" );
+        @shaderGrenadeTrailSmokePuff = CGame::RegisterShader( "gfx/grenadetrail_smoke_puf" );
+        @shaderRocketTrailSmokePuff = CGame::RegisterShader( "gfx/misc/rocketsmokepuff" );
+        @shaderBloodTrailPuff = CGame::RegisterShader( "gfx/misc/bloodtrail_puff" );
+        @shaderBloodTrailLiquidPuff = CGame::RegisterShader( "gfx/misc/bloodtrailliquid_puff" );
+        @shaderBloodImpactPuff = CGame::RegisterShader( "gfx/misc/bloodimpact_puff" );
+        @shaderTeamMateIndicator = CGame::RegisterShader( "gfx/indicators/teammate_indicator" );
+        @shaderTeamCarrierIndicator = CGame::RegisterShader( "gfx/indicators/teamcarrier_indicator" );
+        @shaderTeleportShellGfx = CGame::RegisterShader( "gfx/misc/teleportshell" );
 
         @shaderElectroBeamA = CGame::RegisterShader( "gfx/misc/electro2a" );
         @shaderElectroBeamAAlpha = CGame::RegisterShader( "gfx/misc/electro2a_alpha" );
@@ -190,14 +215,14 @@ class CMedia {
 
 	// Gunblade sounds (weak is blade):
         for( int i = 0; i < 3; i++ ) 
-            @cgs.media.sfxGunbladeWeakShot[i] = CGame::RegisterSound( StringUtils::Format( S_WEAPON_GUNBLADE_W_SHOT_1_to_3, i + 1 ) );
+            @sfxGunbladeWeakShot[i] = CGame::RegisterSound( StringUtils::Format( S_WEAPON_GUNBLADE_W_SHOT_1_to_3, i + 1 ) );
         for( int i = 0; i < 3; i++ ) 
-            @cgs.media.sfxBladeFleshHit[i] = CGame::RegisterSound( StringUtils::Format( S_WEAPON_GUNBLADE_W_HIT_FLESH_1_to_3, i + 1 ) );
+            @sfxBladeFleshHit[i] = CGame::RegisterSound( StringUtils::Format( S_WEAPON_GUNBLADE_W_HIT_FLESH_1_to_3, i + 1 ) );
         for( int i = 0; i < 2; i++ )
-            @cgs.media.sfxBladeWallHit[i] = CGame::RegisterSound( StringUtils::Format( S_WEAPON_GUNBLADE_W_HIT_WALL_1_to_2, i + 1 ) );
-        @cgs.media.sfxGunbladeStrongShot = CGame::RegisterSound( S_WEAPON_GUNBLADE_S_SHOT );
+            @sfxBladeWallHit[i] = CGame::RegisterSound( StringUtils::Format( S_WEAPON_GUNBLADE_W_HIT_WALL_1_to_2, i + 1 ) );
+        @sfxGunbladeStrongShot = CGame::RegisterSound( S_WEAPON_GUNBLADE_S_SHOT );
         for( int i = 0; i < 3; i++ )
-            @cgs.media.sfxGunbladeStrongHit[i] = CGame::RegisterSound( StringUtils::Format( S_WEAPON_GUNBLADE_S_HIT_1_to_2, i + 1 ) );
+            @sfxGunbladeStrongHit[i] = CGame::RegisterSound( StringUtils::Format( S_WEAPON_GUNBLADE_S_HIT_1_to_2, i + 1 ) );
 
         // Rocket launcher sounds :
         @sfxRocketLauncherWeakHit = CGame::RegisterSound( S_WEAPON_ROCKET_W_HIT );

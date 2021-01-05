@@ -518,7 +518,7 @@ void BladeImpact( const Vec3 &in pos, const Vec3 &in dir ) {
 	if( ( trace.surfFlags & SURF_FLESH ) != 0 ||
 		( trace.entNum > 0 && cgEnts[trace.entNum].current.type == ET_PLAYER )
 		|| ( trace.entNum > 0 && cgEnts[trace.entNum].current.type == ET_CORPSE ) ) {
-		LocalEntity le = AllocModel( LE_ALPHA_FADE, origin, angles, 3, //3 frames for weak
+		LocalEntity @le = AllocModel( LE_ALPHA_FADE, origin, angles, 3, //3 frames for weak
 							1, 1, 1, 1, //full white no inducted alpha
 							0, 0, 0, 0, //dlight
 							@cgs.media.modBladeWallHit, null );
@@ -535,7 +535,7 @@ void BladeImpact( const Vec3 &in pos, const Vec3 &in dir ) {
 		CGame::Sound::StartFixedSound( @cgs.media.sfxBladeWallHit[rand() % 2], origin, CHAN_AUTO,
 								cg_volume_effects.value, ATTN_NORM );
 	} else {
-		LocalEntity le = AllocModel( LE_ALPHA_FADE, origin, angles, 3, //3 frames for weak
+		LocalEntity @le = AllocModel( LE_ALPHA_FADE, origin, angles, 3, //3 frames for weak
 							1, 1, 1, 1, //full white no inducted alpha
 							0, 0, 0, 0, //dlight
 							@cgs.media.modBladeWallHit, null );
@@ -549,6 +549,135 @@ void BladeImpact( const Vec3 &in pos, const Vec3 &in dir ) {
 		if( ( trace.surfFlags & SURF_NOMARKS ) == 0 ) {
 			CGame::Scene::SpawnDecal( pos, dir, random() * 10, 8, 1, 1, 1, 1, 10, 1, false, @cgs.media.shaderBladeMark );
 		}
+	}
+}
+
+void LaserGunImpact( const Vec3 &in pos, float radius, const Vec3 &in laser_dir, const Vec4 &in color ) {
+	CGame::Scene::Entity ent;
+
+	Vec3 ndir = laser_dir * -1.0f;
+	Vec3 angles = ndir.toAngles();
+	angles.z = anglemod( -360.0f * cg.time * 0.001f );
+
+	ent.origin = pos;
+	ent.renderfx = RF_FULLBRIGHT | RF_NOSHADOW;
+	ent.scale = 1.45f;
+	ent.shaderRGBA = COLOR_RGBA( uint8( color[0] * 255 ), uint8( color[1] * 255 ), uint8( color[2] * 255 ), uint8( color[3] * 255 ) );
+	@ent.model = @cgs.media.modLasergunWallExplo;
+	angles.anglesToAxis( ent.axis );
+
+	CGame::Scene::AddEntityToScene( @ent );
+}
+
+void GunBladeBlastImpact( const Vec3 &in pos, const Vec3 &in dir, float radius ) {
+	const float model_radius = GUNBLADEBLAST_EXPLOSION_MODEL_RADIUS;
+
+	Vec3 angles = dir.toAngles();
+	Vec3 origin = pos + IMPACT_POINT_OFFSET * dir;
+
+	LocalEntity @le = AllocModel( LE_ALPHA_FADE, pos, angles, 2, //3 frames
+						1, 1, 1, 1, //full white no inducted alpha
+						0, 0, 0, 0, //dlight
+						@cgs.media.modBladeWallHit,
+						null );
+	le.refEnt.rotation = rand() % 360;
+	le.refEnt.scale = 1.0f; // this is the small bullet impact
+
+	LocalEntity @le_explo = AllocModel( LE_ALPHA_FADE, origin, angles, 2 + int( radius / 16.1f ),
+						1, 1, 1, 1, //full white no inducted alpha
+						0, 0, 0, 0, //dlight
+						@cgs.media.modBladeWallExplo,
+						null );
+	le_explo.refEnt.rotation = rand() % 360;
+	le_explo.refEnt.scale = radius / model_radius;
+
+	CGame::Scene::SpawnDecal( pos, dir, random() * 360, 3 + ( radius * 0.5f ), 
+		1, 1, 1, 1, 10, 1, false, @cgs.media.shaderExplosionMark );
+}
+
+void ProjectileFireTrail( CEntity @cent ) {
+	const float radius = 8;
+	const float alpha = bound( 0.0f, cg_projectileFireTrailAlpha.value, 1.0f );
+
+	if( !cg_projectileFireTrail.boolean ) {
+		return;
+	}
+
+	// didn't move
+	Vec3 vec = cent.refEnt.origin - cent.trailOrigin;
+	float len = vec.normalize();
+	if( len == 0.0f ) {
+		return;
+	}
+
+	ShaderHandle @shader;
+	if( ( cent.effects & EF_STRONG_WEAPON ) != 0 ) {
+		@shader = @cgs.media.shaderStrongRocketFireTrailPuff;
+	} else {
+		@shader = @cgs.media.shaderWeakRocketFireTrailPuff;
+	}
+
+	// density is found by quantity per second
+	int trailTime = int( 1000.0f / cg_projectileFireTrail.value );
+	if( trailTime < 1 ) {
+		trailTime = 1;
+	}
+
+	// we don't add more than one sprite each frame. If frame
+	// ratio is too slow, people will prefer having less sprites on screen
+	if( cent.localEffects[LEF_ROCKETFIRE_LAST_DROP] + trailTime < cg.time ) {
+		cent.localEffects[LEF_ROCKETFIRE_LAST_DROP] = cg.time;
+
+		LocalEntity @le = AllocSprite( LE_INVERSESCALE_ALPHA_FADE, cent.trailOrigin, radius, 4,
+							1.0f, 1.0f, 1.0f, alpha,
+							0, 0, 0, 0,
+							@shader );
+		le.velocity.set( -vec.x * 10 + crandom() * 5, -vec.y * 10 + crandom() * 5, -vec.z * 10 + crandom() * 5 );
+		le.refEnt.rotation = rand() % 360;
+	}
+}
+
+void ProjectileTrail( CEntity @cent ) {
+	float radius = 6.5f, alpha = 0.35f;
+	ShaderHandle @shader = @cgs.media.shaderSmokePuff;
+
+	ProjectileFireTrail( @cent ); // add fire trail
+
+	if( !cg_projectileTrail.boolean ) {
+		return;
+	}
+
+	// didn't move
+	Vec3 vec = cent.refEnt.origin - cent.trailOrigin;
+	float len = vec.normalize();
+	if( len == 0.0f ) {
+		return;
+	}
+
+	// density is found by quantity per second
+	int trailTime = int( 1000.0f / cg_projectileTrail.value );
+	if( trailTime < 1 ) {
+		trailTime = 1;
+	}
+
+	// we don't add more than one sprite each frame. If frame
+	// ratio is too slow, people will prefer having less sprites on screen
+	if( cent.localEffects[LEF_ROCKETTRAIL_LAST_DROP] + trailTime < cg.time ) {
+		cent.localEffects[LEF_ROCKETTRAIL_LAST_DROP] = cg.time;
+
+		int contents = GS::PointContents( cent.trailOrigin ) & GS::PointContents( cent.refEnt.origin );
+		if( ( contents & MASK_WATER ) != 0 ) {
+			@shader = @cgs.media.shaderWaterBubble;
+			radius = 3 + crandom();
+			alpha = 1.0f;
+		}
+
+		LocalEntity @le = AllocSprite( LE_PUFF_SHRINK, cent.trailOrigin, radius, 20,
+							1.0f, 1.0f, 1.0f, alpha,
+							0, 0, 0, 0,
+							@shader );
+		le.velocity.set( -vec[0] * 5 + crandom() * 5, -vec[1] * 5 + crandom() * 5, -vec[2] * 5 + crandom() * 5 + 3 );
+		le.refEnt.rotation = rand() % 360;
 	}
 }
 
