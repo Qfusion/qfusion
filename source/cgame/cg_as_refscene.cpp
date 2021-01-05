@@ -651,6 +651,11 @@ void asCG_ParticleEffect( asParticleEffect *ef, const asvec3_t *org, const asvec
 	CG_ParticleEffect( ef->ef, org->v, dir->v, count );
 }
 
+int asCG_SpawnDecal( const asvec3_t *origin, const asvec3_t *dir, float orient, float radius, float r, float g, float b,
+	float a, float die, float fadetime, bool fadealpha, struct shader_s *shader ) {
+	return CG_SpawnDecal( origin->v, dir->v, orient, radius, r, g, b, a, die, fadetime, fadealpha, shader );
+}
+
 const gs_asglobfuncs_t asCGameRefSceneGlobalFuncs[] = {
 	{ "void PlaceRotatedModelOnTag( Entity @+ ent, const Entity @+ dest, const Orientation &in )",
 		asFUNCTION( CG_PlaceRotatedModelOnTag ), NULL },
@@ -680,9 +685,11 @@ const gs_asglobfuncs_t asCGameRefSceneGlobalFuncs[] = {
 	{ "void SpawnPolyBeam( const Vec3 &in start, const Vec3 &in end, const Vec4 &in, int width, int64 dieTime, int64 "
 	  "fadeTime, ShaderHandle @, int shaderLength, int tag )",
 		asFUNCTION( asFunc_CG_SpawnPolyBeam ), NULL },
-
 	{ "void SpawnParticleEffect( ParticleEffect @+ p, const Vec3 &in, const Vec3 &in, int count )",
 		asFUNCTION( asCG_ParticleEffect ), NULL },
+	{ "int SpawnDecal( const Vec3 &in origin, const Vec3 &in dir, float orient, float radius, float r, float g, float b, "
+		"float a, float die, float fadetime, bool fadealpha, ShaderHandle @shader )",
+		asFUNCTION( asCG_SpawnDecal ), NULL },
 
 	{ "void AddEntityToScene( Entity @+ ent )", asFUNCTION( asFunc_CG_AddEntityToScene ), NULL },
 	{ "void AddLightToScene( const Vec3 &in origin, float radius, int color )", asFUNCTION( asFunc_CG_AddLightToScene ), NULL },
