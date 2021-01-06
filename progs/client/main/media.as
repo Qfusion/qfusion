@@ -85,6 +85,10 @@ class CMedia {
 	SoundHandle @sfxGrenadeWeakExplosion;
 	SoundHandle @sfxGrenadeStrongExplosion;
  
+    // Plasmagun sounds :
+    SoundHandle @sfxPlasmaWeakHit;
+    SoundHandle @sfxPlasmaStrongHit;
+
     // Rocket launcher sounds :
     SoundHandle @sfxRocketLauncherWeakHit;
     SoundHandle @sfxRocketLauncherStrongHit;
@@ -182,6 +186,9 @@ class CMedia {
     }
 
     void PrecacheModels() {
+        @modRocketExplosion = CGame::RegisterModel( PATH_ROCKET_EXPLOSION_MODEL );
+        @modPlasmaExplosion = CGame::RegisterModel( PATH_PLASMA_EXPLOSION_MODEL );
+
         @modIlluminatiGib = CGame::RegisterModel( "models/objects/gibs/illuminati/illuminati1.md3" );
         @modFlag = CGame::RegisterModel( PATH_FLAG_MODEL );
         @modHeadStun = CGame::RegisterModel( "models/effects/head_stun.md3" );
@@ -217,7 +224,7 @@ class CMedia {
             @sfxRic[i] = CGame::RegisterSound( StringUtils::Format( "sounds/weapons/ric%s", i + 1 ) );
         }
 
-	// Gunblade sounds (weak is blade):
+	    // Gunblade sounds (weak is blade):
         for( int i = 0; i < 3; i++ ) 
             @sfxGunbladeWeakShot[i] = CGame::RegisterSound( StringUtils::Format( S_WEAPON_GUNBLADE_W_SHOT_1_to_3, i + 1 ) );
         for( int i = 0; i < 3; i++ ) 
@@ -227,6 +234,10 @@ class CMedia {
         @sfxGunbladeStrongShot = CGame::RegisterSound( S_WEAPON_GUNBLADE_S_SHOT );
         for( int i = 0; i < 3; i++ )
             @sfxGunbladeStrongHit[i] = CGame::RegisterSound( StringUtils::Format( S_WEAPON_GUNBLADE_S_HIT_1_to_2, i + 1 ) );
+
+        // Plasmagun sounds :
+        @sfxPlasmaWeakHit = CGame::RegisterSound( S_WEAPON_PLASMAGUN_W_HIT );
+        @sfxPlasmaStrongHit = CGame::RegisterSound( S_WEAPON_PLASMAGUN_S_HIT );
 
         // Rocket launcher sounds :
         @sfxRocketLauncherWeakHit = CGame::RegisterSound( S_WEAPON_ROCKET_W_HIT );

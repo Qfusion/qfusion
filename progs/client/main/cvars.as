@@ -22,6 +22,9 @@ Cvar cg_volume_voicechats( "cg_volume_voicechats", "1.0", CVAR_ARCHIVE );
 Cvar cg_gibs( "cg_gibs", "1", CVAR_ARCHIVE );
 Cvar cg_particles( "cg_particles", "1", CVAR_ARCHIVE );
 
+Cvar cg_damage_indicator( "cg_damage_indicator", "1", CVAR_ARCHIVE );
+Cvar cg_damage_indicator_time( "cg_damage_indicator_time", "25", CVAR_ARCHIVE );
+
 Cvar cg_teamColoredBeams( "cg_teamColoredBeams", "0", CVAR_ARCHIVE );
 Cvar cg_teamColoredInstaBeams( "cg_teamColoredInstaBeams", "1", CVAR_ARCHIVE );
 

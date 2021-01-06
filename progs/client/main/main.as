@@ -68,7 +68,7 @@ class ClientState {
 	int predictedWeaponSwitch;
 
 	//
-	// color blend effects
+	// kick angles and color blend effects
 	//
 	array<ViewBlend> colorblends(MAX_COLORBLENDS);
 	array<int64> damageBlends(4);
@@ -290,6 +290,10 @@ void Frame( int frameTime, int realFrameTime, int64 realTime, int64 serverTime,
 
 void Reset()
 {
+	cg.vweapon.ResetKickAngles();
+	ResetColorBlend();
+	ResetDamageIndicator();
+
 	ResetClientInfos();
 }
 

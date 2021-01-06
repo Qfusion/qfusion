@@ -1,8 +1,5 @@
 namespace CGame {
 
-const int MAX_ANGLES_KICKS = 3;
-const int MAX_COLORBLENDS = 3;
-
 class KickAngles {
 	int64 timestamp;
 	int64 kicktime;
@@ -189,6 +186,84 @@ class ViewWeapon {
             kickangles[i].timestamp = 0;
             kickangles[i].kicktime = 0;
         }
+    }
+
+    void StartKickAnglesEffect( const Vec3 &in source, float knockback, float radius, int time ) {
+        float side;
+        float ftime;
+        int kicknum = -1;
+
+        if( knockback <= 0 || time <= 0 || radius <= 0.0f ) {
+            return;
+        }
+
+        // if spectator but not in chasecam, don't get any kick
+        if( CGame::Snap.playerState.pmove.pm_type == PM_SPECTATOR ) {
+            return;
+        }
+ 
+        // predictedPlayerState is predicted only when prediction is enabled, otherwise it is interpolated
+        Vec3 playerorigin = CGame::PredictedPlayerState.pmove.origin;
+        Vec3 v = source - playerorigin;
+        float dist = v.normalize();
+        if( dist > radius ) {
+            return;
+        }
+
+        float delta = 1.0f - ( dist / radius );
+        if( delta > 1.0f ) {
+            delta = 1.0f;
+        }
+        if( delta <= 0.0f ) {
+            return;
+        }
+
+        float kick = abs( knockback ) * delta;
+        if( kick <= 0.0f ) { // kick of 0 means no view adjust at all
+            return;
+        }
+
+        //find first free kick spot, or the one closer to be finished
+        for( int i = 0; i < MAX_ANGLES_KICKS; i++ ) {
+            if( cg.time > kickangles[i].timestamp + kickangles[i].kicktime ) {
+                kicknum = i;
+                break;
+            }
+        }
+
+        // all in use. Choose the closer to be finished
+        if( kicknum == -1 ) {
+            int remaintime;
+            int best = ( kickangles[0].timestamp + kickangles[0].kicktime ) - cg.time;
+            kicknum = 0;
+            for( int i = 1; i < MAX_ANGLES_KICKS; i++ ) {
+                remaintime = ( kickangles[i].timestamp + kickangles[i].kicktime ) - cg.time;
+                if( remaintime < best ) {
+                    best = remaintime;
+                    kicknum = i;
+                }
+            }
+        }
+
+        Vec3 forward, right, up;
+        CGame::PredictedPlayerState.viewAngles.angleVectors( forward, right, up );
+
+        if( kick < 1.0f ) {
+            kick = 1.0f;
+        }
+
+        side = v * right;
+        kickangles[kicknum].v_roll = bound( -20.0f, kick * side * 0.3, 20.0f );
+
+        side = -( v * forward );
+        kickangles[kicknum].v_pitch = bound( -20.0f, kick * side * 0.3, 20.0f );
+
+        kickangles[kicknum].timestamp = cg.time;
+        ftime = float( time ) * delta;
+        if( ftime < 100 ) {
+            ftime = 100;
+        }
+        kickangles[kicknum].kicktime = int( ftime );
     }
 
     Vec3 AddKickAngles( Vec3 viewangles_ ) {

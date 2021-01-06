@@ -47,6 +47,11 @@ const String S_WEAPON_GRENADE_S_BOUNCE_1_to_2 = "sounds/weapons/gren_strong_boun
 const String S_WEAPON_GRENADE_W_HIT           = "sounds/weapons/gren_strong_explosion";
 const String S_WEAPON_GRENADE_S_HIT           = "sounds/weapons/gren_strong_explosion1";
 
+const String S_WEAPON_PLASMAGUN_W_FLY        = "sounds/weapons/plasmagun_strong_fly";
+const String S_WEAPON_PLASMAGUN_S_FLY        = "sounds/weapons/plasmagun_strong_fly";
+const String S_WEAPON_PLASMAGUN_W_HIT        = "sounds/weapons/plasmagun_strong_explosion";
+const String S_WEAPON_PLASMAGUN_S_HIT        = "sounds/weapons/plasmagun_strong_explosion";
+
 const String S_WEAPON_ROCKET_W_FLY            = "sounds/weapons/rocket_fly_strong";
 const String S_WEAPON_ROCKET_S_FLY            = "sounds/weapons/rocket_fly_strong";
 const String S_WEAPON_ROCKET_W_HIT            = "sounds/weapons/rocket_strong_explosion";

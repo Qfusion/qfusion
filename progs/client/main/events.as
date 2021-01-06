@@ -147,6 +147,71 @@ void FireWeaponEvent( int entNum, int weapon, int fireMode )
 	}
 }
 
+void Event_Fall( const EntityState @state, int parm ) {
+	if( IsViewerEntity( state.number ) ) {
+		if( CGame::PredictedPlayerState.pmove.pm_type != PM_NORMAL ) {
+			SexedSound( state.number, CHAN_AUTO, "*fall_0", cg_volume_players.value, state.attenuation );
+			return;
+		}
+
+		StartFallKickEffect( ( parm + 5 ) * 10 );
+
+		if( parm >= 15 ) {
+			DamageIndicatorAdd( parm, Vec3( 0, 0, 1 ) );
+		}
+	}
+
+	if( parm > 10 ) {
+		int anim;
+		switch( rand() % 3 ) {
+			case 0:
+				anim = GS::Anim::Anim::TORSO_PAIN1;
+				break;
+			case 1:
+				anim = GS::Anim::Anim::TORSO_PAIN2;
+				break;
+			case 2:
+			default:
+				anim = GS::Anim::Anim::TORSO_PAIN3;
+				break;
+		}
+
+		PModel @pmodel = @cgEnts[state.number].pmodel;	
+		pmodel.AddAnimation( {0, anim, 0}, GS::Anim::Channel::EVENT_CHANNEL );
+	}
+
+	if( parm > 10 ) {
+		SexedSound( state.number, CHAN_PAIN, "*fall_2", cg_volume_players.value, state.attenuation );
+	} else if( parm > 0 ) {
+		SexedSound( state.number, CHAN_PAIN, "*fall_1", cg_volume_players.value, state.attenuation );
+	} else {
+		SexedSound( state.number, CHAN_PAIN, "*fall_0", cg_volume_players.value, state.attenuation );
+	}
+
+	// smoke effect
+	if( parm > 0 && ( cg_cartoonEffects.integer & 2 ) != 0 ) {
+		Vec3 start, end;
+
+		if( IsViewerEntity( state.number ) ) {
+			start = CGame::PredictedPlayerState.pmove.origin;
+		} else {
+			start = state.origin;
+		}
+		end = start + Vec3( 0, 0, playerboxStandMins[2] - 48.0f );
+
+		Trace trace;
+		trace.doTrace( start, vec3Origin, vec3Origin, end, state.number, MASK_PLAYERSOLID );
+
+		if( trace.entNum == -1 ) {
+			start.z += playerboxStandMins.z + 8;
+			LE::DustCircle( start, Vec3( 0, 0, 1 ), 50, 12 );
+		} else if( ( trace.surfFlags & SURF_NODAMAGE ) == 0 ) {
+			end = trace.endPos + 8 * trace.planeNormal;
+			LE::DustCircle( end, trace.planeNormal, 50, 12 );
+		}
+	}
+}
+
 void Event_Pain( const EntityState @state, int parm )
 {
 	if( parm == PAIN_WARSHELL ) {
@@ -339,6 +404,7 @@ bool EntityEvent( const EntityState @ent, int ev, int parm, bool predicted )
 	auto @cam = CGame::Camera::GetMainCamera();
 	int weapon, fireMode;
 	Vec3 dir;
+	Vec3 color;
 	int count;
 
 	if( !cg_test.boolean ) {
@@ -444,6 +510,52 @@ bool EntityEvent( const EntityState @ent, int ev, int parm, bool predicted )
 			}
 			return true;
 
+/*
+		case EV_ELECTROTRAIL:
+
+			// check the owner for predicted case
+			if( IsViewerEntity( parm ) && ( ev < PREDICTABLE_EVENTS_MAX ) && ( predicted != cg.view.playerPrediction ) ) {
+				return;
+			}
+			CG_Event_WeaponBeam( ent.origin, ent.origin2, parm, WEAP_ELECTROBOLT, ent.firemode );
+			break;
+
+		case EV_INSTATRAIL:
+
+			// check the owner for predicted case
+			if( IsViewerEntity( parm ) && ( ev < PREDICTABLE_EVENTS_MAX ) && ( predicted != cg.view.playerPrediction ) ) {
+				return;
+			}
+			CG_Event_WeaponBeam( ent.origin, ent.origin2, parm, WEAP_INSTAGUN, FIRE_MODE_STRONG );
+			break;
+
+		case EV_FIRE_RIOTGUN:
+
+			// check the owner for predicted case
+			if( IsViewerEntity( ent.ownerNum ) && ( ev < PREDICTABLE_EVENTS_MAX ) && ( predicted != cg.view.playerPrediction ) ) {
+				return;
+			}
+			
+			VectorCopy( ent.origin2, fv );
+			VectorCopy( ent.origin3, rv );
+			CrossProduct( rv, fv, uv );
+			CG_Event_FireRiotgun( ent.origin, fv, rv, uv, ent.weapon, ent.firemode, parm, ent.ownerNum );
+			break;
+
+		case EV_FIRE_BULLET:
+
+			// check the owner for predicted case
+			if( IsViewerEntity( ent.ownerNum ) && ( ev < PREDICTABLE_EVENTS_MAX ) && ( predicted != cg.view.playerPrediction ) ) {
+				return;
+			}
+
+			VectorCopy( ent.origin2, fv );
+			VectorCopy( ent.origin3, rv );
+			CrossProduct( rv, fv, uv );
+			CG_Event_FireMachinegun( ent.origin, fv, rv, uv, ent.weapon, ent.firemode, parm, ent.ownerNum );
+			break;
+*/
+
 		case EV_NOAMMOCLICK:
 			if( viewer ) {
 				CGame::Sound::StartGlobalSound( @cgs.media.sfxWeaponUpNoAmmo, CHAN_ITEM, cg_volume_effects.value );
@@ -452,10 +564,61 @@ bool EntityEvent( const EntityState @ent, int ev, int parm, bool predicted )
 			}
 			return true;
 
+		case EV_DASH:
+			Event_Dash( @ent, parm );
+			return true;
+
+		case EV_WALLJUMP:
+		case EV_WALLJUMP_FAILED:
+			Event_WallJump( @ent, parm, ev );
+			return true;
+
+		case EV_DOUBLEJUMP:
+			Event_DoubleJump( @ent, parm );
+			return true;
+
+		case EV_JUMP:
+			Event_Jump( @ent, parm );
+			return true;
+
+		case EV_JUMP_PAD:
+			SexedSound( ent.number, CHAN_BODY, StringUtils::Format( S_PLAYER_JUMP_1_to_2, ( rand() & 1 ) + 1 ),
+						   cg_volume_players.value, ent.attenuation );
+			cent.pmodel.AddAnimation( { GS::Anim::LEGS_JUMP_NEUTRAL, 0, 0 }, GS::Anim::Channel::EVENT_CHANNEL );
+			return true;
+
+		case EV_FALL:
+			Event_Fall( ent, parm );
+			break;
+
+		//  NON PREDICTABLE EVENTS
+
 		case EV_ITEM_RESPAWN:
 			cgEnts[ent.number].respawnTime = cg.time;
 			CGame::Sound::StartRelativeSound( @cgs.media.sfxItemRespawn, ent.number, CHAN_AUTO, 
 				cg_volume_effects.value, ATTN_IDLE );
+			return true;
+
+		case EV_PLAYER_RESPAWN:
+			if( uint( ent.ownerNum ) == cgs.playerNum + 1 ) {
+				cg.vweapon.ResetKickAngles();
+				ResetColorBlend();
+				ResetDamageIndicator();
+			}
+
+			if( IsViewerEntity( ent.ownerNum ) ) {
+				CGame::Sound::StartGlobalSound( @cgs.media.sfxPlayerRespawn, CHAN_AUTO,
+										 cg_volume_effects.value );
+			} else {
+				CGame::Sound::StartFixedSound( @cgs.media.sfxPlayerRespawn, ent.origin, CHAN_AUTO,
+										cg_volume_effects.value, ATTN_NORM );
+			}
+
+			if( ent.ownerNum != 0 && ent.ownerNum < GS::maxClients + 1 ) {
+				auto @ce = @cgEnts[ent.ownerNum];
+				ce.localEffects[LEF_EV_PLAYER_TELEPORT_IN] = cg.time;
+				ce.teleportedTo = ent.origin;
+			}
 			return true;
 
 		case EV_PLAYER_TELEPORT_IN:
@@ -492,29 +655,6 @@ bool EntityEvent( const EntityState @ent, int ev, int parm, bool predicted )
 
 		case EV_VSAY:
 			StartVoiceTokenEffect( ent.ownerNum, EV_VSAY, parm );
-			return true;
-
-		case EV_DASH:
-			Event_Dash( @ent, parm );
-			return true;
-
-		case EV_WALLJUMP:
-		case EV_WALLJUMP_FAILED:
-			Event_WallJump( @ent, parm, ev );
-			return true;
-
-		case EV_DOUBLEJUMP:
-			Event_DoubleJump( @ent, parm );
-			return true;
-
-		case EV_JUMP:
-			Event_Jump( @ent, parm );
-			return true;
-
-		case EV_JUMP_PAD:
-			SexedSound( ent.number, CHAN_BODY, StringUtils::Format( S_PLAYER_JUMP_1_to_2, ( rand() & 1 ) + 1 ),
-						   cg_volume_players.value, ent.attenuation );
-			cent.pmodel.AddAnimation( { GS::Anim::LEGS_JUMP_NEUTRAL, 0, 0 }, GS::Anim::Channel::EVENT_CHANNEL );
 			return true;
 
 		case EV_WEAPONDROP: // deactivate is not predictable
@@ -556,6 +696,10 @@ bool EntityEvent( const EntityState @ent, int ev, int parm, bool predicted )
 			}
 			return true;
 
+		case EV_GREEN_LASER:
+			LE::GreenLaser( ent.origin, ent.origin2 );
+			return true;
+
 		case EV_SPARKS:
 			dir = GS::ByteToDir( parm );
 			if( ent.damage > 0 ) {
@@ -573,6 +717,12 @@ bool EntityEvent( const EntityState @ent, int ev, int parm, bool predicted )
 			SplashParticles( ent.origin, dir, 1.0f, 0.67f, 0.0f, 6 );
 			CGame::Sound::StartFixedSound( @cgs.media.sfxRic[rand() % 2], ent.origin, CHAN_AUTO,
 									cg_volume_effects.value, ATTN_STATIC );
+			return true;
+
+		case EV_LASER_SPARKS:
+			dir = GS::ByteToDir( parm );
+			color = ColorToVec3( ent.colorRGBA );
+			SplashParticles2( ent.origin, dir, color.x, color.y, color.z, ent.counterNum );
 			return true;
 
 		case EV_BLADE_IMPACT:
@@ -595,6 +745,74 @@ bool EntityEvent( const EntityState @ent, int ev, int parm, bool predicted )
 		case EV_SPOG:
 			LE::SmallPileOfGibs( ent.origin, parm, ent.origin2, ent.team );
 			return true;
+
+		case EV_PLASMA_EXPLOSION:
+			dir = GS::ByteToDir( parm );
+			LE::PlasmaExplosion( ent.origin, dir, ent.fireMode, float( ent.weapon ) * 8.0f );
+			if( ent.fireMode == FIRE_MODE_STRONG ) {
+				CGame::Sound::StartFixedSound( @cgs.media.sfxPlasmaStrongHit, ent.origin, CHAN_AUTO, cg_volume_effects.value, ATTN_IDLE );
+				cg.vweapon.StartKickAnglesEffect( ent.origin, 50, ent.weapon * 8, 100 );
+			} else {
+				CGame::Sound::StartFixedSound( @cgs.media.sfxPlasmaWeakHit, ent.origin, CHAN_AUTO, cg_volume_effects.value, ATTN_IDLE );
+				cg.vweapon.StartKickAnglesEffect( ent.origin, 30, ent.weapon * 8, 75 );
+			}
+			return true;
+
+		case EV_BOLT_EXPLOSION:
+			dir = GS::ByteToDir( parm );
+			LE::BoltExplosionMode( ent.origin, dir, ent.fireMode, 0 );
+			return true;
+
+		case EV_INSTA_EXPLOSION:
+			dir = GS::ByteToDir( parm );
+			LE::InstaExplosionMode( ent.origin, dir, ent.fireMode, 0, ent.ownerNum );
+			return true;
+
+		case EV_GRENADE_EXPLOSION:
+			if( parm != 0 ) {
+				// we have a direction
+				dir = GS::ByteToDir( parm );
+				LE::GrenadeExplosionMode( ent.origin, dir, ent.fireMode, float( ent.weapon ) * 8.0f );
+			} else {
+				// no direction
+				LE::GrenadeExplosionMode( ent.origin, vec3Origin, ent.fireMode, float( ent.weapon ) * 8.0f );
+			}
+
+			if( ent.fireMode == FIRE_MODE_STRONG ) {
+				cg.vweapon.StartKickAnglesEffect( ent.origin, 135, ent.weapon * 8, 325 );
+			} else {
+				cg.vweapon.StartKickAnglesEffect( ent.origin, 125, ent.weapon * 8, 300 );
+			}
+			return true;
+
+		case EV_ROCKET_EXPLOSION:
+			dir = GS::ByteToDir( parm );
+			LE::RocketExplosionMode( ent.origin, dir, ent.fireMode, float( ent.weapon ) * 8.0f );
+
+			if( ent.fireMode == FIRE_MODE_STRONG ) {
+				cg.vweapon.StartKickAnglesEffect( ent.origin, 135, ent.weapon * 8, 300 );
+			} else {
+				cg.vweapon.StartKickAnglesEffect( ent.origin, 125, ent.weapon * 8, 275 );
+			}
+			return true;
+			
+		case EV_GUNBLADEBLAST_IMPACT:
+			dir = GS::ByteToDir( parm );
+			LE::GunBladeBlastImpact( ent.origin, dir, float( ent.weapon ) * 8 );
+			if( ent.skinNum > 64 ) {
+				CGame::Sound::StartFixedSound( @cgs.media.sfxGunbladeStrongHit[2], ent.origin, CHAN_AUTO,
+										cg_volume_effects.value, ATTN_DISTANT );
+			} else if( ent.skinNum > 34 ) {
+				CGame::Sound::StartFixedSound( @cgs.media.sfxGunbladeStrongHit[1], ent.origin, CHAN_AUTO,
+										cg_volume_effects.value, ATTN_NORM );
+			} else {
+				CGame::Sound::StartFixedSound( @cgs.media.sfxGunbladeStrongHit[0], ent.origin, CHAN_AUTO,
+										cg_volume_effects.value, ATTN_IDLE );
+			}
+
+			//ent.skinnum is knockback value
+			cg.vweapon.StartKickAnglesEffect( ent.origin, ent.skinNum * 8, ent.weapon * 8, 200 );
+			break;
 			
 		default:
 			break;

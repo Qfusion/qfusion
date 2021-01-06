@@ -1109,7 +1109,6 @@ void AddLocalEntities( void ) {
 				ent.scale = 0.8 - 0.8 * ( frac - 3 ) / 3;
 				le.velocity *= 0.85f;
 			}
-			ent.scale = 1;
 		}
 
 		if( le.type == LE_EXPLOSION_TRACER ) {

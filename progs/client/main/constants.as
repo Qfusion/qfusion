@@ -1,5 +1,9 @@
 const int HEADICON_TIMEOUT = 4000;
 
+const int MAX_ANGLES_KICKS = 3;
+
+const int MAX_COLORBLENDS = 3;
+
 const int FLAG_TRAIL_DROP_DELAY = 300;
 
 const float PARTICLE_GRAVITY = 500.0f;
