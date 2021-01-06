@@ -348,10 +348,8 @@ void AddPlayerEnt( CEntity @cent ) {
 
 	AddHeadIcon( @cent );
 
-/*
 	// add teleporter sfx if needed
-	CG_PModel_SpawnTeleportEffect( cent );
-*/
+	LE::SpawnPlayerTeleportEffect( @cent );
 
 	// add weapon model
 	CGame::Scene::Orientation tag_weapon;

@@ -35,6 +35,7 @@ class LocalEntity {
 	int bounce;     // is activator and bounceability value at once
 	int frames;
 
+	ModelSkeleton @skel;
     CGame::Scene::Entity refEnt;
 }
 
@@ -917,6 +918,43 @@ void DashEffect( CEntity @cent ) {
 	le.refEnt.axis.z.z *= 2.0f;
 }
 
+void SpawnPlayerTeleportEffect( CEntity @cent ) {
+	Vec3 teleportOrigin;
+	Vec3 rgb;
+
+	for( int j = LEF_EV_PLAYER_TELEPORT_IN; j <= LEF_EV_PLAYER_TELEPORT_OUT; j++ ) {
+		if( cent.localEffects[j] != 0 ) {
+			cent.localEffects[j] = 0;
+
+			rgb.set( 0.5, 0.5, 0.5 );
+			if( j == LEF_EV_PLAYER_TELEPORT_OUT ) {
+				teleportOrigin = cent.teleportedFrom;
+			} else {
+				teleportOrigin = cent.teleportedTo;
+				if( IsViewerEntity( cent.current.number ) ) {
+					rgb.set( 0.1, 0.1, 0.1 );
+				}
+			}
+
+			if( cg_raceGhosts.boolean && !IsViewerEntity( cent.current.number ) && GS::RaceGametype() ) {
+				rgb *= cg_raceGhostsAlpha.value;
+			}
+
+			// spawn a dummy model
+			LocalEntity @le = AllocModel( LE_RGB_FADE, teleportOrigin, vec3Origin, 10,
+								rgb.x, rgb.y, rgb.z, 1, 0, 0, 0, 0, @cent.refEnt.model,
+								@cgs.media.shaderTeleportShellGfx );
+
+			@le.skel = @cent.skel;
+			@le.refEnt.model = @cent.refEnt.model;
+			le.refEnt.frame = cent.refEnt.frame;
+			le.refEnt.oldFrame = cent.refEnt.frame;
+			le.refEnt.backLerp = 1.0f;
+			le.refEnt.axis = cent.refEnt.axis;
+		}
+	}
+}
+
 void SmallPileOfGibs( const Vec3 &in origin, int damage, const Vec3 &in initialVelocity, int team ) {
 	if( !cg_gibs.boolean ) {
 		return;
@@ -1088,7 +1126,7 @@ void AddLocalEntities( void ) {
 				break;
 			case LE_RGB_FADE:
 				fade = min( fade, fadeIn );
-				ent.shaderRGBA = Vec4ToColor( Vec4( le.color[0] * fade, le.color[1] * fade, le.color[2] * fade, 1.0f ) );
+				ent.shaderRGBA = COLOR_RGBA( uint8( le.color[0] * fade ), uint8( le.color[1] * fade ), uint8( le.color[2] * fade ), 255 );
 				break;
 			case LE_SCALE_ALPHA_FADE:
 				fade = min( fade, fadeIn );
@@ -1195,6 +1233,14 @@ void AddLocalEntities( void ) {
 		} else {
 			ent.origin2 = ent.origin;
 			ent.origin += time * le.velocity;
+		}
+
+		if( @le.skel != null ) {
+			// get space in cache, interpolate, transform, link
+			@le.refEnt.boneposes = CGame::Scene::RegisterTemporaryExternalBoneposes( @le.skel );
+			@le.refEnt.oldBoneposes = @le.refEnt.boneposes;
+			CGame::Scene::LerpSkeletonPoses( @le.skel, le.refEnt.frame, le.refEnt.oldFrame, @le.refEnt.boneposes, 1.0 - le.refEnt.backLerp );
+			CGame::Scene::TransformBoneposes( @le.skel, @le.refEnt.boneposes, @le.refEnt.boneposes );
 		}
 
 		ent.lightingOrigin = ent.origin;
