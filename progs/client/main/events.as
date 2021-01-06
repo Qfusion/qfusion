@@ -579,6 +579,23 @@ bool EntityEvent( const EntityState @ent, int ev, int parm, bool predicted )
 			LE::BladeImpact( ent.origin, ent.origin2 );
 			return true;
 
+		case EV_BLOOD:
+			dir = GS::ByteToDir( parm );
+			LE::BloodDamageEffect( ent.origin, dir, ent.damage );
+			return true;
+
+		case EV_EXPLOSION1:
+			LE::GenericExplosion( ent.origin, vec3Origin, FIRE_MODE_WEAK, parm * 8, false );
+			return true;
+
+		case EV_EXPLOSION2:
+			LE::GenericExplosion( ent.origin, vec3Origin, FIRE_MODE_STRONG, parm * 16, false );
+			return true;
+
+		case EV_SPOG:
+			LE::SmallPileOfGibs( ent.origin, parm, ent.origin2, ent.team );
+			return true;
+			
 		default:
 			break;
 	}

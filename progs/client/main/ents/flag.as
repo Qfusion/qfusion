@@ -59,16 +59,14 @@ void AddFlagModelOnTag( CEntity @cent, int teamcolor, const String @tagname ) {
 	}
 
 	// if on a player, flag drops colored particles and lights up
-/*
 	if( cent.current.type == ET_PLAYER ) {
-		CG_AddLightToScene( flag.origin, 350, teamcolor[0] / 255, teamcolor[1] / 255, teamcolor[2] / 255 );
+		CGame::Scene::AddLightToScene( flag.origin, 350, teamcolor );
 
-		if( cent.localEffects[LOCALEFFECT_FLAGTRAIL_LAST_DROP] + FLAG_TRAIL_DROP_DELAY < cg.time ) {
-			cent.localEffects[LOCALEFFECT_FLAGTRAIL_LAST_DROP] = cg.time;
-			CG_FlagTrail( flag.origin, cent.trailOrigin, cent.refEnt.origin, teamcolor[0] / 255, teamcolor[1] / 255, teamcolor[2] / 255 );
+		if( cent.localEffects[LEF_FLAGTRAIL_LAST_DROP] + FLAG_TRAIL_DROP_DELAY < cg.time ) {
+			cent.localEffects[LEF_FLAGTRAIL_LAST_DROP] = cg.time;
+			LE::FlagTrail( flag.origin, cent.trailOrigin, cent.refEnt.origin, ColorToVec3( teamcolor ) );
 		}
 	}
-*/
 }
 
 void UpdateFlagBaseEnt( CEntity @cent ) {

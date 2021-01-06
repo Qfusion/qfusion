@@ -18,6 +18,8 @@ class CMedia {
 
 	ModelHandle @modLasergunWallExplo;
 
+    ModelHandle @modIlluminatiGibs;
+
     ShaderHandle @shaderLaser;
     ShaderHandle @shaderFlagFlare;
     ShaderHandle @shaderRaceGhostEffect;
@@ -191,6 +193,8 @@ class CMedia {
         @modElectroBoltWallHit = CGame::RegisterModel( PATH_ELECTROBLAST_IMPACT_MODEL );
         @modInstagunWallHit = CGame::RegisterModel( PATH_INSTABLAST_IMPACT_MODEL );
         @modLasergunWallExplo = CGame::RegisterModel( PATH_LASERGUN_IMPACT_MODEL );
+
+        @modIlluminatiGibs = CGame::RegisterModel( "models/objects/gibs/illuminati/illuminati1.md3" );
     }
 
     void PrecacheSounds() {

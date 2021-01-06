@@ -1,5 +1,7 @@
 const int HEADICON_TIMEOUT = 4000;
 
+const int FLAG_TRAIL_DROP_DELAY = 300;
+
 const float PARTICLE_GRAVITY = 500.0f;
 
 const float IMPACT_POINT_OFFSET = 2.0f;

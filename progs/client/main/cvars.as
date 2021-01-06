@@ -27,9 +27,10 @@ Cvar cg_teamColoredInstaBeams( "cg_teamColoredInstaBeams", "1", CVAR_ARCHIVE );
 
 Cvar cg_projectileTrail( "cg_projectileTrail", "60", CVAR_ARCHIVE );
 Cvar cg_projectileFireTrail( "cg_projectileFireTrail", "90", CVAR_ARCHIVE );
-Cvar cg_bloodTrail( "cg_bloodTrail", "10", CVAR_ARCHIVE );
-Cvar cg_showBloodTrail( "cg_showBloodTrail", "1", CVAR_ARCHIVE );
 Cvar cg_projectileFireTrailAlpha( "cg_projectileFireTrailAlpha", "0.45", CVAR_ARCHIVE );
+
+Cvar cg_bloodTrail( "cg_bloodTrail", "10", CVAR_ARCHIVE );
+Cvar cg_bloodTrailAlpha( "cg_bloodTrailAlpha", "1.0", CVAR_ARCHIVE );
 
 Cvar cg_ebbeam_width( "cg_ebbeam_width", "64", CVAR_ARCHIVE );
 Cvar cg_ebbeam_alpha( "cg_ebbeam_alpha", "0.4", CVAR_ARCHIVE );

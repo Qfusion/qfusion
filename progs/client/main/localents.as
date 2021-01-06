@@ -180,7 +180,7 @@ void Explosion_Puff( const Vec3 &in pos, float radius, int frame ) {
 	LocalEntity @le;
 	ShaderHandle @shader = cgs.media.shaderSmokePuff1;
 
-	switch( int( floor( crandom() * 3.0f ) ) ) {
+	switch( rand() % 3 ) {
 		case 1:
 			@shader = @cgs.media.shaderSmokePuff2;
 			break;
@@ -681,6 +681,154 @@ void ProjectileTrail( CEntity @cent ) {
 	}
 }
 
+void BloodDamageEffect( const Vec3 &in origin, const Vec3 &in dir, int damage ) {
+	float radius = 5.0f, alpha = cg_bloodTrailAlpha.value;
+	const int time = 8;
+	ShaderHandle @shader = cgs.media.shaderBloodImpactPuff;
+
+	if( !cg_bloodTrail.boolean ) {
+		return;
+	}
+
+	int count = bound( 1, int( damage * 0.25f ), 10 );
+
+	if( ( GS::PointContents( origin ) & MASK_WATER ) != 0 ) {
+		@shader = @cgs.media.shaderBloodTrailLiquidPuff;
+		radius += ( 1 + crandom() );
+		alpha = 0.5f * cg_bloodTrailAlpha.value;
+	}
+	alpha = bound( 0.0f, alpha, 1.0f );
+
+	for( int i = 0; i < count; i++ ) {
+		LocalEntity @le = AllocSprite( LE_PUFF_SHRINK, origin, radius + crandom(), time,
+							 1, 1, 1, alpha, 0, 0, 0, 0, @shader );
+
+		le.refEnt.rotation = rand() % 360;
+
+		// randomize dir
+		le.velocity.set(
+				   -dir[0] * 5 + crandom() * 5,
+				   -dir[1] * 5 + crandom() * 5,
+				   -dir[2] * 5 + crandom() * 5 + 3 );
+		le.velocity = dir + float( min( 6, count ) ) * le.velocity;
+	}
+}
+
+void GrenadeExplosionMode( const Vec3 &in pos, const Vec3 &in dir, int fire_mode, float radius ) {
+	const float expvelocity = 8.0f;
+	Vec3 angles = dir.toAngles();
+
+	//if( CG_PointContents( pos ) & MASK_WATER )
+	//jalfixme: (shouldn't we do the water sound variation?)
+
+	if( fire_mode == FIRE_MODE_STRONG ) {
+		CGame::Scene::SpawnDecal( pos, dir, random() * 360, radius * 0.5, 1, 1, 1, 1, 10, 1, false, @cgs.media.shaderExplosionMark );
+	} else {
+		CGame::Scene::SpawnDecal( pos, dir, random() * 360, radius * 0.25, 1, 1, 1, 1, 10, 1, false, @cgs.media.shaderExplosionMark );
+	}
+
+	// animmap shader of the explosion
+	Vec3 origin = pos + radius * 0.15f * dir;
+	LocalEntity @le = AllocSprite( LE_ALPHA_FADE, origin, radius * 0.5f, 8,
+						1, 1, 1, 1,
+						radius * 4, 0.75f, 0.533f, 0, // yellow dlight
+						@cgs.media.shaderRocketExplosion );
+
+	Vec3 vec( crandom() * expvelocity, crandom() * expvelocity, crandom() * expvelocity );
+	le.velocity = expvelocity * dir + vec;
+	le.refEnt.rotation = rand() % 360;
+
+	// explosion ring sprite
+	if( cg_explosionsRing.boolean ) {
+		origin = pos + radius * 0.25f * dir;
+		@le = AllocSprite( LE_ALPHA_FADE, origin, radius, 3,
+							 1, 1, 1, 1,
+							 0, 0, 0, 0, // no dlight
+							 cgs.media.shaderRocketExplosionRing );
+
+		le.refEnt.rotation = rand() % 360;
+	}
+
+	if( cg_explosionsDust.integer == 1 ) {
+		// dust ring parallel to the contact surface
+		ExplosionsDust( pos, dir, radius );
+	}
+
+	// Explosion particles
+	ParticleExplosionEffect( pos, dir, 1, 0.5, 0, 32 );
+
+	if( fire_mode == FIRE_MODE_STRONG ) {
+		CGame::Sound::StartFixedSound( @cgs.media.sfxGrenadeStrongExplosion, pos, CHAN_AUTO, cg_volume_effects.value, ATTN_DISTANT );
+	} else {
+		CGame::Sound::StartFixedSound( @cgs.media.sfxGrenadeWeakExplosion, pos, CHAN_AUTO, cg_volume_effects.value, ATTN_DISTANT );
+	}
+}
+
+void GenericExplosion( const Vec3 &in pos, const Vec3 &in dir, int fire_mode, float radius, bool decal = true ) {
+	const float expvelocity = 8.0f;
+
+	//if( CG_PointContents( pos ) & MASK_WATER )
+	//jalfixme: (shouldn't we do the water sound variation?)
+	if( decal ) {
+		if( fire_mode == FIRE_MODE_STRONG ) {
+			CGame::Scene::SpawnDecal( pos, dir, random() * 360, radius * 0.5, 1, 1, 1, 1, 10, 1, false, @cgs.media.shaderExplosionMark );
+		} else {
+			CGame::Scene::SpawnDecal( pos, dir, random() * 360, radius * 0.25, 1, 1, 1, 1, 10, 1, false, @cgs.media.shaderExplosionMark );
+		}
+	}
+
+	// animmap shader of the explosion
+	Vec3 origin = pos + radius * 0.15f * dir;
+	LocalEntity @le = AllocSprite( LE_ALPHA_FADE, origin, radius * 0.5f, 8,
+						1, 1, 1, 1,
+						radius * 4, 0.75f, 0.533f, 0, // yellow dlight
+						@cgs.media.shaderRocketExplosion );
+
+	Vec3 vec( crandom() * expvelocity, crandom() * expvelocity, crandom() * expvelocity );
+	le.velocity = expvelocity * dir + vec;
+	le.refEnt.rotation = rand() % 360;
+
+	// use the rocket explosion sounds
+	if( fire_mode == FIRE_MODE_STRONG ) {
+		CGame::Sound::StartFixedSound( @cgs.media.sfxRocketLauncherStrongHit, pos, CHAN_AUTO, cg_volume_effects.value, ATTN_DISTANT );
+	} else {
+		CGame::Sound::StartFixedSound( @cgs.media.sfxRocketLauncherWeakHit, pos, CHAN_AUTO, cg_volume_effects.value, ATTN_DISTANT );
+	}
+}
+
+void FlagTrail( const Vec3 &in origin, const Vec3 &in start, const Vec3 &in end, const Vec3 &in rgb ) {
+	const float mass = 20;
+
+	Vec3 dir = end - start;
+	float len = dir.normalize();
+	if( len == 0.0f ) {
+		return;
+	}
+
+	LocalEntity @le = AllocSprite( LE_SCALE_ALPHA_FADE, origin, 8, 50 + int( 50 * random() ),
+						rgb.x, rgb.y, rgb.z, 0.7f,
+						0, 0, 0, 0,
+						@cgs.media.shaderTeleporterSmokePuff );
+	le.velocity.set( -dir[0] * 5 + crandom() * 5, -dir[1] * 5 + crandom() * 5, -dir[2] * 5 + crandom() * 5 + 3 );
+	le.refEnt.rotation = rand() % 360;
+
+	//friction and gravity
+	le.accel.set( -0.2f, -0.2f, -9.8f * mass );
+	le.bounce = 50;
+}
+
+void Explosion1( const Vec3 &in pos ) {
+	RocketExplosionMode( pos, vec3Origin, FIRE_MODE_STRONG, 150 );
+}
+
+void Explosion2( const Vec3 &in pos ) {
+	GrenadeExplosionMode( pos, vec3Origin, FIRE_MODE_STRONG, 150 );
+}
+
+void GreenLaser( const Vec3 &in start, const Vec3 &in end ) {
+	AllocLaser( start, end, 2.0f, 2.0f, 0.0f, 0.85f, 0.0f, 0.3f, @cgs.media.shaderLaser );
+}
+
 void DustCircle( const Vec3 &in pos, const Vec3 &in dir, float radius, int count ) {
 	if( ( GS::PointContents( pos ) & MASK_WATER ) != 0 ) {
 		return; // no smoke under water :)
@@ -767,6 +915,72 @@ void DashEffect( CEntity @cent ) {
 						null );
 	le.refEnt.scale = 0.01f;
 	le.refEnt.axis.z.z *= 2.0f;
+}
+
+void SmallPileOfGibs( const Vec3 &in origin, int damage, const Vec3 &in initialVelocity, int team ) {
+	if( !cg_gibs.boolean ) {
+		return;
+	}
+
+	int time = 50;
+	int count = bound( 15, 14 + cg_gibs.integer, 128 ); // 15 models minimum
+
+	for( int i = 0; i < count; i++ ) {
+		Vec4 color( 60.0f / 255.0f, 60.0f / 255.0f, 60.0f / 255.0f, 1.0f ); // grey
+
+		// coloring
+		switch( rand() % 3 ) {
+			case 0:
+				// orange
+				color.set( 1, 0.5, 0, 1 );
+				break;
+			case 1:
+				// purple
+				color.set( 1, 0, 1, 1 );
+				break;
+			case 2:
+			default:
+				if( ( team == TEAM_ALPHA ) || ( team == TEAM_BETA ) ) {
+					// team
+					Vec4 fcolor = TeamColor( team );
+					for( int j = 0; j < 3; j++ ) {
+						color[j] = bound( 60.0f / 255.0f, fcolor[j], 1.0f );
+					}
+					color[3] = fcolor[3];
+				}
+				break;
+		}
+
+		LocalEntity @le = AllocModel( LE_ALPHA_FADE, origin, vec3Origin, time + int( time * random() ),
+							color[0], color[1], color[2], color[3],
+							0, 0, 0, 0,
+							@cgs.media.modIlluminatiGibs,
+							null );
+
+		// random rotation and scale variations
+		Vec3 angles ( crandom() * 360, crandom() * 360, crandom() * 360 );
+		angles.anglesToAxis( le.refEnt.axis );
+		le.refEnt.scale = 0.8f - ( random() * 0.25 );
+		le.refEnt.renderfx = RF_FULLBRIGHT | RF_NOSHADOW;
+
+		Vec3 velocity( crandom() * 0.5, crandom() * 0.5, 0.5 + random() * 0.5 );
+		velocity.normalize();
+		velocity *= min( damage * 10, 300 );
+
+		velocity.x += crandom() * bound( 0, damage, 150 );
+		velocity.y += crandom() * bound( 0, damage, 150 );
+		velocity.z +=  random() * bound( 0, damage, 250 );
+
+		le.velocity = initialVelocity + velocity;
+		le.avelocity[0] = random() * 1200;
+		le.avelocity[1] = random() * 1200;
+		le.avelocity[2] = random() * 1200;
+
+		//friction and gravity
+		le.accel.set( -0.2f, -0.2f, -900 );
+
+		le.bounce = 75;
+	}
 }
 
 void AddLocalEntities( void ) {
@@ -857,6 +1071,7 @@ void AddLocalEntities( void ) {
 				ent.scale = 0.8 - 0.8 * ( frac - 3 ) / 3;
 				le.velocity *= 0.85f;
 			}
+			ent.scale = 1;
 		}
 
 		if( le.type == LE_EXPLOSION_TRACER ) {

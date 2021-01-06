@@ -90,6 +90,12 @@ int ColorIndex( uint8 c ) {
 	return int( i );
 }
 
+Vec3 ColorToVec3( int c ) {
+	return Vec3( float( c & 255 ) / 255.0f,
+		float( (c>>8) & 255 ) / 255.0f,
+		float( (c>>16) & 255 ) / 255.0f );
+}
+
 Vec4 ColorToVec4( int c ) {
 	return Vec4( float( c & 255 ) / 255.0f,
 		float( (c>>8) & 255 ) / 255.0f,
