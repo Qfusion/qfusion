@@ -1356,8 +1356,6 @@ struct gclient_s {
 	int timeDeltasHead;
 
 	pmove_state_t old_pmove;    // for detecting out-of-pmove changes
-
-	int asRefCount, asFactored;
 };
 
 // quit or teamchange data for clients (stats)

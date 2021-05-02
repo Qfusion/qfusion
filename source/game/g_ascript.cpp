@@ -639,17 +639,10 @@ static const gs_asClassDescriptor_t asBotClassDescriptor =
 
 // CLASS: Client
 static int objectGameClient_PlayerNum( gclient_t *self ) {
-	if( self->asFactored ) {
-		return -1;
-	}
 	return PLAYERNUM( self );
 }
 
 static bool objectGameClient_isReady( gclient_t *self ) {
-	if( self->asFactored ) {
-		return false;
-	}
-
 	return ( level.ready[self - game.clients] || GS_MatchState() == MATCH_STATE_PLAYTIME ) ? true : false;
 }
 
@@ -683,10 +676,6 @@ static ai_handle_t *objectGameClient_getBot( gclient_t *self )
 }
 
 static int objectGameClient_ClientState( gclient_t *self ) {
-	if( self->asFactored ) {
-		return CS_FREE;
-	}
-
 	return trap_GetClientState( (int)( self - game.clients ) );
 }
 
@@ -727,10 +716,6 @@ static asstring_t *objectGameClient_getMMLogin( gclient_t *self ) {
 
 static void objectGameClient_Respawn( bool ghost, gclient_t *self ) {
 	int playerNum;
-
-	if( self->asFactored ) {
-		return;
-	}
 
 	playerNum = objectGameClient_PlayerNum( self );
 
@@ -2137,15 +2122,12 @@ static void asFunc_G_LocalSound( gclient_t *target, int channel, int soundindex 
 		return;
 	}
 
-	if( target && !target->asFactored ) {
-		int playerNum = target - game.clients;
-
-		if( playerNum < 0 || playerNum >= gs.maxclients ) {
-			return;
-		}
-
-		ent = game.edicts + playerNum + 1;
+	int playerNum = target - game.clients;
+	if( playerNum < 0 || playerNum >= gs.maxclients ) {
+		return;
 	}
+
+	ent = game.edicts + playerNum + 1;
 
 	if( ent ) {
 		G_LocalSound( ent, channel, soundindex );
@@ -2156,7 +2138,7 @@ static void asFunc_G_AnnouncerSound( gclient_t *target, int soundindex, int team
 	edict_t *ent = NULL, *passent = NULL;
 	int playerNum;
 
-	if( target && !target->asFactored ) {
+	if( target ) {
 		playerNum = target - game.clients;
 
 		if( playerNum < 0 || playerNum >= gs.maxclients ) {
@@ -2166,14 +2148,13 @@ static void asFunc_G_AnnouncerSound( gclient_t *target, int soundindex, int team
 		ent = game.edicts + playerNum + 1;
 	}
 
-	if( ignore && !ignore->asFactored ) {
+	if( ignore ) {
 		playerNum = ignore - game.clients;
 
 		if( playerNum >= 0 && playerNum < gs.maxclients ) {
 			passent = game.edicts + playerNum + 1;
 		}
 	}
-
 
 	G_AnnouncerSound( ent, soundindex, team, queued, passent );
 }
