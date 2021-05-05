@@ -217,7 +217,7 @@ void RegisterCvarAddon( asIScriptEngine *engine ) {
 	r = engine->RegisterObjectMethod( "Cvar", "const String @ get_latchedString() const", asFUNCTION( objectCVar_getLatchedString ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 
 	asITypeInfo *type = engine->GetTypeInfoByName( "Cvar" );
-	type->SetUserData( &objectCVar_ToString, 33 );
+	type->SetUserData( (void *)&objectCVar_ToString, 33 );
 
 	// enums
 	r = engine->RegisterEnumValue( "eCvarFlag", "CVAR_ARCHIVE", CVAR_ARCHIVE ); assert( r >= 0 );
