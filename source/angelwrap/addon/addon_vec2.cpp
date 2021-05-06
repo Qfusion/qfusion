@@ -240,7 +240,7 @@ void RegisterVec2Addon( asIScriptEngine *engine ) {
 	r = engine->RegisterObjectProperty( "Vec2", "float y", asOFFSET( asvec2_t, v[1] ) ); assert( r >= 0 );
 
 	asITypeInfo *type = engine->GetTypeInfoByName( "Vec2" );
-	type->SetUserData( &objectVec2_VecToString, 33 );
+	type->SetUserData( (void *)&objectVec2_VecToString, 33 );
 
 	(void)sizeof( r ); // hush the compiler
 }
