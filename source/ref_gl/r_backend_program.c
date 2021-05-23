@@ -910,7 +910,8 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 
 		if( lightStyle ) {
 			// world surface
-			if( pass->rgbgen.type == RGB_GEN_VERTEX || pass->rgbgen.type == RGB_GEN_ONE_MINUS_VERTEX ) {
+			if( pass->rgbgen.type == RGB_GEN_VERTEX || pass->rgbgen.type == RGB_GEN_ONE_MINUS_VERTEX || 
+				( lightStyle->lightmapNum[0] < 0 && lightStyle->vertexStyles[0] != 255 ) ) {
 				// vertex lighting
 				programFeatures |= GLSL_SHADER_COMMON_VERTEX_LIGHTING;
 			} else if( lightStyle->lightmapNum[0] >= 0 ) {
@@ -1325,7 +1326,8 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 				RB_BindImage( 5, rb.rtlights[0]->cubemapFilter );
 			}
 		} else {
-			if( isWorldVertexLight ) {
+			if( isWorldVertexLight || 
+				( lightStyle && lightStyle->lightmapStyles[0] == 255 && lightStyle->vertexStyles[0] != 255 ) ) {
 				programFeatures |= GLSL_SHADER_COMMON_VERTEX_LIGHTING;
 			}
 
