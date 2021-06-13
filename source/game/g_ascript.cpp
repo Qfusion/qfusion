@@ -637,7 +637,53 @@ static const gs_asClassDescriptor_t asScoreStatsClassDescriptor =
 	NULL, NULL                  /* string factory hack */
 };
 
+//=======================================================================
 
+// CLASS: Bot
+
+static const gs_asFuncdef_t asbot_Funcdefs[] =
+{
+	ASLIB_FUNCDEF_NULL
+};
+
+static const gs_asBehavior_t asbot_ObjectBehaviors[] =
+{
+	ASLIB_BEHAVIOR_NULL
+};
+
+static const gs_asMethod_t asbot_Methods[] =
+{
+	{ ASLIB_FUNCTION_DECL(void, clearGoalWeights, ()), asFUNCTION(AI_ClearWeights), asCALL_CDECL_OBJFIRST },
+	{ ASLIB_FUNCTION_DECL(void, resetGoalWeights, ()), asFUNCTION(AI_ResetWeights), asCALL_CDECL_OBJFIRST },
+	{ ASLIB_FUNCTION_DECL(void, setGoalWeight, ( int i, float weight )), asFUNCTION(AI_SetGoalWeight), asCALL_CDECL_OBJFIRST },
+	{ ASLIB_FUNCTION_DECL(float, getItemWeight, ( const Item @item ) const), asFUNCTION(AI_GetItemWeight), asCALL_CDECL_OBJFIRST },
+
+	// character
+	{ ASLIB_FUNCTION_DECL(float, get_reactionTime, () const), asFUNCTION(AI_GetCharacterReactionTime), asCALL_CDECL_OBJFIRST },
+	{ ASLIB_FUNCTION_DECL(float, get_offensiveness, () const), asFUNCTION(AI_GetCharacterOffensiveness), asCALL_CDECL_OBJFIRST },
+	{ ASLIB_FUNCTION_DECL(float, get_campiness, () const), asFUNCTION(AI_GetCharacterCampiness), asCALL_CDECL_OBJFIRST },
+	{ ASLIB_FUNCTION_DECL(float, get_firerate, () const), asFUNCTION(AI_GetCharacterFirerate), asCALL_CDECL_OBJFIRST },
+
+	ASLIB_METHOD_NULL
+};
+
+static const gs_asProperty_t asbot_Properties[] =
+{
+	ASLIB_PROPERTY_NULL
+};
+
+static const gs_asClassDescriptor_t asBotClassDescriptor =
+{
+	"Bot",						/* name */
+	asOBJ_REF|asOBJ_NOCOUNT,	/* object type flags */
+	ai_handle_size,				/* size */
+	asbot_Funcdefs,				/* funcdefs */
+	asbot_ObjectBehaviors,		/* object behaviors */
+	asbot_Methods,				/* methods */
+	asbot_Properties,			/* properties */
+
+	NULL, NULL					/* string factory hack */
+};
 
 //=======================================================================
 
@@ -668,6 +714,22 @@ static bool objectGameClient_isBot( gclient_t *self ) {
 
 	ent = PLAYERENT( playerNum );
 	return ( ( ent->r.svflags & SVF_FAKECLIENT ) && AI_GetType( ent->ai ) == AI_ISBOT );
+}
+
+static ai_handle_t *objectGameClient_getBot( gclient_t *self )
+{
+	int			   playerNum;
+	const edict_t *ent;
+
+	playerNum = objectGameClient_PlayerNum( self );
+	if( playerNum < 0 && playerNum >= gs.maxclients )
+		return NULL;
+
+	ent = PLAYERENT( playerNum );
+	if( !( ent->r.svflags & SVF_FAKECLIENT ) || AI_GetType( ent->ai ) != AI_ISBOT )
+		return NULL;
+
+	return ent->ai;
 }
 
 static int objectGameClient_ClientState( gclient_t *self ) {
@@ -1064,6 +1126,8 @@ static const gs_asMethod_t gameclient_Methods[] =
 {
 	{ ASLIB_FUNCTION_DECL( int, get_playerNum, ( ) const ), asFUNCTION( objectGameClient_PlayerNum ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( bool, isReady, ( ) const ), asFUNCTION( objectGameClient_isReady ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( bool, isBot, () const ), asFUNCTION( objectGameClient_isBot ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( Bot @, getBot, () const ), asFUNCTION( objectGameClient_getBot ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( int, state, ( ) const ), asFUNCTION( objectGameClient_ClientState ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, respawn, ( bool ghost ) ), asFUNCTION( objectGameClient_Respawn ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, clearPlayerStateEvents, ( ) ), asFUNCTION( objectGameClient_ClearPlayerStateEvents ), asCALL_CDECL_OBJLAST },
@@ -1599,9 +1663,6 @@ static const gs_asProperty_t gedict_Properties[] =
 	{ ASLIB_PROPERTY_DECL( int, mass ), ASLIB_FOFFSET( edict_t, mass ) },
 	{ ASLIB_PROPERTY_DECL( int64, timeStamp ), ASLIB_FOFFSET( edict_t, timeStamp ) },
 
-	{ ASLIB_PROPERTY_DECL( float, aiIntrinsicEnemyWeight ), ASLIB_FOFFSET( edict_t, aiIntrinsicEnemyWeight ) },
-	{ ASLIB_PROPERTY_DECL( float, aiVisibilityDistance ), ASLIB_FOFFSET( edict_t, aiVisibilityDistance ) },
-
 	{ ASLIB_PROPERTY_DECL( entThink @, think ), ASLIB_FOFFSET( edict_t, asThinkFunc ) },
 	{ ASLIB_PROPERTY_DECL( entTouch @, touch ), ASLIB_FOFFSET( edict_t, asTouchFunc ) },
 	{ ASLIB_PROPERTY_DECL( entUse @, use ), ASLIB_FOFFSET( edict_t, asUseFunc ) },
@@ -1648,6 +1709,7 @@ static const gs_asClassDescriptor_t * const asGameClassesDescriptors[] =
 	&asScoreStatsClassDescriptor,
 	&asGameClientDescriptor,
 	&asGameEntityClassDescriptor,
+	&asBotClassDescriptor,
 
 	NULL
 };
@@ -2355,6 +2417,30 @@ static const gs_asglobfuncs_t asGameGlobFuncs[] =
 
 // ============================================================================
 
+static void asFunc_AI_AddGoal( edict_t *self, bool customReach )
+{
+	if( customReach )
+		AI_AddGoalEntityCustom( self );
+	else
+		AI_AddGoalEntity( self );
+}
+
+static const gs_asglobfuncs_t asAIGlobFuncs[] =
+{
+	{ "int GetRootGoal()", asFUNCTION(AI_GetRootGoalEnt), NULL },
+	{ "int GetNextGoal( int index )", asFUNCTION(AI_GetNextGoalEnt), NULL },
+	{ "Entity @GetGoalEntity( int index )", asFUNCTION(AI_GetGoalEntity), NULL },
+
+	{ "void AddGoal( Entity @ent )", asFUNCTION(AI_AddGoalEntity), NULL },
+	{ "void AddGoal( Entity @ent, bool customReach )", asFUNCTION(asFunc_AI_AddGoal), NULL },
+	{ "void RemoveGoal( Entity @ent )", asFUNCTION(AI_RemoveGoalEntity), NULL },
+	{ "void ReachedGoal( Entity @ent )", asFUNCTION(AI_ReachedEntity), NULL },
+
+	{ NULL }
+};
+
+// ============================================================================
+
 static const gs_asglobproperties_t asGlobProps[] =
 {
 	{ "const int64 levelTime", &level.time },
@@ -2697,15 +2783,12 @@ static void G_InitializeGameModuleSyntax( asIScriptEngine *asEngine ) {
 
 	// register global enums
 	GS_asRegisterEnums( asEngine, asGameEnums, NULL );
-	GS_asRegisterEnums( asEngine, asAIEnums, NULL );
 
 	// first register all class names so methods using custom classes work
 	GS_asRegisterObjectClassNames( asEngine, asGameClassesDescriptors, NULL );
-	GS_asRegisterObjectClassNames( asEngine, asAIClassesDescriptors, NULL );
 
 	// register classes
 	GS_asRegisterObjectClasses( asEngine, asGameClassesDescriptors, NULL );
-	GS_asRegisterObjectClasses( asEngine, asAIClassesDescriptors, NULL );
 
 	// register global functions
 	GS_asRegisterGlobalFunctions( asEngine, asGameGlobFuncs, NULL );
@@ -2811,7 +2894,7 @@ static void G_asDumpAPIToFile( const char *path ) {
 	char string[1024];
 
 	// dump class definitions, containing methods, behaviors and properties
-	const gs_asClassDescriptor_t *const *allDescriptors[] = { asGameClassesDescriptors, asAIClassesDescriptors };
+	const gs_asClassDescriptor_t *const *allDescriptors[] = { asGameClassesDescriptors };
 	for( const gs_asClassDescriptor_t *const *descriptors: allDescriptors ) {
 		for( i = 0;; i++ ) {
 			if( !( cDescr = descriptors[i] ) ) {
@@ -2946,7 +3029,7 @@ static void G_asDumpAPIToFile( const char *path ) {
 		Q_snprintfz( string, sizeof( string ), "/**\r\n * %s\r\n */\r\n", "Enums" );
 		trap_FS_Write( string, strlen( string ), file );
 
-		const gs_asEnum_t *const allEnumsLists[] = { asGameEnums, asAIEnums };
+		const gs_asEnum_t *const allEnumsLists[] = { asGameEnums };
 		for( const gs_asEnum_t *const enumsList: allEnumsLists ) {
 			for( i = 0, asEnum = enumsList; asEnum->name != NULL; i++, asEnum++ ) {
 				Q_snprintfz( string, sizeof( string ), "typedef enum\r\n{\r\n" );

@@ -616,9 +616,6 @@ void G_ClientRespawn( edict_t *self, bool ghost ) {
 
 	self->s.teleported = true;
 
-	self->aiIntrinsicEnemyWeight = 1.0f;
-	self->aiVisibilityDistance = 999999.9f;
-
 	// hold in place briefly
 	client->ps.pmove.pm_flags = PMF_TIME_TELEPORT;
 	client->ps.pmove.pm_time = 14;
@@ -632,6 +629,8 @@ void G_ClientRespawn( edict_t *self, bool ghost ) {
 	client->ps.stats[STAT_TIME_ALPHA] = STAT_NOTSET;
 	client->ps.stats[STAT_TIME_BETA] = STAT_NOTSET;
 
+	BOT_Respawn( self );
+
 	self->r.client->level.respawnCount++;
 
 	G_UseTargets( spawnpoint, self );
@@ -644,8 +643,6 @@ void G_ClientRespawn( edict_t *self, bool ghost ) {
 	} else {
 		G_Gametype_GENERIC_ClientRespawn( self, old_team, self->s.team );
 	}
-
-	AI_Respawn( self );
 }
 
 /*
@@ -764,6 +761,8 @@ void ClientBegin( edict_t *ent ) {
 
 	// schedule the next scoreboard update
 	client->level.scoreboard_time = game.realtime + scoreboardInterval - ( game.realtime % scoreboardInterval );
+
+	AI_EnemyAdded( ent );
 
 	G_ClientEndSnapFrame( ent ); // make sure all view stuff is valid
 
@@ -1325,6 +1324,9 @@ void ClientDisconnect( edict_t *ent, const char *reason ) {
 
 	// let the gametype scripts know this client just disconnected
 	G_Gametype_ScoreEvent( ent->r.client, "disconnect", NULL );
+
+	G_FreeAI( ent );
+	AI_EnemyRemoved( ent );
 
 	ent->r.inuse = false;
 	ent->r.svflags = SVF_NOCLIENT;

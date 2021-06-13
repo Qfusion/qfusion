@@ -402,7 +402,6 @@ static void trigger_push_setup( edict_t *self ) {
 		G_FreeEdict( self );
 		return;
 	}
-	self->target_ent = target;
 
 	VectorAdd( self->r.absmin, self->r.absmax, origin );
 	VectorScale( origin, 0.5, origin );

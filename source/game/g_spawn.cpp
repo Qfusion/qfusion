@@ -832,12 +832,8 @@ void G_InitLevel( char *mapname, char *entities, int entstrlen, int64_t levelTim
 	GT_asCallShutdown();
 	G_asCallMapExit();
 
-	AI_BeforeLevelLevelScriptShutdown();
-
 	G_asShutdownMapScript();
 	GT_asShutdownScript();
-
-	AI_AfterLevelScriptShutdown();
 
 	G_FreeCallvotes();
 
@@ -923,7 +919,7 @@ void G_InitLevel( char *mapname, char *entities, int entstrlen, int64_t levelTim
 	G_PrecacheItems(); // set configstrings for items (gametype must be initialized)
 	G_PrecacheMedia();
 	G_PrecacheGameCommands(); // adding commands after this point won't update them to the client
-	AI_InitLevel();
+	AI_InitLevel(); // load navigation file of the current map
 
 	// start spawning entities
 	G_SpawnEntities();
@@ -937,6 +933,8 @@ void G_InitLevel( char *mapname, char *entities, int entstrlen, int64_t levelTim
 
 	// call map specific
 	G_asCallMapInit();
+
+	AI_InitEntitiesData();
 
 	// always start in warmup match state and let the thinking code
 	// revert it to wait state if empty ( so gametype based item masks are setup )

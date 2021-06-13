@@ -703,7 +703,7 @@ void G_FreeEdict( edict_t *ed ) {
 
 	GClip_UnlinkEntity( ed );   // unlink from world
 
-	AI_RemoveNavEntity( ed );
+	AI_RemoveGoalEntity( ed );
 	G_FreeAI( ed );
 
 	G_asReleaseEntityBehaviors( ed );
@@ -736,10 +736,6 @@ void G_InitEdict( edict_t *e ) {
 	e->s.number = ENTNUM( e );
 
 	G_asResetEntityBehaviors( e );
-
-	// Reset AI intrinsic properties
-	e->aiIntrinsicEnemyWeight = 0.0f;
-	e->aiVisibilityDistance = 999999.9f;
 
 	// mark all entities to not be sent by default
 	e->r.svflags = SVF_NOCLIENT | (e->r.svflags & SVF_FAKECLIENT);
@@ -830,8 +826,6 @@ void G_AddEvent( edict_t *ent, int event, int parm, bool highPriority ) {
 	ent->s.events[eventNum] = event;
 	ent->s.eventParms[eventNum] = parm & 0xFF;
 	ent->eventPriority[eventNum] = highPriority;
-
-	AI_RegisterEvent( ent, event, parm );
 }
 
 /*
@@ -979,10 +973,6 @@ void G_CallStop( edict_t *self ) {
 * G_CallPain
 */
 void G_CallPain( edict_t *ent, edict_t *attacker, float kick, float damage ) {
-	if( ent->ai ) {
-		AI_Pain( ent, attacker, kick, damage );
-	}
-
 	if( ent->pain ) {
 		ent->pain( ent, attacker, kick, damage );
 	} else if( ent->scriptSpawned && ent->asPainFunc ) {
@@ -1823,7 +1813,7 @@ bool G_Visible( edict_t *self, edict_t *other ) {
 	spot2[2] += other->viewheight;
 
 	G_Trace( &trace, spot1, vec3_origin, vec3_origin, spot2, self, MASK_OPAQUE );	
-	return( trace.fraction == 1.0 );
+	return ( trace.fraction == 1.0f || ENTNUM( other ) == trace.ent );
 }
 
 /*

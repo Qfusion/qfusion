@@ -457,9 +457,6 @@ void G_Damage( edict_t *targ, edict_t *inflictor, edict_t *attacker, const vec3_
 
 	G_Gametype_ScoreEvent( attacker->r.client, "dmg", va( "%i %f %i", targ->s.number, damage, attacker->s.number ) );
 
-	if( attacker->ai )
-		AI_DamagedEntity( attacker, targ, (int)damage );
-
 	if( statDmg && client ) {
 		client->level.stats.total_damage_received += take + asave;
 		teamlist[targ->s.team].stats.total_damage_received += take + asave;

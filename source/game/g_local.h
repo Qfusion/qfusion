@@ -402,7 +402,6 @@ extern cvar_t *g_asGC_stats;
 extern cvar_t *g_asGC_interval;
 
 extern cvar_t *g_skillRating;
-extern cvar_t *g_bot_evolution;
 
 edict_t **G_Teams_ChallengersQueue( void );
 void G_Teams_Join_Cmd( edict_t *ent );
@@ -1101,7 +1100,7 @@ edict_t	*G_PlayerTrail_LastSpot (void);
 
 //============================================================================
 
-#include "g_botai.h"
+#include "ai/ai.h"
 
 typedef struct {
 	int radius;
@@ -1546,9 +1545,7 @@ struct edict_s {
 	moveinfo_t moveinfo;        // func movers movement
 	monsterinfo_t monsterinfo;
 
-	ai_handle_t *ai;
-	float aiIntrinsicEnemyWeight;
-	float aiVisibilityDistance;
+	ai_handle_t *ai;     //MbotGame
 
 	snap_edict_t snap; // information that is cleared each frame snap
 

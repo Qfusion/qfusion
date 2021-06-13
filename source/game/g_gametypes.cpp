@@ -1562,7 +1562,7 @@ static void G_CheckNumBots( void ) {
 				continue;
 			}
 			if( AI_GetType( ent->ai ) == AI_ISBOT ) {
-				AI_RemoveBot( ent->r.client->netname );
+				trap_DropClient( ent, DROP_TYPE_GENERAL, NULL );
 				break;
 			}
 		}
@@ -1572,7 +1572,7 @@ static void G_CheckNumBots( void ) {
 	if( desiredNumBots > game.numBots ) { // add a bot if there is room
 		for( ent = game.edicts + 1; PLAYERNUM( ent ) < gs.maxclients && game.numBots < desiredNumBots; ent++ ) {
 			if( !ent->r.inuse && trap_GetClientState( PLAYERNUM( ent ) ) == CS_FREE ) {
-				AI_SpawnBot( NULL );
+				BOT_SpawnBot( NULL );
 			}
 		}
 	}

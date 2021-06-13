@@ -372,6 +372,15 @@ void G_AddServerCommands( void ) {
 	trap_Cmd_AddCommand( "listip", Cmd_ListIP_f );
 	trap_Cmd_AddCommand( "writeip", Cmd_WriteIP_f );
 
+	// MBotGame: Add AI related commands
+	trap_Cmd_AddCommand( "botdebug", AIDebug_ToogleBotDebug );
+	trap_Cmd_AddCommand( "editnodes", AITools_InitEditnodes );
+	trap_Cmd_AddCommand( "makenodes", AITools_InitMakenodes );
+	trap_Cmd_AddCommand( "savenodes", Cmd_SaveNodes_f );
+	trap_Cmd_AddCommand( "addnode", AITools_AddNode_Cmd );
+	trap_Cmd_AddCommand( "dropnode", AITools_AddNode_Cmd );
+	trap_Cmd_AddCommand( "addbotroam", AITools_AddBotRoamNode_Cmd );
+
 	trap_Cmd_AddCommand( "dumpASapi", G_asDumpAPI_f );
 
 	trap_Cmd_AddCommand( "listratings", G_ListRatings_f );
@@ -397,6 +406,15 @@ void G_RemoveCommands( void ) {
 	trap_Cmd_RemoveCommand( "removeip" );
 	trap_Cmd_RemoveCommand( "listip" );
 	trap_Cmd_RemoveCommand( "writeip" );
+
+	// Remove AI related commands
+	trap_Cmd_RemoveCommand( "botdebug" );
+	trap_Cmd_RemoveCommand( "editnodes" );
+	trap_Cmd_RemoveCommand( "makenodes" );
+	trap_Cmd_RemoveCommand( "savenodes" );
+	trap_Cmd_RemoveCommand( "addnode" );
+	trap_Cmd_RemoveCommand( "dropnode" );
+	trap_Cmd_RemoveCommand( "addbotroam" );
 
 	trap_Cmd_RemoveCommand( "dumpASapi" );
 

@@ -1,0 +1,121 @@
+AfterMoon
+
+
+            © Copyright 2001-2004
+            Pat AfterMoon 
+
+
+
+       
+
+      This the integral text of my discussion with Steve Yeager about the 
+      release of his ACE BOT code under the GNU GPL licence.
+
+
+
+
+De: <>
+À: <> 
+Objet: About Ace bot
+Date: vendredi 26 juillet 2002 01:08
+
+        Hi,
+
+        I've downloaded Ace Bot, trying it and look at the source code : really great job !
+I would be happy if I could add Ace Bot in my mod.
+Since december 2001 the Quake2 engine and the Dll were released under the term of the GPL licence
+(thanks to John Carmack). My mod is also covered by the GPL licence.
+
+Can your code be integrated in a GPL project ?
+More info about the licence at www.gnu.org
+
+My main site : www.aftermoon.net
+The current MOD I work on : http://coopordie.aftermoon.net
+
+    Best regard
+
+    Pat
+
+
+De: "Steve Yeager" <>
+À: <>
+Objet: Re: About Ace bot
+Date: vendredi 26 juillet 2002 21:14
+
+Sure, use it as you see fit.  It is not encumbered by any license, but if
+you do use it and want to go ahead and mention where it came from that would
+be cool.  Otherwise, hope it works for you.
+
+Steve Yeager
+
+
+
+De: <>
+À: "Steve Yeager" <>
+Objet: Re: About Ace bot
+Date: lundi 29 juillet 2002 15:51
+
+
+I'm really happy by your answer. I worked during the last week-end on your code and I must tell you
+it is really clear and well commented.
+
+But could you really confirm you are OK about the GPL.  I'm not a lawyer but regarding to
+this part of your headers file :
+
+// This program MUST NOT be sold in ANY form. If you have paid for
+// this product, you should contact Steve Yeager immediately, via
+// the ACE Bot homepage.
+
+I must inform you that the GPL authorize (with conditions) redistribution on commercial package,
+like Redhat does with Linux. Of course it can't be integrated in proprietary software, all code will
+always stay open source, all authors need to be mentioned, and source code need to be available for
+every derived work ...
+
+The GPL licence was the choice of John Carmack for Quake1 and Quake2 and many others big open-source
+projects like Linux. I hope it will agree with you.
+
+Distributing your work under the GPL doesn't remove your initial copyright and your right to make
+absolutely what you want with your code.
+
+If you want more info or discuss about that, feel free to email me or look at www.gnu.org
+
+
+
+De: "Steve Yeager" <>
+À: <>
+Objet: Re: About Ace bot
+Date: mercredi 31 juillet 2002 00:34
+
+Yeah, I have to code for a living, so it helps ME when I have to go back and
+figure out what I did...
+
+YES to the GPL.  I've dealt with it before.
+
+The only reason I put that statement in was I was clueless about the GPL at
+that time, otherwise it would have been released with either GPL or LGPL.
+
+Good luck on your project.
+
+Steve Yeager
+
+
+
+De: <>
+À: "Steve Yeager" <>
+Objet: Re: About Ace bot : thank you
+Date: mercredi 31 juillet 2002 08:54
+
+> YES to the GPL.
+Cool !
+
+> Good luck on your project.
+Thank you
+
+    CU
+
+    Pat
+
+
+
+
+ 

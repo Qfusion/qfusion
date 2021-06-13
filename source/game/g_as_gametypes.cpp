@@ -33,8 +33,6 @@ static void GT_ResetScriptData( void ) {
 	level.gametype.selectSpawnPointFunc = NULL;
 	level.gametype.clientCommandFunc = NULL;
 	level.gametype.shutdownFunc = NULL;
-
-	AI_ResetGametypeScript();
 }
 
 void GT_asShutdownScript( void ) {
@@ -340,6 +338,32 @@ bool GT_asCallGameCommand( gclient_t *client, const char *cmd, const char *args,
 	return ctx->GetReturnByte() == 0 ? false : true;
 }
 
+//"bool GT_UpdateBotStatus( Entity @ent )"
+bool GT_asCallBotStatus( edict_t *ent )
+{
+	int				  error;
+	asIScriptContext *ctx;
+
+	if( !level.gametype.botStatusFunc )
+		return false; // should have a hardcoded backup
+
+	ctx = game.asExport->asAcquireContext( GAME_AS_ENGINE() );
+
+	error = ctx->Prepare( static_cast<asIScriptFunction *>( level.gametype.botStatusFunc ) );
+	if( error < 0 )
+		return false;
+
+	// Now we need to pass the parameters to the script function.
+	ctx->SetArgObject( 0, ent );
+
+	error = ctx->Execute();
+	if( G_ExecutionErrorReport( error ) )
+		GT_asShutdownScript();
+
+	// Retrieve the return from the context
+	return ctx->GetReturnByte() == 0 ? false : true;
+}
+
 //"void GT_Shutdown()"
 void GT_asCallShutdown( void ) {
 	int error;
@@ -479,11 +503,6 @@ static bool G_asInitializeGametypeScript( asIScriptModule *asModule ) {
 	} else {
 		funcCount++;
 	}
-
-	//
-	// Initialize AI gametype exports
-	//
-	AI_InitGametypeScript( asModule );
 
 	//
 	// execute the GT_InitGametype function
