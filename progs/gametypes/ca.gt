@@ -4,6 +4,7 @@
 
 generic/overlaymenu.as;
 generic/matchstates.as;
+generic/bots.as;
 generic/awards.as;
 
 ca.as;

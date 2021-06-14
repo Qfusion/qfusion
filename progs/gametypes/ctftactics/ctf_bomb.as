@@ -33,8 +33,6 @@ class cBomb
     Entity @bombEnt;
     cPlayer @player;
 
-    int64 spawnedAt;
-
     void Init()
     {
         // set up with default values
@@ -42,7 +40,6 @@ class cBomb
         @this.player = null;
 		this.explodeTime = 0;
 		this.bombAlarmSoundIndex = G_SoundIndex( "sounds/misc/timer_bip_bip" );
-        this.spawnedAt = levelTime;
     }
 
     cBomb()
@@ -205,6 +202,7 @@ void bomb_body_touch( Entity @ent, Entity @other, const Vec3 planeNormal, int su
             }
         }
     }
+
 }
 
 void bomb_body_die( Entity @self, Entity @inflictor, Entity @attacker )
@@ -227,7 +225,7 @@ void bomb_body_think( Entity @self )
 		if ( gtBombs[self.count].explodeTime > 0 && levelTime > gtBombs[self.count].explodeTime ) 
 		{
 	        bomb_body_die( self, @G_GetEntity(0), @G_GetEntity(0) );
-	        return;
+	        return;		
 		}
 	}
 

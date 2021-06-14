@@ -5,6 +5,7 @@
 generic/overlaymenu.as;
 generic/playerclasses.as;
 generic/matchstates.as;
+generic/bots.as;
 generic/awards.as;
 
 da.as;

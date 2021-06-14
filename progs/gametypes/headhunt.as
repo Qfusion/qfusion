@@ -368,6 +368,61 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
     return false;
 }
 
+// When this function is called the weights of items have been reset to their default values,
+// this means, the weights *are set*, and what this function does is scaling them depending
+// on the current bot status.
+// Player, and non-item entities don't have any weight set. So they will be ignored by the bot
+// unless a weight is assigned here.
+bool GT_UpdateBotStatus( Entity @ent )
+{
+    Entity @goal;
+    Bot @bot;
+
+    @bot = @ent.client.getBot();
+
+    if ( @bot == null )
+        return false;
+
+    float offensiveStatus = GENERIC_OffensiveStatus( ent );
+
+    // loop all the goal entities
+    for ( int i = AI::GetNextGoal( AI::GetRootGoal() ); i != AI::GetRootGoal(); i = AI::GetNextGoal( i ) )
+    {
+        @goal = @AI::GetGoalEntity( i );
+
+        // by now, always full-ignore not solid entities
+        if ( goal.solid == SOLID_NOT )
+        {
+            bot.setGoalWeight( i, 0 );
+            continue;
+        }
+
+        if ( @goal.client != null )
+        {
+            // Someone is tag so assign him as priority
+            if ( hhTaggedPlayer != 999 )
+            {
+                if ( goal.client.playerNum == hhTaggedPlayer )
+                {
+                    bot.setGoalWeight( i, GENERIC_PlayerWeight( ent, goal ) * offensiveStatus );
+                }
+                else
+                {
+                    bot.setGoalWeight( i, 0 );
+                }
+            }
+
+            // No one is tagged, default attack mode
+            if ( hhTaggedPlayer == 999 )
+            {
+                bot.setGoalWeight( i, GENERIC_PlayerWeight( ent, goal ) * offensiveStatus );
+            }
+        }
+    }
+
+    return true;
+}
+
 // select a spawning point for a player
 Entity @GT_SelectSpawnPoint( Entity @self )
 {

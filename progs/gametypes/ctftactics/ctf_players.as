@@ -48,9 +48,6 @@ class cPlayer
     cPlayer @deadcamMedic;
     int64 deadcamMedicScanTime;
 
-    int botPendingClass;
-    int64 botPendingClassAssignedAt;
-    
     cPlayer()
     {
         // initialize all as grunt
@@ -58,8 +55,6 @@ class cPlayer
         @this.reviver = null;
         @this.bomb = null;
         this.resetTimers();
-        botPendingClass = -1;
-        botPendingClassAssignedAt = levelTime;
     }
 
     ~cPlayer() {}
@@ -256,7 +251,7 @@ class cPlayer
         if ( class_tag < 0 || class_tag >= PLAYERCLASS_TOTAL )
             return;
 
-        assignClass( class_tag );
+        @this.playerClass = @cPlayerClassInfos[class_tag];
     }
 
     bool setPlayerClass( String @className )
@@ -269,7 +264,7 @@ class cPlayer
             {
                 if ( cPlayerClassInfos[i].name == className )
                 {
-                    assignClass( i );
+                    @this.playerClass = @cPlayerClassInfos[i];
                     success = true;
                     break;
                 }
@@ -277,15 +272,9 @@ class cPlayer
         }
 
         if ( !success && @this.playerClass == null ) // never be null
-            assignClass( PLAYERCLASS_GRUNT );
+            @this.playerClass = @cPlayerClassInfos[PLAYERCLASS_GRUNT];
 
         return success;
-    }
-
-    void assignClass( int classTag )
-    {
-        @this.playerClass = @cPlayerClassInfos[classTag];
-        playerClasses[client.playerNum] = classTag;
     }
 
     void setPlayerClassCommand( String &argsString )
@@ -442,7 +431,7 @@ class cPlayer
                 }
 
                 Vec3 lookAngles, lookOrigin;
-                visible = CTFT_LookAtEntity( this.reviver.ent.origin, Vec3(0.0), this.deadcamMedic.ent, this.ent.entNum, true, 72, 32, lookOrigin, lookAngles );
+                visible = CTFT_LookAtEntity( this.reviver.ent.origin, Vec3(), this.deadcamMedic.ent, this.ent.entNum, true, 72, 32, lookOrigin, lookAngles );
 
                 this.ent.origin = lookOrigin;
                 this.ent.origin2 = lookOrigin;
@@ -489,7 +478,6 @@ class cPlayer
 
     void refreshMovement()
     {
-        this.ent.aiVisibilityDistance = 999999.9f;
         if ( this.ent.isGhosting() )
         {
             // restore defaults
@@ -528,8 +516,6 @@ class cPlayer
                 this.client.selectWeapon( WEAP_NONE );
                 this.client.pmoveFeatures = this.client.pmoveFeatures & ~PMFEAT_WEAPONSWITCH;
                 this.ent.effects |= EF_PLAYER_HIDENAME;
-                // The player should be visible for bots only on range of 192 units
-                this.ent.aiVisibilityDistance = 192.0f;
             }
         }
     }
@@ -978,7 +964,7 @@ class cPlayer
     }
 }
 
-cPlayer @GetPlayer( const Client @client )
+cPlayer @GetPlayer( Client @client )
 {
     if ( @client == null )
         return null;

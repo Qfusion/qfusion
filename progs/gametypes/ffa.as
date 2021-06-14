@@ -121,6 +121,16 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
     return false;
 }
 
+// When this function is called the weights of items have been reset to their default values,
+// this means, the weights *are set*, and what this function does is scaling them depending
+// on the current bot status.
+// Player, and non-item entities don't have any weight set. So they will be ignored by the bot
+// unless a weight is assigned here.
+bool GT_UpdateBotStatus( Entity @self )
+{
+    return GENERIC_UpdateBotStatus( self );
+}
+
 // select a spawning point for a player
 Entity @GT_SelectSpawnPoint( Entity @self )
 {

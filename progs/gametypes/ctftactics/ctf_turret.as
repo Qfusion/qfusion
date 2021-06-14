@@ -218,12 +218,7 @@ class cTurret
         this.bodyEnt.mass = 450;
         this.bodyEnt.takeDamage = 1;
         this.bodyEnt.nextThink = levelTime + 1;
-        // Allow bots to lock on the turret body. 
-        // Note that team overrides intrinsic enemy weight, 
-        // so bots won't threat turrets of same team as enemies
-        this.bodyEnt.aiIntrinsicEnemyWeight = 3.5f;  
-        this.bodyEnt.linkEntity();      
-
+        this.bodyEnt.linkEntity();
 
         // the count field will be used to store the index of the cTurret object
         // int the list. If the object is part of the list, ofc. This is just for
@@ -373,8 +368,8 @@ class cTurret
             // check if the player is visible from the turret
             target.getSize( mins, maxs );
             center = target.origin + ( 0.5 * ( maxs + mins ) );
-            mins = 0;
-            maxs = 0;
+            mins = Vec3();
+            maxs = Vec3();
 
             if ( !tr.doTrace( origin, mins, maxs, center, target.entNum, MASK_SOLID ) )
             {

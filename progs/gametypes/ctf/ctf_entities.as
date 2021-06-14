@@ -37,10 +37,6 @@ class cFlagBase
     int64 droppedTime;
     cFlagBase @next;
 
-    int team;
-    int enemyTeam;
-    int aiSpotId;
-
     void Initialize( Entity @spawner )
     {
         this.touched = false;
@@ -76,8 +72,7 @@ class cFlagBase
             spawner.moveType = MOVETYPE_TOSS;
 
         spawner.linkEntity();
-        
-        setupAIGoalProperties( spawner );		
+		AI::AddGoal( spawner, true ); // bases are special because of the timers, use custom reachability checks
 
 		// drop to floor
 		Trace tr;
@@ -123,15 +118,6 @@ class cFlagBase
 
     ~cFlagBase()
     {
-        if ( @this.carrier != @this.owner )
-            return;
-    }
-
-    void setupAIGoalProperties( Entity @spawner )
-    {
-        this.team = spawner.team;
-        this.enemyTeam = spawner.team == TEAM_ALPHA ? TEAM_BETA : TEAM_ALPHA;
-        this.aiSpotId = spawner.team;
     }
 
     void setCarrier( Entity @ent )
@@ -162,7 +148,7 @@ class cFlagBase
         else
 		{
             this.owner.solid = SOLID_NOT;
-			this.decal.svflags |= SVF_NOCLIENT;   
+			this.decal.svflags |= SVF_NOCLIENT;
 		}
 
         this.owner.linkEntity();
@@ -214,7 +200,7 @@ class cFlagBase
             this.flagCaptured( activator );
             this.owner.linkEntity();
 
-			AI::NavEntityReached( this.owner ); // let bots know their mission was completed
+			AI::ReachedGoal( this.owner ); // let bots know their mission was completed
 
             return;
         }
@@ -231,7 +217,7 @@ class cFlagBase
             this.flagStolen( activator );
             this.owner.linkEntity();
 
-			AI::NavEntityReached( this.owner ); // let bots know their mission was completed
+			AI::ReachedGoal( this.owner ); // let bots know their mission was completed
 
             return;
         }
@@ -715,7 +701,7 @@ void ctf_flag_touch( Entity @ent, Entity @other, const Vec3 planeNormal, int sur
 // the flag is dropped in motion, add it to AI goals when it stops
 void ctf_flag_stop( Entity @ent )
 {
-	AI::AddNavEntity( ent, AI_NAV_REACH_AT_TOUCH | AI_NAV_DROPPED );
+	AI::AddGoal( ent );
 }
 
 void ctf_flag_think( Entity @ent )

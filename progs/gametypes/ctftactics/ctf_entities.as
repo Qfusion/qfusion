@@ -32,9 +32,6 @@ class cFlagBase
     bool handDropped;
     int64 droppedTime;
     cFlagBase @next;
-    int team;
-    int enemyTeam;
-    int aiSpotId;
 
     void Initialize( Entity @spawner )
     {
@@ -45,7 +42,7 @@ class cFlagBase
 		this.checkBlockages = 0;
         @this.next = @fbHead;
         @fbHead = @this;
-       
+
         @this.owner = @spawner;
         @this.carrier = @spawner;
 
@@ -68,8 +65,7 @@ class cFlagBase
             this.owner.moveType = MOVETYPE_TOSS;
 
         this.owner.linkEntity();
-
-        setupAIGoalProperties( spawner );
+		AI::AddGoal( this.owner ); // bases are special because of the timers, use custom reachability checks
 
         // drop to floor
         Trace tr;
@@ -100,8 +96,6 @@ class cFlagBase
 
     ~cFlagBase()
     {
-        if ( @this.carrier != @this.owner )
-            return;
     }
 
     void setCarrier( Entity @ent )
@@ -127,13 +121,6 @@ class cFlagBase
         }
 
         this.owner.linkEntity();
-    }
-
-    void setupAIGoalProperties( Entity @spawner )
-    {
-        this.team = spawner.team;
-        this.enemyTeam = spawner.team == TEAM_ALPHA ? TEAM_BETA : TEAM_ALPHA;
-        this.aiSpotId = spawner.team;
     }
 
     void resetFlag()
@@ -175,6 +162,8 @@ class cFlagBase
             this.flagCaptured( activator );
             this.owner.linkEntity();
 
+			AI::ReachedGoal( this.owner ); // let bots know their mission was completed
+
             return;
         }
 
@@ -182,6 +171,8 @@ class cFlagBase
         {
             this.flagStolen( activator );
             this.owner.linkEntity();
+
+			AI::ReachedGoal( this.owner ); // let bots know their mission was completed
 
             return;
         }
@@ -597,7 +588,7 @@ void ctf_flag_touch( Entity @ent, Entity @other, const Vec3 planeNormal, int sur
 // the flag is dropped in motion, add it to AI goals when it stops
 void ctf_flag_stop( Entity @ent )
 {
-	AI::AddNavEntity( ent, AI_NAV_REACH_AT_TOUCH );
+	AI::AddGoal( ent );
 }
 
 void ctf_flag_think( Entity @ent )

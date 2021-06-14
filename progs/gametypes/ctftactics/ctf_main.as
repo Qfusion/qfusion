@@ -325,60 +325,162 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
     return false;
 }
 
-int GT_GetScriptWeaponsNum( const Client @client )
+// When this function is called the weights of items have been reset to their default values,
+// this means, the weights *are set*, and what this function does is scaling them depending
+// on the current bot status.
+// Player, and non-item entities don't have any weight set. So they will be ignored by the bot
+// unless a weight is assigned here.
+bool GT_UpdateBotStatus( Entity @ent )
 {
-    if ( @client == null )
-        return 0;
+    Entity @goal;
+    Bot @bot;
+    float baseFactor;
+    float alphaDist, betaDist, homeDist;
 
-    if ( GetPlayer( client ).playerClass.tag != PLAYERCLASS_GRUNT )
-        return 0;
+    @bot = @ent.client.getBot();
+    if ( @bot == null )
+        return false;
 
-    return 1;
-}
+    float offensiveStatus = GENERIC_OffensiveStatus( ent );
 
-bool CTFT_ShouldNotPlantItem( const Entity @originEntity, float radius )
-{
-    array<Entity @> @nearbyEntities = @G_FindInRadius( originEntity.origin, radius );
+    // play defensive when being a flag carrier
+    if ( ( ent.effects & EF_CARRIER ) != 0 )
+        offensiveStatus = 0.33f;
 
-    for ( uint i = 0; i < nearbyEntities.size(); ++i )
+    cFlagBase @alphaBase = @CTF_getBaseForTeam( TEAM_ALPHA );
+    cFlagBase @betaBase = @CTF_getBaseForTeam( TEAM_BETA );
+
+    // for carriers, find the raw distance to base
+    if ( ( ( ent.effects & EF_CARRIER ) != 0 ) && @alphaBase != null && @betaBase != null )
     {
-        Entity @nearby = nearbyEntities[i];
-
-        // Do this cheap test first
-
-        if ( @nearby.client != null )
-            continue;     
-
-        // Do not plant a turret or a dispenser if there are nearby entities of this class (entity team is ignored)
-
-        // Do cheap solid tests first
-
-        if ( nearby.solid == SOLID_YES )
-        {
-        
-            if ( nearby.classname == "turret_body" )
-                return true;
-
-            if ( nearby.classname == "dispenser_body" )
-                return true;
-        }
-        else if ( nearby.solid == SOLID_TRIGGER )
-        {
-            if ( nearby.classname == "bomb_body" )
-                return true;
-
-            if ( nearby.classname == "team_CTF_alphaflag" )
-                return true;
-
-            if ( nearby.classname == "team_CTF_betaflag" )
-                return true;
-        }
+        if ( ent.team == TEAM_ALPHA )
+            homeDist = ent.origin.distance( alphaBase.owner.origin );
+        else
+            homeDist = ent.origin.distance( betaBase.owner.origin );
     }
-    return false;
-}
 
-uint lastClassesUpdate = 0;
-bool lastClassesUpdateTeamIsAlpha = false;
+    // loop all the goal entities
+    for ( int i = AI::GetNextGoal( AI::GetRootGoal() ); i != AI::GetRootGoal(); i = AI::GetNextGoal( i ) )
+    {
+        @goal = @AI::GetGoalEntity( i );
+
+        // by now, always full-ignore not solid entities
+        if ( goal.solid == SOLID_NOT )
+        {
+            bot.setGoalWeight( i, 0 );
+            continue;
+        }
+
+        if ( @goal.client != null )
+        {
+            bot.setGoalWeight( i, GENERIC_PlayerWeight( ent, goal ) * offensiveStatus );
+            continue;
+        }
+
+        // when being a flag carrier have a tendency to stay around your own base
+        baseFactor = 1.0f;
+
+        if ( ( ( ent.effects & EF_CARRIER ) != 0 ) && @alphaBase != null && @betaBase != null )
+        {
+            alphaDist = goal.origin.distance( alphaBase.owner.origin );
+            betaDist = goal.origin.distance( betaBase.owner.origin );
+
+            if ( ( ent.team == TEAM_ALPHA ) && ( alphaDist + 64 < betaDist || alphaDist < homeDist + 128 ) )
+                baseFactor = 5.0f;
+            else if ( ( ent.team == TEAM_BETA ) && ( betaDist + 64 < alphaDist || betaDist < homeDist + 128 ) )
+                baseFactor = 5.0f;
+            else
+                baseFactor = 0.5f;
+        }
+
+        if ( @goal.item != null )
+        {
+            // all the following entities are items
+            if ( ( goal.item.type & IT_WEAPON ) != 0 )
+            {
+                bot.setGoalWeight( i, GENERIC_WeaponWeight( ent, goal ) * baseFactor );
+            }
+            else if ( ( goal.item.type & IT_AMMO ) != 0 )
+            {
+                bot.setGoalWeight( i, GENERIC_AmmoWeight( ent, goal ) * baseFactor );
+            }
+            else if ( ( goal.item.type & IT_ARMOR ) != 0 )
+            {
+                bot.setGoalWeight( i, GENERIC_ArmorWeight( ent, goal ) * baseFactor );
+            }
+            else if ( ( goal.item.type & IT_HEALTH ) != 0 )
+            {
+                bot.setGoalWeight( i, GENERIC_HealthWeight( ent, goal ) * baseFactor );
+            }
+            else if ( ( goal.item.type & IT_POWERUP ) != 0 )
+            {
+                bot.setGoalWeight( i, bot.getItemWeight( goal.item ) * offensiveStatus * baseFactor );
+            }
+
+            continue;
+        }
+
+        // the entities spawned from scripts never have linked items,
+        // so the flags are weighted here
+
+        cFlagBase @flagBase = @CTF_getBaseForOwner( goal );
+
+        if ( @flagBase != null && @flagBase.owner != null )
+        {
+            // enemy or team?
+
+            if ( flagBase.owner.team != ent.team ) // enemy base
+            {
+                if ( @flagBase.owner == @flagBase.carrier ) // enemy flag is at base
+                {
+                    bot.setGoalWeight( i, 12.0f * offensiveStatus );
+                }
+                else
+                {
+                    bot.setGoalWeight( i, 0 );
+                }
+            }
+            else // team
+            {
+                // flag is at base and this bot has the enemy flag
+                if ( ( ent.effects & EF_CARRIER ) != 0 && ( goal.effects & EF_CARRIER ) != 0 )
+                {
+                    bot.setGoalWeight( i, 3.5f * baseFactor );
+                }
+                else
+                {
+                    bot.setGoalWeight( i, 0 );
+                }
+            }
+
+            continue;
+        }
+
+        if ( goal.classname == "ctf_flag" )
+        {
+            // ** please, note, no item has a weight above 1.0 **
+            // ** these are really huge weights **
+
+            // it's my flag, dropped somewhere
+            if ( goal.team == ent.team )
+            {
+                bot.setGoalWeight( i, 5.0f * baseFactor );
+            }
+            // it's enemy flag, dropped somewhere
+            else if ( goal.team != ent.team )
+            {
+                bot.setGoalWeight( i, 3.5f * offensiveStatus * baseFactor );
+            }
+
+            continue;
+        }
+
+        // we don't know what entity is this, so ignore it
+        bot.setGoalWeight( i, 0 );
+    }
+
+    return true; // handled by the script
+}
 
 // select a spawning point for a player
 Entity @GT_SelectSpawnPoint( Entity @self )
@@ -584,7 +686,12 @@ void GT_PlayerRespawn( Entity @ent, int old_team, int new_team )
         // show the class selection menu
         if ( old_team == TEAM_SPECTATOR )
         {
-            client.execGameCommand( "mecu \"Select class\" Grunt \"class grunt\" Medic \"class medic\" Runner \"class runner\" Engineer \"class engineer\"" );
+            if ( @client.getBot() != null )
+            {
+                player.setPlayerClass( rand() % PLAYERCLASS_TOTAL );
+            }
+            else
+                client.execGameCommand( "mecu \"Select class\" Grunt \"class grunt\" Medic \"class medic\" Runner \"class runner\" Engineer \"class engineer\"" );
         }
 
         // Set newly joined players to respawn queue

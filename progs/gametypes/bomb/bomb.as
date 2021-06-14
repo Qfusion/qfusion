@@ -51,8 +51,6 @@ const uint LAST_CALL_TIME = 1;	// last call for defuse or arm
 
 //eBombStates bombState = BOMBSTATE_IDLE; FIXME enum
 uint bombState = BOMBSTATE_IDLE;
-// Bot state before resetBomb()
-uint oldBombState = BOMBSTATE_IDLE;
 
 cBombSite @bombSite;
 
@@ -146,7 +144,7 @@ void bombModelCreate()
 void bombInit()
 {
 	// i'm not setting svflags &= ~SVF_NOCLIENT yet
-	// no need to link either 
+	// no need to link either
 	
 	bombModelCreate();
 
@@ -200,6 +198,8 @@ void bombSetCarrier( Entity @ent )
 	G_AnnouncerSound( @client, sndBombTaken, attackingTeam, true, null );
 
 	bombState = BOMBSTATE_CARRIED;
+
+	AI::ReachedGoal( bombModel ); // let bots know their mission was completed
 }
 
 void bombDrop( uint dropType )
@@ -342,6 +342,9 @@ void bombPlant( cBombSite @site )
 	bombProgress = 0;
 	bombActionTime = levelTime;
 	bombState = BOMBSTATE_PLANTING;
+
+	AI::AddGoal( bombModel, true ); // let bots they have to arm the bomb
+	AI::ReachedGoal( site.model ); // let bots know their mission was completed
 }
 
 void bombArm(array<Entity @> @nearby)
@@ -370,6 +373,8 @@ void bombArm(array<Entity @> @nearby)
 	// reset fast plant if arming took too long
 	if( @fastPlanter != null && ! isFastPlant() )
 		@fastPlanter = null;
+
+	AI::ReachedGoal( bombModel ); // let bots know their mission was completed
 }
 
 // missing an and :DD
@@ -379,6 +384,8 @@ void bombDefuse(array<Entity @> @nearby)
 
 	bombModel.light = BOMB_LIGHT_INACTIVE;
 	bombModel.modelindex = modelBombModel;
+
+	AI::ReachedGoal( bombModel ); // let bots know their mission was completed
 
 	hide( @bombDecal );
 
@@ -466,7 +473,6 @@ void resetBomb()
 
 	bombSprite.team = bombDecal.team = bombMinimap.team = attackingTeam;
 
-    oldBombState = bombState;
 	bombState = BOMBSTATE_IDLE;
 }
 
@@ -970,5 +976,7 @@ void dynamite_stop( Entity @ent )
 
 		bombSprite.origin = origin;
 		bombMinimap.origin = origin;
+
+		AI::AddGoal( bombModel, true ); // let bots they have to arm or pick the bomb
 	}
 }

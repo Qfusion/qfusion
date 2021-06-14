@@ -317,6 +317,11 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
 	return false;
 }
 
+bool GT_UpdateBotStatus( Entity @ent )
+{
+	return BOMB_UpdateBotStatus( @ent );
+}
+
 Entity @GT_SelectSpawnPoint( Entity @self )
 {
 	if ( self.team == attackingTeam )
@@ -773,7 +778,7 @@ void GT_MatchStateStarted()
 			//      didn't respawn all items, but that doesn't
 			//      matter cause there aren't any
 			GENERIC_SetUpCountdown();
-
+			
 			break;
 
 		case MATCH_STATE_PLAYTIME:

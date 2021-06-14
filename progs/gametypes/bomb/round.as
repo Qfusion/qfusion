@@ -46,9 +46,6 @@ uint roundCount;
 
 int attackingTeam;
 int defendingTeam;
-// Team roles at the previous round.
-int oldAttackingTeam;
-int oldDefendingTeam;
 
 bool attackersHurried;
 bool defendersHurried;
@@ -323,9 +320,6 @@ void roundNewState( uint state )
 		{
 			roundCountDown = COUNTDOWN_MAX;
 
-            oldAttackingTeam = attackingTeam;
-            oldDefendingTeam = defendingTeam;
-
 			// swap teams if scorelimit is 0, round == roundLimit or round >= roundLimit * 2
 			uint roundLimit = cvarScoreLimit.integer;
 
@@ -367,7 +361,12 @@ void roundNewState( uint state )
 			respawnAllPlayers();
 			disableMovement();
 
+			// Pick target site for bots
+			@BOMB_BOTS_SITE = @BOMB_PickRandomTargetSite( );
+			
 			bombGiveToRandom();
+			
+			BOMB_assignRandomDenfenseStart( );
 
 			break;
 		}
