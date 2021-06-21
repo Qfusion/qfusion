@@ -46,4 +46,4 @@ void BindOptionsForm( ASInterface *as ) {
 
 }
 
-ASBIND_TYPE( WSWUI::OptionsForm, ElementOptionsForm );
+ASBIND_TYPE( WSWUI::OptionsForm, ElementOptionsForm )

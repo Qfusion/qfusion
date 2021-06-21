@@ -416,7 +416,7 @@ float Q_GetNoiseValueFromTable( float *noisetable, int *noiseperm,
 float Q_GetNoiseValue( float x, float y, float z, float t );
 
 #ifdef __cplusplus
-};
+}
 #endif
 
 #endif // GAME_QMATH_H

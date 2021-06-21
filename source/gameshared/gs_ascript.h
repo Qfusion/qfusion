@@ -117,7 +117,7 @@ void GS_asRegisterGlobalFunctions( asIScriptEngine *asEngine, const gs_asglobfun
 void GS_asRegisterGlobalProperties( asIScriptEngine *asEngine, const gs_asglobproperties_t *props, const char *nameSpace );
 
 #ifdef __cplusplus
-};
+}
 #endif
 
 #endif // __GS_ASCRIPT_H

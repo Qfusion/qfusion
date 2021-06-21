@@ -116,4 +116,4 @@ void BindConsoleGlobal( ASInterface *as ) {
 
 }
 
-ASBIND_TYPE( ASUI::Console, Console );
+ASBIND_TYPE( ASUI::Console, Console )

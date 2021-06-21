@@ -36,7 +36,7 @@ extern "C" {
 #define NUM_CROSSHAIRS  14
 
 #ifdef __cplusplus
-};
+}
 #endif
 
 #endif // __GS_REF_H

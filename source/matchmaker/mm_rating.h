@@ -68,7 +68,7 @@ float Rating_GetProbabilitySingle( clientRating_t *single, clientRating_t *other
 void Rating_AverageRating( clientRating_t *out, clientRating_t *list );
 
 #ifdef __cplusplus
-};
+}
 #endif
 
 #endif

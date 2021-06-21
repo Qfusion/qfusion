@@ -92,4 +92,4 @@ void BindDataSource( ASInterface *as ) {
 
 }
 
-ASBIND_TYPE( Rml::Controls::DataSource, DataSource );
+ASBIND_TYPE( Rml::Controls::DataSource, DataSource )

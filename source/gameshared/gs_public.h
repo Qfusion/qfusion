@@ -1158,7 +1158,7 @@ bool G_GetLaserbeamPoint( gs_laserbeamtrail_t *trail, player_state_t *playerStat
 extern firedef_t ammoFireDefs[];
 
 #ifdef __cplusplus
-};
+}
 #endif
 
 #endif // __GS_PUBLIC_H

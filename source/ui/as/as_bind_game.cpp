@@ -198,4 +198,4 @@ void BindGameGlobal( ASInterface *as ) {
 
 }
 
-ASBIND_TYPE( ASUI::Game, Game );
+ASBIND_TYPE( ASUI::Game, Game )

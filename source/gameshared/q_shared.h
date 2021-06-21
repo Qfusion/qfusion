@@ -466,7 +466,7 @@ typedef enum {
 #define Q_BASE_DPI 96
 
 #ifdef __cplusplus
-};
+}
 #endif
 
 #endif

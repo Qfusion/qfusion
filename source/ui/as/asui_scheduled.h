@@ -77,6 +77,6 @@ private:
 };
 }
 
-ASBIND_TYPE( ASUI::FunctionCallScheduler, FunctionCallScheduler );
+ASBIND_TYPE( ASUI::FunctionCallScheduler, FunctionCallScheduler )
 
 #endif

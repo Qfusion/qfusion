@@ -107,18 +107,18 @@ void BindL10n( ASInterface *as );
 }
 
 // type definitions required by ASBind
-ASBIND_TYPE( asstring_t, String );      // Still required by ASBind
-ASBIND_TYPE( CScriptDictionaryInterface, Dictionary );
-ASBIND_TYPE( CScriptAnyInterface, any );
+ASBIND_TYPE( asstring_t, String )      // Still required by ASBind
+ASBIND_TYPE( CScriptDictionaryInterface, Dictionary )
+ASBIND_TYPE( CScriptAnyInterface, any )
 
-ASBIND_TYPE( Rml::Core::Element, Element );
-ASBIND_TYPE( Rml::Core::ElementDocument, ElementDocument );
+ASBIND_TYPE( Rml::Core::Element, Element )
+ASBIND_TYPE( Rml::Core::ElementDocument, ElementDocument )
 
-ASBIND_TYPE( Rml::Core::Event, Event );
-ASBIND_TYPE( Rml::Core::EventListener, EventListener );
+ASBIND_TYPE( Rml::Core::Event, Event )
+ASBIND_TYPE( Rml::Core::EventListener, EventListener )
 
-ASBIND_TYPE( WSWUI::DemoInfo, DemoInfo );
+ASBIND_TYPE( WSWUI::DemoInfo, DemoInfo )
 
-ASBIND_TYPE( WSWUI::DownloadInfo, DownloadInfo );
+ASBIND_TYPE( WSWUI::DownloadInfo, DownloadInfo )
 
 #endif

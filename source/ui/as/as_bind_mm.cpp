@@ -148,7 +148,8 @@ erase:
 };
 
 }
-ASBIND_TYPE( ASUI::ASMatchMaker, Matchmaker );
+
+ASBIND_TYPE( ASUI::ASMatchMaker, Matchmaker )
 
 namespace ASUI
 {

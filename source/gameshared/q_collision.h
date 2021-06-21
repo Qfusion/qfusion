@@ -108,7 +108,7 @@ typedef struct {
 
 
 #ifdef __cplusplus
-};
+}
 #endif
 
 #endif // GAME_QCOLLISION_H

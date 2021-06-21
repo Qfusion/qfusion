@@ -55,7 +55,7 @@ extern "C" {
 #include <inttypes.h>
 
 #ifdef __cplusplus
-};
+}
 #endif
 
 #ifdef __cplusplus
@@ -449,7 +449,7 @@ typedef int socket_handle_t;
 #define NULL ( (void *)0 )
 #endif
 #ifdef __cplusplus
-};
+}
 #endif
 
 #endif // GAME_QARCH_H

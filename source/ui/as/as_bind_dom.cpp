@@ -41,20 +41,20 @@ typedef WSWUI::ElementImage ElementImage;
 
 //==========================================================
 
-ASBIND_TYPE( Rml::Controls::ElementForm, ElementForm );
-ASBIND_TYPE( Rml::Controls::ElementFormControl, ElementFormControl );
-ASBIND_TYPE( Rml::Controls::ElementFormControlDataSelect, ElementFormControlDataSelect );
+ASBIND_TYPE( Rml::Controls::ElementForm, ElementForm )
+ASBIND_TYPE( Rml::Controls::ElementFormControl, ElementFormControl )
+ASBIND_TYPE( Rml::Controls::ElementFormControlDataSelect, ElementFormControlDataSelect )
 
-ASBIND_TYPE( Rml::Controls::ElementDataGrid, ElementDataGrid );
-ASBIND_TYPE( Rml::Controls::ElementDataGridRow, ElementDataGridRow );
+ASBIND_TYPE( Rml::Controls::ElementDataGrid, ElementDataGrid )
+ASBIND_TYPE( Rml::Controls::ElementDataGridRow, ElementDataGridRow )
 
-ASBIND_TYPE( Rml::Controls::ElementTabSet, ElementTabSet );
+ASBIND_TYPE( Rml::Controls::ElementTabSet, ElementTabSet )
 
-ASBIND_TYPE( WSWUI::ElementImage, ElementImage );
+ASBIND_TYPE( WSWUI::ElementImage, ElementImage )
 
 // array of Element handlers
-ASBIND_ARRAY_TYPE( ASUI::ASElementsArray, Element @ );
-ASBIND_ARRAY_TYPE( ASUI::ASStringsArray, String @ );
+ASBIND_ARRAY_TYPE( ASUI::ASElementsArray, Element @ )
+ASBIND_ARRAY_TYPE( ASUI::ASStringsArray, String @ )
 
 //==============================================================
 

@@ -61,7 +61,7 @@ typedef struct cvar_s {
 } cvar_t;
 
 #ifdef __cplusplus
-};
+}
 #endif
 
 #endif // GAME_QCVAR_H

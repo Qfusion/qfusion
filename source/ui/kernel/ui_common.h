@@ -152,21 +152,21 @@ inline void __deletea__impl__( T *ptr, size_t count, const char *file, int line 
 	{   trap::Mem_Free( ptr, file, line ); }
 
 // c++ simple types
-__delete_no_destructor( bool );
-__delete_no_destructor( char );
-__delete_no_destructor( signed char );
-__delete_no_destructor( unsigned char );
-__delete_no_destructor( wchar_t );
-__delete_no_destructor( short );
-__delete_no_destructor( unsigned short );
-__delete_no_destructor( int );
-__delete_no_destructor( unsigned int );
-__delete_no_destructor( long );
-__delete_no_destructor( unsigned long );
-__delete_no_destructor( float );
-__delete_no_destructor( double );
-__delete_no_destructor( long double );
-__delete_no_destructor( void );
+__delete_no_destructor( bool )
+__delete_no_destructor( char )
+__delete_no_destructor( signed char )
+__delete_no_destructor( unsigned char )
+__delete_no_destructor( wchar_t )
+__delete_no_destructor( short )
+__delete_no_destructor( unsigned short )
+__delete_no_destructor( int )
+__delete_no_destructor( unsigned int )
+__delete_no_destructor( long )
+__delete_no_destructor( unsigned long )
+__delete_no_destructor( float )
+__delete_no_destructor( double )
+__delete_no_destructor( long double )
+__delete_no_destructor( void )
 
 // and then the macros for __delete__ / __deletea__
 	#define __delete__( ptr ) WSWUI::__delete__impl__( ( ptr ), __FILE__, __LINE__ )

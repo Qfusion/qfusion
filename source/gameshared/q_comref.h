@@ -478,7 +478,7 @@ typedef struct {
 
 
 #ifdef __cplusplus
-};
+}
 #endif
 
 #endif // GAME_QCOMREF_H

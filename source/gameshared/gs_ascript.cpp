@@ -36,7 +36,7 @@ extern "C" {
 void GS_asInitializeExport( void );
 
 #ifdef __cplusplus
-};
+}
 #endif
 
 //=======================================================================

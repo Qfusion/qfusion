@@ -103,6 +103,6 @@ private:
 
 }
 
-ASBIND_TYPE( ASUI::ASURL, URL );
+ASBIND_TYPE( ASUI::ASURL, URL )
 
 #endif

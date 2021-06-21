@@ -58,4 +58,4 @@ void BindServerbrowserGlobal( ASInterface *as ) {
 
 }
 
-ASBIND_TYPE( WSWUI::ServerBrowserDataSource, ServerBrowser );
+ASBIND_TYPE( WSWUI::ServerBrowserDataSource, ServerBrowser )

@@ -548,5 +548,5 @@ extern "C" {
 #define LS_SLOW_PULSE_NOT_FADE      "abcdefghijklmnopqrrqponmlkjihgfedcba" // 11
 
 #ifdef __cplusplus
-};
+}
 #endif

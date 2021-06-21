@@ -499,4 +499,4 @@ void UnbindWindow( void ) {
 
 }
 
-ASBIND_TYPE( ASUI::ASWindow, Window );
+ASBIND_TYPE( ASUI::ASWindow, Window )
