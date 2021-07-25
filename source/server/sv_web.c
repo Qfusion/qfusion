@@ -434,7 +434,7 @@ static bool SV_Web_FindGameClientByAddress( const netadr_t *netadr ) {
 /*
 * SV_Web_ConnectionLimitReached
 */
-static unsigned SV_Web_ConnectionLimitReached( const netadr_t *addr ) {
+static bool SV_Web_ConnectionLimitReached( const netadr_t *addr ) {
 	unsigned cnt;
 	const sv_http_connection_t *con, *next;
 	const sv_http_connection_t *hnode = &sv_http_connection_headnode;
@@ -1081,6 +1081,7 @@ static void SV_Web_RouteRequest( const sv_http_request_t *request, sv_http_respo
 static void SV_Web_RespondToQuery( sv_http_connection_t *con ) {
 	char vastr[1024];
 	char err_body[1024];
+	char clength[64];
 	char *content = NULL;
 	size_t header_length = 0;
 	size_t content_length = 0;
@@ -1178,7 +1179,8 @@ static void SV_Web_RespondToQuery( sv_http_connection_t *con ) {
 	}
 
 	// resource length
-	Q_strncatz( resp_stream->header_buf, va( "Content-Length: %" PRIuPTR "\r\n", (uintptr_t)content_length ),
+	Q_strncatz( resp_stream->header_buf, va_r( clength,
+		sizeof( clength ), "Content-Length: %" PRIuPTR "\r\n", (uintptr_t)content_length ),
 				sizeof( resp_stream->header_buf ) );
 
 	if( response->file ) {
