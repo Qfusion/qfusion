@@ -450,8 +450,8 @@ static bool SV_Web_ConnectionLimitReached( const netadr_t *addr ) {
 			if( cnt >= MAX_INCOMING_HTTP_CONNECTIONS_PER_ADDR ) {
 				return true;
 			}
+			cnt++;
 		}
-		cnt++;
 	}
 	return false;
 }
