@@ -720,7 +720,7 @@ static void SV_Web_ParseStartLine( sv_http_request_t *request, char *line ) {
 	// check for HTTP/1.1 and greater
 	if( strncmp( request->http_ver, "HTTP/", 5 ) ) {
 		request->error = HTTP_RESP_BAD_REQUEST;
-	} else if( (int)( atof( request->http_ver + 5 ) * 10 ) < 11 ) {
+	} else if( Q_strnicmp( request->http_ver + 5, "1.1", 3 ) ) {
 		request->error = HTTP_RESP_BAD_REQUEST;
 	}
 }
