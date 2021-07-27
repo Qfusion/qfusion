@@ -717,10 +717,8 @@ static void SV_Web_ParseStartLine( sv_http_request_t *request, char *line ) {
 	}
 	request->http_ver = ZoneCopyString( token );
 
-	// check for HTTP/1.1 and greater
-	if( strncmp( request->http_ver, "HTTP/", 5 ) ) {
-		request->error = HTTP_RESP_BAD_REQUEST;
-	} else if( Q_strnicmp( request->http_ver + 5, "1.1", 3 ) ) {
+	// check for HTTP/1.1
+	if( strcmp( request->http_ver, "HTTP/1.1" ) ) {
 		request->error = HTTP_RESP_BAD_REQUEST;
 	}
 }
