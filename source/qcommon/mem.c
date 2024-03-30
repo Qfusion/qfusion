@@ -71,7 +71,6 @@ static const unsigned int releasedPattern = 0xdeadbeef;    // Fill pattern for d
 static bool memory_initialized = false;
 static bool commands_initialized = false;
 
-
 mempool_t* Q_ParentPool() {
 	return NULL; 
 }
@@ -1245,6 +1244,7 @@ void Memory_Shutdown( void )
 	Mem_CheckSentinelsGlobal();
 
 
+
 	Mem_FreePool( &zoneMemPool );
 	Mem_FreePool( &tempMemPool );
 
@@ -1260,6 +1260,14 @@ void Memory_Shutdown( void )
 	}
 
 	QMutex_Destroy( &memMutex );
+	
+	for(size_t i = 0; i < reservoirIndex; i++) {
+		free(reservoirAllocHeaderBuffer[i]);
+	}
+	free(reservoirAllocHeaderBuffer);
+	reservoirIndex = 0;
+	reservoirAllocHeaderBuffer = NULL;
+	reservoirHeaders = NULL;
 
 	memory_initialized = false;
 }
