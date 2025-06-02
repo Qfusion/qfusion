@@ -790,7 +790,7 @@ void GClip_SetAreaPortalState( edict_t *ent, bool open );
 void GClip_LinkEntity( edict_t *ent );
 void GClip_UnlinkEntity( edict_t *ent );
 void GClip_TouchTriggers( edict_t *ent );
-void G_PMoveTouchTriggers( pmove_t *pm, player_state_t *ps, vec3_t previous_origin );
+void G_PMoveTouchTriggers( pmove_t *pm, player_state_t *ps, vec3_t previous_origin, int64_t serverTimestamp );
 entity_state_t *G_GetEntityStateForDeltaTime( int entNum, int deltaTime );
 int GClip_FindInRadius( vec3_t org, float rad, int *list, int maxcount );
 
@@ -934,7 +934,7 @@ bool ClientConnect( edict_t *ent, char *userinfo, bool fakeClient );
 void ClientDisconnect( edict_t *ent, const char *reason );
 void ClientBegin( edict_t *ent );
 void ClientCommand( edict_t *ent );
-void G_PredictedEvent( int entNum, int ev, int parm );
+void G_PredictedEvent( int entNum, int ev, int parm, int64_t serverTimestamp );
 void G_TeleportPlayer( edict_t *player, edict_t *dest );
 bool G_PlayerCanTeleport( edict_t *player );
 

@@ -574,7 +574,6 @@ typedef struct {
 	float predictedStep;                // for stair up smoothing
 	int64_t predictedStepTime;
 
-	int64_t predictingTimeStamp;
 	int64_t predictedEventTimes[PREDICTABLE_EVENTS_MAX];
 	vec3_t predictionError;
 	player_state_t predictedPlayerState;     // current in use, predicted or interpolated
@@ -753,7 +752,7 @@ struct sfx_s *CG_RegisterSexedSound( int entnum, const char *name );
 extern cvar_t *cg_predict;
 extern cvar_t *cg_showMiss;
 
-void CG_PredictedEvent( int entNum, int ev, int parm );
+void CG_PredictedEvent( int entNum, int ev, int parm, int64_t serverTimestamp );
 void CG_Predict_ChangeWeapon( int new_weapon );
 void CG_PredictMovement( void );
 void CG_CheckPredictionError( void );
@@ -763,7 +762,7 @@ void CG_AddEntityToSolidList( int number );
 void CG_AddEntityToTriggerList( int number );
 void CG_Trace( trace_t *t, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int ignore, int contentmask );
 int CG_PointContents( const vec3_t point );
-void CG_Predict_TouchTriggers( pmove_t *pm, player_state_t *ps, vec3_t previous_origin );
+void CG_Predict_TouchTriggers( pmove_t *pm, player_state_t *ps, vec3_t previous_origin, int64_t serverTimestamp );
 
 //
 // cg_screen.c
@@ -1042,12 +1041,9 @@ extern cvar_t *cg_colorCorrection;
 // Viewport bobbing on fall/high jumps
 extern cvar_t *cg_viewBob;
 
-void CG_ResetKickAngles( void );
 void CG_ResetColorBlend( void );
 
-void CG_StartKickAnglesEffect( vec3_t source, float knockback, float radius, int time );
 void CG_StartColorBlendEffect( float r, float g, float b, float a, int time );
-void CG_StartFallKickEffect( int bounceTime );
 void CG_ViewSmoothPredictedSteps( vec3_t vieworg );
 float CG_ViewSmoothFallKick( void );
 void CG_RenderView( int frameTime, int realFrameTime, int64_t realTime, int64_t serverTime, float stereo_separation, unsigned extrapolationTime );
@@ -1255,7 +1251,7 @@ void CG_asNewPacketEntityState( entity_state_t *state );
 void CG_asConfigString( int index, const char *str );
 void CG_asUpdateEntities( void );
 bool CG_asEntityEvent( entity_state_t *ent, int ev, int parm, bool predicted );
-bool CG_asPredictedEvent( int entNum, int ev, int parm );
+bool CG_asPredictedEvent( int entNum, int ev, int parm, int64_t serverTimestamp );
 void CG_asRunUcmd( pmove_t *pm, usercmd_t *cmd, int ucmdHead, int ucmdExecuted );
 void CG_asBuildSolidList( void );
 

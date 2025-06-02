@@ -27,17 +27,12 @@ int					   cg_numTriggers;
 static entity_state_t *cg_triggersList[MAX_SNAPSHOT_ENTITIES];
 static bool			   cg_triggersListTriggered[MAX_SNAPSHOT_ENTITIES];
 
-static bool ucmdReady = false;
-
 /*
  * CG_PredictedEvent - shared code can fire events during prediction
  */
-void CG_PredictedEvent( int entNum, int ev, int parm )
+void CG_PredictedEvent( int entNum, int ev, int parm, int64_t serverTimestamp )
 {
-	if( ev >= PREDICTABLE_EVENTS_MAX ) {
-		return;
-	}
-	CG_asPredictedEvent( entNum, ev, parm );
+	CG_asPredictedEvent( entNum, ev, parm, serverTimestamp );
 }
 
 /*
@@ -203,7 +198,7 @@ static bool CG_ClipEntityContact( const vec3_t origin, const vec3_t mins, const 
 /*
  * CG_Predict_TouchTriggers
  */
-void CG_Predict_TouchTriggers( pmove_t *pm, player_state_t *ps, vec3_t previous_origin )
+void CG_Predict_TouchTriggers( pmove_t *pm, player_state_t *ps, vec3_t previous_origin, int64_t serverTimestamp )
 {
 	int				i;
 	entity_state_t *state;
@@ -216,12 +211,10 @@ void CG_Predict_TouchTriggers( pmove_t *pm, player_state_t *ps, vec3_t previous_
 	for( i = 0; i < cg_numTriggers; i++ ) {
 		state = cg_triggersList[i];
 
-		if( state->type == ET_PUSH_TRIGGER ) {
-			if( !cg_triggersListTriggered[i] ) {
-				if( CG_ClipEntityContact( ps->pmove.origin, pm->mins, pm->maxs, state->number ) ) {
-					GS_TouchPushTrigger( ps, state );
-					cg_triggersListTriggered[i] = true;
-				}
+		if( !cg_triggersListTriggered[i] ) {
+			if( CG_ClipEntityContact( ps->pmove.origin, pm->mins, pm->maxs, state->number ) ) {
+				GS_TouchPushTrigger( ps, state, serverTimestamp );
+				cg_triggersListTriggered[i] = true;
 			}
 		}
 	}
@@ -435,31 +428,27 @@ void CG_PredictMovement( void )
 
 	cg.predictedPlayerState.POVnum = cgs.playerNum + 1;
 
+	// copy current state to pmove
+	memset( &pm, 0, sizeof( pm ) );
+
+	memset( &ucmd, 0, sizeof( ucmd ) );
+
+	// clear the triggered toggles for this prediction round
+	memset( &cg_triggersListTriggered, false, sizeof( cg_triggersListTriggered ) );
+
 	// if we are too far out of date, just freeze
 	if( ucmdHead - ucmdExecuted >= CMD_BACKUP ) {
 		if( cg_showMiss->integer ) {
 			CG_Printf( "exceeded CMD_BACKUP\n" );
 		}
-
-		cg.predictingTimeStamp = cg.time;
+		CG_asRunUcmd( &pm, &ucmd, ucmdHead, ucmdExecuted );
 		return;
 	}
-
-	// copy current state to pmove
-	memset( &pm, 0, sizeof( pm ) );
-
-	// clear the triggered toggles for this prediction round
-	memset( &cg_triggersListTriggered, false, sizeof( cg_triggersListTriggered ) );
 
 	// run frames
 	while( ++ucmdExecuted <= ucmdHead ) {
 		frame = ucmdExecuted & CMD_MASK;
 		trap_NET_GetUserCmd( frame, &ucmd );
-
-		ucmdReady = ( ucmd.serverTimeStamp != 0 );
-		if( ucmdReady ) {
-			cg.predictingTimeStamp = ucmd.serverTimeStamp;
-		}
 
 		PM_Pmove( &pm, &cg.predictedPlayerState, &ucmd, &CG_asGetViewAnglesClamp, &CG_asPMove );
 

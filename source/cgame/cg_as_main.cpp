@@ -57,7 +57,7 @@ static cg_asApiFuncPtr_t cg_asCGameAPI[] = {
 	{ "void CGame::ConfigString( int index, const String @ )", &cgs.asGameState.configString, false },
 	{ "void CGame::UpdateEntities()", &cgs.asGameState.updateEntities, false },
 	{ "bool CGame::EntityEvent( const EntityState @, int ev, int parm, bool predicted )", &cgs.asGameState.entityEvent, false },
-	{ "void CGame::PredictedEvent( int entNum, int ev, int parm )", &cgs.asGameState.predictedEvent, false },
+	{ "void CGame::PredictedEvent( int entNum, int ev, int parm, int64 serverTimestamp )", &cgs.asGameState.predictedEvent, false },
 	{ "void CGame::RunUserCmd( PMove @pm, UserCmd cmd, int ucmdHead, int ucmdExecuted )", &cgs.asGameState.runUcmd, false },
 	{ "void CGame::BuildSolidList()", &cgs.asGameState.buildSolidList, false },
 
@@ -396,6 +396,11 @@ static void asFunc_Print( const asstring_t *str )
 	CG_Printf( "%s", str->buffer );
 }
 
+static void asFunc_CenterPrint( const asstring_t *str )
+{
+	CG_CenterPrint( str->buffer );
+}
+
 static void asFunc_Error( const asstring_t *str )
 {
 	CG_Error( "%s", str->buffer );
@@ -490,6 +495,7 @@ static bool asFunc_IsPureFile( asstring_t *fn )
 
 static const gs_asglobfuncs_t asCGameGlobalFuncs[] = {
 	{ "void Print( const String &in )", asFUNCTION( asFunc_Print ), NULL },
+	{ "void CenterPrint( const String &in )", asFUNCTION( asFunc_CenterPrint ), NULL },
 	{ "void Error( const String &in )", asFUNCTION( asFunc_Error ), NULL },
 
 	{ "int get_ExtrapolationTime()", asFUNCTION( asFunc_ExtrapolationTime ), NULL },
@@ -956,7 +962,7 @@ bool CG_asEntityEvent( entity_state_t *ent, int ev, int parm, bool predicted )
 	return res == 0 ? false : true;
 }
 
-bool CG_asPredictedEvent( int entNum, int ev, int parm )
+bool CG_asPredictedEvent( int entNum, int ev, int parm, int64_t serverTimestamp )
 {
 	uint8_t res = 0;
 
@@ -965,10 +971,11 @@ bool CG_asPredictedEvent( int entNum, int ev, int parm )
 	}
 	CG_asCallScriptFunc(
 		cgs.asGameState.predictedEvent,
-		[entNum, ev, parm]( asIScriptContext *ctx ) {
+		[entNum, ev, parm, serverTimestamp]( asIScriptContext *ctx ) {
 			ctx->SetArgDWord( 0, entNum );
 			ctx->SetArgDWord( 1, ev );
 			ctx->SetArgDWord( 2, parm );
+			ctx->SetArgQWord( 3, serverTimestamp );
 		},
 		[&res]( asIScriptContext *ctx ) { res = ctx->GetReturnByte(); } );
 

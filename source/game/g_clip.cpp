@@ -1056,7 +1056,7 @@ void GClip_TouchTriggers( edict_t *ent ) {
 	}
 }
 
-void G_PMoveTouchTriggers( pmove_t *pm, player_state_t *ps, vec3_t previous_origin ) {
+void G_PMoveTouchTriggers( pmove_t *pm, player_state_t *ps, vec3_t previous_origin, int64_t serverTimestamp ) {
 	int i, num;
 	edict_t *hit;
 	int touch[MAX_EDICTS];

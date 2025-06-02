@@ -402,6 +402,7 @@ bool GS_CheckAmmoInWeapon( player_state_t *playerState, int checkweapon ) {
 int GS_ThinkPlayerWeapon( player_state_t *playerState, int buttons, int msecs, int timeDelta ) {
 	firedef_t *firedef;
 	bool refire = false;
+	int64_t serverTimestamp = 1; // weapons think on client side only if ucmdReady
 
 	assert( playerState->stats[STAT_PENDING_WEAPON] >= 0 && playerState->stats[STAT_PENDING_WEAPON] < WEAP_TOTAL );
 
@@ -477,7 +478,7 @@ int GS_ThinkPlayerWeapon( player_state_t *playerState, int buttons, int msecs, i
 				playerState->stats[STAT_WEAPON_TIME] += firedef->weapondown_time;
 
 				if( firedef->weapondown_time ) {
-					gs.api.PredictedEvent( playerState->POVnum, EV_WEAPONDROP, 0 );
+					gs.api.PredictedEvent( playerState->POVnum, EV_WEAPONDROP, 0, serverTimestamp );
 				}
 			}
 		}
@@ -495,7 +496,7 @@ int GS_ThinkPlayerWeapon( player_state_t *playerState, int buttons, int msecs, i
 		firedef = GS_FiredefForPlayerState( playerState, playerState->stats[STAT_WEAPON] );
 		playerState->weaponState = WEAPON_STATE_ACTIVATING;
 		playerState->stats[STAT_WEAPON_TIME] += firedef->weaponup_time;
-		gs.api.PredictedEvent( playerState->POVnum, EV_WEAPONACTIVATE, playerState->stats[STAT_WEAPON]<<1 );
+		gs.api.PredictedEvent( playerState->POVnum, EV_WEAPONACTIVATE, playerState->stats[STAT_WEAPON]<<1, serverTimestamp );
 	}
 
 	if( playerState->weaponState == WEAPON_STATE_ACTIVATING ) {
@@ -526,7 +527,7 @@ int GS_ThinkPlayerWeapon( player_state_t *playerState, int buttons, int msecs, i
 					} else {
 						playerState->weaponState = WEAPON_STATE_NOAMMOCLICK;
 						playerState->stats[STAT_WEAPON_TIME] += NOAMMOCLICK_PENALTY;
-						gs.api.PredictedEvent( playerState->POVnum, EV_NOAMMOCLICK, 0 );
+						gs.api.PredictedEvent( playerState->POVnum, EV_NOAMMOCLICK, 0, serverTimestamp );
 						goto done;
 					}
 				}
@@ -556,9 +557,9 @@ int GS_ThinkPlayerWeapon( player_state_t *playerState, int buttons, int msecs, i
 		}
 
 		if( refire && firedef->smooth_refire ) {
-			gs.api.PredictedEvent( playerState->POVnum, EV_SMOOTHREFIREWEAPON, parm );
+			gs.api.PredictedEvent( playerState->POVnum, EV_SMOOTHREFIREWEAPON, parm, serverTimestamp );
 		} else {
-			gs.api.PredictedEvent( playerState->POVnum, EV_FIREWEAPON, parm );
+			gs.api.PredictedEvent( playerState->POVnum, EV_FIREWEAPON, parm, serverTimestamp );
 		}
 
 		// waste ammo

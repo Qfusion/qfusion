@@ -292,129 +292,6 @@ static void CG_CalcViewBob( void ) {
 }
 
 /*
-* CG_ResetKickAngles
-*/
-void CG_ResetKickAngles( void ) {
-	memset( cg.kickangles, 0, sizeof( cg.kickangles ) );
-}
-
-/*
-* CG_StartKickAnglesEffect
-*/
-void CG_StartKickAnglesEffect( vec3_t source, float knockback, float radius, int time ) {
-	float kick;
-	float side;
-	float dist;
-	float delta;
-	float ftime;
-	vec3_t forward, right, v;
-	int i, kicknum = -1;
-	vec3_t playerorigin;
-
-	if( knockback <= 0 || time <= 0 || radius <= 0.0f ) {
-		return;
-	}
-
-	// if spectator but not in chasecam, don't get any kick
-	if( cg.frame.playerState.pmove.pm_type == PM_SPECTATOR ) {
-		return;
-	}
-
-	// not if dead
-	if( cg_entities[cg.view.POVent].current.type == ET_CORPSE || cg_entities[cg.view.POVent].current.type == ET_GIB ) {
-		return;
-	}
-
-	// predictedPlayerState is predicted only when prediction is enabled, otherwise it is interpolated
-	VectorCopy( cg.predictedPlayerState.pmove.origin, playerorigin );
-
-	VectorSubtract( source, playerorigin, v );
-	dist = VectorNormalize( v );
-	if( dist > radius ) {
-		return;
-	}
-
-	delta = 1.0f - ( dist / radius );
-	if( delta > 1.0f ) {
-		delta = 1.0f;
-	}
-	if( delta <= 0.0f ) {
-		return;
-	}
-
-	kick = fabs( knockback ) * delta;
-	if( kick ) { // kick of 0 means no view adjust at all
-		//find first free kick spot, or the one closer to be finished
-		for( i = 0; i < MAX_ANGLES_KICKS; i++ ) {
-			if( cg.time > cg.kickangles[i].timestamp + cg.kickangles[i].kicktime ) {
-				kicknum = i;
-				break;
-			}
-		}
-
-		// all in use. Choose the closer to be finished
-		if( kicknum == -1 ) {
-			int remaintime;
-			int best = ( cg.kickangles[0].timestamp + cg.kickangles[0].kicktime ) - cg.time;
-			kicknum = 0;
-			for( i = 1; i < MAX_ANGLES_KICKS; i++ ) {
-				remaintime = ( cg.kickangles[i].timestamp + cg.kickangles[i].kicktime ) - cg.time;
-				if( remaintime < best ) {
-					best = remaintime;
-					kicknum = i;
-				}
-			}
-		}
-
-		AngleVectors( cg.frame.playerState.viewangles, forward, right, NULL );
-
-		if( kick < 1.0f ) {
-			kick = 1.0f;
-		}
-
-		side = DotProduct( v, right );
-		cg.kickangles[kicknum].v_roll = kick * side * 0.3;
-		Q_clamp( cg.kickangles[kicknum].v_roll, -20, 20 );
-
-		side = -DotProduct( v, forward );
-		cg.kickangles[kicknum].v_pitch = kick * side * 0.3;
-		Q_clamp( cg.kickangles[kicknum].v_pitch, -20, 20 );
-
-		cg.kickangles[kicknum].timestamp = cg.time;
-		ftime = (float)time * delta;
-		if( ftime < 100 ) {
-			ftime = 100;
-		}
-		cg.kickangles[kicknum].kicktime = ftime;
-	}
-}
-
-/*
-* CG_StartFallKickEffect
-*/
-void CG_StartFallKickEffect( int bounceTime ) {
-	if( !cg_viewBob->integer ) {
-		cg.fallEffectTime = 0;
-		cg.fallEffectRebounceTime = 0;
-		return;
-	}
-
-	if( cg.fallEffectTime > cg.time ) {
-		cg.fallEffectRebounceTime = 0;
-	}
-
-	bounceTime += 200;
-	clamp_high( bounceTime, 400 );
-
-	cg.fallEffectTime = cg.time + bounceTime;
-	if( cg.fallEffectRebounceTime ) {
-		cg.fallEffectRebounceTime = cg.time - ( ( cg.time - cg.fallEffectRebounceTime ) * 0.5 );
-	} else {
-		cg.fallEffectRebounceTime = cg.time;
-	}
-}
-
-/*
 * CG_ResetColorBlend
 */
 void CG_ResetColorBlend( void ) {
@@ -822,12 +699,7 @@ static void CG_SetupViewDef( cg_viewdef_t *view, int type, float stereo_separati
 			}
 
 			CG_ViewSmoothPredictedSteps( view->origin ); // smooth out stair climbing
-
-			if( cg_viewBob->integer && !cg_thirdPerson->integer ) {
-				view->origin[2] += CG_ViewSmoothFallKick() * 6.5f;
-			}
 		} else {
-			cg.predictingTimeStamp = cg.time;
 			cg.predictFrom = 0;
 
 			// we don't run prediction, but we still set cg.predictedPlayerState with the interpolation
@@ -997,8 +869,6 @@ void CG_RenderView( int frameTime, int realFrameTime, int64_t realTime, int64_t 
 	} else {
 		CG_SetupViewDef( &cg.view, VIEWDEF_PLAYERVIEW, stereo_separation );
 	}
-
-	CG_CalcViewWeapon( &cg.weapon );
 
 	CG_AddEntities();
 	CG_AddViewWeapon( &cg.weapon );

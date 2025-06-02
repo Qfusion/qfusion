@@ -356,7 +356,7 @@ static void trigger_push_touch( edict_t *self, edict_t *other, cplane_t *plane, 
 
 	// add an event
 	if( other->r.client ) {
-		GS_TouchPushTrigger( &other->r.client->ps, &self->s );
+		GS_TouchPushTrigger( &other->r.client->ps, &self->s, other->r.client->ucmd.serverTimeStamp );
 	} else {
 		// pushing of non-clients
 		if( other->movetype != MOVETYPE_BOUNCEGRENADE ) {

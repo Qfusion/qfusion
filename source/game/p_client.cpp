@@ -1345,7 +1345,7 @@ void ClientDisconnect( edict_t *ent, const char *reason ) {
 /*
 * G_PredictedEvent
 */
-void G_PredictedEvent( int entNum, int ev, int parm ) {
+void G_PredictedEvent( int entNum, int ev, int parm, int64_t serverTimeStamp ) {
 	edict_t *ent;
 	vec3_t upDir = { 0, 0, 1 };
 

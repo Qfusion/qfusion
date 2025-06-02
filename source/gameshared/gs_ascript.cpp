@@ -271,6 +271,23 @@ static const gs_asEnumVal_t asEntityEventEnumVals[] =
 	ASLIB_ENUM_VAL_NULL
 };
 
+static const gs_asEnumVal_t asPlayerStateEventEnumVals[] =
+{
+	ASLIB_ENUM_VAL( PSEV_NONE ),
+	ASLIB_ENUM_VAL( PSEV_HIT ),
+	ASLIB_ENUM_VAL( PSEV_PICKUP ),
+	ASLIB_ENUM_VAL( PSEV_DAMAGE_20 ),
+	ASLIB_ENUM_VAL( PSEV_DAMAGE_40 ),
+	ASLIB_ENUM_VAL( PSEV_DAMAGE_60 ),
+	ASLIB_ENUM_VAL( PSEV_DAMAGE_80 ),
+	ASLIB_ENUM_VAL( PSEV_INDEXEDSOUND ),
+	ASLIB_ENUM_VAL( PSEV_ANNOUNCER ),
+	ASLIB_ENUM_VAL( PSEV_ANNOUNCER_QUEUED ),
+	ASLIB_ENUM_VAL( PSEV_MAX_EVENTS ),
+
+	ASLIB_ENUM_VAL_NULL
+};
+
 static const gs_asEnumVal_t asSolidEnumVals[] =
 {
 	ASLIB_ENUM_VAL( SOLID_NOT ),
@@ -474,6 +491,7 @@ static const gs_asEnumVal_t asSoundChannelEnumVals[] =
 	ASLIB_ENUM_VAL( CHAN_ITEM ),
 	ASLIB_ENUM_VAL( CHAN_BODY ),
 	ASLIB_ENUM_VAL( CHAN_MUZZLEFLASH ),
+	ASLIB_ENUM_VAL( CHAN_ANNOUNCER ),
 	ASLIB_ENUM_VAL( CHAN_FIXED ),
 
 	ASLIB_ENUM_VAL_NULL
@@ -723,6 +741,7 @@ static const gs_asEnum_t asGameEnums[] =
 	{ "teams_e", asTeamEnumVals },
 	{ "entitytype_e", asEntityTypeEnumVals },
 	{ "entityevent_e", asEntityEventEnumVals },
+	{ "psevent_s", asPlayerStateEventEnumVals },
 	{ "solid_e", asSolidEnumVals },
 	{ "pmovestats_e", asPMoveStatEnumVals },
 	{ "pmovefeats_e", asPMoveFeaturesEnumVals },
@@ -1658,7 +1677,7 @@ static void objectPMove_AddTouchEnt( int entNum, pmove_t *pm ) {
 }
 
 static void objectPMove_TouchTriggers( player_state_t *ps, asvec3_t *prevOrigin, pmove_t *pmove ) {
-	gs.api.PMoveTouchTriggers( pmove, ps, prevOrigin->v );
+	gs.api.PMoveTouchTriggers( pmove, ps, prevOrigin->v, pmove->cmd.serverTimeStamp );
 }
 
 static asvec3_t objectPMove_GetOrigin( pmove_t *pmove) {
@@ -1840,8 +1859,8 @@ static int GS_asTransformedPointContents( asvec3_t *vec, struct cmodel_s *cmodel
 	return gs.api.TransformedPointContents( vec->v, cmodel, origin->v, angles->v );
 }
 
-static void GS_asPredictedEvent( int entityNumber, int event, int param ) {
-	gs.api.PredictedEvent( entityNumber, event, param );
+static void GS_asPredictedEvent( int entityNumber, int event, int param, int64_t serverTimestamp ) {
+	gs.api.PredictedEvent( entityNumber, event, param, serverTimestamp );
 }
 
 static void GS_asRoundUpToHullSize( asvec3_t *inmins, asvec3_t *inmaxs, asvec3_t *outmins, asvec3_t *outmaxs ) {
@@ -1936,10 +1955,10 @@ static const gs_asglobfuncs_t asGameGlobalFunctions[] = {
 	{ "int PointContents4D( const Vec3 &in, int timeDelta )", asFUNCTION( GS_asPointContents4D ), NULL },
 	{ "int TransformedPointContents( const Vec3 &in v, CModelHandle @, const Vec3 &in origin, const Vec3 &in angles )", asFUNCTION( GS_asTransformedPointContents ), NULL },
 
-	{ "void PredictedEvent( int entityNumber, int event, int param )", asFUNCTION( GS_asPredictedEvent ), NULL },
+	{ "void PredictedEvent( int entityNumber, int event, int param, int64 serverTimestamp )", asFUNCTION( GS_asPredictedEvent ), NULL },
 	{ "void RoundUpToHullSize( const Vec3 &in inmins, const Vec3 &in inmaxs, Vec3 &out mins, Vec3 &out maxs )", asFUNCTION( GS_asRoundUpToHullSize ), NULL },
 	{ "Vec3 ClipVelocity( const Vec3 &in, const Vec3 &in, float overbounce )", asFUNCTION( GS_asClipVelocity ), NULL },
-	{ "void TouchPushTrigger( PlayerState @ps, EntityState @es )", asFUNCTION( GS_TouchPushTrigger ), NULL },
+	{ "void TouchPushTrigger( PlayerState @ps, EntityState @es, int64 serverTimestamp )", asFUNCTION( GS_TouchPushTrigger ), NULL },
 
 	{ "void GetPlayerStandSize( Vec3 & out, Vec3 & out )", asFUNCTION( GS_asGetPlayerStandSize ), NULL },
 	{ "void GetPlayerCrouchSize( Vec3 & out, Vec3 & out )", asFUNCTION( GS_asGetPlayerCrouchSize ), NULL },

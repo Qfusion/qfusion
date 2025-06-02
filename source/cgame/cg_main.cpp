@@ -1007,7 +1007,6 @@ void CG_Reset( void ) {
 
 	CG_ResetPModels();
 
-	CG_ResetKickAngles();
 	CG_ResetColorBlend();
 	CG_ResetDamageIndicator();
 	CG_ResetItemTimers();

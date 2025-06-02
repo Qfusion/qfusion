@@ -35,7 +35,7 @@ void GS_asInitializeExport( void );
 /*
 * GS_TouchPushTrigger
 */
-void GS_TouchPushTrigger( player_state_t *playerState, entity_state_t *pusher ) {
+void GS_TouchPushTrigger( player_state_t *playerState, entity_state_t *pusher, int64_t serverTimestamp ) {
 	// spectators don't use jump pads
 	if( playerState->pmove.pm_type != PM_NORMAL ) {
 		return;
@@ -47,7 +47,7 @@ void GS_TouchPushTrigger( player_state_t *playerState, entity_state_t *pusher ) 
 	playerState->pmove.pm_flags &= ~PMF_WALLJUMPCOUNT;
 	playerState->pmove.pm_flags |= PMF_JUMPPAD_TIME;
 	playerState->pmove.pm_flags &= ~PMF_ON_GROUND;
-	gs.api.PredictedEvent( playerState->POVnum, EV_JUMP_PAD, 0 );
+	gs.api.PredictedEvent( playerState->POVnum, EV_JUMP_PAD, 0, serverTimestamp );
 }
 
 /*

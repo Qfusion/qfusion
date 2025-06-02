@@ -48,8 +48,8 @@ typedef struct {
 	int ( *TransformedPointContents )( vec3_t p, struct cmodel_s *cmodel, vec3_t origin, vec3_t angles );
 	entity_state_t *( *GetEntityState )( int entNum, int deltaTime );
 	int ( *PointContents )( vec3_t point, int timeDelta );
-	void ( *PredictedEvent )( int entNum, int ev, int parm );
-	void ( *PMoveTouchTriggers )( pmove_t *pm, player_state_t *ps, vec3_t previous_origin );
+	void ( *PredictedEvent )( int entNum, int ev, int parm, int64_t serverTimestamp );
+	void ( *PMoveTouchTriggers )( pmove_t *pm, player_state_t *ps, vec3_t previous_origin, int64_t serverTimestamp );
 	void ( *RoundUpToHullSize )( vec3_t mins, vec3_t maxs );
 	const char *( *GetConfigString )( int index );
 	struct angelwrap_api_s *( *GetAngelExport )( void );
@@ -635,7 +635,7 @@ typedef enum {
 // gs_misc.c
 void GS_SetGametypeName( const char *name );
 void GS_Obituary( void *victim, int gender, void *attacker, int mod, char *message, char *message2 );
-void GS_TouchPushTrigger( player_state_t *playerState, entity_state_t *pusher );
+void GS_TouchPushTrigger( player_state_t *playerState, entity_state_t *pusher, int64_t serverTimestamp );
 int GS_WaterLevel( entity_state_t *state, vec3_t mins, vec3_t maxs );
 void GS_BBoxForEntityState( entity_state_t *state, vec3_t mins, vec3_t maxs );
 float GS_FrameForTime( int *frame, int64_t curTime, int64_t startTimeStamp, float frametime, int firstframe, int lastframe, int loopingframes, bool forceLoop );
