@@ -1,6 +1,5 @@
 /*
-Copyright (C) 2008 German Garcia
-Copyright (C) 2011 Chasseur de bots
+Copyright (C) 2025 Victor Luchits
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License

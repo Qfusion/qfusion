@@ -201,13 +201,21 @@ static void objectOrientation_DefaultConstructor( orientation_t *o )
 
 static void objectOrientation_CopyConstructor( orientation_t *other, orientation_t *o )
 {
-	memcpy( o, other, sizeof( orientation_t ) );
+	VectorCopy( other->origin, o->origin );
+	Matrix3_Copy( other->axis, o->axis );
 }
 
 static void objectOrientation_Vec3Mat3Constructor( asvec3_t *v, asmat3_t *m, orientation_t *o )
 {
 	VectorCopy( v->v, o->origin );
 	Matrix3_Copy( m->m, o->axis );
+}
+
+static orientation_t *objectOrientation_AssignBehaviour( orientation_t *other, orientation_t *self )
+{
+	VectorCopy( other->origin, self->origin );
+	Matrix3_Copy( other->axis, self->axis );
+	return self;
 }
 
 static const gs_asBehavior_t asOrientation_ObjectBehaviors[] = {
@@ -218,7 +226,11 @@ static const gs_asBehavior_t asOrientation_ObjectBehaviors[] = {
 	ASLIB_BEHAVIOR_NULL,
 };
 
-static const gs_asMethod_t asOrientation_Methods[] = { ASLIB_METHOD_NULL };
+static const gs_asMethod_t asOrientation_Methods[] = { 
+	{ ASLIB_FUNCTION_DECL( Orientation &, opAssign, ( const Orientation &in ) ), asFUNCTION( objectOrientation_AssignBehaviour ), asCALL_CDECL_OBJLAST },
+
+	ASLIB_METHOD_NULL
+};
 
 static const gs_asProperty_t asOrientation_Properties[] = { 
 	{ ASLIB_PROPERTY_DECL( Vec3, origin ), ASLIB_FOFFSET( orientation_t, origin ) },
@@ -539,11 +551,9 @@ static bool asFunc_CG_GrabTag( orientation_t *tag, asrefentity_t *ent, asstring_
 	return CG_GrabTag( tag, &ent->ent, tagname->buffer );
 }
 
-orientation_t asFunc_CG_MoveToTag( orientation_t *space, orientation_t *tag )
+void asFunc_CG_MoveToTag( orientation_t *space, orientation_t *tag, orientation_t *o )
 {
-	orientation_t o;
-	CG_MoveToTag( o.origin, o.axis, space->origin, space->axis, tag->origin, tag->axis );
-	return o;
+	CG_MoveToTag( o->origin, o->axis, space->origin, space->axis, tag->origin, tag->axis );
 }
 
 static void asFunc_CG_SpawnPolyQuad( const asvec3_t *v1, const asvec3_t *v2, const asvec3_t *v3, const asvec3_t *v4,
@@ -656,6 +666,12 @@ int asCG_SpawnDecal( const asvec3_t *origin, const asvec3_t *dir, float orient, 
 	return CG_SpawnDecal( origin->v, dir->v, orient, radius, r, g, b, a, die, fadetime, fadealpha, shader );
 }
 
+void asCG_AddFragmentedDecal( const asvec3_t *origin, const asvec3_t *dir, float orient, float radius, float r, float g, float b,
+	float a, struct shader_s *shader )
+{
+	CG_AddFragmentedDecal( origin->v, dir->v, orient, radius, r, g, b, a, shader );
+}
+
 const gs_asglobfuncs_t asCGameRefSceneGlobalFuncs[] = {
 	{ "void PlaceRotatedModelOnTag( Entity @+ ent, const Entity @+ dest, const Orientation &in )",
 		asFUNCTION( CG_PlaceRotatedModelOnTag ), NULL },
@@ -663,7 +679,7 @@ const gs_asglobfuncs_t asCGameRefSceneGlobalFuncs[] = {
 		asFUNCTION( CG_PlaceModelOnTag ), NULL },
 	{ "bool GrabTag( Orientation &out, const Entity @+ ent, const String &in )", asFUNCTION( asFunc_CG_GrabTag ),
 		NULL },
-	{ "Orientation MoveToTag( const Orientation &in space, const Orientation &in tag )", asFUNCTION( asFunc_CG_MoveToTag ),
+	{ "void MoveToTag( const Orientation &in space, const Orientation &in tag, const Orientation &in res )", asFUNCTION( asFunc_CG_MoveToTag ),
 		NULL },
 
 	{ "Boneposes @RegisterTemporaryExternalBoneposes( ModelSkeleton @ )",
@@ -697,6 +713,10 @@ const gs_asglobfuncs_t asCGameRefSceneGlobalFuncs[] = {
 	{ "void AddQuadOnTag( Entity @+ ent, const Orientation &in tag, float width, float height, " 
 		"float x_offset, float s1, float t1, float s2, float t2, const Vec4 &in color, ShaderHandle @shader )",
 		asFUNCTION( asFunc_CG_AddQuadOnTag ), NULL },
+	{ "void AddFragmentedDecalToScene( const Vec3 &in origin, const Vec3 &in dir, float orient, float radius, float r, float g, float b, float a, ShaderHandle @shader )", asFUNCTION( asCG_AddFragmentedDecal ),
+		NULL },
+
+	{ "void KillPolysByTag( int tag )", asFUNCTION( CG_KillPolysByTag ), NULL },
 
 	{ NULL },
 };

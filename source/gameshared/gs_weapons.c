@@ -260,7 +260,7 @@ bool G_GetLaserbeamPoint( gs_laserbeamtrail_t *trail, player_state_t *playerStat
 #undef  LASERGUN_WEAK_TRAIL_BACKUP
 #undef  LASERGUN_WEAK_TRAIL_MASK
 
-static bool GS_CheckBladeAutoAttack( player_state_t *playerState, int timeDelta ) {
+static bool GS_CheckBladeAutoAttack( player_state_t *playerState, int timeDelta, bool allowTeamDamage ) {
 	vec3_t origin, dir, end;
 	trace_t trace;
 	entity_state_t *targ, *player;
@@ -291,7 +291,7 @@ static bool GS_CheckBladeAutoAttack( player_state_t *playerState, int timeDelta 
 		return false;
 	}
 
-	if( GS_TeamBasedGametype() && ( targ->team == player->team ) ) {
+	if( !allowTeamDamage || targ->team == player->team ) {
 		return false;
 	}
 
@@ -535,7 +535,7 @@ int GS_ThinkPlayerWeapon( player_state_t *playerState, int buttons, int msecs, i
 			else if( playerState->stats[STAT_WEAPON] == WEAP_GUNBLADE &&
 					 playerState->pmove.stats[PM_STAT_NOUSERCONTROL] <= 0 &&
 					 playerState->pmove.stats[PM_STAT_NOAUTOATTACK] <= 0 &&
-					 GS_CheckBladeAutoAttack( playerState, timeDelta ) ) {
+					 GS_CheckBladeAutoAttack( playerState, timeDelta, !GS_TeamBasedGametype() ) ) {
 				firedef = &GS_GetWeaponDef( WEAP_GUNBLADE )->firedef_weak;
 				playerState->weaponState = WEAPON_STATE_FIRING;
 			}

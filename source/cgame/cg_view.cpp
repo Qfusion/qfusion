@@ -998,8 +998,6 @@ void CG_RenderView( int frameTime, int realFrameTime, int64_t realTime, int64_t 
 		CG_SetupViewDef( &cg.view, VIEWDEF_PLAYERVIEW, stereo_separation );
 	}
 
-	CG_LerpEntities();  // interpolate packet entities positions
-
 	CG_CalcViewWeapon( &cg.weapon );
 
 	CG_AddEntities();

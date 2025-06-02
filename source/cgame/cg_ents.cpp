@@ -401,7 +401,6 @@ ADD INTERPOLATED ENTITIES TO RENDERING LIST
 *  get the collision model for the given entity, no matter if box or brush-model.
 */
 struct cmodel_s *CG_CModelForEntity( int entNum ) {
-	int x, zd, zu;
 	centity_t *cent;
 	struct cmodel_s *cmodel = NULL;
 	vec3_t bmins, bmaxs;
@@ -418,21 +417,17 @@ struct cmodel_s *CG_CModelForEntity( int entNum ) {
 
 	// find the cmodel
 	if( cent->current.solid == SOLID_BMODEL ) { // special value for bmodel
-		cmodel = trap_CM_InlineModel( cent->current.modelindex );
-	} else if( cent->current.solid ) {   // encoded bbox
-		x = 8 * ( cent->current.solid & 31 );
-		zd = 8 * ( ( cent->current.solid >> 5 ) & 31 );
-		zu = 8 * ( ( cent->current.solid >> 10 ) & 63 ) - 32;
+		return trap_CM_InlineModel( cent->current.modelindex );
+	}
+	if( !cent->current.solid ) {
+		return NULL;
+	}
 
-		bmins[0] = bmins[1] = -x;
-		bmaxs[0] = bmaxs[1] = x;
-		bmins[2] = -zd;
-		bmaxs[2] = zu;
-		if( cent->type == ET_PLAYER || cent->type == ET_CORPSE || cent->type == ET_MONSTER_PLAYER || cent->type == ET_MONSTER_CORPSE ) {
-			cmodel = trap_CM_OctagonModelForBBox( bmins, bmaxs );
-		} else {
-			cmodel = trap_CM_ModelForBBox( bmins, bmaxs );
-		}
+	GS_BBoxForEntityState( &cent->current, bmins, bmaxs );
+	if( cent->type == ET_PLAYER || cent->type == ET_CORPSE || cent->type == ET_MONSTER_PLAYER || cent->type == ET_MONSTER_CORPSE ) {
+		cmodel = trap_CM_OctagonModelForBBox( bmins, bmaxs );
+	} else {
+		cmodel = trap_CM_ModelForBBox( bmins, bmaxs );
 	}
 
 	return cmodel;
@@ -1443,17 +1438,6 @@ centity_t *CG_GetItemTimerEnt( int num ) {
 }
 
 //==========================================================================
-//		ET_BEAM
-//==========================================================================
-
-/*
-* CG_AddBeamEnt
-*/
-static void CG_AddBeamEnt( centity_t *cent ) {
-	CG_QuickPolyBeam( cent->current.origin, cent->current.origin2, cent->current.frame * 0.5f, cgs.media.shaderLaser ); // wsw : jalfixme: missing the color (comes inside cent->current.colorRGBA)
-}
-
-//==========================================================================
 //		ET_LASERBEAM
 //==========================================================================
 
@@ -1840,155 +1824,8 @@ void CG_AddEntities( void ) {
 		canLight = !state->linearMovement;
 
 		switch( cent->type ) {
-			case ET_GENERIC:
-				CG_AddGenericEnt( cent );
-				if( cg_drawEntityBoxes->integer ) {
-					CG_DrawEntityBox( cent );
-				}
-				CG_EntityLoopSound( state, ATTN_STATIC );
-				canLight = true;
-				break;
-			case ET_GIB:
-				if( cg_gibs->integer ) {
-					CG_AddGenericEnt( cent );
-					CG_EntityLoopSound( state, ATTN_STATIC );
-					canLight = true;
-				}
-				break;
-			case ET_BLASTER:
-				CG_AddGenericEnt( cent );
-				CG_BlasterTrail( cent->trailOrigin, cent->ent.origin );
-				CG_EntityLoopSound( state, ATTN_STATIC );
-				break;
-
-			case ET_ELECTRO_WEAK:
-				cent->current.frame = cent->prev.frame = 0;
-				cent->ent.frame =  cent->ent.oldframe = 0;
-
-				CG_AddGenericEnt( cent );
-				CG_EntityLoopSound( state, ATTN_STATIC );
-				CG_ElectroWeakTrail( cent->trailOrigin, cent->ent.origin, NULL );
-				break;
-			case ET_ROCKET:
-				CG_AddGenericEnt( cent );
-				CG_ProjectileTrail( cent );
-				CG_EntityLoopSound( state, ATTN_NORM );
-				CG_AddLightToScene( cent->ent.origin, 300, 0.8f, 0.6f, 0 );
-				break;
-			case ET_GRENADE:
-				CG_AddGenericEnt( cent );
-				CG_EntityLoopSound( state, ATTN_STATIC );
-				CG_ProjectileTrail( cent );
-				canLight = true;
-				break;
-			case ET_PLASMA:
-				CG_AddGenericEnt( cent );
-				CG_EntityLoopSound( state, ATTN_STATIC );
-				break;
-
-			case ET_SPRITE:
-			case ET_RADAR:
-				CG_AddSpriteEnt( cent );
-				CG_EntityLoopSound( state, ATTN_STATIC );
-				canLight = true;
-				break;
-
-			case ET_ITEM:
-				CG_AddItemEnt( cent );
-				if( cg_drawEntityBoxes->integer ) {
-					CG_DrawEntityBox( cent );
-				}
-				CG_EntityLoopSound( state, ATTN_IDLE );
-				canLight = true;
-				break;
-
-			case ET_PLAYER:
-				CG_AddPlayerEnt( cent );
-				if( cg_drawEntityBoxes->integer ) {
-					CG_DrawEntityBox( cent );
-				}
-				CG_EntityLoopSound( state, ATTN_IDLE );
-				CG_LaserBeamEffect( cent );
-				CG_WeaponBeamEffect( cent );
-				canLight = true;
-				break;
-
-			case ET_MONSTER_PLAYER:
-				CG_AddPMonsterlayerEnt( cent );
-				if( cg_drawEntityBoxes->integer ) {
-					CG_DrawEntityBox( cent );
-				}
-				CG_EntityLoopSound( state, ATTN_IDLE );
-				CG_LaserBeamEffect( cent );
-				CG_WeaponBeamEffect( cent );
-				canLight = true;
-				break;
-
-			case ET_CORPSE:
-				CG_AddPlayerEnt( cent );
-				if( cg_drawEntityBoxes->integer ) {
-					CG_DrawEntityBox( cent );
-				}
-				CG_EntityLoopSound( state, ATTN_IDLE );
-				canLight = true;
-				break;
-
-			case ET_MONSTER_CORPSE:
-				CG_AddPMonsterlayerEnt( cent );
-				if( cg_drawEntityBoxes->integer ) {
-					CG_DrawEntityBox( cent );
-				}
-				CG_EntityLoopSound( state, ATTN_IDLE );
-				canLight = true;
-				break;
-
-			case ET_BEAM:
-				CG_AddBeamEnt( cent );
-				CG_EntityLoopSound( state, ATTN_STATIC );
-				break;
-
-			case ET_LASERBEAM:
-			case ET_CURVELASERBEAM:
-				break;
-
 			case ET_PORTALSURFACE:
 				CG_AddPortalSurfaceEnt( cent );
-				CG_EntityLoopSound( state, ATTN_STATIC );
-				break;
-
-			case ET_FLAG_BASE:
-				CG_AddFlagBaseEnt( cent );
-				CG_EntityLoopSound( state, ATTN_STATIC );
-				canLight = true;
-				break;
-
-			case ET_MINIMAP_ICON:
-				if( cent->effects & EF_TEAMCOLOR_TRANSITION ) {
-					CG_EntAddTeamColorTransitionEffect( cent );
-				}
-				break;
-
-			case ET_DECAL:
-				CG_AddDecalEnt( cent );
-				CG_EntityLoopSound( state, ATTN_STATIC );
-				break;
-
-			case ET_PUSH_TRIGGER:
-				if( cg_drawEntityBoxes->integer ) {
-					CG_DrawEntityBox( cent );
-				}
-				CG_EntityLoopSound( state, ATTN_STATIC );
-				break;
-
-			case ET_EVENT:
-			case ET_SOUNDEVENT:
-				break;
-
-			case ET_ITEM_TIMER:
-				break;
-
-			case ET_PARTICLES:
-				CG_AddParticlesEnt( cent );
 				CG_EntityLoopSound( state, ATTN_STATIC );
 				break;
 
@@ -1997,7 +1834,7 @@ void CG_AddEntities( void ) {
 				break;
 
 			default:
-				CG_Error( "CG_AddPacketEntities: unknown entity type" );
+				//CG_Error( "CG_AddPacketEntities: unknown entity type %d", cent->type );
 				break;
 		}
 
@@ -2011,101 +1848,6 @@ void CG_AddEntities( void ) {
 		}
 
 		VectorCopy( cent->ent.origin, cent->trailOrigin );
-	}
-}
-
-/*
-* CG_LerpEntities
-* Interpolate the entity states positions into the entity_t structs
-*/
-void CG_LerpEntities( void ) {
-	entity_state_t *state;
-	int pnum;
-	centity_t *cent;
-
-	for( pnum = 0; pnum < cg.frame.numEntities; pnum++ ) {
-		int number;
-		bool spatialize;
-
-		state = &cg.frame.entities[pnum];
-		number = state->number;
-		cent = &cg_entities[number];
-		spatialize = true;
-
-		switch( cent->type ) {
-			case ET_GENERIC:
-			case ET_GIB:
-			case ET_BLASTER:
-			case ET_ELECTRO_WEAK:
-			case ET_ROCKET:
-			case ET_PLASMA:
-			case ET_GRENADE:
-			case ET_ITEM:
-			case ET_PLAYER:
-			case ET_CORPSE:
-			case ET_FLAG_BASE:
-			case ET_MONSTER_PLAYER:
-			case ET_MONSTER_CORPSE:
-				if( state->linearMovement ) {
-					CG_ExtrapolateLinearProjectile( cent );
-				} else {
-					CG_LerpGenericEnt( cent );
-				}
-				break;
-
-			case ET_SPRITE:
-			case ET_RADAR:
-				CG_LerpSpriteEnt( cent );
-				break;
-
-			case ET_DECAL:
-				CG_LerpDecalEnt( cent );
-				break;
-
-			case ET_BEAM:
-
-				// beams aren't interpolated
-				break;
-
-			case ET_LASERBEAM:
-			case ET_CURVELASERBEAM:
-				CG_LerpLaserbeamEnt( cent );
-				break;
-
-			case ET_MINIMAP_ICON:
-				break;
-
-			case ET_PORTALSURFACE:
-
-				//portals aren't interpolated
-				break;
-
-			case ET_PUSH_TRIGGER:
-				break;
-
-			case ET_EVENT:
-			case ET_SOUNDEVENT:
-				break;
-
-			case ET_ITEM_TIMER:
-				break;
-
-			case ET_PARTICLES:
-				break;
-
-			case ET_VIDEO_SPEAKER:
-				break;
-
-			default:
-				CG_Error( "CG_LerpEntities: unknown entity type" );
-				break;
-		}
-
-		if( spatialize ) {
-			vec3_t origin, velocity;
-			CG_GetEntitySpatilization( number, origin, velocity );
-			trap_S_SetEntitySpatilization( number, origin, velocity );
-		}
 	}
 }
 
@@ -2131,93 +1873,12 @@ void CG_UpdateEntities( void ) {
 		cent->renderfx = 0;
 
 		switch( cent->type ) {
-			case ET_GENERIC:
-				CG_UpdateGenericEnt( cent );
-				break;
-			case ET_GIB:
-				if( cg_gibs->integer ) {
-					cent->renderfx |= RF_NOSHADOW;
-					CG_UpdateGenericEnt( cent );
-
-					// set the gib model ignoring the modelindex one
-					cent->ent.model = cgs.media.modIlluminatiGibs;
-				}
-				break;
-
-			// projectiles with linear trajectories
-			case ET_BLASTER:
-			case ET_ELECTRO_WEAK:
-			case ET_ROCKET:
-			case ET_PLASMA:
-			case ET_GRENADE:
-				cent->renderfx |= ( RF_NOSHADOW | RF_FULLBRIGHT );
-				CG_UpdateGenericEnt( cent );
-				break;
-
-			case ET_RADAR:
-				cent->renderfx |= RF_NODEPTHTEST;
-			case ET_SPRITE:
-				cent->renderfx |= ( RF_NOSHADOW | RF_FULLBRIGHT );
-				CG_UpdateSpriteEnt( cent );
-				break;
-
-			case ET_ITEM:
-				CG_UpdateItemEnt( cent );
-				break;
-			case ET_PLAYER:
-			case ET_CORPSE:
-			case ET_MONSTER_PLAYER:
-			case ET_MONSTER_CORPSE:
-				CG_UpdatePlayerModelEnt( cent );
-				break;
-
-			case ET_BEAM:
-				break;
-
-			case ET_LASERBEAM:
-			case ET_CURVELASERBEAM:
-				CG_UpdateLaserbeamEnt( cent );
-				break;
-
-			case ET_FLAG_BASE:
-				CG_UpdateFlagBaseEnt( cent );
-				break;
-
-			case ET_MINIMAP_ICON:
-			{
-				CG_TeamColorForEntity( cent->current.number, cent->ent.shaderRGBA );
-				if( cent->current.modelindex > 0 && cent->current.modelindex < MAX_IMAGES ) {
-					cent->ent.customShader = cgs.imagePrecache[ cent->current.modelindex ];
-				} else {
-					cent->ent.customShader = NULL;
-				}
-			}
-			break;
-
-			case ET_DECAL:
-				CG_UpdateDecalEnt( cent );
-				break;
-
 			case ET_PORTALSURFACE:
 				CG_UpdatePortalSurfaceEnt( cent );
 				break;
 
-			case ET_PUSH_TRIGGER:
-				break;
-
-			case ET_EVENT:
-				break;
-
-			case ET_SOUNDEVENT:
-				CG_SoundEntityNewState( cent );
-				break;
-
 			case ET_ITEM_TIMER:
 				CG_UpdateItemTimerEnt( cent );
-				break;
-
-			case ET_PARTICLES:
-				CG_UpdateParticlesEnt( cent );
 				break;
 
 			case ET_VIDEO_SPEAKER:
@@ -2225,7 +1886,7 @@ void CG_UpdateEntities( void ) {
 				break;
 
 			default:
-				CG_Error( "CG_UpdateEntities: unknown entity type %i", cent->type );
+				//CG_Error( "CG_UpdateEntities: unknown entity type %i", cent->type );
 				break;
 		}
 	}

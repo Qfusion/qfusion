@@ -57,6 +57,9 @@ static cg_asApiFuncPtr_t cg_asCGameAPI[] = {
 	{ "void CGame::ConfigString( int index, const String @ )", &cgs.asGameState.configString, false },
 	{ "void CGame::UpdateEntities()", &cgs.asGameState.updateEntities, false },
 	{ "bool CGame::EntityEvent( const EntityState @, int ev, int parm, bool predicted )", &cgs.asGameState.entityEvent, false },
+	{ "void CGame::PredictedEvent( int entNum, int ev, int parm )", &cgs.asGameState.predictedEvent, false },
+	{ "void CGame::RunUserCmd( PMove @pm, UserCmd cmd, int ucmdHead, int ucmdExecuted )", &cgs.asGameState.runUcmd, false },
+	{ "void CGame::BuildSolidList()", &cgs.asGameState.buildSolidList, false },
 
 	{ nullptr, nullptr, false },
 };
@@ -491,8 +494,6 @@ static const gs_asglobfuncs_t asCGameGlobalFuncs[] = {
 
 	{ "int get_ExtrapolationTime()", asFUNCTION( asFunc_ExtrapolationTime ), NULL },
 	{ "int get_SnapFrameTime()", asFUNCTION( asFunc_SnapFrameTime ), NULL },
-	{ "void AddEntityToSolidList( int number )", asFUNCTION( CG_AddEntityToSolidList ), NULL },
-	{ "void AddEntityToTriggerList( int number )", asFUNCTION( CG_AddEntityToTriggerList ), NULL },
 
 	{ "ModelHandle @RegisterModel( const String &in )", asFUNCTION( asFunc_RegisterModel ), NULL },
 	{ "SoundHandle @RegisterSound( const String &in )", asFUNCTION( asFunc_RegisterSound ), NULL },
@@ -508,6 +509,8 @@ static const gs_asglobfuncs_t asCGameGlobalFuncs[] = {
 	{ "bool IsViewerEntity( int entNum )", asFUNCTION( asFunc_IsViewerEntity ), NULL },
 	{ "String @GetConfigString( int entNum )", asFUNCTION( asFunc_GetConfigString ), NULL },
 	{ "Vec3 PredictionError()", asFUNCTION( asFunc_GetPredictionError ), NULL },
+	{ "void AddEntityToTriggerList( int entNum )", asFUNCTION( CG_AddEntityToTriggerList ), NULL },
+	{ "void AddEntityToSolidList( int entNum )", asFUNCTION( CG_AddEntityToSolidList ), NULL },
 
 	{ "bool IsPureFile( const String &in )", asFUNCTION( asFunc_IsPureFile ), NULL },
 
@@ -951,4 +954,47 @@ bool CG_asEntityEvent( entity_state_t *ent, int ev, int parm, bool predicted )
 		[&res]( asIScriptContext *ctx ) { res = ctx->GetReturnByte(); } );
 
 	return res == 0 ? false : true;
+}
+
+bool CG_asPredictedEvent( int entNum, int ev, int parm )
+{
+	uint8_t res = 0;
+
+	if( !cgs.asGameState.predictedEvent ) {
+		return false;
+	}
+	CG_asCallScriptFunc(
+		cgs.asGameState.predictedEvent,
+		[entNum, ev, parm]( asIScriptContext *ctx ) {
+			ctx->SetArgDWord( 0, entNum );
+			ctx->SetArgDWord( 1, ev );
+			ctx->SetArgDWord( 2, parm );
+		},
+		[&res]( asIScriptContext *ctx ) { res = ctx->GetReturnByte(); } );
+
+	return res == 0 ? false : true;
+}
+
+void CG_asRunUcmd( pmove_t *pm, usercmd_t *cmd, int ucmdHead, int ucmdExecuted )
+{
+	if( !cgs.asGameState.runUcmd ) {
+		return;
+	}
+	CG_asCallScriptFunc(
+		cgs.asGameState.runUcmd,
+		[pm, cmd, ucmdHead, ucmdExecuted]( asIScriptContext *ctx ) {
+			ctx->SetArgObject( 0, pm );
+			ctx->SetArgObject( 1, cmd );
+			ctx->SetArgDWord( 2, ucmdHead );
+			ctx->SetArgDWord( 3, ucmdExecuted );
+		},
+		cg_empty_as_cb );
+}
+
+void CG_asBuildSolidList(void)
+{
+	if( !cgs.asGameState.buildSolidList ) {
+		return;
+	}
+	CG_asCallScriptFunc( cgs.asGameState.buildSolidList, cg_empty_as_cb, cg_empty_as_cb );
 }

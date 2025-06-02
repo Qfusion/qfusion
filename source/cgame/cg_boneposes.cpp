@@ -384,8 +384,8 @@ bool CG_SkeletalPoseGetAttachment( orientation_t *orient, cgs_skeleton_t *skel,
 						  modOrient.origin, modOrient.axis
 						  );
 
-			Matrix3_Copy( newOrient.axis, orient->axis );
-			VectorCopy( newOrient.origin, orient->origin );
+			//Matrix3_Copy( newOrient.axis, orient->axis );
+			//VectorCopy( newOrient.origin, orient->origin );
 		} else {
 			// offset
 			for( i = 0; i < 3; i++ ) {

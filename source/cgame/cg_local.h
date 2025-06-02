@@ -467,6 +467,9 @@ typedef struct {
 		void *configString;
 		void *updateEntities;
 		void *entityEvent;
+		void *runUcmd;
+		void *buildSolidList;
+		void *predictedEvent;
 	} asGameState;
 
 	// fonts
@@ -676,7 +679,6 @@ bool CG_NewFrameSnap( snapshot_t *frame, snapshot_t *lerpframe );
 struct cmodel_s *CG_CModelForEntity( int entNum );
 void CG_AddEntities( void );
 void CG_GetEntitySpatilization( int entNum, vec3_t origin, vec3_t velocity );
-void CG_LerpEntities( void );
 void CG_LerpGenericEnt( centity_t *cent );
 
 void CG_SetOutlineColor( byte_vec4_t outlineColor, byte_vec4_t color );
@@ -1118,7 +1120,7 @@ extern cvar_t *cg_instabeam_time;
 
 void CG_ClearPolys( void );
 void CG_AddPolys( void );
-void CG_KillPolyBeamsByTag( int key );
+void CG_KillPolysByTag( int key );
 void CG_SpawnPolyQuad( const vec3_t v1, const vec3_t v2, const vec3_t v3, const vec3_t v4, float stx, float sty,
 	const vec4_t color, int64_t dietime, int64_t fadetime, struct shader_s *shader, int tag );
 void CG_SpawnPolyBeam( const vec3_t start, const vec3_t end, const vec4_t color, int width, int64_t dietime,
@@ -1171,7 +1173,7 @@ void CG_SetLightStyle( int i );
 void CG_AddLightStyles( void );
 
 void CG_ClearFragmentedDecals( void );
-void CG_AddFragmentedDecal( vec3_t origin, vec3_t dir, float orient, float radius,
+void CG_AddFragmentedDecal( const vec3_t origin, const vec3_t dir, float orient, float radius,
 							float r, float g, float b, float a, struct shader_s *shader );
 
 void CG_AddParticles( void );
@@ -1253,6 +1255,9 @@ void CG_asNewPacketEntityState( entity_state_t *state );
 void CG_asConfigString( int index, const char *str );
 void CG_asUpdateEntities( void );
 bool CG_asEntityEvent( entity_state_t *ent, int ev, int parm, bool predicted );
+bool CG_asPredictedEvent( int entNum, int ev, int parm );
+void CG_asRunUcmd( pmove_t *pm, usercmd_t *cmd, int ucmdHead, int ucmdExecuted );
+void CG_asBuildSolidList( void );
 
 void CG_asHUDInit( void );
 bool CG_asHUDDrawCrosshair( void );

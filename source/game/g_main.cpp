@@ -211,6 +211,8 @@ static void G_InitGameShared( void ) {
 	api.Malloc = G_GS_Malloc;
 	api.Free = G_GS_Free;
 	api.Trace = G_GS_Trace;
+	api.TransformedBoxTrace = trap_CM_TransformedBoxTrace;
+	api.TransformedPointContents = trap_CM_TransformedPointContents;
 	api.GetEntityState = G_GetEntityStateForDeltaTime;
 	api.PointContents = G_PointContents4D;
 	api.PMoveTouchTriggers = G_PMoveTouchTriggers;
@@ -220,6 +222,8 @@ static void G_InitGameShared( void ) {
 	api.NumInlineModels = trap_CM_NumInlineModels;
 	api.InlineModel = trap_CM_InlineModel;
 	api.InlineModelBounds = trap_CM_InlineModelBounds;
+	api.OctagonModelForBounds = trap_CM_OctagonModelForBBox;
+	api.ModelForBounds = trap_CM_ModelForBBox;
 
 	GS_InitModule( GS_MODULE_GAME, maxclients, &api );
 }

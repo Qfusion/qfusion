@@ -239,9 +239,9 @@ void CG_SpawnPolyBeam( const vec3_t start, const vec3_t end, const vec4_t color,
 }
 
 /*
-* CG_KillPolyBeamsByTag
+* CG_KillPolysByTag
 */
-void CG_KillPolyBeamsByTag( int tag ) {
+void CG_KillPolysByTag( int tag ) {
 	cpoly_t *cgpoly, *next, *hnode;
 
 	// kill polys that have this tag

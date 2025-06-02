@@ -204,6 +204,13 @@ static void objectVec3_AnglesToAxis( asmat3_t *res, asvec3_t *self )
 	AnglesToAxis( self->v, res->m );
 }
 
+static asvec3_t objectVec3_AnglesToForward( asvec3_t *self )
+{
+	asvec3_t res;
+	AngleVectors( self->v, res.v, NULL, NULL );
+	return res;
+}
+
 static float *objectVec3_Index( unsigned index, asvec3_t *self ) {
 	if( index > 2 ) {
 		asIScriptContext *ctx = asGetActiveContext();
@@ -241,6 +248,9 @@ static asstring_t *objectVec3_ToString( asvec3_t *self )
 {
 	char s[32];
 	int len = Q_snprintfz( s, sizeof( s ), "(%+6.3f %+6.3f %+6.3f)", self->v[0], self->v[1], self->v[2] );
+	if( len < 0 ) {
+		len = Q_snprintfz( s, sizeof( s ), "%s", "(???, ???, ???)" );
+	}
 	return objectString_FactoryBuffer( s, len );
 }
 
@@ -296,8 +306,9 @@ void RegisterVec3Addon( asIScriptEngine *engine ) {
 	r = engine->RegisterObjectMethod( "Vec3", "Vec3 toAngles() const", asFUNCTION( objectVec3_VecToAngles ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "Vec3", "Vec3 perpendicular() const", asFUNCTION( objectVec3_Perpendicular ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "Vec3", "void makeNormalVectors(Vec3 &out, Vec3 &out) const", asFUNCTION( objectVec3_MakeNormalVectors ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
-	r = engine->RegisterObjectMethod( "Vec3", "void anglesToMarix(Mat3 &out) const", asFUNCTION( objectVec3_AnglesToMatrix3 ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
+	r = engine->RegisterObjectMethod( "Vec3", "void anglesToMatrix(Mat3 &out) const", asFUNCTION( objectVec3_AnglesToMatrix3 ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "Vec3", "void anglesToAxis(Mat3 &out) const", asFUNCTION( objectVec3_AnglesToAxis ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
+	r = engine->RegisterObjectMethod( "Vec3", "Vec3 anglesToForward() const", asFUNCTION( objectVec3_AnglesToForward ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "Vec3", "float &opIndex(uint)", asFUNCTION( objectVec3_Index ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "Vec3", "const float &opIndex(uint) const", asFUNCTION( objectVec3_Index ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 

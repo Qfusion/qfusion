@@ -195,6 +195,7 @@ static const gs_asEnumVal_t asEntityTypeEnumVals[] =
 	ASLIB_ENUM_VAL( ET_ITEM_TIMER ),
 	ASLIB_ENUM_VAL( ET_PARTICLES ),
 	ASLIB_ENUM_VAL( ET_SPAWN_INDICATOR ),
+	ASLIB_ENUM_VAL( ET_VIDEO_SPEAKER ),
 	ASLIB_ENUM_VAL( ET_RADAR ),
 	ASLIB_ENUM_VAL( ET_MONSTER_PLAYER ),
 	ASLIB_ENUM_VAL( ET_MONSTER_CORPSE ),
@@ -822,22 +823,23 @@ void objectTrace_CopyConstructor( astrace_t *other, astrace_t *self ) {
 }
 
 static bool objectTrace_doTrace4D( asvec3_t *start, asvec3_t *mins, asvec3_t *maxs, asvec3_t *end, int ignore, int contentMask, int timeDelta, astrace_t *self ) {
-	if( !start || !end ) { // should never happen unless the coder explicitly feeds null
-		gs.api.Printf( "* WARNING: gametype plug-in script attempted to call method 'trace.doTrace' with a null vector pointer\n* Tracing skept" );
-		return false;
-	}
-
 	gs.api.Trace( &self->trace, start->v, mins ? mins->v : vec3_origin, maxs ? maxs->v : vec3_origin, end->v, ignore, contentMask, 0 );
-
 	if( self->trace.startsolid || self->trace.allsolid ) {
 		return true;
 	}
-
 	return ( self->trace.ent != -1 ) ? true : false;
 }
 
 static bool objectTrace_doTrace( asvec3_t *start, asvec3_t *mins, asvec3_t *maxs, asvec3_t *end, int ignore, int contentMask, astrace_t *self ) {
 	return objectTrace_doTrace4D( start, mins, maxs, end, ignore, contentMask, 0, self );
+}
+
+static bool objectTrace_doTransformedTrace( asvec3_t *start, asvec3_t *mins, asvec3_t *maxs, asvec3_t *end, struct cmodel_s *cmodel, int contentMask, asvec3_t *origin, asvec3_t *angles, astrace_t *self ) {
+	gs.api.TransformedBoxTrace( &self->trace, start->v, end->v, mins->v, maxs->v, cmodel, contentMask, origin->v, angles->v );
+	if( self->trace.startsolid || self->trace.allsolid ) {
+		return true;
+	}
+	return ( self->trace.ent != -1 ) ? true : false;
 }
 
 static asvec3_t objectTrace_getEndPos( astrace_t *self ) {
@@ -847,11 +849,21 @@ static asvec3_t objectTrace_getEndPos( astrace_t *self ) {
 	return asvec;
 }
 
+static void objectTrace_setEndPos( asvec3_t *vec, astrace_t *self )
+{
+	VectorCopy( vec->v, self->trace.endpos );
+}
+
 static asvec3_t objectTrace_getPlaneNormal( astrace_t *self ) {
 	asvec3_t asvec;
 
 	VectorCopy( self->trace.plane.normal, asvec.v );
 	return asvec;
+}
+
+static void objectTrace_setPlaneNormal( asvec3_t *vec, astrace_t *self )
+{
+	VectorCopy( vec->v, self->trace.plane.normal );
 }
 
 static const gs_asFuncdef_t astrace_Funcdefs[] =
@@ -871,23 +883,26 @@ static const gs_asMethod_t astrace_Methods[] =
 {
 	{ ASLIB_FUNCTION_DECL( bool, doTrace, ( const Vec3 &in, const Vec3 &in, const Vec3 &in, const Vec3 &in, int ignore, int contentMask ) const ), asFUNCTION( objectTrace_doTrace ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( bool, doTrace4D, ( const Vec3 &in, const Vec3 &in, const Vec3 &in, const Vec3 &in, int ignore, int contentMask, int timeDelta ) const ), asFUNCTION( objectTrace_doTrace4D ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( bool, doTransformed, ( const Vec3 &in, const Vec3 &in, const Vec3 &in, const Vec3 &in, CModelHandle @, int contentMask, const Vec3 &in, const Vec3 &in ) const ), asFUNCTION( objectTrace_doTransformedTrace ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( Vec3, get_endPos, ( ) const ), asFUNCTION( objectTrace_getEndPos ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( void, set_endPos, ( const Vec3 &in ) ), asFUNCTION( objectTrace_setEndPos ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( Vec3, get_planeNormal, ( ) const ), asFUNCTION( objectTrace_getPlaneNormal ), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL( void, set_planeNormal, ( const Vec3 &in ) ), asFUNCTION( objectTrace_setPlaneNormal ), asCALL_CDECL_OBJLAST },
 
 	ASLIB_METHOD_NULL
 };
 
 static const gs_asProperty_t astrace_Properties[] =
 {
-	{ ASLIB_PROPERTY_DECL( const bool, allSolid ), ASLIB_FOFFSET( astrace_t, trace.allsolid ) },
-	{ ASLIB_PROPERTY_DECL( const bool, startSolid ), ASLIB_FOFFSET( astrace_t, trace.startsolid ) },
-	{ ASLIB_PROPERTY_DECL( const float, fraction ), ASLIB_FOFFSET( astrace_t, trace.fraction ) },
-	{ ASLIB_PROPERTY_DECL( const int, surfFlags ), ASLIB_FOFFSET( astrace_t, trace.surfFlags ) },
-	{ ASLIB_PROPERTY_DECL( const int, contents ), ASLIB_FOFFSET( astrace_t, trace.contents ) },
-	{ ASLIB_PROPERTY_DECL( const int, entNum ), ASLIB_FOFFSET( astrace_t, trace.ent ) },
-	{ ASLIB_PROPERTY_DECL( const float, planeDist ), ASLIB_FOFFSET( astrace_t, trace.plane.dist ) },
-	{ ASLIB_PROPERTY_DECL( const int16, planeType ), ASLIB_FOFFSET( astrace_t, trace.plane.type ) },
-	{ ASLIB_PROPERTY_DECL( const int16, planeSignBits ), ASLIB_FOFFSET( astrace_t, trace.plane.signbits ) },
+	{ ASLIB_PROPERTY_DECL( bool, allSolid ), ASLIB_FOFFSET( astrace_t, trace.allsolid ) },
+	{ ASLIB_PROPERTY_DECL( bool, startSolid ), ASLIB_FOFFSET( astrace_t, trace.startsolid ) },
+	{ ASLIB_PROPERTY_DECL( float, fraction ), ASLIB_FOFFSET( astrace_t, trace.fraction ) },
+	{ ASLIB_PROPERTY_DECL( int, surfFlags ), ASLIB_FOFFSET( astrace_t, trace.surfFlags ) },
+	{ ASLIB_PROPERTY_DECL( int, contents ), ASLIB_FOFFSET( astrace_t, trace.contents ) },
+	{ ASLIB_PROPERTY_DECL( int, entNum ), ASLIB_FOFFSET( astrace_t, trace.ent ) },
+	{ ASLIB_PROPERTY_DECL( float, planeDist ), ASLIB_FOFFSET( astrace_t, trace.plane.dist ) },
+	{ ASLIB_PROPERTY_DECL( int16, planeType ), ASLIB_FOFFSET( astrace_t, trace.plane.type ) },
+	{ ASLIB_PROPERTY_DECL( int16, planeSignBits ), ASLIB_FOFFSET( astrace_t, trace.plane.signbits ) },
 
 	ASLIB_PROPERTY_NULL
 };
@@ -1001,8 +1016,8 @@ static const gs_asProperty_t asitem_Properties[] =
 	{ ASLIB_PROPERTY_DECL( const int, tag ), ASLIB_FOFFSET( gsitem_t, tag ) },
 	{ ASLIB_PROPERTY_DECL( const uint, type ), ASLIB_FOFFSET( gsitem_t, type ) },
 	{ ASLIB_PROPERTY_DECL( const int, flags ), ASLIB_FOFFSET( gsitem_t, flags ) },
-	{ ASLIB_PROPERTY_DECL( const int, quantity ), ASLIB_FOFFSET( gsitem_t, quantity ) },
-	{ ASLIB_PROPERTY_DECL( const int, inventoryMax ), ASLIB_FOFFSET( gsitem_t, inventory_max ) },
+	{ ASLIB_PROPERTY_DECL( int, quantity ), ASLIB_FOFFSET( gsitem_t, quantity ) },
+	{ ASLIB_PROPERTY_DECL( int, inventoryMax ), ASLIB_FOFFSET( gsitem_t, inventory_max ) },
 	{ ASLIB_PROPERTY_DECL( const int, ammoTag ), ASLIB_FOFFSET( gsitem_t, ammo_tag ) },
 	{ ASLIB_PROPERTY_DECL( const int, weakAmmoTag ), ASLIB_FOFFSET( gsitem_t, weakammo_tag ) },
 	{ ASLIB_PROPERTY_DECL( const int, effects ), ASLIB_FOFFSET( gsitem_t, effects ) },
@@ -1774,72 +1789,6 @@ static const gs_asClassDescriptor_t asGameStateClassDescriptor =
 
 //=======================================================================
 
-// CLASS: FireDef
-
-static const gs_asFuncdef_t asFiredef_Funcdefs[] = {
-	ASLIB_FUNCDEF_NULL,
-};
-
-static const gs_asBehavior_t asFiredef_ObjectBehaviors[] = {
-	ASLIB_BEHAVIOR_NULL,
-};
-
-static const gs_asMethod_t asFiredef_Methods[] = {
-	ASLIB_METHOD_NULL,
-};
-
-static const gs_asProperty_t asFiredef_Properties[] = {
-	// ammo def
-	{ ASLIB_PROPERTY_DECL( int, fireMode ), ASLIB_FOFFSET( firedef_t, fire_mode ) },
-	{ ASLIB_PROPERTY_DECL( int, ammoID ), ASLIB_FOFFSET( firedef_t, ammo_id ) },
-	{ ASLIB_PROPERTY_DECL( int, usagCount ), ASLIB_FOFFSET( firedef_t, usage_count ) },
-	{ ASLIB_PROPERTY_DECL( int, projectileCount ), ASLIB_FOFFSET( firedef_t, projectile_count ) },
-
-	// timings
-	{ ASLIB_PROPERTY_DECL( uint, weaponupTime ), ASLIB_FOFFSET( firedef_t, weaponup_time ) },
-	{ ASLIB_PROPERTY_DECL( uint, weapondownTime ), ASLIB_FOFFSET( firedef_t, weapondown_time ) },
-	{ ASLIB_PROPERTY_DECL( uint, reloadTime ), ASLIB_FOFFSET( firedef_t, reload_time ) },
-	{ ASLIB_PROPERTY_DECL( uint, cooldownTime ), ASLIB_FOFFSET( firedef_t, cooldown_time ) },
-	{ ASLIB_PROPERTY_DECL( uint, timeout ), ASLIB_FOFFSET( firedef_t, timeout ) },
-	{ ASLIB_PROPERTY_DECL( bool, smoothRefire ), ASLIB_FOFFSET( firedef_t, smooth_refire ) },
-
-	// damages
-	{ ASLIB_PROPERTY_DECL( float, damage ), ASLIB_FOFFSET( firedef_t, damage ) },
-	{ ASLIB_PROPERTY_DECL( float, selfDamage ), ASLIB_FOFFSET( firedef_t, selfdamage ) },
-	{ ASLIB_PROPERTY_DECL( int, knockback ), ASLIB_FOFFSET( firedef_t, knockback ) },
-	{ ASLIB_PROPERTY_DECL( int, stun ), ASLIB_FOFFSET( firedef_t, stun ) },
-	{ ASLIB_PROPERTY_DECL( int, splashRadius ), ASLIB_FOFFSET( firedef_t, splash_radius ) },
-	{ ASLIB_PROPERTY_DECL( int, minDamage ), ASLIB_FOFFSET( firedef_t, mindamage ) },
-	{ ASLIB_PROPERTY_DECL( int, minKnockback ), ASLIB_FOFFSET( firedef_t, minknockback ) },
-
-	// projectile def
-	{ ASLIB_PROPERTY_DECL( int, speed ), ASLIB_FOFFSET( firedef_t, speed ) },
-	{ ASLIB_PROPERTY_DECL( int, spread ), ASLIB_FOFFSET( firedef_t, spread ) },
-	{ ASLIB_PROPERTY_DECL( int, vspread ), ASLIB_FOFFSET( firedef_t, v_spread ) },
-
-	// ammo amounts
-	{ ASLIB_PROPERTY_DECL( int, weaponPickup ), ASLIB_FOFFSET( firedef_t, weapon_pickup ) },
-	{ ASLIB_PROPERTY_DECL( int, ammoPickup ), ASLIB_FOFFSET( firedef_t, ammo_pickup ) },
-	{ ASLIB_PROPERTY_DECL( int, ammoMax ), ASLIB_FOFFSET( firedef_t, ammo_max ) },
-	{ ASLIB_PROPERTY_DECL( int, ammoLow ), ASLIB_FOFFSET( firedef_t, ammo_low ) },
-
-	ASLIB_PROPERTY_NULL,
-};
-
-static const gs_asClassDescriptor_t asFiredefClassDescriptor = {
-	"Firedef",				     /* name */
-	asOBJ_REF | asOBJ_NOCOUNT,	 /* object type flags */
-	sizeof( firedef_t ),		 /* size */
-	asFiredef_Funcdefs,			 /* funcdefs */
-	asFiredef_ObjectBehaviors,   /* object behaviors */
-	asFiredef_Methods,		     /* methods */
-	asFiredef_Properties,	     /* properties */
-
-	NULL, NULL /* string factory hack */
-};
-
-//=======================================================================
-
 static const gs_asClassDescriptor_t asCModelHandleClassDescriptor = {
 	"CModelHandle",								   /* name */
 	asOBJ_REF | asOBJ_NOCOUNT, /* object type flags */
@@ -1863,7 +1812,6 @@ static const gs_asClassDescriptor_t * const asGameClassesDescriptors[] =
 	&asPlayerStateClassDescriptor,
 	&asPMoveClassDescriptor,
 	&asGameStateClassDescriptor,
-	&asFiredefClassDescriptor,
 	&asCModelHandleClassDescriptor,
 
 	NULL
@@ -1885,6 +1833,11 @@ static int GS_asPointContents( asvec3_t *vec ) {
 
 static int GS_asPointContents4D( asvec3_t *vec, int timeDelta ) {
 	return gs.api.PointContents( vec->v, timeDelta );
+}
+
+static int GS_asTransformedPointContents( asvec3_t *vec, struct cmodel_s *cmodel, asvec3_t *origin, asvec3_t *angles )
+{
+	return gs.api.TransformedPointContents( vec->v, cmodel, origin->v, angles->v );
 }
 
 static void GS_asPredictedEvent( int entityNumber, int event, int param ) {
@@ -1965,15 +1918,28 @@ static void GS_asInlineModelBounds( struct cmodel_s *model, asvec3_t *mins, asve
 	return gs.api.InlineModelBounds( model, mins->v, maxs->v );
 }
 
+static struct cmodel_s *GS_asOctagonModelForBounds( asvec3_t *mins, asvec3_t *maxs )
+{
+	return gs.api.OctagonModelForBounds( mins->v, maxs->v );
+}
+
+static struct cmodel_s *GS_asModelForBounds( asvec3_t *mins, asvec3_t *maxs )
+{
+	return gs.api.ModelForBounds( mins->v, maxs->v );
+}
+
 static const gs_asglobfuncs_t asGameGlobalFunctions[] = {
 	{ "void Print( const String &in )", asFUNCTION( GS_asPrint ), NULL },
 	{ "void Error( const String &in )", asFUNCTION( GS_asError ), NULL },
 
 	{ "int PointContents( const Vec3 &in )", asFUNCTION( GS_asPointContents ), NULL },
 	{ "int PointContents4D( const Vec3 &in, int timeDelta )", asFUNCTION( GS_asPointContents4D ), NULL },
+	{ "int TransformedPointContents( const Vec3 &in v, CModelHandle @, const Vec3 &in origin, const Vec3 &in angles )", asFUNCTION( GS_asTransformedPointContents ), NULL },
+
 	{ "void PredictedEvent( int entityNumber, int event, int param )", asFUNCTION( GS_asPredictedEvent ), NULL },
 	{ "void RoundUpToHullSize( const Vec3 &in inmins, const Vec3 &in inmaxs, Vec3 &out mins, Vec3 &out maxs )", asFUNCTION( GS_asRoundUpToHullSize ), NULL },
 	{ "Vec3 ClipVelocity( const Vec3 &in, const Vec3 &in, float overbounce )", asFUNCTION( GS_asClipVelocity ), NULL },
+	{ "void TouchPushTrigger( PlayerState @ps, EntityState @es )", asFUNCTION( GS_TouchPushTrigger ), NULL },
 
 	{ "void GetPlayerStandSize( Vec3 & out, Vec3 & out )", asFUNCTION( GS_asGetPlayerStandSize ), NULL },
 	{ "void GetPlayerCrouchSize( Vec3 & out, Vec3 & out )", asFUNCTION( GS_asGetPlayerCrouchSize ), NULL },
@@ -1984,7 +1950,6 @@ static const gs_asglobfuncs_t asGameGlobalFunctions[] = {
 	{ "float GetPlayerGibHeight()", asFUNCTION( GS_asGetPlayerGibViewHeight ), NULL },
 
 	{ "EntityState @GetEntityState( int number, int deltaTime = 0 )", asFUNCTION( GS_asGetEntityState ), NULL },
-	{ "const Firedef @FiredefForPlayerState( const PlayerState @state, int checkWeapon )", asFUNCTION( GS_FiredefForPlayerState ), NULL },
 	
 	{ "int DirToByte( const Vec3 &in )", asFUNCTION( GS_asDirToByte ), NULL },
 	{ "Vec3 ByteToDir( const int b )", asFUNCTION( GS_asByteToDir ), NULL },
@@ -1994,6 +1959,8 @@ static const gs_asglobfuncs_t asGameGlobalFunctions[] = {
 
 	{ "CModelHandle @InlineModel( int modNum )", asFUNCTION( GS_asInlineModel ), NULL },
 	{ "void InlineModelBounds( CModelHandle @handle, Vec3 & out, Vec3 & out )", asFUNCTION( GS_asInlineModelBounds ), NULL },
+	{ "CModelHandle @OctagonModelForBounds( Vec3 & in, Vec3 & in )", asFUNCTION( GS_asOctagonModelForBounds ), NULL },
+	{ "CModelHandle @ModelForBounds( Vec3 & in, Vec3 & in )", asFUNCTION( GS_asModelForBounds ), NULL },
 
 	{ "Item @FindItemByTag( int tag )", asFUNCTION( GS_FindItemByTag ), NULL },
 	{ "Item @FindItemByName( const String &in )", asFUNCTION( GS_FindItemByName ), NULL },
@@ -2053,8 +2020,11 @@ static int asMAX_GENERAL = MAX_GENERAL;
 static int asMAX_MMPLAYERINFOS = MAX_MMPLAYERINFOS;
 static int asMAX_CONFIGSTRINGS = MAX_CONFIGSTRINGS;
 static int asMAX_TEAMS = GS_MAX_TEAMS;
+static int asMAX_SNAPSHOT_ENTITIES = MAX_SNAPSHOT_ENTITIES;
+static int asCMD_BACKUP = CMD_BACKUP;
+static int asCMD_MASK = CMD_MASK;
 
-static float asPREDICTABLE_EVENTS_MAX = PREDICTABLE_EVENTS_MAX;
+static int asPREDICTABLE_EVENTS_MAX = PREDICTABLE_EVENTS_MAX;
 
 static const gs_asglobproperties_t asGameGlobalConstants[] = {
 	{ "const int PS_MAX_STATS", &asPS_MAX_STATS },
@@ -2081,6 +2051,9 @@ static const gs_asglobproperties_t asGameGlobalConstants[] = {
 	{ "const int MAX_CONFIGSTRINGS", &asMAX_CONFIGSTRINGS },
 	{ "const int MAX_TEAMS", &asMAX_TEAMS },
 	{ "const int PREDICTABLE_EVENTS_MAX", &asPREDICTABLE_EVENTS_MAX },
+	{ "const int MAX_SNAPSHOT_ENTITIES", &asMAX_SNAPSHOT_ENTITIES },
+	{ "const int CMD_BACKUP", &asCMD_BACKUP },
+	{ "const int CMD_MASK", &asCMD_MASK },
 
 	{ NULL },
 };

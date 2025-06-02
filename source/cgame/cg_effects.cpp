@@ -421,7 +421,7 @@ void CG_ClearFragmentedDecals( void ) {
 /*
 * CG_AddFragmentedDecal
 */
-void CG_AddFragmentedDecal( vec3_t origin, vec3_t dir, float orient, float radius,
+void CG_AddFragmentedDecal( const vec3_t origin, const vec3_t dir, float orient, float radius,
 							float r, float g, float b, float a, struct shader_s *shader ) {
 	int i, j, c;
 	vec3_t axis[3];

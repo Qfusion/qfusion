@@ -37,20 +37,7 @@ void CG_PredictedEvent( int entNum, int ev, int parm )
 	if( ev >= PREDICTABLE_EVENTS_MAX ) {
 		return;
 	}
-
-	// ignore this action if it has already been predicted (the unclosed ucmd has timestamp zero)
-	if( ucmdReady && ( cg.predictingTimeStamp > cg.predictedEventTimes[ev] ) ) {
-		// inhibit the fire event when there is a weapon change predicted
-		if( ev == EV_FIREWEAPON ) {
-			if( cg.predictedWeaponSwitch &&
-				( cg.predictedWeaponSwitch != cg.predictedPlayerState.stats[STAT_PENDING_WEAPON] ) ) {
-				return;
-			}
-		}
-
-		cg.predictedEventTimes[ev] = cg.predictingTimeStamp;
-		CG_EntityEvent( &cg_entities[entNum].current, ev, parm, true );
-	}
+	CG_asPredictedEvent( entNum, ev, parm );
 }
 
 /*
@@ -162,38 +149,7 @@ void CG_AddEntityToTriggerList( int number )
  */
 void CG_BuildSolidList( void )
 {
-	int				i;
-	entity_state_t *ent;
-
-	for( i = 0; i < cg.frame.numEntities; i++ ) {
-		ent = &cg.frame.entities[i];
-
-		switch( ent->type ) {
-			// the following entities can never be solid
-			case ET_BEAM:
-			case ET_PORTALSURFACE:
-			case ET_BLASTER:
-			case ET_ELECTRO_WEAK:
-			case ET_ROCKET:
-			case ET_GRENADE:
-			case ET_PLASMA:
-			case ET_LASERBEAM:
-			case ET_CURVELASERBEAM:
-			case ET_MINIMAP_ICON:
-			case ET_DECAL:
-			case ET_ITEM_TIMER:
-			case ET_PARTICLES:
-				break;
-
-			case ET_PUSH_TRIGGER:
-				CG_AddEntityToTriggerList( ent->number );
-				break;
-
-			default:
-				CG_AddEntityToSolidList( ent->number );
-				break;
-		}
-	}
+	CG_asBuildSolidList();
 }
 
 /*
@@ -510,18 +466,10 @@ void CG_PredictMovement( void )
 		// copy for stair smoothing
 		predictedSteps[frame] = pm.step;
 
-		if( ucmdReady ) { // hmm fixme: the wip command may not be run enough time to get proper key presses
-			if( ucmdExecuted >= ucmdHead - 1 ) {
-				GS_AddLaserbeamPoint( &cg.weaklaserTrail, &cg.predictedPlayerState, ucmd.serverTimeStamp );
-			}
-
-			cg_entities[cg.predictedPlayerState.POVnum].current.weapon =
-				GS_ThinkPlayerWeapon( &cg.predictedPlayerState, ucmd.buttons, ucmd.msec, 0 );
-		}
+		CG_asRunUcmd( &pm, &ucmd, ucmdHead, ucmdExecuted );
 
 		// save for debug checking
-		VectorCopy(
-			cg.predictedPlayerState.pmove.origin, cg.predictedOrigins[frame] ); // store for prediction error checks
+		VectorCopy(cg.predictedPlayerState.pmove.origin, cg.predictedOrigins[frame] ); // store for prediction error checks
 
 		// backup the last predicted ucmd which has a timestamp (it's closed)
 		if( ucmdExecuted == ucmdHead - 1 ) {
@@ -534,22 +482,6 @@ void CG_PredictMovement( void )
 	}
 
 	cg.predictedGroundEntity = pm.groundentity;
-
-	// compensate for ground entity movement
-	if( pm.groundentity != -1 ) {
-		entity_state_t *ent = &cg_entities[pm.groundentity].current;
-
-		if( ent->solid == SOLID_BMODEL ) {
-			if( ent->linearMovement ) {
-				vec3_t	move;
-				int64_t serverTime;
-
-				serverTime = GS_MatchPaused() ? cg.frame.serverTime : cg.time + cgs.extrapolationTime;
-				GS_LinearMovementDelta( ent, cg.frame.serverTime, serverTime, move );
-				VectorAdd( cg.predictedPlayerState.pmove.origin, move, cg.predictedPlayerState.pmove.origin );
-			}
-		}
-	}
 
 	CG_PredictSmoothSteps();
 }

@@ -29,6 +29,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 extern "C" {
 #endif
 
+struct cmodel_s;
+
 typedef struct {
 #ifndef _MSC_VER
 	void ( *Printf )( const char *format, ... ) __attribute__( ( format( printf, 1, 2 ) ) );
@@ -41,6 +43,9 @@ typedef struct {
 	void *( *Malloc )( size_t size );
 	void ( *Free )( void *data );
 	void ( *Trace )( trace_t *t, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int ignore, int contentmask, int timeDelta );
+	void ( *TransformedBoxTrace )( trace_t *tr, vec3_t start, vec3_t end, vec3_t mins, vec3_t maxs,
+		struct cmodel_s *cmodel, int brushmask, vec3_t origin, vec3_t angles );
+	int ( *TransformedPointContents )( vec3_t p, struct cmodel_s *cmodel, vec3_t origin, vec3_t angles );
 	entity_state_t *( *GetEntityState )( int entNum, int deltaTime );
 	int ( *PointContents )( vec3_t point, int timeDelta );
 	void ( *PredictedEvent )( int entNum, int ev, int parm );
@@ -51,6 +56,8 @@ typedef struct {
 	int ( *NumInlineModels )( void );
 	struct cmodel_s *( *InlineModel )( int num );
 	void ( *InlineModelBounds )( struct cmodel_s *model, vec3_t mins, vec3_t maxs );
+	struct cmodel_s *( *OctagonModelForBounds )( vec3_t mins, vec3_t maxs );
+	struct cmodel_s *( *ModelForBounds )( vec3_t mins, vec3_t maxs );
 } gs_module_api_t;
 
 extern gs_module_api_t gs_api;

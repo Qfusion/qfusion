@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "addon/addon_string.h"
 #include "addon/addon_dictionary.h"
 #include "addon/addon_time.h"
+#include "addon/addon_rand.h"
 #include "addon/addon_any.h"
 #include "addon/addon_vec2.h"
 #include "addon/addon_vec3.h"
@@ -421,6 +422,7 @@ asIScriptEngine *qasCreateEngine( bool *asMaxPortability ) {
 	PreRegisterMathAddon( engine );
 	PreRegisterStringAddon( engine );
 	PreRegisterTimeAddon( engine );
+	PreRegisterRandAddon( engine );
 	PreRegisterVec2Addon( engine );
 	PreRegisterVec3Addon( engine );
 	PreRegisterVec4Addon( engine );
@@ -435,6 +437,7 @@ asIScriptEngine *qasCreateEngine( bool *asMaxPortability ) {
 	RegisterMathAddon( engine );
 	RegisterStringAddon( engine );
 	RegisterTimeAddon( engine );
+	RegisterRandAddon( engine );
 	RegisterVec2Addon( engine );
 	RegisterVec3Addon( engine );
 	RegisterVec4Addon( engine );

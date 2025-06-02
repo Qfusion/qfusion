@@ -190,6 +190,7 @@ void RegisterMathAddon( asIScriptEngine *engine ) {
 		{ "float anglemod( float a )", asFUNCTION( anglemod ) },
 		{ "float LerpAngle( float v1, float v2, float lerp )", asFUNCTION( LerpAngle ) },
 		{ "Vec3 LerpAngles( const Vec3 &in a1, const Vec3 &in a2, float f )", asFUNCTION( asFunc_LerpAngles ) },
+		{ "float GetNoise( float x, float y, float z, float t )", asFUNCTION( Q_GetNoiseValue ) },
 
 		{ NULL, asFUNCTION( 0 ) }
 	}, *func;
