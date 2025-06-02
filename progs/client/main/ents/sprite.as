@@ -19,7 +19,7 @@ void AddSpriteEnt( CEntity @cent ) {
 	cent.refEnt.renderfx = cent.renderfx;
 
 	// add to refresh list
-	CGame::Scene::AddEntityToScene( @cent.refEnt );
+	Scene::AddEntityToScene( @cent.refEnt );
 
 	if( cent.current.modelindex2 != 0 )
 		AddLinkedModel( @cent );

@@ -50,10 +50,10 @@ void AddHeadIcon( CEntity @cent ) {
 	CGame::Scene::Entity balloon;
 	balloon.renderfx = RF_NOSHADOW;
 
-	if( CGame::Scene::GrabTag( tag_head, @cent.refEnt, "tag_head" ) ) {
+	if( Scene::GrabTag( tag_head, @cent.refEnt, "tag_head" ) ) {
 		balloon.origin = tag_head.origin;
 		balloon.origin.z += upoffset;
-		CGame::Scene::PlaceModelOnTag( @balloon, @cent.refEnt, tag_head );
+		Scene::PlaceModelOnTag( @balloon, @cent.refEnt, tag_head );
 	} else {
 		balloon.origin = cent.refEnt.origin;
 		balloon.origin.z += playerboxStandMins.z + upoffset;
@@ -65,7 +65,7 @@ void AddHeadIcon( CEntity @cent ) {
 		@balloon.customShader = @iconShader;
 		balloon.radius = radius;
 		@balloon.model = null;
-		CGame::Scene::AddEntityToScene( @balloon );
+		Scene::AddEntityToScene( @balloon );
 	}
 
 	// add stun effect: not really a head icon, but there's no point in finding the head location twice
@@ -79,7 +79,7 @@ void AddHeadIcon( CEntity @cent ) {
 			balloon.shaderRGBA = COLOR_REPLACEA( balloon.shaderRGBA, uint8( 255.0f * ( 1.0f - cg.lerpfrac ) ) );
 		}
 
-		CGame::Scene::AddEntityToScene( @balloon );
+		Scene::AddEntityToScene( @balloon );
 	}
 }
 
@@ -100,7 +100,7 @@ void UpdatePlayerModelEnt( CEntity @cent ) {
 
     cent.refEnt.shaderRGBA = ColorForEntity( @cent, true );
 
-	if( cg_raceGhosts.boolean && !CGame::IsViewerEntity( cent.current.number ) && GS::RaceGametype() ) {
+	if( cg_raceGhosts.boolean && !IsViewerEntity( cent.current.number ) && GS::RaceGametype() ) {
 		cent.effects &= ~EF_OUTLINE;
 		cent.effects |= EF_RACEGHOST;
 	} else {
@@ -114,9 +114,9 @@ void UpdatePlayerModelEnt( CEntity @cent ) {
 	}
 
 	// make sure al poses have their memory space
-	@cent.skel = CGame::SkeletonForModel( @pmodel.pmodelinfo.model );
+	@cent.skel = SkeletonForModel( @pmodel.pmodelinfo.model );
 	if( @cent.skel is null ) {
-		CGame::Error( "UpdatePlayerModelEnt: ET_PLAYER without a skeleton\n" );
+		Error( "UpdatePlayerModelEnt: ET_PLAYER without a skeleton\n" );
 	}
 
 	// update parts rotation angles
@@ -128,7 +128,7 @@ void UpdatePlayerModelEnt( CEntity @cent ) {
 		cent.yawVelocity = 0;
 	} else {
 		// update smoothed velocities used for animations and leaning angles
-        int serverFrame = CGame::Snap.serverFrame;
+        int serverFrame = Snap.serverFrame;
 
 		// rotational yaw velocity
 		float adelta = AngleDelta( cent.current.angles[YAW], cent.prev.angles[YAW] );
@@ -199,8 +199,8 @@ void UpdatePlayerModelEnt( CEntity @cent ) {
 }
 
 void AddPlayerEnt( CEntity @cent ) {
-    auto @cam = @CGame::Camera::GetMainCamera();
-    bool isViewer = CGame::IsViewerEntity( cent.current.number );
+    auto @cam = @Camera::GetMainCamera();
+    bool isViewer = IsViewerEntity( cent.current.number );
 	bool isCorpse = cent.current.type == ET_CORPSE || cent.current.type == ET_MONSTER_CORPSE;
 
 	cent.UpdatePModelAnimations();
@@ -224,8 +224,8 @@ void AddPlayerEnt( CEntity @cent ) {
 		if( cam.playerPrediction ) {
 			float backlerp = 1.0f - cg.lerpfrac;
 
-            org = CGame::PredictedPlayerState.pmove.origin - backlerp * CGame::PredictionError();
-			org = CGame::Camera::SmoothPredictedSteps( org );
+            org = PredictedPlayerState.pmove.origin - backlerp * PredictionError();
+			org = Camera::SmoothPredictedSteps( org );
 		}
 
 		cg.effects = cent.effects;
@@ -259,21 +259,21 @@ void AddPlayerEnt( CEntity @cent ) {
 
 	// register temp boneposes for this skeleton
 	if( @cent.skel is null ) {
-		CGame::Error( "CG_PlayerModelEntityAddToScene: ET_PLAYER without a skeleton" );
+		Error( "CG_PlayerModelEntityAddToScene: ET_PLAYER without a skeleton" );
 	}
 
-	@cent.refEnt.boneposes = CGame::Scene::RegisterTemporaryExternalBoneposes( @cent.skel );
+	@cent.refEnt.boneposes = Scene::RegisterTemporaryExternalBoneposes( @cent.skel );
 	@cent.refEnt.oldBoneposes = @cent.refEnt.boneposes;
 
 	// fill base pose with lower animation already interpolated
-	CGame::Scene::LerpSkeletonPoses( @cent.skel, animState.frame[GS::Anim::LOWER], animState.oldframe[GS::Anim::LOWER], cent.refEnt.boneposes, animState.lerpFrac[GS::Anim::LOWER] );
+	Scene::LerpSkeletonPoses( @cent.skel, animState.frame[GS::Anim::LOWER], animState.oldframe[GS::Anim::LOWER], cent.refEnt.boneposes, animState.lerpFrac[GS::Anim::LOWER] );
 
 	// create an interpolated pose of the animation to be blent
-	CGame::Scene::LerpSkeletonPoses( @cent.skel, animState.frame[GS::Anim::UPPER], animState.oldframe[GS::Anim::UPPER], cg.tempBoneposes, animState.lerpFrac[GS::Anim::UPPER] );
+	Scene::LerpSkeletonPoses( @cent.skel, animState.frame[GS::Anim::UPPER], animState.oldframe[GS::Anim::UPPER], cg.tempBoneposes, animState.lerpFrac[GS::Anim::UPPER] );
 
 	// blend it into base pose
 	int rootanim = pmodel.pmodelinfo.rootAnims[GS::Anim::UPPER];
-	CGame::Scene::RecurseBlendSkeletalBone( @cent.skel, @cg.tempBoneposes, @cent.refEnt.boneposes, rootanim, 1.0f );
+	Scene::RecurseBlendSkeletalBone( @cent.skel, @cg.tempBoneposes, @cent.refEnt.boneposes, rootanim, 1.0f );
 
 	// add skeleton effects (pose is unmounted yet)
 	if( !isCorpse ) {
@@ -281,7 +281,7 @@ void AddPlayerEnt( CEntity @cent ) {
 
 		// if it's our client use the predicted angles
 		if( isViewer && cam.playerPrediction && ( uint( cam.POVent ) == cgs.playerNum + 1 ) ) {
-           tmpangles = Vec3( 0.0f, CGame::PredictedPlayerState.viewAngles[YAW], 0.0f );
+           tmpangles = Vec3( 0.0f, PredictedPlayerState.viewAngles[YAW], 0.0f );
 		} else {
 			// apply interpolated LOWER angles to entity
             for( int j = 0; j < 3; j++ )
@@ -304,12 +304,12 @@ void AddPlayerEnt( CEntity @cent ) {
 				tmpangles[j] = LerpAngle( pmodel.oldangles[part][j], pmodel.angles[part][j], cg.lerpfrac );
 			}
 
-			CGame::Scene::RotateBonePoses( tmpangles, @cent.refEnt.boneposes, @pmodel.pmodelinfo.rotators[part] );
+			Scene::RotateBonePoses( tmpangles, @cent.refEnt.boneposes, @pmodel.pmodelinfo.rotators[part] );
 		}
 	}
 
 	// finish (mount) pose. Now it's the final skeleton just as it's drawn.
-	CGame::Scene::TransformBoneposes( @cent.skel, cent.refEnt.boneposes, cent.refEnt.boneposes );
+	Scene::TransformBoneposes( @cent.skel, cent.refEnt.boneposes, cent.refEnt.boneposes );
 
 	// Vic: Hack in frame numbers to aid frustum culling
 	cent.refEnt.backLerp = 1.0 - cg.lerpfrac;
@@ -334,7 +334,7 @@ void AddPlayerEnt( CEntity @cent ) {
 	}
 
 	if( ( cent.effects & EF_RACEGHOST ) == 0 ) {
-		CGame::Scene::AddEntityToScene( @cent.refEnt );
+		Scene::AddEntityToScene( @cent.refEnt );
 	}
 
 	if( @cent.refEnt.model is null ) {
@@ -352,7 +352,7 @@ void AddPlayerEnt( CEntity @cent ) {
 
 	// add weapon model
 	CGame::Scene::Orientation tag_weapon;
-	if( cent.current.weapon != 0 && CGame::Scene::GrabTag( tag_weapon, @cent.refEnt, "tag_weapon" ) ) {
+	if( cent.current.weapon != 0 && Scene::GrabTag( tag_weapon, @cent.refEnt, "tag_weapon" ) ) {
 		pmodel.projectionSource = AddWeaponOnTag( @cent.refEnt, tag_weapon, cent.current.weapon, 
 			cent.effects, pmodel.flashTime, pmodel.barrelTime, -1 );
 	}

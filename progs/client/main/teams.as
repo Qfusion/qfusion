@@ -2,7 +2,7 @@ namespace CGame {
 
 int ForceTeam( int team ) {
 	if( cg_forceMyTeamAlpha.boolean ) {
-		int myteam = CGame::PredictedPlayerState.stats[STAT_TEAM];
+		int myteam = PredictedPlayerState.stats[STAT_TEAM];
 		if( myteam == TEAM_BETA ) {
 			if( team == TEAM_ALPHA ) {
 				return TEAM_BETA;
@@ -44,13 +44,13 @@ void RegisterForceModel( Cvar &in teamForceModel, Cvar &in teamForceModelToggle,
 		// if it failed, it will be NULL, so also disabled
 		if( @pmodelinfo.model !is null ) {
 			// when we register a new model, we must re-register the skin, even if the cvar is not modified
-			if( !cgs.pure || CGame::IsPureFile( StringUtils::Format( "models/players/%s/%s.skin", forceModelName, forceModelSkin ) ) ) {
-				@skin = CGame::RegisterSkin( StringUtils::Format( "models/players/%s/%s", forceModelName, forceModelSkin ) );
+			if( !cgs.pure || IsPureFile( StringUtils::Format( "models/players/%s/%s.skin", forceModelName, forceModelSkin ) ) ) {
+				@skin = RegisterSkin( StringUtils::Format( "models/players/%s/%s", forceModelName, forceModelSkin ) );
 			}
 
 			// if the skin failed, we can still try with default value (so only setting model cvar has a visible effect)
 			if( @skin is null ) {
-				@skin = CGame::RegisterSkin( StringUtils::Format( "models/players/%s/%s", forceModelName, teamForceSkin.defaultString ) );
+				@skin = RegisterSkin( StringUtils::Format( "models/players/%s/%s", forceModelName, teamForceSkin.defaultString ) );
 			}
 		}
 

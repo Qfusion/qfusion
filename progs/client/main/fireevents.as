@@ -28,7 +28,7 @@ void BulletImpact(const Trace &in tr) {
     }
 
     // spawn decal
-    CGame::Scene::SpawnDecal(tr.endPos, tr.planeNormal, float(random() * 360.0),  
+    Scene::SpawnDecal(tr.endPos, tr.planeNormal, float(random() * 360.0),  
        8, 1, 1, 1, 1, 8, 1, false,
        cgs.media.shaderBulletMark);
 }
@@ -90,7 +90,7 @@ void Event_FireMachinegun(const Vec3 &in origin, const Vec3 &in fv, const Vec3 &
             } else {
                 ImpactPuffParticles(tr.endPos, tr.planeNormal, 1, 0.7, 1, 0.7, 0.0, 1.0);
 
-                CGame::Sound::StartFixedSound(
+                Sound::StartFixedSound(
                     @cgs.media.sfxRic[rand() % 2],
                     tr.endPos,
                     CHAN_AUTO,
@@ -157,11 +157,11 @@ void Event_FireRiotgun(const Vec3 &in origin, const Vec3 &in fv, const Vec3 &in 
 
     if (tr.entNum != -1 && (tr.surfFlags & SURF_NOIMPACT) == 0) {
         if (fireDef.fireMode == FIRE_MODE_STRONG) {
-            CGame::Sound::StartFixedSound(@cgs.media.sfxRiotgunStrongHit, tr.endPos, CHAN_AUTO,
+            Sound::StartFixedSound(@cgs.media.sfxRiotgunStrongHit, tr.endPos, CHAN_AUTO,
                 cg_volume_effects.value, ATTN_IDLE
             );
         } else {
-            CGame::Sound::StartFixedSound(@cgs.media.sfxRiotgunWeakHit, tr.endPos, CHAN_AUTO,
+            Sound::StartFixedSound(@cgs.media.sfxRiotgunWeakHit, tr.endPos, CHAN_AUTO,
                 cg_volume_effects.value, ATTN_IDLE
             );
         }
@@ -173,7 +173,7 @@ void Event_WeaponBeam(const Vec3 &in origin, const Vec3 &in dir, int ownerNum, i
     int range;
     Vec3 end;
     Trace tr;
-	int POVent = CGame::Camera::GetMainCamera().POVent;
+	int POVent = Camera::GetMainCamera().POVent;
 
     switch (weapon) {
         case WEAP_ELECTROBOLT:
@@ -223,20 +223,20 @@ void Event_LaserBeam(int entNum, int weapon, int fireMode) {
         timeout = GS::Weapons::getWeaponDef(WEAP_LASERGUN).fireDef.reloadTime + 10;
 
         // find destiny point
-        cent.laserOrigin = CGame::PredictedPlayerState.pmove.origin;
-        cent.laserOrigin.z += CGame::PredictedPlayerState.viewHeight;
-		CGame::PredictedPlayerState.viewAngles.angleVectors(f, r, u);
+        cent.laserOrigin = PredictedPlayerState.pmove.origin;
+        cent.laserOrigin.z += PredictedPlayerState.viewHeight;
+		PredictedPlayerState.viewAngles.angleVectors(f, r, u);
         cent.laserPoint = cent.laserOrigin + f * double(GS::Weapons::getWeaponDef(WEAP_LASERGUN).fireDef.timeout);
     } else {
         cent.laserCurved = true;
         timeout = GS::Weapons::getWeaponDef(WEAP_LASERGUN).fireDefWeak.reloadTime + 10;
 
         // find destiny point
-        cent.laserOrigin = CGame::PredictedPlayerState.pmove.origin;
-        cent.laserOrigin.z += CGame::PredictedPlayerState.viewHeight;
+        cent.laserOrigin = PredictedPlayerState.pmove.origin;
+        cent.laserOrigin.z += PredictedPlayerState.viewHeight;
 
         if (!GS::Weapons::GetLaserbeamPoint(@cg.weaklaserTrail, cg.predictingTimeStamp, cent.laserPoint)) {
-			f = CGame::PredictedPlayerState.viewAngles.anglesToForward();
+			f = PredictedPlayerState.viewAngles.anglesToForward();
             cent.laserPoint = cent.laserOrigin + f * double(GS::Weapons::getWeaponDef(WEAP_LASERGUN).fireDef.timeout);
         }
     }

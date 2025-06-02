@@ -19,7 +19,7 @@ void AddRaceGhostShell( CGame::Scene::Entity @ent ) {
 	Vec4 c = ColorToVec4( shell.shaderRGBA );
 	shell.shaderRGBA = Vec4ToColor( Vec4( c[0]*alpha, c[1]*alpha, c[2]*alpha, alpha ) );
 
-	CGame::Scene::AddEntityToScene( @shell );
+	Scene::AddEntityToScene( @shell );
 }
 
 void AddShellEffects( CGame::Scene::Entity @ent, int effects ) {
@@ -64,7 +64,7 @@ void SplashParticles( const Vec3 &in org, const Vec3 &in dir, float r, float g, 
 	ef.velRand.set( -20.0f, 20.0f );
 	ef.accel[2] = -PARTICLE_GRAVITY;
 
-	CGame::Scene::SpawnParticleEffect( @ef, org, dir, count );
+	Scene::SpawnParticleEffect( @ef, org, dir, count );
 }
 
 void SplashParticles2( const Vec3 &in org, const Vec3 &in dir, float r, float g, float b, int count )
@@ -78,7 +78,7 @@ void SplashParticles2( const Vec3 &in org, const Vec3 &in dir, float r, float g,
 	ef.velRand.set( -20.0f, 20.0f );
 	ef.accel[2] = -PARTICLE_GRAVITY;
 
-	CGame::Scene::SpawnParticleEffect( @ef, org, dir, count );
+	Scene::SpawnParticleEffect( @ef, org, dir, count );
 }
 
 void ParticleExplosionEffect( const Vec3 &in org, const Vec3 &in dir, float r, float g, float b, int count ) {
@@ -92,7 +92,7 @@ void ParticleExplosionEffect( const Vec3 &in org, const Vec3 &in dir, float r, f
 	ef.velRand.set( -400.0f, 400.0f );
 	ef.accel[2] = -PARTICLE_GRAVITY;
 
-	CGame::Scene::SpawnParticleEffect( @ef, org, dir, count );
+	Scene::SpawnParticleEffect( @ef, org, dir, count );
 }
 
 void BlasterTrail( const Vec3 &in start, const Vec3 &in end ) {
@@ -110,7 +110,7 @@ void BlasterTrail( const Vec3 &in start, const Vec3 &in end ) {
 	ef.velRand.set( -5.0f, 5.0f );
 	ef.orgSpread = move;
 
-	CGame::Scene::SpawnParticleEffect( @ef, start, vec3Origin, int( len / dec ) + 1 );
+	Scene::SpawnParticleEffect( @ef, start, vec3Origin, int( len / dec ) + 1 );
 }
 
 void ElectroWeakTrail( const Vec3 &in start, const Vec3 &in end ) {
@@ -128,7 +128,7 @@ void ElectroWeakTrail( const Vec3 &in start, const Vec3 &in end ) {
 	ef.velRand.set( -2.0f, 2.0f );
 	ef.orgSpread = move;
 
-	CGame::Scene::SpawnParticleEffect( @ef, start, vec3Origin, int( len / dec ) + 1 );
+	Scene::SpawnParticleEffect( @ef, start, vec3Origin, int( len / dec ) + 1 );
 }
 
 void ImpactPuffParticles( const Vec3 &in org, const Vec3 &in dir, int count, float scale, float r, float g, float b, float a ) {
@@ -142,7 +142,7 @@ void ImpactPuffParticles( const Vec3 &in org, const Vec3 &in dir, int count, flo
 	ef.velRand.set( -40.0f, 40.0f );
 	ef.accel[2] = -PARTICLE_GRAVITY;
 
-	CGame::Scene::SpawnParticleEffect( @ef, org, dir, count );
+	Scene::SpawnParticleEffect( @ef, org, dir, count );
 }
 
 /*
@@ -159,7 +159,7 @@ void HighVelImpactPuffParticles( const Vec3 &in org, const Vec3 &in dir, int cou
 	ef.velRand.set( -40.0f, 40.0f );
 	ef.accel[2] = -PARTICLE_GRAVITY * 2;
 
-	CGame::Scene::SpawnParticleEffect( @ef, org, dir, count );
+	Scene::SpawnParticleEffect( @ef, org, dir, count );
 }
 
 void ElectroIonsTrail( const Vec3 &in start, const Vec3 &in end, const Vec4 color ) {
@@ -183,7 +183,7 @@ void ElectroIonsTrail( const Vec3 &in start, const Vec3 &in end, const Vec4 colo
 	ef.colorRand.set( 0.1, 0.1, 0.1, 0.0f );
 	ef.orgSpread = move;
 
-	CGame::Scene::SpawnParticleEffect( @ef, start, vec3Origin, count );
+	Scene::SpawnParticleEffect( @ef, start, vec3Origin, count );
 }
 
 /*
@@ -222,7 +222,7 @@ void FlyEffect( CEntity @ent, const Vec3 &in origin ) {
 	ef.type = PE_FLY;
 	ef.size = BEAMLENGTH;
 
-	CGame::Scene::SpawnParticleEffect( @ef, origin, vec3Origin, count );
+	Scene::SpawnParticleEffect( @ef, origin, vec3Origin, count );
 }
 
 //============================================================
@@ -256,7 +256,7 @@ class LaserImpactCb : GS::Weapons::ITraceImpact {
 
                 HighVelImpactPuffParticles(trace.endPos, trace.planeNormal, 8, 0.5f, 1.0f, 0.8f, 0.2f, 1.0f);
 
-                CGame::Sound::StartFixedSound(@cgs.media.sfxLasergunHit[rand() % 3], trace.endPos, CHAN_AUTO,
+                Sound::StartFixedSound(@cgs.media.sfxLasergunHit[rand() % 3], trace.endPos, CHAN_AUTO,
                     cg_volume_effects.value, ATTN_STATIC);
             }
         }
@@ -269,7 +269,7 @@ class LaserImpactCb : GS::Weapons::ITraceImpact {
 
             LE::LaserGunImpact(origin, 15.0f, dir, color);
 
-            CGame::Scene::AddLightToScene(origin, 100.0f, laserLightColor);
+            Scene::AddLightToScene(origin, 100.0f, laserLightColor);
             return;
         }
 
@@ -299,9 +299,9 @@ void LaserBeamEffect(CEntity@ cent)
             }
 
             if (IsViewerEntity(cur.number)) {
-                CGame::Sound::StartGlobalSound(sound, CHAN_AUTO, cg_volume_effects.value);
+                Sound::StartGlobalSound(sound, CHAN_AUTO, cg_volume_effects.value);
             } else {
-                CGame::Sound::StartRelativeSound(sound, cur.number, CHAN_AUTO, cg_volume_effects.value, ATTN_NORM);
+                Sound::StartRelativeSound(sound, cur.number, CHAN_AUTO, cg_volume_effects.value, ATTN_NORM);
             }
         }
         cent.localEffects[LEF_LASERBEAM] = 0;
@@ -311,10 +311,10 @@ void LaserBeamEffect(CEntity@ cent)
     @laserOwner = cent;
 
     // interpolate the positions
-    firstPerson = (IsViewerEntity(cur.number) && !CGame::Camera::GetMainCamera().thirdPerson);
+    firstPerson = (IsViewerEntity(cur.number) && !Camera::GetMainCamera().thirdPerson);
 
     if (firstPerson) {
-        auto @pps = @CGame::PredictedPlayerState;
+        auto @pps = @PredictedPlayerState;
         laserOrigin = pps.pmove.origin;
         laserOrigin.z += pps.viewHeight;
         laserAngles = pps.viewAngles;
@@ -354,7 +354,7 @@ void LaserBeamEffect(CEntity@ cent)
             laserOrigin = projectsource.origin;
         }
 
-        CGame::Scene::KillPolysByTag(cur.number);
+        Scene::KillPolysByTag(cur.number);
 
         for (int phase = 0; phase < 3; phase++) {
             ElectroPolyboardBeam(laserOrigin, trace.endPos, cg_laserBeamSubdivisions.integer,
@@ -386,7 +386,7 @@ void LaserBeamEffect(CEntity@ cent)
             subdivisions = float(GS::Weapons::CURVELASERBEAM_SUBDIVISIONS);
         }
 
-        CGame::Scene::KillPolysByTag(cur.number);
+        Scene::KillPolysByTag(cur.number);
 
         blendPoint = laserPoint;
         from = projectsource.origin;
@@ -403,7 +403,7 @@ void LaserBeamEffect(CEntity@ cent)
             end = projectsource.origin + dir * (range * frac);
 
             trace = GS::Weapons::TraceLaserBeam(from, dir, (from - end).length(), passthrough, 0, null);
-            CGame::LaserGunPolyBeam(from, trace.endPos, color, cur.number);
+            LaserGunPolyBeam(from, trace.endPos, color, cur.number);
             if (trace.fraction != 1.0f) {
                 break;
             }
@@ -421,9 +421,9 @@ void LaserBeamEffect(CEntity@ cent)
 
     if (sound !is null) {
         if (IsViewerEntity(cur.number)) {
-            CGame::Sound::AddLoopSound(sound, cur.number, cg_volume_effects.value, ATTN_NONE);
+            Sound::AddLoopSound(sound, cur.number, cg_volume_effects.value, ATTN_NONE);
         } else {
-            CGame::Sound::AddLoopSound(sound, cur.number, cg_volume_effects.value, ATTN_STATIC);
+            Sound::AddLoopSound(sound, cur.number, cg_volume_effects.value, ATTN_STATIC);
         }
     }
 

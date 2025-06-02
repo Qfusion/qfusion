@@ -45,14 +45,14 @@ class ViewWeapon {
         // move to tag_weapon
         CGame::Scene::Orientation tag_weapon;
         
-        CGame::Scene::MoveToTag( 
+        Scene::MoveToTag( 
             CGame::Scene::Orientation( hand_origin, hand_axis ),
             CGame::Scene::Orientation( weap_origin, weap_axis ), tag_weapon );
 
         // move to projectionSource tag
         if( weapon > WEAP_NONE && weapon < WEAP_TOTAL ) {
             auto @weaponInfo = @cgs.weaponModelInfo[weapon];
-            CGame::Scene::MoveToTag( tag_weapon,
+            Scene::MoveToTag( tag_weapon,
                 weaponInfo.tag_projectionsource, projectionSource );
             return;
         }
@@ -117,8 +117,8 @@ class ViewWeapon {
         angles[PITCH] += xyspeed * bobFracSin * 0.012;
 
         // gun angles from delta movement
-        PlayerState @state = @CGame::Snap.playerState;
-        PlayerState @oldState = @CGame::OldSnap.playerState;
+        PlayerState @state = @Snap.playerState;
+        PlayerState @oldState = @OldSnap.playerState;
         Vec3 deltaAngles = oldState.viewAngles - state.viewAngles;
 
         for( int i = 0; i < 3; i++ ) {
@@ -140,7 +140,7 @@ class ViewWeapon {
 
     void CalcViewBob( CGame::Camera::Camera @cam ) {
         float bobMove, bobTime, bobScale;
-        PlayerState @state = @CGame::PredictedPlayerState;
+        PlayerState @state = @PredictedPlayerState;
         Vec3 velocity = state.pmove.velocity;
         Vec3 xyvelocity( velocity.x, velocity.y, 0.0f );
 
@@ -200,12 +200,12 @@ class ViewWeapon {
         }
 
         // if spectator but not in chasecam, don't get any kick
-        if( CGame::Snap.playerState.pmove.pm_type == PM_SPECTATOR ) {
+        if( Snap.playerState.pmove.pm_type == PM_SPECTATOR ) {
             return;
         }
  
         // predictedPlayerState is predicted only when prediction is enabled, otherwise it is interpolated
-        Vec3 playerorigin = CGame::PredictedPlayerState.pmove.origin;
+        Vec3 playerorigin = PredictedPlayerState.pmove.origin;
         Vec3 v = source - playerorigin;
         float dist = v.normalize();
         if( dist > radius ) {
@@ -248,7 +248,7 @@ class ViewWeapon {
         }
 
         Vec3 forward, right, up;
-        CGame::PredictedPlayerState.viewAngles.angleVectors( forward, right, up );
+        PredictedPlayerState.viewAngles.angleVectors( forward, right, up );
 
         if( kick < 1.0f ) {
             kick = 1.0f;
@@ -299,7 +299,7 @@ class ViewWeapon {
         int curframe = -1;
         float framefrac;
         bool nolerp = false;
-        PlayerState @state = @CGame::PredictedPlayerState;
+        PlayerState @state = @PredictedPlayerState;
 
         // if the pov changed, or weapon changed, force restart
         if( POVnum != state.POVnum || weapon != state.stats[STAT_WEAPON] ) {
@@ -367,7 +367,7 @@ class ViewWeapon {
         }
 
         if( curframe < 0 ) {
-            CGame::Error( "UpdateAnimation(2): Base Animation without a defined loop.\n" );
+            Error( "UpdateAnimation(2): Base Animation without a defined loop.\n" );
         }
 
         if( nolerp ) {
@@ -393,8 +393,8 @@ class ViewWeapon {
 
     void CalcViewWeapon( CGame::Camera::Camera @cam ) {
         CGame::Scene::Orientation tag;
-        PlayerState @state = @CGame::PredictedPlayerState;
-        CGame::Camera::Viewport @view = @CGame::Camera::GetViewport();
+        PlayerState @state = @PredictedPlayerState;
+        CGame::Camera::Viewport @view = @Camera::GetViewport();
 
         CalcViewBob( @cam );
 
@@ -424,10 +424,10 @@ class ViewWeapon {
         auto @skel = @weaponInfo.skel[WEAPMODEL_HAND];
         if( @skel !is null ) {
             // get space in cache, interpolate, transform, link
-            @ent.boneposes = CGame::Scene::RegisterTemporaryExternalBoneposes( @skel );
+            @ent.boneposes = Scene::RegisterTemporaryExternalBoneposes( @skel );
             @ent.oldBoneposes = @ent.boneposes;
-            CGame::Scene::LerpSkeletonPoses( @skel, ent.frame, ent.oldFrame, @ent.boneposes, 1.0 - ent.backLerp );
-            CGame::Scene::TransformBoneposes( @skel, ent.boneposes, ent.boneposes );
+            Scene::LerpSkeletonPoses( @skel, ent.frame, ent.oldFrame, @ent.boneposes, 1.0 - ent.backLerp );
+            Scene::TransformBoneposes( @skel, ent.boneposes, ent.boneposes );
         }
 
         // weapon config offsets
@@ -470,14 +470,14 @@ class ViewWeapon {
         gunAngles.anglesToAxis( ent.axis );
 
         if( cg_gun_fov.boolean && state.pmove.stats[PM_STAT_ZOOMTIME] == 0 ) {
-            float gun_fov_y = CGame::Camera::WidescreenFov( bound( 20.0f, cg_gun_fov.value, 160.0f ) );
-            float gun_fov_x = CGame::Camera::CalcHorizontalFov( gun_fov_y, view.width, view.height );
+            float gun_fov_y = Camera::WidescreenFov( bound( 20.0f, cg_gun_fov.value, 160.0f ) );
+            float gun_fov_x = Camera::CalcHorizontalFov( gun_fov_y, view.width, view.height );
             float fracWeapFOV = tan( deg2rad( gun_fov_x ) * 0.5f ) / cam.fracDistFOV;
             ent.axis.x = fracWeapFOV * ent.axis.x;
         }
 
         // if the player doesn't want to view the weapon we still have to build the projection source
-        if( CGame::Scene::GrabTag( tag, @ent, "tag_weapon" ) ) {
+        if( Scene::GrabTag( tag, @ent, "tag_weapon" ) ) {
             UpdateProjectionSource( ent.origin, ent.axis, tag.origin, tag.axis );
         } else {
             UpdateProjectionSource( ent.origin, ent.axis, vec3Origin, Mat3() );
@@ -486,9 +486,14 @@ class ViewWeapon {
 
     void AddViewWeapon( CGame::Camera::Camera @cam ) {
         int64 flashTime = 0;
-        PlayerState @state = @CGame::PredictedPlayerState;
+        PlayerState @state = @PredictedPlayerState;
 
         if( !cam.drawWeapon || weapon == WEAP_NONE ) {
+            return;
+        }
+
+        if( ( cgEnts[cam.POVent].serverFrame != CGame::Snap.serverFrame ) ||
+            ( cgEnts[cam.POVent].current.weapon == 0 ) ) {
             return;
         }
 
@@ -496,7 +501,7 @@ class ViewWeapon {
         ent.origin2 = ent.origin;
         ent.lightingOrigin = cgEnts[POVnum].refEnt.lightingOrigin;
 
-        CGame::Scene::AddEntityToScene( @ent );
+        Scene::AddEntityToScene( @ent );
 
         AddShellEffects( @ent, cg.effects );
 
@@ -506,7 +511,7 @@ class ViewWeapon {
 
         // add attached weapon
         CGame::Scene::Orientation tag;
-        if( CGame::Scene::GrabTag( tag, @ent, "tag_weapon" ) ) {
+        if( Scene::GrabTag( tag, @ent, "tag_weapon" ) ) {
             auto @firedef = @GS::Weapons::FiredefForPlayerState( @state, state.stats[STAT_WEAPON] );
 
             AddWeaponOnTag( @ent, tag, weapon, cg.effects | EF_OUTLINE, flashTime, 

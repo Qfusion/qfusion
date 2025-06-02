@@ -334,6 +334,8 @@ bool CheckAmmoInWeapon(PlayerState@ playerState, int checkweapon) {
 * ThinkPlayerWeapon
 */
 int ThinkPlayerWeapon(PlayerState@ playerState, int buttons, int msecs, int timeDelta) {
+    int64 serverTimestamp = 1; // weapons think on client side only if ucmdReady
+
     if (playerState is null)
         return WEAP_NONE;
 
@@ -414,7 +416,7 @@ int ThinkPlayerWeapon(PlayerState@ playerState, int buttons, int msecs, int time
                 playerState.stats[STAT_WEAPON_TIME] = playerState.stats[STAT_WEAPON_TIME] + firedef.weaponDownTime;
 
                 if (firedef.weaponDownTime != 0) {
-                    GS::PredictedEvent(playerState.POVnum, EV_WEAPONDROP, 0);
+                    GS::PredictedEvent(playerState.POVnum, EV_WEAPONDROP, 0, serverTimestamp);
                 }
             }
         }
@@ -432,7 +434,7 @@ int ThinkPlayerWeapon(PlayerState@ playerState, int buttons, int msecs, int time
         @firedef = @FiredefForPlayerState(playerState, playerState.stats[STAT_WEAPON]);
         playerState.weaponState = WEAPON_STATE_ACTIVATING;
         playerState.stats[STAT_WEAPON_TIME] = playerState.stats[STAT_WEAPON_TIME] + firedef.weaponUpTime;
-        GS::PredictedEvent(playerState.POVnum, EV_WEAPONACTIVATE, playerState.stats[STAT_WEAPON] << 1);
+        GS::PredictedEvent(playerState.POVnum, EV_WEAPONACTIVATE, playerState.stats[STAT_WEAPON] << 1, serverTimestamp);
     }
 
     if (playerState.weaponState == WEAPON_STATE_ACTIVATING) {
@@ -462,7 +464,7 @@ int ThinkPlayerWeapon(PlayerState@ playerState, int buttons, int msecs, int time
                     } else {
                         playerState.weaponState = WEAPON_STATE_NOAMMOCLICK;
                         playerState.stats[STAT_WEAPON_TIME] = playerState.stats[STAT_WEAPON_TIME] + NOAMMOCLICK_PENALTY;
-                        GS::PredictedEvent(playerState.POVnum, EV_NOAMMOCLICK, 0);
+                        GS::PredictedEvent(playerState.POVnum, EV_NOAMMOCLICK, 0, serverTimestamp);
                         return playerState.stats[STAT_WEAPON];
                     }
                 }
@@ -492,9 +494,9 @@ int ThinkPlayerWeapon(PlayerState@ playerState, int buttons, int msecs, int time
         }
 
         if (refire && firedef.smoothRefire) {
-            GS::PredictedEvent(playerState.POVnum, EV_SMOOTHREFIREWEAPON, parm);
+            GS::PredictedEvent(playerState.POVnum, EV_SMOOTHREFIREWEAPON, parm, serverTimestamp);
         } else {
-            GS::PredictedEvent(playerState.POVnum, EV_FIREWEAPON, parm);
+            GS::PredictedEvent(playerState.POVnum, EV_FIREWEAPON, parm, serverTimestamp);
         }
 
         // Waste ammo

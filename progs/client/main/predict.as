@@ -1,21 +1,24 @@
 namespace CGame {
 
-bool ucmdReady = false;
-
 /*
  * PredictedEvent - shared code can fire events during prediction
  */
-void PredictedEvent(int entNum, int ev, int parm) {
+void PredictedEvent(int entNum, int ev, int parm, int64 serverTimestamp) {
     if (ev >= PREDICTABLE_EVENTS_MAX) {
         return;
     }
 
+    bool ucmdReady = ( serverTimestamp != 0 );
+    if( !ucmdReady ) {
+        return;
+    }
+
     // ignore this action if it has already been predicted (the unclosed ucmd has timestamp zero)
-    if (ucmdReady && cg.predictingTimeStamp > cg.predictedEventTimes[ev]) {
+    if (cg.predictingTimeStamp > cg.predictedEventTimes[ev]) {
         // inhibit the fire event when there is a weapon change predicted
         if (ev == EV_FIREWEAPON) {
             if (cg.predictedWeaponSwitch != 0 &&
-                cg.predictedWeaponSwitch != CGame::PredictedPlayerState.stats[STAT_PENDING_WEAPON]) {
+                cg.predictedWeaponSwitch != PredictedPlayerState.stats[STAT_PENDING_WEAPON]) {
                 return;
             }
         }
@@ -29,7 +32,7 @@ void PredictedEvent(int entNum, int ev, int parm) {
  * Predict_ChangeWeapon
  */
 void Predict_ChangeWeapon(int new_weapon) {
-    auto @cam = CGame::Camera::GetMainCamera();
+    auto @cam = Camera::GetMainCamera();
     if (cam.playerPrediction) {
         cg.predictedWeaponSwitch = new_weapon;
     }
@@ -39,8 +42,8 @@ void Predict_ChangeWeapon(int new_weapon) {
  * BuildSolidList
  */
 void BuildSolidList() {
-    for (int i = 0; i < CGame::Snap.numEntities; i++) {
-        auto @ent = @CGame::Snap.getEntityState(i);
+    for (int i = 0; i < Snap.numEntities; i++) {
+        auto @ent = @Snap.getEntityState(i);
 
         switch (ent.type) {
             // the following entities can never be solid
@@ -60,11 +63,11 @@ void BuildSolidList() {
                 break;
 
             case ET_PUSH_TRIGGER:
-                CGame::AddEntityToTriggerList(ent.number);
+                AddEntityToTriggerList(ent.number);
                 break;
 
             default:
-                CGame::AddEntityToSolidList(ent.number);
+                AddEntityToSolidList(ent.number);
                 break;
         }
     }
@@ -77,10 +80,26 @@ void BuildSolidList() {
  */
 void RunUserCmd( PMove @pm, UserCmd ucmd, int ucmdHead, int ucmdExecuted )
 {
-    int frame = ucmdExecuted & CMD_MASK;
-	auto @ps = @CGame::PredictedPlayerState;
+	auto @ps = @PredictedPlayerState;
+    bool lastUcmd = ( ucmdExecuted == ucmdHead );
 
-    ucmdReady = ( ucmd.serverTimeStamp != 0 );
+    // if we are too far out of date, just freeze
+    if( ucmdHead - ucmdExecuted >= CMD_BACKUP ) {
+        cg.predictingTimeStamp = cg.time;
+        return;
+    }
+
+    // compensate for ground entity movement
+    if (lastUcmd && pm.groundEntity != -1) {
+        auto @ent = @cgEnts[pm.groundEntity].current;
+        if (ent.solid == SOLID_BMODEL && ent.linearMovement) {
+            int64 serverTime = GS::MatchPaused() ? Snap.serverTime : cg.time + ExtrapolationTime;
+            Vec3 move = GS::LinearMovementDelta(@ent, Snap.serverTime, serverTime);
+            PredictedPlayerState.pmove.origin = PredictedPlayerState.pmove.origin + move;
+        }
+    }
+
+    bool ucmdReady = ( ucmd.serverTimeStamp != 0 );
     if( !ucmdReady ) {
         return;
     }
@@ -88,17 +107,8 @@ void RunUserCmd( PMove @pm, UserCmd ucmd, int ucmdHead, int ucmdExecuted )
     cg.predictingTimeStamp = ucmd.serverTimeStamp;
 
     if( ucmdExecuted == ucmdHead - 1 ) {
+        // next to last ucmd
         GS::Weapons::AddLaserbeamPoint( @cg.weaklaserTrail, @ps, ucmd.serverTimeStamp );
-
-        // compensate for ground entity movement
-        if (pm.groundEntity != -1) {
-            auto @ent = @cgEnts[pm.groundEntity].current;
-            if (ent.solid == SOLID_BMODEL && ent.linearMovement) {
-                int64 serverTime = GS::MatchPaused() ? CGame::Snap.serverTime : cg.time + CGame::ExtrapolationTime;
-                Vec3 move = GS::LinearMovementDelta(@ent, CGame::Snap.serverTime, serverTime);
-                CGame::PredictedPlayerState.pmove.origin = CGame::PredictedPlayerState.pmove.origin + move;
-            }
-        }
     }
 
     CEntity @cent = @cgEnts[ps.POVnum];

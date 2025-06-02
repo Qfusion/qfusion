@@ -4,6 +4,7 @@ Cvar cg_test( "cg_test", "1", CVAR_ARCHIVE );
 
 Cvar cg_projectileAntilagOffset( "cg_projectileAntilagOffset", "1.0", CVAR_ARCHIVE );
 Cvar cg_showClamp( "cg_showClamp", "0", 0 );
+Cvar cg_showhelp( "cg_showhelp", "1", CVAR_ARCHIVE );
 Cvar cg_shadows( "cg_shadows", "1", CVAR_ARCHIVE );
 Cvar cg_showSelfShadow( "cg_showSelfShadow", "0", CVAR_ARCHIVE );
 
@@ -65,6 +66,8 @@ Cvar cg_gunbob( "cg_gunbob", "1", CVAR_ARCHIVE );
 Cvar cg_gun_fov( "cg_gun_fov", "75", CVAR_ARCHIVE );
 Cvar cg_gun_alpha( "cg_gun_alpha", "1", CVAR_ARCHIVE );
 Cvar cg_weaponFlashes( "cg_weaponFlashes", "2", CVAR_ARCHIVE );
+Cvar cg_weaponAutoSwitch( "cg_weaponAutoSwitch", "2", CVAR_ARCHIVE );
+Cvar cg_pickup_flash( "cg_pickup_flash", "0", CVAR_ARCHIVE );
 
 Cvar cg_hand( "hand", "0", CVAR_USERINFO | CVAR_ARCHIVE );
 Cvar cg_handOffset( "cg_handOffset", "5", CVAR_ARCHIVE );

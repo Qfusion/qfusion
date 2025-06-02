@@ -6,6 +6,8 @@
 /shared/misc.as;
 /shared/anim.as;
 /shared/list.as;
+/shared/weapdef.as;
+/shared/weapons.as;
 
 input/keys.as;
 input/mouse.as;
@@ -33,6 +35,8 @@ main/wmodel.as;
 main/vweapon.as;
 main/view.as;
 main/localents.as;
+main/fireevents.as;
+main/predict.as;
 
 main/ents/flag.as;
 main/ents/generic.as;
@@ -41,3 +45,7 @@ main/ents/projectile.as;
 main/ents/sprite.as;
 main/ents/player.as;
 main/ents/soundevent.as;
+main/ents/beam.as;
+main/ents/decal.as;
+main/ents/laser.as;
+main/ents/particles.as;

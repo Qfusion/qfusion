@@ -4,7 +4,7 @@ void QuickPolyBeam( const Vec3 &in start, const Vec3 &in end, int width, ShaderH
 	if( shader is null ) {
 		@shader = @cgs.media.shaderLaser;
 	}
-	CGame::Scene::SpawnPolyBeam( start, end, colorWhite, width, 1, 0, shader, 64, 0 );
+	Scene::SpawnPolyBeam( start, end, colorWhite, width, 1, 0, shader, 64, 0 );
 }
 
 void ElectroPolyBeam( const Vec3 &in start, const Vec3 &in end, int team ) {
@@ -22,7 +22,7 @@ void ElectroPolyBeam( const Vec3 &in start, const Vec3 &in end, int team ) {
 		}
 	}
 
-	CGame::Scene::SpawnPolyBeam( start, end, colorWhite, cg_ebbeam_width.integer, 
+	Scene::SpawnPolyBeam( start, end, colorWhite, cg_ebbeam_width.integer, 
 		int( cg_ebbeam_time.value * 1000.0f ), int( cg_ebbeam_time.value * 1000.0f * 0.4f ), 
 		shader, 128, 0 );
 }
@@ -55,7 +55,7 @@ void InstaPolyBeam( const Vec3 &in start, const Vec3 &in end, int team ) {
 		return;
 	}
 
-	CGame::Scene::SpawnPolyBeam( start, end, tcolor, cg_instabeam_width.integer, 
+	Scene::SpawnPolyBeam( start, end, tcolor, cg_instabeam_width.integer, 
 		int( cg_instabeam_time.value * 1000.0f ), int( cg_instabeam_time.value * 1000 * 0.4f ),
 		@cgs.media.shaderInstaBeam, 128, 0 );
 }
@@ -73,7 +73,7 @@ void LaserGunPolyBeam(const Vec3 start, const Vec3 end, const Vec4 color, int ta
         }
     }
 
-    CGame::Scene::SpawnPolyBeam(start, end, (color.w > 0.0f) ? tcolor : Vec4(0,0,0,0), 12, 1, 0, cgs.media.shaderLaserGunBeam, 64, tag);
+    Scene::SpawnPolyBeam(start, end, (color.w > 0.0f) ? tcolor : Vec4(0,0,0,0), 12, 1, 0, cgs.media.shaderLaserGunBeam, 64, tag);
 }
 
 /*
@@ -150,7 +150,7 @@ void ElectroPolyboardBeam(const Vec3 start, const Vec3 end, int subdivisions, fl
 
         to = start + dir * frac;
 
-        d = CGame::Camera::GetMainCamera().origin - from;
+        d = Camera::GetMainCamera().origin - from;
         d.normalize();
 
         c = dir ^ d;
@@ -162,7 +162,7 @@ void ElectroPolyboardBeam(const Vec3 start, const Vec3 end, int subdivisions, fl
         f += c * y;
 
         if (i > 0) {
-            CGame::Scene::SpawnPolyQuad(e, f, h, g, 1, 1, (color.w > 0.0f) ? tcolor : Vec4(0,0,0,0), 1, 0, shader, key);
+            Scene::SpawnPolyQuad(e, f, h, g, 1, 1, (color.w > 0.0f) ? tcolor : Vec4(0,0,0,0), 1, 0, shader, key);
         }
 
         from = to;

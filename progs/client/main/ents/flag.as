@@ -21,9 +21,9 @@ void AddFlagModelOnTag( CEntity @cent, int teamcolor, const String @tagname ) {
 	flag.lightingOrigin = cent.refEnt.lightingOrigin;
 
 	// place the flag on the tag if available
-	if( @tagname != null && CGame::Scene::GrabTag( tag, @cent.refEnt, tagname ) ) {
+	if( @tagname != null && Scene::GrabTag( tag, @cent.refEnt, tagname ) ) {
 		flag.axis = cent.refEnt.axis;
-		CGame::Scene::PlaceModelOnTag( @flag, @cent.refEnt, tag );
+		Scene::PlaceModelOnTag( @flag, @cent.refEnt, tag );
 	} else {   // Flag dropped
 		Vec3 angles;
 
@@ -40,11 +40,11 @@ void AddFlagModelOnTag( CEntity @cent, int teamcolor, const String @tagname ) {
 		flag.origin += 16 * flag.axis.x; // Move the flag up a bit
 	}
 
-	CGame::Scene::AddEntityToScene( @flag );
+	Scene::AddEntityToScene( @flag );
 
 	// add the light & energy effects
-	if( CGame::Scene::GrabTag( tag, @flag, "tag_color" ) ) {
-		CGame::Scene::PlaceModelOnTag( @flag, @flag, tag );
+	if( Scene::GrabTag( tag, @flag, "tag_color" ) ) {
+		Scene::PlaceModelOnTag( @flag, @flag, tag );
 	}
 
 	// FIXME: convert this to an autosprite mesh in the flag model
@@ -55,12 +55,12 @@ void AddFlagModelOnTag( CEntity @cent, int teamcolor, const String @tagname ) {
 		flag.frame = flag.oldFrame = 0;
 		flag.radius = 32.0f;
 		@flag.customShader = @cgs.media.shaderFlagFlare;
-		CGame::Scene::AddEntityToScene( @flag );
+		Scene::AddEntityToScene( @flag );
 	}
 
 	// if on a player, flag drops colored particles and lights up
 	if( cent.current.type == ET_PLAYER ) {
-		CGame::Scene::AddLightToScene( flag.origin, 350, teamcolor );
+		Scene::AddLightToScene( flag.origin, 350, teamcolor );
 
 		if( cent.localEffects[LEF_FLAGTRAIL_LAST_DROP] + FLAG_TRAIL_DROP_DELAY < cg.time ) {
 			cent.localEffects[LEF_FLAGTRAIL_LAST_DROP] = cg.time;
@@ -89,7 +89,7 @@ void UpdateFlagBaseEnt( CEntity @cent ) {
 	if( modelindex > 0 && modelindex < MAX_MODELS ) {
 		@cent.refEnt.model = @cgs.modelDraw[modelindex];
 	}
-	@cent.skel = CGame::SkeletonForModel( cent.refEnt.model );
+	@cent.skel = SkeletonForModel( cent.refEnt.model );
 }
 
 void AddFlagBaseEnt( CEntity @cent ) {
@@ -111,14 +111,14 @@ void AddFlagBaseEnt( CEntity @cent ) {
 
 	if( @cent.skel != null ) {
 		// get space in cache, interpolate, transform, link
-		@cent.refEnt.boneposes = CGame::Scene::RegisterTemporaryExternalBoneposes( @cent.skel );
+		@cent.refEnt.boneposes = Scene::RegisterTemporaryExternalBoneposes( @cent.skel );
 		@cent.refEnt.oldBoneposes = @cent.refEnt.boneposes;
-		CGame::Scene::LerpSkeletonPoses( @cent.skel, cent.refEnt.frame, cent.refEnt.oldFrame, @cent.refEnt.boneposes, 1.0 - cent.refEnt.backLerp );
-		CGame::Scene::TransformBoneposes( @cent.skel, @cent.refEnt.boneposes, @cent.refEnt.boneposes );
+		Scene::LerpSkeletonPoses( @cent.skel, cent.refEnt.frame, cent.refEnt.oldFrame, @cent.refEnt.boneposes, 1.0 - cent.refEnt.backLerp );
+		Scene::TransformBoneposes( @cent.skel, @cent.refEnt.boneposes, @cent.refEnt.boneposes );
 	}
 
 	// add to refresh list
-	CGame::Scene::AddEntityToScene( @cent.refEnt );
+	Scene::AddEntityToScene( @cent.refEnt );
 
 	@cent.refEnt.customSkin = null;
 	@cent.refEnt.customShader = null;  // never use a custom skin on others

@@ -160,7 +160,7 @@ namespace Scene
 void PlaceRotatedModelOnTag(Entity@ ent, const Entity@ dest, const Orientation&in) {}
 void PlaceModelOnTag(Entity@ ent, const Entity@ dest, const Orientation&in) {}
 bool GrabTag(Orientation&out, const Entity@ ent, const String&in) {}
-Orientation MoveToTag(const Orientation&in space, const Orientation&in tag) {}
+void MoveToTag(const Orientation&in space, const Orientation&in tag, const Orientation&out res) {}
 Boneposes@ RegisterTemporaryExternalBoneposes(CGame::ModelSkeleton@) {}
 Boneposes@ RegisterTemporaryExternalBoneposes(int numBones) {}
 bool LerpSkeletonPoses(CGame::ModelSkeleton@, int frame, int oldFrame, Boneposes@ boneposes, float frac) {}
@@ -1336,6 +1336,8 @@ double brandom(double min, double max) {}
 double deg2rad(double deg) {}
 double rad2deg(double rad) {}
 int rand() {}
+int Qrand() {}
+double Qrandom() {}
 Vec3 RotatePointAroundVector(const Vec3&in dir, const Vec3&in point, float degrees) {}
 float AngleSubtract(float v1, float v2) {}
 Vec3 AnglesSubtract(const Vec3&in a1, const Vec3&in a2) {}
@@ -1568,7 +1570,7 @@ class Vec3
 	Vec3 toAngles() const {}
 	Vec3 perpendicular() const {}
 	void makeNormalVectors(Vec3&out, Vec3&out) const {}
-	void anglesToMarix(Mat3&out) const {}
+	void anglesToMatrix(Mat3&out) const {}
 	void anglesToAxis(Mat3&out) const {}
 	float& opIndex(uint) {}
 	const float& opIndex(uint) const {}

@@ -50,7 +50,7 @@ void Frame( void ) {
 	// Add acceleration to the gamepad look above the acceleration threshold.
 	Vec4 sticks = GetThumbsticks();
 
-	int axes = ( cg_gamepad_swapSticks.integer != 0 ? 0 : 2 );
+	int axes = ( cg_gamepad_swapSticks.boolean ? 0 : 2 );
 
 	if( cg_gamepad_accelMax.value < 0.0f ) {
 		cg_gamepad_accelMax.set( 0.0f );
@@ -97,7 +97,7 @@ Vec3 GetAngularMovement() {
 	Vec3 viewAngles;
 	Vec4 sticks = GetThumbsticks();
 
-	int axes = ( cg_gamepad_swapSticks.integer != 0 ? 0 : 2 );
+	int axes = ( cg_gamepad_swapSticks.boolean ? 0 : 2 );
 
 	if( ( cg_gamepad_yawThres.value <= 0.0f ) || ( cg_gamepad_yawThres.value >= 1.0f ) ) {
 		cg_gamepad_yawThres.reset();
@@ -120,7 +120,7 @@ Vec3 GetAngularMovement() {
 	threshold = cg_gamepad_pitchThres.value;
 	value = ( abs( axisValue ) - threshold ) / ( 1.0f - threshold );
 	if( value > 0.0f ) {
-		viewAngles[PITCH] += frameTime * 0.001f * ( cg_gamepad_pitchInvert.integer != 0 ? -1.0f : 1.0f ) *
+		viewAngles[PITCH] += frameTime * 0.001f * ( cg_gamepad_pitchInvert.boolean ? -1.0f : 1.0f ) *
 							 value * value * ( ( axisValue < 0.0f ) ? -1.0f : 1.0f ) * cg_gamepadAccelPitch *
 							 cg_gamepad_pitchSpeed.value * GetSensitivityScale( cg_gamepad_pitchSpeed.value, 0.0f );
 	}
@@ -135,7 +135,7 @@ Vec3 GetMovement() {
 	Vec3 movement;
 	Vec4 sticks = GetThumbsticks();
 
-	int axes = ( cg_gamepad_swapSticks.integer != 0 ? 2 : 0 );
+	int axes = ( cg_gamepad_swapSticks.boolean ? 2 : 0 );
 
 	float value = sticks[axes];
 	float threshold = cg_gamepad_strafeThres.value;

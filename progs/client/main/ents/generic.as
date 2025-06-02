@@ -17,13 +17,13 @@ void UpdateGenericEnt( CEntity @cent ) {
 }
 
 void LerpGenericEnt( CEntity @cent ) {
-	int POVent = CGame::Camera::GetMainCamera().POVent;
+	int POVent = Camera::GetMainCamera().POVent;
 	Vec3 ent_angles;
 
 	cent.refEnt.backLerp = 1.0f - cg.lerpfrac;
 
-	if( CGame::IsViewerEntity( cent.current.number ) || POVent == cent.current.number ) {
-		ent_angles = CGame::PredictedPlayerState.viewAngles;
+	if( IsViewerEntity( cent.current.number ) || POVent == cent.current.number ) {
+		ent_angles = PredictedPlayerState.viewAngles;
 	} else {
 		// interpolate angles
 		ent_angles = LerpAngles( cent.prev.angles, cent.current.angles, cg.lerpfrac );
@@ -44,8 +44,8 @@ void LerpGenericEnt( CEntity @cent ) {
 		move = cent.current.origin2 - cent.current.origin;
 		delta = cent.refEnt.axis * move;
 		cent.refEnt.origin = cent.current.origin + cent.refEnt.backLerp * delta;
-	} else if( CGame::IsViewerEntity( cent.current.number ) || POVent == cent.current.number ) {
-		cent.refEnt.origin = CGame::PredictedPlayerState.pmove.origin;
+	} else if( IsViewerEntity( cent.current.number ) || POVent == cent.current.number ) {
+		cent.refEnt.origin = PredictedPlayerState.pmove.origin;
 		cent.refEnt.origin2 = cent.refEnt.origin;
 	} else {
 		if( cg.extrapolationTime != 0 && cent.canExtrapolate ) { // extrapolation
@@ -177,7 +177,7 @@ void AddGenericEnt( CEntity @cent ) {
 
 		// offset weapon items by their special tag
 		if( ( cent.item.type & IT_WEAPON ) != 0 ) {
-			CGame::Scene::PlaceModelOnTag( @cent.refEnt, @cent.refEnt, cgs.weaponItemTag );
+			Scene::PlaceModelOnTag( @cent.refEnt, @cent.refEnt, cgs.weaponItemTag );
 		}
 	} else {
 		if( cent.current.solid != SOLID_BMODEL ) {
@@ -187,10 +187,10 @@ void AddGenericEnt( CEntity @cent ) {
 
 	if( @cent.skel != null ) {
 		// get space in cache, interpolate, transform, link
-		@cent.refEnt.boneposes = CGame::Scene::RegisterTemporaryExternalBoneposes( @cent.skel );
+		@cent.refEnt.boneposes = Scene::RegisterTemporaryExternalBoneposes( @cent.skel );
 		@cent.refEnt.oldBoneposes = @cent.refEnt.boneposes;
-		CGame::Scene::LerpSkeletonPoses( @cent.skel, cent.refEnt.frame, cent.refEnt.oldFrame, @cent.refEnt.boneposes, 1.0 - cent.refEnt.backLerp );
-		CGame::Scene::TransformBoneposes( @cent.skel, @cent.refEnt.boneposes, @cent.refEnt.boneposes );
+		Scene::LerpSkeletonPoses( @cent.skel, cent.refEnt.frame, cent.refEnt.oldFrame, @cent.refEnt.boneposes, 1.0 - cent.refEnt.backLerp );
+		Scene::TransformBoneposes( @cent.skel, @cent.refEnt.boneposes, @cent.refEnt.boneposes );
 	}
 
 	// flags are special
@@ -202,7 +202,7 @@ void AddGenericEnt( CEntity @cent ) {
 		return;
 	}
 
-	CGame::Scene::AddEntityToScene( @cent.refEnt );
+	Scene::AddEntityToScene( @cent.refEnt );
 
 	AddLinkedModel( @cent );
 }

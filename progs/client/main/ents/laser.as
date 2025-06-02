@@ -1,6 +1,6 @@
 namespace CGame {
     void LerpLaserbeamEnt(CEntity@ cent) {
-        auto @cam = @CGame::Camera::GetMainCamera();
+        auto @cam = @Camera::GetMainCamera();
         // Find the owner entity
         auto @owner = @cgEnts[cent.current.ownerNum];
 
@@ -15,7 +15,7 @@ namespace CGame {
     }
 
     void UpdateLaserbeamEnt(CEntity@ cent) {
-        auto @cam = @CGame::Camera::GetMainCamera();
+        auto @cam = @Camera::GetMainCamera();
 
         // If predicting and this is the viewer entity, skip
         if (cam.playerPrediction && cg_predictLaserBeam.boolean
@@ -24,8 +24,8 @@ namespace CGame {
         }
 
         auto owner = @cgEnts[cent.current.ownerNum];
-        if (owner.serverFrame != CGame::Snap.serverFrame) {
-            CGame::Error("CG_UpdateLaserbeamEnt: owner is not in the snapshot");
+        if (owner.serverFrame != Snap.serverFrame) {
+            Error("CG_UpdateLaserbeamEnt: owner is not in the snapshot");
         }
 
         owner.localEffects[LEF_LASERBEAM] = cg.time + 10;

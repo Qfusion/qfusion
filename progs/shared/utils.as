@@ -17,6 +17,10 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
+const float M_PI = 3.14159265358979323846;
+
+const float M_TWOPI = 6.28318530717958647692;
+
 int rint( float x )
 {
 	return int( x < 0 ? ( x - 0.5f ) : ( x + 0.5f ) );

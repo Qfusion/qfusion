@@ -31,7 +31,7 @@ void ThirdPersonOffsetView( Camera @cam ) {
 	}
 	cam.angles[PITCH] = rad2deg( -atan2( stop.z, dist ) );
 	cam.angles[YAW] -= cg_thirdPersonAngle.value;
-	cam.angles.anglesToMarix( cam.axis );
+	cam.angles.anglesToMatrix( cam.axis );
 
 	// move towards destination
 	if( tr.doTrace( cam.origin, mins, maxs, chase_dest, cam.POVent, MASK_SOLID ) ) {
@@ -47,6 +47,12 @@ void ThirdPersonOffsetView( Camera @cam ) {
 void SetupCamera( Camera @cam ) {
 	if( cam.thirdPerson ) {
 		ThirdPersonOffsetView( cam );
+	}
+
+	if( cam.playerPrediction ) {
+		if( cg_viewBob.boolean && !cam.thirdPerson ) {
+			cam.origin.z += ViewSmoothFallKick() * 6.5f;
+		}
 	}
 
 	cg.vweapon.CalcViewWeapon( @cam );

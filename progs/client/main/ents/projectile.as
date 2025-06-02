@@ -16,7 +16,7 @@ bool UpdateLinearProjectilePosition( CEntity @cent ) {
 	}
 
 	if( GS::MatchPaused() ) {
-		serverTime = CGame::Snap.serverTime;
+		serverTime = Snap.serverTime;
 	} else {
 		serverTime = cg.time + cg.extrapolationTime;
 	}
@@ -24,7 +24,7 @@ bool UpdateLinearProjectilePosition( CEntity @cent ) {
 	if( state.solid != SOLID_BMODEL ) {
 		// add a time offset to counter antilag visualization
 		if( !cgs.demoPlaying && cg_projectileAntilagOffset.value > 0.0f &&
-			!IsViewerEntity( state.ownerNum ) && ( cgs.playerNum + 1 != CGame::PredictedPlayerState.POVnum ) ) {
+			!IsViewerEntity( state.ownerNum ) && ( cgs.playerNum + 1 != PredictedPlayerState.POVnum ) ) {
 			serverTime += int64( float( state.modelindex2 ) * cg_projectileAntilagOffset.value );
 		}
 	}

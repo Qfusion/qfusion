@@ -926,13 +926,13 @@ class PMoveLocal {
 		ClipVelocityAgainstGround();
 
 		if( velocity.z > 100 ) {
-			GS::PredictedEvent( playerState.POVnum, EV_DOUBLEJUMP, 0 );
+			GS::PredictedEvent( playerState.POVnum, EV_DOUBLEJUMP, 0, cmd.serverTimeStamp );
 			velocity.z += jumpPlayerSpeed;
 		} else if( velocity[2] > 0 ) {
-			GS::PredictedEvent( playerState.POVnum, EV_JUMP, 0 );
+			GS::PredictedEvent( playerState.POVnum, EV_JUMP, 0, cmd.serverTimeStamp );
 			velocity.z += jumpPlayerSpeed;
 		} else {
-			GS::PredictedEvent( playerState.POVnum, EV_JUMP, 0 );
+			GS::PredictedEvent( playerState.POVnum, EV_JUMP, 0, cmd.serverTimeStamp );
 			velocity.z = jumpPlayerSpeed;
 		}
 
@@ -1008,14 +1008,14 @@ class PMoveLocal {
 			// return sound events
 			if( abs( sidePush ) > 10 && abs( sidePush ) >= abs( forwardPush ) ) {
 				if( sidePush > 0 ) {
-					GS::PredictedEvent( playerState.POVnum, EV_DASH, 2 );
+					GS::PredictedEvent( playerState.POVnum, EV_DASH, 2, cmd.serverTimeStamp );
 				} else {
-					GS::PredictedEvent( playerState.POVnum, EV_DASH, 1 );
+					GS::PredictedEvent( playerState.POVnum, EV_DASH, 1, cmd.serverTimeStamp );
 				}
 			} else if( forwardPush < -10 ) {
-				GS::PredictedEvent( playerState.POVnum, EV_DASH, 3 );
+				GS::PredictedEvent( playerState.POVnum, EV_DASH, 3, cmd.serverTimeStamp );
 			} else {
-				GS::PredictedEvent( playerState.POVnum, EV_DASH, 0 );
+				GS::PredictedEvent( playerState.POVnum, EV_DASH, 0, cmd.serverTimeStamp );
 			}
 		} else if( pm.groundEntity == -1 ) {
 			pm_flags &= ~PMF_DASHING;
@@ -1122,12 +1122,12 @@ class PMoveLocal {
 						pmoveState.stats[PM_STAT_WJTIME] = PM_WALLJUMP_FAILED_TIMEDELAY;
 
 						// Create the event
-						GS::PredictedEvent( playerState.POVnum, EV_WALLJUMP_FAILED, GS::DirToByte( normal ) );
+						GS::PredictedEvent( playerState.POVnum, EV_WALLJUMP_FAILED, GS::DirToByte( normal ), cmd.serverTimeStamp );
 					} else {
 						pmoveState.stats[PM_STAT_WJTIME] = PM_WALLJUMP_TIMEDELAY;
 
 						// Create the event
-						GS::PredictedEvent( playerState.POVnum, EV_WALLJUMP, GS::DirToByte( normal ) );
+						GS::PredictedEvent( playerState.POVnum, EV_WALLJUMP, GS::DirToByte( normal ), cmd.serverTimeStamp );
 					}
 				}
 			}

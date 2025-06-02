@@ -69,6 +69,9 @@ const String S_WEAPON_LASERGUN_HIT_2      = "sounds/weapons/laser_hit2";
 
 const String S_WEAPON_ELECTROBOLT_HIT     = "sounds/weapons/electrobolt_hit";
 
+const String S_WEAPON_RIOTGUN_W_HIT       = "sounds/weapons/riotgun_strong_hit";
+const String S_WEAPON_RIOTGUN_S_HIT      = "sounds/weapons/riotgun_strong_hit";
+
 // explosions
 const String PATH_ROCKET_EXPLOSION_SPRITE      = "gfx/rocket_explosion";
 const String PATH_ROCKET_EXPLOSION_RING_SPRITE = "gfx/misc/rlexplo_ring";

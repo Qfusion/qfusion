@@ -35,7 +35,7 @@ namespace CGame {
 
         Vec4 color = ColorToVec4(cent.refEnt.shaderRGBA);
 
-        CGame::Scene::AddFragmentedDecalToScene(
+        Scene::AddFragmentedDecalToScene(
             cent.refEnt.origin,
             cent.refEnt.origin2,
             cent.refEnt.rotation,

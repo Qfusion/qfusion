@@ -89,7 +89,7 @@ Vec3 GetAngularMovement() {
 		float scale = 1.0f / pixelRatio;
 
 		float angle = ( float( touch.y ) - viewpad.y ) * scale;
-		if( cg_touch_lookInvert.integer != 0 ) {
+		if( cg_touch_lookInvert.boolean ) {
 			angle = -angle;
 		}
 		

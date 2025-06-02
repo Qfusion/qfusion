@@ -11,7 +11,7 @@ class ClientInfo {
         int rgbcolor;
 
         if( !GS::Info::Validate( info ) ) {
-            CGame::Error( "Invalid client info" );
+            Error( "Invalid client info" );
         }
 
         @s = GS::Info::ValueForKey( info, "name" );
@@ -55,11 +55,11 @@ void SexedSound( int entnum, int entchannel, const String &in name, float fvol, 
     }
 
 	if( fixed ) {
-		CGame::Sound::StartFixedSound( @sfx, cgEnts[entnum].current.origin, entchannel, fvol, attn );
+		Sound::StartFixedSound( @sfx, cgEnts[entnum].current.origin, entchannel, fvol, attn );
 	} else if( IsViewerEntity( entnum ) ) {
-		CGame::Sound::StartGlobalSound( @sfx, entchannel, fvol );
+		Sound::StartGlobalSound( @sfx, entchannel, fvol );
 	} else {
-		CGame::Sound::StartRelativeSound( @sfx, entnum, entchannel, fvol, attn );
+		Sound::StartRelativeSound( @sfx, entnum, entchannel, fvol, attn );
 	}
 }
 

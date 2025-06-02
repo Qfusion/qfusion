@@ -33,7 +33,7 @@ class PModelInfo {
 	PModelInfo( const String @pmodelName ) {
 		@model = null;
 
-		PlayerModel @pmodel = CGame::RegisterPlayerModel( pmodelName );
+		PlayerModel @pmodel = RegisterPlayerModel( pmodelName );
 		if( @pmodel is null ) {
 			return;
 		}
@@ -101,14 +101,14 @@ class PModelInfo {
 		String realsname = sname.substr( 1 );
 		String spath = StringUtils::Format( "sounds/players/%s/%s", name, realsname );
 
-		@sfx = CGame::RegisterSound( spath );
+		@sfx = RegisterSound( spath );
 		if( sfx is null ) {
 			if( sex == SEX_FEMALE ) {
 				spath = StringUtils::Format( "sounds/players/female/%s", realsname );
 			} else {
 				spath = StringUtils::Format( "sounds/players/male/%s", realsname );
 			}
-			@sfx = CGame::RegisterSound( spath );
+			@sfx = RegisterSound( spath );
 		}
 		sexedSounds.set( sname, @sfx );
 		return @sfx;
@@ -223,13 +223,13 @@ void RegisterBasePModel( void ) {
 	filename = StringUtils::Format( "%s/%s", "models/players", DEFAULT_PLAYERMODEL );
 	@cgs.basePModelInfo = PModelInfo( filename );
 	if( @cgs.basePModelInfo.model is null ) {
-		CGame::Error( StringUtils::Format( "Default Player Model '%s' failed to load", DEFAULT_PLAYERMODEL ) );
+		Error( StringUtils::Format( "Default Player Model '%s' failed to load", DEFAULT_PLAYERMODEL ) );
 	}
 
 	filename = StringUtils::Format( "%s/%s/%s", "models/players", DEFAULT_PLAYERMODEL, DEFAULT_PLAYERSKIN );
-	@cgs.baseSkin = CGame::RegisterSkin( filename );
+	@cgs.baseSkin = RegisterSkin( filename );
 	if( @cgs.baseSkin is null ) {
-		CGame::Error( StringUtils::Format( "Default Player Skin '%s' failed to load", filename ) );
+		Error( StringUtils::Format( "Default Player Skin '%s' failed to load", filename ) );
 	}
 }
 

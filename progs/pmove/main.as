@@ -218,7 +218,7 @@ void PMove( PMove @pm, PlayerState @ps, UserCmd cmd ) {
 				damage = MAX_FALLING_DAMAGE;
 			}
 
-			GS::PredictedEvent( ps.POVnum, EV_FALL, damageParam );
+			GS::PredictedEvent( ps.POVnum, EV_FALL, damageParam, cmd.serverTimeStamp );
 		}
 
 		pmoveState.pm_flags = pmoveState.pm_flags & int( ~PMF_JUMPPAD_TIME );

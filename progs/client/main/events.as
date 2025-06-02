@@ -1,5 +1,76 @@
 namespace CGame {
 
+//=========================================================
+
+const int MAX_ANNOUNCER_EVENTS = 32;
+const int MAX_ANNOUNCER_EVENTS_MASK = MAX_ANNOUNCER_EVENTS - 1;
+const int ANNOUNCER_EVENTS_FRAMETIME = 1500; // the announcer will speak each 1.5 seconds
+
+class AnnouncerEvent {
+    SoundHandle@ sound;
+}
+
+array<AnnouncerEvent> cg_announcerEvents(MAX_ANNOUNCER_EVENTS);
+int cg_announcerEventsCurrent = 0;
+int cg_announcerEventsHead = 0;
+int cg_announcerEventsDelay = 0;
+
+/*
+ * ClearAnnouncerEvents
+ */
+void ClearAnnouncerEvents() {
+    cg_announcerEventsCurrent = 0;
+    cg_announcerEventsHead = 0;
+}
+
+/*
+ * AddAnnouncerEvent
+ */
+void AddAnnouncerEvent(SoundHandle@ sound, bool queued) {
+    if (sound is null) {
+        return;
+    }
+
+    if (!queued) {
+        Sound::StartLocalSound(sound, CHAN_ANNOUNCER, cg_volume_announcer.value);
+        cg_announcerEventsDelay = ANNOUNCER_EVENTS_FRAMETIME; // wait
+        return;
+    }
+
+    // full buffer (we do nothing, just let it overwrite the oldest)
+    if (cg_announcerEventsCurrent + MAX_ANNOUNCER_EVENTS >= cg_announcerEventsHead) {
+        // do nothing
+    }
+
+    // add it
+    @cg_announcerEvents[cg_announcerEventsHead & MAX_ANNOUNCER_EVENTS_MASK].sound = @sound;
+    cg_announcerEventsHead++;
+}
+
+/*
+ * ReleaseAnnouncerEvents
+ */
+void ReleaseAnnouncerEvents() {
+    // see if enough time has passed
+    cg_announcerEventsDelay -= cg.realFrameTime;
+    if (cg_announcerEventsDelay > 0) {
+        return;
+    }
+
+    if (cg_announcerEventsCurrent < cg_announcerEventsHead) {
+        auto @sound = cg_announcerEvents[cg_announcerEventsCurrent & MAX_ANNOUNCER_EVENTS_MASK].sound;
+        if (sound !is null) {
+            Sound::StartLocalSound(sound, CHAN_ANNOUNCER, cg_volume_announcer.value);
+            cg_announcerEventsDelay = ANNOUNCER_EVENTS_FRAMETIME; // wait
+        }
+        cg_announcerEventsCurrent++;
+    } else {
+        cg_announcerEventsDelay = 0; // no wait
+    }
+}
+
+//=========================================================
+
 void StartVoiceTokenEffect( int entNum, int type, int vsay ) {
 	if( !cg_voiceChats.boolean || cg_volume_voicechats.value <= 0.0f ) {
 		return;
@@ -26,7 +97,7 @@ void StartVoiceTokenEffect( int entNum, int type, int vsay ) {
 	}
 
 	// played as it was made by the 1st person player
-	CGame::Sound::StartLocalSound( sound, CHAN_AUTO, cg_volume_voicechats.value );
+	Sound::StartLocalSound( sound, CHAN_AUTO, cg_volume_voicechats.value );
 }
 
 void FireWeaponEvent( int entNum, int weapon, int fireMode )
@@ -63,19 +134,19 @@ void FireWeaponEvent( int entNum, int weapon, int fireMode )
 
 	if( @sound !is null ) {
 		if( viewer ) {
-			CGame::Sound::StartGlobalSound( sound, CHAN_MUZZLEFLASH, cg_volume_effects.value );
+			Sound::StartGlobalSound( sound, CHAN_MUZZLEFLASH, cg_volume_effects.value );
 		} else {
 			// fixed position is better for location, but the channels are used from worldspawn
 			// and openal runs out of channels quick on cheap cards. Relative sound uses per-entity channels.
-			CGame::Sound::StartRelativeSound( sound, entNum, CHAN_MUZZLEFLASH, cg_volume_effects.value, attenuation );
+			Sound::StartRelativeSound( sound, entNum, CHAN_MUZZLEFLASH, cg_volume_effects.value, attenuation );
 		}
 
 		if( ( cgEnts[entNum].current.effects & EF_QUAD ) != 0 && ( weapon != WEAP_LASERGUN ) ) {
 			SoundHandle @quadSfx = @cgs.media.sfxQuadFireSound;
 			if( viewer ) {
-				CGame::Sound::StartGlobalSound( quadSfx, CHAN_AUTO, cg_volume_effects.value );
+				Sound::StartGlobalSound( quadSfx, CHAN_AUTO, cg_volume_effects.value );
 			} else {
-				CGame::Sound::StartRelativeSound( quadSfx, entNum, CHAN_AUTO, cg_volume_effects.value, attenuation );
+				Sound::StartRelativeSound( quadSfx, entNum, CHAN_AUTO, cg_volume_effects.value, attenuation );
 			}
 		}
 	}
@@ -142,14 +213,14 @@ void FireWeaponEvent( int entNum, int weapon, int fireMode )
 	}
 
 	// add animation to the view weapon model
-	if( viewer && !CGame::Camera::GetMainCamera().thirdPerson ) {
+	if( viewer && !Camera::GetMainCamera().thirdPerson ) {
 		cg.vweapon.StartAnimationEvent( fireMode == FIRE_MODE_STRONG ? WEAPANIM_ATTACK_STRONG : WEAPANIM_ATTACK_WEAK );
 	}
 }
 
 void Event_Fall( const EntityState @state, int parm ) {
 	if( IsViewerEntity( state.number ) ) {
-		if( CGame::PredictedPlayerState.pmove.pm_type != PM_NORMAL ) {
+		if( PredictedPlayerState.pmove.pm_type != PM_NORMAL ) {
 			SexedSound( state.number, CHAN_AUTO, "*fall_0", cg_volume_players.value, state.attenuation );
 			return;
 		}
@@ -193,7 +264,7 @@ void Event_Fall( const EntityState @state, int parm ) {
 		Vec3 start, end;
 
 		if( IsViewerEntity( state.number ) ) {
-			start = CGame::PredictedPlayerState.pmove.origin;
+			start = PredictedPlayerState.pmove.origin;
 		} else {
 			start = state.origin;
 		}
@@ -216,10 +287,10 @@ void Event_Pain( const EntityState @state, int parm )
 {
 	if( parm == PAIN_WARSHELL ) {
 		if( IsViewerEntity( state.number ) ) {
-			CGame::Sound::StartGlobalSound( cgs.media.sfxShellHit, CHAN_PAIN,
+			Sound::StartGlobalSound( cgs.media.sfxShellHit, CHAN_PAIN,
 									 cg_volume_players.value );
 		} else {
-			CGame::Sound::StartRelativeSound( cgs.media.sfxShellHit, state.number, CHAN_PAIN,
+			Sound::StartRelativeSound( cgs.media.sfxShellHit, state.number, CHAN_PAIN,
 									   cg_volume_players.value, state.attenuation );
 		}
 	} else {
@@ -295,10 +366,10 @@ void Event_WallJump( const EntityState @state, int parm, int ev )
 
 	if( ev == EV_WALLJUMP_FAILED ) {
 		if( IsViewerEntity( state.number ) ) {
-			CGame::Sound::StartGlobalSound( @cgs.media.sfxWalljumpFailed,
+			Sound::StartGlobalSound( @cgs.media.sfxWalljumpFailed,
 				CHAN_BODY, cg_volume_effects.value );
 		} else {
-			CGame::Sound::StartRelativeSound( @cgs.media.sfxWalljumpFailed, state.number,
+			Sound::StartRelativeSound( @cgs.media.sfxWalljumpFailed, state.number,
 				CHAN_BODY, cg_volume_effects.value, ATTN_NORM );
 		}
 	} else {
@@ -309,7 +380,7 @@ void Event_WallJump( const EntityState @state, int parm, int ev )
 		if( ( cg_cartoonEffects.integer & 1 ) != 0 ) {
 			Vec3 pos = state.origin;
 			pos.z += 15;
-			CGame::LE::DustCircle( pos, normal, 65.0f, 12 );
+			LE::DustCircle( pos, normal, 65.0f, 12 );
 		}
 	}
 }
@@ -401,20 +472,20 @@ void Event_Mover( const EntityState @state, int parm )
 {
 	Vec3 org, vel;
 	GetEntitySpatilization( state.number, org, vel );
-	CGame::Sound::StartFixedSound( cgs.soundPrecache[parm], org, CHAN_AUTO, cg_volume_effects.value, ATTN_STATIC );
+	Sound::StartFixedSound( cgs.soundPrecache[parm], org, CHAN_AUTO, cg_volume_effects.value, ATTN_STATIC );
 }
 
 bool EntityEvent( const EntityState @ent, int ev, int parm, bool predicted )
 {
 	CEntity @cent = @cgEnts[ent.number];
 	bool viewer = IsViewerEntity( ent.number );
-	auto @cam = CGame::Camera::GetMainCamera();
+	auto @cam = Camera::GetMainCamera();
 	int weapon, fireMode;
 	Vec3 dir;
 	Vec3 color;
 	int count;
 	Vec3 fv, rv, uv;
-	auto @pps = @CGame::PredictedPlayerState;
+	auto @pps = @PredictedPlayerState;
 
 	if( !cg_test.boolean ) {
 		return false;
@@ -450,9 +521,9 @@ bool EntityEvent( const EntityState @ent, int ev, int parm, bool predicted )
 			cent.pmodel.barrelTime = 0;
 
 			if( viewer ) {
-				CGame::Sound::StartGlobalSound( @cgs.media.sfxWeaponUp, CHAN_AUTO, cg_volume_effects.value );
+				Sound::StartGlobalSound( @cgs.media.sfxWeaponUp, CHAN_AUTO, cg_volume_effects.value );
 			} else {
-				CGame::Sound::StartFixedSound( @cgs.media.sfxWeaponUp, ent.origin, CHAN_AUTO, cg_volume_effects.value, ATTN_NORM );
+				Sound::StartFixedSound( @cgs.media.sfxWeaponUp, ent.origin, CHAN_AUTO, cg_volume_effects.value, ATTN_NORM );
 			}
 			return true;
 
@@ -561,9 +632,9 @@ bool EntityEvent( const EntityState @ent, int ev, int parm, bool predicted )
 
 		case EV_NOAMMOCLICK:
 			if( viewer ) {
-				CGame::Sound::StartGlobalSound( @cgs.media.sfxWeaponUpNoAmmo, CHAN_ITEM, cg_volume_effects.value );
+				Sound::StartGlobalSound( @cgs.media.sfxWeaponUpNoAmmo, CHAN_ITEM, cg_volume_effects.value );
 			} else {
-				CGame::Sound::StartFixedSound( @cgs.media.sfxWeaponUpNoAmmo, ent.origin, CHAN_ITEM, cg_volume_effects.value, ATTN_IDLE );
+				Sound::StartFixedSound( @cgs.media.sfxWeaponUpNoAmmo, ent.origin, CHAN_ITEM, cg_volume_effects.value, ATTN_IDLE );
 			}
 			return true;
 
@@ -598,7 +669,7 @@ bool EntityEvent( const EntityState @ent, int ev, int parm, bool predicted )
 
 		case EV_ITEM_RESPAWN:
 			cgEnts[ent.number].respawnTime = cg.time;
-			CGame::Sound::StartRelativeSound( @cgs.media.sfxItemRespawn, ent.number, CHAN_AUTO, 
+			Sound::StartRelativeSound( @cgs.media.sfxItemRespawn, ent.number, CHAN_AUTO, 
 				cg_volume_effects.value, ATTN_IDLE );
 			return true;
 
@@ -610,10 +681,10 @@ bool EntityEvent( const EntityState @ent, int ev, int parm, bool predicted )
 			}
 
 			if( IsViewerEntity( ent.ownerNum ) ) {
-				CGame::Sound::StartGlobalSound( @cgs.media.sfxPlayerRespawn, CHAN_AUTO,
+				Sound::StartGlobalSound( @cgs.media.sfxPlayerRespawn, CHAN_AUTO,
 										 cg_volume_effects.value );
 			} else {
-				CGame::Sound::StartFixedSound( @cgs.media.sfxPlayerRespawn, ent.origin, CHAN_AUTO,
+				Sound::StartFixedSound( @cgs.media.sfxPlayerRespawn, ent.origin, CHAN_AUTO,
 										cg_volume_effects.value, ATTN_NORM );
 			}
 
@@ -626,10 +697,10 @@ bool EntityEvent( const EntityState @ent, int ev, int parm, bool predicted )
 
 		case EV_PLAYER_TELEPORT_IN:
 			if( IsViewerEntity( ent.ownerNum ) ) {
-				CGame::Sound::StartGlobalSound( @cgs.media.sfxTeleportIn, CHAN_AUTO,
+				Sound::StartGlobalSound( @cgs.media.sfxTeleportIn, CHAN_AUTO,
 										 cg_volume_effects.value );
 			} else {
-				CGame::Sound::StartFixedSound( @cgs.media.sfxTeleportIn, ent.origin, CHAN_AUTO,
+				Sound::StartFixedSound( @cgs.media.sfxTeleportIn, ent.origin, CHAN_AUTO,
 										cg_volume_effects.value, ATTN_NORM );
 			}
 
@@ -642,10 +713,10 @@ bool EntityEvent( const EntityState @ent, int ev, int parm, bool predicted )
 
 		case EV_PLAYER_TELEPORT_OUT:
 			if( IsViewerEntity( ent.ownerNum ) ) {
-				CGame::Sound::StartGlobalSound( @cgs.media.sfxTeleportOut, CHAN_AUTO,
+				Sound::StartGlobalSound( @cgs.media.sfxTeleportOut, CHAN_AUTO,
 										 cg_volume_effects.value );
 			} else {
-				CGame::Sound::StartFixedSound( @cgs.media.sfxTeleportOut, ent.origin, CHAN_AUTO,
+				Sound::StartFixedSound( @cgs.media.sfxTeleportOut, ent.origin, CHAN_AUTO,
 										cg_volume_effects.value, ATTN_NORM );
 			}
 
@@ -693,9 +764,9 @@ bool EntityEvent( const EntityState @ent, int ev, int parm, bool predicted )
 
 		case EV_GRENADE_BOUNCE:
 			if( parm == FIRE_MODE_STRONG ) {
-				CGame::Sound::StartRelativeSound( @cgs.media.sfxGrenadeStrongBounce[rand() & 1], ent.number, CHAN_AUTO, cg_volume_effects.value, ATTN_IDLE );
+				Sound::StartRelativeSound( @cgs.media.sfxGrenadeStrongBounce[rand() & 1], ent.number, CHAN_AUTO, cg_volume_effects.value, ATTN_IDLE );
 			} else {
-				CGame::Sound::StartRelativeSound( @cgs.media.sfxGrenadeWeakBounce[rand() & 1], ent.number, CHAN_AUTO, cg_volume_effects.value, ATTN_IDLE );
+				Sound::StartRelativeSound( @cgs.media.sfxGrenadeWeakBounce[rand() & 1], ent.number, CHAN_AUTO, cg_volume_effects.value, ATTN_IDLE );
 			}
 			return true;
 
@@ -718,7 +789,7 @@ bool EntityEvent( const EntityState @ent, int ev, int parm, bool predicted )
 			dir = GS::ByteToDir( parm );
 			LE::BulletExplosion( ent.origin, dir );
 			SplashParticles( ent.origin, dir, 1.0f, 0.67f, 0.0f, 6 );
-			CGame::Sound::StartFixedSound( @cgs.media.sfxRic[rand() % 2], ent.origin, CHAN_AUTO,
+			Sound::StartFixedSound( @cgs.media.sfxRic[rand() % 2], ent.origin, CHAN_AUTO,
 									cg_volume_effects.value, ATTN_STATIC );
 			return true;
 
@@ -753,10 +824,10 @@ bool EntityEvent( const EntityState @ent, int ev, int parm, bool predicted )
 			dir = GS::ByteToDir( parm );
 			LE::PlasmaExplosion( ent.origin, dir, ent.fireMode, float( ent.weapon ) * 8.0f );
 			if( ent.fireMode == FIRE_MODE_STRONG ) {
-				CGame::Sound::StartFixedSound( @cgs.media.sfxPlasmaStrongHit, ent.origin, CHAN_AUTO, cg_volume_effects.value, ATTN_IDLE );
+				Sound::StartFixedSound( @cgs.media.sfxPlasmaStrongHit, ent.origin, CHAN_AUTO, cg_volume_effects.value, ATTN_IDLE );
 				cg.vweapon.StartKickAnglesEffect( ent.origin, 50, ent.weapon * 8, 100 );
 			} else {
-				CGame::Sound::StartFixedSound( @cgs.media.sfxPlasmaWeakHit, ent.origin, CHAN_AUTO, cg_volume_effects.value, ATTN_IDLE );
+				Sound::StartFixedSound( @cgs.media.sfxPlasmaWeakHit, ent.origin, CHAN_AUTO, cg_volume_effects.value, ATTN_IDLE );
 				cg.vweapon.StartKickAnglesEffect( ent.origin, 30, ent.weapon * 8, 75 );
 			}
 			return true;
@@ -803,13 +874,13 @@ bool EntityEvent( const EntityState @ent, int ev, int parm, bool predicted )
 			dir = GS::ByteToDir( parm );
 			LE::GunBladeBlastImpact( ent.origin, dir, float( ent.weapon ) * 8 );
 			if( ent.skinNum > 64 ) {
-				CGame::Sound::StartFixedSound( @cgs.media.sfxGunbladeStrongHit[2], ent.origin, CHAN_AUTO,
+				Sound::StartFixedSound( @cgs.media.sfxGunbladeStrongHit[2], ent.origin, CHAN_AUTO,
 										cg_volume_effects.value, ATTN_DISTANT );
 			} else if( ent.skinNum > 34 ) {
-				CGame::Sound::StartFixedSound( @cgs.media.sfxGunbladeStrongHit[1], ent.origin, CHAN_AUTO,
+				Sound::StartFixedSound( @cgs.media.sfxGunbladeStrongHit[1], ent.origin, CHAN_AUTO,
 										cg_volume_effects.value, ATTN_NORM );
 			} else {
-				CGame::Sound::StartFixedSound( @cgs.media.sfxGunbladeStrongHit[0], ent.origin, CHAN_AUTO,
+				Sound::StartFixedSound( @cgs.media.sfxGunbladeStrongHit[0], ent.origin, CHAN_AUTO,
 										cg_volume_effects.value, ATTN_IDLE );
 			}
 
@@ -818,7 +889,7 @@ bool EntityEvent( const EntityState @ent, int ev, int parm, bool predicted )
 			break;
 
 		case EV_PNODE:
-			CGame::Scene::SpawnPolyBeam( ent.origin, ent.origin2, ColorToVec4( ent.colorRGBA ), 4, 2000.0f, 0.0f, @cgs.media.shaderLaser, 64, 0 );
+			Scene::SpawnPolyBeam( ent.origin, ent.origin2, ColorToVec4( ent.colorRGBA ), 4, 2000.0f, 0.0f, @cgs.media.shaderLaser, 64, 0 );
 			break;
 
 		case EV_PLAT_HIT_TOP:
@@ -838,6 +909,141 @@ bool EntityEvent( const EntityState @ent, int ev, int parm, bool predicted )
 	}
 
 	return false;
+}
+
+/*
+* FirePlayerStateEvents
+* These events are only received by this client, and only affect it.
+*/
+void FirePlayerStateEvents() {
+    uint event, parm, i, count;
+    Vec3 dir;
+	auto @cam = Camera::GetMainCamera();
+	auto @ps = @Snap.playerState;
+	auto @pps = @PredictedPlayerState;
+
+    if (cam.POVent != int(ps.POVnum)) {
+        return;
+    }
+
+    for (count = 0; count < 2; count++) {
+        // first byte is event number, second is parm
+        event = ps.events[count] & 127;
+        parm = ps.eventParms[count] & 0xFF;
+
+        switch (event) {
+            case PSEV_HIT:
+                if (parm > 6) {
+                    break;
+                }
+                if (parm < 4) { // hit of some caliber
+                    Sound::StartLocalSound(@cgs.media.sfxWeaponHit[parm], CHAN_AUTO, cg_volume_hitsound.value);
+					// TODO
+                    //ScreenCrosshairDamageUpdate();
+                } else if (parm == 4) {  // killed an enemy
+                    Sound::StartLocalSound(@cgs.media.sfxWeaponKill, CHAN_AUTO, cg_volume_hitsound.value);
+					// TODO
+                    //ScreenCrosshairDamageUpdate();
+                } else {  // hit a teammate
+                    Sound::StartLocalSound(@cgs.media.sfxWeaponHitTeam, CHAN_AUTO, cg_volume_hitsound.value);
+                    if (cg_showhelp.boolean) {
+                        if (random() <= 0.5f) {
+                            CenterPrint("Don't shoot at members of your team!");
+                        } else {
+                            CenterPrint("You are shooting at your team-mates!");
+                        }
+                    }
+                }
+                break;
+
+            case PSEV_PICKUP:
+                if (cg_pickup_flash.boolean && !cam.thirdPerson) {
+                    StartColorBlendEffect(1.0f, 1.0f, 1.0f, 0.25f, 150);
+                }
+
+                // auto-switch
+                if (cg_weaponAutoSwitch.boolean && (parm > WEAP_NONE && parm < WEAP_TOTAL)) {
+                    if (!cgs.demoPlaying && pps.pmove.pm_type == PM_NORMAL
+                        && pps.POVnum == cgs.playerNum + 1) {
+                        // auto-switch only works when the user didn't have the just-picked weapon
+                        if (OldSnap.playerState.inventory[parm] == 0) {
+                            // switch when player's only weapon is gunblade
+                            if (cg_weaponAutoSwitch.integer == 2) {
+                                for (i = WEAP_GUNBLADE + 1; i < WEAP_TOTAL; i++) {
+                                    if (i == parm) {
+                                        continue;
+                                    }
+                                    if (pps.inventory[i] != 0) {
+                                        break;
+                                    }
+                                }
+
+                                if (i == WEAP_TOTAL) { // didn't have any weapon
+									// TODO
+                                    //UseItem(String(parm));
+                                }
+
+                            }
+                            // switch when the new weapon improves player's selected weapon
+                            else if (cg_weaponAutoSwitch.integer == 1) {
+                                uint best = WEAP_GUNBLADE;
+                                for (i = WEAP_GUNBLADE + 1; i < WEAP_TOTAL; i++) {
+                                    if (i == parm) {
+                                        continue;
+                                    }
+                                    if (pps.inventory[i] != 0) {
+                                        best = i;
+                                    }
+                                }
+
+                                if (best < parm) {
+									// TODO
+                                    //UseItem(String(parm));
+                                }
+                            }
+                        }
+                    }
+                }
+                break;
+
+            case PSEV_DAMAGE_20:
+                dir = GS::ByteToDir(parm);
+                DamageIndicatorAdd(20, dir);
+                break;
+
+            case PSEV_DAMAGE_40:
+                dir = GS::ByteToDir(parm);
+                DamageIndicatorAdd(40, dir);
+                break;
+
+            case PSEV_DAMAGE_60:
+                dir = GS::ByteToDir(parm);
+                DamageIndicatorAdd(60, dir);
+                break;
+
+            case PSEV_DAMAGE_80:
+                dir = GS::ByteToDir(parm);
+                DamageIndicatorAdd(80, dir);
+                break;
+
+            case PSEV_INDEXEDSOUND:
+                if (@cgs.soundPrecache[parm] !is null) {
+                    Sound::StartGlobalSound(@cgs.soundPrecache[parm], CHAN_AUTO, cg_volume_effects.value);
+                }
+                break;
+
+            case PSEV_ANNOUNCER:
+                AddAnnouncerEvent(@cgs.soundPrecache[parm], false);
+                break;
+
+            case PSEV_ANNOUNCER_QUEUED:
+                AddAnnouncerEvent(@cgs.soundPrecache[parm], true);
+                break;
+
+            default:
+                break;
+        }
+    }
 }
 
 }

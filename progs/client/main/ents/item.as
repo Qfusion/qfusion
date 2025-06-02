@@ -27,7 +27,7 @@ void UpdateItemEnt( CEntity @cent ) {
 			cent.effects &= ~EF_ROTATE_AND_BOB;
 		}
 
-		@cent.refEnt.customShader = CGame::RegisterShader( cent.item.simpleIcon );
+		@cent.refEnt.customShader = RegisterShader( cent.item.simpleIcon );
 	} else {
 		cent.refEnt.rtype = RT_MODEL;
 		cent.refEnt.frame = cent.current.frame;
@@ -35,7 +35,7 @@ void UpdateItemEnt( CEntity @cent ) {
 
 		// set up the model
 		@cent.refEnt.model = cgs.modelDraw[cent.current.modelindex];
-		@cent.skel = CGame::SkeletonForModel( cent.refEnt.model );
+		@cent.skel = SkeletonForModel( cent.refEnt.model );
 	}
 }
 
@@ -97,7 +97,7 @@ void AddItemEnt( CEntity @cent ) {
 	}
 
 	cent.refEnt.axis.identity();
-	CGame::Scene::AddEntityToScene( @cent.refEnt );
+	Scene::AddEntityToScene( @cent.refEnt );
 }
 
 }

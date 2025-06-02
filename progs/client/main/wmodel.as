@@ -103,18 +103,18 @@ class WModelInfo {
             // iqm
             if( @model[p] is null ) {
                 String scratch = fn + wmPartSufix[p] + ".iqm";
-                @model[p] = CGame::RegisterModel( scratch );
+                @model[p] = RegisterModel( scratch );
             }
 
             // md3
             if( @model[p] is null ) {
                 String scratch = fn + wmPartSufix[p] + ".md3";
-                @model[p] = CGame::RegisterModel( scratch );
+                @model[p] = RegisterModel( scratch );
             }
 
             @skel[p] = null;
             if( ( p == WEAPMODEL_HAND ) && ( @model[p] !is null ) ) {
-                @skel[p] = CGame::SkeletonForModel( model[p] );
+                @skel[p] = SkeletonForModel( model[p] );
             }
         }
 
@@ -164,13 +164,13 @@ class WModelInfo {
 
         @acFont = null;
 
-        WeaponModel @wmodel = CGame::LoadWeaponModel( script );
+        WeaponModel @wmodel = LoadWeaponModel( script );
 		if( @wmodel is null ) {
 			return false;
 		}
 
         if( wmodel.numAnims != VWEAP_MAXANIMS ) {
-		    CGame::Print( StringUtils::Format( "%sERROR: incomplete WEAPON script: %s - Using default%s\n", S_COLOR_YELLOW, script, S_COLOR_WHITE ) );
+		    Print( StringUtils::Format( "%sERROR: incomplete WEAPON script: %s - Using default%s\n", S_COLOR_YELLOW, script, S_COLOR_WHITE ) );
             return false;
         }
 
@@ -246,11 +246,11 @@ class WModelInfo {
             if( l.length() > 2 ) {
                 @fontFamily = @l[0];
                 int fontSize = l[1].toInt();
-                @acFont = CGame::RegisterFont( fontFamily, QFONT_STYLE_NONE, fontSize );
+                @acFont = RegisterFont( fontFamily, QFONT_STYLE_NONE, fontSize );
             }
 
             if( @acFont !is null )
-                acFontWidth = CGame::Screen::StringWidth( "0", @acFont, 0 );
+                acFontWidth = Screen::StringWidth( "0", @acFont, 0 );
 
             if( l.length() >= 3 )
     			acDigitWidth = l[2].toFloat();
@@ -276,7 +276,7 @@ class WModelInfo {
 
                 const String @s = @l[0];
                 if( s.tolower() != "null" )
-                    sounds[i].insertLast( CGame::RegisterSound( s ) );
+                    sounds[i].insertLast( RegisterSound( s ) );
             }
         }
 
@@ -301,7 +301,7 @@ class WModelInfo {
     }
 
     /*
-    * Store the CGame::Scene::Orientation closer to the tag_flash we can create,
+    * Store the Scene::Orientation closer to the tag_flash we can create,
     * or create one using an offset we consider acceptable.
     *
     * NOTE: This tag will ignore weapon models animations. You'd have to
@@ -319,34 +319,34 @@ class WModelInfo {
             return;
         }
 
-        // assign the model to an CGame::Scene::Entity, so we can build boneposes
+        // assign the model to an Scene::Entity, so we can build boneposes
         ent.rtype = RT_MODEL;
         @ent.model = @model[WEAPMODEL_WEAPON];
         @ent.boneposes = @cg.tempBoneposes; // assigns and builds the skeleton so we can use grabtag
 
         bool haveBarrel = false;
-        if( @model[WEAPMODEL_BARREL] !is null && CGame::Scene::GrabTag( tag_barrel, @ent, "tag_barrel" ) ) {
+        if( @model[WEAPMODEL_BARREL] !is null && Scene::GrabTag( tag_barrel, @ent, "tag_barrel" ) ) {
             haveBarrel = true;
         }
         
         if( @model[WEAPMODEL_BARREL2] !is null ) {
-            if( !haveBarrel || !CGame::Scene::GrabTag( tag_barrel2, @ent, "tag_barrel2" ) ) {
+            if( !haveBarrel || !Scene::GrabTag( tag_barrel2, @ent, "tag_barrel2" ) ) {
                 @model[WEAPMODEL_BARREL2] = null;
             }
         }
 
         // try getting the tag_flash from the weapon model
-        if( !CGame::Scene::GrabTag( tag_projectionsource, @ent, "tag_flash" ) && haveBarrel ) {
+        if( !Scene::GrabTag( tag_projectionsource, @ent, "tag_flash" ) && haveBarrel ) {
             // if it didn't work, try getting it from the barrel model
-            // assign the model to an CGame::Scene::Entity, so we can build boneposes
+            // assign the model to an Scene::Entity, so we can build boneposes
             CGame::Scene::Entity ent_barrel;
 
             ent_barrel.rtype = RT_MODEL;
             @ent_barrel.model = @model[WEAPMODEL_BARREL];
             @ent_barrel.boneposes = @cg.tempBoneposes;
 
-            if( CGame::Scene::GrabTag( tag, @ent_barrel, "tag_flash" ) ) {
-                CGame::Scene::MoveToTag( tag_barrel, tag, tag_projectionsource );
+            if( Scene::GrabTag( tag, @ent_barrel, "tag_flash" ) ) {
+                Scene::MoveToTag( tag_barrel, tag, tag_projectionsource );
             }
         }
     }
@@ -363,7 +363,7 @@ void AddWeaponFlashOnTag( CGame::Scene::Entity @weapon, WModelInfo @weaponInfo, 
 	if( @weaponInfo.model[modelid] is null ) {
 		return;
 	}
-	if( !CGame::Scene::GrabTag( tag, @weapon, tag_flash ) ) {
+	if( !Scene::GrabTag( tag, @weapon, tag_flash ) ) {
 		return;
 	}
 
@@ -384,13 +384,13 @@ void AddWeaponFlashOnTag( CGame::Scene::Entity @weapon, WModelInfo @weaponInfo, 
 	flash.oldFrame = 0;
     flash.backLerp = weapon.backLerp;
 
-	CGame::Scene::PlaceModelOnTag( @flash, @weapon, tag );
+	Scene::PlaceModelOnTag( @flash, @weapon, tag );
 
 	if( ( effects & EF_RACEGHOST ) == 0 ) {
-		CGame::Scene::AddEntityToScene( @flash );
+		Scene::AddEntityToScene( @flash );
 	}
 
-	CGame::Scene::AddLightToScene( flash.origin, weaponInfo.flashRadius * intensity,
+	Scene::AddLightToScene( flash.origin, weaponInfo.flashRadius * intensity,
 		weaponInfo.flashColor );
 }
 
@@ -402,7 +402,7 @@ void AddWeaponExpansionOnTag( CGame::Scene::Entity @weapon, WModelInfo @weaponIn
 	if( @weaponInfo.model[modelid] is null ) {
 		return;
 	}
-	if( !CGame::Scene::GrabTag( tag, @weapon, tag_expansion ) ) {
+	if( !Scene::GrabTag( tag, @weapon, tag_expansion ) ) {
 		return;
 	}
 
@@ -415,10 +415,10 @@ void AddWeaponExpansionOnTag( CGame::Scene::Entity @weapon, WModelInfo @weaponIn
 	expansion.oldFrame = 0;
     expansion.backLerp = weapon.backLerp;
 
-	CGame::Scene::PlaceModelOnTag( @expansion, @weapon, tag );
+	Scene::PlaceModelOnTag( @expansion, @weapon, tag );
 	
 	if( ( effects & EF_RACEGHOST ) == 0 ) {
-        CGame::Scene::AddEntityToScene( @expansion );
+        Scene::AddEntityToScene( @expansion );
 	}
 
 	AddShellEffects( @expansion, effects );
@@ -433,7 +433,7 @@ void AddWeaponBarrelOnTag( CGame::Scene::Entity @weapon, WModelInfo @weaponInfo,
 	if( @weaponInfo.model[modelid] is null ) {
 		return;
 	}
-	if( !CGame::Scene::GrabTag( tag, @weapon, tag_barrel ) ) {
+	if( !Scene::GrabTag( tag, @weapon, tag_barrel ) ) {
 		return;
 	}
 
@@ -454,7 +454,7 @@ void AddWeaponBarrelOnTag( CGame::Scene::Entity @weapon, WModelInfo @weaponInfo,
 		rotangles[2] = anglemod( 360.0f * weaponInfo.barrelSpeed[modelid] * intensity * intensity );
 
 		// Check for tag_recoil
-		if( CGame::Scene::GrabTag( recoil, @weapon, tag_recoil ) ) {
+		if( Scene::GrabTag( recoil, @weapon, tag_recoil ) ) {
             tag.origin = tag.origin + intensity * (recoil.origin - tag.origin);
 		}
 	}
@@ -463,10 +463,10 @@ void AddWeaponBarrelOnTag( CGame::Scene::Entity @weapon, WModelInfo @weaponInfo,
     barrel.origin = weapon.origin;
 
 	// barrel requires special tagging
-	CGame::Scene::PlaceRotatedModelOnTag( @barrel, @weapon, tag );
+	Scene::PlaceRotatedModelOnTag( @barrel, @weapon, tag );
 
 	if( ( effects & EF_RACEGHOST ) == 0 ) {
-		CGame::Scene::AddEntityToScene( @barrel );
+		Scene::AddEntityToScene( @barrel );
     }
 
 	AddShellEffects( @barrel, effects );
@@ -483,7 +483,7 @@ void AddAmmoDigitOnTag( CGame::Scene::Entity @weapon, WModelInfo @weaponInfo,
 	if( weaponInfo.acDigitWidth == 0 || weaponInfo.acDigitHeight == 0 ) {
 		return;
 	}
-	if( !CGame::Scene::GrabTag( tag_digit, @weapon, tag_name ) ) {
+	if( !Scene::GrabTag( tag_digit, @weapon, tag_name ) ) {
 		return;
 	}
 	
@@ -493,7 +493,7 @@ void AddAmmoDigitOnTag( CGame::Scene::Entity @weapon, WModelInfo @weaponInfo,
     float char_w, char_h, char_s1, char_t1, char_s2, char_t2;
     ShaderHandle @char_shader;
 
-    CGame::Screen::DrawCharIntercept( "0"[0] + num, @weaponInfo.acFont, char_w, char_h, 
+    Screen::DrawCharIntercept( "0"[0] + num, @weaponInfo.acFont, char_w, char_h, 
         char_s1, char_t1, char_s2, char_t2, @char_shader );
 
 	float x_width = weaponInfo.acFontWidth;
@@ -502,7 +502,7 @@ void AddAmmoDigitOnTag( CGame::Scene::Entity @weapon, WModelInfo @weaponInfo,
     Vec4 color = colorTable[ ColorIndex( ammoItem.colorToken[1] ) ];
     color[3] = weaponInfo.acDigitAlpha;
 
-	CGame::Scene::AddQuadOnTag( @weapon, tag_digit, width, height, x_offset, char_s1, char_t1, char_s2, char_t2, 
+	Scene::AddQuadOnTag( @weapon, tag_digit, width, height, x_offset, char_s1, char_t1, char_s2, char_t2, 
 		color, char_shader );
 }
 
@@ -510,7 +510,7 @@ void AddItemIconOnTag( CGame::Scene::Entity @weapon, WModelInfo @weaponInfo,
 	const GS::Item @item, const String &tag_name ) {
 	CGame::Scene::Orientation tag_icon;
 
-	if( !CGame::Scene::GrabTag( tag_icon, @weapon, tag_name ) ) {
+	if( !Scene::GrabTag( tag_icon, @weapon, tag_name ) ) {
 		return;
 	}
 
@@ -522,8 +522,8 @@ void AddItemIconOnTag( CGame::Scene::Entity @weapon, WModelInfo @weaponInfo,
     Vec4 color = colorWhite;
     color[3] = weaponInfo.acIconAlpha;
 
-	CGame::Scene::AddQuadOnTag( @weapon, tag_icon, size, size, 0.0f, 0.0, 0.0, 1.0, 1.0, 
-		color, CGame::RegisterShader( item.icon ) );
+	Scene::AddQuadOnTag( @weapon, tag_icon, size, size, 0.0f, 0.0, 0.0, 1.0, 1.0, 
+		color, RegisterShader( item.icon ) );
 }
 
 /*
@@ -531,8 +531,8 @@ void AddItemIconOnTag( CGame::Scene::Entity @weapon, WModelInfo @weaponInfo,
 *
 * @param ammo_count Current ammo count for the counter. Negative value skips rendering of the counter. 
 */
-CGame::Scene::Orientation AddWeaponOnTag( CGame::Scene::Entity @ent, CGame::Scene::Orientation &in tag, int weaponid, int effects, 
-	int64 flashTime, int64 barrelTime, int ammoCount ) {
+CGame::Scene::Orientation AddWeaponOnTag( CGame::Scene::Entity @ent, CGame::Scene::Orientation &in tag,
+    int weaponid, int effects, int64 flashTime, int64 barrelTime, int ammoCount ) {
     CGame::Scene::Orientation projectionSource;
 
 	// don't try without base model or tag
@@ -563,10 +563,10 @@ CGame::Scene::Orientation AddWeaponOnTag( CGame::Scene::Entity @ent, CGame::Scen
     weapon.backLerp = ent.backLerp;
 	@weapon.model = @weaponInfo.model[WEAPMODEL_WEAPON];
 
-	CGame::Scene::PlaceModelOnTag( @weapon, @ent, tag );
+	Scene::PlaceModelOnTag( @weapon, @ent, tag );
 
 	if( ( effects & EF_RACEGHOST ) == 0 ) {
-		CGame::Scene::AddEntityToScene( @weapon );
+		Scene::AddEntityToScene( @weapon );
 	}
 
 	if( @weapon.model is null ) {
@@ -576,7 +576,7 @@ CGame::Scene::Orientation AddWeaponOnTag( CGame::Scene::Entity @ent, CGame::Scen
 	AddShellEffects( @weapon, effects );
 
 	// update projection source
-	CGame::Scene::MoveToTag( 
+	Scene::MoveToTag( 
         CGame::Scene::Orientation( weapon.origin, weapon.axis ), 
         weaponInfo.tag_projectionsource, projectionSource );
 

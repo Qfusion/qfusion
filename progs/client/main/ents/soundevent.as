@@ -17,17 +17,17 @@ void UpdateSoundEventEnt( CEntity @cent ) {
 
 	if( attenuation == ATTN_NONE ) {
 		if( @cgs.soundPrecache[soundindex] !is null ) {
-			CGame::Sound::StartGlobalSound( @cgs.soundPrecache[soundindex], channel & ~CHAN_FIXED, 1.0f );
+			Sound::StartGlobalSound( @cgs.soundPrecache[soundindex], channel & ~CHAN_FIXED, 1.0f );
 		}
 		return;
 	}
 
 	if( owner != 0 ) {
 		if( owner < 0 || owner >= MAX_EDICTS ) {
-			CGame::Print( "UpdateSoundEventEnt: bad owner number\n" );
+			Print( "UpdateSoundEventEnt: bad owner number\n" );
 			return;
 		}
-		if( cgEnts[owner].serverFrame != CGame::Snap.serverFrame ) {
+		if( cgEnts[owner].serverFrame != Snap.serverFrame ) {
 			owner = 0;
 		}
 	}
@@ -48,11 +48,11 @@ void UpdateSoundEventEnt( CEntity @cent ) {
 	}
 
 	if( fixed ) {
-		CGame::Sound::StartFixedSound( @cgs.soundPrecache[soundindex], state.origin, channel, 1.0f, attenuation );
+		Sound::StartFixedSound( @cgs.soundPrecache[soundindex], state.origin, channel, 1.0f, attenuation );
 	} else if( IsViewerEntity( owner ) ) {
-		CGame::Sound::StartGlobalSound( @cgs.soundPrecache[soundindex], channel, 1.0f );
+		Sound::StartGlobalSound( @cgs.soundPrecache[soundindex], channel, 1.0f );
 	} else {
-		CGame::Sound::StartRelativeSound( @cgs.soundPrecache[soundindex], owner, channel, 1.0f, attenuation );
+		Sound::StartRelativeSound( @cgs.soundPrecache[soundindex], owner, channel, 1.0f, attenuation );
 	}
 }
 

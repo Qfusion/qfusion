@@ -197,19 +197,19 @@ void Init( const String @serverName, uint playerNum, bool demoPlaying, const Str
 
 void Precache()
 {
-	@cg.tempBoneposes = CGame::Scene::RegisterTemporaryExternalBoneposes( SKM_MAX_BONES );
+	@cg.tempBoneposes = Scene::RegisterTemporaryExternalBoneposes( SKM_MAX_BONES );
 
 	for( int i = 0; i < MAX_MODELS; i++ ) {
-		ConfigString( CS_MODELS + i, CGame::GetConfigString( CS_MODELS + i ) );
+		ConfigString( CS_MODELS + i, GetConfigString( CS_MODELS + i ) );
 	}
 	for( int i = 0; i < MAX_SOUNDS; i++ ) {
-		ConfigString( CS_SOUNDS + i, CGame::GetConfigString( CS_SOUNDS + i ) );
+		ConfigString( CS_SOUNDS + i, GetConfigString( CS_SOUNDS + i ) );
 	}
 	for( int i = 0; i < MAX_CLIENTS; i++ ) {
-		ConfigString( CS_PLAYERINFOS + i, CGame::GetConfigString( CS_PLAYERINFOS + i ) );
+		ConfigString( CS_PLAYERINFOS + i, GetConfigString( CS_PLAYERINFOS + i ) );
 	}
 	for( int i = 0; i < MAX_SKINFILES; i++ ) {
-		ConfigString( CS_SKINFILES + i, CGame::GetConfigString( CS_SKINFILES + i ) );
+		ConfigString( CS_SKINFILES + i, GetConfigString( CS_SKINFILES + i ) );
 	}
 
 	RegisterBasePModel();
@@ -237,25 +237,25 @@ void Frame( int frameTime, int realFrameTime, int64 realTime, int64 serverTime,
 	cg.time = serverTime;
 	cg.extrapolationTime = extrapolationTime;
 
-	int snapTime = ( CGame::Snap.serverTime - CGame::OldSnap.serverTime );
+	int snapTime = ( Snap.serverTime - OldSnap.serverTime );
 	if( snapTime == 0 ) {
 		snapTime = cgs.snapFrameTime;
 	}
 
-	if( CGame::OldSnap.serverTime == CGame::Snap.serverTime ) {
+	if( OldSnap.serverTime == Snap.serverTime ) {
 		cg.lerpfrac = 1.0f;
 	} else {
-		cg.lerpfrac = ( double( cg.time - cg.extrapolationTime ) - double( CGame::OldSnap.serverTime ) ) / double( snapTime );
+		cg.lerpfrac = ( double( cg.time - cg.extrapolationTime ) - double( OldSnap.serverTime ) ) / double( snapTime );
 	}
 
 	if( cg.extrapolationTime != 0 ) {
-		cg.xerpTime = 0.001f * double( cg.time - CGame::Snap.serverTime );
-		cg.oldXerpTime = 0.001f * double( cg.time - CGame::OldSnap.serverTime );
+		cg.xerpTime = 0.001f * double( cg.time - Snap.serverTime );
+		cg.oldXerpTime = 0.001f * double( cg.time - OldSnap.serverTime );
 
-		if( cg.time >= CGame::Snap.serverTime ) {
-			cg.xerpSmoothFrac = double( cg.time - CGame::Snap.serverTime ) / double( cg.extrapolationTime );
+		if( cg.time >= Snap.serverTime ) {
+			cg.xerpSmoothFrac = double( cg.time - Snap.serverTime ) / double( cg.extrapolationTime );
 		} else {
-			cg.xerpSmoothFrac = double( CGame::Snap.serverTime - cg.time ) / double( cg.extrapolationTime );
+			cg.xerpSmoothFrac = double( Snap.serverTime - cg.time ) / double( cg.extrapolationTime );
 			if( cg.xerpSmoothFrac < -1.0f ) cg.xerpSmoothFrac = -1.0f;
 			if( cg.xerpSmoothFrac >  0.0f ) cg.xerpSmoothFrac =  0.0f;
 			cg.xerpSmoothFrac = 1.0f - cg.xerpSmoothFrac;
@@ -276,9 +276,9 @@ void Frame( int frameTime, int realFrameTime, int64 realTime, int64 serverTime,
 
 	if( cg_showClamp.boolean ) {
 		if( cg.lerpfrac > 1.0f ) {
-			CGame::Print( "high clamp " + cg.lerpfrac + "\n" );
+			Print( "high clamp " + cg.lerpfrac + "\n" );
 		} else if( cg.lerpfrac < 0.0f ) {
-			CGame::Print( "low clamp " + cg.lerpfrac + "\n" );
+			Print( "low clamp " + cg.lerpfrac + "\n" );
 		}
 	}
 
@@ -286,12 +286,12 @@ void Frame( int frameTime, int realFrameTime, int64 realTime, int64 serverTime,
 	if( cg.lerpfrac > 1.0f ) cg.xerpSmoothFrac = 1.0f;
 
 	Vec3 autorotate;
-	bool flipped = CGame::Camera::GetMainCamera().flipped;
+	bool flipped = Camera::GetMainCamera().flipped;
 
 	autorotate[YAW] = ( cg.time % 3600 ) * 0.1 * ( flipped ? -1.0f : 1.0f );
 	autorotate.anglesToAxis( cg.autorotateAxis );
 
-	@cg.tempBoneposes = CGame::Scene::RegisterTemporaryExternalBoneposes( SKM_MAX_BONES );
+	@cg.tempBoneposes = Scene::RegisterTemporaryExternalBoneposes( SKM_MAX_BONES );
 
 	LerpEntities();
 

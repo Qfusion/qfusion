@@ -327,7 +327,7 @@ void BulletExplosion( const Vec3 &in pos, const Trace &in tr ) {
 		}
 
 		if( ( tr.surfFlags & SURF_NOMARKS ) == 0 ) {
-			CGame::Scene::SpawnDecal( pos, dir, random() * 360, 8, 1, 1, 1, 1, 10, 1, false, @cgs.media.shaderBulletMark );
+			Scene::SpawnDecal( pos, dir, random() * 360, 8, 1, 1, 1, 1, 10, 1, false, @cgs.media.shaderBulletMark );
 		}
 	}
 }
@@ -378,13 +378,13 @@ void PlasmaExplosion( const Vec3 &in pos, const Vec3 &in dir, int fire_mode, flo
 
 	le.refEnt.rotation = rand() % 360;
 
-	CGame::Scene::SpawnDecal( pos, dir, 90, 16,
+	Scene::SpawnDecal( pos, dir, 90, 16,
 				   1, 1, 1, 1, 4, 1, true,
 				   @cgs.media.shaderPlasmaMark );
 }
 
 void BoltExplosionMode( const Vec3 &in pos, const Vec3 &in dir, int fire_mode, int surfFlags ) {
-	if( CGame::Scene::SpawnDecal( pos, dir, random() * 360, 12,
+	if( Scene::SpawnDecal( pos, dir, random() * 360, 12,
 		1, 1, 1, 1, 10, 1, true, @cgs.media.shaderElectroboltMark ) == 0 ) {
 		if( ( surfFlags & ( SURF_SKY | SURF_NOMARKS | SURF_NOIMPACT ) ) != 0 ) {
 			return;
@@ -405,7 +405,7 @@ void BoltExplosionMode( const Vec3 &in pos, const Vec3 &in dir, int fire_mode, i
 	// add white energy particles on the impact
 	ImpactPuffParticles( origin, dir, 15, 0.75f, 1, 1, 1, 1 );
 
-	CGame::Sound::StartFixedSound( @cgs.media.sfxElectroboltHit, origin, CHAN_AUTO,
+	Sound::StartFixedSound( @cgs.media.sfxElectroboltHit, origin, CHAN_AUTO,
 							cg_volume_effects.value, ATTN_STATIC );
 }
 
@@ -427,7 +427,7 @@ void InstaExplosionMode( const Vec3 &in pos, const Vec3 &in dir, int fire_mode, 
 	Vec3 angles = dir.toAngles();
 	Vec3 origin = pos + IMPACT_POINT_OFFSET * dir;
 
-	if( CGame::Scene::SpawnDecal( pos, dir, random() * 360, 12,
+	if( Scene::SpawnDecal( pos, dir, random() * 360, 12,
 						tcolor[0], tcolor[1], tcolor[2], 1.0f,
 						10, 1, true, @cgs.media.shaderInstagunMark ) == 0 ) {
 		if( ( surfFlags & ( SURF_SKY | SURF_NOMARKS | SURF_NOIMPACT ) ) != 0 ) {
@@ -446,7 +446,7 @@ void InstaExplosionMode( const Vec3 &in pos, const Vec3 &in dir, int fire_mode, 
 	// add white energy particles on the impact
 	ImpactPuffParticles( origin, dir, 15, 0.75f, 1, 1, 1, 1 );
 
-	CGame::Sound::StartFixedSound( cgs.media.sfxElectroboltHit, origin, CHAN_AUTO,
+	Sound::StartFixedSound( cgs.media.sfxElectroboltHit, origin, CHAN_AUTO,
 							cg_volume_effects.value, ATTN_STATIC );
 }
 
@@ -457,10 +457,10 @@ void RocketExplosionMode( const Vec3 pos, const Vec3 dir, int fire_mode, float r
 
 	if( fire_mode == FIRE_MODE_STRONG ) {
 		//trap_S_StartSound ( pos, 0, 0, CG_RegisterSfx (cgs.media.sfxRocketLauncherStrongHit), cg_volume_effects.value, ATTN_NORM, 0 );
-		CGame::Scene::SpawnDecal( pos, dir, random() * 360, radius * 0.5, 1, 1, 1, 1, 10, 1, false, @cgs.media.shaderExplosionMark );
+		Scene::SpawnDecal( pos, dir, random() * 360, radius * 0.5, 1, 1, 1, 1, 10, 1, false, @cgs.media.shaderExplosionMark );
 	} else {
 		//trap_S_StartSound ( pos, 0, 0, CG_RegisterSfx (cgs.media.sfxRocketLauncherWeakHit), cg_volume_effects.value, ATTN_NORM, 0 );
-		CGame::Scene::SpawnDecal( pos, dir, random() * 360, radius * 0.25, 1, 1, 1, 1, 10, 1, false, @cgs.media.shaderExplosionMark );
+		Scene::SpawnDecal( pos, dir, random() * 360, radius * 0.25, 1, 1, 1, 1, 10, 1, false, @cgs.media.shaderExplosionMark );
 	}
 
 	// animmap shader of the explosion
@@ -494,16 +494,16 @@ void RocketExplosionMode( const Vec3 pos, const Vec3 dir, int fire_mode, float r
 	ParticleExplosionEffect( pos, dir, 1, 0.5, 0, 32 );
 
 	if( fire_mode == FIRE_MODE_STRONG ) {
-		CGame::Sound::StartFixedSound( @cgs.media.sfxRocketLauncherStrongHit, pos, CHAN_AUTO, cg_volume_effects.value, ATTN_DISTANT );
+		Sound::StartFixedSound( @cgs.media.sfxRocketLauncherStrongHit, pos, CHAN_AUTO, cg_volume_effects.value, ATTN_DISTANT );
 	} else {
-		CGame::Sound::StartFixedSound( @cgs.media.sfxRocketLauncherWeakHit, pos, CHAN_AUTO, cg_volume_effects.value, ATTN_DISTANT );
+		Sound::StartFixedSound( @cgs.media.sfxRocketLauncherWeakHit, pos, CHAN_AUTO, cg_volume_effects.value, ATTN_DISTANT );
 	}
 
 	//jalfixme: add sound at water?
 }
 
 void BladeImpact( const Vec3 &in pos, const Vec3 &in dir ) {
-	int POVent = CGame::Camera::GetMainCamera().POVent;
+	int POVent = Camera::GetMainCamera().POVent;
 
 	//find what are we hitting
 	Vec3 local_pos( pos );
@@ -530,14 +530,14 @@ void BladeImpact( const Vec3 &in pos, const Vec3 &in dir ) {
 		le.refEnt.rotation = rand() % 360;
 		le.refEnt.scale = 1.0f;
 
-		CGame::Sound::StartFixedSound( @cgs.media.sfxBladeFleshHit[rand() % 3], origin, CHAN_AUTO,
+		Sound::StartFixedSound( @cgs.media.sfxBladeFleshHit[rand() % 3], origin, CHAN_AUTO,
 								cg_volume_effects.value, ATTN_NORM );
 	} else if( ( trace.surfFlags & SURF_DUST ) != 0 ) {
 		// throw particles on dust
 		SplashParticles( trace.endPos, trace.planeNormal, 0.30f, 0.30f, 0.25f, 30 );
 
 		//fixme? would need a dust sound
-		CGame::Sound::StartFixedSound( @cgs.media.sfxBladeWallHit[rand() % 2], origin, CHAN_AUTO,
+		Sound::StartFixedSound( @cgs.media.sfxBladeWallHit[rand() % 2], origin, CHAN_AUTO,
 								cg_volume_effects.value, ATTN_NORM );
 	} else {
 		LocalEntity @le = AllocModel( LE_ALPHA_FADE, origin, angles, 3, //3 frames for weak
@@ -549,10 +549,10 @@ void BladeImpact( const Vec3 &in pos, const Vec3 &in dir ) {
 
 		SplashParticles( trace.endPos, trace.planeNormal, 0.30f, 0.30f, 0.25f, 15 );
 
-		CGame::Sound::StartFixedSound( cgs.media.sfxBladeWallHit[rand() % 2], origin, CHAN_AUTO,
+		Sound::StartFixedSound( cgs.media.sfxBladeWallHit[rand() % 2], origin, CHAN_AUTO,
 								cg_volume_effects.value, ATTN_NORM );
 		if( ( trace.surfFlags & SURF_NOMARKS ) == 0 ) {
-			CGame::Scene::SpawnDecal( pos, dir, random() * 10, 8, 1, 1, 1, 1, 10, 1, false, @cgs.media.shaderBladeMark );
+			Scene::SpawnDecal( pos, dir, random() * 10, 8, 1, 1, 1, 1, 10, 1, false, @cgs.media.shaderBladeMark );
 		}
 	}
 }
@@ -571,7 +571,7 @@ void LaserGunImpact( const Vec3 &in pos, float radius, const Vec3 &in laser_dir,
 	@ent.model = @cgs.media.modLasergunWallExplo;
 	angles.anglesToAxis( ent.axis );
 
-	CGame::Scene::AddEntityToScene( @ent );
+	Scene::AddEntityToScene( @ent );
 }
 
 void GunBladeBlastImpact( const Vec3 &in pos, const Vec3 &in dir, float radius ) {
@@ -596,7 +596,7 @@ void GunBladeBlastImpact( const Vec3 &in pos, const Vec3 &in dir, float radius )
 	le_explo.refEnt.rotation = rand() % 360;
 	le_explo.refEnt.scale = radius / model_radius;
 
-	CGame::Scene::SpawnDecal( pos, dir, random() * 360, 3 + ( radius * 0.5f ), 
+	Scene::SpawnDecal( pos, dir, random() * 360, 3 + ( radius * 0.5f ), 
 		1, 1, 1, 1, 10, 1, false, @cgs.media.shaderExplosionMark );
 }
 
@@ -727,9 +727,9 @@ void GrenadeExplosionMode( const Vec3 &in pos, const Vec3 &in dir, int fire_mode
 	//jalfixme: (shouldn't we do the water sound variation?)
 
 	if( fire_mode == FIRE_MODE_STRONG ) {
-		CGame::Scene::SpawnDecal( pos, dir, random() * 360, radius * 0.5, 1, 1, 1, 1, 10, 1, false, @cgs.media.shaderExplosionMark );
+		Scene::SpawnDecal( pos, dir, random() * 360, radius * 0.5, 1, 1, 1, 1, 10, 1, false, @cgs.media.shaderExplosionMark );
 	} else {
-		CGame::Scene::SpawnDecal( pos, dir, random() * 360, radius * 0.25, 1, 1, 1, 1, 10, 1, false, @cgs.media.shaderExplosionMark );
+		Scene::SpawnDecal( pos, dir, random() * 360, radius * 0.25, 1, 1, 1, 1, 10, 1, false, @cgs.media.shaderExplosionMark );
 	}
 
 	// animmap shader of the explosion
@@ -763,9 +763,9 @@ void GrenadeExplosionMode( const Vec3 &in pos, const Vec3 &in dir, int fire_mode
 	ParticleExplosionEffect( pos, dir, 1, 0.5, 0, 32 );
 
 	if( fire_mode == FIRE_MODE_STRONG ) {
-		CGame::Sound::StartFixedSound( @cgs.media.sfxGrenadeStrongExplosion, pos, CHAN_AUTO, cg_volume_effects.value, ATTN_DISTANT );
+		Sound::StartFixedSound( @cgs.media.sfxGrenadeStrongExplosion, pos, CHAN_AUTO, cg_volume_effects.value, ATTN_DISTANT );
 	} else {
-		CGame::Sound::StartFixedSound( @cgs.media.sfxGrenadeWeakExplosion, pos, CHAN_AUTO, cg_volume_effects.value, ATTN_DISTANT );
+		Sound::StartFixedSound( @cgs.media.sfxGrenadeWeakExplosion, pos, CHAN_AUTO, cg_volume_effects.value, ATTN_DISTANT );
 	}
 }
 
@@ -776,9 +776,9 @@ void GenericExplosion( const Vec3 &in pos, const Vec3 &in dir, int fire_mode, fl
 	//jalfixme: (shouldn't we do the water sound variation?)
 	if( decal ) {
 		if( fire_mode == FIRE_MODE_STRONG ) {
-			CGame::Scene::SpawnDecal( pos, dir, random() * 360, radius * 0.5, 1, 1, 1, 1, 10, 1, false, @cgs.media.shaderExplosionMark );
+			Scene::SpawnDecal( pos, dir, random() * 360, radius * 0.5, 1, 1, 1, 1, 10, 1, false, @cgs.media.shaderExplosionMark );
 		} else {
-			CGame::Scene::SpawnDecal( pos, dir, random() * 360, radius * 0.25, 1, 1, 1, 1, 10, 1, false, @cgs.media.shaderExplosionMark );
+			Scene::SpawnDecal( pos, dir, random() * 360, radius * 0.25, 1, 1, 1, 1, 10, 1, false, @cgs.media.shaderExplosionMark );
 		}
 	}
 
@@ -795,9 +795,9 @@ void GenericExplosion( const Vec3 &in pos, const Vec3 &in dir, int fire_mode, fl
 
 	// use the rocket explosion sounds
 	if( fire_mode == FIRE_MODE_STRONG ) {
-		CGame::Sound::StartFixedSound( @cgs.media.sfxRocketLauncherStrongHit, pos, CHAN_AUTO, cg_volume_effects.value, ATTN_DISTANT );
+		Sound::StartFixedSound( @cgs.media.sfxRocketLauncherStrongHit, pos, CHAN_AUTO, cg_volume_effects.value, ATTN_DISTANT );
 	} else {
-		CGame::Sound::StartFixedSound( @cgs.media.sfxRocketLauncherWeakHit, pos, CHAN_AUTO, cg_volume_effects.value, ATTN_DISTANT );
+		Sound::StartFixedSound( @cgs.media.sfxRocketLauncherWeakHit, pos, CHAN_AUTO, cg_volume_effects.value, ATTN_DISTANT );
 	}
 }
 
@@ -1070,7 +1070,7 @@ void AddLocalEntities( void ) {
 		auto @ent = @le.refEnt;
 
 		if( le.light != 0 && scale != 0.0f ) {
-			CGame::Scene::AddLightToScene( ent.origin, le.light * scale, Vec3ToColor( le.lightcolor ) );
+			Scene::AddLightToScene( ent.origin, le.light * scale, Vec3ToColor( le.lightcolor ) );
 		}
 
 		if( le.type == LE_LASER ) {
@@ -1240,16 +1240,16 @@ void AddLocalEntities( void ) {
 
 		if( @le.skel != null ) {
 			// get space in cache, interpolate, transform, link
-			@le.refEnt.boneposes = CGame::Scene::RegisterTemporaryExternalBoneposes( @le.skel );
+			@le.refEnt.boneposes = Scene::RegisterTemporaryExternalBoneposes( @le.skel );
 			@le.refEnt.oldBoneposes = @le.refEnt.boneposes;
-			CGame::Scene::LerpSkeletonPoses( @le.skel, le.refEnt.frame, le.refEnt.oldFrame, @le.refEnt.boneposes, 1.0 - le.refEnt.backLerp );
-			CGame::Scene::TransformBoneposes( @le.skel, @le.refEnt.boneposes, @le.refEnt.boneposes );
+			Scene::LerpSkeletonPoses( @le.skel, le.refEnt.frame, le.refEnt.oldFrame, @le.refEnt.boneposes, 1.0 - le.refEnt.backLerp );
+			Scene::TransformBoneposes( @le.skel, @le.refEnt.boneposes, @le.refEnt.boneposes );
 		}
 
 		ent.lightingOrigin = ent.origin;
 		le.velocity += time * le.accel;
 
-		CGame::Scene::AddEntityToScene( @ent );
+		Scene::AddEntityToScene( @ent );
 	}
 }
 
