@@ -43,15 +43,17 @@ class ViewWeapon {
 
     void UpdateProjectionSource( const Vec3 &in hand_origin, const Mat3 &in hand_axis, const Vec3 &in weap_origin, const Mat3 &in weap_axis ) {
         // move to tag_weapon
-        CGame::Scene::Orientation tag_weapon = CGame::Scene::MoveToTag( 
+        CGame::Scene::Orientation tag_weapon;
+        
+        CGame::Scene::MoveToTag( 
             CGame::Scene::Orientation( hand_origin, hand_axis ),
-            CGame::Scene::Orientation( weap_origin, weap_axis ) );
+            CGame::Scene::Orientation( weap_origin, weap_axis ), tag_weapon );
 
         // move to projectionSource tag
         if( weapon > WEAP_NONE && weapon < WEAP_TOTAL ) {
             auto @weaponInfo = @cgs.weaponModelInfo[weapon];
-            projectionSource = CGame::Scene::MoveToTag( tag_weapon,
-                        weaponInfo.tag_projectionsource );
+            CGame::Scene::MoveToTag( tag_weapon,
+                weaponInfo.tag_projectionsource, projectionSource );
             return;
         }
 
@@ -505,7 +507,7 @@ class ViewWeapon {
         // add attached weapon
         CGame::Scene::Orientation tag;
         if( CGame::Scene::GrabTag( tag, @ent, "tag_weapon" ) ) {
-            auto @firedef = GS::FiredefForPlayerState( @state, state.stats[STAT_WEAPON] );
+            auto @firedef = @GS::Weapons::FiredefForPlayerState( @state, state.stats[STAT_WEAPON] );
 
             AddWeaponOnTag( @ent, tag, weapon, cg.effects | EF_OUTLINE, flashTime, 
                 cgEnts[POVnum].pmodel.barrelTime, state.inventory[firedef.ammoID] );

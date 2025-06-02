@@ -199,7 +199,6 @@ void UpdatePlayerModelEnt( CEntity @cent ) {
 }
 
 void AddPlayerEnt( CEntity @cent ) {
-	//CGame::Scene::Orientation tag_weapon;
     auto @cam = @CGame::Camera::GetMainCamera();
     bool isViewer = CGame::IsViewerEntity( cent.current.number );
 	bool isCorpse = cent.current.type == ET_CORPSE || cent.current.type == ET_MONSTER_CORPSE;
@@ -277,7 +276,7 @@ void AddPlayerEnt( CEntity @cent ) {
 	CGame::Scene::RecurseBlendSkeletalBone( @cent.skel, @cg.tempBoneposes, @cent.refEnt.boneposes, rootanim, 1.0f );
 
 	// add skeleton effects (pose is unmounted yet)
-	if( cent.current.type != ET_CORPSE ) {
+	if( !isCorpse ) {
         Vec3 tmpangles;
 
 		// if it's our client use the predicted angles

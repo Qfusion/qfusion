@@ -41,7 +41,10 @@ class CEntity {
 	Vec3 microSmoothOrigin2;
 
 	Vec3 laserOrigin;
+	Vec3 laserOriginOld;
 	Vec3 laserPoint;
+	Vec3 laserPointOld;
+	bool laserCurved;
 
 	Vec3 trailOrigin;
 	int64 respawnTime;
@@ -120,6 +123,34 @@ class CEntity {
 		tag_result = pmodel.projectionSource;
 		return true;
 	}
+
+	CModelHandle @GetCModel() {
+		int x, zd, zu;
+		Vec3 bmins, bmaxs;
+
+		if( serverFrame != CGame::Snap.serverFrame ) { // not present in current frame
+			return null;
+		}
+
+		// find the cmodel
+		if( current.solid != SOLID_BMODEL ) { // special value for bmodel
+			return GS::InlineModel( current.modelindex );
+		}
+		if( current.solid == 0 ) {
+			return null;
+		}
+
+		CModelHandle @cmodel;
+		GS::BBoxForEntityState( current, bmins, bmaxs );
+		if( type == ET_PLAYER || type == ET_CORPSE || type == ET_MONSTER_PLAYER || type == ET_MONSTER_CORPSE ) {
+			@cmodel = @GS::OctagonModelForBounds( bmins, bmaxs );
+		} else {
+			@cmodel = @GS::ModelForBounds( bmins, bmaxs );
+		}
+
+		return @cmodel;
+	}
+
 }
 
 array< CEntity > cgEnts( MAX_EDICTS );
@@ -436,6 +467,10 @@ void UpdateEntities() {
 				}
 				break;
 
+			case ET_ITEM:
+				UpdateItemEnt( @cent );
+				break;
+
 			// projectiles with linear trajectories
 			case ET_BLASTER:
 			case ET_ELECTRO_WEAK:
@@ -444,10 +479,6 @@ void UpdateEntities() {
 			case ET_GRENADE:
 				cent.renderfx |= ( RF_NOSHADOW | RF_FULLBRIGHT );
 				UpdateGenericEnt( @cent );
-				break;
-
-			case ET_ITEM:
-				UpdateItemEnt( @cent );
 				break;
 
 			case ET_FLAG_BASE:
@@ -473,6 +504,44 @@ void UpdateEntities() {
 
 			case ET_SOUNDEVENT:
 				UpdateSoundEventEnt( @cent );
+				break;
+
+			case ET_BEAM:
+				break;
+
+			case ET_DECAL:
+				UpdateDecalEnt( @cent );
+				break;
+
+			case ET_MINIMAP_ICON:
+				cent.refEnt.shaderRGBA = ColorForEntity( @cent, false );
+				if( cent.current.modelindex > 0 && cent.current.modelindex < MAX_IMAGES ) {
+					@cent.refEnt.customShader = cgs.imagePrecache[ cent.current.modelindex ];
+				} else {
+					@cent.refEnt.customShader = null;
+				}
+				break;
+
+			case ET_PORTALSURFACE:
+				// portals aren't interpolated
+				break;
+
+			case ET_EVENT:
+				break;
+
+			case ET_ITEM_TIMER:
+				break;
+
+			case ET_PARTICLES:
+				UpdateParticlesEnt( @cent );
+				break;
+
+			case ET_VIDEO_SPEAKER:
+				break;
+
+			case ET_LASERBEAM:
+			case ET_CURVELASERBEAM:
+				UpdateLaserbeamEnt( @cent );
 				break;
 		}
 	}
@@ -514,7 +583,13 @@ void LerpEntities( void ) {
 				LerpSpriteEnt( @cent );
 				break;
 
-			case ET_PUSH_TRIGGER:
+			case ET_DECAL:
+				LerpDecalEnt( @cent );
+				break;
+
+			case ET_LASERBEAM:
+			case ET_CURVELASERBEAM:
+				LerpLaserbeamEnt( @cent );
 				break;
 
 			default:
@@ -535,25 +610,35 @@ bool AddEntityReal( CEntity @cent )
 		return false;
 	}
 
+	if( state.linearMovement ) {
+		if( !cent.linearProjectileCanDraw ) {
+			return true;
+		}
+	}
+
+	bool canLight = !state.linearMovement;
+
 	switch( cent.type ) {
 		case ET_GENERIC:
 			AddGenericEnt( @cent );
 			DrawEntityBox( @cent );
 			EntityLoopSound( @state, ATTN_STATIC );
-			return true;
+			canLight = true;
+			break;
 
 		case ET_GIB:
 			if( cg_gibs.boolean ) {
 				AddGenericEnt( @cent );
 				EntityLoopSound( @state, ATTN_STATIC );
+				canLight = true;
 			}
-			return true;
+			break;
 
 		case ET_BLASTER:
 			AddGenericEnt( @cent );
 			BlasterTrail( cent.trailOrigin, cent.refEnt.origin );
 			EntityLoopSound( @state, ATTN_STATIC );
-			return true;
+			break;
 
 		case ET_ELECTRO_WEAK:
 			cent.current.frame = cent.prev.frame = 0;
@@ -562,67 +647,112 @@ bool AddEntityReal( CEntity @cent )
 			AddGenericEnt( @cent );
 			EntityLoopSound( @state, ATTN_STATIC );
 			ElectroWeakTrail( cent.trailOrigin, cent.refEnt.origin );
-			return true;
+			break;
 
 		case ET_ITEM:
 			AddItemEnt( @cent );
 			DrawEntityBox( @cent );
 			EntityLoopSound( @state, ATTN_IDLE );
-			return true;
+			canLight = true;			
+			break;
 
 		case ET_ROCKET:
 			AddGenericEnt( @cent );
 			LE::ProjectileTrail( @cent );
 			EntityLoopSound( @state, ATTN_NORM );
 			CGame::Scene::AddLightToScene( cent.refEnt.origin, 300.0f, Vec3ToColor( Vec3( 0.8f, 0.6f, 0 ) ) );
-			return true;
+			break;
 
 		case ET_GRENADE:
 			AddGenericEnt( @cent );
 			EntityLoopSound( @state, ATTN_STATIC );
 			LE::ProjectileTrail( @cent );
-			//canLight = true;
-			return true;
+			canLight = true;
+			break;
 
 		case ET_PLASMA:
 			AddGenericEnt( @cent );
 			EntityLoopSound( @state, ATTN_STATIC );
-			return true;
+			break;
 
 		case ET_PUSH_TRIGGER:
 			DrawEntityBox( @cent );
 			EntityLoopSound( @state, ATTN_STATIC );
-			return true;
+			break;
 
 		case ET_FLAG_BASE:
 			AddFlagBaseEnt( @cent );
-			return true;
+			EntityLoopSound( @state, ATTN_STATIC );
+			canLight = true;
+			break;
 
 		case ET_SPRITE:
 		case ET_RADAR:
 			AddSpriteEnt( @cent );
 			EntityLoopSound( @state, ATTN_STATIC );
-			//canLight = true;
-			return true;
+			canLight = true;
+			break;
 
 		case ET_PLAYER:
 		case ET_MONSTER_PLAYER:
 			AddPlayerEnt( @cent );
+			LaserBeamEffect( @cent );
 			WeaponBeamEffect( @cent );
 			EntityLoopSound( @state, ATTN_IDLE );
-			return true;
+			canLight = true;			
+			break;
 
 		case ET_CORPSE:
 		case ET_MONSTER_CORPSE:
 			AddPlayerEnt( @cent );
+			LaserBeamEffect( @cent );
 			EntityLoopSound( @state, ATTN_IDLE );
-			//canLight = true;
-			return true;
+			canLight = true;
+			break;
+
+		case ET_BEAM:
+			AddBeamEnt( @cent );
+			EntityLoopSound( @state, ATTN_STATIC );
+			break;
+
+		case ET_DECAL:
+			AddDecalEnt( @cent );
+			EntityLoopSound( @state, ATTN_STATIC );
+			break;
+
+		case ET_LASERBEAM:
+		case ET_CURVELASERBEAM:
+			break;
+
+		case ET_EVENT:
+		case ET_SOUNDEVENT:
+			break;
+
+		case ET_ITEM_TIMER:
+			break;
+
+		case ET_MINIMAP_ICON:
+			if( ( cent.effects & EF_TEAMCOLOR_TRANSITION ) != 0 ) {
+				EntAddTeamColorTransitionEffect( @cent );
+			}
+			break;
+
+		case ET_PARTICLES:
+			AddParticlesEnt( @cent );
+			break;
 
 		default:
 			return false;
 	}
-	return false;
+
+	if (canLight && state.light != 0) {
+		Vec4 c = ColorToVec4( state.light );
+		Vec3 rgb = Vec3( c[0], c[1], c[2] );
+		float radius = c[3] * 4;
+		CGame::Scene::AddLightToScene( cent.refEnt.origin, radius, Vec3ToColor( rgb ) );
+	}
+
+	return true;
 }
 
 bool AddEntity( int entNum )

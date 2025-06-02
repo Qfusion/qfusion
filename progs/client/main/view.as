@@ -54,7 +54,7 @@ void DamageIndicatorAdd( int damage, const Vec3 &in dir ) {
 
 	Mat3 playerAxis;
 	Vec3 playerAngles( 0, CGame::PredictedPlayerState.viewAngles.y, 0 );
-	playerAngles.anglesToMarix( playerAxis );
+	playerAngles.anglesToMatrix( playerAxis );
 
 	if( cg_damage_indicator_time.value < 0 ) {
 		cg_damage_indicator_time.set( 0 );

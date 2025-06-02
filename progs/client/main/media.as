@@ -102,6 +102,10 @@ class CMedia {
 	SoundHandle @sfxLasergunStrongStop;
 	array<SoundHandle @>sfxLasergunHit(3);
 
+	// Riotgun sounds
+	SoundHandle @sfxRiotgunWeakHit;
+	SoundHandle @sfxRiotgunStrongHit;
+
 	SoundHandle @sfxElectroboltHit;
 
     array<SoundHandle @> sfxVSaySounds(eVSays::VSAY_TOTAL);
@@ -235,11 +239,11 @@ class CMedia {
         for( int i = 0; i < 3; i++ )
             @sfxGunbladeStrongHit[i] = CGame::RegisterSound( StringUtils::Format( S_WEAPON_GUNBLADE_S_HIT_1_to_2, i + 1 ) );
 
-        // Plasmagun sounds :
+        // Plasmagun sounds
         @sfxPlasmaWeakHit = CGame::RegisterSound( S_WEAPON_PLASMAGUN_W_HIT );
         @sfxPlasmaStrongHit = CGame::RegisterSound( S_WEAPON_PLASMAGUN_S_HIT );
 
-        // Rocket launcher sounds :
+        // Rocket launcher sounds
         @sfxRocketLauncherWeakHit = CGame::RegisterSound( S_WEAPON_ROCKET_W_HIT );
         @sfxRocketLauncherStrongHit = CGame::RegisterSound( S_WEAPON_ROCKET_S_HIT );
 
@@ -254,6 +258,11 @@ class CMedia {
         @sfxLasergunHit[1] = CGame::RegisterSound( S_WEAPON_LASERGUN_HIT_1 );
         @sfxLasergunHit[2] = CGame::RegisterSound( S_WEAPON_LASERGUN_HIT_2 );
 
+        // Riotgun sounds
+        @sfxRiotgunWeakHit = CGame::RegisterSound( S_WEAPON_RIOTGUN_W_HIT );
+        @sfxRiotgunStrongHit = CGame::RegisterSound( S_WEAPON_RIOTGUN_S_HIT );
+
+        // Electobolt sounds
         @sfxElectroboltHit = CGame::RegisterSound( S_WEAPON_ELECTROBOLT_HIT );
 
         //VSAY sounds

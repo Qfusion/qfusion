@@ -104,13 +104,12 @@ class PModelInfo {
 		@sfx = CGame::RegisterSound( spath );
 		if( sfx is null ) {
 			if( sex == SEX_FEMALE ) {
-				spath = StringUtils::Format( "sounds/player/female/%s", realsname );
+				spath = StringUtils::Format( "sounds/players/female/%s", realsname );
 			} else {
-				spath = StringUtils::Format( "sounds/player/male/%s", realsname );
+				spath = StringUtils::Format( "sounds/players/male/%s", realsname );
 			}
 			@sfx = CGame::RegisterSound( spath );
 		}
-
 		sexedSounds.set( sname, @sfx );
 		return @sfx;
 	}

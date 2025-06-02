@@ -346,7 +346,7 @@ class WModelInfo {
             @ent_barrel.boneposes = @cg.tempBoneposes;
 
             if( CGame::Scene::GrabTag( tag, @ent_barrel, "tag_flash" ) ) {
-                tag_projectionsource = CGame::Scene::MoveToTag( tag_barrel, tag );
+                CGame::Scene::MoveToTag( tag_barrel, tag, tag_projectionsource );
             }
         }
     }
@@ -576,9 +576,9 @@ CGame::Scene::Orientation AddWeaponOnTag( CGame::Scene::Entity @ent, CGame::Scen
 	AddShellEffects( @weapon, effects );
 
 	// update projection source
-	projectionSource = CGame::Scene::MoveToTag( 
+	CGame::Scene::MoveToTag( 
         CGame::Scene::Orientation( weapon.origin, weapon.axis ), 
-        weaponInfo.tag_projectionsource );
+        weaponInfo.tag_projectionsource, projectionSource );
 
 	// expansion
 	if( ( effects & EF_STRONG_WEAPON ) != 0 ) {

@@ -65,7 +65,6 @@ class ClientState {
 	Mat3 autorotateAxis;
 
 	ViewWeapon vweapon;
-	int predictedWeaponSwitch;
 
 	//
 	// kick angles and color blend effects
@@ -76,6 +75,15 @@ class ClientState {
 	int64 fallEffectTime;
 	int64 fallEffectRebounceTime;
 	int64 screenDamageTimeOff;
+
+	//
+	// prediction
+	//
+	int64 predictingTimeStamp;
+	array<int64> predictedEventTimes(PREDICTABLE_EVENTS_MAX);
+	int predictedWeaponSwitch; // inhibit shooting prediction while a weapon change is expected
+
+	GS::Weapons::LaserbeamTrail weaklaserTrail;
 }
 
 ClientStatic cgs;
@@ -181,6 +189,8 @@ void Init( const String @serverName, uint playerNum, bool demoPlaying, const Str
 
 	cgs.weaponItemTag.axis.identity();
 	cgs.weaponItemTag.origin = -14.0 * cgs.weaponItemTag.axis.x;
+
+	GS::Weapons::initWeapons();
 
 	LE::Init();
 }

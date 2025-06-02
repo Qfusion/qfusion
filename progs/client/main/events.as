@@ -397,6 +397,13 @@ void Event_Dash( const EntityState @state, int parm ) {
 	cent.jumpedLeft = true;
 }
 
+void Event_Mover( const EntityState @state, int parm )
+{
+	Vec3 org, vel;
+	GetEntitySpatilization( state.number, org, vel );
+	CGame::Sound::StartFixedSound( cgs.soundPrecache[parm], org, CHAN_AUTO, cg_volume_effects.value, ATTN_STATIC );
+}
+
 bool EntityEvent( const EntityState @ent, int ev, int parm, bool predicted )
 {
 	CEntity @cent = @cgEnts[ent.number];
@@ -406,6 +413,8 @@ bool EntityEvent( const EntityState @ent, int ev, int parm, bool predicted )
 	Vec3 dir;
 	Vec3 color;
 	int count;
+	Vec3 fv, rv, uv;
+	auto @pps = @CGame::PredictedPlayerState;
 
 	if( !cg_test.boolean ) {
 		return false;
@@ -460,8 +469,7 @@ bool EntityEvent( const EntityState @ent, int ev, int parm, bool predicted )
 				cg.vweapon.RefreshAnimation();
 
 				if( weapon == WEAP_LASERGUN ) {
-					//TODO
-					//CG_Event_LaserBeam( ent.number, weapon, fireMode );
+					Event_LaserBeam( ent.number, weapon, fireMode );
 				}
 			}
 			return true;
@@ -481,80 +489,75 @@ bool EntityEvent( const EntityState @ent, int ev, int parm, bool predicted )
 
 			// riotgun bullets, electrobolt and instagun beams are predicted when the weapon is fired
 			if( predicted ) {
-				//TODO
-/*				Vec3 origin;
+				Vec3 origin;
 
 				if( ( weapon == WEAP_ELECTROBOLT
 					  && fireMode == FIRE_MODE_STRONG
 					  )
 					|| weapon == WEAP_INSTAGUN ) {
-					VectorCopy( cg.predictedPlayerState.pmove.origin, origin );
-					origin[2] += cg.predictedPlayerState.viewheight;
-					AngleVectors( cg.predictedPlayerState.viewangles, fv, NULL, NULL );
-					CG_Event_WeaponBeam( origin, fv, cg.predictedPlayerState.POVnum, weapon, fireMode );
+					origin = pps.pmove.origin;
+					origin.z += pps.viewHeight;
+					fv = pps.viewAngles.anglesToForward();
+					Event_WeaponBeam( origin, fv, pps.POVnum, weapon, fireMode );
 				} else if( weapon == WEAP_RIOTGUN || weapon == WEAP_MACHINEGUN ) {
 					int seed = cg.predictedEventTimes[EV_FIREWEAPON] & 255;
 
-					VectorCopy( cg.predictedPlayerState.pmove.origin, origin );
-					origin[2] += cg.predictedPlayerState.viewheight;
-					AngleVectors( cg.predictedPlayerState.viewangles, fv, rv, uv );
+					origin = pps.pmove.origin;
+					origin.z += pps.viewHeight;
+					pps.viewAngles.angleVectors( fv, rv, uv );
 
 					if( weapon == WEAP_RIOTGUN ) {
-						CG_Event_FireRiotgun( origin, fv, rv, uv, weapon, fireMode, seed, cg.predictedPlayerState.POVnum );
+						Event_FireRiotgun( origin, fv, rv, uv, weapon, fireMode, seed, pps.POVnum );
 					} else {
-						CG_Event_FireMachinegun( origin, fv, rv, uv, weapon, fireMode, seed, cg.predictedPlayerState.POVnum );
+						Event_FireMachinegun( origin, fv, rv, uv, weapon, fireMode, seed, pps.POVnum );
 					}
 				} else if( weapon == WEAP_LASERGUN ) {
-					CG_Event_LaserBeam( ent.number, weapon, fireMode );
-				}*/
+					Event_LaserBeam( ent.number, weapon, fireMode );
+				}
 			}
 			return true;
 
-/*
 		case EV_ELECTROTRAIL:
-
 			// check the owner for predicted case
-			if( IsViewerEntity( parm ) && ( ev < PREDICTABLE_EVENTS_MAX ) && ( predicted != cg.view.playerPrediction ) ) {
-				return;
+			if( IsViewerEntity( parm ) && ( ev < PREDICTABLE_EVENTS_MAX ) && ( predicted != cam.playerPrediction ) ) {
+				return true;
 			}
-			CG_Event_WeaponBeam( ent.origin, ent.origin2, parm, WEAP_ELECTROBOLT, ent.firemode );
-			break;
+			Event_WeaponBeam( ent.origin, ent.origin2, parm, WEAP_ELECTROBOLT, ent.fireMode );
+			return true;
 
 		case EV_INSTATRAIL:
-
 			// check the owner for predicted case
-			if( IsViewerEntity( parm ) && ( ev < PREDICTABLE_EVENTS_MAX ) && ( predicted != cg.view.playerPrediction ) ) {
-				return;
+			if( IsViewerEntity( parm ) && ( ev < PREDICTABLE_EVENTS_MAX ) && ( predicted != cam.playerPrediction ) ) {
+				return true;
 			}
-			CG_Event_WeaponBeam( ent.origin, ent.origin2, parm, WEAP_INSTAGUN, FIRE_MODE_STRONG );
-			break;
+			Event_WeaponBeam( ent.origin, ent.origin2, parm, WEAP_INSTAGUN, FIRE_MODE_STRONG );
+			return true;
 
 		case EV_FIRE_RIOTGUN:
 
 			// check the owner for predicted case
-			if( IsViewerEntity( ent.ownerNum ) && ( ev < PREDICTABLE_EVENTS_MAX ) && ( predicted != cg.view.playerPrediction ) ) {
-				return;
+			if( IsViewerEntity( ent.ownerNum ) && ( ev < PREDICTABLE_EVENTS_MAX ) && ( predicted != cam.playerPrediction ) ) {
+				return true;
 			}
 			
-			VectorCopy( ent.origin2, fv );
-			VectorCopy( ent.origin3, rv );
-			CrossProduct( rv, fv, uv );
-			CG_Event_FireRiotgun( ent.origin, fv, rv, uv, ent.weapon, ent.firemode, parm, ent.ownerNum );
-			break;
+			fv = ent.origin2;
+			rv = ent.origin3;
+			uv = rv ^ fv;
+			Event_FireRiotgun( ent.origin, fv, rv, uv, ent.weapon, ent.fireMode, parm, ent.ownerNum );
+			return true;
 
 		case EV_FIRE_BULLET:
 
 			// check the owner for predicted case
-			if( IsViewerEntity( ent.ownerNum ) && ( ev < PREDICTABLE_EVENTS_MAX ) && ( predicted != cg.view.playerPrediction ) ) {
-				return;
+			if( IsViewerEntity( ent.ownerNum ) && ( ev < PREDICTABLE_EVENTS_MAX ) && ( predicted != cam.playerPrediction ) ) {
+				return true;
 			}
 
-			VectorCopy( ent.origin2, fv );
-			VectorCopy( ent.origin3, rv );
-			CrossProduct( rv, fv, uv );
-			CG_Event_FireMachinegun( ent.origin, fv, rv, uv, ent.weapon, ent.firemode, parm, ent.ownerNum );
-			break;
-*/
+			fv = ent.origin2;
+			rv = ent.origin3;
+			uv = rv ^ fv;
+			Event_FireMachinegun( ent.origin, fv, rv, uv, ent.weapon, ent.fireMode, parm, ent.ownerNum );
+			return true;
 
 		case EV_NOAMMOCLICK:
 			if( viewer ) {
@@ -813,7 +816,23 @@ bool EntityEvent( const EntityState @ent, int ev, int parm, bool predicted )
 			//ent.skinnum is knockback value
 			cg.vweapon.StartKickAnglesEffect( ent.origin, ent.skinNum * 8, ent.weapon * 8, 200 );
 			break;
-			
+
+		case EV_PNODE:
+			CGame::Scene::SpawnPolyBeam( ent.origin, ent.origin2, ColorToVec4( ent.colorRGBA ), 4, 2000.0f, 0.0f, @cgs.media.shaderLaser, 64, 0 );
+			break;
+
+		case EV_PLAT_HIT_TOP:
+		case EV_PLAT_HIT_BOTTOM:
+		case EV_PLAT_START_MOVING:
+		case EV_DOOR_HIT_TOP:
+		case EV_DOOR_HIT_BOTTOM:
+		case EV_DOOR_START_MOVING:
+		case EV_BUTTON_FIRE:
+		case EV_TRAIN_STOP:
+		case EV_TRAIN_START:
+			Event_Mover( @ent, parm );
+			break;
+
 		default:
 			break;
 	}

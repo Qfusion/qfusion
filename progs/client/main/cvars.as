@@ -52,6 +52,10 @@ Cvar cg_drawEntityBoxes( "cg_drawEntityBoxes", "0", 0 );
 
 Cvar cg_voiceChats( "cg_voiceChats", "1", CVAR_ARCHIVE );
 
+Cvar cg_predictLaserBeam( "cg_predictLaserBeam", "1", CVAR_ARCHIVE );
+
+Cvar cg_laserBeamSubdivisions( "cg_laserBeamSubdivisions", StringUtils::Format( "%d", GS::Weapons::CURVELASERBEAM_SUBDIVISIONS ), CVAR_ARCHIVE );
+
 Cvar cg_gun( "cg_gun", "1", CVAR_ARCHIVE );
 Cvar cg_gunx( "cg_gunx", "0", CVAR_ARCHIVE );
 Cvar cg_guny( "cg_guny", "0", CVAR_ARCHIVE );

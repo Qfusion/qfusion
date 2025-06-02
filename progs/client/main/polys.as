@@ -60,4 +60,119 @@ void InstaPolyBeam( const Vec3 &in start, const Vec3 &in end, int team ) {
 		@cgs.media.shaderInstaBeam, 128, 0 );
 }
 
+void LaserGunPolyBeam(const Vec3 start, const Vec3 end, const Vec4 color, int tag) {
+    Vec4 tcolor(0, 0, 0, 0.35f);
+
+	// dmh: if teamcolor is too dark, set color to default
+    if (color.w > 0.0f) {
+        tcolor = color;
+        float min = 90.0f / 255.0f;
+        float total = tcolor.x + tcolor.y + tcolor.z;
+        if (total < min) {
+            tcolor.x = tcolor.y = tcolor.z = min;
+        }
+    }
+
+    CGame::Scene::SpawnPolyBeam(start, end, (color.w > 0.0f) ? tcolor : Vec4(0,0,0,0), 12, 1, 0, cgs.media.shaderLaserGunBeam, 64, tag);
+}
+
+/*
+* ElectroPolyboardBeam
+*
+* Spawns a segmented lightning beam, pseudo-randomly disturbing each segment's 
+* placement along the given line.
+*
+* For more information please refer to
+* Mathematics for 3D Game Programming and Computer Graphics, section "Polyboards"
+*/
+void ElectroPolyboardBeam(const Vec3 start, const Vec3 end, int subdivisions, float phase, float range, const Vec4 color, int key, bool firstPerson) {
+    Vec4 tcolor(0, 0, 0, 0.35f);
+
+    if (color.w > 0.0f) {
+        tcolor = color;
+        float min = 90.0f / 255.0f;
+        float total = tcolor.x + tcolor.y + tcolor.z;
+        if (total < min) {
+            tcolor.x = tcolor.y = tcolor.z = min;
+        }
+    }
+
+    Vec3 from = start;
+    Vec3 dir = end - start;
+    float dist = dir.length();
+    dir.normalize();
+
+    int minSub = int(GS::Weapons::CURVELASERBEAM_SUBDIVISIONS - 10);
+    int maxSub = int(GS::Weapons::CURVELASERBEAM_SUBDIVISIONS + 10);
+	if (subdivisions < minSub) {
+		subdivisions = minSub;
+	} else if (subdivisions > maxSub) {
+		subdivisions = maxSub;
+	}
+    int segments = int(subdivisions * ((dist + 500.0f) / range));
+    const float frequency = 0.1244f;
+    auto shader = cgs.media.shaderLaserGunBeam;
+
+    Vec3 to, c, d, e, f, g, h;
+
+    for (int i = 0; i <= segments; i++) {
+        float frac = range * float(i) / float(segments);
+        float amplitude = GetNoise(0, 0, 0, float(cg.realTime) + phase) * sqrt(float(i) / float(segments));
+        float width;
+        bool last = false;
+
+        if (firstPerson) {
+            width = (phase + 1) * 4.0f * float(i);
+			if (i > 1)
+	            amplitude *= (phase + 1) * (phase + 1);
+			else
+				amplitude = 0;
+        } else {
+            width = 12.0f;
+            amplitude *= (phase + 1);
+        }
+
+        if (frac >= dist + width * 2.0f) {
+            last = true;
+            width = frac - dist - width * 2.0f;
+        }
+
+        float x = float(i) * (phase + 1) * 400.0f / float(segments);
+        x *= frequency;
+        float t = 0.01f * (-float(cg.time) * 0.01f * 130.0f);
+
+        float y = sin(x);
+        y += sin(x * 2.1f + t * 2.0f) * 4.5f;
+        y += sin(x * 1.72f + t * 6.121f) * 4.0f;
+        y += sin(x * 2.221f + t * 10.437f) * 5.0f;
+        y += sin(x * 3.1122f + t * 8.269f) * 2.5f;
+        y *= amplitude;
+
+        to = start + dir * frac;
+
+        d = CGame::Camera::GetMainCamera().origin - from;
+        d.normalize();
+
+        c = dir ^ d;
+
+        e = from + c * width;
+        f = from - c * width;
+
+        e += c * y;
+        f += c * y;
+
+        if (i > 0) {
+            CGame::Scene::SpawnPolyQuad(e, f, h, g, 1, 1, (color.w > 0.0f) ? tcolor : Vec4(0,0,0,0), 1, 0, shader, key);
+        }
+
+        from = to;
+        g = e;
+        h = f;
+
+        if (last) {
+            break;
+        }
+    }
+}
+
 }

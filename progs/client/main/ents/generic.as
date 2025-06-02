@@ -132,7 +132,7 @@ void AddGenericEnt( CEntity @cent ) {
 	}
 
 	if( ( cent.effects & EF_TEAMCOLOR_TRANSITION ) != 0 ) {
-		EntAddTeamColorTransitionEffect( cent );
+		EntAddTeamColorTransitionEffect( @cent );
 	}
 
 	// render effects

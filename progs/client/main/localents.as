@@ -225,6 +225,10 @@ void ElectroRings( const Vec3 &in start, const Vec3 &in end, const Vec4 &in colo
 	}
 
 	int numrings = int( len / space ) + 1;
+	if (numrings > MAX_LOCAL_ENTITIES / 2) {
+		numrings = MAX_LOCAL_ENTITIES / 2;
+	}
+
 	float timeFrac = 0.6f / float( numrings );
 	for( int i = 0; i < numrings; i++ ) {
 		int t = int( ( float( i ) * timeFrac + 7.5f + ( i * 0.20f ) ) * cg_ebbeam_time.value );
