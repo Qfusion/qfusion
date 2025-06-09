@@ -428,8 +428,8 @@ static const gs_asBehavior_t asPoly_ObjectBehaviors[] = {
 };
 
 static const gs_asMethod_t asPoly_Methods[] = {
-	{ ASLIB_FUNCTION_DECL( void, get_verts, () const ), asFUNCTION( asPoly_GetVerts ), asCALL_CDECL_OBJLAST }, 
-	{ ASLIB_FUNCTION_DECL( void, get_elems, () const ), asFUNCTION( asPoly_GetElems ), asCALL_CDECL_OBJLAST }, 
+	{ ASLIB_FUNCTION_DECL( array<PolyVert> &, get_verts, () const ), asFUNCTION( asPoly_GetVerts ), asCALL_CDECL_OBJLAST }, 
+	{ ASLIB_FUNCTION_DECL( array<uint16> &, get_elems, () const ), asFUNCTION( asPoly_GetElems ), asCALL_CDECL_OBJLAST }, 
 	{ ASLIB_FUNCTION_DECL( void, set_verts, (const array<PolyVert>&in) ), asFUNCTION( asPoly_SetVerts ), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL( void, set_elems, (const array<uint16>&in) ), asFUNCTION( asPoly_SetElems ), asCALL_CDECL_OBJLAST }, 
 

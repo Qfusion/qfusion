@@ -243,55 +243,6 @@ static float CG_CalcViewFov( void ) {
 }
 
 /*
-* CG_CalcViewBob
-*/
-static void CG_CalcViewBob( void ) {
-	float bobMove, bobTime, bobScale;
-
-	if( !cg.view.drawWeapon ) {
-		return;
-	}
-
-	// calculate speed and cycle to be used for all cyclic walking effects
-	cg.xyspeed = sqrt( cg.predictedPlayerState.pmove.velocity[0] * cg.predictedPlayerState.pmove.velocity[0] + cg.predictedPlayerState.pmove.velocity[1] * cg.predictedPlayerState.pmove.velocity[1] );
-
-	bobScale = 0;
-	if( cg.xyspeed < 5 ) {
-		cg.oldBobTime = 0;  // start at beginning of cycle again
-	} else if( cg_gunbob->integer ) {
-		if( !ISVIEWERENTITY( cg.view.POVent ) ) {
-			bobScale = 0.0f;
-		} else if( CG_PointContents( cg.view.origin ) & MASK_WATER ) {
-			bobScale =  0.75f;
-		} else {
-			centity_t *cent;
-			vec3_t mins, maxs;
-			trace_t trace;
-
-			cent = &cg_entities[cg.view.POVent];
-			GS_BBoxForEntityState( &cent->current, mins, maxs );
-			maxs[2] = mins[2];
-			mins[2] -= ( 1.6f * STEPSIZE );
-
-			CG_Trace( &trace, cg.predictedPlayerState.pmove.origin, mins, maxs, cg.predictedPlayerState.pmove.origin, cg.view.POVent, MASK_PLAYERSOLID );
-			if( trace.startsolid || trace.allsolid ) {
-				if( cg.predictedPlayerState.pmove.stats[PM_STAT_CROUCHTIME] ) {
-					bobScale = 1.5f;
-				} else {
-					bobScale = 2.5f;
-				}
-			}
-		}
-	}
-
-	bobMove = cg.frameTime * bobScale * 0.001f;
-	bobTime = ( cg.oldBobTime += bobMove );
-
-	cg.bobCycle = (int)bobTime;
-	cg.bobFracSin = fabs( sin( bobTime * M_PI ) );
-}
-
-/*
 * CG_ResetColorBlend
 */
 void CG_ResetColorBlend( void ) {
@@ -712,8 +663,6 @@ static void CG_SetupViewDef( cg_viewdef_t *view, int type, float stereo_separati
 		}
 
 		view->fov_y = WidescreenFov( CG_CalcViewFov() );
-
-		CG_CalcViewBob();
 
 		VectorCopy( cg.predictedPlayerState.pmove.velocity, view->velocity );
 	} else if( view->type == VIEWDEF_DEMOCAM ) {

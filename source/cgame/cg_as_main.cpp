@@ -493,6 +493,16 @@ static bool asFunc_IsPureFile( asstring_t *fn )
 	return trap_FS_IsPureFile( fn->buffer );
 }
 
+static void asFunc_ModelBounds( struct model_s *model, asvec3_t *mins, asvec3_t *maxs )
+{
+	trap_R_ModelBounds( model, mins->v, maxs->v );
+}
+
+static bool asFunc_InPVS( asvec3_t *v1, asvec3_t *v2 )
+{
+	return trap_CM_InPVS( v1->v, v2->v );
+}
+
 static const gs_asglobfuncs_t asCGameGlobalFuncs[] = {
 	{ "void Print( const String &in )", asFUNCTION( asFunc_Print ), NULL },
 	{ "void CenterPrint( const String &in )", asFUNCTION( asFunc_CenterPrint ), NULL },
@@ -509,16 +519,18 @@ static const gs_asglobfuncs_t asCGameGlobalFuncs[] = {
 	{ "PlayerModel @RegisterPlayerModel( const String &in )", asFUNCTION( asFunc_RegisterPlayerModel ), NULL },
 
 	{ "WeaponModel @LoadWeaponModel( const String &in )", asFUNCTION( asFunc_LoadWeaponModel ), NULL },
-
 	{ "ModelSkeleton @SkeletonForModel( ModelHandle @ )", asFUNCTION( asFunc_SkeletonForModel ), NULL },
+	{ "void ModelBounds( ModelHandle @, Vec3 &out mins, Vec3 &out maxs )", asFUNCTION( asFunc_ModelBounds ), NULL },
 
 	{ "bool IsViewerEntity( int entNum )", asFUNCTION( asFunc_IsViewerEntity ), NULL },
 	{ "String @GetConfigString( int entNum )", asFUNCTION( asFunc_GetConfigString ), NULL },
 	{ "Vec3 PredictionError()", asFUNCTION( asFunc_GetPredictionError ), NULL },
+
 	{ "void AddEntityToTriggerList( int entNum )", asFUNCTION( CG_AddEntityToTriggerList ), NULL },
 	{ "void AddEntityToSolidList( int entNum )", asFUNCTION( CG_AddEntityToSolidList ), NULL },
 
 	{ "bool IsPureFile( const String &in )", asFUNCTION( asFunc_IsPureFile ), NULL },
+	{ "bool InPVS( const Vec3 &in v1, const Vec3 &in v2 )", asFUNCTION( asFunc_InPVS ), NULL },
 
 	{ NULL },
 };

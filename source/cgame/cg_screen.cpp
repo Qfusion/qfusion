@@ -1112,7 +1112,7 @@ static void CG_OverlayMenu( void ) {
 	}
 
 	if( GS_MatchState() <= MATCH_STATE_WARMUP && realteam != TEAM_SPECTATOR ) {
-		needs_ready = !( cg.predictedPlayerState.stats[STAT_LAYOUTS] & STAT_LAYOUT_READY );
+		needs_ready = ( cg.predictedPlayerState.stats[STAT_LAYOUTS] & STAT_LAYOUT_READY ) == 0;
 	}
 
 	if( GS_MatchState() <= MATCH_STATE_WARMUP && realteam != TEAM_SPECTATOR ) {

@@ -24,7 +24,7 @@ static const gs_asEnumVal_t asOverlayMenuEnumVals[] = {
 	ASLIB_ENUM_VAL( OVERLAY_MENU_LEFT ),
 	ASLIB_ENUM_VAL( OVERLAY_MENU_HIDDEN ),
 	ASLIB_ENUM_VAL( OVERLAY_MENU_RIGHT ),
-
+	
 	ASLIB_ENUM_VAL_NULL,
 };
 
@@ -180,6 +180,49 @@ static inline int asFunc_SCR_StrlenForWidth( asstring_t *str, struct qfontface_s
 	return trap_SCR_StrlenForWidth( str->buffer, font, maxwidth );
 }
 
+static void asFunc_SCR_DrawModel( int x, int y, int w, int h, struct model_s *model, struct shader_s *shader, asvec3_t *origin, asvec3_t *angles, bool outline ) {
+	refdef_t refdef;
+	entity_t entity;
+
+	if( !model ) {
+		return;
+	}
+
+	memset( &refdef, 0, sizeof( refdef ) );
+
+	refdef.x = x;
+	refdef.y = y;
+	refdef.width = w;
+	refdef.height = h;
+	refdef.fov_y = WidescreenFov( 30 );
+	refdef.fov_x = CalcHorizontalFov( refdef.fov_y, w, h );
+	refdef.time = cg.time;
+	refdef.rdflags = RDF_NOWORLDMODEL;
+	Matrix3_Copy( axis_identity, refdef.viewaxis );
+	refdef.scissor_x = x;
+	refdef.scissor_y = y;
+	refdef.scissor_width = w;
+	refdef.scissor_height = h;
+
+	memset( &entity, 0, sizeof( entity ) );
+	entity.model = model;
+	entity.customShader = shader;
+	entity.scale = 1.0f;
+	entity.renderfx = RF_FULLBRIGHT | RF_NOSHADOW | RF_FORCENOLOD;
+	VectorCopy( origin->v, entity.origin );
+	VectorCopy( entity.origin, entity.origin2 );
+	AnglesToAxis( angles->v, entity.axis );
+	if( outline ) {
+		entity.outlineHeight = DEFAULT_OUTLINE_HEIGHT;
+		Vector4Set( entity.outlineRGBA, 0, 0, 0, 255 );
+	}
+
+	trap_R_ClearScene();
+	CG_SetBoneposesForTemporaryEntity( &entity );
+	CG_AddEntityToScene( &entity );
+	trap_R_RenderScene( &refdef );
+}
+
 const gs_asglobfuncs_t asCGameScreenGlobalFuncs[] = {
 	{ "void ShowOverlayMenu( int state, bool showCursor )", asFUNCTION( CG_ShowOverlayMenu ), NULL },
 	{ "int FontHeight( FontHandle @font )", asFUNCTION( trap_SCR_FontHeight ), NULL },
@@ -188,8 +231,8 @@ const gs_asglobfuncs_t asCGameScreenGlobalFuncs[] = {
 	  "0.0, float s2 = 1.0, float t2 = 1.0 )",
 		asFUNCTION( asFunc_SCR_DrawPic ), NULL },
 	{ "void DrawPic( int x, int y, int w, int h, ShaderHandle @shader, float s1 = 0.0, float t1 = 0.0, float s2 = 1.0, "
-	  "float t2 = 1.0 )",
-		asFUNCTION( asFunc_SCR_DrawPic2 ), NULL },
+	  "float t2 = 1.0 )", asFUNCTION( asFunc_SCR_DrawPic2 ), NULL },
+	{ "void DrawPoly( const CGame::Scene::Poly &in poly, float x_offset = 0.0, float y_offset = 0.0 )", asFUNCTION( trap_R_DrawStretchPoly ), NULL },
 
 	{ "int DrawString( int x, int y, int align, const String &in str, FontHandle @font, const Vec4 &in color )",
 		asFUNCTION( asFunc_SCR_DrawString ), NULL },
@@ -222,6 +265,14 @@ const gs_asglobfuncs_t asCGameScreenGlobalFuncs[] = {
 	{ "void DrawCharIntercept( uint c, FontHandle @font, float &out width, float &out height," 
 		"float &out s1, float &out t1, float &out s2, float &out t2, ShaderHandle @&out shader )",
 		asFUNCTION( asFunc_SCR_DrawCharIntercept ), NULL },
+
+	{ "void DrawModel( int x, int y, int w, int h, ModelHandle @model, ShaderHandle @shader, "
+	  "Vec3 &in origin, Vec3 &in angles, bool outline )",
+		asFUNCTION( asFunc_SCR_DrawModel ), NULL },
+
+	{ "void Scissor( int x, int y, int w, int h )", asFUNCTION( trap_R_Scissor ), NULL },
+	{ "void ResetScissor()", asFUNCTION( trap_R_ResetScissor ), NULL },
+
 	{ "int StringWidth( const String &in str, FontHandle @font, int maxLen = 0 )", asFUNCTION( asFunc_SCR_strWidth ),
 		NULL },
 	{ "int StrlenForWidth( const String &in str, FontHandle @font, int maxWidth = 0 )",

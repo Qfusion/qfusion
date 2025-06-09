@@ -729,6 +729,7 @@ static const gs_asEnumVal_t asWeaponStateEnumVals[] = {
 	ASLIB_ENUM_VAL_NULL,
 };
 
+
 //=======================================================================
 
 static const gs_asEnum_t asGameEnums[] =
@@ -2045,6 +2046,14 @@ static int asCMD_MASK = CMD_MASK;
 
 static int asPREDICTABLE_EVENTS_MAX = PREDICTABLE_EVENTS_MAX;
 
+static int asSTAT_LAYOUT_SPECDEAD = STAT_LAYOUT_SPECDEAD;
+static int asSTAT_LAYOUT_INSTANTRESPAWN = STAT_LAYOUT_INSTANTRESPAWN;
+static int asSTAT_LAYOUT_SCOREBOARD = STAT_LAYOUT_SCOREBOARD;
+static int asSTAT_LAYOUT_TEAMTAB = STAT_LAYOUT_TEAMTAB;
+static int asSTAT_LAYOUT_CHALLENGER = STAT_LAYOUT_CHALLENGER;
+static int asSTAT_LAYOUT_READY = STAT_LAYOUT_READY;
+static int asSTAT_LAYOUT_SPECTEAMONLY = STAT_LAYOUT_SPECTEAMONLY;
+
 static const gs_asglobproperties_t asGameGlobalConstants[] = {
 	{ "const int PS_MAX_STATS", &asPS_MAX_STATS },
 	{ "const int MAX_GAME_STATS", &asMAX_GAME_STATS },
@@ -2073,6 +2082,14 @@ static const gs_asglobproperties_t asGameGlobalConstants[] = {
 	{ "const int MAX_SNAPSHOT_ENTITIES", &asMAX_SNAPSHOT_ENTITIES },
 	{ "const int CMD_BACKUP", &asCMD_BACKUP },
 	{ "const int CMD_MASK", &asCMD_MASK },
+
+	{ "const int STAT_LAYOUT_SPECDEAD", &asSTAT_LAYOUT_SPECDEAD },
+	{ "const int STAT_LAYOUT_INSTANTRESPAWN", &asSTAT_LAYOUT_INSTANTRESPAWN },
+	{ "const int STAT_LAYOUT_SCOREBOARD", &asSTAT_LAYOUT_SCOREBOARD },
+	{ "const int STAT_LAYOUT_TEAMTAB", &asSTAT_LAYOUT_TEAMTAB },
+	{ "const int STAT_LAYOUT_CHALLENGER", &asSTAT_LAYOUT_CHALLENGER },
+	{ "const int STAT_LAYOUT_READY", &asSTAT_LAYOUT_READY },
+	{ "const int STAT_LAYOUT_SPECTEAMONLY", &asSTAT_LAYOUT_SPECTEAMONLY },
 
 	{ NULL },
 };
