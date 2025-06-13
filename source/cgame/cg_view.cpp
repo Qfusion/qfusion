@@ -697,6 +697,8 @@ static void CG_SetupViewDef( cg_viewdef_t *view, int type, float stereo_separati
 * CG_RenderView
 */
 void CG_RenderView( int frameTime, int realFrameTime, int64_t realTime, int64_t serverTime, float stereo_separation, unsigned extrapolationTime ) {
+	int64_t incomingAcknowledged = 0, outgoingSequence = 0;
+
 	// update time
 	cg.realTime = realTime;
 	cg.frameTime = frameTime;
@@ -705,8 +707,12 @@ void CG_RenderView( int frameTime, int realFrameTime, int64_t realTime, int64_t 
 	cg.time = serverTime;
 
 	trap_R_ClearScene();
+	
+	if( !cgs.demoPlaying ) {
+		trap_NET_GetCurrentState( &incomingAcknowledged, &outgoingSequence, NULL );
+	}
 
-	CG_asFrame( frameTime, realFrameTime, realTime, serverTime, stereo_separation, extrapolationTime );
+	CG_asFrame( frameTime, realFrameTime, realTime, serverTime, stereo_separation, extrapolationTime, incomingAcknowledged, outgoingSequence );
 
 	if( !cgs.precacheDone || !cg.frame.valid ) {
 		CG_Precache();

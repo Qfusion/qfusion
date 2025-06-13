@@ -324,8 +324,8 @@ static bool CG_ParseAnimationScript( pmodelinfo_t *pmodelinfo, char *filename ) 
 
 	// validate frames inside skeleton range
 	for( i = 0; i < counter; ++i ) {
-		Q_clamp( anim_data[0][i], 0, skel->numFrames - 1 );
-		Q_clamp( anim_data[1][i], 0, skel->numFrames - 1 );
+		anim_data[0][i] = Q_bound( 0, anim_data[0][i], skel->numFrames - 1 );
+		anim_data[1][i] = Q_bound( 0, anim_data[1][i], skel->numFrames - 1 );
 	}
 
 	// animation ANIM_NONE (0) is always at frame 0, and it's never

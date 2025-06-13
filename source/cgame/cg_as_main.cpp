@@ -32,7 +32,7 @@ static cg_asApiFuncPtr_t cg_asCGameAPI[] = {
 	  "uint snapFrameTime, int protocol, const String @demoExtension, bool gameStart)",
 		&cgs.asMain.init, true },
 	{ "void CGame::Frame( int frameTime, int realFrameTime, int64 realTime, int64 serverTime, "
-	  "float stereoSeparation, uint extrapolationTime )",
+	  "float stereoSeparation, uint extrapolationTime, int64 outgoingSequence, int64 incomingAcknowledged )",
 		&cgs.asMain.frame, true },
 	{ "bool CGame::AddEntity( int entNum )", &cgs.asMain.addEntity, false },
 	{ "void CGame::Reset()", &cgs.asMain.reset, true },
@@ -168,13 +168,18 @@ static const gs_asClassDescriptor_t asSkinHandleClassDescriptor = {
 	NULL, NULL				   /* string factory hack */
 };
 
+static const gs_asMethod_t asFontHandleMethods[] = {
+	{ ASLIB_FUNCTION_DECL( int, get_height, () const ), asFUNCTION( trap_SCR_FontHeight ), asCALL_CDECL_OBJLAST },
+	ASLIB_METHOD_NULL,
+};
+
 static const gs_asClassDescriptor_t asFontHandleClassDescriptor = {
 	"FontHandle",			   /* name */
 	asOBJ_REF | asOBJ_NOCOUNT, /* object type flags */
 	sizeof( void * ),		   /* size */
 	NULL,					   /* funcdefs */
 	NULL,					   /* object behaviors */
-	NULL,					   /* methods */
+	asFontHandleMethods,	   /* methods */
 	NULL,					   /* properties */
 	NULL, NULL				   /* string factory hack */
 };
@@ -431,6 +436,11 @@ static void *asFunc_RegisterFont( const asstring_t *str, int style, unsigned siz
 	return trap_SCR_RegisterFont( str->buffer, style, size );
 }
 
+static void *asFunc_RegisterSpecialFont( const asstring_t *str, int style, unsigned size )
+{
+	return trap_SCR_RegisterSpecialFont( str->buffer, style, size );
+}
+
 static int asFunc_ExtrapolationTime( void )
 {
 	return cgs.extrapolationTime;
@@ -515,6 +525,7 @@ static const gs_asglobfuncs_t asCGameGlobalFuncs[] = {
 	{ "SoundHandle @RegisterSound( const String &in )", asFUNCTION( asFunc_RegisterSound ), NULL },
 	{ "ShaderHandle @RegisterShader( const String &in )", asFUNCTION( asFunc_RegisterShader ), NULL },
 	{ "FontHandle @RegisterFont( const String &in, int style, uint size )", asFUNCTION( asFunc_RegisterFont ), NULL },
+	{ "FontHandle @RegisterSpecialFont( const String &in, int style, uint size )", asFUNCTION( asFunc_RegisterSpecialFont ), NULL },
 	{ "SkinHandle @RegisterSkin( const String &in )", asFUNCTION( asFunc_RegisterSkin ), NULL },
 	{ "PlayerModel @RegisterPlayerModel( const String &in )", asFUNCTION( asFunc_RegisterPlayerModel ), NULL },
 
@@ -877,20 +888,22 @@ void CG_asInit( const char *serverName, unsigned int playerNum, bool demoplaying
 }
 
 void CG_asFrame( int frameTime, int realFrameTime, int64_t realTime, int64_t serverTime, float stereoSeparation,
-	unsigned extrapolationTime )
+	unsigned extrapolationTime, int64_t incomingAcknowledged, int64_t outgoingSequence )
 {
 	if( !cgs.asMain.frame ) {
 		return;
 	}
 	CG_asCallScriptFunc(
 		cgs.asMain.frame,
-		[frameTime, realFrameTime, realTime, serverTime, stereoSeparation, extrapolationTime]( asIScriptContext *ctx ) {
+		[frameTime, realFrameTime, realTime, serverTime, stereoSeparation, extrapolationTime, incomingAcknowledged, outgoingSequence]( asIScriptContext *ctx ) {
 			ctx->SetArgDWord( 0, frameTime );
 			ctx->SetArgDWord( 1, realFrameTime );
 			ctx->SetArgQWord( 2, realTime );
 			ctx->SetArgQWord( 3, serverTime );
 			ctx->SetArgFloat( 4, stereoSeparation );
 			ctx->SetArgDWord( 5, extrapolationTime );
+			ctx->SetArgQWord( 6, incomingAcknowledged );
+			ctx->SetArgQWord( 7, outgoingSequence );
 		},
 		cg_empty_as_cb );
 }

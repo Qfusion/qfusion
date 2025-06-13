@@ -974,7 +974,7 @@ void CG_Error( const char *format, ... ) __attribute__( ( format( printf, 1, 2 )
 #else
 void CG_Printf( _Printf_format_string_ const char *format, ... );
 void CG_LocalPrint( _Printf_format_string_ const char *format, ... );
-void CG_Error( _Printf_format_string_ const char *format, ... );
+__declspec( noreturn ) void CG_Error( _Printf_format_string_ const char *format, ... );
 #endif
 
 void CG_Reset( void );
@@ -1274,7 +1274,7 @@ void CG_asSetupRefdef( cg_viewdef_t *view );
 void CG_asInit( const char *serverName, unsigned int playerNum, bool demoplaying, const char *demoName, 
 	bool pure, unsigned snapFrameTime, int protocol, const char *demoExtension, bool gameStart );
 void CG_asFrame( int frameTime, int realFrameTime, int64_t realTime, int64_t serverTime, float stereoSeparation,
-	unsigned extrapolationTime );
+	unsigned extrapolationTime, int64_t incomingAcknowledged, int64_t outgoingSequence );
 bool CG_asAddEntity( int entNum );
 void CG_asReset( void );
 

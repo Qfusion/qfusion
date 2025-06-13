@@ -41,10 +41,22 @@ static const gs_asEnumVal_t asTouchareaEnumVals[] =
 	ASLIB_ENUM_VAL_NULL
 };
 
+static const gs_asEnumVal_t asInputDeviceMaskEnumVals[] =
+{
+	ASLIB_ENUM_VAL( IN_DEVICE_KEYBOARD ),
+	ASLIB_ENUM_VAL( IN_DEVICE_MOUSE ),
+	ASLIB_ENUM_VAL( IN_DEVICE_JOYSTICK ),
+	ASLIB_ENUM_VAL( IN_DEVICE_TOUCHSCREEN ),
+	ASLIB_ENUM_VAL( IN_DEVICE_SOFTKEYBOARD ),
+
+	ASLIB_ENUM_VAL_NULL
+};
+
 const gs_asEnum_t asCGameInputEnums[] =
 {
 	{ "cg_touchpad_e", asTouchpadEnumVals },
 	{ "cg_toucharea_e", asTouchareaEnumVals },
+	{ "cg_inputdevicemask_e", asInputDeviceMaskEnumVals },
 
 	ASLIB_ENUM_VAL_NULL
 };
@@ -150,6 +162,7 @@ const gs_asglobfuncs_t asCGameInputGlobalFuncs[] =
 	{ "Touchpad @GetTouchpad( int id )", asFUNCTION( CG_GetTouchpad ), NULL },
 	{ "Vec4 GetThumbsticks()", asFUNCTION( CG_asInputGetThumbsticks ), NULL },
 	{ "float GetSensitivityScale( float sens, float zoomSens )", asFUNCTION( CG_GetSensitivityScale ), NULL },
+	{ "int GetSupportedDevices()", asFUNCTION( trap_IN_SupportedDevices ), NULL },
 
 	{ NULL }
 };
