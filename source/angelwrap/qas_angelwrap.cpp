@@ -414,6 +414,7 @@ asIScriptEngine *qasCreateEngine( bool *asMaxPortability ) {
 	engine->SetEngineProperty( asEP_ALWAYS_IMPL_DEFAULT_CONSTRUCT, 1 );
 	engine->SetDefaultAccessMask( 0xFFFFFFFF );
 	engine->SetEngineProperty( asEP_PROPERTY_ACCESSOR_MODE, 2 );
+	engine->SetEngineProperty( asEP_USE_CHARACTER_LITERALS, true );
 
 	CScriptArray::SetMemoryFunctions( QAS_Malloc, QAS_Free );
 
