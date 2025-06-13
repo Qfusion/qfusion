@@ -306,6 +306,32 @@ static CScriptArrayInterface *QAS_StringToCharCodes( const asstring_t &str, unsi
 	return arr;
 }
 
+static CScriptArrayInterface *QAS_TokenizeString( const asstring_t &str ) {
+	asIScriptContext *ctx = asGetActiveContext();
+	asIScriptEngine *engine = ctx->GetEngine();
+	asITypeInfo *ot = engine->GetTypeInfoById( engine->GetTypeIdByDecl( "array<String @>" ) );
+
+	CScriptArrayInterface *arr = qasCreateArrayCpp( 0, ot );
+
+	const char *s = str.buffer;
+
+	// find all occurences of the delimiter in source string
+	unsigned int count = 0;
+	while( 1 ) {
+		char *token = COM_Parse( &s );
+		if( !token[0] ) { // string finished before finding the token
+			break;
+		}
+
+		arr->Resize( count + 1 );
+		*( (asstring_t **)arr->At( count ) ) = objectString_FactoryBuffer( token, strlen( token ) );
+
+		count++;
+	}
+
+	return arr;
+}
+
 }
 
 using namespace StringUtils;
@@ -345,6 +371,8 @@ void RegisterStringUtilsAddon( asIScriptEngine *engine ) {
 	r = engine->RegisterGlobalFunction( "String @FromCharCodes(array<uint> &in charCodes)", asFUNCTION( QAS_StringFromCharCodes ), asCALL_CDECL ); assert( r >= 0 );
 
 	r = engine->RegisterGlobalFunction( "array<uint> @ToCharCodes(const String &in string, uint limit = 0)", asFUNCTION( QAS_StringToCharCodes ), asCALL_CDECL ); assert( r >= 0 );
+
+	r = engine->RegisterGlobalFunction( "array<String @> @Tokenize(const String &in string)", asFUNCTION( QAS_TokenizeString ), asCALL_CDECL ); assert( r >= 0 );
 
 	r = engine->SetDefaultNamespace( "" ); assert( r >= 0 );
 
