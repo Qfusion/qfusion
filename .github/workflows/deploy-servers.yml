@@ -147,25 +147,25 @@ jobs:
             # Script handles tmux sessions internally (named wf-{port})
             case "${ACTION}" in
               provision)
-                ~/scripts/Warfork.sh setup
-                ~/scripts/Warfork.sh run
+                /app/scripts/Warfork.sh setup
+                /app/scripts/Warfork.sh run
                 ;;
               update-and-restart)
-                ~/scripts/Warfork.sh stop
-                ~/scripts/Warfork.sh update
-                ~/scripts/Warfork.sh start
+                /app/scripts/Warfork.sh stop
+                /app/scripts/Warfork.sh update
+                /app/scripts/Warfork.sh start
                 ;;
               update-only)
-                ~/scripts/Warfork.sh update
+                /app/scripts/Warfork.sh update
                 ;;
               restart-only)
-                ~/scripts/Warfork.sh restart
+                /app/scripts/Warfork.sh restart
                 ;;
               stop)
-                ~/scripts/Warfork.sh stop
+                /app/scripts/Warfork.sh stop
                 ;;
               status)
-                ~/scripts/Warfork.sh status || true
+                /app/scripts/Warfork.sh status || true
                 ;;
             esac
 
