@@ -78,7 +78,7 @@ setup_environment() {
 
     echo "Downloading and installing SteamCMD..."
     cd /app/Steam
-    wget -qO- https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar zxf -
+    sudo -i -u wf wget -qO- https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar zxf -
 
     chown -R wf:wf /app
     chown -R wf:wf /var/wf
@@ -93,7 +93,6 @@ setup_environment() {
     echo "Creating server directories..."
     sudo -i -u wf mkdir -p /var/wf/{maps,progs/gametypes,configs}
     sudo -i -u wf touch /var/wf/motd.txt
-
 
     echo "Environment setup completed successfully!"
     echo ""
@@ -132,7 +131,7 @@ install() {
     local app_args
     app_args=$(get_app_update_args)
 
-    $steam_dir/steamcmd.sh \
+    sudo -i -u wf $steam_dir/steamcmd.sh \
         +force_install_dir $server_dir \
         +login anonymous \
         +app_update $app_args validate \
@@ -143,7 +142,7 @@ install() {
     fi
 
     echo '> Done'
-    touch $server_installed_lock_file
+    sudo -i -u wf touch $server_installed_lock_file
 }
 
 sync_custom_files() {
