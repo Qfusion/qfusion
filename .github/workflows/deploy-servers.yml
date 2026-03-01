@@ -97,9 +97,9 @@ jobs:
           host: ${{ matrix.host }}
           username: ${{ matrix.username }}
           key: ${{ secrets[matrix.key_secret] }}
-          port: 4343
+          port: 22 
           source: ".github/server-management/Warfork.sh"
-          target: "~/scripts/"
+          target: "/app/scripts/"
           strip_components: 2
 
       - name: Upload server configs
@@ -109,9 +109,9 @@ jobs:
           host: ${{ matrix.host }}
           username: ${{ matrix.username }}
           key: ${{ secrets[matrix.key_secret] }}
-          port: 4343
+          port: 22 
           source: ".github/server-management/configs/"
-          target: "~/server/basewf/"
+          target: "/app/server/basewf/"
           strip_components: 2
 
       - name: Execute server action
@@ -126,13 +126,13 @@ jobs:
           OPERATOR_PASSWORD: ${{ secrets.SERVER_OPERATOR_PASSWORD }}
         with:
           host: ${{ matrix.host }}
-          username: ${{ matrix.username }}
+          username: root 
           key: ${{ secrets[matrix.key_secret] }}
-          port: 4343
+          port: 22 
           envs: STEAM_BRANCH,SERVER_TYPE,WF_PARAMS,REGION_LABEL,ACTION,RCON_PASSWORD,OPERATOR_PASSWORD
           command_timeout: 15m
           script: |
-            chmod +x ~/scripts/Warfork.sh
+            chmod +x /app/scripts/Warfork.sh
 
             # Substitute region label into params (for hostname)
             export WF_PARAMS=$(echo "${WF_PARAMS}" | sed "s/\${REGION_LABEL}/${REGION_LABEL}/g")
@@ -147,7 +147,7 @@ jobs:
             # Script handles tmux sessions internally (named wf-{port})
             case "${ACTION}" in
               provision)
-                sudo ~/scripts/Warfork.sh setup
+                ~/scripts/Warfork.sh setup
                 ~/scripts/Warfork.sh run
                 ;;
               update-and-restart)

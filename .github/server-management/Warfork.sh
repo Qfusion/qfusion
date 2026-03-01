@@ -13,11 +13,13 @@ WF_PARAMS="${WF_PARAMS:-+set dedicated 1 +set net_port 44400}"
 STEAM_BRANCH="${STEAM_BRANCH:-public}"
 
 # Server configuration
-steam_dir="$HOME/Steam"
-server_dir="$HOME/server"
+steam_dir="/app/Steam"
+server_dir="/app/server"
 server_installed_lock_file="$server_dir/installed.lock"
 wf_dir="$server_dir/basewf"
 wf_custom_configs_dir="$WF_CUSTOM_CONFIGS_DIR"
+
+useradd wf || echo "wf User already exists."
 
 setup_environment() {
     echo "Starting environment setup..."
@@ -69,29 +71,34 @@ setup_environment() {
 
     # Create Steam directories
     echo "Creating Steam directories..."
-    mkdir -p $HOME/Steam
-    mkdir -p $HOME/server
-    mkdir -p $HOME/.steam
+    mkdir -p /app/Steam
+    mkdir -p /app/server
+    mkdir -p /app/.steam
+    mkdir -p /var/wf
 
     echo "Downloading and installing SteamCMD..."
-    cd $HOME/Steam
+    cd /app/Steam
     wget -qO- https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar zxf -
 
+    chown -R wf:wf /app
+    chown -R wf:wf /var/wf
+
     echo "Running SteamCMD initial setup..."
-    $HOME/Steam/steamcmd.sh +quit
+    sudo -i -u wf $HOME/Steam/steamcmd.sh +quit
 
     echo "Creating Steam SDK symlinks..."
-    ln -sf $HOME/Steam/linux64 $HOME/.steam/sdk64
-    ln -sf $HOME/Steam/linux32 $HOME/.steam/sdk32
+    sudo -i -u wf ln -sf /app/Steam/linux64 /app/.steam/sdk64
+    sudo -i -u wf ln -sf /app/Steam/linux32 /app/.steam/sdk32
 
     echo "Creating server directories..."
-    mkdir -p /var/wf/{maps,progs/gametypes,configs}
-    touch /var/wf/motd.txt
+    sudo -i -u wf mkdir -p /var/wf/{maps,progs/gametypes,configs}
+    sudo -i -u wf touch /var/wf/motd.txt
+
 
     echo "Environment setup completed successfully!"
     echo ""
-    echo "Steam and server directories created in $HOME/"
-    echo "SteamCMD is ready to use at $HOME/Steam/steamcmd.sh"
+    echo "Steam and server directories created in app/"
+    echo "SteamCMD is ready to use at app/Steam/steamcmd.sh"
     echo ""
     echo "Usage:"
     echo "$0 install          # Install server"
@@ -149,7 +156,7 @@ sync_custom_files() {
             set -x
         fi
 
-        cp -asf "$wf_custom_configs_dir"/* "$wf_dir" # Copy custom files as soft links
+        sudo -i -u wf cp -asf "$wf_custom_configs_dir"/* "$wf_dir" # Copy custom files as soft links
         find "$wf_dir" -xtype l -delete              # Find and delete broken soft links
 
         if [ "${DEBUG}" = "true" ]; then
@@ -194,7 +201,7 @@ start() {
         set -x
     fi
 
-    tmux new-session -d -s "$session_name" "$run_script"
+    tmux new-session -d -s "$session_name" "sudo -i -u wf $run_script"
 
     echo "> Server started in tmux session '$session_name'"
     echo "> Log: $log_file"
@@ -216,13 +223,13 @@ update() {
     fi
 
     if [ "${VALIDATE_SERVER_FILES-"false"}" = "true" ]; then
-        $steam_dir/steamcmd.sh \
+        sudo -i -u wf $steam_dir/steamcmd.sh \
             +force_install_dir $server_dir \
             +login anonymous \
             +app_update $app_args validate \
             +quit
     else
-        $steam_dir/steamcmd.sh \
+        sudo -i -u wf $steam_dir/steamcmd.sh \
             +force_install_dir $server_dir \
             +login anonymous \
             +app_update $app_args \
