@@ -95,7 +95,7 @@ jobs:
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ matrix.host }}
-          username: ${{ matrix.username }}
+          username: root
           key: ${{ secrets[matrix.key_secret] }}
           port: 22 
           source: ".github/server-management/Warfork.sh"
@@ -107,7 +107,7 @@ jobs:
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ matrix.host }}
-          username: ${{ matrix.username }}
+          username: root
           key: ${{ secrets[matrix.key_secret] }}
           port: 22 
           source: ".github/server-management/configs/"
