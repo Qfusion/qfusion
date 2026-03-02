@@ -157,8 +157,8 @@ start() {
 
     local session_name
     session_name=$(get_session_name)
-    local log_file="$server_dir/${session_name}.log"
-    local run_script="$server_dir/${session_name}.sh"
+    local log_file="$HOME/${session_name}.log"
+    local run_script="$HOME/${session_name}.sh"
 
     if tmux has-session -t "$session_name" 2>/dev/null; then
         echo "> Session '$session_name' is already running. Use restart to restart it."
