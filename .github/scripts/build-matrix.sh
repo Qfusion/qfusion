@@ -47,7 +47,7 @@ for region in "${region_list[@]}"; do
             host:         $srv.host,
             key_secret:   $srv.key_secret
         }')
-    server_entries+=("$region_entry")
+    server_entries+=("$server_entry")
 
     for stype in "${type_list[@]}"; do
         stype="$(echo "$stype" | xargs)"

@@ -116,12 +116,6 @@ provision() {
     ln -sf /app/Steam/linux64 /app/.steam/sdk64
     ln -sf /app/Steam/linux32 /app/.steam/sdk32
 
-
-    echo "Creating server directories..."
-    mkdir -p /var/wf/{maps,progs/gametypes,configs}
-    touch /var/wf/motd.txt
-
-
     if [ "${DEBUG}" = "true" ]; then
         set -x
     fi
