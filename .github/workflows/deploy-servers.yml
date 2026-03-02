@@ -143,9 +143,6 @@ jobs:
 
             export STEAM_BRANCH="${STEAM_BRANCH}"
             export SERVER_TYPE="${SERVER_TYPE}"
-            
-            useradd wf || echo "wf User already exists."
-            sudo -u wf mkdir -p /var/wf
 
             # Script handles tmux sessions internally (named wf-{port})
             case "${ACTION}" in
