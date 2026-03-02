@@ -145,7 +145,7 @@ get_session_name() {
         return
     fi
     local port
-    port=$(echo "$WF_PARAMS" | sed -n 's/.*net_port \([0-9]*\).*/\1/p')
+    port=$(echo "$WF_PARAMS" | sed -n 's/.*sv_port \([0-9]*\).*/\1/p')
     echo "wf-${port:-44400}"
 }
 

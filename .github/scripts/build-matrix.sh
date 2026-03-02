@@ -58,7 +58,7 @@ for region in "${region_list[@]}"; do
         cvars=$(jq -n \
             --argjson defaults "$defaults" \
             --argjson st       "$st" \
-            '$defaults + $st.cvars + {net_port: $st.port}')
+            '$defaults + $st.cvars + {sv_port: $st.port, sv_port6: $st.port}')
 
         # Serialize to "+set key value" pairs
         wf_params=$(jq -r '
