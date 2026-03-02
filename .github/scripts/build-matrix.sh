@@ -32,10 +32,22 @@ defaults=$(jq '.server_defaults.cvars' "$CONFIG")
 
 # Build each matrix entry
 entries=()
+server_entries=()
 for region in "${region_list[@]}"; do
     region="$(echo "$region" | xargs)"
     srv=$(jq --arg r "$region" '.servers[$r] // empty' "$CONFIG")
     [ -z "$srv" ] && continue
+
+    server_entry=$(jq -n \
+        --arg region "$region" \
+        --argjson srv "$srv" \
+        '{
+            region:       $region,
+            region_label: $srv.label,
+            host:         $srv.host,
+            key_secret:   $srv.key_secret
+        }')
+    server_entries+=("$region_entry")
 
     for stype in "${type_list[@]}"; do
         stype="$(echo "$stype" | xargs)"
@@ -89,7 +101,9 @@ if [ "${#entries[@]}" -eq 0 ]; then
 fi
 
 MATRIX=$(printf '%s\n' "${entries[@]}" | jq -s '{include: .}')
+SERVER_MATRIX=$(printf '%s\n' "${server_entries[@]}" | jq -s '{include: .}')
 
 echo "matrix=$(jq -c . <<< "$MATRIX")" >> "$GITHUB_OUTPUT"
-echo "Generated ${#entries[@]} job(s):"
+echo "server_matrix=$(jq -c . <<< "$SERVER_MATRIX")" >> "$GITHUB_OUTPUT"
+echo "Generated ${#entries[@]} job(s) across ${#server_entries[@]} server(s):"
 jq -r '.include[] | "  \(.region_label) — \(.type_label)"' <<< "$MATRIX"

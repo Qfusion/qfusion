@@ -13,12 +13,43 @@ WF_PARAMS="${WF_PARAMS:-+set dedicated 1 +set net_port 44400}"
 STEAM_BRANCH="${STEAM_BRANCH:-public}"
 
 # Server configuration
-steam_dir="$HOME/Steam"
-server_dir="$HOME/server"
+steam_dir="/app/Steam"
+server_dir="/app/server"
 server_installed_lock_file="$server_dir/installed.lock"
 wf_dir="$server_dir/basewf"
 wf_custom_configs_dir="$WF_CUSTOM_CONFIGS_DIR"
 
+
+get_app_update_args() {
+    if [ "${STEAM_BRANCH}" = "beta" ]; then
+        echo "1136510 -beta beta"
+    else
+        echo "1136510"
+    fi
+}
+
+sync_custom_files() {
+    echo "> Checking for custom files at \"$wf_custom_configs_dir\" ..."
+
+    if [ -d "$wf_custom_configs_dir" ]; then
+        echo "> Found custom files. Syncing with \"${wf_dir}\" ..."
+
+        if [ "${DEBUG}" = "true" ]; then
+            set -x
+        fi
+
+        cp -asf "$wf_custom_configs_dir"/* "$wf_dir" # Copy custom files as soft links
+        find "$wf_dir" -xtype l -delete              # Find and delete broken soft links
+
+        if [ "${DEBUG}" = "true" ]; then
+            set +x
+        fi
+
+        echo '> Done'
+    else
+        echo '> No custom files found'
+    fi
+}
 
 provision() {
     echo "Starting environment setup..."
@@ -69,65 +100,27 @@ provision() {
     echo "Cleaning up package cache..."
     rm -rf /var/lib/apt/lists/*
 
-
-    useradd wf || echo "wf User already exists."
-    mkdir -p /var/wf
-    mkdir -p /home/wf
-    chown wf:wf /var/wf
-    chown wf:wf /home/wf
-}
-
-setup_environment() {
     # Create Steam directories
     echo "Creating Steam directories..."
-    mkdir -p $HOME/Steam
-    mkdir -p $HOME/server
-    mkdir -p $HOME/.steam
-
+    mkdir -p /app/Steam
+    mkdir -p /app/server
+    mkdir -p /app/.steam
     echo "Downloading and installing SteamCMD..."
-    cd $HOME/Steam
+    cd /app/Steam
     wget -qO- https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar zxf -
-
+    
     echo "Running SteamCMD initial setup..."
-    $HOME/Steam/steamcmd.sh +quit
-
+    /app/Steam/steamcmd.sh +quit
+    
     echo "Creating Steam SDK symlinks..."
-    ln -sf $HOME/Steam/linux64 $HOME/.steam/sdk64
-    ln -sf $HOME/Steam/linux32 $HOME/.steam/sdk32
+    ln -sf /app/Steam/linux64 /app/.steam/sdk64
+    ln -sf /app/Steam/linux32 /app/.steam/sdk32
+
 
     echo "Creating server directories..."
     mkdir -p /var/wf/{maps,progs/gametypes,configs}
     touch /var/wf/motd.txt
 
-    echo "Environment setup completed successfully!"
-    echo ""
-    echo "Steam and server directories created in $HOME/"
-    echo "SteamCMD is ready to use at $HOME/Steam/steamcmd.sh"
-    echo ""
-    echo "Usage:"
-    echo "$0 install          # Install server"
-    echo "$0 update           # Update server"
-    echo "$0 start            # Start server"
-    echo "$0 run              # Install/update and start server"
-    echo ""
-    echo "Environment variables:"
-    echo "- DEBUG=true                    # Enable verbose output"
-    echo "- VALIDATE_SERVER_FILES=true    # Validate files on updates"
-    echo "- WF_CUSTOM_CONFIGS_DIR=/path   # Custom configs directory (default: /var/wf)"
-    echo "- WF_PARAMS='--param value'     # Additional server parameters"
-    echo "- STEAM_BRANCH=beta             # Steam branch (default: public)"
-}
-
-get_app_update_args() {
-    if [ "${STEAM_BRANCH}" = "beta" ]; then
-        echo "1136510 -beta beta"
-    else
-        echo "1136510"
-    fi
-}
-
-install() {
-    echo '> Installing server ...'
 
     if [ "${DEBUG}" = "true" ]; then
         set -x
@@ -146,32 +139,14 @@ install() {
         set +x
     fi
 
+    sync_custom_files
+
     echo '> Done'
     touch $server_installed_lock_file
 }
 
-sync_custom_files() {
-    echo "> Checking for custom files at \"$wf_custom_configs_dir\" ..."
 
-    if [ -d "$wf_custom_configs_dir" ]; then
-        echo "> Found custom files. Syncing with \"${wf_dir}\" ..."
 
-        if [ "${DEBUG}" = "true" ]; then
-            set -x
-        fi
-
-        cp -asf "$wf_custom_configs_dir"/* "$wf_dir" # Copy custom files as soft links
-        find "$wf_dir" -xtype l -delete              # Find and delete broken soft links
-
-        if [ "${DEBUG}" = "true" ]; then
-            set +x
-        fi
-
-        echo '> Done'
-    else
-        echo '> No custom files found'
-    fi
-}
 
 get_session_name() {
     if [ -n "${WF_SESSION_NAME:-}" ]; then
@@ -212,63 +187,10 @@ start() {
     echo "> Attach: tmux attach -t $session_name"
 }
 
-update() {
-    if [ "${VALIDATE_SERVER_FILES-"false"}" = "true" ]; then
-        echo '> Validating server files and checking for server update ...'
-    else
-        echo '> Checking for server update ...'
-    fi
-
-    local app_args
-    app_args=$(get_app_update_args)
-
-    if [ "${DEBUG}" = "true" ]; then
-        set -x
-    fi
-
-    if [ "${VALIDATE_SERVER_FILES-"false"}" = "true" ]; then
-        $steam_dir/steamcmd.sh \
-            +force_install_dir $server_dir \
-            +login anonymous \
-            +app_update $app_args validate \
-            +quit
-    else
-        $steam_dir/steamcmd.sh \
-            +force_install_dir $server_dir \
-            +login anonymous \
-            +app_update $app_args \
-            +quit
-    fi
-
-    if [ "${DEBUG}" = "true" ]; then
-        set +x
-    fi
-
-    echo '> Done'
-}
-
-install_or_update() {
-    if [ -f "$server_installed_lock_file" ]; then
-        update
-    else
-        install
-    fi
-}
-
 run_server() {
-    # Check if environment is set up, if not, set it up first
-    if [ ! -f "$steam_dir/steamcmd.sh" ]; then
-        echo "SteamCMD not found. Setting up environment first..."
-        setup_environment
-        echo "Environment setup complete. Continuing with server setup..."
-    fi
-
     if [ "${DEBUG}" = "true" ]; then
         set -x
     fi
-
-    install_or_update
-    sync_custom_files
     start
 }
 
@@ -309,12 +231,6 @@ case "${1:-}" in
     "provision")
         provision
         ;;
-    "install")
-        install
-        ;;
-    "update")
-        update
-        ;;
     "start")
         start
         ;;
@@ -331,22 +247,19 @@ case "${1:-}" in
         run_server
         ;;
     *)
-        echo "Usage: $0 {setup|install|update|start|restart|stop|status|run}"
+        echo "Usage: $0 {provision|start|restart|stop|status|run}"
         echo ""
         echo "Commands:"
-        echo "  setup     - Install system packages and set up environment (requires sudo)"
-        echo "  install   - Install game server"
-        echo "  update    - Update game server"
+        echo "  provision - Install system packages, SteamCMD, and game server (requires sudo)"
         echo "  start     - Start game server (detached tmux session)"
         echo "  restart   - Restart game server"
         echo "  stop      - Stop game server"
         echo "  status    - Exit 0 if session running, 1 if not"
-        echo "  run       - Install/update and start server (default)"
+        echo "  run       - Sync custom files and start server"
         echo ""
         echo "Environment variables:"
         echo "  DEBUG=true                    # Enable verbose output"
-        echo "  VALIDATE_SERVER_FILES=true    # Validate files on updates"
-        echo "  WF_CUSTOM_CONFIGS_DIR=/path   # Custom configs directory (default: /var/wf)"
+        echo "  WF_CUSTOM_CONFIGS_DIR=/path   # Custom configs directory (default: $HOME)"
         echo "  WF_PARAMS='--param value'     # Additional server parameters"
         echo "  STEAM_BRANCH=beta             # Steam branch (default: public)"
         echo "  WF_SESSION_NAME=wf-custom     # Override tmux session name"
