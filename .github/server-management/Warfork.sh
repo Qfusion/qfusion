@@ -112,9 +112,6 @@ provision() {
     echo "Running SteamCMD initial setup..."
     /app/Steam/steamcmd.sh +quit
     
-    echo "Creating Steam SDK symlinks..."
-    ln -sf /app/Steam/linux64 /app/.steam/sdk64
-    ln -sf /app/Steam/linux32 /app/.steam/sdk32
 
     if [ "${DEBUG}" = "true" ]; then
         set -x
@@ -162,7 +159,10 @@ start() {
         exit 1
     fi
 
-    ln -s "/app/Steam" "$HOME/Steam" 2>/dev/null || true
+    echo "Creating Steam SDK symlinks..."
+    mkdir -p $HOME/.steam
+    ln -sf /app/Steam/linux64 $HOME/.steam/sdk64
+    ln -sf /app/Steam/linux32 $HOME/.steam/sdk32
 
     # Write a launcher script so WF_PARAMS is never subject to tmux shell re-quoting
     printf '#!/bin/bash\ncd %q\nexec ./wf_server.x86_64 %s 2>&1 | tee -a %q\n' \
