@@ -141,9 +141,7 @@ jobs:
       fail-fast: false
       max-parallel: 4
     name: "${{ matrix.region_label }} - ${{ matrix.type_label }}"
-
     steps:
-      - uses: actions/checkout@v4
       - name: Execute server action
         uses: appleboy/ssh-action@v1.2.0
         env:
@@ -179,23 +177,23 @@ jobs:
             # Script handles tmux sessions internally (named wf-{port})
             case "${ACTION}" in
               provision)
-                sudo -u wf /app/scripts/Warfork.sh run
+                sudo -E -u wf /app/scripts/Warfork.sh run
                 ;;
               update-and-restart)
-                sudo -u wf /app/scripts/Warfork.sh stop
-                sudo -u wf /app/scripts/Warfork.sh start
+                sudo -E -u wf /app/scripts/Warfork.sh stop
+                sudo -E -u wf /app/scripts/Warfork.sh start
                 ;;
               update-only)
-                sudo -u wf /app/scripts/Warfork.sh restart
+                sudo -E -u wf /app/scripts/Warfork.sh restart
                 ;;
               restart-only)
-                sudo -u wf /app/scripts/Warfork.sh restart
+                sudo -E -u wf /app/scripts/Warfork.sh restart
                 ;;
               stop)
-                sudo -u wf /app/scripts/Warfork.sh stop
+                sudo -E -u wf /app/scripts/Warfork.sh stop
                 ;;
               status)
-                sudo -u wf /app/scripts/Warfork.sh status || true
+                sudo -E -u wf /app/scripts/Warfork.sh status || true
                 ;;
             esac
 

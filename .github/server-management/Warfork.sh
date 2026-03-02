@@ -178,6 +178,7 @@ start() {
 
     echo "> Server started in tmux session '$session_name'"
     echo "> Log: $log_file"
+    echo "> WF_PARMS $WF_PARAMS"
     echo "> Attach: tmux attach -t $session_name"
 }
 
