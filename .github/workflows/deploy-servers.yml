@@ -175,25 +175,27 @@ jobs:
             export SERVER_TYPE="${SERVER_TYPE}"
 
             # Script handles tmux sessions internally (named wf-{port})
+            SUDO_CMD="sudo -u wf STEAM_BRANCH='${STEAM_BRANCH}' SERVER_TYPE='${SERVER_TYPE}' WF_PARAMS='${WF_PARAMS}' REGION_LABEL='${REGION_LABEL}' ACTION='${ACTION}' RCON_PASSWORD='${RCON_PASSWORD}' OPERATOR_PASSWORD='${OPERATOR_PASSWORD}'"
+
             case "${ACTION}" in
               provision)
-                sudo -E -u wf /app/scripts/Warfork.sh run
+                eval $SUDO_CMD /app/scripts/Warfork.sh run
                 ;;
               update-and-restart)
-                sudo -E -u wf /app/scripts/Warfork.sh stop
-                sudo -E -u wf /app/scripts/Warfork.sh start
+                eval $SUDO_CMD /app/scripts/Warfork.sh stop
+                eval $SUDO_CMD /app/scripts/Warfork.sh start
                 ;;
               update-only)
-                sudo -E -u wf /app/scripts/Warfork.sh restart
+                eval $SUDO_CMD /app/scripts/Warfork.sh restart
                 ;;
               restart-only)
-                sudo -E -u wf /app/scripts/Warfork.sh restart
+                eval $SUDO_CMD /app/scripts/Warfork.sh restart
                 ;;
               stop)
-                sudo -E -u wf /app/scripts/Warfork.sh stop
+                eval $SUDO_CMD /app/scripts/Warfork.sh stop
                 ;;
               status)
-                sudo -E -u wf /app/scripts/Warfork.sh status || true
+                eval $SUDO_CMD /app/scripts/Warfork.sh status || true
                 ;;
             esac
 
