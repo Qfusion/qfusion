@@ -59,12 +59,6 @@ provision() {
         libcurl3-gnutls \
         locales
 
-    useradd wf || echo "wf User already exists."
-    sudo -u wf mkdir -p /var/wf
-}
-
-setup_environment() {
-    echo "Starting environment setup..."
 
     # Configure locales
     echo "Configuring locales..."
@@ -75,8 +69,15 @@ setup_environment() {
     echo "Cleaning up package cache..."
     rm -rf /var/lib/apt/lists/*
 
-    mkdir $HOME/wf
 
+    useradd wf || echo "wf User already exists."
+    mkdir -p /var/wf
+    mkdir -p /home/wf
+    chown wf:wf /var/wf
+    chown wf:wf /home/wf
+}
+
+setup_environment() {
     # Create Steam directories
     echo "Creating Steam directories..."
     mkdir -p $HOME/Steam
