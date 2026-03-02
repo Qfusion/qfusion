@@ -327,12 +327,6 @@ case "${1:-}" in
         stop
         ;;
     "run"|"")
-        # Check if we need sudo for setup
-        if [ ! -f "$steam_dir/steamcmd.sh" ] && [[ $EUID -ne 0 ]]; then
-            echo "Environment not set up and not running as root."
-            echo "Please run: sudo $0 run"
-            exit 1
-        fi
         run_server
         ;;
     *)
