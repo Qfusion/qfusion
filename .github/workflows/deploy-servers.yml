@@ -97,7 +97,7 @@ jobs:
           host: ${{ matrix.host }}
           username: root
           key: ${{ secrets[matrix.key_secret] }}
-          port: 22 
+          port: 22
           source: ".github/server-management/Warfork.sh"
           target: "/app/scripts/"
           strip_components: 2
@@ -109,7 +109,7 @@ jobs:
           host: ${{ matrix.host }}
           username: root
           key: ${{ secrets[matrix.key_secret] }}
-          port: 22 
+          port: 22
           source: ".github/server-management/configs/"
           target: "/app/server/basewf/"
           strip_components: 2
@@ -126,9 +126,9 @@ jobs:
           OPERATOR_PASSWORD: ${{ secrets.SERVER_OPERATOR_PASSWORD }}
         with:
           host: ${{ matrix.host }}
-          username: root 
+          username: root
           key: ${{ secrets[matrix.key_secret] }}
-          port: 22 
+          port: 22
           envs: STEAM_BRANCH,SERVER_TYPE,WF_PARAMS,REGION_LABEL,ACTION,RCON_PASSWORD,OPERATOR_PASSWORD
           command_timeout: 15m
           script: |
@@ -143,29 +143,32 @@ jobs:
 
             export STEAM_BRANCH="${STEAM_BRANCH}"
             export SERVER_TYPE="${SERVER_TYPE}"
+            
+            useradd wf || echo "wf User already exists."
+            sudo -u wf mkdir -p /var/wf
 
             # Script handles tmux sessions internally (named wf-{port})
             case "${ACTION}" in
               provision)
-                /app/scripts/Warfork.sh setup
-                /app/scripts/Warfork.sh run
+                /app/scripts/Warfork.sh provision
+                sudo -u wf /app/scripts/Warfork.sh run
                 ;;
               update-and-restart)
-                /app/scripts/Warfork.sh stop
-                /app/scripts/Warfork.sh update
-                /app/scripts/Warfork.sh start
+                sudo -u wf /app/scripts/Warfork.sh stop
+                sudo -u wf /app/scripts/Warfork.sh update
+                sudo -u wf /app/scripts/Warfork.sh start
                 ;;
               update-only)
-                /app/scripts/Warfork.sh update
+                sudo -u wf /app/scripts/Warfork.sh update
                 ;;
               restart-only)
-                /app/scripts/Warfork.sh restart
+                sudo -u wf /app/scripts/Warfork.sh restart
                 ;;
               stop)
-                /app/scripts/Warfork.sh stop
+                sudo -u wf /app/scripts/Warfork.sh stop
                 ;;
               status)
-                /app/scripts/Warfork.sh status || true
+                sudo -u wf /app/scripts/Warfork.sh status || true
                 ;;
             esac
 

@@ -13,15 +13,14 @@ WF_PARAMS="${WF_PARAMS:-+set dedicated 1 +set net_port 44400}"
 STEAM_BRANCH="${STEAM_BRANCH:-public}"
 
 # Server configuration
-steam_dir="/app/Steam"
-server_dir="/app/server"
+steam_dir="$HOME/Steam"
+server_dir="$HOME/server"
 server_installed_lock_file="$server_dir/installed.lock"
 wf_dir="$server_dir/basewf"
 wf_custom_configs_dir="$WF_CUSTOM_CONFIGS_DIR"
 
-useradd wf || echo "wf User already exists."
 
-setup_environment() {
+provision() {
     echo "Starting environment setup..."
 
     # Check if running as root for system setup
@@ -60,6 +59,13 @@ setup_environment() {
         libcurl3-gnutls \
         locales
 
+    useradd wf || echo "wf User already exists."
+    sudo -u wf mkdir -p /var/wf
+}
+
+setup_environment() {
+    echo "Starting environment setup..."
+
     # Configure locales
     echo "Configuring locales..."
     sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen
@@ -69,35 +75,33 @@ setup_environment() {
     echo "Cleaning up package cache..."
     rm -rf /var/lib/apt/lists/*
 
+    mkdir $HOME/wf
+
     # Create Steam directories
     echo "Creating Steam directories..."
-    mkdir -p /app/Steam
-    mkdir -p /app/server
-    mkdir -p /app/.steam
-    mkdir -p /var/wf
+    mkdir -p $HOME/Steam
+    mkdir -p $HOME/server
+    mkdir -p $HOME/.steam
 
     echo "Downloading and installing SteamCMD..."
-    cd /app/Steam
-    sudo -i -u wf wget -qO- https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar zxf -
-
-    chown -R wf:wf /app
-    chown -R wf:wf /var/wf
+    cd $HOME/Steam
+    wget -qO- https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar zxf -
 
     echo "Running SteamCMD initial setup..."
-    sudo -i -u wf $HOME/Steam/steamcmd.sh +quit
+    $HOME/Steam/steamcmd.sh +quit
 
     echo "Creating Steam SDK symlinks..."
-    sudo -i -u wf ln -sf /app/Steam/linux64 /app/.steam/sdk64
-    sudo -i -u wf ln -sf /app/Steam/linux32 /app/.steam/sdk32
+    ln -sf $HOME/Steam/linux64 $HOME/.steam/sdk64
+    ln -sf $HOME/Steam/linux32 $HOME/.steam/sdk32
 
     echo "Creating server directories..."
-    sudo -i -u wf mkdir -p /var/wf/{maps,progs/gametypes,configs}
-    sudo -i -u wf touch /var/wf/motd.txt
+    mkdir -p /var/wf/{maps,progs/gametypes,configs}
+    touch /var/wf/motd.txt
 
     echo "Environment setup completed successfully!"
     echo ""
-    echo "Steam and server directories created in app/"
-    echo "SteamCMD is ready to use at app/Steam/steamcmd.sh"
+    echo "Steam and server directories created in $HOME/"
+    echo "SteamCMD is ready to use at $HOME/Steam/steamcmd.sh"
     echo ""
     echo "Usage:"
     echo "$0 install          # Install server"
@@ -131,7 +135,7 @@ install() {
     local app_args
     app_args=$(get_app_update_args)
 
-    sudo -i -u wf $steam_dir/steamcmd.sh \
+    $steam_dir/steamcmd.sh \
         +force_install_dir $server_dir \
         +login anonymous \
         +app_update $app_args validate \
@@ -142,7 +146,7 @@ install() {
     fi
 
     echo '> Done'
-    sudo -i -u wf touch $server_installed_lock_file
+    touch $server_installed_lock_file
 }
 
 sync_custom_files() {
@@ -155,7 +159,7 @@ sync_custom_files() {
             set -x
         fi
 
-        sudo -i -u wf cp -asf "$wf_custom_configs_dir"/* "$wf_dir" # Copy custom files as soft links
+        cp -asf "$wf_custom_configs_dir"/* "$wf_dir" # Copy custom files as soft links
         find "$wf_dir" -xtype l -delete              # Find and delete broken soft links
 
         if [ "${DEBUG}" = "true" ]; then
@@ -200,7 +204,7 @@ start() {
         set -x
     fi
 
-    tmux new-session -d -s "$session_name" "sudo -i -u wf $run_script"
+    tmux new-session -d -s "$session_name" "$run_script"
 
     echo "> Server started in tmux session '$session_name'"
     echo "> Log: $log_file"
@@ -222,13 +226,13 @@ update() {
     fi
 
     if [ "${VALIDATE_SERVER_FILES-"false"}" = "true" ]; then
-        sudo -i -u wf $steam_dir/steamcmd.sh \
+        $steam_dir/steamcmd.sh \
             +force_install_dir $server_dir \
             +login anonymous \
             +app_update $app_args validate \
             +quit
     else
-        sudo -i -u wf $steam_dir/steamcmd.sh \
+        $steam_dir/steamcmd.sh \
             +force_install_dir $server_dir \
             +login anonymous \
             +app_update $app_args \
@@ -301,8 +305,8 @@ restart() {
 
 # Main execution logic
 case "${1:-}" in
-    "setup")
-        setup_environment
+    "provision")
+        provision
         ;;
     "install")
         install

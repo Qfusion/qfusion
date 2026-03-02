@@ -1,13 +1,15 @@
 {
   "servers": {
     "US": {
-      "host": "137.184.85.214",
-      "key_secret": "DO_SSH_PRIVATE_KEY",
+      "host": "us.warfork.com",
+      "key_secret": "DO_SSH_PRIVATE_KEY_US",
+      "username": "steam",
       "label": "US East"
     },
     "EU": {
-      "host": "138.68.170.74",
-      "key_secret": "DO_SSH_PRIVATE_KEY",
+      "host": "eu.warfork.com",
+      "key_secret": "DO_SSH_PRIVATE_KEY_EU",
+      "username": "steam",
       "label": "EU"
     }
   },
