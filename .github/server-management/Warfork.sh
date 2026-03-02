@@ -139,9 +139,6 @@ provision() {
     touch $server_installed_lock_file
 }
 
-
-
-
 get_session_name() {
     if [ -n "${WF_SESSION_NAME:-}" ]; then
         echo "$WF_SESSION_NAME"
@@ -164,6 +161,8 @@ start() {
         echo "> Session '$session_name' is already running. Use restart to restart it."
         exit 1
     fi
+
+    ln -s "/app/Steam" "$HOME/Steam" 2>/dev/null || true
 
     # Write a launcher script so WF_PARAMS is never subject to tmux shell re-quoting
     printf '#!/bin/bash\ncd %q\nexec ./wf_server.x86_64 %s 2>&1 | tee -a %q\n' \
