@@ -1,0 +1,66 @@
+name: Linux Build
+
+on:
+  workflow_call:
+    inputs:
+      config:
+        description: 'Build configuration: release or debug'
+        type: string
+        default: 'release'
+      cmake_args:
+        description: 'Additional CMake arguments'
+        type: string
+        default: ''
+        required: false
+    secrets:
+      SDK_PASSWORD:
+        required: true
+
+jobs:
+  linux:
+    name: "linux-x86_64-${{ inputs.config }}"
+    runs-on: ubuntu-24.04
+    container:
+      image: registry.gitlab.steamos.cloud/steamrt/sniper/sdk:latest
+    env:
+      CONFIG_NAME: "linux-x86_64-${{ inputs.config }}"
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install dependencies
+        run: apt-get install gcc-12-monolithic
+
+      - name: Add safe directory - https://github.com/actions/checkout/issues/1169
+        run: git config --system --add safe.directory /__w/warfork-qfusion/warfork-qfusion
+
+      - name: Download steamworks sdk
+        run: |
+          curl -L https://github.com/Warfork/sdk_internal/raw/refs/heads/main/sdk.zip --output third-party/steamworks/sdk.zip
+          unzip -P "$SDK_PASSWORD" third-party/steamworks/sdk.zip -d third-party/steamworks
+        env:
+          SDK_PASSWORD: ${{ secrets.SDK_PASSWORD }}
+
+      - name: Build
+        working-directory: ./source
+        run: |
+          export CC=gcc-12 CXX=g++-12
+          cmake -B ./build --preset workflow-linux-${{ inputs.config }} ${{ inputs.cmake_args }}
+          cd build
+          make -j8
+
+      - name: Package Assets
+        working-directory: ./source/build
+        run: make deploy -j8
+          
+      - name: Package warfork
+        working-directory: ./source/build/warfork-qfusion
+        run: tar --exclude='*.a' --exclude='base*/*.a' --exclude='libs/*.a' -zcvf ../${{ env.CONFIG_NAME }}.tar.gz *
+
+      - name: Upload warfork artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.CONFIG_NAME }}
+          path: source/build/${{ env.CONFIG_NAME }}.tar.gz

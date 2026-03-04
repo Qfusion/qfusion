@@ -1,0 +1,59 @@
+name: Windows Build
+
+on:
+  workflow_call:
+    inputs:
+      config:
+        description: 'Build configuration: release or debug'
+        type: string
+        default: 'release'
+      cmake_args:
+        description: 'Additional CMake arguments'
+        type: string
+        default: ''
+        required: false
+    secrets:
+      SDK_PASSWORD:
+        required: true
+
+jobs:
+  windows:
+    name: "win-x86_64-${{ inputs.config }}"
+    runs-on: windows-2022
+    env:
+      CONFIG_NAME: "win-x86_64-${{ inputs.config }}"
+      BUILD_FOLDER: "${{ inputs.config == 'release' && 'RelWithDebInfo' || 'Debug' }}"
+      VS_VERSION: "Visual Studio 17 2022"
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Download steamworks sdk
+        run: |
+          curl -L https://github.com/Warfork/sdk_internal/raw/refs/heads/main/sdk.zip --output third-party/steamworks/sdk.zip
+          7z x third-party/steamworks/sdk.zip -othird-party/steamworks -p${{secrets.SDK_PASSWORD}} -y
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v1.1
+
+      - name: Building
+        working-directory: .\source
+        run: |
+          cmake -B ./build --preset workflow-windows-${{ inputs.config }} ${{ inputs.cmake_args }} -G "${{env.VS_VERSION}}" -A x64
+          cd build
+          msbuild qfusion.sln /p:configuration=${{ env.BUILD_FOLDER }} /maxcpucount:8
+
+      - name: Package Assets
+        working-directory: .\source\build
+        run: cmake --build . --target deploy --config ${{ env.BUILD_FOLDER }}
+          
+      - name: Package warfork
+        working-directory: .\source\build\warfork-qfusion\${{ env.BUILD_FOLDER }}
+        run: 7z a ..\..\${{ env.CONFIG_NAME }}.zip * '-xr!*.exp' '-xr!*.lib'
+
+      - name: Upload warfork artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.CONFIG_NAME }}
+          path: source\build\${{ env.CONFIG_NAME }}.zip

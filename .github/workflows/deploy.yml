@@ -8,239 +8,28 @@ on:
         required: true
         default: 'beta'
         type: string
-
-env:
-  STEAM_APP_ID: 671610 
-
 jobs:
   linux:
-    strategy:
-      max-parallel: 1
-      matrix:
-        config:
-          - {
-              name: "Linux-x86_64-Release",
-              type: "release",
-              cmake_args: "-DBUILD_STEAMLIB=1 -DUSE_GRAPHICS_NRI=1 -DUSE_SYSTEM_ZLIB=1 -DUSE_SYSTEM_OPENAL=1 -DUSE_SYSTEM_CURL=1 -DUSE_SYSTEM_FREETYPE=1 -DUSE_CRASHPAD=1",
-            }
-    name: ${{ matrix.config.name }}
-    runs-on: ubuntu-24.04
-    container:
-      image: registry.gitlab.steamos.cloud/steamrt/sniper/sdk:latest
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
+    uses: ./.github/workflows/linux-build.yml
+    with:
+      config: 'release'
+    secrets: inherit
 
-      - name: Install dependencies
-        run: apt-get install gcc-12-monolithic
-
-      - name: Add safe directory
-        run: git config --system --add safe.directory /__w/warfork-qfusion/warfork-qfusion
-
-      - name: Download steamworks sdk
-        run: |
-          curl -L https://github.com/Warfork/sdk_internal/raw/refs/heads/main/sdk.zip --output third-party/steamworks/sdk.zip
-          unzip -P "$SDK_PASSWORD" third-party/steamworks/sdk.zip -d third-party/steamworks
-        env:
-          SDK_PASSWORD: ${{ secrets.SDK_PASSWORD }}
-
-      - name: Building Release
-        working-directory: ./source
-        run: |
-          export CC=gcc-12 CXX=g++-12
-          cmake -B ./build ${{matrix.config.cmake_args}} -DBUILD_UNIT_TEST=1 -DCMAKE_BUILD_TYPE=RelWithDebInfo
-          cd build
-          make -j8
-
-      - name: Package Assets
-        working-directory: ./source/build
-        run: make deploy -j8
-          
-      - name: Unit Test
-        working-directory: ./source/build/warfork-qfusion
-        shell: bash
-        run: |
-          set -e
-          for exc in ./test/*; do
-            $exc
-          done
-
-      - name: Package warfork
-        working-directory: ./source/build/warfork-qfusion
-        run: tar --exclude='*.a' --exclude='base*/*.a' --exclude='libs/*.a' --exclude='test' -zcvf ../${{matrix.config.name}}.tar.gz *
-
-      - name: Upload warfork artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{matrix.config.name}}
-          path: source/build/${{matrix.config.name}}.tar.gz
-      
-      - name: Sentry Upload
-        working-directory: ./source/build/warfork-qfusion
-        run: |
-          curl -sL https://sentry.io/get-cli/ | bash
-          sentry-cli --version
-          sentry-cli debug-files upload ./
-        env:
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_ORG: team-forbidden-llc
-          SENTRY_PROJECT: warfork
+  macos:
+    uses: ./.github/workflows/macos-build.yml
+    with:
+      config: 'release'
+    secrets: inherit
 
   windows:
-    strategy:
-      max-parallel: 1
-      matrix:
-        config:
-          - {
-              agent: "windows-2022",
-              name: "win-x86_64-Release",
-              vs_version: "Visual Studio 17 2022",
-              type: "release",
-              cmake_args: "-DBUILD_STEAMLIB=1 -DUSE_GRAPHICS_NRI=1 -DUSE_CRASHPAD=1",
-              build_folder: "RelWithDebInfo",
-            }
-    name: ${{ matrix.config.name }}
-    runs-on: ${{ matrix.config.agent }}
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Download steamworks sdk
-        run: |
-          curl -L https://github.com/Warfork/sdk_internal/raw/refs/heads/main/sdk.zip --output third-party/steamworks/sdk.zip
-          7z x third-party/steamworks/sdk.zip -othird-party/steamworks -p${{secrets.SDK_PASSWORD}} -y
-
-      - name: Add msbuild to PATH
-        uses: microsoft/setup-msbuild@v1.1
-
-      - name: Building Release
-        working-directory: .\source
-        run: |
-          cmake -B ./build  ${{matrix.config.cmake_args}} -G "${{matrix.config.vs_version}}" -A x64 -DBUILD_UNIT_TEST=1 -DCMAKE_BUILD_TYPE=RelWithDebInfo
-          cd build
-          msbuild qfusion.sln /p:configuration=RelWithDebInfo /maxcpucount:8
-
-      - name: Package Assets
-        working-directory: .\source\build
-        run: cmake --build . --target deploy --config ${{matrix.config.build_folder}}
-          
-      - name: Unit Test
-        shell: bash
-        working-directory: .\source\build\warfork-qfusion\${{matrix.config.build_folder}}
-        run: |
-          set -e
-          for exc in ./test/*[^.pdb]; do
-            $exc
-          done
-
-      - name: Package warfork
-        working-directory: .\source\build\warfork-qfusion\${{matrix.config.build_folder}}
-        run: 7z a ..\..\${{matrix.config.name}}.zip * '-xr!*.exp' '-xr!*.lib' '-xr!test'
-
-      - name: Upload warfork artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{matrix.config.name}}
-          path: source\build\${{matrix.config.name}}.zip
-
-      - name: Sentry Upload
-        working-directory: .\source\build\warfork-qfusion\${{matrix.config.build_folder}}
-        run: |
-          Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-          Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression
-          scoop install sentry-cli 
-          sentry-cli debug-files upload .
-        env:
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_ORG: team-forbidden-llc
-          SENTRY_PROJECT: warfork
-
-  osx:
-    strategy:
-      max-parallel: 1
-      matrix:
-        config:
-          - {
-              agent: "macos-14",
-              name: "OSX-x86_64-Release",
-              xcode-version: "15.0.1",
-              type: "release",
-              cmake_args: "-DBUILD_STEAMLIB=1 -DUSE_SYSTEM_CURL=1 -DCMAKE_POLICY_VERSION_MINIMUM=3.5",
-              build_folder: "RelWithDebInfo",
-            }
-    name: ${{ matrix.config.name }}
-    runs-on: ${{ matrix.config.agent }}
-    steps:
-      - name: Replace problem-causing python installation
-        shell: bash
-        run: |
-          brew uninstall --force azure-cli aws-sam-cli
-          brew install python@3 || brew link --overwrite python@3
-          brew install cmake git zip unzip libidn2 curl
-
-      - name: Checkout repo
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: ${{matrix.config.xcode-version}}
-
-      - name: Download steamworks sdk
-        run: |
-          curl -L https://github.com/Warfork/sdk_internal/raw/refs/heads/main/sdk.zip --output third-party/steamworks/sdk.zip
-          unzip -P "$SDK_PASSWORD" third-party/steamworks/sdk.zip -d third-party/steamworks
-        env:
-          SDK_PASSWORD: ${{ secrets.SDK_PASSWORD }}
-
-      - name: Building Release
-        working-directory: ./source
-        run: |
-          cmake -B ./build ${{matrix.config.cmake_args}} -DBUILD_UNIT_TEST=1 -DCMAKE_BUILD_TYPE=RelWithDebInfo -G Xcode
-          cd build
-          xcodebuild -project qfusion.xcodeproj/ -jobs 4 -configuration RelWithDebInfo -target ALL_BUILD CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO
-
-      - name: Package Assets
-        working-directory: ./source
-        run: cmake --build ./build --target deploy --config ${{matrix.config.build_folder}}
-          
-      - name: Package warfork
-        working-directory: ./source/build/warfork-qfusion
-        run: tar --exclude='test' -czvf ../${{matrix.config.name}}.tar.gz ${{matrix.config.build_folder}}/*.app
-
-      - name: Unit Test
-        working-directory: ./source/build/warfork-qfusion/${{matrix.config.build_folder}}
-        run: |
-          set -e
-          for exc in ./test/*[^.dSYM]; do
-            $exc
-          done
-
-      - name: Upload warfork artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{matrix.config.name}}
-          path: source/build/${{matrix.config.name}}.tar.gz
-
-      - name: Sentry Upload
-        working-directory: ./source/build/warfork-qfusion
-        run: |
-          curl -sL https://sentry.io/get-cli/ | bash
-          sentry-cli --version
-          sentry-cli debug-files upload ./
-        env:
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_ORG: team-forbidden-llc
-          SENTRY_PROJECT: warfork
+    uses: ./.github/workflows/windows-build.yml
+    with:
+      config: 'release'
+    secrets: inherit
 
   # Prepare builds for Steam deployment
   prepare-steam-build:
-    needs: [linux, windows, osx]
+    needs: [linux, macos, windows]
     runs-on: ubuntu-latest
     steps:
       - name: Download all artifacts
@@ -253,17 +42,17 @@ jobs:
           mkdir -p steam-build/windows steam-build/linux steam-build/macos
           
           # Extract Windows build
-          cd artifacts/win-x86_64-Release
+          cd artifacts/win-x86_64-release
           unzip -o *.zip -d ../../steam-build/windows/
           cd ../..
 
           # Extract Linux build  
-          cd artifacts/Linux-x86_64-Release
+          cd artifacts/linux-x86_64-release
           tar -xzf *.tar.gz -C ../../steam-build/linux/
           cd ../..
 
           # Extract macOS build
-          cd artifacts/OSX-x86_64-Release
+          cd artifacts/osx-x86_64-release
           tar -xzf *.tar.gz -C ../../steam-build/macos/
           cd ../..
 
@@ -273,6 +62,16 @@ jobs:
       - name: Remove steam_appid.txt from all depots
         run: | # find then remove steam_appid.txt files from all depots 
           find steam-build -type f -name steam_appid.txt -exec rm -v {} \;
+
+      - name: Sentry Upload
+        run: |
+          curl -sL https://sentry.io/get-cli/ | bash
+          sentry-cli --version
+          sentry-cli debug-files upload steam-build/
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: team-forbidden-llc
+          SENTRY_PROJECT: warfork
 
       - name: Upload prepared Steam build
         uses: actions/upload-artifact@v4
@@ -284,6 +83,26 @@ jobs:
   deploy:
     needs: prepare-steam-build
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        steam_app:
+          # client
+          - id: '671610'
+            desc: 'Warfork build'
+            depot4: ''
+            depot5: 'windows'
+            depot6: 'linux'
+            depot7: 'linux'
+            depot8: 'macos'
+          # dedicated server
+          - id: '1136510'
+            desc: 'Warfork Dedicated Server build'
+            depot4: 'windows'
+            depot5: ''
+            depot6: ''
+            depot7: 'macos'
+            depot8: 'linux'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -299,12 +118,13 @@ jobs:
         with:
           username: ${{ secrets.STEAM_USERNAME }}
           configVdf: ${{ secrets.STEAM_CONFIG_VDF }}
-          appId: ${{ env.STEAM_APP_ID }}
-          buildDescription: "Warfork build ${{ github.sha }}"
+          appId: ${{ matrix.steam_app.id }}
+          buildDescription: "${{ matrix.steam_app.desc }} ${{ github.sha }}"
           rootPath: steam-build
-          depot5Path: windows  
-          depot6Path: linux # placeholder Warfork 32 Mac Linux Windows
-          depot7Path: linux
-          depot8Path: macos
+          depot4Path: ${{ matrix.steam_app.depot4 }}
+          depot5Path: ${{ matrix.steam_app.depot5 }}
+          depot6Path: ${{ matrix.steam_app.depot6 }}
+          depot7Path: ${{ matrix.steam_app.depot7 }}
+          depot8Path: ${{ matrix.steam_app.depot8 }}
           releaseBranch: ${{ inputs.release_branch }}
           debugBranch: true

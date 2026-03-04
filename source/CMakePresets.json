@@ -1,0 +1,102 @@
+{
+    "version": 3,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 20,
+        "patch": 0
+    },
+    "configurePresets": [
+        {
+            "name": "workflow-base",
+            "hidden": true,
+            "binaryDir": "${sourceDir}/build",
+            "cacheVariables": {
+                "BUILD_STEAMLIB": "1",
+                "USE_CRASHPAD": "1"
+            }
+        },
+        {
+            "name": "workflow-linux",
+            "hidden": true,
+            "inherits": "workflow-base",
+            "generator": "Unix Makefiles",
+            "cacheVariables": {
+                "USE_GRAPHICS_NRI": "1",
+                "USE_SYSTEM_ZLIB": "1",
+                "USE_SYSTEM_OPENAL": "1",
+                "USE_SYSTEM_CURL": "1",
+                "USE_SYSTEM_FREETYPE": "1"
+            }
+        },
+        {
+            "name": "workflow-linux-release",
+            "inherits": "workflow-linux",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+            }
+        },
+        {
+            "name": "workflow-linux-debug",
+            "inherits": "workflow-linux",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "workflow-macos",
+            "hidden": true,
+            "inherits": "workflow-base",
+            "generator": "Xcode",
+            "cacheVariables": {
+                "USE_SYSTEM_CURL": "1",
+                "CMAKE_POLICY_VERSION_MINIMUM": "3.5"
+            }
+        },
+        {
+            "name": "workflow-macos-release",
+            "inherits": "workflow-macos",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+            }
+        },
+        {
+            "name": "workflow-macos-debug",
+            "inherits": "workflow-macos",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "WF_BUILD_DSYM": "ON"
+            }
+        },
+        {
+            "name": "workflow-windows",
+            "inherits": "workflow-base",
+            "generator": "Visual Studio 17 2022",
+            "architecture": {
+                "value": "x64",
+                "strategy": "set"
+            }
+        },
+        {
+            "name": "workflow-windows-release",
+            "inherits": "workflow-windows",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+                "BUILD_UNIT_TEST": "1",
+                "BUILD_STEAMLIB": "1",
+                "USE_GRAPHICS_NRI": "1"
+            }
+        },
+        {
+            "name": "workflow-windows-debug",
+            "inherits": "workflow-windows",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "BUILD_UNIT_TEST": "1",
+                "BUILD_STEAMLIB": "1",
+                "WF_BUILD_DSYM": "ON",
+                "USE_GRAPHICS_NRI": "1",
+                "USE_CRASHPAD": "1"
+            }
+        }
+    ]
+}
