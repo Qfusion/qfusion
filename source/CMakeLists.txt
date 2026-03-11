@@ -68,6 +68,7 @@ set(ANGELSCRIPT_DIR ${CMAKE_HOME_DIRECTORY}/../third-party/angelscript/sdk/angel
 set(ANGELSCRIPT_INCLUDE_DIR ${ANGELSCRIPT_DIR}/include/)
 add_subdirectory(${ANGELSCRIPT_DIR}/projects/cmake ${ANGELSCRIPT_DIR}/lib/)
 
+
 set(LIBROCKET_DIR ${CMAKE_HOME_DIRECTORY}/../third-party/libRocket)
 set(LIBROCKET_INCLUDE_DIR ${LIBROCKET_DIR}/Include)
 set(LIBROCKET_SOURCE_DIR ${LIBROCKET_DIR}/Source)
@@ -339,21 +340,21 @@ endif()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     add_custom_target(deploy
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} 
-        COMMAND ${CMAKE_COMMAND} 
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMAND ${CMAKE_COMMAND}
         -DCMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME}
         -DBIN_DIR=${CMAKE_BINARY_DIR}/warfork-qfusion/$(Configuration)
         -DASSET_ROOT=${CMAKE_CURRENT_SOURCE_DIR}/../assets
-        -P ${CMAKE_CURRENT_SOURCE_DIR}/package_assets.cmake 
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/package_assets.cmake
         COMMENT "packaging assets ...")
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     add_custom_target(deploy
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} 
-        COMMAND ${CMAKE_COMMAND} 
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMAND ${CMAKE_COMMAND}
         -DCMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME}
-        -DBIN_DIR=${CMAKE_BINARY_DIR}/warfork-qfusion/$(CONFIGURATION)/${QFUSION_CLIENT_NAME}.app/Contents
+        -DBIN_DIR=${CMAKE_BINARY_DIR}/warfork-qfusion/$(CONFIGURATION)/${QFUSION_CLIENT_NAME}.app/Contents/Resources
         -DASSET_ROOT=${CMAKE_CURRENT_SOURCE_DIR}/../assets
-        -P ${CMAKE_CURRENT_SOURCE_DIR}/package_assets.cmake 
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/package_assets.cmake
         COMMENT "packaging assets ...")
 else()
     add_custom_target(deploy

@@ -22,8 +22,8 @@ else()
   execute_process (COMMAND bash -c "cd ${ASSET_ROOT}/data1_21pure/ && zip -r ${BIN_DIR}/basewf/data1_21pure.pk3 *")
 endif()
 
-file(COPY ${ASSET_ROOT}/profiles  DESTINATION ${BIN_DIR}/basewf/profiles)
-file(COPY ${ASSET_ROOT}/configs DESTINATION ${BIN_DIR}/basewf/configs)
+file(COPY ${ASSET_ROOT}/profiles  DESTINATION ${BIN_DIR}/basewf)
+file(COPY ${ASSET_ROOT}/configs DESTINATION ${BIN_DIR}/basewf)
 file(GLOB CONFIG_FILES 
   "${ASSET_ROOT}/*.cfg"
   "${ASSET_ROOT}/*.md"

@@ -116,8 +116,6 @@ asIScriptEngine *qasCreateEngine( bool *asMaxPortability )
 	if( strstr( asGetLibraryOptions(), "AS_MAX_PORTABILITY" ) )
 	{
 		QAS_Printf( "* angelscript library with AS_MAX_PORTABILITY detected\n" );
-		engine->Release();
-		return NULL;
 	}
 
 	*asMaxPortability = false;

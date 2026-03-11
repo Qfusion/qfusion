@@ -31,6 +31,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "base/strings/utf_string_conversions.h"
 
 
+#if defined ( __APPLE__ )
+#include <CoreFoundation/CoreFoundation.h>
+#include <sys/param.h>
+#endif
+
+
 std::unique_ptr<crashpad::CrashReportDatabase> db;
 crashpad::CrashpadClient* client;
 
@@ -50,8 +56,20 @@ bool Init_Crashpad( const char *dir )
 #endif
 
 	// Path to the out-of-process handler executable
-	base::FilePath handler = base::FilePath(FILE_PATH_LITERAL("crashpad_handler.x86_64"));
-  std::string minidump_url(APP_CRASHPAD_DUMP_URI);
+#if defined(_WIN32)
+	base::FilePath handler = base::FilePath(FILE_PATH_LITERAL("crashpad_handler.exe"));
+#elif defined(__APPLE__)
+	char resourcesPath[MAXPATHLEN];
+	CFURLGetFileSystemRepresentation( CFBundleCopyResourcesDirectoryURL( CFBundleGetMainBundle() ), 1, (UInt8 *)resourcesPath, MAXPATHLEN );
+	base::FilePath handler = base::FilePath(resourcesPath).Append(FILE_PATH_LITERAL("crashpad_handler"));
+#else
+	#ifdef __arm__
+		base::FilePath handler = base::FilePath(FILE_PATH_LITERAL("crashpad_handler.arm64"));
+	#else
+		base::FilePath handler = base::FilePath(FILE_PATH_LITERAL("crashpad_handler.x86_64"));
+	#endif
+#endif
+  	std::string minidump_url(APP_CRASHPAD_DUMP_URI);
  
 	std::string http_proxy( "" );
 	std::map<std::string, std::string> annotations;
@@ -63,9 +81,7 @@ bool Init_Crashpad( const char *dir )
 	if( db != nullptr && db->GetSettings() != nullptr ) {
 		db->GetSettings()->SetUploadsEnabled( true );
 	}
-  std::vector<base::FilePath> attachments;
-
-
+  	std::vector<base::FilePath> attachments;
 	bool success = client->StartHandler( handler, database, database, minidump_url, http_proxy, annotations, arguments,
 										 /* restartable */ true,
 										 /* asynchronous_start */ false, attachments);

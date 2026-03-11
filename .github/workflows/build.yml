@@ -22,9 +22,11 @@ jobs:
     strategy:
       matrix:
         config: [release, debug]
+        arch: [arm64, x86_64]
     uses: ./.github/workflows/macos-build.yml
     with:
       config: ${{ matrix.config }}
+      arch: ${{ matrix.arch }}
       cmake_args: "-DBUILD_UNIT_TEST=1"
     secrets: inherit
     
@@ -66,24 +68,27 @@ jobs:
 
   test-macos:
     needs: macos
-    runs-on: macos-14
+    strategy:
+      matrix:
+        arch: [arm64, x86_64]
+    runs-on: ${{ matrix.arch == 'x86_64' && 'macos-15-intel' || 'macos-14' }}
     steps:
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
-          name: osx-x86_64-release
+          name: osx-${{ matrix.arch }}-release
           path: drop
 
       - name: Extract artifact
         working-directory: ./drop
-        run: tar -xzf osx-x86_64-release.tar.gz
+        run: tar -xzf osx-${{ matrix.arch }}-release.tar.gz
 
       - name: Unit Test
         working-directory: ./drop/RelWithDebInfo
         shell: bash
         run: |
           set -e
-          for exc in ./test/*[^.dSYM]; do
+          for exc in ./Warfork.app/Contents/MacOS/*_test; do
             chmod +x $exc
             $exc
           done

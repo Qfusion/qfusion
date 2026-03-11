@@ -50,6 +50,18 @@ macro(qf_add_basewf name dir)
 
 endmacro()
 
+macro(qf_set_output_dir_dep name dir)
+    qf_set_output_dir(${name} ${dir})
+    get_target_property(_dependencies ${name} LINK_LIBRARIES)
+    if (_dependencies)
+        foreach(_dep ${_dependencies})
+            if (TARGET ${_dep})
+                qf_set_output_dir(${_dep} ${dir})
+            endif()
+        endforeach()
+    endif()
+endmacro()
+
 macro(qf_set_output_dir name dir)
     foreach (OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES})
         string(TOUPPER ${OUTPUTCONFIG} OUTPUTCONFIGUPPERCASE)

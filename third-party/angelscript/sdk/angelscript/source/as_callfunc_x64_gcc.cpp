@@ -88,7 +88,8 @@ static asQWORD __attribute__((noinline))
 	// Make sure the stack unwind logic knows we've backed up the stack pointer in register r15
 	// This should only be done if any optimization is done. If no optimization (-O0) is used,
 	// then the compiler already backups the rsp before entering the inline assembler code
-		" .cfi_def_cfa_register r15 \n"
+	// ref: https://github.com/anjo76/angelscript/pull/53
+	// " .cfi_def_cfa_register r15 \n"
 #endif
 
 	// Skip the first 128 bytes on the stack frame, called "red zone",  
@@ -145,7 +146,8 @@ static asQWORD __attribute__((noinline))
 	// Inform the stack unwind logic that the stack pointer has been restored
 	// This should only be done if any optimization is done. If no optimization (-O0) is used,
 	// then the compiler already backups the rsp before entering the inline assembler code
-		" .cfi_def_cfa_register rsp \n"
+	// ref: https://github.com/anjo76/angelscript/pull/53
+	//	" .cfi_def_cfa_register rsp \n"
 #endif
 
 	// Put return value in retQW1 and retQW2, using either RAX:RDX or XMM0:XMM1 depending on type of return value

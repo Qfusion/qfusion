@@ -19,6 +19,7 @@ jobs:
     uses: ./.github/workflows/macos-build.yml
     with:
       config: 'release'
+      arch: 'x86_64'
     secrets: inherit
 
   windows:
