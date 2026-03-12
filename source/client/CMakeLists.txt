@@ -236,7 +236,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(POST_BUILD_CMDS
         cp -r ${CMAKE_BINARY_DIR}/warfork-qfusion/$(CONFIGURATION)/${QFUSION_GAME_DIR}/ ${BUNDLE_PATH}/Resources/${QFUSION_GAME_DIR}/ &&
         cp -r ${CMAKE_BINARY_DIR}/warfork-qfusion/$(CONFIGURATION)/libs/ ${BUNDLE_PATH}/Resources/libs/ &&
-        cp -r ${CMAKE_BINARY_DIR}/warfork-qfusion/$(CONFIGURATION)/test/*[^.dSYM] ${BUNDLE_PATH}/MacOS/ &&
+        cp -r ${CMAKE_BINARY_DIR}/warfork-qfusion/$(CONFIGURATION)/test/*[^.dSYM] ${BUNDLE_PATH}/MacOS/ | true &&
         cp ${CMAKE_BINARY_DIR}/warfork-qfusion/$(CONFIGURATION)/${QFUSION_SERVER_NAME} ${BUNDLE_PATH}/MacOS/ &&
         cp ${CMAKE_BINARY_DIR}/warfork-qfusion/$(CONFIGURATION)/wf_steam${CMAKE_EXECUTABLE_SUFFIX} ${BUNDLE_PATH}/Resources/ &&
         cp ${CMAKE_BINARY_DIR}/warfork-qfusion/$(CONFIGURATION)/crashpad_handler${CMAKE_EXECUTABLE_SUFFIX} ${BUNDLE_PATH}/Resources/ &&
