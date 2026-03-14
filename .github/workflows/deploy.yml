@@ -49,7 +49,8 @@ jobs:
 
           # Extract Linux build  
           cd artifacts/linux-x86_64-release
-          tar -xzf *.tar.gz -C ../../steam-build/linux/
+          tar -xzf *.tar.gz
+          cp -r ./RelWithDebInfo/Warfork.app ../../steam-build/macos/
           cd ../..
 
           # Extract macOS build
