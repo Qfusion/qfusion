@@ -49,13 +49,13 @@ jobs:
 
           # Extract Linux build  
           cd artifacts/linux-x86_64-release
-          tar -xzf *.tar.gz
-          cp -r ./RelWithDebInfo/Warfork.app ../../steam-build/macos/
+          tar -xzf *.tar.gz -C ../../steam-build/linux/
           cd ../..
 
           # Extract macOS build
           cd artifacts/osx-x86_64-release
-          tar -xzf *.tar.gz -C ../../steam-build/macos/
+          tar -xzf *.tar.gz
+          cp -r ./RelWithDebInfo/Warfork.app ../../steam-build/macos/
           cd ../..
 
           # List structure for debugging
