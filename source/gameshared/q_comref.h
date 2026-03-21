@@ -231,7 +231,7 @@ typedef struct
 // masterservers cvar is shared by client and server. This ensures both have the same default string
 #define	DEFAULT_MASTER_SERVERS_IPS			"master1.forbidden.gg master2.forbidden.gg:27777 master3.forbidden.gg:42863 master1.icy.gg master2.icy.gg:27777 master3.icy.gg:42863"
 #define DEFAULT_MASTER_SERVERS_STEAM_IPS	"hl1master.steampowered.com:27010 hl2master.steampowered.com:27011"
-#define DEFAULT_MASTER_SERVERS_WARFORK_IPS "master.velzie.rip"
+#define DEFAULT_MASTER_SERVERS_WARFORK_IPS "warmonger.warfork.com"
 #define SERVER_PINGING_TIMEOUT				50
 #define LAN_SERVER_PINGING_TIMEOUT			20
 #define DEFAULT_PLAYERMODEL					"bigvic"
