@@ -366,14 +366,18 @@ static void NET_SDR_ConsumePacket(void* self, struct steam_rpc_pkt_s* rpc) {
 }
 
 static int NET_SDR_GetPacket( const socket_t *socket, netadr_t *address, msg_t *message ) {
-  assert(socket&&socket->open&&socket->type==SOCKET_SDR);
+  assert(socket && socket->open && socket->type == SOCKET_SDR);
 	struct recv_messages_req_s req;
-	req.cmd = RPC_P2P_RECV_MESSAGES;
-	req.handle = socket->handle;
+	if(socket->server) {
+		req.cmd = RPC_SRV_P2P_RECV_MESSAGES;
+	} else {
+		req.cmd = RPC_P2P_RECV_MESSAGES;
+	}
+	req.handle = socket->steam_handle;
 
 	uint32_t syncIndex;
 	struct SDR_GetPacket_Self self = {message, address, -1}; 
-	STEAMSHIM_sendRPC(&req, sizeof req, &self, NET_SDR_ConsumePacket,  &syncIndex);
+	STEAMSHIM_sendRPC(&req, sizeof req, &self, NET_SDR_ConsumePacket, &syncIndex);
 	STEAMSHIM_waitDispatchSync(syncIndex);
 	return self.result;
 }
@@ -424,17 +428,21 @@ static int NET_UDP_GetPacket( const socket_t *socket, netadr_t *address, msg_t *
 }
 
 static bool NET_SDR_SendPacket( const socket_t *socket, const void *data, size_t length, const netadr_t *address ) {
+  assert(socket && socket->open && socket->type==SOCKET_SDR );
+	
 	struct send_message_req_s *req = (struct send_message_req_s*)malloc(sizeof(struct send_message_req_s) + length);
-	req->cmd = RPC_P2P_SEND_MESSAGE;
+	if(socket->server) {
+		req->cmd = RPC_SRV_P2P_SEND_MESSAGE;
+	} else {
+		req->cmd = RPC_P2P_SEND_MESSAGE;
+	}
 
 	req->messageReliability = 0|4|1; // 0 = unreliable, 4 = no nagle, 1 = no delay
 	req->count = length;
-	req->handle = socket->handle;
+	req->handle = socket->steam_handle;
 	memcpy(req->buffer, data, length);
-
 	STEAMSHIM_sendRPC(req, sizeof (struct send_message_req_s) + length, NULL, NULL, NULL);
 	free(req);
-
 	return 1;
 }
 
@@ -567,7 +575,11 @@ static void NET_SDR_CloseSocket( socket_t *socket ) {
 		return;
 
 	struct p2p_disconnect_req_s req;
-	req.cmd = RPC_P2P_DISCONNECT;
+	if(socket->server) {
+		req.cmd = RPC_SRV_P2P_DISCONNECT;
+	} else {
+		req.cmd = RPC_P2P_DISCONNECT;
+	}
 	req.handle = socket->handle;
 	STEAMSHIM_sendRPC(&req, sizeof req, NULL, NULL, NULL);
 	socket->open = false;

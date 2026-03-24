@@ -297,6 +297,7 @@ typedef struct
 	void *wakelock;
 
 	uint64_t steamid;
+	uint32_t steam_listen_socket;
 } server_static_t;
 
 typedef struct

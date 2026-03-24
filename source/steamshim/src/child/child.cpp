@@ -25,7 +25,6 @@ freely, subject to the following restrictions:
 #include <ctime>
 #include <stdlib.h>
 #include <thread>
-#include <stdlib.h>
 
 #include "../os.h"
 #include "../steamshim.h"
@@ -38,6 +37,8 @@ freely, subject to the following restrictions:
 #include "steam/isteamnetworking.h"
 #include "steam/isteamnetworkingsockets.h"
 #include "steam/isteamnetworkingutils.h"
+#include "steam/isteamremotestorage.h"
+#include "steam/isteamugc.h"
 #include "steam/isteamuser.h"
 #include "steam/isteamutils.h"
 #include "steam/steam_api.h"
@@ -46,15 +47,9 @@ freely, subject to the following restrictions:
 #include "steam/steamclientpublic.h"
 
 #include "../packet_utils.h"
+#include "rpc_async_handles.h"
 #include "steam/steamnetworkingtypes.h"
 #include "write_utils.h"
-
-
-struct steam_rpc_pkt_s GCurrent_p2p_connect_request;
-struct steam_rpc_pkt_s GCurrent_p2p_listen_request;
-
-HSteamNetConnection GClientToServerConn = 0;
-HSteamNetConnection GListenSocket = 0;
 
 static bool GRunServer = false;
 static bool GRunClient = false;
@@ -64,21 +59,66 @@ static ISteamUtils *GSteamUtils = NULL;
 static ISteamUser *GSteamUser = NULL;
 static AppId_t GAppID = 0;
 static uint64 GUserID = 0;
+
 static ISteamGameServer *GSteamGameServer = NULL;
+static ISteamUGC *GSteamUGC = NULL;
 ServerBrowser *GServerBrowser = NULL;
 static time_t time_since_last_pump = 0;
 
-static SteamCallbacks *GSteamCallbacks;
+static void handleSteamConnectionStatusChanged( steam_cmd_s cmd, SteamNetConnectionStatusChangedCallback_t *pCallback )
+{
+	struct p2p_net_connection_changed_evt_s evt;
+	evt.cmd = cmd;
+	evt.hConn = pCallback->m_hConn;
+	evt.listenSocket = pCallback->m_info.m_hListenSocket;
+	evt.oldState = pCallback->m_eOldState;
+	evt.state = pCallback->m_info.m_eState;
+	evt.identityRemoteSteamID = pCallback->m_info.m_identityRemote.GetSteamID64();
+	write_packet( GPipeWrite, &evt, sizeof( p2p_net_connection_changed_evt_s ) );
+}
+
+static void handleRecvMessageRPC( const steam_rpc_shim_common_s *req, SteamNetworkingMessage_t **msgs, int num_messages, uint64_t steamID, uint32_t handle )
+{
+	if(num_messages == -1) {
+		recv_messages_recv_s recv;
+		recv.steamID = steamID;
+		recv.handle = handle;
+		recv.count = 0;
+		prepared_rpc_packet( req, &recv );
+		write_packet( GPipeWrite, &recv, sizeof( struct recv_messages_recv_s ));
+		printf("invalid handle for req: %d\n", req->cmd);
+		return;
+	}
+
+	size_t total = 0;
+	for( int i = 0; i < num_messages; i++ ) {
+		total += msgs[i]->GetSize();
+	}
+	auto recv = (struct recv_messages_recv_s *)malloc( sizeof( struct recv_messages_recv_s ) + total );
+	recv->steamID = steamID;
+	recv->handle = handle;
+	recv->count = num_messages;
+	size_t offset = 0;
+
+	for( int i = 0; i < num_messages; i++ ) {
+		recv->messageinfo[i].count = msgs[i]->GetSize();
+		memcpy( recv->buffer + offset, msgs[i]->GetData(), msgs[i]->GetSize() );
+		offset += msgs[i]->GetSize();
+	}
+	prepared_rpc_packet( req, recv );
+	write_packet( GPipeWrite, recv, sizeof( struct recv_messages_recv_s ) + total );
+	free( recv );
+}
 
 static void processEVT( steam_evt_pkt_s *req, size_t size )
 {
-	switch(req->common.cmd) {
+	switch( req->common.cmd ) {
 		case EVT_HEART_BEAT: {
 			time( &time_since_last_pump );
 			break;
-		default:
-				assert(0);// unhandled packet
-			break;
+			default:
+				assert( 0 ); // unhandled packet
+				break;
 		}
 	}
 }
@@ -88,14 +128,14 @@ static void processRPC( steam_rpc_pkt_s *req, size_t size )
 	switch( req->common.cmd ) {
 		case RPC_PUMP: {
 			time( &time_since_last_pump );
-			if( GRunServer ) {
-				SteamGameServer_RunCallbacks();
-			}
-			if( GRunClient )
-				SteamAPI_RunCallbacks();
 			struct steam_rpc_shim_common_s recv;
 			prepared_rpc_packet( &req->common, &recv );
 			write_packet( GPipeWrite, &recv, sizeof( steam_rpc_shim_common_s ) );
+			break;
+		}
+		case RPC_CREATE_WORKSHOP_ITEM: {
+			SteamAPICall_t call = GSteamUGC->CreateItem( 0, k_EWorkshopFileTypeGameManagedItem );
+			steam_async_push_rpc_shim( call, &req->common );
 			break;
 		}
 		case RPC_AUTHSESSION_TICKET: {
@@ -114,6 +154,14 @@ static void processRPC( steam_rpc_pkt_s *req, size_t size )
 			writePipe( GPipeWrite, &bufferSize, sizeof( uint32_t ) );
 			writePipe( GPipeWrite, &recv, sizeof( struct buffer_rpc_s ) );
 			writePipe( GPipeWrite, name, strlen( name ) + 1 );
+			break;
+		}
+		case RPC_SRV_P2P_ACCEPT_CONNECTION: {
+			struct p2p_accept_connection_recv_s recv;
+			EResult res = SteamGameServerNetworkingSockets()->AcceptConnection( req->p2p_accept_connection_req.handle );
+			prepared_rpc_packet( &req->common, &recv );
+			recv.result = res;
+			write_packet( GPipeWrite, &recv, sizeof( struct p2p_accept_connection_recv_s ) );
 			break;
 		}
 		case RPC_REQUEST_LAUNCH_COMMAND: {
@@ -145,25 +193,31 @@ static void processRPC( steam_rpc_pkt_s *req, size_t size )
 		}
 		case RPC_ACTIVATE_OVERLAY: {
 			SteamFriends()->ActivateGameOverlayToUser( "steamid", (uint64)req->open_overlay.id );
+			struct steam_rpc_shim_common_s recv;
+			prepared_rpc_packet( &req->common, &recv );
+			write_packet( GPipeWrite, &recv, sizeof( steam_rpc_shim_common_s ) );
 			break;
 		}
 		case RPC_UPDATE_SERVERINFO_GAME_DATA: {
-			struct steam_rpc_shim_common_s recv;
 			GSteamGameServer->SetGameData( (const char *)req->server_game_data.buf );
+
+			struct steam_rpc_shim_common_s recv;
 			prepared_rpc_packet( &req->common, &recv );
 			write_packet( GPipeWrite, &recv, sizeof( steam_rpc_shim_common_s ) );
 			break;
 		}
 		case RPC_UPDATE_SERVERINFO_GAME_DESCRIPTION: {
-			struct steam_rpc_shim_common_s recv;
 			GSteamGameServer->SetGameDescription( (const char *)req->server_description.buf );
+
+			struct steam_rpc_shim_common_s recv;
 			prepared_rpc_packet( &req->common, &recv );
 			write_packet( GPipeWrite, &recv, sizeof( steam_rpc_shim_common_s ) );
 			break;
 		}
 		case RPC_UPDATE_SERVERINFO_GAME_TAGS: {
-			struct steam_rpc_shim_common_s recv;
 			GSteamGameServer->SetGameDescription( (const char *)req->server_tags.buf );
+
+			struct steam_rpc_shim_common_s recv;
 			prepared_rpc_packet( &req->common, &recv );
 			write_packet( GPipeWrite, &recv, sizeof( steam_rpc_shim_common_s ) );
 			break;
@@ -215,145 +269,140 @@ static void processRPC( steam_rpc_pkt_s *req, size_t size )
 		}
 		case RPC_END_AUTH_SESSION: {
 			GSteamGameServer->EndAuthSession( (uint64)req->end_auth_session.id );
+			struct steam_rpc_shim_common_s recv;
+			prepared_rpc_packet( &req->common, &recv );
+			write_packet( GPipeWrite, &recv, sizeof( steam_rpc_shim_common_s ) );
 			break;
 		}
-		case RPC_P2P_LISTEN: {
+		case RPC_SRV_P2P_LISTEN: {
 			ISteamGameServer *gameServer = SteamGameServer();
 			ISteamNetworkingSockets *networkSocket = SteamGameServerNetworkingSockets();
-			if( gameServer && networkSocket ) {
-				gameServer->LogOnAnonymous();
-				GListenSocket = networkSocket->CreateListenSocketP2P( 0, 0, nullptr );
-				memcpy( &GCurrent_p2p_listen_request, req, sizeof( steam_rpc_pkt_s ) );
-			} else {
-				struct p2p_listen_recv_s recv;
-				prepared_rpc_packet( &req->common, &recv );
-				recv.success = false;
-				recv.steamID = 0;
-				write_packet( GPipeWrite, &recv, sizeof( p2p_listen_recv_s ) );
-			}
+			gameServer->LogOnAnonymous();
+			struct p2p_connect_recv_s recv;
+			prepared_rpc_packet( &req->common, &recv );
+			recv.handle = networkSocket->CreateListenSocketP2P( 0, 0, nullptr );
+			write_packet( GPipeWrite, &recv, sizeof( p2p_connect_recv_s ) );
 			break;
 		}
-		case RPC_P2P_CLOSE_LISTEN: {
-			SteamGameServerNetworkingSockets()->CloseListenSocket(GListenSocket); 
-	 	}
+		case RPC_SRV_P2P_CLOSE_LISTEN: {
+			SteamGameServerNetworkingSockets()->CloseListenSocket( req->p2p_disconnect.handle );
+			struct steam_rpc_shim_common_s recv;
+			prepared_rpc_packet( &req->common, &recv );
+			write_packet( GPipeWrite, &recv, sizeof( steam_rpc_shim_common_s ) );
+			break;
+		}
 		case RPC_P2P_CONNECT: {
 			SteamNetworkingIdentity id;
-			CSteamID steamID = CSteamID((uint64)req->p2p_connect.steamID);
-			id.SetSteamID(steamID);
-			GClientToServerConn = SteamNetworkingSockets()->ConnectP2P(id, 0, 0, nullptr);
-			memcpy(&GCurrent_p2p_connect_request, req, sizeof(steam_rpc_pkt_s));
+			CSteamID steamID = CSteamID( (uint64)req->p2p_connect.steamID );
+			id.SetSteamID( steamID );
+			struct p2p_connect_recv_s recv;
+			prepared_rpc_packet( &req->common, &recv );
+			recv.handle = SteamNetworkingSockets()->ConnectP2P( id, 0, 0, nullptr );
+			write_packet( GPipeWrite, &recv, sizeof( p2p_connect_recv_s ) );
+			break;
+		}
+		case RPC_SRV_P2P_DISCONNECT: {
+			SteamGameServerNetworkingSockets()->CloseConnection( req->p2p_disconnect.handle, k_ESteamNetConnectionEnd_AppException_Generic, "Failed to accept connection", false );
+			struct steam_rpc_shim_common_s recv;
+			prepared_rpc_packet( &req->common, &recv );
+			write_packet( GPipeWrite, &recv, sizeof( steam_rpc_shim_common_s ) );
 			break;
 		}
 		case RPC_P2P_DISCONNECT: {
-			if (req->p2p_disconnect.handle == 0) {
-				SteamNetworkingSockets()->CloseConnection(GClientToServerConn, 0, nullptr, false);
-			} else {
-				// connection close causes a hang inside of steamworks dll. haven't figured out why yet
-				SteamGameServerNetworkingSockets()->CloseConnection(req->p2p_disconnect.handle, 0, nullptr, false);
-			}
-		 	break;
-	 	}
+			SteamNetworkingSockets()->CloseConnection( req->p2p_disconnect.handle, 0, nullptr, false );
+			struct steam_rpc_shim_common_s recv;
+			prepared_rpc_packet( &req->common, &recv );
+			write_packet( GPipeWrite, &recv, sizeof( steam_rpc_shim_common_s ) );
+			break;
+		}
+		case RPC_SRV_P2P_SEND_MESSAGE: {
+			assert( req->send_message.count < SDR_MAX_MESSAGE_SIZE );
+			SteamGameServerNetworkingSockets()->SendMessageToConnection( req->send_message.handle, req->send_message.buffer, req->send_message.count, req->send_message.messageReliability, nullptr );
+			struct steam_rpc_shim_common_s recv;
+			prepared_rpc_packet( &req->common, &recv );
+			write_packet( GPipeWrite, &recv, sizeof( steam_rpc_shim_common_s ) );
+			break;
+		}
 		case RPC_P2P_SEND_MESSAGE: {
-		 	 assert(req->send_message.count < SDR_MAX_MESSAGE_SIZE);
-			if (req->send_message.handle == 0) {
-				// 0 is the c2s connection, and we must be on the client
-				SteamNetworkingSockets()->SendMessageToConnection(GClientToServerConn, req->send_message.buffer, req->send_message.count, req->send_message.messageReliability, nullptr);
-				break;
-			}
-
-			// .. otherwise we must be on the server, sending to a client
-			SteamGameServerNetworkingSockets()->SendMessageToConnection(req->send_message.handle, req->send_message.buffer, req->send_message.count, req->send_message.messageReliability, nullptr);
+			assert( req->send_message.count < SDR_MAX_MESSAGE_SIZE );
+			SteamNetworkingSockets()->SendMessageToConnection( req->send_message.handle, req->send_message.buffer, req->send_message.count, req->send_message.messageReliability, nullptr );
+			struct steam_rpc_shim_common_s recv;
+			prepared_rpc_packet( &req->common, &recv );
+			write_packet( GPipeWrite, &recv, sizeof( steam_rpc_shim_common_s ) );
+			break;
+		}
+		case RPC_SRV_P2P_RECV_MESSAGES: {
+			SteamNetworkingMessage_t *msgs[32];
+			SteamNetConnectionInfo_t info;
+			SteamGameServerNetworkingSockets()->GetConnectionInfo( req->recv_messages.handle, &info );
+			const uint64_t steamid = info.m_identityRemote.GetSteamID().ConvertToUint64();
+			const int n = SteamGameServerNetworkingSockets()->ReceiveMessagesOnConnection( req->recv_messages.handle, msgs, 1 );
+			handleRecvMessageRPC( &req->common, msgs, n, steamid, req->recv_messages.handle );
 			break;
 		}
 		case RPC_P2P_RECV_MESSAGES: {
-			SteamNetworkingMessage_t* msgs[32];
-			int n;
+			SteamNetworkingMessage_t *msgs[32];
+			SteamNetConnectionInfo_t info;
+			SteamNetworkingSockets()->GetConnectionInfo( req->recv_messages.handle, &info );
+			const uint64_t steamid = info.m_identityRemote.GetSteamID().ConvertToUint64();
 
-			uint64_t steamid;
-			if (req->recv_messages.handle == 0) {
-				SteamNetConnectionInfo_t info;
-				SteamNetworkingSockets()->GetConnectionInfo(GClientToServerConn, &info);
-				steamid = info.m_identityRemote.GetSteamID().ConvertToUint64();
-
-				n = SteamNetworkingSockets()->ReceiveMessagesOnConnection(GClientToServerConn, msgs, 1);
-			} else {
-				SteamNetConnectionInfo_t info;
-				SteamGameServerNetworkingSockets()->GetConnectionInfo(req->recv_messages.handle, &info);
-				steamid = info.m_identityRemote.GetSteamID().ConvertToUint64();
-
-				n = SteamGameServerNetworkingSockets()->ReceiveMessagesOnConnection(req->recv_messages.handle, msgs, 1);
-			}
-
-			size_t total = 0;
-			for (int i = 0; i < n; i++) {
-				total += msgs[i]->GetSize();
-			}
-
-			auto recv = (struct recv_messages_recv_s *)malloc(sizeof(struct recv_messages_recv_s) + total);
-			recv->steamID = steamid;
-			recv->handle = req->recv_messages.handle;
-			recv->count = n;
-
-			size_t offset = 0;
-
-			for (int i = 0; i < n; i++) {
-				recv->messageinfo[i].count = msgs[i]->GetSize();
-				memcpy(recv->buffer + offset, msgs[i]->GetData(), msgs[i]->GetSize());
-				offset += msgs[i]->GetSize();
-			}
-
-
-			prepared_rpc_packet(&req->common, recv);
-			write_packet(GPipeWrite, recv, sizeof(struct recv_messages_recv_s) + total);
+			const int n = SteamNetworkingSockets()->ReceiveMessagesOnConnection( req->recv_messages.handle, msgs, 1 );
+			handleRecvMessageRPC( &req->common, msgs, n, steamid, req->recv_messages.handle );
 			break;
 		}
 		case RPC_GETVOICE: {
 			uint32 size;
 
-			SteamUser()->GetAvailableVoice(&size);
-			if (size == 0) {
+			SteamUser()->GetAvailableVoice( &size );
+			if( size == 0 ) {
 				break;
 			}
 
 			uint8_t buffer[1024];
 
-			SteamUser()->GetVoice(true, buffer, sizeof buffer, &size);
+			SteamUser()->GetVoice( true, buffer, sizeof buffer, &size );
 
-			auto recv = (struct getvoice_recv_s *)malloc(sizeof(struct getvoice_recv_s) + size);
+			auto recv = (struct getvoice_recv_s *)malloc( sizeof( struct getvoice_recv_s ) + size );
 			recv->count = size;
-			memcpy(recv->buffer, buffer, size);
+			memcpy( recv->buffer, buffer, size );
 
-			prepared_rpc_packet(&req->common, recv);
-			write_packet(GPipeWrite, recv, sizeof(struct getvoice_recv_s) + size);
-
+			prepared_rpc_packet( &req->common, recv );
+			write_packet( GPipeWrite, recv, sizeof( struct getvoice_recv_s ) + size );
 			break;
-	 	}
-	 	case RPC_DECOMPRESS_VOICE: {
-			static uint8 decompressed[ VOICE_BUFFER_MAX ];
+		}
+		case RPC_DECOMPRESS_VOICE: {
+			static uint8 decompressed[VOICE_BUFFER_MAX];
 
-	 	 	auto recv = (struct decompress_voice_recv_s *)malloc(sizeof(struct decompress_voice_recv_s) + sizeof(decompressed));
+			auto recv = (struct decompress_voice_recv_s *)malloc( sizeof( struct decompress_voice_recv_s ) + sizeof( decompressed ) );
 
-	 	 	uint32 size = 0;
-	 	 	uint32 optimalSampleRate = 11025;
-	 		EVoiceResult e = SteamUser()->DecompressVoice(req->decompress_voice.buffer, req->decompress_voice.count, decompressed, sizeof decompressed, &size, optimalSampleRate);
-	 		if (e != 0) printf("DecompressVoice failed: %d\n", e);
-	 		memcpy(recv->buffer, decompressed, size);
-	 		recv->count = size;
+			uint32 size = 0;
+			uint32 optimalSampleRate = 11025;
+			EVoiceResult e = SteamUser()->DecompressVoice( req->decompress_voice.buffer, req->decompress_voice.count, decompressed, sizeof decompressed, &size, optimalSampleRate );
+			if( e != 0 )
+				printf( "DecompressVoice failed: %d\n", e );
+			memcpy( recv->buffer, decompressed, size );
+			recv->count = size;
 
-	 		prepared_rpc_packet(&req->common, recv);
-	 		write_packet(GPipeWrite, recv, sizeof(struct decompress_voice_recv_s) + size);
-	 	 	break;
-	 	}
-	 	case RPC_START_VOICE_RECORDING: {
+			prepared_rpc_packet( &req->common, recv );
+			write_packet( GPipeWrite, recv, sizeof( struct decompress_voice_recv_s ) + size );
+			break;
+		}
+		case RPC_START_VOICE_RECORDING: {
 			SteamUser()->StartVoiceRecording();
-			SteamFriends()->SetInGameVoiceSpeaking(SteamUser()->GetSteamID(), true);
+			SteamFriends()->SetInGameVoiceSpeaking( SteamUser()->GetSteamID(), true );
+			struct steam_rpc_shim_common_s recv;
+			prepared_rpc_packet( &req->common, &recv );
+			write_packet( GPipeWrite, &recv, sizeof( steam_rpc_shim_common_s ) );
 			break;
-	 	}
-	 	case RPC_STOP_VOICE_RECORDING: {
+		}
+		case RPC_STOP_VOICE_RECORDING: {
 			SteamUser()->StopVoiceRecording();
-			SteamFriends()->SetInGameVoiceSpeaking(SteamUser()->GetSteamID(), false);
+			SteamFriends()->SetInGameVoiceSpeaking( SteamUser()->GetSteamID(), false );
+			struct steam_rpc_shim_common_s recv;
+			prepared_rpc_packet( &req->common, &recv );
+			write_packet( GPipeWrite, &recv, sizeof( steam_rpc_shim_common_s ) );
 			break;
-	 	}
+		}
 		case RPC_REQUEST_STEAM_ID: {
 			struct steam_id_rpc_s recv;
 			prepared_rpc_packet( &req->common, &recv );
@@ -396,10 +445,148 @@ static void processRPC( steam_rpc_pkt_s *req, size_t size )
 			break;
 		}
 		default:
-				assert(0);// unhandled packet
+			assert( 0 ); // unhandled packet
 			break;
 	}
 }
+
+static void processSteamServerDispatch()
+{
+	if( GRunServer ) {
+		HSteamPipe steamPipe = SteamGameServer_GetHSteamPipe();
+		
+		// perform period actions
+		SteamAPI_ManualDispatch_RunFrame( steamPipe );
+
+		// poll for callbacks
+		CallbackMsg_t callback;
+		while( SteamAPI_ManualDispatch_GetNextCallback( steamPipe, &callback ) ) {
+			int id = callback.m_iCallback;
+			void *data = callback.m_pubParam;
+			void *callResultData = 0;
+			steam_rpc_shim_common_s rpcCallback;
+
+			if( callback.m_iCallback == SteamAPICallCompleted_t::k_iCallback ) {
+				SteamAPICallCompleted_t *callCompleted = (SteamAPICallCompleted_t *)callback.m_pubParam;
+				void *callResultData = malloc( callCompleted->m_cubParam );
+				bool failed;
+				if( SteamAPI_ManualDispatch_GetAPICallResult( steamPipe, callCompleted->m_hAsyncCall, callResultData, callCompleted->m_cubParam, callCompleted->m_iCallback, &failed ) ) {
+					if( !steam_async_pop_rpc_shim( callCompleted->m_hAsyncCall, &rpcCallback ) ) {
+						free( callResultData );
+						SteamAPI_ManualDispatch_FreeLastCallback( steamPipe );
+						continue;
+					}
+
+					id = callCompleted->m_iCallback;
+					data = callResultData;
+					// dmLogInfo( "SteamAPICallCompleted_t %llu result %d", callCompleted->m_hAsyncCall, id );
+				} else {
+					free( callResultData );
+					SteamAPI_ManualDispatch_FreeLastCallback( steamPipe );
+					// dmLogInfo("SteamAPICallCompleted_t failed to get call result");
+					return;
+				}
+			}
+
+			switch( id ) {
+				case SteamServersConnected_t::k_iCallback: {
+					printf( "SteamServersConnected_t\n" );
+					break;
+				}
+				case SteamNetConnectionStatusChangedCallback_t::k_iCallback:
+					handleSteamConnectionStatusChanged( EVT_SRV_P2P_CONNECTION_CHANGED, (SteamNetConnectionStatusChangedCallback_t *)data );
+					break;
+				case GSPolicyResponse_t::k_iCallback: {
+					GSPolicyResponse_t *pCallback = (GSPolicyResponse_t *)data;
+					printf( "VAC enabled: %d\n", pCallback->m_bSecure );
+					uint64_t steamID = SteamGameServer()->GetSteamID().ConvertToUint64();
+					policy_response_evt_s evt;
+					evt.cmd = EVT_SRV_P2P_POLICY_RESPONSE;
+					evt.steamID = steamID;
+					evt.secure = pCallback->m_bSecure;
+					write_packet( GPipeWrite, &evt, sizeof( struct policy_response_evt_s ) );
+					break;
+				}
+			}
+			free( callResultData );
+			SteamAPI_ManualDispatch_FreeLastCallback( steamPipe );
+		}
+	}
+}
+
+static void processSteamDispatch()
+{
+	if( GRunClient ) {
+		// use a manual callback loop
+		// see steam_api.h for details
+		HSteamPipe steamPipe = SteamAPI_GetHSteamPipe();
+
+		// perform period actions
+		SteamAPI_ManualDispatch_RunFrame( steamPipe );
+
+		// poll for callbacks
+		CallbackMsg_t callback;
+		while( SteamAPI_ManualDispatch_GetNextCallback( steamPipe, &callback ) ) {
+			int id = callback.m_iCallback;
+			void *data = callback.m_pubParam;
+			void *callResultData = 0;
+			steam_rpc_shim_common_s rpcCallback;
+
+			if( callback.m_iCallback == SteamAPICallCompleted_t::k_iCallback ) {
+				SteamAPICallCompleted_t *callCompleted = (SteamAPICallCompleted_t *)callback.m_pubParam;
+				void *callResultData = malloc( callCompleted->m_cubParam );
+				bool failed;
+				if( SteamAPI_ManualDispatch_GetAPICallResult( steamPipe, callCompleted->m_hAsyncCall, callResultData, callCompleted->m_cubParam, callCompleted->m_iCallback, &failed ) ) {
+					if( !steam_async_pop_rpc_shim( callCompleted->m_hAsyncCall, &rpcCallback ) ) {
+						free( callResultData );
+						SteamAPI_ManualDispatch_FreeLastCallback( steamPipe );
+						continue;
+					}
+
+					id = callCompleted->m_iCallback;
+					data = callResultData;
+					// dmLogInfo( "SteamAPICallCompleted_t %llu result %d", callCompleted->m_hAsyncCall, id );
+				} else {
+					free( callResultData );
+					SteamAPI_ManualDispatch_FreeLastCallback( steamPipe );
+					// dmLogInfo("SteamAPICallCompleted_t failed to get call result");
+					return;
+				}
+			}
+
+			switch( id ) {
+				case UserStatsReceived_t::k_iCallback: {
+					break;
+				}
+				case SteamNetConnectionStatusChangedCallback_t::k_iCallback: {
+					handleSteamConnectionStatusChanged( EVT_P2P_CONNECTION_CHANGED, (SteamNetConnectionStatusChangedCallback_t *)data );
+					break;
+				}
+				case GameRichPresenceJoinRequested_t::k_iCallback: {
+					GameRichPresenceJoinRequested_t *pCallback = (GameRichPresenceJoinRequested_t *)data;
+					join_request_evt_s evt;
+					evt.cmd = EVT_GAME_JOIN;
+					evt.steamID = pCallback->m_steamIDFriend.ConvertToUint64();
+					memcpy( evt.rgchConnect, pCallback->m_rgchConnect, k_cchMaxRichPresenceValueLength );
+					write_packet( GPipeWrite, &evt, sizeof( struct join_request_evt_s ) );
+					break;
+				}
+				case PersonaStateChange_t::k_iCallback: {
+					PersonaStateChange_t *pCallback = (PersonaStateChange_t *)data;
+					persona_changes_evt_s evt;
+					evt.cmd = EVT_PERSONA_CHANGED;
+					evt.avatar_changed = pCallback->m_nChangeFlags & k_EPersonaChangeAvatar;
+					evt.steamID = pCallback->m_ulSteamID;
+					write_packet( GPipeWrite, &evt, sizeof( struct persona_changes_evt_s ) );
+					break;
+				}
+			}
+			free( callResultData );
+			SteamAPI_ManualDispatch_FreeLastCallback( steamPipe );
+		}
+	}
+}
+
 static void processCommands()
 {
 	static struct steam_packet_buf packet;
@@ -413,8 +600,8 @@ static void processCommands()
 
 		assert( sizeof( struct steam_packet_buf ) == STEAM_PACKED_RESERVE_SIZE );
 
-		if (!pipeReady(GPipeRead)) {
-			std::this_thread::sleep_for(std::chrono::microseconds(1000));
+		if( !pipeReady( GPipeRead ) ) {
+			std::this_thread::sleep_for( std::chrono::microseconds( 1000 ) );
 			continue;
 		}
 
@@ -425,6 +612,9 @@ static void processCommands()
 			std::this_thread::sleep_for( std::chrono::microseconds( 1000 ) );
 			continue;
 		}
+
+		processSteamServerDispatch();
+		processSteamDispatch();
 	continue_processing:
 
 		if( packet.size > STEAM_PACKED_RESERVE_SIZE - sizeof( uint32_t ) ) {
@@ -438,9 +628,8 @@ static void processCommands()
 
 		if( packet.common.cmd >= RPC_BEGIN && packet.common.cmd < RPC_END ) {
 			processRPC( &packet.rpc_payload, packet.size );
-		} else if(packet.common.cmd >= EVT_BEGIN && packet.common.cmd < EVT_END) {
+		} else if( packet.common.cmd >= EVT_BEGIN && packet.common.cmd < EVT_END ) {
 			processEVT( &packet.evt_payload, packet.size );
-
 		}
 
 		if( cursor > packet.size + sizeof( uint32_t ) ) {
@@ -455,15 +644,8 @@ static void processCommands()
 	}
 }
 
-void SteamNetConnectionStatusChangedCallback(SteamNetConnectionStatusChangedCallback_t* pInfo) {
-	printf("SteamNetConnectionStatusChangedCallback_t\n");
-}
-
-HSteamNetConnection gconn = k_HSteamNetConnection_Invalid;
 static bool initSteamworks( PipeType fd )
 {
-	GSteamCallbacks = new SteamCallbacks();
-
 	if( GRunClient ) {
 		// this can fail for many reasons:
 		//  - you forgot a steam_appid.txt in the current working directory.
@@ -472,15 +654,16 @@ static bool initSteamworks( PipeType fd )
 		if( !SteamAPI_Init() )
 			return 0;
 
+
 		GSteamStats = SteamUserStats();
 		GSteamUtils = SteamUtils();
 		GSteamUser = SteamUser();
+		GSteamUGC = SteamUGC();
 
 		GAppID = GSteamUtils ? GSteamUtils->GetAppID() : 0;
 		GUserID = GSteamUser ? GSteamUser->GetSteamID().ConvertToUint64() : 0;
 
 		GServerBrowser = new ServerBrowser();
-
 		GServerBrowser->RefreshInternetServers();
 
 		SteamNetworkingUtils()->InitRelayNetworkAccess();
@@ -488,10 +671,9 @@ static bool initSteamworks( PipeType fd )
 	}
 
 	if( GRunServer ) {
-
 		// AFAIK you have to do a full server init if you want to use any of the steam utils, even though we never use this port
 		if( !SteamGameServer_Init( 0, 0, 0, eServerModeAuthenticationAndSecure, "1.0.0.0" ) )
-			printf("port in use, ignoring\n");
+			printf( "port in use, ignoring\n" );
 
 		GSteamGameServer = SteamGameServer();
 		if( !GSteamGameServer )
@@ -502,6 +684,8 @@ static bool initSteamworks( PipeType fd )
 
 		GSteamGameServer->SetAdvertiseServerActive( true );
 	}
+	
+	SteamAPI_ManualDispatch_Init ();
 
 	return 1;
 }

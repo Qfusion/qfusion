@@ -395,6 +395,11 @@ static void CL_CheckForResend( void )
 	}
 }
 
+static void CL_RPC_cb_connect_p2p(void *self, struct steam_rpc_pkt_s *pkt)  {
+	assert(self);
+	socket_t* socket = self;	
+	socket->steam_handle = pkt->p2p_connect_recv.handle; 
+}
 /*
 * CL_Connect
 */
@@ -422,23 +427,22 @@ static void CL_Connect( const char *servername, socket_type_t type, netadr_t *ad
 		break;
 	case SOCKET_SDR:
 		{
-			struct p2p_connect_req_s req;
-			req.cmd = RPC_P2P_CONNECT;
-			req.steamID = address->address.steamid;
-			uint32_t sync;
-			STEAMSHIM_sendRPC(&req, sizeof req, NULL, NULL, &sync);
-			// do we need to wait for connection open?
-			// STEAMSHIM_waitDispatchSync(sync);
-
 			cls.socket = &cls.socket_sdr;
 			cls.socket->address = *address;
 			cls.socket->type = SOCKET_SDR;
-			cls.socket->open = true;
+			cls.socket->open = false;
 			cls.socket->remoteAddress = *address;
-			cls.socket->connected = true;
+			cls.socket->connected = false;
 			cls.socket->server = false;
-			cls.socket->handle = 0;
+			cls.socket->steam_handle = 0;
 			cls.reliable = false;
+			
+			uint32_t sync;
+			struct p2p_connect_req_s req;
+			req.cmd = RPC_P2P_CONNECT;
+			req.steamID = address->address.steamid;
+			STEAMSHIM_sendRPC(&req, sizeof req, cls.socket, &CL_RPC_cb_connect_p2p, &sync);
+			STEAMSHIM_waitDispatchSync(sync);
 		}
 		break;
 
@@ -2187,7 +2191,7 @@ static void CL_RPC_cb_persona( void *self, struct steam_rpc_pkt_s *rec )
 	cvar_t *name_cvar = self;
 	assert( rec->common.cmd == RPC_PERSONA_NAME );
 	char steamname[MAX_NAME_BYTES * 4], *steamnameIn = steamname, c;
-	strncpy( steamname, (char *)rec->persona_name.buf, sizeof( steamname ) );
+	strncpy( steamname, (char *)rec->persona_name.buf, sizeof( steamname ) - 1 );
 
 	bool steamnamePrintable = true;
 	while( ( c = *steamnameIn ) != '\0' ) {
@@ -2205,6 +2209,19 @@ static void CL_RPC_cb_persona( void *self, struct steam_rpc_pkt_s *rec )
 		Cvar_Set( name_cvar->name, steamname );
 	}
 }
+
+static void CL_EVT_cb_connection_changed(void *self, struct steam_evt_pkt_s *pkt) {
+	struct p2p_net_connection_changed_evt_s *evt = &pkt->p2p_net_connection_changed;
+	if(cls.socket && cls.socket->steam_handle == evt->hConn) {
+		switch(evt->state) {
+			case STEAMSHIM_ESteamNetworkingConnectionState_Connected:
+				cls.socket->connected = true;
+				cls.socket->open = true;
+				break;
+		}
+	} 
+}
+
 /*
 * CL_InitLocal
 */
@@ -2304,6 +2321,7 @@ static void CL_InitLocal( void )
   	cvar_t *steam_id = Cvar_Get( "steam_id", "", CVAR_USERINFO | CVAR_READONLY );
 		STEAMSHIM_sendRPC(&request,sizeof(struct steam_rpc_shim_common_s), steam_id , CL_RPC_cb_steam_id, &syncIndex);
 	}
+	STEAMSHIM_subscribeEvent(EVT_P2P_CONNECTION_CHANGED, NULL, CL_EVT_cb_connection_changed);
 	STEAMSHIM_waitDispatchSync(syncIndex);
 
 	Cvar_Get( "clan", "", CVAR_USERINFO | CVAR_ARCHIVE );
@@ -2385,6 +2403,7 @@ static void CL_ShutdownLocal( void )
 	Cmd_RemoveCommand( "stop" );
 	Cmd_RemoveCommand( "quit" );
 	Cmd_RemoveCommand( "connect" );
+	STEAMSHIM_unsubscribeEvent(EVT_P2P_CONNECTION_CHANGED, CL_EVT_cb_connection_changed);
 #if defined(TCP_ALLOW_CONNECT)
 	Cmd_RemoveCommand( "tcpconnect" );
 #endif

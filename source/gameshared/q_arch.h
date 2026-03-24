@@ -58,7 +58,6 @@ extern "C" {
 #endif
 
 #define Q_ARRAY_COUNT( array ) (sizeof( array ) / (sizeof( array[0])))
-
 //==============================================
 
 #ifdef _WIN32
@@ -321,6 +320,8 @@ typedef int socket_handle_t;
 #define INVALID_SOCKET (-1)
 
 #endif
+
+typedef uint32_t socket_steam_handle_t;
 
 //==============================================
 

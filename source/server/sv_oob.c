@@ -826,7 +826,7 @@ static void SVC_DirectConnect( const socket_t *socket, const netadr_t *address )
 		// find the connection
 		for( i = 0; i < MAX_INCOMING_CONNECTIONS; i++ )
 		{
-			if( !svs.incomingp2p[i].active )
+			if( !svs.incomingp2p[i].active)
 				continue;
 
 			if( NET_CompareAddress( &svs.incomingp2p[i].address, address ) && socket == &svs.incomingp2p[i].socket )

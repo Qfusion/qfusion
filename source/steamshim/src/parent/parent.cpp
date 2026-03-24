@@ -48,7 +48,7 @@ struct steam_rpc_async_s {
 
 struct event_subscriber_s {
 	size_t numSubscribers;
-    struct {
+	struct {
 		void *self;
 		STEAMSHIM_evt_handle cb;
 	} handles[NUM_EVT_HANDLE];
@@ -58,7 +58,6 @@ static std::atomic<size_t> SyncToken;
 static size_t currentSync;
 static struct steam_rpc_async_s rpc_handles[NUM_RPC_ASYNC_HANDLE];
 static struct event_subscriber_s evt_handles[STEAM_EVT_LEN];
-
 
 std::mutex writeGuard;
 
@@ -149,7 +148,7 @@ int STEAMSHIM_init( SteamshimOptions *options )
 
 	pipeChildRead = pipeChildWrite = NULLPIPE;
 
-	std::thread task(taskHeartbeat);
+	std::thread task( taskHeartbeat );
 	task.detach();
 
 #ifndef _WIN32
@@ -177,19 +176,19 @@ void STEAMSHIM_deinit( void )
 #endif
 }
 
-bool STEAMSHIM_active() {
-	return ( ( GPipeRead != NULLPIPE ) && ( GPipeWrite != NULLPIPE ) );
-} 
-
-int STEAMSHIM_sendEVT( void *packet, uint32_t size)
+bool STEAMSHIM_active()
 {
-  	writeGuard.lock();
+	return ( ( GPipeRead != NULLPIPE ) && ( GPipeWrite != NULLPIPE ) );
+}
+
+int STEAMSHIM_sendEVT( void *packet, uint32_t size )
+{
+	writeGuard.lock();
 	writePipe( GPipeWrite, &size, sizeof( uint32_t ) );
 	writePipe( GPipeWrite, (uint8_t *)packet, size );
 	writeGuard.unlock();
 	return 0;
 }
-
 
 int STEAMSHIM_sendRPC( void *packet, uint32_t size, void *self, STEAMSHIM_rpc_handle rpc, uint32_t *sync )
 {
@@ -205,7 +204,7 @@ int STEAMSHIM_sendRPC( void *packet, uint32_t size, void *self, STEAMSHIM_rpc_ha
 	handle->self = self;
 	handle->cb = rpc;
 
-  writeGuard.lock();
+	writeGuard.lock();
 	writePipe( GPipeWrite, &size, sizeof( uint32_t ) );
 	writePipe( GPipeWrite, (uint8_t *)packet, size );
 	writeGuard.unlock();
@@ -227,29 +226,28 @@ int STEAMSHIM_waitDispatchSync( uint32_t syncIndex )
 		} else {
 			continue;
 		}
-		continue_processing:
+	continue_processing:
 
 		if( packet.size > STEAM_PACKED_RESERVE_SIZE - sizeof( uint32_t ) ) {
 			// the packet is larger then the reserved size
 			return -1;
 		}
-		
+
 		if( cursor < packet.size + sizeof( uint32_t ) ) {
 			continue;
 		}
 		const bool rpcPacket = packet.common.cmd >= RPC_BEGIN && packet.common.cmd < RPC_END;
 		if( rpcPacket ) {
-		    // assert(packet.rpc_payload.common.sync > currentSync); // rpc's are FIFO no out of order 
-	        
-	        struct steam_rpc_async_s *handle = rpc_handles + ( packet.rpc_payload.common.sync % NUM_RPC_ASYNC_HANDLE );
-	        if( handle->cb ) {
-		        handle->cb( handle->self, &packet.rpc_payload );
-	        }
-		    currentSync = packet.rpc_payload.common.sync;
+			// assert(packet.rpc_payload.common.sync > currentSync); // rpc's are FIFO no out of order
+			struct steam_rpc_async_s *handle = rpc_handles + ( packet.rpc_payload.common.sync % NUM_RPC_ASYNC_HANDLE );
+			if( handle->cb ) {
+				handle->cb( handle->self, &packet.rpc_payload );
+			}
+			currentSync = packet.rpc_payload.common.sync;
 		} else if( packet.common.cmd >= EVT_BEGIN && packet.common.cmd < EVT_END ) {
 			struct event_subscriber_s *handle = evt_handles + ( packet.common.cmd - EVT_BEGIN );
-			for(size_t i = 0; i < handle->numSubscribers; i++) {
-			    handle->handles[i].cb(handle->handles[i].self, &packet.evt_payload);
+			for( size_t i = 0; i < handle->numSubscribers; i++ ) {
+				handle->handles[i].cb( handle->handles[i].self, &packet.evt_payload );
 			}
 		}
 
@@ -258,7 +256,7 @@ int STEAMSHIM_waitDispatchSync( uint32_t syncIndex )
 			const size_t remainingLen = cursor - packetlen;
 			memmove( packet.buffer, packet.buffer + packet.size + sizeof( uint32_t ), remainingLen );
 			cursor = remainingLen;
-		    goto continue_processing;
+			goto continue_processing;
 		} else {
 			cursor = 0;
 		}
@@ -270,7 +268,7 @@ int STEAMSHIM_waitDispatchSync( uint32_t syncIndex )
 }
 void STEAMSHIM_subscribeEvent( uint32_t id, void *self, STEAMSHIM_evt_handle evt )
 {
-    assert(evt);
+	assert( evt );
 	assert( id >= EVT_BEGIN && id < EVT_END );
 	struct event_subscriber_s *handle = evt_handles + ( id - EVT_BEGIN );
 	assert( handle->numSubscribers < NUM_EVT_HANDLE );
@@ -289,7 +287,7 @@ void STEAMSHIM_unsubscribeEvent( uint32_t id, STEAMSHIM_evt_handle cb )
 		if( handle->handles[ic].cb == cb ) {
 			handle->numSubscribers--;
 			ib--;
-		    continue;
+			continue;
 		}
 		if( ic == ib )
 			continue;

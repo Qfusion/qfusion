@@ -569,8 +569,10 @@ typedef struct
 	bool connected;
 #endif
 	netadr_t remoteAddress;
-
-	socket_handle_t handle;
+	union {
+		socket_steam_handle_t steam_handle;
+		socket_handle_t handle;
+	};
 } socket_t;
 
 typedef enum

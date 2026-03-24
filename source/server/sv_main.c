@@ -175,39 +175,102 @@ static bool SV_ProcessPacket( netchan_t *netchan, msg_t *msg )
 
 	return true;
 }
-static void SV_P2P_NewConnection( void *self, struct steam_evt_pkt_s *evt )
-{
-	struct p2p_new_connection_evt_s *p2p = &evt->p2p_new_connection;
 
-	// find a free slot
-	int free = -1;
-	for( int i = 0; i < MAX_INCOMING_CONNECTIONS; i++ ) {
-		if( !svs.incomingp2p[i].active ) {
-			free = i;
-			break;
-		}
-	}
-	if( free == -1 ) {
-		Com_Printf( "No free slot for P2P connection\n" );
+static void CL_EVT_cb_policy_response( void *self, struct steam_evt_pkt_s *pkt )
+{
+	svs.steamid = pkt->policy_response.steamID;
+	// re-update the masterserver now that we have the right steamid
+	svc.nextHeartbeat = 0;
+	SV_MasterHeartbeat();
+}
+
+static void CL_RPC_cb_accept_connection( void *self, struct steam_rpc_pkt_s *pReq )
+{
+	incoming_t *inc = self;
+	struct p2p_accept_connection_recv_s *pRecv = &pReq->p2p_accept_connection_recv;
+	if( pRecv->result != STEAMSHIM_EResultOK ) {
+		struct p2p_disconnect_req_s req;
+		req.cmd = RPC_SRV_P2P_DISCONNECT;
+		req.handle = inc->socket.steam_handle;
+		STEAMSHIM_sendRPC( &req, sizeof( struct p2p_disconnect_req_s ), NULL, NULL, NULL );
+		inc->active = false;
 		return;
 	}
-
-	incoming_t *inc = &svs.incomingp2p[free];
-	netadr_t address;
-	NET_InitAddress( &address, NA_SDR );
-	address.address.steamid = p2p->steamID;
-
-	inc->active = true;
-	inc->time = svs.realtime;
-	inc->address = address;
-
-	inc->socket.address = address;
-	inc->socket.type = SOCKET_SDR;
-	inc->socket.handle = p2p->handle;
-	inc->socket.server = true;
 	inc->socket.open = true;
 	inc->socket.connected = true;
 }
+
+static void CL_EVT_cb_connect_status_response( void *self, struct steam_evt_pkt_s *pkt )
+{
+	struct p2p_net_connection_changed_evt_s *evt = &pkt->p2p_net_connection_changed;
+	if( evt->listenSocket == svs.steam_listen_socket && evt->oldState == STEAMSHIM_ESteamNetworkingConnectionState_None && evt->state == STEAMSHIM_ESteamNetworkingConnectionState_Connecting ) {
+		int free = -1;
+		for( int i = 0; i < MAX_INCOMING_CONNECTIONS; i++ ) {
+			if( !svs.incomingp2p[i].active ) {
+				free = i;
+				break;
+			} 
+		}
+		if( free == -1 ) {
+			Com_Printf( "No free slot for P2P connection\n" );
+			return;
+		}
+		incoming_t *inc = &svs.incomingp2p[free];
+		netadr_t address;
+		NET_InitAddress( &address, NA_SDR );
+		address.address.steamid = evt->identityRemoteSteamID;
+		
+		inc->active = true;
+		inc->time = svs.realtime;
+		inc->address = address;
+		
+		inc->socket.type = SOCKET_SDR;
+		inc->socket.steam_handle = evt->hConn;
+		inc->socket.server = true;
+		inc->socket.open = false;
+		inc->socket.connected = false;
+
+		struct p2p_accept_connect_req_s req;
+		req.cmd = RPC_SRV_P2P_ACCEPT_CONNECTION;
+		req.handle = evt->hConn;
+		STEAMSHIM_sendRPC( &req, sizeof( struct p2p_accept_connect_req_s ), inc, CL_RPC_cb_accept_connection, NULL);
+	}
+}
+
+
+//static void SV_P2P_NewConnection( void *self, struct steam_evt_pkt_s *evt )
+//{
+//	struct p2p_new_connection_evt_s *p2p = &evt->p2p_new_connection;
+//
+//	// find a free slot
+//	int free = -1;
+//	for( int i = 0; i < MAX_INCOMING_CONNECTIONS; i++ ) {
+//		if( !svs.incomingp2p[i].active ) {
+//			free = i;
+//			break;
+//		}
+//	}
+//	if( free == -1 ) {
+//		Com_Printf( "No free slot for P2P connection\n" );
+//		return;
+//	}
+//
+//	incoming_t *inc = &svs.incomingp2p[free];
+//	netadr_t address;
+//	NET_InitAddress( &address, NA_SDR );
+//	address.address.steamid = p2p->steamID;
+//
+//	inc->active = true;
+//	inc->time = svs.realtime;
+//	inc->address = address;
+//
+//	inc->socket.address = address;
+//	inc->socket.type = SOCKET_SDR;
+//	inc->socket.handle = p2p->handle;
+//	inc->socket.server = true;
+//	inc->socket.open = true;
+//	inc->socket.connected = true;
+//}
 
 /*
 * SV_ReadPackets
@@ -404,9 +467,8 @@ static void SV_ReadPackets( void )
 
   // sdr packets without a connection
   for( int i = 0; i < MAX_INCOMING_CONNECTIONS; i++ ) {
-      if( !svs.incomingp2p[i].active )
+      if( !svs.incomingp2p[i].active || !svs.incomingp2p[i].socket.connected )
           continue;
-
       ret = NET_GetPacket( &svs.incomingp2p[i].socket, &address, &msg );
       if( ret == -1 ) {
           Com_Printf( "NET_GetPacket: Error: %s\n", NET_ErrorString() );
@@ -1034,10 +1096,11 @@ void SV_Init( void )
 	} else {
 		Cvar_ForceSet( "sv_useSteamAuth", "0" );
 	}
+	
+	STEAMSHIM_subscribeEvent( EVT_SRV_P2P_POLICY_RESPONSE, NULL, CL_EVT_cb_policy_response );
+	STEAMSHIM_subscribeEvent( EVT_SRV_P2P_CONNECTION_CHANGED, NULL, CL_EVT_cb_connect_status_response );
 
 	// Register net callback
-	STEAMSHIM_subscribeEvent(EVT_P2P_NEW_CONNECTION, NULL, SV_P2P_NewConnection);
-
 	sv_initialized = true;
 }
 
@@ -1050,6 +1113,10 @@ void SV_Shutdown( const char *finalmsg )
 {
 	if( !sv_initialized )
 		return;
+
+	STEAMSHIM_unsubscribeEvent(EVT_SRV_P2P_POLICY_RESPONSE,CL_EVT_cb_policy_response);
+	STEAMSHIM_unsubscribeEvent(EVT_SRV_P2P_CONNECTION_CHANGED, CL_EVT_cb_connect_status_response);
+
 	sv_initialized = false;
 
 	SV_Web_Shutdown();
