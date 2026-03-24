@@ -749,7 +749,7 @@ static inline int FS_FileNumForHandle( filehandle_t *fh )
 
 	file = ( fh - fs_filehandles ) + 1;
 	if( file < 1 || file > FS_MAX_HANDLES )
-		Sys_Error( "FS_FileHandleForNum: bad handle: %i", file );
+		Sys_Error( "FS_FileNumForHandle: bad handle: %i", file );
 	return file;
 }
 
