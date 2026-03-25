@@ -25,8 +25,6 @@ freely, subject to the following restrictions:
 #include "../steamshim.h"
 #include "../steamshim_types.h"
 
-
-
 typedef struct { 
   bool debug;
   bool runclient;

@@ -90,10 +90,10 @@ static bool setEnvironmentVars( PipeType pipeChildRead, PipeType pipeChildWrite 
 
 void taskHeartbeat()
 {
-	while( true ) {
+	while (STEAMSHIM_active()) {
 		struct steam_shim_common_s pkt;
 		pkt.cmd = EVT_HEART_BEAT;
-		STEAMSHIM_sendEVT( &pkt, sizeof( struct steam_shim_common_s ) );
+		STEAMSHIM_sendEVT( &pkt, sizeof( struct steam_shim_common_s ));
 		std::this_thread::sleep_for( std::chrono::milliseconds( 1000 ) );
 	}
 }
@@ -162,9 +162,8 @@ int STEAMSHIM_init( SteamshimOptions *options )
 void STEAMSHIM_deinit( void )
 {
 	dbgprintf( "Child deinit.\n" );
-	if( GPipeWrite != NULLPIPE ) {
+	if( GPipeWrite != NULLPIPE ) 
 		closePipe( GPipeWrite );
-	}
 
 	if( GPipeRead != NULLPIPE )
 		closePipe( GPipeRead );
@@ -224,7 +223,7 @@ int STEAMSHIM_waitDispatchSync( uint32_t syncIndex )
 		if( bytesRead > 0 ) {
 			cursor += bytesRead;
 		} else {
-			continue;
+			return -1;
 		}
 	continue_processing:
 
@@ -279,7 +278,7 @@ void STEAMSHIM_subscribeEvent( uint32_t id, void *self, STEAMSHIM_evt_handle evt
 void STEAMSHIM_unsubscribeEvent( uint32_t id, STEAMSHIM_evt_handle cb )
 {
 	assert( id >= EVT_BEGIN && id < EVT_END );
-	struct event_subscriber_s *handle = evt_handles + ( EVT_BEGIN - id );
+	struct event_subscriber_s *handle = evt_handles + ( id - EVT_BEGIN );
 	size_t ib = 0;
 	size_t ic = 0;
 	const size_t len = handle->numSubscribers;
