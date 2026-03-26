@@ -25,29 +25,27 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 cvar_t *steam_debug;
 /*
-* Steam_Init
-*/
+ * Steam_Init
+ */
 void Steam_Init( void )
 {
-	 steam_debug = Cvar_Get( "steam_debug", "0", 0);
+	steam_debug = Cvar_Get( "steam_debug", "0", 0 );
 
-	 SteamshimOptions opts;
-	 opts.debug = steam_debug->integer;
-	 opts.runserver = 1;
-	 opts.runclient = !dedicated->integer;
+	SteamshimOptions opts;
+	opts.debug = steam_debug->integer;
+	opts.runserver = 1;
+	opts.runclient = !dedicated->integer;
 	int r = STEAMSHIM_init( &opts );
 	if( !r ) {
 		Com_Printf( "Steam initialization failed.\n" );
 		return;
 	}
-
 }
 
 /*
-* Steam_Shutdown
-*/
+ * Steam_Shutdown
+ */
 void Steam_Shutdown( void )
 {
 	STEAMSHIM_deinit();
 }
-

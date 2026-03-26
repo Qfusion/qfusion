@@ -1,7 +1,6 @@
 #include "ServerBrowser.h"
 
 #include "../steamshim_types.h"
-#include "../steamshim.h"
 #include "../steamshim_private.h"
 #include "steam/isteamfriends.h"
 #include "steam/isteamuser.h"

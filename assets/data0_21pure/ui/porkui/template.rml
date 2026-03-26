@@ -190,6 +190,7 @@
 		<a href="index.rml" id="link_profile">Home</a>	
 		<a href="#" id="link_game" onclick="$openTutorialDialog">Play</a>	
 		<!-- <a href="chat.rml" id="link_chat">Chat</a> -->		
+		<a href="workshop.rml" id="link_workshop">Workshop</a>
 		<a href="options.rml" id="link_options">Options</a>
 		<a href="credits.rml" id="link_credits">Credits</a>
 		<a href="#" id="link_quit" onclick="OpenQuitDialog();">Quit</a>

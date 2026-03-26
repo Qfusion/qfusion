@@ -22,7 +22,6 @@ freely, subject to the following restrictions:
 #define STEAMSHIM_CHILD_H
 
 #include <stdint.h>
-#include "../steamshim.h"
 #include "../steamshim_types.h"
 
 typedef struct { 

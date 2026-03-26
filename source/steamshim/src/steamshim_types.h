@@ -27,6 +27,8 @@ freely, subject to the following restrictions:
 #define PIPEMESSAGE_MAX ( STEAM_AVATAR_SIZE + 64 )
 #define AUTH_TICKET_MAXSIZE 1024
 #define SDR_MAX_MESSAGE_SIZE 32768
+
+typedef uint64_t PublishedFileId_t;
 typedef struct {
 	char pTicket[AUTH_TICKET_MAXSIZE];
 	long long pcbTicket;
@@ -36,6 +38,7 @@ typedef struct {
 #define VOICE_BUFFER_MAX 22000
 #define STEAM_MAX_AVATAR_SIZE ( 128 * 128 * 4 )
 #define STEAM_AUTH_TICKET_MAXSIZE 1024
+
 
 enum steam_avatar_size_e { STEAM_AVATAR_LARGE, STEAM_AVATAR_MED, STEAM_AVATAR_SMALL };
 
@@ -205,7 +208,14 @@ enum steam_cmd_s {
 	RPC_UPDATE_SERVERINFO_REGION,
 	RPC_UPDATE_SERVERINFO_SERVERNAME,
 
-	RPC_CREATE_WORKSHOP_ITEM,
+	RPC_WORKSHOP_SUBMIT_ITEM,
+	RPC_WORKSHOP_CREATE_ITEM,
+	RPC_WORKSHOP_ITEM_SET_TITLE,
+	RPC_WORKSHOP_ITEM_SET_DESCRIPTION,
+	RPC_WORKSHOP_ITEM_SET_ITEM_CONTENT,
+	RPC_WORKSHOP_ITEM_SET_VISIBILITY,
+	RPC_WORKSHOP_ITEM_SET_TAGS,
+	RPC_WORKSHOP_ITEM_SET_PREVIEW,
 
 	RPC_SRV_P2P_LISTEN,
 	RPC_SRV_P2P_ACCEPT_CONNECTION,
@@ -271,6 +281,12 @@ struct buffer_rpc_s {
 	uint8_t buf[];
 };
 #define RPC_BUFFER_SIZE( buf, size ) ( size - sizeof( buf ) )
+
+STEAM_RPC_RECV(create_item) {
+	STEAM_RPC_SHIM_COMMON()
+	uint32_t result; // enum steam_result_e 
+	PublishedFileId_t file_id;
+};
 
 STEAM_RPC_REQ( server_info )
 {
@@ -425,6 +441,8 @@ struct steam_rpc_pkt_s {
 		struct steam_id_rpc_s end_auth_session;
 		struct buffer_rpc_s launch_command;
 		struct buffer_rpc_s rich_presence;
+
+		struct create_item_recv_s create_item_recv;
 
 		struct auth_session_ticket_recv_s auth_session;
 

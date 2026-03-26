@@ -1,6 +1,6 @@
 #pragma once
 #include "../os.h"
-#include "../steamshim.h"
+#include "../steamshim_types.h"
 
 template <typename T>
 static inline void prepared_rpc_packet( const steam_rpc_shim_common_s *req, T *response )

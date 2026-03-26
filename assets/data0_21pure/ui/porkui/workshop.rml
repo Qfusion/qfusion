@@ -1,0 +1,20 @@
+<rml>
+    <head>
+        <title>workshop</title>
+        <link type="text/template" href="template.rml" />
+        <link rel="stylesheet" type="text/css" href="css/options/input.rcss" />
+        <script src="as/base.as" />
+    </head>
+    <body template="porkui">
+        <div id="leftside">
+            <div id="workshop">
+                <panel class="dropshadow">
+                    <h3 class="intro">Workshop</h3>
+                    <p>Workshop integration is currently under development.</p>
+                    <br/><br/>
+                    <!-- Add your workshop UI elements here -->
+                </panel>
+            </div>
+        </div>
+    </body>
+</rml>

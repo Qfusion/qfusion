@@ -27,7 +27,6 @@ freely, subject to the following restrictions:
 #include <thread>
 #define DEBUGPIPE 1
 #include "../os.h"
-#include "../steamshim.h"
 #include "../steamshim_private.h"
 #include "../steamshim_types.h"
 #include "parent.h"
@@ -38,7 +37,7 @@ int GArgc = 0;
 char **GArgv = NULL;
 
 #define NUM_RPC_ASYNC_HANDLE 2048
-#define NUM_EVT_HANDLE 16
+#define NUM_EVT_HANDLE 8 
 
 struct steam_rpc_async_s {
 	uint32_t token;

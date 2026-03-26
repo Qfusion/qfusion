@@ -27,7 +27,6 @@ freely, subject to the following restrictions:
 #include <thread>
 
 #include "../os.h"
-#include "../steamshim.h"
 #include "../steamshim_private.h"
 #include "ServerBrowser.h"
 #include "child_private.h"
@@ -133,8 +132,8 @@ static void processRPC( steam_rpc_pkt_s *req, size_t size )
 			write_packet( GPipeWrite, &recv, sizeof( steam_rpc_shim_common_s ) );
 			break;
 		}
-		case RPC_CREATE_WORKSHOP_ITEM: {
-			SteamAPICall_t call = GSteamUGC->CreateItem( 0, k_EWorkshopFileTypeGameManagedItem );
+		case RPC_WORKSHOP_CREATE_ITEM: {
+			SteamAPICall_t call = GSteamUGC->CreateItem( GAppID, k_EWorkshopFileTypeGameManagedItem );
 			steam_async_push_rpc_shim( call, &req->common );
 			break;
 		}
@@ -464,14 +463,14 @@ static void processSteamServerDispatch()
 			int id = callback.m_iCallback;
 			void *data = callback.m_pubParam;
 			void *callResultData = 0;
-			steam_rpc_shim_common_s rpcCallback;
+			steam_rpc_shim_common_s rpc_callback;
 
 			if( callback.m_iCallback == SteamAPICallCompleted_t::k_iCallback ) {
 				SteamAPICallCompleted_t *callCompleted = (SteamAPICallCompleted_t *)callback.m_pubParam;
 				void *callResultData = malloc( callCompleted->m_cubParam );
 				bool failed;
 				if( SteamAPI_ManualDispatch_GetAPICallResult( steamPipe, callCompleted->m_hAsyncCall, callResultData, callCompleted->m_cubParam, callCompleted->m_iCallback, &failed ) ) {
-					if( !steam_async_pop_rpc_shim( callCompleted->m_hAsyncCall, &rpcCallback ) ) {
+					if( !steam_async_pop_rpc_shim( callCompleted->m_hAsyncCall, &rpc_callback ) ) {
 						free( callResultData );
 						SteamAPI_ManualDispatch_FreeLastCallback( steamPipe );
 						continue;
@@ -529,15 +528,15 @@ static void processSteamDispatch()
 		while( SteamAPI_ManualDispatch_GetNextCallback( steamPipe, &callback ) ) {
 			int id = callback.m_iCallback;
 			void *data = callback.m_pubParam;
-			void *callResultData = 0;
-			steam_rpc_shim_common_s rpcCallback;
+			void *call_result_data = 0;
+			steam_rpc_shim_common_s rpc_callback;
 
 			if( callback.m_iCallback == SteamAPICallCompleted_t::k_iCallback ) {
 				SteamAPICallCompleted_t *callCompleted = (SteamAPICallCompleted_t *)callback.m_pubParam;
 				void *callResultData = malloc( callCompleted->m_cubParam );
 				bool failed;
 				if( SteamAPI_ManualDispatch_GetAPICallResult( steamPipe, callCompleted->m_hAsyncCall, callResultData, callCompleted->m_cubParam, callCompleted->m_iCallback, &failed ) ) {
-					if( !steam_async_pop_rpc_shim( callCompleted->m_hAsyncCall, &rpcCallback ) ) {
+					if( !steam_async_pop_rpc_shim( callCompleted->m_hAsyncCall, &rpc_callback ) ) {
 						free( callResultData );
 						SteamAPI_ManualDispatch_FreeLastCallback( steamPipe );
 						continue;
@@ -562,6 +561,15 @@ static void processSteamDispatch()
 					handleSteamConnectionStatusChanged( EVT_P2P_CONNECTION_CHANGED, (SteamNetConnectionStatusChangedCallback_t *)data );
 					break;
 				}
+				case CreateItemResult_t::k_iCallback: {
+					CreateItemResult_t* result = (CreateItemResult_t*)data;
+					struct create_item_recv_s recv;
+					recv.file_id = result->m_nPublishedFileId;
+					recv.result = result->m_eResult;
+					prepared_rpc_packet( &rpc_callback, &recv );
+					write_packet( GPipeWrite, &recv, sizeof( struct create_item_recv_s ) );
+					break;
+				}
 				case GameRichPresenceJoinRequested_t::k_iCallback: {
 					GameRichPresenceJoinRequested_t *pCallback = (GameRichPresenceJoinRequested_t *)data;
 					join_request_evt_s evt;
@@ -581,7 +589,7 @@ static void processSteamDispatch()
 					break;
 				}
 			}
-			free( callResultData );
+			free( call_result_data );
 			SteamAPI_ManualDispatch_FreeLastCallback( steamPipe );
 		}
 	}
