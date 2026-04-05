@@ -810,7 +810,7 @@ void CG_SC_ResetObituaries( void ) {
 void CG_SC_Obituary( void ) {
 	char message[128];
 	char message2[128];
-	cg_clientInfo_t *victim, *attacker;
+	cg_clientInfo_t *victim = NULL, *attacker = NULL;
 	int victimNum = atoi( trap_Cmd_Argv( 1 ) );
 	int attackerNum = atoi( trap_Cmd_Argv( 2 ) );
 	int mod = atoi( trap_Cmd_Argv( 3 ) );
@@ -819,15 +819,12 @@ void CG_SC_Obituary( void ) {
 
 	// wsw : jal : extract gender from their player model info, if any
 	if( victimNum >= 0 && victimNum < MAX_EDICTS && cg_entPModels[victimNum].pmodelinfo ) {
+		victim = &cgs.clientInfo[victimNum - 1];
 		victim_gender = cg_entPModels[victimNum].pmodelinfo->sex;
 	}
 
-	victim = &cgs.clientInfo[victimNum - 1];
-
 	if( attackerNum ) {
 		attacker = &cgs.clientInfo[attackerNum - 1];
-	} else {
-		attacker = NULL;
 	}
 
 	cg_obituaries_current++;

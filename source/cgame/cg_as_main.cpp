@@ -60,6 +60,7 @@ static cg_asApiFuncPtr_t cg_asCGameAPI[] = {
 	{ "void CGame::PredictedEvent( int entNum, int ev, int parm, int64 serverTimestamp )", &cgs.asGameState.predictedEvent, false },
 	{ "void CGame::RunUserCmd( PMove @pm, UserCmd cmd, int ucmdHead, int ucmdExecuted )", &cgs.asGameState.runUcmd, false },
 	{ "void CGame::BuildSolidList()", &cgs.asGameState.buildSolidList, false },
+	{ "bool CGame::ServerCommand( const String &in cmd )", &cgs.asGameState.serverCommand, false },
 
 	{ nullptr, nullptr, false },
 };
@@ -559,6 +560,28 @@ static const gs_asglobproperties_t asCGameGlobalProperties[] = {
 
 //======================================================================
 
+static bool asFunc_TranslateString( asstring_t *v )
+{
+	const char *str = CG_TranslateString( v->buffer );
+	return cgs.asExport->asStringFactoryBuffer( str, strlen( str ) );
+}
+
+static bool asFunc_TranslateColoredString( asstring_t *v )
+{
+	char buffer[MAX_TOKEN_CHARS];
+	const char *str = CG_TranslateColoredString( v->buffer, buffer, sizeof( buffer ) );
+	return cgs.asExport->asStringFactoryBuffer( str, strlen( str ) );
+}
+
+static const gs_asglobfuncs_t asCGameGlobalL10nFuncs[] = {
+	{ "String &TranslateString( const String &in )", asFUNCTION( asFunc_TranslateString ), NULL },
+	{ "String &TranslateColoredString( const String &in )", asFUNCTION( asFunc_TranslateColoredString ), NULL },
+
+	{ NULL },
+};
+
+//======================================================================
+
 /*
  * CG_asInitializeCGameEngineSyntax
  */
@@ -599,6 +622,7 @@ static void CG_asInitializeCGameEngineSyntax( asIScriptEngine *asEngine )
 	GS_asRegisterGlobalFunctions( asEngine, asCGameRefSceneGlobalFuncs, "CGame::Scene" );
 	GS_asRegisterGlobalFunctions( asEngine, asCGameScreenGlobalFuncs, "CGame::Screen" );
 	GS_asRegisterGlobalFunctions( asEngine, asCGameSoundGlobalFuncs, "CGame::Sound" );
+	GS_asRegisterGlobalFunctions( asEngine, asCGameGlobalL10nFuncs, "CGame::L10n" );
 
 	// register global properties
 	GS_asRegisterGlobalProperties( asEngine, asCGameGlobalProperties, "CGame" );
@@ -1029,4 +1053,21 @@ void CG_asBuildSolidList(void)
 		return;
 	}
 	CG_asCallScriptFunc( cgs.asGameState.buildSolidList, cg_empty_as_cb, cg_empty_as_cb );
+}
+
+bool CG_asServerCommand( const char* cmd )
+{
+	uint8_t res = 0;
+
+	if( !cgs.asGameState.serverCommand ) {
+		return false;
+	}
+
+	CG_asCallScriptFunc(
+		cgs.asGameState.serverCommand, [cmd]( asIScriptContext *ctx ) { 
+			ctx->SetArgObject( 0, cgs.asExport->asStringFactoryBuffer( cmd, strlen( cmd ) ) );
+		},
+		[&res]( asIScriptContext *ctx ) { res = ctx->GetReturnByte(); } );
+
+	return res == 0 ? false : true;
 }

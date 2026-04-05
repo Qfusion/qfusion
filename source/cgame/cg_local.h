@@ -470,6 +470,7 @@ typedef struct {
 		void *runUcmd;
 		void *buildSolidList;
 		void *predictedEvent;
+		void *serverCommand;
 	} asGameState;
 
 	// fonts
@@ -1254,6 +1255,7 @@ bool CG_asEntityEvent( entity_state_t *ent, int ev, int parm, bool predicted );
 bool CG_asPredictedEvent( int entNum, int ev, int parm, int64_t serverTimestamp );
 void CG_asRunUcmd( pmove_t *pm, usercmd_t *cmd, int ucmdHead, int ucmdExecuted );
 void CG_asBuildSolidList( void );
+bool CG_asServerCommand( const char *cmd );
 
 void CG_asHUDInit( void );
 bool CG_asHUDDrawCrosshair( void );

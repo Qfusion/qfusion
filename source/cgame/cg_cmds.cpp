@@ -811,6 +811,11 @@ void CG_GameCommand( const char *command ) {
 	trap_Cmd_TokenizeString( command );
 
 	s = trap_Cmd_Argv( 0 );
+
+	if( CG_asServerCommand( s ) ) {
+		return;
+	}
+
 	for( cmd = cg_svcmds; cmd->name; cmd++ ) {
 		if( !strcmp( s, cmd->name ) ) {
 			cmd->func();
