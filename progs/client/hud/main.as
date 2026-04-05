@@ -1,0 +1,7 @@
+namespace CGame {
+
+namespace HUD {
+
+}
+
+}

@@ -1,0 +1,9 @@
+/shared/constants.as;
+/shared/utils.as;
+/shared/files.as;
+
+generic/overlaymenu.as;
+generic/matchstates.as;
+race.as;
+
+legacy/quake1.as;
